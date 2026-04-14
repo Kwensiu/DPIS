@@ -1,0 +1,15 @@
+[submodule "refs/LSPosed.wiki"]
+	path = refs/LSPosed.wiki
+	url = https://github.com/LSPosed/LSPosed.wiki.git
+[submodule "refs/libxposed-api"]
+	path = refs/libxposed-api
+	url = https://github.com/libxposed/api.git
+[submodule "refs/libxposed-example"]
+	path = refs/libxposed-example
+	url = https://github.com/libxposed/example.git
+[submodule "refs/libxposed-helper"]
+	path = refs/libxposed-helper
+	url = https://github.com/libxposed/helper.git
+[submodule "refs/libxposed-service"]
+	path = refs/libxposed-service
+	url = https://github.com/libxposed/service.git
