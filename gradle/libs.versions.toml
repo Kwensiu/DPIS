@@ -1,0 +1,19 @@
+[versions]
+agp = "9.0.1"
+xposed-api = "101.0.1"
+xposed-service = "101.0.0"
+junit4 = "4.13.2"
+appcompat = "1.7.0"
+recyclerview = "1.4.0"
+material = "1.12.0"
+
+[plugins]
+agp-app = { id = "com.android.application", version.ref = "agp" }
+
+[libraries]
+libxposed-api = { group = "io.github.libxposed", name = "api", version.ref = "xposed-api" }
+libxposed-service = { group = "io.github.libxposed", name = "service", version.ref = "xposed-service" }
+junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
