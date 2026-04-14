@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DPIS</string>
+    <string name="module_description">Per-app virtual viewport</string>
+    <string name="status_header_text">DPIS 应用列表</string>
+    <string name="status_editor_hint">留空保存以禁用</string>
+    <string name="status_editor_text">列出已安装用户应用。可搜索、动态加入/移除 LSPosed 作用域，并为每个应用单独保存虚拟宽度 dp。</string>
+    <string name="status_save_button">保存</string>
+    <string name="status_save_success">已保存 %1$s 的虚拟宽度</string>
+    <string name="status_save_disabled">已禁用 %1$s 的虚拟视口配置</string>
+    <string name="status_save_requires_init">remote preferences 未初始化，先重新打开模块 App</string>
+    <string name="status_save_invalid">请输入正整数虚拟宽度 dp，或留空以禁用</string>
+    <string name="status_validation_text">先确认 remote preferences 已初始化，再搜索目标应用。加入作用域后保存参数，重启目标应用进程，再查看标签为 DPIS 的 logcat。</string>
+    <string name="search_hint">搜索应用名或包名</string>
+    <string name="tab_user_apps">用户应用</string>
+    <string name="tab_configured_apps">已配置应用</string>
+    <string name="tab_system_apps">系统应用</string>
+    <string name="scope_add_button">加入作用域</string>
+    <string name="scope_remove_button">移出作用域</string>
+    <string name="scope_add_success">已请求加入作用域：%1$s</string>
+    <string name="scope_remove_success">已移出作用域：%1$s</string>
+    <string name="scope_add_failed">加入作用域失败：%1$s</string>
+    <string name="scope_in">已注入</string>
+    <string name="scope_out">未注入</string>
+    <string name="status_disabled_short">未启用</string>
+    <string name="disable_button">禁用</string>
+    <string name="value_chip_format">%1$s</string>
+    <string name="badge_enabled">✓</string>
+    <string name="badge_disabled">×</string>
+    <string name="dialog_title">应用设置</string>
+    <string name="dialog_disable_button">禁用参数</string>
+    <string name="dialog_cancel_button">关闭</string>
+</resources>
