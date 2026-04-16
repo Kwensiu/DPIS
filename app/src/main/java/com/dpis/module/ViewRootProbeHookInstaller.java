@@ -1,5 +1,6 @@
 package com.dpis.module;
 
+import android.annotation.SuppressLint;
 import android.graphics.Rect;
 import android.view.View;
 
@@ -39,9 +40,8 @@ final class ViewRootProbeHookInstaller {
             ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
             Class<?> viewRootImplClass = Class.forName("android.view.ViewRootImpl", false,
                     bootClassLoader);
-            Method performTraversalsMethod = viewRootImplClass.getDeclaredMethod("performTraversals");
-            Method performMeasureMethod = viewRootImplClass.getDeclaredMethod(
-                    "performMeasure", int.class, int.class);
+            Method performTraversalsMethod = resolvePerformTraversalsMethod(viewRootImplClass);
+            Method performMeasureMethod = resolvePerformMeasureMethod(viewRootImplClass);
             Method setFrameMethod = viewRootImplClass.getDeclaredMethod(
                     "setFrame", Rect.class, boolean.class);
             hookNamedMethods(xposed, viewRootImplClass, "relayoutWindow", true);
@@ -99,6 +99,22 @@ final class ViewRootProbeHookInstaller {
             hookInstalled = true;
             DpisLog.i("ViewRoot probe hook ready");
         }
+    }
+
+    @SuppressLint("SoonBlockedPrivateApi")
+    private static Method resolvePerformTraversalsMethod(Class<?> viewRootImplClass)
+            throws ReflectiveOperationException {
+        // Xposed runtime uses this hidden method to observe traversal timing and
+        // apply frame diagnostics consistently in the target process.
+        return viewRootImplClass.getDeclaredMethod("performTraversals");
+    }
+
+    @SuppressLint("SoonBlockedPrivateApi")
+    private static Method resolvePerformMeasureMethod(Class<?> viewRootImplClass)
+            throws ReflectiveOperationException {
+        // Xposed runtime uses this hidden method to observe measure specs for
+        // viewport/frame correlation in real device diagnostics.
+        return viewRootImplClass.getDeclaredMethod("performMeasure", int.class, int.class);
     }
 
     static String buildPerformTraversalsLog(Object viewRootImpl) {
