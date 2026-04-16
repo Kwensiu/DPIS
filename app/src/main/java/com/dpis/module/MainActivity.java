@@ -1,16 +1,21 @@
 package com.dpis.module;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
+import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.MotionEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.content.Context;
 import android.widget.Toast;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -43,6 +48,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     private AppListAdapter adapter;
     private String currentQuery = "";
     private AppListFilter.Tab currentTab = AppListFilter.Tab.USER_APPS;
+    private TextInputEditText searchInput;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +81,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
             }
         });
 
-        TextInputEditText searchInput = findViewById(R.id.search_input);
+        searchInput = findViewById(R.id.search_input);
         searchInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -91,8 +97,34 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
             public void afterTextChanged(Editable s) {
             }
         });
+        searchInput.setOnFocusChangeListener((view, hasFocus) -> {
+            if (hasFocus) {
+                searchInput.setHint("");
+                return;
+            }
+            CharSequence current = searchInput.getText();
+            if (current == null || current.length() == 0) {
+                searchInput.setHint(getString(R.string.search_hint));
+            }
+        });
+
+        View systemSettingsButton = findViewById(R.id.system_settings_button);
+        systemSettingsButton.setOnClickListener(v ->
+                startActivity(new Intent(this, SystemServerSettingsActivity.class)));
 
         loadAppsAsync();
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN && searchInput != null && searchInput.hasFocus()) {
+            Rect outRect = new Rect();
+            searchInput.getGlobalVisibleRect(outRect);
+            if (!outRect.contains((int) event.getRawX(), (int) event.getRawY())) {
+                clearSearchFocus();
+            }
+        }
+        return super.dispatchTouchEvent(event);
     }
 
     @Override
@@ -133,6 +165,21 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
             return windowInsets;
         });
         ViewCompat.requestApplyInsets(topContainer);
+    }
+
+    private void clearSearchFocus() {
+        if (searchInput == null) {
+            return;
+        }
+        searchInput.clearFocus();
+        Editable current = searchInput.getText();
+        if (current == null || current.length() == 0) {
+            searchInput.setHint(getString(R.string.search_hint));
+        }
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.hideSoftInputFromWindow(searchInput.getWindowToken(), 0);
+        }
     }
 
     private List<AppItem> loadInstalledApps() {
@@ -246,10 +293,15 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         }
         String raw = inputView.getText() != null ? inputView.getText().toString().trim() : "";
         if (raw.isEmpty()) {
-            store.clearTargetViewportWidthDp(item.packageName);
-            Toast.makeText(this, getString(R.string.status_save_disabled, item.packageName),
+            boolean cleared = store.clearTargetViewportWidthDp(item.packageName);
+            Toast.makeText(this,
+                    cleared
+                            ? getString(R.string.status_save_disabled, item.packageName)
+                            : getString(R.string.status_save_requires_init),
                     Toast.LENGTH_SHORT).show();
-            loadAppsAsync();
+            if (cleared) {
+                loadAppsAsync();
+            }
             return;
         }
         try {
@@ -257,10 +309,15 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
             if (widthDp <= 0) {
                 throw new NumberFormatException("width must be positive");
             }
-            store.setTargetViewportWidthDp(item.packageName, widthDp);
-            Toast.makeText(this, getString(R.string.status_save_success, item.packageName),
+            boolean saved = store.setTargetViewportWidthDp(item.packageName, widthDp);
+            Toast.makeText(this,
+                    saved
+                            ? getString(R.string.status_save_success, item.packageName)
+                            : getString(R.string.status_save_requires_init),
                     Toast.LENGTH_SHORT).show();
-            loadAppsAsync();
+            if (saved) {
+                loadAppsAsync();
+            }
         } catch (NumberFormatException exception) {
             Toast.makeText(this, getString(R.string.status_save_invalid), Toast.LENGTH_SHORT)
                     .show();
@@ -274,10 +331,15 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                     .show();
             return;
         }
-        store.clearTargetViewportWidthDp(item.packageName);
-        Toast.makeText(this, getString(R.string.status_save_disabled, item.packageName),
+        boolean cleared = store.clearTargetViewportWidthDp(item.packageName);
+        Toast.makeText(this,
+                cleared
+                        ? getString(R.string.status_save_disabled, item.packageName)
+                        : getString(R.string.status_save_requires_init),
                 Toast.LENGTH_SHORT).show();
-        loadAppsAsync();
+        if (cleared) {
+            loadAppsAsync();
+        }
     }
 
     private void showEditDialog(AppItem item) {

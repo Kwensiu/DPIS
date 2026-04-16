@@ -30,4 +30,14 @@
     <string name="dialog_title">应用设置</string>
     <string name="dialog_disable_button">禁用参数</string>
     <string name="dialog_cancel_button">关闭</string>
+    <string name="system_settings_title">设置</string>
+    <string name="system_settings_section_general">常规</string>
+    <string name="system_settings_back">返回</string>
+    <string name="system_hooks_enabled_label">系统层 Hook</string>
+    <string name="system_hooks_enabled_hint">关闭后仅使用目标应用进程内 DPI 覆写。</string>
+    <string name="system_safe_mode_label">安全模式</string>
+    <string name="system_safe_mode_hint">限制高风险路径，降低卡顿与闪屏风险。</string>
+    <string name="global_log_enabled_label">日志输出</string>
+    <string name="global_log_enabled_hint">关闭后停止输出日志，节省性能。</string>
+    <string name="system_settings_save_failed">保存失败，请重试</string>
 </resources>
