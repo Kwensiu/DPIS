@@ -4,19 +4,19 @@
 
 第一阶段已经完成一个可运行的 LSPosed/libxposed 模块：
 
-- 支持 per-app 配置 `virtualWidthDp`
+- 支持 按应用 配置 `virtualWidthDp`
 - 已覆盖 `ResourcesManager`、`ResourcesImpl`、`Display`、`WindowMetrics`、`ViewRootImpl` 等若干链路
 - 在部分应用上，已经能看到明显的内容放大效果
 
-但当前验证结果也很明确：**并不是所有应用都能达到“像开发者选项里的最小宽度那样整体重排”的效果**。有些应用只出现了局部尺寸变化，例如图标、边框、部分 frame 或 sidebar 变化，而根布局并没有按目标宽度完整重排。
+但当前验证结果也很明确：**并不是所有应用都能达到“像开发者选项里的最小宽度那样整体重排”的效果**。有些应用只出现了局部尺寸变化，例如图标、边框、部分 框架 或 侧边栏 变化，而根布局并没有按目标宽度完整重排。
 
 这说明第一阶段主要实现的是“资源/度量层面的部分伪装”，而用户真实目标是：
 
-> 像系统全局修改“最小宽度”一样，只对指定 App 生效，并让整个应用按新的窗口环境重新布局。
+> 像系统全局修改“最小宽度”一样，只对指定 应用 生效，并让整个应用按新的窗口环境重新布局。
 
 第二阶段因此不再以“调 DPI”为主线，而是转为：
 
-> **per-app window environment spoofing**
+> **按应用 window environment spoofing**
 
 也就是对指定应用伪装更小的“有效窗口宽度 / 最小宽度环境”。
 
@@ -28,8 +28,8 @@
 
 1. 在 Android 16 上，应用进程内仍存在可 Hook 的 `Configuration` / `Resources` / `DisplayMetrics` 链路。
 2. 通过 modern Xposed API + LSPosed，可以稳定安装进目标应用进程，并读取远程配置。
-3. 通过 per-app `virtualWidthDp` 推导目标 `Configuration` 与 `DisplayMetrics`，可以让部分 App 明显放大内容。
-4. 原生配置页、动态作用域、per-app 参数存储链路已经闭环，足够支撑后续底层实验。
+3. 通过 按应用 `virtualWidthDp` 推导目标 `Configuration` 与 `DisplayMetrics`，可以让部分 应用 明显放大内容。
+4. 原生配置页、动态作用域、按应用 参数存储链路已经闭环，足够支撑后续底层实验。
 
 ### 已经确认的限制
 
@@ -38,7 +38,7 @@
 1. 只改 `densityDpi` 不等于“最小宽度”伪装。
 2. 即使同时改了 `screenWidthDp`/`DisplayMetrics`，也可能只影响资源换算，而不能决定根布局宽度。
 3. 部分应用的整体布局主要受 `WindowMetrics`、`WindowManager`、`Insets`、`ViewRootImpl` 真实测量尺寸控制。
-4. 不同技术栈对显示环境的消费入口不同，单一 Hook 点无法覆盖所有 App。
+4. 不同技术栈对显示环境的消费入口不同，单一 Hook 点无法覆盖所有 应用。
 
 ## 根因判断
 
@@ -53,7 +53,7 @@
    - `WindowManager`
    - `WindowMetrics`
    - `Insets`
-   - `ViewRootImpl` 进入 measure/layout 的根尺寸
+   - `ViewRootImpl` 进入 测量/布局 的根尺寸
    - 自身缓存的屏幕尺寸
 3. 只要这些链路里仍有一条返回真实值，就会出现“控件尺寸变了，但整体布局断点没变”的情况。
 
@@ -75,7 +75,7 @@
 
 第二阶段仍不追求：
 
-1. 完全复刻系统级 display policy
+1. 完全复刻系统级 显示策略
 2. 覆盖游戏/引擎/SurfaceView 的所有渲染链路
 3. 解决 WebView/Chromium 内核内部自己的页面布局逻辑
 
@@ -90,7 +90,7 @@
 目标：
 
 - 确认根布局最终使用的宽高参数到底来自哪里
-- 确认当前只在 probe 阶段观察到的尺寸，是否已经太晚，或是否没有改到真正参与 measure 的值
+- 确认当前只在 探针 阶段观察到的尺寸，是否已经太晚，或是否没有改到真正参与 measure 的值
 
 建议排查：
 
@@ -109,17 +109,17 @@
 
 目标：
 
-- 让目标应用在查询窗口 bounds 时，拿到与 `virtualWidthDp` 一致的结果
+- 让目标应用在查询窗口 边界 时，拿到与 `virtualWidthDp` 一致的结果
 
 建议排查：
 
 1. `WindowManager#getCurrentWindowMetrics()`
 2. `WindowManager#getMaximumWindowMetrics()`
-3. 当前 App 实际是直接调用 public API，还是通过 framework 内部包装层取值
+3. 当前 应用 实际是直接调用 public API，还是通过 framework 内部包装层取值
 
 验证标准：
 
-- 当前窗口 bounds、最大窗口 bounds、`DisplayMetrics` 返回值三者能相互对应
+- 当前窗口 边界、最大窗口 边界、`DisplayMetrics` 返回值三者能相互对应
 - 宽高变化能影响布局断点，而不只是图标尺寸
 
 ### 3. Insets / 可用区域链路
@@ -132,7 +132,7 @@
 
 原因：
 
-- 很多 App 真正用于布局的是“content bounds”，不是裸 display size
+- 很多 应用 真正用于布局的是“content 边界”，不是裸 显示尺寸
 
 建议排查：
 
@@ -157,7 +157,7 @@
 
 1. Activity 重建时哪些 `Configuration`/`WindowMetrics` 入口会重新走
 2. 当前 Hook 是否只在冷启动首帧生效
-3. 是否有 Activity override config 覆盖回真实值
+3. 是否有 Activity 覆盖配置 覆盖回真实值
 
 验证标准：
 
@@ -169,7 +169,7 @@
 
 目标：
 
-- 分类判断“哪些 App 因为技术栈不同而仍不生效”
+- 分类判断“哪些 应用 因为技术栈不同而仍不生效”
 
 建议分组：
 
@@ -192,7 +192,7 @@
    - 找到真正参与测量的输入值
 2. **再统一 `WindowManager + WindowMetrics + DisplayMetrics`**
    - 让窗口环境的几个主要公开入口一致
-3. **补 Insets / content bounds**
+3. **补 Insets / content 边界**
    - 解决“显示尺寸变了但内容区域没变”的分裂
 4. **最后做技术栈专项验证**
    - 把 Compose/WebView/自绘应用分组处理
@@ -217,7 +217,8 @@
 最值得先做的是：
 
 1. 把 `ViewRootImpl` 根测量输入追准
-2. 找出当前还没覆盖到的 `WindowManager` / bounds 入口
-3. 用少量代表性 App 建立验证矩阵，而不是只看单个目标应用
+2. 找出当前还没覆盖到的 `WindowManager` / 边界 入口
+3. 用少量代表性 应用 建立验证矩阵，而不是只看单个目标应用
 
 这会直接决定 DPIS 能不能从“部分应用局部生效”进入“多数常规应用整体生效”的阶段。
+

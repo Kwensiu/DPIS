@@ -1,22 +1,22 @@
-# Remote Preferences DPI Config Implementation Plan
+# 远程偏好 DPI 配置 实施计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **给代理执行者：** 必选子技能：使用 `superpowers:subagent-driven-development`（推荐）或 `superpowers:executing-plans` 按任务逐项执行本计划。步骤使用复选框（`- [ ]`）语法跟踪。
 
-**Goal:** 用 `libxposed/service` 建立最小 remote preferences 配置链路，让 Hook 侧按“用户值优先，否则首次观测默认值”计算 DPI，并在原生只读状态页展示当前配置值、默认值和生效值。
+**目标：** 用 `libxposed/service` 建立最小 remote preferences 配置链路，让 Hook 侧按“用户值优先，否则首次观测默认值”计算 DPI，并在原生只读状态页展示当前配置值、默认值和生效值。
 
-**Architecture:** 模块 App 通过 `XposedServiceHelper` 获取 `XposedService`，初始化并读取 framework 侧 remote preferences；Hook 进程继续沿用现有 Hook 点，但改为从 remote preferences 读取每包配置，并在第一次观测到系统默认 DPI 时回填。状态页只读取同一份配置数据进行展示，不提供编辑能力。
+**架构：** 模块 App 通过 `XposedServiceHelper` 获取 `XposedService`，初始化并读取 framework 侧 remote preferences；Hook 进程继续沿用现有 Hook 点，但改为从 remote preferences 读取每包配置，并在第一次观测到系统默认 DPI 时回填。状态页只读取同一份配置数据进行展示，不提供编辑能力。
 
-**Tech Stack:** Android SDK (Java), libxposed/api, libxposed/service, Gradle unit tests, native Android resources/layouts.
+**技术栈：** Android SDK (Java), libxposed/api, libxposed/service, Gradle unit tests, native Android resources/layouts.
 
 ---
 
-### Task 1: Add failing tests for config resolution and default fallback
+### 任务 1： 为配置解析与默认回退添加失败测试
 
-**Files:**
-- Create: `app/src/test/java/com/dpis/module/DpiConfigStoreTest.java`
-- Modify: `app/src/test/java/com/dpis/module/ResourcesImplHookInstallerTest.java`
+**文件：**
+- 新增： `app/src/test/java/com/dpis/module/DpiConfigStoreTest.java`
+- 修改： `app/src/test/java/com/dpis/module/ResourcesImplHookInstallerTest.java`
 
-- [ ] **Step 1: Write the failing tests**
+- [ ] **步骤 1： 编写失败测试**
 
 ```java
 package com.dpis.module;
@@ -78,12 +78,12 @@ public class DpiConfigStoreTest {
 }
 ```
 
-- [ ] **Step 2: Run the new tests and observe failure**
+- [ ] **步骤 2： 运行新测试并观察失败**
 
-Run: `./gradlew :app:testDebugUnitTest --tests com.dpis.module.DpiConfigStoreTest`
-Expected: FAIL because `DpiConfigStore` and `FakePrefs` do not exist yet.
+运行： `./gradlew :app:testDebugUnitTest --tests com.dpis.module.DpiConfigStoreTest`
+预期： 失败 因为 `DpiConfigStore` 和 `FakePrefs` 尚不存在。
 
-- [ ] **Step 3: Add one failing Hook regression test for default fallback**
+- [ ] **步骤 3： 添加一个用于默认回退场景的失败 Hook 回归测试**
 
 ```java
 @Test
@@ -106,19 +106,19 @@ public void usesObservedDefaultDensityWhenNoUserValueExists() {
 }
 ```
 
-- [ ] **Step 4: Run `./gradlew :app:testDebugUnitTest --tests com.dpis.module.ResourcesImplHookInstallerTest` and confirm failure** because the new overload does not exist.
+- [ ] **步骤 4： 运行 `./gradlew :app:testDebugUnitTest --tests com.dpis.module.ResourcesImplHookInstallerTest` 并确认失败**，因为新的重载尚不存在。
 
-### Task 2: Implement remote-preference-backed config store
+### 任务 2： 实现基于 remote preference 的配置存储
 
-**Files:**
-- Create: `app/src/main/java/com/dpis/module/DpiConfigStore.java`
-- Create: `app/src/test/java/com/dpis/module/FakePrefs.java`
-- Modify: `app/src/main/java/com/dpis/module/DpiConfig.java`
-- Modify: `app/src/main/java/com/dpis/module/DpisApplication.java`
-- Modify: `app/src/main/AndroidManifest.xml`
-- Modify: `app/build.gradle.kts`
+**文件：**
+- 新增： `app/src/main/java/com/dpis/module/DpiConfigStore.java`
+- 新增： `app/src/test/java/com/dpis/module/FakePrefs.java`
+- 修改： `app/src/main/java/com/dpis/module/DpiConfig.java`
+- 修改： `app/src/main/java/com/dpis/module/DpisApplication.java`
+- 修改： `app/src/main/AndroidManifest.xml`
+- 修改： `app/build.gradle.kts`
 
-- [ ] **Step 1: Add `libxposed/service` dependency and provider support**
+- [ ] **步骤 1： 添加 `libxposed/service` 依赖与 provider 支持**
 
 ```kotlin
 dependencies {
@@ -128,9 +128,9 @@ dependencies {
 }
 ```
 
-Manifest merge should include the `XposedProvider` from the library; `DpisApplication` remains the application entry.
+Manifest 合并后应包含库中的 `XposedProvider`；`DpisApplication` 仍作为应用入口。
 
-- [ ] **Step 2: Implement `DpiConfigStore` as a thin wrapper around `SharedPreferences`**
+- [ ] **步骤 2： 将 `DpiConfigStore` 实现为 `SharedPreferences` 的轻量封装**
 
 ```java
 final class DpiConfigStore {
@@ -152,12 +152,12 @@ final class DpiConfigStore {
 }
 ```
 
-Use keys:
+使用以下键：
 - `target_packages`
 - `dpi.<package>.user`
 - `dpi.<package>.default`
 
-- [ ] **Step 3: Keep `DpiConfig` focused on static seed packages only**
+- [ ] **步骤 3： 让 `DpiConfig` 仅关注静态种子包**
 
 ```java
 static final String[] TARGET_PACKAGES = {
@@ -170,9 +170,9 @@ static Set<String> getSeedTargetPackages() {
 }
 ```
 
-Do not keep `TARGET_DENSITY_DPI` as the runtime source of truth anymore.
+不再将 `TARGET_DENSITY_DPI` 作为运行时真值来源。
 
-- [ ] **Step 4: Register Xposed service in `DpisApplication` and initialize remote preferences when binder arrives**
+- [ ] **步骤 4： 在 `DpisApplication` 注册 Xposed service，并在 binder 到达时初始化远程偏好**
 
 ```java
 public final class DpisApplication extends Application implements XposedServiceHelper.OnServiceListener {
@@ -207,23 +207,23 @@ public final class DpisApplication extends Application implements XposedServiceH
 }
 ```
 
-- [ ] **Step 5: Re-run the new tests and ensure `DpiConfigStoreTest` passes**
+- [ ] **步骤 5：重新运行新测试并确保 `DpiConfigStoreTest` 通过**
 
-Run: `./gradlew :app:testDebugUnitTest --tests com.dpis.module.DpiConfigStoreTest`
-Expected: PASS.
+运行： `./gradlew :app:testDebugUnitTest --tests com.dpis.module.DpiConfigStoreTest`
+预期： 通过.
 
-### Task 3: Switch Hook logic to remote preferences without changing hook points
+### 任务 3： 在不改 Hook 点的前提下切换为 remote preferences 逻辑
 
-**Files:**
-- Modify: `app/src/main/java/com/dpis/module/ModuleMain.java`
-- Modify: `app/src/main/java/com/dpis/module/ResourcesManagerHookInstaller.java`
-- Modify: `app/src/main/java/com/dpis/module/ResourcesImplHookInstaller.java`
+**文件：**
+- 修改： `app/src/main/java/com/dpis/module/ModuleMain.java`
+- 修改： `app/src/main/java/com/dpis/module/ResourcesManagerHookInstaller.java`
+- 修改： `app/src/main/java/com/dpis/module/ResourcesImplHookInstaller.java`
 
-- [ ] **Step 1: Add a minimal runtime accessor that Hook code can use**
+- [ ] **步骤 1： 添加一个供 Hook 代码使用的最小运行时访问器**
 
-`ModuleMain` should keep a per-process `DpiConfigStore` initialized from `getRemotePreferences(DpiConfigStore.GROUP)` during `onModuleLoaded()` or lazily before package handling.
+`ModuleMain` 应维护进程级 `DpiConfigStore`，在 `onModuleLoaded()` 阶段或包处理前懒加载时通过 `getRemotePreferences(DpiConfigStore.GROUP)` 初始化。
 
-- [ ] **Step 2: Gate package handling by configured package set**
+- [ ] **步骤 2： 按配置包集合对包处理进行门控**
 
 ```java
 DpiConfigStore store = getOrCreateConfigStore();
@@ -232,7 +232,7 @@ if (!store.getConfiguredPackages().contains(param.getPackageName())) {
 }
 ```
 
-- [ ] **Step 3: Update the hook helpers to compute effective density from the store**
+- [ ] **步骤 3： 更新 Hook 辅助方法，改为从 store 计算生效 density**
 
 ```java
 static void applyDensityOverride(String packageName, Configuration config, DisplayMetrics metrics, DpiConfigStore store) {
@@ -245,34 +245,34 @@ static void applyDensityOverride(String packageName, Configuration config, Displ
 }
 ```
 
-The existing hook points stay the same:
+现有 Hook 点保持不变：
 - `ResourcesManager.applyConfigurationToResources(...)`
 - `ResourcesImpl.updateConfiguration(...)`
 
-- [ ] **Step 4: Re-run the updated Hook tests and full unit suite**
+- [ ] **步骤 4： 重新运行更新后的 Hook 测试和完整单测套件**
 
-Run: `./gradlew :app:testDebugUnitTest --tests com.dpis.module.ResourcesImplHookInstallerTest`
-Expected: PASS.
+运行： `./gradlew :app:testDebugUnitTest --tests com.dpis.module.ResourcesImplHookInstallerTest`
+预期： 通过.
 
-Run: `./gradlew :app:testDebugUnitTest`
-Expected: PASS.
+运行： `./gradlew :app:testDebugUnitTest`
+预期： 通过.
 
-### Task 4: Update the read-only status page to show config/default/effective values
+### 任务 4： 更新只读状态页以展示配置值/默认值/生效值
 
-**Files:**
-- Modify: `app/src/main/java/com/dpis/module/MainActivity.java`
-- Modify: `app/src/main/res/layout/activity_status.xml`
-- Modify: `app/src/main/res/values/strings.xml`
+**文件：**
+- 修改： `app/src/main/java/com/dpis/module/MainActivity.java`
+- 修改： `app/src/main/res/layout/activity_status.xml`
+- 修改： `app/src/main/res/values/strings.xml`
 
-- [ ] **Step 1: Change the target section into a per-package status block**
+- [ ] **步骤 1： 将目标区块改为按包展示的状态块**
 
-Each package row should show:
-- `Package: <name>`
-- `Current config: <user value or 未设置>`
-- `Current default: <default value or 未观测>`
-- `Current effective: <effective value or 未观测>`
+每个包行应展示：
+- `包名：<name>`
+- `当前配置：<user value or 未设置>`
+- `当前默认值：<default value or 未观测>`
+- `当前生效值：<effective value or 未观测>`
 
-- [ ] **Step 2: Build the package summary from the app-side `DpiConfigStore` when available, otherwise fall back to the static seed package list with empty values**
+- [ ] **步骤 2： 优先从应用侧 `DpiConfigStore` 构建包摘要；不可用时回退到静态种子包列表并填空值**
 
 ```java
 private String buildTargetText() {
@@ -282,38 +282,41 @@ private String buildTargetText() {
 }
 ```
 
-- [ ] **Step 3: Run `./gradlew :app:assembleDebug`**
+- [ ] **步骤 3：运行 `./gradlew :app:assembleDebug`**
 
-Expected: PASS.
+预期： 通过.
 
-### Task 5: Final verification and APK build
+### 任务 5： 最终验证与 APK 构建
 
-**Files:** None
+**文件：** 无
 
-- [ ] **Step 1: Run the full verification commands**
+- [ ] **步骤 1：运行完整验证命令**
 
-Run: `./gradlew :app:testDebugUnitTest :app:assembleDebug`
-Expected: PASS.
+运行： `./gradlew :app:testDebugUnitTest :app:assembleDebug`
+预期： 通过.
 
-- [ ] **Step 2: Review the diff and working tree**
+- [ ] **步骤 2：检查差异与工作树**
 
-Run: `git status -sb`
-Expected: only the planned files changed.
+运行： `git status -sb`
+预期： 只有计划内文件发生变更。
 
-- [ ] **Step 3: Prepare device verification instructions**
+- [ ] **步骤 3：准备设备验证说明**
 
-Use:
+使用：
 - `adb -s 192.168.5.130:5555 install -r app/build/outputs/apk/debug/app-debug.apk`
 - `adb -s 192.168.5.130:5555 logcat | findstr DPIS`
 
-Confirm logs show first-observed default recording and effective DPI resolution for `bin.mt.plus.canary` and `com.max.xiaoheihe`.
+确认日志展示了 `bin.mt.plus.canary` 和 `com.max.xiaoheihe` 的“首次观测默认值记录”与“生效 DPI 解析”。
 
 ---
 
-Plan complete and saved to `docs/superpowers/plans/2026-04-14-remote-preferences-dpi-config.md`. Two execution options:
+计划已完成并保存至 `docs/superpowers/plans/2026-04-14-remote-preferences-dpi-config.md`。两种执行方式：
 
-**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
+**1. 子代理驱动（推荐）** - 我为每个任务分发一个新的子代理，在任务间评审，快速迭代
 
-**2. Inline Execution** - Execute tasks in this session using executing-plans, batch execution with checkpoints
+**2. 内联执行** - 在当前会话内使用 executing-plans 执行任务，按检查点批量推进
 
-Which approach?
+选择哪种方式？
+
+
+

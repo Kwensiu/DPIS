@@ -10,3 +10,19 @@ captures/
 *.iml
 .DS_Store
 Thumbs.db
+
+# Local scratch / external comparison trees
+/.tmp/
+/InstallerX-Revived/
+/InxLocker/
+/SetAppFull/
+/YukiHookAPI/
+
+# Local runtime logs
+/logs/
+/boot-full.txt
+/startup*.log
+/xhh-*.txt
+/dpis-check.txt
+
+/archive/

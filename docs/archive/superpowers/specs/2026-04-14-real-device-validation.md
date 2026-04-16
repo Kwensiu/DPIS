@@ -18,7 +18,7 @@
 
 ## 推荐验证步骤
 
-1. 先启动模块 App 一次，确保 `remote preferences` 已初始化。
+1. 先启动模块应用一次，确保 `remote preferences` 已初始化。
 2. 启动或重启目标包，然后过滤 `DPIS` 日志：
    - 命令：`adb -s 192.168.5.130:5555 logcat | findstr DPIS`
 3. 观察关键日志：
@@ -26,7 +26,7 @@
    - `target package matched: package=<package>, targetDensityDpi=560`
    - `ResourcesManager override: densityDpi 480 -> 560`
    - `ResourcesImpl override: configDensityDpi 560 -> 560, metricsDensityDpi=560`
-4. 观察目标 App 的界面缩放是否符合预期，并确认非目标包没有命中日志。
+4. 观察目标应用的界面缩放是否符合预期，并确认非目标包没有命中日志。
 
 ## 下一步设计：最小可编辑配置页（只支持两个固定包）
 
@@ -40,4 +40,5 @@
 4. 交互约束：
    - 输入正整数表示新的目标 DPI
    - 留空表示禁用该包目标 DPI
-   - 保存后需要重启目标 App 进程再观察生效结果
+   - 保存后需要重启目标 应用 进程再观察生效结果
+

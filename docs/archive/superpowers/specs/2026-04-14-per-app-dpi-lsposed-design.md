@@ -2,7 +2,7 @@
 
 ## 目标
 
-构建一个基于 `libxposed/api` 的 Android Hook 模块，让特定应用在进程内看到一个 **更小的 dp 视口**，从而使 UI 内容（控件、图标、文本、布局）整体呈现更大的视觉效果。用户真实目标在于**把内容放大而非单纯调整图标密度或边距**，因此首要从 `Configuration.screenWidthDp` / `screenHeightDp` / `smallestScreenWidthDp` 等 viewport 数据切入，在保证内容尺度一致性的前提下，再以 `densityDpi` 作为辅助手段。
+构建一个基于 `libxposed/api` 的 Android Hook 模块，让特定应用在进程内看到一个 **更小的 dp 视口**，从而使 UI 内容（控件、图标、文本、布局）整体呈现更大的视觉效果。用户真实目标在于**把内容放大而非单纯调整图标密度或边距**，因此首要从 `Configuration.screenWidthDp` / `screenHeightDp` / `smallestScreenWidthDp` 等 视口 数据切入，在保证内容尺度一致性的前提下，再以 `densityDpi` 作为辅助手段。
 
 ## 当前已确认约束
 
@@ -30,7 +30,7 @@
 - `ActivityThread` 在应用绑定和配置更新过程中处理 `Configuration`
 - `ResourcesManager` 负责按配置创建和更新资源对象
 - `ResourcesImpl` 在更新配置时同步 `Configuration.densityDpi` 到 `DisplayMetrics`
-- `Context.createConfigurationContext(Configuration)` 仍然是官方支持的 override configuration 入口
+- `Context.createConfigurationContext(Configuration)` 仍然是官方支持的 覆盖配置 入口
 
 这说明 Android 16 上仍然存在“按应用进程改写内容 DPI”的技术路径。
 
@@ -51,11 +51,11 @@
 参考：
 - `https://github.com/JingMatrix/Vector`
 
-## 第一版设计方向：per-app 更小 dp 视口伪装
+## 第一版设计方向：按应用 更小 dp 视口伪装
 
 ### 目标效果
 
-对单个目标应用注入一个“更小”的虚拟 dp 视口，让应用认为可用的 `screenWidthDp` / `screenHeightDp` / `smallestScreenWidthDp` 都减少，实质上扩大了控件、字体、图标和布局的视觉尺寸，以实现“内容变大”的真实感受。`densityDpi` 仍将被同步调整以维护度量一致性，但它是辅助手段，**典型内容放大效果由 viewport 数据驱动**。
+对单个目标应用注入一个“更小”的虚拟 dp 视口，让应用认为可用的 `screenWidthDp` / `screenHeightDp` / `smallestScreenWidthDp` 都减少，实质上扩大了控件、字体、图标和布局的视觉尺寸，以实现“内容变大”的真实感受。`densityDpi` 仍将被同步调整以维护度量一致性，但它是辅助手段，**典型内容放大效果由 视口 数据驱动**。
 
 ### 预期覆盖范围
 
@@ -63,8 +63,8 @@
 1. 普通 `View` / `AppCompat` / `Material` 界面
 2. 依赖 `Resources.getDisplayMetrics()`、`Resources.getConfiguration()` 以及 `screenWidthDp` 等字段决定布局和资源选择逻辑
 3. 基于 `dp` / `sp` 的 XML 布局
-4. 基于 density bucket 的位图/资源加载
-5. 期望通过缩小 viewport 而不是单独调整图标、padding 或 state list
+4. 基于 density 分桶 的位图/资源加载
+5. 期望通过缩小 视口 而不是单独调整图标、内边距 或 状态列表
 
 ### 明确不保证的场景
 
@@ -76,29 +76,29 @@
 
 ## 第一版候选 Hook 思路
 
-### Hook 策略与优先级（viewport-first）
+### Hook 策略与优先级（视口优先）
 
 首要目标是让目标应用看到的 `screenWidthDp`/`screenHeightDp`/`smallestScreenWidthDp` 发生变化，从而让布局系统重新计算尺寸，真实感知“内容变大”。要做到这一点，必须按入口→落地→Activity 级的顺序依次控制 `Configuration` 与 `DisplayMetrics`。建议的优先 Hook 顺序如下：
 
-1. `ResourcesManager.applyConfigurationToResources(Configuration, CompatibilityInfo)` —— 系统将启动过程中生成的配置送入资源系统的统一入口。在这里拦截并把 viewport 相关字段（`screenWidthDp`、`screenHeightDp`、`smallestScreenWidthDp`）改为模块目标值（比如 per-app 虚拟宽度），`densityDpi` 仅作辅助同步，避免影响 `locale`、`fontScale` 等字段。
-2. `ResourcesImpl.updateConfiguration(Configuration, DisplayMetrics, CompatibilityInfo)` —— `Resources` 内部的配置落地点，负责把 `Configuration` 同步到 `DisplayMetrics`。在这里再保证 `DisplayMetrics.densityDpi`/`density`/`scaledDensity` 跟随 viewport 的变化，防止只是改 `Configuration` 造成度量分裂。
-3. `ResourcesManager.updateResourcesForActivity(IBinder, Configuration, int)` —— Activity 级 override configuration 的入口，防止某些 Activity 自己在 `overrideConfig` 里把密度或 viewport 恢复到原值。必要时在进入 `chain.proceed()` 前对 `overrideConfig` 修正 viewport 并保持 `densityDpi` 一致。
+1. `ResourcesManager.applyConfigurationToResources(Configuration, CompatibilityInfo)` —— 系统将启动过程中生成的配置送入资源系统的统一入口。在这里拦截并把 视口 相关字段（`screenWidthDp`、`screenHeightDp`、`smallestScreenWidthDp`）改为模块目标值（比如 按应用 虚拟宽度），`densityDpi` 仅作辅助同步，避免影响 `locale`、`fontScale` 等字段。
+2. `ResourcesImpl.updateConfiguration(Configuration, DisplayMetrics, CompatibilityInfo)` —— `Resources` 内部的配置落地点，负责把 `Configuration` 同步到 `DisplayMetrics`。在这里再保证 `DisplayMetrics.densityDpi`/`density`/`scaledDensity` 跟随 视口 的变化，防止只是改 `Configuration` 造成度量分裂。
+3. `ResourcesManager.updateResourcesForActivity(IBinder, Configuration, int)` —— Activity 级 覆盖配置 的入口，防止某些 Activity 自己在 `overrideConfig` 里把密度或 视口 恢复到原值。必要时在进入 `chain.proceed()` 前对 `overrideConfig` 修正 视口 并保持 `densityDpi` 一致。
 
-这个顺序的核心逻辑是：先管控 `Configuration`（viewport-first），再同步 `DisplayMetrics`（density-second），最后锁定 Activity 的 override context。其他 Hook 点（如 `ActivityThread.handleBindApplication(...)`）可在验证冷启动首屏被漏掉时作为补充。
+这个顺序的核心逻辑是：先管控 `Configuration`（视口优先），再同步 `DisplayMetrics`（density-second），最后锁定 Activity 的 覆盖 上下文。其他 Hook 点（如 `ActivityThread.handleBindApplication(...)`）可在验证冷启动首屏被漏掉时作为补充。
 
-### 为什么 viewport-first 更贴近真实需求
+### 为什么 视口优先 更贴近真实需求
 
-单独改 `densityDpi` 只会让像素换算变快，但 `screenWidthDp`/`screenHeightDp` 等 viewport 数据仍旧反映真实屏幕尺寸，布局本身不会重新计算，结果是控件尺度不变但文字/图标被压缩，体验欠佳。把 viewport 先缩小，应用才会重新计算布局——真正放大页面内容。`densityDpi` 的调整则是为了让 `DisplayMetrics` 的 `density`/`scaledDensity` 与新的 viewport 保持一致，避免资源选择 or 缓存落差。这个顺序也意味着最后一跳的 `ResourcesManager.updateResourcesForActivity` 只是防止还在 Activity 级别的 override config 把 viewport “抹平”回原值。
+单独改 `densityDpi` 只会让像素换算变快，但 `screenWidthDp`/`screenHeightDp` 等 视口 数据仍旧反映真实屏幕尺寸，布局本身不会重新计算，结果是控件尺度不变但文字/图标被压缩，体验欠佳。把 视口 先缩小，应用才会重新计算布局——真正放大页面内容。`densityDpi` 的调整则是为了让 `DisplayMetrics` 的 `density`/`scaledDensity` 与新的 视口 保持一致，避免资源选择或缓存落差。这个顺序也意味着最后一跳的 `ResourcesManager.updateResourcesForActivity` 只是防止还在 Activity 级别的 覆盖配置 把 视口 “抹平”回原值。
 
-### 第一阶段最小配置项建议：per-app 虚拟宽度 DP
+### 第一阶段最小配置项建议：按应用 虚拟宽度 DP
 
-当前阶段无需提供复杂的多维度配置，只需暴露一个 per-app 虚拟宽度 dp，就能驱动 viewport 伪装：
+当前阶段无需提供复杂的多维度配置，只需暴露一个 按应用 虚拟宽度 dp，就能驱动 视口 伪装：
 
 1. 以 `targetWidthDp` 为输入，在 `ResourcesManager.applyConfigurationToResources(...)` 以及 `ResourcesImpl.updateConfiguration(...)` 中，将 `Configuration.screenWidthDp`、`smallestScreenWidthDp` 以及 `screenHeightDp`（可根据显示比例推算）写入新值。
 2. 同步驱动 `DisplayMetrics.densityDpi`/`density`/`scaledDensity` 让每个 dp 单位拥有一致的像素结果，保持系统放大感。
-3. 在 `ResourcesManager.updateResourcesForActivity` 里复写 Activity 的 override config，避免因 Activity 自带 override 而丢失 `targetWidthDp`。
+3. 在 `ResourcesManager.updateResourcesForActivity` 里复写 Activity 的 覆盖配置，避免因 Activity 自带 覆盖 而丢失 `targetWidthDp`。
 
-这个最小集让我们在第一阶段验证 viewport-first 能力，同时为后续引入更多 per-app 虚拟高度、最大 dp 区段等扩展打基础。
+这个最小集让我们在第一阶段验证 视口优先 能力，同时为后续引入更多 按应用 虚拟高度、最大 dp 区段等扩展打基础。
 
 ## Android 16 第一版优先 Hook 点
 
@@ -114,11 +114,11 @@
   - 不在这里安装具体 Hook
 - `onPackageLoaded()`
   - 可选
-  - 只用于非常早期的类/方法预热、反射缓存、必要时的 deopt 准备
+  - 只用于非常早期的类/方法预热、反射缓存、必要时的 反优化 准备
   - 不作为第一版主 Hook 安装点
 - `onPackageReady()`
   - 第一版主安装点
-  - 原因是此时应用 classloader 已稳定，适合用反射查找框架类并安装 Hook
+  - 原因是此时应用 类加载器 已稳定，适合用反射查找框架类并安装 Hook
   - 第一版所有实际 Hook 以这个阶段为准
 
 结论：
@@ -153,8 +153,8 @@
 - 覆盖多数全局配置更新事件
 
 主要风险：
-- 某些 ROM 可能在进入这里之前或之后附加额外 override config
-- 仅改这一层，Activity 级 override config 仍可能把密度再次覆盖
+- 某些 ROM 可能在进入这里之前或之后附加额外 覆盖配置
+- 仅改这一层，Activity 级 覆盖配置 仍可能把密度再次覆盖
 
 ### 主 Hook 点 2：`android.content.res.ResourcesImpl.updateConfiguration(...)`
 
@@ -194,14 +194,14 @@
 ### 补充 Hook 点 1：`android.app.ResourcesManager.updateResourcesForActivity(...)`
 
 优先级：高  
-建议角色：Activity 级 override config 补丁层
+建议角色：Activity 级 覆盖配置 补丁层
 
 目标方法：
 - `android.app.ResourcesManager.updateResourcesForActivity(IBinder, Configuration, int)`
 
 选择理由：
-- AOSP Android 16 中，Activity override configuration 更新时会经过这里
-- 如果应用或系统在 Activity 粒度重新设置 override config，单靠全局配置入口可能不够
+- AOSP Android 16 中，Activity 覆盖配置 更新时会经过这里
+- 如果应用或系统在 Activity 粒度重新设置 覆盖配置，单靠全局配置入口可能不够
 
 建议时机：
 - 与主 Hook 一样，在 `onPackageReady()` 中安装
@@ -210,11 +210,11 @@
 建议行为：
 - 当 `overrideConfig != null` 时，写入目标 `densityDpi`
 - 不改 `displayId`
-- 不主动创建新的 override config，除非后续验证发现传 `null` 时会丢失目标效果
+- 不主动创建新的 覆盖配置，除非后续验证发现传 `null` 时会丢失目标效果
 
 预期收益：
 - 提升 Activity 重建、旋转、分屏、窗口变化后的稳定性
-- 防止 Activity 级 override 把全局密度覆盖回去
+- 防止 Activity 级 覆盖 把全局密度覆盖回去
 
 ### 补充 Hook 点 2：`android.app.ActivityThread.handleBindApplication(...)`
 
@@ -260,7 +260,7 @@
 
 - `Context.createConfigurationContext(...)`
   - 先保留为第二层补充路线
-  - 第一版不优先从这里切入，因为它更偏 context 层传播，覆盖面不如资源主链统一
+  - 第一版不优先从这里切入，因为它更偏 上下文 层传播，覆盖面不如资源主链统一
 - `Resources.getDisplayMetrics()` / `Resources.getConfiguration()`
   - 不作为主 Hook 点
   - 只适合作为调试输出或极端兼容性兜底
@@ -282,7 +282,7 @@
 
 ### 反射与隐藏 API 策略
 
-由于目标类多为 framework hidden/internal 类，第一版不直接在源码层静态引用这些类，而采用反射查找：
+由于目标类多为 框架隐藏/内部 类，第一版不直接在源码层静态引用这些类，而采用反射查找：
 
 - 通过字符串加载类与方法
 - 使用 `libxposed/api` 的 `hook(Executable)` 直接安装
@@ -323,7 +323,7 @@
 - 配置更新后：只做日志和一致性检查，不把“后改内部字段”作为常规主逻辑
 
 当前判断依据：
-- `onPackageReady()` 是现代 API 中对应用 classloader 最稳定的公开时机
+- `onPackageReady()` 是现代 API 中对应用 类加载器 最稳定的公开时机
 - Android 16 的资源链在 `ResourcesManager` 和 `ResourcesImpl` 上仍保持集中
 - 从前置参数入手比事后篡改内部字段更符合系统原生流向
 
@@ -356,11 +356,11 @@
 
 ### 第一阶段结论
 
-- 当前实测只靠改 `Configuration` 及其伴随的 `DisplayMetrics.densityDpi`（即 Configuration/density 的伪装）已经能够命中目标应用并让资源链重新评估 `dp` 视口，但很多应用仍能从其他 API（如 `WindowMetrics`、`Display`）读到真实窗口尺寸，导致整体尺寸感知与真实设备尺寸一致、控件并未“变大”。也就是说，阶段 1 已经命中，但对目标 App 的整体尺寸感知仍然不足。
+- 当前实测只靠改 `Configuration` 及其伴随的 `DisplayMetrics.densityDpi`（即 Configuration/density 的伪装）已经能够命中目标应用并让资源链重新评估 `dp` 视口，但很多应用仍能从其他 API（如 `WindowMetrics`、`Display`）读到真实窗口尺寸，导致整体尺寸感知与真实设备尺寸一致、控件并未“变大”。也就是说，阶段 1 已经命中，但对目标应用的整体尺寸感知仍然不足。
 
 ### 第二阶段主线
 
-- 第二阶段仍以 `virtualWidthDp` 单一配置项为中心，保持第一阶段已验证的 `Configuration` + `density` 伪装链，同时新增对 `WindowMetrics` 与 `Display` 系列接口的伪装。新的策略是：在维持 `virtualWidthDp` 驱动 viewport 的前提下，Hook `WindowMetrics.getBounds()`/`WindowManager.getMaximumWindowMetrics()` 等入口，和 `Display.getRealMetrics()` 这类既有度量，确保应用/框架层读取到的窗口尺寸、物理度量都与 `virtualWidthDp` 同步。
+- 第二阶段仍以 `virtualWidthDp` 单一配置项为中心，保持第一阶段已验证的 `Configuration` + `density` 伪装链，同时新增对 `WindowMetrics` 与 `Display` 系列接口的伪装。新的策略是：在维持 `virtualWidthDp` 驱动 视口 的前提下，Hook `WindowMetrics.getBounds()`/`WindowManager.getMaximumWindowMetrics()` 等入口，和 `Display.getRealMetrics()` 这类既有度量，确保应用/框架层读取到的窗口尺寸、物理度量都与 `virtualWidthDp` 同步。
 
 ### 三层统一推导（配置 → 窗口 → 显示）
 
@@ -372,17 +372,17 @@
 
 - Configuration 成功标准：主资源链 `ResourcesManager`/`ResourcesImpl` 看到的 `screenWidthDp` 和 `densityDpi` 已按 `virtualWidthDp` 设定，常规 `View`/`dp` 布局能感知放大效果。必要性：这是内容缩放链的第一层，任何 UI 读不到这层就不会重新测量/布局。
 - WindowMetrics 成功标准：应用通过 `WindowMetrics`/`WindowManager` 获取的 `Bounds` 与 Configuration 视觉尺寸匹配，旋转、分屏、窗口变化场景下不会意外读取真实尺寸。必要性：许多现代组件跳过 `Resources` 直接读 `WindowMetrics`，这层要同步否则即便资源链被改写也会还原布局。
-- Display 成功标准：`Display.getMetrics()`/`Display.getRealMetrics()` 等接口上报的 `densityDpi`、`widthPixels`/`heightPixels` 理论上与 viewport 重合或受控，避免与底层度量不一致的缓存和状态。必要性：度量层收尾，关系到 `DisplayMetrics` 缓存、API 兼容性以及 `WindowInsets` 之类的衍生计算。
+- Display 成功标准：`Display.getMetrics()`/`Display.getRealMetrics()` 等接口上报的 `densityDpi`、`widthPixels`/`heightPixels` 理论上与 视口 重合或受控，避免与底层度量不一致的缓存和状态。必要性：度量层收尾，关系到 `DisplayMetrics` 缓存、API 兼容性以及 `WindowInsets` 之类的衍生计算。
 
 ## 分阶段推进与三层统一
 
 ### 第一阶段结论
 
-+ 当前实测只靠改 `Configuration` 及其伴随的 `DisplayMetrics.densityDpi`（即 Configuration/density 的伪装）已经能够命中目标应用并让资源链重新评估 `dp` 视口，但很多应用仍能从其他 API（如 `WindowMetrics`、`Display`）读到真实窗口尺寸，导致整体尺寸感知与真实设备尺寸一致、控件并未“变大”。也就是说，阶段 1 已经命中，但对目标 App 的整体尺寸感知仍然不足。
++ 当前实测只靠改 `Configuration` 及其伴随的 `DisplayMetrics.densityDpi`（即 Configuration/density 的伪装）已经能够命中目标应用并让资源链重新评估 `dp` 视口，但很多应用仍能从其他 API（如 `WindowMetrics`、`Display`）读到真实窗口尺寸，导致整体尺寸感知与真实设备尺寸一致、控件并未“变大”。也就是说，阶段 1 已经命中，但对目标应用的整体尺寸感知仍然不足。
 
 ### 第二阶段主线
 
-+ 第二阶段仍以 `virtualWidthDp` 单一配置项为中心，保持第一阶段已验证的 `Configuration` + `density` 伪装链，同时新增对 `WindowMetrics` 与 `Display` 系列接口的伪装。新的策略是：在维持 `virtualWidthDp` 驱动 viewport 的前提下，Hook `WindowMetrics.getBounds()`/`WindowManager.getMaximumWindowMetrics()` 等入口，和 `Display.getRealMetrics()` 这类既有度量，确保应用/框架层读取到的窗口尺寸、物理度量都与 `virtualWidthDp` 同步。
++ 第二阶段仍以 `virtualWidthDp` 单一配置项为中心，保持第一阶段已验证的 `Configuration` + `density` 伪装链，同时新增对 `WindowMetrics` 与 `Display` 系列接口的伪装。新的策略是：在维持 `virtualWidthDp` 驱动 视口 的前提下，Hook `WindowMetrics.getBounds()`/`WindowManager.getMaximumWindowMetrics()` 等入口，和 `Display.getRealMetrics()` 这类既有度量，确保应用/框架层读取到的窗口尺寸、物理度量都与 `virtualWidthDp` 同步。
 
 ### 三层统一推导（配置 → 窗口 → 显示）
 
@@ -394,7 +394,7 @@
 
 + Configuration 成功标准：主资源链 `ResourcesManager`/`ResourcesImpl` 看到的 `screenWidthDp` 和 `densityDpi` 已按 `virtualWidthDp` 设定，常规 `View`/`dp` 布局能感知放大效果。必要性：这是内容缩放链的第一层，任何 UI 读不到这层就不会重新测量/布局。
 + WindowMetrics 成功标准：应用通过 `WindowMetrics`/`WindowManager` 获取的 `Bounds` 与 Configuration 视觉尺寸匹配，旋转、分屏、窗口变化场景下不会意外读取真实尺寸。必要性：许多现代组件跳过 `Resources` 直接读 `WindowMetrics`，这层要同步否则即便资源链被改写也会还原布局。
-+ Display 成功标准：`Display.getMetrics()`/`Display.getRealMetrics()` 等接口上报的 `densityDpi`、`widthPixels`/`heightPixels` 理论上与 viewport 重合或受控，避免与底层度量不一致的缓存和状态。必要性：度量层收尾，关系到 `DisplayMetrics` 缓存、API 兼容性以及 `WindowInsets` 之类的衍生计算。
++ Display 成功标准：`Display.getMetrics()`/`Display.getRealMetrics()` 等接口上报的 `densityDpi`、`widthPixels`/`heightPixels` 理论上与 视口 重合或受控，避免与底层度量不一致的缓存和状态。必要性：度量层收尾，关系到 `DisplayMetrics` 缓存、API 兼容性以及 `WindowInsets` 之类的衍生计算。
 
 ## 第二阶段实验结论
 
@@ -405,11 +405,11 @@
 2. `Display` 伪装生效：
    - `Display.getSize()` / `getRealSize()` / `getRealMetrics()` 已返回缩小后的像素宽高与新的 `densityDpi`。
 3. `WindowManager.getCurrentWindowMetrics()` / `getMaximumWindowMetrics()` 未命中：
-   - 入口探针无日志，说明目标 App 当前主路径并不依赖这两个 Java 层入口。
+   - 入口探针无日志，说明目标 应用 当前主路径并不依赖这两个 Java 层入口。
 4. `ViewRootImpl.performTraversals()` 始终看到真实根尺寸：
    - 根遍历宽高仍保持真实窗口尺寸（例如 `1080x2376`），即便资源链和显示链都已命中。
 
-由此可得：对目标 App 来说，整体布局主导因素不是单纯 `Configuration`，也不是当前已覆盖的 `WindowManager` 入口，而是更接近 `ViewRootImpl` 根尺寸或其上游测量链路。第二阶段因此不能视为“失败”，而是完成了排除：它证明了三层链路里，真正缺失的是根布局输入。
+由此可得：对目标 应用 来说，整体布局主导因素不是单纯 `Configuration`，也不是当前已覆盖的 `WindowManager` 入口，而是更接近 `ViewRootImpl` 根尺寸或其上游测量链路。第二阶段因此不能视为“失败”，而是完成了排除：它证明了三层链路里，真正缺失的是根布局输入。
 
 ## 第四阶段主线：ViewRootImpl 根尺寸伪装
 
@@ -429,7 +429,7 @@
 ### 成功标准
 
 1. `ViewRoot probe(performTraversals)` 的宽高不再始终等于真实窗口尺寸
-2. 目标 App 的整体布局尺寸开始明显向“小屏设备显示更大”的方向变化
+2. 目标 应用 的整体布局尺寸开始明显向“小屏设备显示更大”的方向变化
 3. 同时保持：
    - `Configuration` 仍为虚拟视口
    - `Display` 仍为虚拟像素尺寸
@@ -544,3 +544,4 @@
 - `https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/app/ResourcesManager.java`
 - `https://android.googlesource.com/platform/frameworks/base/+/android16-qpr2-release/core/java/android/content/res/ResourcesImpl.java`
 - `https://developer.android.com/reference/android/content/Context.html#createConfigurationContext(android.content.res.Configuration)`
+

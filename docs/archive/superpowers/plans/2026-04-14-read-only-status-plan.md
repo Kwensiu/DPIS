@@ -1,21 +1,21 @@
-# 只读状态页 Implementation Plan
+# 只读状态页 实施计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **给代理执行者：** 必选子技能：使用 `superpowers:subagent-driven-development`（推荐）或 `superpowers:executing-plans` 按任务逐项执行本计划。步骤使用复选框（`- [ ]`）语法跟踪。
 
-**Goal:** 将 `MainActivity` 变成一个原生只读状态页，展示目标包信息、Hook 列表、作用域说明与真机验证提示，并写一份真机验证文档。
+**目标：** 将 `MainActivity` 变成一个原生只读状态页，展示目标包信息、Hook 列表、作用域说明与真机验证提示，并写一份真机验证文档。
 
-**Architecture:** `MainActivity` 通过新 layout + string resources 绑定几组 TextView，程序只能读出配置信息；支持性文档在 `docs/superpowers/specs` 中补充验证提示和 logcat 关键字。
+**架构：** `MainActivity` 通过新布局 + 字符串资源绑定几组 TextView，程序只能读出配置信息；支持性文档在 `docs/superpowers/specs` 中补充验证提示和 logcat 关键字。
 
-**Tech Stack:** Android SDK (Java, layouts, resources), logcat diagnostics, Markdown docs for verification guidance.
+**技术栈：** Android SDK（Java、布局、资源）、logcat 诊断、用于验证指引的 Markdown 文档。
 
 ---
 
-### Task 1: Create the status layout
+### 任务 1： 创建状态页布局
 
-**Files:**
-- Create: `app/src/main/res/layout/activity_status.xml`
+**文件：**
+- 新增： `app/src/main/res/layout/activity_status.xml`
 
-- [ ] **Step 1: Write the layout XML.**
+- [ ] **步骤 1： 编写布局 XML。**
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -71,25 +71,25 @@
 </ScrollView>
 ```
 
-- [ ] **Step 2: Run `./gradlew :app:assembleDebug`** to verify the layout compiles into the resource package (failure indicates missing attributes or typos).
+- [ ] **步骤 2：运行 `./gradlew :app:assembleDebug`** ，验证布局可编译进资源包（失败通常表示属性缺失或拼写错误）。
 
-- [ ] **Step 3: Launch the activity on a device/emulator.**
-  - Command: `adb shell am start -n com.dpis.module/.MainActivity`
-  - Expectation: the ScrollView renders each TextView section; there are no inputs or interactive elements.
+- [ ] **步骤 3： 在设备/模拟器上启动该 Activity。**
+  - 命令： `adb shell am start -n com.dpis.module/.MainActivity`
+  - 预期： ScrollView 渲染出各个 TextView 区块；没有输入框或交互控件。
 
-- [ ] **Step 4: Commit the layout.**
+- [ ] **步骤 4： 提交布局改动.**
 
 ```bash
 git add app/src/main/res/layout/activity_status.xml
 git commit -m "feat: add read-only status layout"
 ```
 
-### Task 2: Add dedicated strings for each section
+### 任务 2： 为各分区添加专用字符串
 
-**Files:**
-- Modify: `app/src/main/res/values/strings.xml`
+**文件：**
+- 修改： `app/src/main/res/values/strings.xml`
 
-- [ ] **Step 1: Insert the required strings.**
+- [ ] **步骤 1： 插入所需字符串。**
 
 ```xml
     <string name="status_header_text">DPIS 只读状态页</string>
@@ -99,23 +99,23 @@ git commit -m "feat: add read-only status layout"
     <string name="status_validation_text">真机验证：看 `DPIS` logcat 条目（安装、override densityDpi）并确认目标包以 560dpi 渲染，其他 app 保持默认 DPI。</string>
 ```
 
-- [ ] **Step 2: Run `./gradlew :app:assembleDebug`** to ensure the new string resources merge without conflict.
+- [ ] **步骤 2：运行 `./gradlew :app:assembleDebug`** ，确保新增字符串资源合并无冲突。
 
-- [ ] **Step 3: Run `./gradlew :app:lintDebug`** to catch resource warnings (expect PASS).
+- [ ] **步骤 3：运行 `./gradlew :app:lintDebug`** ，捕获资源告警（预期通过）。
 
-- [ ] **Step 4: Commit the string changes.**
+- [ ] **步骤 4： 提交字符串改动.**
 
 ```bash
 git add app/src/main/res/values/strings.xml
 git commit -m "chore: add strings for status page"
 ```
 
-### Task 3: Update `MainActivity` to drive the layout
+### 任务 3： 更新 `MainActivity` 以驱动布局
 
-**Files:**
-- Modify: `app/src/main/java/com/dpis/module/MainActivity.java`
+**文件：**
+- 修改： `app/src/main/java/com/dpis/module/MainActivity.java`
 
-- [ ] **Step 1: Replace the activity contents with the new binding code.**
+- [ ] **步骤 1： 用新的绑定代码替换 Activity 内容。**
 
 ```java
 package com.dpis.module;
@@ -157,25 +157,25 @@ public final class MainActivity extends Activity {
 }
 ```
 
-- [ ] **Step 2: Run `./gradlew :app:assembleDebug`.**
+- [ ] **步骤 2： 运行 `./gradlew :app:assembleDebug`。**
 
-- [ ] **Step 3: Launch via `adb shell am start -n com.dpis.module/.MainActivity` and confirm the TextViews show the expected strings, target package, DPI, hook names, and validation hint.**
+- [ ] **步骤 3： 通过 `adb shell am start -n com.dpis.module/.MainActivity` 启动，并确认 TextView 展示了预期字符串、目标包、DPI、Hook 名称和验证提示。**
 
-- [ ] **Step 4: Watch logcat while launching (e.g., `adb logcat -s DPIS`). Expect entries `installed ResourcesManager and ResourcesImpl hooks` and `override densityDpi ...` when the target package loads; this confirms the page matches the logs.**
+- [ ] **步骤 4： 启动时观察 logcat（如 `adb logcat -s DPIS`）。目标包加载时应出现 `installed ResourcesManager and ResourcesImpl hooks` 与 `override densityDpi ...`，以确认页面内容与日志一致。**
 
-- [ ] **Step 5: Commit the activity change.**
+- [ ] **步骤 5： 提交 Activity 改动。**
 
 ```bash
 git add app/src/main/java/com/dpis/module/MainActivity.java
 git commit -m "feat: show status page info in MainActivity"
 ```
 
-### Task 4: Document real-device verification steps
+### 任务 4： 文档化真机验证步骤
 
-**Files:**
-- Create: `docs/superpowers/specs/2026-04-14-real-device-validation.md`
+**文件：**
+- 新增： `docs/superpowers/specs/2026-04-14-real-device-validation.md`
 
-- [ ] **Step 1: Write the validation doc describing logcat keywords, commands, and observational checks.**
+- [ ] **步骤 1： 编写验证文档，说明 logcat 关键字、命令和观察检查项。**
 
 ```markdown
 # 真机验证指南
@@ -185,11 +185,14 @@ git commit -m "feat: show status page info in MainActivity"
 3. 启动一个非目标包（如 launcher），确认没有 `DPIS` logcat 输出、density 仍然默认，这说明 Hook 只在 `DpiConfig` 匹配时生效。
 ```
 
-- [ ] **Step 2: Double-check the doc matches the spec section so the validation hints stay consistent.**
+- [ ] **步骤 2： 复核文档与规格章节一致，确保验证提示保持统一。**
 
-- [ ] **Step 3: Commit the doc.**
+- [ ] **步骤 3： 提交文档.**
 
 ```bash
 git add docs/superpowers/specs/2026-04-14-real-device-validation.md
 git commit -m "docs: add real-device validation guide"
 ```
+
+
+
