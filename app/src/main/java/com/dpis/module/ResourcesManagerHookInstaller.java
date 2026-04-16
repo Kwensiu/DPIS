@@ -1,5 +1,6 @@
 package com.dpis.module;
 
+import android.annotation.SuppressLint;
 import android.content.res.Configuration;
 import android.util.DisplayMetrics;
 
@@ -42,9 +43,8 @@ final class ResourcesManagerHookInstaller {
                         return chain.proceed();
                     });
 
-            Class<?> iBinderClass = Class.forName("android.os.IBinder", false, bootClassLoader);
-            Method updateResourcesForActivityMethod = resourcesManagerClass.getDeclaredMethod(
-                    "updateResourcesForActivity", iBinderClass, Configuration.class, int.class);
+            Method updateResourcesForActivityMethod = resolveUpdateResourcesForActivityMethod(
+                    resourcesManagerClass, bootClassLoader);
             xposed.hook(updateResourcesForActivityMethod)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
                     .intercept(chain -> {
@@ -59,6 +59,17 @@ final class ResourcesManagerHookInstaller {
             hookInstalled = true;
             DpisLog.i("ResourcesManager hook ready (createHooks=" + createHookCount + ")");
         }
+    }
+
+    @SuppressLint("BlockedPrivateApi")
+    private static Method resolveUpdateResourcesForActivityMethod(
+            Class<?> resourcesManagerClass,
+            ClassLoader bootClassLoader) throws ReflectiveOperationException {
+        // Xposed module runtime depends on this hidden framework method to keep
+        // activity-scoped resource overrides aligned with viewport spoofing.
+        Class<?> iBinderClass = Class.forName("android.os.IBinder", false, bootClassLoader);
+        return resourcesManagerClass.getDeclaredMethod(
+                "updateResourcesForActivity", iBinderClass, Configuration.class, int.class);
     }
 
     private static int installResourceCreationHooks(XposedInterface xposed,
