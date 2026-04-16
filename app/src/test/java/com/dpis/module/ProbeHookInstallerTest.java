@@ -3,19 +3,12 @@ package com.dpis.module;
 import android.content.res.Configuration;
 import android.util.DisplayMetrics;
 
-import org.junit.After;
 import org.junit.Test;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotSame;
 
 public class ProbeHookInstallerTest {
-    @After
-    public void tearDown() {
-        VirtualDisplayState.set(null);
-    }
-
     @Test
     public void buildsResourcesDisplayMetricsLog() {
         DisplayMetrics metrics = new DisplayMetrics();
@@ -52,36 +45,41 @@ public class ProbeHookInstallerTest {
     }
 
     @Test
-    public void appliesVirtualRootSizeToFakeViewRoot() {
-        VirtualDisplayState.set(new VirtualDisplayOverride.Result(300, 613, 300,
-                576, 900, 1840));
-        FakeViewRoot root = new FakeViewRoot(1080, 2376);
+    public void appliesImmediateConfigurationOverride() {
+        Configuration configuration = new Configuration();
+        configuration.screenWidthDp = 360;
+        configuration.screenHeightDp = 736;
+        configuration.smallestScreenWidthDp = 360;
+        configuration.densityDpi = 480;
 
-        assertTrue(ViewRootProbeHookInstaller.applyRootSizeOverride(root));
-        assertEquals(900, root.mWidth);
-        assertEquals(1840, root.mHeight);
+        Configuration overridden = ResourcesProbeHookInstaller.createOverriddenConfiguration(
+                configuration, 200);
+
+        assertNotSame(configuration, overridden);
+        assertEquals(200, overridden.screenWidthDp);
+        assertEquals(409, overridden.screenHeightDp);
+        assertEquals(200, overridden.smallestScreenWidthDp);
+        assertEquals(864, overridden.densityDpi);
     }
 
     @Test
-    public void skipsVirtualRootSizeWhenAlreadyAligned() {
-        VirtualDisplayState.set(new VirtualDisplayOverride.Result(300, 613, 300,
-                576, 900, 1840));
-        FakeViewRoot root = new FakeViewRoot(900, 1840);
+    public void appliesImmediateDisplayMetricsOverride() {
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 2208;
+        metrics.densityDpi = 480;
+        metrics.density = 3.0f;
+        metrics.scaledDensity = 3.45f;
 
-        assertFalse(ViewRootProbeHookInstaller.applyRootSizeOverride(root));
-        assertEquals(900, root.mWidth);
-        assertEquals(1840, root.mHeight);
-    }
+        DisplayMetrics overridden = ResourcesProbeHookInstaller.createOverriddenDisplayMetrics(
+                metrics, 200, 1.15f);
 
-    @Test
-    public void skipsVirtualRootSizeWhenRootNotInitialized() {
-        VirtualDisplayState.set(new VirtualDisplayOverride.Result(300, 613, 300,
-                576, 900, 1840));
-        FakeViewRoot root = new FakeViewRoot(-1, -1);
-
-        assertFalse(ViewRootProbeHookInstaller.applyRootSizeOverride(root));
-        assertEquals(-1, root.mWidth);
-        assertEquals(-1, root.mHeight);
+        assertNotSame(metrics, overridden);
+        assertEquals(1080, overridden.widthPixels);
+        assertEquals(2208, overridden.heightPixels);
+        assertEquals(864, overridden.densityDpi);
+        assertEquals(DensityOverride.densityFromDpi(864), overridden.density, 0.0001f);
+        assertEquals(DensityOverride.scaledDensityFrom(864, 1.15f), overridden.scaledDensity, 0.0001f);
     }
 
     private static final class FakeViewRoot {

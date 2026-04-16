@@ -33,8 +33,8 @@ final class VirtualDisplayOverride {
         int targetSmallestWidthDp = Math.min(targetWidthDp, targetHeightDp);
         int targetDensityDpi = Math.max(1,
                 Math.round(sourceDensityDpi * ((float) sourceWidthDp / (float) targetWidthDp)));
-        int targetWidthPx = Math.max(1, Math.round(sourceWidthPx * viewportScale));
-        int targetHeightPx = Math.max(1, Math.round(sourceHeightPx * viewportScale));
+        int targetWidthPx = Math.max(1, sourceWidthPx);
+        int targetHeightPx = Math.max(1, sourceHeightPx);
         return new Result(targetWidthDp, targetHeightDp, targetSmallestWidthDp, targetDensityDpi,
                 targetWidthPx, targetHeightPx);
     }

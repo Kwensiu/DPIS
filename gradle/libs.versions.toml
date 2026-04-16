@@ -1,19 +1,33 @@
 [versions]
 agp = "9.0.1"
+kotlin = "2.3.20"
+ksp = "2.2.0-2.0.2"
 xposed-api = "101.0.1"
 xposed-service = "101.0.0"
+xposed-legacy-api = "82"
+yukihookapi = "1.3.1"
+kavaref = "1.0.2"
 junit4 = "4.13.2"
 appcompat = "1.7.0"
 recyclerview = "1.4.0"
 material = "1.12.0"
+annotation = "1.9.1"
 
 [plugins]
 agp-app = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 
 [libraries]
 libxposed-api = { group = "io.github.libxposed", name = "api", version.ref = "xposed-api" }
 libxposed-service = { group = "io.github.libxposed", name = "service", version.ref = "xposed-service" }
+legacy-xposed-api = { module = "de.robv.android.xposed:api", version.ref = "xposed-legacy-api" }
+yukihookapi-api = { module = "com.highcapable.yukihookapi:api", version.ref = "yukihookapi" }
+yukihookapi-ksp-xposed = { module = "com.highcapable.yukihookapi:ksp-xposed", version.ref = "yukihookapi" }
+kavaref-core = { module = "com.highcapable.kavaref:kavaref-core", version.ref = "kavaref" }
+kavaref-extension = { module = "com.highcapable.kavaref:kavaref-extension", version.ref = "kavaref" }
 junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-annotation = { group = "androidx.annotation", name = "annotation", version.ref = "annotation" }

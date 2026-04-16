@@ -10,6 +10,11 @@ import java.util.Set;
 
 final class FakePrefs implements SharedPreferences {
     private final Map<String, Object> values = new HashMap<>();
+    private boolean commitResult = true;
+
+    void setCommitResult(boolean commitResult) {
+        this.commitResult = commitResult;
+    }
 
     @Override
     public Map<String, ?> getAll() {
@@ -138,6 +143,9 @@ final class FakePrefs implements SharedPreferences {
 
         @Override
         public boolean commit() {
+            if (!commitResult) {
+                return false;
+            }
             applyChanges();
             return true;
         }

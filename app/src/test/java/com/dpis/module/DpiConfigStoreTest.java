@@ -32,7 +32,7 @@ public class DpiConfigStoreTest {
 
         DpiConfigStore store = new DpiConfigStore(prefs);
 
-        assertEquals(Integer.valueOf(360), store.getEffectiveViewportWidthDp("bin.mt.plus.canary"));
+        assertEquals(Integer.valueOf(360), store.getTargetViewportWidthDp("bin.mt.plus.canary"));
     }
 
     @Test
@@ -41,7 +41,7 @@ public class DpiConfigStoreTest {
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         assertNull(store.getTargetViewportWidthDp("bin.mt.plus.canary"));
-        assertNull(store.getEffectiveViewportWidthDp("bin.mt.plus.canary"));
+        assertNull(store.getTargetViewportWidthDp("bin.mt.plus.canary"));
     }
 
     @Test
@@ -66,24 +66,93 @@ public class DpiConfigStoreTest {
     public void updatesViewportWidthForConfiguredPackage() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
-        store.ensureSeedConfig(DpiConfig.getSeedViewportWidthDps());
+        assertTrue(store.ensureSeedConfig(DpiConfig.getSeedViewportWidthDps()));
 
-        store.setTargetViewportWidthDp("bin.mt.plus.canary", 360);
+        assertTrue(store.setTargetViewportWidthDp("bin.mt.plus.canary", 360));
 
         assertEquals(Integer.valueOf(360), store.getTargetViewportWidthDp("bin.mt.plus.canary"));
-        assertEquals(Integer.valueOf(360), store.getEffectiveViewportWidthDp("bin.mt.plus.canary"));
+        assertEquals(Integer.valueOf(360), store.getTargetViewportWidthDp("bin.mt.plus.canary"));
     }
 
     @Test
     public void clearsViewportWidthWhenDisabled() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
-        store.ensureSeedConfig(DpiConfig.getSeedViewportWidthDps());
+        assertTrue(store.ensureSeedConfig(DpiConfig.getSeedViewportWidthDps()));
 
-        store.clearTargetViewportWidthDp("bin.mt.plus.canary");
+        assertTrue(store.clearTargetViewportWidthDp("bin.mt.plus.canary"));
 
         assertNull(store.getTargetViewportWidthDp("bin.mt.plus.canary"));
-        assertNull(store.getEffectiveViewportWidthDp("bin.mt.plus.canary"));
+        assertNull(store.getTargetViewportWidthDp("bin.mt.plus.canary"));
         assertFalse(store.getConfiguredPackages().contains("bin.mt.plus.canary"));
     }
+
+    @Test
+    public void reportsFailureWhenViewportWidthCommitFails() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.ensureSeedConfig(DpiConfig.getSeedViewportWidthDps()));
+        prefs.setCommitResult(false);
+
+        assertFalse(store.setTargetViewportWidthDp("bin.mt.plus.canary", 320));
+        assertEquals(Integer.valueOf(DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP),
+                store.getTargetViewportWidthDp("bin.mt.plus.canary"));
+    }
+
+    @Test
+    public void reportsFailureWhenViewportWidthClearCommitFails() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.ensureSeedConfig(DpiConfig.getSeedViewportWidthDps()));
+        prefs.setCommitResult(false);
+
+        assertFalse(store.clearTargetViewportWidthDp("bin.mt.plus.canary"));
+        assertEquals(Integer.valueOf(DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP),
+                store.getTargetViewportWidthDp("bin.mt.plus.canary"));
+    }
+
+    @Test
+    public void disablesSystemServerHooksByDefault() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertTrue(store.isSystemServerHooksEnabled());
+    }
+
+    @Test
+    public void enablesSystemServerSafeModeByDefault() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertTrue(store.isSystemServerSafeModeEnabled());
+    }
+
+    @Test
+    public void updatesSystemServerGlobalToggles() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertTrue(store.setSystemServerHooksEnabled(false));
+        assertTrue(store.setSystemServerSafeModeEnabled(false));
+        assertFalse(store.isSystemServerHooksEnabled());
+        assertFalse(store.isSystemServerSafeModeEnabled());
+    }
+
+    @Test
+    public void disablesGlobalLogsByDefault() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertFalse(store.isGlobalLogEnabled());
+    }
+
+    @Test
+    public void updatesGlobalLogToggle() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertTrue(store.setGlobalLogEnabled(false));
+        assertFalse(store.isGlobalLogEnabled());
+    }
 }
+

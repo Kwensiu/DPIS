@@ -10,13 +10,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.github.libxposed.api.XposedInterface;
 
 final class DisplayHookInstaller {
+    private static final String PACKAGE_XIAOHEIHE = "com.max.xiaoheihe";
     private static volatile boolean hookInstalled;
+    private static volatile String targetPackageName;
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
 
     private DisplayHookInstaller() {
     }
 
-    static void install(XposedInterface xposed) throws ReflectiveOperationException {
+    static void install(XposedInterface xposed, String packageName) throws ReflectiveOperationException {
         if (hookInstalled) {
             return;
         }
@@ -24,6 +26,7 @@ final class DisplayHookInstaller {
             if (hookInstalled) {
                 return;
             }
+            targetPackageName = packageName;
             ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
             Class<?> displayClass = Class.forName("android.view.Display", false, bootClassLoader);
             hookDisplayMetricsMethod(xposed, displayClass, "getMetrics");
@@ -66,12 +69,13 @@ final class DisplayHookInstaller {
         if (metrics == null) {
             return;
         }
+        if (!shouldApplyOverrideForPackage(targetPackageName)) {
+            return;
+        }
         VirtualDisplayOverride.Result override = VirtualDisplayState.get();
         if (override == null) {
             return;
         }
-        metrics.widthPixels = override.widthPx;
-        metrics.heightPixels = override.heightPx;
         metrics.densityDpi = override.densityDpi;
         metrics.density = DensityOverride.densityFromDpi(override.densityDpi);
         metrics.scaledDensity = metrics.density;
@@ -85,14 +89,18 @@ final class DisplayHookInstaller {
         if (point == null) {
             return;
         }
-        VirtualDisplayOverride.Result override = VirtualDisplayState.get();
-        if (override == null) {
+        if (!shouldApplyOverrideForPackage(targetPackageName)) {
             return;
         }
-        point.x = override.widthPx;
-        point.y = override.heightPx;
+        if (!WindowFrameOverride.isEnabled()) {
+            return;
+        }
         String message = "Display override(" + sourceTag + "): size=" + point.x + "x" + point.y;
         logIfChanged("point:" + sourceTag, message);
+    }
+
+    static boolean shouldApplyOverrideForPackage(String packageName) {
+        return PACKAGE_XIAOHEIHE.equals(packageName);
     }
 
     private static void logIfChanged(String key, String message) {

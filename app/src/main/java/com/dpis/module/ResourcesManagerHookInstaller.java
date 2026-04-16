@@ -3,12 +3,17 @@ package com.dpis.module;
 import android.content.res.Configuration;
 import android.util.DisplayMetrics;
 
+import java.util.HashSet;
 import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.github.libxposed.api.XposedInterface;
 
 final class ResourcesManagerHookInstaller {
     private static volatile boolean hookInstalled;
+    private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
 
     private ResourcesManagerHookInstaller() {
     }
@@ -48,9 +53,60 @@ final class ResourcesManagerHookInstaller {
                                 "ResourcesManagerActivity");
                         return chain.proceed();
                     });
+
+            int createHookCount = installResourceCreationHooks(
+                    xposed, resourcesManagerClass, packageName, store);
             hookInstalled = true;
-            DpisLog.i("ResourcesManager hook ready");
+            DpisLog.i("ResourcesManager hook ready (createHooks=" + createHookCount + ")");
         }
+    }
+
+    private static int installResourceCreationHooks(XposedInterface xposed,
+                                                    Class<?> resourcesManagerClass,
+                                                    String packageName,
+                                                    DpiConfigStore store) {
+        int hookedCount = 0;
+        Set<Method> hookedMethods = new HashSet<>();
+        for (Method method : resourcesManagerClass.getDeclaredMethods()) {
+            int configArgIndex = findConfigurationArgIndex(method);
+            if (configArgIndex < 0) {
+                continue;
+            }
+            String methodName = method.getName();
+            if (!isResourceCreationMethod(methodName)) {
+                continue;
+            }
+            if (!hookedMethods.add(method)) {
+                continue;
+            }
+            xposed.hook(method)
+                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+                    .intercept(chain -> {
+                        Configuration config = (Configuration) chain.getArg(configArgIndex);
+                        applyViewportOverride(config, store, packageName,
+                                "ResourcesManagerCreate(" + methodName + ")");
+                        return chain.proceed();
+                    });
+            hookedCount++;
+        }
+        return hookedCount;
+    }
+
+    private static int findConfigurationArgIndex(Method method) {
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        for (int i = 0; i < parameterTypes.length; i++) {
+            if (Configuration.class.equals(parameterTypes[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static boolean isResourceCreationMethod(String methodName) {
+        return methodName != null
+                && (methodName.contains("createResources")
+                || methodName.contains("getOrCreateResources")
+                || methodName.contains("createBaseTokenResources"));
     }
 
     private static void applyViewportOverride(Configuration config, DpiConfigStore store,
@@ -62,7 +118,10 @@ final class ResourcesManagerHookInstaller {
         int originalHeightDp = config.screenHeightDp;
         int originalSmallestWidthDp = config.smallestScreenWidthDp;
         int originalDensityDpi = config.densityDpi;
-        Integer targetViewportWidth = store.getEffectiveViewportWidthDp(packageName);
+        if (originalWidthDp <= 0 && originalHeightDp <= 0 && originalDensityDpi <= 0) {
+            return;
+        }
+        Integer targetViewportWidth = TargetViewportWidthResolver.resolve(store, packageName);
         ViewportOverride.Result result = ViewportOverride.derive(
                 config, targetViewportWidth != null ? targetViewportWidth : 0);
         if (result == null) {
@@ -89,12 +148,21 @@ final class ResourcesManagerHookInstaller {
             return;
         }
         ViewportOverride.apply(config, result);
-        DpisLog.i(sourceTag + " override: widthDp "
+        String message = sourceTag + " override: widthDp "
                 + originalWidthDp + " -> " + result.widthDp
                 + ", heightDp " + originalHeightDp + " -> " + result.heightDp
                 + ", smallestWidthDp " + originalSmallestWidthDp + " -> "
                 + result.smallestWidthDp
                 + ", densityDpi " + originalDensityDpi + " -> "
-                + result.densityDpi);
+                + result.densityDpi;
+        logIfChanged(packageName + ":" + sourceTag, message);
+    }
+
+    private static void logIfChanged(String key, String message) {
+        String previous = LAST_MESSAGES.put(key, message);
+        if (!message.equals(previous)) {
+            DpisLog.i(message);
+        }
     }
 }
+

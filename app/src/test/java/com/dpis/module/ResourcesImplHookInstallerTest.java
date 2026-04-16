@@ -61,12 +61,12 @@ public class ResourcesImplHookInstallerTest {
         assertEquals(533, metrics.densityDpi);
         assertEquals(DensityOverride.densityFromDpi(533), metrics.density, 0.0001f);
         assertEquals(DensityOverride.scaledDensityFrom(533, config.fontScale), metrics.scaledDensity, 0.0001f);
-        assertEquals(720, metrics.widthPixels);
-        assertEquals(1200, metrics.heightPixels);
+        assertEquals(1200, metrics.widthPixels);
+        assertEquals(2000, metrics.heightPixels);
     }
 
     @Test
-    public void skipsOverrideWhenTargetDensityMissing() {
+    public void skipsOverrideWhenTargetViewportMissing() {
         Configuration config = new Configuration();
         config.densityDpi = 480;
         config.fontScale = 1.0f;
@@ -132,7 +132,7 @@ public class ResourcesImplHookInstallerTest {
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
 
-        assertEquals(600, VirtualDisplayState.get().widthPx);
-        assertEquals(1227, VirtualDisplayState.get().heightPx);
+        assertEquals(1080, VirtualDisplayState.get().widthPx);
+        assertEquals(2208, VirtualDisplayState.get().heightPx);
     }
 }

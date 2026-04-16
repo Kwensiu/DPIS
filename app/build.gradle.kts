@@ -42,13 +42,19 @@ android {
             it.useJUnit()
         }
     }
+
+    buildFeatures {
+        buildConfig = true
+    }
 }
 
 dependencies {
     compileOnly(libs.libxposed.api)
+    compileOnly(libs.legacy.xposed.api)
     implementation(libs.libxposed.service)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.recyclerview)
     implementation(libs.material)
     testImplementation(libs.junit4)
 }
+

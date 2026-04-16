@@ -31,6 +31,9 @@ final class WindowMetricsHookInstaller {
                         if (!(result instanceof Rect rect)) {
                             return result;
                         }
+                        if (!WindowFrameOverride.isEnabled()) {
+                            return result;
+                        }
                         VirtualDisplayOverride.Result override = VirtualDisplayState.get();
                         if (override == null) {
                             return result;

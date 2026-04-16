@@ -4,6 +4,7 @@ import android.app.Application;
 
 import com.google.android.material.color.DynamicColors;
 
+import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -25,19 +26,28 @@ public final class DpisApplication extends Application implements XposedServiceH
     public void onCreate() {
         super.onCreate();
         DynamicColors.applyToActivitiesIfAvailable(this);
+        configStore = ConfigStoreFactory.createForModuleApp(this);
+        DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
         XposedServiceHelper.registerListener(this);
     }
 
     @Override
     public void onServiceBind(XposedService service) {
+        DpiConfigStore localStore = configStore != null
+                ? configStore
+                : ConfigStoreFactory.createForModuleApp(this);
+        DpiConfigStore remoteStore = ConfigStoreFactory.createForModuleApp(this, service);
+        migrateConfig(localStore, remoteStore);
+        configStore = remoteStore;
+        DpisLog.setLoggingEnabled(remoteStore.isGlobalLogEnabled());
         xposedService = service;
-        configStore = new DpiConfigStore(service.getRemotePreferences(DpiConfigStore.GROUP));
         notifyServiceStateChanged();
     }
 
     @Override
     public void onServiceDied(XposedService service) {
-        configStore = null;
+        configStore = ConfigStoreFactory.createForModuleApp(this);
+        DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
         xposedService = null;
         notifyServiceStateChanged();
     }
@@ -65,5 +75,24 @@ public final class DpisApplication extends Application implements XposedServiceH
         for (ServiceStateListener listener : SERVICE_STATE_LISTENERS) {
             listener.onServiceStateChanged();
         }
+    }
+
+    private static void migrateConfig(DpiConfigStore from, DpiConfigStore to) {
+        if (from == null || to == null || from == to) {
+            return;
+        }
+        LinkedHashMap<String, Integer> seedViewportWidthDps = new LinkedHashMap<>();
+        for (String packageName : from.getConfiguredPackages()) {
+            Integer viewportWidthDp = from.getTargetViewportWidthDp(packageName);
+            if (viewportWidthDp != null && viewportWidthDp > 0) {
+                seedViewportWidthDps.put(packageName, viewportWidthDp);
+            }
+        }
+        if (!seedViewportWidthDps.isEmpty()) {
+            to.ensureSeedConfig(seedViewportWidthDps);
+        }
+        to.setSystemServerHooksEnabled(from.isSystemServerHooksEnabled());
+        to.setSystemServerSafeModeEnabled(from.isSystemServerSafeModeEnabled());
+        to.setGlobalLogEnabled(from.isGlobalLogEnabled());
     }
 }

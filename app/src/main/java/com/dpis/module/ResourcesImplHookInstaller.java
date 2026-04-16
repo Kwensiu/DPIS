@@ -4,11 +4,14 @@ import android.content.res.Configuration;
 import android.util.DisplayMetrics;
 
 import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.github.libxposed.api.XposedInterface;
 
 final class ResourcesImplHookInstaller {
     private static volatile boolean hookInstalled;
+    private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
 
     private ResourcesImplHookInstaller() {
     }
@@ -46,18 +49,19 @@ final class ResourcesImplHookInstaller {
     static void applyDensityOverride(String packageName, Configuration config, DisplayMetrics metrics,
                                      DpiConfigStore store) {
         if (config == null) {
-            DpisLog.i("ResourcesImpl skip: config is null");
+            logIfChanged(packageName + ":skip", "ResourcesImpl skip: config is null");
             return;
         }
         int originalWidthDp = config.screenWidthDp;
         int originalHeightDp = config.screenHeightDp;
         int originalSmallestWidthDp = config.smallestScreenWidthDp;
         int originalDensityDpi = config.densityDpi;
-        Integer targetViewportWidth = store.getEffectiveViewportWidthDp(packageName);
+        Integer targetViewportWidth = TargetViewportWidthResolver.resolve(store, packageName);
         ViewportOverride.Result result = ViewportOverride.derive(
                 config, targetViewportWidth != null ? targetViewportWidth : 0);
         if (result == null) {
-            DpisLog.i("ResourcesImpl observe: widthDp=" + originalWidthDp
+            logIfChanged(packageName + ":observe",
+                    "ResourcesImpl observe: widthDp=" + originalWidthDp
                     + ", heightDp=" + originalHeightDp
                     + ", smallestWidthDp=" + originalSmallestWidthDp
                     + ", densityDpi=" + originalDensityDpi);
@@ -67,26 +71,25 @@ final class ResourcesImplHookInstaller {
                 || result.heightDp != originalHeightDp
                 || result.smallestWidthDp != originalSmallestWidthDp
                 || result.densityDpi != originalDensityDpi;
-        if (needsViewportUpdate) {
-            int sourceWidthPx = metrics != null && metrics.widthPixels > 0
-                    ? metrics.widthPixels
-                    : Math.round(originalWidthDp * (originalDensityDpi / 160.0f));
-            int sourceHeightPx = metrics != null && metrics.heightPixels > 0
-                    ? metrics.heightPixels
-                    : Math.round(originalHeightDp * (originalDensityDpi / 160.0f));
-            VirtualDisplayOverride.Result sharedResult = VirtualDisplayOverride.derive(
-                    originalWidthDp > 0 ? originalWidthDp : result.widthDp,
-                    originalHeightDp > 0 ? originalHeightDp : result.heightDp,
-                    originalDensityDpi > 0 ? originalDensityDpi : result.densityDpi,
-                    sourceWidthPx,
-                    sourceHeightPx,
-                    result.widthDp);
-            if (sharedResult != null) {
-                VirtualDisplayState.set(sharedResult);
-            }
+        int sourceWidthPx = metrics != null && metrics.widthPixels > 0
+                ? metrics.widthPixels
+                : Math.round(originalWidthDp * (originalDensityDpi / 160.0f));
+        int sourceHeightPx = metrics != null && metrics.heightPixels > 0
+                ? metrics.heightPixels
+                : Math.round(originalHeightDp * (originalDensityDpi / 160.0f));
+        VirtualDisplayOverride.Result sharedResult = VirtualDisplayOverride.derive(
+                originalWidthDp > 0 ? originalWidthDp : result.widthDp,
+                originalHeightDp > 0 ? originalHeightDp : result.heightDp,
+                originalDensityDpi > 0 ? originalDensityDpi : result.densityDpi,
+                sourceWidthPx,
+                sourceHeightPx,
+                result.widthDp);
+        if (sharedResult != null) {
+            VirtualDisplayState.set(sharedResult);
         }
         if (!needsViewportUpdate) {
-            DpisLog.i("ResourcesImpl observe: widthDp=" + originalWidthDp
+            logIfChanged(packageName + ":observe",
+                    "ResourcesImpl observe: widthDp=" + originalWidthDp
                     + ", heightDp=" + originalHeightDp
                     + ", smallestWidthDp=" + originalSmallestWidthDp
                     + ", densityDpi=" + originalDensityDpi);
@@ -106,7 +109,8 @@ final class ResourcesImplHookInstaller {
                 metrics.heightPixels = applied.heightPx;
             }
         }
-        DpisLog.i("ResourcesImpl override: widthDp "
+        logIfChanged(packageName + ":override",
+                "ResourcesImpl override: widthDp "
                 + originalWidthDp + " -> " + result.widthDp
                 + ", heightDp " + originalHeightDp + " -> " + result.heightDp
                 + ", smallestWidthDp " + originalSmallestWidthDp + " -> "
@@ -116,4 +120,12 @@ final class ResourcesImplHookInstaller {
                 + ", metricsWidthPx=" + (metrics != null ? metrics.widthPixels : -1)
                 + ", metricsHeightPx=" + (metrics != null ? metrics.heightPixels : -1));
     }
+
+    private static void logIfChanged(String key, String message) {
+        String previous = LAST_MESSAGES.put(key, message);
+        if (!message.equals(previous)) {
+            DpisLog.i(message);
+        }
+    }
 }
+
