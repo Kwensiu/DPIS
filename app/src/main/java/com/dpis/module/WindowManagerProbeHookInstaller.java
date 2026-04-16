@@ -68,7 +68,8 @@ final class WindowManagerProbeHookInstaller {
             if (bounds instanceof Rect rect) {
                 return rect.width() + "x" + rect.height();
             }
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {
+        } catch (NoSuchMethodException | IllegalAccessException |
+                 InvocationTargetException ignored) {
             return null;
         }
         return null;

@@ -62,9 +62,9 @@ final class ResourcesImplHookInstaller {
         if (result == null) {
             logIfChanged(packageName + ":observe",
                     "ResourcesImpl observe: widthDp=" + originalWidthDp
-                    + ", heightDp=" + originalHeightDp
-                    + ", smallestWidthDp=" + originalSmallestWidthDp
-                    + ", densityDpi=" + originalDensityDpi);
+                            + ", heightDp=" + originalHeightDp
+                            + ", smallestWidthDp=" + originalSmallestWidthDp
+                            + ", densityDpi=" + originalDensityDpi);
             return;
         }
         boolean needsViewportUpdate = result.widthDp != originalWidthDp
@@ -90,9 +90,9 @@ final class ResourcesImplHookInstaller {
         if (!needsViewportUpdate) {
             logIfChanged(packageName + ":observe",
                     "ResourcesImpl observe: widthDp=" + originalWidthDp
-                    + ", heightDp=" + originalHeightDp
-                    + ", smallestWidthDp=" + originalSmallestWidthDp
-                    + ", densityDpi=" + originalDensityDpi);
+                            + ", heightDp=" + originalHeightDp
+                            + ", smallestWidthDp=" + originalSmallestWidthDp
+                            + ", densityDpi=" + originalDensityDpi);
             return;
         }
         ViewportOverride.apply(config, result);
@@ -111,14 +111,14 @@ final class ResourcesImplHookInstaller {
         }
         logIfChanged(packageName + ":override",
                 "ResourcesImpl override: widthDp "
-                + originalWidthDp + " -> " + result.widthDp
-                + ", heightDp " + originalHeightDp + " -> " + result.heightDp
-                + ", smallestWidthDp " + originalSmallestWidthDp + " -> "
-                + result.smallestWidthDp
-                + ", densityDpi " + originalDensityDpi + " -> " + result.densityDpi
-                + ", metricsDensityDpi=" + (metrics != null ? metrics.densityDpi : -1)
-                + ", metricsWidthPx=" + (metrics != null ? metrics.widthPixels : -1)
-                + ", metricsHeightPx=" + (metrics != null ? metrics.heightPixels : -1));
+                        + originalWidthDp + " -> " + result.widthDp
+                        + ", heightDp " + originalHeightDp + " -> " + result.heightDp
+                        + ", smallestWidthDp " + originalSmallestWidthDp + " -> "
+                        + result.smallestWidthDp
+                        + ", densityDpi " + originalDensityDpi + " -> " + result.densityDpi
+                        + ", metricsDensityDpi=" + (metrics != null ? metrics.densityDpi : -1)
+                        + ", metricsWidthPx=" + (metrics != null ? metrics.widthPixels : -1)
+                        + ", metricsHeightPx=" + (metrics != null ? metrics.heightPixels : -1));
     }
 
     private static void logIfChanged(String key, String message) {

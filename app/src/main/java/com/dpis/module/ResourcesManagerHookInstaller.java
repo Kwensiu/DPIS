@@ -2,10 +2,9 @@ package com.dpis.module;
 
 import android.annotation.SuppressLint;
 import android.content.res.Configuration;
-import android.util.DisplayMetrics;
 
-import java.util.HashSet;
 import java.lang.reflect.Method;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;

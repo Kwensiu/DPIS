@@ -25,7 +25,8 @@ public class LegacySmokeModuleFilesTest {
 
     @Test
     public void comparisonDocCoversAllReferenceModules() throws IOException {
-        String doc = readText(Path.of("..", "docs", "legacy-module-compare.md"));
+        String doc = readText(Path.of("..", "docs", "archive", "reports",
+                "legacy-module-compare.md"));
 
         assertTrue(doc.contains("DPIS"));
         assertTrue(doc.contains("AppSettingsR"));
