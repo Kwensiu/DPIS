@@ -86,6 +86,20 @@
 - 批次 4 的术语与设置文案已统一（配置/日志/系统层开关语义一致）。
 - 批次 5 已补齐最终验收清单文档：`docs/final-validation-checklist-2026-04-17.md`。
 
+---
+
+## 2026-04-18 补充收口
+
+### 批次 3（system_server 回退与日志降噪）补充
+- `safe mode` 语义保持不变并明确：仅保留 `activity-start` 安装目标。
+- 日志采样窗口分级：`hot=1200ms`、`core=800ms`、`default=400ms`。
+- system_server 高频日志 key 降维，减少高基数字段导致的刷屏。
+
+### 批次 4（测试补齐与文档统一）补充
+- 新增字体替换“回归参考值”测试：`ForceTextSizeRegressionReferenceTest`。
+- 抽取 `FontFieldRewriteMath`，将可测计算与 Hook 绑定逻辑解耦，避免 JVM 单测受 Android 类加载限制。
+- 根 README 与最终验收清单已同步当前口径（system_server 三档、日志开关、定向回归命令）。
+
 
 
 
