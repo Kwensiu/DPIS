@@ -54,6 +54,8 @@ dependencies {
     implementation(libs.libxposed.service)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.viewpager2)
+    implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.material)
     testImplementation(libs.junit4)
 }

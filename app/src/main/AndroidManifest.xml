@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
@@ -38,5 +40,19 @@
                 <category android:name="de.robv.android.xposed.category.MODULE_SETTINGS" />
             </intent-filter>
         </activity>
+
+        <receiver
+            android:name=".FontDebugStatsReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.dpis.module.ACTION_FONT_DEBUG_STATS_UPDATE" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".FontDebugOverlayService"
+            android:enabled="true"
+            android:exported="false" />
     </application>
 </manifest>

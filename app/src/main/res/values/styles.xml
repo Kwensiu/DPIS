@@ -5,4 +5,13 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
+
+    <style name="Widget.Dpis.FontModeToggleButton" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/dialog_font_mode_button_bg</item>
+        <item name="android:textColor">?attr/colorPrimary</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="android:insetTop">7dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:minHeight">0dp</item>
+    </style>
 </resources>

@@ -89,6 +89,16 @@
                 <include
                     android:id="@+id/row_global_log"
                     layout="@layout/item_settings_switch" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp" />
+
+                <include
+                    android:id="@+id/row_font_debug_overlay"
+                    layout="@layout/item_settings_entry" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
