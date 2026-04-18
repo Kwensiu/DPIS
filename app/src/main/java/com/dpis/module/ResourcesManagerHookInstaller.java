@@ -38,7 +38,7 @@ final class ResourcesManagerHookInstaller {
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
                     .intercept(chain -> {
                         Configuration config = (Configuration) chain.getArg(0);
-                        applyViewportOverride(config, store, packageName, "ResourcesManager");
+                        applyResourceOverrides(config, store, packageName, "ResourcesManager");
                         return chain.proceed();
                     });
 
@@ -48,7 +48,7 @@ final class ResourcesManagerHookInstaller {
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
                     .intercept(chain -> {
                         Configuration overrideConfig = (Configuration) chain.getArg(1);
-                        applyViewportOverride(overrideConfig, store, packageName,
+                        applyResourceOverrides(overrideConfig, store, packageName,
                                 "ResourcesManagerActivity");
                         return chain.proceed();
                     });
@@ -93,7 +93,7 @@ final class ResourcesManagerHookInstaller {
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
                     .intercept(chain -> {
                         Configuration config = (Configuration) chain.getArg(configArgIndex);
-                        applyViewportOverride(config, store, packageName,
+                        applyResourceOverrides(config, store, packageName,
                                 "ResourcesManagerCreate(" + methodName + ")");
                         return chain.proceed();
                     });
@@ -119,22 +119,35 @@ final class ResourcesManagerHookInstaller {
                 || methodName.contains("createBaseTokenResources"));
     }
 
-    private static void applyViewportOverride(Configuration config, DpiConfigStore store,
-                                              String packageName, String sourceTag) {
+    private static void applyResourceOverrides(Configuration config, DpiConfigStore store,
+                                               String packageName, String sourceTag) {
         if (config == null) {
             return;
         }
+        FontScaleOverride.Result fontScale = FontScaleOverride.resolve(
+                store, packageName, config.fontScale);
+        FontScaleOverride.applyToConfiguration(config, fontScale);
         int originalWidthDp = config.screenWidthDp;
         int originalHeightDp = config.screenHeightDp;
         int originalSmallestWidthDp = config.smallestScreenWidthDp;
         int originalDensityDpi = config.densityDpi;
         if (originalWidthDp <= 0 && originalHeightDp <= 0 && originalDensityDpi <= 0) {
+            if (fontScale.changed) {
+                String fontMessage = "DPIS_FONT " + sourceTag + " override: fontScale "
+                        + fontScale.original + " -> " + config.fontScale;
+                logIfChanged(packageName + ":" + sourceTag + ":font-only", fontMessage);
+            }
             return;
         }
         Integer targetViewportWidth = TargetViewportWidthResolver.resolve(store, packageName);
         ViewportOverride.Result result = ViewportOverride.derive(
                 config, targetViewportWidth != null ? targetViewportWidth : 0);
         if (result == null) {
+            if (fontScale.changed) {
+                String fontMessage = "DPIS_FONT " + sourceTag + " override: fontScale "
+                        + fontScale.original + " -> " + config.fontScale;
+                logIfChanged(packageName + ":" + sourceTag + ":font-only", fontMessage);
+            }
             return;
         }
         VirtualDisplayOverride.Result sharedResult = VirtualDisplayOverride.derive(
@@ -154,17 +167,24 @@ final class ResourcesManagerHookInstaller {
         if (result.widthDp == originalWidthDp
                 && result.heightDp == originalHeightDp
                 && result.smallestWidthDp == originalSmallestWidthDp
-                && result.densityDpi == originalDensityDpi) {
+                && result.densityDpi == originalDensityDpi
+                && !fontScale.changed) {
             return;
         }
-        ViewportOverride.apply(config, result);
-        String message = sourceTag + " override: widthDp "
+        if (result.widthDp != originalWidthDp
+                || result.heightDp != originalHeightDp
+                || result.smallestWidthDp != originalSmallestWidthDp
+                || result.densityDpi != originalDensityDpi) {
+            ViewportOverride.apply(config, result);
+        }
+        String message = "DPIS_FONT " + sourceTag + " override: widthDp "
                 + originalWidthDp + " -> " + result.widthDp
                 + ", heightDp " + originalHeightDp + " -> " + result.heightDp
                 + ", smallestWidthDp " + originalSmallestWidthDp + " -> "
                 + result.smallestWidthDp
                 + ", densityDpi " + originalDensityDpi + " -> "
-                + result.densityDpi;
+                + result.densityDpi
+                + ", fontScale " + fontScale.original + " -> " + config.fontScale;
         logIfChanged(packageName + ":" + sourceTag, message);
     }
 

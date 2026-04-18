@@ -15,17 +15,19 @@ final class ConfigStoreFactory {
     }
 
     static DpiConfigStore createForModuleApp(Context context, XposedService service) {
+        SharedPreferences localPreferences =
+                context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE);
         if (service != null) {
             try {
                 SharedPreferences remotePreferences = service.getRemotePreferences(DpiConfigStore.GROUP);
                 if (remotePreferences != null) {
-                    return new DpiConfigStore(remotePreferences);
+                    return new DpiConfigStore(remotePreferences, localPreferences);
                 }
             } catch (Throwable ignored) {
                 // Fall through to local storage.
             }
         }
-        return createForModuleApp(context);
+        return new DpiConfigStore(localPreferences);
     }
 
     static DpiConfigStore createForXposedHost(XposedInterface xposed) {

@@ -189,7 +189,8 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     ResolvedPackage resolvedPackage = resolveConfiguredPackage(
                                             thisObject,
                                             args,
-                                            source::get);
+                                            packageName -> selectViewportConfigForSystemServer(
+                                                    source.get(packageName)));
                                     if (resolvedPackage.packageName == null) {
                                         if (loggingEnabled) {
                                             logPackageResolveMiss(target.entryName, thisObject, args);
@@ -357,7 +358,8 @@ final class SystemServerDisplayEnvironmentInstaller {
         String textPackages = describeTextPackages(self, args, 4);
         String message = SystemServerDisplayDiagnostics.buildPackageResolveMissLog(
                 entryName, selfClass, argClasses, argPreview, textPackages);
-        String key = "unresolved|" + entryName + "|" + selfClass + "|" + argClasses + "|" + textPackages;
+        // Keep unresolved log keys low-cardinality to avoid burst noise on hot paths.
+        String key = "unresolved|" + entryName + "|" + selfClass;
         logIfChanged(key, message, resolveLogMinIntervalMs(entryName));
     }
 
@@ -366,7 +368,8 @@ final class SystemServerDisplayEnvironmentInstaller {
                                       String candidatePackages) {
         String message = SystemServerDisplayDiagnostics.buildConfigMissLog(
                 entryName, packageName, candidatePackages);
-        String key = "cfg-miss|" + entryName + "|" + packageName + "|" + candidatePackages;
+        // Candidate list may fluctuate frequently; key by entry+package for stable sampling.
+        String key = "cfg-miss|" + entryName + "|" + packageName;
         logIfChanged(key, message, resolveLogMinIntervalMs(entryName));
     }
 
@@ -434,7 +437,8 @@ final class SystemServerDisplayEnvironmentInstaller {
         String argPreview = describeArgPreview(args, 2);
         String message = SystemServerDisplayDiagnostics.buildInterceptEnterLog(
                 entryName, selfClass, argClasses, argPreview);
-        String key = "enter|" + entryName + "|" + selfClass + "|" + argClasses;
+        // Do not key by arg classes to avoid excessive cardinality.
+        String key = "enter|" + entryName + "|" + selfClass;
         logIfChanged(key, message, resolveLogMinIntervalMs(entryName));
     }
 
@@ -623,6 +627,14 @@ final class SystemServerDisplayEnvironmentInstaller {
                 entryName, self, args, configuredPackages);
     }
 
+    private static PerAppDisplayConfig selectViewportConfigForSystemServer(
+            PerAppDisplayConfig config) {
+        if (config == null || !config.hasViewportOverride()) {
+            return null;
+        }
+        return config;
+    }
+
     private static PerAppDisplayEnvironment chooseEffectiveEnvironment(
             PerAppDisplayEnvironment preEnvironment,
             PerAppDisplayEnvironment postEnvironment) {
@@ -652,6 +664,10 @@ final class SystemServerDisplayEnvironmentInstaller {
                                                 Object self,
                                                 Set<String> configuredPackages) {
         return shouldInspectHotEntry(entryName, self, List.of(), configuredPackages);
+    }
+
+    static boolean shouldUseConfigInSystemServerForTest(PerAppDisplayConfig config) {
+        return selectViewportConfigForSystemServer(config) != null;
     }
 
     static boolean shouldEmitLogForTest(String previousMessage,

@@ -6,12 +6,12 @@ import static org.junit.Assert.assertEquals;
 
 public class DisplayHookInstallerTest {
     @Test
-    public void enablesDisplayOverrideForXiaoheihe() {
+    public void enablesDisplayOverrideForConfiguredPackage() {
         assertEquals(true, DisplayHookInstaller.shouldApplyOverrideForPackage("com.max.xiaoheihe"));
     }
 
     @Test
-    public void skipsDisplayOverrideForOtherPackages() {
-        assertEquals(false, DisplayHookInstaller.shouldApplyOverrideForPackage("com.coolapk.market"));
+    public void skipsDisplayOverrideForMissingPackage() {
+        assertEquals(false, DisplayHookInstaller.shouldApplyOverrideForPackage(null));
     }
 }

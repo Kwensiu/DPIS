@@ -5,11 +5,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 final class SystemServerHookLogGate {
+    private static final int MAX_LOG_CACHE_ENTRIES = 2048;
     private static final ConcurrentMap<String, String> LAST_PROBE_LOGS = new ConcurrentHashMap<>();
     private static final ConcurrentMap<String, Long> LAST_PROBE_LOG_TIMESTAMPS =
             new ConcurrentHashMap<>();
     private static final long HOT_ENTRY_LOG_MIN_INTERVAL_MS = 1200L;
-    private static final long DEFAULT_LOG_MIN_INTERVAL_MS = 0L;
+    private static final long CORE_ENTRY_LOG_MIN_INTERVAL_MS = 800L;
+    private static final long DEFAULT_LOG_MIN_INTERVAL_MS = 400L;
 
     private SystemServerHookLogGate() {
     }
@@ -23,12 +25,18 @@ final class SystemServerHookLogGate {
         }
         LAST_PROBE_LOGS.put(key, message);
         LAST_PROBE_LOG_TIMESTAMPS.put(key, nowMs);
+        trimCachesIfNeeded();
         DpisLog.i(message);
     }
 
     static long resolveLogMinIntervalMs(String entryName) {
         if (isHotEntry(entryName)) {
             return HOT_ENTRY_LOG_MIN_INTERVAL_MS;
+        }
+        if ("activity-start".equals(entryName)
+                || "config-dispatch".equals(entryName)
+                || "display-content-config".equals(entryName)) {
+            return CORE_ENTRY_LOG_MIN_INTERVAL_MS;
         }
         return DEFAULT_LOG_MIN_INTERVAL_MS;
     }
@@ -58,5 +66,14 @@ final class SystemServerHookLogGate {
     static boolean isHotEntry(String entryName) {
         return "display-policy-layout".equals(entryName)
                 || "relayout-dispatch".equals(entryName);
+    }
+
+    private static void trimCachesIfNeeded() {
+        if (LAST_PROBE_LOGS.size() <= MAX_LOG_CACHE_ENTRIES
+                && LAST_PROBE_LOG_TIMESTAMPS.size() <= MAX_LOG_CACHE_ENTRIES) {
+            return;
+        }
+        LAST_PROBE_LOGS.clear();
+        LAST_PROBE_LOG_TIMESTAMPS.clear();
     }
 }

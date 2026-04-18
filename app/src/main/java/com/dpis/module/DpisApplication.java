@@ -91,8 +91,31 @@ public final class DpisApplication extends Application implements XposedServiceH
         if (!seedViewportWidthDps.isEmpty()) {
             to.ensureSeedConfig(seedViewportWidthDps);
         }
-        to.setSystemServerHooksEnabled(from.isSystemServerHooksEnabled());
-        to.setSystemServerSafeModeEnabled(from.isSystemServerSafeModeEnabled());
-        to.setGlobalLogEnabled(from.isGlobalLogEnabled());
+        for (String packageName : from.getConfiguredPackages()) {
+            Integer fontScalePercent = from.getTargetFontScalePercent(packageName);
+            if (fontScalePercent != null && fontScalePercent > 0) {
+                if (!to.hasPrimaryTargetFontScalePercent(packageName)) {
+                    to.setTargetFontScalePercent(packageName, fontScalePercent);
+                }
+            }
+            String fontMode = from.getTargetFontApplyMode(packageName);
+            if (FontApplyMode.isEnabled(fontMode)) {
+                String remoteFontMode = to.hasPrimaryTargetFontApplyMode(packageName)
+                        ? to.getTargetFontApplyMode(packageName)
+                        : FontApplyMode.OFF;
+                if (!fontMode.equals(remoteFontMode)) {
+                    to.setTargetFontApplyMode(packageName, fontMode);
+                }
+            }
+        }
+        if (from.hasSystemServerHooksEnabled() && !to.hasSystemServerHooksEnabled()) {
+            to.setSystemServerHooksEnabled(from.isSystemServerHooksEnabled());
+        }
+        if (from.hasSystemServerSafeModeEnabled() && !to.hasSystemServerSafeModeEnabled()) {
+            to.setSystemServerSafeModeEnabled(from.isSystemServerSafeModeEnabled());
+        }
+        if (from.hasGlobalLogEnabled() && !to.hasGlobalLogEnabled()) {
+            to.setGlobalLogEnabled(from.isGlobalLogEnabled());
+        }
     }
 }

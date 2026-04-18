@@ -7,6 +7,7 @@ import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     @Test
@@ -113,6 +114,15 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     public void emitsWhenThrottleWindowElapsed() {
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldEmitLogForTest("old", "new", 2300L, 1000L, 1200L));
+    }
+
+    @Test
+    public void resolvesSamplingIntervalByEntryRisk() {
+        assertEquals(1200L, SystemServerHookLogGate.resolveLogMinIntervalMs("display-policy-layout"));
+        assertEquals(1200L, SystemServerHookLogGate.resolveLogMinIntervalMs("relayout-dispatch"));
+        assertEquals(800L, SystemServerHookLogGate.resolveLogMinIntervalMs("activity-start"));
+        assertEquals(800L, SystemServerHookLogGate.resolveLogMinIntervalMs("config-dispatch"));
+        assertEquals(400L, SystemServerHookLogGate.resolveLogMinIntervalMs("unknown-entry"));
     }
 
     private static final class FakeWindow {

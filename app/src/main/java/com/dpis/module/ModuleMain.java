@@ -41,16 +41,25 @@ public final class ModuleMain extends XposedModule {
             return;
         }
         Integer targetViewportWidthDp = store.getTargetViewportWidthDp(packageName);
-        if (targetViewportWidthDp == null) {
+        Integer targetFontScalePercent = store.getTargetFontScalePercent(packageName);
+        String targetFontMode = store.getTargetFontApplyMode(packageName);
+        boolean fontScaleActive = targetFontScalePercent != null
+                && targetFontScalePercent > 0
+                && targetFontScalePercent != 100;
+        if (targetViewportWidthDp == null
+                && !fontScaleActive) {
             DpisLog.i("target app disabled: package=" + packageName);
             return;
         }
         DpisLog.i("target app matched: package=" + packageName
-                + ", targetViewportWidthDp=" + targetViewportWidthDp);
+                + ", targetViewportWidthDp=" + targetViewportWidthDp
+                + ", targetFontScalePercent=" + targetFontScalePercent
+                + ", targetFontMode=" + targetFontMode);
         try {
-            AppProcessHookInstaller.install(this, packageName, store, policy);
+            AppProcessHookInstaller.install(this, packageName, store, policy,
+                    targetViewportWidthDp != null, targetFontMode, fontScaleActive);
         } catch (Throwable throwable) {
-            DpisLog.e("failed to install Resources hooks", throwable);
+            DpisLog.e("failed to install app process hooks", throwable);
         }
     }
 

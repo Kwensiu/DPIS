@@ -86,6 +86,27 @@ public class ResourcesImplHookInstallerTest {
     }
 
     @Test
+    public void appliesFontScaleWhenViewportMissing() {
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.densityDpi = 480;
+        metrics.density = 3.0f;
+        metrics.scaledDensity = 3.0f;
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit().putInt("font.bin.mt.plus.canary.scale_percent", 115).commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
+
+        assertEquals(1.15f, config.fontScale, 0.0001f);
+        assertEquals(3.0f, metrics.density, 0.0001f);
+        assertEquals(480, metrics.densityDpi);
+        assertEquals(DensityOverride.scaledDensityFrom(480, 1.15f), metrics.scaledDensity, 0.0001f);
+    }
+
+    @Test
     public void updatesMetricsWhenConfigurationAlreadyMatchesTarget() {
         Configuration config = new Configuration();
         config.densityDpi = 480;
