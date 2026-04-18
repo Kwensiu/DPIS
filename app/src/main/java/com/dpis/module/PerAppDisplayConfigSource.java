@@ -12,10 +12,19 @@ final class PerAppDisplayConfigSource {
 
     PerAppDisplayConfig get(String packageName) {
         Integer targetViewportWidthDp = TargetViewportWidthResolver.resolve(store, packageName);
-        if (targetViewportWidthDp == null) {
+        Integer targetFontScalePercent = store != null
+                ? store.getTargetFontScalePercent(packageName)
+                : null;
+        String targetFontMode = store != null
+                ? store.getTargetFontApplyMode(packageName)
+                : FontApplyMode.OFF;
+        boolean fontConfigured = FontApplyMode.isEnabled(targetFontMode)
+                && targetFontScalePercent != null;
+        if (targetViewportWidthDp == null && !fontConfigured) {
             return null;
         }
-        return new PerAppDisplayConfig(packageName, targetViewportWidthDp);
+        return new PerAppDisplayConfig(packageName, targetViewportWidthDp,
+                targetFontScalePercent, targetFontMode);
     }
 
     Set<String> getConfiguredPackages() {

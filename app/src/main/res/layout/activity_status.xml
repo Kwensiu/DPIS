@@ -6,14 +6,20 @@
     android:background="?attr/colorSurface"
     android:orientation="vertical">
 
-    <LinearLayout
+    <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/top_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:background="@android:color/transparent"
+        android:contentInsetStartWithNavigation="0dp"
+        android:contentInsetLeft="0dp"
+        android:contentInsetStart="0dp"
+        android:contentInsetEnd="0dp"
+        android:contentInsetRight="0dp"
         android:paddingStart="16dp"
-        android:paddingTop="12dp"
-        android:paddingEnd="16dp">
+        android:paddingTop="10dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="6dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -21,38 +27,68 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/search_layout"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="52dp"
                 android:layout_weight="1"
-                app:boxBackgroundColor="?attr/colorSurfaceContainerHigh"
-                app:boxCornerRadiusBottomEnd="30dp"
-                app:boxCornerRadiusBottomStart="30dp"
-                app:boxCornerRadiusTopEnd="30dp"
-                app:boxCornerRadiusTopStart="30dp"
-                app:boxStrokeWidth="0dp"
-                app:boxStrokeWidthFocused="0dp"
-                app:endIconMode="clear_text"
-                app:hintEnabled="false"
-                app:startIconDrawable="@drawable/ic_search_24"
-                app:startIconTint="?attr/colorOnSurfaceVariant">
+                app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+                app:cardCornerRadius="24dp"
+                app:strokeWidth="0dp">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/search_input"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="@string/search_hint"
-                    android:imeOptions="actionDone"
-                    android:inputType="text" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="12dp"
+                        android:src="@drawable/ic_search_24"
+                        android:tint="?attr/colorOnSurfaceVariant" />
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/search_input"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:hint="@string/search_hint"
+                        android:imeOptions="actionDone"
+                        android:inputType="text"
+                        android:lineSpacingExtra="0dp"
+                        android:maxLines="1"
+                        android:minHeight="0dp"
+                        android:paddingStart="0dp"
+                        android:paddingEnd="0dp"
+                        android:paddingTop="0dp"
+                        android:paddingBottom="0dp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textColorHint="?attr/colorOnSurfaceVariant"
+                        android:singleLine="true" />
+
+                    <ImageButton
+                        android:id="@+id/search_filter_button"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/filter_button"
+                        android:padding="10dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/baseline_tune_24"
+                        android:tint="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <ImageButton
                 android:id="@+id/system_settings_button"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
                 android:layout_marginStart="10dp"
+                android:layout_marginEnd="8dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/system_settings_title"
                 android:padding="10dp"
@@ -60,13 +96,13 @@
                 android:src="@drawable/ic_settings_24"
                 android:tint="?attr/colorOnSurfaceVariant" />
         </LinearLayout>
-    </LinearLayout>
+    </com.google.android.material.appbar.MaterialToolbar>
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/filter_tabs"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="2dp"
         app:tabIndicatorColor="?attr/colorPrimary"
         app:tabIndicatorHeight="3dp"
         app:tabGravity="fill"
@@ -81,14 +117,9 @@
         android:layout_height="1dp"
         android:background="?attr/colorOutlineVariant" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/app_list"
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/app_pager"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:clipToPadding="false"
-        android:paddingStart="16dp"
-        android:paddingTop="10dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="24dp" />
+        android:layout_weight="1" />
 </LinearLayout>

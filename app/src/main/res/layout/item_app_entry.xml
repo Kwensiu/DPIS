@@ -57,14 +57,6 @@
                 android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
         </LinearLayout>
 
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/expand_indicator"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="12dp"
-            android:gravity="center"
-            android:text="›"
-            android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
     </LinearLayout>
 
 </LinearLayout>
