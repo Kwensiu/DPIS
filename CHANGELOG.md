@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/Kwensiu/DPIS/compare/v1.0.1...v1.0.2) (2026-04-19)
+
+
+### Bug Fixes
+
+* **ci:** ensure gradlew executable in release workflow ([ac4a932](https://github.com/Kwensiu/DPIS/commit/ac4a932c70f3f02f8d043ca773da86881f81cc7e))
+
 ## [1.0.1](https://github.com/Kwensiu/DPIS/compare/v1.0.0...v1.0.1) (2026-04-19)
 
 
