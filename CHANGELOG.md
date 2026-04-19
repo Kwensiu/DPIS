@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/Kwensiu/DPIS/compare/v1.0.2...v1.1.0) (2026-04-19)
+
+
+### Features
+
+* **update:** add manifest-based update check and release metadata ([3762e13](https://github.com/Kwensiu/DPIS/commit/3762e13aa6f4775840b9d8c4bf05d44ed511700b))
+
 ## [1.0.2](https://github.com/Kwensiu/DPIS/compare/v1.0.1...v1.0.2) (2026-04-19)
 
 
