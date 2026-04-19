@@ -4,6 +4,8 @@
 
 ## 当前有效文档
 
+- [project-visual-map-2026-04-19.md](./project-visual-map-2026-04-19.md)
+  - 项目可视化展开图，按入口、职责、链路和修改落点快速理解 DPIS。
 - [structure-batch-tracker-2026-04-17.md](./structure-batch-tracker-2026-04-17.md)
   - 结构问题分批治理状态与批次结论（主线追踪）。
 - [final-validation-checklist-2026-04-17.md](./final-validation-checklist-2026-04-17.md)
