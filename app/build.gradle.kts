@@ -3,6 +3,27 @@ plugins {
     alias(libs.plugins.aboutlibraries)
 }
 
+private val appVersionName = "0.1.0" // x-release-please-version
+
+private fun semVerToVersionCode(version: String): Int {
+    val parts = version.split(".")
+    require(parts.size == 3) {
+        "Version must use semantic versioning (major.minor.patch): $version"
+    }
+
+    val major = parts[0].toIntOrNull()
+    val minor = parts[1].toIntOrNull()
+    val patch = parts[2].toIntOrNull()
+    require(major != null && minor != null && patch != null) {
+        "Version segments must be numeric: $version"
+    }
+    require(major in 0..99 && minor in 0..99 && patch in 0..99) {
+        "Version segments must stay in 0..99 for versionCode mapping: $version"
+    }
+
+    return major * 10_000 + minor * 100 + patch
+}
+
 android {
     namespace = "com.dpis.module"
     compileSdk = 36
@@ -12,8 +33,8 @@ android {
         applicationId = "com.dpis.module"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionName = appVersionName
+        versionCode = semVerToVersionCode(appVersionName)
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

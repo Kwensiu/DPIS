@@ -1,0 +1,60 @@
+name: release
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to upload assets to (e.g. v0.1.0)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.1.0"
+
+      - name: Build release APK
+        run: ./gradlew :app:assembleRelease
+
+      - name: Calculate APK SHA256
+        id: hash
+        shell: bash
+        run: |
+          APK_PATH="app/build/outputs/apk/release/app-release.apk"
+          SHA256="$(sha256sum "$APK_PATH" | awk '{print $1}')"
+          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag }}
+          files: app/build/outputs/apk/release/app-release.apk
+          fail_on_unmatched_files: true
+          append_body: true
+          body: |
+            Android release asset:
+            - `app-release.apk` (SHA256: `${{ steps.hash.outputs.sha256 }}`)
