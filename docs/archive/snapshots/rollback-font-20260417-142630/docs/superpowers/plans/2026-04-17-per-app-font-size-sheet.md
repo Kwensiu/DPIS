@@ -98,7 +98,7 @@ git commit -m "feat(config): add per-app font scale storage"
 - [ ] **Step 1: 先写失败测试**
 ```java
 assertTrue(AppListFilter.matches("", Tab.CONFIGURED_APPS, "x", "pkg", false, false, null, 115));
-assertEquals("未注入 · 未启用 · 字体115%", AppStatusFormatter.format(false, null, 115));
+assertEquals("未注入 | 未启用 | 字体115%", AppStatusFormatter.format(false, null, 115));
 ```
 
 - [ ] **Step 2: 运行测试确认失败**

@@ -6,12 +6,20 @@
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 
-    <style name="Widget.Dpis.FontModeToggleButton" parent="Widget.Material3.Button">
-        <item name="backgroundTint">@color/dialog_font_mode_button_bg</item>
-        <item name="android:textColor">?attr/colorPrimary</item>
-        <item name="strokeWidth">0dp</item>
-        <item name="android:insetTop">7dp</item>
+    <style name="Widget.Dpis.TextInputLayout.OutlinedBox.Compact"
+        parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxCollapsedPaddingTop">0dp</item>
+    </style>
+
+    <style name="Widget.Dpis.DialogActionButton.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
-        <item name="android:minHeight">0dp</item>
+        <item name="cornerRadius">18dp</item>
+    </style>
+
+    <style name="Widget.Dpis.DialogActionButton.Filled" parent="Widget.Material3.Button">
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="cornerRadius">18dp</item>
     </style>
 </resources>

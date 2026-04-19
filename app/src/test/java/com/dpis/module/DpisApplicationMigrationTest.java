@@ -154,6 +154,34 @@ public class DpisApplicationMigrationTest {
         assertTrue(remoteOnly.getTargetFontScalePercent("com.max.xiaoheihe") == 150);
     }
 
+    @Test
+    public void doesNotOverwriteRemoteLauncherIconHiddenWhenLocalMissing() throws Exception {
+        FakePrefs localPrefs = new FakePrefs();
+        DpiConfigStore local = new DpiConfigStore(localPrefs);
+
+        FakePrefs remotePrefs = new FakePrefs();
+        DpiConfigStore remote = new DpiConfigStore(remotePrefs);
+        assertTrue(remote.setLauncherIconHidden(true));
+
+        invokeMigrate(local, remote);
+
+        assertTrue(remote.isLauncherIconHidden());
+    }
+
+    @Test
+    public void seedsRemoteLauncherIconHiddenWhenRemoteMissing() throws Exception {
+        FakePrefs localPrefs = new FakePrefs();
+        DpiConfigStore local = new DpiConfigStore(localPrefs);
+        assertTrue(local.setLauncherIconHidden(true));
+
+        FakePrefs remotePrefs = new FakePrefs();
+        DpiConfigStore remote = new DpiConfigStore(remotePrefs);
+
+        invokeMigrate(local, remote);
+
+        assertTrue(remote.isLauncherIconHidden());
+    }
+
     private static void invokeMigrate(DpiConfigStore from, DpiConfigStore to) throws Exception {
         Method method = DpisApplication.class.getDeclaredMethod(
                 "migrateConfig", DpiConfigStore.class, DpiConfigStore.class);

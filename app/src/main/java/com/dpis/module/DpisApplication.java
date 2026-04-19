@@ -98,6 +98,11 @@ public final class DpisApplication extends Application implements XposedServiceH
                     to.setTargetFontScalePercent(packageName, fontScalePercent);
                 }
             }
+            String viewportMode = from.getTargetViewportApplyMode(packageName);
+            if (ViewportApplyMode.isEnabled(viewportMode)
+                    && !to.hasPrimaryTargetViewportApplyMode(packageName)) {
+                to.setTargetViewportApplyMode(packageName, viewportMode);
+            }
             String fontMode = from.getTargetFontApplyMode(packageName);
             if (FontApplyMode.isEnabled(fontMode)) {
                 String remoteFontMode = to.hasPrimaryTargetFontApplyMode(packageName)
@@ -116,6 +121,9 @@ public final class DpisApplication extends Application implements XposedServiceH
         }
         if (from.hasGlobalLogEnabled() && !to.hasGlobalLogEnabled()) {
             to.setGlobalLogEnabled(from.isGlobalLogEnabled());
+        }
+        if (from.hasLauncherIconHidden() && !to.hasLauncherIconHidden()) {
+            to.setLauncherIconHidden(from.isLauncherIconHidden());
         }
     }
 }

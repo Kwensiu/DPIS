@@ -1,23 +1,35 @@
 package com.dpis.module;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.res.ColorStateList;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.text.Editable;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextWatcher;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
+import android.text.style.StyleSpan;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -26,14 +38,19 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textview.MaterialTextView;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -68,6 +85,23 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     private AppListFilterState filterState = AppListFilterState.defaultState();
     private EditText searchInput;
     private ImageButton searchFilterButton;
+    private Boolean rootAccessCache;
+
+    private enum ProcessAction {
+        START,
+        RESTART,
+        STOP
+    }
+
+    private static final class ShellResult {
+        final int code;
+        final String output;
+
+        ShellResult(int code, String output) {
+            this.code = code;
+            this.output = output;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,7 +134,10 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
 
         searchFilterButton = findViewById(R.id.search_filter_button);
         appPager = findViewById(R.id.app_pager);
-        pagerAdapter = new AppListPagerAdapter(this::showEditDialog, this::onPageRefreshRequested);
+        pagerAdapter = new AppListPagerAdapter(
+                this::showEditDialog,
+                this::onPageRefreshRequested,
+                this::isSystemHookEnabledFromStore);
         pagerAdapter.restorePageScrollStates(restoredPageScrollStates);
         appPager.setAdapter(pagerAdapter);
         applyRefreshingStatesToPager();
@@ -329,6 +366,211 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         }
     }
 
+    private void clearDialogInputFocus(View fallbackFocusView,
+                                       TextInputEditText viewportInputView,
+                                       TextInputEditText fontInputView) {
+        View focused = getCurrentFocus();
+        if (viewportInputView != null) {
+            viewportInputView.clearFocus();
+        }
+        if (fontInputView != null) {
+            fontInputView.clearFocus();
+        }
+        if (fallbackFocusView != null) {
+            fallbackFocusView.requestFocus();
+        }
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            View tokenView = focused != null ? focused : fallbackFocusView;
+            if (tokenView == null) {
+                tokenView = viewportInputView != null ? viewportInputView : fontInputView;
+            }
+            if (tokenView != null) {
+                imm.hideSoftInputFromWindow(tokenView.getWindowToken(), 0);
+            }
+        }
+    }
+
+    private void showToast(int messageResId) {
+        showToast(getString(messageResId));
+    }
+
+    private void showToast(int messageResId, Object... formatArgs) {
+        showToast(getString(messageResId, formatArgs));
+    }
+
+    private void showToast(CharSequence message) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    private boolean updateSaveButtonState(TextInputLayout viewportInputLayout,
+                                          TextInputEditText viewportInputView,
+                                          TextInputLayout fontInputLayout,
+                                          TextInputEditText fontInputView,
+                                          MaterialButton saveButton) {
+        boolean viewportValid = isPositiveIntOrEmpty(viewportInputView);
+        boolean fontValid = isFontPercentOrEmpty(fontInputView);
+        int defaultStrokeColor = MaterialColors.getColor(
+                viewportInputLayout, com.google.android.material.R.attr.colorOutline);
+        int errorStrokeColor = MaterialColors.getColor(
+                viewportInputLayout, androidx.appcompat.R.attr.colorError);
+        viewportInputLayout.setError(null);
+        fontInputLayout.setError(null);
+        viewportInputLayout.setErrorEnabled(false);
+        fontInputLayout.setErrorEnabled(false);
+        viewportInputLayout.setBoxStrokeColor(viewportValid ? defaultStrokeColor : errorStrokeColor);
+        fontInputLayout.setBoxStrokeColor(fontValid ? defaultStrokeColor : errorStrokeColor);
+        boolean valid = viewportValid && fontValid;
+        saveButton.setEnabled(valid);
+        return valid;
+    }
+
+    private static boolean isPositiveIntOrEmpty(TextInputEditText inputView) {
+        String raw = inputView.getText() != null ? inputView.getText().toString().trim() : "";
+        if (raw.isEmpty()) {
+            return true;
+        }
+        try {
+            return Integer.parseInt(raw) > 0;
+        } catch (NumberFormatException ignored) {
+            return false;
+        }
+    }
+
+    private static boolean isFontPercentOrEmpty(TextInputEditText inputView) {
+        String raw = inputView.getText() != null ? inputView.getText().toString().trim() : "";
+        if (raw.isEmpty()) {
+            return true;
+        }
+        try {
+            int value = Integer.parseInt(raw);
+            return value >= 50 && value <= 300;
+        } catch (NumberFormatException ignored) {
+            return false;
+        }
+    }
+
+    private boolean setDpisEnabled(String packageName, boolean enabled) {
+        DpiConfigStore store = getUiConfigStore();
+        if (store == null) {
+            showToast(R.string.status_save_requires_init);
+            return false;
+        }
+        if (!store.setTargetDpisEnabled(packageName, enabled)) {
+            showToast(R.string.system_settings_save_failed);
+            return false;
+        }
+        showToast(enabled ? R.string.dialog_dpis_enabled_status : R.string.dialog_dpis_disabled_status);
+        requestAppsLoad();
+        return true;
+    }
+
+    private String resolveProcessActionLabel(ProcessAction action) {
+        return switch (action) {
+            case START -> getString(R.string.dialog_process_action_start);
+            case RESTART -> getString(R.string.dialog_process_action_restart);
+            case STOP -> getString(R.string.dialog_process_action_stop);
+        };
+    }
+
+    private void executeProcessAction(AppListItem item, ProcessAction action) {
+        if (!hasRootAccess()) {
+            showToast(R.string.dialog_process_requires_root);
+            return;
+        }
+        if (item.systemApp) {
+            String actionLabel = resolveProcessActionLabel(action);
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.dialog_process_action_confirm_title)
+                    .setMessage(getString(R.string.dialog_process_action_confirm_message,
+                            actionLabel, item.packageName))
+                    .setPositiveButton(R.string.dialog_process_action_confirm_positive,
+                            (dialog, which) -> runProcessAction(item.packageName, action))
+                    .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
+                    .show();
+            return;
+        }
+        runProcessAction(item.packageName, action);
+    }
+
+    private void runProcessAction(String packageName, ProcessAction action) {
+        String actionLabel = resolveProcessActionLabel(action);
+        new Thread(() -> {
+            ShellResult result;
+            if (action == ProcessAction.START) {
+                result = runSuCommand("monkey -p " + packageName
+                        + " -c android.intent.category.LAUNCHER 1");
+            } else if (action == ProcessAction.STOP) {
+                result = runSuCommand("am force-stop " + packageName);
+            } else {
+                result = runSuCommand("am force-stop " + packageName
+                        + " && monkey -p " + packageName
+                        + " -c android.intent.category.LAUNCHER 1");
+            }
+            runOnUiThread(() -> {
+                if (result.code == 0) {
+                    showToast(R.string.dialog_process_action_success, actionLabel, packageName);
+                    return;
+                }
+                String reason = result.output == null || result.output.isEmpty()
+                        ? "unknown error"
+                        : result.output;
+                showToast(R.string.dialog_process_action_failed, actionLabel, reason);
+            });
+        }, "dpis-process-action").start();
+    }
+
+    private boolean hasRootAccess() {
+        if (rootAccessCache != null) {
+            return rootAccessCache;
+        }
+        ShellResult result = runSuCommand("id");
+        boolean hasRoot = result.code == 0 && result.output.contains("uid=0");
+        rootAccessCache = hasRoot;
+        return hasRoot;
+    }
+
+    private ShellResult runSuCommand(String command) {
+        Process process = null;
+        try {
+            process = Runtime.getRuntime().exec(new String[]{"su", "-c", command});
+            StringBuilder output = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream()));
+                 BufferedReader errReader = new BufferedReader(
+                         new InputStreamReader(process.getErrorStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (output.length() > 0) {
+                        output.append('\n');
+                    }
+                    output.append(line);
+                }
+                while ((line = errReader.readLine()) != null) {
+                    if (output.length() > 0) {
+                        output.append('\n');
+                    }
+                    output.append(line);
+                }
+            }
+            int code = process.waitFor();
+            return new ShellResult(code, output.toString());
+        } catch (IOException | InterruptedException exception) {
+            if (exception instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            return new ShellResult(-1, exception.getMessage() != null
+                    ? exception.getMessage() : exception.getClass().getSimpleName());
+        } finally {
+            if (process != null) {
+                process.destroy();
+            }
+        }
+    }
+
     private List<AppListItem> loadInstalledApps() {
         PackageManager packageManager = getPackageManager();
         List<ApplicationInfo> installedApps;
@@ -344,7 +586,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         if (service != null) {
             scopePackages.addAll(service.getScope());
         }
-        DpiConfigStore store = DpisApplication.getConfigStore();
+        DpiConfigStore store = getUiConfigStore();
 
         List<AppListItem> result = new ArrayList<>();
         for (ApplicationInfo applicationInfo : installedApps) {
@@ -357,15 +599,20 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
             Integer viewportWidth = store != null
                     ? store.getTargetViewportWidthDp(applicationInfo.packageName)
                     : null;
+            String viewportMode = store != null
+                    ? store.getTargetViewportApplyMode(applicationInfo.packageName)
+                    : ViewportApplyMode.OFF;
             Integer fontScalePercent = store != null
                     ? store.getTargetFontScalePercent(applicationInfo.packageName)
                     : null;
             String fontMode = store != null
                     ? store.getTargetFontApplyMode(applicationInfo.packageName)
                     : FontApplyMode.OFF;
+            boolean dpisEnabled = store == null
+                    || store.isTargetDpisEnabled(applicationInfo.packageName);
             result.add(new AppListItem(label, applicationInfo.packageName,
-                    scopePackages.contains(applicationInfo.packageName), viewportWidth,
-                    fontScalePercent, fontMode, systemApp, icon));
+                    scopePackages.contains(applicationInfo.packageName), viewportWidth, viewportMode,
+                    fontScalePercent, fontMode, dpisEnabled, systemApp, icon));
         }
         result.sort(Comparator.comparing((AppListItem item) -> item.label.toLowerCase(Locale.ROOT))
                 .thenComparing(item -> item.packageName));
@@ -401,61 +648,75 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         for (AppListPage page : AppListPage.values()) {
             pagerAdapter.submitPage(page, AppListVisibleSections.filter(snapshot, query, page, filterState));
         }
+        pagerAdapter.refreshVisibleStatuses();
     }
 
-    private void toggleScope(AppListItem item) {
+    private void toggleScope(String packageName,
+                             boolean currentlyInScope,
+                             Runnable onTurnedInScope,
+                             Runnable onTurnedOutScope) {
         XposedService service = DpisApplication.getXposedService();
         if (service == null) {
-            Toast.makeText(this, getString(R.string.status_save_requires_init), Toast.LENGTH_SHORT)
-                    .show();
+            showToast(R.string.status_save_requires_init);
             return;
         }
-        if (item.inScope) {
-            service.removeScope(Collections.singletonList(item.packageName));
-            Toast.makeText(this, getString(R.string.scope_remove_success, item.packageName),
-                    Toast.LENGTH_SHORT).show();
+        if (currentlyInScope) {
+            service.removeScope(Collections.singletonList(packageName));
+            showToast(R.string.scope_remove_success, packageName);
+            if (onTurnedOutScope != null) {
+                onTurnedOutScope.run();
+            }
             requestAppsLoad();
             return;
         }
-        service.requestScope(Collections.singletonList(item.packageName),
+        showToast(R.string.system_hooks_scope_request_notice);
+        service.requestScope(Collections.singletonList(packageName),
                 new XposedService.OnScopeEventListener() {
                     @Override
                     public void onScopeRequestApproved(List<String> approved) {
                         runOnUiThread(() -> {
-                            Toast.makeText(MainActivity.this,
-                                    getString(R.string.scope_add_success, item.packageName),
-                                    Toast.LENGTH_SHORT).show();
+                            showToast(R.string.scope_add_success, packageName);
+                            if (onTurnedInScope != null) {
+                                onTurnedInScope.run();
+                            }
                             requestAppsLoad();
                         });
                     }
 
                     @Override
                     public void onScopeRequestFailed(String message) {
-                        runOnUiThread(() -> Toast.makeText(MainActivity.this,
-                                getString(R.string.scope_add_failed, message),
-                                Toast.LENGTH_SHORT).show());
+                        runOnUiThread(() -> showToast(R.string.scope_add_failed, message));
                     }
                 });
     }
 
     private void saveAppConfig(AppListItem item, TextInputEditText viewportInput,
                                TextInputEditText fontScaleInput,
-                               MaterialButton fontModeToggleButton) {
-        DpiConfigStore store = DpisApplication.getConfigStore();
+                               ModeToggle viewportModeToggle,
+                               ModeToggle fontModeToggle) {
+        boolean systemScopeSelected = isSystemHookEnabledFromStore();
+        DpiConfigStore store = getUiConfigStore();
         if (store == null) {
-            Toast.makeText(this, getString(R.string.status_save_requires_init), Toast.LENGTH_SHORT)
-                    .show();
+            showToast(R.string.status_save_requires_init);
             return;
         }
         try {
             Integer widthDp = parsePositiveIntOrNull(viewportInput);
+            String viewportMode = resolveViewportMode(viewportModeToggle);
             Integer fontScalePercent = parseFontScalePercentOrNull(fontScaleInput);
-            String fontMode = resolveFontMode(fontModeToggleButton);
+            String fontMode = resolveFontMode(fontModeToggle);
+            boolean emulationRequestedWithoutSystemScope = !systemScopeSelected
+                    && ((widthDp != null && ViewportApplyMode.SYSTEM_EMULATION.equals(viewportMode))
+                    || (fontScalePercent != null && FontApplyMode.SYSTEM_EMULATION.equals(fontMode)));
             boolean changed = true;
             if (widthDp == null) {
                 changed = store.clearTargetViewportWidthDp(item.packageName) && changed;
+                changed = store.setTargetViewportApplyMode(item.packageName, ViewportApplyMode.OFF)
+                        && changed;
             } else {
                 changed = store.setTargetViewportWidthDp(item.packageName, widthDp) && changed;
+                changed = store.setTargetViewportApplyMode(item.packageName, viewportMode)
+                        && changed;
             }
             if (fontScalePercent == null) {
                 changed = store.clearTargetFontScalePercent(item.packageName) && changed;
@@ -464,43 +725,169 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                 changed = store.setTargetFontScalePercent(item.packageName, fontScalePercent) && changed;
                 changed = store.setTargetFontApplyMode(item.packageName, fontMode) && changed;
             }
-            Toast.makeText(this,
-                    changed
-                            ? getString(R.string.status_save_success, item.packageName)
-                            : getString(R.string.status_save_requires_init),
-                    Toast.LENGTH_SHORT).show();
+            showToast(changed
+                    ? getString(R.string.status_save_success, item.packageName)
+                    : getString(R.string.status_save_requires_init));
             if (changed) {
                 requestAppsLoad();
             }
+            if (changed && emulationRequestedWithoutSystemScope) {
+                showToast(R.string.emulation_requires_system_scope_hint);
+            }
         } catch (NumberFormatException exception) {
-            Toast.makeText(this, getString(R.string.status_save_invalid), Toast.LENGTH_SHORT)
-                    .show();
+            showToast(R.string.status_save_invalid);
         }
     }
 
-    private static String resolveFontMode(MaterialButton fontModeToggleButton) {
-        Object modeTag = fontModeToggleButton.getTag();
-        if (FontApplyMode.FIELD_REWRITE.equals(modeTag)) {
-            return FontApplyMode.FIELD_REWRITE;
+    private static String resolveFontMode(ModeToggle fontModeToggle) {
+        Object modeTag = fontModeToggle.container.getTag();
+        if (FontApplyMode.SYSTEM_EMULATION.equals(modeTag)) {
+            return FontApplyMode.SYSTEM_EMULATION;
         }
-        return FontApplyMode.SYSTEM_EMULATION;
+        return FontApplyMode.FIELD_REWRITE;
     }
 
-    private static void bindFontModeToggle(MaterialButton fontModeToggleButton, String fontMode) {
-        String resolved = FontApplyMode.FIELD_REWRITE.equals(fontMode)
-                ? FontApplyMode.FIELD_REWRITE
-                : FontApplyMode.SYSTEM_EMULATION;
-        fontModeToggleButton.setTag(resolved);
-        fontModeToggleButton.setText(FontApplyMode.FIELD_REWRITE.equals(resolved)
-                ? R.string.dialog_font_mode_fallback
-                : R.string.dialog_font_mode_emulation);
+    private static String resolveViewportMode(ModeToggle viewportModeToggle) {
+        Object modeTag = viewportModeToggle.container.getTag();
+        if (ViewportApplyMode.SYSTEM_EMULATION.equals(modeTag)) {
+            return ViewportApplyMode.SYSTEM_EMULATION;
+        }
+        return ViewportApplyMode.FIELD_REWRITE;
     }
 
-    private static void toggleFontMode(MaterialButton fontModeToggleButton) {
-        String nextMode = FontApplyMode.FIELD_REWRITE.equals(resolveFontMode(fontModeToggleButton))
+    private static void bindFontModeToggle(ModeToggle fontModeToggle, String fontMode) {
+        String resolved = FontApplyMode.SYSTEM_EMULATION.equals(fontMode)
                 ? FontApplyMode.SYSTEM_EMULATION
                 : FontApplyMode.FIELD_REWRITE;
-        bindFontModeToggle(fontModeToggleButton, nextMode);
+        fontModeToggle.container.setTag(resolved);
+        updateModeToggleVisual(fontModeToggle, FontApplyMode.SYSTEM_EMULATION.equals(resolved), false);
+    }
+
+    private static void toggleFontMode(ModeToggle fontModeToggle) {
+        String nextMode = FontApplyMode.FIELD_REWRITE.equals(resolveFontMode(fontModeToggle))
+                ? FontApplyMode.SYSTEM_EMULATION
+                : FontApplyMode.FIELD_REWRITE;
+        bindFontModeToggle(fontModeToggle, nextMode);
+        updateModeToggleVisual(fontModeToggle, FontApplyMode.SYSTEM_EMULATION.equals(nextMode), true);
+    }
+
+    private static void bindViewportModeToggle(ModeToggle viewportModeToggle,
+                                               String viewportMode) {
+        String resolved = ViewportApplyMode.SYSTEM_EMULATION.equals(viewportMode)
+                ? ViewportApplyMode.SYSTEM_EMULATION
+                : ViewportApplyMode.FIELD_REWRITE;
+        viewportModeToggle.container.setTag(resolved);
+        updateModeToggleVisual(viewportModeToggle,
+                ViewportApplyMode.SYSTEM_EMULATION.equals(resolved), false);
+    }
+
+    private static void toggleViewportMode(ModeToggle viewportModeToggle) {
+        String nextMode = ViewportApplyMode.FIELD_REWRITE.equals(
+                resolveViewportMode(viewportModeToggle))
+                ? ViewportApplyMode.SYSTEM_EMULATION
+                : ViewportApplyMode.FIELD_REWRITE;
+        bindViewportModeToggle(viewportModeToggle, nextMode);
+        updateModeToggleVisual(viewportModeToggle,
+                ViewportApplyMode.SYSTEM_EMULATION.equals(nextMode), true);
+    }
+
+    private static void updateModeToggleVisual(ModeToggle toggle,
+                                               boolean emulationActive,
+                                               boolean animate) {
+        int activeTextColor = MaterialColors.getColor(
+                toggle.container, com.google.android.material.R.attr.colorOnSecondaryContainer);
+        int inactiveTextColor = MaterialColors.getColor(
+                toggle.container, com.google.android.material.R.attr.colorOnSurface);
+        toggle.emulationLabel.setTextColor(emulationActive ? activeTextColor : inactiveTextColor);
+        toggle.replaceLabel.setTextColor(emulationActive ? inactiveTextColor : activeTextColor);
+        toggle.emulationLabel.setAlpha(emulationActive ? 1f : 0.66f);
+        toggle.replaceLabel.setAlpha(emulationActive ? 0.66f : 1f);
+        toggle.emulationLabel.setTypeface(Typeface.DEFAULT,
+                emulationActive ? Typeface.BOLD : Typeface.NORMAL);
+        toggle.replaceLabel.setTypeface(Typeface.DEFAULT,
+                emulationActive ? Typeface.NORMAL : Typeface.BOLD);
+        toggle.emulationLabel.setScaleX(emulationActive ? 1.04f : 1f);
+        toggle.emulationLabel.setScaleY(emulationActive ? 1.04f : 1f);
+        toggle.replaceLabel.setScaleX(emulationActive ? 1f : 1.04f);
+        toggle.replaceLabel.setScaleY(emulationActive ? 1f : 1.04f);
+        toggle.container.post(() -> {
+            int available = toggle.container.getWidth()
+                    - toggle.container.getPaddingLeft()
+                    - toggle.container.getPaddingRight();
+            if (available <= 0) {
+                return;
+            }
+            int half = available / 2;
+            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) toggle.thumb.getLayoutParams();
+            if (params.width != half) {
+                params.width = half;
+                toggle.thumb.setLayoutParams(params);
+            }
+            float target = emulationActive ? 0f : half;
+            if (animate) {
+                toggle.thumb.animate().cancel();
+                toggle.thumb.animate().translationX(target).setDuration(150L).start();
+            } else {
+                toggle.thumb.setTranslationX(target);
+            }
+        });
+    }
+
+    private static final class ModeToggle {
+        final View container;
+        final View thumb;
+        final MaterialTextView emulationLabel;
+        final MaterialTextView replaceLabel;
+
+        ModeToggle(View container, View thumb, MaterialTextView emulationLabel,
+                   MaterialTextView replaceLabel) {
+            this.container = container;
+            this.thumb = thumb;
+            this.emulationLabel = emulationLabel;
+            this.replaceLabel = replaceLabel;
+        }
+    }
+
+    private void bindScopeButton(MaterialButton scopeButton,
+                                 boolean inScope,
+                                 ColorStateList defaultBgTint,
+                                 int defaultStrokeWidth,
+                                 int defaultTextColor) {
+        int activeBgColor = MaterialColors.getColor(
+                scopeButton, com.google.android.material.R.attr.colorSecondaryContainer);
+        int activeFgColor = MaterialColors.getColor(
+                scopeButton, com.google.android.material.R.attr.colorOnSecondaryContainer);
+        scopeButton.setIcon(null);
+        scopeButton.setText(R.string.dialog_scope_button);
+        scopeButton.setBackgroundTintList(inScope
+                ? ColorStateList.valueOf(activeBgColor)
+                : defaultBgTint);
+        scopeButton.setTextColor(inScope ? activeFgColor : defaultTextColor);
+        scopeButton.setStrokeWidth(inScope ? 0 : defaultStrokeWidth);
+        scopeButton.setContentDescription(inScope
+                ? getString(R.string.scope_remove_button)
+                : getString(R.string.scope_add_button));
+    }
+
+    private void bindDpisToggleButton(MaterialButton dpisToggleButton,
+                                      boolean dpisEnabled,
+                                      ColorStateList defaultBgTint,
+                                      int defaultStrokeWidth,
+                                      ColorStateList defaultIconTint) {
+        dpisToggleButton.setText("");
+        dpisToggleButton.setIconResource(R.drawable.ic_block_24);
+        int activeBgColor = MaterialColors.getColor(
+                dpisToggleButton, com.google.android.material.R.attr.colorSecondaryContainer);
+        int activeFgColor = MaterialColors.getColor(
+                dpisToggleButton, com.google.android.material.R.attr.colorOnSecondaryContainer);
+        boolean disableActive = !dpisEnabled;
+        dpisToggleButton.setBackgroundTintList(
+                disableActive ? ColorStateList.valueOf(activeBgColor) : defaultBgTint);
+        dpisToggleButton.setIconTint(
+                disableActive ? ColorStateList.valueOf(activeFgColor) : defaultIconTint);
+        dpisToggleButton.setStrokeWidth(disableActive ? 0 : defaultStrokeWidth);
+        dpisToggleButton.setContentDescription(getString(
+                dpisEnabled ? R.string.dialog_dpis_disable_button : R.string.dialog_dpis_enable_button));
     }
 
     private static Integer parsePositiveIntOrNull(TextInputEditText inputView)
@@ -523,34 +910,16 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
             return null;
         }
         int value = Integer.parseInt(raw);
-        if (value < 50 || value > 250) {
+        if (value < 50 || value > 300) {
             throw new NumberFormatException("font scale out of range");
         }
         return value;
     }
 
-    private void disableAppConfig(AppListItem item) {
-        DpiConfigStore store = DpisApplication.getConfigStore();
-        if (store == null) {
-            Toast.makeText(this, getString(R.string.status_save_requires_init), Toast.LENGTH_SHORT)
-                    .show();
-            return;
-        }
-        boolean cleared = store.clearTargetViewportWidthDp(item.packageName);
-        cleared = store.clearTargetFontScalePercent(item.packageName) && cleared;
-        cleared = store.setTargetFontApplyMode(item.packageName, FontApplyMode.OFF) && cleared;
-        Toast.makeText(this,
-                cleared
-                        ? getString(R.string.status_save_disabled, item.packageName)
-                        : getString(R.string.status_save_requires_init),
-                Toast.LENGTH_SHORT).show();
-        if (cleared) {
-            requestAppsLoad();
-        }
-    }
-
     private void showFilterDialog() {
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_list_filters, null, false);
+        ViewGroup root = findViewById(android.R.id.content);
+        View dialogView = LayoutInflater.from(this).inflate(
+                R.layout.dialog_list_filters, root, false);
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         dialog.setContentView(dialogView);
         MaterialSwitch showSystemSwitch = dialogView.findViewById(R.id.filter_show_system_switch);
@@ -579,48 +948,203 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void showEditDialog(AppListItem item) {
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_app_config, null, false);
+        if (pagerAdapter != null) {
+            pagerAdapter.refreshVisibleStatuses();
+        }
+        boolean systemScopeSelected = isSystemHookEnabledFromStore();
+        ViewGroup root = findViewById(android.R.id.content);
+        View dialogView = LayoutInflater.from(this).inflate(
+                R.layout.dialog_app_config, root, false);
         android.widget.ImageView iconView = dialogView.findViewById(R.id.dialog_app_icon);
         MaterialTextView titleView = dialogView.findViewById(R.id.dialog_title);
         MaterialTextView packageView = dialogView.findViewById(R.id.dialog_package);
         MaterialTextView statusView = dialogView.findViewById(R.id.dialog_status);
+        TextInputLayout viewportInputLayout = dialogView.findViewById(R.id.dialog_viewport_input_layout);
         TextInputEditText viewportInputView = dialogView.findViewById(R.id.dialog_viewport_input);
+        TextInputLayout fontInputLayout = dialogView.findViewById(R.id.dialog_font_scale_input_layout);
         TextInputEditText fontInputView = dialogView.findViewById(R.id.dialog_font_scale_input);
-        MaterialButton fontModeToggleButton = dialogView.findViewById(R.id.dialog_font_mode_toggle_button);
+        ModeToggle viewportModeToggle = new ModeToggle(
+                dialogView.findViewById(R.id.dialog_viewport_mode_toggle_button),
+                dialogView.findViewById(R.id.dialog_viewport_mode_toggle_thumb),
+                dialogView.findViewById(R.id.dialog_viewport_mode_emulation_label),
+                dialogView.findViewById(R.id.dialog_viewport_mode_replace_label));
+        ModeToggle fontModeToggle = new ModeToggle(
+                dialogView.findViewById(R.id.dialog_font_mode_toggle_button),
+                dialogView.findViewById(R.id.dialog_font_mode_toggle_thumb),
+                dialogView.findViewById(R.id.dialog_font_mode_emulation_label),
+                dialogView.findViewById(R.id.dialog_font_mode_replace_label));
         MaterialButton scopeButton = dialogView.findViewById(R.id.dialog_scope_button);
+        MaterialButton startButton = dialogView.findViewById(R.id.dialog_start_button);
+        MaterialButton restartButton = dialogView.findViewById(R.id.dialog_restart_button);
+        MaterialButton stopButton = dialogView.findViewById(R.id.dialog_stop_button);
+        MaterialButton dpisToggleButton = dialogView.findViewById(R.id.dialog_dpis_toggle_button);
         MaterialButton disableButton = dialogView.findViewById(R.id.dialog_disable_button);
         MaterialButton saveButton = dialogView.findViewById(R.id.dialog_save_button);
 
         iconView.setImageDrawable(item.icon);
         titleView.setText(item.label);
         packageView.setText(item.packageName);
-        statusView.setText(AppStatusFormatter.format(
-                item.inScope, item.viewportWidthDp, item.fontScalePercent, item.fontMode));
+        String statusText = AppStatusFormatter.format(
+                item.inScope, item.viewportWidthDp, item.viewportMode,
+                item.fontScalePercent, item.fontMode, item.dpisEnabled);
+        if (AppStatusFormatter.shouldWarnViewportEmulation(
+                item.viewportWidthDp, item.viewportMode, systemScopeSelected, item.dpisEnabled)) {
+            int warnColor = MaterialColors.getColor(statusView,
+                    androidx.appcompat.R.attr.colorError);
+            statusView.setText(AppStatusFormatter.applyMiddleSegmentWarnStyle(statusText, warnColor));
+        } else {
+            statusView.setText(statusText);
+        }
         viewportInputView.setText(item.viewportWidthDp != null
                 ? String.valueOf(item.viewportWidthDp) : "");
         fontInputView.setText(item.fontScalePercent != null
                 ? String.valueOf(item.fontScalePercent) : "");
-        bindFontModeToggle(fontModeToggleButton, item.fontMode);
-        scopeButton.setText(item.inScope
-                ? getString(R.string.scope_remove_button)
-                : getString(R.string.scope_add_button));
+        bindViewportModeToggle(viewportModeToggle, item.viewportMode);
+        bindFontModeToggle(fontModeToggle, item.fontMode);
+        final boolean[] scopeSelected = new boolean[]{item.inScope};
+        final boolean[] dpisEnabled = new boolean[]{item.dpisEnabled};
+        final ColorStateList defaultActionBgTint = startButton.getBackgroundTintList();
+        final int defaultActionStrokeWidth = startButton.getStrokeWidth();
+        final int defaultActionTextColor = MaterialColors.getColor(
+                startButton, androidx.appcompat.R.attr.colorPrimary);
+        ColorStateList resolvedActionIconTint = startButton.getIconTint();
+        if (resolvedActionIconTint == null) {
+            resolvedActionIconTint = ColorStateList.valueOf(MaterialColors.getColor(
+                    startButton, androidx.appcompat.R.attr.colorPrimary));
+        }
+        final ColorStateList defaultActionIconTint = resolvedActionIconTint;
+        bindScopeButton(scopeButton, scopeSelected[0],
+                defaultActionBgTint, defaultActionStrokeWidth, defaultActionTextColor);
+        bindDpisToggleButton(dpisToggleButton, dpisEnabled[0],
+                defaultActionBgTint, defaultActionStrokeWidth, defaultActionIconTint);
+        android.widget.TextView.OnEditorActionListener doneListener = (v, actionId, event) -> {
+            boolean isDoneAction = actionId == EditorInfo.IME_ACTION_DONE;
+            boolean isEnterDown = event != null
+                    && event.getAction() == KeyEvent.ACTION_DOWN
+                    && event.getKeyCode() == KeyEvent.KEYCODE_ENTER;
+            if (!isDoneAction && !isEnterDown) {
+                return false;
+            }
+            clearDialogInputFocus(dialogView, viewportInputView, fontInputView);
+            return true;
+        };
+        viewportInputView.setOnEditorActionListener(doneListener);
+        fontInputView.setOnEditorActionListener(doneListener);
+        TextWatcher validationWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                updateSaveButtonState(viewportInputLayout, viewportInputView,
+                        fontInputLayout, fontInputView, saveButton);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        };
+        viewportInputView.addTextChangedListener(validationWatcher);
+        fontInputView.addTextChangedListener(validationWatcher);
+        updateSaveButtonState(viewportInputLayout, viewportInputView,
+                fontInputLayout, fontInputView, saveButton);
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         dialog.setContentView(dialogView);
+        dialogView.setFocusable(true);
+        dialogView.setFocusableInTouchMode(true);
+        dialogView.setClickable(true);
+        dialogView.setOnClickListener(v ->
+                clearDialogInputFocus(dialogView, viewportInputView, fontInputView));
         scopeButton.setOnClickListener(v -> {
-            toggleScope(item);
-            dialog.dismiss();
+            clearDialogInputFocus(dialogView, viewportInputView, fontInputView);
+            toggleScope(item.packageName, scopeSelected[0],
+                    () -> {
+                        scopeSelected[0] = true;
+                        bindScopeButton(scopeButton, true,
+                                defaultActionBgTint, defaultActionStrokeWidth, defaultActionTextColor);
+                    },
+                    () -> {
+                        scopeSelected[0] = false;
+                        bindScopeButton(scopeButton, false,
+                                defaultActionBgTint, defaultActionStrokeWidth, defaultActionTextColor);
+                    });
+        });
+        startButton.setOnClickListener(v -> {
+            clearDialogInputFocus(dialogView, viewportInputView, fontInputView);
+            executeProcessAction(item, ProcessAction.START);
+        });
+        restartButton.setOnClickListener(v -> {
+            clearDialogInputFocus(dialogView, viewportInputView, fontInputView);
+            executeProcessAction(item, ProcessAction.RESTART);
+        });
+        stopButton.setOnClickListener(v -> {
+            clearDialogInputFocus(dialogView, viewportInputView, fontInputView);
+            executeProcessAction(item, ProcessAction.STOP);
+        });
+        dpisToggleButton.setOnClickListener(v -> {
+            clearDialogInputFocus(dialogView, viewportInputView, fontInputView);
+            boolean nextEnabled = !dpisEnabled[0];
+            if (setDpisEnabled(item.packageName, nextEnabled)) {
+                dpisEnabled[0] = nextEnabled;
+                bindDpisToggleButton(dpisToggleButton, dpisEnabled[0],
+                        defaultActionBgTint, defaultActionStrokeWidth, defaultActionIconTint);
+            }
         });
         disableButton.setOnClickListener(v -> {
-            disableAppConfig(item);
-            dialog.dismiss();
+            clearDialogInputFocus(dialogView, viewportInputView, fontInputView);
+            viewportInputView.setText("");
+            fontInputView.setText("");
+            bindViewportModeToggle(viewportModeToggle, ViewportApplyMode.FIELD_REWRITE);
+            bindFontModeToggle(fontModeToggle, FontApplyMode.FIELD_REWRITE);
+            updateSaveButtonState(viewportInputLayout, viewportInputView,
+                    fontInputLayout, fontInputView, saveButton);
         });
         saveButton.setOnClickListener(v -> {
-            saveAppConfig(item, viewportInputView, fontInputView, fontModeToggleButton);
+            clearDialogInputFocus(dialogView, viewportInputView, fontInputView);
+            saveAppConfig(item, viewportInputView, fontInputView,
+                    viewportModeToggle, fontModeToggle);
             dialog.dismiss();
         });
-        fontModeToggleButton.setOnClickListener(v -> toggleFontMode(fontModeToggleButton));
+        viewportModeToggle.container.setOnClickListener(v -> {
+            clearDialogInputFocus(dialogView, viewportInputView, fontInputView);
+            toggleViewportMode(viewportModeToggle);
+        });
+        viewportModeToggle.emulationLabel.setOnClickListener(v -> {
+            clearDialogInputFocus(dialogView, viewportInputView, fontInputView);
+            bindViewportModeToggle(viewportModeToggle, ViewportApplyMode.SYSTEM_EMULATION);
+        });
+        viewportModeToggle.replaceLabel.setOnClickListener(v -> {
+            clearDialogInputFocus(dialogView, viewportInputView, fontInputView);
+            bindViewportModeToggle(viewportModeToggle, ViewportApplyMode.FIELD_REWRITE);
+        });
+        fontModeToggle.container.setOnClickListener(v -> {
+            clearDialogInputFocus(dialogView, viewportInputView, fontInputView);
+            toggleFontMode(fontModeToggle);
+        });
+        fontModeToggle.emulationLabel.setOnClickListener(v -> {
+            clearDialogInputFocus(dialogView, viewportInputView, fontInputView);
+            bindFontModeToggle(fontModeToggle, FontApplyMode.SYSTEM_EMULATION);
+        });
+        fontModeToggle.replaceLabel.setOnClickListener(v -> {
+            clearDialogInputFocus(dialogView, viewportInputView, fontInputView);
+            bindFontModeToggle(fontModeToggle, FontApplyMode.FIELD_REWRITE);
+        });
         dialog.show();
+    }
+
+    private boolean isSystemHookEnabledFromStore() {
+        DpiConfigStore store = getUiConfigStore();
+        return store != null && store.isSystemServerHooksEnabled();
+    }
+
+    private DpiConfigStore getUiConfigStore() {
+        DpiConfigStore sharedStore = DpisApplication.getConfigStore();
+        if (sharedStore != null) {
+            return sharedStore;
+        }
+        return new DpiConfigStore(getSharedPreferences(
+                DpiConfigStore.GROUP, Context.MODE_PRIVATE));
     }
 
     private static final class RetainedState {

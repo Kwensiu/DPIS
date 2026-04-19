@@ -15,6 +15,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
@@ -24,6 +25,8 @@ import java.util.regex.Pattern;
 
 public final class FontDebugOverlayService extends Service {
     private static final long REFRESH_INTERVAL_MS = 500L;
+    private static final long WINDOW_5S_STALE_MS = 5_000L;
+    private static final long WINDOW_30S_STALE_MS = 30_000L;
     private static final Pattern UNIT_LINE_PATTERN =
             Pattern.compile("^\\s*(\\d+)\\s+text-size-unit-(\\d)\\b.*$");
 
@@ -42,11 +45,16 @@ public final class FontDebugOverlayService extends Service {
     private View overlayRoot;
     private DpiConfigStore store;
     private GestureDetector gestureDetector;
+    private boolean suppressLongPress;
+    private int maxPointerCountDuringGesture = 1;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        store = ConfigStoreFactory.createForModuleApp(this);
+        store = DpisApplication.getConfigStore();
+        if (store == null) {
+            store = ConfigStoreFactory.createForModuleApp(this, DpisApplication.getXposedService());
+        }
         if (!Settings.canDrawOverlays(this)) {
             stopSelf();
             return;
@@ -108,11 +116,7 @@ public final class FontDebugOverlayService extends Service {
 
         overlayRoot = overlayTextView;
         gestureDetector = new GestureDetector(this, new OverlayGestureListener());
-        overlayRoot.setOnClickListener(v -> cycleWindowMode());
-        overlayRoot.setOnLongClickListener(v -> {
-            cycleGroupMode();
-            return true;
-        });
+        gestureDetector.setIsLongpressEnabled(true);
         overlayRoot.setOnTouchListener(new DragTouchListener());
 
         layoutParams = new WindowManager.LayoutParams(
@@ -170,9 +174,16 @@ public final class FontDebugOverlayService extends Service {
         long updatedAt = preferences.getLong(FontDebugStatsStore.KEY_UPDATED_AT, 0L);
         int mode = store != null ? store.getFontDebugSelectedMode() : FontDebugStatsStore.MODE_CHAIN;
         int window = store != null ? store.getFontDebugSelectedWindow() : FontDebugStatsStore.WINDOW_ALL;
+        long now = System.currentTimeMillis();
 
         String statsKey = resolveStatsKey(mode, window);
         String statsText = preferences.getString(statsKey, "暂无数据");
+        if (isWindowExpired(window, updatedAt, now)) {
+            statsText = "暂无数据";
+        }
+        boolean hasFontStats = statsText != null
+                && !statsText.isBlank()
+                && !"暂无数据".equals(statsText.trim());
         String unitBreakdown = buildUnitBreakdownFromStats(statsText);
         if ("unit: 0=0 1=0 2=0".equals(unitBreakdown)) {
             unitBreakdown = preferences.getString(FontDebugStatsStore.KEY_UNIT_BREAKDOWN_5S,
@@ -183,12 +194,16 @@ public final class FontDebugOverlayService extends Service {
                 : 3;
         String[] lines = (statsText == null ? "暂无数据" : statsText).split("\n");
         StringBuilder top = new StringBuilder();
-        int limit = Math.min(topLimit, lines.length);
-        for (int i = 0; i < limit; i++) {
-            top.append(lines[i]);
-            if (i < limit - 1) {
-                top.append('\n');
+        if (hasFontStats) {
+            int limit = Math.min(topLimit, lines.length);
+            for (int i = 0; i < limit; i++) {
+                top.append(lines[i]);
+                if (i < limit - 1) {
+                    top.append('\n');
+                }
             }
+        } else {
+            top.append("等待字体链路命中（需开启字体调节）");
         }
 
         String modeText = mode == FontDebugStatsStore.MODE_CHAIN ? "链路" : "链路+视图";
@@ -197,18 +212,62 @@ public final class FontDebugOverlayService extends Service {
             case FontDebugStatsStore.WINDOW_30S -> "30秒";
             default -> "累计";
         };
+        String viewportSummary = store != null
+                ? store.getDebugString(FontDebugStatsStore.KEY_VIEWPORT_DEBUG_SUMMARY, "视口: 暂无")
+                : "视口: 暂无";
+        boolean hasViewportSummary = viewportSummary != null
+                && !viewportSummary.isBlank()
+                && !"视口: 暂无".equals(viewportSummary);
+        boolean loggingEnabled = store == null || store.isGlobalLogEnabled();
+        String loggingNotice = loggingEnabled
+                ? ""
+                : "日志输出已关闭，字体统计暂停\n";
         String body = String.format(Locale.US,
-                "字体统计 %s %s Top%d\n总事件:%d\n%s\n%s\n\n点按:切窗口  双击:切Top  长按:切分组",
+                "字体统计 %s %s Top%d\n总事件:%d\n%s%s\n%s\n%s\n\n点按:切窗口  双击:切Top  长按:切分组  双指长按:清空",
                 windowText,
                 modeText,
                 topLimit,
                 eventTotal,
+                loggingNotice,
+                viewportSummary,
                 unitBreakdown,
                 top);
-        if (updatedAt <= 0L) {
-            body = "字体统计 初始化中\n点按:切窗口  长按:切分组";
+        if (updatedAt <= 0L && eventTotal <= 0 && !hasViewportSummary) {
+            body = "字体统计 初始化中\n点按:切窗口  长按:切分组  双指长按:清空";
         }
         overlayTextView.setText(body);
+    }
+
+    private void clearDebugStatsData() {
+        android.content.SharedPreferences preferences = FontDebugStatsStore.getPreferences(this);
+        preferences.edit()
+                .remove(FontDebugStatsStore.KEY_CHAIN_5S)
+                .remove(FontDebugStatsStore.KEY_CHAIN_30S)
+                .remove(FontDebugStatsStore.KEY_CHAIN_ALL)
+                .remove(FontDebugStatsStore.KEY_CHAIN_VIEW_5S)
+                .remove(FontDebugStatsStore.KEY_CHAIN_VIEW_30S)
+                .remove(FontDebugStatsStore.KEY_CHAIN_VIEW_ALL)
+                .remove(FontDebugStatsStore.KEY_EVENT_TOTAL)
+                .remove(FontDebugStatsStore.KEY_UPDATED_AT)
+                .remove(FontDebugStatsStore.KEY_UNIT_BREAKDOWN_5S)
+                .remove(FontDebugStatsStore.KEY_VIEWPORT_DEBUG_SUMMARY)
+                .apply();
+        Toast.makeText(this, getString(R.string.font_debug_clear_done), Toast.LENGTH_SHORT).show();
+        renderOverlayText();
+    }
+
+    private static boolean isWindowExpired(int window, long updatedAt, long now) {
+        if (updatedAt <= 0L || now <= updatedAt) {
+            return false;
+        }
+        long elapsedMs = now - updatedAt;
+        if (window == FontDebugStatsStore.WINDOW_5S) {
+            return elapsedMs > WINDOW_5S_STALE_MS;
+        }
+        if (window == FontDebugStatsStore.WINDOW_30S) {
+            return elapsedMs > WINDOW_30S_STALE_MS;
+        }
+        return false;
     }
 
     private static String buildUnitBreakdownFromStats(String statsText) {
@@ -295,12 +354,21 @@ public final class FontDebugOverlayService extends Service {
                     touchStartX = event.getRawX();
                     touchStartY = event.getRawY();
                     dragging = false;
-                    return false;
+                    suppressLongPress = false;
+                    maxPointerCountDuringGesture = 1;
+                    return true;
+                case MotionEvent.ACTION_POINTER_DOWN:
+                    maxPointerCountDuringGesture =
+                            Math.max(maxPointerCountDuringGesture, event.getPointerCount());
+                    return true;
                 case MotionEvent.ACTION_MOVE:
+                    maxPointerCountDuringGesture =
+                            Math.max(maxPointerCountDuringGesture, event.getPointerCount());
                     int dx = Math.round(event.getRawX() - touchStartX);
                     int dy = Math.round(event.getRawY() - touchStartY);
                     if (Math.abs(dx) > dp(4) || Math.abs(dy) > dp(4)) {
                         dragging = true;
+                        suppressLongPress = true;
                     }
                     if (dragging) {
                         layoutParams.x = startX - dx;
@@ -310,15 +378,46 @@ public final class FontDebugOverlayService extends Service {
                     }
                     return false;
                 case MotionEvent.ACTION_UP:
+                    if (!dragging) {
+                        v.performClick();
+                    }
+                    suppressLongPress = false;
+                    maxPointerCountDuringGesture = 1;
+                    return true;
                 case MotionEvent.ACTION_CANCEL:
-                    return dragging;
+                    suppressLongPress = false;
+                    maxPointerCountDuringGesture = 1;
+                    return true;
                 default:
-                    return false;
+                    return true;
             }
         }
     }
 
     private final class OverlayGestureListener extends GestureDetector.SimpleOnGestureListener {
+        @Override
+        public boolean onDown(MotionEvent e) {
+            return true;
+        }
+
+        @Override
+        public boolean onSingleTapConfirmed(MotionEvent e) {
+            cycleWindowMode();
+            return true;
+        }
+
+        @Override
+        public void onLongPress(MotionEvent e) {
+            if (suppressLongPress) {
+                return;
+            }
+            if (maxPointerCountDuringGesture >= 2) {
+                clearDebugStatsData();
+                return;
+            }
+            cycleGroupMode();
+        }
+
         @Override
         public boolean onDoubleTap(MotionEvent e) {
             cycleTopLimit();

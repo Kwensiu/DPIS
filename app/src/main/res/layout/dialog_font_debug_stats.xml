@@ -89,11 +89,21 @@
         app:cornerRadius="23dp" />
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/dialog_stats_close"
+        android:id="@+id/dialog_stats_clear"
         style="?attr/materialButtonOutlinedStyle"
         android:layout_width="match_parent"
         android:layout_height="46dp"
         android:layout_marginTop="12dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:text="@string/font_debug_clear_button" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/dialog_stats_close"
+        style="?attr/materialButtonOutlinedStyle"
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:layout_marginTop="10dp"
         android:insetTop="0dp"
         android:insetBottom="0dp"
         android:text="@string/dialog_cancel_button" />

@@ -76,6 +76,8 @@ final class ResourcesImplHookInstaller {
                 || result.heightDp != originalHeightDp
                 || result.smallestWidthDp != originalSmallestWidthDp
                 || result.densityDpi != originalDensityDpi;
+        boolean applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
+                store, packageName);
         int sourceWidthPx = metrics != null && metrics.widthPixels > 0
                 ? metrics.widthPixels
                 : Math.round(originalWidthDp * (originalDensityDpi / 160.0f));
@@ -92,6 +94,17 @@ final class ResourcesImplHookInstaller {
         if (sharedResult != null) {
             VirtualDisplayState.set(sharedResult);
         }
+        String viewportMode = ViewportModePolicy.resolve(store, packageName);
+        ViewportDebugReporter.report(
+                store,
+                packageName,
+                viewportMode,
+                originalWidthDp,
+                originalHeightDp,
+                originalDensityDpi,
+                result,
+                sharedResult,
+                applyToConfiguration);
         if (!needsViewportUpdate) {
             FontScaleOverride.applyScaledDensity(metrics, config);
             logIfChanged(packageName + ":observe",
@@ -102,7 +115,9 @@ final class ResourcesImplHookInstaller {
                             + ", fontScale=" + fontScale.original + " -> " + config.fontScale);
             return;
         }
-        ViewportOverride.apply(config, result);
+        if (applyToConfiguration) {
+            ViewportOverride.apply(config, result);
+        }
         float targetDensity = DensityOverride.densityFromDpi(result.densityDpi);
         float targetScaledDensity = DensityOverride.scaledDensityFrom(
                 result.densityDpi, config.fontScale);
@@ -116,8 +131,9 @@ final class ResourcesImplHookInstaller {
                 metrics.heightPixels = applied.heightPx;
             }
         }
+        String modeLabel = applyToConfiguration ? "emulation" : "replace";
         logIfChanged(packageName + ":override",
-                "DPIS_FONT ResourcesImpl override: widthDp "
+                "DPIS_FONT ResourcesImpl (" + modeLabel + ") override: widthDp "
                         + originalWidthDp + " -> " + result.widthDp
                         + ", heightDp " + originalHeightDp + " -> " + result.heightDp
                         + ", smallestWidthDp " + originalSmallestWidthDp + " -> "

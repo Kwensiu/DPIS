@@ -233,6 +233,25 @@ public class DpiConfigStoreTest {
     }
 
     @Test
+    public void launcherIconIsVisibleByDefault() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertFalse(store.isLauncherIconHidden());
+    }
+
+    @Test
+    public void updatesLauncherIconVisibilityToggle() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertTrue(store.setLauncherIconHidden(true));
+        assertTrue(store.isLauncherIconHidden());
+        assertTrue(store.setLauncherIconHidden(false));
+        assertFalse(store.isLauncherIconHidden());
+    }
+
+    @Test
     public void mirrorsWritesToBackupPreferencesWhenConfigured() {
         FakePrefs remotePrefs = new FakePrefs();
         FakePrefs localPrefs = new FakePrefs();

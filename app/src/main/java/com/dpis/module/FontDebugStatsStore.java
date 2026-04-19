@@ -13,6 +13,7 @@ final class FontDebugStatsStore {
     static final String EXTRA_CHAIN_VIEW_30S = "chain_view_30s";
     static final String EXTRA_CHAIN_VIEW_ALL = "chain_view_all";
     static final String EXTRA_UNIT_BREAKDOWN_5S = "unit_breakdown_5s";
+    static final String EXTRA_VIEWPORT_DEBUG_SUMMARY = "viewport_debug_summary";
     static final String EXTRA_EVENT_TOTAL = "event_total";
     static final String EXTRA_UPDATED_AT = "updated_at";
 
@@ -25,6 +26,7 @@ final class FontDebugStatsStore {
     static final String KEY_EVENT_TOTAL = "font.debug.event_total";
     static final String KEY_UPDATED_AT = "font.debug.updated_at";
     static final String KEY_UNIT_BREAKDOWN_5S = "font.debug.unit_breakdown.5s";
+    static final String KEY_VIEWPORT_DEBUG_SUMMARY = "viewport.debug.summary";
 
     static final int MODE_CHAIN = 0;
     static final int MODE_CHAIN_VIEW = 1;

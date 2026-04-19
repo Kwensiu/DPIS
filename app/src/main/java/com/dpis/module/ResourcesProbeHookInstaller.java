@@ -127,6 +127,9 @@ final class ResourcesProbeHookInstaller {
         if (targetWidthDp == null) {
             return configuration;
         }
+        if (!ViewportModePolicy.shouldApplyConfigurationOverride(configStore, targetPackageName)) {
+            return configuration;
+        }
         return createOverriddenConfiguration(configuration, targetWidthDp);
     }
 

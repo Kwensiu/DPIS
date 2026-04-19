@@ -25,7 +25,6 @@ final class FontDebugStatsReporter {
     private static long lastSnapshotAt;
     private static int totalEvents;
     private static Snapshot pendingSnapshot;
-    private static Context cachedContext;
 
     private FontDebugStatsReporter() {
     }
@@ -68,21 +67,15 @@ final class FontDebugStatsReporter {
         if (context != null) {
             Context app = context.getApplicationContext();
             if (app != null) {
-                cachedContext = app;
                 return app;
             }
-            cachedContext = context;
             return context;
-        }
-        if (cachedContext != null) {
-            return cachedContext;
         }
         try {
             Class<?> activityThread = Class.forName("android.app.ActivityThread");
             Method currentApplication = activityThread.getDeclaredMethod("currentApplication");
             Object app = currentApplication.invoke(null);
             if (app instanceof Application application) {
-                cachedContext = application;
                 return application;
             }
         } catch (Throwable ignored) {

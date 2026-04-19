@@ -58,6 +58,10 @@ final class ActivityThreadFontHookInstaller {
         logIfChanged(buildFontLogKey(packageName, "activity-thread-bind"),
                 "DPIS_FONT ActivityThread bind override: fontScale "
                         + fontScale.original + " -> " + config.fontScale);
+        FontDebugStatsReporter.record(
+                "font-emulation-bind",
+                bindData.getClass().getSimpleName(),
+                null);
         return true;
     }
 

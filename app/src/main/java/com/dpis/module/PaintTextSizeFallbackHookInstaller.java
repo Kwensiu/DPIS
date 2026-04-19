@@ -21,6 +21,7 @@ final class PaintTextSizeFallbackHookInstaller {
     private static final float SIZE_EPSILON_PX = 0.5f;
     private static final int MAX_SAMPLES_PER_CALLER = 2;
     private static final int MAX_STACK_FRAMES = 6;
+    private static volatile boolean verboseFontLogsEnabled;
 
     private PaintTextSizeFallbackHookInstaller() {
     }
@@ -38,6 +39,7 @@ final class PaintTextSizeFallbackHookInstaller {
                     ? store.getTargetFontScalePercent(packageName)
                     : null;
             final float factor = resolveFieldRewriteFactor(store, packageName);
+            verboseFontLogsEnabled = isVerboseFontLogsEnabled(store);
             if (!isTargetPercentActive(targetPercent)) {
                 return;
             }
@@ -117,6 +119,9 @@ final class PaintTextSizeFallbackHookInstaller {
     }
 
     private static void logIfChanged(String key, String message) {
+        if (!verboseFontLogsEnabled) {
+            return;
+        }
         String previous = LAST_MESSAGES.put(key, message);
         if (!message.equals(previous)) {
             DpisLog.i(message);
@@ -129,7 +134,7 @@ final class PaintTextSizeFallbackHookInstaller {
     }
 
     private static void logCallerSample(String packageName) {
-        if (!DpisLog.isLoggingEnabled()) {
+        if (!verboseFontLogsEnabled || !DpisLog.isLoggingEnabled()) {
             return;
         }
         StackTraceElement[] trace = Thread.currentThread().getStackTrace();
@@ -188,5 +193,9 @@ final class PaintTextSizeFallbackHookInstaller {
 
     private static boolean isScaleFactorActive(float factor) {
         return factor > 0f && factor != 1.0f;
+    }
+
+    private static boolean isVerboseFontLogsEnabled(DpiConfigStore store) {
+        return store != null && store.isFontDebugOverlayEnabled();
     }
 }

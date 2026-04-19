@@ -50,6 +50,7 @@ final class ForceTextSizeHookInstaller {
     private static final int MAX_SAMPLES_PER_SOURCE = 1;
     private static final int HOT_LOG_INTERVAL = 32;
     private static final int MAX_STACK_FRAMES = 6;
+    private static volatile boolean verboseFontLogsEnabled;
 
     private ForceTextSizeHookInstaller() {
     }
@@ -67,6 +68,7 @@ final class ForceTextSizeHookInstaller {
             final Integer targetPercent = fontScale.targetPercent;
             final float factor = PaintTextSizeFallbackHookInstaller.resolveFieldRewriteFactor(
                     store, packageName);
+            verboseFontLogsEnabled = isVerboseFontLogsEnabled(store);
             ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
             Class<?> textViewClass = Class.forName("android.widget.TextView", false, bootClassLoader);
             Method setTextSizeMethod = textViewClass.getDeclaredMethod("setTextSize", int.class, float.class);
@@ -109,7 +111,7 @@ final class ForceTextSizeHookInstaller {
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
                         }
-                        if (DpisLog.isLoggingEnabled()) {
+                        if (verboseFontLogsEnabled && DpisLog.isLoggingEnabled()) {
                             logSampled(buildHotFontLogKey(packageName, "text-size-unit-" + unit),
                                     "DPIS_FONT ForceTextSize override: unit=" + unit
                                             + ", size=" + size
@@ -165,7 +167,7 @@ final class ForceTextSizeHookInstaller {
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
                         }
-                        if (DpisLog.isLoggingEnabled()) {
+                        if (verboseFontLogsEnabled && DpisLog.isLoggingEnabled()) {
                             logSampled(buildHotFontLogKey(packageName, "text-size-float"),
                                     "DPIS_FONT ForceTextSize override: unit=SP(default)"
                                             + ", size=" + sizeSp
@@ -223,7 +225,7 @@ final class ForceTextSizeHookInstaller {
                     } finally {
                         INTERNAL_UPDATE.set(Boolean.FALSE);
                     }
-                    if (DpisLog.isLoggingEnabled()) {
+                    if (verboseFontLogsEnabled && DpisLog.isLoggingEnabled()) {
                         logSampled(buildHotFontLogKey(packageName, "paint-size"),
                                 "DPIS_FONT Paint.setTextSize override: in=" + incoming
                                         + ", out=" + adjusted
@@ -266,7 +268,7 @@ final class ForceTextSizeHookInstaller {
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
                         }
-                        if (DpisLog.isLoggingEnabled()) {
+                        if (verboseFontLogsEnabled && DpisLog.isLoggingEnabled()) {
                             logSampled(buildHotFontLogKey(packageName, "textpaint-size"),
                                     "DPIS_FONT TextPaint.setTextSize override: in=" + incoming
                                             + ", out=" + adjusted
@@ -347,7 +349,7 @@ final class ForceTextSizeHookInstaller {
                                 textView.getClass().getName(),
                                 textView.getContext());
                     }
-                    if (DpisLog.isLoggingEnabled()) {
+                    if (verboseFontLogsEnabled && DpisLog.isLoggingEnabled()) {
                         logSampled(buildHotFontLogKey(
                                         packageName, "textview-span-" + textView.getClass().getName()),
                                 "DPIS_FONT TextView span override: view="
@@ -626,6 +628,9 @@ final class ForceTextSizeHookInstaller {
     }
 
     private static void logSampled(String key, String message, int interval) {
+        if (!verboseFontLogsEnabled) {
+            return;
+        }
         if (interval <= 1) {
             DpisLog.i(message);
             return;
@@ -648,7 +653,7 @@ final class ForceTextSizeHookInstaller {
     }
 
     private static void logCallerSample(String packageName, String sourceTag) {
-        if (!DpisLog.isLoggingEnabled()) {
+        if (!verboseFontLogsEnabled || !DpisLog.isLoggingEnabled()) {
             return;
         }
         int sourceCount = CALLER_SOURCE_COUNTS.getOrDefault(sourceTag, 0);
@@ -743,5 +748,9 @@ final class ForceTextSizeHookInstaller {
 
     private static boolean isScaleFactorActive(float factor) {
         return factor > 0f && factor != 1.0f;
+    }
+
+    private static boolean isVerboseFontLogsEnabled(DpiConfigStore store) {
+        return store != null && store.isFontDebugOverlayEnabled();
     }
 }

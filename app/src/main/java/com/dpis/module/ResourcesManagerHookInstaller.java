@@ -164,6 +164,8 @@ final class ResourcesManagerHookInstaller {
         if (sharedResult != null) {
             VirtualDisplayState.set(sharedResult);
         }
+        boolean applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
+                store, packageName);
         if (result.widthDp == originalWidthDp
                 && result.heightDp == originalHeightDp
                 && result.smallestWidthDp == originalSmallestWidthDp
@@ -171,13 +173,15 @@ final class ResourcesManagerHookInstaller {
                 && !fontScale.changed) {
             return;
         }
-        if (result.widthDp != originalWidthDp
+        if (applyToConfiguration
+                && (result.widthDp != originalWidthDp
                 || result.heightDp != originalHeightDp
                 || result.smallestWidthDp != originalSmallestWidthDp
-                || result.densityDpi != originalDensityDpi) {
+                || result.densityDpi != originalDensityDpi)) {
             ViewportOverride.apply(config, result);
         }
-        String message = "DPIS_FONT " + sourceTag + " override: widthDp "
+        String modeLabel = applyToConfiguration ? "emulation" : "replace";
+        String message = "DPIS_FONT " + sourceTag + " (" + modeLabel + ") override: widthDp "
                 + originalWidthDp + " -> " + result.widthDp
                 + ", heightDp " + originalHeightDp + " -> " + result.heightDp
                 + ", smallestWidthDp " + originalSmallestWidthDp + " -> "

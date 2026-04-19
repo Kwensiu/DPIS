@@ -14,12 +14,14 @@ import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.textview.MaterialTextView;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BooleanSupplier;
 
 final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter.PageHolder> {
     interface OnAppClickListener {
@@ -36,10 +38,14 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
     private final EnumMap<AppListPage, PageHolder> activeHolders = new EnumMap<>(AppListPage.class);
     private final OnAppClickListener onAppClickListener;
     private final OnRefreshListener onRefreshListener;
+    private final BooleanSupplier systemScopeSelectedSupplier;
 
-    AppListPagerAdapter(OnAppClickListener onAppClickListener, OnRefreshListener onRefreshListener) {
+    AppListPagerAdapter(OnAppClickListener onAppClickListener,
+                        OnRefreshListener onRefreshListener,
+                        BooleanSupplier systemScopeSelectedSupplier) {
         this.onAppClickListener = onAppClickListener;
         this.onRefreshListener = onRefreshListener;
+        this.systemScopeSelectedSupplier = systemScopeSelectedSupplier;
         for (AppListPage page : AppListPage.values()) {
             pages.put(page, new ArrayList<>());
             refreshingStates.put(page, false);
@@ -88,11 +94,18 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
         }
     }
 
+    void refreshVisibleStatuses() {
+        for (PageHolder holder : activeHolders.values()) {
+            holder.refreshStatuses();
+        }
+    }
+
     @Override
     public PageHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_app_list_page, parent, false);
-        return new PageHolder(view, onAppClickListener, onRefreshListener);
+        return new PageHolder(view, onAppClickListener, onRefreshListener,
+                systemScopeSelectedSupplier);
     }
 
     @Override
@@ -136,12 +149,13 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
 
         PageHolder(View itemView,
                    OnAppClickListener onAppClickListener,
-                   OnRefreshListener onRefreshListener) {
+                   OnRefreshListener onRefreshListener,
+                   BooleanSupplier systemScopeSelectedSupplier) {
             super(itemView);
             swipeRefreshLayout = itemView.findViewById(R.id.page_swipe_refresh);
             recyclerView = itemView.findViewById(R.id.page_list);
             recyclerView.setLayoutManager(new LinearLayoutManager(itemView.getContext()));
-            adapter = new PageListAdapter(onAppClickListener);
+            adapter = new PageListAdapter(onAppClickListener, systemScopeSelectedSupplier);
             recyclerView.setAdapter(adapter);
             swipeRefreshLayout.setOnRefreshListener(() -> {
                 if (boundPage != null) {
@@ -155,7 +169,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                   Parcelable scrollState,
                   boolean refreshing) {
             boundPage = page;
-            adapter.submit(items);
+            adapter.submit(items, this::refreshStatuses);
             setRefreshing(refreshing);
             if (scrollState != null) {
                 restoreScrollState(scrollState);
@@ -168,6 +182,10 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
 
         void setRefreshing(boolean refreshing) {
             swipeRefreshLayout.setRefreshing(refreshing);
+        }
+
+        void refreshStatuses() {
+            adapter.refreshVisibleRows();
         }
 
         Parcelable captureScrollState() {
@@ -190,14 +208,29 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
 
     private static final class PageListAdapter extends ListAdapter<AppListItem, RowHolder> {
         private final OnAppClickListener onAppClickListener;
+        private final BooleanSupplier systemScopeSelectedSupplier;
+        private static final Object PAYLOAD_SYSTEM_SCOPE_CHANGED = new Object();
 
-        private PageListAdapter(OnAppClickListener onAppClickListener) {
+        private PageListAdapter(OnAppClickListener onAppClickListener,
+                                BooleanSupplier systemScopeSelectedSupplier) {
             super(DIFF_CALLBACK);
             this.onAppClickListener = onAppClickListener;
+            this.systemScopeSelectedSupplier = systemScopeSelectedSupplier;
         }
 
         private void submit(List<AppListItem> newItems) {
             submitList(new ArrayList<>(newItems));
+        }
+
+        private void submit(List<AppListItem> newItems, Runnable onCommitted) {
+            submitList(new ArrayList<>(newItems), onCommitted);
+        }
+
+        private void refreshVisibleRows() {
+            if (getItemCount() <= 0) {
+                return;
+            }
+            notifyItemRangeChanged(0, getItemCount(), PAYLOAD_SYSTEM_SCOPE_CHANGED);
         }
 
         @NonNull
@@ -215,9 +248,46 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             holder.label.setText(item.label);
             holder.packageName.setText(item.packageName);
             holder.icon.setImageDrawable(item.icon);
-            holder.status.setText(AppStatusFormatter.format(
-                    item.inScope, item.viewportWidthDp, item.fontScalePercent, item.fontMode));
+            String statusText = AppStatusFormatter.format(
+                    item.inScope, item.viewportWidthDp, item.viewportMode,
+                    item.fontScalePercent, item.fontMode, item.dpisEnabled);
+            if (AppStatusFormatter.shouldWarnViewportEmulation(
+                    item.viewportWidthDp, item.viewportMode,
+                    systemScopeSelectedSupplier.getAsBoolean(),
+                    item.dpisEnabled)) {
+                int warnColor = MaterialColors.getColor(holder.status,
+                        androidx.appcompat.R.attr.colorError);
+                holder.status.setText(AppStatusFormatter.applyMiddleSegmentWarnStyle(
+                        statusText, warnColor));
+            } else {
+                holder.status.setText(statusText);
+            }
             holder.headerClickTarget.setOnClickListener(v -> onAppClickListener.onAppClicked(item));
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull RowHolder holder,
+                                     int position,
+                                     @NonNull List<Object> payloads) {
+            if (!payloads.isEmpty()) {
+                AppListItem item = getItem(position);
+                String statusText = AppStatusFormatter.format(
+                        item.inScope, item.viewportWidthDp, item.viewportMode,
+                        item.fontScalePercent, item.fontMode, item.dpisEnabled);
+                if (AppStatusFormatter.shouldWarnViewportEmulation(
+                        item.viewportWidthDp, item.viewportMode,
+                        systemScopeSelectedSupplier.getAsBoolean(),
+                        item.dpisEnabled)) {
+                    int warnColor = MaterialColors.getColor(holder.status,
+                            androidx.appcompat.R.attr.colorError);
+                    holder.status.setText(AppStatusFormatter.applyMiddleSegmentWarnStyle(
+                            statusText, warnColor));
+                } else {
+                    holder.status.setText(statusText);
+                }
+                return;
+            }
+            super.onBindViewHolder(holder, position, payloads);
         }
 
         private static final DiffUtil.ItemCallback<AppListItem> DIFF_CALLBACK =
@@ -234,8 +304,10 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                         return oldItem.label.equals(newItem.label)
                                 && oldItem.inScope == newItem.inScope
                                 && Objects.equals(oldItem.viewportWidthDp, newItem.viewportWidthDp)
+                                && oldItem.viewportMode.equals(newItem.viewportMode)
                                 && Objects.equals(oldItem.fontScalePercent, newItem.fontScalePercent)
                                 && oldItem.fontMode.equals(newItem.fontMode)
+                                && oldItem.dpisEnabled == newItem.dpisEnabled
                                 && oldItem.systemApp == newItem.systemApp;
                     }
                 };

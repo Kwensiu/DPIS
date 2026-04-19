@@ -16,6 +16,7 @@ final class DpiConfigStore {
     static final String KEY_FONT_DEBUG_OVERLAY_ENABLED = "font.debug.overlay_enabled";
     static final String KEY_FONT_DEBUG_SELECTED_MODE = "font.debug.selected_mode";
     static final String KEY_FONT_DEBUG_SELECTED_WINDOW = "font.debug.selected_window";
+    static final String KEY_HIDE_LAUNCHER_ICON = "ui.hide_launcher_icon";
 
     private final SharedPreferences preferences;
     private final SharedPreferences mirrorPreferences;
@@ -50,6 +51,18 @@ final class DpiConfigStore {
             return null;
         }
         return getInt(key, 0);
+    }
+
+    String getTargetViewportApplyMode(String packageName) {
+        String key = keyForViewportMode(packageName);
+        if (contains(key)) {
+            return ViewportApplyMode.normalize(getString(key, ViewportApplyMode.OFF));
+        }
+        if (contains(keyForViewportWidth(packageName))) {
+            // 历史配置迁移：已有宽度但无模式时，默认视为系统伪装。
+            return ViewportApplyMode.SYSTEM_EMULATION;
+        }
+        return ViewportApplyMode.OFF;
     }
 
     Integer getTargetFontScalePercent(String packageName) {
@@ -108,6 +121,18 @@ final class DpiConfigStore {
         return commitBoth(editor -> editor.putBoolean(KEY_GLOBAL_LOG_ENABLED, enabled));
     }
 
+    boolean isLauncherIconHidden() {
+        return getBoolean(KEY_HIDE_LAUNCHER_ICON, false);
+    }
+
+    boolean hasLauncherIconHidden() {
+        return containsInPrimary(KEY_HIDE_LAUNCHER_ICON);
+    }
+
+    boolean setLauncherIconHidden(boolean hidden) {
+        return commitBoth(editor -> editor.putBoolean(KEY_HIDE_LAUNCHER_ICON, hidden));
+    }
+
     boolean isFontDebugOverlayEnabled() {
         return getBoolean(KEY_FONT_DEBUG_OVERLAY_ENABLED, false);
     }
@@ -140,6 +165,14 @@ final class DpiConfigStore {
         return commitBoth(editor -> editor.putInt(key, value));
     }
 
+    String getDebugString(String key, String defaultValue) {
+        return getString(key, defaultValue);
+    }
+
+    boolean setDebugString(String key, String value) {
+        return commitBoth(editor -> editor.putString(key, value));
+    }
+
     boolean setTargetViewportWidthDp(String packageName, int widthDp) {
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
         packages.add(packageName);
@@ -156,7 +189,27 @@ final class DpiConfigStore {
         }
         return commitBoth(editor -> editor
                 .putStringSet(KEY_TARGET_PACKAGES, packages)
-                .remove(keyForViewportWidth(packageName)));
+                .remove(keyForViewportWidth(packageName))
+                .remove(keyForViewportMode(packageName)));
+    }
+
+    boolean setTargetViewportApplyMode(String packageName, String mode) {
+        String normalized = ViewportApplyMode.normalize(mode);
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        if (!ViewportApplyMode.isEnabled(normalized)) {
+            if (!contains(keyForViewportWidth(packageName))
+                    && !contains(keyForFontScale(packageName))
+                    && !contains(keyForFontMode(packageName))) {
+                packages.remove(packageName);
+            }
+            return commitBoth(editor -> editor
+                    .putStringSet(KEY_TARGET_PACKAGES, packages)
+                    .remove(keyForViewportMode(packageName)));
+        }
+        packages.add(packageName);
+        return commitBoth(editor -> editor
+                .putStringSet(KEY_TARGET_PACKAGES, packages)
+                .putString(keyForViewportMode(packageName), normalized));
     }
 
     boolean setTargetFontScalePercent(String packageName, int percent) {
@@ -200,12 +253,42 @@ final class DpiConfigStore {
         return containsInPrimary(keyForViewportWidth(packageName));
     }
 
+    boolean hasPrimaryTargetViewportApplyMode(String packageName) {
+        return containsInPrimary(keyForViewportMode(packageName));
+    }
+
     boolean hasPrimaryTargetFontScalePercent(String packageName) {
         return containsInPrimary(keyForFontScale(packageName));
     }
 
     boolean hasPrimaryTargetFontApplyMode(String packageName) {
         return containsInPrimary(keyForFontMode(packageName));
+    }
+
+    boolean isTargetDpisEnabled(String packageName) {
+        return getBoolean(keyForDpisEnabled(packageName), true);
+    }
+
+    boolean setTargetDpisEnabled(String packageName, boolean enabled) {
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        if (enabled) {
+            if (!contains(keyForViewportWidth(packageName))
+                    && !contains(keyForFontScale(packageName))
+                    && !contains(keyForViewportMode(packageName))
+                    && !contains(keyForFontMode(packageName))) {
+                packages.remove(packageName);
+                return commitBoth(editor -> editor
+                        .putStringSet(KEY_TARGET_PACKAGES, packages)
+                        .remove(keyForDpisEnabled(packageName)));
+            }
+            return commitBoth(editor -> editor
+                    .putStringSet(KEY_TARGET_PACKAGES, packages)
+                    .remove(keyForDpisEnabled(packageName)));
+        }
+        packages.add(packageName);
+        return commitBoth(editor -> editor
+                .putStringSet(KEY_TARGET_PACKAGES, packages)
+                .putBoolean(keyForDpisEnabled(packageName), false));
     }
 
     boolean ensureSeedConfig(Map<String, Integer> seedTargetViewportWidthDps) {
@@ -281,11 +364,19 @@ final class DpiConfigStore {
         return "viewport." + packageName + ".width_dp";
     }
 
+    private static String keyForViewportMode(String packageName) {
+        return "viewport." + packageName + ".mode";
+    }
+
     private static String keyForFontScale(String packageName) {
         return "font." + packageName + ".scale_percent";
     }
 
     private static String keyForFontMode(String packageName) {
         return "font." + packageName + ".mode";
+    }
+
+    private static String keyForDpisEnabled(String packageName) {
+        return "target." + packageName + ".dpis_enabled";
     }
 }

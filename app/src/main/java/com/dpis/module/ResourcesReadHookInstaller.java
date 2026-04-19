@@ -121,7 +121,9 @@ final class ResourcesReadHookInstaller {
                 || result.heightDp != originalHeightDp
                 || result.smallestWidthDp != originalSmallestWidthDp
                 || result.densityDpi != originalDensityDpi) {
-            ViewportOverride.apply(config, result);
+            if (ViewportModePolicy.shouldApplyConfigurationOverride(store, packageName)) {
+                ViewportOverride.apply(config, result);
+            }
         }
 
         VirtualDisplayOverride.Result sharedResult = VirtualDisplayOverride.derive(
@@ -164,12 +166,14 @@ final class ResourcesReadHookInstaller {
         if (targetDensityDpi <= 0) {
             return;
         }
+        VirtualDisplayOverride.Result applied = VirtualDisplayState.get();
+        if (applied != null && applied.densityDpi > 0) {
+            targetDensityDpi = applied.densityDpi;
+        }
         metrics.densityDpi = targetDensityDpi;
         metrics.density = DensityOverride.densityFromDpi(targetDensityDpi);
         float fontScale = config.fontScale > 0f ? config.fontScale : 1.0f;
         metrics.scaledDensity = DensityOverride.scaledDensityFrom(targetDensityDpi, fontScale);
-
-        VirtualDisplayOverride.Result applied = VirtualDisplayState.get();
         if (applied != null) {
             metrics.widthPixels = applied.widthPx;
             metrics.heightPixels = applied.heightPx;

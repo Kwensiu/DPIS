@@ -41,8 +41,14 @@ public final class ModuleMain extends XposedModule {
             return;
         }
         Integer targetViewportWidthDp = store.getTargetViewportWidthDp(packageName);
+        String targetViewportMode = store.getTargetViewportApplyMode(packageName);
         Integer targetFontScalePercent = store.getTargetFontScalePercent(packageName);
         String targetFontMode = store.getTargetFontApplyMode(packageName);
+        boolean targetDpisEnabled = store.isTargetDpisEnabled(packageName);
+        if (!targetDpisEnabled) {
+            DpisLog.i("target app disabled by dpis toggle: package=" + packageName);
+            return;
+        }
         boolean fontScaleActive = targetFontScalePercent != null
                 && targetFontScalePercent > 0
                 && targetFontScalePercent != 100;
@@ -53,11 +59,13 @@ public final class ModuleMain extends XposedModule {
         }
         DpisLog.i("target app matched: package=" + packageName
                 + ", targetViewportWidthDp=" + targetViewportWidthDp
+                + ", targetViewportMode=" + targetViewportMode
                 + ", targetFontScalePercent=" + targetFontScalePercent
                 + ", targetFontMode=" + targetFontMode);
         try {
             AppProcessHookInstaller.install(this, packageName, store, policy,
-                    targetViewportWidthDp != null, targetFontMode, fontScaleActive);
+                    targetViewportWidthDp != null, targetViewportMode, targetFontMode,
+                    fontScaleActive);
         } catch (Throwable throwable) {
             DpisLog.e("failed to install app process hooks", throwable);
         }

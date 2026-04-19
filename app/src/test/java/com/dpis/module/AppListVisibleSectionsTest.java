@@ -14,8 +14,10 @@ public class AppListVisibleSectionsTest {
                 "com.mfcloudcalculate.networkdisk",
                 true,
                 null,
+                ViewportApplyMode.OFF,
                 null,
                 FontApplyMode.OFF,
+                true,
                 false,
                 null);
         AppListItem plain = new AppListItem(
@@ -23,8 +25,10 @@ public class AppListVisibleSectionsTest {
                 "com.google.android.webview",
                 false,
                 null,
+                ViewportApplyMode.OFF,
                 null,
                 FontApplyMode.OFF,
+                true,
                 true,
                 null);
 

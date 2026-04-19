@@ -64,47 +64,108 @@
         </LinearLayout>
     </LinearLayout>
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginTop="8dp">
-
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:hint="@string/dialog_viewport_hint"
-            app:boxCornerRadiusBottomEnd="18dp"
-            app:boxCornerRadiusBottomStart="18dp"
-            app:boxCornerRadiusTopEnd="18dp"
-            app:boxCornerRadiusTopStart="18dp">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/dialog_viewport_input"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:imeOptions="actionDone"
-                android:inputType="number" />
-        </com.google.android.material.textfield.TextInputLayout>
-    </FrameLayout>
-
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="@dimen/dialog_mode_toggle_row_height"
         android:layout_marginTop="8dp"
+        android:baselineAligned="false"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <FrameLayout
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_weight="1">
 
             <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:id="@+id/dialog_viewport_input_layout"
+                style="@style/Widget.Dpis.TextInputLayout.OutlinedBox.Compact"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/dialog_viewport_hint"
+                app:boxCornerRadiusBottomEnd="18dp"
+                app:boxCornerRadiusBottomStart="18dp"
+                app:boxCornerRadiusTopEnd="18dp"
+                app:boxCornerRadiusTopStart="18dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/dialog_viewport_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:imeOptions="actionDone"
+                    android:inputType="number"
+                    android:minHeight="0dp"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="12dp" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/dialog_viewport_mode_toggle_button"
+            android:layout_width="@dimen/dialog_mode_toggle_width"
+            android:layout_height="match_parent"
+            android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start"
+            android:clickable="true"
+            android:focusable="true">
+
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:layout_marginTop="@dimen/dialog_mode_toggle_content_offset_top"
+                android:background="@drawable/bg_mode_toggle_track">
+
+                <View
+                    android:id="@+id/dialog_viewport_mode_toggle_thumb"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_mode_toggle_thumb" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/dialog_viewport_mode_emulation_label"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="@string/dialog_viewport_mode_emulation"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelMedium" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/dialog_viewport_mode_replace_label"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="@string/dialog_viewport_mode_replace"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelMedium" />
+                </LinearLayout>
+            </FrameLayout>
+        </FrameLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dialog_mode_toggle_row_height"
+        android:layout_marginTop="8dp"
+        android:baselineAligned="false"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/dialog_font_scale_input_layout"
+                style="@style/Widget.Dpis.TextInputLayout.OutlinedBox.Compact"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:hint="@string/dialog_font_scale_hint"
                 app:boxCornerRadiusBottomEnd="18dp"
                 app:boxCornerRadiusBottomStart="18dp"
@@ -114,55 +175,169 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/dialog_font_scale_input"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:imeOptions="actionDone"
-                    android:inputType="number" />
+                    android:inputType="number"
+                    android:minHeight="0dp"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="12dp" />
             </com.google.android.material.textfield.TextInputLayout>
         </FrameLayout>
 
-        <com.google.android.material.button.MaterialButton
+        <FrameLayout
             android:id="@+id/dialog_font_mode_toggle_button"
-            style="@style/Widget.Dpis.FontModeToggleButton"
-            android:layout_width="wrap_content"
+            android:layout_width="@dimen/dialog_mode_toggle_width"
             android:layout_height="match_parent"
-            android:layout_marginStart="10dp"
-            android:minWidth="0dp"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:text="@string/dialog_font_mode_emulation"
-            app:cornerRadius="18dp" />
+            android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start"
+            android:clickable="true"
+            android:focusable="true">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="@dimen/dialog_mode_toggle_content_offset_top"
+                android:background="@drawable/bg_mode_toggle_track">
+
+                <View
+                    android:id="@+id/dialog_font_mode_toggle_thumb"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_mode_toggle_thumb" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/dialog_font_mode_emulation_label"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="@string/dialog_font_mode_emulation"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelMedium" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/dialog_font_mode_replace_label"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="@string/dialog_font_mode_fallback"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelMedium" />
+                </LinearLayout>
+            </FrameLayout>
+        </FrameLayout>
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="12dp"
         android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/dialog_scope_button"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            style="@style/Widget.Dpis.DialogActionButton.Outlined"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.7"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:minWidth="0dp"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp"
+            android:text="@string/dialog_scope_button" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/dialog_stop_button"
+            style="@style/Widget.Dpis.DialogActionButton.Outlined"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="0.82"
+            android:contentDescription="@string/dialog_stop_button"
+            android:minWidth="0dp"
+            android:text=""
+            app:icon="@drawable/ic_stop_24"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="26dp"
+            app:iconTint="?attr/colorPrimary" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/dialog_restart_button"
+            style="@style/Widget.Dpis.DialogActionButton.Outlined"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="0.82"
+            android:contentDescription="@string/dialog_restart_button"
+            android:minWidth="0dp"
+            android:text=""
+            app:icon="@drawable/ic_refresh_24"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="26dp"
+            app:iconTint="?attr/colorPrimary" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/dialog_start_button"
+            style="@style/Widget.Dpis.DialogActionButton.Outlined"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="0.82"
+            android:contentDescription="@string/dialog_start_button"
+            android:minWidth="0dp"
+            android:text=""
+            app:icon="@drawable/ic_play_arrow_24"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="26dp"
+            app:iconTint="?attr/colorPrimary" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/dialog_dpis_toggle_button"
+            style="@style/Widget.Dpis.DialogActionButton.Outlined"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="0.82"
+            android:minWidth="0dp"
+            android:text=""
+            app:icon="@drawable/ic_block_24"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="26dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/dialog_save_button"
+            style="@style/Widget.Dpis.DialogActionButton.Filled"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/scope_add_button" />
+            android:text="@string/status_save_button" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/dialog_disable_button"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="0dp"
+            style="@style/Widget.Dpis.DialogActionButton.Outlined"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:minWidth="0dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
             android:text="@string/dialog_disable_button" />
     </LinearLayout>
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/dialog_save_button"
-        style="@style/Widget.Material3.Button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="@string/status_save_button" />
 </LinearLayout>

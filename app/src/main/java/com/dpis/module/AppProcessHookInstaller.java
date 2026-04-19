@@ -11,6 +11,7 @@ final class AppProcessHookInstaller {
                         DpiConfigStore store,
                         HookRuntimePolicy policy,
                         boolean viewportEnabled,
+                        String viewportMode,
                         String fontMode,
                         boolean fontScaleActive) throws Throwable {
         boolean emulationEnabled =
@@ -48,11 +49,13 @@ final class AppProcessHookInstaller {
                 ViewRootProbeHookInstaller.install(xposed);
             }
             DpisLog.i("hooks installed (full): viewportEnabled=" + viewportEnabled
+                    + ", viewportMode=" + viewportMode
                     + ", fontMode=" + fontMode + " for " + packageName);
             return;
         }
         String mode = policy.systemServerSafeModeEnabled ? "safe mode" : "probe disabled";
         DpisLog.i("hooks installed (" + mode + "): viewportEnabled=" + viewportEnabled
+                + ", viewportMode=" + viewportMode
                 + ", fontMode=" + fontMode + " for " + packageName);
     }
 }
