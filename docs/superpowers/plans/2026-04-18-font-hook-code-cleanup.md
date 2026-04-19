@@ -9,6 +9,12 @@
 - `2B`：非必要日志统一受“全局日志开关”控制
 - `3A`：只做轻量重构（去重/命名/可读性），不做重架构
 
+## 当前状态（2026-04-20）
+
+- `Task 1` 部分已落地：`resolveFieldRewriteFactor` 已抽取并在主链路使用。
+- `Task 4` 目标已满足：模块入口日志语义已统一为 `failed to install app process hooks`。
+- `Task 2`、`Task 3` 仍保留为后续整理项（安装模板与 WebView 分支去重未完整收口）。
+
 ---
 
 ### Task 1: 收敛 `ForceTextSizeHookInstaller` 的判定与缩放逻辑

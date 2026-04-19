@@ -27,3 +27,21 @@
 - `docs/system-smoke-status.md` -> `docs/archive/reports/system-smoke-status.md`
 - `docs/useful-files-full-analysis-2026-04-16.md` -> `docs/archive/reports/useful-files-full-analysis-2026-04-16.md`
 - `docs/docs-curation-2026-04-17.md` -> `docs/archive/reports/docs-curation-2026-04-17.md`
+
+## 2026-04-20 归档
+
+按“完成即归档”整理文档，收敛活文档面，保留 `project-visual-map`、`final-validation-checklist` 与 1 份未收口的字体整理计划。
+
+- 报告类迁移到 `archive/reports/`：
+  - `docs/list-state-analysis-2026-04-18.md` -> `docs/archive/reports/list-state-analysis-2026-04-18.md`
+  - `docs/structure-batch-tracker-2026-04-17.md` -> `docs/archive/reports/structure-batch-tracker-2026-04-17.md`
+- superpowers 计划迁移到 `archive/superpowers/plans/`：
+  - `docs/superpowers/plans/2026-04-17-font-independent-engine-refactor.md`
+  - `docs/superpowers/plans/2026-04-17-font-stability-borrowing-checklist.md`
+  - `docs/superpowers/plans/2026-04-17-per-app-font-size-sheet.md`
+  - `docs/superpowers/plans/2026-04-18-app-list-topbar-and-paging.md`
+  - `docs/superpowers/plans/2026-04-19-settings-other-about-hide-icon.md`
+- superpowers 设计迁移到 `archive/superpowers/specs/`：
+  - `docs/superpowers/specs/2026-04-18-app-list-topbar-and-paging-design.md`
+  - `docs/superpowers/specs/2026-04-19-app-detail-actions-design.md`
+  - `docs/superpowers/specs/2026-04-19-settings-other-about-hide-icon-design.md`
