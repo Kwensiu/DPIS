@@ -51,13 +51,59 @@ jobs:
           SHA256="$(sha256sum "$APK_PATH" | awk '{print $1}')"
           echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
 
-      - name: Upload APK to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag }}
-          files: app/build/outputs/apk/release/app-release.apk
-          fail_on_unmatched_files: true
-          append_body: true
-          body: |
-            Android release asset:
-            - `app-release.apk` (SHA256: `${{ steps.hash.outputs.sha256 }}`)
+      - name: Derive release metadata
+        id: meta
+        shell: bash
+        run: |
+          TAG="${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag }}"
+          if [[ -z "$TAG" ]]; then
+            echo "Tag is required"
+            exit 1
+          fi
+
+          VERSION="$(echo "$TAG" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)"
+          if [[ -z "$VERSION" ]]; then
+            echo "Tag '$TAG' must include semantic version x.y.z"
+            exit 1
+          fi
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          VERSION_CODE=$((10#$MAJOR * 10000 + 10#$MINOR * 100 + 10#$PATCH))
+          REPO="${{ github.repository }}"
+          APK_URL="https://github.com/${REPO}/releases/download/${TAG}/app-release.apk"
+          MANIFEST_URL="https://github.com/${REPO}/releases/latest/download/update.json"
+          RELEASE_URL="https://github.com/${REPO}/releases/tag/${TAG}"
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "apk_url=$APK_URL" >> "$GITHUB_OUTPUT"
+          echo "manifest_url=$MANIFEST_URL" >> "$GITHUB_OUTPUT"
+          echo "release_url=$RELEASE_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Generate update manifest
+        shell: bash
+        run: |
+          cat > update.json <<EOF
+          {
+            "version": "${{ steps.meta.outputs.version }}",
+            "versionCode": ${{ steps.meta.outputs.version_code }},
+            "apkUrl": "${{ steps.meta.outputs.apk_url }}",
+            "manifestUrl": "${{ steps.meta.outputs.manifest_url }}",
+            "releasePage": "${{ steps.meta.outputs.release_url }}",
+            "sha256": "${{ steps.hash.outputs.sha256 }}",
+            "publishedAt": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
+            "force": false
+          }
+          EOF
+          cat update.json
+
+      - name: Upload assets to GitHub Release
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ steps.meta.outputs.tag }}" \
+            app/build/outputs/apk/release/app-release.apk \
+            update.json \
+            --clobber
