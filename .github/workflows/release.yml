@@ -34,7 +34,9 @@ jobs:
       - name: Install Android SDK packages
         shell: bash
         run: |
-          yes | sdkmanager --licenses
+          set +o pipefail
+          yes | sdkmanager --licenses > /dev/null
+          set -o pipefail
           sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.1.0"
 
       - name: Build release APK
