@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/Kwensiu/DPIS/compare/v1.0.0...v1.0.1) (2026-04-19)
+
+
+### Bug Fixes
+
+* **ci:** avoid sdkmanager license pipefail failure ([2449e93](https://github.com/Kwensiu/DPIS/commit/2449e938d896d8ee9b9571acdeb414a5f81aa7b7))
+* **ci:** make sdkmanager license acceptance pipefail-safe ([2031360](https://github.com/Kwensiu/DPIS/commit/2031360fe72f2ab268e5dccce2c0c30a695ab906))
+
 ## 1.0.0 (2026-04-19)
 
 
