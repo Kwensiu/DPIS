@@ -1,6 +1,9 @@
 package com.dpis.module;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.ComponentName;
+import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,6 +14,7 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -27,16 +31,22 @@ import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textview.MaterialTextView;
 
 import java.text.DateFormat;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+
+import io.github.libxposed.service.XposedService;
 
 public final class SystemServerSettingsActivity extends Activity {
     private static final long STATS_REFRESH_INTERVAL_MS = 500L;
+    private static final String SYSTEM_SCOPE_MODERN = "system";
 
     private DpiConfigStore store;
     private MaterialSwitch hooksEnabledSwitch;
     private MaterialSwitch safeModeSwitch;
     private MaterialSwitch globalLogSwitch;
+    private MaterialSwitch hideLauncherIconSwitch;
     private View fontDebugEntryRow;
     private SharedPreferences statsPreferences;
     private int selectedMode = FontDebugStatsStore.MODE_CHAIN;
@@ -48,6 +58,7 @@ public final class SystemServerSettingsActivity extends Activity {
     private MaterialButton dialogStatsWindowButton;
     private MaterialTextView dialogStatsLastUpdatedView;
     private MaterialTextView dialogStatsContentView;
+    private boolean hooksRequestPending;
 
     private final Handler statsHandler = new Handler(Looper.getMainLooper());
     private final Runnable statsRefreshRunnable = new Runnable() {
@@ -89,6 +100,17 @@ public final class SystemServerSettingsActivity extends Activity {
                 R.string.font_debug_overlay_label,
                 R.string.font_debug_entry_hint,
                 this::showFontDebugDialog);
+        bindEntryRow(
+                R.id.row_about,
+                R.drawable.ic_info_outline_24,
+                R.string.settings_about_label,
+                R.string.settings_about_hint,
+                v -> startActivity(new Intent(this, AboutActivity.class)));
+        hideLauncherIconSwitch = bindSwitchRow(
+                R.id.row_hide_launcher_icon,
+                R.drawable.ic_block_24,
+                R.string.settings_hide_launcher_icon_label,
+                R.string.settings_hide_launcher_icon_hint);
 
         statsPreferences = FontDebugStatsStore.getPreferences(this);
         if (store != null) {
@@ -100,19 +122,26 @@ public final class SystemServerSettingsActivity extends Activity {
             hooksEnabledSwitch.setEnabled(false);
             safeModeSwitch.setEnabled(false);
             globalLogSwitch.setEnabled(false);
+            hideLauncherIconSwitch.setEnabled(false);
             setRowEnabled(fontDebugEntryRow, false);
-            Toast.makeText(this, getString(R.string.status_save_requires_init), Toast.LENGTH_SHORT)
-                    .show();
+            showToast(R.string.status_save_requires_init);
             return;
         }
 
         hooksEnabledSwitch.setChecked(store.isSystemServerHooksEnabled());
         safeModeSwitch.setChecked(store.isSystemServerSafeModeEnabled());
         globalLogSwitch.setChecked(store.isGlobalLogEnabled());
+        boolean launcherIconHidden = resolveLauncherIconHiddenState(store.isLauncherIconHidden());
+        setCheckedSilently(hideLauncherIconSwitch, launcherIconHidden, this::onHideLauncherIconChanged);
+        if (launcherIconHidden != store.isLauncherIconHidden()) {
+            store.setLauncherIconHidden(launcherIconHidden);
+        }
 
         hooksEnabledSwitch.setOnCheckedChangeListener(this::onHooksEnabledChanged);
         safeModeSwitch.setOnCheckedChangeListener(this::onSafeModeChanged);
         globalLogSwitch.setOnCheckedChangeListener(this::onGlobalLogChanged);
+        hideLauncherIconSwitch.setOnCheckedChangeListener(this::onHideLauncherIconChanged);
+        syncHooksSwitchWithScope();
     }
 
     @Override
@@ -124,6 +153,8 @@ public final class SystemServerSettingsActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        syncHooksSwitchWithScope();
+        syncLauncherIconSwitch();
         if (store != null && store.isFontDebugOverlayEnabled() && canDrawOverlays()) {
             startFontDebugOverlayService();
         }
@@ -187,11 +218,13 @@ public final class SystemServerSettingsActivity extends Activity {
             return;
         }
         dismissFontDebugDialog();
+        ViewGroup root = findViewById(android.R.id.content);
         View dialogView = LayoutInflater.from(this).inflate(
-                R.layout.dialog_font_debug_stats, null, false);
+                R.layout.dialog_font_debug_stats, root, false);
         MaterialButton overlayActionButton = dialogView.findViewById(R.id.dialog_overlay_action);
         MaterialButton modeButton = dialogView.findViewById(R.id.dialog_stats_mode_button);
         MaterialButton windowButton = dialogView.findViewById(R.id.dialog_stats_window_button);
+        MaterialButton clearButton = dialogView.findViewById(R.id.dialog_stats_clear);
         MaterialTextView lastUpdatedView = dialogView.findViewById(R.id.dialog_stats_last_updated);
         MaterialTextView contentView = dialogView.findViewById(R.id.dialog_stats_content);
         View closeButton = dialogView.findViewById(R.id.dialog_stats_close);
@@ -201,14 +234,12 @@ public final class SystemServerSettingsActivity extends Activity {
             boolean requestedEnabled = !currentEnabled;
             if (requestedEnabled && !canDrawOverlays()) {
                 requestOverlayPermission();
-                Toast.makeText(this, getString(R.string.font_debug_overlay_permission_needed),
-                        Toast.LENGTH_SHORT).show();
+                showToast(R.string.font_debug_overlay_permission_needed);
                 updateDialogButtons();
                 return;
             }
             if (!store.setFontDebugOverlayEnabled(requestedEnabled)) {
-                Toast.makeText(this, getString(R.string.system_settings_save_failed),
-                        Toast.LENGTH_SHORT).show();
+                showToast(R.string.system_settings_save_failed);
                 updateDialogButtons();
                 return;
             }
@@ -243,6 +274,11 @@ public final class SystemServerSettingsActivity extends Activity {
         });
 
         closeButton.setOnClickListener(v -> dismissFontDebugDialog());
+        clearButton.setOnClickListener(v -> {
+            clearDebugStatsData();
+            refreshStatsPanel();
+            showToast(R.string.font_debug_clear_done);
+        });
 
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         dialog.setContentView(dialogView);
@@ -297,6 +333,24 @@ public final class SystemServerSettingsActivity extends Activity {
         dialogStatsLastUpdatedView.setText(getString(R.string.font_debug_last_updated, timeText, eventTotal));
     }
 
+    private void clearDebugStatsData() {
+        if (statsPreferences == null) {
+            return;
+        }
+        statsPreferences.edit()
+                .remove(FontDebugStatsStore.KEY_CHAIN_5S)
+                .remove(FontDebugStatsStore.KEY_CHAIN_30S)
+                .remove(FontDebugStatsStore.KEY_CHAIN_ALL)
+                .remove(FontDebugStatsStore.KEY_CHAIN_VIEW_5S)
+                .remove(FontDebugStatsStore.KEY_CHAIN_VIEW_30S)
+                .remove(FontDebugStatsStore.KEY_CHAIN_VIEW_ALL)
+                .remove(FontDebugStatsStore.KEY_EVENT_TOTAL)
+                .remove(FontDebugStatsStore.KEY_UPDATED_AT)
+                .remove(FontDebugStatsStore.KEY_UNIT_BREAKDOWN_5S)
+                .remove(FontDebugStatsStore.KEY_VIEWPORT_DEBUG_SUMMARY)
+                .apply();
+    }
+
     private void updateDialogButtons() {
         if (store == null) {
             return;
@@ -320,10 +374,13 @@ public final class SystemServerSettingsActivity extends Activity {
                     ? R.string.font_debug_overlay_disable_button
                     : R.string.font_debug_overlay_enable_button);
             int bgColor = MaterialColors.getColor(dialogOverlayActionButton,
-                    overlayEnabled ? com.google.android.material.R.attr.colorError
-                            : com.google.android.material.R.attr.colorPrimary);
+                    overlayEnabled
+                            ? com.google.android.material.R.attr.colorErrorContainer
+                            : com.google.android.material.R.attr.colorPrimaryContainer);
             int fgColor = MaterialColors.getColor(dialogOverlayActionButton,
-                    com.google.android.material.R.attr.colorOnPrimary);
+                    overlayEnabled
+                            ? com.google.android.material.R.attr.colorOnErrorContainer
+                            : com.google.android.material.R.attr.colorOnPrimaryContainer);
             dialogOverlayActionButton.setBackgroundTintList(ColorStateList.valueOf(bgColor));
             dialogOverlayActionButton.setTextColor(fgColor);
         }
@@ -352,11 +409,36 @@ public final class SystemServerSettingsActivity extends Activity {
         if (store == null) {
             return;
         }
-        if (!store.setSystemServerHooksEnabled(isChecked)) {
-            setCheckedSilently(hooksEnabledSwitch, !isChecked, this::onHooksEnabledChanged);
-            Toast.makeText(this, getString(R.string.system_settings_save_failed),
-                    Toast.LENGTH_SHORT).show();
+        if (!isChecked) {
+            if (!removeSystemScopeIfAvailable()) {
+                setCheckedSilently(hooksEnabledSwitch, true, this::onHooksEnabledChanged);
+                showToast(R.string.scope_remove_failed);
+                return;
+            }
+            hooksRequestPending = false;
+            if (!store.setSystemServerHooksEnabled(false)) {
+                setCheckedSilently(hooksEnabledSwitch, true, this::onHooksEnabledChanged);
+                hooksEnabledSwitch.setEnabled(true);
+                showToast(R.string.system_settings_save_failed);
+                return;
+            }
+            setCheckedSilently(hooksEnabledSwitch, false, this::onHooksEnabledChanged);
+            hooksEnabledSwitch.setEnabled(true);
+            return;
         }
+        XposedService service = DpisApplication.getXposedService();
+        if (service == null) {
+            setCheckedSilently(hooksEnabledSwitch, false, this::onHooksEnabledChanged);
+            hooksEnabledSwitch.setEnabled(true);
+            showToast(R.string.status_save_requires_init);
+            return;
+        }
+        // Keep switch visually off while scope request is pending.
+        setCheckedSilently(hooksEnabledSwitch, false, this::onHooksEnabledChanged);
+        hooksRequestPending = true;
+        hooksEnabledSwitch.setEnabled(false);
+        showToast(R.string.system_hooks_scope_request_notice);
+        requestSystemScopeAndEnableHooks(service);
     }
 
     private void onSafeModeChanged(CompoundButton buttonView, boolean isChecked) {
@@ -365,8 +447,7 @@ public final class SystemServerSettingsActivity extends Activity {
         }
         if (!store.setSystemServerSafeModeEnabled(isChecked)) {
             setCheckedSilently(safeModeSwitch, !isChecked, this::onSafeModeChanged);
-            Toast.makeText(this, getString(R.string.system_settings_save_failed),
-                    Toast.LENGTH_SHORT).show();
+            showToast(R.string.system_settings_save_failed);
         }
     }
 
@@ -376,11 +457,38 @@ public final class SystemServerSettingsActivity extends Activity {
         }
         if (!store.setGlobalLogEnabled(isChecked)) {
             setCheckedSilently(globalLogSwitch, !isChecked, this::onGlobalLogChanged);
-            Toast.makeText(this, getString(R.string.system_settings_save_failed),
-                    Toast.LENGTH_SHORT).show();
+            showToast(R.string.system_settings_save_failed);
             return;
         }
         DpisLog.setLoggingEnabled(isChecked);
+    }
+
+    private void onHideLauncherIconChanged(CompoundButton buttonView, boolean isChecked) {
+        if (store == null) {
+            return;
+        }
+        if (isChecked) {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.settings_hide_launcher_icon_confirm_title)
+                    .setMessage(R.string.settings_hide_launcher_icon_confirm_message)
+                    .setPositiveButton(R.string.dialog_process_action_confirm_positive,
+                            (dialog, which) -> {
+                                if (!persistLauncherIconState(true)) {
+                                    setCheckedSilently(hideLauncherIconSwitch, false,
+                                            this::onHideLauncherIconChanged);
+                                }
+                            })
+                    .setNegativeButton(R.string.dialog_process_action_confirm_negative,
+                            (dialog, which) -> setCheckedSilently(hideLauncherIconSwitch, false,
+                                    this::onHideLauncherIconChanged))
+                    .setOnCancelListener(dialog -> setCheckedSilently(hideLauncherIconSwitch, false,
+                            this::onHideLauncherIconChanged))
+                    .show();
+            return;
+        }
+        if (!persistLauncherIconState(false)) {
+            setCheckedSilently(hideLauncherIconSwitch, true, this::onHideLauncherIconChanged);
+        }
     }
 
     private boolean canDrawOverlays() {
@@ -396,6 +504,21 @@ public final class SystemServerSettingsActivity extends Activity {
     private void startFontDebugOverlayService() {
         Intent serviceIntent = new Intent(this, FontDebugOverlayService.class);
         startService(serviceIntent);
+    }
+
+    private void showToast(int messageResId) {
+        showToast(getString(messageResId));
+    }
+
+    private void showToast(int messageResId, Object... formatArgs) {
+        showToast(getString(messageResId, formatArgs));
+    }
+
+    private void showToast(CharSequence message) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     private static void setRowEnabled(View row, boolean enabled) {
@@ -415,5 +538,140 @@ public final class SystemServerSettingsActivity extends Activity {
         switchView.setOnCheckedChangeListener(null);
         switchView.setChecked(checked);
         switchView.setOnCheckedChangeListener(listener);
+    }
+
+    private void syncHooksSwitchWithScope() {
+        if (store == null || hooksEnabledSwitch == null) {
+            return;
+        }
+        hooksEnabledSwitch.setEnabled(!hooksRequestPending);
+        setCheckedSilently(hooksEnabledSwitch, store.isSystemServerHooksEnabled(),
+                this::onHooksEnabledChanged);
+    }
+
+    private void syncLauncherIconSwitch() {
+        if (store == null || hideLauncherIconSwitch == null) {
+            return;
+        }
+        boolean hidden = resolveLauncherIconHiddenState(store.isLauncherIconHidden());
+        if (hidden != store.isLauncherIconHidden()) {
+            store.setLauncherIconHidden(hidden);
+        }
+        setCheckedSilently(hideLauncherIconSwitch, hidden, this::onHideLauncherIconChanged);
+    }
+
+    private boolean persistLauncherIconState(boolean hidden) {
+        if (!setLauncherAliasHidden(hidden)) {
+            showToast(R.string.settings_hide_launcher_icon_apply_failed);
+            return false;
+        }
+        if (store.setLauncherIconHidden(hidden)) {
+            return true;
+        }
+        setLauncherAliasHidden(!hidden);
+        showToast(R.string.system_settings_save_failed);
+        return false;
+    }
+
+    private boolean setLauncherAliasHidden(boolean hidden) {
+        try {
+            int state = hidden
+                    ? PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                    : PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+            getPackageManager().setComponentEnabledSetting(
+                    getLauncherAliasComponentName(),
+                    state,
+                    PackageManager.DONT_KILL_APP);
+            return true;
+        } catch (RuntimeException error) {
+            return false;
+        }
+    }
+
+    private boolean resolveLauncherIconHiddenState(boolean fallback) {
+        int state = getPackageManager().getComponentEnabledSetting(getLauncherAliasComponentName());
+        if (state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                || state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER
+                || state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_UNTIL_USED) {
+            return true;
+        }
+        if (state == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
+            return false;
+        }
+        return fallback;
+    }
+
+    private ComponentName getLauncherAliasComponentName() {
+        return new ComponentName(this, getPackageName() + ".MainActivityLauncher");
+    }
+
+    private boolean hasSystemScopeSelected() {
+        XposedService service = DpisApplication.getXposedService();
+        if (service == null) {
+            return false;
+        }
+        List<String> scope = service.getScope();
+        return scope.contains(SYSTEM_SCOPE_MODERN);
+    }
+
+    private boolean removeSystemScopeIfAvailable() {
+        XposedService service = DpisApplication.getXposedService();
+        if (service == null) {
+            return true;
+        }
+        try {
+            service.removeScope(Collections.singletonList(SYSTEM_SCOPE_MODERN));
+            return true;
+        } catch (RuntimeException error) {
+            return false;
+        }
+    }
+
+    private void requestSystemScopeAndEnableHooks(XposedService service) {
+        service.requestScope(Collections.singletonList(SYSTEM_SCOPE_MODERN),
+                new XposedService.OnScopeEventListener() {
+                    @Override
+                    public void onScopeRequestApproved(List<String> approved) {
+                        runOnUiThread(() -> {
+                            hooksRequestPending = false;
+                            boolean granted = approved.contains(SYSTEM_SCOPE_MODERN)
+                                    || hasSystemScopeSelected();
+                            if (!granted) {
+                                if (!store.setSystemServerHooksEnabled(false)) {
+                                    showToast(R.string.system_settings_save_failed);
+                                }
+                                setCheckedSilently(hooksEnabledSwitch, false,
+                                        SystemServerSettingsActivity.this::onHooksEnabledChanged);
+                                hooksEnabledSwitch.setEnabled(true);
+                                showToast(R.string.system_hooks_scope_required);
+                                return;
+                            }
+                            if (!store.setSystemServerHooksEnabled(true)) {
+                                setCheckedSilently(hooksEnabledSwitch, false,
+                                        SystemServerSettingsActivity.this::onHooksEnabledChanged);
+                                hooksEnabledSwitch.setEnabled(true);
+                                showToast(R.string.system_settings_save_failed);
+                                return;
+                            }
+                            setCheckedSilently(hooksEnabledSwitch, true,
+                                    SystemServerSettingsActivity.this::onHooksEnabledChanged);
+                            hooksEnabledSwitch.setEnabled(true);
+                        });
+                    }
+
+                    @Override
+                    public void onScopeRequestFailed(String message) {
+                        runOnUiThread(() -> {
+                            hooksRequestPending = false;
+                            if (!store.setSystemServerHooksEnabled(false)) {
+                                showToast(R.string.system_settings_save_failed);
+                            }
+                            setCheckedSilently(hooksEnabledSwitch, false,
+                                    SystemServerSettingsActivity.this::onHooksEnabledChanged);
+                            hooksEnabledSwitch.setEnabled(true);
+                            showToast(R.string.scope_add_failed, message);
+                        });
+                    }
+                });
     }
 }

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/open_source_license_content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingStart="16dp"
+    android:paddingTop="18dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/open_source_license_back_button"
+            android:layout_width="@dimen/settings_back_button_size"
+            android:layout_height="@dimen/settings_back_button_size"
+            android:background="@drawable/bg_round_button_surface"
+            android:contentDescription="@string/system_settings_back"
+            android:padding="8dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_arrow_back_24"
+            app:tint="?attr/colorOnSurface" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:includeFontPadding="false"
+            android:text="@string/open_source_license"
+            android:textAppearance="@style/TextAppearance.Material3.HeadlineLarge"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:layout_weight="1"
+        app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+        app:cardCornerRadius="28dp"
+        app:strokeColor="?attr/colorOutlineVariant"
+        app:strokeWidth="1dp">
+
+        <ListView
+            android:id="@+id/open_source_license_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="?attr/colorOutlineVariant"
+            android:dividerHeight="1dp"
+            android:drawSelectorOnTop="false"
+            android:listSelector="@android:color/transparent"
+            android:paddingTop="0dp"
+            android:paddingBottom="0dp" />
+    </com.google.android.material.card.MaterialCardView>
+</LinearLayout>

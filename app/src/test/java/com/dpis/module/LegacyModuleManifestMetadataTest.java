@@ -34,6 +34,16 @@ public final class LegacyModuleManifestMetadataTest {
         assertTrue(scopeList.contains("system"));
     }
 
+    @Test
+    public void manifestUsesLauncherAliasWhileKeepingModuleSettingsEntry() throws IOException {
+        String manifest = readProjectFile("src/main/AndroidManifest.xml");
+
+        assertTrue(manifest.contains("android:name=\".MainActivityLauncher\""));
+        assertTrue(manifest.contains("android:targetActivity=\".MainActivity\""));
+        assertTrue(manifest.contains("android.intent.category.LAUNCHER"));
+        assertTrue(manifest.contains("de.robv.android.xposed.category.MODULE_SETTINGS"));
+    }
+
     private static String readProjectFile(String relativePath) throws IOException {
         Path path = Path.of(relativePath);
         return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);

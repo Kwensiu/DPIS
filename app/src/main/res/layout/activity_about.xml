@@ -1,14 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/settings_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:ignore="DuplicateIncludedIds">
+    android:layout_height="match_parent">
 
     <LinearLayout
-        android:id="@+id/settings_content"
+        android:id="@+id/about_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -24,7 +21,7 @@
             android:orientation="horizontal">
 
             <androidx.appcompat.widget.AppCompatImageButton
-                android:id="@+id/settings_back_button"
+                android:id="@+id/about_back_button"
                 android:layout_width="@dimen/settings_back_button_size"
                 android:layout_height="@dimen/settings_back_button_size"
                 android:background="@drawable/bg_round_button_surface"
@@ -39,24 +36,15 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
                 android:includeFontPadding="false"
-                android:text="@string/system_settings_title"
+                android:text="@string/about_title"
                 android:textAppearance="@style/TextAppearance.Material3.HeadlineLarge"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <com.google.android.material.textview.MaterialTextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/settings_section_inset_start"
-            android:layout_marginTop="24dp"
-            android:text="@string/system_settings_section_general"
-            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
-            android:textStyle="bold" />
-
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="16dp"
             app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
             app:cardCornerRadius="28dp"
             app:strokeColor="?attr/colorOutlineVariant"
@@ -65,57 +53,40 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:padding="20dp">
 
-                <include
-                    android:id="@+id/row_system_hooks"
-                    layout="@layout/item_settings_switch" />
-
-                <com.google.android.material.divider.MaterialDivider
-                    android:layout_width="match_parent"
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/about_app_name"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp" />
+                    android:text="@string/app_name"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                    android:textStyle="bold" />
 
-                <include
-                    android:id="@+id/row_safe_mode"
-                    layout="@layout/item_settings_switch" />
-
-                <com.google.android.material.divider.MaterialDivider
-                    android:layout_width="match_parent"
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/about_version"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp" />
+                    android:layout_marginTop="4dp"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
 
-                <include
-                    android:id="@+id/row_global_log"
-                    layout="@layout/item_settings_switch" />
-
-                <com.google.android.material.divider.MaterialDivider
-                    android:layout_width="match_parent"
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/about_description"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp" />
-
-                <include
-                    android:id="@+id/row_font_debug_overlay"
-                    layout="@layout/item_settings_entry" />
+                    android:layout_marginTop="12dp"
+                    android:text="@string/module_description"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <com.google.android.material.textview.MaterialTextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/settings_section_inset_start"
-            android:layout_marginTop="24dp"
-            android:text="@string/settings_section_other"
-            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
-            android:textStyle="bold" />
-
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="16dp"
             app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
             app:cardCornerRadius="28dp"
             app:strokeColor="?attr/colorOutlineVariant"
@@ -127,7 +98,7 @@
                 android:orientation="vertical">
 
                 <include
-                    android:id="@+id/row_about"
+                    android:id="@+id/row_about_source"
                     layout="@layout/item_settings_entry" />
 
                 <com.google.android.material.divider.MaterialDivider
@@ -137,8 +108,28 @@
                     android:layout_marginEnd="16dp" />
 
                 <include
-                    android:id="@+id/row_hide_launcher_icon"
-                    layout="@layout/item_settings_switch" />
+                    android:id="@+id/row_about_update"
+                    layout="@layout/item_settings_entry" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp" />
+
+                <include
+                    android:id="@+id/row_about_feedback"
+                    layout="@layout/item_settings_entry" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp" />
+
+                <include
+                    android:id="@+id/row_about_open_source_license"
+                    layout="@layout/item_settings_entry" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>

@@ -1,5 +1,5 @@
 [versions]
-agp = "9.0.1"
+agp = "9.1.1"
 kotlin = "2.3.20"
 ksp = "2.2.0-2.0.2"
 xposed-api = "101.0.1"
@@ -8,17 +8,19 @@ xposed-legacy-api = "82"
 yukihookapi = "1.3.1"
 kavaref = "1.0.2"
 junit4 = "4.13.2"
-appcompat = "1.7.0"
+appcompat = "1.7.1"
 recyclerview = "1.4.0"
 viewpager2 = "1.1.0"
-material = "1.12.0"
-annotation = "1.9.1"
-swiperefreshlayout = "1.1.0"
+material = "1.13.0"
+annotation = "1.10.0"
+swiperefreshlayout = "1.2.0"
+aboutLibraries = "14.0.1"
 
 [plugins]
 agp-app = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutLibraries" }
 
 [libraries]
 libxposed-api = { group = "io.github.libxposed", name = "api", version.ref = "xposed-api" }

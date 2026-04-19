@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.agp.app)
+    alias(libs.plugins.aboutlibraries)
 }
 
 android {
