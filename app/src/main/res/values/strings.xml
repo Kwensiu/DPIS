@@ -42,6 +42,12 @@
     <string name="dialog_process_action_stop">停止</string>
     <string name="dialog_dpis_enabled_status">已启用</string>
     <string name="dialog_dpis_disabled_status">已禁用</string>
+    <string name="startup_disclaimer_title">风险提示与免责声明</string>
+    <string name="startup_disclaimer_message">本模块基于 Root/LSPosed 环境运行，可能导致系统不稳定、功能异常、数据丢失、设备变砖、无法开机或账号风控等风险。\n\n你应确认已备份重要数据，并自行承担安装、使用、卸载本模块产生的风险与后果。\n\n在法律允许范围内，开发者不对因使用或误用本模块造成的间接损失、数据损失、收益损失承担责任。</string>
+    <string name="startup_disclaimer_checkbox_text">我已阅读并同意《风险提示与免责声明》</string>
+    <string name="startup_disclaimer_accept_button">同意并继续</string>
+    <string name="startup_disclaimer_exit_button">不同意并退出</string>
+    <string name="startup_disclaimer_save_failed">记录同意状态失败，请重试</string>
     <string name="dialog_cancel_button">关闭</string>
     <string name="dialog_close_button">关闭</string>
     <string name="filter_sheet_title">列表筛选</string>

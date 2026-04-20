@@ -56,6 +56,29 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("restoredPageScrollStates"));
     }
 
+    @Test
+    public void startupDisclaimerUsesMaterialDialogAndPersistsConsent() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(source.contains("maybeShowStartupDisclaimerDialog()"));
+        assertTrue(source.contains("new MaterialAlertDialogBuilder(this)"));
+        assertTrue(source.contains("R.layout.dialog_startup_disclaimer"));
+        assertTrue(source.contains("setStartupDisclaimerAccepted(true)"));
+        assertTrue(source.contains("dialog.setCancelable(false)"));
+        assertTrue(source.contains("setCanceledOnTouchOutside(false)"));
+    }
+
+    @Test
+    public void startupDisclaimerLayoutKeepsScrollableContent() throws IOException {
+        String layout = read("src/main/res/layout/dialog_startup_disclaimer.xml");
+
+        assertTrue(layout.contains("androidx.core.widget.NestedScrollView"));
+        assertTrue(layout.contains("startup_disclaimer_message"));
+        assertTrue(layout.contains("startup_disclaimer_checkbox"));
+        assertTrue(layout.contains("startup_disclaimer_accept_button"));
+        assertTrue(layout.contains("startup_disclaimer_exit_button"));
+    }
+
     private static String read(String relativePath) throws IOException {
         return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
     }

@@ -38,9 +38,11 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.google.android.material.color.MaterialColors;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.color.MaterialColors;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
@@ -191,6 +193,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         if (retainedState != null && !retainedState.appsSnapshot.isEmpty()) {
             applyFilter();
         }
+        maybeShowStartupDisclaimerDialog();
     }
 
     @Override
@@ -944,6 +947,48 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         injectedOnlySwitch.setOnCheckedChangeListener(listener);
         widthOnlySwitch.setOnCheckedChangeListener(listener);
         fontOnlySwitch.setOnCheckedChangeListener(listener);
+        dialog.show();
+    }
+
+    private void maybeShowStartupDisclaimerDialog() {
+        DpiConfigStore store = getUiConfigStore();
+        if (store.isStartupDisclaimerAccepted() || isFinishing() || isDestroyed()) {
+            return;
+        }
+        showStartupDisclaimerDialog(store);
+    }
+
+    private void showStartupDisclaimerDialog(DpiConfigStore store) {
+        View dialogView = LayoutInflater.from(this)
+                .inflate(R.layout.dialog_startup_disclaimer, null, false);
+        MaterialCheckBox agreementCheckBox =
+                dialogView.findViewById(R.id.startup_disclaimer_checkbox);
+        MaterialButton acceptButton =
+                dialogView.findViewById(R.id.startup_disclaimer_accept_button);
+        MaterialButton exitButton =
+                dialogView.findViewById(R.id.startup_disclaimer_exit_button);
+
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+        dialog.setCancelable(false);
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.setOnKeyListener((unused, keyCode, event) ->
+                keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP);
+
+        agreementCheckBox.setOnCheckedChangeListener((buttonView, isChecked) ->
+                acceptButton.setEnabled(isChecked));
+        acceptButton.setOnClickListener(v -> {
+            if (!agreementCheckBox.isChecked()) {
+                return;
+            }
+            if (!store.setStartupDisclaimerAccepted(true)) {
+                showToast(R.string.startup_disclaimer_save_failed);
+                return;
+            }
+            dialog.dismiss();
+        });
+        exitButton.setOnClickListener(v -> finish());
         dialog.show();
     }
 

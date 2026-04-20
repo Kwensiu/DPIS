@@ -17,6 +17,7 @@ final class DpiConfigStore {
     static final String KEY_FONT_DEBUG_SELECTED_MODE = "font.debug.selected_mode";
     static final String KEY_FONT_DEBUG_SELECTED_WINDOW = "font.debug.selected_window";
     static final String KEY_HIDE_LAUNCHER_ICON = "ui.hide_launcher_icon";
+    static final String KEY_STARTUP_DISCLAIMER_ACCEPTED = "ui.startup_disclaimer_accepted";
 
     private final SharedPreferences preferences;
     private final SharedPreferences mirrorPreferences;
@@ -131,6 +132,14 @@ final class DpiConfigStore {
 
     boolean setLauncherIconHidden(boolean hidden) {
         return commitBoth(editor -> editor.putBoolean(KEY_HIDE_LAUNCHER_ICON, hidden));
+    }
+
+    boolean isStartupDisclaimerAccepted() {
+        return getBoolean(KEY_STARTUP_DISCLAIMER_ACCEPTED, false);
+    }
+
+    boolean setStartupDisclaimerAccepted(boolean accepted) {
+        return commitBoth(editor -> editor.putBoolean(KEY_STARTUP_DISCLAIMER_ACCEPTED, accepted));
     }
 
     boolean isFontDebugOverlayEnabled() {

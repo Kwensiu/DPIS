@@ -252,6 +252,16 @@ public class DpiConfigStoreTest {
     }
 
     @Test
+    public void startupDisclaimerRequiresExplicitAcceptance() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertFalse(store.isStartupDisclaimerAccepted());
+        assertTrue(store.setStartupDisclaimerAccepted(true));
+        assertTrue(store.isStartupDisclaimerAccepted());
+    }
+
+    @Test
     public void mirrorsWritesToBackupPreferencesWhenConfigured() {
         FakePrefs remotePrefs = new FakePrefs();
         FakePrefs localPrefs = new FakePrefs();
