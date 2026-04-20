@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">DPIS</string>
-    <string name="module_description">Per-app virtual viewport</string>
+    <string name="module_description">独立调节应用 DPI 与文本大小</string>
     <string name="dialog_viewport_hint">虚拟宽度 dp</string>
     <string name="dialog_viewport_mode_emulation">伪装</string>
     <string name="dialog_viewport_mode_replace">替换</string>
