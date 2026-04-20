@@ -29,6 +29,8 @@ public final class FontDebugOverlayService extends Service {
     private static final long WINDOW_30S_STALE_MS = 30_000L;
     private static final Pattern UNIT_LINE_PATTERN =
             Pattern.compile("^\\s*(\\d+)\\s+text-size-unit-(\\d)\\b.*$");
+    private static final Pattern VIEWPORT_PACKAGE_PATTERN =
+            Pattern.compile("^视口\\s+([^|\\s]+).*");
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable refreshRunnable = new Runnable() {
@@ -215,6 +217,8 @@ public final class FontDebugOverlayService extends Service {
         String viewportSummary = store != null
                 ? store.getDebugString(FontDebugStatsStore.KEY_VIEWPORT_DEBUG_SUMMARY, "视口: 暂无")
                 : "视口: 暂无";
+        String viewportSection = formatViewportSection(viewportSummary);
+        String fontModeText = resolveFontModeText(viewportSummary);
         boolean hasViewportSummary = viewportSummary != null
                 && !viewportSummary.isBlank()
                 && !"视口: 暂无".equals(viewportSummary);
@@ -223,19 +227,105 @@ public final class FontDebugOverlayService extends Service {
                 ? ""
                 : "日志输出已关闭，字体统计暂停\n";
         String body = String.format(Locale.US,
-                "字体统计 %s %s Top%d\n总事件:%d\n%s%s\n%s\n%s\n\n点按:切窗口  双击:切Top  长按:切分组  双指长按:清空",
+                "字体调试  %s · %s · Top%d\n%sDP/视口: %s\n字体模式: %s\n字体事件: %d\n%s\n\nTOP链路:\n%s\n\n点按:切窗口  双击:切Top  长按:切分组  双指长按:清空",
                 windowText,
                 modeText,
                 topLimit,
-                eventTotal,
                 loggingNotice,
-                viewportSummary,
+                viewportSection,
+                fontModeText,
+                eventTotal,
                 unitBreakdown,
                 top);
-        if (updatedAt <= 0L && eventTotal <= 0 && !hasViewportSummary) {
-            body = "字体统计 初始化中\n点按:切窗口  长按:切分组  双指长按:清空";
+        if (!hasFontStats) {
+            FontDebugDataDiagnostics.NoDataReason reason =
+                    FontDebugDataDiagnostics.resolveNoDataReason(store, preferences);
+            if (reason != FontDebugDataDiagnostics.NoDataReason.NONE) {
+                body = String.format(Locale.US,
+                        "字体调试 无数据\n原因: %s\n%s\nDP/视口: %s\n字体模式: %s\n\n点按:切窗口  长按:切分组  双指长按:清空",
+                        reasonTitle(reason),
+                        reasonHint(reason),
+                        viewportSection,
+                        fontModeText);
+            } else if (updatedAt <= 0L && eventTotal <= 0 && !hasViewportSummary) {
+                body = "字体调试 初始化中\n点按:切窗口  长按:切分组  双指长按:清空";
+            }
         }
         overlayTextView.setText(body);
+    }
+
+    private String resolveFontModeText(String viewportSummary) {
+        if (store == null) {
+            return "未知";
+        }
+        String packageName = parsePackageNameFromViewportSummary(viewportSummary);
+        if (packageName == null || packageName.isBlank()) {
+            return "未知（无目标包）";
+        }
+        String mode = store.getTargetFontApplyMode(packageName);
+        return switch (FontApplyMode.normalize(mode)) {
+            case FontApplyMode.SYSTEM_EMULATION -> "伪装";
+            case FontApplyMode.FIELD_REWRITE -> "替换";
+            default -> "关闭";
+        };
+    }
+
+    private static String formatViewportSection(String viewportSummary) {
+        if (viewportSummary == null || viewportSummary.isBlank() || "视口: 暂无".equals(viewportSummary)) {
+            return "暂无";
+        }
+        String normalized = viewportSummary.trim();
+        if (!normalized.startsWith("视口 ")) {
+            return normalized;
+        }
+        String[] parts = normalized.split("\\|");
+        if (parts.length < 3) {
+            return normalized.substring(3).trim();
+        }
+        String pkg = parts[0].replaceFirst("^视口\\s+", "").trim();
+        String dpMode = parts[1].trim();
+        StringBuilder lines = new StringBuilder();
+        lines.append("包名: ").append(pkg)
+                .append('\n')
+                .append("DP模式: ").append(dpMode);
+        for (int i = 2; i < parts.length; i++) {
+            String part = parts[i].trim();
+            if (part.isEmpty()) {
+                continue;
+            }
+            lines.append('\n').append(part);
+        }
+        return lines.toString();
+    }
+
+    private static String parsePackageNameFromViewportSummary(String viewportSummary) {
+        if (viewportSummary == null || viewportSummary.isBlank()) {
+            return null;
+        }
+        Matcher matcher = VIEWPORT_PACKAGE_PATTERN.matcher(viewportSummary.trim());
+        if (!matcher.matches()) {
+            return null;
+        }
+        String pkg = matcher.group(1);
+        return pkg == null || pkg.isBlank() ? null : pkg.trim();
+    }
+
+    private static String reasonTitle(FontDebugDataDiagnostics.NoDataReason reason) {
+        return switch (reason) {
+            case SCOPE_MISSING -> "作用域缺失";
+            case NOT_INJECTED -> "未注入";
+            case NO_EVENTS -> "无事件";
+            default -> "未知";
+        };
+    }
+
+    private static String reasonHint(FontDebugDataDiagnostics.NoDataReason reason) {
+        return switch (reason) {
+            case SCOPE_MISSING -> "未配置目标应用，请先在应用列表加入作用域";
+            case NOT_INJECTED -> "目标进程未加载模块，检查 LSPosed 启用状态并重启目标应用";
+            case NO_EVENTS -> "已注入但未命中字体链路，进入文字页面或切到累计窗口观察";
+            default -> "请稍后重试";
+        };
     }
 
     private void clearDebugStatsData() {

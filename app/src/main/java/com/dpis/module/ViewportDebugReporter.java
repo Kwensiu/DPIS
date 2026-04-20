@@ -24,7 +24,13 @@ final class ViewportDebugReporter {
         if (result == null || packageName == null || packageName.isEmpty()) {
             return;
         }
+        boolean changed = result.widthDp != sourceWidthDp
+                || result.heightDp != sourceHeightDp
+                || result.densityDpi != sourceDensityDpi;
         String modeText = ViewportApplyMode.FIELD_REWRITE.equals(viewportMode) ? "替换" : "伪装";
+        if (!changed) {
+            modeText = modeText + "(未变化)";
+        }
         int targetWidthPx = sharedResult != null ? sharedResult.widthPx : -1;
         int targetHeightPx = sharedResult != null ? sharedResult.heightPx : -1;
         String summary = "视口 " + packageName
@@ -43,7 +49,9 @@ final class ViewportDebugReporter {
             return;
         }
         Intent intent = new Intent(FontDebugStatsStore.ACTION_STATS_UPDATE);
-        intent.setPackage(context.getPackageName());
+        // Hook callbacks execute inside target app processes; always route updates
+        // back to the module package receiver instead of target app package.
+        intent.setPackage(BuildConfig.APPLICATION_ID);
         intent.putExtra(FontDebugStatsStore.EXTRA_VIEWPORT_DEBUG_SUMMARY, summary);
         try {
             context.sendBroadcast(intent);

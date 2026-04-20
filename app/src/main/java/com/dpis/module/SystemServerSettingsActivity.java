@@ -319,7 +319,16 @@ public final class SystemServerSettingsActivity extends Activity {
         int eventTotal = statsPreferences.getInt(FontDebugStatsStore.KEY_EVENT_TOTAL, 0);
 
         if (statsText == null || statsText.trim().isEmpty()) {
-            dialogStatsContentView.setText(getString(R.string.font_debug_not_updated));
+            FontDebugDataDiagnostics.NoDataReason reason =
+                    FontDebugDataDiagnostics.resolveNoDataReason(store, statsPreferences);
+            if (reason == FontDebugDataDiagnostics.NoDataReason.NONE) {
+                dialogStatsContentView.setText(getString(R.string.font_debug_not_updated));
+            } else {
+                dialogStatsContentView.setText(getString(
+                        R.string.font_debug_no_data_with_reason,
+                        reasonTitleText(reason),
+                        reasonHintText(reason)));
+            }
         } else {
             dialogStatsContentView.setText(statsText);
         }
@@ -331,6 +340,24 @@ public final class SystemServerSettingsActivity extends Activity {
         DateFormat format = DateFormat.getTimeInstance(DateFormat.MEDIUM, Locale.getDefault());
         String timeText = format.format(new Date(updatedAt));
         dialogStatsLastUpdatedView.setText(getString(R.string.font_debug_last_updated, timeText, eventTotal));
+    }
+
+    private String reasonTitleText(FontDebugDataDiagnostics.NoDataReason reason) {
+        return switch (reason) {
+            case SCOPE_MISSING -> getString(R.string.font_debug_reason_scope_missing);
+            case NOT_INJECTED -> getString(R.string.font_debug_reason_not_injected);
+            case NO_EVENTS -> getString(R.string.font_debug_reason_no_events);
+            default -> getString(R.string.font_debug_not_updated);
+        };
+    }
+
+    private String reasonHintText(FontDebugDataDiagnostics.NoDataReason reason) {
+        return switch (reason) {
+            case SCOPE_MISSING -> getString(R.string.font_debug_reason_scope_missing_hint);
+            case NOT_INJECTED -> getString(R.string.font_debug_reason_not_injected_hint);
+            case NO_EVENTS -> getString(R.string.font_debug_reason_no_events_hint);
+            default -> getString(R.string.font_debug_not_updated);
+        };
     }
 
     private void clearDebugStatsData() {

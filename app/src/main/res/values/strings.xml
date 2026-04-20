@@ -84,6 +84,13 @@
     <string name="system_settings_save_failed">保存失败，请重试</string>
     <string name="font_debug_last_updated">更新时间：%1$s | 事件总数：%2$d</string>
     <string name="font_debug_not_updated">暂无统计数据</string>
+    <string name="font_debug_no_data_with_reason">暂无统计数据（%1$s）\n%2$s</string>
+    <string name="font_debug_reason_scope_missing">作用域缺失</string>
+    <string name="font_debug_reason_scope_missing_hint">未配置目标应用，请先在应用列表加入作用域。</string>
+    <string name="font_debug_reason_not_injected">未注入</string>
+    <string name="font_debug_reason_not_injected_hint">目标进程未加载模块，检查 LSPosed 启用状态并重启目标应用。</string>
+    <string name="font_debug_reason_no_events">无事件</string>
+    <string name="font_debug_reason_no_events_hint">已注入但未命中字体链路，进入文字页面或切到累计窗口观察。</string>
     <string name="settings_about_label">关于</string>
     <string name="settings_about_hint">查看版本、源码与反馈渠道。</string>
     <string name="settings_hide_launcher_icon_label">隐藏桌面图标</string>

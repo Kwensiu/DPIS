@@ -198,7 +198,9 @@ final class FontDebugStatsReporter {
             return;
         }
         Intent intent = new Intent(FontDebugStatsStore.ACTION_STATS_UPDATE);
-        intent.setPackage(context.getPackageName());
+        // Hook callbacks execute inside target app processes; always route updates
+        // back to the module package receiver instead of target app package.
+        intent.setPackage(BuildConfig.APPLICATION_ID);
         intent.putExtra(FontDebugStatsStore.EXTRA_CHAIN_5S, snapshot.chain5s);
         intent.putExtra(FontDebugStatsStore.EXTRA_CHAIN_30S, snapshot.chain30s);
         intent.putExtra(FontDebugStatsStore.EXTRA_CHAIN_ALL, snapshot.chainAll);
