@@ -30,7 +30,7 @@ android {
     buildToolsVersion = "36.1.0"
 
     defaultConfig {
-        applicationId = "com.dpis.module"
+        applicationId = "io.github.kwensiu.dpis"
         minSdk = 26
         targetSdk = 36
         versionName = appVersionName

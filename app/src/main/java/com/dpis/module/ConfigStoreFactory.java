@@ -42,6 +42,7 @@ final class ConfigStoreFactory {
         if (remotePreferences != null) {
             return new DpiConfigStore(remotePreferences);
         }
-        return new DpiConfigStore(new XSharedPreferencesAdapter("com.dpis.module", DpiConfigStore.GROUP));
+        return new DpiConfigStore(
+                new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpiConfigStore.GROUP));
     }
 }

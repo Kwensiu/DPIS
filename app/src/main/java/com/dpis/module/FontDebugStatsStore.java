@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 final class FontDebugStatsStore {
-    static final String ACTION_STATS_UPDATE = "com.dpis.module.ACTION_FONT_DEBUG_STATS_UPDATE";
+    static final String ACTION_STATS_UPDATE = "io.github.kwensiu.dpis.ACTION_FONT_DEBUG_STATS_UPDATE";
 
     static final String EXTRA_CHAIN_5S = "chain_5s";
     static final String EXTRA_CHAIN_30S = "chain_30s";

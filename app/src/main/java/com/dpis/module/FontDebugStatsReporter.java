@@ -198,7 +198,7 @@ final class FontDebugStatsReporter {
             return;
         }
         Intent intent = new Intent(FontDebugStatsStore.ACTION_STATS_UPDATE);
-        intent.setPackage("com.dpis.module");
+        intent.setPackage(context.getPackageName());
         intent.putExtra(FontDebugStatsStore.EXTRA_CHAIN_5S, snapshot.chain5s);
         intent.putExtra(FontDebugStatsStore.EXTRA_CHAIN_30S, snapshot.chain30s);
         intent.putExtra(FontDebugStatsStore.EXTRA_CHAIN_ALL, snapshot.chainAll);

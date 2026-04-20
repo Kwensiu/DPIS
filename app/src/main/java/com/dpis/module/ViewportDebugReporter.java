@@ -43,7 +43,7 @@ final class ViewportDebugReporter {
             return;
         }
         Intent intent = new Intent(FontDebugStatsStore.ACTION_STATS_UPDATE);
-        intent.setPackage("com.dpis.module");
+        intent.setPackage(context.getPackageName());
         intent.putExtra(FontDebugStatsStore.EXTRA_VIEWPORT_DEBUG_SUMMARY, summary);
         try {
             context.sendBroadcast(intent);

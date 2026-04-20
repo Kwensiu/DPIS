@@ -68,7 +68,7 @@
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="com.dpis.module.ACTION_FONT_DEBUG_STATS_UPDATE" />
+                <action android:name="io.github.kwensiu.dpis.ACTION_FONT_DEBUG_STATS_UPDATE" />
             </intent-filter>
         </receiver>
 
