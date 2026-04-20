@@ -21,6 +21,24 @@ public class AboutActivitySourceSmokeTest {
     }
 
     @Test
+    public void aboutActivityUpdateFlowUsesDirectApkUrlAndHttpsOnly() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AboutActivity.java");
+
+        assertTrue(source.contains("String downloadUrl = manifest.apkUrl;"));
+        assertTrue(source.contains("R.string.about_update_action_view_release"));
+        assertTrue(source.contains("\"https\".equalsIgnoreCase(scheme)"));
+    }
+
+    @Test
+    public void aboutActivityVerifiesDownloadedApkSignatureBeforeInstall() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AboutActivity.java");
+
+        assertTrue(source.contains("verifyDownloadedApk(targetFile);"));
+        assertTrue(source.contains("extractSigningFingerprints"));
+        assertTrue(source.contains("about_update_download_untrusted"));
+    }
+
+    @Test
     public void manifestDeclaresOpenSourceLicenseActivity() throws IOException {
         String manifest = read("src/main/AndroidManifest.xml");
 

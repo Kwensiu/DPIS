@@ -12,6 +12,8 @@ import io.github.libxposed.service.XposedService;
 import io.github.libxposed.service.XposedServiceHelper;
 
 public final class DpisApplication extends Application implements XposedServiceHelper.OnServiceListener {
+    private static final long UPDATE_CACHE_STARTUP_MAX_AGE_MS = 24 * 60 * 60 * 1000L;
+
     interface ServiceStateListener {
         void onServiceStateChanged();
     }
@@ -29,6 +31,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         configStore = ConfigStoreFactory.createForModuleApp(this);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
         XposedServiceHelper.registerListener(this);
+        UpdatePackageInstaller.clearStaleUpdateCache(this, UPDATE_CACHE_STARTUP_MAX_AGE_MS);
     }
 
     @Override
