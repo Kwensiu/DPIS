@@ -68,17 +68,6 @@
 
 若该 APK 能在 `system` 执行，问题更偏向 DPIS 打包形态，而非设备本身不支持 legacy 执行。
 
-## YukiSmoke 后续实验
+## 补充说明
 
-由于 `InxLocker` 使用 YukiHookAPI `loadSystem`，当时增加第二组对照：
-
-- 模块：`YukiSmoke`
-- 包名：`com.dpis.yukismoke`
-- 入口：`HookEntry`
-- 路径：`@InjectYukiHookWithXposed` + `IYukiHookXposedInit` + `loadSystem`
-- 标记：`yukismoke-system-v1`
-
-结论判定：
-
-- 若 `YukiSmoke` 能在 `system` 执行，说明设备支持该类 Yuki 路径；
-- 若仍不能执行，则主要问题在 `system` 执行链路本身，而非 DPIS 包形态。
+`YukiSmoke` 曾作为历史对照实验存在，现已退役并移出当前测试基线。

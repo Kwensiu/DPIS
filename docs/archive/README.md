@@ -15,8 +15,8 @@
 
 ## 重要说明
 
-- 历史模块目录（`legacysmoke`、`yukismoke`）当时仍保留在仓库根目录。
-- 原因：相关测试曾直接读取这些路径（例如 `singleapk/src/test/.../LegacySmokeModuleFilesTest`）。
+- 历史模块目录曾包含 `legacysmoke`、`yukismoke`。
+- 当前测试仅保留 `legacysmoke` 的归档夹具，不再依赖 `yukismoke`。
 
 ## 2026-04-17 归档
 
