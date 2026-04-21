@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.2.0](https://github.com/Kwensiu/DPIS/compare/v1.1.0...v1.2.0) (2026-04-21)
+
+
+### Features
+
+* add in-app update download and install flow ([f83d05b](https://github.com/Kwensiu/DPIS/commit/f83d05bf2de7df1103fbc9be9a308b0bdc47b35d))
+* add startup disclaimer gate with persistent consent ([626aaf4](https://github.com/Kwensiu/DPIS/commit/626aaf40c02b6097ec1a36c69d7443641041323a))
+
+
+### Bug Fixes
+
+* align package identifiers after applicationId rename ([dd6139c](https://github.com/Kwensiu/DPIS/commit/dd6139c351ae13127d3d2137ba1765ea60bbd669))
+* align system hook emulation hint with effective scope state ([6e8818b](https://github.com/Kwensiu/DPIS/commit/6e8818b23ae4ce45559fda729f8270a4366b0620))
+* improve font debug diagnostics and stats routing ([3009676](https://github.com/Kwensiu/DPIS/commit/30096763114d60d0f77e6449a6ead414e7e0fe75))
+* keep app detail sheet open and refresh status in-sheet ([fb4bc98](https://github.com/Kwensiu/DPIS/commit/fb4bc9867d65b751872bbf6329438e5ec99c78ff))
+* remove yuki smoke artifacts from current baseline ([653a492](https://github.com/Kwensiu/DPIS/commit/653a4926d07e53e316b3b1129efb0bbbe2ba79e2))
+
 ## [1.1.0](https://github.com/Kwensiu/DPIS/compare/v1.0.2...v1.1.0) (2026-04-19)
 
 

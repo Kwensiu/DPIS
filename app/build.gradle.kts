@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.aboutlibraries)
 }
 
-private val appVersionName = "1.1.0" // x-release-please-version
+private val appVersionName = "1.2.0" // x-release-please-version
 
 private fun semVerToVersionCode(version: String): Int {
     val parts = version.split(".")
