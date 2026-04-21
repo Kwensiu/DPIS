@@ -65,6 +65,7 @@ import java.util.Set;
 import io.github.libxposed.service.XposedService;
 
 public final class MainActivity extends Activity implements DpisApplication.ServiceStateListener {
+    private static final String SYSTEM_SCOPE_MODERN = "system";
     private static final String STATE_CURRENT_QUERY = "state.current_query";
     private static final String STATE_CURRENT_PAGE = "state.current_page";
     private static final String STATE_FILTER_SHOW_SYSTEM = "state.filter.show_system";
@@ -88,6 +89,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     private EditText searchInput;
     private ImageButton searchFilterButton;
     private Boolean rootAccessCache;
+    private boolean cachedSystemHookEffectiveEnabled;
 
     private enum ProcessAction {
         START,
@@ -110,6 +112,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_status);
         applyInsets();
+        refreshSystemHookEffectiveEnabled();
 
         RetainedState retainedState = (RetainedState) getLastNonConfigurationInstance();
         if (retainedState != null) {
@@ -211,6 +214,10 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     @Override
     protected void onStart() {
         super.onStart();
+        refreshSystemHookEffectiveEnabled();
+        if (pagerAdapter != null) {
+            pagerAdapter.refreshVisibleStatuses();
+        }
         DpisApplication.addServiceStateListener(this, true);
     }
 
@@ -222,7 +229,13 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
 
     @Override
     public void onServiceStateChanged() {
-        runOnUiThread(this::requestAppsLoad);
+        runOnUiThread(() -> {
+            refreshSystemHookEffectiveEnabled();
+            if (pagerAdapter != null) {
+                pagerAdapter.refreshVisibleStatuses();
+            }
+            requestAppsLoad();
+        });
     }
 
     @Override
@@ -697,6 +710,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                                TextInputEditText fontScaleInput,
                                ModeToggle viewportModeToggle,
                                ModeToggle fontModeToggle) {
+        refreshSystemHookEffectiveEnabled();
         boolean systemHooksEnabled = isSystemHookEnabledFromStore();
         DpiConfigStore store = getUiConfigStore();
         if (store == null) {
@@ -1187,8 +1201,31 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private boolean isSystemHookEnabledFromStore() {
+        return cachedSystemHookEffectiveEnabled;
+    }
+
+    private void refreshSystemHookEffectiveEnabled() {
         DpiConfigStore store = getUiConfigStore();
-        return store != null && store.isSystemServerHooksEnabled();
+        if (store == null) {
+            cachedSystemHookEffectiveEnabled = false;
+            return;
+        }
+        boolean desiredEnabled = store.isSystemServerHooksEnabled();
+        XposedService service = DpisApplication.getXposedService();
+        boolean serviceAvailable = service != null;
+        boolean scopeSelected = false;
+        if (serviceAvailable) {
+            try {
+                List<String> scope = service.getScope();
+                scopeSelected = scope != null && scope.contains(SYSTEM_SCOPE_MODERN);
+            } catch (RuntimeException ignored) {
+                scopeSelected = false;
+            }
+        }
+        cachedSystemHookEffectiveEnabled = SystemHookEffectiveView.resolve(
+                desiredEnabled,
+                serviceAvailable,
+                scopeSelected).effectiveEnabled;
     }
 
     private DpiConfigStore getUiConfigStore() {

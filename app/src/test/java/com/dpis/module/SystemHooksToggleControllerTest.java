@@ -136,6 +136,7 @@ public class SystemHooksToggleControllerTest {
         assertFalse(view.lastState.switchEnabled);
         assertTrue(view.lastState.desiredEnabled);
         assertFalse(view.lastState.effectiveEnabled);
+        assertEquals(SystemHookState.Reason.REQUEST_PENDING, view.lastState.reason);
         assertEquals(1, view.scopeRequestNoticeCount);
         assertTrue(gateway.scopeRequestTriggered);
         assertNotNull(gateway.callback);
