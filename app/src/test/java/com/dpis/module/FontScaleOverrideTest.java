@@ -27,6 +27,7 @@ public class FontScaleOverrideTest {
         FakePrefs prefs = new FakePrefs();
         prefs.edit().putInt("font.com.max.xiaoheihe.scale_percent", 150).commit();
         DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setSystemServerHooksEnabled(true);
 
         FontScaleOverride.Result result = FontScaleOverride.resolve(
                 store, "com.max.xiaoheihe", 1.0f);
@@ -34,6 +35,21 @@ public class FontScaleOverrideTest {
         assertEquals(Integer.valueOf(150), result.targetPercent);
         assertEquals(1.5f, result.effective, 0.0001f);
         assertTrue(result.changed);
+    }
+
+    @Test
+    public void resolveSkipsEmulationWhenSystemHookOff() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setSystemServerHooksEnabled(false);
+        store.setTargetFontScalePercent("com.max.xiaoheihe", 150);
+        store.setTargetFontApplyMode("com.max.xiaoheihe", FontApplyMode.SYSTEM_EMULATION);
+
+        FontScaleOverride.Result result = FontScaleOverride.resolve(
+                store, "com.max.xiaoheihe", 1.0f);
+
+        assertEquals(1.0f, result.effective, 0.0001f);
+        assertFalse(result.changed);
     }
 
     @Test

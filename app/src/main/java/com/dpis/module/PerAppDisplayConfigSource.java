@@ -33,5 +33,9 @@ final class PerAppDisplayConfigSource {
         }
         return store.getConfiguredPackages();
     }
+
+    boolean isSystemServerHooksEnabled() {
+        return store == null || store.isSystemServerHooksEnabled();
+    }
 }
 

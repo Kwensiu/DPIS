@@ -14,7 +14,9 @@ final class FontScaleOverride {
         float original = currentFontScale > 0f ? currentFontScale : 1.0f;
         Integer targetPercent = store != null ? store.getTargetFontScalePercent(packageName) : null;
         String mode = store != null ? store.getTargetFontApplyMode(packageName) : FontApplyMode.OFF;
-        boolean emulationEnabled = FontApplyMode.SYSTEM_EMULATION.equals(mode);
+        boolean systemHookEnabled = store == null || store.isSystemServerHooksEnabled();
+        String effectiveMode = EffectiveModeResolver.resolveFontMode(mode, systemHookEnabled);
+        boolean emulationEnabled = FontApplyMode.SYSTEM_EMULATION.equals(effectiveMode);
         float effective = (emulationEnabled && targetPercent != null)
                 ? (targetPercent / 100.0f)
                 : original;

@@ -35,15 +35,19 @@ final class AppStatusFormatter {
     }
 
     static boolean shouldWarnViewportEmulation(Integer viewportWidthDp, String viewportMode,
-                                               boolean systemScopeSelected,
+                                               boolean systemHooksEnabled,
                                                boolean dpisEnabled) {
         if (!dpisEnabled) {
             return false;
         }
-        return viewportWidthDp != null
-                && ViewportApplyMode.SYSTEM_EMULATION.equals(
-                ViewportApplyMode.normalize(viewportMode))
-                && !systemScopeSelected;
+        if (viewportWidthDp == null) {
+            return false;
+        }
+        String requested = ViewportApplyMode.normalize(viewportMode);
+        String effective = EffectiveModeResolver.resolveViewportMode(
+                requested, systemHooksEnabled);
+        return ViewportApplyMode.SYSTEM_EMULATION.equals(requested)
+                && !ViewportApplyMode.SYSTEM_EMULATION.equals(effective);
     }
 
     static CharSequence applyMiddleSegmentWarnStyle(String statusText, int warnColor) {

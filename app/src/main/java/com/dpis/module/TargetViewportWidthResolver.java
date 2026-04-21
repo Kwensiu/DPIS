@@ -8,6 +8,14 @@ final class TargetViewportWidthResolver {
         if (store == null || packageName == null || packageName.isEmpty()) {
             return null;
         }
+        String requestedMode = store.getTargetViewportApplyMode(packageName);
+        String mode = EffectiveModeResolver.resolveViewportMode(
+                requestedMode,
+                store.isSystemServerHooksEnabled());
+        if (ViewportApplyMode.SYSTEM_EMULATION.equals(ViewportApplyMode.normalize(requestedMode))
+                && ViewportApplyMode.OFF.equals(mode)) {
+            return null;
+        }
         Integer targetViewportWidthDp = store.getTargetViewportWidthDp(packageName);
         if (targetViewportWidthDp == null || targetViewportWidthDp <= 0) {
             return null;

@@ -58,7 +58,7 @@ public final class SystemServerSettingsActivity extends Activity {
     private MaterialButton dialogStatsWindowButton;
     private MaterialTextView dialogStatsLastUpdatedView;
     private MaterialTextView dialogStatsContentView;
-    private boolean hooksRequestPending;
+    private SystemHooksToggleController hooksToggleController;
 
     private final Handler statsHandler = new Handler(Looper.getMainLooper());
     private final Runnable statsRefreshRunnable = new Runnable() {
@@ -128,7 +128,6 @@ public final class SystemServerSettingsActivity extends Activity {
             return;
         }
 
-        hooksEnabledSwitch.setChecked(store.isSystemServerHooksEnabled());
         safeModeSwitch.setChecked(store.isSystemServerSafeModeEnabled());
         globalLogSwitch.setChecked(store.isGlobalLogEnabled());
         boolean launcherIconHidden = resolveLauncherIconHiddenState(store.isLauncherIconHidden());
@@ -136,6 +135,11 @@ public final class SystemServerSettingsActivity extends Activity {
         if (launcherIconHidden != store.isLauncherIconHidden()) {
             store.setLauncherIconHidden(launcherIconHidden);
         }
+        hooksToggleController = new SystemHooksToggleController(
+                store,
+                new ActivitySystemScopeGateway(),
+                new ActivitySystemHooksToggleView());
+        hooksToggleController.syncFromStore();
 
         hooksEnabledSwitch.setOnCheckedChangeListener(this::onHooksEnabledChanged);
         safeModeSwitch.setOnCheckedChangeListener(this::onSafeModeChanged);
@@ -433,39 +437,10 @@ public final class SystemServerSettingsActivity extends Activity {
     }
 
     private void onHooksEnabledChanged(CompoundButton buttonView, boolean isChecked) {
-        if (store == null) {
+        if (hooksToggleController == null) {
             return;
         }
-        if (!isChecked) {
-            if (!removeSystemScopeIfAvailable()) {
-                setCheckedSilently(hooksEnabledSwitch, true, this::onHooksEnabledChanged);
-                showToast(R.string.scope_remove_failed);
-                return;
-            }
-            hooksRequestPending = false;
-            if (!store.setSystemServerHooksEnabled(false)) {
-                setCheckedSilently(hooksEnabledSwitch, true, this::onHooksEnabledChanged);
-                hooksEnabledSwitch.setEnabled(true);
-                showToast(R.string.system_settings_save_failed);
-                return;
-            }
-            setCheckedSilently(hooksEnabledSwitch, false, this::onHooksEnabledChanged);
-            hooksEnabledSwitch.setEnabled(true);
-            return;
-        }
-        XposedService service = DpisApplication.getXposedService();
-        if (service == null) {
-            setCheckedSilently(hooksEnabledSwitch, false, this::onHooksEnabledChanged);
-            hooksEnabledSwitch.setEnabled(true);
-            showToast(R.string.status_save_requires_init);
-            return;
-        }
-        // Keep switch visually off while scope request is pending.
-        setCheckedSilently(hooksEnabledSwitch, false, this::onHooksEnabledChanged);
-        hooksRequestPending = true;
-        hooksEnabledSwitch.setEnabled(false);
-        showToast(R.string.system_hooks_scope_request_notice);
-        requestSystemScopeAndEnableHooks(service);
+        hooksToggleController.onUserToggle(isChecked);
     }
 
     private void onSafeModeChanged(CompoundButton buttonView, boolean isChecked) {
@@ -568,12 +543,10 @@ public final class SystemServerSettingsActivity extends Activity {
     }
 
     private void syncHooksSwitchWithScope() {
-        if (store == null || hooksEnabledSwitch == null) {
+        if (hooksToggleController == null) {
             return;
         }
-        hooksEnabledSwitch.setEnabled(!hooksRequestPending);
-        setCheckedSilently(hooksEnabledSwitch, store.isSystemServerHooksEnabled(),
-                this::onHooksEnabledChanged);
+        hooksToggleController.syncFromStore();
     }
 
     private void syncLauncherIconSwitch() {
@@ -632,73 +605,102 @@ public final class SystemServerSettingsActivity extends Activity {
         return new ComponentName(this, getPackageName() + ".MainActivityLauncher");
     }
 
-    private boolean hasSystemScopeSelected() {
-        XposedService service = DpisApplication.getXposedService();
-        if (service == null) {
-            return false;
+    private final class ActivitySystemHooksToggleView implements SystemHooksToggleController.View {
+        @Override
+        public void render(SystemHookState state) {
+            if (hooksEnabledSwitch == null) {
+                return;
+            }
+            setCheckedSilently(hooksEnabledSwitch, state.switchChecked,
+                    SystemServerSettingsActivity.this::onHooksEnabledChanged);
+            hooksEnabledSwitch.setEnabled(state.switchEnabled);
         }
-        List<String> scope = service.getScope();
-        return scope.contains(SYSTEM_SCOPE_MODERN);
+
+        @Override
+        public void showInitRequired() {
+            showToast(R.string.status_save_requires_init);
+        }
+
+        @Override
+        public void showSaveFailed() {
+            showToast(R.string.system_settings_save_failed);
+        }
+
+        @Override
+        public void showScopeRequestNotice() {
+            showToast(R.string.system_hooks_scope_request_notice);
+        }
+
+        @Override
+        public void showScopeRequired() {
+            showToast(R.string.system_hooks_scope_required);
+        }
+
+        @Override
+        public void showScopeRemoveFailed() {
+            showToast(R.string.scope_remove_failed);
+        }
+
+        @Override
+        public void showScopeAddFailed(String message) {
+            showToast(R.string.scope_add_failed, message);
+        }
     }
 
-    private boolean removeSystemScopeIfAvailable() {
-        XposedService service = DpisApplication.getXposedService();
-        if (service == null) {
-            return true;
+    private final class ActivitySystemScopeGateway implements SystemHooksToggleController.ScopeGateway {
+        @Override
+        public boolean isServiceAvailable() {
+            return DpisApplication.getXposedService() != null;
         }
-        try {
-            service.removeScope(Collections.singletonList(SYSTEM_SCOPE_MODERN));
-            return true;
-        } catch (RuntimeException error) {
-            return false;
+
+        @Override
+        public boolean removeSystemScopeIfAvailable() {
+            XposedService service = DpisApplication.getXposedService();
+            if (service == null) {
+                return true;
+            }
+            try {
+                service.removeScope(Collections.singletonList(SYSTEM_SCOPE_MODERN));
+                return true;
+            } catch (RuntimeException error) {
+                return false;
+            }
         }
-    }
 
-    private void requestSystemScopeAndEnableHooks(XposedService service) {
-        service.requestScope(Collections.singletonList(SYSTEM_SCOPE_MODERN),
-                new XposedService.OnScopeEventListener() {
-                    @Override
-                    public void onScopeRequestApproved(List<String> approved) {
-                        runOnUiThread(() -> {
-                            hooksRequestPending = false;
-                            boolean granted = approved.contains(SYSTEM_SCOPE_MODERN)
-                                    || hasSystemScopeSelected();
-                            if (!granted) {
-                                if (!store.setSystemServerHooksEnabled(false)) {
-                                    showToast(R.string.system_settings_save_failed);
-                                }
-                                setCheckedSilently(hooksEnabledSwitch, false,
-                                        SystemServerSettingsActivity.this::onHooksEnabledChanged);
-                                hooksEnabledSwitch.setEnabled(true);
-                                showToast(R.string.system_hooks_scope_required);
-                                return;
-                            }
-                            if (!store.setSystemServerHooksEnabled(true)) {
-                                setCheckedSilently(hooksEnabledSwitch, false,
-                                        SystemServerSettingsActivity.this::onHooksEnabledChanged);
-                                hooksEnabledSwitch.setEnabled(true);
-                                showToast(R.string.system_settings_save_failed);
-                                return;
-                            }
-                            setCheckedSilently(hooksEnabledSwitch, true,
-                                    SystemServerSettingsActivity.this::onHooksEnabledChanged);
-                            hooksEnabledSwitch.setEnabled(true);
-                        });
-                    }
+        @Override
+        public boolean hasSystemScopeSelected() {
+            XposedService service = DpisApplication.getXposedService();
+            if (service == null) {
+                return false;
+            }
+            try {
+                List<String> scope = service.getScope();
+                return scope != null && scope.contains(SYSTEM_SCOPE_MODERN);
+            } catch (RuntimeException error) {
+                return false;
+            }
+        }
 
-                    @Override
-                    public void onScopeRequestFailed(String message) {
-                        runOnUiThread(() -> {
-                            hooksRequestPending = false;
-                            if (!store.setSystemServerHooksEnabled(false)) {
-                                showToast(R.string.system_settings_save_failed);
-                            }
-                            setCheckedSilently(hooksEnabledSwitch, false,
-                                    SystemServerSettingsActivity.this::onHooksEnabledChanged);
-                            hooksEnabledSwitch.setEnabled(true);
-                            showToast(R.string.scope_add_failed, message);
-                        });
-                    }
-                });
+        @Override
+        public void requestSystemScope(SystemHooksToggleController.ScopeGateway.ScopeRequestCallback callback) {
+            XposedService service = DpisApplication.getXposedService();
+            if (service == null) {
+                runOnUiThread(() -> callback.onFailed("xposed service unavailable"));
+                return;
+            }
+            service.requestScope(Collections.singletonList(SYSTEM_SCOPE_MODERN),
+                    new XposedService.OnScopeEventListener() {
+                        @Override
+                        public void onScopeRequestApproved(List<String> approved) {
+                            runOnUiThread(() -> callback.onApproved(
+                                    approved != null && approved.contains(SYSTEM_SCOPE_MODERN)));
+                        }
+
+                        @Override
+                        public void onScopeRequestFailed(String message) {
+                            runOnUiThread(() -> callback.onFailed(message));
+                        }
+                    });
+        }
     }
 }

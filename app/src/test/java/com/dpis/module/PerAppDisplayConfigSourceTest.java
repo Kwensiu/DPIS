@@ -47,4 +47,24 @@ public class PerAppDisplayConfigSourceTest {
         assertTrue(config.hasViewportOverride());
         assertEquals(360, config.targetViewportWidthDp);
     }
+
+    @Test
+    public void reportsSystemServerHooksEnabledByDefault() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+
+        boolean enabled = new PerAppDisplayConfigSource(store).isSystemServerHooksEnabled();
+
+        assertTrue(enabled);
+    }
+
+    @Test
+    public void reportsSystemServerHooksDisabledWhenStoreFlagOff() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.setSystemServerHooksEnabled(false));
+
+        boolean enabled = new PerAppDisplayConfigSource(store).isSystemServerHooksEnabled();
+
+        assertFalse(enabled);
+    }
 }

@@ -697,7 +697,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                                TextInputEditText fontScaleInput,
                                ModeToggle viewportModeToggle,
                                ModeToggle fontModeToggle) {
-        boolean systemScopeSelected = isSystemHookEnabledFromStore();
+        boolean systemHooksEnabled = isSystemHookEnabledFromStore();
         DpiConfigStore store = getUiConfigStore();
         if (store == null) {
             showToast(R.string.status_save_requires_init);
@@ -708,9 +708,17 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
             String viewportMode = resolveViewportMode(viewportModeToggle);
             Integer fontScalePercent = parseFontScalePercentOrNull(fontScaleInput);
             String fontMode = resolveFontMode(fontModeToggle);
-            boolean emulationRequestedWithoutSystemScope = !systemScopeSelected
-                    && ((widthDp != null && ViewportApplyMode.SYSTEM_EMULATION.equals(viewportMode))
-                    || (fontScalePercent != null && FontApplyMode.SYSTEM_EMULATION.equals(fontMode)));
+            boolean viewportEmulationIneffective = widthDp != null
+                    && ViewportApplyMode.SYSTEM_EMULATION.equals(
+                    ViewportApplyMode.normalize(viewportMode))
+                    && !ViewportApplyMode.SYSTEM_EMULATION.equals(
+                    EffectiveModeResolver.resolveViewportMode(viewportMode, systemHooksEnabled));
+            boolean fontEmulationIneffective = fontScalePercent != null
+                    && FontApplyMode.SYSTEM_EMULATION.equals(FontApplyMode.normalize(fontMode))
+                    && !FontApplyMode.SYSTEM_EMULATION.equals(
+                    EffectiveModeResolver.resolveFontMode(fontMode, systemHooksEnabled));
+            boolean emulationRequestedWithoutSystemScope =
+                    viewportEmulationIneffective || fontEmulationIneffective;
             boolean changed = true;
             if (widthDp == null) {
                 changed = store.clearTargetViewportWidthDp(item.packageName) && changed;
@@ -996,7 +1004,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         if (pagerAdapter != null) {
             pagerAdapter.refreshVisibleStatuses();
         }
-        boolean systemScopeSelected = isSystemHookEnabledFromStore();
+        boolean systemHooksEnabled = isSystemHookEnabledFromStore();
         ViewGroup root = findViewById(android.R.id.content);
         View dialogView = LayoutInflater.from(this).inflate(
                 R.layout.dialog_app_config, root, false);
@@ -1033,7 +1041,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                 item.inScope, item.viewportWidthDp, item.viewportMode,
                 item.fontScalePercent, item.fontMode, item.dpisEnabled);
         if (AppStatusFormatter.shouldWarnViewportEmulation(
-                item.viewportWidthDp, item.viewportMode, systemScopeSelected, item.dpisEnabled)) {
+                item.viewportWidthDp, item.viewportMode, systemHooksEnabled, item.dpisEnabled)) {
             int warnColor = MaterialColors.getColor(statusView,
                     androidx.appcompat.R.attr.colorError);
             statusView.setText(AppStatusFormatter.applyMiddleSegmentWarnStyle(statusText, warnColor));

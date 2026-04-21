@@ -13,6 +13,7 @@ Thumbs.db
 
 # Local scratch / external comparison trees
 /.tmp/
+/tmp/
 /InstallerX-Revived/
 /InxLocker/
 /SetAppFull/

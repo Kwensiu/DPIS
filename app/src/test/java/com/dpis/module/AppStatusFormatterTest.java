@@ -3,6 +3,8 @@ package com.dpis.module;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class AppStatusFormatterTest {
     @Test
@@ -45,5 +47,23 @@ public class AppStatusFormatterTest {
                         120,
                         FontApplyMode.SYSTEM_EMULATION,
                         false));
+    }
+
+    @Test
+    public void warnsViewportEmulationWhenSystemHooksDisabled() {
+        assertTrue(AppStatusFormatter.shouldWarnViewportEmulation(
+                360,
+                ViewportApplyMode.SYSTEM_EMULATION,
+                false,
+                true));
+    }
+
+    @Test
+    public void doesNotWarnViewportEmulationWhenSystemHooksEnabled() {
+        assertFalse(AppStatusFormatter.shouldWarnViewportEmulation(
+                360,
+                ViewportApplyMode.SYSTEM_EMULATION,
+                true,
+                true));
     }
 }

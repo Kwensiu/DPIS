@@ -175,6 +175,9 @@ final class SystemServerDisplayEnvironmentInstaller {
                                 try {
                                     Object thisObject = chain.getThisObject();
                                     List<Object> args = chain.getArgs();
+                                    if (!source.isSystemServerHooksEnabled()) {
+                                        return chain.proceed();
+                                    }
                                     boolean loggingEnabled = DpisLog.isLoggingEnabled();
                                     if (!shouldInspectHotEntry(
                                             target.entryName,
