@@ -50,6 +50,30 @@ final class AppStatusFormatter {
                 && !ViewportApplyMode.SYSTEM_EMULATION.equals(effective);
     }
 
+    static boolean shouldWarnEmulation(Integer viewportWidthDp,
+                                       String viewportMode,
+                                       Integer fontScalePercent,
+                                       String fontMode,
+                                       boolean systemHooksEnabled,
+                                       boolean dpisEnabled) {
+        if (!dpisEnabled) {
+            return false;
+        }
+        boolean viewportWarn = shouldWarnViewportEmulation(
+                viewportWidthDp, viewportMode, systemHooksEnabled, true);
+        if (viewportWarn) {
+            return true;
+        }
+        if (fontScalePercent == null) {
+            return false;
+        }
+        String requested = FontApplyMode.normalize(fontMode);
+        String effective = EffectiveModeResolver.resolveFontMode(
+                requested, systemHooksEnabled);
+        return FontApplyMode.SYSTEM_EMULATION.equals(requested)
+                && !FontApplyMode.SYSTEM_EMULATION.equals(effective);
+    }
+
     static CharSequence applyMiddleSegmentWarnStyle(String statusText, int warnColor) {
         if (statusText == null || statusText.isEmpty()) {
             return statusText;
@@ -61,6 +85,31 @@ final class AppStatusFormatter {
         int secondSeparator = statusText.indexOf('|', firstSeparator + 1);
         int segmentStart = firstSeparator + 1;
         int segmentEnd = secondSeparator >= 0 ? secondSeparator : statusText.length();
+        while (segmentStart < segmentEnd && Character.isWhitespace(statusText.charAt(segmentStart))) {
+            segmentStart++;
+        }
+        while (segmentEnd > segmentStart && Character.isWhitespace(statusText.charAt(segmentEnd - 1))) {
+            segmentEnd--;
+        }
+        if (segmentStart >= segmentEnd) {
+            return statusText;
+        }
+        SpannableString styled = new SpannableString(statusText);
+        styled.setSpan(new ForegroundColorSpan(warnColor), segmentStart, segmentEnd,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return styled;
+    }
+
+    static CharSequence applyConfigSegmentsWarnStyle(String statusText, int warnColor) {
+        if (statusText == null || statusText.isEmpty()) {
+            return statusText;
+        }
+        int firstSeparator = statusText.indexOf('|');
+        if (firstSeparator < 0) {
+            return statusText;
+        }
+        int segmentStart = firstSeparator + 1;
+        int segmentEnd = statusText.length();
         while (segmentStart < segmentEnd && Character.isWhitespace(statusText.charAt(segmentStart))) {
             segmentStart++;
         }

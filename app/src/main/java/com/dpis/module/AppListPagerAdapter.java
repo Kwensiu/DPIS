@@ -251,13 +251,14 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             String statusText = AppStatusFormatter.format(
                     item.inScope, item.viewportWidthDp, item.viewportMode,
                     item.fontScalePercent, item.fontMode, item.dpisEnabled);
-            if (AppStatusFormatter.shouldWarnViewportEmulation(
+            if (AppStatusFormatter.shouldWarnEmulation(
                     item.viewportWidthDp, item.viewportMode,
+                    item.fontScalePercent, item.fontMode,
                     systemScopeSelectedSupplier.getAsBoolean(),
                     item.dpisEnabled)) {
                 int warnColor = MaterialColors.getColor(holder.status,
                         androidx.appcompat.R.attr.colorError);
-                holder.status.setText(AppStatusFormatter.applyMiddleSegmentWarnStyle(
+                holder.status.setText(AppStatusFormatter.applyConfigSegmentsWarnStyle(
                         statusText, warnColor));
             } else {
                 holder.status.setText(statusText);
@@ -274,13 +275,14 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                 String statusText = AppStatusFormatter.format(
                         item.inScope, item.viewportWidthDp, item.viewportMode,
                         item.fontScalePercent, item.fontMode, item.dpisEnabled);
-                if (AppStatusFormatter.shouldWarnViewportEmulation(
+                if (AppStatusFormatter.shouldWarnEmulation(
                         item.viewportWidthDp, item.viewportMode,
+                        item.fontScalePercent, item.fontMode,
                         systemScopeSelectedSupplier.getAsBoolean(),
                         item.dpisEnabled)) {
                     int warnColor = MaterialColors.getColor(holder.status,
                             androidx.appcompat.R.attr.colorError);
-                    holder.status.setText(AppStatusFormatter.applyMiddleSegmentWarnStyle(
+                    holder.status.setText(AppStatusFormatter.applyConfigSegmentsWarnStyle(
                             statusText, warnColor));
                 } else {
                     holder.status.setText(statusText);

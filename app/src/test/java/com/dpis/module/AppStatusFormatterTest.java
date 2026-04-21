@@ -66,4 +66,26 @@ public class AppStatusFormatterTest {
                 true,
                 true));
     }
+
+    @Test
+    public void warnsFontEmulationWhenSystemHooksDisabled() {
+        assertTrue(AppStatusFormatter.shouldWarnEmulation(
+                null,
+                ViewportApplyMode.OFF,
+                120,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                true));
+    }
+
+    @Test
+    public void doesNotWarnAnyEmulationWhenDpisDisabled() {
+        assertFalse(AppStatusFormatter.shouldWarnEmulation(
+                360,
+                ViewportApplyMode.SYSTEM_EMULATION,
+                120,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                false));
+    }
 }
