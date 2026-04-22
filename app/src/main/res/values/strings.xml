@@ -13,6 +13,17 @@
     <string name="status_save_requires_init">remote preferences 未初始化，先重新打开模块 App</string>
     <string name="status_save_invalid">宽度请输入正整数 dp；字体请输入 50–300 的整数</string>
     <string name="search_hint">搜索应用名或包名</string>
+    <string name="quick_search_button">快速搜索</string>
+    <string name="help_button">帮助</string>
+    <string name="help_tutorial_emulation_title">伪装模式</string>
+    <string name="help_tutorial_emulation_badge">更接近原生</string>
+    <string name="help_tutorial_emulation_summary">通过系统层链路伪装相关参数，显示效果通常更自然。</string>
+    <string name="help_tutorial_emulation_points">• 需开启系统层 Hook\n• 需勾选目标应用\n• 需目标应用支持</string>
+    <string name="help_tutorial_replace_title">替换模式</string>
+    <string name="help_tutorial_replace_badge">覆盖更强</string>
+    <string name="help_tutorial_replace_summary">通过字段重写直接覆盖缩放，生效更直接。</string>
+    <string name="help_tutorial_replace_points">• 仅需勾选目标应用\n• 更容易出现布局错位或缩放异常</string>
+    <string name="dialog_confirm_button">确认</string>
     <string name="tab_all_apps">全部应用</string>
     <string name="tab_configured_apps">已配置应用</string>
     <string name="filter_button">筛选</string>

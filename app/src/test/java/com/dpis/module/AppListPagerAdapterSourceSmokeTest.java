@@ -14,6 +14,7 @@ public class AppListPagerAdapterSourceSmokeTest {
     public void pageListAdapter_usesListAdapterAndDiffUtil() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppListPagerAdapter.java");
 
+        assertTrue(source.contains("interface OnPageListScrollListener"));
         assertTrue(source.contains("extends ListAdapter<AppListItem, RowHolder>"));
         assertTrue(source.contains("DiffUtil.ItemCallback<AppListItem>"));
         assertTrue(source.contains("submitList(new ArrayList<>(newItems));"));
@@ -21,6 +22,8 @@ public class AppListPagerAdapterSourceSmokeTest {
         assertTrue(source.contains("capturePageScrollStates()"));
         assertTrue(source.contains("restorePageScrollStates("));
         assertTrue(source.contains("setRefreshing(AppListPage page, boolean refreshing)"));
+        assertTrue(source.contains("recyclerView.addOnScrollListener"));
+        assertTrue(source.contains("onPageListScrollListener.onPageListScrolled("));
     }
 
     private static String read(String relativePath) throws IOException {

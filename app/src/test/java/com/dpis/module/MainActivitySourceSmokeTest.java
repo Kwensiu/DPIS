@@ -15,8 +15,18 @@ public class MainActivitySourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(source.contains("R.id.app_pager"));
+        assertTrue(source.contains("R.id.search_focus_fab"));
         assertTrue(source.contains("new TabLayoutMediator("));
         assertTrue(source.contains("searchFilterButton.setOnClickListener"));
+        assertTrue(source.contains("helpFab.setOnClickListener"));
+        assertTrue(source.contains("showHelpTutorialDialog()"));
+        assertTrue(source.contains("HelpTutorialDialog.show(this);"));
+        assertTrue(!source.contains("RichTextDialog.show("));
+        assertTrue(source.contains("searchFocusFab.setOnClickListener"));
+        assertTrue(source.contains("focusSearchInputAndShowKeyboard()"));
+        assertTrue(source.contains("onPageListScrolled("));
+        assertTrue(source.contains("hideSearchFocusFab()"));
+        assertTrue(source.contains("showSearchFocusFab()"));
         assertTrue(source.contains("showFilterDialog()"));
         assertTrue(source.contains("new AppListFilterState("));
         assertTrue(source.contains("setOnCheckedChangeListener"));

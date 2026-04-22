@@ -44,6 +44,7 @@ import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
@@ -67,6 +68,8 @@ import io.github.libxposed.service.XposedService;
 
 public final class MainActivity extends Activity implements DpisApplication.ServiceStateListener {
     private static final long MODE_TOGGLE_ANIM_DURATION_MS = 200L;
+    private static final long SEARCH_FAB_ANIM_DURATION_MS = 180L;
+    private static final int SEARCH_FAB_SCROLL_TRIGGER_DY = 8;
     private static final String SYSTEM_SCOPE_MODERN = "system";
     private static final String STATE_CURRENT_QUERY = "state.current_query";
     private static final String STATE_CURRENT_PAGE = "state.current_page";
@@ -89,6 +92,9 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     private String currentQuery = "";
     private AppListFilterState filterState = AppListFilterState.defaultState();
     private EditText searchInput;
+    private FloatingActionButton searchFocusFab;
+    private FloatingActionButton helpFab;
+    private boolean searchFabHidden;
     private ImageButton searchFilterButton;
     private Boolean rootAccessCache;
     private boolean cachedSystemHookEffectiveEnabled;
@@ -113,6 +119,8 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_status);
+        searchFocusFab = findViewById(R.id.search_focus_fab);
+        helpFab = findViewById(R.id.help_fab);
         applyInsets();
         refreshSystemHookEffectiveEnabled();
 
@@ -144,6 +152,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         pagerAdapter = new AppListPagerAdapter(
                 this::showEditDialog,
                 this::onPageRefreshRequested,
+                this::onPageListScrolled,
                 this::isSystemHookEnabledFromStore);
         pagerAdapter.restorePageScrollStates(restoredPageScrollStates);
         appPager.setAdapter(pagerAdapter);
@@ -159,6 +168,8 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                 (tab, position) -> tab.setText(getString(AppListPage.fromPosition(position).titleRes())))
                 .attach();
         searchFilterButton.setOnClickListener(v -> showFilterDialog());
+        helpFab.setOnClickListener(v -> showHelpTutorialDialog());
+        searchFocusFab.setOnClickListener(v -> focusSearchInputAndShowKeyboard());
 
         searchInput = findViewById(R.id.search_input);
         searchInput.addTextChangedListener(new TextWatcher() {
@@ -204,9 +215,15 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN && searchInput != null && searchInput.hasFocus()) {
-            Rect outRect = new Rect();
-            searchInput.getGlobalVisibleRect(outRect);
-            if (!outRect.contains((int) event.getRawX(), (int) event.getRawY())) {
+            int rawX = (int) event.getRawX();
+            int rawY = (int) event.getRawY();
+            if (!isTouchInsideView(rawX, rawY, searchInput)) {
+                if (isTouchInsideView(rawX, rawY, searchFocusFab)) {
+                    return super.dispatchTouchEvent(event);
+                }
+                if (isTouchInsideView(rawX, rawY, helpFab)) {
+                    return super.dispatchTouchEvent(event);
+                }
                 clearSearchFocus();
             }
         }
@@ -285,6 +302,16 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
             pagerAdapter.setRefreshing(page, true);
         }
         requestAppsLoad();
+    }
+
+    private void onPageListScrolled(AppListPage page, int dy) {
+        if (dy >= SEARCH_FAB_SCROLL_TRIGGER_DY) {
+            hideSearchFocusFab();
+            return;
+        }
+        if (dy <= -SEARCH_FAB_SCROLL_TRIGGER_DY) {
+            showSearchFocusFab();
+        }
     }
 
     private void restoreRefreshingPages(int[] pagePositions) {
@@ -366,7 +393,135 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                     view.getPaddingRight(), view.getPaddingBottom());
             return windowInsets;
         });
+        ViewGroup.MarginLayoutParams searchLayoutParams =
+                (ViewGroup.MarginLayoutParams) searchFocusFab.getLayoutParams();
+        ViewGroup.MarginLayoutParams helpLayoutParams =
+                (ViewGroup.MarginLayoutParams) helpFab.getLayoutParams();
+        final int baseSearchBottomMargin = searchLayoutParams.bottomMargin;
+        final int baseSearchEndMargin = searchLayoutParams.getMarginEnd();
+        final int baseHelpEndMargin = helpLayoutParams.getMarginEnd();
+        final int floatingActionsGapPx =
+                getResources().getDimensionPixelSize(R.dimen.floating_actions_gap);
+        ViewCompat.setOnApplyWindowInsetsListener(searchFocusFab, (view, windowInsets) -> {
+            Insets navigationBars = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars());
+            int sideInset = Math.max(navigationBars.left, navigationBars.right);
+            ViewGroup.MarginLayoutParams searchParams =
+                    (ViewGroup.MarginLayoutParams) searchFocusFab.getLayoutParams();
+            searchParams.bottomMargin = baseSearchBottomMargin + navigationBars.bottom;
+            searchParams.setMarginEnd(baseSearchEndMargin + sideInset);
+            searchFocusFab.setLayoutParams(searchParams);
+            ViewGroup.MarginLayoutParams helpParams =
+                    (ViewGroup.MarginLayoutParams) helpFab.getLayoutParams();
+            int searchFabSizePx = resolveSearchFabSizePx();
+            helpParams.bottomMargin =
+                    searchParams.bottomMargin + searchFabSizePx + floatingActionsGapPx;
+            helpParams.setMarginEnd(baseHelpEndMargin + sideInset);
+            helpFab.setLayoutParams(helpParams);
+            return windowInsets;
+        });
         ViewCompat.requestApplyInsets(topContainer);
+        ViewCompat.requestApplyInsets(searchFocusFab);
+    }
+
+    private int resolveSearchFabSizePx() {
+        if (searchFocusFab == null) {
+            return getResources().getDimensionPixelSize(
+                    com.google.android.material.R.dimen.design_fab_size_normal);
+        }
+        int measuredHeight = searchFocusFab.getMeasuredHeight();
+        if (measuredHeight > 0) {
+            return measuredHeight;
+        }
+        int height = searchFocusFab.getHeight();
+        if (height > 0) {
+            return height;
+        }
+        ViewGroup.LayoutParams layoutParams = searchFocusFab.getLayoutParams();
+        if (layoutParams != null && layoutParams.height > 0) {
+            return layoutParams.height;
+        }
+        return getResources().getDimensionPixelSize(
+                com.google.android.material.R.dimen.design_fab_size_normal);
+    }
+
+    private static boolean isTouchInsideView(int rawX, int rawY, View view) {
+        if (view == null || view.getVisibility() != View.VISIBLE) {
+            return false;
+        }
+        Rect outRect = new Rect();
+        view.getGlobalVisibleRect(outRect);
+        return outRect.contains(rawX, rawY);
+    }
+
+    private void focusSearchInputAndShowKeyboard() {
+        if (searchInput == null) {
+            return;
+        }
+        showSearchFocusFab();
+        searchInput.requestFocus();
+        Editable current = searchInput.getText();
+        if (current != null) {
+            searchInput.setSelection(current.length());
+        }
+        searchInput.setHint("");
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            searchInput.post(() -> imm.showSoftInput(searchInput, InputMethodManager.SHOW_IMPLICIT));
+        }
+    }
+
+    private void hideSearchFocusFab() {
+        if (searchFocusFab == null || helpFab == null || searchFabHidden) {
+            return;
+        }
+        searchFabHidden = true;
+        searchFocusFab.animate().cancel();
+        helpFab.animate().cancel();
+        ViewGroup.MarginLayoutParams searchLayoutParams =
+                (ViewGroup.MarginLayoutParams) searchFocusFab.getLayoutParams();
+        ViewGroup.MarginLayoutParams helpLayoutParams =
+                (ViewGroup.MarginLayoutParams) helpFab.getLayoutParams();
+        float searchTargetTranslationY =
+                searchFocusFab.getHeight() + searchLayoutParams.bottomMargin;
+        float helpTargetTranslationY =
+                helpFab.getHeight() + helpLayoutParams.bottomMargin;
+        searchFocusFab.animate()
+                .translationY(searchTargetTranslationY)
+                .alpha(0f)
+                .setDuration(SEARCH_FAB_ANIM_DURATION_MS)
+                .setInterpolator(new AccelerateDecelerateInterpolator())
+                .withStartAction(() -> searchFocusFab.setClickable(false))
+                .start();
+        helpFab.animate()
+                .translationY(helpTargetTranslationY)
+                .alpha(0f)
+                .setDuration(SEARCH_FAB_ANIM_DURATION_MS)
+                .setInterpolator(new AccelerateDecelerateInterpolator())
+                .withStartAction(() -> helpFab.setClickable(false))
+                .start();
+    }
+
+    private void showSearchFocusFab() {
+        if (searchFocusFab == null || helpFab == null || !searchFabHidden) {
+            return;
+        }
+        searchFabHidden = false;
+        searchFocusFab.animate().cancel();
+        helpFab.animate().cancel();
+        searchFocusFab.animate()
+                .translationY(0f)
+                .alpha(1f)
+                .setDuration(SEARCH_FAB_ANIM_DURATION_MS)
+                .setInterpolator(new AccelerateDecelerateInterpolator())
+                .withStartAction(() -> searchFocusFab.setClickable(true))
+                .start();
+        helpFab.animate()
+                .translationY(0f)
+                .alpha(1f)
+                .setDuration(SEARCH_FAB_ANIM_DURATION_MS)
+                .setInterpolator(new AccelerateDecelerateInterpolator())
+                .withStartAction(() -> helpFab.setClickable(true))
+                .start();
     }
 
     private void clearSearchFocus() {
@@ -422,6 +577,10 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
             return;
         }
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    private void showHelpTutorialDialog() {
+        HelpTutorialDialog.show(this);
     }
 
     private boolean updateSaveButtonState(TextInputLayout viewportInputLayout,

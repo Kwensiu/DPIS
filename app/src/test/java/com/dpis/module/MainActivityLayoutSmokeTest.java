@@ -17,11 +17,16 @@ public class MainActivityLayoutSmokeTest {
 
         assertTrue(layout.contains("android:id=\"@+id/search_input\""));
         assertTrue(layout.contains("android:id=\"@+id/search_filter_button\""));
+        assertTrue(layout.contains("android:id=\"@+id/help_fab\""));
+        assertTrue(layout.contains("android:id=\"@+id/search_focus_fab\""));
         assertTrue(layout.contains("android:src=\"@drawable/ic_search_24\""));
+        assertTrue(layout.contains("app:srcCompat=\"@drawable/ic_info_outline_24\""));
         assertTrue(layout.contains("android:src=\"@drawable/baseline_tune_24\""));
         assertTrue(layout.contains("android:id=\"@+id/system_settings_button\""));
         assertTrue(layout.contains("android:id=\"@+id/app_pager\""));
         assertTrue(strings.contains("tab_all_apps"));
+        assertTrue(strings.contains("quick_search_button"));
+        assertTrue(strings.contains("help_button"));
         assertTrue(Files.exists(Path.of("src/main/res/drawable/baseline_tune_24.xml")));
     }
 

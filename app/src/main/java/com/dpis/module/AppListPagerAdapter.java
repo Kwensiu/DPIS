@@ -32,19 +32,26 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
         void onRefresh(AppListPage page);
     }
 
+    interface OnPageListScrollListener {
+        void onPageListScrolled(AppListPage page, int dy);
+    }
+
     private final EnumMap<AppListPage, List<AppListItem>> pages = new EnumMap<>(AppListPage.class);
     private final EnumMap<AppListPage, Parcelable> pageScrollStates = new EnumMap<>(AppListPage.class);
     private final EnumMap<AppListPage, Boolean> refreshingStates = new EnumMap<>(AppListPage.class);
     private final EnumMap<AppListPage, PageHolder> activeHolders = new EnumMap<>(AppListPage.class);
     private final OnAppClickListener onAppClickListener;
     private final OnRefreshListener onRefreshListener;
+    private final OnPageListScrollListener onPageListScrollListener;
     private final BooleanSupplier systemScopeSelectedSupplier;
 
     AppListPagerAdapter(OnAppClickListener onAppClickListener,
                         OnRefreshListener onRefreshListener,
+                        OnPageListScrollListener onPageListScrollListener,
                         BooleanSupplier systemScopeSelectedSupplier) {
         this.onAppClickListener = onAppClickListener;
         this.onRefreshListener = onRefreshListener;
+        this.onPageListScrollListener = onPageListScrollListener;
         this.systemScopeSelectedSupplier = systemScopeSelectedSupplier;
         for (AppListPage page : AppListPage.values()) {
             pages.put(page, new ArrayList<>());
@@ -105,7 +112,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_app_list_page, parent, false);
         return new PageHolder(view, onAppClickListener, onRefreshListener,
-                systemScopeSelectedSupplier);
+                onPageListScrollListener, systemScopeSelectedSupplier);
     }
 
     @Override
@@ -150,6 +157,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
         PageHolder(View itemView,
                    OnAppClickListener onAppClickListener,
                    OnRefreshListener onRefreshListener,
+                   OnPageListScrollListener onPageListScrollListener,
                    BooleanSupplier systemScopeSelectedSupplier) {
             super(itemView);
             swipeRefreshLayout = itemView.findViewById(R.id.page_swipe_refresh);
@@ -157,6 +165,15 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             recyclerView.setLayoutManager(new LinearLayoutManager(itemView.getContext()));
             adapter = new PageListAdapter(onAppClickListener, systemScopeSelectedSupplier);
             recyclerView.setAdapter(adapter);
+            recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                    if (boundPage == null || dy == 0) {
+                        return;
+                    }
+                    onPageListScrollListener.onPageListScrolled(boundPage, dy);
+                }
+            });
             swipeRefreshLayout.setOnRefreshListener(() -> {
                 if (boundPage != null) {
                     onRefreshListener.onRefresh(boundPage);
