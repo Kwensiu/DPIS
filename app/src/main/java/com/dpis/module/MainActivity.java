@@ -69,8 +69,6 @@ import io.github.libxposed.service.XposedService;
 public final class MainActivity extends Activity implements DpisApplication.ServiceStateListener {
     private static final long MODE_TOGGLE_ANIM_DURATION_MS = 200L;
     private static final long SEARCH_FAB_ANIM_DURATION_MS = 180L;
-    private static final long FAB_TOUCH_FEEDBACK_DURATION_MS = 110L;
-    private static final float FAB_TOUCH_FEEDBACK_SCALE = 0.92f;
     private static final int SEARCH_FAB_SCROLL_TRIGGER_DY = 8;
     private static final String SYSTEM_SCOPE_MODERN = "system";
     private static final String STATE_CURRENT_QUERY = "state.current_query";
@@ -475,34 +473,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void bindFabTouchFeedback(FloatingActionButton fab) {
-        if (fab == null) {
-            return;
-        }
-        fab.setOnTouchListener((view, event) -> {
-            if (event == null) {
-                return false;
-            }
-            int action = event.getActionMasked();
-            if (action == MotionEvent.ACTION_DOWN) {
-                animateFabTouchFeedback(fab, FAB_TOUCH_FEEDBACK_SCALE);
-                return false;
-            }
-            if (action == MotionEvent.ACTION_UP
-                    || action == MotionEvent.ACTION_CANCEL
-                    || action == MotionEvent.ACTION_OUTSIDE) {
-                animateFabTouchFeedback(fab, 1f);
-            }
-            return false;
-        });
-    }
-
-    private void animateFabTouchFeedback(FloatingActionButton fab, float targetScale) {
-        fab.animate()
-                .scaleX(targetScale)
-                .scaleY(targetScale)
-                .setDuration(FAB_TOUCH_FEEDBACK_DURATION_MS)
-                .setInterpolator(new AccelerateDecelerateInterpolator())
-                .start();
+        TouchFeedbackBinder.bindPressScaleAndHaptic(fab);
     }
 
     private void hideSearchFocusFab() {

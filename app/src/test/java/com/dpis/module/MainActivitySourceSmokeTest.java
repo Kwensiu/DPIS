@@ -26,6 +26,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("bindFabTouchFeedback(searchFocusFab);"));
         assertTrue(source.contains("bindFabTouchFeedback(helpFab);"));
         assertTrue(source.contains("private void bindFabTouchFeedback(FloatingActionButton fab)"));
+        assertTrue(source.contains("TouchFeedbackBinder.bindPressScaleAndHaptic(fab);"));
         assertTrue(source.contains("focusSearchInputAndShowKeyboard()"));
         assertTrue(source.contains("onPageListScrolled("));
         assertTrue(source.contains("hideSearchFocusFab()"));
@@ -100,6 +101,17 @@ public class MainActivitySourceSmokeTest {
         assertTrue(layout.contains("android:fillViewport=\"true\""));
         assertTrue(layout.contains("android:minHeight=\"@dimen/dialog_mode_toggle_row_min_height\""));
         assertTrue(!layout.contains("android:layout_height=\"@dimen/dialog_mode_toggle_row_height\""));
+    }
+
+    @Test
+    public void touchFeedbackBinderProvidesSharedHapticAndScaleBehavior() throws IOException {
+        String source = read("src/main/java/com/dpis/module/TouchFeedbackBinder.java");
+
+        assertTrue(source.contains("final class TouchFeedbackBinder"));
+        assertTrue(source.contains("bindPressScaleAndHaptic(View view)"));
+        assertTrue(source.contains("performHapticFeedback(resolvePressHapticConstant())"));
+        assertTrue(source.contains("HapticFeedbackConstants.CONFIRM"));
+        assertTrue(source.contains("HapticFeedbackConstants.VIRTUAL_KEY"));
     }
 
     private static String read(String relativePath) throws IOException {
