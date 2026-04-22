@@ -40,7 +40,41 @@ jobs:
       - name: Ensure gradlew is executable
         run: chmod +x gradlew
 
+      - name: Validate release signing secrets
+        shell: bash
+        env:
+          DPIS_RELEASE_KEYSTORE_BASE64: ${{ secrets.DPIS_RELEASE_KEYSTORE_BASE64 }}
+          DPIS_RELEASE_STORE_PASSWORD: ${{ secrets.DPIS_RELEASE_STORE_PASSWORD }}
+          DPIS_RELEASE_KEY_ALIAS: ${{ secrets.DPIS_RELEASE_KEY_ALIAS }}
+          DPIS_RELEASE_KEY_PASSWORD: ${{ secrets.DPIS_RELEASE_KEY_PASSWORD }}
+        run: |
+          for key in \
+            DPIS_RELEASE_KEYSTORE_BASE64 \
+            DPIS_RELEASE_STORE_PASSWORD \
+            DPIS_RELEASE_KEY_ALIAS \
+            DPIS_RELEASE_KEY_PASSWORD; do
+            if [[ -z "${!key}" ]]; then
+              echo "Missing required secret: $key"
+              exit 1
+            fi
+          done
+
+      - name: Prepare release keystore
+        shell: bash
+        env:
+          DPIS_RELEASE_KEYSTORE_BASE64: ${{ secrets.DPIS_RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          KEYSTORE_DIR="${GITHUB_WORKSPACE}/.keystore"
+          KEYSTORE_PATH="${KEYSTORE_DIR}/release.jks"
+          mkdir -p "${KEYSTORE_DIR}"
+          echo "${DPIS_RELEASE_KEYSTORE_BASE64}" | base64 --decode > "${KEYSTORE_PATH}"
+
       - name: Build release APK
+        env:
+          DPIS_RELEASE_STORE_FILE: ${{ github.workspace }}/.keystore/release.jks
+          DPIS_RELEASE_STORE_PASSWORD: ${{ secrets.DPIS_RELEASE_STORE_PASSWORD }}
+          DPIS_RELEASE_KEY_ALIAS: ${{ secrets.DPIS_RELEASE_KEY_ALIAS }}
+          DPIS_RELEASE_KEY_PASSWORD: ${{ secrets.DPIS_RELEASE_KEY_PASSWORD }}
         run: ./gradlew :app:assembleRelease
 
       - name: Calculate APK SHA256

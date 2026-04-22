@@ -5,6 +5,32 @@ plugins {
 
 private val appVersionName = "1.3.0" // x-release-please-version
 
+private fun readGradleOrEnv(name: String): String? {
+    val gradleValue = project.findProperty(name)?.toString()?.trim()
+    if (!gradleValue.isNullOrEmpty()) {
+        return gradleValue
+    }
+    val envValue = System.getenv(name)?.trim()
+    return if (envValue.isNullOrEmpty()) null else envValue
+}
+
+private val releaseStoreFilePath = readGradleOrEnv("DPIS_RELEASE_STORE_FILE")
+private val releaseStorePassword = readGradleOrEnv("DPIS_RELEASE_STORE_PASSWORD")
+private val releaseKeyAlias = readGradleOrEnv("DPIS_RELEASE_KEY_ALIAS")
+private val releaseKeyPassword = readGradleOrEnv("DPIS_RELEASE_KEY_PASSWORD")
+
+private val releaseSigningMissingKeys = buildList {
+    if (releaseStoreFilePath.isNullOrEmpty()) add("DPIS_RELEASE_STORE_FILE")
+    if (releaseStorePassword.isNullOrEmpty()) add("DPIS_RELEASE_STORE_PASSWORD")
+    if (releaseKeyAlias.isNullOrEmpty()) add("DPIS_RELEASE_KEY_ALIAS")
+    if (releaseKeyPassword.isNullOrEmpty()) add("DPIS_RELEASE_KEY_PASSWORD")
+}
+
+private val hasReleaseSigningConfig = releaseSigningMissingKeys.isEmpty()
+private val releaseTasksRequested = gradle.startParameter.taskNames.any {
+    it.contains("Release", ignoreCase = true)
+}
+
 private fun semVerToVersionCode(version: String): Int {
     val parts = version.split(".")
     require(parts.size == 3) {
@@ -38,12 +64,27 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            if (hasReleaseSigningConfig) {
+                storeFile = file(releaseStoreFilePath!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles("proguard-rules.pro")
-            signingConfig = signingConfigs["debug"]
+            signingConfig = if (hasReleaseSigningConfig) {
+                signingConfigs["release"]
+            } else {
+                signingConfigs["debug"]
+            }
         }
     }
 
@@ -68,6 +109,13 @@ android {
     buildFeatures {
         buildConfig = true
     }
+}
+
+if (releaseTasksRequested && !hasReleaseSigningConfig) {
+    throw GradleException(
+        "Release signing configuration is incomplete. Missing: "
+                + releaseSigningMissingKeys.joinToString(", ")
+    )
 }
 
 dependencies {
