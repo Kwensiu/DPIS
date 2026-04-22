@@ -17,6 +17,27 @@
         <item name="cornerRadius">18dp</item>
     </style>
 
+    <style name="Widget.Dpis.DialogActionButton.Outlined.Error"
+        parent="Widget.Dpis.DialogActionButton.Outlined">
+        <item name="backgroundTint">@color/dpis_stop_container</item>
+        <item name="android:textColor">@color/dpis_on_stop_container</item>
+        <item name="strokeColor">@color/dpis_stop_container</item>
+    </style>
+
+    <style name="Widget.Dpis.DialogActionButton.Outlined.Warn"
+        parent="Widget.Dpis.DialogActionButton.Outlined">
+        <item name="backgroundTint">@color/dpis_warn_container</item>
+        <item name="android:textColor">@color/dpis_on_warn_container</item>
+        <item name="strokeColor">@color/dpis_warn_container</item>
+    </style>
+
+    <style name="Widget.Dpis.DialogActionButton.Outlined.Success"
+        parent="Widget.Dpis.DialogActionButton.Outlined">
+        <item name="backgroundTint">@color/dpis_success_container</item>
+        <item name="android:textColor">@color/dpis_on_success_container</item>
+        <item name="strokeColor">@color/dpis_success_container</item>
+    </style>
+
     <style name="Widget.Dpis.DialogActionButton.Filled" parent="Widget.Material3.Button">
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>

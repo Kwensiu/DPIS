@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="dpis_stop_container">#F3E2E0</color>
+    <color name="dpis_on_stop_container">#5A3A38</color>
+    <color name="dpis_warn_container">#F8E7C0</color>
+    <color name="dpis_on_warn_container">#4A3400</color>
+    <color name="dpis_success_container">#D5EFCF</color>
+    <color name="dpis_on_success_container">#16351A</color>
+</resources>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="dpis_stop_container">#ECA69E</color>
+    <color name="dpis_on_stop_container">#5A3A38</color>
+</resources>

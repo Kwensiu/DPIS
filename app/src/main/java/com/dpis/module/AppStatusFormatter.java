@@ -4,6 +4,9 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 
+import java.util.ArrayList;
+import java.util.List;
+
 final class AppStatusFormatter {
     private AppStatusFormatter() {
     }
@@ -50,21 +53,11 @@ final class AppStatusFormatter {
                 && !ViewportApplyMode.SYSTEM_EMULATION.equals(effective);
     }
 
-    static boolean shouldWarnEmulation(Integer viewportWidthDp,
-                                       String viewportMode,
-                                       Integer fontScalePercent,
-                                       String fontMode,
-                                       boolean systemHooksEnabled,
-                                       boolean dpisEnabled) {
-        if (!dpisEnabled) {
-            return false;
-        }
-        boolean viewportWarn = shouldWarnViewportEmulation(
-                viewportWidthDp, viewportMode, systemHooksEnabled, true);
-        if (viewportWarn) {
-            return true;
-        }
-        if (fontScalePercent == null) {
+    static boolean shouldWarnFontEmulation(Integer fontScalePercent,
+                                           String fontMode,
+                                           boolean systemHooksEnabled,
+                                           boolean dpisEnabled) {
+        if (!dpisEnabled || fontScalePercent == null) {
             return false;
         }
         String requested = FontApplyMode.normalize(fontMode);
@@ -74,55 +67,76 @@ final class AppStatusFormatter {
                 && !FontApplyMode.SYSTEM_EMULATION.equals(effective);
     }
 
-    static CharSequence applyMiddleSegmentWarnStyle(String statusText, int warnColor) {
+    static CharSequence applyConfigSegmentsWarnStyle(String statusText,
+                                                     int warnColor,
+                                                     boolean warnViewport,
+                                                     boolean warnFont) {
         if (statusText == null || statusText.isEmpty()) {
             return statusText;
         }
-        int firstSeparator = statusText.indexOf('|');
-        if (firstSeparator < 0) {
-            return statusText;
-        }
-        int secondSeparator = statusText.indexOf('|', firstSeparator + 1);
-        int segmentStart = firstSeparator + 1;
-        int segmentEnd = secondSeparator >= 0 ? secondSeparator : statusText.length();
-        while (segmentStart < segmentEnd && Character.isWhitespace(statusText.charAt(segmentStart))) {
-            segmentStart++;
-        }
-        while (segmentEnd > segmentStart && Character.isWhitespace(statusText.charAt(segmentEnd - 1))) {
-            segmentEnd--;
-        }
-        if (segmentStart >= segmentEnd) {
+        int[][] warnRanges = resolveWarnSegmentRanges(statusText, warnViewport, warnFont);
+        if (warnRanges.length == 0) {
             return statusText;
         }
         SpannableString styled = new SpannableString(statusText);
-        styled.setSpan(new ForegroundColorSpan(warnColor), segmentStart, segmentEnd,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        for (int[] range : warnRanges) {
+            styled.setSpan(new ForegroundColorSpan(warnColor), range[0], range[1],
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
         return styled;
     }
 
-    static CharSequence applyConfigSegmentsWarnStyle(String statusText, int warnColor) {
-        if (statusText == null || statusText.isEmpty()) {
-            return statusText;
+    static int[][] resolveWarnSegmentRanges(String statusText,
+                                            boolean warnViewport,
+                                            boolean warnFont) {
+        if (statusText == null || statusText.isEmpty() || (!warnViewport && !warnFont)) {
+            return new int[0][];
         }
-        int firstSeparator = statusText.indexOf('|');
-        if (firstSeparator < 0) {
-            return statusText;
+        List<int[]> ranges = new ArrayList<>(2);
+        if (warnViewport) {
+            int[] viewportRange = resolveSegmentRange(statusText, 1);
+            if (viewportRange != null) {
+                ranges.add(viewportRange);
+            }
         }
-        int segmentStart = firstSeparator + 1;
-        int segmentEnd = statusText.length();
-        while (segmentStart < segmentEnd && Character.isWhitespace(statusText.charAt(segmentStart))) {
-            segmentStart++;
+        if (warnFont) {
+            int[] fontRange = resolveSegmentRange(statusText, 2);
+            if (fontRange != null) {
+                ranges.add(fontRange);
+            }
         }
-        while (segmentEnd > segmentStart && Character.isWhitespace(statusText.charAt(segmentEnd - 1))) {
-            segmentEnd--;
+        return ranges.toArray(new int[0][]);
+    }
+
+    private static int[] resolveSegmentRange(String statusText, int targetSegmentIndex) {
+        int segmentStart = 0;
+        int segmentIndex = 0;
+        while (segmentStart <= statusText.length()) {
+            int separatorIndex = statusText.indexOf('|', segmentStart);
+            int segmentEnd = separatorIndex >= 0 ? separatorIndex : statusText.length();
+            if (segmentIndex == targetSegmentIndex) {
+                int trimmedStart = segmentStart;
+                int trimmedEnd = segmentEnd;
+                while (trimmedStart < trimmedEnd
+                        && Character.isWhitespace(statusText.charAt(trimmedStart))) {
+                    trimmedStart++;
+                }
+                while (trimmedEnd > trimmedStart
+                        && Character.isWhitespace(statusText.charAt(trimmedEnd - 1))) {
+                    trimmedEnd--;
+                }
+                if (trimmedStart < trimmedEnd) {
+                    return new int[]{trimmedStart, trimmedEnd};
+                }
+                return null;
+            }
+            if (separatorIndex < 0) {
+                return null;
+            }
+            segmentStart = separatorIndex + 1;
+            segmentIndex++;
         }
-        if (segmentStart >= segmentEnd) {
-            return statusText;
-        }
-        SpannableString styled = new SpannableString(statusText);
-        styled.setSpan(new ForegroundColorSpan(warnColor), segmentStart, segmentEnd,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        return styled;
+        return null;
     }
 
     static String toCompactDisplay(String statusText) {

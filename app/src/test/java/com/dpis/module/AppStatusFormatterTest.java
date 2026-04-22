@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
 public class AppStatusFormatterTest {
@@ -69,9 +70,7 @@ public class AppStatusFormatterTest {
 
     @Test
     public void warnsFontEmulationWhenSystemHooksDisabled() {
-        assertTrue(AppStatusFormatter.shouldWarnEmulation(
-                null,
-                ViewportApplyMode.OFF,
+        assertTrue(AppStatusFormatter.shouldWarnFontEmulation(
                 120,
                 FontApplyMode.SYSTEM_EMULATION,
                 false,
@@ -80,12 +79,54 @@ public class AppStatusFormatterTest {
 
     @Test
     public void doesNotWarnAnyEmulationWhenDpisDisabled() {
-        assertFalse(AppStatusFormatter.shouldWarnEmulation(
+        assertFalse(AppStatusFormatter.shouldWarnViewportEmulation(
                 360,
                 ViewportApplyMode.SYSTEM_EMULATION,
+                false,
+                false));
+        assertFalse(AppStatusFormatter.shouldWarnFontEmulation(
                 120,
                 FontApplyMode.SYSTEM_EMULATION,
                 false,
                 false));
+    }
+
+    @Test
+    public void warnsOnlyViewportSegmentWhenOnlyViewportEmulationFails() {
+        String text = "已注入 | 360dp | 120%";
+        int[][] ranges = AppStatusFormatter.resolveWarnSegmentRanges(text, true, false);
+        assertEquals(1, ranges.length);
+        assertArrayEquals(resolveExpectedRange(text, "360dp"), ranges[0]);
+    }
+
+    @Test
+    public void warnsOnlyFontSegmentWhenOnlyFontEmulationFails() {
+        String text = "已注入 | 360dp | 120%";
+        int[][] ranges = AppStatusFormatter.resolveWarnSegmentRanges(text, false, true);
+        assertEquals(1, ranges.length);
+        assertArrayEquals(resolveExpectedRange(text, "120%"), ranges[0]);
+    }
+
+    @Test
+    public void warnsBothSegmentsWhenBothEmulationsFail() {
+        String text = "已注入 | 360dp | 120%";
+        int[][] ranges = AppStatusFormatter.resolveWarnSegmentRanges(text, true, true);
+        assertEquals(2, ranges.length);
+        assertArrayEquals(resolveExpectedRange(text, "360dp"), ranges[0]);
+        assertArrayEquals(resolveExpectedRange(text, "120%"), ranges[1]);
+    }
+
+    @Test
+    public void returnsNoRangesWhenNoSegmentNeedsWarning() {
+        String text = "已注入 | 360dp | 120%";
+        int[][] ranges = AppStatusFormatter.resolveWarnSegmentRanges(text, false, false);
+        assertEquals(0, ranges.length);
+    }
+
+    private static int[] resolveExpectedRange(String fullText, String segmentText) {
+        int expectedStart = fullText.indexOf(segmentText);
+        assertTrue(expectedStart >= 0);
+        int expectedEnd = expectedStart + segmentText.length();
+        return new int[]{expectedStart, expectedEnd};
     }
 }

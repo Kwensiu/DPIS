@@ -26,6 +26,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -65,6 +66,7 @@ import java.util.Set;
 import io.github.libxposed.service.XposedService;
 
 public final class MainActivity extends Activity implements DpisApplication.ServiceStateListener {
+    private static final long MODE_TOGGLE_ANIM_DURATION_MS = 200L;
     private static final String SYSTEM_SCOPE_MODERN = "system";
     private static final String STATE_CURRENT_QUERY = "state.current_query";
     private static final String STATE_CURRENT_PAGE = "state.current_page";
@@ -805,12 +807,14 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         String statusText = AppStatusFormatter.format(
                 inScope, widthDp, viewportMode, fontScalePercent, fontMode, dpisEnabled);
         String dialogStatusText = AppStatusFormatter.toCompactDisplay(statusText);
-        boolean warnConfigSegments = AppStatusFormatter.shouldWarnEmulation(
-                widthDp, viewportMode, fontScalePercent, fontMode,
-                systemHooksEnabled, dpisEnabled);
-        if (warnConfigSegments) {
+        boolean warnViewport = AppStatusFormatter.shouldWarnViewportEmulation(
+                widthDp, viewportMode, systemHooksEnabled, dpisEnabled);
+        boolean warnFont = AppStatusFormatter.shouldWarnFontEmulation(
+                fontScalePercent, fontMode, systemHooksEnabled, dpisEnabled);
+        if (warnViewport || warnFont) {
             int warnColor = MaterialColors.getColor(statusView, androidx.appcompat.R.attr.colorError);
-            statusView.setText(AppStatusFormatter.applyConfigSegmentsWarnStyle(dialogStatusText, warnColor));
+            statusView.setText(AppStatusFormatter.applyConfigSegmentsWarnStyle(
+                    dialogStatusText, warnColor, warnViewport, warnFont));
             return;
         }
         statusView.setText(dialogStatusText);
@@ -832,30 +836,32 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         return ViewportApplyMode.FIELD_REWRITE;
     }
 
-    private static void bindFontModeToggle(ModeToggle fontModeToggle, String fontMode) {
+    private static void bindFontModeToggle(ModeToggle fontModeToggle,
+                                           String fontMode,
+                                           boolean animate) {
         String resolved = FontApplyMode.SYSTEM_EMULATION.equals(fontMode)
                 ? FontApplyMode.SYSTEM_EMULATION
                 : FontApplyMode.FIELD_REWRITE;
         fontModeToggle.container.setTag(resolved);
-        updateModeToggleVisual(fontModeToggle, FontApplyMode.SYSTEM_EMULATION.equals(resolved), false);
+        updateModeToggleVisual(fontModeToggle, FontApplyMode.SYSTEM_EMULATION.equals(resolved), animate);
     }
 
     private static void toggleFontMode(ModeToggle fontModeToggle) {
         String nextMode = FontApplyMode.FIELD_REWRITE.equals(resolveFontMode(fontModeToggle))
                 ? FontApplyMode.SYSTEM_EMULATION
                 : FontApplyMode.FIELD_REWRITE;
-        bindFontModeToggle(fontModeToggle, nextMode);
-        updateModeToggleVisual(fontModeToggle, FontApplyMode.SYSTEM_EMULATION.equals(nextMode), true);
+        bindFontModeToggle(fontModeToggle, nextMode, true);
     }
 
     private static void bindViewportModeToggle(ModeToggle viewportModeToggle,
-                                               String viewportMode) {
+                                               String viewportMode,
+                                               boolean animate) {
         String resolved = ViewportApplyMode.SYSTEM_EMULATION.equals(viewportMode)
                 ? ViewportApplyMode.SYSTEM_EMULATION
                 : ViewportApplyMode.FIELD_REWRITE;
         viewportModeToggle.container.setTag(resolved);
         updateModeToggleVisual(viewportModeToggle,
-                ViewportApplyMode.SYSTEM_EMULATION.equals(resolved), false);
+                ViewportApplyMode.SYSTEM_EMULATION.equals(resolved), animate);
     }
 
     private static void toggleViewportMode(ModeToggle viewportModeToggle) {
@@ -863,9 +869,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                 resolveViewportMode(viewportModeToggle))
                 ? ViewportApplyMode.SYSTEM_EMULATION
                 : ViewportApplyMode.FIELD_REWRITE;
-        bindViewportModeToggle(viewportModeToggle, nextMode);
-        updateModeToggleVisual(viewportModeToggle,
-                ViewportApplyMode.SYSTEM_EMULATION.equals(nextMode), true);
+        bindViewportModeToggle(viewportModeToggle, nextMode, true);
     }
 
     private static void updateModeToggleVisual(ModeToggle toggle,
@@ -903,7 +907,11 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
             float target = emulationActive ? 0f : half;
             if (animate) {
                 toggle.thumb.animate().cancel();
-                toggle.thumb.animate().translationX(target).setDuration(150L).start();
+                toggle.thumb.animate()
+                        .translationX(target)
+                        .setDuration(MODE_TOGGLE_ANIM_DURATION_MS)
+                        .setInterpolator(new AccelerateDecelerateInterpolator())
+                        .start();
             } else {
                 toggle.thumb.setTranslationX(target);
             }
@@ -935,36 +943,35 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         int activeFgColor = MaterialColors.getColor(
                 scopeButton, com.google.android.material.R.attr.colorOnSecondaryContainer);
         scopeButton.setIcon(null);
-        scopeButton.setText(R.string.dialog_scope_button);
+        int scopeTextRes = inScope ? R.string.scope_remove_button : R.string.scope_add_button;
+        scopeButton.setText(scopeTextRes);
         scopeButton.setBackgroundTintList(inScope
                 ? ColorStateList.valueOf(activeBgColor)
                 : defaultBgTint);
         scopeButton.setTextColor(inScope ? activeFgColor : defaultTextColor);
         scopeButton.setStrokeWidth(inScope ? 0 : defaultStrokeWidth);
-        scopeButton.setContentDescription(inScope
-                ? getString(R.string.scope_remove_button)
-                : getString(R.string.scope_add_button));
+        scopeButton.setContentDescription(getString(scopeTextRes));
     }
 
     private void bindDpisToggleButton(MaterialButton dpisToggleButton,
                                       boolean dpisEnabled,
                                       ColorStateList defaultBgTint,
                                       int defaultStrokeWidth,
-                                      ColorStateList defaultIconTint) {
-        dpisToggleButton.setText("");
-        dpisToggleButton.setIconResource(R.drawable.ic_block_24);
+                                      int defaultTextColor) {
+        String buttonText = getString(
+                dpisEnabled ? R.string.dialog_dpis_disable_button : R.string.dialog_dpis_enable_button);
+        dpisToggleButton.setText(buttonText);
+        dpisToggleButton.setIcon(null);
         int activeBgColor = MaterialColors.getColor(
                 dpisToggleButton, com.google.android.material.R.attr.colorSecondaryContainer);
         int activeFgColor = MaterialColors.getColor(
                 dpisToggleButton, com.google.android.material.R.attr.colorOnSecondaryContainer);
-        boolean disableActive = !dpisEnabled;
+        boolean enabledActive = dpisEnabled;
         dpisToggleButton.setBackgroundTintList(
-                disableActive ? ColorStateList.valueOf(activeBgColor) : defaultBgTint);
-        dpisToggleButton.setIconTint(
-                disableActive ? ColorStateList.valueOf(activeFgColor) : defaultIconTint);
-        dpisToggleButton.setStrokeWidth(disableActive ? 0 : defaultStrokeWidth);
-        dpisToggleButton.setContentDescription(getString(
-                dpisEnabled ? R.string.dialog_dpis_disable_button : R.string.dialog_dpis_enable_button));
+                enabledActive ? ColorStateList.valueOf(activeBgColor) : defaultBgTint);
+        dpisToggleButton.setTextColor(enabledActive ? activeFgColor : defaultTextColor);
+        dpisToggleButton.setStrokeWidth(enabledActive ? 0 : defaultStrokeWidth);
+        dpisToggleButton.setContentDescription(buttonText);
     }
 
     private static Integer parsePositiveIntOrNull(TextInputEditText inputView)
@@ -1076,7 +1083,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                 R.layout.dialog_app_config, root, false);
         AppConfigDialogViews views = initDialogViews(dialogView);
         AppConfigDialogState state = bindDialogInitialState(item, views);
-        AppConfigDialogActionStyle style = resolveDialogActionStyle(views.startButton);
+        AppConfigDialogActionStyle style = resolveDialogActionStyle(views.scopeButton);
         refreshDialogState(views, state, style, systemHooksEnabled);
         bindDialogValidation(dialogView, views, state, style, systemHooksEnabled);
         BottomSheetDialog dialog = new BottomSheetDialog(this);
@@ -1122,25 +1129,20 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                 ? String.valueOf(item.viewportWidthDp) : "");
         views.fontInputView.setText(item.fontScalePercent != null
                 ? String.valueOf(item.fontScalePercent) : "");
-        bindViewportModeToggle(views.viewportModeToggle, item.viewportMode);
-        bindFontModeToggle(views.fontModeToggle, item.fontMode);
+        bindViewportModeToggle(views.viewportModeToggle, item.viewportMode, false);
+        bindFontModeToggle(views.fontModeToggle, item.fontMode, false);
         updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,
                 views.fontInputLayout, views.fontInputView, views.saveButton);
         return new AppConfigDialogState(item.inScope, item.dpisEnabled);
     }
 
-    private AppConfigDialogActionStyle resolveDialogActionStyle(MaterialButton startButton) {
-        ColorStateList defaultActionBgTint = startButton.getBackgroundTintList();
-        int defaultActionStrokeWidth = startButton.getStrokeWidth();
+    private AppConfigDialogActionStyle resolveDialogActionStyle(MaterialButton baseButton) {
+        ColorStateList defaultActionBgTint = baseButton.getBackgroundTintList();
+        int defaultActionStrokeWidth = baseButton.getStrokeWidth();
         int defaultActionTextColor = MaterialColors.getColor(
-                startButton, androidx.appcompat.R.attr.colorPrimary);
-        ColorStateList resolvedActionIconTint = startButton.getIconTint();
-        if (resolvedActionIconTint == null) {
-            resolvedActionIconTint = ColorStateList.valueOf(MaterialColors.getColor(
-                    startButton, androidx.appcompat.R.attr.colorPrimary));
-        }
+                baseButton, androidx.appcompat.R.attr.colorPrimary);
         return new AppConfigDialogActionStyle(defaultActionBgTint,
-                defaultActionStrokeWidth, defaultActionTextColor, resolvedActionIconTint);
+                defaultActionStrokeWidth, defaultActionTextColor);
     }
 
     private void refreshDialogState(AppConfigDialogViews views,
@@ -1159,7 +1161,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         bindScopeButton(views.scopeButton, state.scopeSelected,
                 style.defaultActionBgTint, style.defaultActionStrokeWidth, style.defaultActionTextColor);
         bindDpisToggleButton(views.dpisToggleButton, state.dpisEnabled,
-                style.defaultActionBgTint, style.defaultActionStrokeWidth, style.defaultActionIconTint);
+                style.defaultActionBgTint, style.defaultActionStrokeWidth, style.defaultActionTextColor);
     }
 
     private void bindDialogValidation(View dialogView,
@@ -1247,8 +1249,8 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
             clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
             views.viewportInputView.setText("");
             views.fontInputView.setText("");
-            bindViewportModeToggle(views.viewportModeToggle, ViewportApplyMode.FIELD_REWRITE);
-            bindFontModeToggle(views.fontModeToggle, FontApplyMode.FIELD_REWRITE);
+            bindViewportModeToggle(views.viewportModeToggle, ViewportApplyMode.FIELD_REWRITE, true);
+            bindFontModeToggle(views.fontModeToggle, FontApplyMode.FIELD_REWRITE, true);
             updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,
                     views.fontInputLayout, views.fontInputView, views.saveButton);
             refreshDialogState(views, state, style, systemHooksEnabled);
@@ -1265,12 +1267,14 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         });
         views.viewportModeToggle.emulationLabel.setOnClickListener(v -> {
             clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            bindViewportModeToggle(views.viewportModeToggle, ViewportApplyMode.SYSTEM_EMULATION);
+            bindViewportModeToggle(
+                    views.viewportModeToggle, ViewportApplyMode.SYSTEM_EMULATION, true);
             refreshDialogState(views, state, style, systemHooksEnabled);
         });
         views.viewportModeToggle.replaceLabel.setOnClickListener(v -> {
             clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            bindViewportModeToggle(views.viewportModeToggle, ViewportApplyMode.FIELD_REWRITE);
+            bindViewportModeToggle(
+                    views.viewportModeToggle, ViewportApplyMode.FIELD_REWRITE, true);
             refreshDialogState(views, state, style, systemHooksEnabled);
         });
         views.fontModeToggle.container.setOnClickListener(v -> {
@@ -1280,12 +1284,12 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         });
         views.fontModeToggle.emulationLabel.setOnClickListener(v -> {
             clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            bindFontModeToggle(views.fontModeToggle, FontApplyMode.SYSTEM_EMULATION);
+            bindFontModeToggle(views.fontModeToggle, FontApplyMode.SYSTEM_EMULATION, true);
             refreshDialogState(views, state, style, systemHooksEnabled);
         });
         views.fontModeToggle.replaceLabel.setOnClickListener(v -> {
             clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            bindFontModeToggle(views.fontModeToggle, FontApplyMode.FIELD_REWRITE);
+            bindFontModeToggle(views.fontModeToggle, FontApplyMode.FIELD_REWRITE, true);
             refreshDialogState(views, state, style, systemHooksEnabled);
         });
     }
@@ -1360,16 +1364,13 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         final ColorStateList defaultActionBgTint;
         final int defaultActionStrokeWidth;
         final int defaultActionTextColor;
-        final ColorStateList defaultActionIconTint;
 
         AppConfigDialogActionStyle(ColorStateList defaultActionBgTint,
                                    int defaultActionStrokeWidth,
-                                   int defaultActionTextColor,
-                                   ColorStateList defaultActionIconTint) {
+                                   int defaultActionTextColor) {
             this.defaultActionBgTint = defaultActionBgTint;
             this.defaultActionStrokeWidth = defaultActionStrokeWidth;
             this.defaultActionTextColor = defaultActionTextColor;
-            this.defaultActionIconTint = defaultActionIconTint;
         }
     }
 

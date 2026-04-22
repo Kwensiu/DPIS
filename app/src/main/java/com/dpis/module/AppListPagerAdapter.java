@@ -252,15 +252,19 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                     item.inScope, item.viewportWidthDp, item.viewportMode,
                     item.fontScalePercent, item.fontMode, item.dpisEnabled);
             String compactStatusText = AppStatusFormatter.toCompactDisplay(statusText);
-            if (AppStatusFormatter.shouldWarnEmulation(
+            boolean warnViewport = AppStatusFormatter.shouldWarnViewportEmulation(
                     item.viewportWidthDp, item.viewportMode,
+                    systemScopeSelectedSupplier.getAsBoolean(),
+                    item.dpisEnabled);
+            boolean warnFont = AppStatusFormatter.shouldWarnFontEmulation(
                     item.fontScalePercent, item.fontMode,
                     systemScopeSelectedSupplier.getAsBoolean(),
-                    item.dpisEnabled)) {
+                    item.dpisEnabled);
+            if (warnViewport || warnFont) {
                 int warnColor = MaterialColors.getColor(holder.status,
                         androidx.appcompat.R.attr.colorError);
                 holder.status.setText(AppStatusFormatter.applyConfigSegmentsWarnStyle(
-                        compactStatusText, warnColor));
+                        compactStatusText, warnColor, warnViewport, warnFont));
             } else {
                 holder.status.setText(compactStatusText);
             }
@@ -277,15 +281,19 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                         item.inScope, item.viewportWidthDp, item.viewportMode,
                         item.fontScalePercent, item.fontMode, item.dpisEnabled);
                 String compactStatusText = AppStatusFormatter.toCompactDisplay(statusText);
-                if (AppStatusFormatter.shouldWarnEmulation(
+                boolean warnViewport = AppStatusFormatter.shouldWarnViewportEmulation(
                         item.viewportWidthDp, item.viewportMode,
+                        systemScopeSelectedSupplier.getAsBoolean(),
+                        item.dpisEnabled);
+                boolean warnFont = AppStatusFormatter.shouldWarnFontEmulation(
                         item.fontScalePercent, item.fontMode,
                         systemScopeSelectedSupplier.getAsBoolean(),
-                        item.dpisEnabled)) {
+                        item.dpisEnabled);
+                if (warnViewport || warnFont) {
                     int warnColor = MaterialColors.getColor(holder.status,
                             androidx.appcompat.R.attr.colorError);
                     holder.status.setText(AppStatusFormatter.applyConfigSegmentsWarnStyle(
-                            compactStatusText, warnColor));
+                            compactStatusText, warnColor, warnViewport, warnFont));
                 } else {
                     holder.status.setText(compactStatusText);
                 }

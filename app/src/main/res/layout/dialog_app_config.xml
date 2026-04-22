@@ -239,10 +239,46 @@
         </FrameLayout>
     </LinearLayout>
 
-        <LinearLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/dialog_stop_button"
+            style="@style/Widget.Dpis.DialogActionButton.Outlined.Error"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:minWidth="0dp"
+            android:text="@string/dialog_stop_button" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/dialog_restart_button"
+            style="@style/Widget.Dpis.DialogActionButton.Outlined.Warn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:minWidth="0dp"
+            android:text="@string/dialog_restart_button" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/dialog_start_button"
+            style="@style/Widget.Dpis.DialogActionButton.Outlined.Success"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:minWidth="0dp"
+            android:text="@string/dialog_start_button" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
@@ -250,61 +286,9 @@
             style="@style/Widget.Dpis.DialogActionButton.Outlined"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1.7"
-            android:ellipsize="end"
-            android:maxLines="1"
+            android:layout_weight="1"
             android:minWidth="0dp"
-            android:paddingStart="0dp"
-            android:paddingEnd="0dp"
             android:text="@string/dialog_scope_button" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/dialog_stop_button"
-            style="@style/Widget.Dpis.DialogActionButton.Outlined"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:layout_weight="0.82"
-            android:contentDescription="@string/dialog_stop_button"
-            android:minWidth="0dp"
-            android:text=""
-            app:icon="@drawable/ic_stop_24"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp"
-            app:iconSize="26dp"
-            app:iconTint="?attr/colorPrimary" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/dialog_restart_button"
-            style="@style/Widget.Dpis.DialogActionButton.Outlined"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:layout_weight="0.82"
-            android:contentDescription="@string/dialog_restart_button"
-            android:minWidth="0dp"
-            android:text=""
-            app:icon="@drawable/ic_refresh_24"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp"
-            app:iconSize="26dp"
-            app:iconTint="?attr/colorPrimary" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/dialog_start_button"
-            style="@style/Widget.Dpis.DialogActionButton.Outlined"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:layout_weight="0.82"
-            android:contentDescription="@string/dialog_start_button"
-            android:minWidth="0dp"
-            android:text=""
-            app:icon="@drawable/ic_play_arrow_24"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp"
-            app:iconSize="26dp"
-            app:iconTint="?attr/colorPrimary" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/dialog_dpis_toggle_button"
@@ -312,13 +296,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
-            android:layout_weight="0.82"
+            android:layout_weight="1"
             android:minWidth="0dp"
-            android:text=""
-            app:icon="@drawable/ic_block_24"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp"
-            app:iconSize="26dp" />
+            android:text="@string/dialog_dpis_disable_button" />
     </LinearLayout>
 
         <LinearLayout
