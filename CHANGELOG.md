@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.4.0](https://github.com/Kwensiu/DPIS/compare/v1.3.0...v1.4.0) (2026-04-22)
+
+
+### Features
+
+* polish app list help actions and tutorial dialog ([5f9bd94](https://github.com/Kwensiu/DPIS/commit/5f9bd9462d470fd2829049a6645b05df6043b7c9))
+* refine app config sheet interactions and warning states ([d3cca7d](https://github.com/Kwensiu/DPIS/commit/d3cca7db479fc2f982e2a436de1c30beb39fa3b1))
+
+
+### Bug Fixes
+
+* polish help tutorial theming and layout smoke coverage ([7cdbde3](https://github.com/Kwensiu/DPIS/commit/7cdbde36c0a24ed924ccceb69a027db9ec0e6be1))
+
+
+### UI
+
+* add shared touch haptic feedback foundation ([6a342c4](https://github.com/Kwensiu/DPIS/commit/6a342c4480948d494feb60000280c0d487693f75))
+
 ## [1.3.0](https://github.com/Kwensiu/DPIS/compare/v1.2.0...v1.3.0) (2026-04-22)
 
 
