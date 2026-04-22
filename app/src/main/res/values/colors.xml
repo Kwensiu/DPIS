@@ -6,4 +6,13 @@
     <color name="dpis_on_warn_container">#4A3400</color>
     <color name="dpis_success_container">#D5EFCF</color>
     <color name="dpis_on_success_container">#16351A</color>
+    <color name="help_tutorial_emulation_card_container">#F5F7FF</color>
+    <color name="help_tutorial_emulation_card_stroke">#D9E1FF</color>
+    <color name="help_tutorial_emulation_badge_container">#DDE7FF</color>
+    <color name="help_tutorial_emulation_badge_text">#2447B8</color>
+    <color name="help_tutorial_replace_card_container">#FFF8EF</color>
+    <color name="help_tutorial_replace_card_stroke">#FFE0B2</color>
+    <color name="help_tutorial_replace_badge_container">#FFE7C4</color>
+    <color name="help_tutorial_replace_badge_text">#9A5A0B</color>
+    <color name="dpis_fab_ripple">#332D61D8</color>
 </resources>

@@ -2,4 +2,13 @@
 <resources>
     <color name="dpis_stop_container">#ECA69E</color>
     <color name="dpis_on_stop_container">#5A3A38</color>
+    <color name="help_tutorial_emulation_card_container">#1F2435</color>
+    <color name="help_tutorial_emulation_card_stroke">#39425E</color>
+    <color name="help_tutorial_emulation_badge_container">#2A365C</color>
+    <color name="help_tutorial_emulation_badge_text">#D9E4FF</color>
+    <color name="help_tutorial_replace_card_container">#30261E</color>
+    <color name="help_tutorial_replace_card_stroke">#5C4732</color>
+    <color name="help_tutorial_replace_badge_container">#5A4020</color>
+    <color name="help_tutorial_replace_badge_text">#FFE2B2</color>
+    <color name="dpis_fab_ripple">#33D9E4FF</color>
 </resources>

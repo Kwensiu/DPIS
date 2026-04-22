@@ -23,6 +23,9 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("HelpTutorialDialog.show(this);"));
         assertTrue(!source.contains("RichTextDialog.show("));
         assertTrue(source.contains("searchFocusFab.setOnClickListener"));
+        assertTrue(source.contains("bindFabTouchFeedback(searchFocusFab);"));
+        assertTrue(source.contains("bindFabTouchFeedback(helpFab);"));
+        assertTrue(source.contains("private void bindFabTouchFeedback(FloatingActionButton fab)"));
         assertTrue(source.contains("focusSearchInputAndShowKeyboard()"));
         assertTrue(source.contains("onPageListScrolled("));
         assertTrue(source.contains("hideSearchFocusFab()"));

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="#FFE7C4" />
+    <solid android:color="@color/help_tutorial_replace_badge_container" />
     <corners android:radius="999dp" />
 </shape>

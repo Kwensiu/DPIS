@@ -19,6 +19,13 @@ public class MainActivityLayoutSmokeTest {
         assertTrue(layout.contains("android:id=\"@+id/search_filter_button\""));
         assertTrue(layout.contains("android:id=\"@+id/help_fab\""));
         assertTrue(layout.contains("android:id=\"@+id/search_focus_fab\""));
+        assertTrue(countMatches(layout, "app:elevation=\"6dp\"") == 2);
+        assertTrue(countMatches(layout, "app:hoveredFocusedTranslationZ=\"8dp\"") == 2);
+        assertTrue(countMatches(layout, "app:pressedTranslationZ=\"10dp\"") == 2);
+        assertTrue(countMatches(layout, "app:rippleColor=\"@color/dpis_fab_ripple\"") == 2);
+        assertTrue(layout.contains("android:id=\"@+id/top_container\""));
+        assertTrue(layout.contains("android:paddingStart=\"16dp\""));
+        assertTrue(layout.contains("android:paddingTop=\"16dp\""));
         assertTrue(layout.contains("android:src=\"@drawable/ic_search_24\""));
         assertTrue(layout.contains("app:srcCompat=\"@drawable/ic_info_outline_24\""));
         assertTrue(layout.contains("android:src=\"@drawable/baseline_tune_24\""));
@@ -32,5 +39,18 @@ public class MainActivityLayoutSmokeTest {
 
     private static String read(String relativePath) throws IOException {
         return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
+    }
+
+    private static int countMatches(String text, String target) {
+        int count = 0;
+        int index = 0;
+        while (true) {
+            int found = text.indexOf(target, index);
+            if (found < 0) {
+                return count;
+            }
+            count++;
+            index = found + target.length();
+        }
     }
 }

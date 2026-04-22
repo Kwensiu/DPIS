@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingTop="12dp"
+    android:paddingTop="20dp"
     android:paddingBottom="16dp">
 
     <androidx.core.widget.NestedScrollView
@@ -57,7 +57,7 @@
                         android:paddingBottom="6dp"
                         android:text="@string/help_tutorial_emulation_badge"
                         android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
-                        android:textColor="#2447B8"
+                        android:textColor="@color/help_tutorial_emulation_badge_text"
                         android:textStyle="bold" />
                 </LinearLayout>
 
@@ -118,7 +118,7 @@
                         android:paddingBottom="6dp"
                         android:text="@string/help_tutorial_replace_badge"
                         android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
-                        android:textColor="#9A5A0B"
+                        android:textColor="@color/help_tutorial_replace_badge_text"
                         android:textStyle="bold" />
                 </LinearLayout>
 

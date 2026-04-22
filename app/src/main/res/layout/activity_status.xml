@@ -21,7 +21,7 @@
             android:contentInsetEnd="0dp"
             android:contentInsetRight="0dp"
             android:paddingStart="16dp"
-            android:paddingTop="10dp"
+            android:paddingTop="16dp"
             android:paddingEnd="16dp"
             android:paddingBottom="6dp">
 
@@ -137,6 +137,10 @@
         android:layout_marginBottom="@dimen/floating_actions_search_margin_bottom"
         android:contentDescription="@string/help_button"
         app:backgroundTint="?attr/colorSecondaryContainer"
+        app:elevation="6dp"
+        app:hoveredFocusedTranslationZ="8dp"
+        app:pressedTranslationZ="10dp"
+        app:rippleColor="@color/dpis_fab_ripple"
         app:srcCompat="@drawable/ic_info_outline_24"
         app:tint="?attr/colorOnSecondaryContainer" />
 
@@ -149,6 +153,10 @@
         android:layout_marginBottom="@dimen/floating_actions_search_margin_bottom"
         android:contentDescription="@string/quick_search_button"
         app:backgroundTint="?attr/colorPrimary"
+        app:elevation="6dp"
+        app:hoveredFocusedTranslationZ="8dp"
+        app:pressedTranslationZ="10dp"
+        app:rippleColor="@color/dpis_fab_ripple"
         app:srcCompat="@drawable/ic_search_24"
         app:tint="?attr/colorOnPrimary" />
 
