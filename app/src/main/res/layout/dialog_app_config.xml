@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingStart="20dp"
-    android:orientation="vertical"
-    android:paddingTop="20dp"
-    android:paddingEnd="20dp"
-    android:paddingBottom="24dp">
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="24dp">
 
     <View
         android:layout_width="36dp"
@@ -64,12 +69,13 @@
         </LinearLayout>
     </LinearLayout>
 
-    <LinearLayout
+        <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="@dimen/dialog_mode_toggle_row_height"
+        android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:baselineAligned="false"
         android:gravity="center_vertical"
+        android:minHeight="@dimen/dialog_mode_toggle_row_min_height"
         android:orientation="horizontal">
 
         <FrameLayout
@@ -150,10 +156,11 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="@dimen/dialog_mode_toggle_row_height"
+        android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:baselineAligned="false"
         android:gravity="center_vertical"
+        android:minHeight="@dimen/dialog_mode_toggle_row_min_height"
         android:orientation="horizontal">
 
         <FrameLayout
@@ -232,7 +239,7 @@
         </FrameLayout>
     </LinearLayout>
 
-    <LinearLayout
+        <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
@@ -314,7 +321,7 @@
             app:iconSize="26dp" />
     </LinearLayout>
 
-    <LinearLayout
+        <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
@@ -339,5 +346,6 @@
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:text="@string/dialog_disable_button" />
+        </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+</androidx.core.widget.NestedScrollView>

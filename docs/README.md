@@ -10,6 +10,8 @@
   - 最终构建、测试、设备回归验收清单。
 - [superpowers/plans/2026-04-18-font-hook-code-cleanup.md](./superpowers/plans/2026-04-18-font-hook-code-cleanup.md)
   - 当前保留的字体 Hook 代码整理活计划（其余 superpowers 计划/设计已归档）。
+- [superpowers/plans/2026-04-22-app-detail-sheet-structure-and-layout-hardening.md](./superpowers/plans/2026-04-22-app-detail-sheet-structure-and-layout-hardening.md)
+  - 应用详情 Sheet 的代码解耦与布局容错增强方案（低风险、最小 UX 变更）。
 
 ## 历史文档归档入口
 

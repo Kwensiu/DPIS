@@ -251,6 +251,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             String statusText = AppStatusFormatter.format(
                     item.inScope, item.viewportWidthDp, item.viewportMode,
                     item.fontScalePercent, item.fontMode, item.dpisEnabled);
+            String compactStatusText = AppStatusFormatter.toCompactDisplay(statusText);
             if (AppStatusFormatter.shouldWarnEmulation(
                     item.viewportWidthDp, item.viewportMode,
                     item.fontScalePercent, item.fontMode,
@@ -259,9 +260,9 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                 int warnColor = MaterialColors.getColor(holder.status,
                         androidx.appcompat.R.attr.colorError);
                 holder.status.setText(AppStatusFormatter.applyConfigSegmentsWarnStyle(
-                        statusText, warnColor));
+                        compactStatusText, warnColor));
             } else {
-                holder.status.setText(statusText);
+                holder.status.setText(compactStatusText);
             }
             holder.headerClickTarget.setOnClickListener(v -> onAppClickListener.onAppClicked(item));
         }
@@ -275,6 +276,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                 String statusText = AppStatusFormatter.format(
                         item.inScope, item.viewportWidthDp, item.viewportMode,
                         item.fontScalePercent, item.fontMode, item.dpisEnabled);
+                String compactStatusText = AppStatusFormatter.toCompactDisplay(statusText);
                 if (AppStatusFormatter.shouldWarnEmulation(
                         item.viewportWidthDp, item.viewportMode,
                         item.fontScalePercent, item.fontMode,
@@ -283,9 +285,9 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                     int warnColor = MaterialColors.getColor(holder.status,
                             androidx.appcompat.R.attr.colorError);
                     holder.status.setText(AppStatusFormatter.applyConfigSegmentsWarnStyle(
-                            statusText, warnColor));
+                            compactStatusText, warnColor));
                 } else {
-                    holder.status.setText(statusText);
+                    holder.status.setText(compactStatusText);
                 }
                 return;
             }

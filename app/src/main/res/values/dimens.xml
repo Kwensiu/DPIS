@@ -3,6 +3,7 @@
     <dimen name="settings_back_button_size">36dp</dimen>
     <dimen name="settings_section_inset_start">20dp</dimen>
     <dimen name="dialog_mode_toggle_row_height">56dp</dimen>
+    <dimen name="dialog_mode_toggle_row_min_height">56dp</dimen>
     <dimen name="dialog_mode_toggle_width">132dp</dimen>
     <dimen name="dialog_mode_toggle_spacing_start">10dp</dimen>
     <dimen name="dialog_mode_toggle_content_offset_top">6dp</dimen>

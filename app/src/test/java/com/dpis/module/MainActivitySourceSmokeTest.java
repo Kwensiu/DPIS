@@ -79,6 +79,16 @@ public class MainActivitySourceSmokeTest {
         assertTrue(layout.contains("startup_disclaimer_exit_button"));
     }
 
+    @Test
+    public void appConfigLayoutUsesScrollableContainerAndAdaptiveModeRows() throws IOException {
+        String layout = read("src/main/res/layout/dialog_app_config.xml");
+
+        assertTrue(layout.contains("androidx.core.widget.NestedScrollView"));
+        assertTrue(layout.contains("android:fillViewport=\"true\""));
+        assertTrue(layout.contains("android:minHeight=\"@dimen/dialog_mode_toggle_row_min_height\""));
+        assertTrue(!layout.contains("android:layout_height=\"@dimen/dialog_mode_toggle_row_height\""));
+    }
+
     private static String read(String relativePath) throws IOException {
         return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
     }

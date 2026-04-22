@@ -124,4 +124,47 @@ final class AppStatusFormatter {
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return styled;
     }
+
+    static String toCompactDisplay(String statusText) {
+        if (statusText == null || statusText.isEmpty()) {
+            return statusText;
+        }
+        String[] segments = statusText.split("\\|");
+        if (segments.length == 0) {
+            return statusText;
+        }
+        StringBuilder builder = new StringBuilder();
+        int appendedCount = 0;
+        for (int i = 0; i < segments.length; i++) {
+            String segment = segments[i] != null ? segments[i].trim() : "";
+            if (segment.isEmpty()) {
+                continue;
+            }
+            String compact = compactSegment(i, segment);
+            if (compact.isEmpty()) {
+                continue;
+            }
+            if (appendedCount > 0) {
+                builder.append(" | ");
+            }
+            builder.append(compact);
+            appendedCount++;
+        }
+        return appendedCount > 0 ? builder.toString() : statusText;
+    }
+
+    private static String compactSegment(int index, String segment) {
+        String compact = segment
+                .replace("(伪装)", "")
+                .replace("(替换)", "")
+                .replace("·伪装", "")
+                .replace("·替换", "")
+                .trim();
+        if (index >= 2 && compact.startsWith("字体")) {
+            compact = compact.substring(2).trim();
+        } else if (index >= 2 && compact.startsWith("字")) {
+            compact = compact.substring(1).trim();
+        }
+        return compact;
+    }
 }
