@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/Kwensiu/DPIS/compare/v1.2.0...v1.3.0) (2026-04-22)
+
+
+### Features
+
+* harden app detail sheet structure and layout ([1d69b7c](https://github.com/Kwensiu/DPIS/commit/1d69b7c29e9bf261f19bf2d316603e98123803f5))
+
 ## [1.2.0](https://github.com/Kwensiu/DPIS/compare/v1.1.0...v1.2.0) (2026-04-21)
 
 
