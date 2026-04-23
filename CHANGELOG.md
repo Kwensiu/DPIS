@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/Kwensiu/DPIS/compare/v1.4.0...v1.4.1) (2026-04-23)
+
+
+### Bug Fixes
+
+* decouple system hook toggle from system scope ([#17](https://github.com/Kwensiu/DPIS/issues/17)) ([bfc7e68](https://github.com/Kwensiu/DPIS/commit/bfc7e68adb577e7924c0ca1d48a2f33f9ad287c4)), closes [#11](https://github.com/Kwensiu/DPIS/issues/11)
+
 ## [1.4.0](https://github.com/Kwensiu/DPIS/compare/v1.3.0...v1.4.0) (2026-04-22)
 
 
