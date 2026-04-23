@@ -9,6 +9,10 @@ import java.util.Map;
 import java.util.Set;
 
 final class DpiConfigStore {
+    private static final int MIN_VIEWPORT_WIDTH_DP = 1;
+    private static final int MIN_FONT_SCALE_PERCENT = 50;
+    private static final int MAX_FONT_SCALE_PERCENT = 300;
+
     static final String GROUP = "dpi_config";
     static final String KEY_TARGET_PACKAGES = "target_packages";
     static final String KEY_SYSTEM_SERVER_HOOKS_ENABLED = "system_server.hooks_enabled";
@@ -52,7 +56,8 @@ final class DpiConfigStore {
         if (!contains(key)) {
             return null;
         }
-        return getInt(key, 0);
+        Integer widthDp = getNullableInt(key);
+        return normalizeViewportWidth(widthDp);
     }
 
     String getTargetViewportApplyMode(String packageName) {
@@ -72,7 +77,8 @@ final class DpiConfigStore {
         if (!contains(key)) {
             return null;
         }
-        return getInt(key, 0);
+        Integer percent = getNullableInt(key);
+        return normalizeFontScalePercent(percent);
     }
 
     String getTargetFontApplyMode(String packageName) {
@@ -184,11 +190,15 @@ final class DpiConfigStore {
     }
 
     boolean setTargetViewportWidthDp(String packageName, int widthDp) {
+        Integer normalizedWidthDp = normalizeViewportWidth(widthDp);
+        if (normalizedWidthDp == null) {
+            return clearTargetViewportWidthDp(packageName);
+        }
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
         packages.add(packageName);
         return commitBoth(editor -> editor
                 .putStringSet(KEY_TARGET_PACKAGES, packages)
-                .putInt(keyForViewportWidth(packageName), widthDp));
+                .putInt(keyForViewportWidth(packageName), normalizedWidthDp));
     }
 
     boolean clearTargetViewportWidthDp(String packageName) {
@@ -223,11 +233,15 @@ final class DpiConfigStore {
     }
 
     boolean setTargetFontScalePercent(String packageName, int percent) {
+        Integer normalizedPercent = normalizeFontScalePercent(percent);
+        if (normalizedPercent == null) {
+            return clearTargetFontScalePercent(packageName);
+        }
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
         packages.add(packageName);
         return commitBoth(editor -> editor
                 .putStringSet(KEY_TARGET_PACKAGES, packages)
-                .putInt(keyForFontScale(packageName), percent));
+                .putInt(keyForFontScale(packageName), normalizedPercent));
     }
 
     boolean setTargetFontApplyMode(String packageName, String mode) {
@@ -351,32 +365,74 @@ final class DpiConfigStore {
 
     private int getInt(String key, int defaultValue) {
         if (preferences.contains(key)) {
-            return preferences.getInt(key, defaultValue);
+            try {
+                return preferences.getInt(key, defaultValue);
+            } catch (ClassCastException ignored) {
+                return defaultValue;
+            }
         }
         if (mirrorPreferences != null && mirrorPreferences.contains(key)) {
-            return mirrorPreferences.getInt(key, defaultValue);
+            try {
+                return mirrorPreferences.getInt(key, defaultValue);
+            } catch (ClassCastException ignored) {
+                return defaultValue;
+            }
         }
         return defaultValue;
     }
 
     private String getString(String key, String defaultValue) {
         if (preferences.contains(key)) {
-            return preferences.getString(key, defaultValue);
+            try {
+                return preferences.getString(key, defaultValue);
+            } catch (ClassCastException ignored) {
+                return defaultValue;
+            }
         }
         if (mirrorPreferences != null && mirrorPreferences.contains(key)) {
-            return mirrorPreferences.getString(key, defaultValue);
+            try {
+                return mirrorPreferences.getString(key, defaultValue);
+            } catch (ClassCastException ignored) {
+                return defaultValue;
+            }
         }
         return defaultValue;
     }
 
     private boolean getBoolean(String key, boolean defaultValue) {
         if (preferences.contains(key)) {
-            return preferences.getBoolean(key, defaultValue);
+            try {
+                return preferences.getBoolean(key, defaultValue);
+            } catch (ClassCastException ignored) {
+                return defaultValue;
+            }
         }
         if (mirrorPreferences != null && mirrorPreferences.contains(key)) {
-            return mirrorPreferences.getBoolean(key, defaultValue);
+            try {
+                return mirrorPreferences.getBoolean(key, defaultValue);
+            } catch (ClassCastException ignored) {
+                return defaultValue;
+            }
         }
         return defaultValue;
+    }
+
+    private Integer getNullableInt(String key) {
+        if (preferences.contains(key)) {
+            try {
+                return preferences.getInt(key, 0);
+            } catch (ClassCastException ignored) {
+                return null;
+            }
+        }
+        if (mirrorPreferences != null && mirrorPreferences.contains(key)) {
+            try {
+                return mirrorPreferences.getInt(key, 0);
+            } catch (ClassCastException ignored) {
+                return null;
+            }
+        }
+        return null;
     }
 
     private boolean commitBoth(EditorAction action) {
@@ -469,6 +525,22 @@ final class DpiConfigStore {
             return stringSet;
         }
         return null;
+    }
+
+    private static Integer normalizeViewportWidth(Integer widthDp) {
+        if (widthDp == null || widthDp < MIN_VIEWPORT_WIDTH_DP) {
+            return null;
+        }
+        return widthDp;
+    }
+
+    private static Integer normalizeFontScalePercent(Integer percent) {
+        if (percent == null
+                || percent < MIN_FONT_SCALE_PERCENT
+                || percent > MAX_FONT_SCALE_PERCENT) {
+            return null;
+        }
+        return percent;
     }
 
     private static String keyForViewportWidth(String packageName) {
