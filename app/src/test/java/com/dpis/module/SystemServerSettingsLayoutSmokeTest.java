@@ -39,12 +39,25 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(strings.contains("settings_section_other"));
         assertTrue(strings.contains("settings_about_label"));
         assertTrue(strings.contains("settings_config_backup_label"));
+        assertTrue(strings.contains("config_backup_confirm_import_action"));
         assertTrue(strings.contains("settings_hide_launcher_icon_label"));
         assertTrue(strings.contains("about_source_url"));
         assertTrue(strings.contains("about_releases_url"));
         assertTrue(strings.contains("about_issues_url"));
         assertTrue(strings.contains("open_source_license"));
         assertTrue(strings.contains("open_source_license_settings_description"));
+    }
+
+    @Test
+    public void configBackupDialogsUseCustomLayoutStructure() throws IOException {
+        String actionDialog = read("src/main/res/layout/dialog_config_backup.xml");
+        String confirmDialog = read("src/main/res/layout/dialog_config_backup_confirm.xml");
+
+        assertTrue(actionDialog.contains("android:id=\"@+id/config_backup_export_button\""));
+        assertTrue(actionDialog.contains("android:id=\"@+id/config_backup_import_button\""));
+        assertTrue(actionDialog.contains("android:id=\"@+id/config_backup_close_button\""));
+        assertTrue(confirmDialog.contains("android:id=\"@+id/config_backup_confirm_proceed_button\""));
+        assertTrue(confirmDialog.contains("android:id=\"@+id/config_backup_confirm_cancel_button\""));
     }
 
     private static String read(String relativePath) throws IOException {

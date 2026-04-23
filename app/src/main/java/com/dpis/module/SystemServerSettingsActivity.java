@@ -29,6 +29,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textview.MaterialTextView;
 
@@ -260,21 +261,27 @@ public final class SystemServerSettingsActivity extends Activity {
             showToast(R.string.status_save_requires_init);
             return;
         }
-        CharSequence[] actions = {
-                getString(R.string.config_backup_export_action),
-                getString(R.string.config_backup_import_action)
-        };
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.config_backup_dialog_title)
-                .setItems(actions, (dialog, which) -> {
-                    if (which == 0) {
-                        launchExportBackupPicker();
-                        return;
-                    }
-                    showImportBackupConfirmDialog();
-                })
-                .setNegativeButton(R.string.dialog_close_button, null)
-                .show();
+        View dialogView = LayoutInflater.from(this).inflate(
+                R.layout.dialog_config_backup, null, false);
+        MaterialButton exportButton = dialogView.findViewById(R.id.config_backup_export_button);
+        MaterialButton importButton = dialogView.findViewById(R.id.config_backup_import_button);
+        MaterialButton closeButton = dialogView.findViewById(R.id.config_backup_close_button);
+
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+        dialog.setCanceledOnTouchOutside(true);
+
+        exportButton.setOnClickListener(v -> {
+            dialog.dismiss();
+            launchExportBackupPicker();
+        });
+        importButton.setOnClickListener(v -> {
+            dialog.dismiss();
+            showImportBackupConfirmDialog();
+        });
+        closeButton.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     @SuppressWarnings("deprecation")
@@ -307,13 +314,22 @@ public final class SystemServerSettingsActivity extends Activity {
     }
 
     private void showImportBackupConfirmDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.config_backup_import_confirm_title)
-                .setMessage(R.string.config_backup_import_confirm_message)
-                .setPositiveButton(R.string.dialog_process_action_confirm_positive,
-                        (dialog, which) -> launchImportBackupPicker())
-                .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
-                .show();
+        View dialogView = LayoutInflater.from(this).inflate(
+                R.layout.dialog_config_backup_confirm, null, false);
+        MaterialButton proceedButton = dialogView.findViewById(R.id.config_backup_confirm_proceed_button);
+        MaterialButton cancelButton = dialogView.findViewById(R.id.config_backup_confirm_cancel_button);
+
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+        dialog.setCanceledOnTouchOutside(true);
+
+        proceedButton.setOnClickListener(v -> {
+            dialog.dismiss();
+            launchImportBackupPicker();
+        });
+        cancelButton.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     private void exportConfigBackup(Uri uri) {
