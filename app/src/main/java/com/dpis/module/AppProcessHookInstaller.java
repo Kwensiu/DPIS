@@ -39,7 +39,7 @@ final class AppProcessHookInstaller {
             WindowMetricsHookInstaller.install(xposed);
             DisplayHookInstaller.install(xposed, packageName);
         }
-        if (policy.probeHooksEnabled) {
+        if (shouldInstallProbeHooks(policy)) {
             if (resourcesHooksEnabled) {
                 ResourcesProbeHookInstaller.install(xposed, packageName, store);
             }
@@ -60,6 +60,10 @@ final class AppProcessHookInstaller {
         if (fontHookPlan.downgradedToEmulation) {
             DpisLog.i("safe mode downgraded font apply mode to emulation for " + packageName);
         }
+    }
+
+    static boolean shouldInstallProbeHooks(HookRuntimePolicy policy) {
+        return policy != null && policy.probeHooksEnabled;
     }
 
     static boolean resolveViewportHookEnabled(HookRuntimePolicy policy,
