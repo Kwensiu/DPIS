@@ -61,7 +61,18 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="18dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:singleLine="true" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/update_dialog_cancel_button"
+        style="@style/Widget.Dpis.DialogActionButton.Outlined"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:ellipsize="end"
         android:maxLines="1"
         android:singleLine="true"
-        android:ellipsize="end" />
+        android:text="@string/about_update_action_cancel_dialog" />
 </LinearLayout>

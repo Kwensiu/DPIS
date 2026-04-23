@@ -23,10 +23,15 @@ public class AboutActivitySourceSmokeTest {
     @Test
     public void aboutActivityUpdateFlowUsesDirectApkUrlAndHttpsOnly() throws IOException {
         String source = read("src/main/java/com/dpis/module/AboutActivity.java");
+        String dialogSource = read("src/main/java/com/dpis/module/UpdateAvailableDialog.java");
+        String dialogLayout = read("src/main/res/layout/dialog_update_available.xml");
 
         assertTrue(source.contains("String downloadUrl = manifest.apkUrl;"));
         assertTrue(source.contains("R.string.about_update_action_view_release"));
         assertTrue(source.contains("\"https\".equalsIgnoreCase(scheme)"));
+        assertTrue(source.contains("UpdateAvailableDialog.create("));
+        assertTrue(dialogSource.contains("R.id.update_dialog_cancel_button"));
+        assertTrue(dialogLayout.contains("android:id=\"@+id/update_dialog_cancel_button\""));
     }
 
     @Test

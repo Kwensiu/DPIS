@@ -135,6 +135,7 @@
     <string name="about_update_action_download">下载更新</string>
     <string name="about_update_action_view_release">查看发布页</string>
     <string name="about_update_action_cancel_download">取消下载</string>
+    <string name="about_update_action_cancel_dialog">取消</string>
     <string name="about_update_download_in_progress">更新下载进行中</string>
     <string name="about_update_download_https_required">仅支持 HTTPS 下载更新包</string>
     <string name="about_update_download_failed">下载更新失败，请重试</string>

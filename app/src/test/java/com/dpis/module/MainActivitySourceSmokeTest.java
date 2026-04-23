@@ -75,11 +75,31 @@ public class MainActivitySourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(source.contains("maybeShowStartupDisclaimerDialog()"));
+        assertTrue(source.contains("if (!maybeShowStartupDisclaimerDialog()) {"));
+        assertTrue(source.contains("showStartupDisclaimerDialog(store, this::maybeCheckForUpdatesOnStartup);"));
         assertTrue(source.contains("new MaterialAlertDialogBuilder(this)"));
         assertTrue(source.contains("R.layout.dialog_startup_disclaimer"));
         assertTrue(source.contains("setStartupDisclaimerAccepted(true)"));
         assertTrue(source.contains("dialog.setCancelable(false)"));
         assertTrue(source.contains("setCanceledOnTouchOutside(false)"));
+    }
+
+    @Test
+    public void startupUpdateCheckShowsPromptOnlyOncePerRemoteVersion() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(source.contains("maybeCheckForUpdatesOnStartup();"));
+        assertTrue(source.contains("UPDATE_STARTUP_CHECK_INTERVAL_MS"));
+        assertTrue(source.contains("UPDATE_STARTUP_CHECK_FAILURE_RETRY_INTERVAL_MS"));
+        assertTrue(source.contains("KEY_LAST_UPDATE_CHECK_FAILED"));
+        assertTrue(source.contains("wasLastUpdateCheckFailed()"));
+        assertTrue(source.contains("setLastUpdateCheckFailed(!requestSucceeded);"));
+        assertTrue(source.contains("KEY_LAST_PROMPTED_UPDATE_VERSION_CODE"));
+        assertTrue(source.contains("setLastPromptedUpdateVersionCode(manifest.versionCode);"));
+        assertTrue(source.contains("dialogHandle.cancelButton.setOnClickListener"));
+        assertTrue(source.contains("UpdateAvailableDialog.create("));
+        assertTrue(source.contains("startStartupUpdateDownload("));
+        assertTrue(!source.contains("startActivity(AboutActivity.createStartupUpdateIntent("));
     }
 
     @Test

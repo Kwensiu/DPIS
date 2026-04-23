@@ -11,7 +11,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -23,7 +22,6 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textview.MaterialTextView;
 
@@ -197,7 +195,10 @@ public final class AboutActivity extends Activity {
             showToast(R.string.about_update_up_to_date);
             return;
         }
+        showUpdateDialog(manifest);
+    }
 
+    private void showUpdateDialog(UpdateManifest manifest) {
         String releasePageUrl = manifest.releasePage.isEmpty()
                 ? getString(R.string.about_releases_url)
                 : manifest.releasePage;
@@ -208,29 +209,24 @@ public final class AboutActivity extends Activity {
     private void showCenteredUpdateDialog(UpdateManifest manifest,
                                           String downloadUrl,
                                           String releasePageUrl) {
-        View dialogView = LayoutInflater.from(this)
-                .inflate(R.layout.dialog_update_available, null, false);
-        MaterialTextView titleView = dialogView.findViewById(R.id.update_dialog_title);
-        MaterialTextView messageView = dialogView.findViewById(R.id.update_dialog_message);
-        LinearProgressIndicator progressView =
-                dialogView.findViewById(R.id.update_dialog_progress);
-        MaterialTextView progressTextView =
-                dialogView.findViewById(R.id.update_dialog_progress_text);
-        MaterialButton primaryButton = dialogView.findViewById(R.id.update_dialog_primary_button);
+        UpdateAvailableDialog.DialogHandle dialogHandle = UpdateAvailableDialog.create(
+                this,
+                getString(R.string.about_update_available_title),
+                getString(
+                        R.string.about_update_available_message,
+                        BuildConfig.VERSION_NAME,
+                        BuildConfig.VERSION_CODE,
+                        manifest.versionName,
+                        manifest.versionCode));
 
-        titleView.setText(R.string.about_update_available_title);
-        messageView.setText(getString(
-                R.string.about_update_available_message,
-                BuildConfig.VERSION_NAME,
-                BuildConfig.VERSION_CODE,
-                manifest.versionName,
-                manifest.versionCode));
+        AlertDialog dialog = dialogHandle.dialog;
+        MaterialButton primaryButton = dialogHandle.primaryButton;
+        MaterialButton cancelButton = dialogHandle.cancelButton;
+        LinearProgressIndicator progressView = dialogHandle.progressView;
+        MaterialTextView progressTextView = dialogHandle.progressTextView;
+
         showDialogIdleState(primaryButton, progressView, progressTextView);
-
-        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setView(dialogView)
-                .create();
-        dialog.setCanceledOnTouchOutside(true);
+        bindDialogCancelButton(dialog, cancelButton);
 
         boolean hasDirectDownload = downloadUrl != null && !downloadUrl.trim().isEmpty();
         if (!hasDirectDownload) {
@@ -256,6 +252,15 @@ public final class AboutActivity extends Activity {
 
         dialog.setOnDismissListener(unused -> cancelActiveUpdateDownload());
         dialog.show();
+    }
+
+    private void bindDialogCancelButton(AlertDialog dialog, MaterialButton cancelButton) {
+        cancelButton.setOnClickListener(v -> {
+            if (updateDownloadInProgress) {
+                cancelActiveUpdateDownload();
+            }
+            dialog.dismiss();
+        });
     }
 
     private void startUpdateDownload(String targetVersionName,

@@ -2,17 +2,24 @@ package com.dpis.module;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.res.ColorStateList;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.Signature;
+import android.content.pm.SigningInfo;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -46,6 +53,7 @@ import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.android.material.textfield.TextInputEditText;
@@ -53,8 +61,16 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textview.MaterialTextView;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -63,6 +79,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import io.github.libxposed.service.XposedService;
 
@@ -79,12 +103,25 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     private static final String STATE_FILTER_FONT_ONLY = "state.filter.font_only";
     private static final String STATE_PAGE_SCROLL_STATES = "state.page_scroll_states";
     private static final String STATE_REFRESHING_PAGES = "state.refreshing_pages";
+    private static final String UPDATE_PROMPT_PREFS = "dpis.update_prompt";
+    private static final String KEY_LAST_UPDATE_CHECK_TIMESTAMP = "last_update_check_timestamp";
+    private static final String KEY_LAST_UPDATE_CHECK_FAILED = "last_update_check_failed";
+    private static final String KEY_LAST_PROMPTED_UPDATE_VERSION_CODE =
+            "last_prompted_update_version_code";
+    private static final long UPDATE_STARTUP_CHECK_INTERVAL_MS = 12L * 60L * 60L * 1000L;
+    private static final long UPDATE_STARTUP_CHECK_FAILURE_RETRY_INTERVAL_MS = 30L * 60L * 1000L;
+    private static final int UPDATE_CONNECT_TIMEOUT_MS = 10_000;
+    private static final int UPDATE_READ_TIMEOUT_MS = 10_000;
+    private static final int DOWNLOAD_BUFFER_SIZE = 16 * 1024;
+    private static final long DOWNLOAD_PROGRESS_UPDATE_INTERVAL_MS = 180L;
+    private static final Pattern LEADING_NUMBER_PATTERN = Pattern.compile("^(\\d+)");
 
     private final List<AppListItem> allApps = new ArrayList<>();
     private final Object listLock = new Object();
     private final AppLoadCoordinator loadCoordinator = new AppLoadCoordinator();
     private final AppIconMemoryCache appIconCache = new AppIconMemoryCache(256);
     private final Set<AppListPage> refreshingPages = EnumSet.noneOf(AppListPage.class);
+    private final ExecutorService startupUpdateExecutor = Executors.newSingleThreadExecutor();
 
     private AppListPagerAdapter pagerAdapter;
     private ViewPager2 appPager;
@@ -98,6 +135,11 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     private ImageButton searchFilterButton;
     private Boolean rootAccessCache;
     private boolean cachedSystemHookEffectiveEnabled;
+    private volatile boolean startupUpdateCheckInProgress;
+    private volatile boolean updateDownloadInProgress;
+    private volatile boolean updateDownloadCancelRequested;
+    private volatile Future<?> activeDownloadFuture;
+    private volatile HttpURLConnection activeDownloadConnection;
 
     private enum ProcessAction {
         START,
@@ -112,6 +154,23 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         ShellResult(int code, String output) {
             this.code = code;
             this.output = output;
+        }
+    }
+
+    private static final class StartupUpdateManifest {
+        final String versionName;
+        final int versionCode;
+        final String apkUrl;
+        final String releasePage;
+
+        StartupUpdateManifest(String versionName,
+                              int versionCode,
+                              String apkUrl,
+                              String releasePage) {
+            this.versionName = versionName;
+            this.versionCode = versionCode;
+            this.apkUrl = apkUrl;
+            this.releasePage = releasePage;
         }
     }
 
@@ -211,7 +270,9 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         if (retainedState != null && !retainedState.appsSnapshot.isEmpty()) {
             applyFilter();
         }
-        maybeShowStartupDisclaimerDialog();
+        if (!maybeShowStartupDisclaimerDialog()) {
+            maybeCheckForUpdatesOnStartup();
+        }
     }
 
     @Override
@@ -246,6 +307,13 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     protected void onStop() {
         DpisApplication.removeServiceStateListener(this);
         super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        cancelActiveUpdateDownload();
+        startupUpdateExecutor.shutdownNow();
+        super.onDestroy();
     }
 
     @Override
@@ -1196,15 +1264,652 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         dialog.show();
     }
 
-    private void maybeShowStartupDisclaimerDialog() {
+    private boolean maybeShowStartupDisclaimerDialog() {
         DpiConfigStore store = getUiConfigStore();
         if (store.isStartupDisclaimerAccepted() || isFinishing() || isDestroyed()) {
-            return;
+            return false;
         }
-        showStartupDisclaimerDialog(store);
+        showStartupDisclaimerDialog(store, this::maybeCheckForUpdatesOnStartup);
+        return true;
     }
 
-    private void showStartupDisclaimerDialog(DpiConfigStore store) {
+    private void maybeCheckForUpdatesOnStartup() {
+        if (startupUpdateCheckInProgress || isFinishing() || isDestroyed()) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        long lastCheckTimestamp = getLastUpdateCheckTimestamp();
+        long startupCheckInterval = wasLastUpdateCheckFailed()
+                ? UPDATE_STARTUP_CHECK_FAILURE_RETRY_INTERVAL_MS
+                : UPDATE_STARTUP_CHECK_INTERVAL_MS;
+        if (now - lastCheckTimestamp < startupCheckInterval) {
+            return;
+        }
+        startupUpdateCheckInProgress = true;
+
+        final String manifestUrl = getString(R.string.about_update_manifest_url);
+        startupUpdateExecutor.execute(() -> {
+            boolean requestSucceeded = false;
+            try {
+                StartupUpdateManifest manifest = fetchUpdateManifest(manifestUrl);
+                requestSucceeded = true;
+                boolean hasUpdate = isRemoteVersionNewer(
+                        manifest.versionCode,
+                        manifest.versionName,
+                        BuildConfig.VERSION_CODE,
+                        BuildConfig.VERSION_NAME);
+                if (!hasUpdate) {
+                    return;
+                }
+                int lastPromptedVersionCode = getLastPromptedUpdateVersionCode();
+                if (manifest.versionCode <= lastPromptedVersionCode) {
+                    return;
+                }
+                runOnUiThread(() -> launchStartupUpdateDialog(manifest));
+            } catch (Exception ignored) {
+                // Ignore startup update check failures silently.
+            } finally {
+                setLastUpdateCheckTimestamp(System.currentTimeMillis());
+                setLastUpdateCheckFailed(!requestSucceeded);
+                startupUpdateCheckInProgress = false;
+            }
+        });
+    }
+
+    private void launchStartupUpdateDialog(StartupUpdateManifest manifest) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+
+        UpdateAvailableDialog.DialogHandle dialogHandle = UpdateAvailableDialog.create(
+                this,
+                getString(R.string.about_update_available_title),
+                getString(
+                        R.string.about_update_available_message,
+                        BuildConfig.VERSION_NAME,
+                        BuildConfig.VERSION_CODE,
+                        manifest.versionName,
+                        manifest.versionCode));
+        showStartupDialogIdleState(
+                dialogHandle.primaryButton,
+                dialogHandle.cancelButton,
+                dialogHandle.progressView,
+                dialogHandle.progressTextView);
+
+        dialogHandle.cancelButton.setOnClickListener(v -> {
+            setLastPromptedUpdateVersionCode(manifest.versionCode);
+            if (updateDownloadInProgress) {
+                cancelActiveUpdateDownload();
+                return;
+            }
+            dialogHandle.dialog.dismiss();
+        });
+
+        String releasePageUrl = manifest.releasePage.isEmpty()
+                ? getString(R.string.about_releases_url)
+                : manifest.releasePage;
+        boolean hasDirectDownload = manifest.apkUrl != null && !manifest.apkUrl.trim().isEmpty();
+        if (!hasDirectDownload) {
+            dialogHandle.primaryButton.setText(R.string.about_update_action_view_release);
+            dialogHandle.primaryButton.setOnClickListener(v -> {
+                setLastPromptedUpdateVersionCode(manifest.versionCode);
+                dialogHandle.dialog.dismiss();
+                openUrl(releasePageUrl);
+            });
+            dialogHandle.dialog.show();
+            return;
+        }
+
+        dialogHandle.primaryButton.setText(R.string.about_update_action_download);
+        dialogHandle.primaryButton.setOnClickListener(v -> {
+            setLastPromptedUpdateVersionCode(manifest.versionCode);
+            startStartupUpdateDownload(
+                    manifest.versionName,
+                    manifest.apkUrl,
+                    dialogHandle.dialog,
+                    dialogHandle.primaryButton,
+                    dialogHandle.cancelButton,
+                    dialogHandle.progressView,
+                    dialogHandle.progressTextView);
+        });
+        dialogHandle.dialog.setOnDismissListener(unused -> cancelActiveUpdateDownload());
+        dialogHandle.dialog.show();
+    }
+
+    private void startStartupUpdateDownload(String targetVersionName,
+                                            String downloadUrl,
+                                            androidx.appcompat.app.AlertDialog dialog,
+                                            MaterialButton primaryButton,
+                                            MaterialButton cancelButton,
+                                            LinearProgressIndicator progressView,
+                                            MaterialTextView progressTextView) {
+        if (updateDownloadInProgress) {
+            showToast(R.string.about_update_download_in_progress);
+            return;
+        }
+        if (downloadUrl == null || downloadUrl.trim().isEmpty()) {
+            showToast(R.string.about_update_download_failed);
+            return;
+        }
+
+        Uri downloadUri = Uri.parse(downloadUrl);
+        String scheme = downloadUri.getScheme();
+        if (scheme == null || !"https".equalsIgnoreCase(scheme)) {
+            showToast(R.string.about_update_download_https_required);
+            return;
+        }
+
+        final File targetFile;
+        try {
+            UpdatePackageInstaller.clearUpdateCache(this);
+            targetFile = UpdatePackageInstaller.prepareTargetFile(this, targetVersionName);
+        } catch (RuntimeException ignored) {
+            showToast(R.string.about_update_download_failed);
+            return;
+        }
+
+        updateDownloadInProgress = true;
+        updateDownloadCancelRequested = false;
+        dialog.setCancelable(false);
+        dialog.setCanceledOnTouchOutside(false);
+        showStartupDialogDownloadingState(primaryButton, cancelButton, progressView, progressTextView);
+
+        activeDownloadFuture = startupUpdateExecutor.submit(() -> executeStartupApkDownload(
+                downloadUri,
+                targetFile,
+                dialog,
+                primaryButton,
+                cancelButton,
+                progressView,
+                progressTextView));
+    }
+
+    private void executeStartupApkDownload(Uri downloadUri,
+                                           File targetFile,
+                                           androidx.appcompat.app.AlertDialog dialog,
+                                           MaterialButton primaryButton,
+                                           MaterialButton cancelButton,
+                                           LinearProgressIndicator progressView,
+                                           MaterialTextView progressTextView) {
+        HttpURLConnection connection = null;
+        try {
+            connection = (HttpURLConnection) new URL(downloadUri.toString()).openConnection();
+            activeDownloadConnection = connection;
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(UPDATE_CONNECT_TIMEOUT_MS);
+            connection.setReadTimeout(UPDATE_READ_TIMEOUT_MS);
+            connection.setUseCaches(false);
+            connection.setRequestProperty("Accept", "application/octet-stream,*/*");
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                throw new IOException("Unexpected HTTP response code: " + responseCode);
+            }
+
+            long totalBytes = connection.getContentLengthLong();
+            runOnUiThread(() -> prepareProgressView(progressView, progressTextView, totalBytes));
+
+            try (InputStream inputStream = connection.getInputStream();
+                 FileOutputStream outputStream = new FileOutputStream(targetFile)) {
+                byte[] buffer = new byte[DOWNLOAD_BUFFER_SIZE];
+                long downloadedBytes = 0L;
+                long lastUiUpdateAt = 0L;
+                int lastProgress = -1;
+
+                while (true) {
+                    if (updateDownloadCancelRequested || Thread.currentThread().isInterrupted()) {
+                        throw new DownloadCanceledException();
+                    }
+                    int read = inputStream.read(buffer);
+                    if (read < 0) {
+                        break;
+                    }
+                    outputStream.write(buffer, 0, read);
+                    downloadedBytes += read;
+
+                    long now = System.currentTimeMillis();
+                    if (now - lastUiUpdateAt < DOWNLOAD_PROGRESS_UPDATE_INTERVAL_MS
+                            && totalBytes > 0L) {
+                        continue;
+                    }
+
+                    lastUiUpdateAt = now;
+                    if (totalBytes > 0L) {
+                        int progress = (int) Math.min(100L, (downloadedBytes * 100L) / totalBytes);
+                        if (progress != lastProgress) {
+                            lastProgress = progress;
+                            long finalDownloadedBytes = downloadedBytes;
+                            runOnUiThread(() -> updateProgressView(
+                                    progressView,
+                                    progressTextView,
+                                    progress,
+                                    finalDownloadedBytes,
+                                    totalBytes));
+                        }
+                    } else {
+                        long finalDownloadedBytes = downloadedBytes;
+                        runOnUiThread(() -> updateProgressViewWithoutTotal(
+                                progressView,
+                                progressTextView,
+                                finalDownloadedBytes));
+                    }
+                }
+                outputStream.flush();
+            }
+
+            if (updateDownloadCancelRequested) {
+                throw new DownloadCanceledException();
+            }
+
+            verifyDownloadedApk(targetFile);
+            UpdatePackageInstaller.persistDownloadedFile(this, targetFile);
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                if (dialog.isShowing()) {
+                    dialog.dismiss();
+                }
+                launchPackageInstaller(targetFile);
+            });
+        } catch (DownloadCanceledException ignored) {
+            safeDeleteFile(targetFile);
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                showStartupDialogIdleState(primaryButton, cancelButton, progressView, progressTextView);
+                dialog.setCancelable(true);
+                dialog.setCanceledOnTouchOutside(true);
+                showToast(R.string.about_update_download_canceled);
+            });
+        } catch (UntrustedUpdateException ignored) {
+            safeDeleteFile(targetFile);
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                showStartupDialogIdleState(primaryButton, cancelButton, progressView, progressTextView);
+                dialog.setCancelable(true);
+                dialog.setCanceledOnTouchOutside(true);
+                showToast(R.string.about_update_download_untrusted);
+            });
+        } catch (Exception ignored) {
+            safeDeleteFile(targetFile);
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                showStartupDialogIdleState(primaryButton, cancelButton, progressView, progressTextView);
+                dialog.setCancelable(true);
+                dialog.setCanceledOnTouchOutside(true);
+                showToast(R.string.about_update_download_failed);
+            });
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+            activeDownloadConnection = null;
+            activeDownloadFuture = null;
+            updateDownloadInProgress = false;
+            updateDownloadCancelRequested = false;
+        }
+    }
+
+    private void cancelActiveUpdateDownload() {
+        if (!updateDownloadInProgress) {
+            return;
+        }
+        updateDownloadCancelRequested = true;
+        HttpURLConnection connection = activeDownloadConnection;
+        if (connection != null) {
+            connection.disconnect();
+        }
+        Future<?> future = activeDownloadFuture;
+        if (future != null) {
+            future.cancel(true);
+        }
+    }
+
+    private void showStartupDialogIdleState(MaterialButton primaryButton,
+                                            MaterialButton cancelButton,
+                                            LinearProgressIndicator progressView,
+                                            MaterialTextView progressTextView) {
+        primaryButton.setEnabled(true);
+        primaryButton.setText(R.string.about_update_action_download);
+        cancelButton.setText(R.string.about_update_action_cancel_dialog);
+        progressView.setVisibility(View.GONE);
+        progressTextView.setVisibility(View.GONE);
+    }
+
+    private void showStartupDialogDownloadingState(MaterialButton primaryButton,
+                                                   MaterialButton cancelButton,
+                                                   LinearProgressIndicator progressView,
+                                                   MaterialTextView progressTextView) {
+        primaryButton.setEnabled(false);
+        cancelButton.setText(R.string.about_update_action_cancel_download);
+        progressView.setVisibility(View.VISIBLE);
+        progressTextView.setVisibility(View.VISIBLE);
+        progressView.setIndeterminate(true);
+        progressTextView.setText(R.string.about_update_download_progress_preparing);
+    }
+
+    private void prepareProgressView(LinearProgressIndicator progressView,
+                                     MaterialTextView progressTextView,
+                                     long totalBytes) {
+        if (totalBytes > 0L) {
+            progressView.setIndeterminate(false);
+            progressView.setProgress(0);
+            updateProgressView(progressView, progressTextView, 0, 0L, totalBytes);
+            return;
+        }
+        progressView.setIndeterminate(true);
+        updateProgressViewWithoutTotal(progressView, progressTextView, 0L);
+    }
+
+    private void updateProgressView(LinearProgressIndicator progressView,
+                                    MaterialTextView progressTextView,
+                                    int progress,
+                                    long downloadedBytes,
+                                    long totalBytes) {
+        if (progressView.isIndeterminate()) {
+            progressView.setIndeterminate(false);
+        }
+        progressView.setProgress(progress);
+        progressTextView.setText(getString(
+                R.string.about_update_download_progress_with_percent,
+                progress,
+                formatBytes(downloadedBytes),
+                formatBytes(totalBytes)));
+    }
+
+    private void updateProgressViewWithoutTotal(LinearProgressIndicator progressView,
+                                                MaterialTextView progressTextView,
+                                                long downloadedBytes) {
+        progressView.setIndeterminate(true);
+        progressTextView.setText(getString(
+                R.string.about_update_download_progress_without_total,
+                formatBytes(downloadedBytes)));
+    }
+
+    private void verifyDownloadedApk(File apkFile) throws UntrustedUpdateException {
+        PackageManager packageManager = getPackageManager();
+        PackageInfo downloadedPackage = readArchivePackageInfo(packageManager, apkFile);
+        if (downloadedPackage == null
+                || downloadedPackage.packageName == null
+                || !getPackageName().equals(downloadedPackage.packageName)) {
+            throw new UntrustedUpdateException();
+        }
+
+        PackageInfo installedPackage;
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                installedPackage = packageManager.getPackageInfo(
+                        getPackageName(),
+                        PackageManager.GET_SIGNING_CERTIFICATES);
+            } else {
+                installedPackage = packageManager.getPackageInfo(
+                        getPackageName(),
+                        PackageManager.GET_SIGNATURES);
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            throw new UntrustedUpdateException();
+        }
+
+        Set<String> downloadedSignatures = extractSigningFingerprints(downloadedPackage);
+        Set<String> installedSignatures = extractSigningFingerprints(installedPackage);
+        if (downloadedSignatures.isEmpty()
+                || installedSignatures.isEmpty()
+                || !downloadedSignatures.equals(installedSignatures)) {
+            throw new UntrustedUpdateException();
+        }
+    }
+
+    private static PackageInfo readArchivePackageInfo(PackageManager packageManager, File apkFile) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            return packageManager.getPackageArchiveInfo(
+                    apkFile.getAbsolutePath(),
+                    PackageManager.GET_SIGNING_CERTIFICATES);
+        }
+        return packageManager.getPackageArchiveInfo(
+                apkFile.getAbsolutePath(),
+                PackageManager.GET_SIGNATURES);
+    }
+
+    private static Set<String> extractSigningFingerprints(PackageInfo packageInfo) {
+        Signature[] signatures;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            SigningInfo signingInfo = packageInfo.signingInfo;
+            if (signingInfo == null) {
+                return new HashSet<>();
+            }
+            signatures = signingInfo.hasMultipleSigners()
+                    ? signingInfo.getApkContentsSigners()
+                    : signingInfo.getSigningCertificateHistory();
+        } else {
+            signatures = packageInfo.signatures;
+        }
+        return signaturesToFingerprints(signatures);
+    }
+
+    private static Set<String> signaturesToFingerprints(Signature[] signatures) {
+        Set<String> fingerprints = new HashSet<>();
+        if (signatures == null) {
+            return fingerprints;
+        }
+        for (Signature signature : signatures) {
+            if (signature == null) {
+                continue;
+            }
+            fingerprints.add(toSha256Hex(signature.toByteArray()));
+        }
+        return fingerprints;
+    }
+
+    private static String toSha256Hex(byte[] value) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return toHex(digest.digest(value));
+        } catch (NoSuchAlgorithmException e) {
+            return "";
+        }
+    }
+
+    private static String toHex(byte[] value) {
+        StringBuilder builder = new StringBuilder(value.length * 2);
+        for (byte item : value) {
+            builder.append(Character.forDigit((item >> 4) & 0xF, 16));
+            builder.append(Character.forDigit(item & 0xF, 16));
+        }
+        return builder.toString();
+    }
+
+    private void launchPackageInstaller(File apkFile) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                && !getPackageManager().canRequestPackageInstalls()) {
+            Intent settingsIntent = new Intent(
+                    Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                    Uri.parse("package:" + getPackageName()));
+            startActivity(settingsIntent);
+            showToast(R.string.about_update_install_permission_required);
+            return;
+        }
+        try {
+            Uri contentUri = UpdatePackageInstaller.getInstallUri(this, apkFile);
+            Intent installIntent = new Intent(Intent.ACTION_VIEW)
+                    .setDataAndType(contentUri, UpdatePackageInstaller.APK_MIME_TYPE)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(installIntent);
+        } catch (ActivityNotFoundException | IllegalArgumentException ignored) {
+            showToast(R.string.about_update_install_failed);
+        }
+    }
+
+    private static String formatBytes(long bytes) {
+        if (bytes < 1024L) {
+            return bytes + " B";
+        }
+        double value = bytes;
+        String[] units = {"KB", "MB", "GB", "TB"};
+        int unitIndex = -1;
+        do {
+            value /= 1024.0;
+            unitIndex++;
+        } while (value >= 1024.0 && unitIndex < units.length - 1);
+        return String.format(Locale.getDefault(), "%.1f %s", value, units[unitIndex]);
+    }
+
+    private static void safeDeleteFile(File file) {
+        if (file == null || !file.exists()) {
+            return;
+        }
+        //noinspection ResultOfMethodCallIgnored
+        file.delete();
+    }
+
+    private static final class DownloadCanceledException extends IOException {
+    }
+
+    private static final class UntrustedUpdateException extends IOException {
+    }
+
+    private SharedPreferences getUpdatePromptPrefs() {
+        return getSharedPreferences(UPDATE_PROMPT_PREFS, Context.MODE_PRIVATE);
+    }
+
+    private long getLastUpdateCheckTimestamp() {
+        return getUpdatePromptPrefs().getLong(KEY_LAST_UPDATE_CHECK_TIMESTAMP, 0L);
+    }
+
+    private boolean wasLastUpdateCheckFailed() {
+        return getUpdatePromptPrefs().getBoolean(KEY_LAST_UPDATE_CHECK_FAILED, false);
+    }
+
+    private void setLastUpdateCheckTimestamp(long timestamp) {
+        getUpdatePromptPrefs()
+                .edit()
+                .putLong(KEY_LAST_UPDATE_CHECK_TIMESTAMP, timestamp)
+                .apply();
+    }
+
+    private void setLastUpdateCheckFailed(boolean failed) {
+        getUpdatePromptPrefs()
+                .edit()
+                .putBoolean(KEY_LAST_UPDATE_CHECK_FAILED, failed)
+                .apply();
+    }
+
+    private int getLastPromptedUpdateVersionCode() {
+        return getUpdatePromptPrefs().getInt(KEY_LAST_PROMPTED_UPDATE_VERSION_CODE, 0);
+    }
+
+    private void setLastPromptedUpdateVersionCode(int versionCode) {
+        getUpdatePromptPrefs()
+                .edit()
+                .putInt(KEY_LAST_PROMPTED_UPDATE_VERSION_CODE, versionCode)
+                .apply();
+    }
+
+    private static StartupUpdateManifest fetchUpdateManifest(String manifestUrl)
+            throws IOException, JSONException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(manifestUrl).openConnection();
+        connection.setRequestMethod("GET");
+        connection.setConnectTimeout(UPDATE_CONNECT_TIMEOUT_MS);
+        connection.setReadTimeout(UPDATE_READ_TIMEOUT_MS);
+        connection.setUseCaches(false);
+        connection.setRequestProperty("Accept", "application/json");
+
+        try {
+            int responseCode = connection.getResponseCode();
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                throw new IOException("Unexpected HTTP response code: " + responseCode);
+            }
+            String body = readUtf8(connection.getInputStream());
+            JSONObject object = new JSONObject(body);
+            String versionName = object.optString("version", "").trim();
+            int versionCode = object.optInt("versionCode", 0);
+            String apkUrl = object.optString("apkUrl", "").trim();
+            String releasePage = object.optString("releasePage", "").trim();
+            if (versionName.isEmpty() || versionCode <= 0) {
+                throw new IOException("Invalid update manifest payload");
+            }
+            return new StartupUpdateManifest(versionName, versionCode, apkUrl, releasePage);
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    private static String readUtf8(InputStream inputStream) throws IOException {
+        StringBuilder builder = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            char[] buffer = new char[1024];
+            int read;
+            while ((read = reader.read(buffer)) != -1) {
+                builder.append(buffer, 0, read);
+            }
+        }
+        return builder.toString();
+    }
+
+    private static boolean isRemoteVersionNewer(int remoteCode,
+                                                String remoteName,
+                                                int localCode,
+                                                String localName) {
+        if (remoteCode > localCode) {
+            return true;
+        }
+        if (remoteCode < localCode) {
+            return false;
+        }
+        return compareSemVer(remoteName, localName) > 0;
+    }
+
+    private static int compareSemVer(String left, String right) {
+        int[] leftParts = parseSemVer(left);
+        int[] rightParts = parseSemVer(right);
+        if (leftParts == null || rightParts == null) {
+            return 0;
+        }
+        for (int i = 0; i < leftParts.length; i++) {
+            if (leftParts[i] == rightParts[i]) {
+                continue;
+            }
+            return leftParts[i] > rightParts[i] ? 1 : -1;
+        }
+        return 0;
+    }
+
+    private static int[] parseSemVer(String value) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim();
+        if (normalized.startsWith("v") || normalized.startsWith("V")) {
+            normalized = normalized.substring(1);
+        }
+        String[] segments = normalized.split("\\.");
+        if (segments.length < 3) {
+            return null;
+        }
+
+        int[] result = new int[3];
+        for (int i = 0; i < 3; i++) {
+            Matcher matcher = LEADING_NUMBER_PATTERN.matcher(segments[i]);
+            if (!matcher.find()) {
+                return null;
+            }
+            try {
+                result[i] = Integer.parseInt(matcher.group(1));
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return result;
+    }
+
+    private void showStartupDisclaimerDialog(DpiConfigStore store, Runnable onAccepted) {
         View dialogView = LayoutInflater.from(this)
                 .inflate(R.layout.dialog_startup_disclaimer, null, false);
         MaterialCheckBox agreementCheckBox =
@@ -1233,9 +1938,25 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                 return;
             }
             dialog.dismiss();
+            if (onAccepted != null) {
+                onAccepted.run();
+            }
         });
         exitButton.setOnClickListener(v -> finish());
         dialog.show();
+    }
+
+    private void openUrl(String url) {
+        if (url == null || url.trim().isEmpty()) {
+            showToast(R.string.about_link_open_failed);
+            return;
+        }
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url));
+            startActivity(intent);
+        } catch (android.content.ActivityNotFoundException ignored) {
+            showToast(R.string.about_link_open_failed);
+        }
     }
 
     private void showEditDialog(AppListItem item) {
