@@ -164,13 +164,12 @@ jobs:
             exit 0
           fi
 
-          NOTES="Release ${{ steps.meta.outputs.version }}"
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            NOTES="${{ github.event.release.body }}"
-          fi
+          NOTES=$(gh release view "${{ steps.meta.outputs.tag }}" \
+            --repo Kwensiu/DPIS \
+            --json body -q .body 2>/dev/null || echo "Release ${{ steps.meta.outputs.version }}")
 
           gh release create "${{ steps.meta.outputs.version_code }}-${{ steps.meta.outputs.version }}" \
             --repo Xposed-Modules-Repo/io.github.kwensiu.dpis \
             --title "${{ steps.meta.outputs.version }}" \
-            --notes "$NOTES" \
+            --notes-file - <<< "$NOTES" \
             "${{ steps.meta.outputs.apk_path }}"
