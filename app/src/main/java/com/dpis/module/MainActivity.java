@@ -761,15 +761,15 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                     .setMessage(getString(R.string.dialog_process_action_confirm_message,
                             actionLabel, item.packageName))
                     .setPositiveButton(R.string.dialog_process_action_confirm_positive,
-                            (dialog, which) -> runProcessAction(item.packageName, action))
+                            (dialog, which) -> runProcessAction(item.packageName, item.label, action))
                     .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
                     .show();
             return;
         }
-        runProcessAction(item.packageName, action);
+        runProcessAction(item.packageName, item.label, action);
     }
 
-    private void runProcessAction(String packageName, ProcessAction action) {
+    private void runProcessAction(String packageName, String appLabel, ProcessAction action) {
         String actionLabel = resolveProcessActionLabel(action);
         new Thread(() -> {
             ShellResult result;
@@ -785,13 +785,13 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
             }
             runOnUiThread(() -> {
                 if (result.code == 0) {
-                    showToast(R.string.dialog_process_action_success, actionLabel, packageName);
+                    showToast(R.string.dialog_process_action_success, actionLabel, appLabel);
                     return;
                 }
                 String reason = result.output == null || result.output.isEmpty()
                         ? "unknown error"
                         : result.output;
-                showToast(R.string.dialog_process_action_failed, actionLabel, reason);
+                showToast(R.string.dialog_process_action_failed, actionLabel, appLabel, reason);
             });
         }, "dpis-process-action").start();
     }
@@ -925,7 +925,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         pagerAdapter.refreshVisibleStatuses();
     }
 
-    private void toggleScope(String packageName,
+    private void toggleScope(String packageName, String appLabel,
             boolean currentlyInScope,
             Runnable onTurnedInScope,
             Runnable onTurnedOutScope) {
@@ -937,7 +937,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         if (currentlyInScope) {
             try {
                 service.removeScope(Collections.singletonList(packageName));
-                showToast(R.string.scope_remove_success, packageName);
+                showToast(R.string.scope_remove_success, appLabel);
                 if (onTurnedOutScope != null) {
                     onTurnedOutScope.run();
                 }
@@ -954,7 +954,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                         @Override
                         public void onScopeRequestApproved(List<String> approved) {
                             runOnUiThread(() -> {
-                                showToast(R.string.scope_add_success, packageName);
+                                showToast(R.string.scope_add_success, appLabel);
                                 if (onTurnedInScope != null) {
                                     onTurnedInScope.run();
                                 }
@@ -2187,7 +2187,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                 v -> clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView));
         views.scopeButton.setOnClickListener(v -> {
             clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            toggleScope(item.packageName, state.scopeSelected,
+            toggleScope(item.packageName, item.label, state.scopeSelected,
                     () -> {
                         state.scopeSelected = true;
                         refreshDialogState(views, state, style, systemHooksEnabled);
