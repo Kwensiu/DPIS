@@ -77,14 +77,6 @@ jobs:
           DPIS_RELEASE_KEY_PASSWORD: ${{ secrets.DPIS_RELEASE_KEY_PASSWORD }}
         run: ./gradlew :app:assembleRelease
 
-      - name: Calculate APK SHA256
-        id: hash
-        shell: bash
-        run: |
-          APK_PATH="app/build/outputs/apk/release/app-release.apk"
-          SHA256="$(sha256sum "$APK_PATH" | awk '{print $1}')"
-          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
-
       - name: Derive release metadata
         id: meta
         shell: bash
@@ -104,16 +96,36 @@ jobs:
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
           VERSION_CODE=$((10#$MAJOR * 10000 + 10#$MINOR * 100 + 10#$PATCH))
           REPO="${{ github.repository }}"
-          APK_URL="https://github.com/${REPO}/releases/download/${TAG}/app-release.apk"
+          APK_NAME="DPIS_${VERSION}.apk"
+          APK_PATH="app/build/outputs/apk/release/${APK_NAME}"
+          if [[ ! -f "$APK_PATH" ]]; then
+            SOURCE_APK_PATH="app/build/outputs/apk/release/app-release.apk"
+            if [[ ! -f "$SOURCE_APK_PATH" ]]; then
+              echo "APK not found: $APK_PATH or $SOURCE_APK_PATH"
+              exit 1
+            fi
+            cp "$SOURCE_APK_PATH" "$APK_PATH"
+          fi
+          APK_URL="https://github.com/${REPO}/releases/download/${TAG}/${APK_NAME}"
           MANIFEST_URL="https://github.com/${REPO}/releases/latest/download/update.json"
           RELEASE_URL="https://github.com/${REPO}/releases/tag/${TAG}"
 
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "apk_name=$APK_NAME" >> "$GITHUB_OUTPUT"
+          echo "apk_path=$APK_PATH" >> "$GITHUB_OUTPUT"
           echo "apk_url=$APK_URL" >> "$GITHUB_OUTPUT"
           echo "manifest_url=$MANIFEST_URL" >> "$GITHUB_OUTPUT"
           echo "release_url=$RELEASE_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Calculate APK SHA256
+        id: hash
+        shell: bash
+        run: |
+          APK_PATH="${{ steps.meta.outputs.apk_path }}"
+          SHA256="$(sha256sum "$APK_PATH" | awk '{print $1}')"
+          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
 
       - name: Generate update manifest
         shell: bash
@@ -138,6 +150,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "${{ steps.meta.outputs.tag }}" \
-            app/build/outputs/apk/release/app-release.apk \
+            "${{ steps.meta.outputs.apk_path }}" \
             update.json \
             --clobber

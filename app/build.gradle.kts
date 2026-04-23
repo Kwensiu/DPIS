@@ -1,3 +1,9 @@
+import org.gradle.api.DefaultTask
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.TaskAction
+
 plugins {
     alias(libs.plugins.agp.app)
     alias(libs.plugins.aboutlibraries)
@@ -29,6 +35,36 @@ private val releaseSigningMissingKeys = buildList {
 private val hasReleaseSigningConfig = releaseSigningMissingKeys.isEmpty()
 private val releaseTasksRequested = gradle.startParameter.taskNames.any {
     it.contains("Release", ignoreCase = true)
+}
+
+abstract class RenameReleaseApkTask : DefaultTask() {
+    @get:Internal
+    abstract val sourceApk: RegularFileProperty
+
+    @get:OutputFile
+    abstract val targetApk: RegularFileProperty
+
+    @TaskAction
+    fun renameApk() {
+        val source = sourceApk.get().asFile
+        val target = targetApk.get().asFile
+
+        if (!source.exists()) {
+            if (target.exists()) {
+                logger.lifecycle("Release APK already renamed: ${target.absolutePath}")
+                return
+            }
+            throw GradleException("Release APK not found: ${source.absolutePath}")
+        }
+
+        target.parentFile?.mkdirs()
+        if (target.exists() && !target.delete()) {
+            throw GradleException("Failed to replace existing APK: ${target.absolutePath}")
+        }
+
+        source.copyTo(target, overwrite = true)
+        logger.lifecycle("Release APK copied to: ${target.name}")
+    }
 }
 
 private fun semVerToVersionCode(version: String): Int {
@@ -108,6 +144,19 @@ android {
 
     buildFeatures {
         buildConfig = true
+    }
+}
+
+val renamedReleaseApkName = "DPIS_${appVersionName}.apk"
+
+val renameReleaseApk = tasks.register("renameReleaseApk", RenameReleaseApkTask::class) {
+    sourceApk.set(layout.buildDirectory.file("outputs/apk/release/app-release.apk"))
+    targetApk.set(layout.buildDirectory.file("outputs/apk/release/$renamedReleaseApkName"))
+}
+
+tasks.configureEach {
+    if (name == "assembleRelease") {
+        finalizedBy(renameReleaseApk)
     }
 }
 
