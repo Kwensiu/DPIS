@@ -41,8 +41,6 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
-import com.google.android.material.snackbar.Snackbar;
-
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -649,17 +647,36 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         if (isFinishing() || isDestroyed()) {
             return;
         }
-        View anchor = findViewById(R.id.root_container);
-        if (anchor == null) {
-            anchor = findViewById(android.R.id.content);
-        }
-        if (anchor != null) {
-            Snackbar.make(anchor, message, Snackbar.LENGTH_SHORT).show();
-        }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     private void showHelpTutorialDialog() {
         HelpTutorialDialog.show(this);
+    }
+
+    private static void showSaveButtonFeedback(MaterialButton saveButton) {
+        if (saveButton == null)
+            return;
+        // Tag holds Object[]: [0]=restoreText (CharSequence), [1]=restoreRunnable
+        // (Runnable)
+        CharSequence restoreText;
+        Object[] tag = saveButton.getTag() instanceof Object[] ? (Object[]) saveButton.getTag() : null;
+        if (tag != null && tag[0] instanceof CharSequence) {
+            restoreText = (CharSequence) tag[0];
+            if (tag[1] instanceof Runnable) {
+                saveButton.removeCallbacks((Runnable) tag[1]);
+            }
+        } else {
+            restoreText = saveButton.getText();
+        }
+        saveButton.setText(R.string.status_save_success_inline);
+        Runnable restore = () -> {
+            if (saveButton.isAttachedToWindow()) {
+                saveButton.setText(restoreText);
+            }
+        };
+        saveButton.setTag(new Object[] { restoreText, restore });
+        saveButton.postDelayed(restore, 1500);
     }
 
     private boolean updateSaveButtonState(TextInputLayout viewportInputLayout,
@@ -955,17 +972,17 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         }
     }
 
-    private boolean saveAppConfig(AppListItem item, TextInputEditText viewportInput,
+    /**
+     * Saves app config. Returns int[2]: [0]=1 if saved, 0 if not; [1]=hint string
+     * res id or 0.
+     */
+    private int[] saveAppConfig(AppListItem item, TextInputEditText viewportInput,
             TextInputEditText fontScaleInput,
             ModeToggle viewportModeToggle,
             ModeToggle fontModeToggle) {
         refreshSystemHookEffectiveEnabled();
         boolean systemHooksEnabled = isSystemHookEnabledFromStore();
         DpiConfigStore store = getUiConfigStore();
-        if (store == null) {
-            showToast(R.string.status_save_requires_init);
-            return false;
-        }
         try {
             Integer widthDp = parsePositiveIntOrNull(viewportInput);
             String viewportMode = resolveViewportMode(viewportModeToggle);
@@ -982,6 +999,11 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                             EffectiveModeResolver.resolveFontMode(fontMode, systemHooksEnabled));
             boolean emulationRequestedWithoutSystemScope = viewportEmulationIneffective || fontEmulationIneffective;
             boolean changed = true;
+            int hint = 0;
+            if (store == null) {
+                hint = R.string.status_save_requires_init;
+                return new int[] { 1, hint };
+            }
             if (widthDp == null) {
                 changed = store.clearTargetViewportWidthDp(item.packageName) && changed;
                 changed = store.setTargetViewportApplyMode(item.packageName, ViewportApplyMode.OFF)
@@ -998,19 +1020,15 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                 changed = store.setTargetFontScalePercent(item.packageName, fontScalePercent) && changed;
                 changed = store.setTargetFontApplyMode(item.packageName, fontMode) && changed;
             }
-            showToast(changed
-                    ? getString(R.string.status_save_success, item.packageName)
-                    : getString(R.string.status_save_requires_init));
             if (changed) {
                 requestAppsLoad();
             }
             if (changed && emulationRequestedWithoutSystemScope) {
-                showToast(R.string.emulation_requires_system_scope_hint);
+                hint = R.string.emulation_requires_system_scope_hint;
             }
-            return changed;
+            return new int[] { 1, hint };
         } catch (NumberFormatException exception) {
-            showToast(R.string.status_save_invalid);
-            return false;
+            return new int[] { 0, R.string.status_save_invalid };
         }
     }
 
@@ -1976,7 +1994,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         dialog.setContentView(dialogView);
         bindDialogActions(dialogView, item, views, state, style, systemHooksEnabled);
-        dialog.getBehavior().setFitToContents(false);
+        dialog.getBehavior().setFitToContents(true);
         dialog.getBehavior().setHalfExpandedRatio(0.5f);
         dialog.getBehavior().setState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_HALF_EXPANDED);
         dialog.setOnShowListener(d -> {
@@ -1984,32 +2002,26 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                     dialogView, com.google.android.material.R.attr.colorSurface);
             dialog.getWindow().setNavigationBarColor(surfaceColor);
 
-            // Expand sheet when keyboard appears, collapse when it disappears
+            // When keyboard opens in half-expanded, expand the sheet; restore on close
             android.widget.FrameLayout bottomSheet = dialog.findViewById(
                     com.google.android.material.R.id.design_bottom_sheet);
             if (bottomSheet != null) {
                 ViewCompat.setOnApplyWindowInsetsListener(bottomSheet, (view, insets) -> {
-                    Insets imeVisible = insets.getInsets(WindowInsetsCompat.Type.ime());
                     boolean keyboardVisible = insets.isVisible(WindowInsetsCompat.Type.ime());
                     com.google.android.material.bottomsheet.BottomSheetBehavior<?> behavior = com.google.android.material.bottomsheet.BottomSheetBehavior
                             .from(view);
-                    if (keyboardVisible && imeVisible.bottom > 0) {
+                    if (keyboardVisible) {
                         if (behavior
-                                .getState() != com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED) {
+                                .getState() == com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_HALF_EXPANDED) {
                             behavior.setState(
                                     com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED);
                         }
-                        behavior.setExpandedOffset(imeVisible.bottom);
-                        // Scroll to focused input
-                        View focused = dialogView.findFocus();
-                        if (focused != null && dialogView instanceof androidx.core.widget.NestedScrollView) {
-                            ((androidx.core.widget.NestedScrollView) dialogView)
-                                    .smoothScrollTo(0, (int) focused.getY());
-                        }
                     } else {
-                        // Restore expanded offset after layout calculation
-                        behavior.setExpandedOffset(Math.max(
-                                ((View) view.getParent()).getHeight() - dialogView.getHeight(), 0));
+                        if (behavior
+                                .getState() == com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED) {
+                            behavior.setState(
+                                    com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_HALF_EXPANDED);
+                        }
                     }
                     return insets;
                 });
@@ -2017,7 +2029,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         });
         dialog.show();
 
-        // Refine half-expanded ratio and expanded offset after layout
+        // Refine half-expanded ratio after layout so the advanced section is hidden
         View expandAnchor = dialogView.findViewById(R.id.dialog_expand_anchor);
         if (expandAnchor != null) {
             expandAnchor.post(() -> {
@@ -2033,11 +2045,6 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                 com.google.android.material.bottomsheet.BottomSheetBehavior<?> behavior = com.google.android.material.bottomsheet.BottomSheetBehavior
                         .from(bottomSheet);
 
-                // Set expanded offset so sheet wraps content without blank space
-                int contentHeight = dialogView.getHeight();
-                int expandedOffset = Math.max(parentHeight - contentHeight, 0);
-                behavior.setExpandedOffset(expandedOffset);
-
                 // Set half-expanded ratio so the advanced section is hidden below the fold
                 int[] anchorPos = new int[2];
                 expandAnchor.getLocationOnScreen(anchorPos);
@@ -2045,8 +2052,8 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                 int[] sheetPos = new int[2];
                 bottomSheet.getLocationOnScreen(sheetPos);
                 float ratio = (float) (anchorBottom - sheetPos[1]) / parentHeight;
-                // Ensure ratio < contentHeight/parentHeight so half-expanded state is not
-                // skipped
+                // With fitToContents=true, ratio must be < contentHeight/parentHeight
+                int contentHeight = dialogView.getHeight();
                 float maxRatio = (float) contentHeight / parentHeight - 0.05f;
                 ratio = Math.min(ratio, maxRatio);
                 ratio = Math.min(Math.max(ratio, 0.3f), 0.75f);
@@ -2222,8 +2229,14 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         });
         views.saveButton.setOnClickListener(v -> {
             clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            saveAppConfig(item, views.viewportInputView, views.fontInputView,
+            int[] result = saveAppConfig(item, views.viewportInputView, views.fontInputView,
                     views.viewportModeToggle, views.fontModeToggle);
+            if (result[0] == 1) {
+                showSaveButtonFeedback(views.saveButton);
+            }
+            if (result[1] != 0) {
+                showToast(result[1]);
+            }
         });
         views.viewportModeToggle.container.setOnClickListener(v -> {
             clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);

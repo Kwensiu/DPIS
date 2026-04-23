@@ -20,8 +20,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.google.android.material.snackbar.Snackbar;
-
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -521,13 +519,7 @@ public final class SystemServerSettingsActivity extends Activity {
         if (isFinishing() || isDestroyed()) {
             return;
         }
-        View anchor = findViewById(R.id.settings_root);
-        if (anchor == null) {
-            anchor = findViewById(android.R.id.content);
-        }
-        if (anchor != null) {
-            Snackbar.make(anchor, message, Snackbar.LENGTH_SHORT).show();
-        }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     private static void setRowEnabled(View row, boolean enabled) {

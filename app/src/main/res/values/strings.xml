@@ -9,6 +9,7 @@
     <string name="dialog_font_mode_emulation">伪装</string>
     <string name="dialog_font_mode_fallback">替换</string>
     <string name="status_save_button">保存</string>
+    <string name="status_save_success_inline">已保存</string>
     <string name="status_save_success">已保存 %1$s 的参数</string>
     <string name="status_save_requires_init">remote preferences 未初始化，先重新打开模块 App</string>
     <string name="status_save_invalid">宽度请输入正整数 dp；字体请输入 50–300 的整数</string>
