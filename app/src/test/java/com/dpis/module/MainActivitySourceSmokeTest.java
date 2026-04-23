@@ -138,6 +138,42 @@ public class MainActivitySourceSmokeTest {
     }
 
     @Test
+    public void pageRefresh_forcesInstalledAppCatalogReload() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        int refreshStart = source.indexOf("private void onPageRefreshRequested(AppListPage page) {");
+        int refreshEnd = source.indexOf("private void onPageListScrolled(", refreshStart);
+        assertTrue(refreshStart >= 0);
+        assertTrue(refreshEnd > refreshStart);
+
+        String refreshBody = source.substring(refreshStart, refreshEnd);
+        assertTrue(refreshBody.contains("requestAppsLoad(true);"));
+    }
+
+    @Test
+    public void appLoad_reusesInstalledAppCatalogBetweenRefreshes() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(source.contains("INSTALLED_APP_CATALOG_TTL_MS"));
+        assertTrue(source.contains("getInstalledAppCatalog("));
+        assertTrue(source.contains("forceInstalledAppCatalogReloadRequested"));
+        assertTrue(source.contains("cacheFresh"));
+    }
+
+    @Test
+    public void firstScreen_loadUsesPlaceholderAndAsyncIconWarmup() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(source.contains("FIRST_SCREEN_ICON_WARMUP_LIMIT"));
+        assertTrue(source.contains("maybeScheduleFirstScreenIconWarmup("));
+        assertTrue(source.contains("private void onIconLoadRequested(String packageName)"));
+        assertTrue(source.contains("pendingOnDemandIconLoads"));
+        assertTrue(source.contains("resolveDisplayIcon(item)"));
+        assertTrue(source.contains("scheduleIconRefresh();"));
+        assertTrue(!source.contains("getDefaultActivityIcon()"));
+    }
+
+    @Test
     public void touchFeedbackBinderProvidesSharedHapticAndScaleBehavior() throws IOException {
         String source = read("src/main/java/com/dpis/module/TouchFeedbackBinder.java");
 

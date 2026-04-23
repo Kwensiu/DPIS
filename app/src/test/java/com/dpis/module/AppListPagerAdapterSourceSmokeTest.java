@@ -15,6 +15,7 @@ public class AppListPagerAdapterSourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/AppListPagerAdapter.java");
 
         assertTrue(source.contains("interface OnPageListScrollListener"));
+        assertTrue(source.contains("interface OnIconResolveRequestListener"));
         assertTrue(source.contains("extends ListAdapter<AppListItem, RowHolder>"));
         assertTrue(source.contains("DiffUtil.ItemCallback<AppListItem>"));
         assertTrue(source.contains("submitList(newItems);"));
@@ -45,6 +46,16 @@ public class AppListPagerAdapterSourceSmokeTest {
         assertTrue(source.contains("findFirstVisibleItemPosition()"));
         assertTrue(source.contains("findLastVisibleItemPosition()"));
         assertTrue(source.contains("notifyItemRangeChanged(start, end - start + 1, PAYLOAD_SYSTEM_SCOPE_CHANGED);"));
+    }
+
+    @Test
+    public void missingIcon_usesSkeletonAndRequestsAsyncResolve() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppListPagerAdapter.java");
+
+        assertTrue(source.contains("holder.iconSkeleton.setVisibility(View.VISIBLE);"));
+        assertTrue(source.contains("holder.iconSkeleton.setVisibility(View.GONE);"));
+        assertTrue(source.contains("onIconResolveRequestListener.onIconResolveRequested(item.packageName);"));
+        assertTrue(source.contains("(oldItem.icon != null) == (newItem.icon != null)"));
     }
 
     private static String read(String relativePath) throws IOException {

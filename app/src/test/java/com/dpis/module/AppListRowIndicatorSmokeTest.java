@@ -18,6 +18,8 @@ public class AppListRowIndicatorSmokeTest {
         assertTrue(!layout.contains("@+id/expand_indicator"));
         assertTrue(!layout.contains("@drawable/ic_chevron_right_24"));
         assertTrue(!adapter.contains("expandIndicator"));
+        assertTrue(layout.contains("@+id/app_icon_skeleton"));
+        assertTrue(layout.contains("@drawable/bg_app_icon_skeleton_mask"));
     }
 
     private static String read(String relativePath) throws IOException {

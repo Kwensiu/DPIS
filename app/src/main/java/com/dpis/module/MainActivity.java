@@ -19,6 +19,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.Editable;
 import android.text.SpannableString;
@@ -75,9 +76,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -113,14 +116,31 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     private static final int UPDATE_READ_TIMEOUT_MS = 10_000;
     private static final int DOWNLOAD_BUFFER_SIZE = 16 * 1024;
     private static final long DOWNLOAD_PROGRESS_UPDATE_INTERVAL_MS = 180L;
+    private static final long INSTALLED_APP_CATALOG_TTL_MS = 60_000L;
+    private static final int FIRST_SCREEN_ICON_WARMUP_LIMIT = 48;
+    private static final long ICON_REFRESH_DEBOUNCE_MS = 120L;
     private static final Pattern LEADING_NUMBER_PATTERN = Pattern.compile("^(\\d+)");
 
     private final List<AppListItem> allApps = new ArrayList<>();
     private final Object listLock = new Object();
+    private final Object installedAppCatalogLock = new Object();
+    private final Object installedAppCatalogBuildLock = new Object();
+    private final Object reloadRequestLock = new Object();
+    private final Object iconWarmupLock = new Object();
+    private final Object iconRequestLock = new Object();
     private final AppLoadCoordinator loadCoordinator = new AppLoadCoordinator();
     private final AppIconMemoryCache appIconCache = new AppIconMemoryCache(256);
     private final Set<AppListPage> refreshingPages = EnumSet.noneOf(AppListPage.class);
+    private final Set<String> pendingOnDemandIconLoads = new HashSet<>();
     private final ExecutorService startupUpdateExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService appIconWarmupExecutor = Executors.newSingleThreadExecutor();
+    private List<InstalledAppCatalogItem> installedAppCatalog = Collections.emptyList();
+    private Map<String, InstalledAppCatalogItem> installedAppCatalogIndex = Collections.emptyMap();
+    private long installedAppCatalogLoadedAtMs;
+    private boolean forceInstalledAppCatalogReloadRequested = true;
+    private boolean firstScreenIconWarmupScheduled;
+    private boolean firstScreenIconWarmupFinished;
+    private boolean iconRefreshQueued;
 
     private AppListPagerAdapter pagerAdapter;
     private ViewPager2 appPager;
@@ -210,6 +230,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                 this::showEditDialog,
                 this::onPageRefreshRequested,
                 this::onPageListScrolled,
+                this::onIconLoadRequested,
                 this::isSystemHookEnabledFromStore);
         pagerAdapter.restorePageScrollStates(restoredPageScrollStates);
         appPager.setAdapter(pagerAdapter);
@@ -327,6 +348,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     protected void onDestroy() {
         cancelActiveUpdateDownload();
         startupUpdateExecutor.shutdownNow();
+        appIconWarmupExecutor.shutdownNow();
         super.onDestroy();
     }
 
@@ -384,7 +406,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         if (pagerAdapter != null) {
             pagerAdapter.setRefreshing(page, true);
         }
-        requestAppsLoad();
+        requestAppsLoad(true);
     }
 
     private void onPageListScrolled(AppListPage page, int dy) {
@@ -395,6 +417,37 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         if (dy <= -SEARCH_FAB_SCROLL_TRIGGER_DY) {
             showSearchFocusFab();
         }
+    }
+
+    private void onIconLoadRequested(String packageName) {
+        if (packageName == null || packageName.isEmpty()) {
+            return;
+        }
+        synchronized (iconRequestLock) {
+            if (appIconCache.get(packageName) != null) {
+                return;
+            }
+            if (!pendingOnDemandIconLoads.add(packageName)) {
+                return;
+            }
+        }
+        appIconWarmupExecutor.execute(() -> {
+            boolean loaded = false;
+            try {
+                PackageManager packageManager = getPackageManager();
+                ApplicationInfo applicationInfo = findApplicationInfo(packageManager, packageName);
+                if (applicationInfo != null) {
+                    loaded = loadAppIcon(packageManager, applicationInfo) != null;
+                }
+            } finally {
+                synchronized (iconRequestLock) {
+                    pendingOnDemandIconLoads.remove(packageName);
+                }
+            }
+            if (loaded) {
+                scheduleIconRefresh();
+            }
+        });
     }
 
     private void restoreRefreshingPages(int[] pagePositions) {
@@ -426,6 +479,15 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void requestAppsLoad() {
+        requestAppsLoad(false);
+    }
+
+    private void requestAppsLoad(boolean forceInstalledAppCatalogReload) {
+        if (forceInstalledAppCatalogReload) {
+            synchronized (reloadRequestLock) {
+                forceInstalledAppCatalogReloadRequested = true;
+            }
+        }
         int requestId = loadCoordinator.onLoadRequested();
         if (requestId != AppLoadCoordinator.NO_REQUEST) {
             startAppsLoad(requestId);
@@ -433,10 +495,15 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void startAppsLoad(int requestId) {
+        final boolean forceInstalledAppCatalogReload;
+        synchronized (reloadRequestLock) {
+            forceInstalledAppCatalogReload = forceInstalledAppCatalogReloadRequested;
+            forceInstalledAppCatalogReloadRequested = false;
+        }
         new Thread(() -> {
             List<AppListItem> loaded = null;
             try {
-                loaded = loadInstalledApps();
+                loaded = loadInstalledApps(forceInstalledAppCatalogReload);
             } catch (Throwable throwable) {
                 DpisLog.e("list load failed", throwable);
             }
@@ -845,15 +912,12 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         }
     }
 
-    private List<AppListItem> loadInstalledApps() {
+    private List<AppListItem> loadInstalledApps(boolean forceInstalledAppCatalogReload) {
         PackageManager packageManager = getPackageManager();
-        List<ApplicationInfo> installedApps;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            installedApps = packageManager.getInstalledApplications(
-                    PackageManager.ApplicationInfoFlags.of(0));
-        } else {
-            installedApps = packageManager.getInstalledApplications(0);
-        }
+        List<InstalledAppCatalogItem> catalog = getInstalledAppCatalog(
+                packageManager,
+                forceInstalledAppCatalogReload);
+        maybeScheduleFirstScreenIconWarmup(packageManager, catalog);
 
         Set<String> scopePackages = new HashSet<>();
         XposedService service = DpisApplication.getXposedService();
@@ -862,46 +926,207 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         }
         DpiConfigStore store = getUiConfigStore();
 
-        List<AppListItem> result = new ArrayList<>();
-        for (ApplicationInfo applicationInfo : installedApps) {
-            if (applicationInfo.packageName.equals(getPackageName())) {
-                continue;
-            }
-            boolean systemApp = isSystemApp(applicationInfo);
-            String label = packageManager.getApplicationLabel(applicationInfo).toString();
-            Drawable icon = loadAppIcon(packageManager, applicationInfo);
+        List<AppListItem> result = new ArrayList<>(catalog.size());
+        for (InstalledAppCatalogItem item : catalog) {
             Integer viewportWidth = store != null
-                    ? store.getTargetViewportWidthDp(applicationInfo.packageName)
+                    ? store.getTargetViewportWidthDp(item.packageName)
                     : null;
             String viewportMode = store != null
-                    ? store.getTargetViewportApplyMode(applicationInfo.packageName)
+                    ? store.getTargetViewportApplyMode(item.packageName)
                     : ViewportApplyMode.OFF;
             Integer fontScalePercent = store != null
-                    ? store.getTargetFontScalePercent(applicationInfo.packageName)
+                    ? store.getTargetFontScalePercent(item.packageName)
                     : null;
             String fontMode = store != null
-                    ? store.getTargetFontApplyMode(applicationInfo.packageName)
+                    ? store.getTargetFontApplyMode(item.packageName)
                     : FontApplyMode.OFF;
             boolean dpisEnabled = store == null
-                    || store.isTargetDpisEnabled(applicationInfo.packageName);
-            result.add(new AppListItem(label, applicationInfo.packageName,
-                    scopePackages.contains(applicationInfo.packageName), viewportWidth, viewportMode,
-                    fontScalePercent, fontMode, dpisEnabled, systemApp, icon));
+                    || store.isTargetDpisEnabled(item.packageName);
+            Drawable icon = resolveDisplayIcon(item);
+            result.add(new AppListItem(item.label, item.packageName,
+                    scopePackages.contains(item.packageName), viewportWidth, viewportMode,
+                    fontScalePercent, fontMode, dpisEnabled, item.systemApp, icon));
         }
-        result.sort(Comparator.comparing((AppListItem item) -> item.label.toLowerCase(Locale.ROOT))
-                .thenComparing(item -> item.packageName));
         return result;
+    }
+
+    private List<InstalledAppCatalogItem> getInstalledAppCatalog(PackageManager packageManager,
+            boolean forceReload) {
+        long now = SystemClock.elapsedRealtime();
+        synchronized (installedAppCatalogLock) {
+            boolean cacheFresh = !installedAppCatalog.isEmpty()
+                    && now - installedAppCatalogLoadedAtMs <= INSTALLED_APP_CATALOG_TTL_MS;
+            if (!forceReload && cacheFresh) {
+                return installedAppCatalog;
+            }
+        }
+        synchronized (installedAppCatalogBuildLock) {
+            now = SystemClock.elapsedRealtime();
+            synchronized (installedAppCatalogLock) {
+                boolean cacheFresh = !installedAppCatalog.isEmpty()
+                        && now - installedAppCatalogLoadedAtMs <= INSTALLED_APP_CATALOG_TTL_MS;
+                if (!forceReload && cacheFresh) {
+                    return installedAppCatalog;
+                }
+            }
+
+            Map<String, Drawable> previousIcons = new HashMap<>();
+            synchronized (installedAppCatalogLock) {
+                for (Map.Entry<String, InstalledAppCatalogItem> entry : installedAppCatalogIndex.entrySet()) {
+                    Drawable icon = entry.getValue().icon;
+                    if (icon != null) {
+                        previousIcons.put(entry.getKey(), icon);
+                    }
+                }
+            }
+
+            List<ApplicationInfo> installedApps;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                installedApps = packageManager.getInstalledApplications(
+                        PackageManager.ApplicationInfoFlags.of(0));
+            } else {
+                installedApps = packageManager.getInstalledApplications(0);
+            }
+
+            List<InstalledAppCatalogItem> rebuilt = new ArrayList<>();
+            for (ApplicationInfo applicationInfo : installedApps) {
+                if (applicationInfo.packageName.equals(getPackageName())) {
+                    continue;
+                }
+                boolean systemApp = isSystemApp(applicationInfo);
+                String label = packageManager.getApplicationLabel(applicationInfo).toString();
+                rebuilt.add(new InstalledAppCatalogItem(
+                        label,
+                        applicationInfo.packageName,
+                        systemApp,
+                        previousIcons.get(applicationInfo.packageName)));
+            }
+            rebuilt.sort(Comparator.comparing((InstalledAppCatalogItem item) -> item.label.toLowerCase(Locale.ROOT))
+                    .thenComparing(item -> item.packageName));
+            List<InstalledAppCatalogItem> snapshot = Collections.unmodifiableList(rebuilt);
+            Map<String, InstalledAppCatalogItem> index = new HashMap<>();
+            for (InstalledAppCatalogItem item : rebuilt) {
+                index.put(item.packageName, item);
+            }
+            synchronized (installedAppCatalogLock) {
+                installedAppCatalog = snapshot;
+                installedAppCatalogIndex = index;
+                installedAppCatalogLoadedAtMs = now;
+                return installedAppCatalog;
+            }
+        }
+    }
+
+    private Drawable resolveDisplayIcon(InstalledAppCatalogItem item) {
+        if (item.icon != null) {
+            return item.icon;
+        }
+        Drawable cached = appIconCache.get(item.packageName);
+        if (cached != null) {
+            rememberInstalledCatalogIcon(item.packageName, cached);
+        }
+        return cached;
+    }
+
+    private void maybeScheduleFirstScreenIconWarmup(PackageManager packageManager,
+            List<InstalledAppCatalogItem> catalog) {
+        if (catalog.isEmpty()) {
+            return;
+        }
+        synchronized (iconWarmupLock) {
+            if (firstScreenIconWarmupScheduled || firstScreenIconWarmupFinished) {
+                return;
+            }
+            firstScreenIconWarmupScheduled = true;
+        }
+        appIconWarmupExecutor.execute(() -> {
+            int warmedCount = 0;
+            int limit = Math.min(FIRST_SCREEN_ICON_WARMUP_LIMIT, catalog.size());
+            for (int i = 0; i < limit; i++) {
+                String packageName = catalog.get(i).packageName;
+                if (appIconCache.get(packageName) != null) {
+                    continue;
+                }
+                ApplicationInfo applicationInfo = findApplicationInfo(packageManager, packageName);
+                if (applicationInfo == null) {
+                    continue;
+                }
+                Drawable warmed = loadAppIcon(packageManager, applicationInfo);
+                if (warmed != null) {
+                    warmedCount++;
+                }
+            }
+            synchronized (iconWarmupLock) {
+                firstScreenIconWarmupFinished = true;
+                firstScreenIconWarmupScheduled = false;
+            }
+            if (warmedCount > 0) {
+                scheduleIconRefresh();
+            }
+        });
+    }
+
+    private void scheduleIconRefresh() {
+        synchronized (iconRequestLock) {
+            if (iconRefreshQueued) {
+                return;
+            }
+            iconRefreshQueued = true;
+        }
+        runOnUiThread(() -> {
+            View anchor = appPager != null ? appPager : findViewById(android.R.id.content);
+            if (anchor == null) {
+                synchronized (iconRequestLock) {
+                    iconRefreshQueued = false;
+                }
+                requestAppsLoad();
+                return;
+            }
+            anchor.postDelayed(() -> {
+                synchronized (iconRequestLock) {
+                    iconRefreshQueued = false;
+                }
+                requestAppsLoad();
+            }, ICON_REFRESH_DEBOUNCE_MS);
+        });
+    }
+
+    private static ApplicationInfo findApplicationInfo(PackageManager packageManager, String packageName) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                return packageManager.getApplicationInfo(
+                        packageName,
+                        PackageManager.ApplicationInfoFlags.of(0));
+            }
+            return packageManager.getApplicationInfo(packageName, 0);
+        } catch (PackageManager.NameNotFoundException ignored) {
+            return null;
+        }
     }
 
     private Drawable loadAppIcon(PackageManager packageManager, ApplicationInfo applicationInfo) {
         String packageName = applicationInfo.packageName;
         Drawable cachedIcon = appIconCache.get(packageName);
         if (cachedIcon != null) {
+            rememberInstalledCatalogIcon(packageName, cachedIcon);
             return cachedIcon;
         }
         Drawable loadedIcon = applicationInfo.loadIcon(packageManager);
         appIconCache.put(packageName, loadedIcon);
+        rememberInstalledCatalogIcon(packageName, loadedIcon);
         return loadedIcon;
+    }
+
+    private void rememberInstalledCatalogIcon(String packageName, Drawable icon) {
+        if (packageName == null || packageName.isEmpty() || icon == null) {
+            return;
+        }
+        synchronized (installedAppCatalogLock) {
+            InstalledAppCatalogItem item = installedAppCatalogIndex.get(packageName);
+            if (item != null) {
+                item.icon = icon;
+            }
+        }
     }
 
     private static boolean isSystemApp(ApplicationInfo applicationInfo) {
@@ -921,6 +1146,20 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         }
         for (AppListPage page : AppListPage.values()) {
             pagerAdapter.submitPage(page, AppListVisibleSections.filter(snapshot, query, page, filterState));
+        }
+    }
+
+    private static final class InstalledAppCatalogItem {
+        final String label;
+        final String packageName;
+        final boolean systemApp;
+        volatile Drawable icon;
+
+        InstalledAppCatalogItem(String label, String packageName, boolean systemApp, Drawable icon) {
+            this.label = label;
+            this.packageName = packageName;
+            this.systemApp = systemApp;
+            this.icon = icon;
         }
     }
 
