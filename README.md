@@ -1,5 +1,5 @@
 # DPIS
-<img src="app\src\main\ic_launcher-playstore.png" height='70px'>
+<img src="https://raw.githubusercontent.com/Xposed-Modules-Repo/io.github.kwensiu.dpis/refs/heads/main/icon.png" height='70px'>
 
 ![GitHub Release](https://img.shields.io/github/v/release/Kwensiu/DPIS)
 
