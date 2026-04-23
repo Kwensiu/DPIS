@@ -20,6 +20,10 @@
 - `:app:testDebugUnitTest --tests com.dpis.module.SystemServerDisplayEnvironmentInstallerMutationPolicyTest` 通过（2026-04-18）。
 - `:app:testDebugUnitTest --tests com.dpis.module.SystemServerDisplayDiagnosticsTest` 通过（2026-04-18）。
 - `:app:testDebugUnitTest --tests com.dpis.module.ForceTextSizeRegressionReferenceTest` 通过（2026-04-18）。
+- `:app:testDebugUnitTest --tests "com.dpis.module.*LayoutSmokeTest"` 通过（2026-04-23）。
+- `:app:testDebugUnitTest` 全量通过（2026-04-23）。
+- `:app:assembleDebug` 通过（2026-04-23）。
+- `adb install -r "app/build/outputs/apk/debug/app-debug.apk"` 成功（设备 `aeec529f`，2026-04-23）。
 
 ## 3) 设备侧回归步骤（手工）
 1. 打开 DPIS 设置页，确认三个开关可切换并可持久化。
