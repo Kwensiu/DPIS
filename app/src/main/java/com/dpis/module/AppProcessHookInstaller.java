@@ -53,7 +53,7 @@ final class AppProcessHookInstaller {
                     + ", fontMode=" + fontMode + " for " + packageName);
             return;
         }
-        String mode = policy.systemServerSafeModeEnabled ? "safe mode" : "probe disabled";
+        String mode = resolveProbeInstallMode(policy);
         DpisLog.i("hooks installed (" + mode + "): viewportEnabled=" + viewportEnabled
                 + ", viewportMode=" + viewportMode
                 + ", fontMode=" + fontMode + " for " + packageName);
@@ -64,6 +64,12 @@ final class AppProcessHookInstaller {
 
     static boolean shouldInstallProbeHooks(HookRuntimePolicy policy) {
         return policy != null && policy.probeHooksEnabled;
+    }
+
+    static String resolveProbeInstallMode(HookRuntimePolicy policy) {
+        return policy != null && policy.systemServerSafeModeEnabled
+                ? "safe mode"
+                : "probe disabled";
     }
 
     static boolean resolveViewportHookEnabled(HookRuntimePolicy policy,

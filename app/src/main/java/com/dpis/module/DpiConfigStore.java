@@ -203,7 +203,7 @@ final class DpiConfigStore {
 
     boolean clearTargetViewportWidthDp(String packageName) {
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
-        if (!contains(keyForFontScale(packageName))
+        if (getTargetFontScalePercent(packageName) == null
                 && !contains(keyForFontMode(packageName))) {
             packages.remove(packageName);
         }
@@ -217,8 +217,8 @@ final class DpiConfigStore {
         String normalized = ViewportApplyMode.normalize(mode);
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
         if (!ViewportApplyMode.isEnabled(normalized)) {
-            if (!contains(keyForViewportWidth(packageName))
-                    && !contains(keyForFontScale(packageName))
+            if (getTargetViewportWidthDp(packageName) == null
+                    && getTargetFontScalePercent(packageName) == null
                     && !contains(keyForFontMode(packageName))) {
                 packages.remove(packageName);
             }
@@ -248,8 +248,8 @@ final class DpiConfigStore {
         String normalized = FontApplyMode.normalize(mode);
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
         if (FontApplyMode.OFF.equals(normalized)) {
-            if (!contains(keyForViewportWidth(packageName))
-                    && !contains(keyForFontScale(packageName))) {
+            if (getTargetViewportWidthDp(packageName) == null
+                    && getTargetFontScalePercent(packageName) == null) {
                 packages.remove(packageName);
             }
             return commitBoth(editor -> editor
@@ -264,7 +264,7 @@ final class DpiConfigStore {
 
     boolean clearTargetFontScalePercent(String packageName) {
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
-        if (!contains(keyForViewportWidth(packageName))
+        if (getTargetViewportWidthDp(packageName) == null
                 && !contains(keyForFontMode(packageName))) {
             packages.remove(packageName);
         }
@@ -296,8 +296,8 @@ final class DpiConfigStore {
     boolean setTargetDpisEnabled(String packageName, boolean enabled) {
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
         if (enabled) {
-            if (!contains(keyForViewportWidth(packageName))
-                    && !contains(keyForFontScale(packageName))
+            if (getTargetViewportWidthDp(packageName) == null
+                    && getTargetFontScalePercent(packageName) == null
                     && !contains(keyForViewportMode(packageName))
                     && !contains(keyForFontMode(packageName))) {
                 packages.remove(packageName);

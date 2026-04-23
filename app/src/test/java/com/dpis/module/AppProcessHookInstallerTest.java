@@ -122,6 +122,16 @@ public class AppProcessHookInstallerTest {
     }
 
     @Test
+    public void nullPolicyDisablesProbeHookPath() {
+        assertFalse(AppProcessHookInstaller.shouldInstallProbeHooks(null));
+    }
+
+    @Test
+    public void nullPolicyFallsBackToProbeDisabledModeLabel() {
+        assertTrue("probe disabled".equals(AppProcessHookInstaller.resolveProbeInstallMode(null)));
+    }
+
+    @Test
     public void allowsProbeHookPathWhenSafetyModeDisabledAndGlobalLoggingEnabled()
             throws Exception {
         HookRuntimePolicy policy = createPolicy(false, true, true);

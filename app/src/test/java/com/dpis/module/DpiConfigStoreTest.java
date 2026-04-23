@@ -212,6 +212,42 @@ public class DpiConfigStoreTest {
     }
 
     @Test
+    public void clearsViewportRemovesPackageWhenOnlyInvalidFontScaleKeyExists() {
+        String packageName = "bin.mt.plus.canary";
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
+                        new LinkedHashSet<>(Set.of(packageName)))
+                .putInt("viewport." + packageName + ".width_dp", 360)
+                .putInt("font." + packageName + ".scale_percent", 301)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertNull(store.getTargetFontScalePercent(packageName));
+        assertTrue(store.clearTargetViewportWidthDp(packageName));
+        assertFalse(store.getConfiguredPackages().contains(packageName));
+    }
+
+    @Test
+    public void enablingDpisRemovesPackageWhenOnlyInvalidNumericKeysRemain() {
+        String packageName = "bin.mt.plus.canary";
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
+                        new LinkedHashSet<>(Set.of(packageName)))
+                .putInt("viewport." + packageName + ".width_dp", 0)
+                .putInt("font." + packageName + ".scale_percent", 301)
+                .putBoolean("dpis." + packageName + ".enabled", false)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertNull(store.getTargetViewportWidthDp(packageName));
+        assertNull(store.getTargetFontScalePercent(packageName));
+        assertTrue(store.setTargetDpisEnabled(packageName, true));
+        assertFalse(store.getConfiguredPackages().contains(packageName));
+    }
+
+    @Test
     public void keepsPackageConfiguredWhenClearingFontScaleButViewportExists() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
