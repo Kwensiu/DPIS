@@ -33,7 +33,7 @@ public final class ModuleMain extends XposedModule {
         bridgeLog("package ready: process=" + currentProcessName
                 + ", package=" + param.getPackageName());
         SystemServerDisplayDiagnostics.flushPending();
-        maybeInstallSystemServerFromPackageReady(store, param.getPackageName());
+        maybeInstallSystemServerFromPackageReady(store, policy, param.getPackageName());
         maybeLogFirstPackageReady(param.getPackageName());
         String packageName = param.getPackageName();
         if (!store.getConfiguredPackages().contains(packageName)) {
@@ -80,11 +80,16 @@ public final class ModuleMain extends XposedModule {
         return local;
     }
 
-    private void maybeInstallSystemServerFromPackageReady(DpiConfigStore store, String packageName) {
+    private void maybeInstallSystemServerFromPackageReady(DpiConfigStore store,
+                                                          HookRuntimePolicy policy,
+                                                          String packageName) {
         if (systemServerInstallAttempted) {
             return;
         }
-        if (!SystemServerProcess.isSystemServer(currentProcessName, packageName)) {
+        if (!SystemServerMutationPolicy.shouldInstallSystemServerHooks(
+                currentProcessName,
+                packageName,
+                policy)) {
             return;
         }
         synchronized (this) {

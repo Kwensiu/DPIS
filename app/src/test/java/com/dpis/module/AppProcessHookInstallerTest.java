@@ -114,16 +114,47 @@ public class AppProcessHookInstallerTest {
         assertFalse(plan.downgradedToEmulation);
     }
 
+    @Test
+    public void skipsProbeHookPathWhenSafetyModeEnabled() throws Exception {
+        HookRuntimePolicy policy = createPolicy(true);
+
+        assertFalse(AppProcessHookInstaller.shouldInstallProbeHooks(policy));
+    }
+
+    @Test
+    public void nullPolicyDisablesProbeHookPath() {
+        assertFalse(AppProcessHookInstaller.shouldInstallProbeHooks(null));
+    }
+
+    @Test
+    public void nullPolicyFallsBackToProbeDisabledModeLabel() {
+        assertTrue("probe disabled".equals(AppProcessHookInstaller.resolveProbeInstallMode(null)));
+    }
+
+    @Test
+    public void allowsProbeHookPathWhenSafetyModeDisabledAndGlobalLoggingEnabled()
+            throws Exception {
+        HookRuntimePolicy policy = createPolicy(false, true, true);
+
+        assertTrue(AppProcessHookInstaller.shouldInstallProbeHooks(policy));
+    }
+
     private static HookRuntimePolicy createPolicy(boolean safeMode) {
         return createPolicy(safeMode, true);
     }
 
     private static HookRuntimePolicy createPolicy(boolean safeMode, boolean systemHooksEnabled) {
+        return createPolicy(safeMode, systemHooksEnabled, false);
+    }
+
+    private static HookRuntimePolicy createPolicy(boolean safeMode,
+                                                  boolean systemHooksEnabled,
+                                                  boolean globalLogEnabled) {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
         store.setSystemServerSafeModeEnabled(safeMode);
         store.setSystemServerHooksEnabled(systemHooksEnabled);
-        store.setGlobalLogEnabled(false);
+        store.setGlobalLogEnabled(globalLogEnabled);
         return HookRuntimePolicy.fromStore(store);
     }
 }

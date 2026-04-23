@@ -39,7 +39,7 @@ final class AppProcessHookInstaller {
             WindowMetricsHookInstaller.install(xposed);
             DisplayHookInstaller.install(xposed, packageName);
         }
-        if (policy.probeHooksEnabled) {
+        if (shouldInstallProbeHooks(policy)) {
             if (resourcesHooksEnabled) {
                 ResourcesProbeHookInstaller.install(xposed, packageName, store);
             }
@@ -53,13 +53,23 @@ final class AppProcessHookInstaller {
                     + ", fontMode=" + fontMode + " for " + packageName);
             return;
         }
-        String mode = policy.systemServerSafeModeEnabled ? "safe mode" : "probe disabled";
+        String mode = resolveProbeInstallMode(policy);
         DpisLog.i("hooks installed (" + mode + "): viewportEnabled=" + viewportEnabled
                 + ", viewportMode=" + viewportMode
                 + ", fontMode=" + fontMode + " for " + packageName);
         if (fontHookPlan.downgradedToEmulation) {
             DpisLog.i("safe mode downgraded font apply mode to emulation for " + packageName);
         }
+    }
+
+    static boolean shouldInstallProbeHooks(HookRuntimePolicy policy) {
+        return policy != null && policy.probeHooksEnabled;
+    }
+
+    static String resolveProbeInstallMode(HookRuntimePolicy policy) {
+        return policy != null && policy.systemServerSafeModeEnabled
+                ? "safe mode"
+                : "probe disabled";
     }
 
     static boolean resolveViewportHookEnabled(HookRuntimePolicy policy,

@@ -11,13 +11,21 @@ import org.junit.Test;
 
 public class MainActivityLayoutSmokeTest {
     @Test
+    public void activityStatusLayoutKeepsSingleHelpFabWithExpectedIcon() throws IOException {
+        String layout = read("src/main/res/layout/activity_status.xml");
+
+        assertTrue(countMatches(layout, "android:id=\"@+id/help_fab\"") == 1);
+        assertTrue(layout.contains("android:contentDescription=\"@string/help_button\""));
+        assertTrue(layout.contains("app:srcCompat=\"@drawable/ic_info_outline_24\""));
+    }
+
+    @Test
     public void activityStatusLayoutContainsSearchFilterSettingsAndPager() throws IOException {
         String layout = read("src/main/res/layout/activity_status.xml");
         String strings = read("src/main/res/values/strings.xml");
 
         assertTrue(layout.contains("android:id=\"@+id/search_input\""));
         assertTrue(layout.contains("android:id=\"@+id/search_filter_button\""));
-        assertTrue(layout.contains("android:id=\"@+id/help_fab\""));
         assertTrue(layout.contains("android:id=\"@+id/search_focus_fab\""));
         assertTrue(countMatches(layout, "app:elevation=\"6dp\"") == 2);
         assertTrue(countMatches(layout, "app:hoveredFocusedTranslationZ=\"8dp\"") == 2);
@@ -27,13 +35,11 @@ public class MainActivityLayoutSmokeTest {
         assertTrue(layout.contains("android:paddingStart=\"16dp\""));
         assertTrue(layout.contains("android:paddingTop=\"16dp\""));
         assertTrue(layout.contains("android:src=\"@drawable/ic_search_24\""));
-        assertTrue(layout.contains("app:srcCompat=\"@drawable/ic_info_outline_24\""));
         assertTrue(layout.contains("android:src=\"@drawable/baseline_tune_24\""));
         assertTrue(layout.contains("android:id=\"@+id/system_settings_button\""));
         assertTrue(layout.contains("android:id=\"@+id/app_pager\""));
         assertTrue(strings.contains("tab_all_apps"));
         assertTrue(strings.contains("quick_search_button"));
-        assertTrue(strings.contains("help_button"));
         assertTrue(Files.exists(Path.of("src/main/res/drawable/baseline_tune_24.xml")));
     }
 

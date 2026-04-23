@@ -19,8 +19,21 @@ final class SystemServerMutationPolicy {
     static boolean shouldInstallTarget(String entryName, boolean safeModeEnabled) {
         if (safeModeEnabled) {
             // Safe mode keeps only the lowest-risk system_server entry.
-            return ENTRY_ACTIVITY_START.equals(entryName);
+            return isLowRiskEntry(entryName);
         }
         return true;
+    }
+
+    static boolean shouldInstallSystemServerHooks(String processName,
+                                                  String packageName,
+                                                  HookRuntimePolicy policy) {
+        if (!SystemServerProcess.isSystemServer(processName, packageName)) {
+            return false;
+        }
+        return policy == null || policy.systemServerHooksEnabled;
+    }
+
+    private static boolean isLowRiskEntry(String entryName) {
+        return ENTRY_ACTIVITY_START.equals(entryName);
     }
 }
