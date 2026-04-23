@@ -154,6 +154,17 @@ jobs:
             update.json \
             --clobber
 
+      - name: Fetch release notes
+        id: notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          NOTES=$(gh release view "${{ steps.meta.outputs.tag }}" \
+            --repo ${{ github.repository }} \
+            --json body -q .body 2>/dev/null || echo "Release ${{ steps.meta.outputs.version }}")
+          echo "$NOTES" > /tmp/release-notes.md
+
       - name: Publish release to Xposed-Modules-Repo
         shell: bash
         env:
@@ -164,12 +175,8 @@ jobs:
             exit 0
           fi
 
-          NOTES=$(gh release view "${{ steps.meta.outputs.tag }}" \
-            --repo Kwensiu/DPIS \
-            --json body -q .body 2>/dev/null || echo "Release ${{ steps.meta.outputs.version }}")
-
           gh release create "${{ steps.meta.outputs.version_code }}-${{ steps.meta.outputs.version }}" \
             --repo Xposed-Modules-Repo/io.github.kwensiu.dpis \
             --title "${{ steps.meta.outputs.version }}" \
-            --notes-file - <<< "$NOTES" \
+            --notes-file /tmp/release-notes.md \
             "${{ steps.meta.outputs.apk_path }}"

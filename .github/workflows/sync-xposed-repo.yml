@@ -51,9 +51,7 @@ jobs:
           NOTES=$(gh release view "${{ inputs.tag }}" \
             --repo Kwensiu/DPIS \
             --json body -q .body 2>/dev/null || echo "Release ${{ steps.meta.outputs.version }}")
-          echo "body<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$NOTES" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
+          echo "$NOTES" > /tmp/release-notes.md
 
       - name: Publish release to Xposed-Modules-Repo
         shell: bash
@@ -63,5 +61,5 @@ jobs:
           gh release create "${{ steps.meta.outputs.xposed_tag }}" \
             --repo Xposed-Modules-Repo/io.github.kwensiu.dpis \
             --title "${{ steps.meta.outputs.version }}" \
-            --notes-file - <<< "${{ steps.notes.outputs.body }}" \
+            --notes-file /tmp/release-notes.md \
             "${{ steps.meta.outputs.apk_file }}"
