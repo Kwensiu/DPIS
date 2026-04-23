@@ -31,7 +31,6 @@ import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textview.MaterialTextView;
 
 import java.text.DateFormat;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -627,23 +626,8 @@ public final class SystemServerSettingsActivity extends Activity {
         }
 
         @Override
-        public void showScopeRequestNotice() {
-            showToast(R.string.system_hooks_scope_request_notice);
-        }
-
-        @Override
         public void showScopeRequired() {
             showToast(R.string.system_hooks_scope_required);
-        }
-
-        @Override
-        public void showScopeRemoveFailed() {
-            showToast(R.string.scope_remove_failed);
-        }
-
-        @Override
-        public void showScopeAddFailed(String message) {
-            showToast(R.string.scope_add_failed, message);
         }
     }
 
@@ -651,20 +635,6 @@ public final class SystemServerSettingsActivity extends Activity {
         @Override
         public boolean isServiceAvailable() {
             return DpisApplication.getXposedService() != null;
-        }
-
-        @Override
-        public boolean removeSystemScopeIfAvailable() {
-            XposedService service = DpisApplication.getXposedService();
-            if (service == null) {
-                return true;
-            }
-            try {
-                service.removeScope(Collections.singletonList(SYSTEM_SCOPE_MODERN));
-                return true;
-            } catch (RuntimeException error) {
-                return false;
-            }
         }
 
         @Override
@@ -679,28 +649,6 @@ public final class SystemServerSettingsActivity extends Activity {
             } catch (RuntimeException error) {
                 return false;
             }
-        }
-
-        @Override
-        public void requestSystemScope(SystemHooksToggleController.ScopeGateway.ScopeRequestCallback callback) {
-            XposedService service = DpisApplication.getXposedService();
-            if (service == null) {
-                runOnUiThread(() -> callback.onFailed("xposed service unavailable"));
-                return;
-            }
-            service.requestScope(Collections.singletonList(SYSTEM_SCOPE_MODERN),
-                    new XposedService.OnScopeEventListener() {
-                        @Override
-                        public void onScopeRequestApproved(List<String> approved) {
-                            runOnUiThread(() -> callback.onApproved(
-                                    approved != null && approved.contains(SYSTEM_SCOPE_MODERN)));
-                        }
-
-                        @Override
-                        public void onScopeRequestFailed(String message) {
-                            runOnUiThread(() -> callback.onFailed(message));
-                        }
-                    });
         }
     }
 }

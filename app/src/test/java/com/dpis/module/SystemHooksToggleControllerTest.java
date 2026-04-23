@@ -4,7 +4,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class SystemHooksToggleControllerTest {
@@ -25,7 +24,7 @@ public class SystemHooksToggleControllerTest {
     }
 
     @Test
-    public void disable_setsStoreFalse() {
+    public void disable_setsStoreFalse_withoutScopeMutation() {
         DpiConfigStore store = createStore(true);
         FakeScopeGateway gateway = new FakeScopeGateway();
         FakeView view = new FakeView();
@@ -37,25 +36,8 @@ public class SystemHooksToggleControllerTest {
         assertFalse(view.lastState.switchChecked);
         assertTrue(view.lastState.switchEnabled);
         assertFalse(store.isSystemServerHooksEnabled());
-        assertEquals(1, gateway.removeScopeCallCount);
-    }
-
-    @Test
-    public void disable_whenScopeRemoveFails_keepsStoreStateAndShowsError() {
-        DpiConfigStore store = createStore(true);
-        FakeScopeGateway gateway = new FakeScopeGateway();
-        gateway.removeScopeSuccess = false;
-        FakeView view = new FakeView();
-        SystemHooksToggleController controller = new SystemHooksToggleController(
-                store, gateway, view);
-
-        controller.onUserToggle(false);
-
-        assertTrue(view.lastState.switchChecked);
-        assertTrue(view.lastState.switchEnabled);
-        assertTrue(store.isSystemServerHooksEnabled());
-        assertEquals(1, view.scopeRemoveFailedCount);
-        assertEquals(1, gateway.removeScopeCallCount);
+        assertEquals(0, view.scopeRequiredCount);
+        assertEquals(0, view.initRequiredCount);
     }
 
     @Test
@@ -93,115 +75,12 @@ public class SystemHooksToggleControllerTest {
         assertTrue(view.lastState.desiredEnabled);
         assertFalse(view.lastState.effectiveEnabled);
         assertEquals(1, view.initRequiredCount);
-        assertFalse(gateway.scopeRequestTriggered);
-        assertTrue(store.isSystemServerHooksEnabled());
-    }
-
-    @Test
-    public void syncFromStore_whenServiceBecomesAvailable_requestsScopeForDesiredOnState() {
-        DpiConfigStore store = createStore(false);
-        FakeScopeGateway gateway = new FakeScopeGateway();
-        gateway.serviceAvailable = false;
-        gateway.hasSystemScopeSelected = false;
-        FakeView view = new FakeView();
-        SystemHooksToggleController controller = new SystemHooksToggleController(
-                store, gateway, view);
-
-        controller.onUserToggle(true);
-        assertEquals(0, gateway.scopeRequestCount);
-
-        gateway.serviceAvailable = true;
-        controller.syncFromStore();
-
-        assertEquals(1, gateway.scopeRequestCount);
-        assertTrue(view.lastState.switchChecked);
-        assertFalse(view.lastState.switchEnabled);
-        assertTrue(view.lastState.desiredEnabled);
-        assertFalse(view.lastState.effectiveEnabled);
-        assertEquals(1, view.scopeRequestNoticeCount);
-    }
-
-    @Test
-    public void enable_staysPendingUntilScopeCallback() {
-        DpiConfigStore store = createStore(false);
-        FakeScopeGateway gateway = new FakeScopeGateway();
-        gateway.hasSystemScopeSelected = false;
-        FakeView view = new FakeView();
-        SystemHooksToggleController controller = new SystemHooksToggleController(
-                store, gateway, view);
-
-        controller.onUserToggle(true);
-
-        assertTrue(view.lastState.switchChecked);
-        assertFalse(view.lastState.switchEnabled);
-        assertTrue(view.lastState.desiredEnabled);
-        assertFalse(view.lastState.effectiveEnabled);
-        assertEquals(SystemHookState.Reason.REQUEST_PENDING, view.lastState.reason);
-        assertEquals(1, view.scopeRequestNoticeCount);
-        assertTrue(gateway.scopeRequestTriggered);
-        assertNotNull(gateway.callback);
-    }
-
-    @Test
-    public void enable_whenScopeApproved_setsOnState() {
-        DpiConfigStore store = createStore(false);
-        FakeScopeGateway gateway = new FakeScopeGateway();
-        FakeView view = new FakeView();
-        SystemHooksToggleController controller = new SystemHooksToggleController(
-                store, gateway, view);
-
-        controller.onUserToggle(true);
-        gateway.approve(true);
-
-        assertTrue(view.lastState.switchChecked);
-        assertTrue(view.lastState.switchEnabled);
-        assertTrue(view.lastState.desiredEnabled);
-        assertTrue(view.lastState.effectiveEnabled);
-        assertTrue(store.isSystemServerHooksEnabled());
-    }
-
-    @Test
-    public void enable_whenScopeDenied_showsScopeRequiredAndKeepsDesiredOn() {
-        DpiConfigStore store = createStore(false);
-        FakeScopeGateway gateway = new FakeScopeGateway();
-        gateway.hasSystemScopeSelected = false;
-        FakeView view = new FakeView();
-        SystemHooksToggleController controller = new SystemHooksToggleController(
-                store, gateway, view);
-
-        controller.onUserToggle(true);
-        gateway.approve(false);
-
-        assertTrue(view.lastState.switchChecked);
-        assertTrue(view.lastState.switchEnabled);
-        assertTrue(view.lastState.desiredEnabled);
-        assertFalse(view.lastState.effectiveEnabled);
-        assertEquals(1, view.scopeRequiredCount);
-        assertTrue(store.isSystemServerHooksEnabled());
-    }
-
-    @Test
-    public void enable_whenDeniedButScopeAlreadySelected_setsOnState() {
-        DpiConfigStore store = createStore(false);
-        FakeScopeGateway gateway = new FakeScopeGateway();
-        gateway.hasSystemScopeSelected = true;
-        FakeView view = new FakeView();
-        SystemHooksToggleController controller = new SystemHooksToggleController(
-                store, gateway, view);
-
-        controller.onUserToggle(true);
-        gateway.approve(false);
-
-        assertTrue(view.lastState.switchChecked);
-        assertTrue(view.lastState.switchEnabled);
-        assertTrue(view.lastState.desiredEnabled);
-        assertTrue(view.lastState.effectiveEnabled);
         assertEquals(0, view.scopeRequiredCount);
         assertTrue(store.isSystemServerHooksEnabled());
     }
 
     @Test
-    public void syncFromStore_whenScopeRequestPending_keepsSwitchDisabled() {
+    public void enable_withScopeMissing_showsScopeRequiredAndKeepsDesiredOn() {
         DpiConfigStore store = createStore(false);
         FakeScopeGateway gateway = new FakeScopeGateway();
         gateway.hasSystemScopeSelected = false;
@@ -210,33 +89,72 @@ public class SystemHooksToggleControllerTest {
                 store, gateway, view);
 
         controller.onUserToggle(true);
-        controller.syncFromStore();
-
-        assertTrue(view.lastState.switchChecked);
-        assertFalse(view.lastState.switchEnabled);
-        assertTrue(view.lastState.desiredEnabled);
-        assertFalse(view.lastState.effectiveEnabled);
-        assertTrue(gateway.scopeRequestTriggered);
-    }
-
-    @Test
-    public void enable_whenScopeCallbackFails_showsAddFailedAndKeepsDesiredOn() {
-        DpiConfigStore store = createStore(false);
-        FakeScopeGateway gateway = new FakeScopeGateway();
-        gateway.hasSystemScopeSelected = false;
-        FakeView view = new FakeView();
-        SystemHooksToggleController controller = new SystemHooksToggleController(
-                store, gateway, view);
-
-        controller.onUserToggle(true);
-        gateway.fail("denied by manager");
 
         assertTrue(view.lastState.switchChecked);
         assertTrue(view.lastState.switchEnabled);
         assertTrue(view.lastState.desiredEnabled);
         assertFalse(view.lastState.effectiveEnabled);
-        assertEquals(1, view.scopeAddFailedCount);
-        assertEquals("denied by manager", view.lastScopeAddFailedMessage);
+        assertEquals(SystemHookState.Reason.SCOPE_MISSING, view.lastState.reason);
+        assertEquals(1, view.scopeRequiredCount);
+        assertEquals(0, view.initRequiredCount);
+        assertTrue(store.isSystemServerHooksEnabled());
+    }
+
+    @Test
+    public void enable_withScopeReady_setsOnStateWithoutWarnings() {
+        DpiConfigStore store = createStore(false);
+        FakeScopeGateway gateway = new FakeScopeGateway();
+        FakeView view = new FakeView();
+        SystemHooksToggleController controller = new SystemHooksToggleController(
+                store, gateway, view);
+
+        controller.onUserToggle(true);
+
+        assertTrue(view.lastState.switchChecked);
+        assertTrue(view.lastState.switchEnabled);
+        assertTrue(view.lastState.desiredEnabled);
+        assertTrue(view.lastState.effectiveEnabled);
+        assertEquals(0, view.initRequiredCount);
+        assertEquals(0, view.scopeRequiredCount);
+        assertTrue(store.isSystemServerHooksEnabled());
+    }
+
+    @Test
+    public void syncFromStore_withDesiredOnAndScopeMissing_rendersMissingState() {
+        DpiConfigStore store = createStore(true);
+        FakeScopeGateway gateway = new FakeScopeGateway();
+        gateway.hasSystemScopeSelected = false;
+        FakeView view = new FakeView();
+        SystemHooksToggleController controller = new SystemHooksToggleController(
+                store, gateway, view);
+
+        controller.syncFromStore();
+
+        assertTrue(view.lastState.switchChecked);
+        assertTrue(view.lastState.switchEnabled);
+        assertTrue(view.lastState.desiredEnabled);
+        assertFalse(view.lastState.effectiveEnabled);
+        assertEquals(SystemHookState.Reason.SCOPE_MISSING, view.lastState.reason);
+        assertEquals(0, view.scopeRequiredCount);
+    }
+
+    @Test
+    public void syncFromStore_whenScopeQueryThrows_treatsAsScopeMissing() {
+        DpiConfigStore store = createStore(false);
+        FakeScopeGateway gateway = new FakeScopeGateway();
+        gateway.throwOnHasScopeSelected = true;
+        FakeView view = new FakeView();
+        SystemHooksToggleController controller = new SystemHooksToggleController(
+                store, gateway, view);
+
+        controller.onUserToggle(true);
+
+        assertTrue(view.lastState.switchChecked);
+        assertTrue(view.lastState.switchEnabled);
+        assertTrue(view.lastState.desiredEnabled);
+        assertFalse(view.lastState.effectiveEnabled);
+        assertEquals(SystemHookState.Reason.SCOPE_MISSING, view.lastState.reason);
+        assertEquals(1, view.scopeRequiredCount);
         assertTrue(store.isSystemServerHooksEnabled());
     }
 
@@ -253,11 +171,7 @@ public class SystemHooksToggleControllerTest {
         SystemHookState lastState;
         int initRequiredCount;
         int saveFailedCount;
-        int scopeRequestNoticeCount;
         int scopeRequiredCount;
-        int scopeRemoveFailedCount;
-        int scopeAddFailedCount;
-        String lastScopeAddFailedMessage;
 
         @Override
         public void render(SystemHookState state) {
@@ -275,35 +189,15 @@ public class SystemHooksToggleControllerTest {
         }
 
         @Override
-        public void showScopeRequestNotice() {
-            scopeRequestNoticeCount++;
-        }
-
-        @Override
         public void showScopeRequired() {
             scopeRequiredCount++;
-        }
-
-        @Override
-        public void showScopeRemoveFailed() {
-            scopeRemoveFailedCount++;
-        }
-
-        @Override
-        public void showScopeAddFailed(String message) {
-            scopeAddFailedCount++;
-            lastScopeAddFailedMessage = message;
         }
     }
 
     private static final class FakeScopeGateway implements SystemHooksToggleController.ScopeGateway {
         boolean serviceAvailable = true;
-        boolean removeScopeSuccess = true;
         boolean hasSystemScopeSelected = true;
-        boolean scopeRequestTriggered;
-        int scopeRequestCount;
-        int removeScopeCallCount;
-        ScopeRequestCallback callback;
+        boolean throwOnHasScopeSelected;
 
         @Override
         public boolean isServiceAvailable() {
@@ -311,33 +205,11 @@ public class SystemHooksToggleControllerTest {
         }
 
         @Override
-        public boolean removeSystemScopeIfAvailable() {
-            removeScopeCallCount++;
-            return removeScopeSuccess;
-        }
-
-        @Override
         public boolean hasSystemScopeSelected() {
+            if (throwOnHasScopeSelected) {
+                throw new RuntimeException("scope unavailable");
+            }
             return hasSystemScopeSelected;
-        }
-
-        @Override
-        public void requestSystemScope(ScopeRequestCallback callback) {
-            scopeRequestTriggered = true;
-            scopeRequestCount++;
-            this.callback = callback;
-        }
-
-        void approve(boolean granted) {
-            if (callback != null) {
-                callback.onApproved(granted);
-            }
-        }
-
-        void fail(String message) {
-            if (callback != null) {
-                callback.onFailed(message);
-            }
         }
     }
 }
