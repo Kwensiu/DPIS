@@ -7,7 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 public class AppProcessHookInstallerTest {
     @Test
-    public void safeModeDowngradesFieldRewriteToEmulation() {
+    public void safeModeKeepsFieldRewriteWhenSystemHooksEnabled() {
         HookRuntimePolicy policy = createPolicy(true);
 
         AppProcessHookInstaller.FontHookPlan plan = AppProcessHookInstaller.resolveFontHookPlan(
@@ -15,9 +15,9 @@ public class AppProcessHookInstallerTest {
                 true,
                 FontApplyMode.FIELD_REWRITE);
 
-        assertTrue(plan.emulationEnabled);
-        assertFalse(plan.fieldRewriteEnabled);
-        assertTrue(plan.downgradedToEmulation);
+        assertFalse(plan.emulationEnabled);
+        assertTrue(plan.fieldRewriteEnabled);
+        assertFalse(plan.downgradedToEmulation);
     }
 
     @Test

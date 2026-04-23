@@ -88,10 +88,6 @@ final class AppProcessHookInstaller {
             return new FontHookPlan(false, false, false);
         }
         boolean fieldRewriteRequested = FontApplyMode.FIELD_REWRITE.equals(normalized);
-        boolean safeMode = policy != null && policy.systemServerSafeModeEnabled;
-        if (fieldRewriteRequested && safeMode && systemHooksEnabled) {
-            return new FontHookPlan(true, false, true);
-        }
         boolean emulationEnabled = FontApplyMode.SYSTEM_EMULATION.equals(normalized);
         boolean fieldRewriteEnabled = fieldRewriteRequested;
         return new FontHookPlan(emulationEnabled, fieldRewriteEnabled, false);
