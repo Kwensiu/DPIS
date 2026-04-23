@@ -11,10 +11,12 @@ import org.junit.Test;
 
 public class MainActivityLayoutSmokeTest {
     @Test
-    public void activityStatusLayoutRetainsHelpFabId() throws IOException {
+    public void activityStatusLayoutKeepsSingleHelpFabWithExpectedIcon() throws IOException {
         String layout = read("src/main/res/layout/activity_status.xml");
 
-        assertTrue(layout.contains("android:id=\"@+id/help_fab\""));
+        assertTrue(countMatches(layout, "android:id=\"@+id/help_fab\"") == 1);
+        assertTrue(layout.contains("android:contentDescription=\"@string/help_button\""));
+        assertTrue(layout.contains("app:srcCompat=\"@drawable/ic_info_outline_24\""));
     }
 
     @Test

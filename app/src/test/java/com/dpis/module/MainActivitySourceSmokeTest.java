@@ -15,7 +15,9 @@ public class MainActivitySourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String layout = read("src/main/res/layout/activity_status.xml");
 
-        assertTrue(source.contains("help_fab"));
+        assertTrue(source.contains("helpFab = findViewById(R.id.help_fab);"));
+        assertTrue(source.contains("helpFab.setOnClickListener(v -> showHelpTutorialDialog());"));
+        assertTrue(source.contains("isTouchInsideView(rawX, rawY, helpFab)"));
         assertTrue(layout.contains("@+id/help_fab"));
     }
 
