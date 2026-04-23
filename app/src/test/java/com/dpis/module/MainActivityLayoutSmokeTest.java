@@ -11,6 +11,13 @@ import org.junit.Test;
 
 public class MainActivityLayoutSmokeTest {
     @Test
+    public void activityStatusLayoutRetainsHelpFabId() throws IOException {
+        String layout = read("src/main/res/layout/activity_status.xml");
+
+        assertTrue(layout.contains("android:id=\"@+id/help_fab\""));
+    }
+
+    @Test
     public void activityStatusLayoutContainsSearchFilterSettingsAndPager() throws IOException {
         String layout = read("src/main/res/layout/activity_status.xml");
         String strings = read("src/main/res/values/strings.xml");

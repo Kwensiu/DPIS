@@ -11,6 +11,15 @@ import org.junit.Test;
 
 public class MainActivitySourceSmokeTest {
     @Test
+    public void mainActivityRetainsHelpFabWiring() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+        String layout = read("src/main/res/layout/activity_status.xml");
+
+        assertTrue(source.contains("help_fab"));
+        assertTrue(layout.contains("@+id/help_fab"));
+    }
+
+    @Test
     public void mainActivityWiresPagerMediatorAndFilterEntry() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
