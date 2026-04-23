@@ -153,3 +153,24 @@ jobs:
             "${{ steps.meta.outputs.apk_path }}" \
             update.json \
             --clobber
+
+      - name: Publish release to Xposed-Modules-Repo
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.XPOSED_REPO_TOKEN }}
+        run: |
+          if [[ -z "$GH_TOKEN" ]]; then
+            echo "XPOSED_REPO_TOKEN not set, skipping sync"
+            exit 0
+          fi
+
+          NOTES="Release ${{ steps.meta.outputs.version }}"
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            NOTES="${{ github.event.release.body }}"
+          fi
+
+          gh release create "${{ steps.meta.outputs.version_code }}-${{ steps.meta.outputs.version }}" \
+            --repo Xposed-Modules-Repo/io.github.kwensiu.dpis \
+            --title "${{ steps.meta.outputs.version }}" \
+            --notes "$NOTES" \
+            "${{ steps.meta.outputs.apk_path }}"
