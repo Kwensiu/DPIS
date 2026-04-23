@@ -20,6 +20,8 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.android.material.snackbar.Snackbar;
+
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -85,17 +87,17 @@ public final class SystemServerSettingsActivity extends Activity {
                 R.string.system_hooks_enabled_hint);
         safeModeSwitch = bindSwitchRow(
                 R.id.row_safe_mode,
-                android.R.drawable.ic_lock_lock,
+                R.drawable.ic_shield_24,
                 R.string.system_safe_mode_label,
                 R.string.system_safe_mode_hint);
         globalLogSwitch = bindSwitchRow(
                 R.id.row_global_log,
-                R.drawable.ic_info_outline_24,
+                R.drawable.ic_log_24,
                 R.string.global_log_enabled_label,
                 R.string.global_log_enabled_hint);
         fontDebugEntryRow = bindEntryRow(
                 R.id.row_font_debug_overlay,
-                R.drawable.ic_info_outline_24,
+                R.drawable.ic_bug_report_24,
                 R.string.font_debug_overlay_label,
                 R.string.font_debug_entry_hint,
                 this::showFontDebugDialog);
@@ -171,15 +173,15 @@ public final class SystemServerSettingsActivity extends Activity {
     }
 
     private void applyInsets() {
-        View content = findViewById(R.id.settings_content);
-        final int baseTopPadding = content.getPaddingTop();
-        ViewCompat.setOnApplyWindowInsetsListener(content, (view, insets) -> {
+        View toolbar = findViewById(R.id.settings_toolbar);
+        final int baseTopPadding = toolbar.getPaddingTop();
+        ViewCompat.setOnApplyWindowInsetsListener(toolbar, (view, insets) -> {
             Insets statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
             view.setPadding(view.getPaddingLeft(), baseTopPadding + statusBars.top,
                     view.getPaddingRight(), view.getPaddingBottom());
             return insets;
         });
-        ViewCompat.requestApplyInsets(content);
+        ViewCompat.requestApplyInsets(toolbar);
     }
 
     private MaterialSwitch bindSwitchRow(int rowId, int iconRes, int titleRes, int subtitleRes) {
@@ -201,10 +203,10 @@ public final class SystemServerSettingsActivity extends Activity {
     }
 
     private View bindEntryRow(int rowId,
-                              int iconRes,
-                              int titleRes,
-                              int subtitleRes,
-                              View.OnClickListener clickListener) {
+            int iconRes,
+            int titleRes,
+            int subtitleRes,
+            View.OnClickListener clickListener) {
         View row = findViewById(rowId);
         ImageView iconView = row.findViewById(R.id.setting_icon);
         MaterialTextView titleView = row.findViewById(R.id.setting_title);
@@ -322,8 +324,8 @@ public final class SystemServerSettingsActivity extends Activity {
         int eventTotal = statsPreferences.getInt(FontDebugStatsStore.KEY_EVENT_TOTAL, 0);
 
         if (statsText == null || statsText.trim().isEmpty()) {
-            FontDebugDataDiagnostics.NoDataReason reason =
-                    FontDebugDataDiagnostics.resolveNoDataReason(store, statsPreferences);
+            FontDebugDataDiagnostics.NoDataReason reason = FontDebugDataDiagnostics.resolveNoDataReason(store,
+                    statsPreferences);
             if (reason == FontDebugDataDiagnostics.NoDataReason.NONE) {
                 dialogStatsContentView.setText(getString(R.string.font_debug_not_updated));
             } else {
@@ -519,7 +521,13 @@ public final class SystemServerSettingsActivity extends Activity {
         if (isFinishing() || isDestroyed()) {
             return;
         }
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        View anchor = findViewById(R.id.settings_root);
+        if (anchor == null) {
+            anchor = findViewById(android.R.id.content);
+        }
+        if (anchor != null) {
+            Snackbar.make(anchor, message, Snackbar.LENGTH_SHORT).show();
+        }
     }
 
     private static void setRowEnabled(View row, boolean enabled) {
@@ -531,8 +539,8 @@ public final class SystemServerSettingsActivity extends Activity {
     }
 
     private void setCheckedSilently(CompoundButton switchView,
-                                    boolean checked,
-                                    CompoundButton.OnCheckedChangeListener listener) {
+            boolean checked,
+            CompoundButton.OnCheckedChangeListener listener) {
         if (switchView == null) {
             return;
         }

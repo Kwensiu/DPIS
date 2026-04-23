@@ -1,163 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/root_container"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/root_container" android:layout_width="match_parent" android:layout_height="match_parent">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
 
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/top_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:contentInsetStartWithNavigation="0dp"
-            android:contentInsetLeft="0dp"
-            android:contentInsetStart="0dp"
-            android:contentInsetEnd="0dp"
-            android:contentInsetRight="0dp"
-            android:paddingStart="16dp"
-            android:paddingTop="16dp"
-            android:paddingEnd="16dp"
-            android:paddingBottom="6dp">
+        <com.google.android.material.appbar.MaterialToolbar android:id="@+id/top_container" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@android:color/transparent" android:contentInsetStartWithNavigation="0dp" android:contentInsetLeft="0dp" android:contentInsetStart="0dp" android:contentInsetEnd="0dp" android:contentInsetRight="0dp" android:paddingStart="16dp" android:paddingTop="16dp" android:paddingEnd="16dp" android:paddingBottom="6dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
 
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="0dp"
-                    android:layout_height="52dp"
-                    android:layout_weight="1"
-                    app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
-                    app:cardCornerRadius="24dp"
-                    app:strokeWidth="0dp">
+                <com.google.android.material.card.MaterialCardView android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" app:cardBackgroundColor="?attr/colorSurfaceContainerHigh" app:cardCornerRadius="24dp" app:strokeWidth="0dp">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center_vertical" android:orientation="horizontal">
 
-                        <androidx.appcompat.widget.AppCompatImageView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="12dp"
-                            android:src="@drawable/ic_search_24"
-                            app:tint="?attr/colorOnSurfaceVariant" />
+                        <androidx.appcompat.widget.AppCompatImageView android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingStart="16dp" android:paddingEnd="12dp" android:src="@drawable/ic_search_24" app:tint="?attr/colorOnSurfaceVariant" />
 
-                        <androidx.appcompat.widget.AppCompatEditText
-                            android:id="@+id/search_input"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:background="@android:color/transparent"
-                            android:hint="@string/search_hint"
-                            android:imeOptions="actionDone"
-                            android:inputType="text"
-                            android:lineSpacingExtra="0dp"
-                            android:maxLines="1"
-                            android:minHeight="0dp"
-                            android:paddingStart="0dp"
-                            android:paddingEnd="0dp"
-                            android:paddingTop="0dp"
-                            android:paddingBottom="0dp"
-                            android:singleLine="true"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textColorHint="?attr/colorOnSurfaceVariant" />
+                        <androidx.appcompat.widget.AppCompatEditText android:id="@+id/search_input" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:background="@android:color/transparent" android:hint="@string/search_hint" android:imeOptions="actionDone" android:inputType="text" android:lineSpacingExtra="0dp" android:maxLines="1" android:minHeight="0dp" android:paddingStart="0dp" android:paddingEnd="0dp" android:paddingTop="0dp" android:paddingBottom="0dp" android:singleLine="true" android:textColor="?attr/colorOnSurface" android:textColorHint="?attr/colorOnSurfaceVariant" />
 
-                        <androidx.appcompat.widget.AppCompatImageButton
-                            android:id="@+id/search_filter_button"
-                            android:layout_width="44dp"
-                            android:layout_height="44dp"
-                            android:layout_marginEnd="4dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:contentDescription="@string/filter_button"
-                            android:padding="10dp"
-                            android:scaleType="centerInside"
-                            android:src="@drawable/baseline_tune_24"
-                            app:tint="?attr/colorOnSurfaceVariant" />
+                        <androidx.appcompat.widget.AppCompatImageButton android:id="@+id/search_clear_button" android:layout_width="36dp" android:layout_height="36dp" android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="@string/search_clear" android:padding="6dp" android:scaleType="centerInside" android:src="@drawable/ic_clear_24" android:visibility="gone" app:tint="?attr/colorOnSurfaceVariant" />
+
+                        <androidx.appcompat.widget.AppCompatImageButton android:id="@+id/search_filter_button" android:layout_width="44dp" android:layout_height="44dp" android:layout_marginEnd="4dp" android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="@string/filter_button" android:padding="10dp" android:scaleType="centerInside" android:src="@drawable/baseline_tune_24" app:tint="?attr/colorOnSurfaceVariant" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <androidx.appcompat.widget.AppCompatImageButton
-                    android:id="@+id/system_settings_button"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:layout_marginStart="10dp"
-                    android:layout_marginEnd="8dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/system_settings_title"
-                    android:padding="10dp"
-                    android:scaleType="centerInside"
-                    android:src="@drawable/ic_settings_24"
-                    app:tint="?attr/colorOnSurfaceVariant" />
+                <androidx.appcompat.widget.AppCompatImageButton android:id="@+id/system_settings_button" android:layout_width="44dp" android:layout_height="44dp" android:layout_marginStart="10dp" android:layout_marginEnd="8dp" android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="@string/system_settings_title" android:padding="10dp" android:scaleType="centerInside" android:src="@drawable/ic_settings_24" app:tint="?attr/colorOnSurfaceVariant" />
             </LinearLayout>
         </com.google.android.material.appbar.MaterialToolbar>
 
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/filter_tabs"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            app:tabGravity="fill"
-            app:tabIndicatorAnimationMode="elastic"
-            app:tabIndicatorColor="?attr/colorPrimary"
-            app:tabIndicatorFullWidth="false"
-            app:tabIndicatorHeight="3dp"
-            app:tabInlineLabel="true"
-            app:tabMode="fixed"
-            app:tabRippleColor="@android:color/transparent" />
+        <com.google.android.material.tabs.TabLayout android:id="@+id/filter_tabs" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" app:tabGravity="fill" app:tabIndicatorAnimationMode="elastic" app:tabIndicatorColor="?attr/colorPrimary" app:tabIndicatorFullWidth="false" app:tabIndicatorHeight="3dp" app:tabInlineLabel="true" app:tabMode="fixed" app:tabRippleColor="@android:color/transparent" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="?attr/colorOutlineVariant" />
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/colorOutlineVariant" />
 
-        <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/app_pager"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
+        <androidx.viewpager2.widget.ViewPager2 android:id="@+id/app_pager" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
     </LinearLayout>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/help_fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="@dimen/floating_actions_margin_end"
-        android:layout_marginBottom="@dimen/floating_actions_search_margin_bottom"
-        android:contentDescription="@string/help_button"
-        app:backgroundTint="?attr/colorSecondaryContainer"
-        app:elevation="6dp"
-        app:hoveredFocusedTranslationZ="8dp"
-        app:pressedTranslationZ="10dp"
-        app:rippleColor="@color/dpis_fab_ripple"
-        app:srcCompat="@drawable/ic_info_outline_24"
-        app:tint="?attr/colorOnSecondaryContainer" />
+    <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/help_fab" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="bottom|end" android:layout_marginEnd="@dimen/floating_actions_margin_end" android:layout_marginBottom="@dimen/floating_actions_search_margin_bottom" android:contentDescription="@string/help_button" app:backgroundTint="?attr/colorSecondaryContainer" app:elevation="6dp" app:hoveredFocusedTranslationZ="8dp" app:pressedTranslationZ="10dp" app:rippleColor="@color/dpis_fab_ripple" app:srcCompat="@drawable/ic_info_outline_24" app:tint="?attr/colorOnSecondaryContainer" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/search_focus_fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="@dimen/floating_actions_margin_end"
-        android:layout_marginBottom="@dimen/floating_actions_search_margin_bottom"
-        android:contentDescription="@string/quick_search_button"
-        app:backgroundTint="?attr/colorPrimary"
-        app:elevation="6dp"
-        app:hoveredFocusedTranslationZ="8dp"
-        app:pressedTranslationZ="10dp"
-        app:rippleColor="@color/dpis_fab_ripple"
-        app:srcCompat="@drawable/ic_search_24"
-        app:tint="?attr/colorOnPrimary" />
+    <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/search_focus_fab" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="bottom|end" android:layout_marginEnd="@dimen/floating_actions_margin_end" android:layout_marginBottom="@dimen/floating_actions_search_margin_bottom" android:contentDescription="@string/quick_search_button" app:backgroundTint="?attr/colorPrimary" app:elevation="6dp" app:hoveredFocusedTranslationZ="8dp" app:pressedTranslationZ="10dp" app:rippleColor="@color/dpis_fab_ripple" app:srcCompat="@drawable/ic_search_24" app:tint="?attr/colorOnPrimary" />
 
 </FrameLayout>

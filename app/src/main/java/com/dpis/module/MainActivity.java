@@ -41,6 +41,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import com.google.android.material.snackbar.Snackbar;
+
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -106,8 +108,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     private static final String UPDATE_PROMPT_PREFS = "dpis.update_prompt";
     private static final String KEY_LAST_UPDATE_CHECK_TIMESTAMP = "last_update_check_timestamp";
     private static final String KEY_LAST_UPDATE_CHECK_FAILED = "last_update_check_failed";
-    private static final String KEY_LAST_PROMPTED_UPDATE_VERSION_CODE =
-            "last_prompted_update_version_code";
+    private static final String KEY_LAST_PROMPTED_UPDATE_VERSION_CODE = "last_prompted_update_version_code";
     private static final long UPDATE_STARTUP_CHECK_INTERVAL_MS = 12L * 60L * 60L * 1000L;
     private static final long UPDATE_STARTUP_CHECK_FAILURE_RETRY_INTERVAL_MS = 30L * 60L * 1000L;
     private static final int UPDATE_CONNECT_TIMEOUT_MS = 10_000;
@@ -164,9 +165,9 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         final String releasePage;
 
         StartupUpdateManifest(String versionName,
-                              int versionCode,
-                              String apkUrl,
-                              String releasePage) {
+                int versionCode,
+                String apkUrl,
+                String releasePage) {
             this.versionName = versionName;
             this.versionCode = versionCode;
             this.apkUrl = apkUrl;
@@ -201,8 +202,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                     savedInstanceState.getBoolean(STATE_FILTER_INJECTED_ONLY, false),
                     savedInstanceState.getBoolean(STATE_FILTER_WIDTH_ONLY, false),
                     savedInstanceState.getBoolean(STATE_FILTER_FONT_ONLY, false));
-            restoredPageScrollStates =
-                    savedInstanceState.getSparseParcelableArray(STATE_PAGE_SCROLL_STATES);
+            restoredPageScrollStates = savedInstanceState.getSparseParcelableArray(STATE_PAGE_SCROLL_STATES);
             restoreRefreshingPages(savedInstanceState.getIntArray(STATE_REFRESHING_PAGES));
         }
 
@@ -233,6 +233,16 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         searchFocusFab.setOnClickListener(v -> focusSearchInputAndShowKeyboard());
 
         searchInput = findViewById(R.id.search_input);
+        searchInput.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE
+                    || (event != null && event.getAction() == KeyEvent.ACTION_DOWN
+                            && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                searchInput.clearFocus();
+                return false;
+            }
+            return false;
+        });
+        ImageButton searchClearButton = findViewById(R.id.search_clear_button);
         searchInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -242,11 +252,17 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 currentQuery = s != null ? s.toString() : "";
                 applyFilter();
+                searchClearButton.setVisibility(
+                        currentQuery.isEmpty() ? View.GONE : View.VISIBLE);
             }
 
             @Override
             public void afterTextChanged(Editable s) {
             }
+        });
+        searchClearButton.setOnClickListener(v -> {
+            searchInput.setText("");
+            searchInput.requestFocus();
         });
         if (!currentQuery.isEmpty()) {
             searchInput.setText(currentQuery);
@@ -264,8 +280,8 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         });
 
         View systemSettingsButton = findViewById(R.id.system_settings_button);
-        systemSettingsButton.setOnClickListener(v ->
-                startActivity(new Intent(this, SystemServerSettingsActivity.class)));
+        systemSettingsButton
+                .setOnClickListener(v -> startActivity(new Intent(this, SystemServerSettingsActivity.class)));
 
         if (retainedState != null && !retainedState.appsSnapshot.isEmpty()) {
             applyFilter();
@@ -341,8 +357,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         if (pagerAdapter != null) {
             outState.putSparseParcelableArray(
                     STATE_PAGE_SCROLL_STATES,
-                    pagerAdapter.capturePageScrollStates()
-            );
+                    pagerAdapter.capturePageScrollStates());
         }
         outState.putIntArray(STATE_REFRESHING_PAGES, captureRefreshingPagePositions());
     }
@@ -463,28 +478,23 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                     view.getPaddingRight(), view.getPaddingBottom());
             return windowInsets;
         });
-        ViewGroup.MarginLayoutParams searchLayoutParams =
-                (ViewGroup.MarginLayoutParams) searchFocusFab.getLayoutParams();
-        ViewGroup.MarginLayoutParams helpLayoutParams =
-                (ViewGroup.MarginLayoutParams) helpFab.getLayoutParams();
+        ViewGroup.MarginLayoutParams searchLayoutParams = (ViewGroup.MarginLayoutParams) searchFocusFab
+                .getLayoutParams();
+        ViewGroup.MarginLayoutParams helpLayoutParams = (ViewGroup.MarginLayoutParams) helpFab.getLayoutParams();
         final int baseSearchBottomMargin = searchLayoutParams.bottomMargin;
         final int baseSearchEndMargin = searchLayoutParams.getMarginEnd();
         final int baseHelpEndMargin = helpLayoutParams.getMarginEnd();
-        final int floatingActionsGapPx =
-                getResources().getDimensionPixelSize(R.dimen.floating_actions_gap);
+        final int floatingActionsGapPx = getResources().getDimensionPixelSize(R.dimen.floating_actions_gap);
         ViewCompat.setOnApplyWindowInsetsListener(searchFocusFab, (view, windowInsets) -> {
             Insets navigationBars = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars());
             int sideInset = Math.max(navigationBars.left, navigationBars.right);
-            ViewGroup.MarginLayoutParams searchParams =
-                    (ViewGroup.MarginLayoutParams) searchFocusFab.getLayoutParams();
+            ViewGroup.MarginLayoutParams searchParams = (ViewGroup.MarginLayoutParams) searchFocusFab.getLayoutParams();
             searchParams.bottomMargin = baseSearchBottomMargin + navigationBars.bottom;
             searchParams.setMarginEnd(baseSearchEndMargin + sideInset);
             searchFocusFab.setLayoutParams(searchParams);
-            ViewGroup.MarginLayoutParams helpParams =
-                    (ViewGroup.MarginLayoutParams) helpFab.getLayoutParams();
+            ViewGroup.MarginLayoutParams helpParams = (ViewGroup.MarginLayoutParams) helpFab.getLayoutParams();
             int searchFabSizePx = resolveSearchFabSizePx();
-            helpParams.bottomMargin =
-                    searchParams.bottomMargin + searchFabSizePx + floatingActionsGapPx;
+            helpParams.bottomMargin = searchParams.bottomMargin + searchFabSizePx + floatingActionsGapPx;
             helpParams.setMarginEnd(baseHelpEndMargin + sideInset);
             helpFab.setLayoutParams(helpParams);
             return windowInsets;
@@ -551,14 +561,11 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         searchFabHidden = true;
         searchFocusFab.animate().cancel();
         helpFab.animate().cancel();
-        ViewGroup.MarginLayoutParams searchLayoutParams =
-                (ViewGroup.MarginLayoutParams) searchFocusFab.getLayoutParams();
-        ViewGroup.MarginLayoutParams helpLayoutParams =
-                (ViewGroup.MarginLayoutParams) helpFab.getLayoutParams();
-        float searchTargetTranslationY =
-                searchFocusFab.getHeight() + searchLayoutParams.bottomMargin;
-        float helpTargetTranslationY =
-                helpFab.getHeight() + helpLayoutParams.bottomMargin;
+        ViewGroup.MarginLayoutParams searchLayoutParams = (ViewGroup.MarginLayoutParams) searchFocusFab
+                .getLayoutParams();
+        ViewGroup.MarginLayoutParams helpLayoutParams = (ViewGroup.MarginLayoutParams) helpFab.getLayoutParams();
+        float searchTargetTranslationY = searchFocusFab.getHeight() + searchLayoutParams.bottomMargin;
+        float helpTargetTranslationY = helpFab.getHeight() + helpLayoutParams.bottomMargin;
         searchFocusFab.animate()
                 .translationY(searchTargetTranslationY)
                 .alpha(0f)
@@ -614,27 +621,19 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void clearDialogInputFocus(View fallbackFocusView,
-                                       TextInputEditText viewportInputView,
-                                       TextInputEditText fontInputView) {
-        View focused = getCurrentFocus();
+            TextInputEditText viewportInputView,
+            TextInputEditText fontInputView) {
+        // Clear focus from inputs so cursor disappears
         if (viewportInputView != null) {
             viewportInputView.clearFocus();
         }
         if (fontInputView != null) {
             fontInputView.clearFocus();
         }
-        if (fallbackFocusView != null) {
-            fallbackFocusView.requestFocus();
-        }
+        // Hide keyboard using fallbackFocusView's window token (the dialog root)
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm != null) {
-            View tokenView = focused != null ? focused : fallbackFocusView;
-            if (tokenView == null) {
-                tokenView = viewportInputView != null ? viewportInputView : fontInputView;
-            }
-            if (tokenView != null) {
-                imm.hideSoftInputFromWindow(tokenView.getWindowToken(), 0);
-            }
+        if (imm != null && fallbackFocusView != null) {
+            imm.hideSoftInputFromWindow(fallbackFocusView.getWindowToken(), 0);
         }
     }
 
@@ -650,7 +649,13 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         if (isFinishing() || isDestroyed()) {
             return;
         }
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        View anchor = findViewById(R.id.root_container);
+        if (anchor == null) {
+            anchor = findViewById(android.R.id.content);
+        }
+        if (anchor != null) {
+            Snackbar.make(anchor, message, Snackbar.LENGTH_SHORT).show();
+        }
     }
 
     private void showHelpTutorialDialog() {
@@ -658,10 +663,10 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private boolean updateSaveButtonState(TextInputLayout viewportInputLayout,
-                                          TextInputEditText viewportInputView,
-                                          TextInputLayout fontInputLayout,
-                                          TextInputEditText fontInputView,
-                                          MaterialButton saveButton) {
+            TextInputEditText viewportInputView,
+            TextInputLayout fontInputLayout,
+            TextInputEditText fontInputView,
+            MaterialButton saveButton) {
         boolean viewportValid = isPositiveIntOrEmpty(viewportInputView);
         boolean fontValid = isFontPercentOrEmpty(fontInputView);
         int defaultStrokeColor = MaterialColors.getColor(
@@ -787,12 +792,12 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     private ShellResult runSuCommand(String command) {
         Process process = null;
         try {
-            process = Runtime.getRuntime().exec(new String[]{"su", "-c", command});
+            process = Runtime.getRuntime().exec(new String[] { "su", "-c", command });
             StringBuilder output = new StringBuilder();
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(process.getInputStream()));
-                 BufferedReader errReader = new BufferedReader(
-                         new InputStreamReader(process.getErrorStream()))) {
+                    BufferedReader errReader = new BufferedReader(
+                            new InputStreamReader(process.getErrorStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     if (output.length() > 0) {
@@ -814,7 +819,8 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
                 Thread.currentThread().interrupt();
             }
             return new ShellResult(-1, exception.getMessage() != null
-                    ? exception.getMessage() : exception.getClass().getSimpleName());
+                    ? exception.getMessage()
+                    : exception.getClass().getSimpleName());
         } finally {
             if (process != null) {
                 process.destroy();
@@ -903,9 +909,9 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void toggleScope(String packageName,
-                             boolean currentlyInScope,
-                             Runnable onTurnedInScope,
-                             Runnable onTurnedOutScope) {
+            boolean currentlyInScope,
+            Runnable onTurnedInScope,
+            Runnable onTurnedOutScope) {
         XposedService service = DpisApplication.getXposedService();
         if (service == null) {
             showToast(R.string.status_save_requires_init);
@@ -950,9 +956,9 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private boolean saveAppConfig(AppListItem item, TextInputEditText viewportInput,
-                                  TextInputEditText fontScaleInput,
-                                  ModeToggle viewportModeToggle,
-                                  ModeToggle fontModeToggle) {
+            TextInputEditText fontScaleInput,
+            ModeToggle viewportModeToggle,
+            ModeToggle fontModeToggle) {
         refreshSystemHookEffectiveEnabled();
         boolean systemHooksEnabled = isSystemHookEnabledFromStore();
         DpiConfigStore store = getUiConfigStore();
@@ -967,15 +973,14 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
             String fontMode = resolveFontMode(fontModeToggle);
             boolean viewportEmulationIneffective = widthDp != null
                     && ViewportApplyMode.SYSTEM_EMULATION.equals(
-                    ViewportApplyMode.normalize(viewportMode))
+                            ViewportApplyMode.normalize(viewportMode))
                     && !ViewportApplyMode.SYSTEM_EMULATION.equals(
-                    EffectiveModeResolver.resolveViewportMode(viewportMode, systemHooksEnabled));
+                            EffectiveModeResolver.resolveViewportMode(viewportMode, systemHooksEnabled));
             boolean fontEmulationIneffective = fontScalePercent != null
                     && FontApplyMode.SYSTEM_EMULATION.equals(FontApplyMode.normalize(fontMode))
                     && !FontApplyMode.SYSTEM_EMULATION.equals(
-                    EffectiveModeResolver.resolveFontMode(fontMode, systemHooksEnabled));
-            boolean emulationRequestedWithoutSystemScope =
-                    viewportEmulationIneffective || fontEmulationIneffective;
+                            EffectiveModeResolver.resolveFontMode(fontMode, systemHooksEnabled));
+            boolean emulationRequestedWithoutSystemScope = viewportEmulationIneffective || fontEmulationIneffective;
             boolean changed = true;
             if (widthDp == null) {
                 changed = store.clearTargetViewportWidthDp(item.packageName) && changed;
@@ -1026,13 +1031,13 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void updateDialogStatus(MaterialTextView statusView,
-                                    boolean inScope,
-                                    boolean dpisEnabled,
-                                    TextInputEditText viewportInputView,
-                                    ModeToggle viewportModeToggle,
-                                    TextInputEditText fontInputView,
-                                    ModeToggle fontModeToggle,
-                                    boolean systemHooksEnabled) {
+            boolean inScope,
+            boolean dpisEnabled,
+            TextInputEditText viewportInputView,
+            ModeToggle viewportModeToggle,
+            TextInputEditText fontInputView,
+            ModeToggle fontModeToggle,
+            boolean systemHooksEnabled) {
         Integer widthDp = parsePositiveIntOrNullSafe(viewportInputView);
         Integer fontScalePercent = parseFontScalePercentOrNullSafe(fontInputView);
         String viewportMode = widthDp == null ? ViewportApplyMode.OFF : resolveViewportMode(viewportModeToggle);
@@ -1070,8 +1075,8 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private static void bindFontModeToggle(ModeToggle fontModeToggle,
-                                           String fontMode,
-                                           boolean animate) {
+            String fontMode,
+            boolean animate) {
         String resolved = FontApplyMode.SYSTEM_EMULATION.equals(fontMode)
                 ? FontApplyMode.SYSTEM_EMULATION
                 : FontApplyMode.FIELD_REWRITE;
@@ -1087,8 +1092,8 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private static void bindViewportModeToggle(ModeToggle viewportModeToggle,
-                                               String viewportMode,
-                                               boolean animate) {
+            String viewportMode,
+            boolean animate) {
         String resolved = ViewportApplyMode.SYSTEM_EMULATION.equals(viewportMode)
                 ? ViewportApplyMode.SYSTEM_EMULATION
                 : ViewportApplyMode.FIELD_REWRITE;
@@ -1100,14 +1105,14 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     private static void toggleViewportMode(ModeToggle viewportModeToggle) {
         String nextMode = ViewportApplyMode.FIELD_REWRITE.equals(
                 resolveViewportMode(viewportModeToggle))
-                ? ViewportApplyMode.SYSTEM_EMULATION
-                : ViewportApplyMode.FIELD_REWRITE;
+                        ? ViewportApplyMode.SYSTEM_EMULATION
+                        : ViewportApplyMode.FIELD_REWRITE;
         bindViewportModeToggle(viewportModeToggle, nextMode, true);
     }
 
     private static void updateModeToggleVisual(ModeToggle toggle,
-                                               boolean emulationActive,
-                                               boolean animate) {
+            boolean emulationActive,
+            boolean animate) {
         int activeTextColor = MaterialColors.getColor(
                 toggle.container, com.google.android.material.R.attr.colorOnSecondaryContainer);
         int inactiveTextColor = MaterialColors.getColor(
@@ -1158,7 +1163,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         final MaterialTextView replaceLabel;
 
         ModeToggle(View container, View thumb, MaterialTextView emulationLabel,
-                   MaterialTextView replaceLabel) {
+                MaterialTextView replaceLabel) {
             this.container = container;
             this.thumb = thumb;
             this.emulationLabel = emulationLabel;
@@ -1167,10 +1172,10 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void bindScopeButton(MaterialButton scopeButton,
-                                 boolean inScope,
-                                 ColorStateList defaultBgTint,
-                                 int defaultStrokeWidth,
-                                 int defaultTextColor) {
+            boolean inScope,
+            ColorStateList defaultBgTint,
+            int defaultStrokeWidth,
+            int defaultTextColor) {
         int activeBgColor = MaterialColors.getColor(
                 scopeButton, com.google.android.material.R.attr.colorSecondaryContainer);
         int activeFgColor = MaterialColors.getColor(
@@ -1187,10 +1192,10 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void bindDpisToggleButton(MaterialButton dpisToggleButton,
-                                      boolean dpisEnabled,
-                                      ColorStateList defaultBgTint,
-                                      int defaultStrokeWidth,
-                                      int defaultTextColor) {
+            boolean dpisEnabled,
+            ColorStateList defaultBgTint,
+            int defaultStrokeWidth,
+            int defaultTextColor) {
         String buttonText = getString(
                 dpisEnabled ? R.string.dialog_dpis_disable_button : R.string.dialog_dpis_enable_button);
         dpisToggleButton.setText(buttonText);
@@ -1377,12 +1382,12 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void startStartupUpdateDownload(String targetVersionName,
-                                            String downloadUrl,
-                                            androidx.appcompat.app.AlertDialog dialog,
-                                            MaterialButton primaryButton,
-                                            MaterialButton cancelButton,
-                                            LinearProgressIndicator progressView,
-                                            MaterialTextView progressTextView) {
+            String downloadUrl,
+            androidx.appcompat.app.AlertDialog dialog,
+            MaterialButton primaryButton,
+            MaterialButton cancelButton,
+            LinearProgressIndicator progressView,
+            MaterialTextView progressTextView) {
         if (updateDownloadInProgress) {
             showToast(R.string.about_update_download_in_progress);
             return;
@@ -1425,12 +1430,12 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void executeStartupApkDownload(Uri downloadUri,
-                                           File targetFile,
-                                           androidx.appcompat.app.AlertDialog dialog,
-                                           MaterialButton primaryButton,
-                                           MaterialButton cancelButton,
-                                           LinearProgressIndicator progressView,
-                                           MaterialTextView progressTextView) {
+            File targetFile,
+            androidx.appcompat.app.AlertDialog dialog,
+            MaterialButton primaryButton,
+            MaterialButton cancelButton,
+            LinearProgressIndicator progressView,
+            MaterialTextView progressTextView) {
         HttpURLConnection connection = null;
         try {
             connection = (HttpURLConnection) new URL(downloadUri.toString()).openConnection();
@@ -1450,7 +1455,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
             runOnUiThread(() -> prepareProgressView(progressView, progressTextView, totalBytes));
 
             try (InputStream inputStream = connection.getInputStream();
-                 FileOutputStream outputStream = new FileOutputStream(targetFile)) {
+                    FileOutputStream outputStream = new FileOutputStream(targetFile)) {
                 byte[] buffer = new byte[DOWNLOAD_BUFFER_SIZE];
                 long downloadedBytes = 0L;
                 long lastUiUpdateAt = 0L;
@@ -1572,9 +1577,9 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void showStartupDialogIdleState(MaterialButton primaryButton,
-                                            MaterialButton cancelButton,
-                                            LinearProgressIndicator progressView,
-                                            MaterialTextView progressTextView) {
+            MaterialButton cancelButton,
+            LinearProgressIndicator progressView,
+            MaterialTextView progressTextView) {
         primaryButton.setEnabled(true);
         primaryButton.setText(R.string.about_update_action_download);
         cancelButton.setText(R.string.about_update_action_cancel_dialog);
@@ -1583,9 +1588,9 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void showStartupDialogDownloadingState(MaterialButton primaryButton,
-                                                   MaterialButton cancelButton,
-                                                   LinearProgressIndicator progressView,
-                                                   MaterialTextView progressTextView) {
+            MaterialButton cancelButton,
+            LinearProgressIndicator progressView,
+            MaterialTextView progressTextView) {
         primaryButton.setEnabled(false);
         cancelButton.setText(R.string.about_update_action_cancel_download);
         progressView.setVisibility(View.VISIBLE);
@@ -1595,8 +1600,8 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void prepareProgressView(LinearProgressIndicator progressView,
-                                     MaterialTextView progressTextView,
-                                     long totalBytes) {
+            MaterialTextView progressTextView,
+            long totalBytes) {
         if (totalBytes > 0L) {
             progressView.setIndeterminate(false);
             progressView.setProgress(0);
@@ -1608,10 +1613,10 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void updateProgressView(LinearProgressIndicator progressView,
-                                    MaterialTextView progressTextView,
-                                    int progress,
-                                    long downloadedBytes,
-                                    long totalBytes) {
+            MaterialTextView progressTextView,
+            int progress,
+            long downloadedBytes,
+            long totalBytes) {
         if (progressView.isIndeterminate()) {
             progressView.setIndeterminate(false);
         }
@@ -1624,8 +1629,8 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void updateProgressViewWithoutTotal(LinearProgressIndicator progressView,
-                                                MaterialTextView progressTextView,
-                                                long downloadedBytes) {
+            MaterialTextView progressTextView,
+            long downloadedBytes) {
         progressView.setIndeterminate(true);
         progressTextView.setText(getString(
                 R.string.about_update_download_progress_without_total,
@@ -1751,7 +1756,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
             return bytes + " B";
         }
         double value = bytes;
-        String[] units = {"KB", "MB", "GB", "TB"};
+        String[] units = { "KB", "MB", "GB", "TB" };
         int unitIndex = -1;
         do {
             value /= 1024.0;
@@ -1764,7 +1769,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         if (file == null || !file.exists()) {
             return;
         }
-        //noinspection ResultOfMethodCallIgnored
+        // noinspection ResultOfMethodCallIgnored
         file.delete();
     }
 
@@ -1854,9 +1859,9 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private static boolean isRemoteVersionNewer(int remoteCode,
-                                                String remoteName,
-                                                int localCode,
-                                                String localName) {
+            String remoteName,
+            int localCode,
+            String localName) {
         if (remoteCode > localCode) {
             return true;
         }
@@ -1912,23 +1917,19 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     private void showStartupDisclaimerDialog(DpiConfigStore store, Runnable onAccepted) {
         View dialogView = LayoutInflater.from(this)
                 .inflate(R.layout.dialog_startup_disclaimer, null, false);
-        MaterialCheckBox agreementCheckBox =
-                dialogView.findViewById(R.id.startup_disclaimer_checkbox);
-        MaterialButton acceptButton =
-                dialogView.findViewById(R.id.startup_disclaimer_accept_button);
-        MaterialButton exitButton =
-                dialogView.findViewById(R.id.startup_disclaimer_exit_button);
+        MaterialCheckBox agreementCheckBox = dialogView.findViewById(R.id.startup_disclaimer_checkbox);
+        MaterialButton acceptButton = dialogView.findViewById(R.id.startup_disclaimer_accept_button);
+        MaterialButton exitButton = dialogView.findViewById(R.id.startup_disclaimer_exit_button);
 
         androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setView(dialogView)
                 .create();
         dialog.setCancelable(false);
         dialog.setCanceledOnTouchOutside(false);
-        dialog.setOnKeyListener((unused, keyCode, event) ->
-                keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP);
+        dialog.setOnKeyListener((unused, keyCode, event) -> keyCode == KeyEvent.KEYCODE_BACK
+                && event.getAction() == KeyEvent.ACTION_UP);
 
-        agreementCheckBox.setOnCheckedChangeListener((buttonView, isChecked) ->
-                acceptButton.setEnabled(isChecked));
+        agreementCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> acceptButton.setEnabled(isChecked));
         acceptButton.setOnClickListener(v -> {
             if (!agreementCheckBox.isChecked()) {
                 return;
@@ -1975,7 +1976,83 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         dialog.setContentView(dialogView);
         bindDialogActions(dialogView, item, views, state, style, systemHooksEnabled);
+        dialog.getBehavior().setFitToContents(false);
+        dialog.getBehavior().setHalfExpandedRatio(0.5f);
+        dialog.getBehavior().setState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_HALF_EXPANDED);
+        dialog.setOnShowListener(d -> {
+            int surfaceColor = MaterialColors.getColor(
+                    dialogView, com.google.android.material.R.attr.colorSurface);
+            dialog.getWindow().setNavigationBarColor(surfaceColor);
+
+            // Expand sheet when keyboard appears, collapse when it disappears
+            android.widget.FrameLayout bottomSheet = dialog.findViewById(
+                    com.google.android.material.R.id.design_bottom_sheet);
+            if (bottomSheet != null) {
+                ViewCompat.setOnApplyWindowInsetsListener(bottomSheet, (view, insets) -> {
+                    Insets imeVisible = insets.getInsets(WindowInsetsCompat.Type.ime());
+                    boolean keyboardVisible = insets.isVisible(WindowInsetsCompat.Type.ime());
+                    com.google.android.material.bottomsheet.BottomSheetBehavior<?> behavior = com.google.android.material.bottomsheet.BottomSheetBehavior
+                            .from(view);
+                    if (keyboardVisible && imeVisible.bottom > 0) {
+                        if (behavior
+                                .getState() != com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED) {
+                            behavior.setState(
+                                    com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED);
+                        }
+                        behavior.setExpandedOffset(imeVisible.bottom);
+                        // Scroll to focused input
+                        View focused = dialogView.findFocus();
+                        if (focused != null && dialogView instanceof androidx.core.widget.NestedScrollView) {
+                            ((androidx.core.widget.NestedScrollView) dialogView)
+                                    .smoothScrollTo(0, (int) focused.getY());
+                        }
+                    } else {
+                        // Restore expanded offset after layout calculation
+                        behavior.setExpandedOffset(Math.max(
+                                ((View) view.getParent()).getHeight() - dialogView.getHeight(), 0));
+                    }
+                    return insets;
+                });
+            }
+        });
         dialog.show();
+
+        // Refine half-expanded ratio and expanded offset after layout
+        View expandAnchor = dialogView.findViewById(R.id.dialog_expand_anchor);
+        if (expandAnchor != null) {
+            expandAnchor.post(() -> {
+                android.widget.FrameLayout bottomSheet = dialog.findViewById(
+                        com.google.android.material.R.id.design_bottom_sheet);
+                if (bottomSheet == null)
+                    return;
+                View parent = (View) bottomSheet.getParent();
+                int parentHeight = parent.getHeight();
+                if (parentHeight <= 0)
+                    return;
+
+                com.google.android.material.bottomsheet.BottomSheetBehavior<?> behavior = com.google.android.material.bottomsheet.BottomSheetBehavior
+                        .from(bottomSheet);
+
+                // Set expanded offset so sheet wraps content without blank space
+                int contentHeight = dialogView.getHeight();
+                int expandedOffset = Math.max(parentHeight - contentHeight, 0);
+                behavior.setExpandedOffset(expandedOffset);
+
+                // Set half-expanded ratio so the advanced section is hidden below the fold
+                int[] anchorPos = new int[2];
+                expandAnchor.getLocationOnScreen(anchorPos);
+                int anchorBottom = anchorPos[1] + expandAnchor.getHeight();
+                int[] sheetPos = new int[2];
+                bottomSheet.getLocationOnScreen(sheetPos);
+                float ratio = (float) (anchorBottom - sheetPos[1]) / parentHeight;
+                // Ensure ratio < contentHeight/parentHeight so half-expanded state is not
+                // skipped
+                float maxRatio = (float) contentHeight / parentHeight - 0.05f;
+                ratio = Math.min(ratio, maxRatio);
+                ratio = Math.min(Math.max(ratio, 0.3f), 0.75f);
+                behavior.setHalfExpandedRatio(ratio);
+            });
+        }
     }
 
     private AppConfigDialogViews initDialogViews(View dialogView) {
@@ -2012,9 +2089,11 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         views.titleView.setText(item.label);
         views.packageView.setText(item.packageName);
         views.viewportInputView.setText(item.viewportWidthDp != null
-                ? String.valueOf(item.viewportWidthDp) : "");
+                ? String.valueOf(item.viewportWidthDp)
+                : "");
         views.fontInputView.setText(item.fontScalePercent != null
-                ? String.valueOf(item.fontScalePercent) : "");
+                ? String.valueOf(item.fontScalePercent)
+                : "");
         bindViewportModeToggle(views.viewportModeToggle, item.viewportMode, false);
         bindFontModeToggle(views.fontModeToggle, item.fontMode, false);
         updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,
@@ -2032,9 +2111,9 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void refreshDialogState(AppConfigDialogViews views,
-                                    AppConfigDialogState state,
-                                    AppConfigDialogActionStyle style,
-                                    boolean systemHooksEnabled) {
+            AppConfigDialogState state,
+            AppConfigDialogActionStyle style,
+            boolean systemHooksEnabled) {
         updateDialogStatus(
                 views.statusView,
                 state.scopeSelected,
@@ -2051,10 +2130,10 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void bindDialogValidation(View dialogView,
-                                      AppConfigDialogViews views,
-                                      AppConfigDialogState state,
-                                      AppConfigDialogActionStyle style,
-                                      boolean systemHooksEnabled) {
+            AppConfigDialogViews views,
+            AppConfigDialogState state,
+            AppConfigDialogActionStyle style,
+            boolean systemHooksEnabled) {
         android.widget.TextView.OnEditorActionListener doneListener = (v, actionId, event) -> {
             boolean isDoneAction = actionId == EditorInfo.IME_ACTION_DONE;
             boolean isEnterDown = event != null
@@ -2089,16 +2168,16 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     }
 
     private void bindDialogActions(View dialogView,
-                                   AppListItem item,
-                                   AppConfigDialogViews views,
-                                   AppConfigDialogState state,
-                                   AppConfigDialogActionStyle style,
-                                   boolean systemHooksEnabled) {
+            AppListItem item,
+            AppConfigDialogViews views,
+            AppConfigDialogState state,
+            AppConfigDialogActionStyle style,
+            boolean systemHooksEnabled) {
         dialogView.setFocusable(true);
         dialogView.setFocusableInTouchMode(true);
         dialogView.setClickable(true);
-        dialogView.setOnClickListener(v ->
-                clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView));
+        dialogView.setOnClickListener(
+                v -> clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView));
         views.scopeButton.setOnClickListener(v -> {
             clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
             toggleScope(item.packageName, state.scopeSelected,
@@ -2200,22 +2279,22 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         final MaterialButton saveButton;
 
         AppConfigDialogViews(android.widget.ImageView iconView,
-                             MaterialTextView titleView,
-                             MaterialTextView packageView,
-                             MaterialTextView statusView,
-                             TextInputLayout viewportInputLayout,
-                             TextInputEditText viewportInputView,
-                             TextInputLayout fontInputLayout,
-                             TextInputEditText fontInputView,
-                             ModeToggle viewportModeToggle,
-                             ModeToggle fontModeToggle,
-                             MaterialButton scopeButton,
-                             MaterialButton startButton,
-                             MaterialButton restartButton,
-                             MaterialButton stopButton,
-                             MaterialButton dpisToggleButton,
-                             MaterialButton disableButton,
-                             MaterialButton saveButton) {
+                MaterialTextView titleView,
+                MaterialTextView packageView,
+                MaterialTextView statusView,
+                TextInputLayout viewportInputLayout,
+                TextInputEditText viewportInputView,
+                TextInputLayout fontInputLayout,
+                TextInputEditText fontInputView,
+                ModeToggle viewportModeToggle,
+                ModeToggle fontModeToggle,
+                MaterialButton scopeButton,
+                MaterialButton startButton,
+                MaterialButton restartButton,
+                MaterialButton stopButton,
+                MaterialButton dpisToggleButton,
+                MaterialButton disableButton,
+                MaterialButton saveButton) {
             this.iconView = iconView;
             this.titleView = titleView;
             this.packageView = packageView;
@@ -2252,8 +2331,8 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         final int defaultActionTextColor;
 
         AppConfigDialogActionStyle(ColorStateList defaultActionBgTint,
-                                   int defaultActionStrokeWidth,
-                                   int defaultActionTextColor) {
+                int defaultActionStrokeWidth,
+                int defaultActionTextColor) {
             this.defaultActionBgTint = defaultActionBgTint;
             this.defaultActionStrokeWidth = defaultActionStrokeWidth;
             this.defaultActionTextColor = defaultActionTextColor;
@@ -2306,11 +2385,11 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         final int[] refreshingPagePositions;
 
         RetainedState(List<AppListItem> appsSnapshot,
-                      String query,
-                      AppListFilterState filterState,
-                      int currentPage,
-                      SparseArray<Parcelable> pageScrollStates,
-                      int[] refreshingPagePositions) {
+                String query,
+                AppListFilterState filterState,
+                int currentPage,
+                SparseArray<Parcelable> pageScrollStates,
+                int[] refreshingPagePositions) {
             this.appsSnapshot = appsSnapshot;
             this.query = query != null ? query : "";
             this.filterState = filterState != null ? filterState : AppListFilterState.defaultState();
