@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.6.1](https://github.com/Kwensiu/DPIS/compare/v1.6.0...v1.6.1) (2026-04-23)
+
+
+### Bug Fixes
+
+* keep field-rewrite font mode when system hooks are enabled ([4388a86](https://github.com/Kwensiu/DPIS/commit/4388a864ff60a4f43e15f99f44c719bb79d878da))
+
+
+### Performance
+
+* next-phase hardening for per-app display config and hook policy ([#29](https://github.com/Kwensiu/DPIS/issues/29)) ([f0a354d](https://github.com/Kwensiu/DPIS/commit/f0a354dbb73277c66d8b6bb273521b4cf0a19f08))
+
 ## [1.6.0](https://github.com/Kwensiu/DPIS/compare/v1.5.0...v1.6.0) (2026-04-23)
 
 
