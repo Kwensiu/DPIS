@@ -3,6 +3,7 @@ package com.dpis.module;
 import android.content.SharedPreferences;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -314,6 +315,31 @@ final class DpiConfigStore {
         });
     }
 
+    Map<String, Object> snapshotAll() {
+        LinkedHashMap<String, Object> snapshot = new LinkedHashMap<>();
+        if (mirrorPreferences != null) {
+            copyAllEntries(snapshot, mirrorPreferences.getAll());
+        }
+        copyAllEntries(snapshot, preferences.getAll());
+        return snapshot;
+    }
+
+    boolean replaceAll(Map<String, Object> entries) {
+        if (entries == null) {
+            return false;
+        }
+        return commitBoth(editor -> {
+            editor.clear();
+            for (Map.Entry<String, Object> entry : entries.entrySet()) {
+                String key = entry.getKey();
+                if (key == null || key.isEmpty()) {
+                    continue;
+                }
+                putTypedValue(editor, key, entry.getValue());
+            }
+        });
+    }
+
     private boolean contains(String key) {
         return preferences.contains(key)
                 || (mirrorPreferences != null && mirrorPreferences.contains(key));
@@ -367,6 +393,82 @@ final class DpiConfigStore {
 
     private interface EditorAction {
         void apply(SharedPreferences.Editor editor);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void putTypedValue(SharedPreferences.Editor editor, String key, Object value) {
+        if (value == null) {
+            editor.remove(key);
+            return;
+        }
+        if (value instanceof String typed) {
+            editor.putString(key, typed);
+            return;
+        }
+        if (value instanceof Integer typed) {
+            editor.putInt(key, typed);
+            return;
+        }
+        if (value instanceof Long typed) {
+            editor.putLong(key, typed);
+            return;
+        }
+        if (value instanceof Float typed) {
+            editor.putFloat(key, typed);
+            return;
+        }
+        if (value instanceof Boolean typed) {
+            editor.putBoolean(key, typed);
+            return;
+        }
+        if (value instanceof Set<?> typed) {
+            LinkedHashSet<String> stringSet = new LinkedHashSet<>();
+            for (Object item : typed) {
+                if (!(item instanceof String text)) {
+                    continue;
+                }
+                stringSet.add(text);
+            }
+            editor.putStringSet(key, stringSet);
+            return;
+        }
+        throw new IllegalArgumentException("Unsupported preference value type: " + value.getClass());
+    }
+
+    private static void copyAllEntries(Map<String, Object> target, Map<String, ?> source) {
+        for (Map.Entry<String, ?> entry : source.entrySet()) {
+            String key = entry.getKey();
+            if (key == null || key.isEmpty()) {
+                continue;
+            }
+            Object normalized = normalizeValue(entry.getValue());
+            if (normalized != null) {
+                target.put(key, normalized);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object normalizeValue(Object value) {
+        if (value == null
+                || value instanceof String
+                || value instanceof Integer
+                || value instanceof Long
+                || value instanceof Float
+                || value instanceof Boolean) {
+            return value;
+        }
+        if (value instanceof Set<?> typed) {
+            LinkedHashSet<String> stringSet = new LinkedHashSet<>();
+            for (Object item : typed) {
+                if (!(item instanceof String text)) {
+                    return null;
+                }
+                stringSet.add(text);
+            }
+            return stringSet;
+        }
+        return null;
     }
 
     private static String keyForViewportWidth(String packageName) {

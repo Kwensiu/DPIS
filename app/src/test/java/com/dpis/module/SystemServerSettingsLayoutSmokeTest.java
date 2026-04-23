@@ -15,6 +15,7 @@ public class SystemServerSettingsLayoutSmokeTest {
         String layout = read("src/main/res/layout/activity_system_server_settings.xml");
 
         assertTrue(layout.contains("android:id=\"@+id/row_about\""));
+        assertTrue(layout.contains("android:id=\"@+id/row_config_backup\""));
         assertTrue(layout.contains("android:id=\"@+id/row_hide_launcher_icon\""));
         assertTrue(layout.contains("@string/settings_section_other"));
     }
@@ -37,6 +38,7 @@ public class SystemServerSettingsLayoutSmokeTest {
 
         assertTrue(strings.contains("settings_section_other"));
         assertTrue(strings.contains("settings_about_label"));
+        assertTrue(strings.contains("settings_config_backup_label"));
         assertTrue(strings.contains("settings_hide_launcher_icon_label"));
         assertTrue(strings.contains("about_source_url"));
         assertTrue(strings.contains("about_releases_url"));

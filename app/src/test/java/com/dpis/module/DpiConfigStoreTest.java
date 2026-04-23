@@ -5,6 +5,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -324,6 +325,51 @@ public class DpiConfigStoreTest {
         DpiConfigStore remoteOnly = new DpiConfigStore(remotePrefs);
         assertEquals(Integer.valueOf(DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP),
                 remoteOnly.getTargetViewportWidthDp("com.max.xiaoheihe"));
+    }
+
+    @Test
+    public void snapshotAllMergesPrimaryAndBackupValues() {
+        FakePrefs remotePrefs = new FakePrefs();
+        remotePrefs.edit()
+                .putBoolean(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED, true)
+                .putInt("viewport.com.max.xiaoheihe.width_dp", 420)
+                .commit();
+        FakePrefs localPrefs = new FakePrefs();
+        localPrefs.edit()
+                .putBoolean(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED, false)
+                .putInt("font.com.max.xiaoheihe.scale_percent", 135)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(remotePrefs, localPrefs);
+
+        Map<String, Object> snapshot = store.snapshotAll();
+
+        assertEquals(true, snapshot.get(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED));
+        assertEquals(420, snapshot.get("viewport.com.max.xiaoheihe.width_dp"));
+        assertEquals(135, snapshot.get("font.com.max.xiaoheihe.scale_percent"));
+    }
+
+    @Test
+    public void replaceAllOverwritesPrimaryAndBackupValues() {
+        FakePrefs remotePrefs = new FakePrefs();
+        FakePrefs localPrefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(remotePrefs, localPrefs);
+        LinkedHashMap<String, Object> values = new LinkedHashMap<>();
+        values.put(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED, true);
+        values.put("viewport.com.max.xiaoheihe.width_dp", 360);
+        values.put("font.com.max.xiaoheihe.scale_percent", 120);
+        values.put(DpiConfigStore.KEY_TARGET_PACKAGES,
+                new LinkedHashSet<>(Set.of("com.max.xiaoheihe")));
+
+        assertTrue(store.replaceAll(values));
+
+        DpiConfigStore remoteOnly = new DpiConfigStore(remotePrefs);
+        DpiConfigStore localOnly = new DpiConfigStore(localPrefs);
+        assertTrue(remoteOnly.isGlobalLogEnabled());
+        assertEquals(Integer.valueOf(360),
+                remoteOnly.getTargetViewportWidthDp("com.max.xiaoheihe"));
+        assertEquals(Integer.valueOf(120),
+                localOnly.getTargetFontScalePercent("com.max.xiaoheihe"));
+        assertTrue(localOnly.getConfiguredPackages().contains("com.max.xiaoheihe"));
     }
 }
 

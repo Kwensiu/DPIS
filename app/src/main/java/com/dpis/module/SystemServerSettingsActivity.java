@@ -2,10 +2,12 @@ package com.dpis.module;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
+import android.content.ContentResolver;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
@@ -30,16 +32,28 @@ import com.google.android.material.color.MaterialColors;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textview.MaterialTextView;
 
+import org.json.JSONException;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import io.github.libxposed.service.XposedService;
 
 public final class SystemServerSettingsActivity extends Activity {
     private static final long STATS_REFRESH_INTERVAL_MS = 500L;
     private static final String SYSTEM_SCOPE_MODERN = "system";
+    private static final int REQUEST_EXPORT_CONFIG_BACKUP = 1001;
+    private static final int REQUEST_IMPORT_CONFIG_BACKUP = 1002;
 
     private DpiConfigStore store;
     private MaterialSwitch hooksEnabledSwitch;
@@ -47,6 +61,7 @@ public final class SystemServerSettingsActivity extends Activity {
     private MaterialSwitch globalLogSwitch;
     private MaterialSwitch hideLauncherIconSwitch;
     private View fontDebugEntryRow;
+    private View backupConfigEntryRow;
     private SharedPreferences statsPreferences;
     private int selectedMode = FontDebugStatsStore.MODE_CHAIN;
     private int selectedWindow = FontDebugStatsStore.WINDOW_ALL;
@@ -99,6 +114,12 @@ public final class SystemServerSettingsActivity extends Activity {
                 R.string.font_debug_overlay_label,
                 R.string.font_debug_entry_hint,
                 this::showFontDebugDialog);
+        backupConfigEntryRow = bindEntryRow(
+                R.id.row_config_backup,
+                R.drawable.ic_log_24,
+                R.string.settings_config_backup_label,
+                R.string.settings_config_backup_hint,
+                this::showConfigBackupDialog);
         bindEntryRow(
                 R.id.row_about,
                 R.drawable.ic_info_outline_24,
@@ -123,6 +144,7 @@ public final class SystemServerSettingsActivity extends Activity {
             globalLogSwitch.setEnabled(false);
             hideLauncherIconSwitch.setEnabled(false);
             setRowEnabled(fontDebugEntryRow, false);
+            setRowEnabled(backupConfigEntryRow, false);
             showToast(R.string.status_save_requires_init);
             return;
         }
@@ -170,6 +192,23 @@ public final class SystemServerSettingsActivity extends Activity {
         dismissFontDebugDialog();
     }
 
+    @SuppressWarnings("deprecation")
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode != RESULT_OK || data == null || data.getData() == null) {
+            return;
+        }
+        Uri uri = data.getData();
+        if (requestCode == REQUEST_EXPORT_CONFIG_BACKUP) {
+            exportConfigBackup(uri);
+            return;
+        }
+        if (requestCode == REQUEST_IMPORT_CONFIG_BACKUP) {
+            importConfigBackup(uri);
+        }
+    }
+
     private void applyInsets() {
         View toolbar = findViewById(R.id.settings_toolbar);
         final int baseTopPadding = toolbar.getPaddingTop();
@@ -214,6 +253,202 @@ public final class SystemServerSettingsActivity extends Activity {
         subtitleView.setText(subtitleRes);
         row.setOnClickListener(clickListener);
         return row;
+    }
+
+    private void showConfigBackupDialog(View anchor) {
+        if (store == null) {
+            showToast(R.string.status_save_requires_init);
+            return;
+        }
+        CharSequence[] actions = {
+                getString(R.string.config_backup_export_action),
+                getString(R.string.config_backup_import_action)
+        };
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.config_backup_dialog_title)
+                .setItems(actions, (dialog, which) -> {
+                    if (which == 0) {
+                        launchExportBackupPicker();
+                        return;
+                    }
+                    showImportBackupConfirmDialog();
+                })
+                .setNegativeButton(R.string.dialog_close_button, null)
+                .show();
+    }
+
+    @SuppressWarnings("deprecation")
+    private void launchExportBackupPicker() {
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("application/json")
+                .putExtra(Intent.EXTRA_TITLE, buildBackupFileName());
+        try {
+            startActivityForResult(intent, REQUEST_EXPORT_CONFIG_BACKUP);
+        } catch (ActivityNotFoundException error) {
+            showToast(R.string.config_backup_picker_failed);
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private void launchImportBackupPicker() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("*/*")
+                .putExtra(Intent.EXTRA_MIME_TYPES, new String[] {
+                        "application/json",
+                        "text/plain"
+                });
+        try {
+            startActivityForResult(intent, REQUEST_IMPORT_CONFIG_BACKUP);
+        } catch (ActivityNotFoundException error) {
+            showToast(R.string.config_backup_picker_failed);
+        }
+    }
+
+    private void showImportBackupConfirmDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.config_backup_import_confirm_title)
+                .setMessage(R.string.config_backup_import_confirm_message)
+                .setPositiveButton(R.string.dialog_process_action_confirm_positive,
+                        (dialog, which) -> launchImportBackupPicker())
+                .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
+                .show();
+    }
+
+    private void exportConfigBackup(Uri uri) {
+        DpiConfigStore localStore = store;
+        if (localStore == null) {
+            showToast(R.string.status_save_requires_init);
+            return;
+        }
+        new Thread(() -> {
+            Map<String, Object> entries = localStore.snapshotAll();
+            boolean success = false;
+            try {
+                String payload = ConfigBackupCodec.encode(entries);
+                writeUtf8(uri, payload);
+                success = true;
+            } catch (IOException | JSONException | RuntimeException ignored) {
+                success = false;
+            }
+            boolean finalSuccess = success;
+            int entryCount = entries.size();
+            runOnUiThread(() -> {
+                if (finalSuccess) {
+                    showToast(R.string.config_backup_export_success, entryCount);
+                    return;
+                }
+                showToast(R.string.config_backup_export_failed);
+            });
+        }, "dpis-config-backup-export").start();
+    }
+
+    private void importConfigBackup(Uri uri) {
+        DpiConfigStore localStore = store;
+        if (localStore == null) {
+            showToast(R.string.status_save_requires_init);
+            return;
+        }
+        new Thread(() -> {
+            Map<String, Object> entries;
+            try {
+                String payload = readUtf8(uri);
+                entries = ConfigBackupCodec.decode(payload);
+            } catch (IOException | JSONException | IllegalArgumentException ignored) {
+                runOnUiThread(() -> showToast(R.string.config_backup_import_invalid));
+                return;
+            }
+            if (!localStore.replaceAll(entries)) {
+                runOnUiThread(() -> showToast(R.string.config_backup_import_failed));
+                return;
+            }
+            int entryCount = entries.size();
+            runOnUiThread(() -> {
+                applyRestoredStoreState();
+                showToast(R.string.config_backup_import_success, entryCount);
+            });
+        }, "dpis-config-backup-import").start();
+    }
+
+    private void applyRestoredStoreState() {
+        if (store == null) {
+            return;
+        }
+        selectedMode = store.getFontDebugSelectedMode();
+        selectedWindow = store.getFontDebugSelectedWindow();
+
+        setCheckedSilently(safeModeSwitch,
+                store.isSystemServerSafeModeEnabled(),
+                this::onSafeModeChanged);
+        setCheckedSilently(globalLogSwitch,
+                store.isGlobalLogEnabled(),
+                this::onGlobalLogChanged);
+        DpisLog.setLoggingEnabled(store.isGlobalLogEnabled());
+
+        applyLauncherIconVisibilityFromStore();
+        syncHooksSwitchWithScope();
+
+        if (store.isFontDebugOverlayEnabled() && canDrawOverlays()) {
+            startFontDebugOverlayService();
+        } else if (!store.isFontDebugOverlayEnabled()) {
+            stopService(new Intent(this, FontDebugOverlayService.class));
+        }
+        updateDialogButtons();
+        refreshStatsPanel();
+    }
+
+    private void applyLauncherIconVisibilityFromStore() {
+        if (store == null || hideLauncherIconSwitch == null) {
+            return;
+        }
+        boolean requestedHidden = store.isLauncherIconHidden();
+        if (!setLauncherAliasHidden(requestedHidden)) {
+            showToast(R.string.settings_hide_launcher_icon_apply_failed);
+        }
+        boolean actualHidden = resolveLauncherIconHiddenState(requestedHidden);
+        if (actualHidden != store.isLauncherIconHidden()) {
+            store.setLauncherIconHidden(actualHidden);
+        }
+        setCheckedSilently(hideLauncherIconSwitch, actualHidden, this::onHideLauncherIconChanged);
+    }
+
+    private String buildBackupFileName() {
+        return String.format(
+                Locale.US,
+                "dpis-backup-%1$tY%1$tm%1$td-%1$tH%1$tM%1$tS.json",
+                new Date());
+    }
+
+    private void writeUtf8(Uri uri, String content) throws IOException {
+        ContentResolver resolver = getContentResolver();
+        try (OutputStream output = resolver.openOutputStream(uri, "wt")) {
+            if (output == null) {
+                throw new IOException("Unable to open backup output stream");
+            }
+            try (OutputStreamWriter writer = new OutputStreamWriter(output, StandardCharsets.UTF_8)) {
+                writer.write(content);
+            }
+        }
+    }
+
+    private String readUtf8(Uri uri) throws IOException {
+        ContentResolver resolver = getContentResolver();
+        try (InputStream input = resolver.openInputStream(uri)) {
+            if (input == null) {
+                throw new IOException("Unable to open backup input stream");
+            }
+            StringBuilder builder = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(input, StandardCharsets.UTF_8))) {
+                char[] buffer = new char[1024];
+                int read;
+                while ((read = reader.read(buffer)) != -1) {
+                    builder.append(buffer, 0, read);
+                }
+            }
+            return builder.toString();
+        }
     }
 
     private void showFontDebugDialog(View anchor) {
