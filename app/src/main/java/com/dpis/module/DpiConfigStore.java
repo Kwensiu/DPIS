@@ -65,7 +65,7 @@ final class DpiConfigStore {
         if (contains(key)) {
             return ViewportApplyMode.normalize(getString(key, ViewportApplyMode.OFF));
         }
-        if (contains(keyForViewportWidth(packageName))) {
+        if (getTargetViewportWidthDp(packageName) != null) {
             // 历史配置迁移：已有宽度但无模式时，默认视为系统伪装。
             return ViewportApplyMode.SYSTEM_EMULATION;
         }
@@ -86,7 +86,7 @@ final class DpiConfigStore {
         if (contains(key)) {
             return FontApplyMode.normalize(getString(key, FontApplyMode.OFF));
         }
-        if (contains(keyForFontScale(packageName))) {
+        if (getTargetFontScalePercent(packageName) != null) {
             // 历史配置迁移：已有字体百分比但无模式时，默认视为系统伪装。
             return FontApplyMode.SYSTEM_EMULATION;
         }

@@ -59,6 +59,17 @@ public class DpiConfigStoreTest {
     }
 
     @Test
+    public void defaultsViewportModeToOffWhenLegacyWidthIsInvalid() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 0).commit();
+
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertEquals(ViewportApplyMode.OFF,
+                store.getTargetViewportApplyMode("bin.mt.plus.canary"));
+    }
+
+    @Test
     public void seedsMissingPackageListAndTargetValuesWithoutOverwritingExistingValues() {
         FakePrefs prefs = new FakePrefs();
         prefs.edit()
@@ -132,6 +143,17 @@ public class DpiConfigStoreTest {
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         assertNull(store.getTargetFontScalePercent("bin.mt.plus.canary"));
+    }
+
+    @Test
+    public void defaultsFontModeToOffWhenLegacyScaleIsInvalid() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit().putInt("font.bin.mt.plus.canary.scale_percent", 301).commit();
+
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertEquals(FontApplyMode.OFF,
+                store.getTargetFontApplyMode("bin.mt.plus.canary"));
     }
 
     @Test
