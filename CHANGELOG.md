@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.5.0](https://github.com/Kwensiu/DPIS/compare/v1.4.1...v1.5.0) (2026-04-23)
+
+
+### Features
+
+* improve update prompt flow and dialog reuse ([a3a97f5](https://github.com/Kwensiu/DPIS/commit/a3a97f5626c25d21c5ed053555b64a52e977d8c5))
+
+
+### Bug Fixes
+
+* show app label instead of package name in toast messages ([#13](https://github.com/Kwensiu/DPIS/issues/13)) ([67c5f22](https://github.com/Kwensiu/DPIS/commit/67c5f227f36d6d683fe06d7b4a6743e54f0afd56))
+
+
+### UI
+
+* fix dialog input focus, save feedback, keyboard handling, revert snackbar to toast ([96ee2b6](https://github.com/Kwensiu/DPIS/commit/96ee2b6c8fa7c4f9a86dfb5d48c3c418305a74c6))
+* fix status bar inversion, touch feedback, fixed toolbar, input clear buttons, toast→snackbar, icon adjustments, bottom sheet simplification ([31b052b](https://github.com/Kwensiu/DPIS/commit/31b052b9aa3730d7c726493793ca9c4bd48f4ab5))
+
 ## [1.4.1](https://github.com/Kwensiu/DPIS/compare/v1.4.0...v1.4.1) (2026-04-23)
 
 
