@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SimpleItemAnimator;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.color.MaterialColors;
@@ -60,8 +61,12 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
     }
 
     void submitPage(AppListPage page, List<AppListItem> items) {
-        pages.put(page, new ArrayList<>(items));
-        notifyItemChanged(page.position());
+        List<AppListItem> snapshot = new ArrayList<>(items);
+        pages.put(page, snapshot);
+        PageHolder holder = activeHolders.get(page);
+        if (holder != null) {
+            holder.submitItems(snapshot);
+        }
     }
 
     SparseArray<Parcelable> capturePageScrollStates() {
@@ -165,6 +170,10 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             recyclerView.setLayoutManager(new LinearLayoutManager(itemView.getContext()));
             adapter = new PageListAdapter(onAppClickListener, systemScopeSelectedSupplier);
             recyclerView.setAdapter(adapter);
+            RecyclerView.ItemAnimator itemAnimator = recyclerView.getItemAnimator();
+            if (itemAnimator instanceof SimpleItemAnimator) {
+                ((SimpleItemAnimator) itemAnimator).setSupportsChangeAnimations(false);
+            }
             recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
                 @Override
                 public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -193,6 +202,10 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             }
         }
 
+        void submitItems(List<AppListItem> items) {
+            adapter.submit(items);
+        }
+
         AppListPage getBoundPage() {
             return boundPage;
         }
@@ -202,7 +215,15 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
         }
 
         void refreshStatuses() {
-            adapter.refreshVisibleRows();
+            RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
+            if (!(layoutManager instanceof LinearLayoutManager)) {
+                adapter.refreshVisibleRows(0, adapter.getItemCount() - 1);
+                return;
+            }
+            LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
+            int firstVisible = linearLayoutManager.findFirstVisibleItemPosition();
+            int lastVisible = linearLayoutManager.findLastVisibleItemPosition();
+            adapter.refreshVisibleRows(firstVisible, lastVisible);
         }
 
         Parcelable captureScrollState() {
@@ -236,18 +257,23 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
         }
 
         private void submit(List<AppListItem> newItems) {
-            submitList(new ArrayList<>(newItems));
+            submitList(newItems);
         }
 
         private void submit(List<AppListItem> newItems, Runnable onCommitted) {
-            submitList(new ArrayList<>(newItems), onCommitted);
+            submitList(newItems, onCommitted);
         }
 
-        private void refreshVisibleRows() {
-            if (getItemCount() <= 0) {
+        private void refreshVisibleRows(int firstPosition, int lastPosition) {
+            if (getItemCount() <= 0 || firstPosition < 0 || lastPosition < firstPosition) {
                 return;
             }
-            notifyItemRangeChanged(0, getItemCount(), PAYLOAD_SYSTEM_SCOPE_CHANGED);
+            int start = Math.max(0, firstPosition);
+            int end = Math.min(getItemCount() - 1, lastPosition);
+            if (end < start) {
+                return;
+            }
+            notifyItemRangeChanged(start, end - start + 1, PAYLOAD_SYSTEM_SCOPE_CHANGED);
         }
 
         @NonNull

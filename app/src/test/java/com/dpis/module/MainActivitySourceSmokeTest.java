@@ -124,6 +124,20 @@ public class MainActivitySourceSmokeTest {
     }
 
     @Test
+    public void applyFilter_submitsPerPageListsWithoutRedundantStatusRefresh() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        int applyFilterStart = source.indexOf("private void applyFilter() {");
+        int applyFilterEnd = source.indexOf("private void toggleScope(", applyFilterStart);
+        assertTrue(applyFilterStart >= 0);
+        assertTrue(applyFilterEnd > applyFilterStart);
+
+        String applyFilterBody = source.substring(applyFilterStart, applyFilterEnd);
+        assertTrue(applyFilterBody.contains("pagerAdapter.submitPage("));
+        assertTrue(!applyFilterBody.contains("pagerAdapter.refreshVisibleStatuses();"));
+    }
+
+    @Test
     public void touchFeedbackBinderProvidesSharedHapticAndScaleBehavior() throws IOException {
         String source = read("src/main/java/com/dpis/module/TouchFeedbackBinder.java");
 

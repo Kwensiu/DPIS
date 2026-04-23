@@ -922,7 +922,6 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
         for (AppListPage page : AppListPage.values()) {
             pagerAdapter.submitPage(page, AppListVisibleSections.filter(snapshot, query, page, filterState));
         }
-        pagerAdapter.refreshVisibleStatuses();
     }
 
     private void toggleScope(String packageName, String appLabel,

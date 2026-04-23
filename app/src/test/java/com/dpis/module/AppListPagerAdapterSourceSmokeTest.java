@@ -17,13 +17,34 @@ public class AppListPagerAdapterSourceSmokeTest {
         assertTrue(source.contains("interface OnPageListScrollListener"));
         assertTrue(source.contains("extends ListAdapter<AppListItem, RowHolder>"));
         assertTrue(source.contains("DiffUtil.ItemCallback<AppListItem>"));
-        assertTrue(source.contains("submitList(new ArrayList<>(newItems));"));
+        assertTrue(source.contains("submitList(newItems);"));
+        assertTrue(source.contains("submitList(newItems, onCommitted);"));
         assertTrue(!source.contains("notifyDataSetChanged()"));
         assertTrue(source.contains("capturePageScrollStates()"));
         assertTrue(source.contains("restorePageScrollStates("));
         assertTrue(source.contains("setRefreshing(AppListPage page, boolean refreshing)"));
         assertTrue(source.contains("recyclerView.addOnScrollListener"));
         assertTrue(source.contains("onPageListScrollListener.onPageListScrolled("));
+    }
+
+    @Test
+    public void submitPage_updatesActiveHolderWithoutPageLevelRebind() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppListPagerAdapter.java");
+
+        assertTrue(source.contains("PageHolder holder = activeHolders.get(page);"));
+        assertTrue(source.contains("holder.submitItems(snapshot);"));
+        assertTrue(!source.contains("notifyItemChanged(page.position())"));
+    }
+
+    @Test
+    public void statusRefresh_limitsUpdateToVisibleRowsAndDisablesChangeAnimations() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppListPagerAdapter.java");
+
+        assertTrue(source.contains("setSupportsChangeAnimations(false)"));
+        assertTrue(source.contains("adapter.submit(items, this::refreshStatuses);"));
+        assertTrue(source.contains("findFirstVisibleItemPosition()"));
+        assertTrue(source.contains("findLastVisibleItemPosition()"));
+        assertTrue(source.contains("notifyItemRangeChanged(start, end - start + 1, PAYLOAD_SYSTEM_SCOPE_CHANGED);"));
     }
 
     private static String read(String relativePath) throws IOException {
