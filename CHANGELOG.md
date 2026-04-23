@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.6.0](https://github.com/Kwensiu/DPIS/compare/v1.5.0...v1.6.0) (2026-04-23)
+
+
+### Features
+
+* add config backup import/export flow ([#15](https://github.com/Kwensiu/DPIS/issues/15)) ([343f0c0](https://github.com/Kwensiu/DPIS/commit/343f0c0e9c05dc7c82d549128e9d5614b105b24f))
+
+
+### Bug Fixes
+
+* optimize app list refresh updates ([#10](https://github.com/Kwensiu/DPIS/issues/10)) ([920655b](https://github.com/Kwensiu/DPIS/commit/920655b9f597486725a7d2a809d8160674b829dd))
+* remove nested backup dialog borders ([#15](https://github.com/Kwensiu/DPIS/issues/15)) ([e754b60](https://github.com/Kwensiu/DPIS/commit/e754b60d16ed0d16533fdb70f07ac7b22310e3c0))
+* stabilize async icon loading and eliminate list icon flicker ([0e22595](https://github.com/Kwensiu/DPIS/commit/0e22595eb65d8fa03e887560514031f163339476))
+* stabilize viewport density across orientation ([#8](https://github.com/Kwensiu/DPIS/issues/8)) ([7f3b235](https://github.com/Kwensiu/DPIS/commit/7f3b235820f39a72f42d8d7d5f622724278afc59))
+
+
+### Styles
+
+* use custom dialogs for config backup actions ([#15](https://github.com/Kwensiu/DPIS/issues/15)) ([aa330a8](https://github.com/Kwensiu/DPIS/commit/aa330a84d827d8883fc9d0433f86be76b7d0fb55))
+
 ## [1.5.0](https://github.com/Kwensiu/DPIS/compare/v1.4.1...v1.5.0) (2026-04-23)
 
 
