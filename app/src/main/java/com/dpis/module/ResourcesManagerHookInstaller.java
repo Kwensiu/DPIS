@@ -160,7 +160,7 @@ final class ResourcesManagerHookInstaller {
                 originalHeightDp > 0 && originalDensityDpi > 0
                         ? Math.round(originalHeightDp * (originalDensityDpi / 160.0f))
                         : result.heightDp,
-                result.widthDp);
+                result.smallestWidthDp);
         if (sharedResult != null) {
             VirtualDisplayState.set(sharedResult);
         }

@@ -66,6 +66,20 @@ public class VirtualDisplayOverrideTest {
         assertEquals(2208, point.y);
     }
 
+    @Test
+    public void keepsDensityStableAcrossOrientationForSameShortSideTarget() {
+        VirtualDisplayOverride.Result portrait = VirtualDisplayOverride.derive(
+                412, 915, 420, 1080, 2400, 360);
+        VirtualDisplayOverride.Result landscape = VirtualDisplayOverride.derive(
+                915, 412, 420, 2400, 1080, 360);
+
+        assertEquals(481, portrait.densityDpi);
+        assertEquals(481, landscape.densityDpi);
+        assertEquals(360, portrait.widthDp);
+        assertEquals(800, landscape.widthDp);
+        assertEquals(360, landscape.heightDp);
+    }
+
     private static void setTargetPackageName(String packageName) {
         try {
             Field field = DisplayHookInstaller.class.getDeclaredField("targetPackageName");

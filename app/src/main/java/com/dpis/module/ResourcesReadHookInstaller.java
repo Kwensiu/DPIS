@@ -134,7 +134,7 @@ final class ResourcesReadHookInstaller {
                         * ((originalDensityDpi > 0 ? originalDensityDpi : result.densityDpi) / 160.0f)),
                 Math.round((originalHeightDp > 0 ? originalHeightDp : result.heightDp)
                         * ((originalDensityDpi > 0 ? originalDensityDpi : result.densityDpi) / 160.0f)),
-                result.widthDp);
+                result.smallestWidthDp);
         if (sharedResult != null) {
             VirtualDisplayState.set(sharedResult);
         }

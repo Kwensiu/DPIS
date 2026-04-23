@@ -156,4 +156,31 @@ public class ResourcesImplHookInstallerTest {
         assertEquals(1080, VirtualDisplayState.get().widthPx);
         assertEquals(2208, VirtualDisplayState.get().heightPx);
     }
+
+    @Test
+    public void keepsSharedDensityStableWhenLandscapeConfigAlreadyMatchesTargetShortSide() {
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.screenWidthDp = 792;
+        config.screenHeightDp = 360;
+        config.smallestScreenWidthDp = 360;
+        config.fontScale = 1.15f;
+
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.widthPixels = 2376;
+        metrics.heightPixels = 1080;
+        metrics.densityDpi = 480;
+        metrics.density = 3.0f;
+        metrics.scaledDensity = 3.45f;
+
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 360).commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
+
+        assertEquals(480, VirtualDisplayState.get().densityDpi);
+        assertEquals(2376, VirtualDisplayState.get().widthPx);
+        assertEquals(1080, VirtualDisplayState.get().heightPx);
+    }
 }

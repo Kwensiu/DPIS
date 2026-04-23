@@ -38,4 +38,20 @@ public class ViewportOverrideTest {
         assertEquals(360, config.smallestScreenWidthDp);
         assertEquals(800, config.densityDpi);
     }
+
+    @Test
+    public void derivesLandscapeFromShortSideInsteadOfCurrentWidth() {
+        Configuration config = new Configuration();
+        config.screenWidthDp = 915;
+        config.screenHeightDp = 412;
+        config.smallestScreenWidthDp = 412;
+        config.densityDpi = 420;
+
+        ViewportOverride.Result result = ViewportOverride.derive(config, 360);
+
+        assertEquals(800, result.widthDp);
+        assertEquals(360, result.heightDp);
+        assertEquals(360, result.smallestWidthDp);
+        assertEquals(481, result.densityDpi);
+    }
 }

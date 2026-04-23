@@ -90,7 +90,7 @@ final class ResourcesImplHookInstaller {
                 originalDensityDpi > 0 ? originalDensityDpi : result.densityDpi,
                 sourceWidthPx,
                 sourceHeightPx,
-                result.widthDp);
+                result.smallestWidthDp);
         if (sharedResult != null) {
             VirtualDisplayState.set(sharedResult);
         }
