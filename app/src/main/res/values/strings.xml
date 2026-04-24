@@ -45,6 +45,8 @@
     <string name="dialog_dpis_enable_button">启用修改</string>
     <string name="dialog_dpis_disable_button">已启用</string>
     <string name="dialog_process_requires_root">该操作需要 root 权限</string>
+    <string name="dialog_process_restart_requires_root">重启应用需要 root 权限</string>
+    <string name="dialog_process_stop_requires_root">停止应用需要 root 权限</string>
     <string name="dialog_process_action_success">已执行%1$s：%2$s</string>
     <string name="dialog_process_action_failed">执行%1$s失败：%2$s（%3$s）</string>
     <string name="dialog_process_action_confirm_title">高风险操作确认</string>
