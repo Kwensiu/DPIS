@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.6.2](https://github.com/Kwensiu/DPIS/compare/v1.6.1...v1.6.2) (2026-04-24)
+
+
+### Bug Fixes
+
+* avoid app list reload on rotation ([#26](https://github.com/Kwensiu/DPIS/issues/26)) ([a56a9e8](https://github.com/Kwensiu/DPIS/commit/a56a9e87b7cde0362d78ef9f60e44c5e59d4322c))
+* unexpectedly enabled auto-rotate on launch ([#30](https://github.com/Kwensiu/DPIS/issues/30)) ([189e235](https://github.com/Kwensiu/DPIS/commit/189e235dfa0152b822b2127e00690500bc6af891))
+
+
+### Refactoring
+
+* MainActivity architecture and unify update flow ([dc048b9](https://github.com/Kwensiu/DPIS/commit/dc048b91c110a8722d047f467acb7927d0d59693))
+
 ## [1.6.1](https://github.com/Kwensiu/DPIS/compare/v1.6.0...v1.6.1) (2026-04-23)
 
 
