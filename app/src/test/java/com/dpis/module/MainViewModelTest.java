@@ -25,6 +25,23 @@ public class MainViewModelTest {
     }
 
     @Test
+    public void restoredSnapshot_firstBackgroundRefreshDoesNotForceCatalogReload() {
+        List<AppListItem> restoredApps = List.of(app("Restored", "com.example.restored", true, false));
+        MainUiState restoredState = MainUiState.initial("",
+                AppListFilterState.defaultState(),
+                restoredApps,
+                Collections.emptySet());
+        MainViewModel viewModel = new MainViewModel(restoredState);
+
+        List<MainUiEffect> effects = viewModel.dispatch(MainUiAction.requestAppsLoad(false));
+
+        assertEquals(1, effects.size());
+        assertTrue(effects.get(0) instanceof MainUiEffect.StartAppsLoad);
+        MainUiEffect.StartAppsLoad start = (MainUiEffect.StartAppsLoad) effects.get(0);
+        assertFalse(start.forceInstalledAppCatalogReload);
+    }
+
+    @Test
     public void queuedLoad_emitsFollowUpEffectAndAppliesLatestResult() {
         MainViewModel viewModel = new MainViewModel(emptyState());
 

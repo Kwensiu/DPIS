@@ -6,7 +6,7 @@ import java.util.List;
 final class MainViewModel {
     private final AppLoadCoordinator loadCoordinator = new AppLoadCoordinator();
     private MainUiState state;
-    private boolean forceInstalledAppCatalogReloadRequested = true;
+    private boolean forceInstalledAppCatalogReloadRequested;
 
     MainViewModel(MainUiState initialState) {
         state = initialState != null
@@ -16,6 +16,7 @@ final class MainViewModel {
                 AppListFilterState.defaultState(),
                 Collections.emptyList(),
                 Collections.emptySet());
+        forceInstalledAppCatalogReloadRequested = state.appsSnapshot().isEmpty();
     }
 
     MainUiState getState() {

@@ -118,6 +118,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
     private boolean searchFabHidden;
     private ImageButton searchFilterButton;
     private boolean cachedSystemHookEffectiveEnabled;
+    private boolean skipNextImmediateServiceReload;
     private volatile boolean startupUpdateCheckInProgress;
     private volatile boolean startupUpdateDownloadInProgress;
     private volatile boolean startupUpdateDownloadCancelRequested;
@@ -150,6 +151,7 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
             restoredPageScrollStates = retainedState.pageScrollStates;
             initialRefreshingPages = decodeRefreshingPages(retainedState.refreshingPagePositions);
             initialAppsSnapshot = new ArrayList<>(retainedState.appsSnapshot);
+            skipNextImmediateServiceReload = !initialAppsSnapshot.isEmpty();
         }
         if (savedInstanceState != null) {
             initialQuery = savedInstanceState.getString(STATE_CURRENT_QUERY, "");
@@ -302,6 +304,10 @@ public final class MainActivity extends Activity implements DpisApplication.Serv
             refreshSystemHookEffectiveEnabled();
             if (pagerAdapter != null) {
                 pagerAdapter.refreshVisibleStatuses();
+            }
+            if (skipNextImmediateServiceReload) {
+                skipNextImmediateServiceReload = false;
+                return;
             }
             requestAppsLoad();
         });

@@ -194,6 +194,16 @@ public class MainActivitySourceSmokeTest {
     }
 
     @Test
+    public void retainedAppListSkipsImmediateServiceReloadOnRotation() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(source.contains("private boolean skipNextImmediateServiceReload;"));
+        assertTrue(source.contains("skipNextImmediateServiceReload = !initialAppsSnapshot.isEmpty();"));
+        assertTrue(source.contains("DpisApplication.addServiceStateListener(this, true);"));
+        assertTrue(source.contains("if (skipNextImmediateServiceReload)"));
+    }
+
+    @Test
     public void appConfigSheet_halfExpandedStateUsesDownwardOffset() throws IOException {
         String coordinatorSource = read("src/main/java/com/dpis/module/AppConfigDialogCoordinator.java");
 
