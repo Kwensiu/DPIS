@@ -49,8 +49,8 @@
     <string name="dialog_process_stop_requires_root">停止应用需要 root 权限</string>
     <string name="dialog_process_action_success">已执行%1$s：%2$s</string>
     <string name="dialog_process_action_failed">执行%1$s失败：%2$s（%3$s）</string>
-    <string name="dialog_process_action_confirm_title">高风险操作确认</string>
-    <string name="dialog_process_action_confirm_message">你正在对系统应用执行【%1$s】（%2$s）。可能导致界面闪烁或短暂不稳定，是否继续？</string>
+    <string name="dialog_process_action_confirm_title">高风险操作</string>
+    <string name="dialog_process_action_confirm_message">即将【%1$s】系统应用\n%2$s\n可能导致系统崩溃，是否继续？</string>
     <string name="dialog_process_action_confirm_positive">继续</string>
     <string name="dialog_process_action_confirm_negative">取消</string>
     <string name="dialog_process_action_start">启动</string>

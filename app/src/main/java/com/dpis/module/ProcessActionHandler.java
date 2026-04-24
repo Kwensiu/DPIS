@@ -1,10 +1,17 @@
 package com.dpis.module;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
+
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textview.MaterialTextView;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,22 +36,37 @@ final class ProcessActionHandler {
             showToast(rootRequiredMessageResId(action));
             return;
         }
-        if (item.systemApp) {
-            String actionLabel = resolveActionLabel(action);
-            new AlertDialog.Builder(activity)
-                    .setTitle(R.string.dialog_process_action_confirm_title)
-                    .setMessage(activity.getString(
-                            R.string.dialog_process_action_confirm_message,
-                            actionLabel,
-                            item.packageName))
-                    .setPositiveButton(
-                            R.string.dialog_process_action_confirm_positive,
-                            (dialog, which) -> runProcessAction(item.packageName, item.label, action))
-                    .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
-                    .show();
+        if (item.systemApp && action != Action.START) {
+            showSystemAppActionConfirmation(item, action);
             return;
         }
         runProcessAction(item.packageName, item.label, action);
+    }
+
+    private void showSystemAppActionConfirmation(AppListItem item, Action action) {
+        String actionLabel = resolveActionLabel(action);
+        View dialogView = LayoutInflater.from(activity)
+                .inflate(R.layout.dialog_process_action_confirm, null, false);
+        MaterialTextView titleView = dialogView.findViewById(R.id.process_action_confirm_title);
+        MaterialTextView messageView = dialogView.findViewById(R.id.process_action_confirm_message);
+        MaterialButton proceedButton = dialogView.findViewById(R.id.process_action_confirm_proceed_button);
+        MaterialButton cancelButton = dialogView.findViewById(R.id.process_action_confirm_cancel_button);
+
+        titleView.setText(R.string.dialog_process_action_confirm_title);
+        messageView.setText(activity.getString(
+                R.string.dialog_process_action_confirm_message,
+                actionLabel,
+                item.label));
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
+                .setView(dialogView)
+                .create();
+        proceedButton.setOnClickListener(v -> {
+            dialog.dismiss();
+            runProcessAction(item.packageName, item.label, action);
+        });
+        cancelButton.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     private String resolveActionLabel(Action action) {

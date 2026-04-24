@@ -63,6 +63,39 @@ public class ProcessActionHandlerSourceSmokeTest {
         assertFalse(strings.contains("dialog_process_launch_mode_force_stop_failed"));
     }
 
+    @Test
+    public void systemAppStartDoesNotShowRiskConfirmation() throws IOException {
+        String source = read("src/main/java/com/dpis/module/ProcessActionHandler.java");
+
+        assertTrue(source.contains("item.systemApp && action != Action.START"));
+        assertFalse(source.contains("new AlertDialog.Builder(activity)"));
+    }
+
+    @Test
+    public void processActionConfirmationUsesCustomDialogLayout() throws IOException {
+        String source = read("src/main/java/com/dpis/module/ProcessActionHandler.java");
+        String layout = read("src/main/res/layout/dialog_process_action_confirm.xml");
+
+        assertTrue(source.contains("R.layout.dialog_process_action_confirm"));
+        assertTrue(source.contains("process_action_confirm_title"));
+        assertTrue(source.contains("process_action_confirm_message"));
+        assertTrue(source.contains("process_action_confirm_proceed_button"));
+        assertTrue(source.contains("process_action_confirm_cancel_button"));
+        assertTrue(layout.contains("Widget.Dpis.DialogActionButton.Outlined.Warn"));
+        assertTrue(layout.contains("Widget.Dpis.DialogActionButton.Outlined"));
+    }
+
+    @Test
+    public void systemAppConfirmationShowsAppLabelAndUsesMatchingFormatArgs() throws IOException {
+        String source = read("src/main/java/com/dpis/module/ProcessActionHandler.java");
+        String strings = read("src/main/res/values/strings.xml");
+
+        assertTrue(source.contains("actionLabel,\r\n                item.label")
+                || source.contains("actionLabel,\n                item.label"));
+        assertTrue(strings.contains("%2$s\\n"));
+        assertFalse(strings.contains("%3$s\\n"));
+    }
+
     private static String read(String relativePath) throws IOException {
         return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
     }
