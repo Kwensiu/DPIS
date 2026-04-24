@@ -138,6 +138,8 @@
     <string name="about_link_feedback_desc">提交 issue 或查看已知问题</string>
     <string name="open_source_license">开放源代码许可</string>
     <string name="open_source_license_settings_description">查看本应用所使用的第三方开源库及其许可证信息</string>
+    <string name="open_source_license_project_summary">GPL-3.0-or-later</string>
+    <string name="open_source_license_project_detail">DPIS 以 GPL-3.0-or-later 许可发布。源码：%1$s</string>
     <string name="open_source_license_empty">未找到许可证数据</string>
     <string name="open_source_license_load_failed">读取许可证数据失败</string>
     <string name="open_source_license_item_fallback">未标注许可证</string>

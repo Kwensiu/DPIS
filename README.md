@@ -2,6 +2,7 @@
 <img src="https://raw.githubusercontent.com/Xposed-Modules-Repo/io.github.kwensiu.dpis/refs/heads/main/icon.png" height='70px'>
 
 ![GitHub Release](https://img.shields.io/github/v/release/Kwensiu/DPIS)
+![License](https://img.shields.io/github/license/Kwensiu/DPIS)
 
 DPIS 是一个基于 LSPosed/Xposed 的 Android 模块，用于按应用独立调整显示参数（虚拟宽度 + 字体大小），在不改全局系统显示设置的前提下，优化单应用观感。
 
@@ -79,6 +80,10 @@ refs/                     本地参考资料（LSPosed / AOSP / libxposed）
 
 - 当前文档入口：[docs/README.md](docs/README.md)
 - 历史文档归档入口：[docs/archive/README.md](docs/archive/README.md)
+
+## 许可证
+
+DPIS 以 [GPL-3.0-or-later](LICENSE) 许可发布。 
 
 ## 引用与致谢
 

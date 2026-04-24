@@ -29,6 +29,35 @@ public class OpenSourceLicenseActivityParsingTest {
         assertTrue(source.contains("detailBuilder.append(\"\\n\\n\").append(license.content)"));
     }
 
+    @Test
+    public void licensePageIncludesDpisProjectLicense() throws IOException {
+        String source = read("src/main/java/com/dpis/module/OpenSourceLicenseActivity.java");
+        String strings = read("src/main/res/values/strings.xml");
+
+        assertTrue(source.contains("createProjectLicenseItem()"));
+        assertTrue(source.contains("R.raw.gpl_3_0"));
+        assertTrue(strings.contains("open_source_license_project_summary"));
+        assertTrue(strings.contains("GPL-3.0-or-later"));
+    }
+
+    @Test
+    public void notFoundPathShowsMissingThirdPartyLicenseIndicator() throws IOException {
+        String source = read("src/main/java/com/dpis/module/OpenSourceLicenseActivity.java")
+                .replace("\r\n", "\n");
+        int notFoundCatch = source.indexOf("} catch (Resources.NotFoundException e) {");
+        int throwableCatch = source.indexOf("} catch (Throwable t) {", notFoundCatch);
+
+        assertTrue(notFoundCatch >= 0);
+        assertTrue(throwableCatch > notFoundCatch);
+
+        String notFoundBranch = source.substring(notFoundCatch, throwableCatch);
+        assertTrue(notFoundBranch.contains("List<LicenseItem> items = new ArrayList<>();"));
+        assertTrue(notFoundBranch.contains("items.add(createProjectLicenseItem());"));
+        assertTrue(notFoundBranch.contains(
+                "items.add(emptyItem(getString(R.string.open_source_license_empty)));"));
+        assertTrue(notFoundBranch.contains("return items;"));
+    }
+
     private static String read(String relativePath) throws IOException {
         return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
     }

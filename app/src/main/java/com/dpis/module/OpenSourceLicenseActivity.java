@@ -102,10 +102,14 @@ public final class OpenSourceLicenseActivity extends Activity {
             JSONArray libraries = root.optJSONArray("libraries");
             JSONObject licenseCatalog = root.optJSONObject("licenses");
             if (libraries == null || libraries.length() == 0) {
-                return Collections.singletonList(emptyItem(getString(R.string.open_source_license_empty)));
+                List<LicenseItem> items = new ArrayList<>();
+                items.add(createProjectLicenseItem());
+                items.add(emptyItem(getString(R.string.open_source_license_empty)));
+                return items;
             }
 
             List<LicenseItem> items = new ArrayList<>();
+            items.add(createProjectLicenseItem());
             for (int i = 0; i < libraries.length(); i++) {
                 JSONObject library = libraries.optJSONObject(i);
                 if (library == null) {
@@ -154,16 +158,35 @@ public final class OpenSourceLicenseActivity extends Activity {
                 items.add(new LicenseItem(name, licenseNames, detailBuilder.toString(), website));
             }
 
-            if (items.isEmpty()) {
-                return Collections.singletonList(emptyItem(getString(R.string.open_source_license_empty)));
-            }
-            items.sort((left, right) -> left.name.compareToIgnoreCase(right.name));
+            items.subList(1, items.size()).sort((left, right) -> left.name.compareToIgnoreCase(right.name));
             return items;
         } catch (Resources.NotFoundException e) {
-            return Collections.singletonList(emptyItem(getString(R.string.open_source_license_empty)));
+            List<LicenseItem> items = new ArrayList<>();
+            items.add(createProjectLicenseItem());
+            items.add(emptyItem(getString(R.string.open_source_license_empty)));
+            return items;
         } catch (Throwable t) {
-            return Collections.singletonList(emptyItem(getString(R.string.open_source_license_load_failed)));
+            List<LicenseItem> items = new ArrayList<>();
+            items.add(createProjectLicenseItem());
+            items.add(emptyItem(getString(R.string.open_source_license_load_failed)));
+            return items;
         }
+    }
+
+    private LicenseItem createProjectLicenseItem() {
+        String sourceUrl = getString(R.string.about_source_url);
+        StringBuilder detailBuilder = new StringBuilder(
+                getString(R.string.open_source_license_project_detail, sourceUrl));
+        try (InputStream inputStream = getResources().openRawResource(R.raw.gpl_3_0)) {
+            detailBuilder.append("\n\n").append(readText(inputStream));
+        } catch (Throwable ignored) {
+        }
+        return new LicenseItem(
+                getString(R.string.app_name),
+                getString(R.string.open_source_license_project_summary),
+                detailBuilder.toString(),
+                sourceUrl
+        );
     }
 
     private LicenseItem emptyItem(String reason) {
