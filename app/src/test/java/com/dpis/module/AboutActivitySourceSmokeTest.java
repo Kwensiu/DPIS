@@ -21,26 +21,49 @@ public class AboutActivitySourceSmokeTest {
     }
 
     @Test
-    public void aboutActivityUpdateFlowUsesDirectApkUrlAndHttpsOnly() throws IOException {
+    public void aboutActivityUpdateFlowUsesSharedDownloadCoordinatorAndHttpsOnly() throws IOException {
         String source = read("src/main/java/com/dpis/module/AboutActivity.java");
         String dialogSource = read("src/main/java/com/dpis/module/UpdateAvailableDialog.java");
+        String manifestFetcherSource = read("src/main/java/com/dpis/module/UpdateManifestFetcher.java");
         String dialogLayout = read("src/main/res/layout/dialog_update_available.xml");
 
         assertTrue(source.contains("String downloadUrl = manifest.apkUrl;"));
+        assertTrue(source.contains("UpdateManifestFetcher.fetch("));
         assertTrue(source.contains("R.string.about_update_action_view_release"));
-        assertTrue(source.contains("\"https\".equalsIgnoreCase(scheme)"));
+        assertTrue(source.contains("UpdateDownloadCoordinator.showDialogIdleState("));
+        assertTrue(source.contains("updateDownloadCoordinator.startDownload("));
+        assertTrue(manifestFetcherSource.contains("final class UpdateManifestFetcher"));
         assertTrue(source.contains("UpdateAvailableDialog.create("));
         assertTrue(dialogSource.contains("R.id.update_dialog_cancel_button"));
         assertTrue(dialogLayout.contains("android:id=\"@+id/update_dialog_cancel_button\""));
+        assertTrue(!source.contains("private void executeApkDownload("));
+        assertTrue(!source.contains("private void verifyDownloadedApk("));
+        assertTrue(!source.contains("private static StartupUpdateManifest fetchUpdateManifest("));
+        assertTrue(!source.contains("private static String formatBytes("));
+        assertTrue(!source.contains("private static int compareSemVer("));
     }
 
     @Test
-    public void aboutActivityVerifiesDownloadedApkSignatureBeforeInstall() throws IOException {
+    public void aboutActivityDelegatesSignatureVerificationToSharedHandler() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AboutActivity.java");
+        String coordinatorSource = read("src/main/java/com/dpis/module/UpdateDownloadCoordinator.java");
+
+        assertTrue(!source.contains("extractSigningFingerprints"));
+        assertTrue(!source.contains("about_update_download_untrusted"));
+        assertTrue(coordinatorSource.contains("packageHandler.verifyDownloadedApk("));
+        assertTrue(coordinatorSource.contains("StartupUpdatePackageHandler.UntrustedUpdateException"));
+    }
+
+    @Test
+    public void aboutActivityTracksDownloadStateForCoordinatorCancelFlow() throws IOException {
         String source = read("src/main/java/com/dpis/module/AboutActivity.java");
 
-        assertTrue(source.contains("verifyDownloadedApk(targetFile);"));
-        assertTrue(source.contains("extractSigningFingerprints"));
-        assertTrue(source.contains("about_update_download_untrusted"));
+        assertTrue(source.contains("private volatile boolean updateDownloadInProgress = false;"));
+        assertTrue(source.contains("private volatile boolean updateDownloadCancelRequested = false;"));
+        assertTrue(source.contains("new UpdateCoordinator.State("));
+        assertTrue(source.contains("updateDownloadInProgress,"));
+        assertTrue(source.contains("updateDownloadCancelRequested);"));
+        assertTrue(!source.contains("return UpdateCoordinator.State.empty();"));
     }
 
     @Test

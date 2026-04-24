@@ -10,4 +10,5 @@
     <dimen name="dialog_mode_toggle_width">132dp</dimen>
     <dimen name="dialog_mode_toggle_spacing_start">10dp</dimen>
     <dimen name="dialog_mode_toggle_content_offset_top">6dp</dimen>
+    <dimen name="dialog_app_config_half_expanded_down_offset">1dp</dimen>
 </resources>

@@ -12,6 +12,8 @@
   - 当前保留的字体 Hook 代码整理活计划（其余 superpowers 计划/设计已归档）。
 - [superpowers/plans/2026-04-22-app-detail-sheet-structure-and-layout-hardening.md](./superpowers/plans/2026-04-22-app-detail-sheet-structure-and-layout-hardening.md)
   - 应用详情 Sheet 的代码解耦与布局容错增强方案（低风险、最小 UX 变更）。
+- [superpowers/plans/2026-04-24-mainactivity-phase1-architecture-upgrade.md](./superpowers/plans/2026-04-24-mainactivity-phase1-architecture-upgrade.md)
+  - MainActivity 两阶段架构升级计划（先骨架后重逻辑，当前主线）。
 
 ## 历史文档归档入口
 

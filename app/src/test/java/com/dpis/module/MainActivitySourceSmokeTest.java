@@ -53,7 +53,8 @@ public class MainActivitySourceSmokeTest {
     public void restoreSnapshot_isNotBlockedBySavedStateBranch() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
-        int restoreSnapshotLine = source.indexOf("allApps.addAll(retainedState.appsSnapshot);");
+        int restoreSnapshotLine = source.indexOf(
+                "initialAppsSnapshot = new ArrayList<>(retainedState.appsSnapshot);");
         assertTrue(restoreSnapshotLine > 0);
         String beforeRestoreSnapshot = source.substring(0, restoreSnapshotLine);
 
@@ -64,10 +65,12 @@ public class MainActivitySourceSmokeTest {
     @Test
     public void loadInstalledApps_usesIconCacheEntryPoint() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
+        String coordinatorSource = read("src/main/java/com/dpis/module/InstalledAppCatalogCoordinator.java");
 
-        assertTrue(source.contains("AppIconMemoryCache"));
-        assertTrue(source.contains("loadAppIcon(packageManager, applicationInfo)"));
-        assertTrue(!source.contains("Drawable icon = applicationInfo.loadIcon(packageManager);"));
+        assertTrue(source.contains("installedAppCatalogCoordinator.loadInstalledApps("));
+        assertTrue(coordinatorSource.contains("AppIconMemoryCache"));
+        assertTrue(coordinatorSource.contains("loadAppIcon(packageManager, applicationInfo)"));
+        assertTrue(!coordinatorSource.contains("getDefaultActivityIcon()"));
     }
 
     @Test
@@ -87,29 +90,45 @@ public class MainActivitySourceSmokeTest {
 
         assertTrue(source.contains("maybeShowStartupDisclaimerDialog()"));
         assertTrue(source.contains("if (!maybeShowStartupDisclaimerDialog()) {"));
-        assertTrue(source.contains("showStartupDisclaimerDialog(store, this::maybeCheckForUpdatesOnStartup);"));
-        assertTrue(source.contains("new MaterialAlertDialogBuilder(this)"));
-        assertTrue(source.contains("R.layout.dialog_startup_disclaimer"));
-        assertTrue(source.contains("setStartupDisclaimerAccepted(true)"));
-        assertTrue(source.contains("dialog.setCancelable(false)"));
-        assertTrue(source.contains("setCanceledOnTouchOutside(false)"));
+        assertTrue(source.contains("startupUpdateDialogCoordinator().maybeShowStartupDisclaimerDialog("));
     }
 
     @Test
     public void startupUpdateCheckShowsPromptOnlyOncePerRemoteVersion() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
+        String coordinatorSource = read("src/main/java/com/dpis/module/StartupUpdateCheckCoordinator.java");
+        String downloadCoordinatorSource = read("src/main/java/com/dpis/module/UpdateDownloadCoordinator.java");
+        String manifestFetcherSource = read("src/main/java/com/dpis/module/UpdateManifestFetcher.java");
+        String storeSource = read("src/main/java/com/dpis/module/UpdateStateStore.java");
 
         assertTrue(source.contains("maybeCheckForUpdatesOnStartup();"));
-        assertTrue(source.contains("UPDATE_STARTUP_CHECK_INTERVAL_MS"));
-        assertTrue(source.contains("UPDATE_STARTUP_CHECK_FAILURE_RETRY_INTERVAL_MS"));
-        assertTrue(source.contains("KEY_LAST_UPDATE_CHECK_FAILED"));
-        assertTrue(source.contains("wasLastUpdateCheckFailed()"));
-        assertTrue(source.contains("setLastUpdateCheckFailed(!requestSucceeded);"));
-        assertTrue(source.contains("KEY_LAST_PROMPTED_UPDATE_VERSION_CODE"));
-        assertTrue(source.contains("setLastPromptedUpdateVersionCode(manifest.versionCode);"));
-        assertTrue(source.contains("dialogHandle.cancelButton.setOnClickListener"));
-        assertTrue(source.contains("UpdateAvailableDialog.create("));
+        assertTrue(source.contains("new UpdateCoordinator("));
+        assertTrue(source.contains("new StartupUpdateCheckCoordinator("));
+        assertTrue(source.contains("startupUpdateCheckCoordinator.maybeCheckForUpdatesOnStartup();"));
+        assertTrue(source.contains("private volatile boolean startupUpdateDownloadInProgress;"));
+        assertTrue(source.contains("private volatile boolean startupUpdateDownloadCancelRequested;"));
+        assertTrue(coordinatorSource.contains("if (state.startupCheckInProgress) {"));
+        assertTrue(coordinatorSource.contains("updateCoordinator.markStartupCheckStarted(state)"));
+        assertTrue(!coordinatorSource.contains("updateCoordinator.evaluateStartupCheck("));
+        assertTrue(coordinatorSource.contains("updateCoordinator.evaluatePromptDecision("));
+        assertTrue(coordinatorSource.contains("updateCoordinator.markStartupCheckFinished("));
+        assertTrue(coordinatorSource.contains("UpdateManifestFetcher.fetch("));
+        assertTrue(storeSource.contains("KEY_LAST_UPDATE_CHECK_FAILED"));
+        assertTrue(storeSource.contains("KEY_LAST_PROMPTED_UPDATE_VERSION_CODE"));
+        assertTrue(manifestFetcherSource.contains("static StartupUpdateManifest fetch("));
+        assertTrue(source.contains("markPromptedVersion("));
+        assertTrue(downloadCoordinatorSource.contains("updateCoordinator.requestDownloadStart("));
+        assertTrue(downloadCoordinatorSource.contains("updateCoordinator.requestDownloadCancel("));
+        assertTrue(downloadCoordinatorSource.contains("updateCoordinator.markDownloadFinished("));
+        assertTrue(downloadCoordinatorSource.contains("downloadExecutor.download("));
+        assertTrue(source.contains("new StartupUpdatePackageHandler(this)"));
+        assertTrue(downloadCoordinatorSource.contains("packageHandler.verifyDownloadedApk("));
+        assertTrue(source.contains("startupUpdatePackageHandler.launchPackageInstaller(targetFile);"));
+        assertTrue(!source.contains("private void verifyDownloadedApk(File apkFile)"));
+        assertTrue(source.contains("startupUpdateDialogCoordinator().showUpdateAvailableDialog("));
         assertTrue(source.contains("startStartupUpdateDownload("));
+        assertTrue(source.contains("startupUpdateDownloadInProgress = state.downloadInProgress;"));
+        assertTrue(source.contains("startupUpdateDownloadCancelRequested = state.downloadCancelRequested;"));
         assertTrue(!source.contains("startActivity(AboutActivity.createStartupUpdateIntent("));
     }
 
@@ -139,7 +158,7 @@ public class MainActivitySourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
         int applyFilterStart = source.indexOf("private void applyFilter() {");
-        int applyFilterEnd = source.indexOf("private void toggleScope(", applyFilterStart);
+        int applyFilterEnd = source.indexOf("private void showFilterDialog()", applyFilterStart);
         assertTrue(applyFilterStart >= 0);
         assertTrue(applyFilterEnd > applyFilterStart);
 
@@ -164,24 +183,69 @@ public class MainActivitySourceSmokeTest {
     @Test
     public void appLoad_reusesInstalledAppCatalogBetweenRefreshes() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
+        String viewModelSource = read("src/main/java/com/dpis/module/MainViewModel.java");
+        String coordinatorSource = read("src/main/java/com/dpis/module/InstalledAppCatalogCoordinator.java");
 
         assertTrue(source.contains("INSTALLED_APP_CATALOG_TTL_MS"));
-        assertTrue(source.contains("getInstalledAppCatalog("));
-        assertTrue(source.contains("forceInstalledAppCatalogReloadRequested"));
-        assertTrue(source.contains("cacheFresh"));
+        assertTrue(source.contains("new InstalledAppCatalogCoordinator("));
+        assertTrue(coordinatorSource.contains("getInstalledAppCatalog("));
+        assertTrue(viewModelSource.contains("forceInstalledAppCatalogReloadRequested"));
+        assertTrue(coordinatorSource.contains("cacheFresh"));
+    }
+
+    @Test
+    public void appConfigSheet_halfExpandedStateUsesDownwardOffset() throws IOException {
+        String coordinatorSource = read("src/main/java/com/dpis/module/AppConfigDialogCoordinator.java");
+
+        assertTrue(coordinatorSource.contains("R.dimen.dialog_app_config_half_expanded_down_offset"));
+        assertTrue(coordinatorSource.contains("anchorBottom - sheetPos[1] - halfExpandedDownOffsetPx"));
+    }
+
+    @Test
+    public void showEditDialog_delegatesSheetPresentationToCoordinator() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(source.contains("new AppConfigDialogBinder(this, createAppConfigDialogHost()).bind("));
+        assertTrue(source.contains("new AppConfigDialogCoordinator(this).show("));
+        assertTrue(!source.contains("private void bindDialogValidation("));
+        assertTrue(!source.contains("private void bindDialogActions("));
+        assertTrue(!source.contains("private void refreshDialogState("));
+    }
+
+    @Test
+    public void appConfigAndProcessActions_delegateToDedicatedHandlers() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(source.contains("new ProcessActionHandler(this)"));
+        assertTrue(source.contains("new AppConfigSaveHandler()"));
+        assertTrue(source.contains("processActionHandler.execute(item, mappedAction);"));
+        assertTrue(source.contains("appConfigSaveHandler.save("));
+        assertTrue(!source.contains("private void runProcessAction(String packageName"));
+        assertTrue(!source.contains("private int[] saveAppConfig(AppListItem item"));
     }
 
     @Test
     public void firstScreen_loadUsesPlaceholderAndAsyncIconWarmup() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
+        String coordinatorSource = read("src/main/java/com/dpis/module/InstalledAppCatalogCoordinator.java");
 
-        assertTrue(source.contains("FIRST_SCREEN_ICON_WARMUP_LIMIT"));
-        assertTrue(source.contains("maybeScheduleFirstScreenIconWarmup("));
-        assertTrue(source.contains("private void onIconLoadRequested(String packageName)"));
-        assertTrue(source.contains("pendingOnDemandIconLoads"));
-        assertTrue(source.contains("resolveDisplayIcon(item)"));
-        assertTrue(source.contains("scheduleIconRefresh();"));
-        assertTrue(!source.contains("getDefaultActivityIcon()"));
+        assertTrue(source.contains("installedAppCatalogCoordinator.onIconLoadRequested(packageName);"));
+        assertTrue(coordinatorSource.contains("firstScreenIconWarmupLimit"));
+        assertTrue(coordinatorSource.contains("maybeScheduleFirstScreenIconWarmup("));
+        assertTrue(coordinatorSource.contains("pendingOnDemandIconLoads"));
+        assertTrue(coordinatorSource.contains("resolveDisplayIcon(item)"));
+        assertTrue(coordinatorSource.contains("scheduleIconRefresh();"));
+        assertTrue(!coordinatorSource.contains("getDefaultActivityIcon()"));
+    }
+
+    @Test
+    public void systemScopeAndHookStatus_delegateToCoordinator() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(source.contains("new SystemScopeCoordinator(createSystemScopeHost())"));
+        assertTrue(source.contains("systemScopeCoordinator.toggleScope("));
+        assertTrue(source.contains("systemScopeCoordinator.resolveSystemHookEffectiveEnabled("));
+        assertTrue(!source.contains("private void toggleScope(String packageName"));
     }
 
     @Test
