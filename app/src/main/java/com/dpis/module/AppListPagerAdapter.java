@@ -305,10 +305,9 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             holder.label.setText(item.label);
             holder.packageName.setText(item.packageName);
             bindIcon(holder, item);
-            String statusText = AppStatusFormatter.format(
-                    item.inScope, item.viewportWidthDp, item.viewportMode,
+            String compactStatusText = AppStatusFormatter.formatCompact(
+                    holder.status.getResources(), item.inScope, item.viewportWidthDp, item.viewportMode,
                     item.fontScalePercent, item.fontMode, item.dpisEnabled);
-            String compactStatusText = AppStatusFormatter.toCompactDisplay(statusText);
             boolean warnViewport = AppStatusFormatter.shouldWarnViewportEmulation(
                     item.viewportWidthDp, item.viewportMode,
                     systemScopeSelectedSupplier.getAsBoolean(),
@@ -334,10 +333,9 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                                      @NonNull List<Object> payloads) {
             if (!payloads.isEmpty()) {
                 AppListItem item = getItem(position);
-                String statusText = AppStatusFormatter.format(
-                        item.inScope, item.viewportWidthDp, item.viewportMode,
+                String compactStatusText = AppStatusFormatter.formatCompact(
+                        holder.status.getResources(), item.inScope, item.viewportWidthDp, item.viewportMode,
                         item.fontScalePercent, item.fontMode, item.dpisEnabled);
-                String compactStatusText = AppStatusFormatter.toCompactDisplay(statusText);
                 boolean warnViewport = AppStatusFormatter.shouldWarnViewportEmulation(
                         item.viewportWidthDp, item.viewportMode,
                         systemScopeSelectedSupplier.getAsBoolean(),

@@ -74,11 +74,11 @@
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal">
 
-            <com.google.android.material.button.MaterialButton android:id="@+id/dialog_stop_button" style="@style/Widget.Dpis.DialogActionButton.Outlined.Error" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:minWidth="0dp" android:text="@string/dialog_stop_button" />
+            <com.google.android.material.button.MaterialButton android:id="@+id/dialog_stop_button" style="@style/Widget.Dpis.DialogActionButton.Process.Error" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:minWidth="0dp" android:text="@string/dialog_stop_button" />
 
-            <com.google.android.material.button.MaterialButton android:id="@+id/dialog_restart_button" style="@style/Widget.Dpis.DialogActionButton.Outlined.Warn" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_weight="1" android:minWidth="0dp" android:text="@string/dialog_restart_button" />
+            <com.google.android.material.button.MaterialButton android:id="@+id/dialog_restart_button" style="@style/Widget.Dpis.DialogActionButton.Process.Warn" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_weight="1" android:minWidth="0dp" android:text="@string/dialog_restart_button" />
 
-            <com.google.android.material.button.MaterialButton android:id="@+id/dialog_start_button" style="@style/Widget.Dpis.DialogActionButton.Outlined.Success" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_weight="1" android:minWidth="0dp" android:text="@string/dialog_start_button" />
+            <com.google.android.material.button.MaterialButton android:id="@+id/dialog_start_button" style="@style/Widget.Dpis.DialogActionButton.Process.Success" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_weight="1" android:minWidth="0dp" android:text="@string/dialog_start_button" />
         </LinearLayout>
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:layout_marginBottom="16dp" android:gravity="center_vertical" android:orientation="horizontal">

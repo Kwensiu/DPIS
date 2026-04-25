@@ -363,9 +363,9 @@ final class AppConfigDialogBinder {
         Integer fontScalePercent = parseFontScalePercentOrNullSafe(fontInputView);
         String viewportMode = widthDp == null ? ViewportApplyMode.OFF : resolveViewportMode(viewportModeToggle);
         String fontMode = fontScalePercent == null ? FontApplyMode.OFF : resolveFontMode(fontModeToggle);
-        String statusText = AppStatusFormatter.format(
-                inScope, widthDp, viewportMode, fontScalePercent, fontMode, dpisEnabled);
-        String dialogStatusText = AppStatusFormatter.toCompactDisplay(statusText);
+        String dialogStatusText = AppStatusFormatter.formatCompact(
+                activity.getResources(), inScope, widthDp, viewportMode,
+                fontScalePercent, fontMode, dpisEnabled);
         boolean warnViewport = AppStatusFormatter.shouldWarnViewportEmulation(
                 widthDp, viewportMode, systemHooksEnabled, dpisEnabled);
         boolean warnFont = AppStatusFormatter.shouldWarnFontEmulation(

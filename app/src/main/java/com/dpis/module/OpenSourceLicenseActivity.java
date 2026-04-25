@@ -1,6 +1,5 @@
 package com.dpis.module;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
@@ -33,7 +32,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public final class OpenSourceLicenseActivity extends Activity {
+public final class OpenSourceLicenseActivity extends LocalizedActivity {
     private static final class LicenseItem {
         final String name;
         final String summary;
