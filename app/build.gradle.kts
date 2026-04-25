@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.aboutlibraries)
 }
 
-private val appVersionName = "1.6.2" // x-release-please-version
+private val appVersionName = "1.6.3" // x-release-please-version
 
 private fun readGradleOrEnv(name: String): String? {
     val gradleValue = project.findProperty(name)?.toString()?.trim()
