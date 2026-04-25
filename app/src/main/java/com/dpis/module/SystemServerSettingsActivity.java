@@ -1,6 +1,5 @@
 package com.dpis.module;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
@@ -43,6 +42,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -50,7 +50,8 @@ import java.util.Map;
 
 import io.github.libxposed.service.XposedService;
 
-public final class SystemServerSettingsActivity extends Activity {
+public final class SystemServerSettingsActivity extends LocalizedActivity
+        implements DpisApplication.ServiceStateListener {
     private static final long STATS_REFRESH_INTERVAL_MS = 500L;
     private static final String SYSTEM_SCOPE_MODERN = "system";
     private static final int REQUEST_EXPORT_CONFIG_BACKUP = 1001;
@@ -61,6 +62,8 @@ public final class SystemServerSettingsActivity extends Activity {
     private MaterialSwitch safeModeSwitch;
     private MaterialSwitch globalLogSwitch;
     private MaterialSwitch hideLauncherIconSwitch;
+    private View primarySwitchCard;
+    private View languageEntryRow;
     private View fontDebugEntryRow;
     private View backupConfigEntryRow;
     private SharedPreferences statsPreferences;
@@ -93,7 +96,8 @@ public final class SystemServerSettingsActivity extends Activity {
         ImageButton backButton = findViewById(R.id.settings_back_button);
         backButton.setOnClickListener(v -> finish());
 
-        store = DpisApplication.getConfigStore();
+        primarySwitchCard = findViewById(R.id.settings_primary_switch_card);
+        primarySwitchCard.setVisibility(View.GONE);
         hooksEnabledSwitch = bindSwitchRow(
                 R.id.row_system_hooks,
                 R.drawable.ic_settings_24,
@@ -117,10 +121,17 @@ public final class SystemServerSettingsActivity extends Activity {
                 this::showFontDebugDialog);
         backupConfigEntryRow = bindEntryRow(
                 R.id.row_config_backup,
-                R.drawable.ic_log_24,
+                R.drawable.baseline_upload_file_24,
                 R.string.settings_config_backup_label,
                 R.string.settings_config_backup_hint,
                 this::showConfigBackupDialog);
+        languageEntryRow = bindEntryRow(
+                R.id.row_language,
+                R.drawable.ic_language_24,
+                R.string.settings_language_label,
+                R.string.settings_language_hint,
+                this::showLanguageDialog);
+        updateLanguageEntrySubtitle();
         bindEntryRow(
                 R.id.row_about,
                 R.drawable.ic_info_outline_24,
@@ -129,50 +140,22 @@ public final class SystemServerSettingsActivity extends Activity {
                 v -> startActivity(new Intent(this, AboutActivity.class)));
         hideLauncherIconSwitch = bindSwitchRow(
                 R.id.row_hide_launcher_icon,
-                R.drawable.ic_block_24,
+                R.drawable.outline_image_not_supported_24,
                 R.string.settings_hide_launcher_icon_label,
                 R.string.settings_hide_launcher_icon_hint);
 
         statsPreferences = FontDebugStatsStore.getPreferences(this);
-        if (store != null) {
-            selectedMode = store.getFontDebugSelectedMode();
-            selectedWindow = store.getFontDebugSelectedWindow();
-        }
-
-        if (store == null) {
-            hooksEnabledSwitch.setEnabled(false);
-            safeModeSwitch.setEnabled(false);
-            globalLogSwitch.setEnabled(false);
-            hideLauncherIconSwitch.setEnabled(false);
-            setRowEnabled(fontDebugEntryRow, false);
-            setRowEnabled(backupConfigEntryRow, false);
-            showToast(R.string.status_save_requires_init);
-            return;
-        }
-
-        safeModeSwitch.setChecked(store.isSystemServerSafeModeEnabled());
-        globalLogSwitch.setChecked(store.isGlobalLogEnabled());
-        boolean launcherIconHidden = resolveLauncherIconHiddenState(store.isLauncherIconHidden());
-        setCheckedSilently(hideLauncherIconSwitch, launcherIconHidden, this::onHideLauncherIconChanged);
-        if (launcherIconHidden != store.isLauncherIconHidden()) {
-            store.setLauncherIconHidden(launcherIconHidden);
-        }
-        hooksToggleController = new SystemHooksToggleController(
-                store,
-                new ActivitySystemScopeGateway(),
-                new ActivitySystemHooksToggleView());
-        hooksToggleController.syncFromStore();
-
         hooksEnabledSwitch.setOnCheckedChangeListener(this::onHooksEnabledChanged);
         safeModeSwitch.setOnCheckedChangeListener(this::onSafeModeChanged);
         globalLogSwitch.setOnCheckedChangeListener(this::onGlobalLogChanged);
         hideLauncherIconSwitch.setOnCheckedChangeListener(this::onHideLauncherIconChanged);
-        syncHooksSwitchWithScope();
+        refreshStoreState(true);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        DpisApplication.addServiceStateListener(this, true);
         statsHandler.post(statsRefreshRunnable);
     }
 
@@ -188,9 +171,15 @@ public final class SystemServerSettingsActivity extends Activity {
 
     @Override
     protected void onStop() {
+        DpisApplication.removeServiceStateListener(this);
         super.onStop();
         statsHandler.removeCallbacks(statsRefreshRunnable);
         dismissFontDebugDialog();
+    }
+
+    @Override
+    public void onServiceStateChanged() {
+        runOnUiThread(() -> refreshStoreState(false));
     }
 
     @SuppressWarnings("deprecation")
@@ -254,6 +243,96 @@ public final class SystemServerSettingsActivity extends Activity {
         subtitleView.setText(subtitleRes);
         row.setOnClickListener(clickListener);
         return row;
+    }
+
+    private void showLanguageDialog(View anchor) {
+        View dialogView = LayoutInflater.from(this).inflate(
+                R.layout.dialog_language_selection, null, false);
+        ViewGroup optionsContainer = dialogView.findViewById(R.id.language_options_container);
+        MaterialButton cancelButton = dialogView.findViewById(R.id.language_dialog_cancel_button);
+        List<AppLocaleManager.LanguageOption> languageOptions = AppLocaleManager.supportedLanguages();
+        List<MaterialButton> optionButtons = new ArrayList<>(languageOptions.size());
+        String selectedLanguageTag = AppLocaleManager.getLanguageTag(this);
+
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+        dialog.setCanceledOnTouchOutside(true);
+
+        int selectedIndex = 0;
+        for (int i = 0; i < languageOptions.size(); i++) {
+            AppLocaleManager.LanguageOption option = languageOptions.get(i);
+            int optionIndex = i;
+            MaterialButton optionButton = createLanguageOptionButton(optionsContainer, option.labelResId);
+            optionButton.setOnClickListener(
+                    v -> onLanguageOptionSelected(dialog, optionButtons, languageOptions, optionIndex));
+            optionsContainer.addView(optionButton);
+            optionButtons.add(optionButton);
+            if (option.tag.equals(selectedLanguageTag)) {
+                selectedIndex = i;
+            }
+        }
+        updateLanguageOptionButtonStyles(optionButtons, selectedIndex);
+        cancelButton.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
+    private void onLanguageOptionSelected(androidx.appcompat.app.AlertDialog dialog,
+            List<MaterialButton> optionButtons,
+            List<AppLocaleManager.LanguageOption> languageOptions,
+            int selectedIndex) {
+        if (selectedIndex < 0 || selectedIndex >= languageOptions.size()) {
+            return;
+        }
+        updateLanguageOptionButtonStyles(optionButtons, selectedIndex);
+        String previousTag = AppLocaleManager.getLanguageTag(this);
+        String selectedTag = languageOptions.get(selectedIndex).tag;
+        if (!AppLocaleManager.setLanguageTag(this, selectedTag)) {
+            showToast(R.string.system_settings_save_failed);
+            return;
+        }
+        updateLanguageEntrySubtitle();
+        dialog.dismiss();
+        if (!selectedTag.equals(previousTag)) {
+            recreate();
+        }
+    }
+
+    private MaterialButton createLanguageOptionButton(ViewGroup parent, int labelResId) {
+        MaterialButton button = (MaterialButton) LayoutInflater.from(this).inflate(
+                R.layout.item_language_option_button,
+                parent,
+                false);
+        button.setText(labelResId);
+        return button;
+    }
+
+    private void updateLanguageOptionButtonStyles(List<MaterialButton> optionButtons, int selectedIndex) {
+        for (int i = 0; i < optionButtons.size(); i++) {
+            MaterialButton button = optionButtons.get(i);
+            boolean selected = i == selectedIndex;
+            int backgroundColor = selected
+                    ? MaterialColors.getColor(
+                            this,
+                            com.google.android.material.R.attr.colorSecondaryContainer, 0)
+                    : 0;
+            int textColor = MaterialColors.getColor(
+                    this,
+                    selected ? androidx.appcompat.R.attr.colorPrimary
+                            : com.google.android.material.R.attr.colorOnSurface,
+                    0);
+            button.setBackgroundTintList(ColorStateList.valueOf(backgroundColor));
+            button.setTextColor(textColor);
+            button.setStrokeWidth(0);
+        }
+    }
+
+    private void updateLanguageEntrySubtitle() {
+        if (languageEntryRow == null) {
+            return;
+        }
+        MaterialTextView subtitleView = languageEntryRow.findViewById(R.id.setting_subtitle);
+        subtitleView.setText(AppLocaleManager.selectedLabelResId(this));
     }
 
     private void showConfigBackupDialog(View anchor) {
@@ -414,15 +493,57 @@ public final class SystemServerSettingsActivity extends Activity {
         refreshStatsPanel();
     }
 
+    private void refreshStoreState(boolean showInitToast) {
+        store = DpisApplication.getConfigStore();
+        if (store == null) {
+            applyUnavailableStoreState(showInitToast);
+            return;
+        }
+        applyAvailableStoreState();
+    }
+
+    private void applyAvailableStoreState() {
+        hooksEnabledSwitch.setEnabled(true);
+        safeModeSwitch.setEnabled(true);
+        globalLogSwitch.setEnabled(true);
+        hideLauncherIconSwitch.setEnabled(true);
+        setRowEnabled(fontDebugEntryRow, true);
+        setRowEnabled(backupConfigEntryRow, true);
+        hooksToggleController = new SystemHooksToggleController(
+                store,
+                new ActivitySystemScopeGateway(),
+                new ActivitySystemHooksToggleView());
+        applyRestoredStoreState();
+        setPrimarySwitchRowsVisible(true);
+    }
+
+    private void applyUnavailableStoreState(boolean showInitToast) {
+        hooksToggleController = null;
+        setPrimarySwitchRowsVisible(true);
+        hooksEnabledSwitch.setEnabled(false);
+        safeModeSwitch.setEnabled(false);
+        globalLogSwitch.setEnabled(false);
+        hideLauncherIconSwitch.setEnabled(false);
+        setRowEnabled(fontDebugEntryRow, false);
+        setRowEnabled(backupConfigEntryRow, false);
+        setRowEnabled(languageEntryRow, false);
+        if (showInitToast) {
+            showToast(R.string.status_save_requires_init);
+        }
+    }
+
+    private void setPrimarySwitchRowsVisible(boolean visible) {
+        if (primarySwitchCard == null) {
+            return;
+        }
+        primarySwitchCard.setVisibility(visible ? View.VISIBLE : View.GONE);
+    }
+
     private void applyLauncherIconVisibilityFromStore() {
         if (store == null || hideLauncherIconSwitch == null) {
             return;
         }
-        boolean requestedHidden = store.isLauncherIconHidden();
-        if (!setLauncherAliasHidden(requestedHidden)) {
-            showToast(R.string.settings_hide_launcher_icon_apply_failed);
-        }
-        boolean actualHidden = resolveLauncherIconHiddenState(requestedHidden);
+        boolean actualHidden = resolveLauncherIconHiddenState(store.isLauncherIconHidden());
         if (actualHidden != store.isLauncherIconHidden()) {
             store.setLauncherIconHidden(actualHidden);
         }
@@ -839,7 +960,12 @@ public final class SystemServerSettingsActivity extends Activity {
     }
 
     private boolean resolveLauncherIconHiddenState(boolean fallback) {
-        int state = getPackageManager().getComponentEnabledSetting(getLauncherAliasComponentName());
+        int state;
+        try {
+            state = getPackageManager().getComponentEnabledSetting(getLauncherAliasComponentName());
+        } catch (RuntimeException error) {
+            return fallback;
+        }
         if (state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
                 || state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER
                 || state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_UNTIL_USED) {

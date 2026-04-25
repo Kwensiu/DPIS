@@ -39,10 +39,68 @@
         <item name="strokeColor">@color/dpis_success_container</item>
     </style>
 
+    <style name="Widget.Dpis.DialogActionButton.Process"
+        parent="Widget.Dpis.DialogActionButton.Outlined">
+        <item name="android:minWidth">0dp</item>
+        <item name="minWidth">0dp</item>
+        <item name="android:paddingStart">4dp</item>
+        <item name="android:paddingEnd">4dp</item>
+        <item name="android:paddingLeft">4dp</item>
+        <item name="android:paddingRight">4dp</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <style name="Widget.Dpis.DialogActionButton.Process.Error"
+        parent="Widget.Dpis.DialogActionButton.Process">
+        <item name="backgroundTint">@color/dpis_stop_container</item>
+        <item name="android:textColor">@color/dpis_on_stop_container</item>
+        <item name="strokeColor">@color/dpis_stop_container</item>
+    </style>
+
+    <style name="Widget.Dpis.DialogActionButton.Process.Warn"
+        parent="Widget.Dpis.DialogActionButton.Process">
+        <item name="backgroundTint">@color/dpis_warn_container</item>
+        <item name="android:textColor">@color/dpis_on_warn_container</item>
+        <item name="strokeColor">@color/dpis_warn_container</item>
+    </style>
+
+    <style name="Widget.Dpis.DialogActionButton.Process.Success"
+        parent="Widget.Dpis.DialogActionButton.Process">
+        <item name="backgroundTint">@color/dpis_success_container</item>
+        <item name="android:textColor">@color/dpis_on_success_container</item>
+        <item name="strokeColor">@color/dpis_success_container</item>
+    </style>
+
     <style name="Widget.Dpis.DialogActionButton.Filled" parent="Widget.Material3.Button">
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
         <item name="cornerRadius">18dp</item>
+    </style>
+
+    <style name="Widget.Dpis.DialogActionButton.LanguageOption"
+        parent="Widget.Material3.Button">
+        <item name="android:minHeight">52dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:paddingStart">18dp</item>
+        <item name="android:paddingEnd">18dp</item>
+        <item name="android:gravity">center_vertical|start</item>
+        <item name="android:textAlignment">viewStart</item>
+        <item name="cornerRadius">20dp</item>
+        <item name="elevation">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="rippleColor">?attr/colorControlHighlight</item>
+    </style>
+
+    <style name="Widget.Dpis.DialogActionButton.LanguageOption.Default"
+        parent="Widget.Dpis.DialogActionButton.LanguageOption">
+        <item name="backgroundTint">@android:color/transparent</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
     </style>
 
 </resources>

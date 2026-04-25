@@ -1,6 +1,5 @@
 package com.dpis.module;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -23,7 +22,7 @@ import java.io.File;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public final class AboutActivity extends Activity {
+public final class AboutActivity extends LocalizedActivity {
     private static final int UPDATE_CONNECT_TIMEOUT_MS = 10_000;
     private static final int UPDATE_READ_TIMEOUT_MS = 10_000;
     private static final int DOWNLOAD_BUFFER_SIZE = 16 * 1024;

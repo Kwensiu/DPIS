@@ -16,7 +16,7 @@
 
             <com.google.android.material.textview.MaterialTextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="@dimen/settings_section_inset_start" android:layout_marginTop="24dp" android:text="@string/system_settings_section_general" android:textAppearance="@style/TextAppearance.Material3.TitleLarge" android:textStyle="bold" />
 
-            <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" app:cardBackgroundColor="?attr/colorSurfaceContainerHigh" app:cardCornerRadius="28dp" app:strokeColor="?attr/colorOutlineVariant" app:strokeWidth="1dp">
+            <com.google.android.material.card.MaterialCardView android:id="@+id/settings_primary_switch_card" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" app:cardBackgroundColor="?attr/colorSurfaceContainerHigh" app:cardCornerRadius="28dp" app:strokeColor="?attr/colorOutlineVariant" app:strokeWidth="1dp">
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
 
@@ -47,6 +47,10 @@
                     <com.google.android.material.divider.MaterialDivider android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" />
 
                     <include android:id="@+id/row_config_backup" layout="@layout/item_settings_entry" />
+
+                    <com.google.android.material.divider.MaterialDivider android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" />
+
+                    <include android:id="@+id/row_language" layout="@layout/item_settings_entry" />
 
                     <com.google.android.material.divider.MaterialDivider android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" />
 

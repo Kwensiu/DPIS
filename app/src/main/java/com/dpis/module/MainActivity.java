@@ -1,9 +1,8 @@
 package com.dpis.module;
 
-import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.res.ColorStateList;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -63,7 +62,7 @@ import java.util.concurrent.Executors;
 
 import io.github.libxposed.service.XposedService;
 
-public final class MainActivity extends Activity implements DpisApplication.ServiceStateListener {
+public final class MainActivity extends LocalizedActivity implements DpisApplication.ServiceStateListener {
     private static final long MODE_TOGGLE_ANIM_DURATION_MS = 200L;
     private static final long SEARCH_FAB_ANIM_DURATION_MS = 180L;
     private static final int SEARCH_FAB_SCROLL_TRIGGER_DY = 8;

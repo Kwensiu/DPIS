@@ -32,8 +32,8 @@ public class HelpTutorialDialogLayoutSmokeTest {
         assertTrue(layout.contains("android:id=\"@+id/help_tutorial_emulation_summary\""));
         assertTrue(layout.contains("android:id=\"@+id/help_tutorial_replace_badge\""));
         assertTrue(layout.contains("android:id=\"@+id/help_tutorial_replace_summary\""));
-        assertTrue(strings.contains("通过系统层链路伪装相关参数"));
-        assertTrue(strings.contains("通过字段重写直接覆盖缩放"));
+        assertTrue(strings.contains("name=\"help_tutorial_emulation_summary\""));
+        assertTrue(strings.contains("name=\"help_tutorial_replace_summary\""));
     }
 
     @Test

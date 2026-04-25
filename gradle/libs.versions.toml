@@ -15,6 +15,8 @@ material = "1.13.0"
 annotation = "1.10.0"
 swiperefreshlayout = "1.2.0"
 aboutLibraries = "14.0.1"
+androidxTestExtJunit = "1.3.0"
+androidxTestCore = "1.7.0"
 
 [plugins]
 agp-app = { id = "com.android.application", version.ref = "agp" }
@@ -37,3 +39,5 @@ androidx-viewpager2 = { group = "androidx.viewpager2", name = "viewpager2", vers
 androidx-swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-annotation = { group = "androidx.annotation", name = "annotation", version.ref = "annotation" }
+androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestExtJunit" }
+androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }

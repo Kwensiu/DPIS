@@ -11,5 +11,5 @@
         <com.google.android.material.textview.MaterialTextView android:id="@+id/setting_subtitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:textAppearance="@style/TextAppearance.Material3.BodyMedium" android:textColor="?attr/colorOnSurfaceVariant" />
     </LinearLayout>
 
-    <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/setting_switch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:showText="false" android:splitTrack="false" android:switchMinWidth="56dp" android:switchPadding="0dp" app:thumbTint="@color/settings_switch_thumb_tint" app:trackTint="@color/settings_switch_track_tint" app:useMaterialThemeColors="false" />
+    <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/setting_switch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:saveEnabled="false" android:showText="false" android:splitTrack="false" android:switchMinWidth="56dp" android:switchPadding="0dp" app:thumbTint="@color/settings_switch_thumb_tint" app:trackTint="@color/settings_switch_track_tint" app:useMaterialThemeColors="false" />
 </LinearLayout>
