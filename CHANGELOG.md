@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.3](https://github.com/Kwensiu/DPIS/compare/v1.6.2...v1.6.3) (2026-04-25)
+
+
+### UI
+
+* optimize the warning dialog for restarting/launching system apps ([#32](https://github.com/Kwensiu/DPIS/issues/32)) ([c0f767b](https://github.com/Kwensiu/DPIS/commit/c0f767b1ed80ed131479bd601c05f134b63bdc5b))
+
 ## [1.6.2](https://github.com/Kwensiu/DPIS/compare/v1.6.1...v1.6.2) (2026-04-24)
 
 
