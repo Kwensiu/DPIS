@@ -5,6 +5,7 @@ final class PerAppDisplayConfig {
     final int targetViewportWidthDp;
     final Integer targetFontScalePercent;
     final String targetFontMode;
+    final boolean hyperOsFlutterFontHookEnabled;
     final boolean viewportOverrideEnabled;
 
     PerAppDisplayConfig(String packageName, int targetViewportWidthDp) {
@@ -24,12 +25,21 @@ final class PerAppDisplayConfig {
 
     PerAppDisplayConfig(String packageName, Integer targetViewportWidthDp,
                         Integer targetFontScalePercent, String targetFontMode) {
+        this(packageName, targetViewportWidthDp, targetFontScalePercent, targetFontMode, false);
+    }
+
+    PerAppDisplayConfig(String packageName,
+                        Integer targetViewportWidthDp,
+                        Integer targetFontScalePercent,
+                        String targetFontMode,
+                        boolean hyperOsFlutterFontHookEnabled) {
         this.packageName = packageName;
         this.viewportOverrideEnabled =
                 targetViewportWidthDp != null && targetViewportWidthDp > 0;
         this.targetViewportWidthDp = viewportOverrideEnabled ? targetViewportWidthDp : 0;
         this.targetFontScalePercent = targetFontScalePercent;
         this.targetFontMode = FontApplyMode.normalize(targetFontMode);
+        this.hyperOsFlutterFontHookEnabled = hyperOsFlutterFontHookEnabled;
     }
 
     boolean hasViewportOverride() {

@@ -20,6 +20,9 @@ public final class ModuleMain extends XposedModule {
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
         String message = "module loaded: process=" + param.getProcessName()
                 + ", marker=" + SystemServerDisplayDiagnostics.BUILD_MARKER;
+        if (SystemServerProcess.isSystemServer(param.getProcessName(), "")) {
+            ModuleRuntimeStateReporter.reportSystemServerLoaded();
+        }
         SystemServerDisplayDiagnostics.recordPending(
                 message);
         DpisLog.i(message);
@@ -63,6 +66,7 @@ public final class ModuleMain extends XposedModule {
                 + ", targetViewportMode=" + targetViewportMode
                 + ", targetFontScalePercent=" + targetFontScalePercent
                 + ", targetFontMode=" + targetFontMode);
+        HyperOsFlutterFontHookInstaller.install(packageName, store);
         try {
             AppProcessHookInstaller.install(this, packageName, store, policy,
                     targetViewportWidthDp != null, targetViewportMode, targetFontMode,

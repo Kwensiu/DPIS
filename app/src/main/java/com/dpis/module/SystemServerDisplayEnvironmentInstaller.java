@@ -1,8 +1,11 @@
 package com.dpis.module;
 
 import android.content.res.Configuration;
+import android.content.pm.ActivityInfo;
 import android.graphics.Rect;
+import android.os.Binder;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -57,6 +60,15 @@ final class SystemServerDisplayEnvironmentInstaller {
                             "computeScreenConfiguration",
                             "updateDisplayAndOrientation",
                             "getDisplayInfo"
+                    }),
+            new HookTarget("display-manager-info",
+                    new String[]{
+                            "com.android.server.display.DisplayManagerService$BinderService",
+                            "com.android.server.display.DisplayManagerService"
+                    },
+                    new String[]{
+                            "getDisplayInfo",
+                            "getDisplayInfoInternal"
                     })
     };
     private static volatile boolean installed;
@@ -94,10 +106,21 @@ final class SystemServerDisplayEnvironmentInstaller {
                     installed = true;
                     return;
                 }
-                PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(store);
+                PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(
+                        () -> ConfigStoreFactory.createForXposedHost(xposed));
                 Set<String> configuredPackages = source.getConfiguredPackages();
                 int installedCount = 0;
                 int missingCount = 0;
+                if (installLaunchActivityItemHook(xposed, source)) {
+                    installedCount++;
+                } else {
+                    missingCount++;
+                }
+                if (HyperOsRustProcessHookInstaller.install(xposed, source)) {
+                    installedCount++;
+                } else {
+                    missingCount++;
+                }
                 for (HookTarget target : HOOK_TARGETS) {
                     if (!SystemServerMutationPolicy.shouldInstallTarget(
                             target.entryName, policy.systemServerSafeModeEnabled)) {
@@ -178,12 +201,19 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     if (!source.isSystemServerHooksEnabled()) {
                                         return chain.proceed();
                                     }
+                                    if ("display-manager-info".equals(target.entryName)) {
+                                        Object displayManagerResult = chain.proceed();
+                                        applyDisplayManagerInfoResult(
+                                                source, target.entryName, displayManagerResult);
+                                        return displayManagerResult;
+                                    }
                                     boolean loggingEnabled = DpisLog.isLoggingEnabled();
+                                    Set<String> currentConfiguredPackages = source.getConfiguredPackages();
                                     if (!shouldInspectHotEntry(
                                             target.entryName,
                                             thisObject,
                                             args,
-                                            configuredPackages)) {
+                                            currentConfiguredPackages)) {
                                         return chain.proceed();
                                     }
                                     if (loggingEnabled && shouldLogInterceptEnter(target.entryName)) {
@@ -192,7 +222,7 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     ResolvedPackage resolvedPackage = resolveConfiguredPackage(
                                             thisObject,
                                             args,
-                                            packageName -> selectViewportConfigForSystemServer(
+                                            packageName -> selectConfigForSystemServer(
                                                     source.get(packageName)));
                                     if (resolvedPackage.packageName == null) {
                                         if (loggingEnabled) {
@@ -218,9 +248,8 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     Snapshot before = captureSnapshot(thisObject, args);
                                     PerAppDisplayEnvironment preEnvironment = resolveTargetEnvironment(
                                             before, before, config);
-                                    if (preEnvironment != null
-                                            && shouldApplyPreProceedMutations(target.entryName)) {
-                                        applyEnvironment(target.entryName, before, preEnvironment);
+                                    if (shouldApplyPreProceedMutations(target.entryName)) {
+                                        applyEnvironment(target.entryName, before, preEnvironment, config);
                                     }
                                     result = chain.proceed();
                                     proceeded = true;
@@ -244,12 +273,12 @@ final class SystemServerDisplayEnvironmentInstaller {
                                                             after.configuration, after.frame));
                                         }
                                     }
-                                    if (effectiveEnvironment != null && shouldApplyPostProceedMutations(target.entryName)) {
+                                    if (shouldApplyPostProceedMutations(target.entryName)) {
                                         String beforeApplySummary = loggingEnabled
                                                 ? SystemServerDisplayDiagnostics.describeState(
                                                 after.configuration, after.frame)
                                                 : null;
-                                        if (applyEnvironment(target.entryName, after, effectiveEnvironment)) {
+                                        if (applyEnvironment(target.entryName, after, effectiveEnvironment, config)) {
                                             if (loggingEnabled) {
                                                 String afterApplySummary = SystemServerDisplayDiagnostics.describeState(
                                                         mutated.configuration, mutated.frame);
@@ -318,6 +347,119 @@ final class SystemServerDisplayEnvironmentInstaller {
         DpisLog.i(SystemServerDisplayDiagnostics.buildHookMissingLog(
                 target.entryName, target.describeClassNames(), target.describeMethodNames()));
         return false;
+    }
+
+    private static boolean installLaunchActivityItemHook(XposedInterface xposed,
+                                                         PerAppDisplayConfigSource source) {
+        Class<?> clazz = resolveClass("android.app.servertransaction.LaunchActivityItem", null);
+        if (clazz == null) {
+            DpisLog.i("system_server hook missing: entry=launch-activity-item, class=LaunchActivityItem");
+            return false;
+        }
+        boolean hooked = false;
+        for (Constructor<?> constructor : clazz.getDeclaredConstructors()) {
+            xposed.hook(constructor)
+                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+                    .intercept(chain -> {
+                        try {
+                            if (source.isSystemServerHooksEnabled()) {
+                                applyLaunchActivityItemArgs(source, chain.getArgs());
+                            }
+                        } catch (Throwable throwable) {
+                            DpisLog.e("system_server launch-activity-item failed", throwable);
+                        }
+                        return chain.proceed();
+                    });
+            hooked = true;
+        }
+        if (hooked) {
+            DpisLog.i("system_server hook ready: entry=launch-activity-item, class=LaunchActivityItem");
+        }
+        return hooked;
+    }
+
+    private static void applyLaunchActivityItemArgs(PerAppDisplayConfigSource source,
+                                                    List<Object> args) {
+        String packageName = findActivityInfoPackage(args);
+        if (packageName == null) {
+            return;
+        }
+        PerAppDisplayConfig config = selectConfigForSystemServer(source.get(packageName));
+        if (config == null) {
+            return;
+        }
+        Configuration baseConfiguration = findFirstConfiguration(args);
+        if (baseConfiguration == null) {
+            return;
+        }
+        PerAppDisplayEnvironment environment = null;
+        if (config.hasViewportOverride()) {
+            int widthPx = resolveWidthPx(baseConfiguration, null);
+            int heightPx = resolveHeightPx(baseConfiguration, null);
+            environment = PerAppDisplayOverrideCalculator.calculate(
+                    baseConfiguration, widthPx, heightPx, config.targetViewportWidthDp);
+        }
+        String beforeSummary = DpisLog.isLoggingEnabled()
+                ? describeConfigurationArgs(args)
+                : null;
+        float beforeFontScale = baseConfiguration.fontScale;
+        boolean changed = false;
+        boolean fontChanged = false;
+        for (Object arg : args) {
+            if (arg instanceof Configuration configuration) {
+                if (environment != null) {
+                    changed |= applyConfiguration(configuration, environment);
+                }
+                boolean appliedFont = applyFontScale(configuration, config);
+                fontChanged |= appliedFont;
+                changed |= appliedFont;
+            }
+        }
+        if (fontChanged) {
+            HyperOsFlutterFontBridge.publishTarget(packageName, config);
+            reportSystemServerFontConfig(packageName, beforeFontScale, baseConfiguration.fontScale);
+        }
+        if (changed && DpisLog.isLoggingEnabled()) {
+            String message = "system_server launch-activity-item apply: package=" + packageName
+                    + ", before=" + safeToString(beforeSummary)
+                    + ", after=" + describeConfigurationArgs(args)
+                    + ", target=" + describeEnvironment(environment);
+            logIfChanged("launch-activity-item|" + packageName, message,
+                    resolveLogMinIntervalMs("launch-activity-item"));
+        }
+    }
+
+    private static String findActivityInfoPackage(List<Object> args) {
+        for (Object arg : args) {
+            if (arg instanceof ActivityInfo activityInfo
+                    && activityInfo.packageName != null
+                    && isLikelyPackageName(activityInfo.packageName)) {
+                return activityInfo.packageName;
+            }
+        }
+        return null;
+    }
+
+    private static Configuration findFirstConfiguration(List<Object> args) {
+        for (Object arg : args) {
+            if (arg instanceof Configuration configuration) {
+                return configuration;
+            }
+        }
+        return null;
+    }
+
+    private static String describeConfigurationArgs(List<Object> args) {
+        StringJoiner joiner = new StringJoiner(",");
+        int index = 0;
+        for (Object arg : args) {
+            if (arg instanceof Configuration configuration) {
+                joiner.add("#" + index + "="
+                        + SystemServerDisplayDiagnostics.describeConfiguration(configuration));
+            }
+            index++;
+        }
+        return joiner.toString();
     }
 
     private static Set<ClassLoader> resolveCandidateClassLoaders() {
@@ -587,7 +729,7 @@ final class SystemServerDisplayEnvironmentInstaller {
     private static PerAppDisplayEnvironment resolveTargetEnvironment(Snapshot before,
                                                                      Snapshot after,
                                                                      PerAppDisplayConfig config) {
-        if (config == null) {
+        if (config == null || !config.hasViewportOverride()) {
             return null;
         }
         Configuration configuration = after.configuration != null
@@ -630,12 +772,151 @@ final class SystemServerDisplayEnvironmentInstaller {
                 entryName, self, args, configuredPackages);
     }
 
-    private static PerAppDisplayConfig selectViewportConfigForSystemServer(
+    private static PerAppDisplayConfig selectConfigForSystemServer(
             PerAppDisplayConfig config) {
-        if (config == null || !config.hasViewportOverride()) {
+        if (config == null
+                || (!config.hasViewportOverride() && !hasSystemServerFontOverride(config))) {
             return null;
         }
         return config;
+    }
+
+    private static boolean hasSystemServerFontOverride(PerAppDisplayConfig config) {
+        return config != null
+                && FontApplyMode.SYSTEM_EMULATION.equals(config.targetFontMode)
+                && config.targetFontScalePercent != null
+                && config.targetFontScalePercent > 0;
+    }
+
+    private static void applyDisplayManagerInfoResult(PerAppDisplayConfigSource source,
+                                                       String entryName,
+                                                       Object displayInfo) {
+        if (displayInfo == null || source == null) {
+            logDisplayManagerInfoSkip(entryName, "empty-result", -1, null, displayInfo);
+            return;
+        }
+        int callingUid = Binder.getCallingUid();
+        String packageName = resolveCallingUidConfiguredPackage(source, callingUid);
+        if (packageName == null) {
+            logDisplayManagerInfoSkip(entryName, "uid-not-configured", callingUid, null, displayInfo);
+            return;
+        }
+        PerAppDisplayConfig config = selectConfigForSystemServer(source.get(packageName));
+        if (config == null) {
+            logDisplayManagerInfoSkip(entryName, "no-viewport-config", callingUid, packageName, displayInfo);
+            return;
+        }
+        PerAppDisplayEnvironment environment = resolveDisplayInfoEnvironment(displayInfo, config);
+        if (environment == null) {
+            logDisplayManagerInfoSkip(entryName, "env-null", callingUid, packageName, displayInfo);
+            return;
+        }
+        String beforeSummary = DpisLog.isLoggingEnabled() ? describeDisplayInfo(displayInfo) : null;
+        if (!applyDisplayInfo(displayInfo, environment)) {
+            return;
+        }
+        if (DpisLog.isLoggingEnabled()) {
+            String message = "system_server display-manager-info apply: package=" + packageName
+                    + ", before=" + safeToString(beforeSummary)
+                    + ", after=" + safeToString(describeDisplayInfo(displayInfo))
+                    + ", target=" + describeEnvironment(environment);
+            logIfChanged("display-manager-info|" + packageName, message,
+                    resolveLogMinIntervalMs(entryName));
+        }
+    }
+
+    private static void logDisplayManagerInfoSkip(String entryName,
+                                                  String reason,
+                                                  int callingUid,
+                                                  String packageName,
+                                                  Object displayInfo) {
+        if (!DpisLog.isLoggingEnabled()) {
+            return;
+        }
+        String message = "system_server display-manager-info skip: reason=" + reason
+                + ", uid=" + callingUid
+                + ", package=" + safeToString(packageName)
+                + ", displayInfo=" + safeToString(describeDisplayInfo(displayInfo));
+        logIfChanged("display-manager-info-skip|" + reason + "|" + callingUid,
+                message, resolveLogMinIntervalMs(entryName));
+    }
+
+    private static String resolveCallingUidConfiguredPackage(PerAppDisplayConfigSource source,
+                                                             int callingUid) {
+        if (callingUid <= 0) {
+            return null;
+        }
+        String fallbackPackage = null;
+        for (String packageName : source.getConfiguredPackages()) {
+            if (resolvePackageUid(packageName) != callingUid) {
+                continue;
+            }
+            if (selectConfigForSystemServer(source.get(packageName)) != null) {
+                return packageName;
+            }
+            fallbackPackage = packageName;
+        }
+        return fallbackPackage;
+    }
+
+    private static int resolvePackageUid(String packageName) {
+        try {
+            Object packageManager = Class.forName("android.app.AppGlobals")
+                    .getMethod("getPackageManager")
+                    .invoke(null);
+            if (packageManager != null) {
+                Object uid = packageManager.getClass()
+                        .getMethod("getPackageUid", String.class, long.class, int.class)
+                        .invoke(packageManager, packageName, 0L, 0);
+                if (uid instanceof Integer integerUid) {
+                    return integerUid;
+                }
+            }
+        } catch (Throwable throwable) {
+            try {
+                Object activityThread = Class.forName("android.app.ActivityThread")
+                        .getMethod("currentActivityThread")
+                        .invoke(null);
+                if (activityThread == null) {
+                    return -1;
+                }
+                Object context = activityThread.getClass()
+                        .getMethod("getSystemContext")
+                        .invoke(activityThread);
+                if (!(context instanceof android.content.Context androidContext)) {
+                    return -1;
+                }
+                return androidContext.getPackageManager().getPackageUid(packageName, 0);
+            } catch (Throwable ignored) {
+                return -1;
+            }
+        }
+        return -1;
+    }
+
+    private static PerAppDisplayEnvironment resolveDisplayInfoEnvironment(Object displayInfo,
+                                                                          PerAppDisplayConfig config) {
+        Integer logicalWidth = readIntField(displayInfo, "logicalWidth");
+        Integer logicalHeight = readIntField(displayInfo, "logicalHeight");
+        Integer logicalDensityDpi = readIntField(displayInfo, "logicalDensityDpi");
+        if (logicalWidth == null || logicalHeight == null || logicalDensityDpi == null
+                || logicalWidth <= 0 || logicalHeight <= 0 || logicalDensityDpi <= 0) {
+            return null;
+        }
+        Configuration configuration = new Configuration();
+        configuration.densityDpi = logicalDensityDpi;
+        configuration.screenWidthDp = Math.max(1,
+                Math.round(logicalWidth / (logicalDensityDpi / 160.0f)));
+        configuration.screenHeightDp = Math.max(1,
+                Math.round(logicalHeight / (logicalDensityDpi / 160.0f)));
+        configuration.smallestScreenWidthDp = Math.min(
+                configuration.screenWidthDp,
+                configuration.screenHeightDp);
+        return PerAppDisplayOverrideCalculator.calculate(
+                configuration,
+                logicalWidth,
+                logicalHeight,
+                config.targetViewportWidthDp);
     }
 
     private static PerAppDisplayEnvironment chooseEffectiveEnvironment(
@@ -670,7 +951,7 @@ final class SystemServerDisplayEnvironmentInstaller {
     }
 
     static boolean shouldUseConfigInSystemServerForTest(PerAppDisplayConfig config) {
-        return selectViewportConfigForSystemServer(config) != null;
+        return selectConfigForSystemServer(config) != null;
     }
 
     static boolean shouldEmitLogForTest(String previousMessage,
@@ -687,15 +968,23 @@ final class SystemServerDisplayEnvironmentInstaller {
 
     private static boolean applyEnvironment(String entryName,
                                             Snapshot snapshot,
-                                            PerAppDisplayEnvironment environment) {
+                                            PerAppDisplayEnvironment environment,
+                                            PerAppDisplayConfig config) {
         boolean changed = false;
-        if (snapshot.configuration != null) {
+        if (snapshot.configuration != null && environment != null) {
             changed |= applyConfiguration(snapshot.configuration, environment);
         }
-        if (shouldApplyFrame(entryName) && snapshot.frame != null) {
+        if (snapshot.configuration != null) {
+            boolean fontChanged = applyFontScale(snapshot.configuration, config);
+            if (fontChanged) {
+                HyperOsFlutterFontBridge.publishTarget(config.packageName, config);
+            }
+            changed |= fontChanged;
+        }
+        if (environment != null && shouldApplyFrame(entryName) && snapshot.frame != null) {
             changed |= applyFrame(snapshot.frame, environment.widthPx, environment.heightPx);
         }
-        if (shouldApplyDisplayInfo(entryName) && snapshot.displayInfo != null) {
+        if (environment != null && shouldApplyDisplayInfo(entryName) && snapshot.displayInfo != null) {
             changed |= applyDisplayInfo(snapshot.displayInfo, environment);
         }
         return changed;
@@ -725,6 +1014,29 @@ final class SystemServerDisplayEnvironmentInstaller {
                 environment.smallestWidthDp,
                 environment.densityDpi));
         return true;
+    }
+
+    private static boolean applyFontScale(Configuration configuration,
+                                          PerAppDisplayConfig config) {
+        if (configuration == null || !hasSystemServerFontOverride(config)) {
+            return false;
+        }
+        float fontScale = config.targetFontScalePercent / 100.0f;
+        if (Math.abs(configuration.fontScale - fontScale) < 0.0001f) {
+            return false;
+        }
+        configuration.fontScale = fontScale;
+        return true;
+    }
+
+    private static void reportSystemServerFontConfig(String packageName,
+                                                     float beforeFontScale,
+                                                     float afterFontScale) {
+        if (packageName == null || packageName.isEmpty()) {
+            return;
+        }
+        DpisLog.i("DPIS_FONT SystemServer config fontScale: package=" + packageName
+                + ", fontScale=" + beforeFontScale + "->" + afterFontScale);
     }
 
     private static boolean applyFrame(Rect frame, int targetWidthPx, int targetHeightPx) {

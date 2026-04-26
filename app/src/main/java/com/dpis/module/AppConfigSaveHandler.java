@@ -45,9 +45,16 @@ final class AppConfigSaveHandler {
             if (fontScalePercent == null) {
                 changed = store.clearTargetFontScalePercent(item.packageName) && changed;
                 changed = store.setTargetFontApplyMode(item.packageName, FontApplyMode.OFF) && changed;
+                HyperOsNativeFontPropertySyncer.clearFontTargetAsync(item.packageName);
             } else {
                 changed = store.setTargetFontScalePercent(item.packageName, fontScalePercent) && changed;
                 changed = store.setTargetFontApplyMode(item.packageName, fontMode) && changed;
+                if (FontApplyMode.isEnabled(fontMode)) {
+                    HyperOsNativeFontPropertySyncer.publishForceFontTargetAsync(
+                            item.packageName, fontScalePercent);
+                } else {
+                    HyperOsNativeFontPropertySyncer.clearFontTargetAsync(item.packageName);
+                }
             }
             if (changed && onChanged != null) {
                 onChanged.run();
