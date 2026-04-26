@@ -44,6 +44,13 @@
     <string name="dialog_stop_button">Stop</string>
     <string name="dialog_dpis_enable_button">Enable</string>
     <string name="dialog_dpis_disable_button">Enabled</string>
+    <string name="dialog_hyperos_native_warning">HyperOS native/Flutter app detected. Current Java hooks may not load, so DP/font replacement can be ineffective.</string>
+    <string name="dialog_hyperos_native_proxy_present">HyperOS Native Proxy: detected. Rust/Flutter font hook can be used after restarting the target app.</string>
+    <string name="dialog_hyperos_native_proxy_missing">HyperOS Native Proxy: not detected in the target app native directory, so Rust/Flutter font hook may not take effect.</string>
+    <string name="dialog_hyperos_native_proxy_unknown">HyperOS Native Proxy: unable to check the target app native directory. If font hook does not work, verify libdpis_native.so manually.</string>
+    <string name="module_runtime_reload_title">System-level hooks may need reload</string>
+    <string name="module_runtime_reload_message">DPIS was updated after this boot. Normal Java app hooks may work after restarting the target app, but system_server/HyperOS Rust hooks can still be running the previous module code. If Gallery or other HyperOS apps do not change, reboot the device or restart the module runtime/system_server before testing.</string>
+    <string name="module_runtime_reload_ack_button">Got it</string>
     <string name="dialog_process_requires_root">Root access required</string>
     <string name="dialog_process_restart_requires_root">Root access required to restart</string>
     <string name="dialog_process_stop_requires_root">Root access required to stop</string>
@@ -107,6 +114,8 @@
     <string name="font_debug_reason_not_injected_hint">Module not loaded. Check LSPosed and restart the app.</string>
     <string name="font_debug_reason_no_events">No events</string>
     <string name="font_debug_reason_no_events_hint">Injected, but no font paths hit. Open a text page or view totals.</string>
+    <string name="settings_hyperos_flutter_font_hook_label">Experimental HyperOS Flutter font hook</string>
+    <string name="settings_hyperos_flutter_font_hook_hint">Native text hook for HyperOS Flutter apps. Requires app restart.</string>
     <string name="settings_about_label">About</string>
     <string name="settings_about_hint">Version, source code, and feedback.</string>
     <string name="settings_config_backup_label">Config backup</string>

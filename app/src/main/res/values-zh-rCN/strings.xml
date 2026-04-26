@@ -44,6 +44,13 @@
     <string name="dialog_stop_button">停止</string>
     <string name="dialog_dpis_enable_button">启用修改</string>
     <string name="dialog_dpis_disable_button">已启用</string>
+    <string name="dialog_hyperos_native_warning">检测到 HyperOS 原生/Flutter 应用。当前 Java Hook 可能不会加载，因此 DP/字体替换可能无效。</string>
+    <string name="dialog_hyperos_native_proxy_present">HyperOS Native Proxy：已检测到。重启目标应用后可使用 Rust/Flutter 字体 Hook。</string>
+    <string name="dialog_hyperos_native_proxy_missing">HyperOS Native Proxy：目标应用 native 目录未检测到，Rust/Flutter 字体 Hook 可能不会生效。</string>
+    <string name="dialog_hyperos_native_proxy_unknown">HyperOS Native Proxy：无法检测目标应用 native 目录。若字体 Hook 不生效，请手动确认 libdpis_native.so。</string>
+    <string name="module_runtime_reload_title">系统级 Hook 可能需要重载</string>
+    <string name="module_runtime_reload_message">DPIS 是在本次开机后更新的。普通 Java 应用重启目标应用后通常可以生效，但 system_server/HyperOS Rust 链路可能仍在运行旧模块代码。如果相册或其他 HyperOS 应用没有变化，请重启设备，或重启模块运行时/system_server 后再测试。</string>
+    <string name="module_runtime_reload_ack_button">知道了</string>
     <string name="dialog_process_requires_root">该操作需要 root 权限</string>
     <string name="dialog_process_restart_requires_root">重启应用需要 root 权限</string>
     <string name="dialog_process_stop_requires_root">停止应用需要 root 权限</string>
@@ -107,6 +114,8 @@
     <string name="font_debug_reason_not_injected_hint">目标进程未加载模块，检查 LSPosed 启用状态并重启目标应用。</string>
     <string name="font_debug_reason_no_events">无事件</string>
     <string name="font_debug_reason_no_events_hint">已注入但未命中字体链路，进入文字页面或切到累计窗口观察。</string>
+    <string name="settings_hyperos_flutter_font_hook_label">实验性 HyperOS Flutter 字体 Hook</string>
+    <string name="settings_hyperos_flutter_font_hook_hint">针对 HyperOS Flutter 应用的 native 文本层 Hook，需重启目标应用。</string>
     <string name="settings_about_label">关于</string>
     <string name="settings_about_hint">查看版本、源码与反馈渠道。</string>
     <string name="settings_config_backup_label">配置备份</string>

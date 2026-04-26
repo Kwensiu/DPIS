@@ -19,6 +19,7 @@ public class AppListVisibleSectionsTest {
                 FontApplyMode.OFF,
                 true,
                 false,
+                false,
                 null);
         AppListItem plain = new AppListItem(
                 "Android System WebView",
@@ -30,6 +31,7 @@ public class AppListVisibleSectionsTest {
                 FontApplyMode.OFF,
                 true,
                 true,
+                false,
                 null);
 
         List<AppListItem> configuredItems = AppListVisibleSections.filter(

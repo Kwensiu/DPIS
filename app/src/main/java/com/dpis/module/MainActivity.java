@@ -249,6 +249,9 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                 .setOnClickListener(v -> startActivity(new Intent(this, SystemServerSettingsActivity.class)));
 
         renderMainUiState(requireUiState());
+        if (maybeShowModuleRuntimeReloadAdvice()) {
+            return;
+        }
         if (!maybeShowStartupDisclaimerDialog()) {
             maybeCheckForUpdatesOnStartup();
         }
@@ -623,6 +626,9 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             showToast(R.string.system_settings_save_failed);
             return false;
         }
+        if (!enabled) {
+            HyperOsNativeFontPropertySyncer.clearFontTargetAsync(packageName);
+        }
         showToast(enabled ? R.string.dialog_dpis_enabled_status : R.string.dialog_dpis_disabled_status);
         requestAppsLoad();
         return true;
@@ -730,6 +736,23 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         return startupUpdateDialogCoordinator().maybeShowStartupDisclaimerDialog(
                 getUiConfigStore(),
                 this::maybeCheckForUpdatesOnStartup);
+    }
+
+    private boolean maybeShowModuleRuntimeReloadAdvice() {
+        if (!ModuleRuntimeReloadAdvisor.shouldShowReloadAdvice(this)) {
+            return false;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.module_runtime_reload_title)
+                .setMessage(R.string.module_runtime_reload_message)
+                .setPositiveButton(R.string.module_runtime_reload_ack_button, (dialog, which) -> {
+                    ModuleRuntimeReloadAdvisor.markReloadAdviceAcknowledged(this);
+                    if (!maybeShowStartupDisclaimerDialog()) {
+                        maybeCheckForUpdatesOnStartup();
+                    }
+                })
+                .show();
+        return true;
     }
 
     private void maybeCheckForUpdatesOnStartup() {

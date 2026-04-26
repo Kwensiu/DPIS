@@ -88,6 +88,9 @@ public class MainActivitySourceSmokeTest {
     public void startupDisclaimerUsesMaterialDialogAndPersistsConsent() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
+        assertTrue(source.contains("maybeShowModuleRuntimeReloadAdvice()"));
+        assertTrue(source.contains("ModuleRuntimeReloadAdvisor.shouldShowReloadAdvice(this)"));
+        assertTrue(source.contains("ModuleRuntimeReloadAdvisor.markReloadAdviceAcknowledged(this)"));
         assertTrue(source.contains("maybeShowStartupDisclaimerDialog()"));
         assertTrue(source.contains("if (!maybeShowStartupDisclaimerDialog()) {"));
         assertTrue(source.contains("startupUpdateDialogCoordinator().maybeShowStartupDisclaimerDialog("));
@@ -230,6 +233,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("new AppConfigSaveHandler()"));
         assertTrue(source.contains("processActionHandler.execute(item, mappedAction);"));
         assertTrue(source.contains("appConfigSaveHandler.save("));
+        assertTrue(source.contains("HyperOsNativeFontPropertySyncer.clearFontTargetAsync(packageName)"));
         assertTrue(!source.contains("private void runProcessAction(String packageName"));
         assertTrue(!source.contains("private int[] saveAppConfig(AppListItem item"));
     }
@@ -267,6 +271,14 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("performHapticFeedback(resolvePressHapticConstant())"));
         assertTrue(source.contains("HapticFeedbackConstants.CONFIRM"));
         assertTrue(source.contains("HapticFeedbackConstants.VIRTUAL_KEY"));
+    }
+
+    @Test
+    public void applicationSyncsHyperOsNativeFontTargetsOnStartup() throws IOException {
+        String source = read("src/main/java/com/dpis/module/DpisApplication.java");
+
+        assertTrue(source.contains("HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(configStore)"));
+        assertTrue(source.contains("HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(remoteStore)"));
     }
 
     private static String read(String relativePath) throws IOException {
