@@ -2,7 +2,7 @@ package com.dpis.module;
 
 import android.app.Application;
 import android.content.Context;
-import android.content.Intent;
+import android.os.Bundle;
 
 import java.lang.reflect.Method;
 
@@ -48,13 +48,10 @@ final class ViewportDebugReporter {
         if (context == null) {
             return;
         }
-        Intent intent = new Intent(FontDebugStatsStore.ACTION_STATS_UPDATE);
-        // Hook callbacks execute inside target app processes; always route updates
-        // back to the module package receiver instead of target app package.
-        intent.setPackage(BuildConfig.APPLICATION_ID);
-        intent.putExtra(FontDebugStatsStore.EXTRA_VIEWPORT_DEBUG_SUMMARY, summary);
+        Bundle extras = new Bundle();
+        extras.putString(FontDebugStatsStore.EXTRA_VIEWPORT_DEBUG_SUMMARY, summary);
         try {
-            context.sendBroadcast(intent);
+            FontDebugStatsTransport.sendUpdate(context, extras);
             lastSummary = summary;
         } catch (Throwable ignored) {
         }

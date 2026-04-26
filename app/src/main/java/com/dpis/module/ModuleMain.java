@@ -16,6 +16,7 @@ public final class ModuleMain extends XposedModule {
         moduleLoadedObserved = true;
         currentProcessName = param.getProcessName();
         configStore = ConfigStoreFactory.createForXposedHost(this);
+        FontDebugStatsTransport.initialize(this);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
         String message = "module loaded: process=" + param.getProcessName()
                 + ", marker=" + SystemServerDisplayDiagnostics.BUILD_MARKER;
@@ -75,6 +76,7 @@ public final class ModuleMain extends XposedModule {
         DpiConfigStore local = configStore;
         if (local == null) {
             local = ConfigStoreFactory.createForXposedHost(this);
+            FontDebugStatsTransport.initialize(this);
             configStore = local;
         }
         return local;
