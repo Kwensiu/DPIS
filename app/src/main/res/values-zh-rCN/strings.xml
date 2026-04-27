@@ -45,9 +45,13 @@
     <string name="dialog_dpis_enable_button">启用修改</string>
     <string name="dialog_dpis_disable_button">已启用</string>
     <string name="dialog_hyperos_native_warning">检测到 HyperOS 原生/Flutter 应用。当前 Java Hook 可能不会加载，因此 DP/字体替换可能无效。</string>
-    <string name="dialog_hyperos_native_proxy_present">HyperOS Native Proxy：已检测到。重启目标应用后可使用 Rust/Flutter 字体 Hook。</string>
-    <string name="dialog_hyperos_native_proxy_missing">HyperOS Native Proxy：目标应用 native 目录未检测到，Rust/Flutter 字体 Hook 可能不会生效。</string>
-    <string name="dialog_hyperos_native_proxy_unknown">HyperOS Native Proxy：无法检测目标应用 native 目录。若字体 Hook 不生效，请手动确认 libdpis_native.so。</string>
+    <string name="dialog_hyperos_native_proxy_present">HyperOS &#x517C;&#x5BB9;&#x652F;&#x6301;&#x5DF2;&#x5C31;&#x7EEA;&#x3002;&#x4FDD;&#x5B58;&#x4FEE;&#x6539;&#x540E;&#x8BF7;&#x91CD;&#x542F;&#x76EE;&#x6807;&#x5E94;&#x7528;&#x3002;</string>
+    <string name="dialog_hyperos_native_proxy_missing">HyperOS &#x517C;&#x5BB9;&#x652F;&#x6301;&#x5C1A;&#x672A;&#x5C31;&#x7EEA;&#xFF0C;&#x90E8;&#x5206;&#x6587;&#x5B57;&#x4FEE;&#x6539;&#x53EF;&#x80FD;&#x4E0D;&#x4F1A;&#x751F;&#x6548;&#x3002;</string>
+    <string name="dialog_hyperos_native_proxy_unknown">&#x65E0;&#x6CD5;&#x68C0;&#x67E5; HyperOS &#x517C;&#x5BB9;&#x652F;&#x6301;&#x72B6;&#x6001;&#x3002;</string>
+    <string name="dialog_hyperos_native_proxy_apply_success">HyperOS &#x517C;&#x5BB9;&#x652F;&#x6301;&#x5DF2;&#x5E94;&#x7528;&#xFF0C;&#x8BF7;&#x91CD;&#x542F;&#x76EE;&#x6807;&#x5E94;&#x7528;&#x3002;</string>
+    <string name="dialog_hyperos_native_proxy_apply_failed">HyperOS &#x517C;&#x5BB9;&#x8BBE;&#x7F6E;&#x5931;&#x8D25;&#xFF0C;&#x8BF7;&#x68C0;&#x67E5; root &#x6743;&#x9650;&#x540E;&#x91CD;&#x8BD5;&#x3002;</string>
+    <string name="dialog_hyperos_native_proxy_unmount_success">HyperOS &#x517C;&#x5BB9;&#x652F;&#x6301;&#x5DF2;&#x56DE;&#x6EDA;&#xFF0C;&#x8BF7;&#x91CD;&#x542F;&#x76EE;&#x6807;&#x5E94;&#x7528;&#x3002;</string>
+    <string name="dialog_hyperos_native_proxy_unmount_failed">HyperOS &#x517C;&#x5BB9;&#x56DE;&#x6EDA;&#x5931;&#x8D25;&#xFF0C;&#x8BF7;&#x68C0;&#x67E5; root &#x6743;&#x9650;&#x540E;&#x91CD;&#x8BD5;&#x3002;</string>
     <string name="module_runtime_reload_title">系统级 Hook 可能需要重载</string>
     <string name="module_runtime_reload_message">DPIS 是在本次开机后更新的。普通 Java 应用重启目标应用后通常可以生效，但 system_server/HyperOS Rust 链路可能仍在运行旧模块代码。如果相册或其他 HyperOS 应用没有变化，请重启设备，或重启模块运行时/system_server 后再测试。</string>
     <string name="module_runtime_reload_ack_button">知道了</string>

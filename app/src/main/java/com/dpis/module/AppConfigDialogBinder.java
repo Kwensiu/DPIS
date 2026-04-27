@@ -38,6 +38,10 @@ final class AppConfigDialogBinder {
 
         void executeProcessAction(AppListItem item, ProcessAction action);
 
+        void applyHyperOsNativeProxy(AppListItem item, Runnable onFinished);
+
+        void unmountHyperOsNativeProxy(AppListItem item, Runnable onFinished);
+
         boolean setDpisEnabled(String packageName, boolean enabled);
 
         int[] saveAppConfig(AppListItem item,
@@ -243,6 +247,7 @@ final class AppConfigDialogBinder {
                     resolveFontMode(views.fontModeToggle));
             if (result[0] == 1) {
                 showSaveButtonFeedback(views.saveButton);
+                syncHyperOsNativeProxyAfterSave(item, views, state);
             }
             if (result[1] != 0) {
                 host.showToast(result[1]);
@@ -394,6 +399,33 @@ final class AppConfigDialogBinder {
         warningView.setTextColor(statusColor);
         warningView.setText(resolveHyperOsNativeWarningText(proxyStatus));
         warningView.setVisibility(View.VISIBLE);
+    }
+
+    private void syncHyperOsNativeProxyAfterSave(
+            AppListItem item, AppConfigDialogViews views, AppConfigDialogState state) {
+        if (!item.hyperOsNativeProxyCandidate) {
+            return;
+        }
+        setSaveAndResetButtonsEnabled(views, false);
+        Runnable onFinished = () -> {
+            bindHyperOsNativeWarning(views.hyperOsNativeWarningView, item);
+            setSaveAndResetButtonsEnabled(views, true);
+        };
+        if (state.dpisEnabled && hasActiveDialogConfig(views)) {
+            host.applyHyperOsNativeProxy(item, onFinished);
+            return;
+        }
+        host.unmountHyperOsNativeProxy(item, onFinished);
+    }
+
+    private static boolean hasActiveDialogConfig(AppConfigDialogViews views) {
+        return parsePositiveIntOrNullSafe(views.viewportInputView) != null
+                || parsePositiveIntOrNullSafe(views.fontInputView) != null;
+    }
+
+    private static void setSaveAndResetButtonsEnabled(AppConfigDialogViews views, boolean enabled) {
+        views.saveButton.setEnabled(enabled);
+        views.disableButton.setEnabled(enabled);
     }
 
     private String resolveHyperOsNativeWarningText(HyperOsNativeProxyStatus proxyStatus) {

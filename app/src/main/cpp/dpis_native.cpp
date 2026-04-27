@@ -1,4 +1,4 @@
-﻿#include <android/log.h>
+#include <android/log.h>
 #include <dlfcn.h>
 #include <jni.h>
 #include <link.h>
@@ -284,6 +284,10 @@ std::string read_system_property(const char *key) {
     return std::string(value, static_cast<size_t>(length));
 }
 
+bool is_enabled_value(const std::string &value) {
+    return value == "1" || value == "true" || value == "enabled";
+}
+
 std::string read_environment(const char *key) {
     if (key == nullptr || key[0] == '\0') {
         return {};
@@ -445,6 +449,8 @@ void try_hook_flutter(void *handle) {
 
 void on_library_loaded(const char *name, void *handle) {
     if (ends_with(name, kTargetLibrary)) {
+        log_info("native_init on_library_loaded target: process=" + current_process_name()
+                + " name=" + (name == nullptr ? std::string("") : std::string(name)));
         try_hook_flutter(handle);
     }
 }
@@ -500,7 +506,12 @@ void try_hook_flutter_without_lsposed() {
 void proxy_constructor() {
     log_info("HyperOS proxy constructor: process=" + current_process_name());
     refresh_property_config();
-    load_original_rust_binary();
+    if (is_enabled_value(read_environment("DPIS_NATIVE_SKIP_ORIGINAL"))
+            || is_enabled_value(read_system_property("debug.dpis.native.skip_original"))) {
+        log_info("HyperOS proxy original load skipped: preload mode");
+    } else {
+        load_original_rust_binary();
+    }
     try_hook_flutter_without_lsposed();
 }
 
@@ -690,6 +701,9 @@ NativeOnModuleLoaded native_init(const NativeAPIEntries *entries) {
     if (entries != nullptr) {
         g_hook_func = entries->hook_func;
     }
-    log_info("native_init ready");
+    log_info("native_init ready: process=" + current_process_name()
+            + " entries=" + std::to_string(reinterpret_cast<uintptr_t>(entries))
+            + " hook=" + std::to_string(reinterpret_cast<uintptr_t>(g_hook_func)));
+    try_hook_flutter_without_lsposed();
     return on_library_loaded;
 }

@@ -16,7 +16,6 @@ final class HyperOsRustProcessHookInstaller {
     private static final int ARG_BINARY_PATH = 20;
     private static final String MODULE_PACKAGE = "io.github.kwensiu.dpis";
     private static final String NATIVE_LIBRARY_NAME = "libdpis_native.so";
-
     private HyperOsRustProcessHookInstaller() {
     }
 
@@ -62,6 +61,10 @@ final class HyperOsRustProcessHookInstaller {
                                            int targetFontScalePercent,
                                            String binaryPath) {
         return appendEnvironment(existing, packageName, targetFontScalePercent, binaryPath);
+    }
+
+    static String resolveProxyLibraryPathForTest(String originalBinaryPath) {
+        return resolveProxyLibraryPath(originalBinaryPath);
     }
 
     private static Object[] applyEnvironmentArgs(PerAppDisplayConfigSource source, List<Object> args) {

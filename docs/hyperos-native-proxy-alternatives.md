@@ -192,3 +192,11 @@
 - 改 native 代码：必须更新目标目录里的 sibling proxy，否则目标应用继续运行旧 native 逻辑。
 
 因此，后续 DPIS 应该把 sibling proxy 更新做成显式功能，而不是隐藏行为：检测、提示、复制、校验、回滚，全流程可见。
+
+
+## Current Decision
+
+- Keep sibling native proxy as the supported path.
+- Do not keep the external-path or `LD_PRELOAD` experiment branches in normal hook code.
+- Keep runtime system properties for repeated value updates after the proxy path is prepared.
+- Keep detailed experiment logs out of active docs; archive them only when they are still useful for future research.

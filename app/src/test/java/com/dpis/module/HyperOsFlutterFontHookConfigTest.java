@@ -29,6 +29,21 @@ public class HyperOsFlutterFontHookConfigTest {
                 HyperOsFlutterFontBridge.forcePropertyNameForPackage("com.miui.gallery"));
     }
 
+
+    @Test
+    public void viewportBridgePropertyNameUsesStablePackageHash() {
+        assertEquals("debug.dpis.vp.a55b5fe1",
+                ViewportPropertyBridge.propertyNameForPackage("com.miui.gallery"));
+    }
+
+    @Test
+    public void viewportBridgeParsesPositiveOverrideAndExplicitClear() {
+        assertEquals(Integer.valueOf(300), ViewportPropertyBridge.parseOverrideValueForTest("300"));
+        assertEquals(Integer.valueOf(0), ViewportPropertyBridge.parseOverrideValueForTest("0"));
+        assertEquals(null, ViewportPropertyBridge.parseOverrideValueForTest(""));
+        assertEquals(null, ViewportPropertyBridge.parseOverrideValueForTest("abc"));
+    }
+
     @Test
     public void rustProcessEnvironmentIncludesFontTarget() {
         String envs = HyperOsRustProcessHookInstaller.appendEnvironmentForTest(
@@ -39,6 +54,14 @@ public class HyperOsFlutterFontHookConfigTest {
                         + " --envs=DPIS_RUST_BINARY=/data/app/MIUIGallery/lib/arm64/libapp_gallery.so"
                         + " --cold-boot-speed",
                 envs);
+    }
+
+    @Test
+    public void rustProcessProxyFallsBackToSiblingPath() {
+        String proxyPath = HyperOsRustProcessHookInstaller.resolveProxyLibraryPathForTest(
+                "/missing/MIUIGallery/lib/arm64/libapp_gallery.so");
+
+        assertEquals(null, proxyPath);
     }
 
     @Test
