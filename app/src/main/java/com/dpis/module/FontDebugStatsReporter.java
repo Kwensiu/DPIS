@@ -2,7 +2,7 @@ package com.dpis.module;
 
 import android.app.Application;
 import android.content.Context;
-import android.content.Intent;
+import android.os.Bundle;
 
 import java.lang.reflect.Method;
 import java.util.ArrayDeque;
@@ -197,23 +197,17 @@ final class FontDebugStatsReporter {
         if (context == null || snapshot == null) {
             return;
         }
-        Intent intent = new Intent(FontDebugStatsStore.ACTION_STATS_UPDATE);
-        // Hook callbacks execute inside target app processes; always route updates
-        // back to the module package receiver instead of target app package.
-        intent.setPackage(BuildConfig.APPLICATION_ID);
-        intent.putExtra(FontDebugStatsStore.EXTRA_CHAIN_5S, snapshot.chain5s);
-        intent.putExtra(FontDebugStatsStore.EXTRA_CHAIN_30S, snapshot.chain30s);
-        intent.putExtra(FontDebugStatsStore.EXTRA_CHAIN_ALL, snapshot.chainAll);
-        intent.putExtra(FontDebugStatsStore.EXTRA_CHAIN_VIEW_5S, snapshot.chainView5s);
-        intent.putExtra(FontDebugStatsStore.EXTRA_CHAIN_VIEW_30S, snapshot.chainView30s);
-        intent.putExtra(FontDebugStatsStore.EXTRA_CHAIN_VIEW_ALL, snapshot.chainViewAll);
-        intent.putExtra(FontDebugStatsStore.EXTRA_UNIT_BREAKDOWN_5S, snapshot.unitBreakdown5s);
-        intent.putExtra(FontDebugStatsStore.EXTRA_EVENT_TOTAL, snapshot.eventTotal);
-        intent.putExtra(FontDebugStatsStore.EXTRA_UPDATED_AT, snapshot.updatedAt);
-        try {
-            context.sendBroadcast(intent);
-        } catch (Throwable ignored) {
-        }
+        Bundle extras = new Bundle();
+        extras.putString(FontDebugStatsStore.EXTRA_CHAIN_5S, snapshot.chain5s);
+        extras.putString(FontDebugStatsStore.EXTRA_CHAIN_30S, snapshot.chain30s);
+        extras.putString(FontDebugStatsStore.EXTRA_CHAIN_ALL, snapshot.chainAll);
+        extras.putString(FontDebugStatsStore.EXTRA_CHAIN_VIEW_5S, snapshot.chainView5s);
+        extras.putString(FontDebugStatsStore.EXTRA_CHAIN_VIEW_30S, snapshot.chainView30s);
+        extras.putString(FontDebugStatsStore.EXTRA_CHAIN_VIEW_ALL, snapshot.chainViewAll);
+        extras.putString(FontDebugStatsStore.EXTRA_UNIT_BREAKDOWN_5S, snapshot.unitBreakdown5s);
+        extras.putInt(FontDebugStatsStore.EXTRA_EVENT_TOTAL, snapshot.eventTotal);
+        extras.putLong(FontDebugStatsStore.EXTRA_UPDATED_AT, snapshot.updatedAt);
+        FontDebugStatsTransport.sendUpdate(context, extras);
     }
 
     private static void increment(Map<String, Integer> map, String key) {

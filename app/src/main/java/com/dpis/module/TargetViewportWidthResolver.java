@@ -8,6 +8,10 @@ final class TargetViewportWidthResolver {
         if (store == null || packageName == null || packageName.isEmpty()) {
             return null;
         }
+        Integer runtimeOverride = ViewportPropertyBridge.readTargetWidthDp(packageName);
+        if (runtimeOverride != null) {
+            return runtimeOverride > 0 ? runtimeOverride : null;
+        }
         String requestedMode = store.getTargetViewportApplyMode(packageName);
         String mode = EffectiveModeResolver.resolveViewportMode(
                 requestedMode,

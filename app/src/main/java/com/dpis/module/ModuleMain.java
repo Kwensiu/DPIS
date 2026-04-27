@@ -16,9 +16,13 @@ public final class ModuleMain extends XposedModule {
         moduleLoadedObserved = true;
         currentProcessName = param.getProcessName();
         configStore = ConfigStoreFactory.createForXposedHost(this);
+        FontDebugStatsTransport.initialize(this);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
         String message = "module loaded: process=" + param.getProcessName()
                 + ", marker=" + SystemServerDisplayDiagnostics.BUILD_MARKER;
+        if (SystemServerProcess.isSystemServer(param.getProcessName(), "")) {
+            ModuleRuntimeStateReporter.reportSystemServerLoaded();
+        }
         SystemServerDisplayDiagnostics.recordPending(
                 message);
         DpisLog.i(message);
@@ -62,6 +66,7 @@ public final class ModuleMain extends XposedModule {
                 + ", targetViewportMode=" + targetViewportMode
                 + ", targetFontScalePercent=" + targetFontScalePercent
                 + ", targetFontMode=" + targetFontMode);
+        HyperOsFlutterFontHookInstaller.install(packageName, store);
         try {
             AppProcessHookInstaller.install(this, packageName, store, policy,
                     targetViewportWidthDp != null, targetViewportMode, targetFontMode,
@@ -75,6 +80,7 @@ public final class ModuleMain extends XposedModule {
         DpiConfigStore local = configStore;
         if (local == null) {
             local = ConfigStoreFactory.createForXposedHost(this);
+            FontDebugStatsTransport.initialize(this);
             configStore = local;
         }
         return local;

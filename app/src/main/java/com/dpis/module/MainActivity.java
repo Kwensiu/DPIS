@@ -249,6 +249,9 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                 .setOnClickListener(v -> startActivity(new Intent(this, SystemServerSettingsActivity.class)));
 
         renderMainUiState(requireUiState());
+        if (maybeShowModuleRuntimeReloadAdvice()) {
+            return;
+        }
         if (!maybeShowStartupDisclaimerDialog()) {
             maybeCheckForUpdatesOnStartup();
         }
@@ -623,6 +626,10 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             showToast(R.string.system_settings_save_failed);
             return false;
         }
+        if (!enabled) {
+            HyperOsNativeFontPropertySyncer.clearFontTargetAsync(packageName);
+            ViewportPropertySyncer.clearTargetAsync(packageName);
+        }
         showToast(enabled ? R.string.dialog_dpis_enabled_status : R.string.dialog_dpis_disabled_status);
         requestAppsLoad();
         return true;
@@ -730,6 +737,23 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         return startupUpdateDialogCoordinator().maybeShowStartupDisclaimerDialog(
                 getUiConfigStore(),
                 this::maybeCheckForUpdatesOnStartup);
+    }
+
+    private boolean maybeShowModuleRuntimeReloadAdvice() {
+        if (!ModuleRuntimeReloadAdvisor.shouldShowReloadAdvice(this)) {
+            return false;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.module_runtime_reload_title)
+                .setMessage(R.string.module_runtime_reload_message)
+                .setPositiveButton(R.string.module_runtime_reload_ack_button, (dialog, which) -> {
+                    ModuleRuntimeReloadAdvisor.markReloadAdviceAcknowledged(this);
+                    if (!maybeShowStartupDisclaimerDialog()) {
+                        maybeCheckForUpdatesOnStartup();
+                    }
+                })
+                .show();
+        return true;
     }
 
     private void maybeCheckForUpdatesOnStartup() {
@@ -1061,6 +1085,16 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             }
 
             @Override
+            public void applyHyperOsNativeProxy(AppListItem item, Runnable onFinished) {
+                executeHyperOsNativeProxyMount(item, true, onFinished);
+            }
+
+            @Override
+            public void unmountHyperOsNativeProxy(AppListItem item, Runnable onFinished) {
+                executeHyperOsNativeProxyMount(item, false, onFinished);
+            }
+
+            @Override
             public boolean setDpisEnabled(String packageName, boolean enabled) {
                 return MainActivity.this.setDpisEnabled(packageName, enabled);
             }
@@ -1088,6 +1122,32 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                 MainActivity.this.showToast(messageResId);
             }
         };
+    }
+
+    private void executeHyperOsNativeProxyMount(
+            AppListItem item, boolean apply, Runnable onFinished) {
+        new Thread(() -> {
+            HyperOsNativeProxyBindMounter.MountPlan plan =
+                    HyperOsNativeProxyBindMounter.createPlan(this, item.packageName);
+            HyperOsNativeProxyBindMounter.MountResult result = apply
+                    ? HyperOsNativeProxyBindMounter.apply(plan)
+                    : HyperOsNativeProxyBindMounter.unmount(plan);
+            DpisLog.i("HyperOS Native Proxy " + (apply ? "apply" : "rollback")
+                    + " package=" + item.packageName
+                    + " success=" + result.success
+                    + " output=" + result.output);
+            int messageResId = apply
+                    ? R.string.dialog_hyperos_native_proxy_apply_failed
+                    : R.string.dialog_hyperos_native_proxy_unmount_failed;
+            runOnUiThread(() -> {
+                if (!result.success) {
+                    showToast(messageResId);
+                }
+                if (onFinished != null) {
+                    onFinished.run();
+                }
+            });
+        }, "DPIS-HyperOsNativeProxyMount").start();
     }
 
     private void executeDialogProcessAction(AppListItem item, AppConfigDialogBinder.ProcessAction action) {

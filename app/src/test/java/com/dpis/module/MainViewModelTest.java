@@ -119,6 +119,7 @@ public class MainViewModelTest {
                 FontApplyMode.OFF,
                 true,
                 systemApp,
+                false,
                 null);
     }
 }

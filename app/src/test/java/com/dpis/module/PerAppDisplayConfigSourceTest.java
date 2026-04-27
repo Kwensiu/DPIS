@@ -35,6 +35,35 @@ public class PerAppDisplayConfigSourceTest {
     }
 
     @Test
+    public void returnsNullWhenTargetDpisDisabled() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.setTargetViewportWidthDp("com.example.target", 500));
+        assertTrue(store.setTargetFontScalePercent("com.example.target", 300));
+        assertTrue(store.setTargetFontApplyMode(
+                "com.example.target", FontApplyMode.SYSTEM_EMULATION));
+        assertTrue(store.setTargetDpisEnabled("com.example.target", false));
+
+        PerAppDisplayConfig config = new PerAppDisplayConfigSource(store)
+                .get("com.example.target");
+
+        assertNull(config);
+    }
+
+    @Test
+    public void providerReflectsUpdatedStoreOnEachRead() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.setTargetFontScalePercent("com.example.target", 300));
+        PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(() -> store);
+        assertNotNull(source.get("com.example.target"));
+
+        assertTrue(store.clearTargetPackageConfig("com.example.target"));
+
+        assertNull(source.get("com.example.target"));
+    }
+
+    @Test
     public void keepsViewportConfigWhenViewportExists() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);

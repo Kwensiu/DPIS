@@ -37,6 +37,7 @@ public class SystemServerSettingsLayoutSmokeTest {
         String strings = read("src/main/res/values/strings.xml");
 
         assertTrue(strings.contains("settings_section_other"));
+        assertTrue(strings.contains("settings_hyperos_flutter_font_hook_label"));
         assertTrue(strings.contains("settings_about_label"));
         assertTrue(strings.contains("settings_config_backup_label"));
         assertTrue(strings.contains("config_backup_confirm_import_action"));
@@ -52,6 +53,8 @@ public class SystemServerSettingsLayoutSmokeTest {
     public void settingsRowsUseSemanticIcons() throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
 
+        assertTrue(source.contains("R.id.row_hyperos_flutter_font_hook"));
+        assertTrue(source.contains("R.drawable.baseline_tune_24"));
         assertTrue(source.contains("R.drawable.baseline_upload_file_24"));
         assertTrue(source.contains("R.drawable.ic_language_24"));
         assertTrue(source.contains("R.drawable.outline_image_not_supported_24"));

@@ -61,6 +61,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     private MaterialSwitch hooksEnabledSwitch;
     private MaterialSwitch safeModeSwitch;
     private MaterialSwitch globalLogSwitch;
+    private MaterialSwitch hyperOsFlutterFontHookSwitch;
     private MaterialSwitch hideLauncherIconSwitch;
     private View primarySwitchCard;
     private View languageEntryRow;
@@ -119,6 +120,11 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
                 R.string.font_debug_overlay_label,
                 R.string.font_debug_entry_hint,
                 this::showFontDebugDialog);
+        hyperOsFlutterFontHookSwitch = bindSwitchRow(
+                R.id.row_hyperos_flutter_font_hook,
+                R.drawable.baseline_tune_24,
+                R.string.settings_hyperos_flutter_font_hook_label,
+                R.string.settings_hyperos_flutter_font_hook_hint);
         backupConfigEntryRow = bindEntryRow(
                 R.id.row_config_backup,
                 R.drawable.baseline_upload_file_24,
@@ -148,6 +154,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         hooksEnabledSwitch.setOnCheckedChangeListener(this::onHooksEnabledChanged);
         safeModeSwitch.setOnCheckedChangeListener(this::onSafeModeChanged);
         globalLogSwitch.setOnCheckedChangeListener(this::onGlobalLogChanged);
+        hyperOsFlutterFontHookSwitch.setOnCheckedChangeListener(this::onHyperOsFlutterFontHookChanged);
         hideLauncherIconSwitch.setOnCheckedChangeListener(this::onHideLauncherIconChanged);
         refreshStoreState(true);
     }
@@ -479,6 +486,9 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         setCheckedSilently(globalLogSwitch,
                 store.isGlobalLogEnabled(),
                 this::onGlobalLogChanged);
+        setCheckedSilently(hyperOsFlutterFontHookSwitch,
+                store.isHyperOsFlutterFontHookEnabled(),
+                this::onHyperOsFlutterFontHookChanged);
         DpisLog.setLoggingEnabled(store.isGlobalLogEnabled());
 
         applyLauncherIconVisibilityFromStore();
@@ -506,6 +516,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         hooksEnabledSwitch.setEnabled(true);
         safeModeSwitch.setEnabled(true);
         globalLogSwitch.setEnabled(true);
+        hyperOsFlutterFontHookSwitch.setEnabled(true);
         hideLauncherIconSwitch.setEnabled(true);
         setRowEnabled(fontDebugEntryRow, true);
         setRowEnabled(backupConfigEntryRow, true);
@@ -523,6 +534,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         hooksEnabledSwitch.setEnabled(false);
         safeModeSwitch.setEnabled(false);
         globalLogSwitch.setEnabled(false);
+        hyperOsFlutterFontHookSwitch.setEnabled(false);
         hideLauncherIconSwitch.setEnabled(false);
         setRowEnabled(fontDebugEntryRow, false);
         setRowEnabled(backupConfigEntryRow, false);
@@ -834,6 +846,17 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             return;
         }
         DpisLog.setLoggingEnabled(isChecked);
+    }
+
+    private void onHyperOsFlutterFontHookChanged(CompoundButton buttonView, boolean isChecked) {
+        if (store == null) {
+            return;
+        }
+        if (!store.setHyperOsFlutterFontHookEnabled(isChecked)) {
+            setCheckedSilently(hyperOsFlutterFontHookSwitch, !isChecked,
+                    this::onHyperOsFlutterFontHookChanged);
+            showToast(R.string.system_settings_save_failed);
+        }
     }
 
     private void onHideLauncherIconChanged(CompoundButton buttonView, boolean isChecked) {
