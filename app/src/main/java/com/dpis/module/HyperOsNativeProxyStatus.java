@@ -42,7 +42,7 @@ final class HyperOsNativeProxyStatus {
         }
         File nativeDir = new File(nativeLibraryDir);
         File proxy = new File(nativeDir, NATIVE_PROXY_LIBRARY_NAME);
-        if (proxy.isFile()) {
+        if (proxy.isFile() && proxy.length() > 0) {
             return new HyperOsNativeProxyStatus(State.PRESENT, nativeLibraryDir);
         }
         if (nativeDir.isDirectory()) {

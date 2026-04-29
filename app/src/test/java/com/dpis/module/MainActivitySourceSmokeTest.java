@@ -284,4 +284,16 @@ public class MainActivitySourceSmokeTest {
     private static String read(String relativePath) throws IOException {
         return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
     }
+
+    @Test
+    public void hyperOsRestartPreparesNativeProxyBeforeProcessAction() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(source.contains("executeDialogProcessActionAfterHyperOsProxyReady"));
+        assertTrue(source.contains("item.hyperOsNativeProxyCandidate"));
+        assertTrue(source.contains("executeHyperOsNativeProxyMount(item, true, success ->"));
+        assertTrue(source.contains("if (success)"));
+        assertTrue(source.contains("processActionHandler.execute(item, mappedAction);"));
+    }
+
 }

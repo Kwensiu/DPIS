@@ -76,4 +76,97 @@ public class HyperOsFlutterFontHookConfigTest {
 
         assertFalse(shouldClear);
     }
+    @Test
+    public void nativeForceFontPropertyCanOverrideJniConfiguration() throws Exception {
+        java.nio.file.Path nativeSource = java.nio.file.Paths.get("src/main/cpp/dpis_native.cpp");
+        if (!java.nio.file.Files.exists(nativeSource)) {
+            nativeSource = java.nio.file.Paths.get("app/src/main/cpp/dpis_native.cpp");
+        }
+        String source = new String(java.nio.file.Files.readAllBytes(nativeSource),
+                java.nio.charset.StandardCharsets.UTF_8);
+
+        assertFalse(source.contains("if (g_configured_from_jni.load(std::memory_order_relaxed)) {\n        return;"));
+        assertTrue(source.indexOf("debug.dpis.forcefont.%08x")
+                < source.indexOf("DPIS_FONT_SCALE_PERCENT"));
+        assertTrue(source.indexOf("debug.dpis.forcefont")
+                < source.indexOf("debug.dpis.font.%08x"));
+    }
+    @Test
+    public void nativeCreateHookScalesWeatherCreateFontRegisters() throws Exception {
+        java.nio.file.Path nativeSource = java.nio.file.Paths.get("src/main/cpp/dpis_native.cpp");
+        if (!java.nio.file.Files.exists(nativeSource)) {
+            nativeSource = java.nio.file.Paths.get("app/src/main/cpp/dpis_native.cpp");
+        }
+        String source = new String(java.nio.file.Files.readAllBytes(nativeSource),
+                java.nio.charset.StandardCharsets.UTF_8);
+
+        int createScale = source.indexOf("bl dpis_create_scaled_d0");
+        String createTrampoline = source.substring(Math.max(0, createScale - 300), createScale + 180);
+        assertTrue(source.contains("double create_observed_scale(double observed_scale)"));
+        assertTrue(source.contains("return 1.0;"));
+        assertTrue(createTrampoline.contains("ldr d0, [sp, #80]"));
+        assertTrue(createTrampoline.contains("bl dpis_create_scaled_d0"));
+        assertTrue(createTrampoline.contains("fmul d0, d0, d1"));
+    }
+
+    @Test
+    public void nativeProxyLoadsOriginalRustBinaryFromEnvironmentBeforeProperty() throws Exception {
+        java.nio.file.Path nativeSource = java.nio.file.Paths.get("src/main/cpp/dpis_native.cpp");
+        if (!java.nio.file.Files.exists(nativeSource)) {
+            nativeSource = java.nio.file.Paths.get("app/src/main/cpp/dpis_native.cpp");
+        }
+        String source = new String(java.nio.file.Files.readAllBytes(nativeSource),
+                java.nio.charset.StandardCharsets.UTF_8);
+
+        int envRead = source.indexOf("read_environment(\"DPIS_RUST_BINARY\")");
+        int propertyRead = source.indexOf("debug.dpis.rustbin.%08x");
+        assertTrue(envRead >= 0);
+        assertTrue(propertyRead >= 0);
+        assertTrue(envRead < propertyRead);
+    }
+
+    @Test
+    public void weatherNativeProxyFallsBackToSiblingOriginalLibrary() throws Exception {
+        java.nio.file.Path nativeSource = java.nio.file.Paths.get("src/main/cpp/dpis_native.cpp");
+        if (!java.nio.file.Files.exists(nativeSource)) {
+            nativeSource = java.nio.file.Paths.get("app/src/main/cpp/dpis_native.cpp");
+        }
+        String source = new String(java.nio.file.Files.readAllBytes(nativeSource),
+                java.nio.charset.StandardCharsets.UTF_8);
+
+        assertTrue(source.contains("sibling_original_rust_binary_path()"));
+        assertTrue(source.contains("current_process_name() != \"com.miui.weather2\""));
+        assertTrue(source.contains("libweather_app.so"));
+        assertTrue(source.contains("path == \"0\""));
+    }
+
+    @Test
+    public void weatherGotHookValidatesOriginalSlotBeforePatching() throws Exception {
+        java.nio.file.Path nativeSource = java.nio.file.Paths.get("src/main/cpp/dpis_native.cpp");
+        if (!java.nio.file.Files.exists(nativeSource)) {
+            nativeSource = java.nio.file.Paths.get("app/src/main/cpp/dpis_native.cpp");
+        }
+        String source = new String(java.nio.file.Files.readAllBytes(nativeSource),
+                java.nio.charset.StandardCharsets.UTF_8);
+
+        assertTrue(source.contains("is_weather_configuration_font_scale_slot"));
+        assertTrue(source.contains("GOT hook skipped: unexpected slot"));
+        assertTrue(source.indexOf("is_weather_configuration_font_scale_slot(*slot)")
+                < source.indexOf("*slot = reinterpret_cast<void *>(Configuration_get_font_scale)"));
+    }
+
+    @Test
+    public void rustProcessProxyRejectsEmptySiblingPlaceholder() throws Exception {
+        java.io.File dir = java.nio.file.Files.createTempDirectory("dpis-rust-proxy").toFile();
+        java.io.File original = new java.io.File(dir, "libweather_app.so");
+        java.io.File proxy = new java.io.File(dir, "libdpis_native.so");
+        assertTrue(original.createNewFile());
+        assertTrue(proxy.createNewFile());
+
+        String proxyPath = HyperOsRustProcessHookInstaller.resolveProxyLibraryPathForTest(
+                original.getAbsolutePath());
+
+        assertEquals(null, proxyPath);
+    }
+
 }

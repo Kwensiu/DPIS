@@ -119,7 +119,7 @@ final class HyperOsRustProcessHookInstaller {
             return null;
         }
         File proxy = new File(parent, NATIVE_LIBRARY_NAME);
-        return proxy.isFile() ? proxy.getAbsolutePath() : null;
+        return proxy.isFile() && proxy.length() > 0 ? proxy.getAbsolutePath() : null;
     }
 
     private static String appendEnvironment(String existing,

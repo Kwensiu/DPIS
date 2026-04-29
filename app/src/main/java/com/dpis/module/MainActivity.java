@@ -1126,6 +1126,15 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
 
     private void executeHyperOsNativeProxyMount(
             AppListItem item, boolean apply, Runnable onFinished) {
+        executeHyperOsNativeProxyMount(item, apply, ignored -> {
+            if (onFinished != null) {
+                onFinished.run();
+            }
+        });
+    }
+
+    private void executeHyperOsNativeProxyMount(
+            AppListItem item, boolean apply, HyperOsNativeProxyMountCallback onFinished) {
         new Thread(() -> {
             HyperOsNativeProxyBindMounter.MountPlan plan =
                     HyperOsNativeProxyBindMounter.createPlan(this, item.packageName);
@@ -1144,13 +1153,29 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                     showToast(messageResId);
                 }
                 if (onFinished != null) {
-                    onFinished.run();
+                    onFinished.onFinished(result.success);
                 }
             });
         }, "DPIS-HyperOsNativeProxyMount").start();
     }
 
     private void executeDialogProcessAction(AppListItem item, AppConfigDialogBinder.ProcessAction action) {
+        if (action == AppConfigDialogBinder.ProcessAction.RESTART
+                && item.hyperOsNativeProxyCandidate
+                && item.fontScalePercent != null
+                && item.fontScalePercent > 0) {
+            executeHyperOsNativeProxyMount(item, true, success -> {
+                if (success) {
+                    executeDialogProcessActionAfterHyperOsProxyReady(item, action);
+                }
+            });
+            return;
+        }
+        executeDialogProcessActionAfterHyperOsProxyReady(item, action);
+    }
+
+    private void executeDialogProcessActionAfterHyperOsProxyReady(
+            AppListItem item, AppConfigDialogBinder.ProcessAction action) {
         ProcessActionHandler.Action mappedAction = switch (action) {
             case START -> ProcessActionHandler.Action.START;
             case RESTART -> ProcessActionHandler.Action.RESTART;
@@ -1161,6 +1186,10 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
 
     private boolean isSystemHookEnabledFromStore() {
         return cachedSystemHookEffectiveEnabled;
+    }
+
+    private interface HyperOsNativeProxyMountCallback {
+        void onFinished(boolean success);
     }
 
     private void refreshSystemHookEffectiveEnabled() {

@@ -20,8 +20,14 @@ namespace {
 constexpr const char *kLogTag = "DPIS_NATIVE";
 constexpr const char *kTargetLibrary = "libhyper_os_flutter.so";
 constexpr const char *kHyperOsAppPublicLibrary = "libhyper_os_app_public.so";
+#if defined(__aarch64__)
+constexpr const char *kWeatherRustLibrary = "libweather_app.so";
+#endif
 constexpr uintptr_t kParagraphBuilderCreateOffset = 0x81c368;
 constexpr uintptr_t kParagraphBuilderPushStyleOffset = 0x82370c;
+#if defined(__aarch64__)
+constexpr uintptr_t kWeatherConfigurationFontScaleGotOffset = 0x44c0d8;
+#endif
 constexpr double kMinScale = 0.25;
 constexpr double kMaxScale = 8.0;
 #if defined(__aarch64__)
@@ -43,20 +49,30 @@ struct NativeAPIEntries {
 HookFunType g_hook_func = nullptr;
 void *g_backup_create = nullptr;
 void *g_backup_push_style = nullptr;
+#if defined(__aarch64__)
+void *g_original_weather_configuration_font_scale = nullptr;
+#endif
 std::atomic<int> g_target_font_percent{100};
 std::atomic<bool> g_enabled{false};
 std::atomic<bool> g_configured_from_jni{false};
 std::atomic<bool> g_create_hooked{false};
 std::atomic<bool> g_push_style_hooked{false};
+#if defined(__aarch64__)
+std::atomic<bool> g_weather_configuration_font_scale_hooked{false};
+#endif
 std::atomic<int> g_property_refresh_budget{256};
 std::atomic<int> g_replace_create_log_budget{16};
 std::atomic<int> g_replace_push_style_log_budget{16};
+std::atomic<int> g_weather_configuration_font_scale_log_budget{16};
+std::atomic<int> g_weather_create_d0_remap_log_budget{16};
 
 std::atomic<int> g_last_observed_scale_milli{1000};
 
 void log_info(const std::string &message);
 extern "C" void replace_create_trampoline();
 extern "C" void replace_push_style_trampoline();
+extern "C" float Configuration_get_font_scale(void *configuration);
+extern "C" void app_entry_point();
 
 #if defined(__aarch64__)
 void emit_mov_abs(uint32_t *code, size_t &index, uintptr_t address) {
@@ -108,6 +124,22 @@ bool make_writable_executable(void *address, size_t length) {
     return true;
 }
 
+
+bool make_writable_data(void *address, size_t length) {
+    long page_size = sysconf(_SC_PAGESIZE);
+    if (page_size <= 0) {
+        page_size = 4096;
+    }
+    uintptr_t start = reinterpret_cast<uintptr_t>(address) & ~(static_cast<uintptr_t>(page_size) - 1u);
+    uintptr_t end = (reinterpret_cast<uintptr_t>(address) + length + page_size - 1u)
+            & ~(static_cast<uintptr_t>(page_size) - 1u);
+    if (mprotect(reinterpret_cast<void *>(start), end - start,
+            PROT_READ | PROT_WRITE) != 0) {
+        log_info("mprotect data failed errno=" + std::to_string(errno));
+        return false;
+    }
+    return true;
+}
 #endif
 
 int inline_hook_arm64(void *target, void *replacement, void **backup) {
@@ -197,6 +229,28 @@ uintptr_t find_library_base(const char *name) {
     dl_iterate_phdr(find_base_callback, &lookup);
     return lookup.base;
 }
+
+#if defined(__aarch64__)
+bool is_weather_configuration_font_scale_slot(void *value) {
+    if (value == nullptr) {
+        return false;
+    }
+    Dl_info info = {};
+    if (dladdr(value, &info) == 0 || info.dli_fname == nullptr) {
+        return false;
+    }
+    if (!ends_with(info.dli_fname, kWeatherRustLibrary)) {
+        return false;
+    }
+    if (info.dli_sname != nullptr
+            && std::strcmp(info.dli_sname, "Configuration_get_font_scale") == 0) {
+        return true;
+    }
+    uintptr_t weather_base = find_library_base(kWeatherRustLibrary);
+    uintptr_t address = reinterpret_cast<uintptr_t>(value);
+    return weather_base != 0 && address >= weather_base;
+}
+#endif
 
 double clamp(double value, double min_value, double max_value) {
     if (value < min_value) {
@@ -299,6 +353,28 @@ std::string read_environment(const char *key) {
     return std::string(value);
 }
 
+std::string sibling_original_rust_binary_path() {
+#if defined(__aarch64__)
+    if (current_process_name() != "com.miui.weather2") {
+        return {};
+    }
+    Dl_info info = {};
+    if (dladdr(reinterpret_cast<void *>(app_entry_point), &info) == 0
+            || info.dli_fname == nullptr
+            || info.dli_fname[0] == '\0') {
+        return {};
+    }
+    std::string self_path(info.dli_fname);
+    size_t slash = self_path.rfind('/');
+    if (slash == std::string::npos) {
+        return {};
+    }
+    return self_path.substr(0, slash + 1) + kWeatherRustLibrary;
+#else
+    return {};
+#endif
+}
+
 uint32_t java_string_hash(const std::string &text) {
     uint32_t hash = 0;
     for (unsigned char ch : text) {
@@ -308,9 +384,6 @@ uint32_t java_string_hash(const std::string &text) {
 }
 
 void refresh_property_config() {
-    if (g_configured_from_jni.load(std::memory_order_relaxed)) {
-        return;
-    }
     int remaining = g_property_refresh_budget.load(std::memory_order_relaxed);
     if (remaining <= 0) {
         return;
@@ -327,13 +400,14 @@ void refresh_property_config() {
     if (value.empty()) {
         value = read_system_property("debug.dpis.forcefont");
     }
-    if (value.empty()) {
+    bool configured_from_jni = g_configured_from_jni.load(std::memory_order_relaxed);
+    if (value.empty() && !configured_from_jni) {
         value = read_environment("DPIS_FONT_SCALE_PERCENT");
     }
-    if (value.empty()) {
+    if (value.empty() && !configured_from_jni) {
         value = read_proc_cmdline_value("DPIS_FONT_SCALE_PERCENT");
     }
-    if (value.empty()) {
+    if (value.empty() && !configured_from_jni) {
         std::snprintf(key, sizeof(key), "debug.dpis.font.%08x", process_hash);
         value = read_system_property(key);
     }
@@ -363,8 +437,15 @@ double multiplier_for(double observed_scale) {
     return clamp(target_scale() / observed_scale, kMinScale, kMaxScale);
 }
 
+double create_observed_scale(double observed_scale) {
+    if (observed_scale > 0.0 && std::isfinite(observed_scale)) {
+        return observed_scale;
+    }
+    return 1.0;
+}
+
 extern "C" double dpis_create_multiplier(double d0, double d1, double d2) {
-    double multiplier = multiplier_for(d1);
+    double multiplier = multiplier_for(create_observed_scale(d1));
     int log_budget = g_replace_create_log_budget.load(std::memory_order_relaxed);
     if (log_budget > 0) {
         g_replace_create_log_budget.store(log_budget - 1, std::memory_order_relaxed);
@@ -377,6 +458,26 @@ extern "C" double dpis_create_multiplier(double d0, double d1, double d2) {
     return multiplier;
 }
 
+extern "C" double dpis_create_scaled_d0(double original_d0,
+                                        double original_d2,
+                                        double multiplier) {
+    if (current_process_name() == "com.miui.weather2"
+            && original_d0 <= 0.0
+            && original_d2 > 0.0
+            && std::isfinite(original_d2)) {
+        double scaled = original_d2 * multiplier;
+        int log_budget = g_weather_create_d0_remap_log_budget.load(std::memory_order_relaxed);
+        if (log_budget > 0) {
+            g_weather_create_d0_remap_log_budget.store(log_budget - 1, std::memory_order_relaxed);
+            log_info("HyperOS Weather Create d0 remap: d0="
+                    + std::to_string(original_d0)
+                    + " d2=" + std::to_string(original_d2)
+                    + " scaled=" + std::to_string(scaled));
+        }
+        return scaled;
+    }
+    return original_d0 * multiplier;
+}
 extern "C" uintptr_t dpis_create_backup_address() {
     return reinterpret_cast<uintptr_t>(g_backup_create);
 }
@@ -408,6 +509,57 @@ extern "C" double dpis_push_style_multiplier(double observed_scale, double font_
 
 extern "C" uintptr_t dpis_push_style_backup_address() {
     return reinterpret_cast<uintptr_t>(g_backup_push_style);
+}
+
+extern "C" [[gnu::visibility("default")]] float Configuration_get_font_scale(void *configuration) {
+    refresh_property_config();
+    float value = static_cast<float>(target_scale());
+    int log_budget = g_weather_configuration_font_scale_log_budget.load(std::memory_order_relaxed);
+    if (log_budget > 0) {
+        g_weather_configuration_font_scale_log_budget.store(log_budget - 1, std::memory_order_relaxed);
+        log_info("HyperOS Configuration_get_font_scale override: process=" + current_process_name()
+                + " value=" + std::to_string(value)
+                + " config=" + std::to_string(reinterpret_cast<uintptr_t>(configuration)));
+    }
+    return value;
+}
+
+void try_hook_weather_configuration_font_scale() {
+#if defined(__aarch64__)
+    if (current_process_name() != "com.miui.weather2") {
+        return;
+    }
+    if (g_weather_configuration_font_scale_hooked.load(std::memory_order_acquire)) {
+        return;
+    }
+    uintptr_t base = find_library_base(kWeatherRustLibrary);
+    if (base == 0) {
+        log_info("HyperOS Weather Configuration_get_font_scale GOT hook skipped: base not found");
+        return;
+    }
+    auto *slot = reinterpret_cast<void **>(base + kWeatherConfigurationFontScaleGotOffset);
+    if (!is_weather_configuration_font_scale_slot(*slot)) {
+        log_info("HyperOS Weather Configuration_get_font_scale GOT hook skipped: unexpected slot="
+                + std::to_string(reinterpret_cast<uintptr_t>(*slot)));
+        return;
+    }
+    if (!make_writable_data(slot, sizeof(void *))) {
+        log_info("HyperOS Weather Configuration_get_font_scale GOT hook failed: mprotect");
+        return;
+    }
+    g_original_weather_configuration_font_scale = *slot;
+    *slot = reinterpret_cast<void *>(Configuration_get_font_scale);
+    __builtin___clear_cache(reinterpret_cast<char *>(slot),
+            reinterpret_cast<char *>(slot) + sizeof(void *));
+    g_weather_configuration_font_scale_hooked.store(true, std::memory_order_release);
+    log_info("HyperOS Weather Configuration_get_font_scale GOT hook installed: base="
+            + std::to_string(base)
+            + " slot=" + std::to_string(reinterpret_cast<uintptr_t>(slot))
+            + " original=" + std::to_string(
+                    reinterpret_cast<uintptr_t>(g_original_weather_configuration_font_scale)));
+#else
+    log_info("HyperOS Weather Configuration_get_font_scale GOT hook skipped: unsupported arch");
+#endif
 }
 
 void try_hook_flutter(void *handle) {
@@ -461,12 +613,18 @@ void *load_original_rust_binary() {
         log_info("HyperOS proxy original load skipped: empty process");
         return nullptr;
     }
-    char key[PROP_NAME_MAX] = {};
-    std::snprintf(key, sizeof(key), "debug.dpis.rustbin.%08x", java_string_hash(process));
-    std::string path = read_system_property(key);
+    std::string path = read_environment("DPIS_RUST_BINARY");
     if (path.empty()) {
-        log_info("HyperOS proxy original load skipped: missing property " + std::string(key));
-        return nullptr;
+        path = sibling_original_rust_binary_path();
+    }
+    if (path.empty()) {
+        char key[PROP_NAME_MAX] = {};
+        std::snprintf(key, sizeof(key), "debug.dpis.rustbin.%08x", java_string_hash(process));
+        path = read_system_property(key);
+        if (path.empty() || path == "0") {
+            log_info("HyperOS proxy original load skipped: missing property " + std::string(key));
+            return nullptr;
+        }
     }
     void *handle = dlopen(path.c_str(), RTLD_NOW | RTLD_GLOBAL);
     const char *error = dlerror();
@@ -500,6 +658,7 @@ void try_hook_flutter_without_lsposed() {
             + std::to_string(reinterpret_cast<uintptr_t>(local_handle))
             + " error=" + (error == nullptr ? "" : error));
     try_hook_flutter(local_handle);
+    try_hook_weather_configuration_font_scale();
 }
 
 [[gnu::constructor]]
@@ -534,15 +693,23 @@ void replace_create_trampoline() {
             "stp q6, q7, [sp, #176]\n"
             "bl dpis_create_multiplier\n"
             "str d0, [sp, #208]\n"
+            "ldr d0, [sp, #80]\n"
+            "ldr d1, [sp, #112]\n"
+            "ldr d2, [sp, #208]\n"
+            "bl dpis_create_scaled_d0\n"
+            "str d0, [sp, #224]\n"
+            "ldr d0, [sp, #112]\n"
+            "ldr d1, [sp, #208]\n"
+            "fmul d0, d0, d1\n"
+            "str d0, [sp, #232]\n"
             "bl dpis_create_backup_address\n"
             "str x0, [sp, #216]\n"
             "ldp q0, q1, [sp, #80]\n"
             "ldp q2, q3, [sp, #112]\n"
             "ldp q4, q5, [sp, #144]\n"
             "ldp q6, q7, [sp, #176]\n"
-            "ldr d16, [sp, #208]\n"
-            "fmul d0, d0, d16\n"
-            "fmul d2, d2, d16\n"
+            "ldr d0, [sp, #224]\n"
+            "ldr d2, [sp, #232]\n"
             "ldp x0, x1, [sp, #0]\n"
             "ldp x2, x3, [sp, #16]\n"
             "ldp x4, x5, [sp, #32]\n"
@@ -596,6 +763,7 @@ void replace_push_style_trampoline() {
             "1:\n"
             "ret\n");
 }
+
 #else
 extern "C" [[gnu::visibility("default")]] [[gnu::used]]
 void replace_create_trampoline() {
@@ -604,6 +772,7 @@ void replace_create_trampoline() {
 extern "C" [[gnu::visibility("default")]] [[gnu::used]]
 void replace_push_style_trampoline() {
 }
+
 #endif
 
 extern "C" [[gnu::visibility("default")]] [[gnu::used]]

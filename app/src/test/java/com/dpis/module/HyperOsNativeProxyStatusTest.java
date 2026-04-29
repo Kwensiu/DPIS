@@ -14,13 +14,27 @@ public class HyperOsNativeProxyStatusTest {
     public void inspectNativeLibraryDirDetectsProxyLibrary() throws Exception {
         File nativeDir = Files.createTempDirectory("dpis-native-proxy").toFile();
         File proxy = new File(nativeDir, "libdpis_native.so");
-        assertTrue(proxy.createNewFile());
+        Files.write(proxy.toPath(), new byte[] {1});
 
         HyperOsNativeProxyStatus status = HyperOsNativeProxyStatus.inspectNativeLibraryDir(
                 nativeDir.getAbsolutePath());
 
         assertEquals(HyperOsNativeProxyStatus.State.PRESENT, status.state);
         assertTrue(status.isPresent());
+    }
+
+
+    @Test
+    public void inspectNativeLibraryDirTreatsEmptyPlaceholderAsMissing() throws Exception {
+        File nativeDir = Files.createTempDirectory("dpis-native-proxy-empty").toFile();
+        File proxy = new File(nativeDir, "libdpis_native.so");
+        assertTrue(proxy.createNewFile());
+
+        HyperOsNativeProxyStatus status = HyperOsNativeProxyStatus.inspectNativeLibraryDir(
+                nativeDir.getAbsolutePath());
+
+        assertEquals(HyperOsNativeProxyStatus.State.MISSING, status.state);
+        assertFalse(status.isPresent());
     }
 
     @Test

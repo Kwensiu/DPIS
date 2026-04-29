@@ -39,8 +39,12 @@ final class HyperOsNativeProxyBindMounter {
         if (!source.isFile()) {
             return MountPlan.invalid("module proxy library missing: " + source.getAbsolutePath());
         }
-        if (!target.isFile()) {
-            return MountPlan.invalid("target proxy mount point missing: " + target.getAbsolutePath());
+        File targetParent = target.getParentFile();
+        if (targetParent == null || !targetParent.isDirectory()) {
+            return MountPlan.invalid("target native library directory missing: " + targetNativeLibraryDir);
+        }
+        if (target.exists() && !target.isFile()) {
+            return MountPlan.invalid("target proxy mount point is not a file: " + target.getAbsolutePath());
         }
         return new MountPlan(source.getAbsolutePath(), target.getAbsolutePath(), true, "");
     }
@@ -53,26 +57,39 @@ final class HyperOsNativeProxyBindMounter {
     }
 
     static MountResult unmount(MountPlan plan) {
-        if (plan == null || plan.targetPath == null || plan.targetPath.isBlank()) {
+        if (plan == null || plan.sourcePath == null || plan.sourcePath.isBlank()
+                || plan.targetPath == null || plan.targetPath.isBlank()) {
             return new MountResult(false, "invalid mount target");
         }
-        return runRootCommand(buildUnmountCommand(plan.targetPath));
+        return runRootCommand(buildUnmountCommand(plan.sourcePath, plan.targetPath));
     }
 
     static String buildApplyCommand(String sourcePath, String targetPath) {
         String source = shellQuote(sourcePath);
         String target = shellQuote(targetPath);
-        return "(umount -l " + target + " 2>/dev/null || true)"
-                + " && mount -o bind " + source + " " + target
-                + " && mount | grep -F -- " + shellQuote(targetPath) + " >/dev/null"
-                + " && md5sum " + source + " " + target;
+        return "umount -l " + target + " 2>/dev/null || true; "
+                + "test ! -s " + target
+                + " || cmp -s " + source + " " + target
+                + " || exit 1; "
+                + "cp -f " + source + " " + target
+                + " || cat " + source + " > " + target
+                + " || exit 1; "
+                + "chown system:system " + target + " 2>/dev/null || true; "
+                + "chmod 755 " + target + " 2>/dev/null || true; "
+                + "chcon u:object_r:apk_data_file:s0 " + target + " 2>/dev/null || true; "
+                + "md5sum " + source + " " + target
+                + " || exit 1";
     }
 
-    static String buildUnmountCommand(String targetPath) {
+    static String buildUnmountCommand(String sourcePath, String targetPath) {
+        String source = shellQuote(sourcePath);
         String target = shellQuote(targetPath);
-        return "(umount -l " + target + " 2>/dev/null || true)"
-                + " && (mount | grep -F -- " + shellQuote(targetPath)
-                + " >/dev/null && exit 1 || exit 0)";
+        return "umount -l " + target + " 2>/dev/null || true; "
+                + "test ! -e " + target
+                + " || cmp -s " + source + " " + target
+                + " || exit 1; "
+                + "rm -f " + target + " 2>/dev/null || true; "
+                + "test ! -e " + target + " || test ! -s " + target;
     }
 
     private static MountResult runRootCommand(String command) {
