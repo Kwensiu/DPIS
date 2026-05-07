@@ -1,6 +1,7 @@
 package com.dpis.module;
 
 import java.io.IOException;
+import java.util.LinkedHashSet;
 
 final class HyperOsNativeFontPropertySyncer {
     private HyperOsNativeFontPropertySyncer() {
@@ -31,6 +32,21 @@ final class HyperOsNativeFontPropertySyncer {
         cleanerThread.setDaemon(true);
         cleanerThread.start();
     }
+
+    static void clearConfiguredFontTargetsAsync(DpiConfigStore store) {
+        if (store == null) {
+            return;
+        }
+        LinkedHashSet<String> packages = new LinkedHashSet<>(store.getConfiguredPackages());
+        if (packages.isEmpty()) {
+            return;
+        }
+        Thread cleanerThread = new Thread(() -> clearFontTargets(packages),
+                "DPIS-hyperos-configured-property-cleaner");
+        cleanerThread.setDaemon(true);
+        cleanerThread.start();
+    }
+
     static void syncConfiguredFontTargetsAsync(DpiConfigStore store) {
         if (store == null || !store.isHyperOsFlutterFontHookEnabled()) {
             return;
@@ -59,6 +75,32 @@ final class HyperOsNativeFontPropertySyncer {
                 + "setprop " + shellQuote(forceFontProperty) + " 0; "
                 + "setprop " + shellQuote(rustBinaryProperty) + " 0";
         runRootCommand(command);
+    }
+
+    private static void clearFontTargets(LinkedHashSet<String> packages) {
+        StringBuilder command = new StringBuilder();
+        for (String packageName : packages) {
+            if (packageName == null || packageName.isBlank()) {
+                continue;
+            }
+            HyperOsFlutterFontBridge.clearTarget(packageName);
+            appendClearCommand(command,
+                    HyperOsFlutterFontBridge.propertyNameForPackage(packageName));
+            appendClearCommand(command,
+                    HyperOsFlutterFontBridge.forcePropertyNameForPackage(packageName));
+            appendClearCommand(command,
+                    HyperOsFlutterFontBridge.rustBinaryPropertyNameForPackage(packageName));
+        }
+        if (command.length() > 0) {
+            runRootCommand(command.toString());
+        }
+    }
+
+    private static void appendClearCommand(StringBuilder command, String property) {
+        if (command.length() > 0) {
+            command.append("; ");
+        }
+        command.append("setprop ").append(shellQuote(property)).append(" 0");
     }
 
     static String buildPublishCommandForTest(String fontProperty, int fontScalePercent) {

@@ -111,15 +111,21 @@ final class SystemServerDisplayEnvironmentInstaller {
                 Set<String> configuredPackages = source.getConfiguredPackages();
                 int installedCount = 0;
                 int missingCount = 0;
-                if (installLaunchActivityItemHook(xposed, source)) {
-                    installedCount++;
-                } else {
-                    missingCount++;
+                if (shouldInstallTarget("launch-activity-item",
+                        policy.systemServerSafeModeEnabled)) {
+                    if (installLaunchActivityItemHook(xposed, source)) {
+                        installedCount++;
+                    } else {
+                        missingCount++;
+                    }
                 }
-                if (HyperOsRustProcessHookInstaller.install(xposed, source)) {
-                    installedCount++;
-                } else {
-                    missingCount++;
+                if (shouldInstallTarget("hyperos-rust-process",
+                        policy.systemServerSafeModeEnabled)) {
+                    if (HyperOsRustProcessHookInstaller.install(xposed, source)) {
+                        installedCount++;
+                    } else {
+                        missingCount++;
+                    }
                 }
                 for (HookTarget target : HOOK_TARGETS) {
                     if (!SystemServerMutationPolicy.shouldInstallTarget(

@@ -46,17 +46,31 @@ public class HyperOsNativeProxyBindMounterTest {
                 "/data/app/MIUIGallery/lib/arm64/libdpis_native.so");
 
         assertTrue(command.contains("umount -l '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'"));
-        assertTrue(command.contains("test ! -s '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'"
-                + " || cmp -s '/data/app/module/lib/arm64/libdpis_native.so'"
-                + " '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'"));
         assertTrue(command.contains("cp -f '/data/app/module/lib/arm64/libdpis_native.so'"
                 + " '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'"));
         assertTrue(command.contains("cat '/data/app/module/lib/arm64/libdpis_native.so'"
                 + " > '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'"));
         assertTrue(command.contains("chmod 755 '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'"));
+        assertTrue(command.contains("cmp -s '/data/app/module/lib/arm64/libdpis_native.so'"
+                + " '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'"
+                + " || exit 1"));
         assertTrue(command.contains("md5sum '/data/app/module/lib/arm64/libdpis_native.so'"
                 + " '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'"));
+        assertFalse(command.contains("md5sum '/data/app/module/lib/arm64/libdpis_native.so'"
+                + " '/data/app/MIUIGallery/lib/arm64/libdpis_native.so' || exit 1"));
         assertFalse(command.contains("mount -o bind"));
+    }
+
+    @Test
+    public void applyCommandOverwritesExistingProxyCopy() {
+        String command = HyperOsNativeProxyBindMounter.buildApplyCommand(
+                "/data/app/module/lib/arm64/libdpis_native.so",
+                "/data/app/MIUIWeather/lib/arm64/libdpis_native.so");
+
+        assertTrue(command.contains("cp -f '/data/app/module/lib/arm64/libdpis_native.so'"
+                + " '/data/app/MIUIWeather/lib/arm64/libdpis_native.so'"));
+        assertTrue(command.indexOf("cp -f '/data/app/module/lib/arm64/libdpis_native.so'")
+                < command.indexOf("cmp -s '/data/app/module/lib/arm64/libdpis_native.so'"));
     }
 
     @Test
@@ -70,6 +84,22 @@ public class HyperOsNativeProxyBindMounterTest {
                 + " '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'"));
         assertTrue(command.contains("rm -f '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'"));
         assertTrue(command.contains("test ! -e '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'"));
+    }
+
+    @Test
+    public void unmountCommandVerifiesProxyBeforeRemovingTarget() {
+        String command = HyperOsNativeProxyBindMounter.buildUnmountCommand(
+                "/data/app/module/lib/arm64/libdpis_native.so",
+                "/data/app/MIUIWeather/lib/arm64/libdpis_native.so");
+
+        int compareIndex = command.indexOf("cmp -s '/data/app/module/lib/arm64/libdpis_native.so'"
+                + " '/data/app/MIUIWeather/lib/arm64/libdpis_native.so'"
+                + " || exit 1");
+        int removeIndex = command.indexOf("rm -f '/data/app/MIUIWeather/lib/arm64/libdpis_native.so'");
+
+        assertTrue(compareIndex >= 0);
+        assertTrue(removeIndex >= 0);
+        assertTrue(compareIndex < removeIndex);
     }
 
     @Test

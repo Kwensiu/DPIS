@@ -76,14 +76,18 @@ public class HyperOsFlutterFontHookConfigTest {
 
         assertFalse(shouldClear);
     }
+
+    @Test
+    public void nativeHookInstallerRequiresEnabledFontMode() throws Exception {
+        String source = readSource("src/main/java/com/dpis/module/HyperOsFlutterFontHookInstaller.java");
+
+        assertTrue(source.contains("store.getTargetFontApplyMode(packageName)"));
+        assertTrue(source.contains("FontApplyMode.isEnabled("));
+    }
+
     @Test
     public void nativeForceFontPropertyCanOverrideJniConfiguration() throws Exception {
-        java.nio.file.Path nativeSource = java.nio.file.Paths.get("src/main/cpp/dpis_native.cpp");
-        if (!java.nio.file.Files.exists(nativeSource)) {
-            nativeSource = java.nio.file.Paths.get("app/src/main/cpp/dpis_native.cpp");
-        }
-        String source = new String(java.nio.file.Files.readAllBytes(nativeSource),
-                java.nio.charset.StandardCharsets.UTF_8);
+        String source = readSource("src/main/cpp/dpis_native.cpp");
 
         assertFalse(source.contains("if (g_configured_from_jni.load(std::memory_order_relaxed)) {\n        return;"));
         assertTrue(source.indexOf("debug.dpis.forcefont.%08x")
@@ -93,12 +97,7 @@ public class HyperOsFlutterFontHookConfigTest {
     }
     @Test
     public void nativeCreateHookScalesWeatherCreateFontRegisters() throws Exception {
-        java.nio.file.Path nativeSource = java.nio.file.Paths.get("src/main/cpp/dpis_native.cpp");
-        if (!java.nio.file.Files.exists(nativeSource)) {
-            nativeSource = java.nio.file.Paths.get("app/src/main/cpp/dpis_native.cpp");
-        }
-        String source = new String(java.nio.file.Files.readAllBytes(nativeSource),
-                java.nio.charset.StandardCharsets.UTF_8);
+        String source = readSource("src/main/cpp/dpis_native.cpp");
 
         int createScale = source.indexOf("bl dpis_create_scaled_d0");
         String createTrampoline = source.substring(Math.max(0, createScale - 300), createScale + 180);
@@ -111,12 +110,7 @@ public class HyperOsFlutterFontHookConfigTest {
 
     @Test
     public void nativeProxyLoadsOriginalRustBinaryFromEnvironmentBeforeProperty() throws Exception {
-        java.nio.file.Path nativeSource = java.nio.file.Paths.get("src/main/cpp/dpis_native.cpp");
-        if (!java.nio.file.Files.exists(nativeSource)) {
-            nativeSource = java.nio.file.Paths.get("app/src/main/cpp/dpis_native.cpp");
-        }
-        String source = new String(java.nio.file.Files.readAllBytes(nativeSource),
-                java.nio.charset.StandardCharsets.UTF_8);
+        String source = readSource("src/main/cpp/dpis_native.cpp");
 
         int envRead = source.indexOf("read_environment(\"DPIS_RUST_BINARY\")");
         int propertyRead = source.indexOf("debug.dpis.rustbin.%08x");
@@ -127,12 +121,7 @@ public class HyperOsFlutterFontHookConfigTest {
 
     @Test
     public void weatherNativeProxyFallsBackToSiblingOriginalLibrary() throws Exception {
-        java.nio.file.Path nativeSource = java.nio.file.Paths.get("src/main/cpp/dpis_native.cpp");
-        if (!java.nio.file.Files.exists(nativeSource)) {
-            nativeSource = java.nio.file.Paths.get("app/src/main/cpp/dpis_native.cpp");
-        }
-        String source = new String(java.nio.file.Files.readAllBytes(nativeSource),
-                java.nio.charset.StandardCharsets.UTF_8);
+        String source = readSource("src/main/cpp/dpis_native.cpp");
 
         assertTrue(source.contains("sibling_original_rust_binary_path()"));
         assertTrue(source.contains("current_process_name() != \"com.miui.weather2\""));
@@ -142,12 +131,7 @@ public class HyperOsFlutterFontHookConfigTest {
 
     @Test
     public void weatherGotHookValidatesOriginalSlotBeforePatching() throws Exception {
-        java.nio.file.Path nativeSource = java.nio.file.Paths.get("src/main/cpp/dpis_native.cpp");
-        if (!java.nio.file.Files.exists(nativeSource)) {
-            nativeSource = java.nio.file.Paths.get("app/src/main/cpp/dpis_native.cpp");
-        }
-        String source = new String(java.nio.file.Files.readAllBytes(nativeSource),
-                java.nio.charset.StandardCharsets.UTF_8);
+        String source = readSource("src/main/cpp/dpis_native.cpp");
 
         assertTrue(source.contains("is_weather_configuration_font_scale_slot"));
         assertTrue(source.contains("GOT hook skipped: unexpected slot"));
@@ -169,4 +153,12 @@ public class HyperOsFlutterFontHookConfigTest {
         assertEquals(null, proxyPath);
     }
 
+    private static String readSource(String relativePath) throws Exception {
+        java.nio.file.Path path = java.nio.file.Paths.get(relativePath);
+        if (!java.nio.file.Files.exists(path)) {
+            path = java.nio.file.Paths.get("app", relativePath);
+        }
+        return new String(java.nio.file.Files.readAllBytes(path),
+                java.nio.charset.StandardCharsets.UTF_8);
+    }
 }

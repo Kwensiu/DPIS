@@ -746,14 +746,28 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         new AlertDialog.Builder(this)
                 .setTitle(R.string.module_runtime_reload_title)
                 .setMessage(R.string.module_runtime_reload_message)
-                .setPositiveButton(R.string.module_runtime_reload_ack_button, (dialog, which) -> {
+                .setPositiveButton(R.string.module_runtime_reload_now_button, (dialog, which) -> {
                     ModuleRuntimeReloadAdvisor.markReloadAdviceAcknowledged(this);
-                    if (!maybeShowStartupDisclaimerDialog()) {
-                        maybeCheckForUpdatesOnStartup();
-                    }
+                    showToast(R.string.module_runtime_reload_started);
+                    ModuleRuntimeReloader.softReloadAsync((success, output) -> runOnUiThread(() -> {
+                        if (!success && !isFinishing() && !isDestroyed()) {
+                            showToast(R.string.module_runtime_reload_failed);
+                            continueStartupDialogsAfterRuntimeReloadAdvice();
+                        }
+                    }));
+                })
+                .setNegativeButton(R.string.module_runtime_reload_later_button, (dialog, which) -> {
+                    ModuleRuntimeReloadAdvisor.markReloadAdviceAcknowledged(this);
+                    continueStartupDialogsAfterRuntimeReloadAdvice();
                 })
                 .show();
         return true;
+    }
+
+    private void continueStartupDialogsAfterRuntimeReloadAdvice() {
+        if (!maybeShowStartupDisclaimerDialog()) {
+            maybeCheckForUpdatesOnStartup();
+        }
     }
 
     private void maybeCheckForUpdatesOnStartup() {

@@ -12,6 +12,10 @@ final class HyperOsFlutterFontHookInstaller {
         if (targetFontScalePercent == null || targetFontScalePercent <= 0) {
             return;
         }
+        String targetFontMode = store.getTargetFontApplyMode(packageName);
+        if (!FontApplyMode.isEnabled(targetFontMode)) {
+            return;
+        }
         try {
             System.loadLibrary("dpis_native");
             configure(packageName, targetFontScalePercent, true);

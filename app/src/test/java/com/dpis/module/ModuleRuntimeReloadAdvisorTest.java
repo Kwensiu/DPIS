@@ -7,6 +7,14 @@ import org.junit.Test;
 
 public class ModuleRuntimeReloadAdvisorTest {
     @Test
+    public void softReloadCommandRestartsZygoteAndSystemServer() {
+        String command = ModuleRuntimeReloader.buildSoftReloadCommandForTest();
+
+        assertTrue(command.contains("setprop ctl.restart zygote"));
+        assertTrue(command.contains("setprop ctl.restart zygote_secondary"));
+    }
+
+    @Test
     public void detectsSystemServerRuntimeOlderThanCurrentInstall() {
         assertTrue(ModuleRuntimeReloadAdvisor.isSystemServerRuntimeOlderThanInstall(
                 10_000L, 7_000L));

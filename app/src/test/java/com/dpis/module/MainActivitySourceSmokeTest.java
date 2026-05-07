@@ -91,6 +91,8 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("maybeShowModuleRuntimeReloadAdvice()"));
         assertTrue(source.contains("ModuleRuntimeReloadAdvisor.shouldShowReloadAdvice(this)"));
         assertTrue(source.contains("ModuleRuntimeReloadAdvisor.markReloadAdviceAcknowledged(this)"));
+        assertTrue(source.contains("ModuleRuntimeReloader.softReloadAsync("));
+        assertTrue(source.contains("module_runtime_reload_now_button"));
         assertTrue(source.contains("maybeShowStartupDisclaimerDialog()"));
         assertTrue(source.contains("if (!maybeShowStartupDisclaimerDialog()) {"));
         assertTrue(source.contains("startupUpdateDialogCoordinator().maybeShowStartupDisclaimerDialog("));
@@ -279,6 +281,20 @@ public class MainActivitySourceSmokeTest {
 
         assertTrue(source.contains("HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(configStore)"));
         assertTrue(source.contains("HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(remoteStore)"));
+        assertTrue(!source.contains("HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(this, configStore)"));
+        assertTrue(!source.contains("HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(this, remoteStore)"));
+    }
+
+    @Test
+    public void appReceivesPackageReplacementWithoutAutoMountingHyperOsNativeProxy() throws IOException {
+        String manifest = read("src/main/AndroidManifest.xml");
+        String receiver = read("src/main/java/com/dpis/module/DpisPackageLifecycleReceiver.java");
+
+        assertTrue(manifest.contains(".DpisPackageLifecycleReceiver"));
+        assertTrue(manifest.contains("android.intent.action.MY_PACKAGE_REPLACED"));
+        assertTrue(receiver.contains("Intent.ACTION_MY_PACKAGE_REPLACED"));
+        assertTrue(receiver.contains("HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(context)"));
+        assertTrue(!receiver.contains("HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(context, store)"));
     }
 
     private static String read(String relativePath) throws IOException {

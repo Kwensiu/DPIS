@@ -68,17 +68,15 @@ final class HyperOsNativeProxyBindMounter {
         String source = shellQuote(sourcePath);
         String target = shellQuote(targetPath);
         return "umount -l " + target + " 2>/dev/null || true; "
-                + "test ! -s " + target
-                + " || cmp -s " + source + " " + target
-                + " || exit 1; "
                 + "cp -f " + source + " " + target
                 + " || cat " + source + " > " + target
                 + " || exit 1; "
                 + "chown system:system " + target + " 2>/dev/null || true; "
                 + "chmod 755 " + target + " 2>/dev/null || true; "
                 + "chcon u:object_r:apk_data_file:s0 " + target + " 2>/dev/null || true; "
+                + "cmp -s " + source + " " + target + " || exit 1; "
                 + "md5sum " + source + " " + target
-                + " || exit 1";
+                + " 2>/dev/null || true";
     }
 
     static String buildUnmountCommand(String sourcePath, String targetPath) {

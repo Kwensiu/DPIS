@@ -61,6 +61,14 @@ public class SystemServerSettingsLayoutSmokeTest {
     }
 
     @Test
+    public void disablingHyperOsFontHookClearsPublishedFontTargets() throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+
+        assertTrue(source.contains("if (!isChecked) {"));
+        assertTrue(source.contains("HyperOsNativeFontPropertySyncer.clearConfiguredFontTargetsAsync(store);"));
+    }
+
+    @Test
     public void configBackupDialogsUseCustomLayoutStructure() throws IOException {
         String actionDialog = read("src/main/res/layout/dialog_config_backup.xml");
         String confirmDialog = read("src/main/res/layout/dialog_config_backup_confirm.xml");

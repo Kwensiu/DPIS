@@ -856,6 +856,10 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             setCheckedSilently(hyperOsFlutterFontHookSwitch, !isChecked,
                     this::onHyperOsFlutterFontHookChanged);
             showToast(R.string.system_settings_save_failed);
+            return;
+        }
+        if (!isChecked) {
+            HyperOsNativeFontPropertySyncer.clearConfiguredFontTargetsAsync(store);
         }
     }
 
