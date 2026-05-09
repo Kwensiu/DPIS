@@ -18,7 +18,6 @@
 
                 <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="1dp" android:maxLines="1" android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
 
-                <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_hyperos_native_warning" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/dialog_hyperos_native_warning" android:textAppearance="@style/TextAppearance.Material3.BodySmall" android:visibility="gone" />
             </LinearLayout>
         </LinearLayout>
 

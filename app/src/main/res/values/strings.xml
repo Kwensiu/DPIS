@@ -52,12 +52,8 @@
     <string name="dialog_hyperos_native_proxy_apply_failed">HyperOS compatibility setup failed. Check root access and try again.</string>
     <string name="dialog_hyperos_native_proxy_unmount_success">HyperOS compatibility support rolled back. Restart the target app.</string>
     <string name="dialog_hyperos_native_proxy_unmount_failed">HyperOS compatibility rollback failed. Check root access and try again.</string>
-    <string name="module_runtime_reload_title">System-level hooks may need reload</string>
-    <string name="module_runtime_reload_message">DPIS was updated after this boot. Normal Java app hooks may work after restarting the target app, but system_server/HyperOS Rust hooks can still be running the previous module code. To apply the new HyperOS compatibility code without a full device reboot, reload the module runtime now. This will briefly restart Android system services.</string>
-    <string name="module_runtime_reload_now_button">Reload now</string>
-    <string name="module_runtime_reload_later_button">Later</string>
-    <string name="module_runtime_reload_started">Reloading Android runtime…</string>
-    <string name="module_runtime_reload_failed">Runtime reload failed. Check root access or reboot the device.</string>
+    <string name="module_runtime_reload_title">Restart recommended</string>
+    <string name="module_runtime_reload_message">Some changes may not fully take effect until the device is restarted.</string>
     <string name="module_runtime_reload_ack_button">Got it</string>
     <string name="dialog_process_requires_root">Root access required</string>
     <string name="dialog_process_restart_requires_root">Root access required to restart</string>

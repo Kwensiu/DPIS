@@ -49,21 +49,14 @@ public class AppConfigDialogBinderSourceSmokeTest {
     }
 
     @Test
-    public void binderShowsHyperOsNativeProxyStatus() throws IOException {
+    public void binderDoesNotShowHyperOsNativeProxyStatusTextInSheet() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
-        String strings = read("src/main/res/values/strings.xml");
+        String layout = read("src/main/res/layout/dialog_app_config.xml");
 
-        assertTrue(source.contains("HyperOsNativeProxyStatus.inspect(activity, item.packageName)"));
-        assertTrue(source.contains("dialog_hyperos_native_proxy_present"));
-        assertTrue(source.contains("dialog_hyperos_native_proxy_missing"));
-        assertTrue(source.contains("dialog_hyperos_native_proxy_unknown"));
-        assertTrue(strings.contains("dialog_hyperos_native_proxy_present"));
-        assertFalse(strings.contains("native directory"));
-        assertFalse(strings.contains("libdpis_native.so"));
-        assertTrue(strings.contains("dialog_hyperos_native_proxy_missing"));
-        assertTrue(strings.contains("dialog_hyperos_native_proxy_unknown"));
-        assertTrue(strings.contains("dialog_hyperos_native_proxy_apply_success"));
-        assertTrue(strings.contains("dialog_hyperos_native_proxy_unmount_success"));
+        assertFalse(source.contains("bindHyperOsNativeWarning("));
+        assertFalse(source.contains("resolveHyperOsNativeWarningText("));
+        assertFalse(source.contains("HyperOsNativeProxyStatus.inspect(activity, item.packageName)"));
+        assertFalse(layout.contains("dialog_hyperos_native_warning"));
     }
 
 

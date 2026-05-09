@@ -1,6 +1,5 @@
 package com.dpis.module;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.Intent;
@@ -38,6 +37,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
@@ -743,24 +743,19 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         if (!ModuleRuntimeReloadAdvisor.shouldShowReloadAdvice(this)) {
             return false;
         }
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.module_runtime_reload_title)
-                .setMessage(R.string.module_runtime_reload_message)
-                .setPositiveButton(R.string.module_runtime_reload_now_button, (dialog, which) -> {
-                    ModuleRuntimeReloadAdvisor.markReloadAdviceAcknowledged(this);
-                    showToast(R.string.module_runtime_reload_started);
-                    ModuleRuntimeReloader.softReloadAsync((success, output) -> runOnUiThread(() -> {
-                        if (!success && !isFinishing() && !isDestroyed()) {
-                            showToast(R.string.module_runtime_reload_failed);
-                            continueStartupDialogsAfterRuntimeReloadAdvice();
-                        }
-                    }));
-                })
-                .setNegativeButton(R.string.module_runtime_reload_later_button, (dialog, which) -> {
-                    ModuleRuntimeReloadAdvisor.markReloadAdviceAcknowledged(this);
-                    continueStartupDialogsAfterRuntimeReloadAdvice();
-                })
-                .show();
+        View dialogView = LayoutInflater.from(this)
+                .inflate(R.layout.dialog_module_runtime_reload_advice, null, false);
+        MaterialButton ackButton = dialogView.findViewById(R.id.module_runtime_reload_ack_button);
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+        dialog.setCanceledOnTouchOutside(true);
+        ackButton.setOnClickListener(v -> {
+            ModuleRuntimeReloadAdvisor.markReloadAdviceAcknowledged(this);
+            dialog.dismiss();
+            continueStartupDialogsAfterRuntimeReloadAdvice();
+        });
+        dialog.show();
         return true;
     }
 

@@ -76,7 +76,6 @@ final class AppConfigDialogBinder {
                 dialogView.findViewById(R.id.dialog_title),
                 dialogView.findViewById(R.id.dialog_package),
                 dialogView.findViewById(R.id.dialog_status),
-                dialogView.findViewById(R.id.dialog_hyperos_native_warning),
                 dialogView.findViewById(R.id.dialog_viewport_input_layout),
                 dialogView.findViewById(R.id.dialog_viewport_input),
                 dialogView.findViewById(R.id.dialog_font_scale_input_layout),
@@ -104,7 +103,6 @@ final class AppConfigDialogBinder {
         views.iconView.setImageDrawable(item.icon);
         views.titleView.setText(item.label);
         views.packageView.setText(item.packageName);
-        bindHyperOsNativeWarning(views.hyperOsNativeWarningView, item);
         views.viewportInputView.setText(item.viewportWidthDp != null
                 ? String.valueOf(item.viewportWidthDp)
                 : "");
@@ -386,21 +384,6 @@ final class AppConfigDialogBinder {
         statusView.setText(dialogStatusText);
     }
 
-    private void bindHyperOsNativeWarning(MaterialTextView warningView, AppListItem item) {
-        if (!item.hyperOsNativeProxyCandidate) {
-            warningView.setVisibility(View.GONE);
-            return;
-        }
-        HyperOsNativeProxyStatus proxyStatus = HyperOsNativeProxyStatus.inspect(activity, item.packageName);
-        int colorAttr = proxyStatus.isPresent()
-                ? androidx.appcompat.R.attr.colorPrimary
-                : androidx.appcompat.R.attr.colorError;
-        int statusColor = MaterialColors.getColor(warningView, colorAttr);
-        warningView.setTextColor(statusColor);
-        warningView.setText(resolveHyperOsNativeWarningText(proxyStatus));
-        warningView.setVisibility(View.VISIBLE);
-    }
-
     private void syncHyperOsNativeProxyAfterSave(
             AppListItem item, AppConfigDialogViews views, AppConfigDialogState state) {
         if (!item.hyperOsNativeProxyCandidate) {
@@ -408,7 +391,6 @@ final class AppConfigDialogBinder {
         }
         setSaveAndResetButtonsEnabled(views, false);
         Runnable onFinished = () -> {
-            bindHyperOsNativeWarning(views.hyperOsNativeWarningView, item);
             setSaveAndResetButtonsEnabled(views, true);
         };
         if (state.dpisEnabled && hasActiveDialogConfig(views)) {
@@ -426,14 +408,6 @@ final class AppConfigDialogBinder {
     private static void setSaveAndResetButtonsEnabled(AppConfigDialogViews views, boolean enabled) {
         views.saveButton.setEnabled(enabled);
         views.disableButton.setEnabled(enabled);
-    }
-
-    private String resolveHyperOsNativeWarningText(HyperOsNativeProxyStatus proxyStatus) {
-        return switch (proxyStatus.state) {
-            case PRESENT -> activity.getString(R.string.dialog_hyperos_native_proxy_present);
-            case MISSING -> activity.getString(R.string.dialog_hyperos_native_proxy_missing);
-            case UNKNOWN -> activity.getString(R.string.dialog_hyperos_native_proxy_unknown);
-        };
     }
 
     private static Integer parsePositiveIntOrNullSafe(TextInputEditText inputView) {
@@ -637,7 +611,6 @@ final class AppConfigDialogBinder {
         final MaterialTextView titleView;
         final MaterialTextView packageView;
         final MaterialTextView statusView;
-        final MaterialTextView hyperOsNativeWarningView;
         final TextInputLayout viewportInputLayout;
         final TextInputEditText viewportInputView;
         final TextInputLayout fontInputLayout;
@@ -656,7 +629,6 @@ final class AppConfigDialogBinder {
                 MaterialTextView titleView,
                 MaterialTextView packageView,
                 MaterialTextView statusView,
-                MaterialTextView hyperOsNativeWarningView,
                 TextInputLayout viewportInputLayout,
                 TextInputEditText viewportInputView,
                 TextInputLayout fontInputLayout,
@@ -674,7 +646,6 @@ final class AppConfigDialogBinder {
             this.titleView = titleView;
             this.packageView = packageView;
             this.statusView = statusView;
-            this.hyperOsNativeWarningView = hyperOsNativeWarningView;
             this.viewportInputLayout = viewportInputLayout;
             this.viewportInputView = viewportInputView;
             this.fontInputLayout = fontInputLayout;

@@ -87,12 +87,32 @@ public class MainActivitySourceSmokeTest {
     @Test
     public void startupDisclaimerUsesMaterialDialogAndPersistsConsent() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
+        String runtimeLayout = read("src/main/res/layout/dialog_module_runtime_reload_advice.xml");
+        String strings = read("src/main/res/values/strings.xml");
+        String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
         assertTrue(source.contains("maybeShowModuleRuntimeReloadAdvice()"));
         assertTrue(source.contains("ModuleRuntimeReloadAdvisor.shouldShowReloadAdvice(this)"));
         assertTrue(source.contains("ModuleRuntimeReloadAdvisor.markReloadAdviceAcknowledged(this)"));
-        assertTrue(source.contains("ModuleRuntimeReloader.softReloadAsync("));
-        assertTrue(source.contains("module_runtime_reload_now_button"));
+        assertTrue(source.contains("R.layout.dialog_module_runtime_reload_advice"));
+        assertTrue(source.contains("new MaterialAlertDialogBuilder(this)"));
+        assertTrue(source.contains("module_runtime_reload_ack_button"));
+        assertTrue(!source.contains("ModuleRuntimeReloader.softReloadAsync("));
+        assertTrue(!source.contains("module_runtime_reload_now_button"));
+        assertTrue(!source.contains("module_runtime_reload_later_button"));
+        assertTrue(runtimeLayout.contains("@drawable/ic_error_outline_24"));
+        assertTrue(runtimeLayout.contains("module_runtime_reload_title"));
+        assertTrue(runtimeLayout.contains("module_runtime_reload_message"));
+        assertTrue(runtimeLayout.contains("module_runtime_reload_ack_button"));
+        String runtimeMessage = stringEntry(strings, "module_runtime_reload_message");
+        String zhRuntimeTitle = stringEntry(zhStrings, "module_runtime_reload_title");
+        String zhRuntimeMessage = stringEntry(zhStrings, "module_runtime_reload_message");
+        assertTrue(zhRuntimeTitle.contains("建议重启设备"));
+        assertTrue(zhRuntimeMessage.contains("部分修改可能需要重启设备后才能完全生效"));
+        assertTrue(!runtimeMessage.contains("HyperOS"));
+        assertTrue(!runtimeMessage.contains("Rust"));
+        assertTrue(!zhRuntimeMessage.contains("HyperOS"));
+        assertTrue(!zhRuntimeMessage.contains("Rust"));
         assertTrue(source.contains("maybeShowStartupDisclaimerDialog()"));
         assertTrue(source.contains("if (!maybeShowStartupDisclaimerDialog()) {"));
         assertTrue(source.contains("startupUpdateDialogCoordinator().maybeShowStartupDisclaimerDialog("));
@@ -299,6 +319,19 @@ public class MainActivitySourceSmokeTest {
 
     private static String read(String relativePath) throws IOException {
         return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
+    }
+
+    private static String stringEntry(String source, String name) {
+        String marker = "name=\"" + name + "\"";
+        int start = source.indexOf(marker);
+        if (start < 0) {
+            return "";
+        }
+        int end = source.indexOf("</string>", start);
+        if (end < start) {
+            return source.substring(start);
+        }
+        return source.substring(start, end);
     }
 
     @Test
