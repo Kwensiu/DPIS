@@ -12,6 +12,7 @@ final class AppListItem {
     final String fontMode;
     final boolean dpisEnabled;
     final boolean systemApp;
+    final boolean hyperOsNativeProxyCandidate;
     final Drawable icon;
 
     AppListItem(String label,
@@ -23,6 +24,7 @@ final class AppListItem {
                 String fontMode,
                 boolean dpisEnabled,
                 boolean systemApp,
+                boolean hyperOsNativeProxyCandidate,
                 Drawable icon) {
         this.label = label;
         this.packageName = packageName;
@@ -33,6 +35,7 @@ final class AppListItem {
         this.fontMode = FontApplyMode.normalize(fontMode);
         this.dpisEnabled = dpisEnabled;
         this.systemApp = systemApp;
+        this.hyperOsNativeProxyCandidate = hyperOsNativeProxyCandidate;
         this.icon = icon;
     }
 }

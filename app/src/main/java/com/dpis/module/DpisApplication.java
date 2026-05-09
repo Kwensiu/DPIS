@@ -1,7 +1,6 @@
 package com.dpis.module;
 
 import android.app.Application;
-
 import com.google.android.material.color.DynamicColors;
 
 import java.util.LinkedHashMap;
@@ -28,8 +27,10 @@ public final class DpisApplication extends Application implements XposedServiceH
     public void onCreate() {
         super.onCreate();
         DynamicColors.applyToActivitiesIfAvailable(this);
+        HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(this);
         configStore = ConfigStoreFactory.createForModuleApp(this);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
+        HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(configStore);
         XposedServiceHelper.registerListener(this);
         UpdatePackageInstaller.clearStaleUpdateCache(this, UPDATE_CACHE_STARTUP_MAX_AGE_MS);
     }
@@ -43,6 +44,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         migrateConfig(localStore, remoteStore);
         configStore = remoteStore;
         DpisLog.setLoggingEnabled(remoteStore.isGlobalLogEnabled());
+        HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(remoteStore);
         xposedService = service;
         notifyServiceStateChanged();
     }
@@ -51,6 +53,7 @@ public final class DpisApplication extends Application implements XposedServiceH
     public void onServiceDied(XposedService service) {
         configStore = ConfigStoreFactory.createForModuleApp(this);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
+        HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(configStore);
         xposedService = null;
         notifyServiceStateChanged();
     }
@@ -84,8 +87,9 @@ public final class DpisApplication extends Application implements XposedServiceH
         if (from == null || to == null || from == to) {
             return;
         }
+        Set<String> localPackages = from.getConfiguredPackages();
         LinkedHashMap<String, Integer> seedViewportWidthDps = new LinkedHashMap<>();
-        for (String packageName : from.getConfiguredPackages()) {
+        for (String packageName : localPackages) {
             Integer viewportWidthDp = from.getTargetViewportWidthDp(packageName);
             if (viewportWidthDp != null && viewportWidthDp > 0) {
                 seedViewportWidthDps.put(packageName, viewportWidthDp);
@@ -94,7 +98,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         if (!seedViewportWidthDps.isEmpty()) {
             to.ensureSeedConfig(seedViewportWidthDps);
         }
-        for (String packageName : from.getConfiguredPackages()) {
+        for (String packageName : localPackages) {
             Integer fontScalePercent = from.getTargetFontScalePercent(packageName);
             if (fontScalePercent != null && fontScalePercent > 0) {
                 if (!to.hasPrimaryTargetFontScalePercent(packageName)) {
@@ -124,6 +128,9 @@ public final class DpisApplication extends Application implements XposedServiceH
         }
         if (from.hasGlobalLogEnabled() && !to.hasGlobalLogEnabled()) {
             to.setGlobalLogEnabled(from.isGlobalLogEnabled());
+        }
+        if (from.hasHyperOsFlutterFontHookEnabled() && !to.hasHyperOsFlutterFontHookEnabled()) {
+            to.setHyperOsFlutterFontHookEnabled(from.isHyperOsFlutterFontHookEnabled());
         }
         if (from.hasLauncherIconHidden() && !to.hasLauncherIconHidden()) {
             to.setLauncherIconHidden(from.isLauncherIconHidden());

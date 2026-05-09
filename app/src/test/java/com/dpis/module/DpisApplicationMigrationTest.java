@@ -3,8 +3,11 @@ package com.dpis.module;
 import org.junit.Test;
 
 import java.lang.reflect.Method;
+import java.util.LinkedHashSet;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class DpisApplicationMigrationTest {
@@ -155,6 +158,66 @@ public class DpisApplicationMigrationTest {
     }
 
     @Test
+    public void preservesRemoteOnlyPackageConfigDuringMigration() throws Exception {
+        FakePrefs localPrefs = new FakePrefs();
+        DpiConfigStore local = new DpiConfigStore(localPrefs);
+        assertTrue(local.setTargetViewportWidthDp("com.miui.weather2", 500));
+
+        FakePrefs remotePrefs = new FakePrefs();
+        DpiConfigStore remote = new DpiConfigStore(remotePrefs);
+        assertTrue(remote.setTargetViewportWidthDp("com.miui.gallery", 500));
+        assertTrue(remote.setTargetViewportApplyMode(
+                "com.miui.gallery", ViewportApplyMode.FIELD_REWRITE));
+        assertTrue(remote.setTargetFontScalePercent("com.miui.gallery", 300));
+        assertTrue(remote.setTargetFontApplyMode(
+                "com.miui.gallery", FontApplyMode.SYSTEM_EMULATION));
+
+        invokeMigrate(local, remote);
+
+        DpiConfigStore remoteOnly = new DpiConfigStore(remotePrefs);
+        assertTrue(remoteOnly.getConfiguredPackages().contains("com.miui.gallery"));
+        assertTrue(remoteOnly.getTargetViewportWidthDp("com.miui.gallery") == 500);
+        assertTrue(remoteOnly.getTargetFontScalePercent("com.miui.gallery") == 300);
+        assertTrue(FontApplyMode.SYSTEM_EMULATION.equals(
+                remoteOnly.getTargetFontApplyMode("com.miui.gallery")));
+    }
+
+    @Test
+    public void nativeProxyAssetResolverUsesFirstSupportedAvailableAbi() {
+        LinkedHashSet<String> available = new LinkedHashSet<>();
+        available.add("native/armeabi-v7a/libdpis_native.so");
+        available.add("native/arm64-v8a/libdpis_native.so");
+
+        String path = HyperOsNativeProxyAssetExporter.resolveNativeProxyAssetPath(available,
+                new String[]{"x86_64", "arm64-v8a", "armeabi-v7a"});
+
+        assertEquals("native/arm64-v8a/libdpis_native.so", path);
+    }
+
+    @Test
+    public void nativeProxyAssetResolverFallsBackToArm64ThenFirstAvailable() {
+        LinkedHashSet<String> available = new LinkedHashSet<>();
+        available.add("native/armeabi-v7a/libdpis_native.so");
+        available.add("native/arm64-v8a/libdpis_native.so");
+
+        String arm64Path = HyperOsNativeProxyAssetExporter.resolveNativeProxyAssetPath(available,
+                new String[]{"x86_64"});
+        String firstPath = HyperOsNativeProxyAssetExporter.resolveNativeProxyAssetPath(available,
+                new String[]{"x86_64", "x86"});
+
+        assertEquals("native/arm64-v8a/libdpis_native.so", arm64Path);
+        assertEquals("native/arm64-v8a/libdpis_native.so", firstPath);
+    }
+
+    @Test
+    public void nativeProxyAssetResolverReturnsNullWhenNoAssetsAvailable() {
+        assertNull(HyperOsNativeProxyAssetExporter.resolveNativeProxyAssetPath(new LinkedHashSet<>(),
+                new String[]{"arm64-v8a"}));
+        assertNull(HyperOsNativeProxyAssetExporter.resolveNativeProxyAssetPath(null,
+                new String[]{"arm64-v8a"}));
+    }
+
+    @Test
     public void doesNotOverwriteRemoteLauncherIconHiddenWhenLocalMissing() throws Exception {
         FakePrefs localPrefs = new FakePrefs();
         DpiConfigStore local = new DpiConfigStore(localPrefs);
@@ -180,6 +243,20 @@ public class DpisApplicationMigrationTest {
         invokeMigrate(local, remote);
 
         assertTrue(remote.isLauncherIconHidden());
+    }
+
+    @Test
+    public void seedsRemoteHyperOsFlutterFontHookFlagWhenRemoteMissing() throws Exception {
+        FakePrefs localPrefs = new FakePrefs();
+        DpiConfigStore local = new DpiConfigStore(localPrefs);
+        assertTrue(local.setHyperOsFlutterFontHookEnabled(true));
+
+        FakePrefs remotePrefs = new FakePrefs();
+        DpiConfigStore remote = new DpiConfigStore(remotePrefs);
+
+        invokeMigrate(local, remote);
+
+        assertTrue(remote.isHyperOsFlutterFontHookEnabled());
     }
 
     private static void invokeMigrate(DpiConfigStore from, DpiConfigStore to) throws Exception {

@@ -1,6 +1,10 @@
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.ConfigurableFileTree
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
@@ -98,6 +102,12 @@ android {
         versionName = appVersionName
         versionCode = semVerToVersionCode(appVersionName)
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        externalNativeBuild {
+            cmake {
+                arguments += "-DANDROID_STL=c++_static"
+            }
+        }
     }
 
     signingConfigs {
@@ -130,6 +140,9 @@ android {
     }
 
     packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
         resources {
             merges += "META-INF/xposed/*"
             excludes += "**"
@@ -144,6 +157,51 @@ android {
 
     buildFeatures {
         buildConfig = true
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+        }
+    }
+}
+
+abstract class SyncNativeProxyAssetTask : DefaultTask() {
+    @get:InputFiles
+    abstract val sourceFiles: ConfigurableFileTree
+
+    @get:OutputDirectory
+    abstract val outputDirectory: DirectoryProperty
+
+    @TaskAction
+    fun syncNativeProxyAsset() {
+        val output = outputDirectory.get().asFile
+        if (output.exists()) {
+            output.deleteRecursively()
+        }
+        sourceFiles.files.forEach { source ->
+            val abi = source.parentFile.name
+            val target = output.resolve("native/$abi/libdpis_native.so")
+            target.parentFile.mkdirs()
+            source.copyTo(target, overwrite = true)
+        }
+    }
+}
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        val capitalizedName = variant.name.replaceFirstChar { char ->
+            if (char.isLowerCase()) char.titlecase() else char.toString()
+        }
+        val syncNativeProxy = tasks.register<SyncNativeProxyAssetTask>(
+            "sync${capitalizedName}NativeProxyAsset"
+        ) {
+            sourceFiles.setDir(layout.buildDirectory.dir("intermediates/cxx/${variant.name}"))
+            sourceFiles.include("**/obj/*/libdpis_native.so")
+            outputDirectory.set(layout.buildDirectory.dir("generated/assets/nativeProxy/${variant.name}"))
+            dependsOn("externalNativeBuild${capitalizedName}")
+        }
+        variant.sources.assets?.addGeneratedSourceDirectory(syncNativeProxy) { it.outputDirectory }
     }
 }
 

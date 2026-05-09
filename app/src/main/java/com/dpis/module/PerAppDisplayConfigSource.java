@@ -4,13 +4,25 @@ import java.util.Collections;
 import java.util.Set;
 
 final class PerAppDisplayConfigSource {
-    private final DpiConfigStore store;
+    interface StoreProvider {
+        DpiConfigStore get();
+    }
+
+    private final StoreProvider storeProvider;
 
     PerAppDisplayConfigSource(DpiConfigStore store) {
-        this.store = store;
+        this(() -> store);
+    }
+
+    PerAppDisplayConfigSource(StoreProvider storeProvider) {
+        this.storeProvider = storeProvider;
     }
 
     PerAppDisplayConfig get(String packageName) {
+        DpiConfigStore store = getStore();
+        if (store != null && !store.isTargetDpisEnabled(packageName)) {
+            return null;
+        }
         Integer targetViewportWidthDp = TargetViewportWidthResolver.resolve(store, packageName);
         Integer targetFontScalePercent = store != null
                 ? store.getTargetFontScalePercent(packageName)
@@ -24,10 +36,12 @@ final class PerAppDisplayConfigSource {
             return null;
         }
         return new PerAppDisplayConfig(packageName, targetViewportWidthDp,
-                targetFontScalePercent, targetFontMode);
+                targetFontScalePercent, targetFontMode,
+                store != null && store.isHyperOsFlutterFontHookEnabled());
     }
 
     Set<String> getConfiguredPackages() {
+        DpiConfigStore store = getStore();
         if (store == null) {
             return Collections.emptySet();
         }
@@ -35,7 +49,12 @@ final class PerAppDisplayConfigSource {
     }
 
     boolean isSystemServerHooksEnabled() {
+        DpiConfigStore store = getStore();
         return store == null || store.isSystemServerHooksEnabled();
+    }
+
+    private DpiConfigStore getStore() {
+        return storeProvider != null ? storeProvider.get() : null;
     }
 }
 

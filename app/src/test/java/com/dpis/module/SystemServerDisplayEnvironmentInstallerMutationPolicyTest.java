@@ -2,6 +2,10 @@ package com.dpis.module;
 
 import org.junit.Test;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -76,6 +80,10 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
                 .shouldInstallTargetForTest("activity-start", true));
         assertFalse(SystemServerDisplayEnvironmentInstaller
                 .shouldInstallTargetForTest("config-dispatch", true));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldInstallTargetForTest("launch-activity-item", true));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldInstallTargetForTest("hyperos-rust-process", true));
     }
 
     @Test
@@ -90,6 +98,27 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
                 .shouldInstallTargetForTest("activity-start", false));
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldInstallTargetForTest("config-dispatch", false));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldInstallTargetForTest("launch-activity-item", false));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldInstallTargetForTest("hyperos-rust-process", false));
+    }
+
+    @Test
+    public void hyperOsBootstrapHooksAreGuardedBySafeModeInSource() throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+
+        int launchHookIndex = source.indexOf("if (installLaunchActivityItemHook(xposed, source))");
+        assertTrue(launchHookIndex > 0);
+        String launchContext = source.substring(Math.max(0, launchHookIndex - 260), launchHookIndex);
+        assertTrue(launchContext.contains("shouldInstallTarget("));
+        assertTrue(launchContext.contains("launch-activity-item"));
+
+        int rustHookIndex = source.indexOf("if (HyperOsRustProcessHookInstaller.install(xposed, source))");
+        assertTrue(rustHookIndex > 0);
+        String rustContext = source.substring(Math.max(0, rustHookIndex - 260), rustHookIndex);
+        assertTrue(rustContext.contains("shouldInstallTarget("));
+        assertTrue(rustContext.contains("hyperos-rust-process"));
     }
 
     @Test
@@ -123,6 +152,10 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
         assertEquals(800L, SystemServerHookLogGate.resolveLogMinIntervalMs("activity-start"));
         assertEquals(800L, SystemServerHookLogGate.resolveLogMinIntervalMs("config-dispatch"));
         assertEquals(400L, SystemServerHookLogGate.resolveLogMinIntervalMs("unknown-entry"));
+    }
+
+    private static String read(String relativePath) throws IOException {
+        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
     }
 
     private static final class FakeWindow {

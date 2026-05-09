@@ -28,11 +28,12 @@ public class SystemServerDisplayDiagnosticsTest {
         configuration.screenHeightDp = 736;
         configuration.smallestScreenWidthDp = 360;
         configuration.densityDpi = 480;
+        configuration.fontScale = 1.25f;
 
         String summary = SystemServerDisplayDiagnostics.describeState(configuration, null);
 
         assertEquals(
-                "config{widthDp=360,heightDp=736,smallestWidthDp=360,densityDpi=480}",
+                "config{widthDp=360,heightDp=736,smallestWidthDp=360,densityDpi=480,fontScale=1.25}",
                 summary);
     }
 

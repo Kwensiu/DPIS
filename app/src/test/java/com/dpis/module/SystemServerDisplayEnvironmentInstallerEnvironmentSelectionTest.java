@@ -26,19 +26,28 @@ public class SystemServerDisplayEnvironmentInstallerEnvironmentSelectionTest {
     }
 
     @Test
-    public void systemServerOnlyUsesConfigWithViewportOverride() {
-        PerAppDisplayConfig fontOnly = new PerAppDisplayConfig(
+    public void systemServerUsesViewportOrFontEmulationConfig() {
+        PerAppDisplayConfig fontOnlyEmulation = new PerAppDisplayConfig(
                 "com.example.target",
                 null,
-                120
+                120,
+                FontApplyMode.SYSTEM_EMULATION
+        );
+        PerAppDisplayConfig fontOnlyRewrite = new PerAppDisplayConfig(
+                "com.example.target",
+                null,
+                120,
+                FontApplyMode.FIELD_REWRITE
         );
         PerAppDisplayConfig viewport = new PerAppDisplayConfig(
                 "com.example.target",
                 360
         );
 
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerForTest(fontOnlyEmulation));
         assertFalse(SystemServerDisplayEnvironmentInstaller
-                .shouldUseConfigInSystemServerForTest(fontOnly));
+                .shouldUseConfigInSystemServerForTest(fontOnlyRewrite));
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldUseConfigInSystemServerForTest(viewport));
     }

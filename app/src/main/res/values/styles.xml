@@ -7,6 +7,13 @@
         <item name="android:windowLightStatusBar">true</item>
     </style>
 
+    <style name="Theme.Dpis.Ingest" parent="android:style/Theme.Translucent.NoTitleBar">
+        <item name="android:windowNoDisplay">true</item>
+        <item name="android:windowDisablePreview">true</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+
     <style name="Widget.Dpis.TextInputLayout.OutlinedBox.Compact"
         parent="Widget.Material3.TextInputLayout.OutlinedBox">
         <item name="boxCollapsedPaddingTop">0dp</item>

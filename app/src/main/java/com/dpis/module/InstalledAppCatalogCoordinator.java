@@ -95,7 +95,8 @@ final class InstalledAppCatalogCoordinator {
             Drawable icon = resolveDisplayIcon(item);
             result.add(new AppListItem(item.label, item.packageName,
                     scopePackages.contains(item.packageName), viewportWidth, viewportMode,
-                    fontScalePercent, fontMode, dpisEnabled, item.systemApp, icon));
+                    fontScalePercent, fontMode, dpisEnabled, item.systemApp,
+                    item.hyperOsNativeProxyCandidate, icon));
         }
         return result;
     }
@@ -165,9 +166,9 @@ final class InstalledAppCatalogCoordinator {
             List<ApplicationInfo> installedApps;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 installedApps = packageManager.getInstalledApplications(
-                        PackageManager.ApplicationInfoFlags.of(0));
+                        PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA));
             } else {
-                installedApps = packageManager.getInstalledApplications(0);
+                installedApps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA);
             }
 
             List<InstalledAppCatalogItem> rebuilt = new ArrayList<>();
@@ -181,6 +182,7 @@ final class InstalledAppCatalogCoordinator {
                         label,
                         applicationInfo.packageName,
                         systemApp,
+                        HyperOsNativeAppDetector.isNativeProxyCandidate(applicationInfo),
                         previousIcons.get(applicationInfo.packageName)));
             }
             rebuilt.sort(Comparator.comparing(
@@ -318,16 +320,23 @@ final class InstalledAppCatalogCoordinator {
                 && (flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0;
     }
 
+
     private static final class InstalledAppCatalogItem {
         final String label;
         final String packageName;
         final boolean systemApp;
+        final boolean hyperOsNativeProxyCandidate;
         volatile Drawable icon;
 
-        InstalledAppCatalogItem(String label, String packageName, boolean systemApp, Drawable icon) {
+        InstalledAppCatalogItem(String label,
+                String packageName,
+                boolean systemApp,
+                boolean hyperOsNativeProxyCandidate,
+                Drawable icon) {
             this.label = label;
             this.packageName = packageName;
             this.systemApp = systemApp;
+            this.hyperOsNativeProxyCandidate = hyperOsNativeProxyCandidate;
             this.icon = icon;
         }
     }

@@ -156,7 +156,8 @@ final class SystemServerDisplayDiagnostics {
         return "config{widthDp=" + configuration.screenWidthDp
                 + ",heightDp=" + configuration.screenHeightDp
                 + ",smallestWidthDp=" + configuration.smallestScreenWidthDp
-                + ",densityDpi=" + configuration.densityDpi + "}";
+                + ",densityDpi=" + configuration.densityDpi
+                + ",fontScale=" + configuration.fontScale + "}";
     }
 
     static String describeFrame(Rect frame) {

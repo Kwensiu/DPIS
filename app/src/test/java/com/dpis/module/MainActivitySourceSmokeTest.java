@@ -88,6 +88,11 @@ public class MainActivitySourceSmokeTest {
     public void startupDisclaimerUsesMaterialDialogAndPersistsConsent() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
+        assertTrue(source.contains("maybeShowModuleRuntimeReloadAdvice()"));
+        assertTrue(source.contains("ModuleRuntimeReloadAdvisor.shouldShowReloadAdvice(this)"));
+        assertTrue(source.contains("ModuleRuntimeReloadAdvisor.markReloadAdviceAcknowledged(this)"));
+        assertTrue(source.contains("ModuleRuntimeReloader.softReloadAsync("));
+        assertTrue(source.contains("module_runtime_reload_now_button"));
         assertTrue(source.contains("maybeShowStartupDisclaimerDialog()"));
         assertTrue(source.contains("if (!maybeShowStartupDisclaimerDialog()) {"));
         assertTrue(source.contains("startupUpdateDialogCoordinator().maybeShowStartupDisclaimerDialog("));
@@ -230,6 +235,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("new AppConfigSaveHandler()"));
         assertTrue(source.contains("processActionHandler.execute(item, mappedAction);"));
         assertTrue(source.contains("appConfigSaveHandler.save("));
+        assertTrue(source.contains("HyperOsNativeFontPropertySyncer.clearFontTargetAsync(packageName)"));
         assertTrue(!source.contains("private void runProcessAction(String packageName"));
         assertTrue(!source.contains("private int[] saveAppConfig(AppListItem item"));
     }
@@ -269,7 +275,41 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("HapticFeedbackConstants.VIRTUAL_KEY"));
     }
 
+    @Test
+    public void applicationSyncsHyperOsNativeFontTargetsOnStartup() throws IOException {
+        String source = read("src/main/java/com/dpis/module/DpisApplication.java");
+
+        assertTrue(source.contains("HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(configStore)"));
+        assertTrue(source.contains("HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(remoteStore)"));
+        assertTrue(!source.contains("HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(this, configStore)"));
+        assertTrue(!source.contains("HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(this, remoteStore)"));
+    }
+
+    @Test
+    public void appReceivesPackageReplacementWithoutAutoMountingHyperOsNativeProxy() throws IOException {
+        String manifest = read("src/main/AndroidManifest.xml");
+        String receiver = read("src/main/java/com/dpis/module/DpisPackageLifecycleReceiver.java");
+
+        assertTrue(manifest.contains(".DpisPackageLifecycleReceiver"));
+        assertTrue(manifest.contains("android.intent.action.MY_PACKAGE_REPLACED"));
+        assertTrue(receiver.contains("Intent.ACTION_MY_PACKAGE_REPLACED"));
+        assertTrue(receiver.contains("HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(context)"));
+        assertTrue(!receiver.contains("HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(context, store)"));
+    }
+
     private static String read(String relativePath) throws IOException {
         return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
     }
+
+    @Test
+    public void hyperOsRestartPreparesNativeProxyBeforeProcessAction() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(source.contains("executeDialogProcessActionAfterHyperOsProxyReady"));
+        assertTrue(source.contains("item.hyperOsNativeProxyCandidate"));
+        assertTrue(source.contains("executeHyperOsNativeProxyMount(item, true, success ->"));
+        assertTrue(source.contains("if (success)"));
+        assertTrue(source.contains("processActionHandler.execute(item, mappedAction);"));
+    }
+
 }

@@ -33,6 +33,10 @@
                     <com.google.android.material.divider.MaterialDivider android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" />
 
                     <include android:id="@+id/row_font_debug_overlay" layout="@layout/item_settings_entry" />
+
+                    <com.google.android.material.divider.MaterialDivider android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" />
+
+                    <include android:id="@+id/row_hyperos_flutter_font_hook" layout="@layout/item_settings_switch" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

@@ -21,6 +21,7 @@ final class DpiConfigStore {
     static final String KEY_FONT_DEBUG_OVERLAY_ENABLED = "font.debug.overlay_enabled";
     static final String KEY_FONT_DEBUG_SELECTED_MODE = "font.debug.selected_mode";
     static final String KEY_FONT_DEBUG_SELECTED_WINDOW = "font.debug.selected_window";
+    static final String KEY_HYPEROS_FLUTTER_FONT_HOOK_ENABLED = "font.hyperos_flutter_hook_enabled";
     static final String KEY_HIDE_LAUNCHER_ICON = "ui.hide_launcher_icon";
     static final String KEY_STARTUP_DISCLAIMER_ACCEPTED = "ui.startup_disclaimer_accepted";
 
@@ -173,6 +174,18 @@ final class DpiConfigStore {
         return commitBoth(editor -> editor.putInt(KEY_FONT_DEBUG_SELECTED_WINDOW, window));
     }
 
+    boolean isHyperOsFlutterFontHookEnabled() {
+        return getBoolean(KEY_HYPEROS_FLUTTER_FONT_HOOK_ENABLED, false);
+    }
+
+    boolean hasHyperOsFlutterFontHookEnabled() {
+        return containsInPrimary(KEY_HYPEROS_FLUTTER_FONT_HOOK_ENABLED);
+    }
+
+    boolean setHyperOsFlutterFontHookEnabled(boolean enabled) {
+        return commitBoth(editor -> editor.putBoolean(KEY_HYPEROS_FLUTTER_FONT_HOOK_ENABLED, enabled));
+    }
+
     int getDebugInt(String key, int defaultValue) {
         return getInt(key, defaultValue);
     }
@@ -313,6 +326,18 @@ final class DpiConfigStore {
         return commitBoth(editor -> editor
                 .putStringSet(KEY_TARGET_PACKAGES, packages)
                 .putBoolean(keyForDpisEnabled(packageName), false));
+    }
+
+    boolean clearTargetPackageConfig(String packageName) {
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        packages.remove(packageName);
+        return commitBoth(editor -> editor
+                .putStringSet(KEY_TARGET_PACKAGES, packages)
+                .remove(keyForViewportWidth(packageName))
+                .remove(keyForViewportMode(packageName))
+                .remove(keyForFontScale(packageName))
+                .remove(keyForFontMode(packageName))
+                .remove(keyForDpisEnabled(packageName)));
     }
 
     boolean ensureSeedConfig(Map<String, Integer> seedTargetViewportWidthDps) {

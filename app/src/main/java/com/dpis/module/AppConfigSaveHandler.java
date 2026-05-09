@@ -37,17 +37,30 @@ final class AppConfigSaveHandler {
                 changed = store.clearTargetViewportWidthDp(item.packageName) && changed;
                 changed = store.setTargetViewportApplyMode(item.packageName, ViewportApplyMode.OFF)
                         && changed;
+                ViewportPropertySyncer.clearTargetAsync(item.packageName);
             } else {
                 changed = store.setTargetViewportWidthDp(item.packageName, widthDp) && changed;
                 changed = store.setTargetViewportApplyMode(item.packageName, viewportMode)
                         && changed;
+                if (ViewportApplyMode.isEnabled(viewportMode)) {
+                    ViewportPropertySyncer.publishTargetAsync(item.packageName, widthDp);
+                } else {
+                    ViewportPropertySyncer.clearTargetAsync(item.packageName);
+                }
             }
             if (fontScalePercent == null) {
                 changed = store.clearTargetFontScalePercent(item.packageName) && changed;
                 changed = store.setTargetFontApplyMode(item.packageName, FontApplyMode.OFF) && changed;
+                HyperOsNativeFontPropertySyncer.clearFontTargetAsync(item.packageName);
             } else {
                 changed = store.setTargetFontScalePercent(item.packageName, fontScalePercent) && changed;
                 changed = store.setTargetFontApplyMode(item.packageName, fontMode) && changed;
+                if (FontApplyMode.isEnabled(fontMode)) {
+                    HyperOsNativeFontPropertySyncer.publishForceFontTargetAsync(
+                            item.packageName, fontScalePercent);
+                } else {
+                    HyperOsNativeFontPropertySyncer.clearFontTargetAsync(item.packageName);
+                }
             }
             if (changed && onChanged != null) {
                 onChanged.run();

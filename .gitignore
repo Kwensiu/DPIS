@@ -2,6 +2,7 @@
 .gradle/
 build/
 **/build/
+**/.cxx/
 local.properties
 captures/
 

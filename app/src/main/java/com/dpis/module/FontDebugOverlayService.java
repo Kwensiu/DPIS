@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.provider.Settings;
@@ -25,6 +26,9 @@ import java.util.regex.Pattern;
 
 public final class FontDebugOverlayService extends Service {
     private static final long REFRESH_INTERVAL_MS = 500L;
+    private static final long BRIDGE_IMPORT_INTERVAL_MS = 2_000L;
+    private static final long LOGCAT_IMPORT_INTERVAL_MS = 5_000L;
+    private static final long LOGCAT_FAILURE_RETRY_MS = 30_000L;
     private static final long WINDOW_5S_STALE_MS = 5_000L;
     private static final long WINDOW_30S_STALE_MS = 30_000L;
     private static final Pattern UNIT_LINE_PATTERN =
@@ -33,11 +37,22 @@ public final class FontDebugOverlayService extends Service {
             Pattern.compile("^视口\\s+([^|\\s]+).*");
 
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private HandlerThread bridgeThread;
+    private Handler bridgeHandler;
+    private volatile long lastBridgeImportAt;
+    private volatile long lastLogcatImportAt;
+    private volatile boolean bridgeImportRunning;
     private final Runnable refreshRunnable = new Runnable() {
         @Override
         public void run() {
             renderOverlayText();
             handler.postDelayed(this, REFRESH_INTERVAL_MS);
+        }
+    };
+    private final Runnable bridgeImportRunnable = new Runnable() {
+        @Override
+        public void run() {
+            importDebugDataInBackground();
         }
     };
 
@@ -66,6 +81,9 @@ public final class FontDebugOverlayService extends Service {
             stopSelf();
             return;
         }
+        bridgeThread = new HandlerThread("DPIS-font-debug-bridge");
+        bridgeThread.start();
+        bridgeHandler = new Handler(bridgeThread.getLooper());
         createOverlayView();
         handler.post(refreshRunnable);
     }
@@ -85,6 +103,14 @@ public final class FontDebugOverlayService extends Service {
     @Override
     public void onDestroy() {
         handler.removeCallbacks(refreshRunnable);
+        if (bridgeHandler != null) {
+            bridgeHandler.removeCallbacksAndMessages(null);
+            bridgeHandler = null;
+        }
+        if (bridgeThread != null) {
+            bridgeThread.quitSafely();
+            bridgeThread = null;
+        }
         if (windowManager != null && overlayRoot != null) {
             try {
                 windowManager.removeView(overlayRoot);
@@ -171,6 +197,7 @@ public final class FontDebugOverlayService extends Service {
         if (overlayTextView == null) {
             return;
         }
+        scheduleBridgeImportIfNeeded();
         android.content.SharedPreferences preferences = FontDebugStatsStore.getPreferences(this);
         int eventTotal = preferences.getInt(FontDebugStatsStore.KEY_EVENT_TOTAL, 0);
         long updatedAt = preferences.getLong(FontDebugStatsStore.KEY_UPDATED_AT, 0L);
@@ -252,6 +279,41 @@ public final class FontDebugOverlayService extends Service {
             }
         }
         overlayTextView.setText(body);
+    }
+
+    private void scheduleBridgeImportIfNeeded() {
+        Handler backgroundHandler = bridgeHandler;
+        if (backgroundHandler == null || bridgeImportRunning) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (now - lastBridgeImportAt < BRIDGE_IMPORT_INTERVAL_MS
+                && now - lastLogcatImportAt < LOGCAT_IMPORT_INTERVAL_MS) {
+            return;
+        }
+        bridgeImportRunning = true;
+        backgroundHandler.post(bridgeImportRunnable);
+    }
+
+    private void importDebugDataInBackground() {
+        long now = System.currentTimeMillis();
+        try {
+            if (now - lastBridgeImportAt >= BRIDGE_IMPORT_INTERVAL_MS) {
+                FontDebugStatsFileBridge.importIfNewer(this);
+                lastBridgeImportAt = now;
+            }
+            if (now - lastLogcatImportAt >= LOGCAT_IMPORT_INTERVAL_MS) {
+                boolean imported = FontDebugLogcatBridge.importRecent(this);
+                lastLogcatImportAt = imported ? now : now + LOGCAT_FAILURE_RETRY_MS - LOGCAT_IMPORT_INTERVAL_MS;
+            }
+        } finally {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    bridgeImportRunning = false;
+                }
+            });
+        }
     }
 
     private String resolveFontModeText(String viewportSummary) {
