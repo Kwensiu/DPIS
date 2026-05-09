@@ -74,6 +74,28 @@ public class MainActivitySourceSmokeTest {
     }
 
     @Test
+    public void appLoad_requestsXiaomiInstalledAppsPermissionBeforeQueryingPackages() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(source.contains("XIAOMI_GET_INSTALLED_APPS_PERMISSION"));
+        assertTrue(source.contains("com.android.permission.GET_INSTALLED_APPS"));
+        assertTrue(source.contains("requestPermissions("));
+        assertTrue(source.contains("REQUEST_XIAOMI_GET_INSTALLED_APPS"));
+        assertTrue(source.contains("onRequestPermissionsResult("));
+        assertTrue(source.contains("installedAppsPermissionRequestCompleted"));
+        assertTrue(source.contains("isXiaomiInstalledAppsPermissionDeclared()"));
+        assertTrue(source.contains("getPermissionInfo("));
+        assertTrue(source.contains("dispatchMainUiAction(MainUiAction.requestAppsLoad(true));"));
+        int requestLoadStart = source.indexOf("private void requestAppsLoad(boolean forceInstalledAppCatalogReload)");
+        int requestLoadEnd = source.indexOf("private boolean ensureInstalledAppsPermissionBeforeLoad()", requestLoadStart);
+        assertTrue(requestLoadStart >= 0);
+        assertTrue(requestLoadEnd > requestLoadStart);
+        String requestLoadBody = source.substring(requestLoadStart, requestLoadEnd);
+        assertTrue(requestLoadBody.indexOf("ensureInstalledAppsPermissionBeforeLoad()")
+                < requestLoadBody.indexOf("dispatchMainUiAction(MainUiAction.requestAppsLoad"));
+    }
+
+    @Test
     public void savesAndRestoresPageScrollStatesForRotation() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 

@@ -44,6 +44,14 @@ public final class LegacyModuleManifestMetadataTest {
         assertTrue(manifest.contains("de.robv.android.xposed.category.MODULE_SETTINGS"));
     }
 
+    @Test
+    public void manifestDeclaresXiaomiInstalledAppsPermission() throws IOException {
+        String manifest = readProjectFile("src/main/AndroidManifest.xml");
+
+        assertTrue(manifest.contains("android.permission.QUERY_ALL_PACKAGES"));
+        assertTrue(manifest.contains("com.android.permission.GET_INSTALLED_APPS"));
+    }
+
     private static String readProjectFile(String relativePath) throws IOException {
         Path path = Path.of(relativePath);
         return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);

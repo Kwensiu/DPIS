@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.os.Process;
 import android.text.Editable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -81,6 +82,9 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     private static final long INSTALLED_APP_CATALOG_TTL_MS = 60_000L;
     private static final int FIRST_SCREEN_ICON_WARMUP_LIMIT = 48;
     private static final long ICON_REFRESH_DEBOUNCE_MS = 120L;
+    private static final String XIAOMI_GET_INSTALLED_APPS_PERMISSION =
+            "com.android.permission.GET_INSTALLED_APPS";
+    private static final int REQUEST_XIAOMI_GET_INSTALLED_APPS = 10022;
 
     private final UpdateCoordinator updateCoordinator = new UpdateCoordinator();
     private final StartupUpdateDownloadExecutor startupUpdateDownloadExecutor = new StartupUpdateDownloadExecutor(
@@ -118,6 +122,9 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     private ImageButton searchFilterButton;
     private boolean cachedSystemHookEffectiveEnabled;
     private boolean skipNextImmediateServiceReload;
+    private boolean installedAppsPermissionRequestInFlight;
+    private boolean pendingInstalledAppsLoadAfterPermission;
+    private boolean installedAppsPermissionRequestCompleted;
     private volatile boolean startupUpdateCheckInProgress;
     private volatile boolean startupUpdateDownloadInProgress;
     private volatile boolean startupUpdateDownloadCancelRequested;
@@ -336,6 +343,21 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != REQUEST_XIAOMI_GET_INSTALLED_APPS) {
+            return;
+        }
+        installedAppsPermissionRequestInFlight = false;
+        boolean shouldReload = pendingInstalledAppsLoadAfterPermission;
+        pendingInstalledAppsLoadAfterPermission = false;
+        installedAppsPermissionRequestCompleted = true;
+        if (shouldReload) {
+            dispatchMainUiAction(MainUiAction.requestAppsLoad(true));
+        }
+    }
+
+    @Override
     public Object onRetainNonConfigurationInstance() {
         MainUiState state = requireUiState();
         List<AppListItem> snapshot = state.appsSnapshot();
@@ -407,7 +429,44 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     }
 
     private void requestAppsLoad(boolean forceInstalledAppCatalogReload) {
+        if (!ensureInstalledAppsPermissionBeforeLoad()) {
+            pendingInstalledAppsLoadAfterPermission = true;
+            return;
+        }
         dispatchMainUiAction(MainUiAction.requestAppsLoad(forceInstalledAppCatalogReload));
+    }
+
+    private boolean ensureInstalledAppsPermissionBeforeLoad() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M
+                || installedAppsPermissionRequestCompleted
+                || !isXiaomiInstalledAppsPermissionDeclared()) {
+            return true;
+        }
+        try {
+            if (checkPermission(XIAOMI_GET_INSTALLED_APPS_PERMISSION,
+                    Process.myPid(),
+                    Process.myUid()) == PackageManager.PERMISSION_GRANTED) {
+                return true;
+            }
+            if (!installedAppsPermissionRequestInFlight) {
+                installedAppsPermissionRequestInFlight = true;
+                requestPermissions(
+                        new String[]{XIAOMI_GET_INSTALLED_APPS_PERMISSION},
+                        REQUEST_XIAOMI_GET_INSTALLED_APPS);
+            }
+            return false;
+        } catch (RuntimeException ignored) {
+            return true;
+        }
+    }
+
+    private boolean isXiaomiInstalledAppsPermissionDeclared() {
+        try {
+            getPackageManager().getPermissionInfo(XIAOMI_GET_INSTALLED_APPS_PERMISSION, 0);
+            return true;
+        } catch (PackageManager.NameNotFoundException | RuntimeException ignored) {
+            return false;
+        }
     }
 
     private void startAppsLoad(MainUiEffect.StartAppsLoad start) {
