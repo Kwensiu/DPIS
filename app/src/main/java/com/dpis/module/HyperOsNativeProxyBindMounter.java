@@ -67,13 +67,16 @@ final class HyperOsNativeProxyBindMounter {
     static String buildApplyCommand(String sourcePath, String targetPath) {
         String source = shellQuote(sourcePath);
         String target = shellQuote(targetPath);
-        return "umount -l " + target + " 2>/dev/null || true; "
-                + "cp -f " + source + " " + target
-                + " || cat " + source + " > " + target
-                + " || exit 1; "
-                + "chown system:system " + target + " 2>/dev/null || true; "
-                + "chmod 755 " + target + " 2>/dev/null || true; "
-                + "chcon u:object_r:apk_data_file:s0 " + target + " 2>/dev/null || true; "
+        return lazyUnmount(target)
+                + ensureTargetFile(target)
+                // After a file bind mount, metadata operations on target affect the source inode.
+                // Prepare the target placeholder before binding; only the copy fallback restores it again.
+                + restoreTargetMetadata(target)
+                + "mount -o bind " + source + " " + target + " 2>/dev/null; "
+                + "if ! cmp -s " + source + " " + target + "; then "
+                + copyProxyFallback(source, target)
+                + restoreTargetMetadata(target)
+                + "else echo dpis_proxy_apply=bind; fi; "
                 + "cmp -s " + source + " " + target + " || exit 1; "
                 + "md5sum " + source + " " + target
                 + " 2>/dev/null || true";
@@ -88,6 +91,29 @@ final class HyperOsNativeProxyBindMounter {
                 + " || exit 1; "
                 + "rm -f " + target + " 2>/dev/null || true; "
                 + "test ! -e " + target + " || test ! -s " + target;
+    }
+
+    private static String lazyUnmount(String target) {
+        return "umount -l " + target + " 2>/dev/null || true; ";
+    }
+
+    private static String ensureTargetFile(String target) {
+        return "if ! test -e " + target + "; then "
+                + "touch " + target + " || exit 1; "
+                + "fi; ";
+    }
+
+    private static String restoreTargetMetadata(String target) {
+        return "chown system:system " + target + " 2>/dev/null || true; "
+                + "chmod 755 " + target + " 2>/dev/null || true; "
+                + "chcon u:object_r:apk_data_file:s0 " + target + " 2>/dev/null || true; ";
+    }
+
+    private static String copyProxyFallback(String source, String target) {
+        return "echo dpis_proxy_apply=copy; "
+                + "cp -f " + source + " " + target
+                + " || cat " + source + " > " + target
+                + " || exit 1; ";
     }
 
     private static MountResult runRootCommand(String command) {

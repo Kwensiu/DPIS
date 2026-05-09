@@ -6,6 +6,8 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import java.util.Arrays;
+
 public class HyperOsFlutterFontHookConfigTest {
     @Test
     public void experimentalHookDefaultsOffAndPersists() {
@@ -94,6 +96,7 @@ public class HyperOsFlutterFontHookConfigTest {
                 < source.indexOf("DPIS_FONT_SCALE_PERCENT"));
         assertTrue(source.indexOf("debug.dpis.forcefont")
                 < source.indexOf("debug.dpis.font.%08x"));
+        assertTrue(source.contains("HyperOS font config source: process="));
     }
     @Test
     public void nativeCreateHookScalesWeatherCreateFontRegisters() throws Exception {
@@ -135,8 +138,34 @@ public class HyperOsFlutterFontHookConfigTest {
 
         assertTrue(source.contains("is_weather_configuration_font_scale_slot"));
         assertTrue(source.contains("GOT hook skipped: unexpected slot"));
+        assertTrue(source.contains("describe_symbol(*slot)"));
+        assertTrue(source.contains("kHyperOsAppPublicLibrary"));
+        assertTrue(source.contains("ends_with(info.dli_fname, kHyperOsAppPublicLibrary)"));
         assertTrue(source.indexOf("is_weather_configuration_font_scale_slot(*slot)")
                 < source.indexOf("*slot = reinterpret_cast<void *>(Configuration_get_font_scale)"));
+    }
+
+    @Test
+    public void rustProcessArgumentProbeSummarizesTargetStringArguments() {
+        String summary = HyperOsRustProcessHookInstaller.buildArgumentProbeSummaryForTest(
+                Arrays.asList("ignored",
+                        "com.miui.weather2",
+                        Integer.valueOf(1),
+                        "/data/app/weather/lib/arm64/libweather_app.so",
+                        "--envs=EXISTING=value"));
+
+        assertTrue(summary.contains("size=5"));
+        assertTrue(summary.contains("1=com.miui.weather2"));
+        assertTrue(summary.contains("3=/data/app/weather/lib/arm64/libweather_app.so"));
+        assertTrue(summary.contains("4=--envs=EXISTING=value"));
+    }
+
+    @Test
+    public void rustProcessArgumentProbeSkipsUnrelatedPackages() {
+        String summary = HyperOsRustProcessHookInstaller.buildArgumentProbeSummaryForTest(
+                Arrays.asList("com.example.app", "/data/app/example/libfoo.so"));
+
+        assertEquals(null, summary);
     }
 
     @Test

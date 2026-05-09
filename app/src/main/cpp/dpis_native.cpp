@@ -65,6 +65,7 @@ std::atomic<int> g_replace_create_log_budget{16};
 std::atomic<int> g_replace_push_style_log_budget{16};
 std::atomic<int> g_weather_configuration_font_scale_log_budget{16};
 std::atomic<int> g_weather_create_d0_remap_log_budget{16};
+std::atomic<int> g_property_source_log_budget{24};
 
 std::atomic<int> g_last_observed_scale_milli{1000};
 
@@ -231,6 +232,15 @@ uintptr_t find_library_base(const char *name) {
 }
 
 #if defined(__aarch64__)
+bool is_weather_font_scale_symbol(const Dl_info &info) {
+    // On tested Weather builds, the GOT entry resolves to the HyperOS public API
+    // implementation instead of a symbol inside libweather_app.so.
+    return info.dli_sname != nullptr
+            && std::strcmp(info.dli_sname, "Configuration_get_font_scale") == 0
+            && (ends_with(info.dli_fname, kWeatherRustLibrary)
+                    || ends_with(info.dli_fname, kHyperOsAppPublicLibrary));
+}
+
 bool is_weather_configuration_font_scale_slot(void *value) {
     if (value == nullptr) {
         return false;
@@ -239,16 +249,29 @@ bool is_weather_configuration_font_scale_slot(void *value) {
     if (dladdr(value, &info) == 0 || info.dli_fname == nullptr) {
         return false;
     }
+    if (is_weather_font_scale_symbol(info)) {
+        return true;
+    }
     if (!ends_with(info.dli_fname, kWeatherRustLibrary)) {
         return false;
-    }
-    if (info.dli_sname != nullptr
-            && std::strcmp(info.dli_sname, "Configuration_get_font_scale") == 0) {
-        return true;
     }
     uintptr_t weather_base = find_library_base(kWeatherRustLibrary);
     uintptr_t address = reinterpret_cast<uintptr_t>(value);
     return weather_base != 0 && address >= weather_base;
+}
+
+std::string describe_symbol(void *value) {
+    if (value == nullptr) {
+        return "null";
+    }
+    Dl_info info = {};
+    if (dladdr(value, &info) == 0) {
+        return "dladdr-failed address=" + std::to_string(reinterpret_cast<uintptr_t>(value));
+    }
+    return "address=" + std::to_string(reinterpret_cast<uintptr_t>(value))
+            + " file=" + (info.dli_fname == nullptr ? "" : info.dli_fname)
+            + " symbol=" + (info.dli_sname == nullptr ? "" : info.dli_sname)
+            + " symbolAddress=" + std::to_string(reinterpret_cast<uintptr_t>(info.dli_saddr));
 }
 #endif
 
@@ -383,6 +406,23 @@ uint32_t java_string_hash(const std::string &text) {
     return hash;
 }
 
+void log_property_config_source(const std::string &process,
+                                const std::string &source,
+                                const std::string &value,
+                                int percent,
+                                bool configured_from_jni) {
+    int log_budget = g_property_source_log_budget.load(std::memory_order_relaxed);
+    if (log_budget <= 0) {
+        return;
+    }
+    g_property_source_log_budget.store(log_budget - 1, std::memory_order_relaxed);
+    log_info("HyperOS font config source: process=" + process
+            + " source=" + source
+            + " value=" + value
+            + " percent=" + std::to_string(percent)
+            + " configuredFromJni=" + std::to_string(configured_from_jni));
+}
+
 void refresh_property_config() {
     int remaining = g_property_refresh_budget.load(std::memory_order_relaxed);
     if (remaining <= 0) {
@@ -396,25 +436,31 @@ void refresh_property_config() {
     char key[PROP_NAME_MAX] = {};
     uint32_t process_hash = java_string_hash(process);
     std::snprintf(key, sizeof(key), "debug.dpis.forcefont.%08x", process_hash);
+    std::string source = key;
     std::string value = read_system_property(key);
     if (value.empty()) {
+        source = "debug.dpis.forcefont";
         value = read_system_property("debug.dpis.forcefont");
     }
     bool configured_from_jni = g_configured_from_jni.load(std::memory_order_relaxed);
     if (value.empty() && !configured_from_jni) {
+        source = "env:DPIS_FONT_SCALE_PERCENT";
         value = read_environment("DPIS_FONT_SCALE_PERCENT");
     }
     if (value.empty() && !configured_from_jni) {
+        source = "cmdline:DPIS_FONT_SCALE_PERCENT";
         value = read_proc_cmdline_value("DPIS_FONT_SCALE_PERCENT");
     }
     if (value.empty() && !configured_from_jni) {
         std::snprintf(key, sizeof(key), "debug.dpis.font.%08x", process_hash);
+        source = key;
         value = read_system_property(key);
     }
     if (value.empty()) {
         return;
     }
     int percent = std::atoi(value.c_str());
+    log_property_config_source(process, source, value, percent, configured_from_jni);
     if (percent <= 0) {
         g_enabled.store(false, std::memory_order_relaxed);
         return;
@@ -449,7 +495,8 @@ extern "C" double dpis_create_multiplier(double d0, double d1, double d2) {
     int log_budget = g_replace_create_log_budget.load(std::memory_order_relaxed);
     if (log_budget > 0) {
         g_replace_create_log_budget.store(log_budget - 1, std::memory_order_relaxed);
-        log_info("HyperOS Flutter ParagraphBuilder::Create override: d0="
+        log_info("HyperOS Flutter ParagraphBuilder::Create override: process=" + current_process_name()
+                + " d0="
                 + std::to_string(d0)
                 + " d1=" + std::to_string(d1)
                 + " d2=" + std::to_string(d2)
@@ -499,7 +546,8 @@ extern "C" double dpis_push_style_multiplier(double observed_scale, double font_
     int log_budget = g_replace_push_style_log_budget.load(std::memory_order_relaxed);
     if (log_budget > 0) {
         g_replace_push_style_log_budget.store(log_budget - 1, std::memory_order_relaxed);
-        log_info("HyperOS Flutter ParagraphBuilder::pushStyle override: font="
+        log_info("HyperOS Flutter ParagraphBuilder::pushStyle override: process=" + current_process_name()
+                + " font="
                 + std::to_string(font_size)
                 + " observed=" + std::to_string(observed_scale)
                 + " multiplier=" + std::to_string(multiplier));
@@ -540,7 +588,9 @@ void try_hook_weather_configuration_font_scale() {
     auto *slot = reinterpret_cast<void **>(base + kWeatherConfigurationFontScaleGotOffset);
     if (!is_weather_configuration_font_scale_slot(*slot)) {
         log_info("HyperOS Weather Configuration_get_font_scale GOT hook skipped: unexpected slot="
-                + std::to_string(reinterpret_cast<uintptr_t>(*slot)));
+                + describe_symbol(*slot)
+                + " base=" + std::to_string(base)
+                + " slot=" + std::to_string(reinterpret_cast<uintptr_t>(slot)));
         return;
     }
     if (!make_writable_data(slot, sizeof(void *))) {

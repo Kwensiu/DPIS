@@ -11,6 +11,8 @@ final class HyperOsNativeFontPropertySyncer {
         if (packageName == null || packageName.isBlank() || fontScalePercent <= 0) {
             return;
         }
+        // Native proxies prefer forcefont so value-only changes can bypass stale
+        // system_server RustProcess env values after a same-version module update.
         String fontProperty = HyperOsFlutterFontBridge.forcePropertyNameForPackage(packageName);
         Thread publisherThread = new Thread(() -> publishPropertyWithRoot(fontProperty, fontScalePercent),
                 "DPIS-hyperos-property-publisher");

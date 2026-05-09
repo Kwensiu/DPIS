@@ -1173,6 +1173,8 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                 && item.hyperOsNativeProxyCandidate
                 && item.fontScalePercent != null
                 && item.fontScalePercent > 0) {
+            // Re-prepare before restart because APK updates can leave an old bind mount
+            // pointing at a deleted module native library.
             executeHyperOsNativeProxyMount(item, true, success -> {
                 if (success) {
                     executeDialogProcessActionAfterHyperOsProxyReady(item, action);

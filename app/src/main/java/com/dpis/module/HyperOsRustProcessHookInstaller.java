@@ -5,6 +5,7 @@ import java.lang.reflect.Modifier;
 import java.io.File;
 import java.util.List;
 import java.util.Locale;
+import java.util.StringJoiner;
 
 import io.github.libxposed.api.XposedInterface;
 
@@ -16,6 +17,8 @@ final class HyperOsRustProcessHookInstaller {
     private static final int ARG_BINARY_PATH = 20;
     private static final String MODULE_PACKAGE = "io.github.kwensiu.dpis";
     private static final String NATIVE_LIBRARY_NAME = "libdpis_native.so";
+    private static final String WEATHER_PACKAGE = "com.miui.weather2";
+    private static final String GALLERY_PACKAGE = "com.miui.gallery";
     private HyperOsRustProcessHookInstaller() {
     }
 
@@ -36,6 +39,7 @@ final class HyperOsRustProcessHookInstaller {
                     .intercept(chain -> {
                         try {
                             List<Object> args = chain.getArgs();
+                            logTargetArgumentProbe(args);
                             Object[] updatedArgs = applyEnvironmentArgs(source, args);
                             if (updatedArgs != null) {
                                 return chain.proceed(updatedArgs);
@@ -67,6 +71,10 @@ final class HyperOsRustProcessHookInstaller {
         return resolveProxyLibraryPath(originalBinaryPath);
     }
 
+    static String buildArgumentProbeSummaryForTest(List<Object> args) {
+        return buildArgumentProbeSummary(args);
+    }
+
     private static Object[] applyEnvironmentArgs(PerAppDisplayConfigSource source, List<Object> args) {
         if (source == null || args == null || args.size() <= ARG_ENVIRONMENTS) {
             return null;
@@ -89,6 +97,9 @@ final class HyperOsRustProcessHookInstaller {
         String binaryPath = binaryValue instanceof String ? (String) binaryValue : "";
         String updated = appendEnvironment(existing, packageName,
                 config.targetFontScalePercent, binaryPath);
+        // This property is a diagnostic/fallback path only. Full /data/app/... Rust
+        // binary paths can exceed Android's system property value limit, while the
+        // environment value remains available to the native proxy at process start.
         HyperOsFlutterFontBridge.publishRustBinaryPath(packageName, binaryPath);
         HyperOsFlutterFontBridge.publishRustProxyTarget(packageName, config);
         String proxyLibraryPath = resolveProxyLibraryPath(binaryPath);
@@ -104,6 +115,55 @@ final class HyperOsRustProcessHookInstaller {
         updatedArgs[ARG_BINARY_PATH] = proxyLibraryPath;
         updatedArgs[ARG_ENVIRONMENTS] = updated;
         return updatedArgs;
+    }
+
+    private static void logTargetArgumentProbe(List<Object> args) {
+        String summary = buildArgumentProbeSummary(args);
+        if (summary != null) {
+            DpisLog.i(summary);
+        }
+    }
+
+    private static String buildArgumentProbeSummary(List<Object> args) {
+        if (args == null || args.isEmpty()) {
+            return null;
+        }
+        boolean hasTargetPackage = false;
+        StringJoiner strings = new StringJoiner(", ");
+        for (int index = 0; index < args.size(); index++) {
+            Object value = args.get(index);
+            if (!(value instanceof String stringValue) || stringValue.isEmpty()) {
+                continue;
+            }
+            if (stringValue.contains(WEATHER_PACKAGE) || stringValue.contains(GALLERY_PACKAGE)) {
+                hasTargetPackage = true;
+            }
+            if (isInterestingArgumentString(stringValue)) {
+                strings.add(index + "=" + shorten(stringValue));
+            }
+        }
+        if (!hasTargetPackage) {
+            return null;
+        }
+        return "DPIS_FONT HyperOS Rust process args probe: size=" + args.size()
+                + ", strings={" + strings + "}";
+    }
+
+    private static boolean isInterestingArgumentString(String value) {
+        return value.contains(WEATHER_PACKAGE)
+                || value.contains(GALLERY_PACKAGE)
+                || value.contains(".so")
+                || value.contains("DPIS_")
+                || value.contains("--envs=")
+                || value.contains("hyperos");
+    }
+
+    private static String shorten(String value) {
+        String sanitized = sanitize(value);
+        if (sanitized.length() <= 240) {
+            return sanitized;
+        }
+        return sanitized.substring(0, 237) + "...";
     }
 
     private static String resolveProxyLibraryPath(String originalBinaryPath) {

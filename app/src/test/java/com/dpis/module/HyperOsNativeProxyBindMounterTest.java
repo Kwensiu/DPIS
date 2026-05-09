@@ -40,16 +40,25 @@ public class HyperOsNativeProxyBindMounterTest {
     }
 
     @Test
-    public void applyCommandCopiesProxyAndPrintsHashes() {
+    public void applyCommandBindMountsProxyAndPrintsHashes() {
         String command = HyperOsNativeProxyBindMounter.buildApplyCommand(
                 "/data/app/module/lib/arm64/libdpis_native.so",
                 "/data/app/MIUIGallery/lib/arm64/libdpis_native.so");
 
         assertTrue(command.contains("umount -l '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'"));
+        assertTrue(command.contains("if ! test -e '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'; then"));
+        assertTrue(command.contains("touch '/data/app/MIUIGallery/lib/arm64/libdpis_native.so' || exit 1"));
+        assertTrue(command.contains("chown system:system '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'"));
+        assertTrue(command.contains("mount -o bind '/data/app/module/lib/arm64/libdpis_native.so'"
+                + " '/data/app/MIUIGallery/lib/arm64/libdpis_native.so' 2>/dev/null"));
+        assertTrue(command.contains("if ! cmp -s '/data/app/module/lib/arm64/libdpis_native.so'"
+                + " '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'; then"));
+        assertTrue(command.contains("echo dpis_proxy_apply=copy"));
         assertTrue(command.contains("cp -f '/data/app/module/lib/arm64/libdpis_native.so'"
                 + " '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'"));
         assertTrue(command.contains("cat '/data/app/module/lib/arm64/libdpis_native.so'"
                 + " > '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'"));
+        assertTrue(command.contains("else echo dpis_proxy_apply=bind"));
         assertTrue(command.contains("chmod 755 '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'"));
         assertTrue(command.contains("cmp -s '/data/app/module/lib/arm64/libdpis_native.so'"
                 + " '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'"
@@ -58,19 +67,31 @@ public class HyperOsNativeProxyBindMounterTest {
                 + " '/data/app/MIUIGallery/lib/arm64/libdpis_native.so'"));
         assertFalse(command.contains("md5sum '/data/app/module/lib/arm64/libdpis_native.so'"
                 + " '/data/app/MIUIGallery/lib/arm64/libdpis_native.so' || exit 1"));
-        assertFalse(command.contains("mount -o bind"));
     }
 
     @Test
-    public void applyCommandOverwritesExistingProxyCopy() {
+    public void applyCommandFallsBackToCopyWhenBindFails() {
         String command = HyperOsNativeProxyBindMounter.buildApplyCommand(
                 "/data/app/module/lib/arm64/libdpis_native.so",
                 "/data/app/MIUIWeather/lib/arm64/libdpis_native.so");
 
+        assertTrue(command.contains("mount -o bind '/data/app/module/lib/arm64/libdpis_native.so'"
+                + " '/data/app/MIUIWeather/lib/arm64/libdpis_native.so' 2>/dev/null"));
         assertTrue(command.contains("cp -f '/data/app/module/lib/arm64/libdpis_native.so'"
                 + " '/data/app/MIUIWeather/lib/arm64/libdpis_native.so'"));
+        assertTrue(command.indexOf("touch '/data/app/MIUIWeather/lib/arm64/libdpis_native.so'")
+                < command.indexOf("mount -o bind '/data/app/module/lib/arm64/libdpis_native.so'"));
+        assertTrue(command.indexOf("chown system:system '/data/app/MIUIWeather/lib/arm64/libdpis_native.so'")
+                < command.indexOf("mount -o bind '/data/app/module/lib/arm64/libdpis_native.so'"));
+        assertTrue(command.indexOf("mount -o bind '/data/app/module/lib/arm64/libdpis_native.so'")
+                < command.indexOf("if ! cmp -s '/data/app/module/lib/arm64/libdpis_native.so'"));
+        assertTrue(command.indexOf("if ! cmp -s '/data/app/module/lib/arm64/libdpis_native.so'")
+                < command.indexOf("cp -f '/data/app/module/lib/arm64/libdpis_native.so'"));
         assertTrue(command.indexOf("cp -f '/data/app/module/lib/arm64/libdpis_native.so'")
-                < command.indexOf("cmp -s '/data/app/module/lib/arm64/libdpis_native.so'"));
+                < command.lastIndexOf("cmp -s '/data/app/module/lib/arm64/libdpis_native.so'"));
+        assertTrue(command.lastIndexOf("chcon u:object_r:apk_data_file:s0"
+                + " '/data/app/MIUIWeather/lib/arm64/libdpis_native.so'")
+                < command.indexOf("else echo dpis_proxy_apply=bind"));
     }
 
     @Test
