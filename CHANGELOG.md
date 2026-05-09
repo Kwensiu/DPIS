@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.7.0](https://github.com/Kwensiu/DPIS/compare/v1.6.3...v1.7.0) (2026-05-09)
+
+
+### Features
+
+* add HyperOS Rust/Flutter dp/font scaling support ([#37](https://github.com/Kwensiu/DPIS/issues/37)) ([8233eac](https://github.com/Kwensiu/DPIS/commit/8233eac37cdf6c57ec529207e283a3175244a183))
+* simplify reload advice dialog and remove HyperOS sheet warning ([8cc7091](https://github.com/Kwensiu/DPIS/commit/8cc7091df84ceb15f991e92628f4b816589e59af))
+
+
+### Bug Fixes
+
+* harden HyperOS native proxy font path ([71f80ae](https://github.com/Kwensiu/DPIS/commit/71f80aed6b4511d419878fd0e44c0074c1ae3cc6))
+* request HyperOS installed apps permission ([3ac8b6d](https://github.com/Kwensiu/DPIS/commit/3ac8b6dfcbcd9db48846362de42b7c3a801ea8cf))
+
 ## [1.6.3](https://github.com/Kwensiu/DPIS/compare/v1.6.2...v1.6.3) (2026-04-25)
 
 
