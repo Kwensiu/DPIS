@@ -12,6 +12,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textview.MaterialTextView;
 
+import java.util.Locale;
+
 final class StartupUpdateDialogCoordinator {
     interface Host {
         void showDialogIdleState(MaterialButton primaryButton,
@@ -61,7 +63,8 @@ final class StartupUpdateDialogCoordinator {
             String remoteVersionName,
             int remoteVersionCode,
             String remoteApkUrl,
-            String remoteReleasePage) {
+            String remoteReleasePage,
+            String remoteReleaseNotes) {
         if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
@@ -75,6 +78,14 @@ final class StartupUpdateDialogCoordinator {
                         localVersionCode,
                         remoteVersionName,
                         remoteVersionCode));
+        MaterialTextView releaseNotesText = dialogHandle.releaseNotesText;
+        String embeddedReleaseNotes = remoteReleaseNotes == null ? "" : remoteReleaseNotes.trim();
+        if (!embeddedReleaseNotes.isEmpty()) {
+            Locale locale = activity.getResources().getConfiguration().getLocales().get(0);
+            releaseNotesText.setText(ReleaseNotesMarkdownLite.format(embeddedReleaseNotes, locale));
+        } else {
+            releaseNotesText.setText(R.string.about_update_release_notes_empty);
+        }
         host.showDialogIdleState(
                 dialogHandle.primaryButton,
                 dialogHandle.cancelButton,

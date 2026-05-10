@@ -4,15 +4,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -31,8 +28,6 @@ public final class AboutActivity extends LocalizedActivity {
     private static final int UPDATE_READ_TIMEOUT_MS = 10_000;
     private static final int DOWNLOAD_BUFFER_SIZE = 16 * 1024;
     private static final long DOWNLOAD_PROGRESS_UPDATE_INTERVAL_MS = 180L;
-    private static final long RELEASE_NOTES_TOGGLE_ANIMATION_MS = 120L;
-    private static final int TAG_RELEASE_NOTES_EXPANDED = R.id.update_dialog_release_notes_card;
 
     private final UpdateCoordinator updateCoordinator = new UpdateCoordinator();
     private final StartupUpdateDownloadExecutor downloadExecutor = new StartupUpdateDownloadExecutor(
@@ -250,15 +245,11 @@ public final class AboutActivity extends LocalizedActivity {
         MaterialButton cancelButton = dialogHandle.cancelButton;
         LinearProgressIndicator progressView = dialogHandle.progressView;
         MaterialTextView progressTextView = dialogHandle.progressTextView;
-        ConstraintLayout releaseNotesHost = dialogHandle.releaseNotesHost;
-        View releaseNotesCard = dialogHandle.releaseNotesCard;
-        View releaseNotesContainer = dialogHandle.releaseNotesContainer;
         MaterialTextView releaseNotesText = dialogHandle.releaseNotesText;
 
         UpdateDownloadCoordinator.showDialogIdleState(
                 primaryButton, cancelButton, progressView, progressTextView);
         bindDialogCancelButton(dialog, cancelButton);
-        bindReleaseNotesToggle(releaseNotesHost, releaseNotesCard, releaseNotesContainer);
         String embeddedReleaseNotes = manifest.releaseNotes == null ? "" : manifest.releaseNotes.trim();
         Locale locale = getResources().getConfiguration().getLocales().get(0);
         if (!embeddedReleaseNotes.isEmpty()) {
@@ -266,7 +257,6 @@ public final class AboutActivity extends LocalizedActivity {
         } else {
             releaseNotesText.setText(R.string.about_update_release_notes_loading);
         }
-        releaseNotesText.setMovementMethod(LinkMovementMethod.getInstance());
         loadReleaseNotes(releaseNotesText, locale, manifest.versionName, !embeddedReleaseNotes.isEmpty());
 
         boolean hasDirectDownload = downloadUrl != null && !downloadUrl.trim().isEmpty();
@@ -294,62 +284,6 @@ public final class AboutActivity extends LocalizedActivity {
 
         dialog.setOnDismissListener(unused -> updateDownloadCoordinator.cancelActiveDownload());
         dialog.show();
-    }
-
-    private void bindReleaseNotesToggle(ConstraintLayout releaseNotesHost,
-            View releaseNotesCard,
-            View releaseNotesContainer) {
-        releaseNotesContainer.setVisibility(View.GONE);
-        releaseNotesContainer.setAlpha(0f);
-        releaseNotesCard.setTag(TAG_RELEASE_NOTES_EXPANDED, Boolean.FALSE);
-        applyReleaseNotesCardWidth(releaseNotesHost, releaseNotesCard, false);
-        releaseNotesCard.setOnClickListener(v -> {
-            boolean expanded = Boolean.TRUE.equals(
-                    releaseNotesCard.getTag(TAG_RELEASE_NOTES_EXPANDED));
-            boolean nextExpanded = !expanded;
-            releaseNotesCard.setTag(TAG_RELEASE_NOTES_EXPANDED, nextExpanded);
-            releaseNotesContainer.animate().cancel();
-            if (nextExpanded) {
-                applyReleaseNotesCardWidth(releaseNotesHost, releaseNotesCard, true);
-                releaseNotesContainer.setVisibility(View.VISIBLE);
-                releaseNotesContainer.setAlpha(0f);
-                releaseNotesContainer.animate()
-                        .alpha(1f)
-                        .setDuration(RELEASE_NOTES_TOGGLE_ANIMATION_MS)
-                        .start();
-            } else {
-                releaseNotesContainer.animate()
-                        .alpha(0f)
-                        .setDuration(RELEASE_NOTES_TOGGLE_ANIMATION_MS)
-                        .withEndAction(() -> {
-                            boolean stillCollapsed = !Boolean.TRUE.equals(
-                                    releaseNotesCard.getTag(TAG_RELEASE_NOTES_EXPANDED));
-                            if (!stillCollapsed) {
-                                return;
-                            }
-                            releaseNotesContainer.setVisibility(View.GONE);
-                            applyReleaseNotesCardWidth(releaseNotesHost, releaseNotesCard, false);
-                        })
-                        .start();
-            }
-        });
-    }
-
-    private void applyReleaseNotesCardWidth(ConstraintLayout host,
-            View card,
-            boolean expanded) {
-        ConstraintSet constraintSet = new ConstraintSet();
-        constraintSet.clone(host);
-        int cardId = card.getId();
-        if (expanded) {
-            constraintSet.constrainWidth(cardId, ConstraintSet.MATCH_CONSTRAINT);
-        } else {
-            constraintSet.constrainWidth(cardId, ConstraintSet.WRAP_CONTENT);
-        }
-        constraintSet.connect(cardId, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
-        constraintSet.connect(cardId, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
-        constraintSet.setHorizontalBias(cardId, 0.5f);
-        constraintSet.applyTo(host);
     }
 
     private void loadReleaseNotes(MaterialTextView releaseNotesText,

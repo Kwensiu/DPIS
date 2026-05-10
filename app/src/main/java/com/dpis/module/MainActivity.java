@@ -835,7 +835,8 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                 manifest.versionName,
                 manifest.versionCode,
                 manifest.apkUrl,
-                manifest.releasePage);
+                manifest.releasePage,
+                manifest.releaseNotes);
     }
 
     private void startStartupUpdateDownload(String targetVersionName,

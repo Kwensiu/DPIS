@@ -13,6 +13,7 @@ public class StartupUpdateDialogCoordinatorSourceSmokeTest {
     @Test
     public void coordinatorOwnsStartupDisclaimerAndUpdateDialogComposition() throws IOException {
         String source = read("src/main/java/com/dpis/module/StartupUpdateDialogCoordinator.java");
+        String dialogSource = read("src/main/java/com/dpis/module/UpdateAvailableDialog.java");
 
         assertTrue(source.contains("final class StartupUpdateDialogCoordinator"));
         assertTrue(source.contains("boolean maybeShowStartupDisclaimerDialog("));
@@ -30,6 +31,10 @@ public class StartupUpdateDialogCoordinatorSourceSmokeTest {
         assertTrue(!cancelBlock.contains("host.markPromptedVersion(remoteVersionCode)"));
         assertTrue(source.contains("host.markPromptedVersion(remoteVersionCode)"));
         assertTrue(source.contains("startStartupUpdateDownload("));
+        assertTrue(source.contains("String remoteReleaseNotes"));
+        assertTrue(source.contains("ReleaseNotesMarkdownLite.format(embeddedReleaseNotes, locale)"));
+        assertTrue(dialogSource.contains("bindReleaseNotesToggle(releaseNotesHost, releaseNotesCard, releaseNotesContainer);"));
+        assertTrue(dialogSource.contains("releaseNotesCard.setOnClickListener"));
     }
 
     private static String read(String relativePath) throws IOException {

@@ -173,6 +173,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("startupUpdatePackageHandler.launchPackageInstaller(targetFile);"));
         assertTrue(!source.contains("private void verifyDownloadedApk(File apkFile)"));
         assertTrue(source.contains("startupUpdateDialogCoordinator().showUpdateAvailableDialog("));
+        assertTrue(source.contains("manifest.releaseNotes"));
         assertTrue(source.contains("startStartupUpdateDownload("));
         assertTrue(source.contains("startupUpdateDownloadInProgress = state.downloadInProgress;"));
         assertTrue(source.contains("startupUpdateDownloadCancelRequested = state.downloadCancelRequested;"));
