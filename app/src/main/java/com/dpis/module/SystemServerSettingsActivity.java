@@ -1,6 +1,5 @@
 package com.dpis.module;
 
-import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -21,6 +20,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -868,27 +868,43 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             return;
         }
         if (isChecked) {
-            new AlertDialog.Builder(this)
-                    .setTitle(R.string.settings_hide_launcher_icon_confirm_title)
-                    .setMessage(R.string.settings_hide_launcher_icon_confirm_message)
-                    .setPositiveButton(R.string.dialog_process_action_confirm_positive,
-                            (dialog, which) -> {
-                                if (!persistLauncherIconState(true)) {
-                                    setCheckedSilently(hideLauncherIconSwitch, false,
-                                            this::onHideLauncherIconChanged);
-                                }
-                            })
-                    .setNegativeButton(R.string.dialog_process_action_confirm_negative,
-                            (dialog, which) -> setCheckedSilently(hideLauncherIconSwitch, false,
-                                    this::onHideLauncherIconChanged))
-                    .setOnCancelListener(dialog -> setCheckedSilently(hideLauncherIconSwitch, false,
-                            this::onHideLauncherIconChanged))
-                    .show();
+            showHideLauncherIconConfirmationDialog();
             return;
         }
         if (!persistLauncherIconState(false)) {
             setCheckedSilently(hideLauncherIconSwitch, true, this::onHideLauncherIconChanged);
         }
+    }
+
+    private void showHideLauncherIconConfirmationDialog() {
+        View dialogView = LayoutInflater.from(this)
+                .inflate(R.layout.dialog_process_action_confirm, null, false);
+        MaterialTextView titleView = dialogView.findViewById(R.id.process_action_confirm_title);
+        MaterialTextView messageView = dialogView.findViewById(R.id.process_action_confirm_message);
+        MaterialButton proceedButton = dialogView.findViewById(R.id.process_action_confirm_proceed_button);
+        MaterialButton cancelButton = dialogView.findViewById(R.id.process_action_confirm_cancel_button);
+
+        titleView.setText(R.string.settings_hide_launcher_icon_confirm_title);
+        messageView.setText(R.string.settings_hide_launcher_icon_confirm_message);
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+        proceedButton.setOnClickListener(v -> {
+            dialog.dismiss();
+            if (!persistLauncherIconState(true)) {
+                setCheckedSilently(hideLauncherIconSwitch, false,
+                        this::onHideLauncherIconChanged);
+            }
+        });
+        cancelButton.setOnClickListener(v -> {
+            dialog.dismiss();
+            setCheckedSilently(hideLauncherIconSwitch, false,
+                    this::onHideLauncherIconChanged);
+        });
+        dialog.setOnCancelListener(unused -> setCheckedSilently(hideLauncherIconSwitch, false,
+                this::onHideLauncherIconChanged));
+        dialog.show();
     }
 
     private boolean canDrawOverlays() {
@@ -1005,7 +1021,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     }
 
     private ComponentName getLauncherAliasComponentName() {
-        return new ComponentName(this, getPackageName() + ".MainActivityLauncher");
+        return new ComponentName(this, MainActivity.class.getName() + "Launcher");
     }
 
     private final class ActivitySystemHooksToggleView implements SystemHooksToggleController.View {

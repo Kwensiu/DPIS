@@ -31,7 +31,7 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/process_action_confirm_proceed_button"
-        style="@style/Widget.Dpis.DialogActionButton.Outlined.Warn"
+        style="@style/Widget.Dpis.DialogActionButton.Outlined.WarnBg"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="18dp"

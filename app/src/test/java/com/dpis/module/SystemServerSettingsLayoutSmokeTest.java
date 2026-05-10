@@ -121,7 +121,25 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(source.contains("boolean actualHidden = resolveLauncherIconHiddenState("));
         assertTrue(!source.contains("if (!setLauncherAliasHidden(requestedHidden))"));
         assertTrue(source.contains("new ComponentName("));
-        assertTrue(source.contains("getPackageName() + \".MainActivityLauncher\""));
+        assertTrue(source.contains("MainActivity.class.getName() + \"Launcher\""));
+        assertTrue(!source.contains("getPackageName() + \".MainActivityLauncher\""));
+    }
+
+    @Test
+    public void hideLauncherIconConfirmationUsesCustomCenteredDialogLayout() throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+
+        assertTrue(source.contains("private void showHideLauncherIconConfirmationDialog()"));
+        assertTrue(source.contains("R.layout.dialog_process_action_confirm"));
+        assertTrue(source.contains("R.id.process_action_confirm_title"));
+        assertTrue(source.contains("R.id.process_action_confirm_message"));
+        assertTrue(source.contains("R.id.process_action_confirm_proceed_button"));
+        assertTrue(source.contains("R.id.process_action_confirm_cancel_button"));
+        assertTrue(source.contains("new MaterialAlertDialogBuilder(this)"));
+        assertTrue(!source.contains("new AlertDialog.Builder(this)"));
+        assertTrue(source.contains("if (!persistLauncherIconState(true))"));
+        assertTrue(source.contains("setCheckedSilently(hideLauncherIconSwitch, false"));
+        assertTrue(source.contains("dialog.setOnCancelListener"));
     }
 
     private static String read(String relativePath) throws IOException {

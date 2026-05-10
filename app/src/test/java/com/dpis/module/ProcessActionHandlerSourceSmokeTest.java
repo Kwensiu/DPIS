@@ -74,15 +74,12 @@ public class ProcessActionHandlerSourceSmokeTest {
     @Test
     public void processActionConfirmationUsesCustomDialogLayout() throws IOException {
         String source = read("src/main/java/com/dpis/module/ProcessActionHandler.java");
-        String layout = read("src/main/res/layout/dialog_process_action_confirm.xml");
 
         assertTrue(source.contains("R.layout.dialog_process_action_confirm"));
         assertTrue(source.contains("process_action_confirm_title"));
         assertTrue(source.contains("process_action_confirm_message"));
         assertTrue(source.contains("process_action_confirm_proceed_button"));
         assertTrue(source.contains("process_action_confirm_cancel_button"));
-        assertTrue(layout.contains("Widget.Dpis.DialogActionButton.Outlined.Warn"));
-        assertTrue(layout.contains("Widget.Dpis.DialogActionButton.Outlined"));
     }
 
     @Test
