@@ -159,6 +159,10 @@ android {
         buildConfig = true
     }
 
+    lint {
+        lintConfig = file("lint.xml")
+    }
+
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")

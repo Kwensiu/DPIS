@@ -104,6 +104,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
                 R.drawable.ic_settings_24,
                 R.string.system_hooks_enabled_label,
                 R.string.system_hooks_enabled_hint);
+        applySystemHooksRowVisibility();
         safeModeSwitch = bindSwitchRow(
                 R.id.row_safe_mode,
                 R.drawable.ic_shield_24,
@@ -820,10 +821,21 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     }
 
     private void onHooksEnabledChanged(CompoundButton buttonView, boolean isChecked) {
+        if (!BuildConfig.DEBUG) {
+            return;
+        }
         if (hooksToggleController == null) {
             return;
         }
         hooksToggleController.onUserToggle(isChecked);
+    }
+
+    private void applySystemHooksRowVisibility() {
+        View row = findViewById(R.id.row_system_hooks);
+        if (row == null) {
+            return;
+        }
+        row.setVisibility(BuildConfig.DEBUG ? View.VISIBLE : View.GONE);
     }
 
     private void onSafeModeChanged(CompoundButton buttonView, boolean isChecked) {
@@ -957,6 +969,9 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     }
 
     private void syncHooksSwitchWithScope() {
+        if (!BuildConfig.DEBUG) {
+            return;
+        }
         if (hooksToggleController == null) {
             return;
         }

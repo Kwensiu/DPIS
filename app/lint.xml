@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <issue id="Instantiatable">
+        <ignore path="src/main/AndroidManifest.xml" />
+        <ignore path="src/main/res/layout" />
+    </issue>
+</lint>

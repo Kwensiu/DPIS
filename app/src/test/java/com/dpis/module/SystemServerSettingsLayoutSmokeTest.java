@@ -61,6 +61,16 @@ public class SystemServerSettingsLayoutSmokeTest {
     }
 
     @Test
+    public void releaseBuildHidesSystemHooksSwitchAndUsesDebugGateForToggle() throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+
+        assertTrue(source.contains("applySystemHooksRowVisibility()"));
+        assertTrue(source.contains("row.setVisibility(BuildConfig.DEBUG ? View.VISIBLE : View.GONE);"));
+        assertTrue(source.contains("if (!BuildConfig.DEBUG) {"));
+        assertTrue(source.contains("private void onHooksEnabledChanged(CompoundButton buttonView, boolean isChecked)"));
+    }
+
+    @Test
     public void disablingHyperOsFontHookClearsPublishedFontTargets() throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
 
@@ -140,6 +150,15 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(source.contains("if (!persistLauncherIconState(true))"));
         assertTrue(source.contains("setCheckedSilently(hideLauncherIconSwitch, false"));
         assertTrue(source.contains("dialog.setOnCancelListener"));
+    }
+
+    @Test
+    public void releaseBuildForcesSystemHooksEnabledAtStoreReadBoundary() throws IOException {
+        String source = read("src/main/java/com/dpis/module/DpiConfigStore.java");
+
+        assertTrue(source.contains("if (!BuildConfig.DEBUG) {"));
+        assertTrue(source.contains("return true;"));
+        assertTrue(source.contains("return getBoolean(KEY_SYSTEM_SERVER_HOOKS_ENABLED, true);"));
     }
 
     private static String read(String relativePath) throws IOException {

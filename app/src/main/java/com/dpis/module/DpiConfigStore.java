@@ -95,6 +95,9 @@ final class DpiConfigStore {
     }
 
     boolean isSystemServerHooksEnabled() {
+        if (!BuildConfig.DEBUG) {
+            return true;
+        }
         return getBoolean(KEY_SYSTEM_SERVER_HOOKS_ENABLED, true);
     }
 
