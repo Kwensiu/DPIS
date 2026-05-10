@@ -32,6 +32,10 @@ public class StartupUpdateDialogCoordinatorSourceSmokeTest {
         assertTrue(source.contains("host.markPromptedVersion(remoteVersionCode)"));
         assertTrue(source.contains("startStartupUpdateDownload("));
         assertTrue(source.contains("String remoteReleaseNotes"));
+        assertTrue(source.contains("ReleaseNotesController releaseNotesController"));
+        assertTrue(source.contains("releaseNotesController.load(targetVersionName"));
+        assertTrue(source.contains("dialog.isShowing()"));
+        assertTrue(source.contains("R.string.about_update_release_notes_loading"));
         assertTrue(source.contains("ReleaseNotesMarkdownLite.format(embeddedReleaseNotes, locale)"));
         assertTrue(dialogSource.contains("bindReleaseNotesToggle(releaseNotesHost, releaseNotesCard, releaseNotesContainer);"));
         assertTrue(dialogSource.contains("releaseNotesCard.setOnClickListener"));

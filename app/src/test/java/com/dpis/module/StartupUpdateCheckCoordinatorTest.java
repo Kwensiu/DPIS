@@ -6,10 +6,30 @@ import org.junit.Test;
 
 public class StartupUpdateCheckCoordinatorTest {
     @Test
-    public void maybeCheck_ignoresIntervalWindowAndStartsOnFreshState() {
+    public void maybeCheck_startsWithinSuccessfulCheckInterval() {
         FakeHost host = new FakeHost(new UpdateCoordinator.State(
                 System.currentTimeMillis(),
                 false,
+                0,
+                false,
+                false,
+                false));
+        StartupUpdateCheckCoordinator coordinator = new StartupUpdateCheckCoordinator(
+                host,
+                new UpdateCoordinator(),
+                1_000,
+                1_000);
+
+        coordinator.maybeCheckForUpdatesOnStartup();
+
+        assertEquals(1, host.backgroundExecutionCount);
+    }
+
+    @Test
+    public void maybeCheck_startsWithinFailureRetryInterval() {
+        FakeHost host = new FakeHost(new UpdateCoordinator.State(
+                System.currentTimeMillis(),
+                true,
                 0,
                 false,
                 false,

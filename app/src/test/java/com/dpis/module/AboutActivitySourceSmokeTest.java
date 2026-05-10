@@ -36,6 +36,9 @@ public class AboutActivitySourceSmokeTest {
         assertTrue(source.contains("UpdateAvailableDialog.create("));
         assertTrue(dialogSource.contains("R.id.update_dialog_cancel_button"));
         assertTrue(dialogLayout.contains("android:id=\"@+id/update_dialog_cancel_button\""));
+        assertTrue(dialogLayout.contains("com.dpis.module.MaxHeightNestedScrollView"));
+        assertTrue(dialogLayout.contains("android:scrollbars=\"vertical\""));
+        assertTrue(dialogLayout.contains("android:fadeScrollbars=\"false\""));
         assertTrue(!source.contains("private void executeApkDownload("));
         assertTrue(!source.contains("private void verifyDownloadedApk("));
         assertTrue(!source.contains("private static StartupUpdateManifest fetchUpdateManifest("));

@@ -44,10 +44,14 @@ final class StartupUpdateDialogCoordinator {
 
     private final Activity activity;
     private final Host host;
+    private final ReleaseNotesController releaseNotesController;
 
-    StartupUpdateDialogCoordinator(Activity activity, Host host) {
+    StartupUpdateDialogCoordinator(Activity activity,
+            Host host,
+            ReleaseNotesController releaseNotesController) {
         this.activity = activity;
         this.host = host;
+        this.releaseNotesController = releaseNotesController;
     }
 
     boolean maybeShowStartupDisclaimerDialog(DpiConfigStore store, Runnable onAccepted) {
@@ -84,7 +88,7 @@ final class StartupUpdateDialogCoordinator {
             Locale locale = activity.getResources().getConfiguration().getLocales().get(0);
             releaseNotesText.setText(ReleaseNotesMarkdownLite.format(embeddedReleaseNotes, locale));
         } else {
-            releaseNotesText.setText(R.string.about_update_release_notes_empty);
+            releaseNotesText.setText(R.string.about_update_release_notes_loading);
         }
         host.showDialogIdleState(
                 dialogHandle.primaryButton,
@@ -112,6 +116,11 @@ final class StartupUpdateDialogCoordinator {
                 host.openUrl(releasePageUrl);
             });
             dialogHandle.dialog.show();
+            loadReleaseNotes(
+                    releaseNotesText,
+                    dialogHandle.dialog,
+                    remoteVersionName,
+                    !embeddedReleaseNotes.isEmpty());
             return;
         }
 
@@ -129,6 +138,42 @@ final class StartupUpdateDialogCoordinator {
         });
         dialogHandle.dialog.setOnDismissListener(unused -> host.cancelActiveUpdateDownload());
         dialogHandle.dialog.show();
+        loadReleaseNotes(
+                releaseNotesText,
+                dialogHandle.dialog,
+                remoteVersionName,
+                !embeddedReleaseNotes.isEmpty());
+    }
+
+    private void loadReleaseNotes(MaterialTextView releaseNotesText,
+            AlertDialog dialog,
+            String targetVersionName,
+            boolean hasEmbeddedReleaseNotes) {
+        Locale locale = activity.getResources().getConfiguration().getLocales().get(0);
+        releaseNotesController.load(targetVersionName, hasEmbeddedReleaseNotes,
+                new ReleaseNotesController.Listener() {
+                    @Override
+                    public boolean isAlive() {
+                        return !activity.isFinishing()
+                                && !activity.isDestroyed()
+                                && dialog.isShowing();
+                    }
+
+                    @Override
+                    public void onBody(String body) {
+                        releaseNotesText.setText(ReleaseNotesMarkdownLite.format(body, locale));
+                    }
+
+                    @Override
+                    public void onEmptyBody() {
+                        releaseNotesText.setText(R.string.about_update_release_notes_empty);
+                    }
+
+                    @Override
+                    public void onFailure() {
+                        releaseNotesText.setText(R.string.about_update_release_notes_failed);
+                    }
+                });
     }
 
     private void showStartupDisclaimerDialog(DpiConfigStore store, Runnable onAccepted) {

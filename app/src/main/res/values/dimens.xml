@@ -11,7 +11,7 @@
     <dimen name="dialog_mode_toggle_spacing_start">10dp</dimen>
     <dimen name="dialog_mode_toggle_content_offset_top">6dp</dimen>
     <dimen name="dialog_app_config_half_expanded_down_offset">1dp</dimen>
-    <dimen name="update_dialog_release_notes_max_height">220dp</dimen>
+    <dimen name="update_dialog_release_notes_max_height">160dp</dimen>
     <dimen name="update_dialog_release_notes_corner_radius">16dp</dimen>
     <dimen name="update_dialog_release_notes_padding_horizontal">12dp</dimen>
     <dimen name="update_dialog_release_notes_padding_vertical">10dp</dimen>

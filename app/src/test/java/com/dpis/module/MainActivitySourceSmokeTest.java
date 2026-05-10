@@ -151,6 +151,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("maybeCheckForUpdatesOnStartup();"));
         assertTrue(source.contains("new UpdateCoordinator("));
         assertTrue(source.contains("new StartupUpdateCheckCoordinator("));
+        assertTrue(source.contains("StartupUpdateCheckOnce.consume()"));
         assertTrue(source.contains("startupUpdateCheckCoordinator.maybeCheckForUpdatesOnStartup();"));
         assertTrue(source.contains("private volatile boolean startupUpdateDownloadInProgress;"));
         assertTrue(source.contains("private volatile boolean startupUpdateDownloadCancelRequested;"));
@@ -171,6 +172,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("new StartupUpdatePackageHandler(this)"));
         assertTrue(downloadCoordinatorSource.contains("packageHandler.verifyDownloadedApk("));
         assertTrue(source.contains("startupUpdatePackageHandler.launchPackageInstaller(targetFile);"));
+        assertTrue(source.contains("new ReleaseNotesController("));
         assertTrue(!source.contains("private void verifyDownloadedApk(File apkFile)"));
         assertTrue(source.contains("startupUpdateDialogCoordinator().showUpdateAvailableDialog("));
         assertTrue(source.contains("manifest.releaseNotes"));

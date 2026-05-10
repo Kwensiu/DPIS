@@ -69,12 +69,15 @@
                 android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
                 android:textColor="?attr/colorOnSurface" />
 
-            <androidx.core.widget.NestedScrollView
+            <com.dpis.module.MaxHeightNestedScrollView
                 android:id="@+id/update_dialog_release_notes_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
+                android:fadeScrollbars="false"
                 android:maxHeight="@dimen/update_dialog_release_notes_max_height"
+                android:scrollbarStyle="insideInset"
+                android:scrollbars="vertical"
                 android:visibility="gone">
 
                 <com.google.android.material.textview.MaterialTextView
@@ -84,7 +87,7 @@
                     android:lineSpacingExtra="2dp"
                     android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                     android:textColor="?attr/colorOnSurfaceVariant" />
-            </androidx.core.widget.NestedScrollView>
+            </com.dpis.module.MaxHeightNestedScrollView>
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 

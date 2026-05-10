@@ -110,6 +110,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             UPDATE_CONNECT_TIMEOUT_MS,
             UPDATE_READ_TIMEOUT_MS);
     private StartupUpdateDialogCoordinator startupUpdateDialogCoordinator;
+    private ReleaseNotesController releaseNotesController;
 
     private MainViewModel mainViewModel;
     private AppListPagerAdapter pagerAdapter;
@@ -145,6 +146,14 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                 startupUpdateDownloadExecutor,
                 startupUpdatePackageHandler,
                 startupUpdateExecutor);
+        releaseNotesController = new ReleaseNotesController(
+                new ReleaseNotesCacheStore(this),
+                startupUpdateExecutor,
+                this::runOnUiThread,
+                GitHubReleaseNotesFetcher::fetchByVersionName,
+                System::currentTimeMillis,
+                UPDATE_CONNECT_TIMEOUT_MS,
+                UPDATE_READ_TIMEOUT_MS);
 
         RetainedState retainedState = (RetainedState) getLastNonConfigurationInstance();
         String initialQuery = "";
@@ -825,6 +834,9 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     }
 
     private void maybeCheckForUpdatesOnStartup() {
+        if (!StartupUpdateCheckOnce.consume()) {
+            return;
+        }
         startupUpdateCheckCoordinator.maybeCheckForUpdatesOnStartup();
     }
 
@@ -1004,7 +1016,8 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         if (startupUpdateDialogCoordinator == null) {
             startupUpdateDialogCoordinator = new StartupUpdateDialogCoordinator(
                     this,
-                    createStartupUpdateDialogHost());
+                    createStartupUpdateDialogHost(),
+                    releaseNotesController);
         }
         return startupUpdateDialogCoordinator;
     }
