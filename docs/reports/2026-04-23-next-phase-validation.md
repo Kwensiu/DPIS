@@ -1,7 +1,7 @@
 # DPIS Next-Phase Validation Report (2026-04-23)
 
 ## Scope
-- Worktree: `C:\Users\x1852\.config\superpowers\worktrees\DPIS\feat-subagent-next-phase-20260423`
+- Worktree: `<worktree-root>`
 - Branch: `feat-subagent-next-phase-20260423`
 - Baseline HEAD before validation: `c517b1a` (`fix: enforce safety-mode policy in hook installers`)
 

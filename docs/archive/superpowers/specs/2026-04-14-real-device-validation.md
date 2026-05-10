@@ -20,7 +20,7 @@
 
 1. 先启动模块应用一次，确保 `remote preferences` 已初始化。
 2. 启动或重启目标包，然后过滤 `DPIS` 日志：
-   - 命令：`adb -s 192.168.5.130:5555 logcat | findstr DPIS`
+   - 命令：`adb -s <adb-host:port> logcat | findstr DPIS`
 3. 观察关键日志：
    - `module loaded: process=<package>`
    - `target package matched: package=<package>, targetDensityDpi=560`

@@ -145,7 +145,7 @@ flowchart TD
 
 你提到的计划文件：
 
-- [2026-04-19-settings-other-about-hide-icon.md](E:\System\Documents\GitHub\DPIS\docs\superpowers\plans\2026-04-19-settings-other-about-hide-icon.md)
+- [2026-04-19-settings-other-about-hide-icon.md](<repo-root>\docs\superpowers\plans\2026-04-19-settings-other-about-hide-icon.md)
 
 它在当前架构中的落点可以直接画成这张图：
 
@@ -170,14 +170,14 @@ flowchart TD
 
 如果你是想“把项目真正读懂”，建议按这条线走：
 
-1. [README.md](E:\System\Documents\GitHub\DPIS\README.md)
-2. [AndroidManifest.xml](E:\System\Documents\GitHub\DPIS\app\src\main\AndroidManifest.xml)
-3. [MainActivity.java](E:\System\Documents\GitHub\DPIS\app\src\main\java\com\dpis\module\MainActivity.java)
-4. [SystemServerSettingsActivity.java](E:\System\Documents\GitHub\DPIS\app\src\main\java\com\dpis\module\SystemServerSettingsActivity.java)
-5. [DpiConfigStore.java](E:\System\Documents\GitHub\DPIS\app\src\main\java\com\dpis\module\DpiConfigStore.java)
-6. [ModuleMain.java](E:\System\Documents\GitHub\DPIS\app\src\main\java\com\dpis\module\ModuleMain.java)
-7. [AppProcessHookInstaller.java](E:\System\Documents\GitHub\DPIS\app\src\main\java\com\dpis\module\AppProcessHookInstaller.java)
-8. [SystemServerDisplayEnvironmentInstaller.java](E:\System\Documents\GitHub\DPIS\app\src\main\java\com\dpis\module\SystemServerDisplayEnvironmentInstaller.java)
+1. [README.md](<repo-root>\README.md)
+2. [AndroidManifest.xml](<repo-root>\app\src\main\AndroidManifest.xml)
+3. [MainActivity.java](<repo-root>\app\src\main\java\com\dpis\module\MainActivity.java)
+4. [SystemServerSettingsActivity.java](<repo-root>\app\src\main\java\com\dpis\module\SystemServerSettingsActivity.java)
+5. [DpiConfigStore.java](<repo-root>\app\src\main\java\com\dpis\module\DpiConfigStore.java)
+6. [ModuleMain.java](<repo-root>\app\src\main\java\com\dpis\module\ModuleMain.java)
+7. [AppProcessHookInstaller.java](<repo-root>\app\src\main\java\com\dpis\module\AppProcessHookInstaller.java)
+8. [SystemServerDisplayEnvironmentInstaller.java](<repo-root>\app\src\main\java\com\dpis\module\SystemServerDisplayEnvironmentInstaller.java)
 
 这条顺序对应的是：
 

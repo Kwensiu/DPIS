@@ -252,29 +252,29 @@ Gallery 的 hash：
 Gallery 当前属性：
 
 ```powershell
-adb -s d7121fb5 shell su -c getprop debug.dpis.font.a55b5fe1
-adb -s d7121fb5 shell su -c getprop debug.dpis.rustbin.a55b5fe1
-adb -s d7121fb5 shell su -c getprop debug.dpis.forcefont
-adb -s d7121fb5 shell su -c getprop debug.dpis.pushstyle
+adb -s <device-serial> shell su -c getprop debug.dpis.font.a55b5fe1
+adb -s <device-serial> shell su -c getprop debug.dpis.rustbin.a55b5fe1
+adb -s <device-serial> shell su -c getprop debug.dpis.forcefont
+adb -s <device-serial> shell su -c getprop debug.dpis.pushstyle
 ```
 
 Gallery native proxy：
 
 ```powershell
-adb -s d7121fb5 shell su -c "ls -l /data/app/MIUIGallery/lib/arm64/libdpis_native.so"
+adb -s <device-serial> shell su -c "ls -l /data/app/MIUIGallery/lib/arm64/libdpis_native.so"
 ```
 
 Gallery 配置残留：
 
 ```powershell
-adb -s d7121fb5 shell su -c "grep -n 'com.miui.gallery\|font\.hyperos\|target_packages' /data/user/0/io.github.kwensiu.dpis/shared_prefs/dpi_config.xml"
+adb -s <device-serial> shell su -c "grep -n 'com.miui.gallery\|font\.hyperos\|target_packages' /data/user/0/io.github.kwensiu.dpis/shared_prefs/dpi_config.xml"
 ```
 
 恢复默认的手动兜底：
 
 ```powershell
-adb -s d7121fb5 shell su -c setprop debug.dpis.font.a55b5fe1 0
-adb -s d7121fb5 shell su -c setprop debug.dpis.rustbin.a55b5fe1 0
-adb -s d7121fb5 shell su -c setprop debug.dpis.forcefont 0
-adb -s d7121fb5 shell su -c am force-stop com.miui.gallery
+adb -s <device-serial> shell su -c setprop debug.dpis.font.a55b5fe1 0
+adb -s <device-serial> shell su -c setprop debug.dpis.rustbin.a55b5fe1 0
+adb -s <device-serial> shell su -c setprop debug.dpis.forcefont 0
+adb -s <device-serial> shell su -c am force-stop com.miui.gallery
 ```

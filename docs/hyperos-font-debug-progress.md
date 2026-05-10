@@ -45,7 +45,7 @@ This document tracks the HyperOS Rust/Flutter font investigation. New experiment
 
 1. Install the new debug APK without rebooting the device.
 2. Change Gallery font to a visible value, for example 300%.
-3. Check `adb -s d7121fb5 shell su -c getprop debug.dpis.font.a55b5fe1` immediately.
+3. Check `adb -s <device-serial> shell su -c getprop debug.dpis.font.a55b5fe1` immediately.
 4. Only force-stop/restart Gallery.
 5. Check for `ParagraphBuilder::Create override` or `ParagraphBuilder::pushStyle override` logs and confirm the multiplier matches the new value.
 

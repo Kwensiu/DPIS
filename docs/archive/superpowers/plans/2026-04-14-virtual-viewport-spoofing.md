@@ -182,8 +182,8 @@ store.setTargetViewportWidthDp(packageName, widthDp);
 - [ ] **步骤 2： 构建设备验证清单**
 
 使用：
-- `adb -s 192.168.5.130:5555 install -r app/build/outputs/apk/debug/app-debug.apk`
-- `adb -s 192.168.5.130:5555 logcat | findstr DPIS`
+- `adb -s <adb-host:port> install -r app/build/outputs/apk/debug/app-debug.apk`
+- `adb -s <adb-host:port> logcat | findstr DPIS`
 
 预期日志应提及 `targetViewportWidthDp=<value>` 以及与视口相关的覆盖。
 
