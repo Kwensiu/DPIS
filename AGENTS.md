@@ -35,6 +35,23 @@
 - Test location mirrors production package structure.
 - Test naming: `<ClassName>Test.java` and method names describing behavior (e.g., `usesObservedDefaultDensityWhenNoUserValueExists`).
 - Run targeted tests during iteration, then run full `:app:testDebugUnitTest` before submitting.
+- Prefer behavior tests for parsers, caches, and policy classes. Source smoke tests are acceptable for wiring checks, but should not be the only coverage for business logic.
+
+## Update Flow Guidelines
+- Do not cache update detection, version decisions, or manifest results.
+- Release notes body may be cached by version with TTL, but must not affect update availability.
+- Network failure must not overwrite already available release notes content.
+- Empty release notes body should still be cacheable when the goal is to reduce repeated body fetches.
+
+## Debug-only UI Entrypoints
+- Temporary debug-only UI rows must be gated by `BuildConfig.DEBUG`.
+- Name ids, strings, and binding methods with `debug_only`.
+- Group debug-only rows with their own dividers so release layouts keep static separators.
+- Before release-related commits, explicitly decide whether to remove or keep debug-only entries.
+
+## Gradle Task Detection
+- Build scripts must not infer release tasks by scanning arbitrary Gradle arguments such as `--tests`.
+- Release signing checks should only trigger for actual release task names.
 
 ## Commit & Pull Request Guidelines
 - Follow Conventional Commit style observed in history:

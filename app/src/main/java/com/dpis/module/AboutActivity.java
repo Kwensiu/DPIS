@@ -43,7 +43,7 @@ public final class AboutActivity extends LocalizedActivity {
     private final StartupUpdatePackageHandler packageHandler = new StartupUpdatePackageHandler(this);
     private final ExecutorService updateExecutor = Executors.newSingleThreadExecutor();
     private UpdateDownloadCoordinator updateDownloadCoordinator;
-    private ReleaseNotesCacheStore releaseNotesCacheStore;
+    private ReleaseNotesController releaseNotesController;
     private volatile boolean updateCheckInProgress = false;
     private volatile boolean updateDownloadInProgress = false;
     private volatile boolean updateDownloadCancelRequested = false;
@@ -60,7 +60,14 @@ public final class AboutActivity extends LocalizedActivity {
                 downloadExecutor,
                 packageHandler,
                 updateExecutor);
-        releaseNotesCacheStore = new ReleaseNotesCacheStore(this);
+        releaseNotesController = new ReleaseNotesController(
+                new ReleaseNotesCacheStore(this),
+                updateExecutor,
+                this::runOnUiThread,
+                GitHubReleaseNotesFetcher::fetchByVersionName,
+                System::currentTimeMillis,
+                UPDATE_CONNECT_TIMEOUT_MS,
+                UPDATE_READ_TIMEOUT_MS);
 
         ImageButton backButton = findViewById(R.id.about_back_button);
         backButton.setOnClickListener(v -> finish());
@@ -153,29 +160,16 @@ public final class AboutActivity extends LocalizedActivity {
     }
 
     private void bindDebugOnlyUpdateDialogRow() {
+        View group = findViewById(R.id.group_about_update_dialog_debug_only);
         View row = findViewById(R.id.row_about_update_dialog_debug_only);
-        View dividerAfterUpdate = findViewById(R.id.divider_after_update);
-        View dividerAfterDebugRow = findViewById(R.id.divider_after_update_dialog_debug_only);
-        if (row == null) {
+        if (group == null || row == null) {
             return;
         }
         if (!BuildConfig.DEBUG) {
-            row.setVisibility(View.GONE);
-            if (dividerAfterUpdate != null) {
-                dividerAfterUpdate.setVisibility(View.VISIBLE);
-            }
-            if (dividerAfterDebugRow != null) {
-                dividerAfterDebugRow.setVisibility(View.GONE);
-            }
+            group.setVisibility(View.GONE);
             return;
         }
-        row.setVisibility(View.VISIBLE);
-        if (dividerAfterUpdate != null) {
-            dividerAfterUpdate.setVisibility(View.VISIBLE);
-        }
-        if (dividerAfterDebugRow != null) {
-            dividerAfterDebugRow.setVisibility(View.VISIBLE);
-        }
+        group.setVisibility(View.VISIBLE);
         ImageView iconView = row.findViewById(R.id.setting_icon);
         MaterialTextView titleView = row.findViewById(R.id.setting_title);
         MaterialTextView subtitleView = row.findViewById(R.id.setting_subtitle);
@@ -273,7 +267,7 @@ public final class AboutActivity extends LocalizedActivity {
             releaseNotesText.setText(R.string.about_update_release_notes_loading);
         }
         releaseNotesText.setMovementMethod(LinkMovementMethod.getInstance());
-        fetchReleaseNotes(releaseNotesText, locale, manifest.versionName, !embeddedReleaseNotes.isEmpty());
+        loadReleaseNotes(releaseNotesText, locale, manifest.versionName, !embeddedReleaseNotes.isEmpty());
 
         boolean hasDirectDownload = downloadUrl != null && !downloadUrl.trim().isEmpty();
         if (!hasDirectDownload) {
@@ -358,60 +352,32 @@ public final class AboutActivity extends LocalizedActivity {
         constraintSet.applyTo(host);
     }
 
-    private void fetchReleaseNotes(MaterialTextView releaseNotesText,
+    private void loadReleaseNotes(MaterialTextView releaseNotesText,
             Locale locale,
             String targetVersionName,
             boolean hasEmbeddedReleaseNotes) {
-        String cachedBody = releaseNotesCacheStore.getValidBody(
-                targetVersionName,
-                System.currentTimeMillis());
-        if (cachedBody != null) {
-            CharSequence rendered = cachedBody.trim().isEmpty()
-                    ? getText(R.string.about_update_release_notes_empty)
-                    : ReleaseNotesMarkdownLite.format(cachedBody, locale);
-            releaseNotesText.setText(rendered);
-            return;
-        }
-        updateExecutor.execute(() -> {
-            String releaseNotes;
-            boolean failed = false;
-            try {
-                releaseNotes = GitHubReleaseNotesFetcher.fetchByVersionName(
-                        targetVersionName,
-                        UPDATE_CONNECT_TIMEOUT_MS,
-                        UPDATE_READ_TIMEOUT_MS);
-                if (releaseNotes == null || releaseNotes.trim().isEmpty()) {
-                    releaseNotesCacheStore.put(
-                            targetVersionName,
-                            "",
-                            System.currentTimeMillis());
-                    releaseNotes = getString(R.string.about_update_release_notes_empty);
-                } else {
-                    releaseNotesCacheStore.put(
-                            targetVersionName,
-                            releaseNotes,
-                            System.currentTimeMillis());
-                }
-            } catch (Exception ignored) {
-                releaseNotes = getString(R.string.about_update_release_notes_failed);
-                failed = true;
-            }
-            final String finalReleaseNotes = releaseNotes;
-            final boolean requestFailed = failed;
-            runOnUiThread(() -> {
-                if (isFinishing() || isDestroyed()) {
-                    return;
-                }
-                if (requestFailed && hasEmbeddedReleaseNotes) {
-                    return;
-                }
-                if (finalReleaseNotes.trim().equals(getString(R.string.about_update_release_notes_empty))
-                        && hasEmbeddedReleaseNotes) {
-                    return;
-                }
-                releaseNotesText.setText(ReleaseNotesMarkdownLite.format(finalReleaseNotes, locale));
-            });
-        });
+        releaseNotesController.load(targetVersionName, hasEmbeddedReleaseNotes,
+                new ReleaseNotesController.Listener() {
+                    @Override
+                    public boolean isAlive() {
+                        return !isFinishing() && !isDestroyed();
+                    }
+
+                    @Override
+                    public void onBody(String body) {
+                        releaseNotesText.setText(ReleaseNotesMarkdownLite.format(body, locale));
+                    }
+
+                    @Override
+                    public void onEmptyBody() {
+                        releaseNotesText.setText(R.string.about_update_release_notes_empty);
+                    }
+
+                    @Override
+                    public void onFailure() {
+                        releaseNotesText.setText(R.string.about_update_release_notes_failed);
+                    }
+                });
     }
 
     private void bindDialogCancelButton(AlertDialog dialog, MaterialButton cancelButton) {

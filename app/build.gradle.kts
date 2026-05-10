@@ -38,7 +38,8 @@ private val releaseSigningMissingKeys = buildList {
 
 private val hasReleaseSigningConfig = releaseSigningMissingKeys.isEmpty()
 private val releaseTasksRequested = gradle.startParameter.taskNames.any {
-    it.contains("Release", ignoreCase = true)
+    val taskName = it.substringAfterLast(":")
+    taskName == "renameReleaseApk" || taskName.endsWith("Release")
 }
 
 abstract class RenameReleaseApkTask : DefaultTask() {

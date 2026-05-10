@@ -27,7 +27,7 @@ final class ReleaseNotesMarkdownLite {
         if (markdown == null || markdown.trim().isEmpty()) {
             return "";
         }
-        String filtered = filterByLanguageSection(markdown, locale);
+        String filtered = filterBodyForLocale(markdown, locale);
         if (filtered.trim().isEmpty()) {
             return "";
         }
@@ -59,7 +59,7 @@ final class ReleaseNotesMarkdownLite {
         return out;
     }
 
-    private static String filterByLanguageSection(String markdown, Locale locale) {
+    static String filterBodyForLocale(String markdown, Locale locale) {
         String normalized = markdown.replace("\r\n", "\n");
         String[] lines = normalized.split("\n", -1);
         int start = 0;
@@ -103,7 +103,7 @@ final class ReleaseNotesMarkdownLite {
         boolean foundDivider = false;
         for (String raw : lines) {
             String line = raw == null ? "" : raw.trim();
-            if (!foundDivider && line.matches("---+")) {
+            if (!foundDivider && line.matches("-{3,}")) {
                 foundDivider = true;
                 continue;
             }
