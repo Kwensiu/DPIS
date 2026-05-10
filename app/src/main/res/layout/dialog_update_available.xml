@@ -38,6 +38,56 @@
         android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
         android:textColor="?attr/colorOnSurfaceVariant" />
 
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/update_dialog_release_notes_host"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp">
+
+        <LinearLayout
+            android:id="@+id/update_dialog_release_notes_card"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_update_release_notes_container"
+            android:clickable="true"
+            android:focusable="true"
+            android:orientation="vertical"
+            android:paddingStart="@dimen/update_dialog_release_notes_padding_horizontal"
+            android:paddingTop="@dimen/update_dialog_release_notes_padding_vertical"
+            android:paddingEnd="@dimen/update_dialog_release_notes_padding_horizontal"
+            android:paddingBottom="@dimen/update_dialog_release_notes_padding_vertical"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:singleLine="true"
+                android:text="@string/about_update_release_notes_title"
+                android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
+                android:textColor="?attr/colorOnSurface" />
+
+            <androidx.core.widget.NestedScrollView
+                android:id="@+id/update_dialog_release_notes_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:maxHeight="@dimen/update_dialog_release_notes_max_height"
+                android:visibility="gone">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/update_dialog_release_notes_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:lineSpacingExtra="2dp"
+                    android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+            </androidx.core.widget.NestedScrollView>
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
     <com.google.android.material.progressindicator.LinearProgressIndicator
         android:id="@+id/update_dialog_progress"
         android:layout_width="match_parent"

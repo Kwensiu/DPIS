@@ -36,10 +36,16 @@ final class UpdateManifestFetcher {
             int versionCode = object.optInt("versionCode", 0);
             String apkUrl = object.optString("apkUrl", "").trim();
             String releasePage = object.optString("releasePage", "").trim();
+            String releaseNotes = object.optString("releaseNotes", "").trim();
             if (versionName.isEmpty() || versionCode <= 0) {
                 throw new IOException("Invalid update manifest payload");
             }
-            return new StartupUpdateManifest(versionName, versionCode, apkUrl, releasePage);
+            return new StartupUpdateManifest(
+                    versionName,
+                    versionCode,
+                    apkUrl,
+                    releasePage,
+                    releaseNotes);
         } finally {
             connection.disconnect();
         }

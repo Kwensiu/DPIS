@@ -112,6 +112,19 @@
                     layout="@layout/item_settings_entry" />
 
                 <com.google.android.material.divider.MaterialDivider
+                    android:id="@+id/divider_after_update"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp" />
+
+                <include
+                    android:id="@+id/row_about_update_dialog_debug_only"
+                    layout="@layout/item_settings_entry"
+                    android:visibility="gone" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:id="@+id/divider_after_update_dialog_debug_only"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"

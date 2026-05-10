@@ -149,6 +149,8 @@
     <string name="about_link_source_desc">DPIS repository on GitHub</string>
     <string name="about_link_update_title">Check for updates</string>
     <string name="about_link_update_desc">Get the latest version</string>
+    <string name="about_link_update_dialog_debug_only_title">Debug only: update dialog</string>
+    <string name="about_link_update_dialog_debug_only_desc">Development entry. Opens the dialog without version gate.</string>
     <string name="about_link_feedback_title">Feedback</string>
     <string name="about_link_feedback_desc">Report issues or view known ones</string>
     <string name="open_source_license">Open source licenses</string>
@@ -168,6 +170,10 @@
     <string name="about_update_up_to_date">Already up to date</string>
     <string name="about_update_available_title">New version available</string>
     <string name="about_update_available_message">Current version: %1$s (%2$d)\nLatest version: %3$s (%4$d)</string>
+    <string name="about_update_release_notes_title">Release notes</string>
+    <string name="about_update_release_notes_loading">Loading release notes...</string>
+    <string name="about_update_release_notes_failed">Failed to load release notes.</string>
+    <string name="about_update_release_notes_empty">No release notes.</string>
     <string name="about_update_action_download">Download update</string>
     <string name="about_update_action_view_release">View release page</string>
     <string name="about_update_action_cancel_download">Cancel download</string>

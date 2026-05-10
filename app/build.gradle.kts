@@ -102,6 +102,11 @@ android {
         versionName = appVersionName
         versionCode = semVerToVersionCode(appVersionName)
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField(
+            "String",
+            "GITHUB_RELEASES_API_URL",
+            "\"https://api.github.com/repos/Kwensiu/DPIS/releases\""
+        )
 
         externalNativeBuild {
             cmake {

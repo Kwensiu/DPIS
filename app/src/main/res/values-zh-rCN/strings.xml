@@ -149,6 +149,8 @@
     <string name="about_link_source_desc">在 GitHub 上查看 DPIS 仓库</string>
     <string name="about_link_update_title">检查更新</string>
     <string name="about_link_update_desc">联网检查并获取最新版本</string>
+    <string name="about_link_update_dialog_debug_only_title">仅调试：更新弹窗</string>
+    <string name="about_link_update_dialog_debug_only_desc">开发入口。忽略版本新旧判断，直接打开弹窗。</string>
     <string name="about_link_feedback_title">问题反馈</string>
     <string name="about_link_feedback_desc">提交 issue 或查看已知问题</string>
     <string name="open_source_license">开放源代码许可</string>
@@ -168,6 +170,10 @@
     <string name="about_update_up_to_date">当前已是最新版本</string>
     <string name="about_update_available_title">发现新版本</string>
     <string name="about_update_available_message">当前版本：%1$s (%2$d)\n最新版本：%3$s (%4$d)</string>
+    <string name="about_update_release_notes_title">更新日志</string>
+    <string name="about_update_release_notes_loading">正在加载更新日志…</string>
+    <string name="about_update_release_notes_failed">加载更新日志失败</string>
+    <string name="about_update_release_notes_empty">暂无更新日志</string>
     <string name="about_update_action_download">下载更新</string>
     <string name="about_update_action_view_release">查看发布页</string>
     <string name="about_update_action_cancel_download">取消下载</string>

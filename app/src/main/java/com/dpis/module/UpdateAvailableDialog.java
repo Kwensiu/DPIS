@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -24,6 +25,13 @@ final class UpdateAvailableDialog {
                 dialogView.findViewById(R.id.update_dialog_progress);
         MaterialTextView progressTextView =
                 dialogView.findViewById(R.id.update_dialog_progress_text);
+        ConstraintLayout releaseNotesHost =
+                dialogView.findViewById(R.id.update_dialog_release_notes_host);
+        View releaseNotesCard = dialogView.findViewById(R.id.update_dialog_release_notes_card);
+        View releaseNotesContainer =
+                dialogView.findViewById(R.id.update_dialog_release_notes_container);
+        MaterialTextView releaseNotesText =
+                dialogView.findViewById(R.id.update_dialog_release_notes_text);
         MaterialButton primaryButton = dialogView.findViewById(R.id.update_dialog_primary_button);
         MaterialButton cancelButton = dialogView.findViewById(R.id.update_dialog_cancel_button);
 
@@ -40,7 +48,11 @@ final class UpdateAvailableDialog {
                 primaryButton,
                 cancelButton,
                 progressView,
-                progressTextView);
+                progressTextView,
+                releaseNotesHost,
+                releaseNotesCard,
+                releaseNotesContainer,
+                releaseNotesText);
     }
 
     static final class DialogHandle {
@@ -49,17 +61,29 @@ final class UpdateAvailableDialog {
         final MaterialButton cancelButton;
         final LinearProgressIndicator progressView;
         final MaterialTextView progressTextView;
+        final ConstraintLayout releaseNotesHost;
+        final View releaseNotesCard;
+        final View releaseNotesContainer;
+        final MaterialTextView releaseNotesText;
 
         DialogHandle(AlertDialog dialog,
                      MaterialButton primaryButton,
                      MaterialButton cancelButton,
                      LinearProgressIndicator progressView,
-                     MaterialTextView progressTextView) {
+                     MaterialTextView progressTextView,
+                     ConstraintLayout releaseNotesHost,
+                     View releaseNotesCard,
+                     View releaseNotesContainer,
+                     MaterialTextView releaseNotesText) {
             this.dialog = dialog;
             this.primaryButton = primaryButton;
             this.cancelButton = cancelButton;
             this.progressView = progressView;
             this.progressTextView = progressTextView;
+            this.releaseNotesHost = releaseNotesHost;
+            this.releaseNotesCard = releaseNotesCard;
+            this.releaseNotesContainer = releaseNotesContainer;
+            this.releaseNotesText = releaseNotesText;
         }
     }
 }
