@@ -79,6 +79,20 @@ public class SystemServerSettingsLayoutSmokeTest {
     }
 
     @Test
+    public void disablingSafeModeRequiresConfirmationAndCanRollbackSwitch() throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+        String strings = read("src/main/res/values/strings.xml");
+
+        assertTrue(source.contains("showDisableSafeModeConfirmationDialog()"));
+        assertTrue(source.contains("R.string.system_safe_mode_disable_confirm_title"));
+        assertTrue(source.contains("R.string.system_safe_mode_disable_confirm_message"));
+        assertTrue(source.contains("if (!store.setSystemServerSafeModeEnabled(false))"));
+        assertTrue(source.contains("setCheckedSilently(safeModeSwitch, true"));
+        assertTrue(strings.contains("system_safe_mode_disable_confirm_title"));
+        assertTrue(strings.contains("system_safe_mode_disable_confirm_message"));
+    }
+
+    @Test
     public void configBackupDialogsUseCustomLayoutStructure() throws IOException {
         String actionDialog = read("src/main/res/layout/dialog_config_backup.xml");
         String confirmDialog = read("src/main/res/layout/dialog_config_backup_confirm.xml");

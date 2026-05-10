@@ -93,6 +93,8 @@
     <string name="emulation_requires_system_scope_hint">Emulation disabled without system-layer Hook</string>
     <string name="system_safe_mode_label">Safe mode</string>
     <string name="system_safe_mode_hint">Limits high-risk hooks to reduce lag and flickering.</string>
+    <string name="system_safe_mode_disable_confirm_title">Disable safe mode?</string>
+    <string name="system_safe_mode_disable_confirm_message">Disabling safe mode enables all system_server hook targets. This may increase lag, flickering, or instability. Continue?</string>
     <string name="global_log_enabled_label">Log output</string>
     <string name="global_log_enabled_hint">Disables log output to improve performance.</string>
     <string name="font_debug_overlay_label">Debug overlay</string>

@@ -93,6 +93,8 @@
     <string name="emulation_requires_system_scope_hint">系统层 Hook 未开启，伪装模式将不生效</string>
     <string name="system_safe_mode_label">安全模式</string>
     <string name="system_safe_mode_hint">限制高风险路径，降低卡顿与闪屏风险。</string>
+    <string name="system_safe_mode_disable_confirm_title">确认关闭安全模式</string>
+    <string name="system_safe_mode_disable_confirm_message">关闭后将启用全部 system_server Hook 目标，会增加卡顿、闪屏等风险。是否继续？</string>
     <string name="global_log_enabled_label">日志输出</string>
     <string name="global_log_enabled_hint">关闭后停止输出日志，节省性能。</string>
     <string name="font_debug_overlay_label">调试悬浮窗</string>

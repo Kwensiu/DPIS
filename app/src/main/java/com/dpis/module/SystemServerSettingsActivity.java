@@ -842,10 +842,44 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         if (store == null) {
             return;
         }
-        if (!store.setSystemServerSafeModeEnabled(isChecked)) {
-            setCheckedSilently(safeModeSwitch, !isChecked, this::onSafeModeChanged);
+        if (!isChecked) {
+            showDisableSafeModeConfirmationDialog();
+            return;
+        }
+        if (!store.setSystemServerSafeModeEnabled(true)) {
+            setCheckedSilently(safeModeSwitch, false, this::onSafeModeChanged);
             showToast(R.string.system_settings_save_failed);
         }
+    }
+
+    private void showDisableSafeModeConfirmationDialog() {
+        View dialogView = LayoutInflater.from(this)
+                .inflate(R.layout.dialog_process_action_confirm, null, false);
+        MaterialTextView titleView = dialogView.findViewById(R.id.process_action_confirm_title);
+        MaterialTextView messageView = dialogView.findViewById(R.id.process_action_confirm_message);
+        MaterialButton proceedButton = dialogView.findViewById(R.id.process_action_confirm_proceed_button);
+        MaterialButton cancelButton = dialogView.findViewById(R.id.process_action_confirm_cancel_button);
+
+        titleView.setText(R.string.system_safe_mode_disable_confirm_title);
+        messageView.setText(R.string.system_safe_mode_disable_confirm_message);
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+        proceedButton.setOnClickListener(v -> {
+            dialog.dismiss();
+            if (!store.setSystemServerSafeModeEnabled(false)) {
+                setCheckedSilently(safeModeSwitch, true, this::onSafeModeChanged);
+                showToast(R.string.system_settings_save_failed);
+            }
+        });
+        cancelButton.setOnClickListener(v -> {
+            dialog.dismiss();
+            setCheckedSilently(safeModeSwitch, true, this::onSafeModeChanged);
+        });
+        dialog.setOnCancelListener(unused -> setCheckedSilently(safeModeSwitch, true,
+                this::onSafeModeChanged));
+        dialog.show();
     }
 
     private void onGlobalLogChanged(CompoundButton buttonView, boolean isChecked) {
