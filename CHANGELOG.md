@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.7.1](https://github.com/Kwensiu/DPIS/compare/v1.7.0...v1.7.1) (2026-05-10)
+
+
+### Features
+
+* add confirmation before disabling safe mode ([8ec4405](https://github.com/Kwensiu/DPIS/commit/8ec440545aa514f0267b6af66a3fd338f1e3b1f2))
+* show cached release notes in update dialog ([c95abf9](https://github.com/Kwensiu/DPIS/commit/c95abf9c2260ac2d4e2573674b1c0ceca1177fc3))
+
+
+### Bug Fixes
+
+* correct launcher icon hiding logic ([fa98411](https://github.com/Kwensiu/DPIS/commit/fa98411117e8742310b18bb773c129406dbab81d))
+* enforce release system-hook default and lint config ([1d0d1f2](https://github.com/Kwensiu/DPIS/commit/1d0d1f211789404679a9ac77dbff3f4c4cdc51f7))
+
+
+### Refactoring
+
+* harden release notes update flow ([08419bd](https://github.com/Kwensiu/DPIS/commit/08419bdbc4d4c5fd6416e5e5f4c721658fa5dcef))
+
 ## [1.7.0](https://github.com/Kwensiu/DPIS/compare/v1.6.3...v1.7.0) (2026-05-09)
 
 
