@@ -1,5 +1,6 @@
 package com.dpis.module;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -87,12 +88,13 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("getPermissionInfo("));
         assertTrue(source.contains("dispatchMainUiAction(MainUiAction.requestAppsLoad(true));"));
         int requestLoadStart = source.indexOf("private void requestAppsLoad(boolean forceInstalledAppCatalogReload)");
-        int requestLoadEnd = source.indexOf("private boolean ensureInstalledAppsPermissionBeforeLoad()", requestLoadStart);
+        int requestLoadEnd = source.indexOf("private boolean ensureInstalledAppsPermissionBeforeLoad()",
+                requestLoadStart);
         assertTrue(requestLoadStart >= 0);
         assertTrue(requestLoadEnd > requestLoadStart);
         String requestLoadBody = source.substring(requestLoadStart, requestLoadEnd);
-        assertTrue(requestLoadBody.indexOf("ensureInstalledAppsPermissionBeforeLoad()")
-                < requestLoadBody.indexOf("dispatchMainUiAction(MainUiAction.requestAppsLoad"));
+        assertTrue(requestLoadBody.indexOf("ensureInstalledAppsPermissionBeforeLoad()") < requestLoadBody
+                .indexOf("dispatchMainUiAction(MainUiAction.requestAppsLoad"));
     }
 
     @Test
@@ -306,8 +308,8 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("new SystemScopeCoordinator(createSystemScopeHost())"));
         assertTrue(source.contains("systemScopeCoordinator.toggleScope("));
         assertTrue(source.contains("systemScopeCoordinator.resolveSystemHookEffectiveEnabled("));
-        assertTrue(source.contains("openLsposedModuleSettings()"));
-        assertTrue(source.contains("de.robv.android.xposed.intent.action.MODULE_SETTINGS"));
+        assertFalse(source.contains("openLsposedModuleSettings()"));
+        assertFalse(source.contains("de.robv.android.xposed.intent.action.MODULE_SETTINGS"));
         assertTrue(!source.contains("private void toggleScope(String packageName"));
     }
 
@@ -328,8 +330,10 @@ public class MainActivitySourceSmokeTest {
 
         assertTrue(source.contains("HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(configStore)"));
         assertTrue(source.contains("HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(remoteStore)"));
-        assertTrue(!source.contains("HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(this, configStore)"));
-        assertTrue(!source.contains("HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(this, remoteStore)"));
+        assertTrue(!source
+                .contains("HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(this, configStore)"));
+        assertTrue(!source
+                .contains("HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(this, remoteStore)"));
     }
 
     @Test
@@ -341,7 +345,8 @@ public class MainActivitySourceSmokeTest {
         assertTrue(manifest.contains("android.intent.action.MY_PACKAGE_REPLACED"));
         assertTrue(receiver.contains("Intent.ACTION_MY_PACKAGE_REPLACED"));
         assertTrue(receiver.contains("HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(context)"));
-        assertTrue(!receiver.contains("HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(context, store)"));
+        assertTrue(!receiver
+                .contains("HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(context, store)"));
     }
 
     private static String read(String relativePath) throws IOException {

@@ -25,7 +25,7 @@ public class Compat100LegacyUiSourceSmokeTest {
     }
 
     @Test
-    public void appStatusCanRepresentUnknownScopeSeparatelyFromNotInjected() throws IOException {
+    public void unknownScopeHidesInjectionStatusAndDisablesScopeAction() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppStatusFormatter.java");
         String dialogBinder = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
         String strings = read("src/main/res/values-zh-rCN/strings.xml");
@@ -34,10 +34,11 @@ public class Compat100LegacyUiSourceSmokeTest {
         assertTrue(source.contains("labels.scopeUnknown"));
         assertTrue(dialogBinder.contains("scopeButton.setEnabled(scopeKnown);"));
         assertTrue(dialogBinder.contains("scopeButton.setAlpha(scopeKnown ? 1f : 0.6f);"));
-        assertTrue(strings.contains("<string name=\"app_status_scope_unknown\">"));
-        assertTrue(strings.contains("<string name=\"scope_manual_button\">"));
+        assertFalse(strings.contains("<string name=\"app_status_scope_unknown\">"));
+        assertFalse(strings.contains("<string name=\"scope_manual_button\">"));
         assertTrue(strings.contains("LSPosed"));
-        assertFalse(strings.contains("remote preferences 未初始化，先重新打开模块 App</string>\n    <string name=\"scope_manual_manage_required\""));
+        assertFalse(strings.contains(
+                "remote preferences 未初始化，先重新打开模块 App</string>\n    <string name=\"scope_manual_manage_required\""));
     }
 
     private static String read(String relativePath) throws IOException {
