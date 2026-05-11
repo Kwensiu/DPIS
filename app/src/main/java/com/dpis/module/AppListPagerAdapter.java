@@ -52,10 +52,10 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
     private final BooleanSupplier systemScopeSelectedSupplier;
 
     AppListPagerAdapter(OnAppClickListener onAppClickListener,
-                        OnRefreshListener onRefreshListener,
-                        OnPageListScrollListener onPageListScrollListener,
-                        OnIconResolveRequestListener onIconResolveRequestListener,
-                        BooleanSupplier systemScopeSelectedSupplier) {
+            OnRefreshListener onRefreshListener,
+            OnPageListScrollListener onPageListScrollListener,
+            OnIconResolveRequestListener onIconResolveRequestListener,
+            BooleanSupplier systemScopeSelectedSupplier) {
         this.onAppClickListener = onAppClickListener;
         this.onRefreshListener = onRefreshListener;
         this.onPageListScrollListener = onPageListScrollListener;
@@ -140,8 +140,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                 page,
                 pages.get(page),
                 pageScrollStates.get(page),
-                Boolean.TRUE.equals(refreshingStates.get(page))
-        );
+                Boolean.TRUE.equals(refreshingStates.get(page)));
         pageScrollStates.remove(page);
     }
 
@@ -167,11 +166,11 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
         private AppListPage boundPage;
 
         PageHolder(View itemView,
-                   OnAppClickListener onAppClickListener,
-                   OnRefreshListener onRefreshListener,
-                   OnPageListScrollListener onPageListScrollListener,
-                   OnIconResolveRequestListener onIconResolveRequestListener,
-                   BooleanSupplier systemScopeSelectedSupplier) {
+                OnAppClickListener onAppClickListener,
+                OnRefreshListener onRefreshListener,
+                OnPageListScrollListener onPageListScrollListener,
+                OnIconResolveRequestListener onIconResolveRequestListener,
+                BooleanSupplier systemScopeSelectedSupplier) {
             super(itemView);
             swipeRefreshLayout = itemView.findViewById(R.id.page_swipe_refresh);
             recyclerView = itemView.findViewById(R.id.page_list);
@@ -202,9 +201,9 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
         }
 
         void bind(AppListPage page,
-                  List<AppListItem> items,
-                  Parcelable scrollState,
-                  boolean refreshing) {
+                List<AppListItem> items,
+                Parcelable scrollState,
+                boolean refreshing) {
             boundPage = page;
             adapter.submit(items, this::refreshStatuses);
             setRefreshing(refreshing);
@@ -262,8 +261,8 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
         private static final Object PAYLOAD_SYSTEM_SCOPE_CHANGED = new Object();
 
         private PageListAdapter(OnAppClickListener onAppClickListener,
-                                OnIconResolveRequestListener onIconResolveRequestListener,
-                                BooleanSupplier systemScopeSelectedSupplier) {
+                OnIconResolveRequestListener onIconResolveRequestListener,
+                BooleanSupplier systemScopeSelectedSupplier) {
             super(DIFF_CALLBACK);
             this.onAppClickListener = onAppClickListener;
             this.onIconResolveRequestListener = onIconResolveRequestListener;
@@ -309,11 +308,11 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                     holder.status.getResources(), item.inScope, item.scopeKnown,
                     item.viewportWidthDp, item.viewportMode,
                     item.fontScalePercent, item.fontMode, item.dpisEnabled);
-            boolean warnViewport = AppStatusFormatter.shouldWarnViewportEmulation(
+            boolean warnViewport = item.scopeKnown && AppStatusFormatter.shouldWarnViewportEmulation(
                     item.viewportWidthDp, item.viewportMode,
                     systemScopeSelectedSupplier.getAsBoolean(),
                     item.dpisEnabled);
-            boolean warnFont = AppStatusFormatter.shouldWarnFontEmulation(
+            boolean warnFont = item.scopeKnown && AppStatusFormatter.shouldWarnFontEmulation(
                     item.fontScalePercent, item.fontMode,
                     systemScopeSelectedSupplier.getAsBoolean(),
                     item.dpisEnabled);
@@ -330,19 +329,19 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
 
         @Override
         public void onBindViewHolder(@NonNull RowHolder holder,
-                                     int position,
-                                     @NonNull List<Object> payloads) {
+                int position,
+                @NonNull List<Object> payloads) {
             if (!payloads.isEmpty()) {
                 AppListItem item = getItem(position);
                 String compactStatusText = AppStatusFormatter.formatCompact(
                         holder.status.getResources(), item.inScope, item.scopeKnown,
                         item.viewportWidthDp, item.viewportMode,
                         item.fontScalePercent, item.fontMode, item.dpisEnabled);
-                boolean warnViewport = AppStatusFormatter.shouldWarnViewportEmulation(
+                boolean warnViewport = item.scopeKnown && AppStatusFormatter.shouldWarnViewportEmulation(
                         item.viewportWidthDp, item.viewportMode,
                         systemScopeSelectedSupplier.getAsBoolean(),
                         item.dpisEnabled);
-                boolean warnFont = AppStatusFormatter.shouldWarnFontEmulation(
+                boolean warnFont = item.scopeKnown && AppStatusFormatter.shouldWarnFontEmulation(
                         item.fontScalePercent, item.fontMode,
                         systemScopeSelectedSupplier.getAsBoolean(),
                         item.dpisEnabled);
@@ -370,29 +369,28 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             onIconResolveRequestListener.onIconResolveRequested(item.packageName);
         }
 
-        private static final DiffUtil.ItemCallback<AppListItem> DIFF_CALLBACK =
-                new DiffUtil.ItemCallback<AppListItem>() {
-                    @Override
-                    public boolean areItemsTheSame(@NonNull AppListItem oldItem,
-                                                   @NonNull AppListItem newItem) {
-                        return oldItem.packageName.equals(newItem.packageName);
-                    }
+        private static final DiffUtil.ItemCallback<AppListItem> DIFF_CALLBACK = new DiffUtil.ItemCallback<AppListItem>() {
+            @Override
+            public boolean areItemsTheSame(@NonNull AppListItem oldItem,
+                    @NonNull AppListItem newItem) {
+                return oldItem.packageName.equals(newItem.packageName);
+            }
 
-                    @Override
-                    public boolean areContentsTheSame(@NonNull AppListItem oldItem,
-                                                      @NonNull AppListItem newItem) {
-                        return oldItem.label.equals(newItem.label)
-                                && oldItem.inScope == newItem.inScope
-                                && oldItem.scopeKnown == newItem.scopeKnown
-                                && Objects.equals(oldItem.viewportWidthDp, newItem.viewportWidthDp)
-                                && oldItem.viewportMode.equals(newItem.viewportMode)
-                                && Objects.equals(oldItem.fontScalePercent, newItem.fontScalePercent)
-                                && oldItem.fontMode.equals(newItem.fontMode)
-                                && oldItem.dpisEnabled == newItem.dpisEnabled
-                                && oldItem.systemApp == newItem.systemApp
-                                && (oldItem.icon != null) == (newItem.icon != null);
-                    }
-                };
+            @Override
+            public boolean areContentsTheSame(@NonNull AppListItem oldItem,
+                    @NonNull AppListItem newItem) {
+                return oldItem.label.equals(newItem.label)
+                        && oldItem.inScope == newItem.inScope
+                        && oldItem.scopeKnown == newItem.scopeKnown
+                        && Objects.equals(oldItem.viewportWidthDp, newItem.viewportWidthDp)
+                        && oldItem.viewportMode.equals(newItem.viewportMode)
+                        && Objects.equals(oldItem.fontScalePercent, newItem.fontScalePercent)
+                        && oldItem.fontMode.equals(newItem.fontMode)
+                        && oldItem.dpisEnabled == newItem.dpisEnabled
+                        && oldItem.systemApp == newItem.systemApp
+                        && (oldItem.icon != null) == (newItem.icon != null);
+            }
+        };
     }
 
     private static final class RowHolder extends RecyclerView.ViewHolder {
@@ -402,6 +400,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
         final MaterialTextView label;
         final MaterialTextView packageName;
         final MaterialTextView status;
+
         private RowHolder(View root) {
             super(root);
             headerClickTarget = root.findViewById(R.id.header_click_target);

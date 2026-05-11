@@ -16,7 +16,6 @@ final class AppStatusFormatter {
     static final class Labels {
         final String injected;
         final String notInjected;
-        final String scopeUnknown;
         final String enabled;
         final String disabled;
         final String notEnabled;
@@ -27,7 +26,6 @@ final class AppStatusFormatter {
 
         Labels(String injected,
                 String notInjected,
-                String scopeUnknown,
                 String enabled,
                 String disabled,
                 String notEnabled,
@@ -37,7 +35,6 @@ final class AppStatusFormatter {
                 Locale locale) {
             this.injected = injected;
             this.notInjected = notInjected;
-            this.scopeUnknown = scopeUnknown;
             this.enabled = enabled;
             this.disabled = disabled;
             this.notEnabled = notEnabled;
@@ -54,7 +51,6 @@ final class AppStatusFormatter {
         return new Labels(
                 resources.getString(R.string.app_status_injected),
                 resources.getString(R.string.app_status_not_injected),
-                resources.getString(R.string.app_status_scope_unknown),
                 resources.getString(R.string.app_status_enabled),
                 resources.getString(R.string.app_status_disabled),
                 resources.getString(R.string.app_status_not_enabled),
@@ -155,7 +151,7 @@ final class AppStatusFormatter {
             boolean compact) {
         String scopeText = scopeKnown
                 ? (inScope ? labels.injected : labels.notInjected)
-                : labels.scopeUnknown;
+                : null;
         if (!dpisEnabled) {
             return joinSegments(scopeText, labels.disabled);
         }

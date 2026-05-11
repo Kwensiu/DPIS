@@ -31,7 +31,7 @@ public class Compat100LegacyUiSourceSmokeTest {
         String strings = read("src/main/res/values-zh-rCN/strings.xml");
 
         assertTrue(source.contains("scopeKnown"));
-        assertTrue(source.contains("labels.scopeUnknown"));
+        assertFalse(source.contains("labels.scopeUnknown"));
         assertTrue(dialogBinder.contains("scopeButton.setEnabled(scopeKnown);"));
         assertTrue(dialogBinder.contains("scopeButton.setAlpha(scopeKnown ? 1f : 0.6f);"));
         assertFalse(strings.contains("<string name=\"app_status_scope_unknown\">"));

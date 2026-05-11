@@ -13,7 +13,6 @@ public class AppStatusFormatterTest {
     private final AppStatusFormatter.Labels englishLabels = new AppStatusFormatter.Labels(
             "Injected",
             "Not injected",
-            "Scope unknown",
             "Enabled",
             "Disabled",
             "Not enabled",
@@ -25,7 +24,6 @@ public class AppStatusFormatterTest {
     private final AppStatusFormatter.Labels chineseLabels = new AppStatusFormatter.Labels(
             "\u5DF2\u6CE8\u5165",
             "\u672A\u6CE8\u5165",
-            "\u4F5C\u7528\u57DF\u672A\u77E5",
             "\u5DF2\u542F\u7528",
             "\u5DF2\u7981\u7528",
             "\u672A\u542F\u7528",
@@ -94,8 +92,8 @@ public class AppStatusFormatterTest {
     }
 
     @Test
-    public void formatsUnknownScopeWhenScopeCannotBeRead() {
-        assertEquals("Scope unknown | 320dp",
+    public void hidesStatusScopeSegmentWhenScopeCannotBeRead() {
+        assertEquals("320dp",
                 AppStatusFormatter.formatCompact(
                         englishLabels,
                         false,
@@ -184,6 +182,6 @@ public class AppStatusFormatterTest {
         int expectedStart = fullText.indexOf(segmentText);
         assertTrue(expectedStart >= 0);
         int expectedEnd = expectedStart + segmentText.length();
-        return new int[]{expectedStart, expectedEnd};
+        return new int[] { expectedStart, expectedEnd };
     }
 }

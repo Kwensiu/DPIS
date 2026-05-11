@@ -373,9 +373,9 @@ final class AppConfigDialogBinder {
         String dialogStatusText = AppStatusFormatter.formatCompact(
                 activity.getResources(), inScope, scopeKnown, widthDp, viewportMode,
                 fontScalePercent, fontMode, dpisEnabled);
-        boolean warnViewport = AppStatusFormatter.shouldWarnViewportEmulation(
+        boolean warnViewport = scopeKnown && AppStatusFormatter.shouldWarnViewportEmulation(
                 widthDp, viewportMode, systemHooksEnabled, dpisEnabled);
-        boolean warnFont = AppStatusFormatter.shouldWarnFontEmulation(
+        boolean warnFont = scopeKnown && AppStatusFormatter.shouldWarnFontEmulation(
                 fontScalePercent, fontMode, systemHooksEnabled, dpisEnabled);
         if (warnViewport || warnFont) {
             int warnColor = MaterialColors.getColor(statusView, androidx.appcompat.R.attr.colorError);
