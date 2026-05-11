@@ -228,10 +228,16 @@ androidComponents {
 }
 
 val renamedReleaseApkName = "DPIS_${appVersionName}.apk"
+val renamedLegacyApkName = "DPIS_${appVersionName}_legacy.apk"
 
 val renameReleaseApk = tasks.register("renameReleaseApk", RenameReleaseApkTask::class) {
     sourceApk.set(layout.buildDirectory.file("outputs/apk/modern101/release/app-modern101-release.apk"))
     targetApk.set(layout.buildDirectory.file("outputs/apk/modern101/release/$renamedReleaseApkName"))
+}
+
+val renameLegacyApk = tasks.register("renameLegacyApk", RenameReleaseApkTask::class) {
+    sourceApk.set(layout.buildDirectory.file("outputs/apk/compat100/release/app-compat100-release.apk"))
+    targetApk.set(layout.buildDirectory.file("outputs/apk/compat100/release/$renamedLegacyApkName"))
 }
 
 tasks.register<Test>("testDebugUnitTest") {
@@ -250,6 +256,9 @@ tasks.register("testAllDebugUnitTests") {
 tasks.configureEach {
     if (name == "assembleModern101Release" || name == "assembleRelease") {
         finalizedBy(renameReleaseApk)
+    }
+    if (name == "assembleCompat100Release" || name == "assembleRelease") {
+        finalizedBy(renameLegacyApk)
     }
 }
 

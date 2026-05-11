@@ -97,9 +97,9 @@ jobs:
           VERSION_CODE=$((10#$MAJOR * 10000 + 10#$MINOR * 100 + 10#$PATCH))
           REPO="${{ github.repository }}"
           APK_NAME="DPIS_${VERSION}.apk"
-          APK_PATH="app/build/outputs/apk/release/${APK_NAME}"
+          APK_PATH="app/build/outputs/apk/modern101/release/${APK_NAME}"
           if [[ ! -f "$APK_PATH" ]]; then
-            SOURCE_APK_PATH="app/build/outputs/apk/release/app-release.apk"
+            SOURCE_APK_PATH="app/build/outputs/apk/modern101/release/app-modern101-release.apk"
             if [[ ! -f "$SOURCE_APK_PATH" ]]; then
               echo "APK not found: $APK_PATH or $SOURCE_APK_PATH"
               exit 1
@@ -107,6 +107,18 @@ jobs:
             cp "$SOURCE_APK_PATH" "$APK_PATH"
           fi
           APK_URL="https://github.com/${REPO}/releases/download/${TAG}/${APK_NAME}"
+
+          COMPAT_APK_NAME="DPIS_${VERSION}_legacy.apk"
+          COMPAT_APK_PATH="app/build/outputs/apk/compat100/release/${COMPAT_APK_NAME}"
+          if [[ ! -f "$COMPAT_APK_PATH" ]]; then
+            COMPAT_SOURCE="app/build/outputs/apk/compat100/release/app-compat100-release.apk"
+            if [[ ! -f "$COMPAT_SOURCE" ]]; then
+              echo "Legacy APK not found: $COMPAT_APK_PATH or $COMPAT_SOURCE"
+              exit 1
+            fi
+            cp "$COMPAT_SOURCE" "$COMPAT_APK_PATH"
+          fi
+          COMPAT_APK_URL="https://github.com/${REPO}/releases/download/${TAG}/${COMPAT_APK_NAME}"
           MANIFEST_URL="https://github.com/${REPO}/releases/latest/download/update.json"
           RELEASE_URL="https://github.com/${REPO}/releases/tag/${TAG}"
 
@@ -116,6 +128,9 @@ jobs:
           echo "apk_name=$APK_NAME" >> "$GITHUB_OUTPUT"
           echo "apk_path=$APK_PATH" >> "$GITHUB_OUTPUT"
           echo "apk_url=$APK_URL" >> "$GITHUB_OUTPUT"
+          echo "compat_apk_name=$COMPAT_APK_NAME" >> "$GITHUB_OUTPUT"
+          echo "compat_apk_path=$COMPAT_APK_PATH" >> "$GITHUB_OUTPUT"
+          echo "compat_apk_url=$COMPAT_APK_URL" >> "$GITHUB_OUTPUT"
           echo "manifest_url=$MANIFEST_URL" >> "$GITHUB_OUTPUT"
           echo "release_url=$RELEASE_URL" >> "$GITHUB_OUTPUT"
 
@@ -126,6 +141,9 @@ jobs:
           APK_PATH="${{ steps.meta.outputs.apk_path }}"
           SHA256="$(sha256sum "$APK_PATH" | awk '{print $1}')"
           echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
+          COMPAT_APK_PATH="${{ steps.meta.outputs.compat_apk_path }}"
+          COMPAT_SHA256="$(sha256sum "$COMPAT_APK_PATH" | awk '{print $1}')"
+          echo "compat_sha256=$COMPAT_SHA256" >> "$GITHUB_OUTPUT"
 
       - name: Generate update manifest
         shell: bash
@@ -138,6 +156,8 @@ jobs:
             "manifestUrl": "${{ steps.meta.outputs.manifest_url }}",
             "releasePage": "${{ steps.meta.outputs.release_url }}",
             "sha256": "${{ steps.hash.outputs.sha256 }}",
+            "compatApkUrl": "${{ steps.meta.outputs.compat_apk_url }}",
+            "compatSha256": "${{ steps.hash.outputs.compat_sha256 }}",
             "publishedAt": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
             "force": false
           }
@@ -151,6 +171,7 @@ jobs:
         run: |
           gh release upload "${{ steps.meta.outputs.tag }}" \
             "${{ steps.meta.outputs.apk_path }}" \
+            "${{ steps.meta.outputs.compat_apk_path }}" \
             update.json \
             --clobber
 
@@ -179,4 +200,5 @@ jobs:
             --repo Xposed-Modules-Repo/io.github.kwensiu.dpis \
             --title "${{ steps.meta.outputs.version }}" \
             --notes-file /tmp/release-notes.md \
-            "${{ steps.meta.outputs.apk_path }}"
+            "${{ steps.meta.outputs.apk_path }}" \
+            "${{ steps.meta.outputs.compat_apk_path }}"

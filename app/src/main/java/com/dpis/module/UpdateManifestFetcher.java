@@ -34,7 +34,16 @@ final class UpdateManifestFetcher {
             JSONObject object = new JSONObject(body);
             String versionName = object.optString("version", "").trim();
             int versionCode = object.optInt("versionCode", 0);
-            String apkUrl = object.optString("apkUrl", "").trim();
+            String defaultApkUrl = object.optString("apkUrl", "").trim();
+            String apkUrl;
+            if ("compat100".equals(BuildConfig.FLAVOR)) {
+                // Fallback to apkUrl is intentional: keeps update flow working even if
+                // compatApkUrl is absent, so users still see the release page link.
+                String compatUrl = object.optString("compatApkUrl", "").trim();
+                apkUrl = compatUrl.isEmpty() ? defaultApkUrl : compatUrl;
+            } else {
+                apkUrl = defaultApkUrl;
+            }
             String releasePage = object.optString("releasePage", "").trim();
             String releaseNotes = object.optString("releaseNotes", "").trim();
             if (versionName.isEmpty() || versionCode <= 0) {

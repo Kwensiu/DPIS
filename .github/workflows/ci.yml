@@ -52,9 +52,9 @@ jobs:
           TEST_FILTER: ${{ github.event.inputs.test_filter }}
         run: |
           if [[ -n "${TEST_FILTER}" ]]; then
-            ./gradlew :app:assembleDebug :app:testDebugUnitTest --tests "${TEST_FILTER}" :app:lintDebug --stacktrace
+            ./gradlew :app:assembleModern101Debug :app:assembleCompat100Debug :app:testDebugUnitTest --tests "${TEST_FILTER}" :app:lintModern101Debug --stacktrace
           else
-            ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug --stacktrace
+            ./gradlew :app:assembleModern101Debug :app:assembleCompat100Debug :app:testAllDebugUnitTests :app:lintModern101Debug --stacktrace
           fi
 
       - name: Upload test and lint reports
@@ -65,6 +65,10 @@ jobs:
           if-no-files-found: warn
           path: |
             app/build/reports/tests/testDebugUnitTest
+            app/build/reports/tests/testModern101DebugUnitTest
+            app/build/reports/tests/testCompat100DebugUnitTest
             app/build/test-results/testDebugUnitTest
-            app/build/reports/lint-results-debug.html
-            app/build/reports/lint-results-debug.xml
+            app/build/test-results/testModern101DebugUnitTest
+            app/build/test-results/testCompat100DebugUnitTest
+            app/build/reports/lint-results-modern101Debug.html
+            app/build/reports/lint-results-modern101Debug.xml
