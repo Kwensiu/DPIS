@@ -15,6 +15,7 @@ Thumbs.db
 # Local scratch / external comparison trees
 /.tmp/
 /tmp/
+/.worktrees/
 /.keystore/
 /InstallerX-Revived/
 /InxLocker/
