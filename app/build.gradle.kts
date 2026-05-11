@@ -125,6 +125,7 @@ android {
         }
         create("compat100") {
             dimension = "xposedApi"
+            versionNameSuffix = "-legacy"
         }
     }
 
