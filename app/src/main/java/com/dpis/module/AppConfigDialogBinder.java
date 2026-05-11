@@ -113,7 +113,7 @@ final class AppConfigDialogBinder {
         bindFontModeToggle(views.fontModeToggle, item.fontMode, false);
         updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,
                 views.fontInputLayout, views.fontInputView, views.saveButton);
-        return new AppConfigDialogState(item.inScope, item.dpisEnabled);
+        return new AppConfigDialogState(item.inScope, item.scopeKnown, item.dpisEnabled);
     }
 
     private AppConfigDialogActionStyle resolveDialogActionStyle(MaterialButton baseButton) {
@@ -132,13 +132,14 @@ final class AppConfigDialogBinder {
         updateDialogStatus(
                 views.statusView,
                 state.scopeSelected,
+                state.scopeKnown,
                 state.dpisEnabled,
                 views.viewportInputView,
                 views.viewportModeToggle,
                 views.fontInputView,
                 views.fontModeToggle,
                 systemHooksEnabled);
-        bindScopeButton(views.scopeButton, state.scopeSelected,
+        bindScopeButton(views.scopeButton, state.scopeSelected, state.scopeKnown,
                 style.defaultActionBgTint, style.defaultActionStrokeWidth, style.defaultActionTextColor);
         bindDpisToggleButton(views.dpisToggleButton, state.dpisEnabled,
                 style.defaultActionBgTint, style.defaultActionStrokeWidth, style.defaultActionTextColor);
@@ -358,6 +359,7 @@ final class AppConfigDialogBinder {
 
     private void updateDialogStatus(MaterialTextView statusView,
             boolean inScope,
+            boolean scopeKnown,
             boolean dpisEnabled,
             TextInputEditText viewportInputView,
             ModeToggle viewportModeToggle,
@@ -369,7 +371,7 @@ final class AppConfigDialogBinder {
         String viewportMode = widthDp == null ? ViewportApplyMode.OFF : resolveViewportMode(viewportModeToggle);
         String fontMode = fontScalePercent == null ? FontApplyMode.OFF : resolveFontMode(fontModeToggle);
         String dialogStatusText = AppStatusFormatter.formatCompact(
-                activity.getResources(), inScope, widthDp, viewportMode,
+                activity.getResources(), inScope, scopeKnown, widthDp, viewportMode,
                 fontScalePercent, fontMode, dpisEnabled);
         boolean warnViewport = AppStatusFormatter.shouldWarnViewportEmulation(
                 widthDp, viewportMode, systemHooksEnabled, dpisEnabled);
@@ -552,6 +554,7 @@ final class AppConfigDialogBinder {
 
     private void bindScopeButton(MaterialButton scopeButton,
             boolean inScope,
+            boolean scopeKnown,
             ColorStateList defaultBgTint,
             int defaultStrokeWidth,
             int defaultTextColor) {
@@ -560,14 +563,19 @@ final class AppConfigDialogBinder {
         int activeFgColor = MaterialColors.getColor(
                 scopeButton, com.google.android.material.R.attr.colorOnSecondaryContainer);
         scopeButton.setIcon(null);
-        int scopeTextRes = inScope ? R.string.scope_remove_button : R.string.scope_add_button;
+        int scopeTextRes = scopeKnown
+                ? (inScope ? R.string.scope_remove_button : R.string.scope_add_button)
+                : R.string.scope_add_button;
         scopeButton.setText(scopeTextRes);
-        scopeButton.setBackgroundTintList(inScope
+        boolean activeScopeStyle = scopeKnown && inScope;
+        scopeButton.setBackgroundTintList(activeScopeStyle
                 ? ColorStateList.valueOf(activeBgColor)
                 : defaultBgTint);
-        scopeButton.setTextColor(inScope ? activeFgColor : defaultTextColor);
-        scopeButton.setStrokeWidth(inScope ? 0 : defaultStrokeWidth);
+        scopeButton.setTextColor(activeScopeStyle ? activeFgColor : defaultTextColor);
+        scopeButton.setStrokeWidth(activeScopeStyle ? 0 : defaultStrokeWidth);
         scopeButton.setContentDescription(activity.getString(scopeTextRes));
+        scopeButton.setEnabled(scopeKnown);
+        scopeButton.setAlpha(scopeKnown ? 1f : 0.6f);
     }
 
     private void bindDpisToggleButton(MaterialButton dpisToggleButton,
@@ -664,10 +672,12 @@ final class AppConfigDialogBinder {
 
     private static final class AppConfigDialogState {
         boolean scopeSelected;
+        boolean scopeKnown;
         boolean dpisEnabled;
 
-        AppConfigDialogState(boolean scopeSelected, boolean dpisEnabled) {
+        AppConfigDialogState(boolean scopeSelected, boolean scopeKnown, boolean dpisEnabled) {
             this.scopeSelected = scopeSelected;
+            this.scopeKnown = scopeKnown;
             this.dpisEnabled = dpisEnabled;
         }
     }

@@ -31,6 +31,30 @@ public class HyperOsFlutterFontHookConfigTest {
                 HyperOsFlutterFontBridge.forcePropertyNameForPackage("com.miui.gallery"));
     }
 
+    @Test
+    public void bridgeCompatFontPropertyNameUsesStablePackageHash() {
+        assertEquals("debug.dpis.compatfont.a55b5fe1",
+                HyperOsFlutterFontBridge.compatFontPropertyNameForPackage("com.miui.gallery"));
+    }
+
+    @Test
+    public void compat100FactoryUsesPackageSystemPropertiesWithoutExportedProvider() throws Exception {
+        String factory = readSource("src/main/java/com/dpis/module/ConfigStoreFactory.java");
+        String prefs = readSource("src/main/java/com/dpis/module/SystemPropertyConfigPreferences.java");
+        String app = readSource("src/main/java/com/dpis/module/DpisApplication.java");
+
+        assertTrue(factory.contains("createForCompat100Host(String packageName)"));
+        assertTrue(factory.contains("new SystemPropertyConfigPreferences(packageName)"));
+        assertFalse(factory.contains("CompatConfigProviderPreferences"));
+        assertTrue(prefs.contains("ViewportPropertyBridge.readTargetWidthDp(packageName)"));
+        assertFalse(prefs.contains("HyperOsFlutterFontBridge.readForceFontScalePercent(packageName)"));
+        assertTrue(prefs.contains("HyperOsFlutterFontBridge.readCompatFontScalePercent(packageName)"));
+        assertTrue(app.contains("ViewportPropertySyncer.syncConfiguredTargetsAsync(configStore)"));
+        assertTrue(app.contains("CompatFontPropertySyncer.syncConfiguredTargetsAsync(configStore)"));
+        assertTrue(app.contains("ViewportPropertySyncer.syncConfiguredTargetsAsync(remoteStore)"));
+        assertTrue(app.contains("CompatFontPropertySyncer.syncConfiguredTargetsAsync(remoteStore)"));
+    }
+
 
     @Test
     public void viewportBridgePropertyNameUsesStablePackageHash() {

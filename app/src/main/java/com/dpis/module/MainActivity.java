@@ -82,8 +82,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     private static final long INSTALLED_APP_CATALOG_TTL_MS = 60_000L;
     private static final int FIRST_SCREEN_ICON_WARMUP_LIMIT = 48;
     private static final long ICON_REFRESH_DEBOUNCE_MS = 120L;
-    private static final String XIAOMI_GET_INSTALLED_APPS_PERMISSION =
-            "com.android.permission.GET_INSTALLED_APPS";
+    private static final String XIAOMI_GET_INSTALLED_APPS_PERMISSION = "com.android.permission.GET_INSTALLED_APPS";
     private static final int REQUEST_XIAOMI_GET_INSTALLED_APPS = 10022;
 
     private final UpdateCoordinator updateCoordinator = new UpdateCoordinator();
@@ -460,7 +459,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             if (!installedAppsPermissionRequestInFlight) {
                 installedAppsPermissionRequestInFlight = true;
                 requestPermissions(
-                        new String[]{XIAOMI_GET_INSTALLED_APPS_PERMISSION},
+                        new String[] { XIAOMI_GET_INSTALLED_APPS_PERMISSION },
                         REQUEST_XIAOMI_GET_INSTALLED_APPS);
             }
             return false;
@@ -696,6 +695,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         }
         if (!enabled) {
             HyperOsNativeFontPropertySyncer.clearFontTargetAsync(packageName);
+            CompatFontPropertySyncer.clearTargetAsync(packageName);
             ViewportPropertySyncer.clearTargetAsync(packageName);
         }
         showToast(enabled ? R.string.dialog_dpis_enabled_status : R.string.dialog_dpis_disabled_status);
@@ -705,10 +705,15 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
 
     private List<AppListItem> loadInstalledApps(boolean forceInstalledAppCatalogReload) {
         Set<String> scopePackages = new HashSet<>();
+        boolean scopeKnown = false;
         XposedService service = DpisApplication.getXposedService();
         if (service != null) {
             try {
-                scopePackages.addAll(service.getScope());
+                List<String> scope = service.getScope();
+                if (scope != null) {
+                    scopePackages.addAll(scope);
+                    scopeKnown = true;
+                }
             } catch (RuntimeException ignored) {
                 scopePackages.clear();
             }
@@ -716,7 +721,8 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         return installedAppCatalogCoordinator.loadInstalledApps(
                 forceInstalledAppCatalogReload,
                 getUiConfigStore(),
-                scopePackages);
+                scopePackages,
+                scopeKnown);
     }
 
     private void applyFilter() {
@@ -1218,8 +1224,8 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     private void executeHyperOsNativeProxyMount(
             AppListItem item, boolean apply, HyperOsNativeProxyMountCallback onFinished) {
         new Thread(() -> {
-            HyperOsNativeProxyBindMounter.MountPlan plan =
-                    HyperOsNativeProxyBindMounter.createPlan(this, item.packageName);
+            HyperOsNativeProxyBindMounter.MountPlan plan = HyperOsNativeProxyBindMounter.createPlan(this,
+                    item.packageName);
             HyperOsNativeProxyBindMounter.MountResult result = apply
                     ? HyperOsNativeProxyBindMounter.apply(plan)
                     : HyperOsNativeProxyBindMounter.unmount(plan);

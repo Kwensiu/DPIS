@@ -35,9 +35,12 @@ public class LegacySmokeModuleFilesTest {
 
     @Test
     public void appModuleStaysModernOnlyWithoutLegacyHookEntryFiles() throws IOException {
-        String moduleMain = readText(Path.of("src", "main", "java", "com", "dpis", "module", "ModuleMain.java"));
+        String moduleMain = readText(Path.of(
+                "src", "modern101", "java", "com", "dpis", "module", "ModuleMain.java"));
 
         assertTrue(moduleMain.contains("extends XposedModule"));
+        assertFalse(Files.exists(Path.of(
+                "src", "main", "java", "com", "dpis", "module", "ModuleMain.java")));
         assertFalse(Files.exists(Path.of("src", "main", "assets", "xposed_init")));
         assertFalse(Files.exists(Path.of("src", "main", "java", "com", "dpis", "module", "HookEntry.kt")));
     }

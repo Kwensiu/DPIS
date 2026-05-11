@@ -113,6 +113,7 @@ public class MainViewModelTest {
         return new AppListItem(label,
                 packageName,
                 inScope,
+                true,
                 null,
                 ViewportApplyMode.OFF,
                 null,

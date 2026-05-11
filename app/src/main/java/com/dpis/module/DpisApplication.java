@@ -30,6 +30,8 @@ public final class DpisApplication extends Application implements XposedServiceH
         HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(this);
         configStore = ConfigStoreFactory.createForModuleApp(this);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
+        ViewportPropertySyncer.syncConfiguredTargetsAsync(configStore);
+        CompatFontPropertySyncer.syncConfiguredTargetsAsync(configStore);
         HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(configStore);
         XposedServiceHelper.registerListener(this);
         UpdatePackageInstaller.clearStaleUpdateCache(this, UPDATE_CACHE_STARTUP_MAX_AGE_MS);
@@ -44,6 +46,8 @@ public final class DpisApplication extends Application implements XposedServiceH
         migrateConfig(localStore, remoteStore);
         configStore = remoteStore;
         DpisLog.setLoggingEnabled(remoteStore.isGlobalLogEnabled());
+        ViewportPropertySyncer.syncConfiguredTargetsAsync(remoteStore);
+        CompatFontPropertySyncer.syncConfiguredTargetsAsync(remoteStore);
         HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(remoteStore);
         xposedService = service;
         notifyServiceStateChanged();
@@ -53,6 +57,8 @@ public final class DpisApplication extends Application implements XposedServiceH
     public void onServiceDied(XposedService service) {
         configStore = ConfigStoreFactory.createForModuleApp(this);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
+        ViewportPropertySyncer.syncConfiguredTargetsAsync(configStore);
+        CompatFontPropertySyncer.syncConfiguredTargetsAsync(configStore);
         HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(configStore);
         xposedService = null;
         notifyServiceStateChanged();

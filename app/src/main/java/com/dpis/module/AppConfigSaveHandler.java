@@ -42,7 +42,8 @@ final class AppConfigSaveHandler {
                 changed = store.setTargetViewportWidthDp(item.packageName, widthDp) && changed;
                 changed = store.setTargetViewportApplyMode(item.packageName, viewportMode)
                         && changed;
-                if (ViewportApplyMode.isEnabled(viewportMode)) {
+                if (ViewportApplyMode.SYSTEM_EMULATION.equals(
+                        ViewportApplyMode.normalize(viewportMode))) {
                     ViewportPropertySyncer.publishTargetAsync(item.packageName, widthDp);
                 } else {
                     ViewportPropertySyncer.clearTargetAsync(item.packageName);
@@ -52,6 +53,7 @@ final class AppConfigSaveHandler {
                 changed = store.clearTargetFontScalePercent(item.packageName) && changed;
                 changed = store.setTargetFontApplyMode(item.packageName, FontApplyMode.OFF) && changed;
                 HyperOsNativeFontPropertySyncer.clearFontTargetAsync(item.packageName);
+                CompatFontPropertySyncer.clearTargetAsync(item.packageName);
             } else {
                 changed = store.setTargetFontScalePercent(item.packageName, fontScalePercent) && changed;
                 changed = store.setTargetFontApplyMode(item.packageName, fontMode) && changed;
@@ -60,6 +62,11 @@ final class AppConfigSaveHandler {
                             item.packageName, fontScalePercent);
                 } else {
                     HyperOsNativeFontPropertySyncer.clearFontTargetAsync(item.packageName);
+                }
+                if (FontApplyMode.SYSTEM_EMULATION.equals(FontApplyMode.normalize(fontMode))) {
+                    CompatFontPropertySyncer.publishTargetAsync(item.packageName, fontScalePercent);
+                } else {
+                    CompatFontPropertySyncer.clearTargetAsync(item.packageName);
                 }
             }
             if (changed && onChanged != null) {

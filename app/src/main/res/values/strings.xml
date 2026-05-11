@@ -201,6 +201,7 @@
     <string name="settings_language_simplified_chinese">简体中文</string>
     <string name="app_status_injected">Injected</string>
     <string name="app_status_not_injected">Not injected</string>
+    <string name="app_status_scope_unknown">Scope unknown</string>
     <string name="app_status_enabled">Enabled</string>
     <string name="app_status_disabled">Disabled</string>
     <string name="app_status_not_enabled">Not enabled</string>

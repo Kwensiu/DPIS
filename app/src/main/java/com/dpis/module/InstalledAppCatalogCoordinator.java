@@ -68,7 +68,8 @@ final class InstalledAppCatalogCoordinator {
 
     List<AppListItem> loadInstalledApps(boolean forceInstalledAppCatalogReload,
             DpiConfigStore store,
-            Set<String> scopePackages) {
+            Set<String> scopePackages,
+            boolean scopeKnown) {
         PackageManager packageManager = host.getPackageManager();
         List<InstalledAppCatalogItem> catalog = getInstalledAppCatalog(
                 packageManager,
@@ -94,7 +95,7 @@ final class InstalledAppCatalogCoordinator {
                     || store.isTargetDpisEnabled(item.packageName);
             Drawable icon = resolveDisplayIcon(item);
             result.add(new AppListItem(item.label, item.packageName,
-                    scopePackages.contains(item.packageName), viewportWidth, viewportMode,
+                    scopePackages.contains(item.packageName), scopeKnown, viewportWidth, viewportMode,
                     fontScalePercent, fontMode, dpisEnabled, item.systemApp,
                     item.hyperOsNativeProxyCandidate, icon));
         }

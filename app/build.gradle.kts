@@ -7,6 +7,7 @@ import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.testing.Test
 
 plugins {
     alias(libs.plugins.agp.app)
@@ -96,6 +97,8 @@ android {
     compileSdk = 36
     buildToolsVersion = "36.1.0"
 
+    flavorDimensions += "xposedApi"
+
     defaultConfig {
         applicationId = "io.github.kwensiu.dpis"
         minSdk = 26
@@ -113,6 +116,15 @@ android {
             cmake {
                 arguments += "-DANDROID_STL=c++_static"
             }
+        }
+    }
+
+    productFlavors {
+        create("modern101") {
+            dimension = "xposedApi"
+        }
+        create("compat100") {
+            dimension = "xposedApi"
         }
     }
 
@@ -218,12 +230,25 @@ androidComponents {
 val renamedReleaseApkName = "DPIS_${appVersionName}.apk"
 
 val renameReleaseApk = tasks.register("renameReleaseApk", RenameReleaseApkTask::class) {
-    sourceApk.set(layout.buildDirectory.file("outputs/apk/release/app-release.apk"))
-    targetApk.set(layout.buildDirectory.file("outputs/apk/release/$renamedReleaseApkName"))
+    sourceApk.set(layout.buildDirectory.file("outputs/apk/modern101/release/app-modern101-release.apk"))
+    targetApk.set(layout.buildDirectory.file("outputs/apk/modern101/release/$renamedReleaseApkName"))
+}
+
+tasks.register<Test>("testDebugUnitTest") {
+    val modern101Test = tasks.named<Test>("testModern101DebugUnitTest").get()
+    description = "Compatibility alias for filtered debug unit tests; runs modern101 debug unit tests."
+    group = "verification"
+    testClassesDirs = modern101Test.testClassesDirs
+    classpath = modern101Test.classpath
+    shouldRunAfter(modern101Test)
+}
+
+tasks.register("testAllDebugUnitTests") {
+    dependsOn("testModern101DebugUnitTest", "testCompat100DebugUnitTest")
 }
 
 tasks.configureEach {
-    if (name == "assembleRelease") {
+    if (name == "assembleModern101Release" || name == "assembleRelease") {
         finalizedBy(renameReleaseApk)
     }
 }

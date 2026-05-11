@@ -6,6 +6,7 @@ final class AppListItem {
     final String label;
     final String packageName;
     final boolean inScope;
+    final boolean scopeKnown;
     final Integer viewportWidthDp;
     final String viewportMode;
     final Integer fontScalePercent;
@@ -18,6 +19,7 @@ final class AppListItem {
     AppListItem(String label,
                 String packageName,
                 boolean inScope,
+                boolean scopeKnown,
                 Integer viewportWidthDp,
                 String viewportMode,
                 Integer fontScalePercent,
@@ -29,6 +31,7 @@ final class AppListItem {
         this.label = label;
         this.packageName = packageName;
         this.inScope = inScope;
+        this.scopeKnown = scopeKnown;
         this.viewportWidthDp = viewportWidthDp;
         this.viewportMode = ViewportApplyMode.normalize(viewportMode);
         this.fontScalePercent = fontScalePercent;

@@ -45,4 +45,20 @@ final class ConfigStoreFactory {
         return new DpiConfigStore(
                 new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpiConfigStore.GROUP));
     }
+
+    static DpiConfigStore createForCompat100Host() {
+        return new DpiConfigStore(
+                new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpiConfigStore.GROUP));
+    }
+
+    static DpiConfigStore createForCompat100Host(String packageName) {
+        SharedPreferences xSharedPreferences =
+                new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpiConfigStore.GROUP);
+        if (packageName == null || packageName.isBlank()) {
+            return new DpiConfigStore(xSharedPreferences);
+        }
+        return new DpiConfigStore(
+                new SystemPropertyConfigPreferences(packageName),
+                xSharedPreferences);
+    }
 }

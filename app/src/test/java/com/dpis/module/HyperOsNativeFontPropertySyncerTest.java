@@ -18,4 +18,11 @@ public class HyperOsNativeFontPropertySyncerTest {
                 HyperOsNativeFontPropertySyncer.buildPublishCommandForTest(
                         "debug.dpis.forcefont.a55b5fe1", 300));
     }
+
+    @Test
+    public void compatFontCommandUsesSeparateProperty() {
+        assertEquals("setprop 'debug.dpis.compatfont.a55b5fe1' '200'",
+                CompatFontPropertySyncer.buildSetCommandForTest(
+                        "debug.dpis.compatfont.a55b5fe1", 200));
+    }
 }

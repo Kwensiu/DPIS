@@ -306,7 +306,8 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             holder.packageName.setText(item.packageName);
             bindIcon(holder, item);
             String compactStatusText = AppStatusFormatter.formatCompact(
-                    holder.status.getResources(), item.inScope, item.viewportWidthDp, item.viewportMode,
+                    holder.status.getResources(), item.inScope, item.scopeKnown,
+                    item.viewportWidthDp, item.viewportMode,
                     item.fontScalePercent, item.fontMode, item.dpisEnabled);
             boolean warnViewport = AppStatusFormatter.shouldWarnViewportEmulation(
                     item.viewportWidthDp, item.viewportMode,
@@ -334,7 +335,8 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             if (!payloads.isEmpty()) {
                 AppListItem item = getItem(position);
                 String compactStatusText = AppStatusFormatter.formatCompact(
-                        holder.status.getResources(), item.inScope, item.viewportWidthDp, item.viewportMode,
+                        holder.status.getResources(), item.inScope, item.scopeKnown,
+                        item.viewportWidthDp, item.viewportMode,
                         item.fontScalePercent, item.fontMode, item.dpisEnabled);
                 boolean warnViewport = AppStatusFormatter.shouldWarnViewportEmulation(
                         item.viewportWidthDp, item.viewportMode,
@@ -381,6 +383,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                                                       @NonNull AppListItem newItem) {
                         return oldItem.label.equals(newItem.label)
                                 && oldItem.inScope == newItem.inScope
+                                && oldItem.scopeKnown == newItem.scopeKnown
                                 && Objects.equals(oldItem.viewportWidthDp, newItem.viewportWidthDp)
                                 && oldItem.viewportMode.equals(newItem.viewportMode)
                                 && Objects.equals(oldItem.fontScalePercent, newItem.fontScalePercent)

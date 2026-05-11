@@ -306,6 +306,8 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("new SystemScopeCoordinator(createSystemScopeHost())"));
         assertTrue(source.contains("systemScopeCoordinator.toggleScope("));
         assertTrue(source.contains("systemScopeCoordinator.resolveSystemHookEffectiveEnabled("));
+        assertTrue(source.contains("openLsposedModuleSettings()"));
+        assertTrue(source.contains("de.robv.android.xposed.intent.action.MODULE_SETTINGS"));
         assertTrue(!source.contains("private void toggleScope(String packageName"));
     }
 

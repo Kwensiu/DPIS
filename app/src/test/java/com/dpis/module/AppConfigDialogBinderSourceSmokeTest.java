@@ -92,15 +92,32 @@ public class AppConfigDialogBinderSourceSmokeTest {
     public void savingViewportConfigPublishesRuntimeViewportTarget() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
 
+        assertTrue(source.contains("ViewportApplyMode.SYSTEM_EMULATION.equals"));
         assertTrue(source.contains("ViewportPropertySyncer.publishTargetAsync(item.packageName, widthDp)"));
         assertTrue(source.contains("ViewportPropertySyncer.clearTargetAsync(item.packageName)"));
     }
 
     @Test
-    public void savingEmptyFontConfigClearsHyperOsNativeTarget() throws IOException {
+    public void savingEmptyFontConfigClearsHyperOsNativeAndCompatTargets() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        int clearStart = source.indexOf("if (fontScalePercent == null)");
+        int configuredStart = source.indexOf("} else {", clearStart);
+        String clearBlock = source.substring(clearStart, configuredStart);
 
-        assertTrue(source.contains("HyperOsNativeFontPropertySyncer.clearFontTargetAsync(item.packageName)"));
+        assertTrue(clearBlock.contains("HyperOsNativeFontPropertySyncer.clearFontTargetAsync(item.packageName)"));
+        assertTrue(clearBlock.contains("CompatFontPropertySyncer.clearTargetAsync(item.packageName)"));
+    }
+
+    @Test
+    public void disablingDpisClearsRuntimePropertiesForAllCompatPaths() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+        int disableStart = source.indexOf("if (!enabled) {");
+        int disableEnd = source.indexOf("}", disableStart);
+        String disableBlock = source.substring(disableStart, disableEnd);
+
+        assertTrue(disableBlock.contains("HyperOsNativeFontPropertySyncer.clearFontTargetAsync(packageName)"));
+        assertTrue(disableBlock.contains("CompatFontPropertySyncer.clearTargetAsync(packageName)"));
+        assertTrue(disableBlock.contains("ViewportPropertySyncer.clearTargetAsync(packageName)"));
     }
 
     @Test
@@ -110,6 +127,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("FontApplyMode.isEnabled(fontMode)"));
         assertTrue(source.contains("HyperOsNativeFontPropertySyncer.publishForceFontTargetAsync("));
         assertTrue(source.contains("item.packageName, fontScalePercent"));
+        assertTrue(source.contains("CompatFontPropertySyncer.publishTargetAsync(item.packageName, fontScalePercent)"));
+        assertTrue(source.contains("FontApplyMode.SYSTEM_EMULATION.equals"));
     }
 
     private static String read(String relativePath) throws IOException {

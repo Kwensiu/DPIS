@@ -29,7 +29,6 @@ final class SystemScopeCoordinator {
             Runnable onTurnedOutScope) {
         XposedService service = DpisApplication.getXposedService();
         if (service == null) {
-            host.showToast(R.string.status_save_requires_init);
             return;
         }
         if (currentlyInScope) {

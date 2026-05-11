@@ -16,6 +16,7 @@ final class AppStatusFormatter {
     static final class Labels {
         final String injected;
         final String notInjected;
+        final String scopeUnknown;
         final String enabled;
         final String disabled;
         final String notEnabled;
@@ -26,6 +27,7 @@ final class AppStatusFormatter {
 
         Labels(String injected,
                 String notInjected,
+                String scopeUnknown,
                 String enabled,
                 String disabled,
                 String notEnabled,
@@ -35,6 +37,7 @@ final class AppStatusFormatter {
                 Locale locale) {
             this.injected = injected;
             this.notInjected = notInjected;
+            this.scopeUnknown = scopeUnknown;
             this.enabled = enabled;
             this.disabled = disabled;
             this.notEnabled = notEnabled;
@@ -51,6 +54,7 @@ final class AppStatusFormatter {
         return new Labels(
                 resources.getString(R.string.app_status_injected),
                 resources.getString(R.string.app_status_not_injected),
+                resources.getString(R.string.app_status_scope_unknown),
                 resources.getString(R.string.app_status_enabled),
                 resources.getString(R.string.app_status_disabled),
                 resources.getString(R.string.app_status_not_enabled),
@@ -79,7 +83,19 @@ final class AppStatusFormatter {
             String fontMode,
             boolean dpisEnabled) {
         return formatInternal(labels, inScope, viewportWidthDp, viewportMode,
-                fontScalePercent, fontMode, dpisEnabled, false);
+                fontScalePercent, fontMode, dpisEnabled, true, false);
+    }
+
+    static String format(Labels labels,
+            boolean inScope,
+            boolean scopeKnown,
+            Integer viewportWidthDp,
+            String viewportMode,
+            Integer fontScalePercent,
+            String fontMode,
+            boolean dpisEnabled) {
+        return formatInternal(labels, inScope, viewportWidthDp, viewportMode,
+                fontScalePercent, fontMode, dpisEnabled, scopeKnown, false);
     }
 
     static String formatCompact(Resources resources,
@@ -101,7 +117,31 @@ final class AppStatusFormatter {
             String fontMode,
             boolean dpisEnabled) {
         return formatInternal(labels, inScope, viewportWidthDp, viewportMode,
-                fontScalePercent, fontMode, dpisEnabled, true);
+                fontScalePercent, fontMode, dpisEnabled, true, true);
+    }
+
+    static String formatCompact(Resources resources,
+            boolean inScope,
+            boolean scopeKnown,
+            Integer viewportWidthDp,
+            String viewportMode,
+            Integer fontScalePercent,
+            String fontMode,
+            boolean dpisEnabled) {
+        return formatCompact(labelsFrom(resources), inScope, scopeKnown, viewportWidthDp,
+                viewportMode, fontScalePercent, fontMode, dpisEnabled);
+    }
+
+    static String formatCompact(Labels labels,
+            boolean inScope,
+            boolean scopeKnown,
+            Integer viewportWidthDp,
+            String viewportMode,
+            Integer fontScalePercent,
+            String fontMode,
+            boolean dpisEnabled) {
+        return formatInternal(labels, inScope, viewportWidthDp, viewportMode,
+                fontScalePercent, fontMode, dpisEnabled, scopeKnown, true);
     }
 
     private static String formatInternal(Labels labels,
@@ -111,8 +151,11 @@ final class AppStatusFormatter {
             Integer fontScalePercent,
             String fontMode,
             boolean dpisEnabled,
+            boolean scopeKnown,
             boolean compact) {
-        String scopeText = inScope ? labels.injected : labels.notInjected;
+        String scopeText = scopeKnown
+                ? (inScope ? labels.injected : labels.notInjected)
+                : labels.scopeUnknown;
         if (!dpisEnabled) {
             return joinSegments(scopeText, labels.disabled);
         }

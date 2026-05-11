@@ -3,17 +3,17 @@ package com.dpis.module;
 import java.io.IOException;
 import java.util.LinkedHashSet;
 
-final class ViewportPropertySyncer {
-    private ViewportPropertySyncer() {
+final class CompatFontPropertySyncer {
+    private CompatFontPropertySyncer() {
     }
 
-    static void publishTargetAsync(String packageName, int widthDp) {
-        if (packageName == null || packageName.isBlank() || widthDp <= 0) {
+    static void publishTargetAsync(String packageName, int fontScalePercent) {
+        if (packageName == null || packageName.isBlank() || fontScalePercent <= 0) {
             return;
         }
-        String property = ViewportPropertyBridge.propertyNameForPackage(packageName);
-        Thread publisherThread = new Thread(() -> setPropertyWithRoot(property, widthDp),
-                "DPIS-viewport-property-publisher");
+        Thread publisherThread = new Thread(
+                () -> setPropertyWithRoot(packageName, fontScalePercent),
+                "DPIS-compat-font-property-publisher");
         publisherThread.setDaemon(true);
         publisherThread.start();
     }
@@ -22,9 +22,9 @@ final class ViewportPropertySyncer {
         if (packageName == null || packageName.isBlank()) {
             return;
         }
-        String property = ViewportPropertyBridge.propertyNameForPackage(packageName);
-        Thread cleanerThread = new Thread(() -> setPropertyWithRoot(property, 0),
-                "DPIS-viewport-property-cleaner");
+        Thread cleanerThread = new Thread(
+                () -> setPropertyWithRoot(packageName, 0),
+                "DPIS-compat-font-property-cleaner");
         cleanerThread.setDaemon(true);
         cleanerThread.start();
     }
@@ -40,39 +40,42 @@ final class ViewportPropertySyncer {
         Thread syncThread = new Thread(() -> {
             StringBuilder command = new StringBuilder();
             for (String packageName : packages) {
-                Integer widthDp = store.getTargetViewportWidthDp(packageName);
-                String mode = store.getTargetViewportApplyMode(packageName);
+                Integer fontScalePercent = store.getTargetFontScalePercent(packageName);
+                String mode = store.getTargetFontApplyMode(packageName);
                 int value = store.isTargetDpisEnabled(packageName)
-                        && widthDp != null
-                        && widthDp > 0
-                        && ViewportApplyMode.SYSTEM_EMULATION.equals(
-                                ViewportApplyMode.normalize(mode))
-                        ? widthDp
+                        && fontScalePercent != null
+                        && fontScalePercent > 0
+                        && FontApplyMode.SYSTEM_EMULATION.equals(FontApplyMode.normalize(mode))
+                        ? fontScalePercent
                         : 0;
                 if (command.length() > 0) {
                     command.append("; ");
                 }
                 command.append(buildSetCommand(
-                        ViewportPropertyBridge.propertyNameForPackage(packageName), value));
+                        HyperOsFlutterFontBridge.compatFontPropertyNameForPackage(packageName),
+                        value));
             }
             if (command.length() > 0) {
                 runRootCommand(command.toString());
             }
-        }, "DPIS-viewport-property-syncer");
+        }, "DPIS-compat-font-property-syncer");
         syncThread.setDaemon(true);
         syncThread.start();
     }
 
-    static String buildSetCommandForTest(String property, int widthDp) {
-        return buildSetCommand(property, widthDp);
+    static String buildSetCommandForTest(String property, int fontScalePercent) {
+        return buildSetCommand(property, fontScalePercent);
     }
 
-    private static void setPropertyWithRoot(String property, int widthDp) {
-        runRootCommand(buildSetCommand(property, widthDp));
+    private static void setPropertyWithRoot(String packageName, int fontScalePercent) {
+        runRootCommand(buildSetCommand(
+                HyperOsFlutterFontBridge.compatFontPropertyNameForPackage(packageName),
+                fontScalePercent));
     }
 
-    private static String buildSetCommand(String property, int widthDp) {
-        return "setprop " + shellQuote(property) + " " + shellQuote(String.valueOf(widthDp));
+    private static String buildSetCommand(String property, int fontScalePercent) {
+        return "setprop " + shellQuote(property) + " "
+                + shellQuote(String.valueOf(fontScalePercent));
     }
 
     private static void runRootCommand(String command) {

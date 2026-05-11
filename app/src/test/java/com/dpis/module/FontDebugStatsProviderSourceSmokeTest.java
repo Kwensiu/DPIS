@@ -47,7 +47,7 @@ public class FontDebugStatsProviderSourceSmokeTest {
     @Test
     public void transportPrefersXposedRemotePreferencesBeforeProviderFallback() throws IOException {
         String transport = read("src/main/java/com/dpis/module/FontDebugStatsTransport.java");
-        String moduleMain = read("src/main/java/com/dpis/module/ModuleMain.java");
+        String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
 
         assertTrue(transport.contains("xposed.getRemotePreferences(DpiConfigStore.GROUP)"));
         assertTrue(transport.contains("MODULE_CLASS_PACKAGE + \".FontDebugStatsReceiver\""));

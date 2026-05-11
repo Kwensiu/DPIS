@@ -7,20 +7,24 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ModuleMainHookInstallerTest {
     @Test
     public void moduleMainUsesExplicitSystemServerPolicyGuard() throws IOException {
-        String source = read("src/main/java/com/dpis/module/ModuleMain.java");
+        String source = read("src/modern101/java/com/dpis/module/ModuleMain.java");
 
         assertTrue(source.contains("SystemServerMutationPolicy.shouldInstallSystemServerHooks("));
+        assertTrue(source.contains("ModulePackagePlan.resolve("));
+        assertFalse(Files.exists(Path.of(
+                "src", "main", "java", "com", "dpis", "module", "ModuleMain.java")));
     }
 
     @Test
     public void moduleMainConfiguresHyperOsFlutterNativeFontHook() throws IOException {
-        String moduleMain = read("src/main/java/com/dpis/module/ModuleMain.java");
-        String nativeInit = read("src/main/resources/META-INF/xposed/native_init.list");
+        String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+        String nativeInit = read("src/modern101/resources/META-INF/xposed/native_init.list");
         String build = read("build.gradle.kts");
 
         assertTrue(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));

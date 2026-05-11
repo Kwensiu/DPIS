@@ -39,38 +39,33 @@ public final class ModuleMain extends XposedModule {
         SystemServerDisplayDiagnostics.flushPending();
         maybeInstallSystemServerFromPackageReady(store, policy, param.getPackageName());
         maybeLogFirstPackageReady(param.getPackageName());
-        String packageName = param.getPackageName();
+        ModulePackagePlan packagePlan = ModulePackagePlan.resolve(store, param.getPackageName());
+        String packageName = packagePlan.packageName;
         if (!store.getConfiguredPackages().contains(packageName)) {
             DpisLog.i("package not configured: package=" + packageName);
             return;
         }
-        Integer targetViewportWidthDp = store.getTargetViewportWidthDp(packageName);
-        String targetViewportMode = store.getTargetViewportApplyMode(packageName);
-        Integer targetFontScalePercent = store.getTargetFontScalePercent(packageName);
-        String targetFontMode = store.getTargetFontApplyMode(packageName);
-        boolean targetDpisEnabled = store.isTargetDpisEnabled(packageName);
-        if (!targetDpisEnabled) {
+        if (!packagePlan.targetDpisEnabled) {
             DpisLog.i("target app disabled by dpis toggle: package=" + packageName);
             return;
         }
-        boolean fontScaleActive = targetFontScalePercent != null
-                && targetFontScalePercent > 0
-                && targetFontScalePercent != 100;
-        if (targetViewportWidthDp == null
-                && !fontScaleActive) {
+        if (packagePlan.targetViewportWidthDp == null
+                && !packagePlan.fontScaleActive) {
             DpisLog.i("target app disabled: package=" + packageName);
             return;
         }
         DpisLog.i("target app matched: package=" + packageName
-                + ", targetViewportWidthDp=" + targetViewportWidthDp
-                + ", targetViewportMode=" + targetViewportMode
-                + ", targetFontScalePercent=" + targetFontScalePercent
-                + ", targetFontMode=" + targetFontMode);
+                + ", targetViewportWidthDp=" + packagePlan.targetViewportWidthDp
+                + ", targetViewportMode=" + packagePlan.targetViewportMode
+                + ", targetFontScalePercent=" + packagePlan.targetFontScalePercent
+                + ", targetFontMode=" + packagePlan.targetFontMode);
         HyperOsFlutterFontHookInstaller.install(packageName, store);
         try {
             AppProcessHookInstaller.install(this, packageName, store, policy,
-                    targetViewportWidthDp != null, targetViewportMode, targetFontMode,
-                    fontScaleActive);
+                    packagePlan.viewportConfigured,
+                    packagePlan.targetViewportMode,
+                    packagePlan.targetFontMode,
+                    packagePlan.fontScaleActive);
         } catch (Throwable throwable) {
             DpisLog.e("failed to install app process hooks", throwable);
         }

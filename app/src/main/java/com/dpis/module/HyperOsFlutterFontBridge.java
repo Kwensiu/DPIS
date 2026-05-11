@@ -6,6 +6,7 @@ import java.util.Locale;
 final class HyperOsFlutterFontBridge {
     private static final String PROPERTY_PREFIX = "debug.dpis.font.";
     private static final String FORCE_PROPERTY_PREFIX = "debug.dpis.forcefont.";
+    private static final String COMPAT_FONT_PROPERTY_PREFIX = "debug.dpis.compatfont.";
     private static final String RUST_BINARY_PROPERTY_PREFIX = "debug.dpis.rustbin.";
 
     private HyperOsFlutterFontBridge() {
@@ -17,6 +18,34 @@ final class HyperOsFlutterFontBridge {
 
     static String forcePropertyNameForPackage(String packageName) {
         return FORCE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
+    }
+
+    static String compatFontPropertyNameForPackage(String packageName) {
+        return COMPAT_FONT_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
+    }
+
+    static Integer readForceFontScalePercent(String packageName) {
+        return readPositiveIntProperty(forcePropertyNameForPackage(packageName));
+    }
+
+    static Integer readCompatFontScalePercent(String packageName) {
+        if (packageName == null || packageName.isEmpty()) {
+            return null;
+        }
+        return readPositiveIntProperty(compatFontPropertyNameForPackage(packageName));
+    }
+
+    private static Integer readPositiveIntProperty(String key) {
+        String value = readSystemProperty(key);
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            int parsed = Integer.parseInt(value.trim());
+            return parsed > 0 ? parsed : null;
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 
     static String rustBinaryPropertyNameForPackage(String packageName) {
@@ -84,6 +113,17 @@ final class HyperOsFlutterFontBridge {
             set.invoke(null, key, value);
         } catch (Throwable throwable) {
             DpisLog.e("DPIS_FONT HyperOS Flutter property publish failed: key=" + key, throwable);
+        }
+    }
+
+    private static String readSystemProperty(String key) {
+        try {
+            Class<?> systemProperties = Class.forName("android.os.SystemProperties");
+            Method getMethod = systemProperties.getDeclaredMethod("get", String.class, String.class);
+            Object value = getMethod.invoke(null, key, "");
+            return value instanceof String ? (String) value : "";
+        } catch (Throwable ignored) {
+            return "";
         }
     }
 }
