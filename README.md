@@ -54,27 +54,38 @@ DPIS 是一个基于 LSPosed/Xposed 的 Android 模块，用于按应用独立�
 ## 构建与测试
 
 ```powershell
-./gradlew :app:assembleDebug
-./gradlew :app:testDebugUnitTest
+./gradlew :app:assembleModern101Debug :app:assembleCompat100Debug
+./gradlew :app:testAllDebugUnitTests
 ```
 
 可选安装（Windows PowerShell）：
 
 ```powershell
-./gradlew :app:assembleDebug; if ($LASTEXITCODE -eq 0) { adb install -r "app/build/outputs/apk/debug/app-debug.apk" }
+./gradlew :app:assembleModern101Debug; if ($LASTEXITCODE -eq 0) { adb install -r "app/build/outputs/apk/modern101/debug/app-modern101-debug.apk" }
 ```
 
 ## 项目结构
 
 ```text
 app/                      Android 主模块
-  src/main/java/          生产代码
-  src/main/res/           资源与界面
+  src/main/java/          共享生产代码
+  src/main/res/           共享资源与界面
+  src/modern101/java/     libxposed API 101 专用代码
+  src/compat100/java/     legacy Xposed API 兼容代码
   src/test/java/          单元测试
 docs/                     当前有效文档
 docs/archive/             历史归档文档
 refs/                     本地参考资料（LSPosed / AOSP / libxposed）
 ```
+
+## 版本说明
+
+| 版本 | 文件名 | 适用环境 |
+| --- | --- | --- |
+| 标准版 | `DPIS_{version}.apk` | LSPosed（libxposed API 101+） |
+| 兼容版 | `DPIS_{version}_legacy.apk` | 传统 Xposed / 不支持 libxposed API 101 的框架 |
+
+两个版本功能相同，区别仅在于与 Xposed 框架的对接方式。优先使用标准版，仅在标准版无法加载时使用兼容版。
 
 ## 文档导航
 

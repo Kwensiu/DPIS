@@ -3,7 +3,9 @@
 ## Project Structure & Module Organization
 - Main Android module: `app/` (single-module project; see `settings.gradle.kts`).
 - Production code: `app/src/main/java/com/dpis/module/`.
+- Flavor-specific code: `app/src/modern101/java/` (libxposed API 101) and `app/src/compat100/java/` (legacy Xposed API).
 - Resources and UI assets: `app/src/main/res/` and `app/src/main/resources/`.
+- Flavor-specific assets: `app/src/compat100/assets/` and `app/src/modern101/resources/`.
 - Unit tests: `app/src/test/java/com/dpis/module/`.
 - Build outputs/logs are generated under `app/build/` and should not be edited manually.
 - Documentation:
@@ -11,12 +13,15 @@
   - Historical/archived docs: `docs/archive/`
 
 ## Build, Test, and Development Commands
-- Build debug APK:
-  - `./gradlew :app:assembleDebug`
+- Build debug APKs (both flavors):
+  - `./gradlew :app:assembleModern101Debug :app:assembleCompat100Debug`
+- Build release APKs (produces `DPIS_{version}.apk` and `DPIS_{version}_legacy.apk`):
+  - `./gradlew :app:assembleRelease`
 - Run unit tests:
-  - `./gradlew :app:testDebugUnitTest`
+  - `./gradlew :app:testAllDebugUnitTests`
+  - For filtered tests, use a real flavor test task such as `./gradlew :app:testModern101DebugUnitTest --tests com.dpis.module.ModulePackagePlanTest`.
 - Build then install (PowerShell):
-  - `./gradlew :app:assembleDebug; if ($LASTEXITCODE -eq 0) { adb install -r "app/build/outputs/apk/debug/app-debug.apk" }`
+  - `./gradlew :app:assembleModern101Debug; if ($LASTEXITCODE -eq 0) { adb install -r "app/build/outputs/apk/modern101/debug/app-modern101-debug.apk" }`
 - Clean root build directory:
   - `./gradlew Delete`
 
@@ -34,7 +39,7 @@
 - Framework: JUnit4 (`testImplementation(libs.junit4)`).
 - Test location mirrors production package structure.
 - Test naming: `<ClassName>Test.java` and method names describing behavior (e.g., `usesObservedDefaultDensityWhenNoUserValueExists`).
-- Run targeted tests during iteration, then run full `:app:testDebugUnitTest` before submitting.
+- Run targeted tests during iteration with a flavor test task, then run full `:app:testAllDebugUnitTests` before submitting.
 - Prefer behavior tests for parsers, caches, and policy classes. Source smoke tests are acceptable for wiring checks, but should not be the only coverage for business logic.
 
 ## Update Flow Guidelines
