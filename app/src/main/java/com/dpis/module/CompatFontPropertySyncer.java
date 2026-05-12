@@ -8,11 +8,15 @@ final class CompatFontPropertySyncer {
     }
 
     static void publishTargetAsync(String packageName, int fontScalePercent) {
+        publishTargetAsync(packageName, fontScalePercent, FontApplyMode.SYSTEM_EMULATION);
+    }
+
+    static void publishTargetAsync(String packageName, int fontScalePercent, String mode) {
         if (packageName == null || packageName.isBlank() || fontScalePercent <= 0) {
             return;
         }
         Thread publisherThread = new Thread(
-                () -> setPropertyWithRoot(packageName, fontScalePercent),
+                () -> runRootCommand(buildCompatConfigCommand(packageName, fontScalePercent, mode)),
                 "DPIS-compat-font-property-publisher");
         publisherThread.setDaemon(true);
         publisherThread.start();
@@ -23,7 +27,7 @@ final class CompatFontPropertySyncer {
             return;
         }
         Thread cleanerThread = new Thread(
-                () -> setPropertyWithRoot(packageName, 0),
+                () -> runRootCommand(buildClearCommand(packageName)),
                 "DPIS-compat-font-property-cleaner");
         cleanerThread.setDaemon(true);
         cleanerThread.start();
@@ -45,15 +49,12 @@ final class CompatFontPropertySyncer {
                 int value = store.isTargetDpisEnabled(packageName)
                         && fontScalePercent != null
                         && fontScalePercent > 0
-                        && FontApplyMode.SYSTEM_EMULATION.equals(FontApplyMode.normalize(mode))
                         ? fontScalePercent
                         : 0;
                 if (command.length() > 0) {
                     command.append("; ");
                 }
-                command.append(buildSetCommand(
-                        HyperOsFlutterFontBridge.compatFontPropertyNameForPackage(packageName),
-                        value));
+                command.append(buildCompatConfigCommand(packageName, value, mode));
             }
             if (command.length() > 0) {
                 runRootCommand(command.toString());
@@ -67,15 +68,41 @@ final class CompatFontPropertySyncer {
         return buildSetCommand(property, fontScalePercent);
     }
 
-    private static void setPropertyWithRoot(String packageName, int fontScalePercent) {
-        runRootCommand(buildSetCommand(
-                HyperOsFlutterFontBridge.compatFontPropertyNameForPackage(packageName),
-                fontScalePercent));
+    static String buildCompatConfigCommandForTest(String packageName, int fontScalePercent, String mode) {
+        return buildCompatConfigCommand(packageName, fontScalePercent, mode);
+    }
+
+    private static String buildCompatConfigCommand(String packageName, int fontScalePercent, String mode) {
+        String normalizedMode = FontApplyMode.normalize(mode);
+        boolean enabled = fontScalePercent > 0 && FontApplyMode.isEnabled(normalizedMode);
+        // compatfont.* keeps legacy system-emulation behavior. Field rewrite
+        // reads forcefont.* plus fontmode.*, so compatfont.* must stay 0.
+        int systemEmulationValue = enabled
+                && FontApplyMode.SYSTEM_EMULATION.equals(normalizedMode) ? fontScalePercent : 0;
+        int forceFontValue = enabled
+                && FontApplyMode.FIELD_REWRITE.equals(normalizedMode) ? fontScalePercent : 0;
+        String compatMode = enabled ? normalizedMode : FontApplyMode.OFF;
+        return buildSetCommand(HyperOsFlutterFontBridge.compatFontPropertyNameForPackage(packageName),
+                systemEmulationValue)
+                + "; " + buildSetCommand(
+                        HyperOsFlutterFontBridge.compatFontModePropertyNameForPackage(packageName),
+                        compatMode)
+                + "; " + buildSetCommand(
+                        HyperOsFlutterFontBridge.forcePropertyNameForPackage(packageName),
+                        forceFontValue);
+    }
+
+    private static String buildClearCommand(String packageName) {
+        return buildCompatConfigCommand(packageName, 0, FontApplyMode.OFF);
     }
 
     private static String buildSetCommand(String property, int fontScalePercent) {
         return "setprop " + shellQuote(property) + " "
                 + shellQuote(String.valueOf(fontScalePercent));
+    }
+
+    private static String buildSetCommand(String property, String value) {
+        return "setprop " + shellQuote(property) + " " + shellQuote(value);
     }
 
     private static void runRootCommand(String command) {

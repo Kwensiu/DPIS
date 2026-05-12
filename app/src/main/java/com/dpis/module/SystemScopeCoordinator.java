@@ -75,6 +75,11 @@ final class SystemScopeCoordinator {
             return false;
         }
         boolean desiredEnabled = store.isSystemServerHooksEnabled();
+        if ("compat100".equals(BuildConfig.FLAVOR)) {
+            // Legacy LSPosed builds do not expose libxposed service scope state,
+            // but the system_server hook is still driven by the stored toggle and LSPosed scope.
+            return desiredEnabled;
+        }
         XposedService service = DpisApplication.getXposedService();
         boolean serviceAvailable = service != null;
         boolean scopeSelected = false;

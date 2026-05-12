@@ -44,7 +44,7 @@ public final class ModulePackagePlanTest {
     }
 
     @Test
-    public void compat100LegacySkipsFontFieldRewriteOnlyPackage() {
+    public void compat100LegacyInstallsFontFieldRewriteOnlyPackage() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 120);
         store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
@@ -52,7 +52,7 @@ public final class ModulePackagePlanTest {
         ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
 
         assertTrue(plan.shouldInstallHooks());
-        assertFalse(plan.shouldInstallCompat100LegacyHooks());
+        assertTrue(plan.shouldInstallCompat100LegacyHooks());
     }
 
     @Test

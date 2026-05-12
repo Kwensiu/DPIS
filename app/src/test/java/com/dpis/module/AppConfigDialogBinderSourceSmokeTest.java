@@ -93,7 +93,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
 
         assertTrue(source.contains("ViewportApplyMode.SYSTEM_EMULATION.equals"));
-        assertTrue(source.contains("ViewportPropertySyncer.publishTargetAsync(item.packageName, widthDp)"));
+        assertTrue(source.contains("ViewportPropertySyncer.publishTargetAsync(item.packageName, widthDp, viewportMode)"));
         assertTrue(source.contains("ViewportPropertySyncer.clearTargetAsync(item.packageName)"));
     }
 
@@ -127,7 +127,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("FontApplyMode.isEnabled(fontMode)"));
         assertTrue(source.contains("HyperOsNativeFontPropertySyncer.publishForceFontTargetAsync("));
         assertTrue(source.contains("item.packageName, fontScalePercent"));
-        assertTrue(source.contains("CompatFontPropertySyncer.publishTargetAsync(item.packageName, fontScalePercent)"));
+        assertTrue(source.contains("CompatFontPropertySyncer.publishTargetAsync("));
+        assertTrue(source.contains("item.packageName, fontScalePercent, fontMode"));
         assertTrue(source.contains("FontApplyMode.SYSTEM_EMULATION.equals"));
     }
 

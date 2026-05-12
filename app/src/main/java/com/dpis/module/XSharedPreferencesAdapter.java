@@ -2,6 +2,9 @@ package com.dpis.module;
 
 import android.content.SharedPreferences;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -9,63 +12,77 @@ import de.robv.android.xposed.XSharedPreferences;
 
 final class XSharedPreferencesAdapter implements SharedPreferences {
     private final XSharedPreferences preferences;
+    private final long reloadIntervalMs;
+    private volatile Map<String, Object> snapshot;
+    private volatile long lastReloadAtMs;
 
     XSharedPreferencesAdapter(String packageName, String preferenceName) {
-        preferences = new XSharedPreferences(packageName, preferenceName);
-        preferences.reload();
+        this(packageName, preferenceName, 0L);
     }
 
-    private void reload() {
-        preferences.reload();
+    XSharedPreferencesAdapter(String packageName, String preferenceName, long reloadIntervalMs) {
+        preferences = new XSharedPreferences(packageName, preferenceName);
+        this.reloadIntervalMs = Math.max(0L, reloadIntervalMs);
+        // XSharedPreferences.reload() can touch disk. Compat100 resource hooks call into
+        // DpiConfigStore from Resources hot paths, so app-process fallback stays as a
+        // process-start snapshot. Long-lived system_server uses an explicit low-frequency
+        // refresh interval instead of per-read reloads.
+        reloadNow();
     }
 
     @Override
     public Map<String, ?> getAll() {
-        reload();
-        return preferences.getAll();
+        maybeReload();
+        return snapshot;
     }
 
     @Override
     public String getString(String key, String defValue) {
-        reload();
-        return preferences.getString(key, defValue);
+        maybeReload();
+        Object value = snapshot.get(key);
+        return value instanceof String typed ? typed : defValue;
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Set<String> getStringSet(String key, Set<String> defValues) {
-        reload();
-        Set<String> values = preferences.getStringSet(key, defValues);
-        return values != null ? values : defValues;
+        maybeReload();
+        Object value = snapshot.get(key);
+        return value instanceof Set<?> ? new LinkedHashSet<>((Set<String>) value) : defValues;
     }
 
     @Override
     public int getInt(String key, int defValue) {
-        reload();
-        return preferences.getInt(key, defValue);
+        maybeReload();
+        Object value = snapshot.get(key);
+        return value instanceof Integer typed ? typed : defValue;
     }
 
     @Override
     public long getLong(String key, long defValue) {
-        reload();
-        return preferences.getLong(key, defValue);
+        maybeReload();
+        Object value = snapshot.get(key);
+        return value instanceof Long typed ? typed : defValue;
     }
 
     @Override
     public float getFloat(String key, float defValue) {
-        reload();
-        return preferences.getFloat(key, defValue);
+        maybeReload();
+        Object value = snapshot.get(key);
+        return value instanceof Float typed ? typed : defValue;
     }
 
     @Override
     public boolean getBoolean(String key, boolean defValue) {
-        reload();
-        return preferences.getBoolean(key, defValue);
+        maybeReload();
+        Object value = snapshot.get(key);
+        return value instanceof Boolean typed ? typed : defValue;
     }
 
     @Override
     public boolean contains(String key) {
-        reload();
-        return preferences.contains(key);
+        maybeReload();
+        return snapshot.containsKey(key);
     }
 
     @Override
@@ -79,5 +96,64 @@ final class XSharedPreferencesAdapter implements SharedPreferences {
 
     @Override
     public void unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
+    }
+
+    private void maybeReload() {
+        if (reloadIntervalMs <= 0L) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (now - lastReloadAtMs < reloadIntervalMs) {
+            return;
+        }
+        synchronized (this) {
+            now = System.currentTimeMillis();
+            if (now - lastReloadAtMs >= reloadIntervalMs) {
+                reloadNow();
+            }
+        }
+    }
+
+    private void reloadNow() {
+        preferences.reload();
+        snapshot = snapshot(preferences.getAll());
+        lastReloadAtMs = System.currentTimeMillis();
+    }
+
+    private static Map<String, Object> snapshot(Map<String, ?> source) {
+        if (source == null || source.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        LinkedHashMap<String, Object> values = new LinkedHashMap<>();
+        for (Map.Entry<String, ?> entry : source.entrySet()) {
+            String key = entry.getKey();
+            if (key == null || key.isEmpty()) {
+                continue;
+            }
+            Object value = entry.getValue();
+            if (value instanceof Set<?> typed) {
+                LinkedHashSet<String> stringSet = new LinkedHashSet<>();
+                boolean valid = true;
+                for (Object item : typed) {
+                    if (!(item instanceof String text)) {
+                        valid = false;
+                        break;
+                    }
+                    stringSet.add(text);
+                }
+                if (valid) {
+                    values.put(key, Collections.unmodifiableSet(stringSet));
+                }
+                continue;
+            }
+            if (value instanceof String
+                    || value instanceof Integer
+                    || value instanceof Long
+                    || value instanceof Float
+                    || value instanceof Boolean) {
+                values.put(key, value);
+            }
+        }
+        return Collections.unmodifiableMap(values);
     }
 }

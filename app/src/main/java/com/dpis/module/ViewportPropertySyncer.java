@@ -8,11 +8,15 @@ final class ViewportPropertySyncer {
     }
 
     static void publishTargetAsync(String packageName, int widthDp) {
+        publishTargetAsync(packageName, widthDp, ViewportApplyMode.SYSTEM_EMULATION);
+    }
+
+    static void publishTargetAsync(String packageName, int widthDp, String mode) {
         if (packageName == null || packageName.isBlank() || widthDp <= 0) {
             return;
         }
-        String property = ViewportPropertyBridge.propertyNameForPackage(packageName);
-        Thread publisherThread = new Thread(() -> setPropertyWithRoot(property, widthDp),
+        Thread publisherThread = new Thread(
+                () -> runRootCommand(buildCompatConfigCommand(packageName, widthDp, mode)),
                 "DPIS-viewport-property-publisher");
         publisherThread.setDaemon(true);
         publisherThread.start();
@@ -22,8 +26,7 @@ final class ViewportPropertySyncer {
         if (packageName == null || packageName.isBlank()) {
             return;
         }
-        String property = ViewportPropertyBridge.propertyNameForPackage(packageName);
-        Thread cleanerThread = new Thread(() -> setPropertyWithRoot(property, 0),
+        Thread cleanerThread = new Thread(() -> runRootCommand(buildClearCommand(packageName)),
                 "DPIS-viewport-property-cleaner");
         cleanerThread.setDaemon(true);
         cleanerThread.start();
@@ -42,18 +45,14 @@ final class ViewportPropertySyncer {
             for (String packageName : packages) {
                 Integer widthDp = store.getTargetViewportWidthDp(packageName);
                 String mode = store.getTargetViewportApplyMode(packageName);
-                int value = store.isTargetDpisEnabled(packageName)
-                        && widthDp != null
-                        && widthDp > 0
-                        && ViewportApplyMode.SYSTEM_EMULATION.equals(
-                                ViewportApplyMode.normalize(mode))
-                        ? widthDp
-                        : 0;
                 if (command.length() > 0) {
                     command.append("; ");
                 }
-                command.append(buildSetCommand(
-                        ViewportPropertyBridge.propertyNameForPackage(packageName), value));
+                int targetWidthDp = widthDp != null ? widthDp : 0;
+                command.append(buildCompatConfigCommand(
+                        packageName,
+                        store.isTargetDpisEnabled(packageName) ? targetWidthDp : 0,
+                        mode));
             }
             if (command.length() > 0) {
                 runRootCommand(command.toString());
@@ -67,12 +66,39 @@ final class ViewportPropertySyncer {
         return buildSetCommand(property, widthDp);
     }
 
-    private static void setPropertyWithRoot(String property, int widthDp) {
-        runRootCommand(buildSetCommand(property, widthDp));
+    static String buildCompatConfigCommandForTest(String packageName, int widthDp, String mode) {
+        return buildCompatConfigCommand(packageName, widthDp, mode);
+    }
+
+    private static String buildCompatConfigCommand(String packageName, int widthDp, String mode) {
+        String normalizedMode = ViewportApplyMode.normalize(mode);
+        boolean enabled = widthDp > 0 && ViewportApplyMode.isEnabled(normalizedMode);
+        // vp.* drives system emulation. vpcfg/vpmode preserve compat100 config
+        // for field_rewrite without accidentally enabling emulation.
+        int systemEmulationValue = enabled
+                && ViewportApplyMode.SYSTEM_EMULATION.equals(normalizedMode) ? widthDp : 0;
+        int compatConfigValue = enabled ? widthDp : 0;
+        String compatMode = enabled ? normalizedMode : ViewportApplyMode.OFF;
+        return buildSetCommand(ViewportPropertyBridge.propertyNameForPackage(packageName),
+                systemEmulationValue)
+                + "; " + buildSetCommand(
+                        ViewportPropertyBridge.compatConfigPropertyNameForPackage(packageName),
+                        compatConfigValue)
+                + "; " + buildSetCommand(
+                        ViewportPropertyBridge.compatModePropertyNameForPackage(packageName),
+                        compatMode);
+    }
+
+    private static String buildClearCommand(String packageName) {
+        return buildCompatConfigCommand(packageName, 0, ViewportApplyMode.OFF);
     }
 
     private static String buildSetCommand(String property, int widthDp) {
         return "setprop " + shellQuote(property) + " " + shellQuote(String.valueOf(widthDp));
+    }
+
+    private static String buildSetCommand(String property, String value) {
+        return "setprop " + shellQuote(property) + " " + shellQuote(value);
     }
 
     private static void runRootCommand(String command) {

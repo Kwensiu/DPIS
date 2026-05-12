@@ -38,16 +38,19 @@ final class DpiConfigStore {
     }
 
     Set<String> getConfiguredPackages() {
-        Set<String> packages;
+        LinkedHashSet<String> packages = new LinkedHashSet<>();
         if (preferences.contains(KEY_TARGET_PACKAGES)) {
-            packages = preferences.getStringSet(KEY_TARGET_PACKAGES, Collections.emptySet());
-        } else if (mirrorPreferences != null) {
-            packages = mirrorPreferences.getStringSet(KEY_TARGET_PACKAGES, Collections.emptySet());
-        } else {
-            packages = Collections.emptySet();
+            Set<String> primaryPackages = preferences.getStringSet(KEY_TARGET_PACKAGES, Collections.emptySet());
+            if (primaryPackages != null) {
+                packages.addAll(primaryPackages);
+            }
+            return new LinkedHashSet<>(packages);
         }
-        if (packages == null) {
-            packages = Collections.emptySet();
+        if (mirrorPreferences != null && mirrorPreferences.contains(KEY_TARGET_PACKAGES)) {
+            Set<String> backupPackages = mirrorPreferences.getStringSet(KEY_TARGET_PACKAGES, Collections.emptySet());
+            if (backupPackages != null) {
+                packages.addAll(backupPackages);
+            }
         }
         return new LinkedHashSet<>(packages);
     }
@@ -146,6 +149,11 @@ final class DpiConfigStore {
     }
 
     boolean isStartupDisclaimerAccepted() {
+        if (preferences.contains(KEY_STARTUP_DISCLAIMER_ACCEPTED)) {
+            return preferences.getBoolean(KEY_STARTUP_DISCLAIMER_ACCEPTED, false)
+                    || (mirrorPreferences != null
+                    && mirrorPreferences.getBoolean(KEY_STARTUP_DISCLAIMER_ACCEPTED, false));
+        }
         return getBoolean(KEY_STARTUP_DISCLAIMER_ACCEPTED, false);
     }
 

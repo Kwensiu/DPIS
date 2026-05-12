@@ -7,6 +7,9 @@ final class HyperOsFlutterFontBridge {
     private static final String PROPERTY_PREFIX = "debug.dpis.font.";
     private static final String FORCE_PROPERTY_PREFIX = "debug.dpis.forcefont.";
     private static final String COMPAT_FONT_PROPERTY_PREFIX = "debug.dpis.compatfont.";
+    // compatfont.* is non-zero only for system emulation; fontmode.* lets
+    // compat100 interpret forcefont.* as field_rewrite when needed.
+    private static final String COMPAT_FONT_MODE_PROPERTY_PREFIX = "debug.dpis.fontmode.";
     private static final String RUST_BINARY_PROPERTY_PREFIX = "debug.dpis.rustbin.";
 
     private HyperOsFlutterFontBridge() {
@@ -24,6 +27,10 @@ final class HyperOsFlutterFontBridge {
         return COMPAT_FONT_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
+    static String compatFontModePropertyNameForPackage(String packageName) {
+        return COMPAT_FONT_MODE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
+    }
+
     static Integer readForceFontScalePercent(String packageName) {
         return readPositiveIntProperty(forcePropertyNameForPackage(packageName));
     }
@@ -33,6 +40,13 @@ final class HyperOsFlutterFontBridge {
             return null;
         }
         return readPositiveIntProperty(compatFontPropertyNameForPackage(packageName));
+    }
+
+    static String readCompatFontMode(String packageName) {
+        if (packageName == null || packageName.isEmpty()) {
+            return FontApplyMode.OFF;
+        }
+        return FontApplyMode.normalize(readSystemProperty(compatFontModePropertyNameForPackage(packageName)));
     }
 
     private static Integer readPositiveIntProperty(String key) {

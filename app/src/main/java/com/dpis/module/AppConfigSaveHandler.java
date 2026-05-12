@@ -27,52 +27,44 @@ final class AppConfigSaveHandler {
                             EffectiveModeResolver.resolveFontMode(fontMode, systemHooksEnabled));
             boolean emulationRequestedWithoutSystemScope =
                     viewportEmulationIneffective || fontEmulationIneffective;
-            boolean changed = true;
+            boolean saved = true;
             int hint = 0;
             if (store == null) {
                 hint = R.string.status_save_requires_init;
                 return new int[] { 1, hint };
             }
             if (widthDp == null) {
-                changed = store.clearTargetViewportWidthDp(item.packageName) && changed;
-                changed = store.setTargetViewportApplyMode(item.packageName, ViewportApplyMode.OFF)
-                        && changed;
+                saved = store.clearTargetViewportWidthDp(item.packageName) && saved;
+                saved = store.setTargetViewportApplyMode(item.packageName, ViewportApplyMode.OFF)
+                        && saved;
                 ViewportPropertySyncer.clearTargetAsync(item.packageName);
             } else {
-                changed = store.setTargetViewportWidthDp(item.packageName, widthDp) && changed;
-                changed = store.setTargetViewportApplyMode(item.packageName, viewportMode)
-                        && changed;
-                if (ViewportApplyMode.SYSTEM_EMULATION.equals(
-                        ViewportApplyMode.normalize(viewportMode))) {
-                    ViewportPropertySyncer.publishTargetAsync(item.packageName, widthDp);
-                } else {
-                    ViewportPropertySyncer.clearTargetAsync(item.packageName);
-                }
+                saved = store.setTargetViewportWidthDp(item.packageName, widthDp) && saved;
+                saved = store.setTargetViewportApplyMode(item.packageName, viewportMode)
+                        && saved;
+                ViewportPropertySyncer.publishTargetAsync(item.packageName, widthDp, viewportMode);
             }
             if (fontScalePercent == null) {
-                changed = store.clearTargetFontScalePercent(item.packageName) && changed;
-                changed = store.setTargetFontApplyMode(item.packageName, FontApplyMode.OFF) && changed;
+                saved = store.clearTargetFontScalePercent(item.packageName) && saved;
+                saved = store.setTargetFontApplyMode(item.packageName, FontApplyMode.OFF) && saved;
                 HyperOsNativeFontPropertySyncer.clearFontTargetAsync(item.packageName);
                 CompatFontPropertySyncer.clearTargetAsync(item.packageName);
             } else {
-                changed = store.setTargetFontScalePercent(item.packageName, fontScalePercent) && changed;
-                changed = store.setTargetFontApplyMode(item.packageName, fontMode) && changed;
+                saved = store.setTargetFontScalePercent(item.packageName, fontScalePercent) && saved;
+                saved = store.setTargetFontApplyMode(item.packageName, fontMode) && saved;
                 if (FontApplyMode.isEnabled(fontMode)) {
                     HyperOsNativeFontPropertySyncer.publishForceFontTargetAsync(
                             item.packageName, fontScalePercent);
                 } else {
                     HyperOsNativeFontPropertySyncer.clearFontTargetAsync(item.packageName);
                 }
-                if (FontApplyMode.SYSTEM_EMULATION.equals(FontApplyMode.normalize(fontMode))) {
-                    CompatFontPropertySyncer.publishTargetAsync(item.packageName, fontScalePercent);
-                } else {
-                    CompatFontPropertySyncer.clearTargetAsync(item.packageName);
-                }
+                CompatFontPropertySyncer.publishTargetAsync(
+                        item.packageName, fontScalePercent, fontMode);
             }
-            if (changed && onChanged != null) {
+            if (saved && onChanged != null) {
                 onChanged.run();
             }
-            if (changed && emulationRequestedWithoutSystemScope) {
+            if (saved && emulationRequestedWithoutSystemScope) {
                 hint = R.string.emulation_requires_system_scope_hint;
             }
             return new int[] { 1, hint };

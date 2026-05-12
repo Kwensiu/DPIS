@@ -21,6 +21,61 @@ import io.github.libxposed.api.XposedInterface;
 
 final class SystemServerDisplayEnvironmentInstaller {
     private static final int MAX_PACKAGE_RECURSION_DEPTH = 5;
+    private static final ReflectionProbeCache REFLECTION_CACHE = new ReflectionProbeCache();
+    private static final SystemServerPackageUidResolver PACKAGE_UID_RESOLVER =
+            new SystemServerPackageUidResolver(
+                    ConfigSnapshotRefreshPolicy.SYSTEM_SERVER_TTL_MILLIS);
+    private static final String[] PACKAGE_STRING_METHOD_NAMES = new String[]{
+            "getOwningPackage",
+            "getPackageName",
+            "getPackage",
+            "getOpPackageName"
+    };
+    private static final String[] PACKAGE_OBJECT_METHOD_NAMES = new String[]{
+            "getIntent",
+            "getComponent",
+            "getActivityInfo",
+            "getApplicationInfo",
+            "getRequest",
+            "getTargetActivity",
+            "getOrigActivity",
+            "getRealActivity"
+    };
+    private static final String[] PACKAGE_STRING_FIELD_NAMES = new String[]{
+            "packageName", "mPackageName", "package", "launchedFromPackage"
+    };
+    private static final String[] PACKAGE_OBJECT_FIELD_NAMES = new String[]{
+            "intent",
+            "mIntent",
+            "component",
+            "mComponent",
+            "activityInfo",
+            "applicationInfo",
+            "request",
+            "mRequest",
+            "targetActivity",
+            "origActivity",
+            "realActivity"
+    };
+    private static final String[] CONFIGURATION_FIELD_NAMES = new String[]{
+            "mergedConfiguration",
+            "mLastReportedConfiguration",
+            "mTmpConfig",
+            "configuration",
+            "mConfiguration"
+    };
+    private static final String[] DISPLAY_INFO_FIELD_NAMES = new String[]{
+            "displayInfo",
+            "mDisplayInfo",
+            "mTmpDisplayInfo",
+            "mLastDisplayInfo"
+    };
+    private static final String[] FRAME_DIRECT_FIELD_NAMES = new String[]{
+            "frame", "mFrame", "displayFrame"
+    };
+    private static final String[] FRAME_NESTED_FIELD_NAMES = new String[]{
+            "frames", "windowFrames", "clientWindowFrames", "outFrames", "result"
+    };
     private static final HookTarget[] HOOK_TARGETS = new HookTarget[]{
             new HookTarget("config-dispatch",
                     new String[]{
@@ -107,7 +162,10 @@ final class SystemServerDisplayEnvironmentInstaller {
                     return;
                 }
                 PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(
-                        () -> ConfigStoreFactory.createForXposedHost(xposed));
+                        new RefreshingConfigSnapshotProvider(
+                                () -> ConfigSnapshotLoader.fromStore(
+                                        ConfigStoreFactory.createForXposedHost(xposed)),
+                                ConfigSnapshotRefreshPolicy.SYSTEM_SERVER_TTL_MILLIS));
                 Set<String> configuredPackages = source.getConfiguredPackages();
                 int installedCount = 0;
                 int missingCount = 0;
@@ -854,7 +912,7 @@ final class SystemServerDisplayEnvironmentInstaller {
         }
         String fallbackPackage = null;
         for (String packageName : source.getConfiguredPackages()) {
-            if (resolvePackageUid(packageName) != callingUid) {
+            if (PACKAGE_UID_RESOLVER.resolve(packageName, callingUid) != callingUid) {
                 continue;
             }
             if (selectConfigForSystemServer(source.get(packageName)) != null) {
@@ -863,41 +921,6 @@ final class SystemServerDisplayEnvironmentInstaller {
             fallbackPackage = packageName;
         }
         return fallbackPackage;
-    }
-
-    private static int resolvePackageUid(String packageName) {
-        try {
-            Object packageManager = Class.forName("android.app.AppGlobals")
-                    .getMethod("getPackageManager")
-                    .invoke(null);
-            if (packageManager != null) {
-                Object uid = packageManager.getClass()
-                        .getMethod("getPackageUid", String.class, long.class, int.class)
-                        .invoke(packageManager, packageName, 0L, 0);
-                if (uid instanceof Integer integerUid) {
-                    return integerUid;
-                }
-            }
-        } catch (Throwable throwable) {
-            try {
-                Object activityThread = Class.forName("android.app.ActivityThread")
-                        .getMethod("currentActivityThread")
-                        .invoke(null);
-                if (activityThread == null) {
-                    return -1;
-                }
-                Object context = activityThread.getClass()
-                        .getMethod("getSystemContext")
-                        .invoke(activityThread);
-                if (!(context instanceof android.content.Context androidContext)) {
-                    return -1;
-                }
-                return androidContext.getPackageManager().getPackageUid(packageName, 0);
-            } catch (Throwable ignored) {
-                return -1;
-            }
-        }
-        return -1;
     }
 
     private static PerAppDisplayEnvironment resolveDisplayInfoEnvironment(Object displayInfo,
@@ -1125,50 +1148,26 @@ final class SystemServerDisplayEnvironmentInstaller {
         if (target instanceof String value && isLikelyPackageName(value)) {
             return value;
         }
-        for (String methodName : new String[]{
-                "getOwningPackage",
-                "getPackageName",
-                "getPackage",
-                "getOpPackageName"}) {
+        for (String methodName : PACKAGE_STRING_METHOD_NAMES) {
             String fromMethod = invokeStringMethod(target, methodName);
             if (fromMethod != null) {
                 return fromMethod;
             }
         }
-        for (String methodName : new String[]{
-                "getIntent",
-                "getComponent",
-                "getActivityInfo",
-                "getApplicationInfo",
-                "getRequest",
-                "getTargetActivity",
-                "getOrigActivity",
-                "getRealActivity"}) {
+        for (String methodName : PACKAGE_OBJECT_METHOD_NAMES) {
             Object value = invokeObjectMethod(target, methodName);
             String nestedPackage = findPackageNameRecursive(value, depth + 1);
             if (nestedPackage != null) {
                 return nestedPackage;
             }
         }
-        for (String fieldName : new String[]{
-                "packageName", "mPackageName", "package", "launchedFromPackage"}) {
+        for (String fieldName : PACKAGE_STRING_FIELD_NAMES) {
             Object value = readField(target, fieldName);
             if (value instanceof String stringValue && isLikelyPackageName(stringValue)) {
                 return stringValue;
             }
         }
-        for (String fieldName : new String[]{
-                "intent",
-                "mIntent",
-                "component",
-                "mComponent",
-                "activityInfo",
-                "applicationInfo",
-                "request",
-                "mRequest",
-                "targetActivity",
-                "origActivity",
-                "realActivity"}) {
+        for (String fieldName : PACKAGE_OBJECT_FIELD_NAMES) {
             String nestedPackage = findPackageNameRecursive(readField(target, fieldName), depth + 1);
             if (nestedPackage != null) {
                 return nestedPackage;
@@ -1220,12 +1219,7 @@ final class SystemServerDisplayEnvironmentInstaller {
         if (target instanceof Configuration configuration) {
             return configuration;
         }
-        for (String fieldName : new String[]{
-                "mergedConfiguration",
-                "mLastReportedConfiguration",
-                "mTmpConfig",
-                "configuration",
-                "mConfiguration"}) {
+        for (String fieldName : CONFIGURATION_FIELD_NAMES) {
             Object value = readField(target, fieldName);
             if (value instanceof Configuration configuration) {
                 return configuration;
@@ -1299,11 +1293,7 @@ final class SystemServerDisplayEnvironmentInstaller {
         if ("android.view.DisplayInfo".equals(target.getClass().getName())) {
             return target;
         }
-        for (String fieldName : new String[]{
-                "displayInfo",
-                "mDisplayInfo",
-                "mTmpDisplayInfo",
-                "mLastDisplayInfo"}) {
+        for (String fieldName : DISPLAY_INFO_FIELD_NAMES) {
             Object value = readField(target, fieldName);
             if (value != null && "android.view.DisplayInfo".equals(value.getClass().getName())) {
                 return value;
@@ -1345,13 +1335,13 @@ final class SystemServerDisplayEnvironmentInstaller {
         if (target instanceof Rect rect) {
             return rect;
         }
-        for (String fieldName : new String[]{"frame", "mFrame", "displayFrame"}) {
+        for (String fieldName : FRAME_DIRECT_FIELD_NAMES) {
             Object value = readField(target, fieldName);
             if (value instanceof Rect rect) {
                 return rect;
             }
         }
-        for (String fieldName : new String[]{"frames", "windowFrames", "clientWindowFrames", "outFrames", "result"}) {
+        for (String fieldName : FRAME_NESTED_FIELD_NAMES) {
             Object nested = readField(target, fieldName);
             Rect rect = findFrameRecursive(nested, depth + 1);
             if (rect != null) {
@@ -1381,7 +1371,10 @@ final class SystemServerDisplayEnvironmentInstaller {
 
     private static String invokeStringMethod(Object target, String methodName) {
         try {
-            Method method = target.getClass().getMethod(methodName);
+            Method method = REFLECTION_CACHE.findNoArgMethod(target.getClass(), methodName);
+            if (method == null) {
+                return null;
+            }
             Object value = method.invoke(target);
             return value instanceof String stringValue ? stringValue : null;
         } catch (ReflectiveOperationException ignored) {
@@ -1391,7 +1384,10 @@ final class SystemServerDisplayEnvironmentInstaller {
 
     private static Configuration invokeConfigurationMethod(Object target, String methodName) {
         try {
-            Method method = target.getClass().getMethod(methodName);
+            Method method = REFLECTION_CACHE.findNoArgMethod(target.getClass(), methodName);
+            if (method == null) {
+                return null;
+            }
             Object value = method.invoke(target);
             return value instanceof Configuration configuration ? configuration : null;
         } catch (ReflectiveOperationException ignored) {
@@ -1401,7 +1397,10 @@ final class SystemServerDisplayEnvironmentInstaller {
 
     private static Object invokeObjectMethod(Object target, String methodName) {
         try {
-            Method method = target.getClass().getMethod(methodName);
+            Method method = REFLECTION_CACHE.findNoArgMethod(target.getClass(), methodName);
+            if (method == null) {
+                return null;
+            }
             return method.invoke(target);
         } catch (ReflectiveOperationException ignored) {
             return null;
@@ -1412,7 +1411,7 @@ final class SystemServerDisplayEnvironmentInstaller {
         if (target == null) {
             return null;
         }
-        Field field = resolveField(target.getClass(), fieldName);
+        Field field = REFLECTION_CACHE.findField(target.getClass(), fieldName);
         if (field == null) {
             return null;
         }
@@ -1425,16 +1424,7 @@ final class SystemServerDisplayEnvironmentInstaller {
     }
 
     private static List<Field> getAllFields(Class<?> clazz) {
-        List<Field> fields = new ArrayList<>();
-        Class<?> current = clazz;
-        while (current != null) {
-            Field[] declared = current.getDeclaredFields();
-            for (Field field : declared) {
-                fields.add(field);
-            }
-            current = current.getSuperclass();
-        }
-        return fields;
+        return REFLECTION_CACHE.getAllFields(clazz);
     }
 
     private static String extractPackageFromText(String value) {
@@ -1605,15 +1595,7 @@ final class SystemServerDisplayEnvironmentInstaller {
     }
 
     private static Field resolveField(Class<?> clazz, String fieldName) {
-        Class<?> current = clazz;
-        while (current != null) {
-            try {
-                return current.getDeclaredField(fieldName);
-            } catch (NoSuchFieldException ignored) {
-                current = current.getSuperclass();
-            }
-        }
-        return null;
+        return REFLECTION_CACHE.findField(clazz, fieldName);
     }
 
     private static int safeInt(Integer value) {

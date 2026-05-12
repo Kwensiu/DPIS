@@ -9,21 +9,53 @@ final class TargetViewportWidthResolver {
             return null;
         }
         Integer runtimeOverride = ViewportPropertyBridge.readTargetWidthDp(packageName);
+        return resolve(store, packageName, runtimeOverride);
+    }
+
+    static Integer resolveForTest(DpiConfigStore store, String packageName, Integer runtimeOverride) {
+        return resolve(store, packageName, runtimeOverride);
+    }
+
+    static Integer resolve(Integer targetViewportWidthDp,
+                           String requestedMode,
+                           boolean systemServerHooksEnabled,
+                           Integer runtimeOverride) {
         if (runtimeOverride != null) {
-            return runtimeOverride > 0 ? runtimeOverride : null;
+            if (runtimeOverride > 0) {
+                return runtimeOverride;
+            }
+            if (!ViewportApplyMode.FIELD_REWRITE.equals(
+                    ViewportApplyMode.normalize(requestedMode))) {
+                return null;
+            }
         }
-        String requestedMode = store.getTargetViewportApplyMode(packageName);
         String mode = EffectiveModeResolver.resolveViewportMode(
                 requestedMode,
-                store.isSystemServerHooksEnabled());
+                systemServerHooksEnabled);
         if (ViewportApplyMode.SYSTEM_EMULATION.equals(ViewportApplyMode.normalize(requestedMode))
                 && ViewportApplyMode.OFF.equals(mode)) {
             return null;
         }
-        Integer targetViewportWidthDp = store.getTargetViewportWidthDp(packageName);
         if (targetViewportWidthDp == null || targetViewportWidthDp <= 0) {
             return null;
         }
         return targetViewportWidthDp;
+    }
+
+    private static Integer resolve(DpiConfigStore store, String packageName, Integer runtimeOverride) {
+        if (runtimeOverride != null) {
+            if (runtimeOverride > 0) {
+                return runtimeOverride;
+            }
+            if (!ViewportApplyMode.FIELD_REWRITE.equals(
+                    ViewportApplyMode.normalize(store.getTargetViewportApplyMode(packageName)))) {
+                return null;
+            }
+        }
+        return resolve(
+                store.getTargetViewportWidthDp(packageName),
+                store.getTargetViewportApplyMode(packageName),
+                store.isSystemServerHooksEnabled(),
+                runtimeOverride);
     }
 }

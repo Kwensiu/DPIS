@@ -22,6 +22,16 @@ final class HookRuntimePolicy {
                 store.isGlobalLogEnabled());
     }
 
+    static HookRuntimePolicy fromSnapshot(ConfigSnapshot snapshot) {
+        if (snapshot == null) {
+            return new HookRuntimePolicy(true, true, false);
+        }
+        return new HookRuntimePolicy(
+                snapshot.isSystemServerHooksEnabled(),
+                snapshot.isSystemServerSafeModeEnabled(),
+                snapshot.isGlobalLogEnabled());
+    }
+
     static HookRuntimePolicy fromNullableStore(DpiConfigStore store) {
         if (store == null) {
             return new HookRuntimePolicy(true, true, false);

@@ -390,7 +390,7 @@ public class DpiConfigStoreTest {
     }
 
     @Test
-    public void doesNotFallbackToBackupPackageSetWhenPrimaryExplicitlyEmpty() {
+    public void primaryPackageSetShadowsBackupWhenExplicitlyEmpty() {
         FakePrefs remotePrefs = new FakePrefs();
         remotePrefs.edit()
                 .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES, new LinkedHashSet<>())
@@ -402,7 +402,40 @@ public class DpiConfigStoreTest {
                 .commit();
         DpiConfigStore store = new DpiConfigStore(remotePrefs, localPrefs);
 
-        assertTrue(store.getConfiguredPackages().isEmpty());
+        assertFalse(store.getConfiguredPackages().contains("com.max.xiaoheihe"));
+    }
+
+    @Test
+    public void primaryPackageSetDoesNotUnionStaleBackupPackages() {
+        FakePrefs remotePrefs = new FakePrefs();
+        remotePrefs.edit()
+                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
+                        new LinkedHashSet<>(Set.of("com.example.current")))
+                .commit();
+        FakePrefs localPrefs = new FakePrefs();
+        localPrefs.edit()
+                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
+                        new LinkedHashSet<>(Set.of("com.example.stale")))
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(remotePrefs, localPrefs);
+
+        assertTrue(store.getConfiguredPackages().contains("com.example.current"));
+        assertFalse(store.getConfiguredPackages().contains("com.example.stale"));
+    }
+
+    @Test
+    public void startupDisclaimerAcceptedFallsBackToBackupTrue() {
+        FakePrefs remotePrefs = new FakePrefs();
+        remotePrefs.edit()
+                .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, false)
+                .commit();
+        FakePrefs localPrefs = new FakePrefs();
+        localPrefs.edit()
+                .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(remotePrefs, localPrefs);
+
+        assertTrue(store.isStartupDisclaimerAccepted());
     }
 
     @Test

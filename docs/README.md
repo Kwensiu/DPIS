@@ -6,6 +6,8 @@
 
 - [project-visual-map-2026-04-19.md](./project-visual-map-2026-04-19.md)
   - 项目可视化展开图，按入口、职责、链路和修改落点快速理解 DPIS。
+- [compat100-runtime-resync.md](./compat100-runtime-resync.md)
+  - compat100 持久配置与运行态镜像重放说明，记录 100 版本的恢复边界和验证路径。
 - [final-validation-checklist-2026-04-17.md](./final-validation-checklist-2026-04-17.md)
   - 最终构建、测试、设备回归验收清单。
 - [superpowers/plans/2026-04-18-font-hook-code-cleanup.md](./superpowers/plans/2026-04-18-font-hook-code-cleanup.md)

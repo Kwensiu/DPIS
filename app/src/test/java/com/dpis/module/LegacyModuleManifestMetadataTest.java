@@ -188,14 +188,16 @@ public final class LegacyModuleManifestMetadataTest {
     @Test
     public void manifestSyncsCompatPropertiesAfterBoot() throws IOException {
         String manifest = readProjectFile("src/main/AndroidManifest.xml");
+        String app = readProjectFile("src/main/java/com/dpis/module/DpisApplication.java");
         String receiver = readProjectFile(
                 "src/main/java/com/dpis/module/DpisPackageLifecycleReceiver.java");
 
         assertTrue(manifest.contains("android.permission.RECEIVE_BOOT_COMPLETED"));
         assertTrue(manifest.contains("android.intent.action.BOOT_COMPLETED"));
         assertTrue(receiver.contains("Intent.ACTION_BOOT_COMPLETED"));
-        assertTrue(receiver.contains("ViewportPropertySyncer.syncConfiguredTargetsAsync(store)"));
-        assertTrue(receiver.contains("HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(store)"));
+        assertTrue(receiver.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(store)"));
+        assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)"));
+        assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(remoteStore)"));
     }
 
     private static String readProjectFile(String relativePath) throws IOException {

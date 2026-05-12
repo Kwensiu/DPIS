@@ -328,8 +328,8 @@ public class MainActivitySourceSmokeTest {
     public void applicationSyncsHyperOsNativeFontTargetsOnStartup() throws IOException {
         String source = read("src/main/java/com/dpis/module/DpisApplication.java");
 
-        assertTrue(source.contains("HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(configStore)"));
-        assertTrue(source.contains("HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(remoteStore)"));
+        assertTrue(source.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)"));
+        assertTrue(source.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(remoteStore)"));
         assertTrue(!source
                 .contains("HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(this, configStore)"));
         assertTrue(!source
@@ -347,6 +347,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(receiver.contains("HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(context)"));
         assertTrue(!receiver
                 .contains("HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(context, store)"));
+        assertTrue(receiver.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(store)"));
     }
 
     private static String read(String relativePath) throws IOException {
