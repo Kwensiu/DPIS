@@ -9,8 +9,10 @@ import java.util.Map;
 import java.util.Set;
 
 final class SystemPropertyConfigPreferences implements SharedPreferences {
+    private static final long SNAPSHOT_TTL_MILLIS = 2_000L;
     private final String packageName;
     private volatile Map<String, Object> cachedSnapshot;
+    private volatile long cachedAtMillis;
 
     SystemPropertyConfigPreferences(String packageName) {
         this.packageName = packageName;
@@ -19,25 +21,41 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
     @Override
     public Map<String, ?> getAll() {
         Map<String, Object> snapshot = cachedSnapshot;
-        if (snapshot != null) {
+        long now = System.currentTimeMillis();
+        if (snapshot != null && (now - cachedAtMillis) < SNAPSHOT_TTL_MILLIS) {
             return snapshot;
         }
+        // Compat100 publishes the current per-app values through system properties so
+        // legacy app processes do not need to read DPIS private files from hook hot paths.
         LinkedHashMap<String, Object> values = new LinkedHashMap<>();
-        Integer widthDp = ViewportPropertyBridge.readTargetWidthDp(packageName);
+        Integer widthDp = ViewportPropertyBridge.readCompatConfigWidthDp(packageName);
+        String viewportMode = ViewportPropertyBridge.readCompatMode(packageName);
+        if (widthDp == null || widthDp <= 0 || !ViewportApplyMode.isEnabled(viewportMode)) {
+            widthDp = ViewportPropertyBridge.readTargetWidthDp(packageName);
+            viewportMode = ViewportApplyMode.SYSTEM_EMULATION;
+        }
         Integer fontScalePercent = HyperOsFlutterFontBridge.readCompatFontScalePercent(packageName);
+        String fontMode = HyperOsFlutterFontBridge.readCompatFontMode(packageName);
+        Integer forceFontScalePercent = null;
+        if (fontScalePercent == null || fontScalePercent <= 0) {
+            forceFontScalePercent = HyperOsFlutterFontBridge.readForceFontScalePercent(packageName);
+            fontScalePercent = forceFontScalePercent;
+        }
+        fontMode = resolveCompatFontMode(fontScalePercent, fontMode, forceFontScalePercent);
         if (widthDp != null && widthDp > 0) {
             values.put(viewportWidthKey(), widthDp);
-            values.put(viewportModeKey(), ViewportApplyMode.SYSTEM_EMULATION);
+            values.put(viewportModeKey(), viewportMode);
         }
         if (fontScalePercent != null && fontScalePercent > 0) {
             values.put(fontScaleKey(), fontScalePercent);
-            values.put(fontModeKey(), FontApplyMode.SYSTEM_EMULATION);
+            values.put(fontModeKey(), FontApplyMode.normalize(fontMode));
         }
         if (!values.isEmpty()) {
             values.put(DpiConfigStore.KEY_TARGET_PACKAGES,
                     new LinkedHashSet<>(Collections.singleton(packageName)));
         }
         cachedSnapshot = Collections.unmodifiableMap(values);
+        cachedAtMillis = now;
         return cachedSnapshot;
     }
 
@@ -94,6 +112,27 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
 
     @Override
     public void unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
+    }
+
+    static String resolveCompatFontModeForTest(Integer compatFontScalePercent,
+                                               String rawMode,
+                                               Integer forceFontScalePercent) {
+        return resolveCompatFontMode(compatFontScalePercent, rawMode, forceFontScalePercent);
+    }
+
+    private static String resolveCompatFontMode(Integer fontScalePercent,
+                                                String rawMode,
+                                                Integer forceFontScalePercent) {
+        String mode = FontApplyMode.normalize(rawMode);
+        if (FontApplyMode.isEnabled(mode)) {
+            return mode;
+        }
+        if (fontScalePercent == null || fontScalePercent <= 0) {
+            return FontApplyMode.OFF;
+        }
+        return forceFontScalePercent != null && forceFontScalePercent > 0
+                ? FontApplyMode.FIELD_REWRITE
+                : FontApplyMode.SYSTEM_EMULATION;
     }
 
     private String viewportWidthKey() {

@@ -7,6 +7,8 @@ import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.service.XposedService;
 
 final class ConfigStoreFactory {
+    private static final long COMPAT100_SYSTEM_SERVER_RELOAD_INTERVAL_MS = 2_000L;
+
     private ConfigStoreFactory() {
     }
 
@@ -51,12 +53,22 @@ final class ConfigStoreFactory {
                 new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpiConfigStore.GROUP));
     }
 
+    static DpiConfigStore createForCompat100SystemServerHost() {
+        return new DpiConfigStore(new XSharedPreferencesAdapter(
+                BuildConfig.APPLICATION_ID,
+                DpiConfigStore.GROUP,
+                COMPAT100_SYSTEM_SERVER_RELOAD_INTERVAL_MS));
+    }
+
     static DpiConfigStore createForCompat100Host(String packageName) {
         SharedPreferences xSharedPreferences =
                 new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpiConfigStore.GROUP);
         if (packageName == null || packageName.isBlank()) {
             return new DpiConfigStore(xSharedPreferences);
         }
+        // API100 has no libxposed remote preferences service. Runtime app-process hooks
+        // read the per-package system-property bridge first, with XSharedPreferences kept
+        // only as a startup fallback for older or unsynced configuration.
         return new DpiConfigStore(
                 new SystemPropertyConfigPreferences(packageName),
                 xSharedPreferences);

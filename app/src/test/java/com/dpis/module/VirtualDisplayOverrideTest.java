@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 import static org.junit.Assert.assertEquals;
 
@@ -15,12 +16,14 @@ public class VirtualDisplayOverrideTest {
     @Before
     public void setUp() {
         setTargetPackageName("com.max.xiaoheihe");
+        setCurrentPackageResolver();
     }
 
     @After
     public void tearDown() {
         VirtualDisplayState.set(null);
         setTargetPackageName(null);
+        clearCurrentPackageResolver();
     }
 
     @Test
@@ -85,6 +88,40 @@ public class VirtualDisplayOverrideTest {
             Field field = DisplayHookInstaller.class.getDeclaredField("targetPackageName");
             field.setAccessible(true);
             field.set(null, packageName);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private static String testCurrentPackageName() {
+        return "com.max.xiaoheihe";
+    }
+
+    private static void setCurrentPackageResolver() {
+        try {
+            Method method = VirtualDisplayOverrideTest.class.getDeclaredMethod("testCurrentPackageName");
+            method.setAccessible(true);
+            Field resolverField = DisplayHookInstaller.class.getDeclaredField("currentPackageNameMethod");
+            resolverField.setAccessible(true);
+            resolverField.set(null, method);
+            Field unavailableField =
+                    DisplayHookInstaller.class.getDeclaredField("currentPackageNameUnavailable");
+            unavailableField.setAccessible(true);
+            unavailableField.setBoolean(null, false);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private static void clearCurrentPackageResolver() {
+        try {
+            Field resolverField = DisplayHookInstaller.class.getDeclaredField("currentPackageNameMethod");
+            resolverField.setAccessible(true);
+            resolverField.set(null, null);
+            Field unavailableField =
+                    DisplayHookInstaller.class.getDeclaredField("currentPackageNameUnavailable");
+            unavailableField.setAccessible(true);
+            unavailableField.setBoolean(null, false);
         } catch (ReflectiveOperationException e) {
             throw new AssertionError(e);
         }

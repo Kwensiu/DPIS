@@ -1,13 +1,21 @@
 package com.dpis.module;
 
 import android.content.res.Configuration;
+import android.content.res.Resources;
+import android.graphics.Paint;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.ConcurrentHashMap;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
@@ -18,24 +26,61 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage {
     private static final AtomicBoolean RESOURCES_IMPL_HOOKED = new AtomicBoolean(false);
     private static final AtomicBoolean RESOURCES_MANAGER_HOOKED = new AtomicBoolean(false);
+    private static final AtomicBoolean RESOURCES_READ_HOOKED = new AtomicBoolean(false);
+    private static final AtomicBoolean DISPLAY_HOOKED = new AtomicBoolean(false);
+    private static final AtomicBoolean WINDOW_METRICS_HOOKED = new AtomicBoolean(false);
+    private static final AtomicBoolean FONT_FIELD_REWRITE_HOOKED = new AtomicBoolean(false);
+    private static final ThreadLocal<Boolean> FONT_TEXTVIEW_UPDATE =
+            ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private static final ThreadLocal<Boolean> RESOURCES_READ_INTERNAL_UPDATE =
+            ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private static final AtomicReference<Method> CURRENT_PACKAGE_METHOD = new AtomicReference<>();
+    private static final Map<String, DpiConfigStore> COMPAT100_HOST_STORE_CACHE =
+            new ConcurrentHashMap<>();
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
         String packageName = lpparam.packageName;
-        compatLog("compat100 legacy handleLoadPackage: package=" + packageName
-                + ", process=" + lpparam.processName);
+        if (SystemServerProcess.isSystemServer(lpparam.processName, packageName)) {
+            DpisLog.setLoggingEnabled(ConfigStoreFactory.createForCompat100Host().isGlobalLogEnabled());
+            compatDebugLog("compat100 legacy handleLoadPackage: package=" + packageName
+                    + ", process=" + lpparam.processName);
+            installSystemServerHooksForCompat100();
+            return;
+        }
         DpiConfigStore store = ConfigStoreFactory.createForCompat100Host(packageName);
+        DpisLog.setLoggingEnabled(store.isGlobalLogEnabled());
+        compatDebugLog("compat100 legacy handleLoadPackage: package=" + packageName
+                + ", process=" + lpparam.processName);
         ModulePackagePlan plan = ModulePackagePlan.resolve(store, packageName);
         if (!plan.shouldInstallCompat100LegacyHooks()) {
-            compatLog("compat100 legacy package skipped: package=" + packageName
+            compatDebugLog("compat100 legacy package skipped: package=" + packageName
                     + ", configuredPackages=" + store.getConfiguredPackages());
             return;
         }
-        compatLog("compat100 legacy package matched: package=" + packageName
+        compatDebugLog("compat100 legacy package matched: package=" + packageName
                 + ", targetViewportWidthDp=" + plan.targetViewportWidthDp
                 + ", targetFontScalePercent=" + plan.targetFontScalePercent);
         installResourcesImplHook(packageName, store);
         installResourcesManagerHook(packageName, store);
+        installResourcesReadHooks(packageName, store);
+        if (plan.viewportEnabled) {
+            installDisplayHooks(packageName);
+            installWindowMetricsHook();
+        }
+        if (FontApplyMode.FIELD_REWRITE.equals(FontApplyMode.normalize(plan.targetFontMode))) {
+            installFontFieldRewriteHooks(packageName, store);
+        }
+    }
+
+    private static void installSystemServerHooksForCompat100() {
+        try {
+            Compat100SystemServerHookInstaller.install();
+            compatDebugLog("compat100 legacy system_server hooks ready");
+        } catch (Throwable throwable) {
+            compatErrorLog("compat100 legacy system_server hooks failed: "
+                    + throwable.getClass().getName() + ": " + throwable.getMessage());
+        }
     }
 
     private static void installResourcesImplHook(String packageName, DpiConfigStore store) {
@@ -63,10 +108,10 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage {
                             store);
                 }
             });
-            compatLog("compat100 legacy ResourcesImpl hook ready");
+            compatDebugLog("compat100 legacy ResourcesImpl hook ready");
         } catch (Throwable throwable) {
             RESOURCES_IMPL_HOOKED.set(false);
-            compatLog("compat100 legacy ResourcesImpl hook failed: "
+            compatErrorLog("compat100 legacy ResourcesImpl hook failed: "
                     + throwable.getClass().getName() + ": " + throwable.getMessage());
         }
     }
@@ -99,12 +144,12 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage {
                     resourcesManagerClass, packageName, store);
             int createHookCount = installResourceCreationHooks(
                     resourcesManagerClass, packageName, store);
-            compatLog("compat100 legacy ResourcesManager hook ready"
+            compatDebugLog("compat100 legacy ResourcesManager hook ready"
                     + " (activityHooks=" + activityHookCount
                     + ", createHooks=" + createHookCount + ")");
         } catch (Throwable throwable) {
             RESOURCES_MANAGER_HOOKED.set(false);
-            compatLog("compat100 legacy ResourcesManager hook failed: "
+            compatErrorLog("compat100 legacy ResourcesManager hook failed: "
                     + throwable.getClass().getName() + ": " + throwable.getMessage());
         }
     }
@@ -132,7 +177,7 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage {
             });
             return 1;
         } catch (Throwable throwable) {
-            compatLog("compat100 legacy ResourcesManager activity hook failed: "
+            compatErrorLog("compat100 legacy ResourcesManager activity hook failed: "
                     + throwable.getClass().getName() + ": " + throwable.getMessage());
             return 0;
         }
@@ -183,41 +228,315 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage {
                 || methodName.contains("createBaseTokenResources"));
     }
 
+    private static void installResourcesReadHooks(String packageName, DpiConfigStore store) {
+        if (!RESOURCES_READ_HOOKED.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
+            Class<?> resourcesClass = Class.forName(
+                    "android.content.res.Resources", false, bootClassLoader);
+
+            Method getConfigurationMethod = resourcesClass.getDeclaredMethod("getConfiguration");
+            XposedBridge.hookMethod(getConfigurationMethod, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    Object result = param.getResult();
+                    if (result instanceof Configuration configuration) {
+                        String activePackage = resolveActivePackageName(packageName);
+                        DpiConfigStore activeStore = resolveStoreForPackage(activePackage, store);
+                        ResourcesReadHookInstaller.applyConfigurationOverride(
+                                configuration, activePackage, activeStore,
+                                "Compat100ResourcesRead(getConfiguration)");
+                    }
+                }
+            });
+
+            Method getDisplayMetricsMethod = resourcesClass.getDeclaredMethod("getDisplayMetrics");
+            XposedBridge.hookMethod(getDisplayMetricsMethod, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    Object result = param.getResult();
+                    Object thisObject = param.thisObject;
+                    if (!(result instanceof DisplayMetrics metrics)
+                            || !(thisObject instanceof Resources resources)) {
+                        return;
+                    }
+                    if (Boolean.TRUE.equals(RESOURCES_READ_INTERNAL_UPDATE.get())) {
+                        return;
+                    }
+                    RESOURCES_READ_INTERNAL_UPDATE.set(Boolean.TRUE);
+                    try {
+                        Configuration config = resources.getConfiguration();
+                        String activePackage = resolveActivePackageName(packageName);
+                        ResourcesReadHookInstaller.applyMetricsOverride(metrics, config, activePackage);
+                    } finally {
+                        RESOURCES_READ_INTERNAL_UPDATE.set(Boolean.FALSE);
+                    }
+                }
+            });
+
+            Method getSystemMethod = resourcesClass.getDeclaredMethod("getSystem");
+            XposedBridge.hookMethod(getSystemMethod, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    Object result = param.getResult();
+                    if (!(result instanceof Resources resources)) {
+                        return;
+                    }
+                    RESOURCES_READ_INTERNAL_UPDATE.set(Boolean.TRUE);
+                    try {
+                        Configuration config = resources.getConfiguration();
+                        String activePackage = resolveActivePackageName(packageName);
+                        DpiConfigStore activeStore = resolveStoreForPackage(activePackage, store);
+                        ResourcesReadHookInstaller.applyConfigurationOverride(
+                                config, activePackage, activeStore,
+                                "Compat100ResourcesRead(getSystem)");
+                        ResourcesReadHookInstaller.applyMetricsOverride(
+                                resources.getDisplayMetrics(), config, activePackage);
+                    } finally {
+                        RESOURCES_READ_INTERNAL_UPDATE.set(Boolean.FALSE);
+                    }
+                }
+            });
+
+            compatDebugLog("compat100 legacy Resources read hook ready");
+        } catch (Throwable throwable) {
+            RESOURCES_READ_HOOKED.set(false);
+            compatErrorLog("compat100 legacy Resources read hook failed: "
+                    + throwable.getClass().getName() + ": " + throwable.getMessage());
+        }
+    }
+
+    private static void installDisplayHooks(String packageName) {
+        DisplayHookInstaller.setTargetPackageNameForCompat100(packageName);
+        if (!DISPLAY_HOOKED.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
+            Class<?> displayClass = Class.forName("android.view.Display", false, bootClassLoader);
+            hookDisplayMetricsMethod(displayClass, "getMetrics");
+            hookDisplayMetricsMethod(displayClass, "getRealMetrics");
+            hookDisplayPointMethod(displayClass, "getSize");
+            hookDisplayPointMethod(displayClass, "getRealSize");
+            hookDisplayInfoMethod(displayClass, bootClassLoader);
+            compatDebugLog("compat100 legacy Display hooks ready for " + packageName);
+        } catch (Throwable throwable) {
+            DISPLAY_HOOKED.set(false);
+            compatErrorLog("compat100 legacy Display hooks failed: "
+                    + throwable.getClass().getName() + ": " + throwable.getMessage());
+        }
+    }
+
+    private static void hookDisplayMetricsMethod(Class<?> displayClass, String methodName)
+            throws ReflectiveOperationException {
+        Method method = displayClass.getDeclaredMethod(methodName, DisplayMetrics.class);
+        XposedBridge.hookMethod(method, new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) {
+                DisplayHookInstaller.applyDisplayMetrics((DisplayMetrics) param.args[0], methodName);
+            }
+        });
+    }
+
+    private static void hookDisplayPointMethod(Class<?> displayClass, String methodName)
+            throws ReflectiveOperationException {
+        Method method = displayClass.getDeclaredMethod(methodName, Point.class);
+        XposedBridge.hookMethod(method, new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) {
+                DisplayHookInstaller.applyPoint((Point) param.args[0], methodName);
+            }
+        });
+    }
+
+    private static void hookDisplayInfoMethod(Class<?> displayClass, ClassLoader bootClassLoader) {
+        try {
+            Class<?> displayInfoClass = Class.forName("android.view.DisplayInfo", false, bootClassLoader);
+            Method method = displayClass.getDeclaredMethod("getDisplayInfo", displayInfoClass);
+            XposedBridge.hookMethod(method, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    DisplayHookInstaller.applyDisplayInfo(param.args[0], "getDisplayInfo");
+                }
+            });
+        } catch (Throwable ignored) {
+            compatDebugLog("compat100 legacy Display getDisplayInfo hook skipped");
+        }
+    }
+
+    private static void installWindowMetricsHook() {
+        if (!WINDOW_METRICS_HOOKED.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
+            Class<?> windowMetricsClass = Class.forName(
+                    "android.view.WindowMetrics", false, bootClassLoader);
+            Method method = windowMetricsClass.getDeclaredMethod("getBounds");
+            XposedBridge.hookMethod(method, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    Object result = param.getResult();
+                    if (!(result instanceof Rect rect) || !WindowFrameOverride.isEnabled()) {
+                        return;
+                    }
+                    VirtualDisplayOverride.Result override = VirtualDisplayState.get();
+                    if (override == null) {
+                        return;
+                    }
+                    Rect newRect = new Rect(rect.left, rect.top,
+                            rect.left + override.widthPx, rect.top + override.heightPx);
+                    param.setResult(newRect);
+                }
+            });
+            compatDebugLog("compat100 legacy WindowMetrics hook ready");
+        } catch (Throwable throwable) {
+            WINDOW_METRICS_HOOKED.set(false);
+            compatErrorLog("compat100 legacy WindowMetrics hook failed: "
+                    + throwable.getClass().getName() + ": " + throwable.getMessage());
+        }
+    }
+
+    private static void installFontFieldRewriteHooks(String packageName, DpiConfigStore store) {
+        if (!FONT_FIELD_REWRITE_HOOKED.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            float factor = PaintTextSizeFallbackHookInstaller.resolveFieldRewriteFactor(store, packageName);
+            if (factor <= 0f || factor == 1.0f) {
+                FONT_FIELD_REWRITE_HOOKED.set(false);
+                return;
+            }
+            ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
+            Class<?> textViewClass = Class.forName("android.widget.TextView", false, bootClassLoader);
+            Method setTextSizeWithUnit = textViewClass.getDeclaredMethod(
+                    "setTextSize", int.class, float.class);
+            XposedBridge.hookMethod(setTextSizeWithUnit, new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    if (Boolean.TRUE.equals(FONT_TEXTVIEW_UPDATE.get())) {
+                        return;
+                    }
+                    int unit = (Integer) param.args[0];
+                    if (shouldScaleTextUnit(unit)) {
+                        param.args[1] = ((Float) param.args[1]) * factor;
+                        FONT_TEXTVIEW_UPDATE.set(Boolean.TRUE);
+                    }
+                }
+
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    FONT_TEXTVIEW_UPDATE.set(Boolean.FALSE);
+                }
+            });
+            Method setTextSizeSp = textViewClass.getDeclaredMethod("setTextSize", float.class);
+            XposedBridge.hookMethod(setTextSizeSp, new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    param.args[0] = ((Float) param.args[0]) * factor;
+                    FONT_TEXTVIEW_UPDATE.set(Boolean.TRUE);
+                }
+
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    FONT_TEXTVIEW_UPDATE.set(Boolean.FALSE);
+                }
+            });
+            Method paintSetTextSize = Paint.class.getDeclaredMethod("setTextSize", float.class);
+            XposedBridge.hookMethod(paintSetTextSize, new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    if (Boolean.TRUE.equals(FONT_TEXTVIEW_UPDATE.get())) {
+                        return;
+                    }
+                    param.args[0] = ((Float) param.args[0]) * factor;
+                }
+            });
+            compatDebugLog("compat100 legacy font field rewrite hooks ready: factor=" + factor);
+        } catch (Throwable throwable) {
+            FONT_FIELD_REWRITE_HOOKED.set(false);
+            compatErrorLog("compat100 legacy font field rewrite hooks failed: "
+                    + throwable.getClass().getName() + ": " + throwable.getMessage());
+        }
+    }
+
+    private static boolean shouldScaleTextUnit(int unit) {
+        return unit == TypedValue.COMPLEX_UNIT_SP
+                || unit == TypedValue.COMPLEX_UNIT_PX
+                || unit == TypedValue.COMPLEX_UNIT_DIP
+                || unit == TypedValue.COMPLEX_UNIT_PT
+                || unit == TypedValue.COMPLEX_UNIT_IN
+                || unit == TypedValue.COMPLEX_UNIT_MM;
+    }
+
     private static void applyResourceOverrides(Configuration config,
                                                DpiConfigStore store,
                                                String packageName,
                                                String sourceTag) {
         try {
-            Method method = ResourcesManagerHookInstaller.class.getDeclaredMethod(
-                    "applyResourceOverrides",
-                    Configuration.class,
-                    DpiConfigStore.class,
-                    String.class,
-                    String.class);
-            method.setAccessible(true);
-            method.invoke(null, config, store, packageName, sourceTag);
-            if (config != null && store.getConfiguredPackages().contains(packageName)) {
-                compatLog("compat100 legacy resource override applied: package="
-                        + packageName + ", source=" + sourceTag
-                        + ", widthDp=" + config.screenWidthDp
-                        + ", densityDpi=" + config.densityDpi
-                        + ", fontScale=" + config.fontScale);
-            }
+            ResourcesManagerHookInstaller.applyResourceOverrides(config, store, packageName, sourceTag);
         } catch (Throwable throwable) {
-            compatLog("compat100 legacy resource override failed: "
+            compatErrorLog("compat100 legacy resource override failed: "
                     + throwable.getClass().getName() + ": " + throwable.getMessage());
         }
     }
 
+    private static String resolveActivePackageName(String fallbackPackageName) {
+        try {
+            Method cached = CURRENT_PACKAGE_METHOD.get();
+            if (cached == null) {
+                Class<?> activityThreadClass = Class.forName("android.app.ActivityThread");
+                Method method = activityThreadClass.getDeclaredMethod("currentPackageName");
+                method.setAccessible(true);
+                if (!CURRENT_PACKAGE_METHOD.compareAndSet(null, method)) {
+                    method = CURRENT_PACKAGE_METHOD.get();
+                }
+                cached = method;
+            }
+            if (cached != null) {
+                Object value = cached.invoke(null);
+                if (value instanceof String packageName && !packageName.isBlank()) {
+                    return packageName;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return fallbackPackageName;
+    }
+
+    private static DpiConfigStore resolveStoreForPackage(String packageName, DpiConfigStore fallbackStore) {
+        if (packageName == null || packageName.isBlank()) {
+            return fallbackStore;
+        }
+        try {
+            return COMPAT100_HOST_STORE_CACHE.computeIfAbsent(
+                    packageName, ConfigStoreFactory::createForCompat100Host);
+        } catch (Throwable ignored) {
+            return fallbackStore;
+        }
+    }
+
     private static void compatLog(String message) {
+        DpisLog.i(message);
+    }
+
+    private static void compatDebugLog(String message) {
+        if (!DpisLog.isLoggingEnabled()) {
+            return;
+        }
+        compatLog(message);
+    }
+
+    private static void compatErrorLog(String message) {
         try {
             XposedBridge.log("DPIS " + message);
         } catch (Throwable ignored) {
         }
         try {
-            Log.i("DPIS", message);
+            Log.e(DpisLog.TAG, message);
         } catch (Throwable ignored) {
         }
-        DpisLog.i(message);
     }
 }

@@ -88,8 +88,7 @@ final class ModulePackagePlan {
         return targetDpisEnabled
                 && (viewportEnabled
                 || (fontScaleActive
-                && FontApplyMode.SYSTEM_EMULATION.equals(
-                        FontApplyMode.normalize(targetFontMode))));
+                && FontApplyMode.isEnabled(targetFontMode)));
     }
 
     private static ModulePackagePlan inactive(String packageName) {

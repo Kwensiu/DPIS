@@ -90,10 +90,10 @@ final class ResourcesReadHookInstaller {
         }
     }
 
-    private static void applyConfigurationOverride(Configuration config,
-                                                   String packageName,
-                                                   DpiConfigStore store,
-                                                   String sourceTag) {
+    static void applyConfigurationOverride(Configuration config,
+                                           String packageName,
+                                           DpiConfigStore store,
+                                           String sourceTag) {
         if (config == null) {
             return;
         }
@@ -156,9 +156,9 @@ final class ResourcesReadHookInstaller {
                         + ", fontScale " + fontScale.original + " -> " + config.fontScale);
     }
 
-    private static void applyMetricsOverride(DisplayMetrics metrics,
-                                             Configuration config,
-                                             String packageName) {
+    static void applyMetricsOverride(DisplayMetrics metrics,
+                                     Configuration config,
+                                     String packageName) {
         if (metrics == null || config == null) {
             return;
         }

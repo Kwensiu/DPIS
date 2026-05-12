@@ -47,10 +47,13 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(factory.contains("new SystemPropertyConfigPreferences(packageName)"));
         assertFalse(factory.contains("CompatConfigProviderPreferences"));
         assertTrue(prefs.contains("ViewportPropertyBridge.readTargetWidthDp(packageName)"));
-        assertFalse(prefs.contains("HyperOsFlutterFontBridge.readForceFontScalePercent(packageName)"));
+        assertTrue(prefs.contains("HyperOsFlutterFontBridge.readForceFontScalePercent(packageName)"));
         assertTrue(prefs.contains("HyperOsFlutterFontBridge.readCompatFontScalePercent(packageName)"));
+        assertTrue(prefs.contains("ViewportPropertyBridge.readCompatConfigWidthDp(packageName)"));
+        assertTrue(prefs.contains("HyperOsFlutterFontBridge.readCompatFontMode(packageName)"));
         assertTrue(app.contains("ViewportPropertySyncer.syncConfiguredTargetsAsync(configStore)"));
         assertTrue(app.contains("CompatFontPropertySyncer.syncConfiguredTargetsAsync(configStore)"));
+        assertTrue(app.contains("DpiConfigStore localStore = ConfigStoreFactory.createForModuleApp(this);"));
         assertTrue(app.contains("ViewportPropertySyncer.syncConfiguredTargetsAsync(remoteStore)"));
         assertTrue(app.contains("CompatFontPropertySyncer.syncConfiguredTargetsAsync(remoteStore)"));
     }

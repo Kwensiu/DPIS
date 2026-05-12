@@ -119,8 +119,8 @@ final class ResourcesManagerHookInstaller {
                 || methodName.contains("createBaseTokenResources"));
     }
 
-    private static void applyResourceOverrides(Configuration config, DpiConfigStore store,
-                                               String packageName, String sourceTag) {
+    static void applyResourceOverrides(Configuration config, DpiConfigStore store,
+                                       String packageName, String sourceTag) {
         if (config == null) {
             return;
         }

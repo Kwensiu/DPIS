@@ -13,6 +13,8 @@ import io.github.libxposed.api.XposedInterface;
 final class DisplayHookInstaller {
     private static volatile boolean hookInstalled;
     private static volatile String targetPackageName;
+    private static volatile Method currentPackageNameMethod;
+    private static volatile boolean currentPackageNameUnavailable;
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
 
     private DisplayHookInstaller() {
@@ -37,6 +39,10 @@ final class DisplayHookInstaller {
             hookInstalled = true;
             DpisLog.i("Display hook ready");
         }
+    }
+
+    static void setTargetPackageNameForCompat100(String packageName) {
+        targetPackageName = packageName;
     }
 
     private static void hookDisplayMetricsMethod(XposedInterface xposed, Class<?> displayClass,
@@ -158,7 +164,17 @@ final class DisplayHookInstaller {
     }
 
     static boolean shouldApplyOverrideForPackage(String packageName) {
-        return packageName != null && !packageName.isBlank();
+        return shouldApplyOverrideForPackage(packageName, resolveCurrentPackageName());
+    }
+
+    static boolean shouldApplyOverrideForPackage(String packageName, String currentPackageName) {
+        if (packageName == null || packageName.isBlank()) {
+            return false;
+        }
+        if (currentPackageName == null || currentPackageName.isBlank()) {
+            return false;
+        }
+        return packageName.equals(currentPackageName);
     }
 
     private static boolean writeIntField(Object target, String fieldName, int value) {
@@ -180,6 +196,33 @@ final class DisplayHookInstaller {
         String previous = LAST_MESSAGES.put(key, message);
         if (!message.equals(previous)) {
             DpisLog.i(message);
+        }
+    }
+
+    private static String resolveCurrentPackageName() {
+        try {
+            Method method = currentPackageNameMethod;
+            if (method == null) {
+                if (currentPackageNameUnavailable) {
+                    return null;
+                }
+                synchronized (DisplayHookInstaller.class) {
+                    method = currentPackageNameMethod;
+                    if (method == null && !currentPackageNameUnavailable) {
+                        method = Class.forName("android.app.ActivityThread")
+                                .getDeclaredMethod("currentPackageName");
+                        currentPackageNameMethod = method;
+                    }
+                }
+            }
+            if (method == null) {
+                return null;
+            }
+            Object value = method.invoke(null);
+            return value instanceof String ? (String) value : null;
+        } catch (Throwable ignored) {
+            currentPackageNameUnavailable = true;
+            return null;
         }
     }
 }

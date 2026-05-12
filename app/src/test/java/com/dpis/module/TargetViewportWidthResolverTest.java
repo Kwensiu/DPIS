@@ -31,4 +31,30 @@ public class TargetViewportWidthResolverTest {
 
         assertEquals(Integer.valueOf(360), value);
     }
+
+    @Test
+    public void explicitRuntimeClearDoesNotShadowReplaceModeStoreWidth() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setTargetViewportWidthDp("com.example.target", 360);
+        store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.FIELD_REWRITE);
+
+        Integer value = TargetViewportWidthResolver.resolveForTest(
+                store, "com.example.target", 0);
+
+        assertEquals(Integer.valueOf(360), value);
+    }
+
+    @Test
+    public void explicitRuntimeClearDisablesSystemEmulationStoreWidth() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setTargetViewportWidthDp("com.example.target", 360);
+        store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.SYSTEM_EMULATION);
+
+        Integer value = TargetViewportWidthResolver.resolveForTest(
+                store, "com.example.target", 0);
+
+        assertNull(value);
+    }
 }

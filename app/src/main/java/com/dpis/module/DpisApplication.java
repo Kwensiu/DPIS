@@ -39,9 +39,7 @@ public final class DpisApplication extends Application implements XposedServiceH
 
     @Override
     public void onServiceBind(XposedService service) {
-        DpiConfigStore localStore = configStore != null
-                ? configStore
-                : ConfigStoreFactory.createForModuleApp(this);
+        DpiConfigStore localStore = ConfigStoreFactory.createForModuleApp(this);
         DpiConfigStore remoteStore = ConfigStoreFactory.createForModuleApp(this, service);
         migrateConfig(localStore, remoteStore);
         configStore = remoteStore;
