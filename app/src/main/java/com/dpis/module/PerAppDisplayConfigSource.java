@@ -27,6 +27,8 @@ final class PerAppDisplayConfigSource {
         if (packageConfig == null || !packageConfig.dpisEnabled) {
             return null;
         }
+        // Runtime viewport properties are intentionally projected per package so
+        // app-process changes can apply without rebuilding all configured packages.
         Integer targetViewportWidthDp = TargetViewportWidthResolver.resolve(
                 packageConfig.targetViewportWidthDp,
                 packageConfig.targetViewportMode,

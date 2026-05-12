@@ -7,8 +7,6 @@ import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.service.XposedService;
 
 final class ConfigStoreFactory {
-    private static final long COMPAT100_SYSTEM_SERVER_RELOAD_INTERVAL_MS = 2_000L;
-
     private ConfigStoreFactory() {
     }
 
@@ -54,10 +52,8 @@ final class ConfigStoreFactory {
     }
 
     static DpiConfigStore createForCompat100SystemServerHost() {
-        return new DpiConfigStore(new XSharedPreferencesAdapter(
-                BuildConfig.APPLICATION_ID,
-                DpiConfigStore.GROUP,
-                COMPAT100_SYSTEM_SERVER_RELOAD_INTERVAL_MS));
+        // Long-lived system_server refresh is owned by RefreshingConfigSnapshotProvider.
+        return createForCompat100Host();
     }
 
     static DpiConfigStore createForCompat100Host(String packageName) {
