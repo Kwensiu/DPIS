@@ -16,7 +16,7 @@
 ## 重要说明
 
 - 历史模块目录曾包含 `legacysmoke`、`yukismoke`。
-- 当前测试仅保留 `legacysmoke` 的归档夹具，不再依赖 `yukismoke`。
+- 当前 compat100 入口已由主模块 flavor 覆盖，不再保留 standalone legacy smoke 夹具。
 
 ## 2026-04-17 归档
 
