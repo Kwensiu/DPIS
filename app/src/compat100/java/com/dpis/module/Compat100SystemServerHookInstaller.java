@@ -26,7 +26,8 @@ final class Compat100SystemServerHookInstaller {
             Class<?> launchActivityItemClass = Class.forName(
                     "android.app.servertransaction.LaunchActivityItem");
             PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(
-                    ConfigStoreFactory.createForCompat100SystemServerHost());
+                    () -> ConfigSnapshotLoader.fromStore(
+                            ConfigStoreFactory.createForCompat100SystemServerHost()));
             int hookedCount = 0;
             for (Constructor<?> constructor : launchActivityItemClass.getDeclaredConstructors()) {
                 XposedBridge.hookMethod(constructor, new XC_MethodHook() {

@@ -1,35 +1,39 @@
 package com.dpis.module;
 
-import java.util.Collections;
 import java.util.Set;
 
 final class PerAppDisplayConfigSource {
-    interface StoreProvider {
-        DpiConfigStore get();
+    interface SnapshotProvider {
+        ConfigSnapshot get();
     }
 
-    private final StoreProvider storeProvider;
+    private final SnapshotProvider snapshotProvider;
 
     PerAppDisplayConfigSource(DpiConfigStore store) {
-        this(() -> store);
+        this(ConfigSnapshotLoader.fromStore(store));
     }
 
-    PerAppDisplayConfigSource(StoreProvider storeProvider) {
-        this.storeProvider = storeProvider;
+    PerAppDisplayConfigSource(ConfigSnapshot snapshot) {
+        this(() -> snapshot);
+    }
+
+    PerAppDisplayConfigSource(SnapshotProvider snapshotProvider) {
+        this.snapshotProvider = snapshotProvider;
     }
 
     PerAppDisplayConfig get(String packageName) {
-        DpiConfigStore store = getStore();
-        if (store != null && !store.isTargetDpisEnabled(packageName)) {
+        ConfigSnapshot snapshot = getSnapshot();
+        PackageConfigSnapshot packageConfig = snapshot.getPackage(packageName);
+        if (packageConfig == null || !packageConfig.dpisEnabled) {
             return null;
         }
-        Integer targetViewportWidthDp = TargetViewportWidthResolver.resolve(store, packageName);
-        Integer targetFontScalePercent = store != null
-                ? store.getTargetFontScalePercent(packageName)
-                : null;
-        String targetFontMode = store != null
-                ? store.getTargetFontApplyMode(packageName)
-                : FontApplyMode.OFF;
+        Integer targetViewportWidthDp = TargetViewportWidthResolver.resolve(
+                packageConfig.targetViewportWidthDp,
+                packageConfig.targetViewportMode,
+                snapshot.isSystemServerHooksEnabled(),
+                ViewportPropertyBridge.readTargetWidthDp(packageName));
+        Integer targetFontScalePercent = packageConfig.targetFontScalePercent;
+        String targetFontMode = packageConfig.targetFontMode;
         boolean fontConfigured = FontApplyMode.isEnabled(targetFontMode)
                 && targetFontScalePercent != null;
         if (targetViewportWidthDp == null && !fontConfigured) {
@@ -37,24 +41,20 @@ final class PerAppDisplayConfigSource {
         }
         return new PerAppDisplayConfig(packageName, targetViewportWidthDp,
                 targetFontScalePercent, targetFontMode,
-                store != null && store.isHyperOsFlutterFontHookEnabled());
+                packageConfig.hyperOsFlutterFontHookEnabled);
     }
 
     Set<String> getConfiguredPackages() {
-        DpiConfigStore store = getStore();
-        if (store == null) {
-            return Collections.emptySet();
-        }
-        return store.getConfiguredPackages();
+        return getSnapshot().getConfiguredPackages();
     }
 
     boolean isSystemServerHooksEnabled() {
-        DpiConfigStore store = getStore();
-        return store == null || store.isSystemServerHooksEnabled();
+        return getSnapshot().isSystemServerHooksEnabled();
     }
 
-    private DpiConfigStore getStore() {
-        return storeProvider != null ? storeProvider.get() : null;
+    private ConfigSnapshot getSnapshot() {
+        ConfigSnapshot snapshot = snapshotProvider != null ? snapshotProvider.get() : null;
+        return snapshot != null ? snapshot : ConfigSnapshot.empty();
     }
 }
 

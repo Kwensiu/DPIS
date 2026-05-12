@@ -32,16 +32,17 @@ public final class ModuleMain extends XposedModule {
     @Override
     public void onPackageReady(PackageReadyParam param) {
         DpiConfigStore store = getOrCreateConfigStore();
-        HookRuntimePolicy policy = HookRuntimePolicy.fromStore(store);
+        ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(store);
+        HookRuntimePolicy policy = HookRuntimePolicy.fromSnapshot(snapshot);
         DpisLog.setLoggingEnabled(policy.globalLogEnabled);
         bridgeLog("package ready: process=" + currentProcessName
                 + ", package=" + param.getPackageName());
         SystemServerDisplayDiagnostics.flushPending();
         maybeInstallSystemServerFromPackageReady(store, policy, param.getPackageName());
         maybeLogFirstPackageReady(param.getPackageName());
-        ModulePackagePlan packagePlan = ModulePackagePlan.resolve(store, param.getPackageName());
+        ModulePackagePlan packagePlan = ModulePackagePlan.resolve(snapshot, param.getPackageName());
         String packageName = packagePlan.packageName;
-        if (!store.getConfiguredPackages().contains(packageName)) {
+        if (!snapshot.isConfigured(packageName)) {
             DpisLog.i("package not configured: package=" + packageName);
             return;
         }

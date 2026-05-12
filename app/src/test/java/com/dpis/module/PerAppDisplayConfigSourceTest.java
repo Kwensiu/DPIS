@@ -55,7 +55,8 @@ public class PerAppDisplayConfigSourceTest {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
         assertTrue(store.setTargetFontScalePercent("com.example.target", 300));
-        PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(() -> store);
+        PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(
+                () -> ConfigSnapshotLoader.fromStore(store));
         assertNotNull(source.get("com.example.target"));
 
         assertTrue(store.clearTargetPackageConfig("com.example.target"));

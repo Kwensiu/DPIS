@@ -107,7 +107,8 @@ final class SystemServerDisplayEnvironmentInstaller {
                     return;
                 }
                 PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(
-                        () -> ConfigStoreFactory.createForXposedHost(xposed));
+                        () -> ConfigSnapshotLoader.fromStore(
+                                ConfigStoreFactory.createForXposedHost(xposed)));
                 Set<String> configuredPackages = source.getConfiguredPackages();
                 int installedCount = 0;
                 int missingCount = 0;

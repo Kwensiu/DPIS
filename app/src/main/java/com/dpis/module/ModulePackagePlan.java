@@ -35,15 +35,23 @@ final class ModulePackagePlan {
     }
 
     static ModulePackagePlan resolve(DpiConfigStore store, String packageName) {
-        if (store == null || packageName == null || packageName.isBlank()
-                || !store.getConfiguredPackages().contains(packageName)) {
+        return resolve(ConfigSnapshotLoader.fromStore(store), packageName);
+    }
+
+    static ModulePackagePlan resolve(ConfigSnapshot snapshot, String packageName) {
+        if (snapshot == null || packageName == null || packageName.isBlank()
+                || !snapshot.isConfigured(packageName)) {
             return inactive(packageName);
         }
-        Integer targetViewportWidthDp = store.getTargetViewportWidthDp(packageName);
-        String targetViewportMode = store.getTargetViewportApplyMode(packageName);
-        Integer targetFontScalePercent = store.getTargetFontScalePercent(packageName);
-        String targetFontMode = store.getTargetFontApplyMode(packageName);
-        boolean targetDpisEnabled = store.isTargetDpisEnabled(packageName);
+        PackageConfigSnapshot packageConfig = snapshot.getPackage(packageName);
+        if (packageConfig == null) {
+            return inactive(packageName);
+        }
+        Integer targetViewportWidthDp = packageConfig.targetViewportWidthDp;
+        String targetViewportMode = packageConfig.targetViewportMode;
+        Integer targetFontScalePercent = packageConfig.targetFontScalePercent;
+        String targetFontMode = packageConfig.targetFontMode;
+        boolean targetDpisEnabled = packageConfig.dpisEnabled;
         boolean fontScaleActive = targetFontScalePercent != null
                 && targetFontScalePercent > 0
                 && targetFontScalePercent != 100;
@@ -60,7 +68,7 @@ final class ModulePackagePlan {
                     fontScaleActive,
                     false);
         }
-        HookRuntimePolicy policy = HookRuntimePolicy.fromStore(store);
+        HookRuntimePolicy policy = HookRuntimePolicy.fromSnapshot(snapshot);
         boolean viewportConfigured = targetViewportWidthDp != null;
         boolean viewportEnabled = AppProcessHookInstaller.resolveViewportHookEnabled(
                 policy, viewportConfigured, targetViewportMode);

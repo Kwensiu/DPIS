@@ -52,10 +52,11 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage {
         DpisLog.setLoggingEnabled(store.isGlobalLogEnabled());
         compatDebugLog("compat100 legacy handleLoadPackage: package=" + packageName
                 + ", process=" + lpparam.processName);
-        ModulePackagePlan plan = ModulePackagePlan.resolve(store, packageName);
+        ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(store);
+        ModulePackagePlan plan = ModulePackagePlan.resolve(snapshot, packageName);
         if (!plan.shouldInstallCompat100LegacyHooks()) {
             compatDebugLog("compat100 legacy package skipped: package=" + packageName
-                    + ", configuredPackages=" + store.getConfiguredPackages());
+                    + ", configuredPackages=" + snapshot.getConfiguredPackages());
             return;
         }
         compatDebugLog("compat100 legacy package matched: package=" + packageName
