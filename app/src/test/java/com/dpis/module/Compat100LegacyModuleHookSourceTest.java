@@ -28,6 +28,8 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(source.contains("resolveStoreForPackage(activePackage, store)"));
         assertTrue(source.contains("ConfigStoreFactory.createForCompat100Host(packageName)"));
         assertTrue(source.contains("FONT_FIELD_REWRITE_HOOKED.set(false);"));
+        assertTrue(source.contains("if (Boolean.TRUE.equals(FONT_TEXTVIEW_UPDATE.get()))"));
+        assertTrue(source.contains("Android's one-argument TextView#setTextSize delegates"));
         assertTrue(source.contains("getDeclaredMethod(\"getConfiguration\")"));
         assertTrue(source.contains("getDeclaredMethod(\"getDisplayMetrics\")"));
         assertTrue(source.contains("getDeclaredMethod(\"getSystem\")"));

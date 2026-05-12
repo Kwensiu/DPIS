@@ -436,6 +436,12 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage {
             XposedBridge.hookMethod(setTextSizeSp, new XC_MethodHook() {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) {
+                    if (Boolean.TRUE.equals(FONT_TEXTVIEW_UPDATE.get())) {
+                        return;
+                    }
+                    // Android's one-argument TextView#setTextSize delegates to the
+                    // two-argument overload on AOSP. The shared guard keeps compat100
+                    // field rewrite to one scale pass across that nested call chain.
                     param.args[0] = ((Float) param.args[0]) * factor;
                     FONT_TEXTVIEW_UPDATE.set(Boolean.TRUE);
                 }
