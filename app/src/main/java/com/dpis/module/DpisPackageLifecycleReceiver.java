@@ -15,9 +15,9 @@ public final class DpisPackageLifecycleReceiver extends BroadcastReceiver {
         if (store == null) {
             store = ConfigStoreFactory.createForModuleApp(context);
         }
-        ViewportPropertySyncer.syncConfiguredTargetsAsync(store);
-        CompatFontPropertySyncer.syncConfiguredTargetsAsync(store);
-        HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(store);
+        // BOOT_COMPLETED and MY_PACKAGE_REPLACED are only best-effort triggers on some ROMs.
+        // The coordinator itself is idempotent and can be replayed safely from other entrypoints.
+        RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(store);
     }
 
     private static boolean isSupportedAction(String action) {
