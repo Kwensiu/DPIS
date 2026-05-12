@@ -22,6 +22,9 @@ import io.github.libxposed.api.XposedInterface;
 final class SystemServerDisplayEnvironmentInstaller {
     private static final int MAX_PACKAGE_RECURSION_DEPTH = 5;
     private static final ReflectionProbeCache REFLECTION_CACHE = new ReflectionProbeCache();
+    private static final SystemServerPackageUidResolver PACKAGE_UID_RESOLVER =
+            new SystemServerPackageUidResolver(
+                    ConfigSnapshotRefreshPolicy.SYSTEM_SERVER_TTL_MILLIS);
     private static final String[] PACKAGE_STRING_METHOD_NAMES = new String[]{
             "getOwningPackage",
             "getPackageName",
@@ -909,7 +912,7 @@ final class SystemServerDisplayEnvironmentInstaller {
         }
         String fallbackPackage = null;
         for (String packageName : source.getConfiguredPackages()) {
-            if (resolvePackageUid(packageName) != callingUid) {
+            if (PACKAGE_UID_RESOLVER.resolve(packageName, callingUid) != callingUid) {
                 continue;
             }
             if (selectConfigForSystemServer(source.get(packageName)) != null) {
@@ -918,41 +921,6 @@ final class SystemServerDisplayEnvironmentInstaller {
             fallbackPackage = packageName;
         }
         return fallbackPackage;
-    }
-
-    private static int resolvePackageUid(String packageName) {
-        try {
-            Object packageManager = Class.forName("android.app.AppGlobals")
-                    .getMethod("getPackageManager")
-                    .invoke(null);
-            if (packageManager != null) {
-                Object uid = packageManager.getClass()
-                        .getMethod("getPackageUid", String.class, long.class, int.class)
-                        .invoke(packageManager, packageName, 0L, 0);
-                if (uid instanceof Integer integerUid) {
-                    return integerUid;
-                }
-            }
-        } catch (Throwable throwable) {
-            try {
-                Object activityThread = Class.forName("android.app.ActivityThread")
-                        .getMethod("currentActivityThread")
-                        .invoke(null);
-                if (activityThread == null) {
-                    return -1;
-                }
-                Object context = activityThread.getClass()
-                        .getMethod("getSystemContext")
-                        .invoke(activityThread);
-                if (!(context instanceof android.content.Context androidContext)) {
-                    return -1;
-                }
-                return androidContext.getPackageManager().getPackageUid(packageName, 0);
-            } catch (Throwable ignored) {
-                return -1;
-            }
-        }
-        return -1;
     }
 
     private static PerAppDisplayEnvironment resolveDisplayInfoEnvironment(Object displayInfo,
