@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.8.0](https://github.com/Kwensiu/DPIS/compare/v1.7.1...v1.8.0) (2026-05-12)
+
+
+### Features
+
+* publish dual APKs (modern + legacy) in release workflows ([ee9f3e7](https://github.com/Kwensiu/DPIS/commit/ee9f3e7ad5ee2c95284dcc3ab14111a69afd5bfc))
+* split modern101 and compat100 Xposed builds ([fa24caf](https://github.com/Kwensiu/DPIS/commit/fa24cafc9d90b961ef181590ca291fa4c269a46f))
+
+
+### Bug Fixes
+
+* cleanup dead tests ([390e4bd](https://github.com/Kwensiu/DPIS/commit/390e4bd8e0f257c4202e72d6200edb488866e746))
+* guard compat100 text size rewrite ([af86482](https://github.com/Kwensiu/DPIS/commit/af8648204c9c9897c23a40dc41d901e1ed6bfb50))
+* improve startup update release notes dialog ([a6002bf](https://github.com/Kwensiu/DPIS/commit/a6002bfc9824bb65099d8f3810cabd7d2d80c2c4))
+* mark compat100 builds as legacy ([b89e66a](https://github.com/Kwensiu/DPIS/commit/b89e66ab9c0223aee96d9e1828c96aa4181a413b))
+* migrate font debug stats before legacy cleanup ([a815893](https://github.com/Kwensiu/DPIS/commit/a81589362c9a2b85a3f818499d043ff8c3b890cf))
+* persist compat font recovery paths ([dc2f8a5](https://github.com/Kwensiu/DPIS/commit/dc2f8a5b47dad47260a292883eb89757c1d82e30))
+* refine compat100 scope fallback UI and remove unused manual-scope strings ([ac99904](https://github.com/Kwensiu/DPIS/commit/ac999040319d4dde1a85292112a183595a3bdc7e))
+* restore compat100 HyperOS runtime sync ([414a3d2](https://github.com/Kwensiu/DPIS/commit/414a3d2fcb01433790feb9c5ee8f70b60a2dad9d))
+* restore release notes toggle in startup update dialog ([ff10dc5](https://github.com/Kwensiu/DPIS/commit/ff10dc598a15183e74c2cd0adaf943da62631104))
+* stabilize compat100 hook configuration ([5e73c79](https://github.com/Kwensiu/DPIS/commit/5e73c7938d13d7057f603940d436191637e4ec40))
+
+
+### Refactoring
+
+* cache system server package uid lookups ([41f71f8](https://github.com/Kwensiu/DPIS/commit/41f71f847c376bc034c771259f48ebcf3d39deb2))
+* cache system server reflection probes ([7c6f086](https://github.com/Kwensiu/DPIS/commit/7c6f0869b218fc38f93e8d9d8c670a52167d839a))
+* centralize runtime property recovery ([35e7ade](https://github.com/Kwensiu/DPIS/commit/35e7ade7a183767bad561a2c748160a8719b7c4b))
+* deduplicate preference fallback reads ([efea3f9](https://github.com/Kwensiu/DPIS/commit/efea3f9ed55a0c253bc2a998499fb571e06baaae))
+* introduce config snapshot read model ([01d6593](https://github.com/Kwensiu/DPIS/commit/01d659336833aeecd9c265eabc5d74391aee7bbe))
+* refresh system server config snapshots ([37186af](https://github.com/Kwensiu/DPIS/commit/37186af5450897f7cfdba916ae4c13a1b98a09f6))
+
 ## [1.7.1](https://github.com/Kwensiu/DPIS/compare/v1.7.0...v1.7.1) (2026-05-10)
 
 
