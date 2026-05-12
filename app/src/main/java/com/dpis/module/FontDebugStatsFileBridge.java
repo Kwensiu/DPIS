@@ -12,14 +12,14 @@ import java.io.IOException;
 import java.util.Properties;
 
 final class FontDebugStatsFileBridge {
-    private static final String DIR_NAME = "DPIS";
+    private static final String DIR_NAME = "font_debug_stats";
     private static final String FILE_NAME = "font_debug_stats.properties";
 
     private FontDebugStatsFileBridge() {
     }
 
-    static void write(Bundle extras) {
-        File file = resolveFile();
+    static void write(Context context, Bundle extras) {
+        File file = resolveFile(context);
         if (file == null || extras == null || extras.isEmpty()) {
             return;
         }
@@ -51,17 +51,14 @@ final class FontDebugStatsFileBridge {
     }
 
     static void importIfNewer(Context context) {
-        File file = resolveFile();
-        if (context == null || file == null || !file.isFile()) {
+        if (context == null) {
             return;
         }
-        Properties properties = new Properties();
-        try (FileInputStream input = new FileInputStream(file)) {
-            properties.load(input);
-        } catch (IOException ignored) {
-            return;
-        }
-        importIfNewer(FontDebugStatsStore.getPreferences(context), properties);
+        SharedPreferences preferences = FontDebugStatsStore.getPreferences(context);
+        importIfNewer(preferences, resolveFile(context));
+        File legacyFile = resolveLegacyPublicFile();
+        importIfNewer(preferences, legacyFile);
+        deleteLegacyPublicFile(legacyFile);
     }
 
     static void importIfNewer(SharedPreferences preferences, Properties properties) {
@@ -96,12 +93,85 @@ final class FontDebugStatsFileBridge {
         editor.apply();
     }
 
-    private static File resolveFile() {
+    static void importIfNewer(SharedPreferences preferences, File file) {
+        Properties properties = loadProperties(file);
+        if (properties != null) {
+            importIfNewer(preferences, properties);
+        }
+    }
+
+    static File resolveFileForTest(Context context) {
+        return resolveFile(context);
+    }
+
+    static File resolveFileForTest(File baseDir) {
+        return resolveFile(baseDir);
+    }
+
+    static File resolveLegacyPublicFileForTest(File downloads) {
+        return resolveLegacyPublicFile(downloads);
+    }
+
+    static void deleteLegacyPublicFileForTest(File legacyFile) {
+        deleteLegacyPublicFile(legacyFile);
+    }
+
+    private static File resolveFile(Context context) {
+        File baseDir = context != null ? context.getExternalFilesDir(null) : null;
+        return resolveFile(baseDir);
+    }
+
+    private static File resolveFile(File baseDir) {
+        if (baseDir == null) {
+            return null;
+        }
+        return new File(new File(baseDir, DIR_NAME), FILE_NAME);
+    }
+
+    private static File resolveLegacyPublicFile() {
         File downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        return resolveLegacyPublicFile(downloads);
+    }
+
+    private static File resolveLegacyPublicFile(File downloads) {
         if (downloads == null) {
             return null;
         }
-        return new File(new File(downloads, DIR_NAME), FILE_NAME);
+        File legacyDir = new File(downloads, "DPIS");
+        return new File(legacyDir, FILE_NAME);
+    }
+
+    private static void deleteLegacyPublicFile(File legacyFile) {
+        if (legacyFile == null) {
+            return;
+        }
+        // Migration cleanup for versions that wrote this debug cache into public
+        // Downloads. Remove this compatibility cleanup after old installs have had
+        // enough release cycles to migrate.
+        if (legacyFile.isFile()) {
+            legacyFile.delete();
+        }
+        File legacyDir = legacyFile.getParentFile();
+        if (legacyDir == null) {
+            return;
+        }
+        String[] children = legacyDir.list();
+        if (children != null && children.length == 0) {
+            legacyDir.delete();
+        }
+    }
+
+    private static Properties loadProperties(File file) {
+        if (file == null || !file.isFile()) {
+            return null;
+        }
+        Properties properties = new Properties();
+        try (FileInputStream input = new FileInputStream(file)) {
+            properties.load(input);
+        } catch (IOException ignored) {
+            return null;
+        }
+        return properties;
     }
 
     private static void putString(Properties properties, Bundle extras, String key) {

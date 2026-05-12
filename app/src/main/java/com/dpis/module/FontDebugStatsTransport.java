@@ -79,7 +79,7 @@ final class FontDebugStatsTransport {
         } catch (Throwable throwable) {
             DpisLog.e("font debug ingest activity update failed", throwable);
         }
-        FontDebugStatsFileBridge.write(extras);
+        FontDebugStatsFileBridge.write(context, extras);
     }
 
     private static Uri buildUri() {

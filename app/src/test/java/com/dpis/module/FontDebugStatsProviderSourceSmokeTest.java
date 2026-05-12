@@ -58,7 +58,7 @@ public class FontDebugStatsProviderSourceSmokeTest {
         assertTrue(transport.contains("context.sendBroadcast(intent)"));
         assertTrue(transport.contains("context.startService(intent)"));
         assertTrue(transport.contains("context.startActivity(intent)"));
-        assertTrue(transport.contains("FontDebugStatsFileBridge.write(extras)"));
+        assertTrue(transport.contains("FontDebugStatsFileBridge.write(context, extras)"));
         assertTrue(!transport.contains("return;\n        } catch (Throwable throwable)"));
         assertTrue(moduleMain.contains("FontDebugStatsTransport.initialize(this)"));
     }
