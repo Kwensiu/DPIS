@@ -45,3 +45,20 @@
   - `docs/superpowers/specs/2026-04-18-app-list-topbar-and-paging-design.md`
   - `docs/superpowers/specs/2026-04-19-app-detail-actions-design.md`
   - `docs/superpowers/specs/2026-04-19-settings-other-about-hide-icon-design.md`
+
+## 2026-05-12 归档
+
+合并 compat100 重构后继续收敛活文档面。已完成或阶段性失效的 superpowers 计划、设计和验证报告迁入归档，避免把历史执行计划误读为当前主线。
+
+- 报告类迁移到 `archive/reports/`：
+  - `docs/reports/2026-04-23-next-phase-validation.md`
+- superpowers 计划迁移到 `archive/superpowers/plans/`：
+  - `docs/superpowers/plans/2026-04-18-font-hook-code-cleanup.md`
+  - `docs/superpowers/plans/2026-04-22-app-detail-sheet-structure-and-layout-hardening.md`
+  - `docs/superpowers/plans/2026-04-23-dpis-next-phase-full-execution-plan.md`
+  - `docs/superpowers/plans/2026-04-23-help-tutorial-dialog-card-layout.md`
+  - `docs/superpowers/plans/2026-04-24-mainactivity-phase1-architecture-upgrade.md`
+  - `docs/superpowers/plans/2026-04-25-i18n-english-default-language-switch.md`
+- superpowers 设计迁移到 `archive/superpowers/specs/`：
+  - `docs/superpowers/specs/2026-04-23-help-tutorial-dialog-card-design.md`
+  - `docs/superpowers/specs/2026-04-25-i18n-english-default-language-switch-design.md`
