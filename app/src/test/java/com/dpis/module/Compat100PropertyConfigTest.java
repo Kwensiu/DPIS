@@ -10,10 +10,7 @@ public class Compat100PropertyConfigTest {
         String command = ViewportPropertySyncer.buildCompatConfigCommandForTest(
                 "com.max.xiaoheihe", 300, ViewportApplyMode.FIELD_REWRITE);
 
-        assertEquals("setprop 'debug.dpis.vp.eab4efd3' '0'; "
-                        + "setprop 'debug.dpis.vpcfg.eab4efd3' '300'; "
-                        + "setprop 'debug.dpis.vpmode.eab4efd3' 'field_rewrite'",
-                command);
+        assertEquals(expectedViewportCommand("0", "300", "field_rewrite"), command);
     }
 
     @Test
@@ -21,36 +18,25 @@ public class Compat100PropertyConfigTest {
         String command = ViewportPropertySyncer.buildCompatConfigCommandForTest(
                 "com.max.xiaoheihe", 300, ViewportApplyMode.SYSTEM_EMULATION);
 
-        assertEquals("setprop 'debug.dpis.vp.eab4efd3' '300'; "
-                        + "setprop 'debug.dpis.vpcfg.eab4efd3' '300'; "
-                        + "setprop 'debug.dpis.vpmode.eab4efd3' 'system_emulation'",
-                command);
+        assertEquals(expectedViewportCommand("300", "300", "system_emulation"), command);
     }
 
     @Test
     public void viewportOffOrInvalidWidthClearsRuntimeAndCompatConfig() {
-        assertEquals("setprop 'debug.dpis.vp.eab4efd3' '0'; "
-                        + "setprop 'debug.dpis.vpcfg.eab4efd3' '0'; "
-                        + "setprop 'debug.dpis.vpmode.eab4efd3' 'off'",
+        assertEquals(expectedViewportCommand("0", "0", "off"),
                 ViewportPropertySyncer.buildCompatConfigCommandForTest(
                         "com.max.xiaoheihe", 300, ViewportApplyMode.OFF));
-        assertEquals("setprop 'debug.dpis.vp.eab4efd3' '0'; "
-                        + "setprop 'debug.dpis.vpcfg.eab4efd3' '0'; "
-                        + "setprop 'debug.dpis.vpmode.eab4efd3' 'off'",
+        assertEquals(expectedViewportCommand("0", "0", "off"),
                 ViewportPropertySyncer.buildCompatConfigCommandForTest(
                         "com.max.xiaoheihe", 0, ViewportApplyMode.FIELD_REWRITE));
     }
 
     @Test
     public void viewportBoundaryWidthsArePreserved() {
-        assertEquals("setprop 'debug.dpis.vp.eab4efd3' '0'; "
-                        + "setprop 'debug.dpis.vpcfg.eab4efd3' '1'; "
-                        + "setprop 'debug.dpis.vpmode.eab4efd3' 'field_rewrite'",
+        assertEquals(expectedViewportCommand("0", "1", "field_rewrite"),
                 ViewportPropertySyncer.buildCompatConfigCommandForTest(
                         "com.max.xiaoheihe", 1, ViewportApplyMode.FIELD_REWRITE));
-        assertEquals("setprop 'debug.dpis.vp.eab4efd3' '0'; "
-                        + "setprop 'debug.dpis.vpcfg.eab4efd3' '9999'; "
-                        + "setprop 'debug.dpis.vpmode.eab4efd3' 'field_rewrite'",
+        assertEquals(expectedViewportCommand("0", "9999", "field_rewrite"),
                 ViewportPropertySyncer.buildCompatConfigCommandForTest(
                         "com.max.xiaoheihe", 9999, ViewportApplyMode.FIELD_REWRITE));
     }
@@ -60,10 +46,7 @@ public class Compat100PropertyConfigTest {
         String command = CompatFontPropertySyncer.buildCompatConfigCommandForTest(
                 "com.max.xiaoheihe", 200, FontApplyMode.FIELD_REWRITE);
 
-        assertEquals("setprop 'debug.dpis.compatfont.eab4efd3' '0'; "
-                        + "setprop 'debug.dpis.fontmode.eab4efd3' 'field_rewrite'; "
-                        + "setprop 'debug.dpis.forcefont.eab4efd3' '200'",
-                command);
+        assertEquals(expectedFontCommand("0", "field_rewrite", "200"), command);
     }
 
     @Test
@@ -71,41 +54,28 @@ public class Compat100PropertyConfigTest {
         String command = CompatFontPropertySyncer.buildCompatConfigCommandForTest(
                 "com.max.xiaoheihe", 200, FontApplyMode.SYSTEM_EMULATION);
 
-        assertEquals("setprop 'debug.dpis.compatfont.eab4efd3' '200'; "
-                        + "setprop 'debug.dpis.fontmode.eab4efd3' 'system_emulation'; "
-                        + "setprop 'debug.dpis.forcefont.eab4efd3' '0'",
-                command);
+        assertEquals(expectedFontCommand("200", "system_emulation", "0"), command);
     }
 
     @Test
     public void fontOffOrInvalidPercentClearsRuntimeAndMode() {
-        assertEquals("setprop 'debug.dpis.compatfont.eab4efd3' '0'; "
-                        + "setprop 'debug.dpis.fontmode.eab4efd3' 'off'; "
-                        + "setprop 'debug.dpis.forcefont.eab4efd3' '0'",
+        assertEquals(expectedFontCommand("0", "off", "0"),
                 CompatFontPropertySyncer.buildCompatConfigCommandForTest(
                         "com.max.xiaoheihe", 200, FontApplyMode.OFF));
-        assertEquals("setprop 'debug.dpis.compatfont.eab4efd3' '0'; "
-                        + "setprop 'debug.dpis.fontmode.eab4efd3' 'off'; "
-                        + "setprop 'debug.dpis.forcefont.eab4efd3' '0'",
+        assertEquals(expectedFontCommand("0", "off", "0"),
                 CompatFontPropertySyncer.buildCompatConfigCommandForTest(
                         "com.max.xiaoheihe", 0, FontApplyMode.FIELD_REWRITE));
     }
 
     @Test
     public void fontBoundaryPercentsArePreserved() {
-        assertEquals("setprop 'debug.dpis.compatfont.eab4efd3' '0'; "
-                        + "setprop 'debug.dpis.fontmode.eab4efd3' 'field_rewrite'; "
-                        + "setprop 'debug.dpis.forcefont.eab4efd3' '50'",
+        assertEquals(expectedFontCommand("0", "field_rewrite", "50"),
                 CompatFontPropertySyncer.buildCompatConfigCommandForTest(
                         "com.max.xiaoheihe", 50, FontApplyMode.FIELD_REWRITE));
-        assertEquals("setprop 'debug.dpis.compatfont.eab4efd3' '0'; "
-                        + "setprop 'debug.dpis.fontmode.eab4efd3' 'field_rewrite'; "
-                        + "setprop 'debug.dpis.forcefont.eab4efd3' '100'",
+        assertEquals(expectedFontCommand("0", "field_rewrite", "100"),
                 CompatFontPropertySyncer.buildCompatConfigCommandForTest(
                         "com.max.xiaoheihe", 100, FontApplyMode.FIELD_REWRITE));
-        assertEquals("setprop 'debug.dpis.compatfont.eab4efd3' '0'; "
-                        + "setprop 'debug.dpis.fontmode.eab4efd3' 'field_rewrite'; "
-                        + "setprop 'debug.dpis.forcefont.eab4efd3' '300'",
+        assertEquals(expectedFontCommand("0", "field_rewrite", "300"),
                 CompatFontPropertySyncer.buildCompatConfigCommandForTest(
                         "com.max.xiaoheihe", 300, FontApplyMode.FIELD_REWRITE));
     }
@@ -132,5 +102,23 @@ public class Compat100PropertyConfigTest {
         assertEquals(FontApplyMode.FIELD_REWRITE,
                 SystemPropertyConfigPreferences.resolveCompatFontModeForTest(
                         200, FontApplyMode.FIELD_REWRITE, null));
+    }
+
+    private static String expectedViewportCommand(String viewport, String compatConfig, String mode) {
+        return "setprop 'debug.dpis.vp.eab4efd3' '" + viewport + "'; "
+                + "setprop 'persist.debug.dpis.vp.eab4efd3' '" + viewport + "'; "
+                + "setprop 'debug.dpis.vpcfg.eab4efd3' '" + compatConfig + "'; "
+                + "setprop 'persist.debug.dpis.vpcfg.eab4efd3' '" + compatConfig + "'; "
+                + "setprop 'debug.dpis.vpmode.eab4efd3' '" + mode + "'; "
+                + "setprop 'persist.debug.dpis.vpmode.eab4efd3' '" + mode + "'";
+    }
+
+    private static String expectedFontCommand(String compatFont, String mode, String forceFont) {
+        return "setprop 'debug.dpis.compatfont.eab4efd3' '" + compatFont + "'; "
+                + "setprop 'persist.debug.dpis.compatfont.eab4efd3' '" + compatFont + "'; "
+                + "setprop 'debug.dpis.fontmode.eab4efd3' '" + mode + "'; "
+                + "setprop 'persist.debug.dpis.fontmode.eab4efd3' '" + mode + "'; "
+                + "setprop 'debug.dpis.forcefont.eab4efd3' '" + forceFont + "'; "
+                + "setprop 'persist.debug.dpis.forcefont.eab4efd3' '" + forceFont + "'";
     }
 }

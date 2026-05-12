@@ -65,6 +65,70 @@ public class PerAppDisplayConfigSourceTest {
     }
 
     @Test
+    public void usesPackageFallbackWhenSnapshotHasNoPackage() {
+        PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(
+                ConfigSnapshot::empty,
+                packageName -> new PackageConfigSnapshot(
+                        packageName,
+                        true,
+                        500,
+                        ViewportApplyMode.FIELD_REWRITE,
+                        200,
+                        FontApplyMode.FIELD_REWRITE,
+                        false));
+
+        PerAppDisplayConfig config = source.get("com.example.target");
+
+        assertNotNull(config);
+        assertEquals(500, config.targetViewportWidthDp);
+        assertEquals(Integer.valueOf(200), config.targetFontScalePercent);
+        assertEquals(FontApplyMode.FIELD_REWRITE, config.targetFontMode);
+    }
+
+    @Test
+    public void doesNotUsePackageFallbackWhenSnapshotDisablesPackage() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.setTargetFontScalePercent("com.example.target", 200));
+        assertTrue(store.setTargetDpisEnabled("com.example.target", false));
+        PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(
+                () -> ConfigSnapshotLoader.fromStore(store),
+                packageName -> new PackageConfigSnapshot(
+                        packageName,
+                        true,
+                        null,
+                        ViewportApplyMode.OFF,
+                        200,
+                        FontApplyMode.FIELD_REWRITE,
+                        false));
+
+        assertNull(source.get("com.example.target"));
+    }
+
+    @Test
+    public void usesPackageFallbackWhenSnapshotHasStaleEnabledPackage() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.setTargetFontScalePercent("com.example.target", 100));
+        PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(
+                () -> ConfigSnapshotLoader.fromStore(store),
+                packageName -> new PackageConfigSnapshot(
+                        packageName,
+                        true,
+                        600,
+                        ViewportApplyMode.FIELD_REWRITE,
+                        200,
+                        FontApplyMode.FIELD_REWRITE,
+                        false));
+
+        PerAppDisplayConfig config = source.get("com.example.target");
+
+        assertNotNull(config);
+        assertEquals(600, config.targetViewportWidthDp);
+        assertEquals(Integer.valueOf(200), config.targetFontScalePercent);
+    }
+
+    @Test
     public void keepsViewportConfigWhenViewportExists() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);

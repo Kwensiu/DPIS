@@ -7,7 +7,12 @@ final class PerAppDisplayConfigSource {
         ConfigSnapshot get();
     }
 
+    interface PackageFallbackProvider {
+        PackageConfigSnapshot get(String packageName);
+    }
+
     private final SnapshotProvider snapshotProvider;
+    private final PackageFallbackProvider packageFallbackProvider;
 
     PerAppDisplayConfigSource(DpiConfigStore store) {
         this(ConfigSnapshotLoader.fromStore(store));
@@ -18,12 +23,32 @@ final class PerAppDisplayConfigSource {
     }
 
     PerAppDisplayConfigSource(SnapshotProvider snapshotProvider) {
+        this(snapshotProvider, null);
+    }
+
+    PerAppDisplayConfigSource(SnapshotProvider snapshotProvider,
+                              PackageFallbackProvider packageFallbackProvider) {
         this.snapshotProvider = snapshotProvider;
+        this.packageFallbackProvider = packageFallbackProvider;
+    }
+
+    static PerAppDisplayConfigSource withCompat100RuntimePropertyFallback(
+            SnapshotProvider snapshotProvider) {
+        return new PerAppDisplayConfigSource(
+                snapshotProvider,
+                PerAppDisplayConfigSource::loadCompat100RuntimePropertyConfig);
     }
 
     PerAppDisplayConfig get(String packageName) {
         ConfigSnapshot snapshot = getSnapshot();
         PackageConfigSnapshot packageConfig = snapshot.getPackage(packageName);
+        if (packageConfig != null && !packageConfig.dpisEnabled) {
+            return null;
+        }
+        PackageConfigSnapshot fallbackConfig = getFallbackPackageConfig(packageName);
+        if (fallbackConfig != null) {
+            packageConfig = fallbackConfig;
+        }
         if (packageConfig == null || !packageConfig.dpisEnabled) {
             return null;
         }
@@ -57,6 +82,19 @@ final class PerAppDisplayConfigSource {
     private ConfigSnapshot getSnapshot() {
         ConfigSnapshot snapshot = snapshotProvider != null ? snapshotProvider.get() : null;
         return snapshot != null ? snapshot : ConfigSnapshot.empty();
+    }
+
+    private PackageConfigSnapshot getFallbackPackageConfig(String packageName) {
+        if (packageFallbackProvider == null || packageName == null || packageName.isBlank()) {
+            return null;
+        }
+        return packageFallbackProvider.get(packageName);
+    }
+
+    private static PackageConfigSnapshot loadCompat100RuntimePropertyConfig(String packageName) {
+        ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(
+                new DpiConfigStore(new SystemPropertyConfigPreferences(packageName)));
+        return snapshot.getPackage(packageName);
     }
 }
 

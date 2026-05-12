@@ -90,10 +90,19 @@ final class FontRuntimePropertySyncer {
         return buildSetCommand(HyperOsFlutterFontBridge.compatFontPropertyNameForPackage(packageName),
                 systemEmulationValue)
                 + "; " + buildSetCommand(
+                        HyperOsFlutterFontBridge.persistentCompatFontPropertyNameForPackage(packageName),
+                        systemEmulationValue)
+                + "; " + buildSetCommand(
                         HyperOsFlutterFontBridge.compatFontModePropertyNameForPackage(packageName),
                         compatMode)
                 + "; " + buildSetCommand(
+                        HyperOsFlutterFontBridge.persistentCompatFontModePropertyNameForPackage(packageName),
+                        compatMode)
+                + "; " + buildSetCommand(
                         HyperOsFlutterFontBridge.forcePropertyNameForPackage(packageName),
+                        forceFontValue)
+                + "; " + buildSetCommand(
+                        HyperOsFlutterFontBridge.persistentForcePropertyNameForPackage(packageName),
                         forceFontValue);
     }
 

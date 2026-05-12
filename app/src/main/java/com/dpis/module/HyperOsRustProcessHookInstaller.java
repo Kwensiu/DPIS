@@ -96,7 +96,6 @@ final class HyperOsRustProcessHookInstaller {
         if (config == null
                 || config.targetFontScalePercent == null
                 || config.targetFontScalePercent <= 0) {
-            HyperOsFlutterFontBridge.clearTarget(packageName);
             return null;
         }
         Object existingValue = args.get(ARG_ENVIRONMENTS);

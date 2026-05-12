@@ -82,13 +82,17 @@ final class CompatFontPropertySyncer {
         int forceFontValue = enabled
                 && FontApplyMode.FIELD_REWRITE.equals(normalizedMode) ? fontScalePercent : 0;
         String compatMode = enabled ? normalizedMode : FontApplyMode.OFF;
-        return buildSetCommand(HyperOsFlutterFontBridge.compatFontPropertyNameForPackage(packageName),
-                systemEmulationValue)
-                + "; " + buildSetCommand(
+        return buildSetCommandPair(
+                        HyperOsFlutterFontBridge.compatFontPropertyNameForPackage(packageName),
+                        HyperOsFlutterFontBridge.persistentCompatFontPropertyNameForPackage(packageName),
+                        systemEmulationValue)
+                + "; " + buildSetCommandPair(
                         HyperOsFlutterFontBridge.compatFontModePropertyNameForPackage(packageName),
+                        HyperOsFlutterFontBridge.persistentCompatFontModePropertyNameForPackage(packageName),
                         compatMode)
-                + "; " + buildSetCommand(
+                + "; " + buildSetCommandPair(
                         HyperOsFlutterFontBridge.forcePropertyNameForPackage(packageName),
+                        HyperOsFlutterFontBridge.persistentForcePropertyNameForPackage(packageName),
                         forceFontValue);
     }
 
@@ -103,6 +107,15 @@ final class CompatFontPropertySyncer {
 
     private static String buildSetCommand(String property, String value) {
         return "setprop " + shellQuote(property) + " " + shellQuote(value);
+    }
+
+    private static String buildSetCommandPair(String property, String persistentProperty, int fontScalePercent) {
+        return buildSetCommandPair(property, persistentProperty, String.valueOf(fontScalePercent));
+    }
+
+    private static String buildSetCommandPair(String property, String persistentProperty, String value) {
+        return buildSetCommand(property, value)
+                + "; " + buildSetCommand(persistentProperty, value);
     }
 
     private static void runRootCommand(String command) {

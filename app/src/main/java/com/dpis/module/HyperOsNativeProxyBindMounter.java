@@ -69,14 +69,11 @@ final class HyperOsNativeProxyBindMounter {
         String target = shellQuote(targetPath);
         return lazyUnmount(target)
                 + ensureTargetFile(target)
-                // After a file bind mount, metadata operations on target affect the source inode.
-                // Prepare the target placeholder before binding; only the copy fallback restores it again.
                 + restoreTargetMetadata(target)
-                + "mount -o bind " + source + " " + target + " 2>/dev/null; "
-                + "if ! cmp -s " + source + " " + target + "; then "
-                + copyProxyFallback(source, target)
+                // App-initiated su may run in a mount namespace that is not visible
+                // to the target app's later process, so use a real file copy.
+                + copyProxy(source, target)
                 + restoreTargetMetadata(target)
-                + "else echo dpis_proxy_apply=bind; fi; "
                 + "cmp -s " + source + " " + target + " || exit 1; "
                 + "md5sum " + source + " " + target
                 + " 2>/dev/null || true";
@@ -109,7 +106,7 @@ final class HyperOsNativeProxyBindMounter {
                 + "chcon u:object_r:apk_data_file:s0 " + target + " 2>/dev/null || true; ";
     }
 
-    private static String copyProxyFallback(String source, String target) {
+    private static String copyProxy(String source, String target) {
         return "echo dpis_proxy_apply=copy; "
                 + "cp -f " + source + " " + target
                 + " || cat " + source + " > " + target

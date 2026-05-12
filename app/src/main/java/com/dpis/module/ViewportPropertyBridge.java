@@ -9,6 +9,9 @@ final class ViewportPropertyBridge {
     // stay 0 unless system emulation is active.
     private static final String COMPAT_CONFIG_PROPERTY_PREFIX = "debug.dpis.vpcfg.";
     private static final String COMPAT_MODE_PROPERTY_PREFIX = "debug.dpis.vpmode.";
+    private static final String PERSIST_PROPERTY_PREFIX = "persist.debug.dpis.vp.";
+    private static final String PERSIST_COMPAT_CONFIG_PROPERTY_PREFIX = "persist.debug.dpis.vpcfg.";
+    private static final String PERSIST_COMPAT_MODE_PROPERTY_PREFIX = "persist.debug.dpis.vpmode.";
 
     private ViewportPropertyBridge() {
     }
@@ -25,25 +28,41 @@ final class ViewportPropertyBridge {
         return COMPAT_MODE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
+    static String persistentPropertyNameForPackage(String packageName) {
+        return PERSIST_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
+    }
+
+    static String persistentCompatConfigPropertyNameForPackage(String packageName) {
+        return PERSIST_COMPAT_CONFIG_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
+    }
+
+    static String persistentCompatModePropertyNameForPackage(String packageName) {
+        return PERSIST_COMPAT_MODE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
+    }
+
     static Integer readTargetWidthDp(String packageName) {
         if (packageName == null || packageName.isEmpty()) {
             return null;
         }
-        return parseOverrideValue(readSystemProperty(propertyNameForPackage(packageName)));
+        return readOverrideValue(propertyNameForPackage(packageName),
+                persistentPropertyNameForPackage(packageName));
     }
 
     static Integer readCompatConfigWidthDp(String packageName) {
         if (packageName == null || packageName.isEmpty()) {
             return null;
         }
-        return parseOverrideValue(readSystemProperty(compatConfigPropertyNameForPackage(packageName)));
+        return readOverrideValue(compatConfigPropertyNameForPackage(packageName),
+                persistentCompatConfigPropertyNameForPackage(packageName));
     }
 
     static String readCompatMode(String packageName) {
         if (packageName == null || packageName.isEmpty()) {
             return ViewportApplyMode.OFF;
         }
-        return ViewportApplyMode.normalize(readSystemProperty(compatModePropertyNameForPackage(packageName)));
+        return ViewportApplyMode.normalize(readPropertyWithPersistentFallback(
+                compatModePropertyNameForPackage(packageName),
+                persistentCompatModePropertyNameForPackage(packageName)));
     }
 
     static Integer parseOverrideValueForTest(String value) {
@@ -60,6 +79,20 @@ final class ViewportPropertyBridge {
         } catch (NumberFormatException ignored) {
             return null;
         }
+    }
+
+    private static Integer readOverrideValue(String propertyName, String persistentPropertyName) {
+        String value = readPropertyWithPersistentFallback(propertyName, persistentPropertyName);
+        return parseOverrideValue(value);
+    }
+
+    private static String readPropertyWithPersistentFallback(String propertyName,
+                                                             String persistentPropertyName) {
+        String value = readSystemProperty(propertyName);
+        if (value != null && !value.trim().isEmpty()) {
+            return value;
+        }
+        return readSystemProperty(persistentPropertyName);
     }
 
     private static String readSystemProperty(String key) {

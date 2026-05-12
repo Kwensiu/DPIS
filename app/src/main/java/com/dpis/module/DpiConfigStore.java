@@ -443,9 +443,13 @@ final class DpiConfigStore {
         if (mirrorPreferences == null) {
             return primaryCommitted;
         }
-        SharedPreferences.Editor mirrorEditor = mirrorPreferences.edit();
-        action.apply(mirrorEditor);
-        return primaryCommitted && mirrorEditor.commit();
+        try {
+            SharedPreferences.Editor mirrorEditor = mirrorPreferences.edit();
+            action.apply(mirrorEditor);
+            return primaryCommitted && mirrorEditor.commit();
+        } catch (UnsupportedOperationException ignored) {
+            return primaryCommitted;
+        }
     }
 
     private interface EditorAction {

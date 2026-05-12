@@ -259,9 +259,37 @@ public class DpisApplicationMigrationTest {
         assertTrue(remote.isHyperOsFlutterFontHookEnabled());
     }
 
+    @Test
+    public void mirrorsRemoteConfigBackToLocalAfterServiceBind() throws Exception {
+        FakePrefs localPrefs = new FakePrefs();
+        DpiConfigStore local = new DpiConfigStore(localPrefs);
+        assertTrue(local.setHyperOsFlutterFontHookEnabled(false));
+
+        FakePrefs remotePrefs = new FakePrefs();
+        DpiConfigStore remote = new DpiConfigStore(remotePrefs);
+        assertTrue(remote.setHyperOsFlutterFontHookEnabled(true));
+        assertTrue(remote.setTargetFontScalePercent("com.miui.weather2", 200));
+        assertTrue(remote.setTargetFontApplyMode("com.miui.weather2", FontApplyMode.FIELD_REWRITE));
+
+        invokeMigrate(local, remote);
+        invokeMirror(remote, local);
+
+        assertTrue(local.isHyperOsFlutterFontHookEnabled());
+        assertTrue(local.getConfiguredPackages().contains("com.miui.weather2"));
+        assertEquals(Integer.valueOf(200), local.getTargetFontScalePercent("com.miui.weather2"));
+        assertEquals(FontApplyMode.FIELD_REWRITE, local.getTargetFontApplyMode("com.miui.weather2"));
+    }
+
     private static void invokeMigrate(DpiConfigStore from, DpiConfigStore to) throws Exception {
         Method method = DpisApplication.class.getDeclaredMethod(
                 "migrateConfig", DpiConfigStore.class, DpiConfigStore.class);
+        method.setAccessible(true);
+        method.invoke(null, from, to);
+    }
+
+    private static void invokeMirror(DpiConfigStore from, DpiConfigStore to) throws Exception {
+        Method method = DpisApplication.class.getDeclaredMethod(
+                "mirrorConfig", DpiConfigStore.class, DpiConfigStore.class);
         method.setAccessible(true);
         method.invoke(null, from, to);
     }

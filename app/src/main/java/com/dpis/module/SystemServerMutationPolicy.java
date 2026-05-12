@@ -3,6 +3,7 @@ package com.dpis.module;
 final class SystemServerMutationPolicy {
     private static final String ENTRY_CONFIG_DISPATCH = "config-dispatch";
     private static final String ENTRY_ACTIVITY_START = "activity-start";
+    private static final String ENTRY_HYPEROS_RUST_PROCESS = "hyperos-rust-process";
 
     private SystemServerMutationPolicy() {
     }
@@ -34,6 +35,10 @@ final class SystemServerMutationPolicy {
     }
 
     private static boolean isLowRiskEntry(String entryName) {
-        return ENTRY_ACTIVITY_START.equals(entryName);
+        return ENTRY_ACTIVITY_START.equals(entryName)
+                // HyperOS native font replacement depends on rewriting the Rust
+                // process launch environment. This path is package-gated by config
+                // and does not mutate shared display state, so safe mode should keep it.
+                || ENTRY_HYPEROS_RUST_PROCESS.equals(entryName);
     }
 }

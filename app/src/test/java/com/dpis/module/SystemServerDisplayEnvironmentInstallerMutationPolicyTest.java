@@ -82,7 +82,7 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
                 .shouldInstallTargetForTest("config-dispatch", true));
         assertFalse(SystemServerDisplayEnvironmentInstaller
                 .shouldInstallTargetForTest("launch-activity-item", true));
-        assertFalse(SystemServerDisplayEnvironmentInstaller
+        assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldInstallTargetForTest("hyperos-rust-process", true));
     }
 

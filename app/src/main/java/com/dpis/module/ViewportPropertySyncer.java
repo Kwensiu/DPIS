@@ -79,13 +79,17 @@ final class ViewportPropertySyncer {
                 && ViewportApplyMode.SYSTEM_EMULATION.equals(normalizedMode) ? widthDp : 0;
         int compatConfigValue = enabled ? widthDp : 0;
         String compatMode = enabled ? normalizedMode : ViewportApplyMode.OFF;
-        return buildSetCommand(ViewportPropertyBridge.propertyNameForPackage(packageName),
-                systemEmulationValue)
-                + "; " + buildSetCommand(
+        return buildSetCommandPair(
+                        ViewportPropertyBridge.propertyNameForPackage(packageName),
+                        ViewportPropertyBridge.persistentPropertyNameForPackage(packageName),
+                        systemEmulationValue)
+                + "; " + buildSetCommandPair(
                         ViewportPropertyBridge.compatConfigPropertyNameForPackage(packageName),
+                        ViewportPropertyBridge.persistentCompatConfigPropertyNameForPackage(packageName),
                         compatConfigValue)
-                + "; " + buildSetCommand(
+                + "; " + buildSetCommandPair(
                         ViewportPropertyBridge.compatModePropertyNameForPackage(packageName),
+                        ViewportPropertyBridge.persistentCompatModePropertyNameForPackage(packageName),
                         compatMode);
     }
 
@@ -99,6 +103,15 @@ final class ViewportPropertySyncer {
 
     private static String buildSetCommand(String property, String value) {
         return "setprop " + shellQuote(property) + " " + shellQuote(value);
+    }
+
+    private static String buildSetCommandPair(String property, String persistentProperty, int widthDp) {
+        return buildSetCommandPair(property, persistentProperty, String.valueOf(widthDp));
+    }
+
+    private static String buildSetCommandPair(String property, String persistentProperty, String value) {
+        return buildSetCommand(property, value)
+                + "; " + buildSetCommand(persistentProperty, value);
     }
 
     private static void runRootCommand(String command) {

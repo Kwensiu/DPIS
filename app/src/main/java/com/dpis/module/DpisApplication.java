@@ -40,6 +40,9 @@ public final class DpisApplication extends Application implements XposedServiceH
         DpiConfigStore localStore = ConfigStoreFactory.createForModuleApp(this);
         DpiConfigStore remoteStore = ConfigStoreFactory.createForModuleApp(this, service);
         migrateConfig(localStore, remoteStore);
+        // Keep local SharedPreferences as a cold-start mirror before the Xposed
+        // service is rebound. Compat100 app processes cannot load XSharedPreferences.
+        mirrorConfig(remoteStore, localStore);
         configStore = remoteStore;
         DpisLog.setLoggingEnabled(remoteStore.isGlobalLogEnabled());
         RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(remoteStore);
@@ -133,5 +136,12 @@ public final class DpisApplication extends Application implements XposedServiceH
         if (from.hasLauncherIconHidden() && !to.hasLauncherIconHidden()) {
             to.setLauncherIconHidden(from.isLauncherIconHidden());
         }
+    }
+
+    private static void mirrorConfig(DpiConfigStore from, DpiConfigStore to) {
+        if (from == null || to == null || from == to) {
+            return;
+        }
+        to.replaceAll(from.snapshotAll());
     }
 }

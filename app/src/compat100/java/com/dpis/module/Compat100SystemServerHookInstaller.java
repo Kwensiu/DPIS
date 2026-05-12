@@ -11,32 +11,50 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 
 final class Compat100SystemServerHookInstaller {
-    private static final AtomicBoolean INSTALLED = new AtomicBoolean(false);
+    private static final AtomicBoolean LAUNCH_ACTIVITY_ITEM_INSTALLED = new AtomicBoolean(false);
+    private static final AtomicBoolean RUST_PROCESS_INSTALLED = new AtomicBoolean(false);
 
     private Compat100SystemServerHookInstaller() {
     }
 
     static void install() {
-        if (!INSTALLED.compareAndSet(false, true)) {
+        PerAppDisplayConfigSource source =
+                PerAppDisplayConfigSource.withCompat100RuntimePropertyFallback(
+                        new RefreshingConfigSnapshotProvider(
+                                () -> ConfigSnapshotLoader.fromStore(
+                                        ConfigStoreFactory.createForCompat100SystemServerHost()),
+                                ConfigSnapshotRefreshPolicy.SYSTEM_SERVER_TTL_MILLIS));
+        int hookedCount = 0;
+        int constructorHookCount = 0;
+        boolean attempted = false;
+
+        // initZygote can run before HyperOS exposes android.os.RustProcessImpl.
+        // Keep RustProcess retryable so the later system_server entry can install it.
+        if (RUST_PROCESS_INSTALLED.compareAndSet(false, true)) {
+            attempted = true;
+            try {
+                if (Compat100RustProcessHookInstaller.install(source)) {
+                    hookedCount++;
+                } else {
+                    RUST_PROCESS_INSTALLED.set(false);
+                }
+            } catch (Throwable throwable) {
+                RUST_PROCESS_INSTALLED.set(false);
+                logError("compat100 system_server rust-process hook failed: "
+                        + throwable.getClass().getName() + ": " + throwable.getMessage());
+            }
+        }
+
+        if (!LAUNCH_ACTIVITY_ITEM_INSTALLED.compareAndSet(false, true)) {
+            logInstallSummaryIfAttempted(attempted, hookedCount, constructorHookCount);
             return;
         }
+        attempted = true;
         try {
             // API100 legacy modules do not have libxposed's system_server entry,
             // so keep this launch Configuration path wired explicitly for compat100.
             Class<?> launchActivityItemClass = Class.forName(
                     "android.app.servertransaction.LaunchActivityItem");
-            PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(
-                    new RefreshingConfigSnapshotProvider(
-                            () -> ConfigSnapshotLoader.fromStore(
-                                    ConfigStoreFactory.createForCompat100SystemServerHost()),
-                            ConfigSnapshotRefreshPolicy.SYSTEM_SERVER_TTL_MILLIS));
-            int hookedCount = 0;
-            int constructorHookCount = 0;
-            // API100 needs the same RustProcess env rewrite as modern101, but the
-            // legacy entry can only install it through XposedBridge.hookMethod.
-            if (Compat100RustProcessHookInstaller.install(source)) {
-                hookedCount++;
-            }
             for (Constructor<?> constructor : launchActivityItemClass.getDeclaredConstructors()) {
                 XposedBridge.hookMethod(constructor, new XC_MethodHook() {
                     @Override
@@ -47,13 +65,12 @@ final class Compat100SystemServerHookInstaller {
                 hookedCount++;
                 constructorHookCount++;
             }
-            logDebug("compat100 system_server hook ready: hooks=" + hookedCount
-                    + ", launchActivityItemConstructors=" + constructorHookCount);
         } catch (Throwable throwable) {
-            INSTALLED.set(false);
+            LAUNCH_ACTIVITY_ITEM_INSTALLED.set(false);
             logError("compat100 system_server launch-activity-item hook failed: "
                     + throwable.getClass().getName() + ": " + throwable.getMessage());
         }
+        logInstallSummaryIfAttempted(attempted, hookedCount, constructorHookCount);
     }
 
     static void applyLaunchActivityItemArgs(PerAppDisplayConfigSource source, Object[] args) {
@@ -171,6 +188,17 @@ final class Compat100SystemServerHookInstaller {
             return;
         }
         DpisLog.i(message);
+    }
+
+    private static void logInstallSummaryIfAttempted(boolean attempted,
+                                                     int hookedCount,
+                                                     int constructorHookCount) {
+        if (!attempted) {
+            return;
+        }
+        logDebug("compat100 system_server hook ready: hooks=" + hookedCount
+                + ", launchActivityItemConstructors=" + constructorHookCount
+                + ", rustProcessInstalled=" + RUST_PROCESS_INSTALLED.get());
     }
 
     private static void logError(String message) {

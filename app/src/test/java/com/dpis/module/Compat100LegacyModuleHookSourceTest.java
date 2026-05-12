@@ -46,7 +46,7 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(systemServerSource.contains("android.app.servertransaction.LaunchActivityItem"));
         assertTrue(systemServerSource.contains("applyLaunchActivityItemArgs"));
         assertTrue(systemServerSource.contains(
-                "PerAppDisplayConfigSource source = new PerAppDisplayConfigSource"));
+                "PerAppDisplayConfigSource.withCompat100RuntimePropertyFallback"));
         assertTrue(systemServerSource.contains("createForCompat100SystemServerHost"));
         assertTrue(systemServerSource.contains("applyLaunchActivityItemArgs(source, param.args)"));
         assertTrue(systemServerSource.contains("PerAppDisplayOverrideCalculator.calculate"));
@@ -59,7 +59,9 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(compatRustSource.contains("param.args = updatedArgs"));
         String rustSource = read("src/main/java/com/dpis/module/HyperOsRustProcessHookInstaller.java");
         assertTrue(rustSource.contains("applyEnvironmentArgsForLegacy"));
-        assertTrue(rustSource.contains("logTargetArgumentProbeForLegacy"));
+        assertTrue(rustSource.indexOf("return null;")
+                < rustSource.indexOf("Object existingValue = args.get(ARG_ENVIRONMENTS);"));
+        assertTrue(!rustSource.contains("HyperOsFlutterFontBridge.clearTarget(packageName);"));
     }
 
     private static String read(String relativePath) throws Exception {
