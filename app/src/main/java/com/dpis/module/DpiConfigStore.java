@@ -400,75 +400,40 @@ final class DpiConfigStore {
     }
 
     private int getInt(String key, int defaultValue) {
-        if (preferences.contains(key)) {
-            try {
-                return preferences.getInt(key, defaultValue);
-            } catch (ClassCastException ignored) {
-                return defaultValue;
-            }
-        }
-        if (mirrorPreferences != null && mirrorPreferences.contains(key)) {
-            try {
-                return mirrorPreferences.getInt(key, defaultValue);
-            } catch (ClassCastException ignored) {
-                return defaultValue;
-            }
-        }
-        return defaultValue;
+        Integer value = readPreferenceValue(key, prefs -> prefs.getInt(key, defaultValue));
+        return value != null ? value : defaultValue;
     }
 
     private String getString(String key, String defaultValue) {
-        if (preferences.contains(key)) {
-            try {
-                return preferences.getString(key, defaultValue);
-            } catch (ClassCastException ignored) {
-                return defaultValue;
-            }
-        }
-        if (mirrorPreferences != null && mirrorPreferences.contains(key)) {
-            try {
-                return mirrorPreferences.getString(key, defaultValue);
-            } catch (ClassCastException ignored) {
-                return defaultValue;
-            }
-        }
-        return defaultValue;
+        String value = readPreferenceValue(key, prefs -> prefs.getString(key, defaultValue));
+        return value != null ? value : defaultValue;
     }
 
     private boolean getBoolean(String key, boolean defaultValue) {
-        if (preferences.contains(key)) {
-            try {
-                return preferences.getBoolean(key, defaultValue);
-            } catch (ClassCastException ignored) {
-                return defaultValue;
-            }
-        }
-        if (mirrorPreferences != null && mirrorPreferences.contains(key)) {
-            try {
-                return mirrorPreferences.getBoolean(key, defaultValue);
-            } catch (ClassCastException ignored) {
-                return defaultValue;
-            }
-        }
-        return defaultValue;
+        Boolean value = readPreferenceValue(key, prefs -> prefs.getBoolean(key, defaultValue));
+        return value != null ? value : defaultValue;
     }
 
     private Integer getNullableInt(String key) {
+        return readPreferenceValue(key, prefs -> prefs.getInt(key, 0));
+    }
+
+    private <T> T readPreferenceValue(String key, PreferenceReader<T> reader) {
         if (preferences.contains(key)) {
-            try {
-                return preferences.getInt(key, 0);
-            } catch (ClassCastException ignored) {
-                return null;
-            }
+            return readPreferenceValue(preferences, reader);
         }
         if (mirrorPreferences != null && mirrorPreferences.contains(key)) {
-            try {
-                return mirrorPreferences.getInt(key, 0);
-            } catch (ClassCastException ignored) {
-                return null;
-            }
+            return readPreferenceValue(mirrorPreferences, reader);
         }
         return null;
+    }
+
+    private static <T> T readPreferenceValue(SharedPreferences source, PreferenceReader<T> reader) {
+        try {
+            return reader.read(source);
+        } catch (ClassCastException ignored) {
+            return null;
+        }
     }
 
     private boolean commitBoth(EditorAction action) {
@@ -485,6 +450,10 @@ final class DpiConfigStore {
 
     private interface EditorAction {
         void apply(SharedPreferences.Editor editor);
+    }
+
+    private interface PreferenceReader<T> {
+        T read(SharedPreferences preferences);
     }
 
     @SuppressWarnings("unchecked")
