@@ -98,14 +98,13 @@ public class AppConfigDialogBinderSourceSmokeTest {
     }
 
     @Test
-    public void savingEmptyFontConfigClearsHyperOsNativeAndCompatTargets() throws IOException {
+    public void savingEmptyFontConfigClearsFontRuntimeTargets() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
         int clearStart = source.indexOf("if (fontScalePercent == null)");
         int configuredStart = source.indexOf("} else {", clearStart);
         String clearBlock = source.substring(clearStart, configuredStart);
 
-        assertTrue(clearBlock.contains("HyperOsNativeFontPropertySyncer.clearFontTargetAsync(item.packageName)"));
-        assertTrue(clearBlock.contains("CompatFontPropertySyncer.clearTargetAsync(item.packageName)"));
+        assertTrue(clearBlock.contains("FontRuntimePropertySyncer.clearTargetAsync(item.packageName)"));
     }
 
     @Test
@@ -115,20 +114,18 @@ public class AppConfigDialogBinderSourceSmokeTest {
         int disableEnd = source.indexOf("}", disableStart);
         String disableBlock = source.substring(disableStart, disableEnd);
 
-        assertTrue(disableBlock.contains("HyperOsNativeFontPropertySyncer.clearFontTargetAsync(packageName)"));
-        assertTrue(disableBlock.contains("CompatFontPropertySyncer.clearTargetAsync(packageName)"));
+        assertTrue(disableBlock.contains("FontRuntimePropertySyncer.clearTargetAsync(packageName)"));
         assertTrue(disableBlock.contains("ViewportPropertySyncer.clearTargetAsync(packageName)"));
     }
 
     @Test
-    public void savingFontConfigPublishesHyperOsNativeTargetWhenModeEnabled() throws IOException {
+    public void savingFontConfigPublishesUnifiedFontRuntimeTarget() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
 
-        assertTrue(source.contains("FontApplyMode.isEnabled(fontMode)"));
-        assertTrue(source.contains("HyperOsNativeFontPropertySyncer.publishForceFontTargetAsync("));
+        assertTrue(source.contains("FontRuntimePropertySyncer.publishTargetAsync("));
         assertTrue(source.contains("item.packageName, fontScalePercent"));
-        assertTrue(source.contains("CompatFontPropertySyncer.publishTargetAsync("));
-        assertTrue(source.contains("item.packageName, fontScalePercent, fontMode"));
+        assertTrue(source.contains("fontMode,"));
+        assertTrue(source.contains("store.isHyperOsFlutterFontHookEnabled()"));
         assertTrue(source.contains("FontApplyMode.SYSTEM_EMULATION.equals"));
     }
 

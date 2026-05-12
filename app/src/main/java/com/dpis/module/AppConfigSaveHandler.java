@@ -47,19 +47,15 @@ final class AppConfigSaveHandler {
             if (fontScalePercent == null) {
                 saved = store.clearTargetFontScalePercent(item.packageName) && saved;
                 saved = store.setTargetFontApplyMode(item.packageName, FontApplyMode.OFF) && saved;
-                HyperOsNativeFontPropertySyncer.clearFontTargetAsync(item.packageName);
-                CompatFontPropertySyncer.clearTargetAsync(item.packageName);
+                FontRuntimePropertySyncer.clearTargetAsync(item.packageName);
             } else {
                 saved = store.setTargetFontScalePercent(item.packageName, fontScalePercent) && saved;
                 saved = store.setTargetFontApplyMode(item.packageName, fontMode) && saved;
-                if (FontApplyMode.isEnabled(fontMode)) {
-                    HyperOsNativeFontPropertySyncer.publishForceFontTargetAsync(
-                            item.packageName, fontScalePercent);
-                } else {
-                    HyperOsNativeFontPropertySyncer.clearFontTargetAsync(item.packageName);
-                }
-                CompatFontPropertySyncer.publishTargetAsync(
-                        item.packageName, fontScalePercent, fontMode);
+                FontRuntimePropertySyncer.publishTargetAsync(
+                        item.packageName,
+                        fontScalePercent,
+                        fontMode,
+                        store.isHyperOsFlutterFontHookEnabled());
             }
             if (saved && onChanged != null) {
                 onChanged.run();

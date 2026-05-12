@@ -18,12 +18,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.ConcurrentHashMap;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
+import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 @SuppressWarnings("unused")
-public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage {
+public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
     private static final AtomicBoolean RESOURCES_IMPL_HOOKED = new AtomicBoolean(false);
     private static final AtomicBoolean RESOURCES_MANAGER_HOOKED = new AtomicBoolean(false);
     private static final AtomicBoolean RESOURCES_READ_HOOKED = new AtomicBoolean(false);
@@ -37,6 +38,13 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage {
     private static final AtomicReference<Method> CURRENT_PACKAGE_METHOD = new AtomicReference<>();
     private static final Map<String, DpiConfigStore> COMPAT100_HOST_STORE_CACHE =
             new ConcurrentHashMap<>();
+
+    @Override
+    public void initZygote(StartupParam startupParam) {
+        DpisLog.setLoggingEnabled(ConfigStoreFactory.createForCompat100Host().isGlobalLogEnabled());
+        compatDebugLog("compat100 legacy initZygote");
+        installSystemServerHooksForCompat100();
+    }
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {

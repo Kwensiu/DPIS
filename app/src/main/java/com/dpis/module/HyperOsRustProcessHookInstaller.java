@@ -75,6 +75,14 @@ final class HyperOsRustProcessHookInstaller {
         return buildArgumentProbeSummary(args);
     }
 
+    static Object[] applyEnvironmentArgsForLegacy(PerAppDisplayConfigSource source, List<Object> args) {
+        return applyEnvironmentArgs(source, args);
+    }
+
+    static void logTargetArgumentProbeForLegacy(List<Object> args) {
+        logTargetArgumentProbe(args);
+    }
+
     private static Object[] applyEnvironmentArgs(PerAppDisplayConfigSource source, List<Object> args) {
         if (source == null || args == null || args.size() <= ARG_ENVIRONMENTS) {
             return null;

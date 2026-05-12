@@ -100,6 +100,14 @@ final class HyperOsFlutterFontBridge {
         setSystemProperty(rustBinaryPropertyNameForPackage(packageName), "0");
     }
 
+    static void clearNativeTarget(String packageName) {
+        if (packageName == null || packageName.isEmpty()) {
+            return;
+        }
+        setSystemProperty(propertyNameForPackage(packageName), "0");
+        setSystemProperty(rustBinaryPropertyNameForPackage(packageName), "0");
+    }
+
     static boolean shouldClearOnPublishTargetSkipForTest(String packageName,
                                                         PerAppDisplayConfig config) {
         return shouldClearOnPublishTargetSkip(packageName, config);

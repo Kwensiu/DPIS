@@ -282,7 +282,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("new AppConfigSaveHandler()"));
         assertTrue(source.contains("processActionHandler.execute(item, mappedAction);"));
         assertTrue(source.contains("appConfigSaveHandler.save("));
-        assertTrue(source.contains("HyperOsNativeFontPropertySyncer.clearFontTargetAsync(packageName)"));
+        assertTrue(source.contains("FontRuntimePropertySyncer.clearTargetAsync(packageName)"));
         assertTrue(!source.contains("private void runProcessAction(String packageName"));
         assertTrue(!source.contains("private int[] saveAppConfig(AppListItem item"));
     }

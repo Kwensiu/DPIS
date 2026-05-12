@@ -31,6 +31,12 @@ final class Compat100SystemServerHookInstaller {
                                     ConfigStoreFactory.createForCompat100SystemServerHost()),
                             ConfigSnapshotRefreshPolicy.SYSTEM_SERVER_TTL_MILLIS));
             int hookedCount = 0;
+            int constructorHookCount = 0;
+            // API100 needs the same RustProcess env rewrite as modern101, but the
+            // legacy entry can only install it through XposedBridge.hookMethod.
+            if (Compat100RustProcessHookInstaller.install(source)) {
+                hookedCount++;
+            }
             for (Constructor<?> constructor : launchActivityItemClass.getDeclaredConstructors()) {
                 XposedBridge.hookMethod(constructor, new XC_MethodHook() {
                     @Override
@@ -39,8 +45,10 @@ final class Compat100SystemServerHookInstaller {
                     }
                 });
                 hookedCount++;
+                constructorHookCount++;
             }
-            logDebug("compat100 system_server launch-activity-item hook ready: constructors=" + hookedCount);
+            logDebug("compat100 system_server hook ready: hooks=" + hookedCount
+                    + ", launchActivityItemConstructors=" + constructorHookCount);
         } catch (Throwable throwable) {
             INSTALLED.set(false);
             logError("compat100 system_server launch-activity-item hook failed: "

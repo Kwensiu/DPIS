@@ -43,14 +43,14 @@ final class HyperOsNativeFontPropertySyncer {
         if (packages.isEmpty()) {
             return;
         }
-        Thread cleanerThread = new Thread(() -> clearFontTargets(packages),
+        Thread cleanerThread = new Thread(() -> clearFontTargets(store, packages),
                 "DPIS-hyperos-configured-property-cleaner");
         cleanerThread.setDaemon(true);
         cleanerThread.start();
     }
 
     static void syncConfiguredFontTargetsAsync(DpiConfigStore store) {
-        if (store == null || !store.isHyperOsFlutterFontHookEnabled()) {
+        if (store == null) {
             return;
         }
         for (String packageName : store.getConfiguredPackages()) {
@@ -59,7 +59,7 @@ final class HyperOsNativeFontPropertySyncer {
             if (store.isTargetDpisEnabled(packageName)
                     && fontScalePercent != null
                     && fontScalePercent > 0
-                    && FontApplyMode.isEnabled(fontMode)) {
+                    && shouldPublishForceFontOnRecovery(store, fontMode)) {
                 publishForceFontTargetAsync(packageName, fontScalePercent);
             }
         }
@@ -79,17 +79,27 @@ final class HyperOsNativeFontPropertySyncer {
         runRootCommand(command);
     }
 
-    private static void clearFontTargets(LinkedHashSet<String> packages) {
+    private static void clearFontTargets(DpiConfigStore store, LinkedHashSet<String> packages) {
         StringBuilder command = new StringBuilder();
         for (String packageName : packages) {
             if (packageName == null || packageName.isBlank()) {
                 continue;
             }
-            HyperOsFlutterFontBridge.clearTarget(packageName);
+            // forcefont.* is shared by HyperOS native font replacement and
+            // compat100 field-rewrite config. Disabling only the HyperOS
+            // native path must not erase an active compat100 field rewrite.
+            boolean preserveForceFont = shouldPreserveCompatForceFont(store, packageName);
+            if (!preserveForceFont) {
+                HyperOsFlutterFontBridge.clearTarget(packageName);
+            } else {
+                HyperOsFlutterFontBridge.clearNativeTarget(packageName);
+            }
             appendClearCommand(command,
                     HyperOsFlutterFontBridge.propertyNameForPackage(packageName));
-            appendClearCommand(command,
-                    HyperOsFlutterFontBridge.forcePropertyNameForPackage(packageName));
+            if (!preserveForceFont) {
+                appendClearCommand(command,
+                        HyperOsFlutterFontBridge.forcePropertyNameForPackage(packageName));
+            }
             appendClearCommand(command,
                     HyperOsFlutterFontBridge.rustBinaryPropertyNameForPackage(packageName));
         }
@@ -107,6 +117,37 @@ final class HyperOsNativeFontPropertySyncer {
 
     static String buildPublishCommandForTest(String fontProperty, int fontScalePercent) {
         return buildPublishCommand(fontProperty, fontScalePercent);
+    }
+
+    static boolean shouldPreserveCompatForceFontForTest(DpiConfigStore store, String packageName) {
+        return shouldPreserveCompatForceFont(store, packageName);
+    }
+
+    static boolean shouldPublishForceFontOnRecoveryForTest(DpiConfigStore store, String fontMode) {
+        return shouldPublishForceFontOnRecovery(store, fontMode);
+    }
+
+    private static boolean shouldPublishForceFontOnRecovery(DpiConfigStore store, String fontMode) {
+        if (store == null) {
+            return false;
+        }
+        String normalizedMode = FontApplyMode.normalize(fontMode);
+        if (FontApplyMode.FIELD_REWRITE.equals(normalizedMode)) {
+            return true;
+        }
+        return store.isHyperOsFlutterFontHookEnabled()
+                && FontApplyMode.isEnabled(normalizedMode);
+    }
+
+    private static boolean shouldPreserveCompatForceFont(DpiConfigStore store, String packageName) {
+        if (store == null || packageName == null || packageName.isBlank()
+                || !store.isTargetDpisEnabled(packageName)) {
+            return false;
+        }
+        Integer fontScalePercent = store.getTargetFontScalePercent(packageName);
+        return fontScalePercent != null
+                && fontScalePercent > 0
+                && FontApplyMode.FIELD_REWRITE.equals(store.getTargetFontApplyMode(packageName));
     }
 
     private static String buildPublishCommand(String fontProperty, int fontScalePercent) {

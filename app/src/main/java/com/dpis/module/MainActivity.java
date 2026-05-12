@@ -694,8 +694,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             return false;
         }
         if (!enabled) {
-            HyperOsNativeFontPropertySyncer.clearFontTargetAsync(packageName);
-            CompatFontPropertySyncer.clearTargetAsync(packageName);
+            FontRuntimePropertySyncer.clearTargetAsync(packageName);
             ViewportPropertySyncer.clearTargetAsync(packageName);
         }
         showToast(enabled ? R.string.dialog_dpis_enabled_status : R.string.dialog_dpis_disabled_status);

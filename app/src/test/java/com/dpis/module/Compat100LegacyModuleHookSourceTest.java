@@ -38,6 +38,9 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(source.contains("Compat100SystemServerHookInstaller.install"));
         assertTrue(source.indexOf("DisplayHookInstaller.setTargetPackageNameForCompat100(packageName)")
                 < source.indexOf("DISPLAY_HOOKED.compareAndSet(false, true)"));
+        assertTrue(source.contains("implements IXposedHookLoadPackage, IXposedHookZygoteInit"));
+        assertTrue(source.contains("public void initZygote(StartupParam startupParam)"));
+        assertTrue(source.contains("installSystemServerHooksForCompat100();"));
 
         String systemServerSource = read("src/compat100/java/com/dpis/module/Compat100SystemServerHookInstaller.java");
         assertTrue(systemServerSource.contains("android.app.servertransaction.LaunchActivityItem"));
@@ -49,6 +52,14 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(systemServerSource.contains("PerAppDisplayOverrideCalculator.calculate"));
         assertTrue(systemServerSource.contains("ViewportOverride.apply"));
         assertTrue(systemServerSource.contains("FontApplyMode.SYSTEM_EMULATION"));
+        assertTrue(systemServerSource.contains("Compat100RustProcessHookInstaller.install(source)"));
+
+        String compatRustSource = read("src/compat100/java/com/dpis/module/Compat100RustProcessHookInstaller.java");
+        assertTrue(compatRustSource.contains("XposedBridge.hookMethod(method"));
+        assertTrue(compatRustSource.contains("param.args = updatedArgs"));
+        String rustSource = read("src/main/java/com/dpis/module/HyperOsRustProcessHookInstaller.java");
+        assertTrue(rustSource.contains("applyEnvironmentArgsForLegacy"));
+        assertTrue(rustSource.contains("logTargetArgumentProbeForLegacy"));
     }
 
     private static String read(String relativePath) throws Exception {

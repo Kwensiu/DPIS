@@ -18,7 +18,6 @@ final class RuntimePropertyRecoveryCoordinator {
         // Keep the runtime mirrors in sync with the persisted store. Boot/package events
         // are best-effort triggers; the actual source of truth remains the stored config.
         ViewportPropertySyncer.syncConfiguredTargetsAsync(store);
-        CompatFontPropertySyncer.syncConfiguredTargetsAsync(store);
-        HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(store);
+        FontRuntimePropertySyncer.syncConfiguredTargetsAsync(store);
     }
 }

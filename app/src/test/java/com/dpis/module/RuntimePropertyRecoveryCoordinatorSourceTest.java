@@ -20,8 +20,7 @@ public final class RuntimePropertyRecoveryCoordinatorSourceTest {
                 "src/main/java/com/dpis/module/DpisPackageLifecycleReceiver.java");
 
         assertTrue(source.contains("ViewportPropertySyncer.syncConfiguredTargetsAsync(store)"));
-        assertTrue(source.contains("CompatFontPropertySyncer.syncConfiguredTargetsAsync(store)"));
-        assertTrue(source.contains("HyperOsNativeFontPropertySyncer.syncConfiguredFontTargetsAsync(store)"));
+        assertTrue(source.contains("FontRuntimePropertySyncer.syncConfiguredTargetsAsync(store)"));
         assertTrue(source.contains("idempotent"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(remoteStore)"));
