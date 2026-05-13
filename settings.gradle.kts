@@ -27,3 +27,4 @@ dependencyResolutionManagement {
 rootProject.name = "DPIS"
 
 include(":app")
+include(":companion-display-tool")

@@ -1,0 +1,6 @@
+<resources>
+    <color name="tool_background">#F6F7F9</color>
+    <color name="tool_surface">#FFFFFF</color>
+    <color name="tool_text_primary">#202124</color>
+    <color name="tool_text_secondary">#5F6368</color>
+</resources>

@@ -1,0 +1,14 @@
+<resources>
+    <style name="Theme.CompanionDisplayTool" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:colorAccent">#1A73E8</item>
+        <item name="android:navigationBarColor">@color/tool_background</item>
+        <item name="android:windowBackground">@color/tool_background</item>
+    </style>
+
+    <style name="TextAppearanceCompanionDisplayToolScene">
+        <item name="android:textColor">@color/tool_text_primary</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+</resources>

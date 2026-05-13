@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">DPIS Display Tool</string>
+    <string name="overview_title">Phase 1 native display scenes</string>
+    <string name="overview_subtitle">Cold start runs normal core scenes. Use adb broadcast for targeted fragile runs.</string>
+</resources>
