@@ -74,6 +74,20 @@ public class FontDebugStatsProviderSourceSmokeTest {
     }
 
     @Test
+    public void settingsExposeSafeCacheCleanup() throws IOException {
+        String layout = read("src/main/res/layout/activity_system_server_settings.xml");
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+
+        assertTrue(layout.contains("android:id=\"@+id/row_clear_cache\""));
+        assertTrue(layout.indexOf("android:id=\"@+id/row_language\"")
+                < layout.indexOf("android:id=\"@+id/row_clear_cache\""));
+        assertTrue(layout.indexOf("android:id=\"@+id/row_clear_cache\"")
+                < layout.indexOf("android:id=\"@+id/row_hide_launcher_icon\""));
+        assertTrue(source.contains("SafeCacheCleaner.formatCacheUsage("));
+        assertTrue(source.contains("SafeCacheCleaner.clearAll("));
+    }
+
+    @Test
     public void manifestDoesNotRequestReadLogsForLogcatFallback() throws IOException {
         String manifest = read("src/main/AndroidManifest.xml");
 

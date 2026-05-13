@@ -56,6 +56,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     private static final String SYSTEM_SCOPE_MODERN = "system";
     private static final int REQUEST_EXPORT_CONFIG_BACKUP = 1001;
     private static final int REQUEST_IMPORT_CONFIG_BACKUP = 1002;
+    private static final long CLEAR_CACHE_MIN_DISABLED_MS = 300L;
 
     private DpiConfigStore store;
     private MaterialSwitch hooksEnabledSwitch;
@@ -65,8 +66,10 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     private MaterialSwitch hideLauncherIconSwitch;
     private View primarySwitchCard;
     private View languageEntryRow;
+    private View clearCacheEntryRow;
     private View fontDebugEntryRow;
     private View backupConfigEntryRow;
+    private volatile boolean clearCacheInProgress;
     private SharedPreferences statsPreferences;
     private int selectedMode = FontDebugStatsStore.MODE_CHAIN;
     private int selectedWindow = FontDebugStatsStore.WINDOW_ALL;
@@ -139,6 +142,14 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
                 R.string.settings_language_hint,
                 this::showLanguageDialog);
         updateLanguageEntrySubtitle();
+        clearCacheEntryRow = bindEntryRow(
+                R.id.row_clear_cache,
+                R.drawable.ic_clear_24,
+                R.string.settings_clear_cache_label,
+                R.string.settings_clear_cache_size,
+                this::clearCache);
+        setCacheEntrySubtitle("0 B");
+        updateCacheEntrySubtitle();
         bindEntryRow(
                 R.id.row_about,
                 R.drawable.ic_info_outline_24,
@@ -341,6 +352,83 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         }
         MaterialTextView subtitleView = languageEntryRow.findViewById(R.id.setting_subtitle);
         subtitleView.setText(AppLocaleManager.selectedLabelResId(this));
+    }
+
+    private void updateCacheEntrySubtitle() {
+        if (clearCacheEntryRow == null) {
+            return;
+        }
+        android.content.Context appContext = getApplicationContext();
+        new Thread(() -> {
+            String usage = SafeCacheCleaner.formatCacheUsage(appContext);
+            runOnUiThread(() -> {
+                if (!isFinishing() && !isDestroyed() && !clearCacheInProgress) {
+                    setCacheEntrySubtitle(usage);
+                }
+            });
+        }, "dpis-cache-size").start();
+    }
+
+    private void clearCache(View anchor) {
+        if (clearCacheInProgress) {
+            return;
+        }
+        clearCacheInProgress = true;
+        setRowEnabled(clearCacheEntryRow, false);
+        setCacheEntrySubtitle(getString(R.string.settings_clear_cache_cleaning));
+        android.content.Context appContext = getApplicationContext();
+        new Thread(() -> {
+            long startedAt = System.currentTimeMillis();
+            boolean legacyCacheStillNeedsManualDelete = false;
+            boolean failed = false;
+            try {
+                SafeCacheCleaner.clearAll(appContext);
+                legacyCacheStillNeedsManualDelete = SafeCacheCleaner.hasLegacyPublicFontDebugCache();
+            } catch (RuntimeException exception) {
+                failed = true;
+                DpisLog.e("clear cache failed", exception);
+            } finally {
+                sleepUntilMinDisabledElapsed(startedAt);
+                boolean finalLegacyCacheStillNeedsManualDelete = legacyCacheStillNeedsManualDelete;
+                boolean finalFailed = failed;
+                runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
+                    clearCacheInProgress = false;
+                    setRowEnabled(clearCacheEntryRow, true);
+                    updateCacheEntrySubtitle();
+                    if (finalLegacyCacheStillNeedsManualDelete) {
+                        showToast(R.string.settings_clear_cache_legacy_public_file_blocked);
+                        return;
+                    }
+                    showToast(finalFailed
+                            ? R.string.system_settings_save_failed
+                            : R.string.settings_clear_cache_done);
+                });
+            }
+        }, "dpis-clear-cache").start();
+    }
+
+    private static void sleepUntilMinDisabledElapsed(long startedAt) {
+        long elapsed = System.currentTimeMillis() - startedAt;
+        long remaining = CLEAR_CACHE_MIN_DISABLED_MS - elapsed;
+        if (remaining <= 0L) {
+            return;
+        }
+        try {
+            Thread.sleep(remaining);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private void setCacheEntrySubtitle(String usage) {
+        if (clearCacheEntryRow == null) {
+            return;
+        }
+        MaterialTextView subtitleView = clearCacheEntryRow.findViewById(R.id.setting_subtitle);
+        subtitleView.setText(getString(R.string.settings_clear_cache_size, usage));
     }
 
     private void showConfigBackupDialog(View anchor) {
@@ -749,21 +837,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     }
 
     private void clearDebugStatsData() {
-        if (statsPreferences == null) {
-            return;
-        }
-        statsPreferences.edit()
-                .remove(FontDebugStatsStore.KEY_CHAIN_5S)
-                .remove(FontDebugStatsStore.KEY_CHAIN_30S)
-                .remove(FontDebugStatsStore.KEY_CHAIN_ALL)
-                .remove(FontDebugStatsStore.KEY_CHAIN_VIEW_5S)
-                .remove(FontDebugStatsStore.KEY_CHAIN_VIEW_30S)
-                .remove(FontDebugStatsStore.KEY_CHAIN_VIEW_ALL)
-                .remove(FontDebugStatsStore.KEY_EVENT_TOTAL)
-                .remove(FontDebugStatsStore.KEY_UPDATED_AT)
-                .remove(FontDebugStatsStore.KEY_UNIT_BREAKDOWN_5S)
-                .remove(FontDebugStatsStore.KEY_VIEWPORT_DEBUG_SUMMARY)
-                .apply();
+        FontDebugStatsStore.clearStats(statsPreferences);
     }
 
     private void updateDialogButtons() {

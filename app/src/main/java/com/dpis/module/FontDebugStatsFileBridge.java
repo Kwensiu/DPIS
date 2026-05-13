@@ -58,7 +58,6 @@ final class FontDebugStatsFileBridge {
         importIfNewer(preferences, resolveFile(context));
         File legacyFile = resolveLegacyPublicFile();
         importIfNewer(preferences, legacyFile);
-        deleteLegacyPublicFile(legacyFile);
     }
 
     static void importIfNewer(SharedPreferences preferences, Properties properties) {
@@ -100,20 +99,16 @@ final class FontDebugStatsFileBridge {
         }
     }
 
-    static File resolveFileForTest(Context context) {
+    static File resolveAppSpecificStatsFile(Context context) {
         return resolveFile(context);
     }
 
-    static File resolveFileForTest(File baseDir) {
+    static File resolveAppSpecificStatsFile(File baseDir) {
         return resolveFile(baseDir);
     }
 
-    static File resolveLegacyPublicFileForTest(File downloads) {
+    static File resolveLegacyPublicStatsFile(File downloads) {
         return resolveLegacyPublicFile(downloads);
-    }
-
-    static void deleteLegacyPublicFileForTest(File legacyFile) {
-        deleteLegacyPublicFile(legacyFile);
     }
 
     private static File resolveFile(Context context) {
@@ -139,26 +134,6 @@ final class FontDebugStatsFileBridge {
         }
         File legacyDir = new File(downloads, "DPIS");
         return new File(legacyDir, FILE_NAME);
-    }
-
-    private static void deleteLegacyPublicFile(File legacyFile) {
-        if (legacyFile == null) {
-            return;
-        }
-        // Migration cleanup for versions that wrote this debug cache into public
-        // Downloads. Remove this compatibility cleanup after old installs have had
-        // enough release cycles to migrate.
-        if (legacyFile.isFile()) {
-            legacyFile.delete();
-        }
-        File legacyDir = legacyFile.getParentFile();
-        if (legacyDir == null) {
-            return;
-        }
-        String[] children = legacyDir.list();
-        if (children != null && children.length == 0) {
-            legacyDir.delete();
-        }
     }
 
     private static Properties loadProperties(File file) {

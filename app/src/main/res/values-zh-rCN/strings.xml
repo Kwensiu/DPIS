@@ -143,6 +143,11 @@
     <string name="settings_hide_launcher_icon_confirm_title">确认隐藏桌面图标</string>
     <string name="settings_hide_launcher_icon_confirm_message">隐藏后将不再显示桌面入口，但仍可从 LSPosed 的模块设置入口打开。确认继续？</string>
     <string name="settings_hide_launcher_icon_apply_failed">更新桌面图标状态失败，请重试</string>
+    <string name="settings_clear_cache_label">清理缓存</string>
+    <string name="settings_clear_cache_size">缓存占用：%1$s</string>
+    <string name="settings_clear_cache_cleaning">正在清理缓存…</string>
+    <string name="settings_clear_cache_done">缓存清理完成</string>
+    <string name="settings_clear_cache_legacy_public_file_blocked">旧版本的调试文件遗留在Download/DPIS目录需要手动删除</string>
     <string name="about_title">关于</string>
     <string name="about_version_format">版本：%1$s (%2$d)</string>
     <string name="about_link_source_title">查看源代码</string>

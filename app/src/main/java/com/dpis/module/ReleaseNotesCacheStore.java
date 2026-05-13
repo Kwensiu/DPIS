@@ -3,6 +3,9 @@ package com.dpis.module;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+
 final class ReleaseNotesCacheStore {
     static final String PREFS_NAME = "dpis.release_notes_cache";
     static final long DEFAULT_TTL_MS = 24L * 60L * 60L * 1000L;
@@ -61,6 +64,26 @@ final class ReleaseNotesCacheStore {
                 .apply();
     }
 
+    void clear() {
+        prefs.edit().clear().commit();
+    }
+
+    long estimateCacheBytes() {
+        long total = 0L;
+        for (Map.Entry<String, ?> entry : prefs.getAll().entrySet()) {
+            total += utf8Bytes(entry.getKey());
+            Object value = entry.getValue();
+            if (value instanceof String stringValue) {
+                total += utf8Bytes(stringValue);
+            } else if (value instanceof Boolean) {
+                total += 1L;
+            } else if (value instanceof Number) {
+                total += Long.BYTES;
+            }
+        }
+        return total;
+    }
+
     private static String normalizeVersionName(String versionName) {
         if (versionName == null) {
             return "";
@@ -70,5 +93,9 @@ final class ReleaseNotesCacheStore {
             normalized = normalized.substring(1).trim();
         }
         return normalized;
+    }
+
+    private static int utf8Bytes(String value) {
+        return value == null ? 0 : value.getBytes(StandardCharsets.UTF_8).length;
     }
 }
