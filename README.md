@@ -4,6 +4,8 @@
 ![GitHub Release](https://img.shields.io/github/v/release/Kwensiu/DPIS)
 ![License](https://img.shields.io/github/license/Kwensiu/DPIS)
 
+中文说明 | [English](docs/README.en.md)
+
 DPIS 是一个基于 LSPosed/Xposed 的 Android 模块，用于按应用独立调整显示参数（虚拟宽度 + 字体大小），在不改全局系统显示设置的前提下，优化单应用观感。
 
 ## 核心能力
@@ -30,6 +32,8 @@ DPIS 是一个基于 LSPosed/Xposed 的 Android 模块，用于按应用独立�
    - 宽度模式与字体模式（`伪装` / `替换`）
 4. 保存后重启目标应用进程生效；必要时重启设备。
 
+如果你使用 `伪装` 模式，请额外在 LSPosed 中勾选 `system` 作用域；`替换` 模式通常不需要。
+
 ## 模式说明
 
 | 模式 | 特点 | 适用场景 | 注意事项 |
@@ -43,7 +47,7 @@ DPIS 是一个基于 LSPosed/Xposed 的 Android 模块，用于按应用独立�
 - `开启`：启用完整 `system_server` 入口，适合调试与对照。
 - `开启 + 安全模式`：限制为低风险入口（`activity-start`），推荐作为默认配置。
 
-如果你要使用 `伪装` 模式，请先确保 LSPosed 作用域已勾选 `system`。
+如果你要使用 `伪装` 模式，请先确保 LSPosed 作用域已勾选 `system`。`替换` 模式通常可以只勾选目标应用。
 
 ## 日志与调试
 
@@ -62,6 +66,7 @@ DPIS 是一个基于 LSPosed/Xposed 的 Android 模块，用于按应用独立�
 
 ```powershell
 ./gradlew :app:assembleModern101Debug; if ($LASTEXITCODE -eq 0) { adb install -r "app/build/outputs/apk/modern101/debug/app-modern101-debug.apk" }
+./gradlew :app:assembleCompat100Debug; if ($LASTEXITCODE -eq 0) { adb install -r "app/build/outputs/apk/compat100/debug/app-compat100-debug.apk" }
 ```
 
 ## 项目结构
@@ -85,16 +90,21 @@ refs/                     本地参考资料（LSPosed / AOSP / libxposed）
 | 标准版 | `DPIS_{version}.apk` | LSPosed（libxposed API 101+） |
 | 兼容版 | `DPIS_{version}_legacy.apk` | 传统 Xposed / 不支持 libxposed API 101 的框架 |
 
-两个版本功能相同，区别仅在于与 Xposed 框架的对接方式。优先使用标准版，仅在标准版无法加载时使用兼容版。
+两个版本面向相同的用户功能目标，区别主要在于与 Xposed 框架的对接方式、下载入口与更新行为。优先使用标准版，仅在标准版无法加载时使用兼容版。
+
+兼容版（`legacy`）请始终以主仓库 Releases 为准。LSPosed / Xposed 模块仓库仅同步标准版 APK。
+
+标准版与兼容版不可共存。二者包名相同，交叉安装会相互覆盖，并可能导致已有配置或状态被重置。
 
 ## 文档导航
 
 - 当前文档入口：[docs/README.md](docs/README.md)
+- 英文说明文档：[docs/README.en.md](docs/README.en.md)
 - 历史文档归档入口：[docs/archive/README.md](docs/archive/README.md)
 
 ## 许可证
 
-DPIS 以 [GPL-3.0-or-later](LICENSE) 许可发布。 
+DPIS 以 [GPL-3.0-or-later](LICENSE) 许可发布。
 
 ## 引用与致谢
 
