@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="xposedscope">
+        <!-- LSPosed legacy manager swaps android/system for historical compatibility. -->
         <item>android</item>
-        <item>system</item>
     </string-array>
 </resources>

@@ -24,11 +24,11 @@ public final class LegacyModuleManifestMetadataTest {
     }
 
     @Test
-    public void scopeResourceDeclaresSystemAndAndroidRecommendations() throws IOException {
+    public void scopeResourceDeclaresLegacySystemRecommendation() throws IOException {
         String arrays = readProjectFile("src/main/res/values/arrays.xml");
         assertTrue(arrays.contains("<string-array name=\"xposedscope\">"));
         assertTrue(arrays.contains("<item>android</item>"));
-        assertTrue(arrays.contains("<item>system</item>"));
+        assertFalse(arrays.contains("<item>system</item>"));
     }
 
     @Test
