@@ -200,5 +200,4 @@ jobs:
             --repo Xposed-Modules-Repo/io.github.kwensiu.dpis \
             --title "${{ steps.meta.outputs.version }}" \
             --notes-file /tmp/release-notes.md \
-            "${{ steps.meta.outputs.apk_path }}" \
-            "${{ steps.meta.outputs.compat_apk_path }}"
+            "${{ steps.meta.outputs.apk_path }}"
