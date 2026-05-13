@@ -11,13 +11,13 @@ import org.junit.Test;
 public class ReleaseNotesMarkdownLiteTest {
     private static final String SAMPLE = "## [1.7.0](https://github.com/Kwensiu/DPIS/compare/v1.6.3...v1.7.0) (2026-05-09)\n"
             + "\n"
-            + "### Features\n"
-            + "* add HyperOS support ([#37](https://github.com/Kwensiu/DPIS/issues/37))\n"
+            + "### 功能\n"
+            + "* 增加 HyperOS 支持 ([#37](https://github.com/Kwensiu/DPIS/issues/37))\n"
             + "\n"
             + "---\n"
             + "\n"
-            + "### 功能\n"
-            + "* 增加 HyperOS 支持 ([#37](https://github.com/Kwensiu/DPIS/issues/37))\n";
+            + "### Features\n"
+            + "* add HyperOS support ([#37](https://github.com/Kwensiu/DPIS/issues/37))\n";
 
     @Test
     public void stripsVersionHeadingAndShowsChineseSectionForChineseLocale() {
@@ -42,7 +42,7 @@ public class ReleaseNotesMarkdownLiteTest {
 
     @Test
     public void acceptsDividerLineWithExtraDashesAndSpaces() {
-        String markdown = "### English\n* hello\n\n  ----  \n\n### 中文\n* 你好";
+        String markdown = "### 中文\n* 你好\n\n  ----  \n\n### English\n* hello";
 
         String rendered = ReleaseNotesMarkdownLite.filterBodyForLocale(
                 markdown,
@@ -53,7 +53,7 @@ public class ReleaseNotesMarkdownLiteTest {
 
     @Test
     public void fallsBackWhenPreferredLanguageSectionIsEmpty() {
-        String markdown = "### Features\n* hello\n\n---\n\n";
+        String markdown = "\n\n---\n\n### Features\n* hello\n";
 
         String rendered = ReleaseNotesMarkdownLite.filterBodyForLocale(
                 markdown,
@@ -71,5 +71,28 @@ public class ReleaseNotesMarkdownLiteTest {
 
         assertTrue(rendered.contains("abc123"));
         assertTrue(rendered.contains("https://github.com"));
+    }
+
+    @Test
+    public void usesChineseTopAndEnglishBottomAroundDivider() {
+        String markdown = "### 中文\n- 一\n\n---\n\n### English\n- one";
+
+        String zh = ReleaseNotesMarkdownLite.filterBodyForLocale(markdown, Locale.SIMPLIFIED_CHINESE);
+        String en = ReleaseNotesMarkdownLite.filterBodyForLocale(markdown, Locale.ENGLISH);
+
+        assertTrue(zh.contains("中文"));
+        assertFalse(zh.contains("English"));
+        assertTrue(en.contains("English"));
+        assertFalse(en.contains("中文"));
+    }
+
+    @Test
+    public void unclosedCodeFenceFallsBackToNormalText() {
+        String markdown = "### 中文\n```java\nline\nstill text";
+
+        String rendered = ReleaseNotesMarkdownLite.filterBodyForLocale(markdown, Locale.SIMPLIFIED_CHINESE);
+
+        assertTrue(rendered.contains("```java"));
+        assertTrue(rendered.contains("still text"));
     }
 }
