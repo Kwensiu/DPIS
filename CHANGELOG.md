@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.8.1](https://github.com/Kwensiu/DPIS/compare/v1.8.0...v1.8.1) (2026-05-13)
+
+
+### Features
+
+* add safe cache cleanup entry ([8211c1e](https://github.com/Kwensiu/DPIS/commit/8211c1e963306aa8f058c0dcc2c954fcb53610f2))
+
+
+### Bug Fixes
+
+* align legacy scope recommendation and version naming ([d2b6f39](https://github.com/Kwensiu/DPIS/commit/d2b6f39ccb27f1c94433efa28e323997f96ad1e1))
+* improve release notes markdown rendering ([994d8e9](https://github.com/Kwensiu/DPIS/commit/994d8e96a661654ee11b17e5ee85a40964260e7a))
+
 ## [1.8.0](https://github.com/Kwensiu/DPIS/compare/v1.7.1...v1.8.0) (2026-05-12)
 
 
