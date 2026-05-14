@@ -88,6 +88,14 @@ final class DpiConfigStore {
         return normalizeFontScalePercent(percent);
     }
 
+    String getTargetTypefaceId(String packageName) {
+        String key = keyForTypefaceId(packageName);
+        if (!contains(key)) {
+            return null;
+        }
+        return normalizeTypefaceId(getString(key, null));
+    }
+
     String getTargetFontApplyMode(String packageName) {
         String key = keyForFontMode(packageName);
         if (contains(key)) {
@@ -295,6 +303,18 @@ final class DpiConfigStore {
                 .putInt(keyForFontScale(packageName), normalizedPercent));
     }
 
+    boolean setTargetTypefaceId(String packageName, String typefaceId) {
+        String normalizedTypefaceId = normalizeTypefaceId(typefaceId);
+        if (normalizedTypefaceId == null) {
+            return clearTargetTypefaceId(packageName);
+        }
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        packages.add(packageName);
+        return commitBoth(editor -> editor
+                .putStringSet(KEY_TARGET_PACKAGES, packages)
+                .putString(keyForTypefaceId(packageName), normalizedTypefaceId));
+    }
+
     boolean setTargetFontApplyMode(String packageName, String mode) {
         String normalized = FontApplyMode.normalize(mode);
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
@@ -322,6 +342,16 @@ final class DpiConfigStore {
                 .remove(keyForFontScale(packageName)));
     }
 
+    boolean clearTargetTypefaceId(String packageName) {
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        if (!hasAnyPackageConfigAfterRemoving(packageName, keyForTypefaceId(packageName))) {
+            packages.remove(packageName);
+        }
+        return commitBoth(editor -> editor
+                .putStringSet(KEY_TARGET_PACKAGES, packages)
+                .remove(keyForTypefaceId(packageName)));
+    }
+
     boolean hasPrimaryTargetViewportWidthDp(String packageName) {
         return containsInPrimary(keyForViewportWidth(packageName));
     }
@@ -332,6 +362,10 @@ final class DpiConfigStore {
 
     boolean hasPrimaryTargetFontScalePercent(String packageName) {
         return containsInPrimary(keyForFontScale(packageName));
+    }
+
+    boolean hasPrimaryTargetTypefaceId(String packageName) {
+        return containsInPrimary(keyForTypefaceId(packageName));
     }
 
     boolean hasPrimaryTargetFontApplyMode(String packageName) {
@@ -366,6 +400,7 @@ final class DpiConfigStore {
                 .remove(keyForViewportWidth(packageName))
                 .remove(keyForViewportMode(packageName))
                 .remove(keyForFontScale(packageName))
+                .remove(keyForTypefaceId(packageName))
                 .remove(keyForFontMode(packageName))
                 .remove(keyForDpisEnabled(packageName))
                 .remove(keyForFontHookDomains(packageName)));
@@ -420,6 +455,11 @@ final class DpiConfigStore {
         String fontScaleKey = keyForFontScale(packageName);
         if (!isRemovedKey(fontScaleKey, removedKeys)
                 && getTargetFontScalePercent(packageName) != null) {
+            return true;
+        }
+        String typefaceIdKey = keyForTypefaceId(packageName);
+        if (!isRemovedKey(typefaceIdKey, removedKeys)
+                && getTargetTypefaceId(packageName) != null) {
             return true;
         }
         String fontModeKey = keyForFontMode(packageName);
@@ -653,6 +693,17 @@ final class DpiConfigStore {
         return percent;
     }
 
+    private static String normalizeTypefaceId(String typefaceId) {
+        if (typefaceId == null) {
+            return null;
+        }
+        String normalizedTypefaceId = typefaceId.trim();
+        if (normalizedTypefaceId.isEmpty()) {
+            return null;
+        }
+        return normalizedTypefaceId;
+    }
+
     private static String keyForViewportWidth(String packageName) {
         return "viewport." + packageName + ".width_dp";
     }
@@ -663,6 +714,10 @@ final class DpiConfigStore {
 
     private static String keyForFontScale(String packageName) {
         return "font." + packageName + ".scale_percent";
+    }
+
+    private static String keyForTypefaceId(String packageName) {
+        return "font." + packageName + ".typeface_id";
     }
 
     private static String keyForFontMode(String packageName) {

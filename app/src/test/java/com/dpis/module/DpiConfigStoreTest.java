@@ -136,6 +136,70 @@ public class DpiConfigStoreTest {
     }
 
     @Test
+    public void updatesTypefaceIdForConfiguredPackage() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertTrue(store.setTargetTypefaceId("bin.mt.plus.canary", "font_abcd1234"));
+
+        assertEquals("font_abcd1234", store.getTargetTypefaceId("bin.mt.plus.canary"));
+        assertTrue(store.hasPrimaryTargetTypefaceId("bin.mt.plus.canary"));
+        assertTrue(store.getConfiguredPackages().contains("bin.mt.plus.canary"));
+    }
+
+    @Test
+    public void clearsTypefaceIdAndRemovesPackageWhenItIsOnlyConfig() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.setTargetTypefaceId("bin.mt.plus.canary", "font_abcd1234"));
+
+        assertTrue(store.clearTargetTypefaceId("bin.mt.plus.canary"));
+
+        assertNull(store.getTargetTypefaceId("bin.mt.plus.canary"));
+        assertFalse(store.hasPrimaryTargetTypefaceId("bin.mt.plus.canary"));
+        assertFalse(store.getConfiguredPackages().contains("bin.mt.plus.canary"));
+    }
+
+    @Test
+    public void keepsPackageConfiguredWhenClearingTypefaceButViewportExists() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.setTargetViewportWidthDp("bin.mt.plus.canary", 360));
+        assertTrue(store.setTargetTypefaceId("bin.mt.plus.canary", "font_abcd1234"));
+
+        assertTrue(store.clearTargetTypefaceId("bin.mt.plus.canary"));
+
+        assertEquals(Integer.valueOf(360), store.getTargetViewportWidthDp("bin.mt.plus.canary"));
+        assertTrue(store.getConfiguredPackages().contains("bin.mt.plus.canary"));
+    }
+
+    @Test
+    public void keepsPackageConfiguredWhenClearingViewportButTypefaceExists() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.setTargetViewportWidthDp("bin.mt.plus.canary", 360));
+        assertTrue(store.setTargetTypefaceId("bin.mt.plus.canary", "font_abcd1234"));
+
+        assertTrue(store.clearTargetViewportWidthDp("bin.mt.plus.canary"));
+
+        assertNull(store.getTargetViewportWidthDp("bin.mt.plus.canary"));
+        assertEquals("font_abcd1234", store.getTargetTypefaceId("bin.mt.plus.canary"));
+        assertTrue(store.getConfiguredPackages().contains("bin.mt.plus.canary"));
+    }
+
+    @Test
+    public void clearTargetPackageConfigRemovesTypefaceId() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.setTargetTypefaceId("bin.mt.plus.canary", "font_abcd1234"));
+
+        assertTrue(store.clearTargetPackageConfig("bin.mt.plus.canary"));
+
+        assertNull(store.getTargetTypefaceId("bin.mt.plus.canary"));
+        assertFalse(store.getConfiguredPackages().contains("bin.mt.plus.canary"));
+    }
+
+    @Test
     public void returnsNullFontScaleWhenStoredValueOutOfRange() {
         FakePrefs prefs = new FakePrefs();
         prefs.edit().putInt("font.bin.mt.plus.canary.scale_percent", 301).commit();
