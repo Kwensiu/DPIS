@@ -258,6 +258,7 @@ final class SystemServerDisplayEnvironmentInstaller {
                             .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
                             .intercept(chain -> {
                                 Object result = null;
+                                boolean proceedAttempted = false;
                                 boolean proceeded = false;
                                 try {
                                     Object thisObject = chain.getThisObject();
@@ -315,6 +316,7 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     if (shouldApplyPreProceedMutations(target.entryName)) {
                                         applyEnvironment(target.entryName, before, preEnvironment, config);
                                     }
+                                    proceedAttempted = true;
                                     result = chain.proceed();
                                     proceeded = true;
                                     Snapshot after = captureSnapshot(thisObject, args);
@@ -383,6 +385,9 @@ final class SystemServerDisplayEnvironmentInstaller {
                                             target.entryName, throwable), throwable);
                                     if (proceeded) {
                                         return result;
+                                    }
+                                    if (proceedAttempted) {
+                                        throw throwable;
                                     }
                                     return chain.proceed();
                                 }

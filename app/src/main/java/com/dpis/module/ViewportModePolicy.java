@@ -12,7 +12,7 @@ final class ViewportModePolicy {
     }
 
     static boolean shouldApplyConfigurationOverride(DpiConfigStore store, String packageName) {
-        return !ViewportApplyMode.FIELD_REWRITE.equals(resolve(store, packageName));
+        return ViewportApplyMode.isEnabled(resolve(store, packageName));
     }
 }
 

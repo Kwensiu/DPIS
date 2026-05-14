@@ -158,6 +158,35 @@ public class ResourcesImplHookInstallerTest {
     }
 
     @Test
+    public void restoresStableDensityWhenTargetConfigWasReDerivedFromStaleMetrics() {
+        VirtualDisplayState.set(new VirtualDisplayOverride.Result(800, 1636, 800,
+                216, 1080, 2209));
+        Configuration config = new Configuration();
+        config.densityDpi = 456;
+        config.screenWidthDp = 800;
+        config.screenHeightDp = 1636;
+        config.smallestScreenWidthDp = 800;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 2208;
+        metrics.densityDpi = 456;
+        metrics.density = 2.85f;
+        metrics.scaledDensity = 2.85f;
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 800).commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
+
+        assertEquals(216, config.densityDpi);
+        assertEquals(216, metrics.densityDpi);
+        assertEquals(DensityOverride.densityFromDpi(216), metrics.density, 0.0001f);
+        assertEquals(1080, metrics.widthPixels);
+        assertEquals(2209, metrics.heightPixels);
+    }
+
+    @Test
     public void keepsSharedDensityStableWhenLandscapeConfigAlreadyMatchesTargetShortSide() {
         Configuration config = new Configuration();
         config.densityDpi = 480;

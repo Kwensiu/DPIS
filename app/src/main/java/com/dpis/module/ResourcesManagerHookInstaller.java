@@ -161,9 +161,8 @@ final class ResourcesManagerHookInstaller {
                         ? Math.round(originalHeightDp * (originalDensityDpi / 160.0f))
                         : result.heightDp,
                 result.smallestWidthDp);
-        if (sharedResult != null) {
-            VirtualDisplayState.set(sharedResult);
-        }
+        VirtualDisplayState.setUnlessDerivedFromTargetConfig(
+                sharedResult, originalSmallestWidthDp, targetViewportWidth);
         boolean applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
                 store, packageName);
         if (result.widthDp == originalWidthDp
@@ -171,6 +170,25 @@ final class ResourcesManagerHookInstaller {
                 && result.smallestWidthDp == originalSmallestWidthDp
                 && result.densityDpi == originalDensityDpi
                 && !fontScale.changed) {
+            VirtualDisplayOverride.Result stableResult =
+                    VirtualDisplayState.getStableTargetResult(
+                            originalSmallestWidthDp, targetViewportWidth);
+            if (stableResult != null && stableResult.densityDpi > 0
+                    && config.densityDpi != stableResult.densityDpi) {
+                config.densityDpi = stableResult.densityDpi;
+                String message = "DPIS_FONT " + sourceTag
+                        + " stable target: widthDp " + originalWidthDp
+                        + " -> " + config.screenWidthDp
+                        + ", heightDp " + originalHeightDp
+                        + " -> " + config.screenHeightDp
+                        + ", smallestWidthDp " + originalSmallestWidthDp
+                        + " -> " + config.smallestScreenWidthDp
+                        + ", densityDpi " + originalDensityDpi
+                        + " -> " + config.densityDpi
+                        + ", fontScale " + fontScale.original
+                        + " -> " + config.fontScale;
+                logIfChanged(packageName + ":" + sourceTag + ":stable-target", message);
+            }
             return;
         }
         if (applyToConfiguration

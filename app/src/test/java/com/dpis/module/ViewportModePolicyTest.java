@@ -32,4 +32,18 @@ public class ViewportModePolicyTest {
         assertEquals(ViewportApplyMode.SYSTEM_EMULATION, mode);
         assertTrue(ViewportModePolicy.shouldApplyConfigurationOverride(store, "com.example.target"));
     }
+
+    @Test
+    public void fieldRewriteAppliesConfigurationOverrideInAppProcess() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setSystemServerHooksEnabled(false);
+        store.setTargetViewportWidthDp("com.example.target", 360);
+        store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.FIELD_REWRITE);
+
+        String mode = ViewportModePolicy.resolve(store, "com.example.target");
+
+        assertEquals(ViewportApplyMode.FIELD_REWRITE, mode);
+        assertTrue(ViewportModePolicy.shouldApplyConfigurationOverride(store, "com.example.target"));
+    }
 }

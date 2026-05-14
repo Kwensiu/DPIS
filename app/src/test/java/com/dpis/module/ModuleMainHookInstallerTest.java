@@ -35,6 +35,27 @@ public class ModuleMainHookInstallerTest {
     }
 
     @Test
+    public void systemServerHookDoesNotRetryOriginalAfterProceedThrows() throws IOException {
+        String installer = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+
+        assertTrue(installer.contains("boolean proceedAttempted = false;"));
+        assertTrue(installer.contains("proceedAttempted = true;"));
+        assertTrue(installer.contains("if (proceedAttempted)"));
+        assertTrue(installer.contains("throw throwable;"));
+        assertTrue(installer.contains("return chain.proceed();"));
+    }
+
+    @Test
+    public void issueSpecificDiagnosticsDoNotRemainInRuntimeSources() throws IOException {
+        assertFalse(read("src/modern101/java/com/dpis/module/ModuleMain.java")
+                .contains("DPIS_DIAG"));
+        assertFalse(read("src/main/java/com/dpis/module/ConfigStoreFactory.java")
+                .contains("DPIS_DIAG"));
+        assertFalse(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
+                .contains("DPIS_DIAG"));
+    }
+
+    @Test
     public void nativeFontHookUsesRustEnvironmentAsRuntimeFontSource() throws IOException {
         String nativeSource = read("src/main/cpp/dpis_native.cpp");
 

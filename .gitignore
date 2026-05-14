@@ -29,5 +29,8 @@ Thumbs.db
 /startup*.log
 /xhh-*.txt
 /dpis-check.txt
+/af.db
+/.debug-*.xml
+/.debug-smoke-*/
 
 /archive/

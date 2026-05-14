@@ -54,6 +54,25 @@
 - Group debug-only rows with their own dividers so release layouts keep static separators.
 - Before release-related commits, explicitly decide whether to remove or keep debug-only entries.
 
+## Runtime Debug Automation
+- Autofish may be used as an auxiliary Android automation channel for real-device
+  DPIS validation. It is for launching apps, coordinate taps/swipes, screenshots,
+  top-activity checks, and repeatable visual comparisons.
+- Do not treat Autofish accessibility trees as authoritative for apps with limited
+  accessibility exposure. These apps may expose only system/status/sidebar nodes,
+  so missing in-app text or tab labels in Autofish output does not prove the UI is
+  absent or unmodified.
+- For DPIS behavior claims, pair Autofish evidence with DPIS/LSPosed logs,
+  `dumpsys activity`, or app-process resource metrics. Autofish can confirm what
+  is visible and where to tap; it cannot confirm `Configuration`, `ResourcesImpl`,
+  `DisplayMetrics`, or system_server mutation state by itself.
+- Keep Autofish connection data local. Use `af config set remote.url ...` and
+  `af config set remote.token ...` on the agent machine, but do not commit tokens,
+  `af.db`, generated screenshots, or `.debug-*` evidence directories.
+- Current useful pattern for issue-style validation:
+  configure DPIS through the debug-only config entrypoint, use Autofish to launch
+  and navigate the target app, then collect screenshots plus adb/LSPosed logs.
+
 ## Gradle Task Detection
 - Build scripts must not infer release tasks by scanning arbitrary Gradle arguments such as `--tests`.
 - Release signing checks should only trigger for actual release task names.

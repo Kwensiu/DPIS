@@ -91,9 +91,8 @@ final class ResourcesImplHookInstaller {
                 sourceWidthPx,
                 sourceHeightPx,
                 result.smallestWidthDp);
-        if (sharedResult != null) {
-            VirtualDisplayState.set(sharedResult);
-        }
+        VirtualDisplayState.setUnlessDerivedFromTargetConfig(
+                sharedResult, originalSmallestWidthDp, targetViewportWidth);
         String viewportMode = ViewportModePolicy.resolve(store, packageName);
         ViewportDebugReporter.report(
                 store,
@@ -106,6 +105,35 @@ final class ResourcesImplHookInstaller {
                 sharedResult,
                 applyToConfiguration);
         if (!needsViewportUpdate) {
+            VirtualDisplayOverride.Result stableResult =
+                    VirtualDisplayState.getStableTargetResult(
+                            originalSmallestWidthDp, targetViewportWidth);
+            if (stableResult != null && stableResult.densityDpi > 0
+                    && config.densityDpi != stableResult.densityDpi) {
+                config.densityDpi = stableResult.densityDpi;
+                if (metrics != null) {
+                    metrics.densityDpi = stableResult.densityDpi;
+                    metrics.density = DensityOverride.densityFromDpi(stableResult.densityDpi);
+                    metrics.scaledDensity = DensityOverride.scaledDensityFrom(
+                            stableResult.densityDpi, config.fontScale);
+                    metrics.widthPixels = stableResult.widthPx;
+                    metrics.heightPixels = stableResult.heightPx;
+                }
+                logIfChanged(packageName + ":stable-target",
+                        "DPIS_FONT ResourcesImpl stable target: widthDp="
+                                + config.screenWidthDp
+                                + ", heightDp=" + config.screenHeightDp
+                                + ", smallestWidthDp=" + config.smallestScreenWidthDp
+                                + ", densityDpi " + originalDensityDpi
+                                + " -> " + config.densityDpi
+                                + ", metricsDensityDpi="
+                                + (metrics != null ? metrics.densityDpi : -1)
+                                + ", metricsWidthPx="
+                                + (metrics != null ? metrics.widthPixels : -1)
+                                + ", metricsHeightPx="
+                                + (metrics != null ? metrics.heightPixels : -1));
+                return;
+            }
             FontScaleOverride.applyScaledDensity(metrics, config);
             logIfChanged(packageName + ":observe",
                     "DPIS_FONT ResourcesImpl observe: widthDp=" + originalWidthDp
