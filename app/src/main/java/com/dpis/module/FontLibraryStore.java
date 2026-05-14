@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 final class FontLibraryStore {
     private static final String KEY_ENTRIES = "font.library.entries";
@@ -30,7 +31,7 @@ final class FontLibraryStore {
     private final File fontDirectory;
 
     FontLibraryStore(SharedPreferences preferences, File fontDirectory) {
-        this.preferences = preferences;
+        this.preferences = Objects.requireNonNull(preferences, "preferences");
         this.fontDirectory = fontDirectory;
     }
 
@@ -71,13 +72,13 @@ final class FontLibraryStore {
         if (isReferenced(entry.id, configStore)) {
             return DeleteResult.IN_USE;
         }
-        File file = new File(entry.storedPath);
-        if (file.exists() && !file.delete()) {
-            return DeleteResult.DELETE_FAILED;
-        }
         List<FontLibraryEntry> entries = readEntries();
         entries.removeIf(candidate -> entry.id.equals(candidate.id));
         if (!writeEntries(entries)) {
+            return DeleteResult.DELETE_FAILED;
+        }
+        File file = new File(entry.storedPath);
+        if (file.exists() && !file.delete()) {
             return DeleteResult.DELETE_FAILED;
         }
         return DeleteResult.DELETED;
@@ -87,9 +88,13 @@ final class FontLibraryStore {
             File sourceFile,
             String sourceFileName,
             long importedAtEpochMs) throws IOException {
+        Objects.requireNonNull(sourceFile, "sourceFile");
+        Objects.requireNonNull(fontDirectory, "fontDirectory");
         byte[] bytes = Files.readAllBytes(sourceFile.toPath());
         String sha256 = sha256(bytes);
-        for (FontLibraryEntry entry : readEntries()) {
+        List<FontLibraryEntry> entries = readEntries();
+        entries.removeIf(entry -> sha256.equals(entry.sha256) && resolveStoredFile(entry) == null);
+        for (FontLibraryEntry entry : entries) {
             if (sha256.equals(entry.sha256)) {
                 return entry;
             }
@@ -116,9 +121,9 @@ final class FontLibraryStore {
                 targetFile.getAbsolutePath(),
                 sha256,
                 importedAtEpochMs);
-        List<FontLibraryEntry> entries = readEntries();
         entries.add(entry);
         if (!writeEntries(entries)) {
+            targetFile.delete();
             throw new IOException("Unable to persist font library metadata");
         }
         return entry;
@@ -134,6 +139,11 @@ final class FontLibraryStore {
             }
         }
         return false;
+    }
+
+    private static File resolveStoredFile(FontLibraryEntry entry) {
+        File file = new File(entry.storedPath);
+        return file.isFile() ? file : null;
     }
 
     private List<FontLibraryEntry> readEntries() {
