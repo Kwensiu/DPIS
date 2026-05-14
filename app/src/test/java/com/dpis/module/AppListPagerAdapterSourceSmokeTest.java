@@ -58,6 +58,13 @@ public class AppListPagerAdapterSourceSmokeTest {
         assertTrue(source.contains("(oldItem.icon != null) == (newItem.icon != null)"));
     }
 
+    @Test
+    public void diffCallback_comparesTypefaceId() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppListPagerAdapter.java");
+
+        assertTrue(source.contains("Objects.equals(oldItem.typefaceId, newItem.typefaceId)"));
+    }
+
     private static String read(String relativePath) throws IOException {
         return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
     }

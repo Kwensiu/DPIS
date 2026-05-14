@@ -16,7 +16,8 @@ public class AppListFilterTest {
                 false,
                 null,
                 null,
-                FontApplyMode.OFF));
+                FontApplyMode.OFF,
+                null));
         assertTrue(AppListFilter.matches("",
                 AppListFilter.Tab.ALL_APPS,
                 "Android System WebView",
@@ -25,7 +26,8 @@ public class AppListFilterTest {
                 false,
                 null,
                 null,
-                FontApplyMode.OFF));
+                FontApplyMode.OFF,
+                null));
     }
 
     @Test
@@ -38,7 +40,8 @@ public class AppListFilterTest {
                 true,
                 null,
                 null,
-                FontApplyMode.OFF));
+                FontApplyMode.OFF,
+                null));
         assertTrue(AppListFilter.matches("",
                 AppListFilter.Tab.CONFIGURED_APPS,
                 "Xiaoheihe",
@@ -47,7 +50,8 @@ public class AppListFilterTest {
                 false,
                 300,
                 null,
-                FontApplyMode.OFF));
+                FontApplyMode.OFF,
+                null));
         assertTrue(AppListFilter.matches("",
                 AppListFilter.Tab.CONFIGURED_APPS,
                 "Tieba",
@@ -56,7 +60,8 @@ public class AppListFilterTest {
                 false,
                 null,
                 115,
-                FontApplyMode.SYSTEM_EMULATION));
+                FontApplyMode.SYSTEM_EMULATION,
+                null));
         assertFalse(AppListFilter.matches("",
                 AppListFilter.Tab.CONFIGURED_APPS,
                 "AdClose",
@@ -65,7 +70,35 @@ public class AppListFilterTest {
                 false,
                 null,
                 null,
-                FontApplyMode.OFF));
+                FontApplyMode.OFF,
+                null));
+    }
+
+    @Test
+    public void configuredTabAndFontOnlyFilterIncludeTypefaceOnlyApps() {
+        AppListFilterState fontOnlyState = new AppListFilterState(true, false, false, true);
+
+        assertTrue(AppListFilter.matches("",
+                AppListFilter.Tab.CONFIGURED_APPS,
+                "Reader",
+                "com.example.reader",
+                false,
+                false,
+                null,
+                null,
+                FontApplyMode.OFF,
+                "font_abcd1234"));
+        assertTrue(AppListFilter.matches("",
+                AppListFilter.Tab.ALL_APPS,
+                "Reader",
+                "com.example.reader",
+                false,
+                false,
+                null,
+                null,
+                FontApplyMode.OFF,
+                "font_abcd1234",
+                fontOnlyState));
     }
 
     @Test
@@ -78,7 +111,8 @@ public class AppListFilterTest {
                 false,
                 null,
                 115,
-                FontApplyMode.SYSTEM_EMULATION));
+                FontApplyMode.SYSTEM_EMULATION,
+                null));
         assertTrue(AppListFilter.matches("android",
                 AppListFilter.Tab.CONFIGURED_APPS,
                 "Android System WebView",
@@ -87,7 +121,8 @@ public class AppListFilterTest {
                 true,
                 null,
                 null,
-                FontApplyMode.OFF));
+                FontApplyMode.OFF,
+                null));
         assertFalse(AppListFilter.matches("cool",
                 AppListFilter.Tab.CONFIGURED_APPS,
                 "Android System WebView",
@@ -96,7 +131,8 @@ public class AppListFilterTest {
                 true,
                 null,
                 null,
-                FontApplyMode.OFF));
+                FontApplyMode.OFF,
+                null));
     }
 
     @Test
@@ -112,6 +148,7 @@ public class AppListFilterTest {
                 360,
                 null,
                 FontApplyMode.OFF,
+                null,
                 state));
         assertFalse(AppListFilter.matches("",
                 AppListFilter.Tab.ALL_APPS,
@@ -122,6 +159,7 @@ public class AppListFilterTest {
                 360,
                 null,
                 FontApplyMode.OFF,
+                null,
                 state));
         assertFalse(AppListFilter.matches("",
                 AppListFilter.Tab.ALL_APPS,
@@ -132,6 +170,7 @@ public class AppListFilterTest {
                 360,
                 null,
                 FontApplyMode.OFF,
+                null,
                 state));
         assertFalse(AppListFilter.matches("",
                 AppListFilter.Tab.ALL_APPS,
@@ -142,6 +181,7 @@ public class AppListFilterTest {
                 null,
                 null,
                 FontApplyMode.OFF,
+                null,
                 state));
     }
 
@@ -158,6 +198,7 @@ public class AppListFilterTest {
                 null,
                 115,
                 FontApplyMode.SYSTEM_EMULATION,
+                null,
                 state));
         assertFalse(AppListFilter.matches("",
                 AppListFilter.Tab.ALL_APPS,
@@ -168,6 +209,7 @@ public class AppListFilterTest {
                 null,
                 115,
                 FontApplyMode.OFF,
+                null,
                 state));
         assertFalse(AppListFilter.matches("",
                 AppListFilter.Tab.ALL_APPS,
@@ -178,6 +220,7 @@ public class AppListFilterTest {
                 null,
                 null,
                 FontApplyMode.SYSTEM_EMULATION,
+                null,
                 state));
     }
 

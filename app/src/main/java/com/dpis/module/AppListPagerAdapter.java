@@ -386,6 +386,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                         && oldItem.viewportMode.equals(newItem.viewportMode)
                         && Objects.equals(oldItem.fontScalePercent, newItem.fontScalePercent)
                         && oldItem.fontMode.equals(newItem.fontMode)
+                        && Objects.equals(oldItem.typefaceId, newItem.typefaceId)
                         && oldItem.dpisEnabled == newItem.dpisEnabled
                         && oldItem.systemApp == newItem.systemApp
                         && (oldItem.icon != null) == (newItem.icon != null);
