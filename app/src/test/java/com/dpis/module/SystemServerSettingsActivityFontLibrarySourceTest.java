@@ -22,7 +22,8 @@ public class SystemServerSettingsActivityFontLibrarySourceTest {
         assertTrue(source.contains("font/ttf"));
         assertTrue(source.contains("font/otf"));
         assertTrue(source.contains("dpis-font-library-delete"));
-        assertTrue(factory.contains("/data/local/tmp/dpis/fonts"));
+        assertTrue(factory.contains("/data/local/tmp"));
+        assertTrue(store.contains("\"dpis_\" + stagingFile.getName()"));
         assertTrue(store.contains("publishFontFile"));
         assertTrue(store.contains("chmod 644"));
     }

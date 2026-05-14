@@ -9,7 +9,7 @@ import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.service.XposedService;
 
 final class ConfigStoreFactory {
-    private static final File PUBLIC_FONT_DIRECTORY = new File("/data/local/tmp/dpis/fonts");
+    private static final File PUBLIC_FONT_DIRECTORY = new File("/data/local/tmp");
 
     private ConfigStoreFactory() {
     }

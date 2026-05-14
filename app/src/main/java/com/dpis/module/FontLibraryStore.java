@@ -164,7 +164,7 @@ final class FontLibraryStore {
         if (publicFontDirectory == null) {
             return stagingFile;
         }
-        File publicFile = new File(publicFontDirectory, stagingFile.getName());
+        File publicFile = new File(publicFontDirectory, "dpis_" + stagingFile.getName());
         File publicParent = publicFontDirectory.getParentFile();
         StringBuilder command = new StringBuilder();
         command.append("mkdir -p ").append(shellQuote(publicFontDirectory.getAbsolutePath()));
