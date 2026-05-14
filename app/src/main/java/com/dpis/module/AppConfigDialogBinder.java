@@ -312,7 +312,8 @@ final class AppConfigDialogBinder {
         });
         views.typefaceSelectorButton.setOnClickListener(v -> {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            showTypefaceSelector(views.typefaceSelectorButton, state);
+            showTypefaceSelector(views.typefaceSelectorButton, state,
+                    () -> refreshDialogState(views, state, style, systemHooksEnabled));
         });
     }
 
@@ -321,7 +322,9 @@ final class AppConfigDialogBinder {
                 listFontLibraryEntries()));
     }
 
-    private void showTypefaceSelector(MaterialButton selectorButton, AppConfigDialogState state) {
+    private void showTypefaceSelector(MaterialButton selectorButton,
+            AppConfigDialogState state,
+            Runnable onSelectionChanged) {
         List<FontLibraryEntry> entries = listFontLibraryEntries();
         List<String> labels = new ArrayList<>(entries.size() + 1);
         List<String> ids = new ArrayList<>(entries.size() + 1);
@@ -357,6 +360,9 @@ final class AppConfigDialogBinder {
                         (dialog, which) -> {
                             state.selectedTypefaceId = ids.get(which);
                             selectorButton.setText(labels.get(which));
+                            if (onSelectionChanged != null) {
+                                onSelectionChanged.run();
+                            }
                             dialog.dismiss();
                         })
                 .show();

@@ -84,6 +84,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);"));
         assertTrue(source.contains("AppStatusFormatter.formatCompact("));
         assertTrue(source.contains("state.selectedTypefaceId"));
+        assertTrue(source.contains("showTypefaceSelector(views.typefaceSelectorButton, state,"));
+        assertTrue(source.contains("() -> refreshDialogState(views, state, style, systemHooksEnabled)"));
     }
 
     @Test
