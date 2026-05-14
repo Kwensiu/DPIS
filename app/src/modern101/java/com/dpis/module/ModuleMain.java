@@ -122,8 +122,7 @@ public final class ModuleMain extends XposedModule {
             DpisLog.i("target app disabled by dpis toggle: package=" + packageName);
             return;
         }
-        if (packagePlan.targetViewportWidthDp == null
-                && !packagePlan.fontScaleActive) {
+        if (!packagePlan.shouldInstallHooks()) {
             DpisLog.i("target app disabled: package=" + packageName);
             return;
         }
