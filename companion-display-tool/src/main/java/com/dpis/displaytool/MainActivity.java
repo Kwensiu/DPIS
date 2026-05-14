@@ -58,12 +58,28 @@ public final class MainActivity extends Activity {
     private void bindSceneList() {
         LinearLayout sceneList = findViewById(R.id.scene_list);
         LayoutInflater inflater = LayoutInflater.from(this);
+        addSceneGroupLabel(sceneList, inflater, R.string.scene_group_native);
         for (DisplayScene scene : sceneRegistry.coreScenes()) {
-            TextView row = (TextView) inflater.inflate(R.layout.item_scene_row, sceneList, false);
-            row.setText(scene.id());
-            row.setOnClickListener(view -> showScene(scene.id(), CompanionContract.VARIANT_NORMAL));
-            sceneList.addView(row);
+            addSceneRow(sceneList, inflater, scene);
         }
+        addSceneGroupLabel(sceneList, inflater, R.string.scene_group_compose);
+        for (DisplayScene scene : sceneRegistry.composeScenes()) {
+            addSceneRow(sceneList, inflater, scene);
+        }
+    }
+
+    private void addSceneGroupLabel(LinearLayout sceneList, LayoutInflater inflater, int labelResId) {
+        TextView label = (TextView) inflater.inflate(R.layout.item_scene_row, sceneList, false);
+        label.setText(labelResId);
+        label.setEnabled(false);
+        sceneList.addView(label);
+    }
+
+    private void addSceneRow(LinearLayout sceneList, LayoutInflater inflater, DisplayScene scene) {
+        TextView row = (TextView) inflater.inflate(R.layout.item_scene_row, sceneList, false);
+        row.setText(scene.id());
+        row.setOnClickListener(view -> showScene(scene.id(), CompanionContract.VARIANT_NORMAL));
+        sceneList.addView(row);
     }
 
     private void scheduleColdStartRun() {
