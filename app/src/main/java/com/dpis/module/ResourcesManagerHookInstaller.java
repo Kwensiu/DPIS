@@ -2,7 +2,6 @@ package com.dpis.module;
 
 import android.annotation.SuppressLint;
 import android.content.res.Configuration;
-import android.util.DisplayMetrics;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -10,15 +9,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import io.github.libxposed.api.XposedInterface;
 
 final class ResourcesManagerHookInstaller {
     private static volatile boolean hookInstalled;
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
-    private static final int MAX_KEY_PROBE_LOGS = 24;
-    private static final AtomicInteger KEY_PROBE_LOG_COUNT = new AtomicInteger();
 
     private ResourcesManagerHookInstaller() {
     }
@@ -129,9 +125,7 @@ final class ResourcesManagerHookInstaller {
                         Object key = chain.getArg(0);
                         maybeApplyKeyOverride(
                                 chain.getThisObject(), key, store, packageName, methodName);
-                        Object result = chain.proceed();
-                        logResourcesKeyProbe(packageName, methodName, key, result);
-                        return result;
+                        return chain.proceed();
                     });
             hookedCount++;
         }
@@ -289,7 +283,7 @@ final class ResourcesManagerHookInstaller {
             if (stableResult != null && stableResult.densityDpi > 0
                     && config.densityDpi != stableResult.densityDpi) {
                 config.densityDpi = stableResult.densityDpi;
-                String message = "DPIS_FONT " + sourceTag
+                String message = "DPIS_VIEWPORT " + sourceTag
                         + " stable target: widthDp " + originalWidthDp
                         + " -> " + config.screenWidthDp
                         + ", heightDp " + originalHeightDp
@@ -311,8 +305,9 @@ final class ResourcesManagerHookInstaller {
                 || result.densityDpi != originalDensityDpi)) {
             ViewportOverride.apply(config, result);
         }
-        String modeLabel = applyToConfiguration ? "emulation" : "replace";
-        String message = "DPIS_FONT " + sourceTag + " (" + modeLabel + ") override: widthDp "
+        String modeLabel = applyToConfiguration ? "config" : "metrics";
+        String message = "DPIS_VIEWPORT " + sourceTag + " (" + modeLabel
+                + ") override: widthDp "
                 + originalWidthDp + " -> " + result.widthDp
                 + ", heightDp " + originalHeightDp + " -> " + result.heightDp
                 + ", smallestWidthDp " + originalSmallestWidthDp + " -> "
@@ -330,64 +325,6 @@ final class ResourcesManagerHookInstaller {
         }
     }
 
-    private static void logResourcesKeyProbe(String packageName,
-                                             String methodName,
-                                             Object key,
-                                             Object impl) {
-        if (KEY_PROBE_LOG_COUNT.incrementAndGet() > MAX_KEY_PROBE_LOGS) {
-            return;
-        }
-        DpisLog.i("ResourcesManager key probe(" + methodName + "): key="
-                + describeResourcesKey(key)
-                + ", impl=" + describeResourcesImpl(impl)
-                + appendCaller(packageName));
-    }
-
-    private static String describeResourcesKey(Object key) {
-        if (key == null) {
-            return "null";
-        }
-        int displayId = readIntField(key, "mDisplayId", Integer.MIN_VALUE);
-        Object override = readField(key, "mOverrideConfiguration");
-        return "id=" + System.identityHashCode(key)
-                + ", displayId=" + (displayId == Integer.MIN_VALUE ? "?" : displayId)
-                + ", override=" + describeConfiguration(override);
-    }
-
-    private static String describeResourcesImpl(Object impl) {
-        if (impl == null) {
-            return "null";
-        }
-        Object config = readField(impl, "mConfiguration");
-        Object metrics = readField(impl, "mMetrics");
-        return "id=" + System.identityHashCode(impl)
-                + ", config=" + describeConfiguration(config)
-                + ", metrics=" + (metrics instanceof DisplayMetrics displayMetrics
-                ? describeDisplayMetrics(displayMetrics) : String.valueOf(metrics));
-    }
-
-    private static String describeConfiguration(Object config) {
-        if (!(config instanceof Configuration configuration)) {
-            return String.valueOf(config);
-        }
-        return "config{widthDp=" + configuration.screenWidthDp
-                + ",heightDp=" + configuration.screenHeightDp
-                + ",smallestWidthDp=" + configuration.smallestScreenWidthDp
-                + ",densityDpi=" + configuration.densityDpi
-                + ",fontScale=" + configuration.fontScale + "}";
-    }
-
-    private static String describeDisplayMetrics(DisplayMetrics metrics) {
-        if (metrics == null) {
-            return "null";
-        }
-        return "metrics{widthPx=" + metrics.widthPixels
-                + ",heightPx=" + metrics.heightPixels
-                + ",densityDpi=" + metrics.densityDpi
-                + ",density=" + metrics.density
-                + ",scaledDensity=" + metrics.scaledDensity + "}";
-    }
-
     private static Object readField(Object target, String fieldName) {
         if (target == null) {
             return null;
@@ -400,18 +337,4 @@ final class ResourcesManagerHookInstaller {
             return null;
         }
     }
-
-    private static int readIntField(Object target, String fieldName, int fallback) {
-        Object value = readField(target, fieldName);
-        return value instanceof Integer integer ? integer : fallback;
-    }
-
-    private static String appendCaller(String packageName) {
-        String caller = CallerTrace.capture(packageName);
-        if (caller == null) {
-            return "";
-        }
-        return ", caller=" + caller;
-    }
 }
-

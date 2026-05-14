@@ -150,7 +150,7 @@ final class ResourcesReadHookInstaller {
                     && config.densityDpi != stableResult.densityDpi) {
                 config.densityDpi = stableResult.densityDpi;
                 logIfChanged(packageName + ":" + sourceTag + ":stable-target",
-                        "DPIS_FONT " + sourceTag + " stable target: widthDp="
+                        "DPIS_VIEWPORT " + sourceTag + " stable target: widthDp="
                                 + config.screenWidthDp
                                 + ", heightDp=" + config.screenHeightDp
                                 + ", smallestWidthDp=" + config.smallestScreenWidthDp
@@ -162,7 +162,7 @@ final class ResourcesReadHookInstaller {
             return;
         }
         logIfChanged(packageName + ":" + sourceTag,
-                "DPIS_FONT " + sourceTag + " override: widthDp " + originalWidthDp
+                "DPIS_VIEWPORT " + sourceTag + " override: widthDp " + originalWidthDp
                         + " -> " + config.screenWidthDp
                         + ", heightDp " + originalHeightDp + " -> " + config.screenHeightDp
                         + ", smallestWidthDp " + originalSmallestWidthDp + " -> "
@@ -195,7 +195,7 @@ final class ResourcesReadHookInstaller {
         }
 
         logIfChanged(packageName + ":ResourcesRead(getDisplayMetrics)",
-                "DPIS_FONT ResourcesRead(getDisplayMetrics) override: densityDpi="
+                "DPIS_VIEWPORT ResourcesRead(getDisplayMetrics) override: densityDpi="
                         + targetDensityDpi
                         + ", density=" + metrics.density
                         + ", scaledDensity=" + metrics.scaledDensity
