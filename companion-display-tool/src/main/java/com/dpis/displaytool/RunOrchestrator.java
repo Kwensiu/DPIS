@@ -2,8 +2,10 @@ package com.dpis.displaytool;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.res.Configuration;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -20,6 +22,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 final class RunOrchestrator {
+    private static final int COMPOSE_READY_MAX_ATTEMPTS = 8;
+    private static final long COMPOSE_READY_RETRY_MS = 16L;
     private static final AtomicInteger RUN_SEQUENCE = new AtomicInteger();
 
     private final Activity activity;
@@ -48,11 +52,29 @@ final class RunOrchestrator {
     }
 
     void runAll(String trigger) {
-        List<SceneRun> runs = new ArrayList<>();
-        for (DisplayScene scene : registry.coreScenes()) {
-            runs.add(new SceneRun(scene, CompanionContract.VARIANT_NORMAL));
-        }
-        startRun(trigger, CompanionContract.VARIANT_MODE_NORMAL_ONLY, runs);
+        runAll(trigger, null);
+    }
+
+    void runAll(String trigger, Runnable afterRun) {
+        startRun(
+                trigger,
+                CompanionContract.VARIANT_MODE_NORMAL_ONLY,
+                runsFor(registry.coreScenes(), CompanionContract.VARIANT_NORMAL),
+                afterRun
+        );
+    }
+
+    void runComposeColdStart(String trigger) {
+        runComposeColdStart(trigger, null);
+    }
+
+    void runComposeColdStart(String trigger, Runnable afterRun) {
+        startRun(
+                trigger,
+                CompanionContract.VARIANT_MODE_NORMAL_ONLY,
+                runsFor(registry.composeColdStartScenes(), CompanionContract.VARIANT_NORMAL),
+                afterRun
+        );
     }
 
     void runScene(String sceneId, String variant, String trigger) {
@@ -67,7 +89,7 @@ final class RunOrchestrator {
         }
         List<SceneRun> runs = new ArrayList<>();
         runs.add(new SceneRun(scene, variant));
-        startRun(trigger, CompanionContract.VARIANT_MODE_SINGLE, runs);
+        startRun(trigger, CompanionContract.VARIANT_MODE_SINGLE, runs, null);
     }
 
     void showScene(DisplayScene scene, String variant) {
@@ -105,7 +127,12 @@ final class RunOrchestrator {
         log.commandRejected(action, reason, packageName);
     }
 
-    private void startRun(String trigger, String variantMode, List<SceneRun> runs) {
+    private void startRun(
+            String trigger,
+            String variantMode,
+            List<SceneRun> runs,
+            Runnable afterRun
+    ) {
         if (active) {
             log.runRejected(currentRunId(), trigger, "active_run", packageName);
             return;
@@ -116,13 +143,16 @@ final class RunOrchestrator {
         RunSummary summary = new RunSummary(runId, trigger, runs.size());
         latestSummary = summary;
         log.runStart(runId, trigger, runs.size(), variantMode, packageName);
-        runNext(summary, runs, 0);
+        runNext(summary, runs, 0, afterRun);
     }
 
-    private void runNext(RunSummary summary, List<SceneRun> runs, int index) {
+    private void runNext(RunSummary summary, List<SceneRun> runs, int index, Runnable afterRun) {
         if (index >= runs.size()) {
             active = false;
             log.runEnd(summary, packageName);
+            if (afterRun != null) {
+                afterRun.run();
+            }
             return;
         }
         SceneRun run = runs.get(index);
@@ -139,13 +169,13 @@ final class RunOrchestrator {
             presentation = run.scene.create(runtime, run.variant);
         } catch (RuntimeException exception) {
             summary.errorTotal++;
-            mainHandler.post(() -> runNext(summary, runs, index + 1));
+            mainHandler.post(() -> runNext(summary, runs, index + 1, afterRun));
             return;
         }
         if (presentation.kind() == ScenePresentation.Kind.DIALOG) {
-            runDialogScene(summary, runs, index, run, presentation);
+            runDialogScene(summary, runs, index, run, presentation, afterRun);
         } else {
-            runViewScene(summary, runs, index, run, presentation);
+            runViewScene(summary, runs, index, run, presentation, afterRun);
         }
     }
 
@@ -154,7 +184,8 @@ final class RunOrchestrator {
             List<SceneRun> runs,
             int index,
             SceneRun run,
-            ScenePresentation presentation
+            ScenePresentation presentation,
+            Runnable afterRun
     ) {
         View view = presentation.view();
         detailHost.addView(
@@ -165,9 +196,9 @@ final class RunOrchestrator {
                 )
         );
         logAfterLayout(view, presentation.textView(), presentation.baseSp(), presentation.viewName(),
-                run, presentation.event(), () -> {
+                run, presentation.event(), presentation.composeFieldsProvider(), summary, () -> {
                     summary.sceneCompleted++;
-                    mainHandler.post(() -> runNext(summary, runs, index + 1));
+                    mainHandler.post(() -> runNext(summary, runs, index + 1, afterRun));
                 });
     }
 
@@ -176,7 +207,8 @@ final class RunOrchestrator {
             List<SceneRun> runs,
             int index,
             SceneRun run,
-            ScenePresentation presentation
+            ScenePresentation presentation,
+            Runnable afterRun
     ) {
         activeDialog = presentation.dialog();
         activeDialog.setOnShowListener(dialog -> {
@@ -184,11 +216,11 @@ final class RunOrchestrator {
                     ? presentation.view()
                     : activeDialog.getWindow().getDecorView();
             logAfterLayout(root, presentation.textView(), presentation.baseSp(), presentation.viewName(),
-                    run, presentation.event(), () -> {
+                    run, presentation.event(), presentation.composeFieldsProvider(), summary, () -> {
                         summary.sceneCompleted++;
                         activeDialog.dismiss();
                         activeDialog = null;
-                        mainHandler.post(() -> runNext(summary, runs, index + 1));
+                        mainHandler.post(() -> runNext(summary, runs, index + 1, afterRun));
                     });
         });
         activeDialog.show();
@@ -201,6 +233,8 @@ final class RunOrchestrator {
             String viewName,
             SceneRun run,
             String event,
+            ScenePresentation.ComposeFieldsProvider composeFieldsProvider,
+            RunSummary summary,
             Runnable afterLog
     ) {
         root.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -213,11 +247,25 @@ final class RunOrchestrator {
                 }
                 logged = true;
                 root.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                if (composeFieldsProvider != null) {
+                    logComposeWhenReady(
+                            root,
+                            baseSp,
+                            viewName,
+                            run,
+                            event,
+                            composeFieldsProvider,
+                            summary,
+                            afterLog,
+                            0
+                    );
+                    return;
+                }
                 TextView resolvedTextView = textView == null
                         ? root.findViewById(com.dpis.displaytool.R.id.text_primary)
                         : textView;
                 if (resolvedTextView == null) {
-                    latestSummary.errorTotal++;
+                    summary.errorTotal++;
                     afterLog.run();
                     return;
                 }
@@ -234,12 +282,98 @@ final class RunOrchestrator {
                         packageName
                 );
                 if (suspicious) {
-                    latestSummary.suspiciousTotal++;
+                    summary.suspiciousTotal++;
                 }
                 afterLog.run();
             }
         });
         root.requestLayout();
+    }
+
+    private void logComposeWhenReady(
+            View root,
+            float baseSp,
+            String viewName,
+            SceneRun run,
+            String event,
+            ScenePresentation.ComposeFieldsProvider composeFieldsProvider,
+            RunSummary summary,
+            Runnable afterLog,
+            int attempt
+    ) {
+        if (!composeFieldsProvider.isReady()) {
+            if (attempt >= COMPOSE_READY_MAX_ATTEMPTS) {
+                summary.errorTotal++;
+                afterLog.run();
+                return;
+            }
+            mainHandler.postDelayed(() -> logComposeWhenReady(
+                    root,
+                    baseSp,
+                    viewName,
+                    run,
+                    event,
+                    composeFieldsProvider,
+                    summary,
+                    afterLog,
+                    attempt + 1
+            ), COMPOSE_READY_RETRY_MS);
+            return;
+        }
+
+        DisplayMetrics metrics = activity.getResources().getDisplayMetrics();
+        Configuration configuration = activity.getResources().getConfiguration();
+        ComposeRunFields composeFields = composeFieldsProvider.fields(metrics.scaledDensity);
+        float expectedPx = baseSp * metrics.scaledDensity;
+        float densityFromDpi = metrics.densityDpi / 160f;
+        float widthDpFromDensity = metrics.widthPixels / densityFromDpi;
+        float heightDpFromDensity = metrics.heightPixels / densityFromDpi;
+        SceneAnomaly anomaly = SceneAnomaly.classify(
+                composeFields.composeTextPx,
+                expectedPx,
+                configuration.fontScale
+        );
+        log.composeSceneEvent(
+                new CompanionLog.SceneEventFields(
+                        currentRunId(),
+                        run.scene.id(),
+                        run.variant,
+                        event,
+                        packageName,
+                        configuration.fontScale,
+                        metrics.densityDpi,
+                        metrics.scaledDensity,
+                        configuration.screenWidthDp,
+                        configuration.screenHeightDp,
+                        metrics.density,
+                        metrics.widthPixels,
+                        metrics.heightPixels,
+                        widthDpFromDensity,
+                        heightDpFromDensity,
+                        viewName,
+                        composeFields.composeTextPx,
+                        baseSp,
+                        expectedPx,
+                        expectedPx <= 0f ? 0f : composeFields.composeTextPx / expectedPx,
+                        composeFields.composeLineCount,
+                        root.getMeasuredWidth(),
+                        root.getMeasuredHeight(),
+                        anomaly
+                ),
+                composeFields
+        );
+        if (anomaly.suspicious) {
+            summary.suspiciousTotal++;
+        }
+        afterLog.run();
+    }
+
+    private static List<SceneRun> runsFor(List<DisplayScene> scenes, String variant) {
+        List<SceneRun> runs = new ArrayList<>();
+        for (DisplayScene scene : scenes) {
+            runs.add(new SceneRun(scene, variant));
+        }
+        return runs;
     }
 
     private void clearDialog() {

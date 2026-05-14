@@ -71,6 +71,10 @@ final class CompanionLog {
         return anomaly.suspicious;
     }
 
+    void composeSceneEvent(SceneEventFields fields, ComposeRunFields composeFields) {
+        Log.i(TAG, PREFIX + formatComposeSceneEvent(fields, composeFields));
+    }
+
     void runRejected(String runId, String trigger, String reason, String pkg) {
         Log.i(TAG, PREFIX
                 + field("stage", CompanionContract.STAGE)

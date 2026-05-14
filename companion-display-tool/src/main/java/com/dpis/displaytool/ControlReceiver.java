@@ -26,6 +26,10 @@ public final class ControlReceiver extends BroadcastReceiver {
                 CompanionContract.EXTRA_TRIGGER,
                 intent.getStringExtra(CompanionContract.EXTRA_TRIGGER)
         );
+        activityIntent.putExtra(
+                CompanionContract.EXTRA_GROUP,
+                intent.getStringExtra(CompanionContract.EXTRA_GROUP)
+        );
         context.startActivity(activityIntent);
     }
 }

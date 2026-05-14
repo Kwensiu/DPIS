@@ -23,7 +23,7 @@ public final class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_companion_display_tool);
 
-        sceneRegistry = SceneRegistry.createPhase1();
+        sceneRegistry = SceneRegistry.create();
         detailHost = findViewById(R.id.detail_host);
         detailTitle = findViewById(R.id.detail_title);
         runOrchestrator = new RunOrchestrator(
@@ -71,7 +71,10 @@ public final class MainActivity extends Activity {
             return;
         }
         coldStartScheduled = true;
-        detailHost.post(() -> runOrchestrator.runAll(CompanionContract.TRIGGER_COLD_START));
+        detailHost.post(() -> runOrchestrator.runAll(
+                CompanionContract.TRIGGER_COLD_START,
+                () -> runOrchestrator.runComposeColdStart(CompanionContract.TRIGGER_COLD_START)
+        ));
     }
 
     private boolean handleControlIntent(Intent intent) {
@@ -84,13 +87,18 @@ public final class MainActivity extends Activity {
                 CompanionContract.TRIGGER_ADB
         );
         String scene = intent.getStringExtra(CompanionContract.EXTRA_SCENE);
+        String group = intent.getStringExtra(CompanionContract.EXTRA_GROUP);
         String variant = nonEmpty(
                 intent.getStringExtra(CompanionContract.EXTRA_VARIANT),
                 CompanionContract.VARIANT_NORMAL
         );
         switch (action) {
             case CompanionContract.ACTION_RUN_ALL:
-                runOrchestrator.runAll(trigger);
+                if (CompanionContract.GROUP_COMPOSE.equals(group)) {
+                    runOrchestrator.runComposeColdStart(trigger);
+                } else {
+                    runOrchestrator.runAll(trigger);
+                }
                 return true;
             case CompanionContract.ACTION_RUN_SCENE:
                 runOrchestrator.runScene(scene, variant, trigger);
