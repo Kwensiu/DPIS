@@ -109,7 +109,27 @@ public final class FontLibraryStoreTest {
 
         assertSame(FontLibraryStore.DeleteResult.DELETE_FAILED, result);
         assertEquals(entry, store.findById(entry.id));
-        assertTrue(new File(entry.storedPath).isFile());
+        assertFalse(new File(entry.storedPath).exists());
+    }
+
+    @Test
+    public void deleteFailureBeforeMetadataRemovalKeepsEntry() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        File dir = temporaryFolder.newFolder("fonts");
+        FontLibraryStore store = new FontLibraryStore(prefs, dir);
+        FontLibraryEntry entry = store.registerCopiedFontForTest(
+                writeFile("Example.ttf", "fake-font-data"),
+                "Example.ttf",
+                1234L);
+        File storedFile = new File(entry.storedPath);
+        assertTrue(storedFile.delete());
+        assertTrue(storedFile.mkdir());
+
+        FontLibraryStore.DeleteResult result = store.deleteFont(entry.id, new DpiConfigStore(new FakePrefs()));
+
+        assertSame(FontLibraryStore.DeleteResult.DELETE_FAILED, result);
+        assertEquals(entry, store.findById(entry.id));
+        assertTrue(storedFile.isDirectory());
     }
 
     @Test
@@ -200,6 +220,23 @@ public final class FontLibraryStoreTest {
         assertEquals(sourceFileName, roundTripped.displayName);
         assertEquals(sourceFileName, roundTripped.sourceFileName);
         assertEquals(entry, roundTripped);
+    }
+
+    @Test
+    public void leadingAndTrailingSpacesInSourceFileNameRoundTrip() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
+        String sourceFileName = "  Display Font.ttf  ";
+
+        FontLibraryEntry entry = store.registerCopiedFontForTest(
+                writeFile("Source.ttf", "fake-font-data"),
+                sourceFileName,
+                1234L);
+
+        FontLibraryEntry roundTripped = store.findById(entry.id);
+        assertNotNull(roundTripped);
+        assertEquals(sourceFileName, roundTripped.displayName);
+        assertEquals(sourceFileName, roundTripped.sourceFileName);
     }
 
     @Test
