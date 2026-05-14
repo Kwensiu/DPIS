@@ -82,6 +82,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("views.fontInputView.addTextChangedListener(validationWatcher)"));
         assertTrue(source.contains("updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,"));
         assertTrue(source.contains("refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);"));
+        assertTrue(source.contains("AppStatusFormatter.formatCompact("));
+        assertTrue(source.contains("state.selectedTypefaceId"));
     }
 
     @Test

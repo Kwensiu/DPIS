@@ -251,4 +251,5 @@
     <string name="app_status_mode_system">系统</string>
     <string name="app_status_mode_compat">兼容</string>
     <string name="app_status_font_prefix">字体</string>
+    <string name="app_status_font_file">字体文件</string>
 </resources>

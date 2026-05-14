@@ -25,6 +25,15 @@ public class ConfigBackupCodecSourceSmokeTest {
         assertTrue(source.contains("Unsupported backup value type"));
     }
 
+    @Test
+    public void codecSupportsTypefaceIdStringEntries() throws IOException {
+        String source = read("src/main/java/com/dpis/module/ConfigBackupCodec.java");
+
+        assertTrue(source.contains("encoded.put(KEY_TYPE, TYPE_STRING);"));
+        assertTrue(source.contains("case TYPE_STRING -> encoded.optString(KEY_VALUE, \"\")"));
+        assertTrue(source.contains("TYPE_STRING"));
+    }
+
     private static String read(String relativePath) throws IOException {
         return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
     }

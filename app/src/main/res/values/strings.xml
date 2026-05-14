@@ -251,4 +251,5 @@
     <string name="app_status_mode_system">System</string>
     <string name="app_status_mode_compat">Compat</string>
     <string name="app_status_font_prefix">Font</string>
+    <string name="app_status_font_file">Font file</string>
 </resources>

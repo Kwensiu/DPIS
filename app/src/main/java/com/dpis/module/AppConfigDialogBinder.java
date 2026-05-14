@@ -153,6 +153,7 @@ final class AppConfigDialogBinder {
                 views.viewportModeToggle,
                 views.fontInputView,
                 views.fontModeToggle,
+                state.selectedTypefaceId,
                 systemHooksEnabled);
         bindScopeButton(views.scopeButton, state.scopeSelected, state.scopeKnown,
                 style.defaultActionBgTint, style.defaultActionStrokeWidth, style.defaultActionTextColor);
@@ -462,6 +463,7 @@ final class AppConfigDialogBinder {
             ModeToggle viewportModeToggle,
             TextInputEditText fontInputView,
             ModeToggle fontModeToggle,
+            String selectedTypefaceId,
             boolean systemHooksEnabled) {
         Integer widthDp = parsePositiveIntOrNullSafe(viewportInputView);
         Integer fontScalePercent = parseFontScalePercentOrNullSafe(fontInputView);
@@ -469,7 +471,7 @@ final class AppConfigDialogBinder {
         String fontMode = fontScalePercent == null ? FontApplyMode.OFF : resolveFontMode(fontModeToggle);
         String dialogStatusText = AppStatusFormatter.formatCompact(
                 activity.getResources(), inScope, scopeKnown, widthDp, viewportMode,
-                fontScalePercent, fontMode, dpisEnabled);
+                fontScalePercent, fontMode, selectedTypefaceId, dpisEnabled);
         boolean warnViewport = scopeKnown && AppStatusFormatter.shouldWarnViewportEmulation(
                 widthDp, viewportMode, systemHooksEnabled, dpisEnabled);
         boolean warnFont = scopeKnown && AppStatusFormatter.shouldWarnFontEmulation(

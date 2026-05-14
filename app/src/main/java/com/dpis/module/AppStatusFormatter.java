@@ -22,6 +22,7 @@ final class AppStatusFormatter {
         final String emulation;
         final String replace;
         final String font;
+        final String fontFile;
         final Locale locale;
 
         Labels(String injected,
@@ -32,6 +33,7 @@ final class AppStatusFormatter {
                 String emulation,
                 String replace,
                 String font,
+                String fontFile,
                 Locale locale) {
             this.injected = injected;
             this.notInjected = notInjected;
@@ -41,6 +43,7 @@ final class AppStatusFormatter {
             this.emulation = emulation;
             this.replace = replace;
             this.font = font;
+            this.fontFile = fontFile;
             this.locale = locale;
         }
     }
@@ -57,6 +60,7 @@ final class AppStatusFormatter {
                 resources.getString(R.string.app_status_mode_system),
                 resources.getString(R.string.app_status_mode_compat),
                 resources.getString(R.string.app_status_font_prefix),
+                resources.getString(R.string.app_status_font_file),
                 locale);
     }
 
@@ -66,9 +70,10 @@ final class AppStatusFormatter {
             String viewportMode,
             Integer fontScalePercent,
             String fontMode,
+            String typefaceId,
             boolean dpisEnabled) {
         return format(labelsFrom(resources), inScope, viewportWidthDp, viewportMode,
-                fontScalePercent, fontMode, dpisEnabled);
+                fontScalePercent, fontMode, typefaceId, dpisEnabled);
     }
 
     static String format(Labels labels,
@@ -77,9 +82,10 @@ final class AppStatusFormatter {
             String viewportMode,
             Integer fontScalePercent,
             String fontMode,
+            String typefaceId,
             boolean dpisEnabled) {
         return formatInternal(labels, inScope, viewportWidthDp, viewportMode,
-                fontScalePercent, fontMode, dpisEnabled, true, false);
+                fontScalePercent, fontMode, typefaceId, dpisEnabled, true, false);
     }
 
     static String format(Labels labels,
@@ -89,9 +95,10 @@ final class AppStatusFormatter {
             String viewportMode,
             Integer fontScalePercent,
             String fontMode,
+            String typefaceId,
             boolean dpisEnabled) {
         return formatInternal(labels, inScope, viewportWidthDp, viewportMode,
-                fontScalePercent, fontMode, dpisEnabled, scopeKnown, false);
+                fontScalePercent, fontMode, typefaceId, dpisEnabled, scopeKnown, false);
     }
 
     static String formatCompact(Resources resources,
@@ -100,9 +107,10 @@ final class AppStatusFormatter {
             String viewportMode,
             Integer fontScalePercent,
             String fontMode,
+            String typefaceId,
             boolean dpisEnabled) {
         return formatCompact(labelsFrom(resources), inScope, viewportWidthDp, viewportMode,
-                fontScalePercent, fontMode, dpisEnabled);
+                fontScalePercent, fontMode, typefaceId, dpisEnabled);
     }
 
     static String formatCompact(Labels labels,
@@ -111,9 +119,10 @@ final class AppStatusFormatter {
             String viewportMode,
             Integer fontScalePercent,
             String fontMode,
+            String typefaceId,
             boolean dpisEnabled) {
         return formatInternal(labels, inScope, viewportWidthDp, viewportMode,
-                fontScalePercent, fontMode, dpisEnabled, true, true);
+                fontScalePercent, fontMode, typefaceId, dpisEnabled, true, true);
     }
 
     static String formatCompact(Resources resources,
@@ -123,9 +132,10 @@ final class AppStatusFormatter {
             String viewportMode,
             Integer fontScalePercent,
             String fontMode,
+            String typefaceId,
             boolean dpisEnabled) {
         return formatCompact(labelsFrom(resources), inScope, scopeKnown, viewportWidthDp,
-                viewportMode, fontScalePercent, fontMode, dpisEnabled);
+                viewportMode, fontScalePercent, fontMode, typefaceId, dpisEnabled);
     }
 
     static String formatCompact(Labels labels,
@@ -135,9 +145,10 @@ final class AppStatusFormatter {
             String viewportMode,
             Integer fontScalePercent,
             String fontMode,
+            String typefaceId,
             boolean dpisEnabled) {
         return formatInternal(labels, inScope, viewportWidthDp, viewportMode,
-                fontScalePercent, fontMode, dpisEnabled, scopeKnown, true);
+                fontScalePercent, fontMode, typefaceId, dpisEnabled, scopeKnown, true);
     }
 
     private static String formatInternal(Labels labels,
@@ -146,6 +157,7 @@ final class AppStatusFormatter {
             String viewportMode,
             Integer fontScalePercent,
             String fontMode,
+            String typefaceId,
             boolean dpisEnabled,
             boolean scopeKnown,
             boolean compact) {
@@ -159,11 +171,15 @@ final class AppStatusFormatter {
         String widthText = viewportWidthDp != null
                 ? formatViewport(labels, viewportWidthDp, normalizedViewportMode, compact)
                 : labels.notEnabled;
+        String fontFileText = typefaceId != null && !typefaceId.isBlank()
+                ? labels.fontFile
+                : null;
         String normalizedFontMode = FontApplyMode.normalize(fontMode);
         if (!FontApplyMode.isEnabled(normalizedFontMode) || fontScalePercent == null) {
-            return joinSegments(scopeText, widthText);
+            return joinSegments(scopeText, widthText, fontFileText);
         }
         return joinSegments(scopeText, widthText,
+                fontFileText,
                 formatFont(labels, fontScalePercent, normalizedFontMode, compact));
     }
 
@@ -273,12 +289,38 @@ final class AppStatusFormatter {
             }
         }
         if (warnFont) {
-            int[] fontRange = resolveSegmentRange(statusText, 2);
+            int[] fontRange = resolveFontScaleSegmentRange(statusText);
             if (fontRange != null) {
                 ranges.add(fontRange);
             }
         }
         return ranges.toArray(new int[0][]);
+    }
+
+    private static int[] resolveFontScaleSegmentRange(String statusText) {
+        int[] percentRange = resolveFirstSegmentRangeContaining(statusText, "%", 2);
+        return percentRange != null ? percentRange : resolveSegmentRange(statusText, 2);
+    }
+
+    private static int[] resolveFirstSegmentRangeContaining(String statusText,
+            String needle,
+            int minSegmentIndex) {
+        int segmentStart = 0;
+        int segmentIndex = 0;
+        while (segmentStart <= statusText.length()) {
+            int separatorIndex = statusText.indexOf('|', segmentStart);
+            int segmentEnd = separatorIndex >= 0 ? separatorIndex : statusText.length();
+            if (segmentIndex >= minSegmentIndex
+                    && statusText.substring(segmentStart, segmentEnd).contains(needle)) {
+                return trimRange(statusText, segmentStart, segmentEnd);
+            }
+            if (separatorIndex < 0) {
+                return null;
+            }
+            segmentStart = separatorIndex + 1;
+            segmentIndex++;
+        }
+        return null;
     }
 
     private static int[] resolveSegmentRange(String statusText, int targetSegmentIndex) {
@@ -288,26 +330,30 @@ final class AppStatusFormatter {
             int separatorIndex = statusText.indexOf('|', segmentStart);
             int segmentEnd = separatorIndex >= 0 ? separatorIndex : statusText.length();
             if (segmentIndex == targetSegmentIndex) {
-                int trimmedStart = segmentStart;
-                int trimmedEnd = segmentEnd;
-                while (trimmedStart < trimmedEnd
-                        && Character.isWhitespace(statusText.charAt(trimmedStart))) {
-                    trimmedStart++;
-                }
-                while (trimmedEnd > trimmedStart
-                        && Character.isWhitespace(statusText.charAt(trimmedEnd - 1))) {
-                    trimmedEnd--;
-                }
-                if (trimmedStart < trimmedEnd) {
-                    return new int[] { trimmedStart, trimmedEnd };
-                }
-                return null;
+                return trimRange(statusText, segmentStart, segmentEnd);
             }
             if (separatorIndex < 0) {
                 return null;
             }
             segmentStart = separatorIndex + 1;
             segmentIndex++;
+        }
+        return null;
+    }
+
+    private static int[] trimRange(String statusText, int segmentStart, int segmentEnd) {
+        int trimmedStart = segmentStart;
+        int trimmedEnd = segmentEnd;
+        while (trimmedStart < trimmedEnd
+                && Character.isWhitespace(statusText.charAt(trimmedStart))) {
+            trimmedStart++;
+        }
+        while (trimmedEnd > trimmedStart
+                && Character.isWhitespace(statusText.charAt(trimmedEnd - 1))) {
+            trimmedEnd--;
+        }
+        if (trimmedStart < trimmedEnd) {
+            return new int[] { trimmedStart, trimmedEnd };
         }
         return null;
     }
