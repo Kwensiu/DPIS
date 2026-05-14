@@ -13,6 +13,8 @@ public class SystemServerSettingsActivityFontLibrarySourceTest {
     @Test
     public void settingsActivityWiresFontLibraryEntryAndImportPicker() throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+        String factory = read("src/main/java/com/dpis/module/ConfigStoreFactory.java");
+        String store = read("src/main/java/com/dpis/module/FontLibraryStore.java");
 
         assertTrue(source.contains("row_font_library"));
         assertTrue(source.contains("showFontLibraryDialog"));
@@ -20,6 +22,9 @@ public class SystemServerSettingsActivityFontLibrarySourceTest {
         assertTrue(source.contains("font/ttf"));
         assertTrue(source.contains("font/otf"));
         assertTrue(source.contains("dpis-font-library-delete"));
+        assertTrue(factory.contains("/data/local/tmp/dpis/fonts"));
+        assertTrue(store.contains("publishFontFile"));
+        assertTrue(store.contains("chmod 644"));
     }
 
     @Test

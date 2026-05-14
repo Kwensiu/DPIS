@@ -509,9 +509,9 @@ final class DpiConfigStore {
     Map<String, Object> snapshotAll() {
         LinkedHashMap<String, Object> snapshot = new LinkedHashMap<>();
         if (mirrorPreferences != null) {
-            copyAllEntries(snapshot, mirrorPreferences.getAll());
+            copyBackupEntries(snapshot, mirrorPreferences.getAll());
         }
-        copyAllEntries(snapshot, preferences.getAll());
+        copyBackupEntries(snapshot, preferences.getAll());
         return snapshot;
     }
 
@@ -526,9 +526,32 @@ final class DpiConfigStore {
                 if (key == null || key.isEmpty()) {
                     continue;
                 }
+                if (!isBackupConfigKey(key)) {
+                    continue;
+                }
                 putTypedValue(editor, key, entry.getValue());
             }
         });
+    }
+
+    private static void copyBackupEntries(Map<String, Object> target, Map<String, ?> source) {
+        if (source == null) {
+            return;
+        }
+        for (Map.Entry<String, ?> entry : source.entrySet()) {
+            String key = entry.getKey();
+            if (key == null || key.isEmpty() || !isBackupConfigKey(key)) {
+                continue;
+            }
+            Object normalized = normalizeValue(entry.getValue());
+            if (normalized != null) {
+                target.put(key, normalized);
+            }
+        }
+    }
+
+    private static boolean isBackupConfigKey(String key) {
+        return key != null && !key.startsWith("font.library.");
     }
 
     private boolean contains(String key) {
@@ -639,19 +662,6 @@ final class DpiConfigStore {
             return;
         }
         throw new IllegalArgumentException("Unsupported preference value type: " + value.getClass());
-    }
-
-    private static void copyAllEntries(Map<String, Object> target, Map<String, ?> source) {
-        for (Map.Entry<String, ?> entry : source.entrySet()) {
-            String key = entry.getKey();
-            if (key == null || key.isEmpty()) {
-                continue;
-            }
-            Object normalized = normalizeValue(entry.getValue());
-            if (normalized != null) {
-                target.put(key, normalized);
-            }
-        }
     }
 
     @SuppressWarnings("unchecked")

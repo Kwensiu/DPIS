@@ -39,6 +39,7 @@ public class ConfigBackupCodecSourceSmokeTest {
         assertTrue(codec.contains("TYPE_STRING"));
         assertTrue(settings.contains("ConfigBackupCodec.decode(payload)"));
         assertTrue(settings.contains("localStore.replaceAll(entries)"));
+        assertTrue(store.contains("!key.startsWith(\"font.library.\")"));
     }
 
     private static String read(String relativePath) throws IOException {

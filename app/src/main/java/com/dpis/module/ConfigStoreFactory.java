@@ -9,6 +9,8 @@ import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.service.XposedService;
 
 final class ConfigStoreFactory {
+    private static final File PUBLIC_FONT_DIRECTORY = new File("/data/local/tmp/dpis/fonts");
+
     private ConfigStoreFactory() {
     }
 
@@ -35,7 +37,8 @@ final class ConfigStoreFactory {
     static FontLibraryStore createFontLibraryForModuleApp(Context context) {
         SharedPreferences preferences =
                 context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE);
-        return new FontLibraryStore(preferences, new File(context.getFilesDir(), "fonts"));
+        return new FontLibraryStore(preferences, new File(context.getFilesDir(), "fonts"),
+                PUBLIC_FONT_DIRECTORY);
     }
 
     static FontLibraryStore createFontLibraryForModuleApp(Context context, XposedService service) {
@@ -52,7 +55,8 @@ final class ConfigStoreFactory {
                 preferences = localPreferences;
             }
         }
-        return new FontLibraryStore(preferences, new File(context.getFilesDir(), "fonts"));
+        return new FontLibraryStore(preferences, new File(context.getFilesDir(), "fonts"),
+                PUBLIC_FONT_DIRECTORY);
     }
 
     static DpiConfigStore createForXposedHost(XposedInterface xposed) {

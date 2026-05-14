@@ -29,10 +29,16 @@ final class FontLibraryStore {
 
     private final SharedPreferences preferences;
     private final File fontDirectory;
+    private final File publicFontDirectory;
 
     FontLibraryStore(SharedPreferences preferences, File fontDirectory) {
+        this(preferences, fontDirectory, null);
+    }
+
+    FontLibraryStore(SharedPreferences preferences, File fontDirectory, File publicFontDirectory) {
         this.preferences = Objects.requireNonNull(preferences, "preferences");
         this.fontDirectory = fontDirectory;
+        this.publicFontDirectory = publicFontDirectory;
     }
 
     List<FontLibraryEntry> listFonts() {
@@ -79,11 +85,27 @@ final class FontLibraryStore {
             return DeleteResult.DELETE_FAILED;
         }
         File file = new File(entry.storedPath);
-        if (file.exists() && !file.delete()) {
+        if (file.exists() && !deleteStoredFile(file)) {
             writeEntries(originalEntries);
             return DeleteResult.DELETE_FAILED;
         }
         return DeleteResult.DELETED;
+    }
+
+    private boolean deleteStoredFile(File file) {
+        if (publicFontDirectory != null && isUnderPublicFontDirectory(file)) {
+            return runRootCommand("rm -f " + shellQuote(file.getAbsolutePath()));
+        }
+        return file.delete();
+    }
+
+    private boolean isUnderPublicFontDirectory(File file) {
+        try {
+            return file.getCanonicalPath().startsWith(
+                    publicFontDirectory.getCanonicalPath() + File.separator);
+        } catch (IOException ignored) {
+            return false;
+        }
     }
 
     FontLibraryEntry registerCopiedFontForTest(
@@ -111,9 +133,10 @@ final class FontLibraryStore {
 
         String id = FONT_ID_PREFIX + sha256.substring(0, 16);
         String extension = resolveFontExtension(sourceFileName);
-        File targetFile = new File(fontDirectory, id + extension);
-        Files.write(targetFile.toPath(), bytes);
-        targetFile.setReadable(true, false);
+        File stagingFile = new File(fontDirectory, id + extension);
+        Files.write(stagingFile.toPath(), bytes);
+        stagingFile.setReadable(true, false);
+        File targetFile = publishFontFile(stagingFile);
 
         FontLibraryEntry entry = new FontLibraryEntry(
                 id,
@@ -126,9 +149,36 @@ final class FontLibraryStore {
         entries.add(entry);
         if (!writeEntries(entries)) {
             targetFile.delete();
+            if (!targetFile.equals(stagingFile)) {
+                stagingFile.delete();
+            }
             throw new IOException("Unable to persist font library metadata");
         }
+        if (!targetFile.equals(stagingFile)) {
+            stagingFile.delete();
+        }
         return entry;
+    }
+
+    private File publishFontFile(File stagingFile) throws IOException {
+        if (publicFontDirectory == null) {
+            return stagingFile;
+        }
+        File publicFile = new File(publicFontDirectory, stagingFile.getName());
+        File publicParent = publicFontDirectory.getParentFile();
+        StringBuilder command = new StringBuilder();
+        command.append("mkdir -p ").append(shellQuote(publicFontDirectory.getAbsolutePath()));
+        if (publicParent != null) {
+            command.append(" && chmod 755 ").append(shellQuote(publicParent.getAbsolutePath()));
+        }
+        command.append(" && cp ").append(shellQuote(stagingFile.getAbsolutePath()))
+                .append(" ").append(shellQuote(publicFile.getAbsolutePath()))
+                .append(" && chmod 755 ").append(shellQuote(publicFontDirectory.getAbsolutePath()))
+                .append(" && chmod 644 ").append(shellQuote(publicFile.getAbsolutePath()));
+        if (!runRootCommand(command.toString())) {
+            throw new IOException("Unable to publish font file: " + publicFile);
+        }
+        return publicFile;
     }
 
     private boolean isReferenced(String id, DpiConfigStore configStore) {
@@ -334,6 +384,30 @@ final class FontLibraryStore {
         } catch (NoSuchAlgorithmException exception) {
             throw new IllegalStateException("SHA-256 is unavailable", exception);
         }
+    }
+
+    private static boolean runRootCommand(String command) {
+        Process process = null;
+        try {
+            process = Runtime.getRuntime().exec(new String[] { "su", "-c", command });
+            return process.waitFor() == 0;
+        } catch (IOException ignored) {
+            return false;
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+            return false;
+        } finally {
+            if (process != null) {
+                process.destroy();
+            }
+        }
+    }
+
+    private static String shellQuote(String value) {
+        if (value == null || value.isEmpty()) {
+            return "''";
+        }
+        return "'" + value.replace("'", "'\\''") + "'";
     }
 
     enum DeleteResult {
