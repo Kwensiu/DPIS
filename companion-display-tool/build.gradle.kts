@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.agp.app)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -21,10 +22,15 @@ android {
 
     buildFeatures {
         buildConfig = true
+        compose = true
     }
 }
 
 dependencies {
     implementation(libs.androidx.recyclerview)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.runtime)
     testImplementation(libs.junit4)
 }

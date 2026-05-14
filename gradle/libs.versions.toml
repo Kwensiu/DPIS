@@ -10,6 +10,7 @@ kavaref = "1.0.2"
 junit4 = "4.13.2"
 appcompat = "1.7.1"
 recyclerview = "1.4.0"
+composeBom = "2026.04.01"
 viewpager2 = "1.1.0"
 material = "1.13.0"
 annotation = "1.10.0"
@@ -21,6 +22,7 @@ androidxTestCore = "1.7.0"
 [plugins]
 agp-app = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutLibraries" }
 
@@ -35,6 +37,10 @@ kavaref-extension = { module = "com.highcapable.kavaref:kavaref-extension", vers
 junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
 androidx-viewpager2 = { group = "androidx.viewpager2", name = "viewpager2", version.ref = "viewpager2" }
 androidx-swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
