@@ -327,12 +327,28 @@ final class AppConfigDialogBinder {
         labels.add(activity.getString(R.string.dialog_typeface_default));
         ids.add(null);
         int checkedItem = 0;
+        boolean selectedTypefaceMissing = state.selectedTypefaceId != null
+                && !state.selectedTypefaceId.isBlank();
+        if (selectedTypefaceMissing) {
+            boolean found = false;
+            for (FontLibraryEntry entry : entries) {
+                if (state.selectedTypefaceId.equals(entry.id)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                labels.add(activity.getString(R.string.dialog_typeface_missing));
+                ids.add(state.selectedTypefaceId);
+                checkedItem = 1;
+            }
+        }
         for (int i = 0; i < entries.size(); i++) {
             FontLibraryEntry entry = entries.get(i);
             labels.add(entry.displayName);
             ids.add(entry.id);
             if (entry.id.equals(state.selectedTypefaceId)) {
-                checkedItem = i + 1;
+                checkedItem = labels.size() - 1;
             }
         }
         new MaterialAlertDialogBuilder(activity)
@@ -476,16 +492,17 @@ final class AppConfigDialogBinder {
         Runnable onFinished = () -> {
             setSaveAndResetButtonsEnabled(views, true);
         };
-        if (state.dpisEnabled && hasActiveDialogConfig(views)) {
+        if (state.dpisEnabled && hasActiveDialogConfig(views, state)) {
             host.applyHyperOsNativeProxy(item, onFinished);
             return;
         }
         host.unmountHyperOsNativeProxy(item, onFinished);
     }
 
-    private static boolean hasActiveDialogConfig(AppConfigDialogViews views) {
+    private static boolean hasActiveDialogConfig(AppConfigDialogViews views, AppConfigDialogState state) {
         return parsePositiveIntOrNullSafe(views.viewportInputView) != null
-                || parsePositiveIntOrNullSafe(views.fontInputView) != null;
+                || parsePositiveIntOrNullSafe(views.fontInputView) != null
+                || (state.selectedTypefaceId != null && !state.selectedTypefaceId.isBlank());
     }
 
     private static void setSaveAndResetButtonsEnabled(AppConfigDialogViews views, boolean enabled) {

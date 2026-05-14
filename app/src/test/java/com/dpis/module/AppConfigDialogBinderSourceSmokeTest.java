@@ -52,6 +52,29 @@ public class AppConfigDialogBinderSourceSmokeTest {
     }
 
     @Test
+    public void binderTreatsSelectedTypefaceAsActiveDialogConfig() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        int activeStart = source.indexOf("private static boolean hasActiveDialogConfig");
+        int activeEnd = source.indexOf("private static void setSaveAndResetButtonsEnabled", activeStart);
+        String activeBlock = source.substring(activeStart, activeEnd);
+
+        assertTrue(activeBlock.contains("state.selectedTypefaceId"));
+        assertTrue(activeBlock.contains("!state.selectedTypefaceId.isBlank()"));
+    }
+
+    @Test
+    public void typefaceSelectorKeepsMissingCurrentChoiceChecked() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        int selectorStart = source.indexOf("private void showTypefaceSelector");
+        int selectorEnd = source.indexOf("private String resolveTypefaceDisplayText", selectorStart);
+        String selectorBlock = source.substring(selectorStart, selectorEnd);
+
+        assertTrue(selectorBlock.contains("R.string.dialog_typeface_missing"));
+        assertTrue(selectorBlock.contains("ids.add(state.selectedTypefaceId)"));
+        assertTrue(selectorBlock.contains("checkedItem = 1"));
+    }
+
+    @Test
     public void binder_validationWatcherUpdatesSaveStateAndStatus() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
 
