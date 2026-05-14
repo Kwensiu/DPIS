@@ -132,6 +132,7 @@ public final class ModuleMain extends XposedModule {
                 + ", targetViewportMode=" + packagePlan.targetViewportMode
                 + ", targetFontScalePercent=" + packagePlan.targetFontScalePercent
                 + ", targetFontMode=" + packagePlan.targetFontMode
+                + ", typefaceActive=" + packagePlan.typefaceActive
                 + ", flutterSettingsFont=" + packagePlan.flutterSettingsFontEnabled
                 + ", hyperOsNativeFlutterFont=" + packagePlan.hyperOsNativeFlutterFontEnabled);
         appProcessInstallAttempted = true;
@@ -141,6 +142,7 @@ public final class ModuleMain extends XposedModule {
                     packagePlan.targetViewportMode,
                     packagePlan.targetFontMode,
                     packagePlan.fontScaleActive,
+                    packagePlan.typefaceActive,
                     packagePlan.flutterSettingsFontEnabled,
                     packagePlan.hyperOsNativeFlutterFontEnabled,
                     packagePlan.hookDomainOverride);

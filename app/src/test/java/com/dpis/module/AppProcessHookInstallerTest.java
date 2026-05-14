@@ -258,6 +258,21 @@ public class AppProcessHookInstallerTest {
     }
 
     @Test
+    public void typefacePlanDoesNotEnableFontScaleHooks() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetTypefaceId("com.example.app", "font_abcd1234");
+
+        ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
+        AppProcessHookInstaller.FontHookPlan fontHookPlan =
+                AppProcessHookInstaller.resolveFontHookPlan(
+                        null, plan.fontScaleActive, plan.targetFontMode);
+
+        assertFalse(fontHookPlan.emulationEnabled);
+        assertFalse(fontHookPlan.fieldRewriteEnabled);
+        assertTrue(plan.typefaceEnabled);
+    }
+
+    @Test
     public void skipsProbeHookPathWhenSafetyModeEnabled() throws Exception {
         HookRuntimePolicy policy = createPolicy(true);
 

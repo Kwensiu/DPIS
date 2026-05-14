@@ -21,6 +21,7 @@ final class AppProcessHookInstaller {
                         String viewportMode,
                         String fontMode,
                         boolean fontScaleActive,
+                        boolean typefaceActive,
                         boolean flutterSettingsFontEnabled,
                         boolean hyperOsNativeFlutterEnabled,
                         HookDomainOverride hookDomainOverride) throws Throwable {
@@ -53,6 +54,13 @@ final class AppProcessHookInstaller {
                 + ", unknownCustomDomains=" + plan.unknownCustomDomains
                 + ", reason={" + plan.reason.formatForLog() + "}");
         installFromPlan(xposed, packageName, store, plan);
+        if (typefaceActive) {
+            TypefaceOverrideHookInstaller.install(
+                    xposed,
+                    packageName,
+                    store,
+                    ConfigStoreFactory.createFontLibraryForXposedHost(xposed));
+        }
         if (plan.probeHooksRequested) {
             DpisLog.i("hooks installed (full): viewportEnabled=" + plan.viewportEnabled
                     + ", viewportMode=" + viewportMode
