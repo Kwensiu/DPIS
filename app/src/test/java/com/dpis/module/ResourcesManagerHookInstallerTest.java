@@ -91,6 +91,36 @@ public class ResourcesManagerHookInstallerTest {
     }
 
     @Test
+    public void replacesResourcesKeyOverrideThatMatchesBaseActivityConfiguration() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putInt("viewport.com.example.target.width_dp", 800)
+                .putString("viewport.com.example.target.mode", ViewportApplyMode.SYSTEM_EMULATION)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        Configuration globalConfig = new Configuration();
+        globalConfig.screenWidthDp = 360;
+        globalConfig.screenHeightDp = 736;
+        globalConfig.smallestScreenWidthDp = 360;
+        globalConfig.densityDpi = 480;
+        globalConfig.fontScale = 1.0f;
+        FakeResourcesKey key = new FakeResourcesKey();
+        key.mOverrideConfiguration.screenWidthDp = 360;
+        key.mOverrideConfiguration.screenHeightDp = 736;
+        key.mOverrideConfiguration.smallestScreenWidthDp = 360;
+        key.mOverrideConfiguration.densityDpi = 480;
+
+        ResourcesManagerHookInstaller.maybeApplyKeyOverride(
+                new FakeResourcesManager(globalConfig), key, store,
+                "com.example.target", "createResourcesImpl");
+
+        assertEquals(800, key.mOverrideConfiguration.screenWidthDp);
+        assertEquals(1636, key.mOverrideConfiguration.screenHeightDp);
+        assertEquals(800, key.mOverrideConfiguration.smallestScreenWidthDp);
+        assertEquals(216, key.mOverrideConfiguration.densityDpi);
+    }
+
+    @Test
     public void preservesExistingResourcesKeyFontOnlyOverride() {
         FakePrefs prefs = new FakePrefs();
         prefs.edit()

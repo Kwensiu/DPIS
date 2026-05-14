@@ -153,9 +153,12 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
                     resourcesManagerClass, packageName, store);
             int createHookCount = installResourceCreationHooks(
                     resourcesManagerClass, packageName, store);
+            int keyHookCount = installResourcesKeyHooks(
+                    resourcesManagerClass, packageName, store);
             compatDebugLog("compat100 legacy ResourcesManager hook ready"
                     + " (activityHooks=" + activityHookCount
-                    + ", createHooks=" + createHookCount + ")");
+                    + ", createHooks=" + createHookCount
+                    + ", keyHooks=" + keyHookCount + ")");
         } catch (Throwable throwable) {
             RESOURCES_MANAGER_HOOKED.set(false);
             compatErrorLog("compat100 legacy ResourcesManager hook failed: "
@@ -220,6 +223,34 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
         return hookedCount;
     }
 
+    private static int installResourcesKeyHooks(Class<?> resourcesManagerClass,
+                                                String packageName,
+                                                DpiConfigStore store) {
+        int hookedCount = 0;
+        Set<Method> hookedMethods = new HashSet<>();
+        for (Method method : resourcesManagerClass.getDeclaredMethods()) {
+            String methodName = method.getName();
+            if (!"createResourcesImpl".equals(methodName)
+                    || !hasResourcesKeyFirstArg(method)
+                    || !hookedMethods.add(method)) {
+                continue;
+            }
+            XposedBridge.hookMethod(method, new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    ResourcesManagerHookInstaller.maybeApplyKeyOverride(
+                            param.thisObject,
+                            param.args[0],
+                            store,
+                            packageName,
+                            "Compat100LegacyResourcesManagerKey(" + methodName + ")");
+                }
+            });
+            hookedCount++;
+        }
+        return hookedCount;
+    }
+
     private static int findConfigurationArgIndex(Method method) {
         Class<?>[] parameterTypes = method.getParameterTypes();
         for (int i = 0; i < parameterTypes.length; i++) {
@@ -235,6 +266,12 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
                 && (methodName.contains("createResources")
                 || methodName.contains("getOrCreateResources")
                 || methodName.contains("createBaseTokenResources"));
+    }
+
+    private static boolean hasResourcesKeyFirstArg(Method method) {
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        return parameterTypes.length > 0
+                && "android.content.res.ResourcesKey".equals(parameterTypes[0].getName());
     }
 
     private static void installResourcesReadHooks(String packageName, DpiConfigStore store) {

@@ -147,19 +147,20 @@ final class ResourcesManagerHookInstaller {
         if (!(override instanceof Configuration overrideConfig)) {
             return;
         }
-        if (!isEffectivelyEmpty(overrideConfig)) {
-            return;
-        }
         Configuration baseConfig = readResourcesManagerConfiguration(resourcesManager);
         if (baseConfig == null) {
             return;
         }
+        if (!shouldReplaceResourcesKeyOverride(overrideConfig, baseConfig)) {
+            return;
+        }
         Configuration targetConfig = new Configuration();
-        copyViewportConfiguration(baseConfig, targetConfig);
-        targetConfig.fontScale = baseConfig.fontScale;
+        Configuration sourceConfig = isEffectivelyEmpty(overrideConfig) ? baseConfig : overrideConfig;
+        copyViewportConfiguration(sourceConfig, targetConfig);
+        targetConfig.fontScale = sourceConfig.fontScale;
         applyResourceOverrides(targetConfig, store, packageName,
                 "ResourcesManagerKey(" + sourceTag + ")");
-        if (!hasViewportOverride(targetConfig, baseConfig)) {
+        if (!hasViewportOverride(targetConfig, sourceConfig)) {
             return;
         }
         copyViewportConfiguration(targetConfig, overrideConfig);
@@ -185,6 +186,32 @@ final class ResourcesManagerHookInstaller {
                 && config.screenHeightDp <= 0
                 && config.smallestScreenWidthDp <= 0
                 && config.densityDpi <= 0;
+    }
+
+    private static boolean shouldReplaceResourcesKeyOverride(Configuration overrideConfig,
+                                                            Configuration baseConfig) {
+        if (overrideConfig == null || baseConfig == null) {
+            return false;
+        }
+        if (isEffectivelyEmpty(overrideConfig)) {
+            return true;
+        }
+        boolean hasViewportFields = overrideConfig.screenWidthDp > 0
+                || overrideConfig.screenHeightDp > 0
+                || overrideConfig.smallestScreenWidthDp > 0
+                || overrideConfig.densityDpi > 0;
+        if (!hasViewportFields) {
+            return true;
+        }
+        boolean sameBounds = (overrideConfig.screenWidthDp <= 0
+                || overrideConfig.screenWidthDp == baseConfig.screenWidthDp)
+                && (overrideConfig.screenHeightDp <= 0
+                || overrideConfig.screenHeightDp == baseConfig.screenHeightDp)
+                && (overrideConfig.smallestScreenWidthDp <= 0
+                || overrideConfig.smallestScreenWidthDp == baseConfig.smallestScreenWidthDp);
+        boolean sameDensity = overrideConfig.densityDpi <= 0
+                || overrideConfig.densityDpi == baseConfig.densityDpi;
+        return sameBounds && sameDensity;
     }
 
     private static boolean hasViewportOverride(Configuration target, Configuration source) {
