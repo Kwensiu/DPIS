@@ -394,7 +394,14 @@ public class MainActivitySourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(source.contains("executeDialogProcessActionAfterHyperOsProxyReady"));
-        assertTrue(source.contains("item.hyperOsNativeProxyCandidate"));
+        assertTrue(source.contains("shouldPrepareHyperOsNativeProxyForRestart(item)"));
+        assertTrue(source.contains("DpiConfigStore store = getUiConfigStore();"));
+        assertTrue(source.contains("store.isTargetDpisEnabled(item.packageName)"));
+        assertTrue(source.contains("hasActiveStoredConfig(store, item.packageName)"));
+        assertTrue(source.contains("store.getTargetTypefaceId(packageName)"));
+        assertTrue(source.contains("typefaceId != null && !typefaceId.isBlank()"));
+        assertFalse(source.contains("item.fontScalePercent != null\n                && item.fontScalePercent > 0"));
+        assertFalse(source.contains("FontApplyMode.isEnabled"));
         assertTrue(source.contains("executeHyperOsNativeProxyMount(item, true, success ->"));
         assertTrue(source.contains("if (success)"));
         assertTrue(source.contains("processActionHandler.execute(item, mappedAction);"));

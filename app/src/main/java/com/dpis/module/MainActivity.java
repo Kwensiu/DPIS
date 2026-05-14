@@ -1378,9 +1378,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
 
     private void executeDialogProcessAction(AppListItem item, AppConfigDialogBinder.ProcessAction action) {
         if (action == AppConfigDialogBinder.ProcessAction.RESTART
-                && item.hyperOsNativeProxyCandidate
-                && item.fontScalePercent != null
-                && item.fontScalePercent > 0) {
+                && shouldPrepareHyperOsNativeProxyForRestart(item)) {
             // Re-prepare before restart because APK updates can leave an old bind mount
             // pointing at a deleted module native library.
             executeHyperOsNativeProxyMount(item, true, success -> {
@@ -1391,6 +1389,24 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             return;
         }
         executeDialogProcessActionAfterHyperOsProxyReady(item, action);
+    }
+
+    private boolean shouldPrepareHyperOsNativeProxyForRestart(AppListItem item) {
+        if (item == null || !item.hyperOsNativeProxyCandidate) {
+            return false;
+        }
+        DpiConfigStore store = getUiConfigStore();
+        return store.isTargetDpisEnabled(item.packageName)
+                && hasActiveStoredConfig(store, item.packageName);
+    }
+
+    private static boolean hasActiveStoredConfig(DpiConfigStore store, String packageName) {
+        Integer widthDp = store.getTargetViewportWidthDp(packageName);
+        Integer fontScalePercent = store.getTargetFontScalePercent(packageName);
+        String typefaceId = store.getTargetTypefaceId(packageName);
+        return widthDp != null
+                || fontScalePercent != null
+                || (typefaceId != null && !typefaceId.isBlank());
     }
 
     private void executeDialogProcessActionAfterHyperOsProxyReady(
