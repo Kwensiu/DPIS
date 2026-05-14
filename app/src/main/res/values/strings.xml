@@ -147,6 +147,17 @@
     <string name="settings_flutter_settings_font_hook_hint">flutterSettingsFontEnabled</string>
     <string name="settings_hyperos_flutter_font_hook_label">HyperOS native text</string>
     <string name="settings_hyperos_flutter_font_hook_hint">hyperOsNativeFlutterFontEnabled</string>
+    <string name="settings_font_library_label">Font library</string>
+    <string name="settings_font_library_hint">Import and manage fonts for per-app replacement.</string>
+    <string name="font_library_dialog_title">Font library</string>
+    <string name="font_library_import_action">Import font</string>
+    <string name="font_library_empty">No imported fonts</string>
+    <string name="font_library_import_success">Imported %1$s</string>
+    <string name="font_library_import_failed">Failed to import font</string>
+    <string name="font_library_delete_action">Delete</string>
+    <string name="font_library_delete_failed">Failed to delete font</string>
+    <string name="font_library_delete_in_use">Font is used by an app. Clear it before deleting.</string>
+    <string name="font_library_picker_failed">Unable to open file picker</string>
     <string name="settings_about_label">About</string>
     <string name="settings_about_hint">Version, source code, and feedback.</string>
     <string name="settings_config_backup_label">Config backup</string>

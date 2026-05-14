@@ -147,6 +147,17 @@
     <string name="settings_flutter_settings_font_hook_hint">flutterSettingsFontEnabled</string>
     <string name="settings_hyperos_flutter_font_hook_label">HyperOS 原生文本</string>
     <string name="settings_hyperos_flutter_font_hook_hint">hyperOsNativeFlutterFontEnabled</string>
+    <string name="settings_font_library_label">字体库</string>
+    <string name="settings_font_library_hint">导入并管理用于按应用替换的字体。</string>
+    <string name="font_library_dialog_title">字体库</string>
+    <string name="font_library_import_action">导入字体</string>
+    <string name="font_library_empty">暂无已导入字体</string>
+    <string name="font_library_import_success">已导入 %1$s</string>
+    <string name="font_library_import_failed">导入字体失败</string>
+    <string name="font_library_delete_action">删除</string>
+    <string name="font_library_delete_failed">删除字体失败</string>
+    <string name="font_library_delete_in_use">字体正在被应用使用，请先清除配置再删除。</string>
+    <string name="font_library_picker_failed">无法打开文件选择器</string>
     <string name="settings_about_label">关于</string>
     <string name="settings_about_hint">查看版本、源码与反馈渠道。</string>
     <string name="settings_config_backup_label">配置备份</string>
