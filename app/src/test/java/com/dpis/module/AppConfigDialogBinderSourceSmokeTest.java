@@ -39,6 +39,19 @@ public class AppConfigDialogBinderSourceSmokeTest {
     }
 
     @Test
+    public void binder_wiresTypefaceSelector() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String saveHandler = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        String layout = read("src/main/res/layout/dialog_app_config.xml");
+
+        assertTrue(layout.contains("dialog_typeface_selector_button"));
+        assertTrue(layout.contains("@string/dialog_typeface_default"));
+        assertTrue(source.contains("bindTypefaceSelector"));
+        assertTrue(saveHandler.contains("setTargetTypefaceId"));
+        assertTrue(saveHandler.contains("clearTargetTypefaceId"));
+    }
+
+    @Test
     public void binder_validationWatcherUpdatesSaveStateAndStatus() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
 

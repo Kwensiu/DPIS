@@ -8,6 +8,7 @@ final class AppConfigSaveHandler {
             TextInputEditText fontScaleInput,
             String viewportMode,
             String fontMode,
+            String selectedTypefaceId,
             boolean systemHooksEnabled,
             DpiConfigStore store,
             Runnable onChanged) {
@@ -59,6 +60,11 @@ final class AppConfigSaveHandler {
                         FontHookDomainDecision.isHyperOsNativeFlutterEnabled(
                                 store, item.packageName));
                 FontHookDomainPropertySyncer.publishFromStoreAsync(item.packageName, store);
+            }
+            if (selectedTypefaceId == null || selectedTypefaceId.isBlank()) {
+                saved = store.clearTargetTypefaceId(item.packageName) && saved;
+            } else {
+                saved = store.setTargetTypefaceId(item.packageName, selectedTypefaceId) && saved;
             }
             if (saved && onChanged != null) {
                 onChanged.run();

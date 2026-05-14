@@ -8,6 +8,9 @@
     <string name="dialog_font_scale_hint">字体 50–300%</string>
     <string name="dialog_font_mode_system">系统</string>
     <string name="dialog_font_mode_compat">兼容</string>
+    <string name="dialog_typeface_label">字体文件</string>
+    <string name="dialog_typeface_default">系统默认</string>
+    <string name="dialog_typeface_missing">所选字体不可用</string>
     <string name="status_save_button">保存</string>
     <string name="status_save_success_inline">已保存</string>
     <string name="status_save_success">已保存 %1$s 的参数</string>

@@ -1203,7 +1203,8 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                     TextInputEditText viewportInput,
                     TextInputEditText fontScaleInput,
                     String viewportMode,
-                    String fontMode) {
+                    String fontMode,
+                    String selectedTypefaceId) {
                 refreshSystemHookEffectiveEnabled();
                 return appConfigSaveHandler.save(
                         item,
@@ -1211,6 +1212,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                         fontScaleInput,
                         viewportMode,
                         fontMode,
+                        selectedTypefaceId,
                         isSystemHookEnabledFromStore(),
                         getUiConfigStore(),
                         MainActivity.this::requestAppsLoad);

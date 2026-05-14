@@ -91,12 +91,15 @@ final class InstalledAppCatalogCoordinator {
             String fontMode = store != null
                     ? store.getTargetFontApplyMode(item.packageName)
                     : FontApplyMode.OFF;
+            String typefaceId = store != null
+                    ? store.getTargetTypefaceId(item.packageName)
+                    : null;
             boolean dpisEnabled = store == null
                     || store.isTargetDpisEnabled(item.packageName);
             Drawable icon = resolveDisplayIcon(item);
             result.add(new AppListItem(item.label, item.packageName,
                     scopePackages.contains(item.packageName), scopeKnown, viewportWidth, viewportMode,
-                    fontScalePercent, fontMode, dpisEnabled, item.systemApp,
+                    fontScalePercent, fontMode, typefaceId, dpisEnabled, item.systemApp,
                     item.hyperOsNativeProxyCandidate, icon));
         }
         return result;

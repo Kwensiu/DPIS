@@ -8,6 +8,9 @@
     <string name="dialog_font_scale_hint">Font 50–300%</string>
     <string name="dialog_font_mode_system">System</string>
     <string name="dialog_font_mode_compat">Compat</string>
+    <string name="dialog_typeface_label">Font file</string>
+    <string name="dialog_typeface_default">System default</string>
+    <string name="dialog_typeface_missing">Selected font is unavailable</string>
     <string name="status_save_button">Save</string>
     <string name="status_save_success_inline">Saved</string>
     <string name="status_save_success">Saved: %1$s</string>

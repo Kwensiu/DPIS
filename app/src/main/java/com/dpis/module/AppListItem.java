@@ -11,6 +11,7 @@ final class AppListItem {
     final String viewportMode;
     final Integer fontScalePercent;
     final String fontMode;
+    final String typefaceId;
     final boolean dpisEnabled;
     final boolean systemApp;
     final boolean hyperOsNativeProxyCandidate;
@@ -28,6 +29,24 @@ final class AppListItem {
                 boolean systemApp,
                 boolean hyperOsNativeProxyCandidate,
                 Drawable icon) {
+        this(label, packageName, inScope, scopeKnown, viewportWidthDp, viewportMode,
+                fontScalePercent, fontMode, null, dpisEnabled, systemApp,
+                hyperOsNativeProxyCandidate, icon);
+    }
+
+    AppListItem(String label,
+                String packageName,
+                boolean inScope,
+                boolean scopeKnown,
+                Integer viewportWidthDp,
+                String viewportMode,
+                Integer fontScalePercent,
+                String fontMode,
+                String typefaceId,
+                boolean dpisEnabled,
+                boolean systemApp,
+                boolean hyperOsNativeProxyCandidate,
+                Drawable icon) {
         this.label = label;
         this.packageName = packageName;
         this.inScope = inScope;
@@ -36,6 +55,7 @@ final class AppListItem {
         this.viewportMode = ViewportApplyMode.normalize(viewportMode);
         this.fontScalePercent = fontScalePercent;
         this.fontMode = FontApplyMode.normalize(fontMode);
+        this.typefaceId = typefaceId;
         this.dpisEnabled = dpisEnabled;
         this.systemApp = systemApp;
         this.hyperOsNativeProxyCandidate = hyperOsNativeProxyCandidate;
