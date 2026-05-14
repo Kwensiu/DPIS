@@ -19,6 +19,7 @@ final class DebugConfigApplier {
     private static final String EXTRA_RESTART = "restart";
     private static final String EXTRA_SAFE_MODE = "system_server_safe_mode";
     private static final String EXTRA_LOG_ENABLED = "log_enabled";
+    private static final String EXTRA_FONT_DEBUG_OVERLAY_ENABLED = "font_debug_overlay_enabled";
 
     private DebugConfigApplier() {
     }
@@ -79,6 +80,10 @@ final class DebugConfigApplier {
             saved &= store.setGlobalLogEnabled(loggingEnabled);
             DpisLog.setLoggingEnabled(loggingEnabled);
         }
+        if (intent.hasExtra(EXTRA_FONT_DEBUG_OVERLAY_ENABLED)) {
+            saved &= store.setFontDebugOverlayEnabled(
+                    intent.getBooleanExtra(EXTRA_FONT_DEBUG_OVERLAY_ENABLED, false));
+        }
 
         boolean restart = intent.getBooleanExtra(EXTRA_RESTART, false);
         if (restart) {
@@ -92,6 +97,7 @@ final class DebugConfigApplier {
                 + ", fontMode=" + store.getTargetFontApplyMode(packageName)
                 + ", systemServerSafeMode=" + store.isSystemServerSafeModeEnabled()
                 + ", logEnabled=" + store.isGlobalLogEnabled()
+                + ", fontDebugOverlayEnabled=" + store.isFontDebugOverlayEnabled()
                 + ", restart=" + restart);
     }
 

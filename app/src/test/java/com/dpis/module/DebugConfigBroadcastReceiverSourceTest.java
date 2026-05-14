@@ -39,6 +39,7 @@ public class DebugConfigBroadcastReceiverSourceTest {
         assertTrue(source.contains("FontRuntimePropertySyncer.publishTargetAsync(packageName, fontScalePercent"));
         assertTrue(source.contains("store.setSystemServerSafeModeEnabled("));
         assertTrue(source.contains("store.setGlobalLogEnabled(loggingEnabled)"));
+        assertTrue(source.contains("store.setFontDebugOverlayEnabled("));
         assertTrue(source.contains("restartTargetAsync(packageName)"));
         assertTrue(source.contains("DPIS_DEBUG_CONFIG"));
     }
