@@ -1,6 +1,6 @@
 package com.dpis.displaytool;
 
-final class ComposeRunFields {
+public final class ComposeRunFields {
     final float composeDensity;
     final float composeFontScale;
     final float composeTextSp;
@@ -14,7 +14,7 @@ final class ComposeRunFields {
     final String styleSource;
     final String container;
 
-    ComposeRunFields(
+    public ComposeRunFields(
             float composeDensity,
             float composeFontScale,
             float composeTextSp,

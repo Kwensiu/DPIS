@@ -4,7 +4,15 @@ import android.app.Dialog;
 import android.view.View;
 import android.widget.TextView;
 
+import com.dpis.displaytool.ComposeRunFields;
+
 public final class ScenePresentation {
+    public interface ComposeFieldsProvider {
+        boolean isReady();
+
+        ComposeRunFields fields(float androidScaledDensity);
+    }
+
     public enum Kind {
         VIEW,
         DIALOG
@@ -17,6 +25,7 @@ public final class ScenePresentation {
     private final float baseSp;
     private final String viewName;
     private final String event;
+    private final ComposeFieldsProvider composeFieldsProvider;
 
     private ScenePresentation(
             Kind kind,
@@ -25,7 +34,8 @@ public final class ScenePresentation {
             TextView textView,
             float baseSp,
             String viewName,
-            String event
+            String event,
+            ComposeFieldsProvider composeFieldsProvider
     ) {
         this.kind = kind;
         this.view = view;
@@ -34,6 +44,7 @@ public final class ScenePresentation {
         this.baseSp = baseSp;
         this.viewName = viewName;
         this.event = event;
+        this.composeFieldsProvider = composeFieldsProvider;
     }
 
     public static ScenePresentation view(
@@ -43,7 +54,7 @@ public final class ScenePresentation {
             String viewName,
             String event
     ) {
-        return new ScenePresentation(Kind.VIEW, view, null, textView, baseSp, viewName, event);
+        return new ScenePresentation(Kind.VIEW, view, null, textView, baseSp, viewName, event, null);
     }
 
     public static ScenePresentation dialog(
@@ -54,7 +65,26 @@ public final class ScenePresentation {
             String viewName,
             String event
     ) {
-        return new ScenePresentation(Kind.DIALOG, root, dialog, textView, baseSp, viewName, event);
+        return new ScenePresentation(Kind.DIALOG, root, dialog, textView, baseSp, viewName, event, null);
+    }
+
+    public static ScenePresentation composeView(
+            View view,
+            float baseSp,
+            String viewName,
+            String event,
+            ComposeFieldsProvider composeFieldsProvider
+    ) {
+        return new ScenePresentation(
+                Kind.VIEW,
+                view,
+                null,
+                null,
+                baseSp,
+                viewName,
+                event,
+                composeFieldsProvider
+        );
     }
 
     public Kind kind() {
@@ -83,5 +113,9 @@ public final class ScenePresentation {
 
     public String event() {
         return event;
+    }
+
+    public ComposeFieldsProvider composeFieldsProvider() {
+        return composeFieldsProvider;
     }
 }
