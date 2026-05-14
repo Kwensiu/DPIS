@@ -68,6 +68,70 @@ public final class CompanionLogTest {
     }
 
     @Test
+    public void composeSceneEventKeepsPrefixBeforeComposeFields() {
+        String line = CompanionLog.formatComposeSceneEvent(new CompanionLog.SceneEventFields(
+                "123_2",
+                "compose_baseline_text",
+                "normal",
+                "compose_first_text_layout",
+                "io.github.kwensiu.dpis.displaytool",
+                1.0f,
+                346,
+                2.1625f,
+                360,
+                792,
+                2.1625f,
+                1080,
+                2376,
+                499.4f,
+                1098.7f,
+                "compose_text_primary",
+                30.3f,
+                14f,
+                30.3f,
+                1.0f,
+                1,
+                240,
+                48,
+                SceneAnomaly.NONE
+        ), new ComposeRunFields(
+                2.1625f,
+                1.0f,
+                14f,
+                30.3f,
+                1,
+                240,
+                48,
+                1.0f,
+                -1,
+                -1,
+                "baseline",
+                ""
+        ));
+
+        assertEquals(
+                "stage=phase1 run_id=123_2 scene=compose_baseline_text variant=normal "
+                        + "event=compose_first_text_layout pkg=io.github.kwensiu.dpis.displaytool "
+                        + "font_scale=1.00 density_dpi=346 scaled_density=2.16 "
+                        + "width_dp=360 height_dp=792 density=2.16 "
+                        + "width_px=1080 height_px=2376 "
+                        + "width_dp_from_density=499.4 height_dp_from_density=1098.7 "
+                        + "view=compose_text_primary text_px=30.3 base_sp=14.0 "
+                        + "expected_text_px=30.3 rendered_scale=1.00 "
+                        + "line_count=1 measured_w=240 measured_h=48 suspicious=false "
+                        + "surface=compose compose_density=2.16 compose_font_scale=1.00 "
+                        + "compose_text_sp=14.0 compose_text_px=30.3 compose_line_count=1 "
+                        + "compose_layout_w=240 compose_layout_h=48 "
+                        + "compose_rendered_scale=1.00 style_source=baseline ",
+                line
+        );
+        assertFalse(line.contains("item_index=-1 "));
+        assertFalse(line.contains("lazy_first_visible_index=-1 "));
+        assertFalse(line.contains("container="));
+        assertAscii(line);
+    }
+
+    @Test
     public void unsupportedCharactersAreSanitized() {
         String field = CompanionLog.field("reason", "bad value:中文");
 

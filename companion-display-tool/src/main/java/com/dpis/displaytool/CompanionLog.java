@@ -175,6 +175,28 @@ final class CompanionLog {
                 + optionalField("suspicious_reason", fields.anomaly.reason);
     }
 
+    static String formatComposeSceneEvent(SceneEventFields fields, ComposeRunFields composeFields) {
+        String line = formatSceneEvent(fields)
+                + field("surface", CompanionContract.GROUP_COMPOSE)
+                + field("compose_density", two(composeFields.composeDensity))
+                + field("compose_font_scale", two(composeFields.composeFontScale))
+                + field("compose_text_sp", one(composeFields.composeTextSp))
+                + field("compose_text_px", one(composeFields.composeTextPx))
+                + field("compose_line_count", composeFields.composeLineCount)
+                + field("compose_layout_w", composeFields.composeLayoutW)
+                + field("compose_layout_h", composeFields.composeLayoutH)
+                + field("compose_rendered_scale", two(composeFields.composeRenderedScale));
+        if (composeFields.itemIndex >= 0) {
+            line += field("item_index", composeFields.itemIndex);
+        }
+        if (composeFields.lazyFirstVisibleIndex >= 0) {
+            line += field("lazy_first_visible_index", composeFields.lazyFirstVisibleIndex);
+        }
+        line += optionalField("style_source", composeFields.styleSource);
+        line += optionalField("container", composeFields.container);
+        return line;
+    }
+
     static String field(String key, Object value) {
         return key + "=" + sanitize(String.valueOf(value)) + " ";
     }
