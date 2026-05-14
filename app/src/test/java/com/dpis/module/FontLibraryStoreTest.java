@@ -109,11 +109,11 @@ public final class FontLibraryStoreTest {
 
         assertSame(FontLibraryStore.DeleteResult.DELETE_FAILED, result);
         assertEquals(entry, store.findById(entry.id));
-        assertFalse(new File(entry.storedPath).exists());
+        assertTrue(new File(entry.storedPath).isFile());
     }
 
     @Test
-    public void deleteFailureBeforeMetadataRemovalKeepsEntry() throws Exception {
+    public void fileDeletionFailureRestoresMetadata() throws Exception {
         FakePrefs prefs = new FakePrefs();
         File dir = temporaryFolder.newFolder("fonts");
         FontLibraryStore store = new FontLibraryStore(prefs, dir);
@@ -124,6 +124,7 @@ public final class FontLibraryStoreTest {
         File storedFile = new File(entry.storedPath);
         assertTrue(storedFile.delete());
         assertTrue(storedFile.mkdir());
+        assertTrue(new File(storedFile, "child").createNewFile());
 
         FontLibraryStore.DeleteResult result = store.deleteFont(entry.id, new DpiConfigStore(new FakePrefs()));
 
@@ -198,6 +199,22 @@ public final class FontLibraryStoreTest {
         FakePrefs prefs = new FakePrefs();
         prefs.edit()
                 .putString("font.library.entries", "[{\"id\":\"font_missing_fields\"}]")
+                .commit();
+        FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
+
+        assertTrue(store.listFonts().isEmpty());
+    }
+
+    @Test
+    public void blankRequiredFieldEntriesAreIgnored() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putString("font.library.entries",
+                        "[{\"id\":\"   \",\"displayName\":\"Example.ttf\","
+                                + "\"sourceFileName\":\"Example.ttf\","
+                                + "\"storedFileName\":\"font_bad.ttf\","
+                                + "\"storedPath\":\"   \","
+                                + "\"sha256\":\"abc\",\"importedAtEpochMs\":1234}]")
                 .commit();
         FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
 

@@ -72,18 +72,15 @@ final class FontLibraryStore {
         if (isReferenced(entry.id, configStore)) {
             return DeleteResult.IN_USE;
         }
+        List<FontLibraryEntry> originalEntries = readEntries();
+        List<FontLibraryEntry> remainingEntries = new ArrayList<>(originalEntries);
+        remainingEntries.removeIf(candidate -> entry.id.equals(candidate.id));
+        if (!writeEntries(remainingEntries)) {
+            return DeleteResult.DELETE_FAILED;
+        }
         File file = new File(entry.storedPath);
-        if (file.exists() && !file.isFile()) {
-            return DeleteResult.DELETE_FAILED;
-        }
-        if (file.isFile() && !file.delete()) {
-            return DeleteResult.DELETE_FAILED;
-        }
-        List<FontLibraryEntry> entries = readEntries();
-        entries.removeIf(candidate -> entry.id.equals(candidate.id));
-        // If this commit fails after a successful file delete, stale metadata may remain.
-        // Later duplicate imports treat missing stored files as stale and replace them.
-        if (!writeEntries(entries)) {
+        if (file.exists() && !file.delete()) {
+            writeEntries(originalEntries);
             return DeleteResult.DELETE_FAILED;
         }
         return DeleteResult.DELETED;
