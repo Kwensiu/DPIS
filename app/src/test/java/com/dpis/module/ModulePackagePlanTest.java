@@ -124,6 +124,45 @@ public final class ModulePackagePlanTest {
     }
 
     @Test
+    public void installsTypefaceHooksForTypefaceOnlyPackage() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetTypefaceId("com.example.app", "font_abcd1234");
+
+        ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
+
+        assertTrue(plan.shouldInstallHooks());
+        assertFalse(plan.viewportConfigured);
+        assertFalse(plan.fontScaleActive);
+        assertFalse(plan.fontEnabled);
+        assertTrue(plan.typefaceActive);
+        assertTrue(plan.typefaceEnabled);
+    }
+
+    @Test
+    public void compat100LegacyDoesNotInstallForTypefaceOnlyPackage() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetTypefaceId("com.example.app", "font_abcd1234");
+
+        ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
+
+        assertTrue(plan.shouldInstallHooks());
+        assertFalse(plan.shouldInstallCompat100LegacyHooks());
+    }
+
+    @Test
+    public void skipsTypefacePackageDisabledByTargetToggle() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetTypefaceId("com.example.app", "font_abcd1234");
+        store.setTargetDpisEnabled("com.example.app", false);
+
+        ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
+
+        assertFalse(plan.shouldInstallHooks());
+        assertTrue(plan.typefaceActive);
+        assertFalse(plan.typefaceEnabled);
+    }
+
+    @Test
     public void skipsPackagesDisabledByTargetToggle() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetViewportWidthDp("com.example.app", 411);

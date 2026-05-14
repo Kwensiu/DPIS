@@ -7,6 +7,7 @@ final class PackageConfigSnapshot {
     final String targetViewportMode;
     final Integer targetFontScalePercent;
     final String targetFontMode;
+    final String targetTypefaceId;
     final boolean flutterFontHookEnabled;
     final boolean flutterSettingsFontHookEnabled;
     final boolean hyperOsFlutterFontHookEnabled;
@@ -18,6 +19,7 @@ final class PackageConfigSnapshot {
                           String targetViewportMode,
                           Integer targetFontScalePercent,
                           String targetFontMode,
+                          String targetTypefaceId,
                           boolean flutterFontHookEnabled,
                           boolean flutterSettingsFontHookEnabled,
                           boolean hyperOsFlutterFontHookEnabled) {
@@ -27,6 +29,7 @@ final class PackageConfigSnapshot {
                 targetViewportMode,
                 targetFontScalePercent,
                 targetFontMode,
+                targetTypefaceId,
                 flutterFontHookEnabled,
                 flutterSettingsFontHookEnabled,
                 hyperOsFlutterFontHookEnabled,
@@ -39,6 +42,7 @@ final class PackageConfigSnapshot {
                           String targetViewportMode,
                           Integer targetFontScalePercent,
                           String targetFontMode,
+                          String targetTypefaceId,
                           boolean flutterFontHookEnabled,
                           boolean flutterSettingsFontHookEnabled,
                           boolean hyperOsFlutterFontHookEnabled,
@@ -49,6 +53,7 @@ final class PackageConfigSnapshot {
         this.targetViewportMode = ViewportApplyMode.normalize(targetViewportMode);
         this.targetFontScalePercent = targetFontScalePercent;
         this.targetFontMode = FontApplyMode.normalize(targetFontMode);
+        this.targetTypefaceId = targetTypefaceId;
         this.flutterFontHookEnabled = flutterFontHookEnabled;
         this.flutterSettingsFontHookEnabled = flutterSettingsFontHookEnabled;
         this.hyperOsFlutterFontHookEnabled = hyperOsFlutterFontHookEnabled;

@@ -26,6 +26,7 @@ final class ConfigSnapshotLoader {
                     store.getTargetViewportApplyMode(packageName),
                     store.getTargetFontScalePercent(packageName),
                     store.getTargetFontApplyMode(packageName),
+                    store.getTargetTypefaceId(packageName),
                     false,
                     false,
                     false,

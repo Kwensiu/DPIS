@@ -122,6 +122,7 @@ public class HyperOsFlutterFontHookConfigTest {
                         ViewportApplyMode.OFF,
                         300,
                         FontApplyMode.FIELD_REWRITE,
+                        null,
                         false,
                         false,
                         false,
