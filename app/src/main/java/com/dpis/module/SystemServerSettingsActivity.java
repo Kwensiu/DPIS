@@ -296,11 +296,11 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
 
     private void importFont(Uri uri) {
         new Thread(() -> {
-            String displayName = resolveDisplayName(uri);
-            String mimeType = getContentResolver().getType(uri);
             File tempFile = null;
             FontLibraryEntry importedEntry = null;
             try {
+                String displayName = resolveDisplayName(uri);
+                String mimeType = getContentResolver().getType(uri);
                 if (!isSupportedFontInput(displayName, mimeType)) {
                     throw new IOException("Unsupported font input");
                 }
@@ -454,13 +454,26 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     }
 
     private void deleteFontLibraryEntry(FontLibraryEntry entry) {
-        FontLibraryStore fontLibraryStore = ConfigStoreFactory.createFontLibraryForModuleApp(
-                this,
-                DpisApplication.getXposedService());
-        DpiConfigStore configStore = ConfigStoreFactory.createForModuleApp(
-                this,
-                DpisApplication.getXposedService());
-        FontLibraryStore.DeleteResult result = fontLibraryStore.deleteFont(entry.id, configStore);
+        new Thread(() -> {
+            FontLibraryStore.DeleteResult result;
+            try {
+                FontLibraryStore fontLibraryStore = ConfigStoreFactory.createFontLibraryForModuleApp(
+                        this,
+                        DpisApplication.getXposedService());
+                DpiConfigStore configStore = ConfigStoreFactory.createForModuleApp(
+                        this,
+                        DpisApplication.getXposedService());
+                result = fontLibraryStore.deleteFont(entry.id, configStore);
+            } catch (RuntimeException error) {
+                result = FontLibraryStore.DeleteResult.DELETE_FAILED;
+            }
+
+            FontLibraryStore.DeleteResult finalResult = result;
+            runOnUiThread(() -> handleFontLibraryDeleteResult(finalResult));
+        }, "dpis-font-library-delete").start();
+    }
+
+    private void handleFontLibraryDeleteResult(FontLibraryStore.DeleteResult result) {
         if (result == FontLibraryStore.DeleteResult.DELETED) {
             refreshFontLibraryDialogList();
             return;

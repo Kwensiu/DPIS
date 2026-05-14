@@ -19,6 +19,18 @@ public class SystemServerSettingsActivityFontLibrarySourceTest {
         assertTrue(source.contains("Intent.ACTION_OPEN_DOCUMENT"));
         assertTrue(source.contains("font/ttf"));
         assertTrue(source.contains("font/otf"));
+        assertTrue(source.contains("dpis-font-library-delete"));
+    }
+
+    @Test
+    public void importProviderMetadataAccessIsInsideGuardedTryBlock() throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+        String importMethod = source.substring(
+                source.indexOf("private void importFont(Uri uri)"),
+                source.indexOf("private void copyUriToFile"));
+
+        assertTrue(importMethod.indexOf("try {") < importMethod.indexOf("resolveDisplayName(uri)"));
+        assertTrue(importMethod.indexOf("try {") < importMethod.indexOf("getContentResolver().getType(uri)"));
     }
 
     @Test
