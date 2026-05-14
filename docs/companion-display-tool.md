@@ -47,7 +47,7 @@ adb -s <device> shell am broadcast `
   --es variant fragile
 ```
 
-Default cold start and `run_all` execute only the six core scenes with `variant=normal`.
+Plain `run_all` executes only the six core native scenes with `variant=normal`.
 Fragile variants are only executed through explicit `run_scene` requests.
 
 ## Core Scenes
@@ -67,6 +67,45 @@ Fragile phase 1 coverage:
 - `recycler_text_bind`
 - `styled_text_appearance`
 - `programmatic_text_px`
+
+## Compose Phase 2
+
+Compose Phase 2 adds a Compose scene group without changing the native phase 1 scene contract.
+
+Normal-only Compose scenes:
+
+- `compose_baseline_text`
+- `compose_nested_scroll_text`
+- `compose_lazy_list_text`
+- `compose_styled_text`
+
+Cold start samples only the Compose subset below:
+
+- `compose_baseline_text`
+- `compose_lazy_list_text`
+
+Plain `run_all` remains native-only. To rerun the Compose cold-start subset, pass `group=compose`:
+
+```powershell
+adb -s <device> shell am broadcast `
+  -a io.github.kwensiu.dpis.displaytool.CONTROL `
+  -n io.github.kwensiu.dpis.displaytool/com.dpis.displaytool.ControlReceiver `
+  --es action run_all `
+  --es group compose
+```
+
+Run one Compose scene explicitly:
+
+```powershell
+adb -s <device> shell am broadcast `
+  -a io.github.kwensiu.dpis.displaytool.CONTROL `
+  -n io.github.kwensiu.dpis.displaytool/com.dpis.displaytool.ControlReceiver `
+  --es action run_scene `
+  --es scene compose_baseline_text `
+  --es variant normal
+```
+
+Compose scenes reject fragile variants in this phase.
 
 ## Logcat Contract
 
@@ -96,6 +135,20 @@ Useful phase 1 extension fields:
 - `height_dp_from_density`
 - `expected_text_px`
 - `rendered_scale`
+
+Compose logs keep the same native prefix and native extension fields, then append Compose fields:
+
+- `surface=compose`
+- `compose_density`
+- `compose_font_scale`
+- `compose_text_sp`
+- `compose_text_px`
+- `compose_line_count`
+- `compose_layout_w`
+- `compose_layout_h`
+- `compose_rendered_scale`
+
+Scene-specific Compose fields may include `item_index`, `lazy_first_visible_index`, `style_source`, and `container`.
 
 For a 1080 px wide device, `width_dp_from_density` near `500.0` indicates an effective 500 dp density path.
 For 300 percent font replacement, `rendered_scale` near `3.00` indicates the rendered text path is scaled 3x relative to current `scaled_density`.
