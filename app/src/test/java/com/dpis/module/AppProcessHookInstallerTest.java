@@ -2,6 +2,11 @@ package com.dpis.module;
 
 import org.junit.Test;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -273,6 +278,18 @@ public class AppProcessHookInstallerTest {
     }
 
     @Test
+    public void typefaceInstallerIsIndependentFromResourcesHookGate() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+
+        assertTrue(source.contains("TypefaceOverrideHookInstaller.install("));
+        assertTrue(source.indexOf("installFromPlan(xposed, packageName, store, plan);")
+                < source.indexOf("TypefaceOverrideHookInstaller.install("));
+        assertFalse(source.contains("HookExecutionPlanner.buildPlan("
+                + "policy, packageName, viewportConfigured, viewportMode, fontScaleActive, fontMode,"
+                + " typefaceActive"));
+    }
+
+    @Test
     public void skipsProbeHookPathWhenSafetyModeEnabled() throws Exception {
         HookRuntimePolicy policy = createPolicy(true);
 
@@ -397,5 +414,9 @@ public class AppProcessHookInstallerTest {
         }
         return new String(java.nio.file.Files.readAllBytes(path),
                 java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    private static String read(String relativePath) throws IOException {
+        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
     }
 }

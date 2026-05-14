@@ -13,6 +13,8 @@ import io.github.libxposed.api.XposedInterface;
 
 final class TypefaceOverrideHookInstaller {
     private static final String LOG_PREFIX = "DPIS_FONT_STYLE ";
+    // Process-level hook matching existing app-process installers; ModulePackagePlan decides
+    // whether it is loaded for the current package.
     private static volatile boolean hookInstalled;
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
     private static final ThreadLocal<Boolean> INTERNAL_UPDATE =
@@ -96,7 +98,6 @@ final class TypefaceOverrideHookInstaller {
                         Object thisObject = chain.getThisObject();
                         if (thisObject instanceof Paint paint) {
                             applyPaintTypeface(paint, replacement);
-                            return replacement;
                         }
                         return result;
                     });
@@ -153,6 +154,10 @@ final class TypefaceOverrideHookInstaller {
     }
 
     static int resolveStyleForTest(Integer originalStyle, Integer explicitStyle) {
+        return resolveStyle(originalStyle, explicitStyle);
+    }
+
+    static int resolveReplacementStyleForTest(Integer originalStyle, Integer explicitStyle) {
         return resolveStyle(originalStyle, explicitStyle);
     }
 

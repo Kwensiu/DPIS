@@ -34,4 +34,22 @@ public final class TypefaceOverrideHookInstallerTest {
 
         assertEquals(Typeface.DEFAULT_BOLD, result);
     }
+
+    @Test
+    public void replacementStylePrefersExplicitStyle() {
+        int style = TypefaceOverrideHookInstaller.resolveReplacementStyleForTest(
+                Typeface.BOLD,
+                Typeface.ITALIC);
+
+        assertEquals(Typeface.ITALIC, style);
+    }
+
+    @Test
+    public void replacementStyleUsesNormalWhenOriginalMissing() {
+        int style = TypefaceOverrideHookInstaller.resolveReplacementStyleForTest(
+                null,
+                null);
+
+        assertEquals(Typeface.NORMAL, style);
+    }
 }
