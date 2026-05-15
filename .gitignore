@@ -31,3 +31,5 @@ Thumbs.db
 /dpis-check.txt
 
 /archive/
+/refs/
+*.code-workspace
