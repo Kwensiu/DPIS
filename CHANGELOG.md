@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.2](https://github.com/Kwensiu/DPIS/compare/v1.8.1...v1.8.2) (2026-05-15)
+
+
+### Bug Fixes
+
+* complete viewport override path on API 101/100 ([#48](https://github.com/Kwensiu/DPIS/issues/48)) ([2287cbd](https://github.com/Kwensiu/DPIS/commit/2287cbde49ef3e2f924d112b33829ffda958cb1e))
+
 ## [1.8.1](https://github.com/Kwensiu/DPIS/compare/v1.8.0...v1.8.1) (2026-05-13)
 
 
