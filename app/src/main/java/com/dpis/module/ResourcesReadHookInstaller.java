@@ -135,19 +135,34 @@ final class ResourcesReadHookInstaller {
                 Math.round((originalHeightDp > 0 ? originalHeightDp : result.heightDp)
                         * ((originalDensityDpi > 0 ? originalDensityDpi : result.densityDpi) / 160.0f)),
                 result.smallestWidthDp);
-        if (sharedResult != null) {
-            VirtualDisplayState.set(sharedResult);
-        }
+        VirtualDisplayState.setUnlessDerivedFromTargetConfig(
+                sharedResult, originalSmallestWidthDp, targetViewportWidth);
 
         if (result.widthDp == originalWidthDp
                 && result.heightDp == originalHeightDp
                 && result.smallestWidthDp == originalSmallestWidthDp
                 && result.densityDpi == originalDensityDpi
                 && !fontScale.changed) {
+            VirtualDisplayOverride.Result stableResult =
+                    VirtualDisplayState.getStableTargetResult(
+                            originalSmallestWidthDp, targetViewportWidth);
+            if (stableResult != null && stableResult.densityDpi > 0
+                    && config.densityDpi != stableResult.densityDpi) {
+                config.densityDpi = stableResult.densityDpi;
+                logIfChanged(packageName + ":" + sourceTag + ":stable-target",
+                        "DPIS_VIEWPORT " + sourceTag + " stable target: widthDp="
+                                + config.screenWidthDp
+                                + ", heightDp=" + config.screenHeightDp
+                                + ", smallestWidthDp=" + config.smallestScreenWidthDp
+                                + ", densityDpi " + originalDensityDpi
+                                + " -> " + config.densityDpi
+                                + ", fontScale " + fontScale.original
+                                + " -> " + config.fontScale);
+            }
             return;
         }
         logIfChanged(packageName + ":" + sourceTag,
-                "DPIS_FONT " + sourceTag + " override: widthDp " + originalWidthDp
+                "DPIS_VIEWPORT " + sourceTag + " override: widthDp " + originalWidthDp
                         + " -> " + config.screenWidthDp
                         + ", heightDp " + originalHeightDp + " -> " + config.screenHeightDp
                         + ", smallestWidthDp " + originalSmallestWidthDp + " -> "
@@ -180,7 +195,7 @@ final class ResourcesReadHookInstaller {
         }
 
         logIfChanged(packageName + ":ResourcesRead(getDisplayMetrics)",
-                "DPIS_FONT ResourcesRead(getDisplayMetrics) override: densityDpi="
+                "DPIS_VIEWPORT ResourcesRead(getDisplayMetrics) override: densityDpi="
                         + targetDensityDpi
                         + ", density=" + metrics.density
                         + ", scaledDensity=" + metrics.scaledDensity

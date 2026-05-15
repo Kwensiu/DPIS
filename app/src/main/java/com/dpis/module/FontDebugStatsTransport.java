@@ -31,6 +31,11 @@ final class FontDebugStatsTransport {
         if (extras == null || extras.isEmpty()) {
             return;
         }
+        // Target app contexts cannot start non-exported module components.
+        if (!isModuleContext(context)) {
+            FontDebugStatsFileBridge.write(context, extras);
+            return;
+        }
         SharedPreferences preferences = remotePreferences;
         if (preferences != null) {
             try {
@@ -80,6 +85,10 @@ final class FontDebugStatsTransport {
             DpisLog.e("font debug ingest activity update failed", throwable);
         }
         FontDebugStatsFileBridge.write(context, extras);
+    }
+
+    private static boolean isModuleContext(Context context) {
+        return context != null && BuildConfig.APPLICATION_ID.equals(context.getPackageName());
     }
 
     private static Uri buildUri() {

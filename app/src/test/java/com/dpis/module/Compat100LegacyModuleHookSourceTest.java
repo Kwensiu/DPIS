@@ -22,6 +22,10 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(source.contains("DisplayHookInstaller.setTargetPackageNameForCompat100(packageName)"));
         assertTrue(source.contains("FONT_TEXTVIEW_UPDATE"));
         assertTrue(source.contains("installResourcesReadHooks(packageName, store)"));
+        assertTrue(source.contains("installResourcesKeyHooks("));
+        assertTrue(source.contains("ResourcesManagerHookInstaller.maybeApplyKeyOverride"));
+        assertTrue(source.contains("\"createResourcesImpl\".equals(methodName)"));
+        assertTrue(source.contains("\"android.content.res.ResourcesKey\".equals"));
         assertTrue(source.contains("ResourcesReadHookInstaller.applyConfigurationOverride"));
         assertTrue(source.contains("ResourcesReadHookInstaller.applyMetricsOverride"));
         assertTrue(source.contains("resolveActivePackageName(packageName)"));
