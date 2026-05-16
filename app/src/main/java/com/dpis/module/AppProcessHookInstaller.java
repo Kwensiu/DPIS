@@ -17,8 +17,16 @@ final class AppProcessHookInstaller {
         boolean viewportEnabled = resolveViewportHookEnabled(policy, viewportConfigured, viewportMode);
         FontHookPlan fontHookPlan = resolveFontHookPlan(policy, fontScaleActive, fontMode);
         boolean emulationEnabled = fontHookPlan.emulationEnabled;
-        boolean fallbackEnabled = fontHookPlan.fieldRewriteEnabled;
-        boolean resourcesHooksEnabled = viewportEnabled || emulationEnabled;
+        FontHookArbitration.FontDomainPlan fontDomainPlan = resolveFontDomainPlan(fontHookPlan);
+        DpisLog.i("DPIS_FONT app hook plan: package=" + packageName
+                + ", fontScaleActive=" + fontScaleActive
+                + ", fontMode=" + fontMode
+                + ", emulation=" + fontHookPlan.emulationEnabled
+                + ", fieldRewrite=" + fontHookPlan.fieldRewriteEnabled
+                + ", domain=" + fontDomainPlan.reason
+                + ", flutterSettings=" + fontDomainPlan.flutterSettingsEnabled);
+        boolean resourcesHooksEnabled =
+                resolveResourcesHooksEnabled(viewportEnabled, fontHookPlan, fontDomainPlan);
         if (resourcesHooksEnabled) {
             ResourcesManagerHookInstaller.install(xposed, packageName, store);
         }
@@ -31,8 +39,14 @@ final class AppProcessHookInstaller {
         if (emulationEnabled) {
             ActivityThreadFontHookInstaller.install(xposed, packageName, store);
         }
-        if (fallbackEnabled) {
-            ForceTextSizeHookInstaller.install(xposed, packageName, store);
+        if (fontDomainPlan.textViewHooksEnabled) {
+            ForceTextSizeHookInstaller.install(xposed, packageName, store, fontDomainPlan);
+        }
+        if (fontDomainPlan.flutterSettingsEnabled) {
+            DpisLog.i("DPIS_FONT installing Flutter settings font hooks for " + packageName);
+            FlutterSettingsFontHookInstaller.install(xposed, packageName, store, fontDomainPlan);
+        }
+        if (fontDomainPlan.webViewTextZoomEnabled) {
             WebViewFontHookInstaller.install(xposed, packageName, store);
         }
         if (viewportEnabled) {
@@ -56,7 +70,13 @@ final class AppProcessHookInstaller {
         String mode = resolveProbeInstallMode(policy);
         DpisLog.i("hooks installed (" + mode + "): viewportEnabled=" + viewportEnabled
                 + ", viewportMode=" + viewportMode
-                + ", fontMode=" + fontMode + " for " + packageName);
+                + ", fontMode=" + fontMode
+                + ", fontDomainPlan=" + fontDomainPlan.reason
+                + ", resourcesFont=" + fontDomainPlan.resourcesFontEnabled
+                + ", textViewSpRewrite=" + fontDomainPlan.textViewSpRewriteEnabled
+                + ", paintFallback=" + fontDomainPlan.paintFallbackEnabled
+                + ", flutterSettings=" + fontDomainPlan.flutterSettingsEnabled
+                + " for " + packageName);
         if (fontHookPlan.downgradedToEmulation) {
             DpisLog.i("safe mode downgraded font apply mode to emulation for " + packageName);
         }
@@ -84,6 +104,21 @@ final class AppProcessHookInstaller {
             return false;
         }
         return true;
+    }
+
+    static FontHookArbitration.FontDomainPlan resolveFontDomainPlan(FontHookPlan fontHookPlan) {
+        return FontHookArbitration.resolveDomainPlan(
+                fontHookPlan != null
+                        && (fontHookPlan.emulationEnabled || fontHookPlan.fieldRewriteEnabled),
+                fontHookPlan != null && fontHookPlan.fieldRewriteEnabled);
+    }
+
+    static boolean resolveResourcesHooksEnabled(boolean viewportEnabled,
+                                                FontHookPlan fontHookPlan,
+                                                FontHookArbitration.FontDomainPlan domainPlan) {
+        return viewportEnabled
+                || (fontHookPlan != null && fontHookPlan.emulationEnabled)
+                || (domainPlan != null && domainPlan.resourcesFontEnabled);
     }
 
     static FontHookPlan resolveFontHookPlan(HookRuntimePolicy policy,

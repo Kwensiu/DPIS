@@ -65,13 +65,23 @@ public final class LegacyModuleManifestMetadataTest {
     @Test
     public void compat100IntentionallySharesNativeInitAssetForNativeProxySupport()
             throws IOException {
-        String nativeInit = readProjectFile("src/main/assets/native_init");
+        String nativeInit = readProjectFile("src/compat100/assets/native_init");
         String buildScript = readProjectFile("build.gradle.kts");
 
         assertTrue(nativeInit.contains("libdpis_native.so"));
+        assertFalse(Files.exists(Path.of("src", "main", "assets", "native_init")));
         assertTrue(buildScript.contains("selector().all()"));
         assertTrue(buildScript.contains("sync${capitalizedName}NativeProxyAsset"));
         assertTrue(buildScript.contains("variant.sources.assets?.addGeneratedSourceDirectory"));
+    }
+
+    @Test
+    public void modern101DeclaresNativeInitListForLibxposedNativeHooks() throws IOException {
+        String nativeInit = readProjectFile(
+                "src/modern101/resources/META-INF/xposed/native_init.list");
+
+        assertTrue(nativeInit.contains("libdpis_native.so"));
+        assertTrue(nativeInit.contains("dpis_native"));
     }
 
     @Test

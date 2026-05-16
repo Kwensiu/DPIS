@@ -2,6 +2,8 @@
 #include <dlfcn.h>
 #include <jni.h>
 #include <link.h>
+#include <mutex>
+#include <pthread.h>
 #include <sys/mman.h>
 #include <sys/system_properties.h>
 #include <unistd.h>
@@ -19,12 +21,18 @@ namespace {
 
 constexpr const char *kLogTag = "DPIS_NATIVE";
 constexpr const char *kTargetLibrary = "libhyper_os_flutter.so";
+constexpr const char *kGenericFlutterLibrary = "libflutter.so";
+constexpr const char *kGenericFlutterAppLibrary = "libapp.so";
 constexpr const char *kHyperOsAppPublicLibrary = "libhyper_os_app_public.so";
 #if defined(__aarch64__)
 constexpr const char *kWeatherRustLibrary = "libweather_app.so";
 #endif
 constexpr uintptr_t kParagraphBuilderCreateOffset = 0x81c368;
 constexpr uintptr_t kParagraphBuilderPushStyleOffset = 0x82370c;
+// Hook after a verified libflutter wrapper has decoded TextStyle.fontSize into
+// d11. The function entry receives decorationThickness in d4, so changing the
+// entry register does not affect visible text size.
+constexpr uintptr_t kGenericParagraphBuilderPushStyleOffset = 0x82d470;
 #if defined(__aarch64__)
 constexpr uintptr_t kWeatherConfigurationFontScaleGotOffset = 0x44c0d8;
 #endif
@@ -40,6 +48,11 @@ using NativeOnModuleLoaded = void (*)(const char *name, void *handle);
 using HyperOsLaunchMainThread = void (*)();
 using HyperOsAppEntryPoint = void (*)();
 
+enum class GenericFlutterFontRoute : int {
+    kNone = 0,
+    kVerifiedPushStyleD11 = 1,
+};
+
 struct NativeAPIEntries {
     uint32_t version;
     HookFunType hook_func;
@@ -49,6 +62,13 @@ struct NativeAPIEntries {
 HookFunType g_hook_func = nullptr;
 void *g_backup_create = nullptr;
 void *g_backup_push_style = nullptr;
+void *g_backup_generic_get_scaled_font_size = nullptr;
+void *g_backup_generic_create = nullptr;
+void *g_backup_generic_push_style = nullptr;
+JavaVM *g_java_vm = nullptr;
+jclass g_dpis_log_class = nullptr;
+jmethodID g_dpis_log_info_method = nullptr;
+std::mutex g_dpis_log_bridge_mutex;
 #if defined(__aarch64__)
 void *g_original_weather_configuration_font_scale = nullptr;
 #endif
@@ -57,6 +77,9 @@ std::atomic<bool> g_enabled{false};
 std::atomic<bool> g_configured_from_jni{false};
 std::atomic<bool> g_create_hooked{false};
 std::atomic<bool> g_push_style_hooked{false};
+std::atomic<bool> g_generic_get_scaled_font_size_hooked{false};
+std::atomic<bool> g_generic_create_hooked{false};
+std::atomic<bool> g_generic_push_style_hooked{false};
 #if defined(__aarch64__)
 std::atomic<bool> g_weather_configuration_font_scale_hooked{false};
 #endif
@@ -66,12 +89,44 @@ std::atomic<int> g_replace_push_style_log_budget{16};
 std::atomic<int> g_weather_configuration_font_scale_log_budget{16};
 std::atomic<int> g_weather_create_d0_remap_log_budget{16};
 std::atomic<int> g_property_source_log_budget{24};
+std::atomic<int> g_generic_flutter_probe_log_budget{16};
+std::atomic<int> g_generic_flutter_string_probe_log_budget{12};
+std::atomic<bool> g_generic_flutter_poll_started{false};
+std::atomic<bool> g_generic_flutter_status_started{false};
+std::atomic<uintptr_t> g_last_generic_flutter_poll_base{0};
+std::atomic<uintptr_t> g_last_reported_generic_flutter_base{0};
+std::atomic<int> g_last_generic_flutter_poll_index{-1};
+std::atomic<int> g_generic_get_scaled_font_size_attempts{0};
+std::atomic<int> g_generic_get_scaled_font_size_calls{0};
+std::atomic<int> g_generic_get_scaled_font_size_log_budget{24};
+std::atomic<int> g_last_generic_get_scaled_input_milli{0};
+std::atomic<int> g_last_generic_get_scaled_output_milli{0};
+std::atomic<int> g_last_generic_get_scaled_config_id{0};
+std::atomic<int> g_generic_create_attempts{0};
+std::atomic<int> g_generic_create_calls{0};
+std::atomic<int> g_generic_create_log_budget{24};
+std::atomic<int> g_generic_push_style_attempts{0};
+std::atomic<int> g_generic_push_style_calls{0};
+std::atomic<int> g_generic_push_style_log_budget{24};
+std::atomic<int> g_last_generic_push_style_input_milli{0};
+std::atomic<int> g_last_generic_push_style_output_milli{0};
+std::atomic<int> g_generic_flutter_route{static_cast<int>(GenericFlutterFontRoute::kNone)};
+std::atomic<int> g_generic_flutter_route_log_budget{8};
 
 std::atomic<int> g_last_observed_scale_milli{1000};
 
 void log_info(const std::string &message);
+void bridge_log_info(const std::string &message);
+std::string current_process_name();
+uintptr_t parse_maps_start_address(const char *line);
+void probe_generic_flutter(void *handle, const std::string &source);
+void probe_flutter_text_strings(const char *library_name, void *handle, const std::string &source);
+bool is_debug_build();
 extern "C" void replace_create_trampoline();
 extern "C" void replace_push_style_trampoline();
+extern "C" void replace_generic_get_scaled_font_size_trampoline();
+extern "C" void replace_generic_create_trampoline();
+extern "C" void replace_generic_push_style_trampoline();
 extern "C" float Configuration_get_font_scale(void *configuration);
 extern "C" void app_entry_point();
 
@@ -201,6 +256,51 @@ void log_info(const std::string &message) {
     log_info(message.c_str());
 }
 
+bool is_debug_build() {
+#ifdef NDEBUG
+    return false;
+#else
+    return true;
+#endif
+}
+
+void bridge_log_info(const std::string &message) {
+    JavaVM *java_vm = nullptr;
+    jclass log_class = nullptr;
+    jmethodID log_method = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(g_dpis_log_bridge_mutex);
+        java_vm = g_java_vm;
+        log_class = g_dpis_log_class;
+        log_method = g_dpis_log_info_method;
+    }
+    if (java_vm == nullptr || log_class == nullptr || log_method == nullptr) {
+        return;
+    }
+    JNIEnv *env = nullptr;
+    bool detach = false;
+    jint get_env = java_vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6);
+    if (get_env == JNI_EDETACHED) {
+        if (java_vm->AttachCurrentThread(&env, nullptr) != JNI_OK) {
+            return;
+        }
+        detach = true;
+    } else if (get_env != JNI_OK || env == nullptr) {
+        return;
+    }
+    jstring text = env->NewStringUTF(message.c_str());
+    if (text != nullptr) {
+        env->CallStaticVoidMethod(log_class, log_method, text);
+        env->DeleteLocalRef(text);
+    }
+    if (env->ExceptionCheck()) {
+        env->ExceptionClear();
+    }
+    if (detach) {
+        java_vm->DetachCurrentThread();
+    }
+}
+
 bool ends_with(const char *text, const char *suffix) {
     if (text == nullptr || suffix == nullptr) {
         return false;
@@ -228,7 +328,72 @@ int find_base_callback(struct dl_phdr_info *info, size_t, void *data) {
 uintptr_t find_library_base(const char *name) {
     BaseLookup lookup{name, 0};
     dl_iterate_phdr(find_base_callback, &lookup);
-    return lookup.base;
+    if (lookup.base != 0) {
+        return lookup.base;
+    }
+    FILE *maps = std::fopen("/proc/self/maps", "r");
+    if (maps == nullptr) {
+        return 0;
+    }
+    char line[1024] = {};
+    uintptr_t base = 0;
+    while (std::fgets(line, sizeof(line), maps) != nullptr) {
+        if (std::strstr(line, name) == nullptr || std::strstr(line, "r-xp") == nullptr) {
+            continue;
+        }
+        uintptr_t start = parse_maps_start_address(line);
+        if (start != 0) {
+            base = start;
+            break;
+        }
+    }
+    std::fclose(maps);
+    return base;
+}
+
+uintptr_t parse_maps_start_address(const char *line) {
+    if (line == nullptr) {
+        return 0;
+    }
+    uintptr_t value = 0;
+    for (const char *cursor = line; *cursor != '\0'; cursor++) {
+        char ch = *cursor;
+        if (ch == '-') {
+            return value;
+        }
+        int digit = -1;
+        if (ch >= '0' && ch <= '9') {
+            digit = ch - '0';
+        } else if (ch >= 'a' && ch <= 'f') {
+            digit = ch - 'a' + 10;
+        } else if (ch >= 'A' && ch <= 'F') {
+            digit = ch - 'A' + 10;
+        } else {
+            return 0;
+        }
+        value = (value << 4u) | static_cast<uintptr_t>(digit);
+    }
+    return 0;
+}
+
+GenericFlutterFontRoute resolve_generic_flutter_font_route(uintptr_t base) {
+    if (base == 0) {
+        return GenericFlutterFontRoute::kNone;
+    }
+    // Last-resort generic Flutter route. Java semantic settings hooks may miss
+    // apps that load their embedding before module hooks are installed, so this
+    // path targets Flutter's native text style consumption point directly.
+    return GenericFlutterFontRoute::kVerifiedPushStyleD11;
+}
+
+const char *generic_flutter_font_route_name(GenericFlutterFontRoute route) {
+    switch (route) {
+        case GenericFlutterFontRoute::kVerifiedPushStyleD11:
+            return "GENERIC_PUSH_STYLE_D11";
+        case GenericFlutterFontRoute::kNone:
+        default:
+            return "NONE";
+    }
 }
 
 #if defined(__aarch64__)
@@ -559,6 +724,107 @@ extern "C" uintptr_t dpis_push_style_backup_address() {
     return reinterpret_cast<uintptr_t>(g_backup_push_style);
 }
 
+extern "C" double dpis_generic_scaled_font_size_input(double unscaled_font_size,
+                                                      int configuration_id) {
+    refresh_property_config();
+    double scale = target_scale();
+    if (!g_enabled.load(std::memory_order_relaxed)
+            || unscaled_font_size <= 0.0
+            || !std::isfinite(unscaled_font_size)) {
+        scale = 1.0;
+    }
+    double adjusted = clamp(unscaled_font_size * scale, 0.01, 10000.0);
+    g_generic_get_scaled_font_size_calls.fetch_add(1, std::memory_order_relaxed);
+    g_last_generic_get_scaled_input_milli.store(
+            static_cast<int>(std::lround(unscaled_font_size * 1000.0)),
+            std::memory_order_relaxed);
+    g_last_generic_get_scaled_output_milli.store(
+            static_cast<int>(std::lround(adjusted * 1000.0)),
+            std::memory_order_relaxed);
+    g_last_generic_get_scaled_config_id.store(configuration_id, std::memory_order_relaxed);
+    int log_budget = g_generic_get_scaled_font_size_log_budget.load(std::memory_order_relaxed);
+    if (log_budget > 0) {
+        g_generic_get_scaled_font_size_log_budget.store(log_budget - 1, std::memory_order_relaxed);
+        std::string message = "Generic Flutter GetScaledFontSize override: process="
+                + current_process_name()
+                + " font=" + std::to_string(unscaled_font_size)
+                + " adjusted=" + std::to_string(adjusted)
+                + " scale=" + std::to_string(scale)
+                + " configurationId=" + std::to_string(configuration_id)
+                + " calls=" + std::to_string(
+                        g_generic_get_scaled_font_size_calls.load(std::memory_order_relaxed));
+        log_info(message);
+        bridge_log_info("DPIS_FONT " + message);
+    }
+    return adjusted;
+}
+
+extern "C" uintptr_t dpis_generic_get_scaled_font_size_backup_address() {
+    return reinterpret_cast<uintptr_t>(g_backup_generic_get_scaled_font_size);
+}
+
+extern "C" double dpis_generic_create_scale_probe(double observed_scale) {
+    refresh_property_config();
+    double scale = target_scale();
+    if (!g_enabled.load(std::memory_order_relaxed)) {
+        scale = 1.0;
+    }
+    g_generic_create_calls.fetch_add(1, std::memory_order_relaxed);
+    int log_budget = g_generic_create_log_budget.load(std::memory_order_relaxed);
+    if (log_budget > 0) {
+        g_generic_create_log_budget.store(log_budget - 1, std::memory_order_relaxed);
+        std::string message = "Generic Flutter ParagraphBuilder::Create override: process="
+                + current_process_name()
+                + " observedD0=" + std::to_string(observed_scale)
+                + " targetScale=" + std::to_string(scale)
+                + " calls=" + std::to_string(
+                        g_generic_create_calls.load(std::memory_order_relaxed));
+        log_info(message);
+        bridge_log_info("DPIS_FONT " + message);
+    }
+    return scale;
+}
+
+extern "C" uintptr_t dpis_generic_create_backup_address() {
+    return reinterpret_cast<uintptr_t>(g_backup_generic_create);
+}
+
+extern "C" double dpis_generic_push_style_font_size_input(double font_size) {
+    refresh_property_config();
+    double scale = target_scale();
+    if (!g_enabled.load(std::memory_order_relaxed)
+            || font_size <= 0.0
+            || !std::isfinite(font_size)) {
+        scale = 1.0;
+    }
+    double adjusted = clamp(font_size * scale, 0.01, 10000.0);
+    g_generic_push_style_calls.fetch_add(1, std::memory_order_relaxed);
+    g_last_generic_push_style_input_milli.store(
+            static_cast<int>(std::lround(font_size * 1000.0)),
+            std::memory_order_relaxed);
+    g_last_generic_push_style_output_milli.store(
+            static_cast<int>(std::lround(adjusted * 1000.0)),
+            std::memory_order_relaxed);
+    int log_budget = g_generic_push_style_log_budget.load(std::memory_order_relaxed);
+    if (log_budget > 0) {
+        g_generic_push_style_log_budget.store(log_budget - 1, std::memory_order_relaxed);
+        std::string message = "Generic Flutter ParagraphBuilder::pushStyle fontSize override: process="
+                + current_process_name()
+                + " fontSize=" + std::to_string(font_size)
+                + " adjusted=" + std::to_string(adjusted)
+                + " scale=" + std::to_string(scale)
+                + " calls=" + std::to_string(
+                        g_generic_push_style_calls.load(std::memory_order_relaxed));
+        log_info(message);
+        bridge_log_info("DPIS_FONT " + message);
+    }
+    return adjusted;
+}
+
+extern "C" uintptr_t dpis_generic_push_style_backup_address() {
+    return reinterpret_cast<uintptr_t>(g_backup_generic_push_style);
+}
+
 extern "C" [[gnu::visibility("default")]] float Configuration_get_font_scale(void *configuration) {
     refresh_property_config();
     float value = static_cast<float>(target_scale());
@@ -649,11 +915,387 @@ void try_hook_flutter(void *handle) {
     }
 }
 
+void try_hook_generic_flutter(void *handle, const std::string &source) {
+    uintptr_t base = find_library_base(kGenericFlutterLibrary);
+    if (base == 0) {
+        return;
+    }
+    GenericFlutterFontRoute route = resolve_generic_flutter_font_route(base);
+    if (route == GenericFlutterFontRoute::kNone
+            && g_generic_push_style_hooked.load(std::memory_order_acquire)) {
+        route = static_cast<GenericFlutterFontRoute>(
+                g_generic_flutter_route.load(std::memory_order_relaxed));
+    }
+    g_generic_flutter_route.store(static_cast<int>(route), std::memory_order_relaxed);
+    uintptr_t previous_reported_base = g_last_reported_generic_flutter_base.exchange(
+            base, std::memory_order_acq_rel);
+    int route_log_budget = g_generic_flutter_route_log_budget.load(std::memory_order_relaxed);
+    if (previous_reported_base != base || route_log_budget > 0) {
+        if (route_log_budget > 0) {
+            g_generic_flutter_route_log_budget.store(route_log_budget - 1,
+                    std::memory_order_relaxed);
+        }
+        std::string mapped = "Generic Flutter mapped: process=" + current_process_name()
+                + " source=" + source
+                + " handle=" + std::to_string(reinterpret_cast<uintptr_t>(handle))
+                + " base=" + std::to_string(base)
+                + " route=" + generic_flutter_font_route_name(route);
+        log_info(mapped);
+        bridge_log_info("DPIS_FONT " + mapped);
+    }
+    if (route == GenericFlutterFontRoute::kNone) {
+        return;
+    }
+    if (g_generic_push_style_hooked.load(std::memory_order_acquire)) {
+        return;
+    }
+    int push_attempts = g_generic_push_style_attempts.fetch_add(
+            1, std::memory_order_acq_rel);
+    void *push_target = reinterpret_cast<void *>(
+            base + kGenericParagraphBuilderPushStyleOffset);
+    int push_result = g_hook_func != nullptr
+            ? g_hook_func(push_target,
+                    reinterpret_cast<void *>(replace_generic_push_style_trampoline),
+                    &g_backup_generic_push_style)
+            : inline_hook_arm64(push_target,
+                    reinterpret_cast<void *>(replace_generic_push_style_trampoline),
+                    &g_backup_generic_push_style);
+    if (push_result == 0) {
+        g_generic_push_style_hooked.store(true, std::memory_order_release);
+    }
+    std::string push_message = "Generic Flutter ParagraphBuilder::pushStyle hook result="
+            + std::to_string(push_result)
+            + " process=" + current_process_name()
+            + " source=" + source
+            + " route=" + generic_flutter_font_route_name(route)
+            + " base=" + std::to_string(base)
+            + " target=" + std::to_string(reinterpret_cast<uintptr_t>(push_target))
+            + " backup="
+            + std::to_string(reinterpret_cast<uintptr_t>(g_backup_generic_push_style))
+            + " attempt=" + std::to_string(push_attempts + 1)
+            + " handle=" + std::to_string(reinterpret_cast<uintptr_t>(handle));
+    log_info(push_message);
+    bridge_log_info("DPIS_FONT " + push_message);
+}
+
+int parse_native_poll_index(const std::string &source) {
+    constexpr const char *prefix = "native-poll-";
+    if (source.rfind(prefix, 0) != 0) {
+        return -1;
+    }
+    char *end = nullptr;
+    long value = std::strtol(source.c_str() + std::strlen(prefix), &end, 10);
+    if (end == source.c_str() + std::strlen(prefix) || value < 0 || value > 1000) {
+        return -1;
+    }
+    return static_cast<int>(value);
+}
+
+void probe_generic_flutter(void *handle, const std::string &source) {
+    uintptr_t base = find_library_base(kGenericFlutterLibrary);
+    try_hook_generic_flutter(handle, source);
+    int poll_index = parse_native_poll_index(source);
+    if (poll_index >= 0) {
+        g_last_generic_flutter_poll_base.store(base, std::memory_order_relaxed);
+        g_last_generic_flutter_poll_index.store(poll_index, std::memory_order_relaxed);
+    }
+    int log_budget = g_generic_flutter_probe_log_budget.load(std::memory_order_relaxed);
+    if (log_budget <= 0 && base == 0) {
+        return;
+    }
+    if (log_budget > 0) {
+        g_generic_flutter_probe_log_budget.store(log_budget - 1, std::memory_order_relaxed);
+    }
+    log_info("Generic Flutter font probe: process=" + current_process_name()
+            + " source=" + source
+            + " handle=" + std::to_string(reinterpret_cast<uintptr_t>(handle))
+            + " base=" + std::to_string(base)
+            + " configured=" + std::to_string(g_configured_from_jni.load(std::memory_order_relaxed))
+            + " enabled=" + std::to_string(g_enabled.load(std::memory_order_relaxed))
+            + " lastPollIndex="
+            + std::to_string(g_last_generic_flutter_poll_index.load(std::memory_order_relaxed))
+            + " lastPollBase="
+            + std::to_string(g_last_generic_flutter_poll_base.load(std::memory_order_relaxed))
+            + " targetFontScalePercent="
+            + std::to_string(g_target_font_percent.load(std::memory_order_relaxed))
+            + " route="
+            + generic_flutter_font_route_name(static_cast<GenericFlutterFontRoute>(
+                    g_generic_flutter_route.load(std::memory_order_relaxed)))
+            + " status="
+            + (g_generic_push_style_hooked.load(std::memory_order_relaxed)
+                    ? "push-style-d11-hooked" : "detected-not-hooked"));
+    if (is_debug_build() && poll_index >= 0) {
+        bridge_log_info("DPIS_FONT Generic Flutter native poll: process=" + current_process_name()
+                + " source=" + source
+                + " handle=" + std::to_string(reinterpret_cast<uintptr_t>(handle))
+                + " base=" + std::to_string(base)
+                + " targetFontScalePercent="
+                + std::to_string(g_target_font_percent.load(std::memory_order_relaxed))
+                + " route="
+                + generic_flutter_font_route_name(static_cast<GenericFlutterFontRoute>(
+                        g_generic_flutter_route.load(std::memory_order_relaxed)))
+                + " status="
+                + (g_generic_push_style_hooked.load(std::memory_order_relaxed)
+                        ? "push-style-d11-hooked" : "detected-not-hooked"));
+    }
+    if (is_debug_build()) {
+        probe_flutter_text_strings(kGenericFlutterLibrary, handle, source);
+        probe_flutter_text_strings(kGenericFlutterAppLibrary, handle, source);
+    }
+}
+
+const char *find_bytes(const char *haystack, size_t haystack_length,
+                       const char *needle, size_t needle_length) {
+    if (haystack == nullptr || needle == nullptr || needle_length == 0
+            || haystack_length < needle_length) {
+        return nullptr;
+    }
+    const char first = needle[0];
+    const char *end = haystack + haystack_length - needle_length;
+    for (const char *cursor = haystack; cursor <= end; cursor++) {
+        if (*cursor == first && std::memcmp(cursor, needle, needle_length) == 0) {
+            return cursor;
+        }
+    }
+    return nullptr;
+}
+
+void probe_flutter_text_strings(const char *library_name, void *handle, const std::string &source) {
+    if (library_name == nullptr || library_name[0] == '\0') {
+        return;
+    }
+    uintptr_t base = find_library_base(library_name);
+    if (base == 0) {
+        return;
+    }
+    int log_budget = g_generic_flutter_string_probe_log_budget.load(std::memory_order_relaxed);
+    if (log_budget <= 0) {
+        return;
+    }
+    Dl_info info = {};
+    if (handle != nullptr && dladdr(handle, &info) == 0) {
+        info = {};
+    }
+    char line[1024] = {};
+    FILE *maps = std::fopen("/proc/self/maps", "r");
+    if (maps == nullptr) {
+        return;
+    }
+    int matches = 0;
+    while (std::fgets(line, sizeof(line), maps) != nullptr) {
+        if (std::strstr(line, library_name) == nullptr) {
+            continue;
+        }
+        if (std::strstr(line, "r--p") == nullptr && std::strstr(line, "r-xp") == nullptr) {
+            continue;
+        }
+        uintptr_t start = parse_maps_start_address(line);
+        if (start == 0) {
+            continue;
+        }
+        uintptr_t end = 0;
+        const char *dash = std::strchr(line, '-');
+        if (dash != nullptr) {
+            char *tail = nullptr;
+            end = static_cast<uintptr_t>(std::strtoull(dash + 1, &tail, 16));
+        }
+        if (end <= start) {
+            continue;
+        }
+        size_t length = static_cast<size_t>(end - start);
+        const char *cursor = reinterpret_cast<const char *>(start);
+        const char *limit = cursor + length;
+        for (const char *needle : {"textScaleFactor", "setTextScaleFactor",
+                                   "flutter/settings", "ParagraphBuilder",
+                                   "pushStyle", "FontCollection"}) {
+            const char *found = find_bytes(cursor, length, needle, std::strlen(needle));
+            if (found == nullptr || found >= limit) {
+                continue;
+            }
+            matches++;
+            std::string message = "Flutter text string probe: process=" + current_process_name()
+                    + " source=" + source
+                    + " library=" + library_name
+                    + " needle=" + needle
+                    + " offset=" + std::to_string(
+                            static_cast<uintptr_t>(found - cursor))
+                    + " base=" + std::to_string(start);
+            log_info(message);
+            bridge_log_info("DPIS_FONT " + message);
+            if (--log_budget <= 0) {
+                break;
+            }
+        }
+        if (log_budget <= 0) {
+            break;
+        }
+    }
+    std::fclose(maps);
+    if (matches > 0) {
+        g_generic_flutter_string_probe_log_budget.store(log_budget, std::memory_order_relaxed);
+    }
+}
+
+void *generic_flutter_poll_thread(void *) {
+    for (int index = 0; index < 60; index++) {
+        char source[32] = {};
+        std::snprintf(source, sizeof(source), "native-poll-%d", index);
+        void *handle = dlopen(kGenericFlutterLibrary, RTLD_NOW | RTLD_NOLOAD);
+        probe_generic_flutter(handle, source);
+        if (g_generic_push_style_hooked.load(std::memory_order_acquire)) {
+            break;
+        }
+        if (!is_debug_build() && index >= 7) {
+            break;
+        }
+        usleep(1000000);
+    }
+    return nullptr;
+}
+
+void *generic_flutter_status_thread(void *) {
+    for (int index = 0; index < 90; index++) {
+        uintptr_t base = find_library_base(kGenericFlutterLibrary);
+        if (base != 0) {
+            std::string message = "Generic Flutter status tick: process=" + current_process_name()
+                    + " index=" + std::to_string(index)
+                    + " base=" + std::to_string(base)
+                    + " route="
+                    + generic_flutter_font_route_name(static_cast<GenericFlutterFontRoute>(
+                            g_generic_flutter_route.load(std::memory_order_relaxed)))
+                    + " getScaledHooked="
+                    + std::to_string(g_generic_get_scaled_font_size_hooked.load(
+                            std::memory_order_relaxed))
+                    + " createHooked="
+                    + std::to_string(g_generic_create_hooked.load(std::memory_order_relaxed))
+                    + " pushStyleHooked="
+                    + std::to_string(g_generic_push_style_hooked.load(std::memory_order_relaxed))
+                    + " overrideCalls="
+                    + std::to_string(g_generic_get_scaled_font_size_calls.load(
+                            std::memory_order_relaxed))
+                    + " createCalls="
+                    + std::to_string(g_generic_create_calls.load(std::memory_order_relaxed))
+                    + " pushStyleCalls="
+                    + std::to_string(g_generic_push_style_calls.load(std::memory_order_relaxed));
+            log_info(message);
+            bridge_log_info("DPIS_FONT " + message);
+        }
+        usleep(1000000);
+    }
+    return nullptr;
+}
+
+void schedule_generic_flutter_poll() {
+    if (g_generic_flutter_poll_started.exchange(true, std::memory_order_acq_rel)) {
+        return;
+    }
+    pthread_t thread{};
+    pthread_attr_t attr{};
+    if (pthread_attr_init(&attr) == 0) {
+        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+        int result = pthread_create(&thread, &attr, generic_flutter_poll_thread, nullptr);
+        pthread_attr_destroy(&attr);
+        log_info("Generic Flutter poll thread start result=" + std::to_string(result));
+        if (result != 0) {
+            g_generic_flutter_poll_started.store(false, std::memory_order_relaxed);
+        }
+        return;
+    }
+    int result = pthread_create(&thread, nullptr, generic_flutter_poll_thread, nullptr);
+    log_info("Generic Flutter poll thread start result=" + std::to_string(result));
+    if (result != 0) {
+        g_generic_flutter_poll_started.store(false, std::memory_order_relaxed);
+    }
+}
+
+void schedule_generic_flutter_status() {
+    if (!is_debug_build()) {
+        return;
+    }
+    if (g_generic_flutter_status_started.exchange(true, std::memory_order_acq_rel)) {
+        return;
+    }
+    pthread_t thread{};
+    pthread_attr_t attr{};
+    if (pthread_attr_init(&attr) == 0) {
+        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+        int result = pthread_create(&thread, &attr, generic_flutter_status_thread, nullptr);
+        pthread_attr_destroy(&attr);
+        log_info("Generic Flutter status thread start result=" + std::to_string(result));
+        if (result != 0) {
+            g_generic_flutter_status_started.store(false, std::memory_order_relaxed);
+        }
+        return;
+    }
+    int result = pthread_create(&thread, nullptr, generic_flutter_status_thread, nullptr);
+    log_info("Generic Flutter status thread start result=" + std::to_string(result));
+    if (result != 0) {
+        g_generic_flutter_status_started.store(false, std::memory_order_relaxed);
+    }
+}
+
+std::string generic_flutter_probe_status(void *handle, const std::string &package_name,
+                                         const std::string &source) {
+    uintptr_t base = find_library_base(kGenericFlutterLibrary);
+    if (base != 0 && !g_generic_get_scaled_font_size_hooked.load(std::memory_order_acquire)) {
+        try_hook_generic_flutter(handle, "status-probe " + source);
+    }
+    if (is_debug_build()) {
+        probe_flutter_text_strings(kGenericFlutterLibrary, handle, source);
+        probe_flutter_text_strings(kGenericFlutterAppLibrary, handle, source);
+    }
+    return "Generic Flutter font probe: process=" + current_process_name()
+            + " package=" + package_name
+            + " source=" + source
+            + " handle=" + std::to_string(reinterpret_cast<uintptr_t>(handle))
+            + " base=" + std::to_string(base)
+            + " configured=" + std::to_string(g_configured_from_jni.load(std::memory_order_relaxed))
+            + " enabled=" + std::to_string(g_enabled.load(std::memory_order_relaxed))
+            + " lastPollIndex="
+            + std::to_string(g_last_generic_flutter_poll_index.load(std::memory_order_relaxed))
+            + " lastPollBase="
+            + std::to_string(g_last_generic_flutter_poll_base.load(std::memory_order_relaxed))
+            + " targetFontScalePercent="
+            + std::to_string(g_target_font_percent.load(std::memory_order_relaxed))
+            + " route="
+            + generic_flutter_font_route_name(static_cast<GenericFlutterFontRoute>(
+                    g_generic_flutter_route.load(std::memory_order_relaxed)))
+            + " hookAttempts="
+            + std::to_string(g_generic_get_scaled_font_size_attempts.load(std::memory_order_relaxed))
+            + " overrideCalls="
+            + std::to_string(g_generic_get_scaled_font_size_calls.load(std::memory_order_relaxed))
+            + " lastInputMilli="
+            + std::to_string(g_last_generic_get_scaled_input_milli.load(std::memory_order_relaxed))
+            + " lastOutputMilli="
+            + std::to_string(g_last_generic_get_scaled_output_milli.load(std::memory_order_relaxed))
+            + " lastConfigId="
+            + std::to_string(g_last_generic_get_scaled_config_id.load(std::memory_order_relaxed))
+            + " createAttempts="
+            + std::to_string(g_generic_create_attempts.load(std::memory_order_relaxed))
+            + " createCalls="
+            + std::to_string(g_generic_create_calls.load(std::memory_order_relaxed))
+            + " pushStyleAttempts="
+            + std::to_string(g_generic_push_style_attempts.load(std::memory_order_relaxed))
+            + " pushStyleCalls="
+            + std::to_string(g_generic_push_style_calls.load(std::memory_order_relaxed))
+            + " lastPushInputMilli="
+            + std::to_string(g_last_generic_push_style_input_milli.load(std::memory_order_relaxed))
+            + " lastPushOutputMilli="
+            + std::to_string(g_last_generic_push_style_output_milli.load(std::memory_order_relaxed))
+            + " status="
+            + (g_generic_get_scaled_font_size_hooked.load(std::memory_order_relaxed)
+                    || g_generic_create_hooked.load(std::memory_order_relaxed)
+                    || g_generic_push_style_hooked.load(std::memory_order_relaxed)
+                    ? "push-style-d11-hooked" : "detected-not-hooked");
+}
+
 void on_library_loaded(const char *name, void *handle) {
     if (ends_with(name, kTargetLibrary)) {
         log_info("native_init on_library_loaded target: process=" + current_process_name()
                 + " name=" + (name == nullptr ? std::string("") : std::string(name)));
         try_hook_flutter(handle);
+    } else if (ends_with(name, kGenericFlutterLibrary)) {
+        probe_generic_flutter(handle, name == nullptr ? "native-init" : std::string(name));
     }
 }
 
@@ -708,6 +1350,12 @@ void try_hook_flutter_without_lsposed() {
             + std::to_string(reinterpret_cast<uintptr_t>(local_handle))
             + " error=" + (error == nullptr ? "" : error));
     try_hook_flutter(local_handle);
+    void *flutter_handle = dlopen(kGenericFlutterLibrary, RTLD_NOW | RTLD_NOLOAD);
+    const char *flutter_error = dlerror();
+    log_info("Generic Flutter font lookup: handle="
+            + std::to_string(reinterpret_cast<uintptr_t>(flutter_handle))
+            + " error=" + (flutter_error == nullptr ? "" : flutter_error));
+    probe_generic_flutter(flutter_handle, "direct-lookup");
     try_hook_weather_configuration_font_scale();
 }
 
@@ -814,6 +1462,111 @@ void replace_push_style_trampoline() {
             "ret\n");
 }
 
+extern "C" [[gnu::visibility("default")]] [[gnu::used]] [[gnu::naked]]
+void replace_generic_get_scaled_font_size_trampoline() {
+    __asm__ volatile(
+            "sub sp, sp, #96\n"
+            "str x30, [sp, #0]\n"
+            "stp x0, x1, [sp, #8]\n"
+            "stp x2, x3, [sp, #24]\n"
+            "stp q0, q1, [sp, #48]\n"
+            "str w0, [sp, #80]\n"
+            "bl dpis_generic_scaled_font_size_input\n"
+            "str d0, [sp, #88]\n"
+            "bl dpis_generic_get_scaled_font_size_backup_address\n"
+            "mov x9, x0\n"
+            "ldr x30, [sp, #0]\n"
+            "ldp x0, x1, [sp, #8]\n"
+            "ldp x2, x3, [sp, #24]\n"
+            "ldp q0, q1, [sp, #48]\n"
+            "ldr d0, [sp, #88]\n"
+            "add sp, sp, #96\n"
+            "cbz x9, 1f\n"
+            "br x9\n"
+            "1:\n"
+            "ret\n");
+}
+
+extern "C" [[gnu::visibility("default")]] [[gnu::used]] [[gnu::naked]]
+void replace_generic_create_trampoline() {
+    __asm__ volatile(
+            "sub sp, sp, #256\n"
+            "stp x0, x1, [sp, #0]\n"
+            "stp x2, x3, [sp, #16]\n"
+            "stp x4, x5, [sp, #32]\n"
+            "stp x6, x7, [sp, #48]\n"
+            "str x8, [sp, #64]\n"
+            "str x30, [sp, #72]\n"
+            "stp q0, q1, [sp, #80]\n"
+            "stp q2, q3, [sp, #112]\n"
+            "stp q4, q5, [sp, #144]\n"
+            "stp q6, q7, [sp, #176]\n"
+            "bl dpis_generic_create_scale_probe\n"
+            "str d0, [sp, #208]\n"
+            "bl dpis_generic_create_backup_address\n"
+            "str x0, [sp, #216]\n"
+            "ldp q0, q1, [sp, #80]\n"
+            "ldp q2, q3, [sp, #112]\n"
+            "ldp q4, q5, [sp, #144]\n"
+            "ldp q6, q7, [sp, #176]\n"
+            "ldr d16, [sp, #208]\n"
+            "fmul d0, d0, d16\n"
+            "ldp x0, x1, [sp, #0]\n"
+            "ldp x2, x3, [sp, #16]\n"
+            "ldp x4, x5, [sp, #32]\n"
+            "ldp x6, x7, [sp, #48]\n"
+            "ldr x8, [sp, #64]\n"
+            "ldr x30, [sp, #72]\n"
+            "ldr x9, [sp, #216]\n"
+            "add sp, sp, #256\n"
+            "cbz x9, 1f\n"
+            "br x9\n"
+            "1:\n"
+            "ret\n");
+}
+
+extern "C" [[gnu::visibility("default")]] [[gnu::used]] [[gnu::naked]]
+void replace_generic_push_style_trampoline() {
+    __asm__ volatile(
+            "sub sp, sp, #320\n"
+            "str x30, [sp, #0]\n"
+            "stp x0, x1, [sp, #16]\n"
+            "stp x2, x3, [sp, #32]\n"
+            "stp x4, x5, [sp, #48]\n"
+            "stp x6, x7, [sp, #64]\n"
+            "stp x8, x9, [sp, #80]\n"
+            "stp q0, q1, [sp, #96]\n"
+            "stp q2, q3, [sp, #128]\n"
+            "stp q4, q5, [sp, #160]\n"
+            "stp q6, q7, [sp, #192]\n"
+            "stp d8, d9, [sp, #224]\n"
+            "stp d10, d12, [sp, #240]\n"
+            "fmov d0, d11\n"
+            "bl dpis_generic_push_style_font_size_input\n"
+            "str d0, [sp, #256]\n"
+            "bl dpis_generic_push_style_backup_address\n"
+            "str x0, [sp, #264]\n"
+            "ldr x30, [sp, #0]\n"
+            "ldp x0, x1, [sp, #16]\n"
+            "ldp x2, x3, [sp, #32]\n"
+            "ldp x4, x5, [sp, #48]\n"
+            "ldp x6, x7, [sp, #64]\n"
+            "ldp x8, x9, [sp, #80]\n"
+            "ldp q0, q1, [sp, #96]\n"
+            "ldp q2, q3, [sp, #128]\n"
+            "ldp q4, q5, [sp, #160]\n"
+            "ldp q6, q7, [sp, #192]\n"
+            "ldp d8, d9, [sp, #224]\n"
+            "ldp d10, d12, [sp, #240]\n"
+            "ldr d11, [sp, #256]\n"
+            "ldr x17, [sp, #264]\n"
+            "add sp, sp, #320\n"
+            "cbz x17, 1f\n"
+            "br x17\n"
+            "1:\n"
+            "ret\n");
+}
+
 #else
 extern "C" [[gnu::visibility("default")]] [[gnu::used]]
 void replace_create_trampoline() {
@@ -821,6 +1574,18 @@ void replace_create_trampoline() {
 
 extern "C" [[gnu::visibility("default")]] [[gnu::used]]
 void replace_push_style_trampoline() {
+}
+
+extern "C" [[gnu::visibility("default")]] [[gnu::used]]
+void replace_generic_get_scaled_font_size_trampoline() {
+}
+
+extern "C" [[gnu::visibility("default")]] [[gnu::used]]
+void replace_generic_create_trampoline() {
+}
+
+extern "C" [[gnu::visibility("default")]] [[gnu::used]]
+void replace_generic_push_style_trampoline() {
 }
 
 #endif
@@ -900,6 +1665,33 @@ Java_com_dpis_module_HyperOsFlutterFontHookInstaller_configure(JNIEnv *env,
                                                                jstring package_name,
                                                                jint target_font_scale_percent,
                                                                jboolean enabled) {
+    {
+        std::lock_guard<std::mutex> lock(g_dpis_log_bridge_mutex);
+        if (g_java_vm == nullptr) {
+            env->GetJavaVM(&g_java_vm);
+        }
+        if (g_dpis_log_class == nullptr || g_dpis_log_info_method == nullptr) {
+            jclass local_log_class = env->FindClass("com/dpis/module/DpisLog");
+            if (local_log_class != nullptr) {
+                jclass global_log_class =
+                        reinterpret_cast<jclass>(env->NewGlobalRef(local_log_class));
+                env->DeleteLocalRef(local_log_class);
+                if (global_log_class != nullptr) {
+                    jmethodID log_info_method = env->GetStaticMethodID(
+                            global_log_class, "i", "(Ljava/lang/String;)V");
+                    if (log_info_method != nullptr) {
+                        g_dpis_log_class = global_log_class;
+                        g_dpis_log_info_method = log_info_method;
+                    } else {
+                        env->DeleteGlobalRef(global_log_class);
+                    }
+                }
+            }
+            if (env->ExceptionCheck()) {
+                env->ExceptionClear();
+            }
+        }
+    }
     const char *package_chars = package_name != nullptr
             ? env->GetStringUTFChars(package_name, nullptr)
             : nullptr;
@@ -913,6 +1705,68 @@ Java_com_dpis_module_HyperOsFlutterFontHookInstaller_configure(JNIEnv *env,
     log_info("configured package=" + package_text
             + " targetFontScalePercent=" + std::to_string(target_font_scale_percent)
             + " enabled=" + std::to_string(enabled == JNI_TRUE));
+    void *flutter_handle = dlopen(kGenericFlutterLibrary, RTLD_NOW | RTLD_NOLOAD);
+    probe_generic_flutter(flutter_handle, "jni-configure");
+    schedule_generic_flutter_poll();
+    schedule_generic_flutter_status();
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_dpis_module_HyperOsFlutterFontHookInstaller_onRuntimeLibraryLoaded(JNIEnv *env,
+                                                                            jclass,
+                                                                            jstring package_name,
+                                                                            jstring library_name) {
+    const char *package_chars = package_name != nullptr
+            ? env->GetStringUTFChars(package_name, nullptr)
+            : nullptr;
+    const char *library_chars = library_name != nullptr
+            ? env->GetStringUTFChars(library_name, nullptr)
+            : nullptr;
+    std::string package_text = package_chars != nullptr ? package_chars : "unknown";
+    std::string library_text = library_chars != nullptr ? library_chars : "unknown";
+    if (package_chars != nullptr) {
+        env->ReleaseStringUTFChars(package_name, package_chars);
+    }
+    if (library_chars != nullptr) {
+        env->ReleaseStringUTFChars(library_name, library_chars);
+    }
+    void *handle = nullptr;
+    if (library_text == "flutter") {
+        handle = dlopen(kGenericFlutterLibrary, RTLD_NOW | RTLD_NOLOAD);
+    } else if (library_text == "libflutter.so") {
+        handle = dlopen(kGenericFlutterLibrary, RTLD_NOW | RTLD_NOLOAD);
+    } else if (ends_with(library_text.c_str(), kGenericFlutterLibrary)) {
+        handle = dlopen(library_text.c_str(), RTLD_NOW | RTLD_NOLOAD);
+    } else if (library_text == kTargetLibrary || ends_with(library_text.c_str(), kTargetLibrary)) {
+        handle = dlopen(kTargetLibrary, RTLD_NOW | RTLD_NOLOAD);
+        try_hook_flutter(handle);
+    }
+    probe_generic_flutter(handle, "runtime-load package=" + package_text
+            + " library=" + library_text);
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_dpis_module_HyperOsFlutterFontHookInstaller_genericFlutterProbeStatus(JNIEnv *env,
+                                                                               jclass,
+                                                                               jstring package_name,
+                                                                               jstring source) {
+    const char *package_chars = package_name != nullptr
+            ? env->GetStringUTFChars(package_name, nullptr)
+            : nullptr;
+    const char *source_chars = source != nullptr
+            ? env->GetStringUTFChars(source, nullptr)
+            : nullptr;
+    std::string package_text = package_chars != nullptr ? package_chars : "unknown";
+    std::string source_text = source_chars != nullptr ? source_chars : "unknown";
+    if (package_chars != nullptr) {
+        env->ReleaseStringUTFChars(package_name, package_chars);
+    }
+    if (source_chars != nullptr) {
+        env->ReleaseStringUTFChars(source, source_chars);
+    }
+    void *handle = dlopen(kGenericFlutterLibrary, RTLD_NOW | RTLD_NOLOAD);
+    std::string status = generic_flutter_probe_status(handle, package_text, source_text);
+    return env->NewStringUTF(status.c_str());
 }
 
 extern "C" [[gnu::visibility("default")]] [[gnu::used]]

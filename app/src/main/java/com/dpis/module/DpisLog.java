@@ -15,7 +15,7 @@ final class DpisLog {
     }
 
     static void i(String msg) {
-        if (!isLoggingEnabled()) {
+        if (!shouldLog()) {
             return;
         }
         try {
@@ -27,7 +27,7 @@ final class DpisLog {
     }
 
     static void e(String msg, Throwable throwable) {
-        if (!isLoggingEnabled()) {
+        if (!shouldLog()) {
             return;
         }
         try {
@@ -46,6 +46,10 @@ final class DpisLog {
 
     static boolean isLoggingEnabled() {
         return loggingEnabled;
+    }
+
+    private static boolean shouldLog() {
+        return BuildConfig.DEBUG || isLoggingEnabled();
     }
 
     static void setLoggingEnabled(boolean enabled) {

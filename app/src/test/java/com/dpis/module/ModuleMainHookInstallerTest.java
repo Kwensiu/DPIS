@@ -24,14 +24,40 @@ public class ModuleMainHookInstallerTest {
     @Test
     public void moduleMainConfiguresHyperOsFlutterNativeFontHook() throws IOException {
         String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
-        String nativeInit = read("src/modern101/resources/META-INF/xposed/native_init.list");
         String build = read("build.gradle.kts");
+        String flutterInstaller = read("src/main/java/com/dpis/module/HyperOsFlutterFontHookInstaller.java");
 
-        assertTrue(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));
+        assertTrue(moduleMain.contains("HyperOsFlutterFontHookInstaller.install(this, packageName, store)"));
+        assertTrue(moduleMain.contains("maybeInstallAppProcessFromModuleLoaded("));
+        assertTrue(moduleMain.contains("installAppProcessHooksIfConfigured("));
+        assertTrue(moduleMain.contains("new SystemPropertyConfigPreferences(processName)"));
+        assertTrue(moduleMain.contains("module-loaded app hook install enter"));
+        assertTrue(moduleMain.contains("module-loaded app hook install failed"));
+        assertTrue(moduleMain.contains("rawBridgeLog("));
+        assertTrue(moduleMain.contains("module-loaded app config fallback"));
+        assertTrue(moduleMain.contains("module-loaded app config unavailable"));
+        assertTrue(moduleMain.contains("appProcessInstallAttempted"));
+        assertTrue(moduleMain.contains("\"module-loaded\""));
+        assertTrue(moduleMain.contains("\"module-loaded-fallback\""));
+        assertTrue(moduleMain.contains("\"package-ready\""));
         assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
                 .contains("HyperOsRustProcessHookInstaller.install("));
-        assertTrue(nativeInit.contains("libdpis_native.so"));
+        assertTrue(Files.exists(Path.of(
+                "src", "modern101", "resources", "META-INF", "xposed", "native_init.list")));
+        assertFalse(Files.exists(Path.of("src", "main", "assets", "native_init")));
+        assertTrue(flutterInstaller.contains("System.loadLibrary(\"dpis_native\")"));
         assertTrue(build.contains("externalNativeBuild"));
+    }
+
+    @Test
+    public void moduleMainRetriesFlutterHooksWithAppClassLoaderFromPackageReady() throws IOException {
+        String source = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+
+        assertTrue(source.contains("retryFlutterHooksWithAppClassLoader("));
+        assertTrue(source.contains("param.getClassLoader()"));
+        assertTrue(source.contains("FlutterSettingsFontHookInstaller.retryWithAppClassLoader("));
+        assertTrue(source.contains("AppProcessHookInstaller.resolveFontHookPlan("));
+        assertTrue(source.contains("AppProcessHookInstaller.resolveFontDomainPlan("));
     }
 
     @Test
@@ -53,6 +79,48 @@ public class ModuleMainHookInstallerTest {
                 .contains("DPIS_DIAG"));
         assertFalse(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
                 .contains("DPIS_DIAG"));
+    }
+
+    @Test
+    public void temporaryProbesAndPackerReferencesDoNotRemainInRuntimeSources() throws IOException {
+        String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+        String flutterInstaller = read("src/main/java/com/dpis/module/FlutterSettingsFontHookInstaller.java");
+
+        // Temporary selftest/probe prefixes must not remain
+        assertFalse("SELFTEST probe must be removed", moduleMain.contains("DPIS_HOOK_SELFTEST"));
+        assertFalse("RUNTIME_PROBE must be removed", moduleMain.contains("DPIS_RUNTIME_PROBE"));
+        assertFalse("APPCLASS probe must be removed", moduleMain.contains("DPIS_APPCLASS"));
+        assertFalse("SHELL probe must be removed", moduleMain.contains("DPIS_SHELL"));
+        assertFalse("CL_CAPABILITY probe must be removed", moduleMain.contains("DPIS_CL_CAPABILITY"));
+        assertFalse("module-loaded install path must not keep temporary probe wording",
+                moduleMain.contains("module-loaded app hook probe"));
+
+        // Packer-specific class names must not appear in production sources
+        assertFalse("shell packer class must not be in ModuleMain",
+                moduleMain.contains("s.h.e.l.l"));
+        assertFalse("target app package must not be hardcoded in ModuleMain",
+                moduleMain.contains("com.mfcloudcalculate.networkdisk"));
+        assertFalse("shell packer class must not be in FlutterSettingsFontHookInstaller",
+                flutterInstaller.contains("s.h.e.l.l"));
+        assertFalse("target app package must not be in FlutterSettingsFontHookInstaller",
+                flutterInstaller.contains("com.mfcloudcalculate.networkdisk"));
+    }
+
+    @Test
+    public void packedAppSupportBoundaryDocumentExists() throws IOException {
+        String doc = read("../docs/packed-flutter-app-support-boundary.md");
+
+        assertTrue("Doc should state packing is confirmed",
+                doc.contains("PACKED CONFIRMED"));
+        assertTrue("Doc should advise against productizing packer support",
+                doc.contains("Do NOT productize"));
+    }
+
+    @Test
+    public void debugBuildKeepsRuntimeHookLogsVisible() throws IOException {
+        String source = read("src/main/java/com/dpis/module/DpisLog.java");
+
+        assertTrue(source.contains("BuildConfig.DEBUG || isLoggingEnabled()"));
     }
 
     @Test

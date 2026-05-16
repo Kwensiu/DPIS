@@ -2,6 +2,9 @@ package com.dpis.module;
 
 import org.junit.Test;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,5 +48,53 @@ public class ForceTextSizeRegressionReferenceTest {
         assertTrue(FontFieldRewriteMath.containsCommentHint("com.max.xiaoheihe.reply.ReplyItem"));
         assertTrue(FontFieldRewriteMath.containsCommentHint("com.max.xiaoheihe.bbs.HbLineHeightView"));
         assertFalse(FontFieldRewriteMath.containsCommentHint("com.max.xiaoheihe.feed.NormalTitleView"));
+    }
+
+    @Test
+    public void replacementHookCoversXmlStyledTextViewAttachPath() throws Exception {
+        String source = read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java");
+
+        assertTrue(source.contains("installTextViewAttachHook("));
+        assertTrue(source.contains("getDeclaredMethod(\"onAttachedToWindow\")"));
+        assertTrue(source.contains("return View.class.getDeclaredMethod(\"onAttachedToWindow\")"));
+        assertTrue(source.contains("DPIS_FONT TextView attach override"));
+        assertTrue(source.contains("domainPlan.paintFallbackEnabled"));
+        assertTrue(source.contains("DPIS_FONT Paint/TextPaint fallback suppressed"));
+        assertTrue(source.indexOf("installTextViewAttachHook(")
+                < source.indexOf("installPaintTextSizeHooks("));
+    }
+
+    @Test
+    public void fontHookArbitrationKeepsTextViewWebViewAndResourcesButSuppressesPaint() {
+        FontHookArbitration.FontDomainPlan plan =
+                FontHookArbitration.resolveDomainPlan(true, true);
+
+        assertTrue(plan.resourcesFontEnabled);
+        assertTrue(plan.webViewTextZoomEnabled);
+        assertTrue(plan.textViewHooksEnabled);
+        assertFalse(plan.textViewSpRewriteEnabled);
+        assertFalse(plan.textViewAbsoluteRewriteEnabled);
+        assertFalse(plan.paintFallbackEnabled);
+    }
+
+    @Test
+    public void textViewUnitRewriteSkipsSpWhenResourcesOwnFontScale() {
+        FontHookArbitration.FontDomainPlan plan =
+                FontHookArbitration.resolveDomainPlan(true, true);
+
+        assertFalse(ForceTextSizeHookInstaller.shouldForceTextUnitForTest(
+                android.util.TypedValue.COMPLEX_UNIT_SP,
+                plan));
+        assertFalse(ForceTextSizeHookInstaller.shouldForceTextUnitForTest(
+                android.util.TypedValue.COMPLEX_UNIT_PX,
+                plan));
+    }
+
+    private static String read(String relativePath) throws Exception {
+        Path path = Path.of(relativePath);
+        if (!Files.exists(path)) {
+            path = Path.of("app", relativePath);
+        }
+        return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
     }
 }
