@@ -181,7 +181,7 @@ Suggested user-visible explanation:
 
 4. **compat100 fallback path**: For packed apps where libxposed API 101 `onPackageReady` doesn't fire, investigate whether the compat100 legacy API's `handleLoadPackage` fires after shell decryption. This could be a generic fallback without depending on shell internals.
 
-5. **Native Flutter route independence**: The `libflutter.so` native hooking path should work regardless of Java-level packing. Prioritize making this route robust and generic (symbol-based offset resolution rather than hardcoded offsets) as it's the only viable path for packed Flutter apps.
+5. **Native Flutter route independence**: The `libflutter.so` native layer is independent of Java-level packing, but generic hardcoded-offset patching is not a DPIS default route. Keep any generic native Flutter work behind explicit debug/experimental gates unless it can be made symbol-based and engine-version tolerant. HyperOS native Flutter remains a separate known route selected by the font-domain plan, not by packer-specific checks.
 
 ## 5. Stop Conditions Met
 

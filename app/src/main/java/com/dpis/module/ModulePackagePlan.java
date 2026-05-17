@@ -11,6 +11,7 @@ final class ModulePackagePlan {
     final boolean viewportEnabled;
     final boolean fontScaleActive;
     final boolean fontEnabled;
+    final boolean hyperOsNativeFlutterFontEnabled;
 
     private ModulePackagePlan(String packageName,
                               Integer targetViewportWidthDp,
@@ -21,7 +22,8 @@ final class ModulePackagePlan {
                               boolean viewportConfigured,
                               boolean viewportEnabled,
                               boolean fontScaleActive,
-                              boolean fontEnabled) {
+                              boolean fontEnabled,
+                              boolean hyperOsNativeFlutterFontEnabled) {
         this.packageName = packageName;
         this.targetViewportWidthDp = targetViewportWidthDp;
         this.targetViewportMode = targetViewportMode;
@@ -32,6 +34,7 @@ final class ModulePackagePlan {
         this.viewportEnabled = viewportEnabled;
         this.fontScaleActive = fontScaleActive;
         this.fontEnabled = fontEnabled;
+        this.hyperOsNativeFlutterFontEnabled = hyperOsNativeFlutterFontEnabled;
     }
 
     static ModulePackagePlan resolve(DpiConfigStore store, String packageName) {
@@ -52,6 +55,7 @@ final class ModulePackagePlan {
         Integer targetFontScalePercent = packageConfig.targetFontScalePercent;
         String targetFontMode = packageConfig.targetFontMode;
         boolean targetDpisEnabled = packageConfig.dpisEnabled;
+        boolean hyperOsNativeFlutterFontEnabled = packageConfig.hyperOsFlutterFontHookEnabled;
         boolean fontScaleActive = targetFontScalePercent != null
                 && targetFontScalePercent > 0
                 && targetFontScalePercent != 100;
@@ -66,7 +70,8 @@ final class ModulePackagePlan {
                     targetViewportWidthDp != null,
                     false,
                     fontScaleActive,
-                    false);
+                    false,
+                    hyperOsNativeFlutterFontEnabled);
         }
         HookRuntimePolicy policy = HookRuntimePolicy.fromSnapshot(snapshot);
         boolean viewportConfigured = targetViewportWidthDp != null;
@@ -85,7 +90,8 @@ final class ModulePackagePlan {
                 viewportConfigured,
                 viewportEnabled,
                 fontScaleActive,
-                fontHookPlan.emulationEnabled || fontHookPlan.fieldRewriteEnabled);
+                fontHookPlan.emulationEnabled || fontHookPlan.fieldRewriteEnabled,
+                hyperOsNativeFlutterFontEnabled);
     }
 
     boolean shouldInstallHooks() {
@@ -106,6 +112,7 @@ final class ModulePackagePlan {
                 ViewportApplyMode.OFF,
                 null,
                 FontApplyMode.OFF,
+                false,
                 false,
                 false,
                 false,

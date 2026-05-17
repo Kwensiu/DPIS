@@ -26,8 +26,12 @@ public class ModuleMainHookInstallerTest {
         String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
         String build = read("build.gradle.kts");
         String flutterInstaller = read("src/main/java/com/dpis/module/HyperOsFlutterFontHookInstaller.java");
+        String appProcessInstaller = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
 
-        assertTrue(moduleMain.contains("HyperOsFlutterFontHookInstaller.install(this, packageName, store)"));
+        assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));
+        assertTrue(moduleMain.contains("packagePlan.hyperOsNativeFlutterFontEnabled"));
+        assertTrue(appProcessInstaller.contains("fontDomainPlan.hyperOsNativeFlutterEnabled"));
+        assertTrue(appProcessInstaller.contains("HyperOsFlutterFontHookInstaller.install(xposed, packageName, store)"));
         assertTrue(moduleMain.contains("maybeInstallAppProcessFromModuleLoaded("));
         assertTrue(moduleMain.contains("installAppProcessHooksIfConfigured("));
         assertTrue(moduleMain.contains("new SystemPropertyConfigPreferences(processName)"));
@@ -58,6 +62,19 @@ public class ModuleMainHookInstallerTest {
         assertTrue(source.contains("FlutterSettingsFontHookInstaller.retryWithAppClassLoader("));
         assertTrue(source.contains("AppProcessHookInstaller.resolveFontHookPlan("));
         assertTrue(source.contains("AppProcessHookInstaller.resolveFontDomainPlan("));
+        assertTrue(source.contains("fontPlan, packagePlan.hyperOsNativeFlutterFontEnabled"));
+    }
+
+    @Test
+    public void hyperOsNativeFlutterDoesNotBypassAppProcessInstaller() throws IOException {
+        String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+        String appProcessInstaller = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+
+        assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));
+        assertTrue(moduleMain.contains("AppProcessHookInstaller.install("));
+        assertTrue(appProcessInstaller.contains("HyperOsFlutterFontHookInstaller.install("));
+        assertTrue(appProcessInstaller.contains("resolveFontDomainPlan("));
+        assertTrue(appProcessInstaller.contains("hyperOsNativeFlutterEnabled"));
     }
 
     @Test

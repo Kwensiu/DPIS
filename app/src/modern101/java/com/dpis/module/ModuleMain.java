@@ -132,15 +132,16 @@ public final class ModuleMain extends XposedModule {
                 + ", targetViewportWidthDp=" + packagePlan.targetViewportWidthDp
                 + ", targetViewportMode=" + packagePlan.targetViewportMode
                 + ", targetFontScalePercent=" + packagePlan.targetFontScalePercent
-                + ", targetFontMode=" + packagePlan.targetFontMode);
+                + ", targetFontMode=" + packagePlan.targetFontMode
+                + ", hyperOsNativeFlutterFont=" + packagePlan.hyperOsNativeFlutterFontEnabled);
         appProcessInstallAttempted = true;
-        HyperOsFlutterFontHookInstaller.install(this, packageName, store);
         try {
             AppProcessHookInstaller.install(this, packageName, store, policy,
                     packagePlan.viewportConfigured,
                     packagePlan.targetViewportMode,
                     packagePlan.targetFontMode,
-                    packagePlan.fontScaleActive);
+                    packagePlan.fontScaleActive,
+                    packagePlan.hyperOsNativeFlutterFontEnabled);
         } catch (Throwable throwable) {
             appProcessInstallAttempted = false;
             DpisLog.e("failed to install app process hooks", throwable);
@@ -164,7 +165,8 @@ public final class ModuleMain extends XposedModule {
         HookRuntimePolicy policy = HookRuntimePolicy.fromSnapshot(snapshot);
         AppProcessHookInstaller.FontHookPlan fontPlan = AppProcessHookInstaller.resolveFontHookPlan(
                 policy, packagePlan.fontScaleActive, packagePlan.targetFontMode);
-        FontHookArbitration.FontDomainPlan domainPlan = AppProcessHookInstaller.resolveFontDomainPlan(fontPlan);
+        FontHookArbitration.FontDomainPlan domainPlan = AppProcessHookInstaller.resolveFontDomainPlan(
+                fontPlan, packagePlan.hyperOsNativeFlutterFontEnabled);
         if (!domainPlan.flutterSettingsEnabled) {
             return;
         }

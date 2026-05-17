@@ -6,8 +6,16 @@ final class FontHookArbitration {
 
     static FontDomainPlan resolveDomainPlan(boolean fontScaleEnabled,
                                             boolean fieldRewriteEnabled) {
+        return resolveDomainPlan(fontScaleEnabled, fieldRewriteEnabled, false);
+    }
+
+    static FontDomainPlan resolveDomainPlan(boolean fontScaleEnabled,
+                                            boolean fieldRewriteEnabled,
+                                            boolean hyperOsNativeFlutterEnabled) {
         if (!fontScaleEnabled) {
             return new FontDomainPlan(
+                false,
+                false,
                 false,
                 false,
                 false,
@@ -26,6 +34,8 @@ final class FontHookArbitration {
                     false,
                     false,
                     true,
+                    hyperOsNativeFlutterEnabled,
+                    false,
                     "semantic-font-domain-plan");
         }
         return new FontDomainPlan(
@@ -36,6 +46,8 @@ final class FontHookArbitration {
                 false,
                 false,
                 true,
+                hyperOsNativeFlutterEnabled,
+                false,
                 "field-rewrite-domain-plan");
     }
 
@@ -47,6 +59,8 @@ final class FontHookArbitration {
         final boolean textViewAbsoluteRewriteEnabled;
         final boolean paintFallbackEnabled;
         final boolean flutterSettingsEnabled;
+        final boolean hyperOsNativeFlutterEnabled;
+        final boolean genericNativeFlutterEnabled;
         final String reason;
 
         FontDomainPlan(boolean resourcesFontEnabled,
@@ -56,6 +70,8 @@ final class FontHookArbitration {
                        boolean textViewAbsoluteRewriteEnabled,
                        boolean paintFallbackEnabled,
                        boolean flutterSettingsEnabled,
+                       boolean hyperOsNativeFlutterEnabled,
+                       boolean genericNativeFlutterEnabled,
                        String reason) {
             this.resourcesFontEnabled = resourcesFontEnabled;
             this.webViewTextZoomEnabled = webViewTextZoomEnabled;
@@ -64,6 +80,8 @@ final class FontHookArbitration {
             this.textViewAbsoluteRewriteEnabled = textViewAbsoluteRewriteEnabled;
             this.paintFallbackEnabled = paintFallbackEnabled;
             this.flutterSettingsEnabled = flutterSettingsEnabled;
+            this.hyperOsNativeFlutterEnabled = hyperOsNativeFlutterEnabled;
+            this.genericNativeFlutterEnabled = genericNativeFlutterEnabled;
             this.reason = reason;
         }
     }

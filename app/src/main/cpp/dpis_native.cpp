@@ -122,6 +122,7 @@ uintptr_t parse_maps_start_address(const char *line);
 void probe_generic_flutter(void *handle, const std::string &source);
 void probe_flutter_text_strings(const char *library_name, void *handle, const std::string &source);
 bool is_debug_build();
+bool is_generic_flutter_font_hook_experiment_enabled();
 extern "C" void replace_create_trampoline();
 extern "C" void replace_push_style_trampoline();
 extern "C" void replace_generic_get_scaled_font_size_trampoline();
@@ -380,9 +381,9 @@ GenericFlutterFontRoute resolve_generic_flutter_font_route(uintptr_t base) {
     if (base == 0) {
         return GenericFlutterFontRoute::kNone;
     }
-    // Last-resort generic Flutter route. Java semantic settings hooks may miss
-    // apps that load their embedding before module hooks are installed, so this
-    // path targets Flutter's native text style consumption point directly.
+    if (!is_generic_flutter_font_hook_experiment_enabled()) {
+        return GenericFlutterFontRoute::kNone;
+    }
     return GenericFlutterFontRoute::kVerifiedPushStyleD11;
 }
 
@@ -539,6 +540,14 @@ std::string read_environment(const char *key) {
         return {};
     }
     return std::string(value);
+}
+
+bool is_generic_flutter_font_hook_experiment_enabled() {
+    if (!is_debug_build()) {
+        return false;
+    }
+    return is_enabled_value(read_environment("DPIS_GENERIC_FLUTTER_FONT_HOOK"))
+            || is_enabled_value(read_system_property("debug.dpis.generic_flutter_font_hook"));
 }
 
 std::string sibling_original_rust_binary_path() {

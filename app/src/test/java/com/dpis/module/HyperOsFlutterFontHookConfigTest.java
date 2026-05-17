@@ -118,8 +118,12 @@ public class HyperOsFlutterFontHookConfigTest {
         String source = readSource("src/main/java/com/dpis/module/HyperOsFlutterFontHookInstaller.java");
         String nativeSource = readSource("src/main/cpp/dpis_native.cpp");
         String moduleMain = readSource("src/modern101/java/com/dpis/module/ModuleMain.java");
+        String appProcessInstaller = readSource("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
 
-        assertTrue(moduleMain.contains("HyperOsFlutterFontHookInstaller.install(this, packageName, store)"));
+        assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));
+        assertTrue(moduleMain.contains("packagePlan.hyperOsNativeFlutterFontEnabled"));
+        assertTrue(appProcessInstaller.contains("fontDomainPlan.hyperOsNativeFlutterEnabled"));
+        assertTrue(appProcessInstaller.contains("HyperOsFlutterFontHookInstaller.install(xposed, packageName, store)"));
         assertTrue(source.contains("installRuntimeLibraryProbe(xposed, packageName)"));
         assertTrue(source.contains("installFlutterViewAttachProbe(xposed, packageName)"));
         assertTrue(source.contains("private static final boolean DEBUG_PROBES = BuildConfig.DEBUG"));
@@ -163,12 +167,15 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(nativeSource.contains("Generic Flutter status tick: process="));
         assertTrue(nativeSource.contains("bool is_debug_build()"));
         assertTrue(nativeSource.contains("if (!is_debug_build())"));
+        assertTrue(nativeSource.contains("is_generic_flutter_font_hook_experiment_enabled()"));
+        assertTrue(nativeSource.contains("DPIS_GENERIC_FLUTTER_FONT_HOOK"));
+        assertTrue(nativeSource.contains("debug.dpis.generic_flutter_font_hook"));
         assertTrue(nativeSource.contains("schedule_generic_flutter_status();"));
         assertTrue(nativeSource.contains("!is_debug_build() && index >= 7"));
         assertTrue(nativeSource.contains("\"native-poll-%d\""));
         assertTrue(nativeSource.contains("Generic Flutter mapped: process="));
         assertTrue(nativeSource.contains("+ \" route=\""));
-        assertTrue(nativeSource.contains("Last-resort generic Flutter route"));
+        assertFalse(nativeSource.contains("Last-resort generic Flutter route"));
         assertTrue(nativeSource.contains("GENERIC_PUSH_STYLE_D11"));
         assertFalse(nativeSource.contains("matches_verified_push_style_d11_window"));
         assertFalse(nativeSource.contains("VERIFIED_PUSH_STYLE_D11"));

@@ -18,6 +18,8 @@ public class FontHookArbitrationTest {
         assertFalse(plan.textViewAbsoluteRewriteEnabled);
         assertFalse(plan.paintFallbackEnabled);
         assertTrue(plan.flutterSettingsEnabled);
+        assertFalse(plan.hyperOsNativeFlutterEnabled);
+        assertFalse(plan.genericNativeFlutterEnabled);
     }
 
     @Test
@@ -32,6 +34,8 @@ public class FontHookArbitrationTest {
         assertFalse(plan.textViewAbsoluteRewriteEnabled);
         assertFalse(plan.paintFallbackEnabled);
         assertTrue(plan.flutterSettingsEnabled);
+        assertFalse(plan.hyperOsNativeFlutterEnabled);
+        assertFalse(plan.genericNativeFlutterEnabled);
         assertTrue("semantic-font-domain-plan".equals(plan.reason));
     }
 
@@ -47,6 +51,29 @@ public class FontHookArbitrationTest {
         assertFalse(plan.textViewAbsoluteRewriteEnabled);
         assertFalse(plan.paintFallbackEnabled);
         assertFalse(plan.flutterSettingsEnabled);
+        assertFalse(plan.hyperOsNativeFlutterEnabled);
+        assertFalse(plan.genericNativeFlutterEnabled);
         assertTrue("font-scale-disabled".equals(plan.reason));
+    }
+
+    @Test
+    public void hyperOsNativeFlutterIsArbitratedWithActiveFontDomains() {
+        FontHookArbitration.FontDomainPlan plan =
+                FontHookArbitration.resolveDomainPlan(true, true, true);
+
+        assertTrue(plan.resourcesFontEnabled);
+        assertTrue(plan.flutterSettingsEnabled);
+        assertTrue(plan.hyperOsNativeFlutterEnabled);
+        assertFalse(plan.genericNativeFlutterEnabled);
+    }
+
+    @Test
+    public void inactiveFontScaleSuppressesHyperOsNativeFlutterDomain() {
+        FontHookArbitration.FontDomainPlan plan =
+                FontHookArbitration.resolveDomainPlan(false, false, true);
+
+        assertFalse(plan.flutterSettingsEnabled);
+        assertFalse(plan.hyperOsNativeFlutterEnabled);
+        assertFalse(plan.genericNativeFlutterEnabled);
     }
 }

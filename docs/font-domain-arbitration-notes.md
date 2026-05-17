@@ -11,6 +11,8 @@ process:
 - Flutter main UI uses `FlutterView` / `FlutterSurfaceView`.
 - Ads and banners may use WebView platform views.
 - Android platform text can still appear through TextView or spans.
+- HyperOS system apps may render text through native Flutter/Rust paths.
+- Generic Flutter apps may expose only `libflutter.so`, but engine offsets vary.
 
 Applying every font hook as an independent multiplier can double-scale text.
 For example, if `scaledDensity` already reflects a 300% font scale, a
@@ -35,6 +37,12 @@ value by 3.0 can produce an effective 900% scale.
   active font source.
 - Use Paint/TextPaint only as a last fallback. Default it off when a clearer
   domain primary exists, because it is the highest-risk double-scaling path.
+- Route native Flutter installers through the same `FontHookArbitration`
+  plan. `ModuleMain` must not install HyperOS/native Flutter hooks directly.
+- Keep HyperOS native Flutter as an explicit native domain behind the existing
+  user/debug toggle. Do not infer it from package names.
+- Keep generic native Flutter offset patching out of the default domain plan.
+  It may exist only as a debug-build experiment with an explicit runtime flag.
 
 ## Implementation Shape
 
@@ -47,6 +55,9 @@ use names that carry rendering-domain and unit semantics, for example:
 - `textViewSpRewriteEnabled`
 - `textViewAbsoluteRewriteEnabled`
 - `paintFallbackEnabled`
+- `flutterSettingsEnabled`
+- `hyperOsNativeFlutterEnabled`
+- `genericNativeFlutterEnabled`
 
 The plan is produced by `FontHookArbitration` and consumed by
 `AppProcessHookInstaller` and the individual installers.
@@ -75,9 +86,14 @@ those values directly.
 Native Flutter offset patching is not a viable default route. `libflutter.so`
 instruction windows vary across engine builds and application packages, so a
 working offset for one build does not provide a general DPIS mechanism. The
-default Flutter path should be the semantic Android embedding boundary:
+default generic Flutter path should be the semantic Android embedding boundary:
 `flutter/settings`, `textScaleFactor`, `FlutterJNI.dispatchPlatformMessage`,
 and `FlutterView.sendUserSettingsToFlutter`.
+
+HyperOS native Flutter is separate from generic Flutter. It has a known native
+proxy/HyperOS library route and remains supported, but it is still a rendering
+domain selected by the font domain plan rather than an installer called
+directly from `ModuleMain`.
 
 ## Open Questions
 

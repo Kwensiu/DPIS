@@ -44,6 +44,19 @@ public final class ModulePackagePlanTest {
     }
 
     @Test
+    public void carriesHyperOsNativeFlutterFlagForAppProcessDispatch() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetFontScalePercent("com.example.app", 120);
+        store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
+        store.setHyperOsFlutterFontHookEnabled(true);
+
+        ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
+
+        assertTrue(plan.fontEnabled);
+        assertTrue(plan.hyperOsNativeFlutterFontEnabled);
+    }
+
+    @Test
     public void compat100LegacyInstallsFontFieldRewriteOnlyPackage() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 120);
