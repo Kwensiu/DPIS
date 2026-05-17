@@ -40,6 +40,9 @@
             android:name=".SystemServerSettingsActivity"
             android:exported="false" />
         <activity
+            android:name=".ExperimentalSettingsActivity"
+            android:exported="false" />
+        <activity
             android:name=".AboutActivity"
             android:exported="false" />
         <activity

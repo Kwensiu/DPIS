@@ -216,33 +216,33 @@ public class ResourcesImplHookInstallerTest {
     @Test
     public void targetMatchingSmallestWidthDoesNotRewriteCurrentWindowMetrics() {
         Configuration config = new Configuration();
-        config.densityDpi = 480;
-        config.screenWidthDp = 393;
-        config.screenHeightDp = 800;
-        config.smallestScreenWidthDp = 360;
+        config.densityDpi = 420;
+        config.screenWidthDp = 448;
+        config.screenHeightDp = 970;
+        config.smallestScreenWidthDp = 411;
         config.fontScale = 1.0f;
         DisplayMetrics metrics = new DisplayMetrics();
-        metrics.widthPixels = 1080;
-        metrics.heightPixels = 2208;
-        metrics.densityDpi = 480;
-        metrics.density = 3.0f;
-        metrics.scaledDensity = 3.0f;
+        metrics.widthPixels = 1176;
+        metrics.heightPixels = 2546;
+        metrics.densityDpi = 420;
+        metrics.density = 2.625f;
+        metrics.scaledDensity = 2.625f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 360).commit();
+        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 411).commit();
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
 
-        assertEquals(393, config.screenWidthDp);
-        assertEquals(800, config.screenHeightDp);
-        assertEquals(360, config.smallestScreenWidthDp);
-        assertEquals(480, config.densityDpi);
-        assertEquals(480, metrics.densityDpi);
-        assertEquals(1080, metrics.widthPixels);
-        assertEquals(2208, metrics.heightPixels);
-        assertEquals(480, VirtualDisplayState.get().densityDpi);
-        assertEquals(1080, VirtualDisplayState.get().widthPx);
-        assertEquals(2208, VirtualDisplayState.get().heightPx);
+        assertEquals(448, config.screenWidthDp);
+        assertEquals(970, config.screenHeightDp);
+        assertEquals(411, config.smallestScreenWidthDp);
+        assertEquals(420, config.densityDpi);
+        assertEquals(420, metrics.densityDpi);
+        assertEquals(1176, metrics.widthPixels);
+        assertEquals(2546, metrics.heightPixels);
+        assertEquals(420, VirtualDisplayState.get().densityDpi);
+        assertEquals(1176, VirtualDisplayState.get().widthPx);
+        assertEquals(2546, VirtualDisplayState.get().heightPx);
     }
 
     @Test
@@ -270,5 +270,87 @@ public class ResourcesImplHookInstallerTest {
         assertEquals(1080, metrics.widthPixels);
         assertEquals(2208, metrics.heightPixels);
         assertEquals(null, VirtualDisplayState.get());
+    }
+
+    @Test
+    public void validDensityWithoutTrustedMetricsPixelsDoesNotPublishVirtualDisplayState() {
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 736;
+        config.smallestScreenWidthDp = 360;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.widthPixels = 0;
+        metrics.heightPixels = 0;
+        metrics.densityDpi = 480;
+        metrics.density = 3.0f;
+        metrics.scaledDensity = 3.0f;
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 500).commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
+
+        assertEquals(500, config.smallestScreenWidthDp);
+        assertEquals(null, VirtualDisplayState.get());
+    }
+
+    @Test
+    public void untrustedMetricsPixelsDoNotReuseStaleVirtualDisplayState() {
+        VirtualDisplayState.set(new VirtualDisplayOverride.Result(360, 736, 360,
+                480, 1080, 2208));
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 736;
+        config.smallestScreenWidthDp = 360;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.widthPixels = 0;
+        metrics.heightPixels = 0;
+        metrics.densityDpi = 480;
+        metrics.density = 3.0f;
+        metrics.scaledDensity = 3.0f;
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 500).commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
+
+        assertEquals(500, config.smallestScreenWidthDp);
+        assertEquals(346, config.densityDpi);
+        assertEquals(346, metrics.densityDpi);
+        assertEquals(0, metrics.widthPixels);
+        assertEquals(0, metrics.heightPixels);
+    }
+
+    @Test
+    public void replacingViewportTo500dpKeepsPhysicalPixels() {
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 736;
+        config.smallestScreenWidthDp = 360;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 2208;
+        metrics.densityDpi = 480;
+        metrics.density = 3.0f;
+        metrics.scaledDensity = 3.0f;
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 500).commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
+
+        assertEquals(500, config.smallestScreenWidthDp);
+        assertEquals(1080, metrics.widthPixels);
+        assertEquals(2208, metrics.heightPixels);
+        assertEquals(1080, VirtualDisplayState.get().widthPx);
+        assertEquals(2208, VirtualDisplayState.get().heightPx);
+        assertEquals(500, config.smallestScreenWidthDp);
+        assertEquals(346, config.densityDpi);
     }
 }

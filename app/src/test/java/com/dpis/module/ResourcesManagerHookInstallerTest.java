@@ -151,14 +151,14 @@ public class ResourcesManagerHookInstallerTest {
     @Test
     public void targetMatchingSmallestWidthDoesNotRewriteWindowConfiguration() {
         Configuration config = new Configuration();
-        config.screenWidthDp = 393;
-        config.screenHeightDp = 800;
-        config.smallestScreenWidthDp = 360;
-        config.densityDpi = 480;
+        config.screenWidthDp = 448;
+        config.screenHeightDp = 970;
+        config.smallestScreenWidthDp = 411;
+        config.densityDpi = 420;
         config.fontScale = 1.0f;
         FakePrefs prefs = new FakePrefs();
         prefs.edit()
-                .putInt("viewport.com.example.target.width_dp", 360)
+                .putInt("viewport.com.example.target.width_dp", 411)
                 .putString("viewport.com.example.target.mode", ViewportApplyMode.FIELD_REWRITE)
                 .commit();
         DpiConfigStore store = new DpiConfigStore(prefs);
@@ -166,11 +166,11 @@ public class ResourcesManagerHookInstallerTest {
         ResourcesManagerHookInstaller.applyResourceOverrides(config, store, "com.example.target",
                 "ResourcesManager");
 
-        assertEquals(393, config.screenWidthDp);
-        assertEquals(800, config.screenHeightDp);
-        assertEquals(360, config.smallestScreenWidthDp);
-        assertEquals(480, config.densityDpi);
-        assertEquals(480, VirtualDisplayState.get().densityDpi);
+        assertEquals(448, config.screenWidthDp);
+        assertEquals(970, config.screenHeightDp);
+        assertEquals(411, config.smallestScreenWidthDp);
+        assertEquals(420, config.densityDpi);
+        assertEquals(null, VirtualDisplayState.get());
     }
 
     @Test
@@ -195,6 +195,28 @@ public class ResourcesManagerHookInstallerTest {
         assertEquals(736, config.screenHeightDp);
         assertEquals(360, config.smallestScreenWidthDp);
         assertEquals(0, config.densityDpi);
+        assertEquals(null, VirtualDisplayState.get());
+    }
+
+    @Test
+    public void doesNotUseViewportDpAsPixelsWhenMetricsAreUnavailable() {
+        Configuration config = new Configuration();
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 736;
+        config.smallestScreenWidthDp = 360;
+        config.densityDpi = 480;
+        config.fontScale = 1.0f;
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putInt("viewport.com.example.target.width_dp", 500)
+                .putString("viewport.com.example.target.mode", ViewportApplyMode.FIELD_REWRITE)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        ResourcesManagerHookInstaller.applyResourceOverrides(config, store, "com.example.target",
+                "ResourcesManager");
+
+        assertEquals(500, config.smallestScreenWidthDp);
         assertEquals(null, VirtualDisplayState.get());
     }
 

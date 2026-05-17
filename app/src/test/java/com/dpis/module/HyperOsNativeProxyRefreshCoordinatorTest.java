@@ -23,6 +23,7 @@ public class HyperOsNativeProxyRefreshCoordinatorTest {
     @Test
     public void refreshesOnlyEnabledConfiguredFontTargetsWhenHookEnabled() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        assertTrue(store.setFlutterFontHookEnabled(true));
         assertTrue(store.setHyperOsFlutterFontHookEnabled(true));
         assertTrue(store.setTargetFontScalePercent("com.miui.gallery", 180));
         assertTrue(store.setTargetFontApplyMode("com.miui.gallery", FontApplyMode.SYSTEM_EMULATION));
@@ -45,6 +46,19 @@ public class HyperOsNativeProxyRefreshCoordinatorTest {
     @Test
     public void refreshSkipsWhenHookDisabled() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        assertTrue(store.setFlutterFontHookEnabled(true));
+        assertTrue(store.setTargetFontScalePercent("com.miui.gallery", 180));
+        assertTrue(store.setTargetFontApplyMode("com.miui.gallery", FontApplyMode.SYSTEM_EMULATION));
+
+        assertTrue(HyperOsNativeProxyRefreshCoordinator
+                .collectRefreshPackagesForTest(store).isEmpty());
+    }
+
+    @Test
+    public void refreshSkipsWhenFlutterMasterSwitchDisabled() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        assertTrue(store.setFlutterFontHookEnabled(false));
+        assertTrue(store.setHyperOsFlutterFontHookEnabled(true));
         assertTrue(store.setTargetFontScalePercent("com.miui.gallery", 180));
         assertTrue(store.setTargetFontApplyMode("com.miui.gallery", FontApplyMode.SYSTEM_EMULATION));
 

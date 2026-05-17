@@ -75,6 +75,8 @@ public class PerAppDisplayConfigSourceTest {
                         ViewportApplyMode.FIELD_REWRITE,
                         200,
                         FontApplyMode.FIELD_REWRITE,
+                        false,
+                        false,
                         false));
 
         PerAppDisplayConfig config = source.get("com.example.target");
@@ -100,6 +102,8 @@ public class PerAppDisplayConfigSourceTest {
                         ViewportApplyMode.OFF,
                         200,
                         FontApplyMode.FIELD_REWRITE,
+                        false,
+                        false,
                         false));
 
         assertNull(source.get("com.example.target"));
@@ -119,6 +123,8 @@ public class PerAppDisplayConfigSourceTest {
                         ViewportApplyMode.FIELD_REWRITE,
                         200,
                         FontApplyMode.FIELD_REWRITE,
+                        false,
+                        false,
                         false));
 
         PerAppDisplayConfig config = source.get("com.example.target");

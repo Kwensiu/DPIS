@@ -11,6 +11,7 @@ final class ModulePackagePlan {
     final boolean viewportEnabled;
     final boolean fontScaleActive;
     final boolean fontEnabled;
+    final boolean flutterSettingsFontEnabled;
     final boolean hyperOsNativeFlutterFontEnabled;
 
     private ModulePackagePlan(String packageName,
@@ -23,6 +24,7 @@ final class ModulePackagePlan {
                               boolean viewportEnabled,
                               boolean fontScaleActive,
                               boolean fontEnabled,
+                              boolean flutterSettingsFontEnabled,
                               boolean hyperOsNativeFlutterFontEnabled) {
         this.packageName = packageName;
         this.targetViewportWidthDp = targetViewportWidthDp;
@@ -34,6 +36,7 @@ final class ModulePackagePlan {
         this.viewportEnabled = viewportEnabled;
         this.fontScaleActive = fontScaleActive;
         this.fontEnabled = fontEnabled;
+        this.flutterSettingsFontEnabled = flutterSettingsFontEnabled;
         this.hyperOsNativeFlutterFontEnabled = hyperOsNativeFlutterFontEnabled;
     }
 
@@ -55,7 +58,10 @@ final class ModulePackagePlan {
         Integer targetFontScalePercent = packageConfig.targetFontScalePercent;
         String targetFontMode = packageConfig.targetFontMode;
         boolean targetDpisEnabled = packageConfig.dpisEnabled;
-        boolean hyperOsNativeFlutterFontEnabled = packageConfig.hyperOsFlutterFontHookEnabled;
+        boolean hyperOsNativeFlutterFontEnabled = packageConfig.flutterFontHookEnabled
+                && packageConfig.hyperOsFlutterFontHookEnabled;
+        boolean flutterSettingsFontEnabled = packageConfig.flutterFontHookEnabled
+                && packageConfig.flutterSettingsFontHookEnabled;
         boolean fontScaleActive = targetFontScalePercent != null
                 && targetFontScalePercent > 0
                 && targetFontScalePercent != 100;
@@ -71,6 +77,7 @@ final class ModulePackagePlan {
                     false,
                     fontScaleActive,
                     false,
+                    flutterSettingsFontEnabled,
                     hyperOsNativeFlutterFontEnabled);
         }
         HookRuntimePolicy policy = HookRuntimePolicy.fromSnapshot(snapshot);
@@ -91,10 +98,13 @@ final class ModulePackagePlan {
                 viewportEnabled,
                 fontScaleActive,
                 fontHookPlan.emulationEnabled || fontHookPlan.fieldRewriteEnabled,
+                flutterSettingsFontEnabled,
                 hyperOsNativeFlutterFontEnabled);
     }
 
     boolean shouldInstallHooks() {
+        // Flutter supplements are currently attached only when a normal font route is active.
+        // If they become standalone routes, include them in this predicate as well.
         return targetDpisEnabled && (viewportEnabled || fontEnabled);
     }
 
@@ -112,6 +122,7 @@ final class ModulePackagePlan {
                 ViewportApplyMode.OFF,
                 null,
                 FontApplyMode.OFF,
+                false,
                 false,
                 false,
                 false,

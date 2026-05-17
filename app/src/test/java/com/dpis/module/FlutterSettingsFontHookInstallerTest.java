@@ -59,8 +59,9 @@ public class FlutterSettingsFontHookInstallerTest {
                 assertTrue(source.contains("installContentProviderAttachClassLoaderHook("));
                 assertTrue(source.contains("installApplicationAttachClassLoaderHook("));
                 assertTrue(source.contains("installApplicationCreateClassLoaderHook("));
-                assertTrue(source.contains("installActivityResumeFlutterViewScan("));
-                assertTrue(source.contains("installViewRootFlutterViewScan("));
+                assertFalse(defaultInstallBody(source).contains("installActivityResumeFlutterViewScan("));
+                assertFalse(defaultInstallBody(source).contains("installViewRootFlutterViewScan("));
+                assertFalse(defaultInstallBody(source).contains("startActiveActivityFlutterViewProbeThread("));
                 assertTrue(source.contains("tryHookFlutterFragment("));
                 assertTrue(source.contains("bridgeProbe(\"DPIS_FONT Flutter semantic install active:"));
                 assertTrue(source.contains("Class.forName(\"dalvik.system.BaseDexClassLoader\""));
@@ -212,5 +213,11 @@ public class FlutterSettingsFontHookInstallerTest {
                         path = java.nio.file.Path.of("app", relativePath);
                 }
                 return new String(java.nio.file.Files.readAllBytes(path), StandardCharsets.UTF_8);
+        }
+
+        private static String defaultInstallBody(String source) {
+                int start = source.indexOf("static void install(XposedInterface xposed,");
+                int end = source.indexOf("private static void installLoadedClassHook", start);
+                return source.substring(start, end);
         }
 }

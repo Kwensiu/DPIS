@@ -271,16 +271,6 @@ final class FlutterSettingsFontHookInstaller {
                 ClassLoader.getSystemClassLoader());
         installFlutterViewAttachBridge(xposed, packageName, fontScale.effective,
                 fontScale.targetPercent);
-        installActivityResumeFlutterViewScan(xposed, packageName, fontScale.effective,
-                fontScale.targetPercent);
-        installViewRootFlutterViewScan(xposed, packageName, fontScale.effective,
-                fontScale.targetPercent);
-        scheduleActiveActivityFlutterViewScans(xposed, packageName, fontScale.effective,
-                fontScale.targetPercent);
-        scanActiveActivities(xposed, packageName, fontScale.effective,
-                fontScale.targetPercent, "active-activity-immediate");
-        startActiveActivityFlutterViewProbeThread(xposed, packageName, fontScale.effective,
-                fontScale.targetPercent);
     }
 
     private static void installLoadedClassHook(XposedInterface xposed,

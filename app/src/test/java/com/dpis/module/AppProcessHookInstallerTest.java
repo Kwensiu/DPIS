@@ -133,7 +133,7 @@ public class AppProcessHookInstallerTest {
     }
 
     @Test
-    public void fieldRewriteDomainEnablesFlutterSettings() {
+    public void fieldRewriteDomainKeepsFlutterSettingsExperimental() {
         FontHookArbitration.FontDomainPlan domainPlan =
                 AppProcessHookInstaller.resolveFontDomainPlan(
                         new AppProcessHookInstaller.FontHookPlan(false, true, false));
@@ -144,13 +144,13 @@ public class AppProcessHookInstallerTest {
         assertFalse(domainPlan.textViewSpRewriteEnabled);
         assertTrue(domainPlan.textViewAbsoluteRewriteEnabled);
         assertFalse(domainPlan.textViewCurrentPxFallbackEnabled);
-        assertTrue(domainPlan.flutterSettingsEnabled);
+        assertFalse(domainPlan.flutterSettingsEnabled);
         assertFalse(domainPlan.hyperOsNativeFlutterEnabled);
         assertFalse(domainPlan.genericNativeFlutterEnabled);
     }
 
     @Test
-    public void emulationDomainEnablesFlutterSettingsWithoutTextViewRewrite() {
+    public void emulationDomainKeepsFlutterSettingsExperimental() {
         FontHookArbitration.FontDomainPlan domainPlan =
                 AppProcessHookInstaller.resolveFontDomainPlan(
                         new AppProcessHookInstaller.FontHookPlan(true, false, false));
@@ -159,7 +159,35 @@ public class AppProcessHookInstallerTest {
         assertTrue(domainPlan.webViewTextZoomEnabled);
         assertFalse(domainPlan.textViewHooksEnabled);
         assertFalse(domainPlan.textViewCurrentPxFallbackEnabled);
+        assertFalse(domainPlan.flutterSettingsEnabled);
+        assertFalse(domainPlan.hyperOsNativeFlutterEnabled);
+        assertFalse(domainPlan.genericNativeFlutterEnabled);
+    }
+
+    @Test
+    public void flutterSettingsDomainIsIndependentlyGatedBySupplementFlag() {
+        FontHookArbitration.FontDomainPlan domainPlan =
+                AppProcessHookInstaller.resolveFontDomainPlan(
+                        new AppProcessHookInstaller.FontHookPlan(true, false, false),
+                        true,
+                        false);
+
+        assertTrue(domainPlan.resourcesFontEnabled);
         assertTrue(domainPlan.flutterSettingsEnabled);
+        assertFalse(domainPlan.hyperOsNativeFlutterEnabled);
+        assertFalse(domainPlan.genericNativeFlutterEnabled);
+    }
+
+    @Test
+    public void disabledFontPlanSuppressesFlutterSettingsSupplementDomain() {
+        FontHookArbitration.FontDomainPlan domainPlan =
+                AppProcessHookInstaller.resolveFontDomainPlan(
+                        new AppProcessHookInstaller.FontHookPlan(false, false, false),
+                        true,
+                        false);
+
+        assertFalse(domainPlan.resourcesFontEnabled);
+        assertFalse(domainPlan.flutterSettingsEnabled);
         assertFalse(domainPlan.hyperOsNativeFlutterEnabled);
         assertFalse(domainPlan.genericNativeFlutterEnabled);
     }
@@ -172,7 +200,7 @@ public class AppProcessHookInstallerTest {
 
         assertTrue(domainPlan.webViewTextZoomEnabled);
         assertTrue(domainPlan.textViewHooksEnabled);
-        assertTrue(domainPlan.flutterSettingsEnabled);
+        assertFalse(domainPlan.flutterSettingsEnabled);
         assertFalse(domainPlan.textViewSpRewriteEnabled);
         assertTrue(domainPlan.textViewAbsoluteRewriteEnabled);
         assertFalse(domainPlan.textViewCurrentPxFallbackEnabled);
@@ -189,7 +217,7 @@ public class AppProcessHookInstallerTest {
                         true);
 
         assertTrue(domainPlan.resourcesFontEnabled);
-        assertTrue(domainPlan.flutterSettingsEnabled);
+        assertFalse(domainPlan.flutterSettingsEnabled);
         assertTrue(domainPlan.hyperOsNativeFlutterEnabled);
         assertFalse(domainPlan.genericNativeFlutterEnabled);
     }
@@ -216,7 +244,7 @@ public class AppProcessHookInstallerTest {
                         new AppProcessHookInstaller.FontHookPlan(false, true, false));
 
         assertTrue(emulationPlan.webViewTextZoomEnabled);
-        assertTrue(emulationPlan.flutterSettingsEnabled);
+        assertFalse(emulationPlan.flutterSettingsEnabled);
         assertTrue(emulationPlan.resourcesFontEnabled);
         assertFalse(emulationPlan.textViewHooksEnabled);
         assertFalse(emulationPlan.textViewCurrentPxFallbackEnabled);
@@ -226,7 +254,7 @@ public class AppProcessHookInstallerTest {
         assertTrue(fieldRewritePlan.resourcesFontEnabled);
         assertTrue(fieldRewritePlan.webViewTextZoomEnabled);
         assertTrue(fieldRewritePlan.textViewHooksEnabled);
-        assertTrue(fieldRewritePlan.flutterSettingsEnabled);
+        assertFalse(fieldRewritePlan.flutterSettingsEnabled);
         assertFalse(fieldRewritePlan.textViewSpRewriteEnabled);
         assertTrue(fieldRewritePlan.textViewAbsoluteRewriteEnabled);
         assertFalse(fieldRewritePlan.textViewCurrentPxFallbackEnabled);
@@ -260,6 +288,37 @@ public class AppProcessHookInstallerTest {
         assertTrue(AppProcessHookInstaller.shouldInstallProbeHooks(policy));
     }
 
+    @Test
+    public void debugFlutterSettingsPropertyMatchesExactPackageOrWildcardOnly() {
+        assertTrue(AppProcessHookInstaller.isDebugPropertyPackageMatchForTest(
+                "debug.dpis.font.flutter_settings_only_package",
+                "com.example.app",
+                "com.example.app"));
+        assertTrue(AppProcessHookInstaller.isDebugPropertyPackageMatchForTest(
+                "debug.dpis.font.flutter_settings_only_package",
+                "com.example.app",
+                "*"));
+        assertFalse(AppProcessHookInstaller.isDebugPropertyPackageMatchForTest(
+                "debug.dpis.font.flutter_settings_only_package",
+                "com.example.app",
+                "com.example.other"));
+        assertFalse(AppProcessHookInstaller.isDebugPropertyPackageMatchForTest(
+                "debug.dpis.font.flutter_settings_only_package",
+                "com.example.app",
+                ""));
+    }
+
+    @Test
+    public void debugFlutterSettingsPropertiesAreDebugOnlyAndPackageScoped() throws Exception {
+        String source = readSource("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+
+        assertTrue(source.contains("debug.dpis.font.force_flutter_settings_package"));
+        assertTrue(source.contains("debug.dpis.font.flutter_settings_only_package"));
+        assertTrue(source.contains("if (!BuildConfig.DEBUG || packageName == null"));
+        assertTrue(source.contains("createDebugFlutterSettingsPlan("));
+        assertTrue(source.contains("!debugFlutterSettingsOnly"));
+    }
+
     private static HookRuntimePolicy createPolicy(boolean safeMode) {
         return createPolicy(safeMode, true);
     }
@@ -277,5 +336,14 @@ public class AppProcessHookInstallerTest {
         store.setSystemServerHooksEnabled(systemHooksEnabled);
         store.setGlobalLogEnabled(globalLogEnabled);
         return HookRuntimePolicy.fromStore(store);
+    }
+
+    private static String readSource(String relativePath) throws Exception {
+        java.nio.file.Path path = java.nio.file.Paths.get(relativePath);
+        if (!java.nio.file.Files.exists(path)) {
+            path = java.nio.file.Paths.get("app", relativePath);
+        }
+        return new String(java.nio.file.Files.readAllBytes(path),
+                java.nio.charset.StandardCharsets.UTF_8);
     }
 }

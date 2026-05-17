@@ -73,21 +73,21 @@ public final class AboutActivity extends LocalizedActivity {
 
         bindEntryRow(
                 R.id.row_about_source,
-                R.drawable.ic_info_outline_24,
+                R.drawable.ic_code_24,
                 R.string.about_link_source_title,
                 R.string.about_link_source_desc,
                 getString(R.string.about_source_url));
         bindUpdateRow();
         bindEntryRow(
                 R.id.row_about_feedback,
-                R.drawable.ic_settings_24,
+                R.drawable.ic_adjust_24,
                 R.string.about_link_feedback_title,
                 R.string.about_link_feedback_desc,
                 getString(R.string.about_issues_url));
         bindDebugOnlyUpdateDialogRow();
         bindIntentEntryRow(
                 R.id.row_about_open_source_license,
-                R.drawable.ic_info_outline_24,
+                R.drawable.ic_license_24,
                 R.string.open_source_license,
                 R.string.open_source_license_settings_description,
                 new Intent(this, OpenSourceLicenseActivity.class));

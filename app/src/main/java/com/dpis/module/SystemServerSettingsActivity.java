@@ -62,12 +62,12 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     private MaterialSwitch hooksEnabledSwitch;
     private MaterialSwitch safeModeSwitch;
     private MaterialSwitch globalLogSwitch;
-    private MaterialSwitch hyperOsFlutterFontHookSwitch;
     private MaterialSwitch hideLauncherIconSwitch;
     private View primarySwitchCard;
     private View languageEntryRow;
     private View clearCacheEntryRow;
     private View fontDebugEntryRow;
+    private View experimentalSettingsEntryRow;
     private View backupConfigEntryRow;
     private volatile boolean clearCacheInProgress;
     private SharedPreferences statsPreferences;
@@ -104,7 +104,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         primarySwitchCard.setVisibility(View.GONE);
         hooksEnabledSwitch = bindSwitchRow(
                 R.id.row_system_hooks,
-                R.drawable.ic_settings_24,
+                R.drawable.ic_android_24,
                 R.string.system_hooks_enabled_label,
                 R.string.system_hooks_enabled_hint);
         applySystemHooksRowVisibility();
@@ -115,7 +115,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
                 R.string.system_safe_mode_hint);
         globalLogSwitch = bindSwitchRow(
                 R.id.row_global_log,
-                R.drawable.ic_log_24,
+                R.drawable.ic_view_kanban_24,
                 R.string.global_log_enabled_label,
                 R.string.global_log_enabled_hint);
         fontDebugEntryRow = bindEntryRow(
@@ -124,14 +124,15 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
                 R.string.font_debug_overlay_label,
                 R.string.font_debug_entry_hint,
                 this::showFontDebugDialog);
-        hyperOsFlutterFontHookSwitch = bindSwitchRow(
-                R.id.row_hyperos_flutter_font_hook,
-                R.drawable.baseline_tune_24,
-                R.string.settings_hyperos_flutter_font_hook_label,
-                R.string.settings_hyperos_flutter_font_hook_hint);
+        experimentalSettingsEntryRow = bindEntryRow(
+                R.id.row_experimental_settings,
+                R.drawable.ic_experiment_24,
+                R.string.settings_experimental_title,
+                R.string.settings_experimental_hint,
+                v -> startActivity(new Intent(this, ExperimentalSettingsActivity.class)));
         backupConfigEntryRow = bindEntryRow(
                 R.id.row_config_backup,
-                R.drawable.baseline_upload_file_24,
+                R.drawable.ic_upload_file_24,
                 R.string.settings_config_backup_label,
                 R.string.settings_config_backup_hint,
                 this::showConfigBackupDialog);
@@ -144,7 +145,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         updateLanguageEntrySubtitle();
         clearCacheEntryRow = bindEntryRow(
                 R.id.row_clear_cache,
-                R.drawable.ic_clear_24,
+                R.drawable.ic_mop_24,
                 R.string.settings_clear_cache_label,
                 R.string.settings_clear_cache_size,
                 this::clearCache);
@@ -152,13 +153,13 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         updateCacheEntrySubtitle();
         bindEntryRow(
                 R.id.row_about,
-                R.drawable.ic_info_outline_24,
+                R.drawable.ic_info_24,
                 R.string.settings_about_label,
                 R.string.settings_about_hint,
                 v -> startActivity(new Intent(this, AboutActivity.class)));
         hideLauncherIconSwitch = bindSwitchRow(
                 R.id.row_hide_launcher_icon,
-                R.drawable.outline_image_not_supported_24,
+                R.drawable.ic_hide_image_24,
                 R.string.settings_hide_launcher_icon_label,
                 R.string.settings_hide_launcher_icon_hint);
 
@@ -166,7 +167,6 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         hooksEnabledSwitch.setOnCheckedChangeListener(this::onHooksEnabledChanged);
         safeModeSwitch.setOnCheckedChangeListener(this::onSafeModeChanged);
         globalLogSwitch.setOnCheckedChangeListener(this::onGlobalLogChanged);
-        hyperOsFlutterFontHookSwitch.setOnCheckedChangeListener(this::onHyperOsFlutterFontHookChanged);
         hideLauncherIconSwitch.setOnCheckedChangeListener(this::onHideLauncherIconChanged);
         refreshStoreState(true);
     }
@@ -575,9 +575,6 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         setCheckedSilently(globalLogSwitch,
                 store.isGlobalLogEnabled(),
                 this::onGlobalLogChanged);
-        setCheckedSilently(hyperOsFlutterFontHookSwitch,
-                store.isHyperOsFlutterFontHookEnabled(),
-                this::onHyperOsFlutterFontHookChanged);
         DpisLog.setLoggingEnabled(store.isGlobalLogEnabled());
 
         applyLauncherIconVisibilityFromStore();
@@ -605,9 +602,9 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         hooksEnabledSwitch.setEnabled(true);
         safeModeSwitch.setEnabled(true);
         globalLogSwitch.setEnabled(true);
-        hyperOsFlutterFontHookSwitch.setEnabled(true);
         hideLauncherIconSwitch.setEnabled(true);
         setRowEnabled(fontDebugEntryRow, true);
+        setRowEnabled(experimentalSettingsEntryRow, true);
         setRowEnabled(backupConfigEntryRow, true);
         hooksToggleController = new SystemHooksToggleController(
                 store,
@@ -623,9 +620,9 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         hooksEnabledSwitch.setEnabled(false);
         safeModeSwitch.setEnabled(false);
         globalLogSwitch.setEnabled(false);
-        hyperOsFlutterFontHookSwitch.setEnabled(false);
         hideLauncherIconSwitch.setEnabled(false);
         setRowEnabled(fontDebugEntryRow, false);
+        setRowEnabled(experimentalSettingsEntryRow, false);
         setRowEnabled(backupConfigEntryRow, false);
         setRowEnabled(languageEntryRow, false);
         if (showInitToast) {
@@ -966,21 +963,6 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             return;
         }
         DpisLog.setLoggingEnabled(isChecked);
-    }
-
-    private void onHyperOsFlutterFontHookChanged(CompoundButton buttonView, boolean isChecked) {
-        if (store == null) {
-            return;
-        }
-        if (!store.setHyperOsFlutterFontHookEnabled(isChecked)) {
-            setCheckedSilently(hyperOsFlutterFontHookSwitch, !isChecked,
-                    this::onHyperOsFlutterFontHookChanged);
-            showToast(R.string.system_settings_save_failed);
-            return;
-        }
-        if (!isChecked) {
-            HyperOsNativeFontPropertySyncer.clearConfiguredFontTargetsAsync(store);
-        }
     }
 
     private void onHideLauncherIconChanged(CompoundButton buttonView, boolean isChecked) {

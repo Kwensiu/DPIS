@@ -21,6 +21,9 @@ final class DpiConfigStore {
     static final String KEY_FONT_DEBUG_OVERLAY_ENABLED = "font.debug.overlay_enabled";
     static final String KEY_FONT_DEBUG_SELECTED_MODE = "font.debug.selected_mode";
     static final String KEY_FONT_DEBUG_SELECTED_WINDOW = "font.debug.selected_window";
+    static final String KEY_FLUTTER_FONT_HOOK_ENABLED = "font.flutter_hook_enabled";
+    static final String KEY_FLUTTER_SETTINGS_FONT_HOOK_ENABLED =
+            "font.flutter_settings_hook_enabled";
     static final String KEY_HYPEROS_FLUTTER_FONT_HOOK_ENABLED = "font.hyperos_flutter_hook_enabled";
     static final String KEY_HIDE_LAUNCHER_ICON = "ui.hide_launcher_icon";
     static final String KEY_STARTUP_DISCLAIMER_ACCEPTED = "ui.startup_disclaimer_accepted";
@@ -187,6 +190,31 @@ final class DpiConfigStore {
 
     boolean isHyperOsFlutterFontHookEnabled() {
         return getBoolean(KEY_HYPEROS_FLUTTER_FONT_HOOK_ENABLED, false);
+    }
+
+    boolean isFlutterFontHookEnabled() {
+        return getBoolean(KEY_FLUTTER_FONT_HOOK_ENABLED, false);
+    }
+
+    boolean isFlutterSettingsFontHookEnabled() {
+        return getBoolean(KEY_FLUTTER_SETTINGS_FONT_HOOK_ENABLED, false);
+    }
+
+    boolean hasFlutterSettingsFontHookEnabled() {
+        return containsInPrimary(KEY_FLUTTER_SETTINGS_FONT_HOOK_ENABLED);
+    }
+
+    boolean setFlutterSettingsFontHookEnabled(boolean enabled) {
+        return commitBoth(editor -> editor.putBoolean(
+                KEY_FLUTTER_SETTINGS_FONT_HOOK_ENABLED, enabled));
+    }
+
+    boolean hasFlutterFontHookEnabled() {
+        return containsInPrimary(KEY_FLUTTER_FONT_HOOK_ENABLED);
+    }
+
+    boolean setFlutterFontHookEnabled(boolean enabled) {
+        return commitBoth(editor -> editor.putBoolean(KEY_FLUTTER_FONT_HOOK_ENABLED, enabled));
     }
 
     boolean hasHyperOsFlutterFontHookEnabled() {

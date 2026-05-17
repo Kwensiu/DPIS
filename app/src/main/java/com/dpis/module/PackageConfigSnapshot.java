@@ -7,6 +7,8 @@ final class PackageConfigSnapshot {
     final String targetViewportMode;
     final Integer targetFontScalePercent;
     final String targetFontMode;
+    final boolean flutterFontHookEnabled;
+    final boolean flutterSettingsFontHookEnabled;
     final boolean hyperOsFlutterFontHookEnabled;
 
     PackageConfigSnapshot(String packageName,
@@ -15,6 +17,8 @@ final class PackageConfigSnapshot {
                           String targetViewportMode,
                           Integer targetFontScalePercent,
                           String targetFontMode,
+                          boolean flutterFontHookEnabled,
+                          boolean flutterSettingsFontHookEnabled,
                           boolean hyperOsFlutterFontHookEnabled) {
         this.packageName = packageName;
         this.dpisEnabled = dpisEnabled;
@@ -22,6 +26,8 @@ final class PackageConfigSnapshot {
         this.targetViewportMode = ViewportApplyMode.normalize(targetViewportMode);
         this.targetFontScalePercent = targetFontScalePercent;
         this.targetFontMode = FontApplyMode.normalize(targetFontMode);
+        this.flutterFontHookEnabled = flutterFontHookEnabled;
+        this.flutterSettingsFontHookEnabled = flutterSettingsFontHookEnabled;
         this.hyperOsFlutterFontHookEnabled = hyperOsFlutterFontHookEnabled;
     }
 }

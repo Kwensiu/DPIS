@@ -6,52 +6,31 @@ final class FontHookArbitration {
 
     static FontDomainPlan resolveDomainPlan(boolean fontScaleEnabled,
                                             boolean fieldRewriteEnabled) {
-        return resolveDomainPlan(fontScaleEnabled, fieldRewriteEnabled, false);
+        return resolveDomainPlan(fontScaleEnabled, fieldRewriteEnabled, false, false);
     }
 
     static FontDomainPlan resolveDomainPlan(boolean fontScaleEnabled,
                                             boolean fieldRewriteEnabled,
                                             boolean hyperOsNativeFlutterEnabled) {
+        return resolveDomainPlan(fontScaleEnabled, fieldRewriteEnabled,
+                false, hyperOsNativeFlutterEnabled);
+    }
+
+    static FontDomainPlan resolveDomainPlan(boolean fontScaleEnabled,
+                                            boolean fieldRewriteEnabled,
+                                            boolean flutterSettingsEnabled,
+                                            boolean hyperOsNativeFlutterEnabled) {
         if (!fontScaleEnabled) {
-            return new FontDomainPlan(
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                "font-scale-disabled");
+            return FontDomainPlan.fontScaleDisabled();
         }
         if (!fieldRewriteEnabled) {
-            return new FontDomainPlan(
-                    true,
-                    true,
-                    false,
-                    false,
-                    false,
-                    false,
-                    false,
-                    true,
-                    hyperOsNativeFlutterEnabled,
-                    false,
-                    "semantic-font-domain-plan");
+            return FontDomainPlan.semanticFontDomainPlan(
+                    flutterSettingsEnabled,
+                    hyperOsNativeFlutterEnabled);
         }
-        return new FontDomainPlan(
-                true,
-                true,
-                true,
-                false,
-                true,
-                false,
-                false,
-                true,
-                hyperOsNativeFlutterEnabled,
-                false,
-                "field-rewrite-domain-plan");
+        return FontDomainPlan.fieldRewriteDomainPlan(
+                flutterSettingsEnabled,
+                hyperOsNativeFlutterEnabled);
     }
 
     static final class FontDomainPlan {
@@ -89,6 +68,53 @@ final class FontHookArbitration {
             this.hyperOsNativeFlutterEnabled = hyperOsNativeFlutterEnabled;
             this.genericNativeFlutterEnabled = genericNativeFlutterEnabled;
             this.reason = reason;
+        }
+
+        static FontDomainPlan fontScaleDisabled() {
+            return new FontDomainPlan(
+                    false,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false,
+                    "font-scale-disabled");
+        }
+
+        static FontDomainPlan semanticFontDomainPlan(boolean flutterSettingsEnabled,
+                                                     boolean hyperOsNativeFlutterEnabled) {
+            return new FontDomainPlan(
+                    true,
+                    true,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false,
+                    flutterSettingsEnabled,
+                    hyperOsNativeFlutterEnabled,
+                    false,
+                    "semantic-font-domain-plan");
+        }
+
+        static FontDomainPlan fieldRewriteDomainPlan(boolean flutterSettingsEnabled,
+                                                     boolean hyperOsNativeFlutterEnabled) {
+            return new FontDomainPlan(
+                    true,
+                    true,
+                    true,
+                    false,
+                    true,
+                    false,
+                    false,
+                    flutterSettingsEnabled,
+                    hyperOsNativeFlutterEnabled,
+                    false,
+                    "field-rewrite-domain-plan");
         }
     }
 }

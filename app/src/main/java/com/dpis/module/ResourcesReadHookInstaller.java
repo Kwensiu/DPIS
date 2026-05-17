@@ -126,17 +126,15 @@ final class ResourcesReadHookInstaller {
             }
         }
 
-        if (originalDensityDpi > 0) {
-            VirtualDisplayOverride.Result sharedResult = VirtualDisplayOverride.derive(
-                    originalWidthDp > 0 ? originalWidthDp : result.widthDp,
-                    originalHeightDp > 0 ? originalHeightDp : result.heightDp,
-                    originalSmallestWidthDp > 0 ? originalSmallestWidthDp : result.smallestWidthDp,
-                    originalDensityDpi,
-                    Math.round((originalWidthDp > 0 ? originalWidthDp : result.widthDp)
-                            * (originalDensityDpi / 160.0f)),
-                    Math.round((originalHeightDp > 0 ? originalHeightDp : result.heightDp)
-                            * (originalDensityDpi / 160.0f)),
-                    result.smallestWidthDp);
+        VirtualDisplayOverride.Result sharedResult = VirtualDisplayPlan.derivePublishableResult(
+                originalWidthDp,
+                originalHeightDp,
+                originalSmallestWidthDp,
+                originalDensityDpi,
+                0,
+                0,
+                result.smallestWidthDp);
+        if (sharedResult != null) {
             VirtualDisplayState.setUnlessDerivedFromTargetConfig(
                     sharedResult, originalSmallestWidthDp, targetViewportWidth);
         }
@@ -184,7 +182,7 @@ final class ResourcesReadHookInstaller {
         if (targetDensityDpi <= 0) {
             return;
         }
-        VirtualDisplayOverride.Result applied = VirtualDisplayState.get();
+        VirtualDisplayOverride.Result applied = matchingVirtualDisplayState(config);
         if (applied != null && applied.densityDpi > 0) {
             targetDensityDpi = applied.densityDpi;
         }
@@ -204,6 +202,18 @@ final class ResourcesReadHookInstaller {
                         + ", scaledDensity=" + metrics.scaledDensity
                         + ", widthPx=" + metrics.widthPixels
                         + ", heightPx=" + metrics.heightPixels);
+    }
+
+    private static VirtualDisplayOverride.Result matchingVirtualDisplayState(Configuration config) {
+        VirtualDisplayOverride.Result current = VirtualDisplayState.get();
+        // The shared display state may have been produced by an earlier target.
+        // Only reuse it when it describes the same logical viewport.
+        if (current == null
+                || config.smallestScreenWidthDp <= 0
+                || current.smallestWidthDp != config.smallestScreenWidthDp) {
+            return null;
+        }
+        return current;
     }
 
     private static void logIfChanged(String key, String message) {

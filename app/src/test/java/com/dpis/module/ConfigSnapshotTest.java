@@ -65,4 +65,22 @@ public class ConfigSnapshotTest {
         assertFalse(snapshot.isSystemServerHooksEnabled());
         assertTrue(snapshot.hasSystemServerHooksEnabled());
     }
+
+    @Test
+    public void packageSnapshotCapturesFlutterFontFlags() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetFontScalePercent("com.example.app", 125);
+        store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
+        store.setFlutterFontHookEnabled(true);
+        store.setFlutterSettingsFontHookEnabled(true);
+        store.setHyperOsFlutterFontHookEnabled(true);
+
+        PackageConfigSnapshot packageConfig =
+                ConfigSnapshotLoader.fromStore(store).getPackage("com.example.app");
+
+        assertNotNull(packageConfig);
+        assertTrue(packageConfig.flutterFontHookEnabled);
+        assertTrue(packageConfig.flutterSettingsFontHookEnabled);
+        assertTrue(packageConfig.hyperOsFlutterFontHookEnabled);
+    }
 }

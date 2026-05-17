@@ -11,11 +11,7 @@ final class DisplayOverridePipeline {
                                                 int sourceWidthPx,
                                                 int sourceHeightPx,
                                                 int targetWidthDp) {
-        if (targetWidthDp <= 0 || sourceWidthDp <= 0 || sourceHeightDp <= 0
-                || sourceDensityDpi <= 0 || sourceWidthPx <= 0 || sourceHeightPx <= 0) {
-            return null;
-        }
-        return VirtualDisplayOverride.derive(
+        return VirtualDisplayPlan.derivePublishableResult(
                 sourceWidthDp,
                 sourceHeightDp,
                 sourceSmallestWidthDp,

@@ -25,6 +25,8 @@ final class ConfigSnapshotLoader {
                     store.getTargetViewportApplyMode(packageName),
                     store.getTargetFontScalePercent(packageName),
                     store.getTargetFontApplyMode(packageName),
+                    store.isFlutterFontHookEnabled(),
+                    store.isFlutterSettingsFontHookEnabled(),
                     store.isHyperOsFlutterFontHookEnabled()));
         }
         return new ConfigSnapshot(

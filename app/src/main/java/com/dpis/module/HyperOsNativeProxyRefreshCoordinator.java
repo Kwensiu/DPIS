@@ -34,7 +34,9 @@ final class HyperOsNativeProxyRefreshCoordinator {
 
     private static LinkedHashSet<String> collectRefreshPackages(DpiConfigStore store) {
         LinkedHashSet<String> packages = new LinkedHashSet<>();
-        if (store == null || !store.isHyperOsFlutterFontHookEnabled()) {
+        if (store == null
+                || !store.isFlutterFontHookEnabled()
+                || !store.isHyperOsFlutterFontHookEnabled()) {
             return packages;
         }
         for (String packageName : store.getConfiguredPackages()) {
