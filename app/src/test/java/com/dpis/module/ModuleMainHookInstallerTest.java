@@ -46,7 +46,7 @@ public class ModuleMainHookInstallerTest {
         assertTrue(moduleMain.contains("\"package-ready\""));
         assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
                 .contains("HyperOsRustProcessHookInstaller.install("));
-        assertTrue(Files.exists(Path.of(
+        assertFalse(Files.exists(Path.of(
                 "src", "modern101", "resources", "META-INF", "xposed", "native_init.list")));
         assertFalse(Files.exists(Path.of("src", "main", "assets", "native_init")));
         assertTrue(flutterInstaller.contains("System.loadLibrary(\"dpis_native\")"));

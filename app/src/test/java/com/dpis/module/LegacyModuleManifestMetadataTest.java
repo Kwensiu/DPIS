@@ -76,12 +76,9 @@ public final class LegacyModuleManifestMetadataTest {
     }
 
     @Test
-    public void modern101DeclaresNativeInitListForLibxposedNativeHooks() throws IOException {
-        String nativeInit = readProjectFile(
-                "src/modern101/resources/META-INF/xposed/native_init.list");
-
-        assertTrue(nativeInit.contains("libdpis_native.so"));
-        assertTrue(nativeInit.contains("dpis_native"));
+    public void modern101DoesNotDeclareNativeInitListForScopedApps() {
+        assertFalse(Files.exists(Path.of(
+                "src", "modern101", "resources", "META-INF", "xposed", "native_init.list")));
     }
 
     @Test

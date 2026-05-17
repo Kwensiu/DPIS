@@ -284,19 +284,15 @@ final class ResourcesManagerHookInstaller {
             }
             return;
         }
-        if (originalDensityDpi > 0) {
-            VirtualDisplayOverride.Result sharedResult = VirtualDisplayOverride.derive(
-                    originalWidthDp > 0 ? originalWidthDp : result.widthDp,
-                    originalHeightDp > 0 ? originalHeightDp : result.heightDp,
-                    originalSmallestWidthDp > 0 ? originalSmallestWidthDp : result.smallestWidthDp,
-                    originalDensityDpi,
-                    originalWidthDp > 0
-                            ? Math.round(originalWidthDp * (originalDensityDpi / 160.0f))
-                            : result.widthDp,
-                    originalHeightDp > 0
-                            ? Math.round(originalHeightDp * (originalDensityDpi / 160.0f))
-                            : result.heightDp,
-                    result.smallestWidthDp);
+        VirtualDisplayOverride.Result sharedResult = VirtualDisplayPlan.derivePublishableResult(
+                originalWidthDp,
+                originalHeightDp,
+                originalSmallestWidthDp,
+                originalDensityDpi,
+                0,
+                0,
+                result.smallestWidthDp);
+        if (sharedResult != null) {
             VirtualDisplayState.setUnlessDerivedFromTargetConfig(
                     sharedResult, originalSmallestWidthDp, targetViewportWidth);
         }

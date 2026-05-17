@@ -35,7 +35,7 @@ final class FontHookArbitration {
                     false,
                     false,
                     false,
-                    true,
+                    false,
                     hyperOsNativeFlutterEnabled,
                     false,
                     "semantic-font-domain-plan");
@@ -48,7 +48,7 @@ final class FontHookArbitration {
                 true,
                 false,
                 false,
-                true,
+                false,
                 hyperOsNativeFlutterEnabled,
                 false,
                 "field-rewrite-domain-plan");

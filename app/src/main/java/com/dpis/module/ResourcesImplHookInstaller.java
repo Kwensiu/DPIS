@@ -78,23 +78,17 @@ final class ResourcesImplHookInstaller {
                 || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi);
         boolean applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
                 store, packageName);
-        int sourceWidthPx = metrics != null && metrics.widthPixels > 0
-                ? metrics.widthPixels
-                : Math.round(originalWidthDp * (originalDensityDpi / 160.0f));
-        int sourceHeightPx = metrics != null && metrics.heightPixels > 0
-                ? metrics.heightPixels
-                : Math.round(originalHeightDp * (originalDensityDpi / 160.0f));
-        VirtualDisplayOverride.Result sharedResult = originalDensityDpi > 0
-                ? VirtualDisplayOverride.derive(
-                originalWidthDp > 0 ? originalWidthDp : result.widthDp,
-                originalHeightDp > 0 ? originalHeightDp : result.heightDp,
-                originalSmallestWidthDp > 0 ? originalSmallestWidthDp : result.smallestWidthDp,
+        int sourceWidthPx = metrics != null ? metrics.widthPixels : 0;
+        int sourceHeightPx = metrics != null ? metrics.heightPixels : 0;
+        VirtualDisplayOverride.Result sharedResult = VirtualDisplayPlan.derivePublishableResult(
+                originalWidthDp,
+                originalHeightDp,
+                originalSmallestWidthDp,
                 originalDensityDpi,
                 sourceWidthPx,
                 sourceHeightPx,
-                result.smallestWidthDp)
-                : null;
-        if (originalDensityDpi > 0) {
+                result.smallestWidthDp);
+        if (sharedResult != null) {
             VirtualDisplayState.setUnlessDerivedFromTargetConfig(
                     sharedResult, originalSmallestWidthDp, targetViewportWidth);
         }
@@ -155,13 +149,12 @@ final class ResourcesImplHookInstaller {
         float targetScaledDensity = DensityOverride.scaledDensityFrom(
                 result.densityDpi, config.fontScale);
         if (metrics != null) {
-            VirtualDisplayOverride.Result applied = VirtualDisplayState.get();
             metrics.densityDpi = result.densityDpi;
             metrics.density = targetDensity;
             metrics.scaledDensity = targetScaledDensity;
-            if (applied != null) {
-                metrics.widthPixels = applied.widthPx;
-                metrics.heightPixels = applied.heightPx;
+            if (sharedResult != null) {
+                metrics.widthPixels = sharedResult.widthPx;
+                metrics.heightPixels = sharedResult.heightPx;
             }
         }
         String modeLabel = applyToConfiguration ? "config" : "metrics";

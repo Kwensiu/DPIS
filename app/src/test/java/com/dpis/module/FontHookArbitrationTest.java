@@ -18,7 +18,7 @@ public class FontHookArbitrationTest {
         assertTrue(plan.textViewAbsoluteRewriteEnabled);
         assertFalse(plan.textViewCurrentPxFallbackEnabled);
         assertFalse(plan.paintFallbackEnabled);
-        assertTrue(plan.flutterSettingsEnabled);
+        assertFalse(plan.flutterSettingsEnabled);
         assertFalse(plan.hyperOsNativeFlutterEnabled);
         assertFalse(plan.genericNativeFlutterEnabled);
     }
@@ -35,7 +35,7 @@ public class FontHookArbitrationTest {
         assertFalse(plan.textViewAbsoluteRewriteEnabled);
         assertFalse(plan.textViewCurrentPxFallbackEnabled);
         assertFalse(plan.paintFallbackEnabled);
-        assertTrue(plan.flutterSettingsEnabled);
+        assertFalse(plan.flutterSettingsEnabled);
         assertFalse(plan.hyperOsNativeFlutterEnabled);
         assertFalse(plan.genericNativeFlutterEnabled);
         assertTrue("semantic-font-domain-plan".equals(plan.reason));
@@ -65,7 +65,7 @@ public class FontHookArbitrationTest {
                 FontHookArbitration.resolveDomainPlan(true, true, true);
 
         assertTrue(plan.resourcesFontEnabled);
-        assertTrue(plan.flutterSettingsEnabled);
+        assertFalse(plan.flutterSettingsEnabled);
         assertTrue(plan.hyperOsNativeFlutterEnabled);
         assertFalse(plan.genericNativeFlutterEnabled);
     }
