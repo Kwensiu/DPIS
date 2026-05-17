@@ -120,28 +120,31 @@ final class ResourcesReadHookInstaller {
         if (result.widthDp != originalWidthDp
                 || result.heightDp != originalHeightDp
                 || result.smallestWidthDp != originalSmallestWidthDp
-                || result.densityDpi != originalDensityDpi) {
+                || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi)) {
             if (ViewportModePolicy.shouldApplyConfigurationOverride(store, packageName)) {
                 ViewportOverride.apply(config, result);
             }
         }
 
-        VirtualDisplayOverride.Result sharedResult = VirtualDisplayOverride.derive(
-                originalWidthDp > 0 ? originalWidthDp : result.widthDp,
-                originalHeightDp > 0 ? originalHeightDp : result.heightDp,
-                originalDensityDpi > 0 ? originalDensityDpi : result.densityDpi,
-                Math.round((originalWidthDp > 0 ? originalWidthDp : result.widthDp)
-                        * ((originalDensityDpi > 0 ? originalDensityDpi : result.densityDpi) / 160.0f)),
-                Math.round((originalHeightDp > 0 ? originalHeightDp : result.heightDp)
-                        * ((originalDensityDpi > 0 ? originalDensityDpi : result.densityDpi) / 160.0f)),
-                result.smallestWidthDp);
-        VirtualDisplayState.setUnlessDerivedFromTargetConfig(
-                sharedResult, originalSmallestWidthDp, targetViewportWidth);
+        if (originalDensityDpi > 0) {
+            VirtualDisplayOverride.Result sharedResult = VirtualDisplayOverride.derive(
+                    originalWidthDp > 0 ? originalWidthDp : result.widthDp,
+                    originalHeightDp > 0 ? originalHeightDp : result.heightDp,
+                    originalSmallestWidthDp > 0 ? originalSmallestWidthDp : result.smallestWidthDp,
+                    originalDensityDpi,
+                    Math.round((originalWidthDp > 0 ? originalWidthDp : result.widthDp)
+                            * (originalDensityDpi / 160.0f)),
+                    Math.round((originalHeightDp > 0 ? originalHeightDp : result.heightDp)
+                            * (originalDensityDpi / 160.0f)),
+                    result.smallestWidthDp);
+            VirtualDisplayState.setUnlessDerivedFromTargetConfig(
+                    sharedResult, originalSmallestWidthDp, targetViewportWidth);
+        }
 
         if (result.widthDp == originalWidthDp
                 && result.heightDp == originalHeightDp
                 && result.smallestWidthDp == originalSmallestWidthDp
-                && result.densityDpi == originalDensityDpi
+                && (result.densityDpi <= 0 || result.densityDpi == originalDensityDpi)
                 && !fontScale.changed) {
             VirtualDisplayOverride.Result stableResult =
                     VirtualDisplayState.getStableTargetResult(

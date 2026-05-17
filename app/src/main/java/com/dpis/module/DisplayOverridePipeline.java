@@ -18,6 +18,7 @@ final class DisplayOverridePipeline {
         return VirtualDisplayOverride.derive(
                 sourceWidthDp,
                 sourceHeightDp,
+                sourceSmallestWidthDp,
                 sourceDensityDpi,
                 sourceWidthPx,
                 sourceHeightPx,

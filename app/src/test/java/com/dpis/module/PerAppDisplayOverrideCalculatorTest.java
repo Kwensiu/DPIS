@@ -33,4 +33,24 @@ public class PerAppDisplayOverrideCalculatorTest {
     public void returnsNullForInvalidInput() {
         assertTrue(PerAppDisplayOverrideCalculator.calculate(null, 1080, 2376, 200) == null);
     }
+
+    @Test
+    public void targetMatchingSourceSmallestWidthKeepsEnvironmentIdentity() {
+        Configuration configuration = new Configuration();
+        configuration.screenWidthDp = 393;
+        configuration.screenHeightDp = 800;
+        configuration.smallestScreenWidthDp = 360;
+        configuration.densityDpi = 480;
+
+        PerAppDisplayEnvironment environment = PerAppDisplayOverrideCalculator.calculate(
+                configuration, 1080, 2376, 360);
+
+        assertNotNull(environment);
+        assertEquals(393, environment.widthDp);
+        assertEquals(800, environment.heightDp);
+        assertEquals(360, environment.smallestWidthDp);
+        assertEquals(480, environment.densityDpi);
+        assertEquals(1080, environment.widthPx);
+        assertEquals(2376, environment.heightPx);
+    }
 }

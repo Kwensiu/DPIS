@@ -28,15 +28,18 @@ final class ViewportOverride {
         }
         int sourceWidth = config.screenWidthDp > 0 ? config.screenWidthDp : targetWidthDp;
         int sourceHeight = config.screenHeightDp > 0 ? config.screenHeightDp : targetWidthDp;
-        int sourceDensityDpi = config.densityDpi > 0 ? config.densityDpi : 160;
-        VirtualDisplayOverride.Result result = VirtualDisplayOverride.derive(
-                sourceWidth, sourceHeight, sourceDensityDpi,
-                sourceWidth, sourceHeight, targetWidthDp);
-        if (result == null) {
-            return null;
-        }
-        return new Result(result.widthDp, result.heightDp, result.smallestWidthDp,
-                result.densityDpi);
+        int sourceSmallest = config.smallestScreenWidthDp > 0
+                ? config.smallestScreenWidthDp
+                : Math.min(sourceWidth, sourceHeight);
+        float viewportScale = (float) targetWidthDp / (float) sourceSmallest;
+        int targetWidth = Math.max(1, Math.round(sourceWidth * viewportScale));
+        int targetHeight = Math.max(1, Math.round(sourceHeight * viewportScale));
+        int targetSmallestWidthDp = targetWidthDp;
+        int targetDensityDpi = config.densityDpi > 0
+                ? Math.max(1, Math.round(config.densityDpi
+                * ((float) sourceSmallest / (float) targetWidthDp)))
+                : 0;
+        return new Result(targetWidth, targetHeight, targetSmallestWidthDp, targetDensityDpi);
     }
 
     static void apply(Configuration config, Result result) {
@@ -46,7 +49,9 @@ final class ViewportOverride {
         config.screenWidthDp = result.widthDp;
         config.screenHeightDp = result.heightDp;
         config.smallestScreenWidthDp = result.smallestWidthDp;
-        config.densityDpi = result.densityDpi;
+        if (result.densityDpi > 0) {
+            config.densityDpi = result.densityDpi;
+        }
         setIntFieldIfPresent(config, "compatScreenWidthDp", result.widthDp);
         setIntFieldIfPresent(config, "compatScreenHeightDp", result.heightDp);
         setIntFieldIfPresent(config, "compatSmallestScreenWidthDp", result.smallestWidthDp);

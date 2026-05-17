@@ -61,4 +61,48 @@ public class ResourcesReadHookInstallerTest {
         assertEquals(1080, metrics.widthPixels);
         assertEquals(2209, metrics.heightPixels);
     }
+
+    @Test
+    public void targetMatchingSmallestWidthDoesNotRewriteWindowConfiguration() {
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.screenWidthDp = 393;
+        config.screenHeightDp = 800;
+        config.smallestScreenWidthDp = 360;
+        config.fontScale = 1.0f;
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit().putInt("viewport.com.example.target.width_dp", 360).commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        ResourcesReadHookInstaller.applyConfigurationOverride(config, "com.example.target", store,
+                "ResourcesRead(getConfiguration)");
+
+        assertEquals(393, config.screenWidthDp);
+        assertEquals(800, config.screenHeightDp);
+        assertEquals(360, config.smallestScreenWidthDp);
+        assertEquals(480, config.densityDpi);
+        assertEquals(480, VirtualDisplayState.get().densityDpi);
+    }
+
+    @Test
+    public void unknownDensityDoesNotPublishMdpiVirtualDisplayState() {
+        Configuration config = new Configuration();
+        config.densityDpi = 0;
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 736;
+        config.smallestScreenWidthDp = 360;
+        config.fontScale = 1.0f;
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit().putInt("viewport.com.example.target.width_dp", 360).commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        ResourcesReadHookInstaller.applyConfigurationOverride(config, "com.example.target", store,
+                "ResourcesRead(getConfiguration)");
+
+        assertEquals(360, config.screenWidthDp);
+        assertEquals(736, config.screenHeightDp);
+        assertEquals(360, config.smallestScreenWidthDp);
+        assertEquals(0, config.densityDpi);
+        assertEquals(null, VirtualDisplayState.get());
+    }
 }

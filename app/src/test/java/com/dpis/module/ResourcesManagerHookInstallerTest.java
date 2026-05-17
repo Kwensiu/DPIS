@@ -148,6 +148,56 @@ public class ResourcesManagerHookInstallerTest {
         assertEquals(0.5f, key.mOverrideConfiguration.fontScale, 0.0001f);
     }
 
+    @Test
+    public void targetMatchingSmallestWidthDoesNotRewriteWindowConfiguration() {
+        Configuration config = new Configuration();
+        config.screenWidthDp = 393;
+        config.screenHeightDp = 800;
+        config.smallestScreenWidthDp = 360;
+        config.densityDpi = 480;
+        config.fontScale = 1.0f;
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putInt("viewport.com.example.target.width_dp", 360)
+                .putString("viewport.com.example.target.mode", ViewportApplyMode.FIELD_REWRITE)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        ResourcesManagerHookInstaller.applyResourceOverrides(config, store, "com.example.target",
+                "ResourcesManager");
+
+        assertEquals(393, config.screenWidthDp);
+        assertEquals(800, config.screenHeightDp);
+        assertEquals(360, config.smallestScreenWidthDp);
+        assertEquals(480, config.densityDpi);
+        assertEquals(480, VirtualDisplayState.get().densityDpi);
+    }
+
+    @Test
+    public void unknownDensityDoesNotPublishMdpiVirtualDisplayState() {
+        Configuration config = new Configuration();
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 736;
+        config.smallestScreenWidthDp = 360;
+        config.densityDpi = 0;
+        config.fontScale = 1.0f;
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putInt("viewport.com.example.target.width_dp", 360)
+                .putString("viewport.com.example.target.mode", ViewportApplyMode.FIELD_REWRITE)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        ResourcesManagerHookInstaller.applyResourceOverrides(config, store, "com.example.target",
+                "ResourcesManager");
+
+        assertEquals(360, config.screenWidthDp);
+        assertEquals(736, config.screenHeightDp);
+        assertEquals(360, config.smallestScreenWidthDp);
+        assertEquals(0, config.densityDpi);
+        assertEquals(null, VirtualDisplayState.get());
+    }
+
     private static final class FakeResourcesManager {
         private final Configuration configuration;
 
