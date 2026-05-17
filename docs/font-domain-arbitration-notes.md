@@ -54,6 +54,7 @@ use names that carry rendering-domain and unit semantics, for example:
 - `textViewHooksEnabled`
 - `textViewSpRewriteEnabled`
 - `textViewAbsoluteRewriteEnabled`
+- `textViewCurrentPxFallbackEnabled`
 - `paintFallbackEnabled`
 - `flutterSettingsEnabled`
 - `hyperOsNativeFlutterEnabled`
@@ -68,6 +69,9 @@ Use a combination of low-cost mechanisms:
 
 - Domain plan first: avoid installing high-frequency fallback hooks unless the
   plan needs them.
+- Keep current-px TextView fallback separate from explicit TextView rewrites.
+  It infers a base size from already-applied view state and therefore must not
+  be part of the default Resources-owned font path.
 - Idempotent target values inside a domain: compute target size from a stable
   base and skip writes when the current value is already close enough.
 - `ThreadLocal` guards only for hook reentrancy.

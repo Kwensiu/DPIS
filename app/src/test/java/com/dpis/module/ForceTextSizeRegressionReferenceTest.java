@@ -43,6 +43,30 @@ public class ForceTextSizeRegressionReferenceTest {
     }
 
     @Test
+    public void textViewCurrentPxFallbackIsNotPartOfDefaultFieldRewritePlan() {
+        Map<Object, Float> base = new HashMap<>();
+        Object key = new Object();
+
+        FontHookArbitration.FontDomainPlan plan =
+                FontHookArbitration.resolveDomainPlan(true, true);
+
+        assertFalse(plan.textViewCurrentPxFallbackEnabled);
+        assertTrue(base.isEmpty());
+    }
+
+    @Test
+    public void textSizeScalingReference_showsWhyCurrentPxFallbackMustBeOptIn() {
+        Map<Object, Float> base = new HashMap<>();
+        Object key = new Object();
+
+        float resolved = FontFieldRewriteMath.resolveScaledTextSize(
+                42f, 2.0f, base, key);
+
+        assertEquals(84f, resolved, 0.0001f);
+        assertEquals(42f, base.get(key), 0.0001f);
+    }
+
+    @Test
     public void commentHintReference_identifiesCommentLikeAndNonCommentLike() {
         assertTrue(FontFieldRewriteMath.containsCommentHint("com.max.xiaoheihe.comment.CommentTextView"));
         assertTrue(FontFieldRewriteMath.containsCommentHint("com.max.xiaoheihe.reply.ReplyItem"));
@@ -51,13 +75,14 @@ public class ForceTextSizeRegressionReferenceTest {
     }
 
     @Test
-    public void replacementHookCoversXmlStyledTextViewAttachPath() throws Exception {
+    public void replacementHookKeepsCurrentPxFallbackBehindDomainPlan() throws Exception {
         String source = read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java");
 
         assertTrue(source.contains("installTextViewAttachHook("));
         assertTrue(source.contains("getDeclaredMethod(\"onAttachedToWindow\")"));
         assertTrue(source.contains("return View.class.getDeclaredMethod(\"onAttachedToWindow\")"));
         assertTrue(source.contains("DPIS_FONT TextView attach override"));
+        assertTrue(source.contains("domainPlan.textViewCurrentPxFallbackEnabled"));
         assertTrue(source.contains("domainPlan.paintFallbackEnabled"));
         assertTrue(source.contains("DPIS_FONT Paint/TextPaint fallback suppressed"));
         assertTrue(source.indexOf("installTextViewAttachHook(")
@@ -65,7 +90,7 @@ public class ForceTextSizeRegressionReferenceTest {
     }
 
     @Test
-    public void fontHookArbitrationKeepsTextViewWebViewAndResourcesButSuppressesPaint() {
+    public void fontHookArbitrationKeepsResourcesWebViewAndTextViewGapFillButSuppressesPaint() {
         FontHookArbitration.FontDomainPlan plan =
                 FontHookArbitration.resolveDomainPlan(true, true);
 
@@ -73,19 +98,20 @@ public class ForceTextSizeRegressionReferenceTest {
         assertTrue(plan.webViewTextZoomEnabled);
         assertTrue(plan.textViewHooksEnabled);
         assertFalse(plan.textViewSpRewriteEnabled);
-        assertFalse(plan.textViewAbsoluteRewriteEnabled);
+        assertTrue(plan.textViewAbsoluteRewriteEnabled);
+        assertFalse(plan.textViewCurrentPxFallbackEnabled);
         assertFalse(plan.paintFallbackEnabled);
     }
 
     @Test
-    public void textViewUnitRewriteSkipsSpWhenResourcesOwnFontScale() {
+    public void textViewUnitRewriteSkipsSpWhenResourcesOwnsFontScale() {
         FontHookArbitration.FontDomainPlan plan =
                 FontHookArbitration.resolveDomainPlan(true, true);
 
         assertFalse(ForceTextSizeHookInstaller.shouldForceTextUnitForTest(
                 android.util.TypedValue.COMPLEX_UNIT_SP,
                 plan));
-        assertFalse(ForceTextSizeHookInstaller.shouldForceTextUnitForTest(
+        assertTrue(ForceTextSizeHookInstaller.shouldForceTextUnitForTest(
                 android.util.TypedValue.COMPLEX_UNIT_PX,
                 plan));
     }

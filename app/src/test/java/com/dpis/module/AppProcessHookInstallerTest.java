@@ -141,7 +141,9 @@ public class AppProcessHookInstallerTest {
         assertTrue(domainPlan.resourcesFontEnabled);
         assertTrue(domainPlan.webViewTextZoomEnabled);
         assertTrue(domainPlan.textViewHooksEnabled);
-        assertFalse(domainPlan.textViewAbsoluteRewriteEnabled);
+        assertFalse(domainPlan.textViewSpRewriteEnabled);
+        assertTrue(domainPlan.textViewAbsoluteRewriteEnabled);
+        assertFalse(domainPlan.textViewCurrentPxFallbackEnabled);
         assertTrue(domainPlan.flutterSettingsEnabled);
         assertFalse(domainPlan.hyperOsNativeFlutterEnabled);
         assertFalse(domainPlan.genericNativeFlutterEnabled);
@@ -153,16 +155,17 @@ public class AppProcessHookInstallerTest {
                 AppProcessHookInstaller.resolveFontDomainPlan(
                         new AppProcessHookInstaller.FontHookPlan(true, false, false));
 
-        assertFalse(domainPlan.resourcesFontEnabled);
+        assertTrue(domainPlan.resourcesFontEnabled);
         assertTrue(domainPlan.webViewTextZoomEnabled);
         assertFalse(domainPlan.textViewHooksEnabled);
+        assertFalse(domainPlan.textViewCurrentPxFallbackEnabled);
         assertTrue(domainPlan.flutterSettingsEnabled);
         assertFalse(domainPlan.hyperOsNativeFlutterEnabled);
         assertFalse(domainPlan.genericNativeFlutterEnabled);
     }
 
     @Test
-    public void fieldRewriteKeepsIndependentFontDomainsButSkipsRiskierFallbacks() {
+    public void fieldRewriteKeepsIndependentDomainsButSkipsRiskierTextViewFallbacks() {
         FontHookArbitration.FontDomainPlan domainPlan =
                 AppProcessHookInstaller.resolveFontDomainPlan(
                         new AppProcessHookInstaller.FontHookPlan(false, true, false));
@@ -171,7 +174,8 @@ public class AppProcessHookInstallerTest {
         assertTrue(domainPlan.textViewHooksEnabled);
         assertTrue(domainPlan.flutterSettingsEnabled);
         assertFalse(domainPlan.textViewSpRewriteEnabled);
-        assertFalse(domainPlan.textViewAbsoluteRewriteEnabled);
+        assertTrue(domainPlan.textViewAbsoluteRewriteEnabled);
+        assertFalse(domainPlan.textViewCurrentPxFallbackEnabled);
         assertFalse(domainPlan.paintFallbackEnabled);
         assertFalse(domainPlan.hyperOsNativeFlutterEnabled);
         assertFalse(domainPlan.genericNativeFlutterEnabled);
@@ -213,8 +217,9 @@ public class AppProcessHookInstallerTest {
 
         assertTrue(emulationPlan.webViewTextZoomEnabled);
         assertTrue(emulationPlan.flutterSettingsEnabled);
-        assertFalse(emulationPlan.resourcesFontEnabled);
+        assertTrue(emulationPlan.resourcesFontEnabled);
         assertFalse(emulationPlan.textViewHooksEnabled);
+        assertFalse(emulationPlan.textViewCurrentPxFallbackEnabled);
         assertFalse(emulationPlan.hyperOsNativeFlutterEnabled);
         assertFalse(emulationPlan.genericNativeFlutterEnabled);
 
@@ -223,6 +228,8 @@ public class AppProcessHookInstallerTest {
         assertTrue(fieldRewritePlan.textViewHooksEnabled);
         assertTrue(fieldRewritePlan.flutterSettingsEnabled);
         assertFalse(fieldRewritePlan.textViewSpRewriteEnabled);
+        assertTrue(fieldRewritePlan.textViewAbsoluteRewriteEnabled);
+        assertFalse(fieldRewritePlan.textViewCurrentPxFallbackEnabled);
         assertFalse(fieldRewritePlan.paintFallbackEnabled);
         assertFalse(fieldRewritePlan.hyperOsNativeFlutterEnabled);
         assertFalse(fieldRewritePlan.genericNativeFlutterEnabled);

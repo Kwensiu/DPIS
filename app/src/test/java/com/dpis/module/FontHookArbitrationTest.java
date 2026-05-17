@@ -7,7 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 public class FontHookArbitrationTest {
     @Test
-    public void fieldRewriteEnablesIndependentFontDomainsAndFlutterSettings() {
+    public void fieldRewriteUsesResourcesFontDomainAndGapFillsTextViewAbsoluteUnits() {
         FontHookArbitration.FontDomainPlan plan =
                 FontHookArbitration.resolveDomainPlan(true, true);
 
@@ -15,7 +15,8 @@ public class FontHookArbitrationTest {
         assertTrue(plan.webViewTextZoomEnabled);
         assertTrue(plan.textViewHooksEnabled);
         assertFalse(plan.textViewSpRewriteEnabled);
-        assertFalse(plan.textViewAbsoluteRewriteEnabled);
+        assertTrue(plan.textViewAbsoluteRewriteEnabled);
+        assertFalse(plan.textViewCurrentPxFallbackEnabled);
         assertFalse(plan.paintFallbackEnabled);
         assertTrue(plan.flutterSettingsEnabled);
         assertFalse(plan.hyperOsNativeFlutterEnabled);
@@ -27,11 +28,12 @@ public class FontHookArbitrationTest {
         FontHookArbitration.FontDomainPlan plan =
                 FontHookArbitration.resolveDomainPlan(true, false);
 
-        assertFalse(plan.resourcesFontEnabled);
+        assertTrue(plan.resourcesFontEnabled);
         assertTrue(plan.webViewTextZoomEnabled);
         assertFalse(plan.textViewHooksEnabled);
         assertFalse(plan.textViewSpRewriteEnabled);
         assertFalse(plan.textViewAbsoluteRewriteEnabled);
+        assertFalse(plan.textViewCurrentPxFallbackEnabled);
         assertFalse(plan.paintFallbackEnabled);
         assertTrue(plan.flutterSettingsEnabled);
         assertFalse(plan.hyperOsNativeFlutterEnabled);
@@ -49,6 +51,7 @@ public class FontHookArbitrationTest {
         assertFalse(plan.textViewHooksEnabled);
         assertFalse(plan.textViewSpRewriteEnabled);
         assertFalse(plan.textViewAbsoluteRewriteEnabled);
+        assertFalse(plan.textViewCurrentPxFallbackEnabled);
         assertFalse(plan.paintFallbackEnabled);
         assertFalse(plan.flutterSettingsEnabled);
         assertFalse(plan.hyperOsNativeFlutterEnabled);

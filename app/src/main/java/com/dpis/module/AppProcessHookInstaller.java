@@ -82,6 +82,8 @@ final class AppProcessHookInstaller {
                 + ", fontDomainPlan=" + fontDomainPlan.reason
                 + ", resourcesFont=" + fontDomainPlan.resourcesFontEnabled
                 + ", textViewSpRewrite=" + fontDomainPlan.textViewSpRewriteEnabled
+                + ", textViewCurrentPxFallback="
+                + fontDomainPlan.textViewCurrentPxFallbackEnabled
                 + ", paintFallback=" + fontDomainPlan.paintFallbackEnabled
                 + ", flutterSettings=" + fontDomainPlan.flutterSettingsEnabled
                 + ", hyperOsNativeFlutter=" + fontDomainPlan.hyperOsNativeFlutterEnabled

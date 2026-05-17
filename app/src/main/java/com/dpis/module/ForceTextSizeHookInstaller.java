@@ -194,8 +194,6 @@ final class ForceTextSizeHookInstaller {
                                 textView.getContext());
                         return result;
                     });
-            // Current-px TextView fallbacks cannot tell whether Resources/scaledDensity
-            // already supplied the font scale, so only install them when Resources is not primary.
             if (shouldInstallCurrentPxTextViewFallbacks(domainPlan)) {
                 installTextAppearanceHooks(xposed, textViewClass, factor, targetPercent, packageName);
                 installTextViewAttachHook(xposed, textViewClass, factor, targetPercent, packageName);
@@ -847,7 +845,7 @@ final class ForceTextSizeHookInstaller {
 
     private static boolean shouldInstallCurrentPxTextViewFallbacks(
             FontHookArbitration.FontDomainPlan domainPlan) {
-        return domainPlan == null || !domainPlan.resourcesFontEnabled;
+        return domainPlan == null || domainPlan.textViewCurrentPxFallbackEnabled;
     }
 
     private static boolean isTargetPercentActive(Integer targetPercent) {

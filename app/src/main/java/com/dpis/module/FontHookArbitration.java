@@ -23,12 +23,14 @@ final class FontHookArbitration {
                 false,
                 false,
                 false,
+                false,
                 "font-scale-disabled");
         }
         if (!fieldRewriteEnabled) {
             return new FontDomainPlan(
-                    false,
                     true,
+                    true,
+                    false,
                     false,
                     false,
                     false,
@@ -43,6 +45,7 @@ final class FontHookArbitration {
                 true,
                 true,
                 false,
+                true,
                 false,
                 false,
                 true,
@@ -57,6 +60,7 @@ final class FontHookArbitration {
         final boolean textViewHooksEnabled;
         final boolean textViewSpRewriteEnabled;
         final boolean textViewAbsoluteRewriteEnabled;
+        final boolean textViewCurrentPxFallbackEnabled;
         final boolean paintFallbackEnabled;
         final boolean flutterSettingsEnabled;
         final boolean hyperOsNativeFlutterEnabled;
@@ -68,6 +72,7 @@ final class FontHookArbitration {
                        boolean textViewHooksEnabled,
                        boolean textViewSpRewriteEnabled,
                        boolean textViewAbsoluteRewriteEnabled,
+                       boolean textViewCurrentPxFallbackEnabled,
                        boolean paintFallbackEnabled,
                        boolean flutterSettingsEnabled,
                        boolean hyperOsNativeFlutterEnabled,
@@ -78,6 +83,7 @@ final class FontHookArbitration {
             this.textViewHooksEnabled = textViewHooksEnabled;
             this.textViewSpRewriteEnabled = textViewSpRewriteEnabled;
             this.textViewAbsoluteRewriteEnabled = textViewAbsoluteRewriteEnabled;
+            this.textViewCurrentPxFallbackEnabled = textViewCurrentPxFallbackEnabled;
             this.paintFallbackEnabled = paintFallbackEnabled;
             this.flutterSettingsEnabled = flutterSettingsEnabled;
             this.hyperOsNativeFlutterEnabled = hyperOsNativeFlutterEnabled;
