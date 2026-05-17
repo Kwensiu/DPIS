@@ -1,5 +1,6 @@
 package com.dpis.module;
 
+import android.annotation.SuppressLint;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -121,6 +122,7 @@ final class HyperOsFlutterFontHookInstaller {
         }
     }
 
+    @SuppressLint("SoonBlockedPrivateApi")
     private static void installViewRootTraversalProbe(XposedInterface xposed, String packageName) {
         if (xposed == null || !VIEW_ROOT_PROBE_INSTALLED.compareAndSet(false, true)) {
             return;

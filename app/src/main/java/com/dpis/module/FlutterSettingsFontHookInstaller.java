@@ -1,5 +1,6 @@
 package com.dpis.module;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
@@ -863,6 +864,7 @@ final class FlutterSettingsFontHookInstaller {
         }
     }
 
+    @SuppressLint("SoonBlockedPrivateApi")
     private static void installViewRootFlutterViewScan(XposedInterface xposed,
             String packageName,
             float targetFontScale,
