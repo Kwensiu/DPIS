@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.9.0](https://github.com/Kwensiu/DPIS/compare/v1.8.2...v1.9.0) (2026-05-17)
+
+
+### Features
+
+* Unify Font Hook Domains and Stabilize Viewport Scaling ([#52](https://github.com/Kwensiu/DPIS/issues/52)) ([ace8658](https://github.com/Kwensiu/DPIS/commit/ace8658e16a0b29ca1bf5d167b21eae3fab64a8f))
+
+
+### Bug Fixes
+
+* restore post-squash font cleanup commits ([#55](https://github.com/Kwensiu/DPIS/issues/55)) ([df17016](https://github.com/Kwensiu/DPIS/commit/df1701621a6b0dc922536bc972ccf0e738604ae9))
+
+
+### UI
+
+* rename UI terminology to smallest width, system, and compat ([ec1030e](https://github.com/Kwensiu/DPIS/commit/ec1030ec25446a2b61e76bdec2ed11b22421323c))
+
 ## [1.8.2](https://github.com/Kwensiu/DPIS/compare/v1.8.1...v1.8.2) (2026-05-15)
 
 
