@@ -130,6 +130,19 @@ public final class DpisApplication extends Application implements XposedServiceH
         if (from.hasGlobalLogEnabled() && !to.hasGlobalLogEnabled()) {
             to.setGlobalLogEnabled(from.isGlobalLogEnabled());
         }
+        if (from.hasFlutterFontHookEnabled() && !to.hasFlutterFontHookEnabled()) {
+            to.setFlutterFontHookEnabled(from.isFlutterFontHookEnabled());
+        }
+        if (from.hasFlutterSettingsFontHookEnabled()
+                && !to.hasFlutterSettingsFontHookEnabled()) {
+            to.setFlutterSettingsFontHookEnabled(from.isFlutterSettingsFontHookEnabled());
+        }
+        if (!from.hasFlutterFontHookEnabled()
+                && from.hasHyperOsFlutterFontHookEnabled()
+                && from.isHyperOsFlutterFontHookEnabled()
+                && !to.hasFlutterFontHookEnabled()) {
+            to.setFlutterFontHookEnabled(true);
+        }
         if (from.hasHyperOsFlutterFontHookEnabled() && !to.hasHyperOsFlutterFontHookEnabled()) {
             to.setHyperOsFlutterFontHookEnabled(from.isHyperOsFlutterFontHookEnabled());
         }

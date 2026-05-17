@@ -48,12 +48,56 @@ public final class ModulePackagePlanTest {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 120);
         store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
+        store.setFlutterFontHookEnabled(true);
         store.setHyperOsFlutterFontHookEnabled(true);
 
         ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
 
         assertTrue(plan.fontEnabled);
         assertTrue(plan.hyperOsNativeFlutterFontEnabled);
+    }
+
+    @Test
+    public void carriesFlutterSettingsFlagForAppProcessDispatch() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetFontScalePercent("com.example.app", 120);
+        store.setTargetFontApplyMode("com.example.app", FontApplyMode.SYSTEM_EMULATION);
+        store.setFlutterFontHookEnabled(true);
+        store.setFlutterSettingsFontHookEnabled(true);
+
+        ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
+
+        assertTrue(plan.fontEnabled);
+        assertTrue(plan.flutterSettingsFontEnabled);
+        assertFalse(plan.hyperOsNativeFlutterFontEnabled);
+    }
+
+    @Test
+    public void flutterMasterSwitchGatesFlutterSettingsFlag() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetFontScalePercent("com.example.app", 120);
+        store.setTargetFontApplyMode("com.example.app", FontApplyMode.SYSTEM_EMULATION);
+        store.setFlutterFontHookEnabled(false);
+        store.setFlutterSettingsFontHookEnabled(true);
+
+        ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
+
+        assertTrue(plan.fontEnabled);
+        assertFalse(plan.flutterSettingsFontEnabled);
+    }
+
+    @Test
+    public void flutterMasterSwitchGatesHyperOsNativeFlutterFlag() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetFontScalePercent("com.example.app", 120);
+        store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
+        store.setFlutterFontHookEnabled(false);
+        store.setHyperOsFlutterFontHookEnabled(true);
+
+        ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
+
+        assertTrue(plan.fontEnabled);
+        assertFalse(plan.hyperOsNativeFlutterFontEnabled);
     }
 
     @Test
@@ -87,6 +131,23 @@ public final class ModulePackagePlanTest {
 
         ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
 
+        assertFalse(plan.shouldInstallHooks());
+    }
+
+    @Test
+    public void disabledPackageStillCarriesInactiveFlutterSupplementsOnlyForDiagnostics() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetFontScalePercent("com.example.app", 120);
+        store.setTargetFontApplyMode("com.example.app", FontApplyMode.SYSTEM_EMULATION);
+        store.setFlutterFontHookEnabled(true);
+        store.setFlutterSettingsFontHookEnabled(true);
+        store.setTargetDpisEnabled("com.example.app", false);
+
+        ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
+
+        assertFalse(plan.targetDpisEnabled);
+        assertTrue(plan.fontScaleActive);
+        assertTrue(plan.flutterSettingsFontEnabled);
         assertFalse(plan.shouldInstallHooks());
     }
 }

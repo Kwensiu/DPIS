@@ -133,6 +133,7 @@ public final class ModuleMain extends XposedModule {
                 + ", targetViewportMode=" + packagePlan.targetViewportMode
                 + ", targetFontScalePercent=" + packagePlan.targetFontScalePercent
                 + ", targetFontMode=" + packagePlan.targetFontMode
+                + ", flutterSettingsFont=" + packagePlan.flutterSettingsFontEnabled
                 + ", hyperOsNativeFlutterFont=" + packagePlan.hyperOsNativeFlutterFontEnabled);
         appProcessInstallAttempted = true;
         try {
@@ -141,6 +142,7 @@ public final class ModuleMain extends XposedModule {
                     packagePlan.targetViewportMode,
                     packagePlan.targetFontMode,
                     packagePlan.fontScaleActive,
+                    packagePlan.flutterSettingsFontEnabled,
                     packagePlan.hyperOsNativeFlutterFontEnabled);
         } catch (Throwable throwable) {
             appProcessInstallAttempted = false;
@@ -159,14 +161,16 @@ public final class ModuleMain extends XposedModule {
             return;
         }
         ModulePackagePlan packagePlan = ModulePackagePlan.resolve(snapshot, packageName);
-        if (!packagePlan.fontScaleActive) {
+        if (!packagePlan.targetDpisEnabled || !packagePlan.fontScaleActive) {
             return;
         }
         HookRuntimePolicy policy = HookRuntimePolicy.fromSnapshot(snapshot);
         AppProcessHookInstaller.FontHookPlan fontPlan = AppProcessHookInstaller.resolveFontHookPlan(
                 policy, packagePlan.fontScaleActive, packagePlan.targetFontMode);
         FontHookArbitration.FontDomainPlan domainPlan = AppProcessHookInstaller.resolveFontDomainPlan(
-                fontPlan, packagePlan.hyperOsNativeFlutterFontEnabled);
+                fontPlan,
+                packagePlan.flutterSettingsFontEnabled,
+                packagePlan.hyperOsNativeFlutterFontEnabled);
         if (!domainPlan.flutterSettingsEnabled) {
             return;
         }

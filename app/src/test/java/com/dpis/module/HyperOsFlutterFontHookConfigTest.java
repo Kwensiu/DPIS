@@ -13,9 +13,15 @@ public class HyperOsFlutterFontHookConfigTest {
     public void experimentalHookDefaultsOffAndPersists() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
 
+        assertFalse(store.isFlutterFontHookEnabled());
+        assertFalse(store.isFlutterSettingsFontHookEnabled());
         assertFalse(store.isHyperOsFlutterFontHookEnabled());
 
+        assertTrue(store.setFlutterFontHookEnabled(true));
+        assertTrue(store.setFlutterSettingsFontHookEnabled(true));
         assertTrue(store.setHyperOsFlutterFontHookEnabled(true));
+        assertTrue(store.isFlutterFontHookEnabled());
+        assertTrue(store.isFlutterSettingsFontHookEnabled());
         assertTrue(store.isHyperOsFlutterFontHookEnabled());
     }
 
@@ -111,6 +117,14 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(source.contains("store.getTargetFontApplyMode(packageName)"));
         assertTrue(source.contains("FontApplyMode.isEnabled("));
         assertFalse(source.contains("store == null || !store.isHyperOsFlutterFontHookEnabled()"));
+    }
+
+    @Test
+    public void nativeProxyRefreshRequiresFlutterMasterSwitch() throws Exception {
+        String source = readSource("src/main/java/com/dpis/module/HyperOsNativeProxyRefreshCoordinator.java");
+
+        assertTrue(source.contains("!store.isFlutterFontHookEnabled()"));
+        assertTrue(source.contains("!store.isHyperOsFlutterFontHookEnabled()"));
     }
 
     @Test

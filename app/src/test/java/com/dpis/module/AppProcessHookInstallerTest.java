@@ -165,6 +165,34 @@ public class AppProcessHookInstallerTest {
     }
 
     @Test
+    public void flutterSettingsDomainIsIndependentlyGatedBySupplementFlag() {
+        FontHookArbitration.FontDomainPlan domainPlan =
+                AppProcessHookInstaller.resolveFontDomainPlan(
+                        new AppProcessHookInstaller.FontHookPlan(true, false, false),
+                        true,
+                        false);
+
+        assertTrue(domainPlan.resourcesFontEnabled);
+        assertTrue(domainPlan.flutterSettingsEnabled);
+        assertFalse(domainPlan.hyperOsNativeFlutterEnabled);
+        assertFalse(domainPlan.genericNativeFlutterEnabled);
+    }
+
+    @Test
+    public void disabledFontPlanSuppressesFlutterSettingsSupplementDomain() {
+        FontHookArbitration.FontDomainPlan domainPlan =
+                AppProcessHookInstaller.resolveFontDomainPlan(
+                        new AppProcessHookInstaller.FontHookPlan(false, false, false),
+                        true,
+                        false);
+
+        assertFalse(domainPlan.resourcesFontEnabled);
+        assertFalse(domainPlan.flutterSettingsEnabled);
+        assertFalse(domainPlan.hyperOsNativeFlutterEnabled);
+        assertFalse(domainPlan.genericNativeFlutterEnabled);
+    }
+
+    @Test
     public void fieldRewriteKeepsIndependentDomainsButSkipsRiskierTextViewFallbacks() {
         FontHookArbitration.FontDomainPlan domainPlan =
                 AppProcessHookInstaller.resolveFontDomainPlan(
@@ -260,6 +288,37 @@ public class AppProcessHookInstallerTest {
         assertTrue(AppProcessHookInstaller.shouldInstallProbeHooks(policy));
     }
 
+    @Test
+    public void debugFlutterSettingsPropertyMatchesExactPackageOrWildcardOnly() {
+        assertTrue(AppProcessHookInstaller.isDebugPropertyPackageMatchForTest(
+                "debug.dpis.font.flutter_settings_only_package",
+                "com.example.app",
+                "com.example.app"));
+        assertTrue(AppProcessHookInstaller.isDebugPropertyPackageMatchForTest(
+                "debug.dpis.font.flutter_settings_only_package",
+                "com.example.app",
+                "*"));
+        assertFalse(AppProcessHookInstaller.isDebugPropertyPackageMatchForTest(
+                "debug.dpis.font.flutter_settings_only_package",
+                "com.example.app",
+                "com.example.other"));
+        assertFalse(AppProcessHookInstaller.isDebugPropertyPackageMatchForTest(
+                "debug.dpis.font.flutter_settings_only_package",
+                "com.example.app",
+                ""));
+    }
+
+    @Test
+    public void debugFlutterSettingsPropertiesAreDebugOnlyAndPackageScoped() throws Exception {
+        String source = readSource("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+
+        assertTrue(source.contains("debug.dpis.font.force_flutter_settings_package"));
+        assertTrue(source.contains("debug.dpis.font.flutter_settings_only_package"));
+        assertTrue(source.contains("if (!BuildConfig.DEBUG || packageName == null"));
+        assertTrue(source.contains("createDebugFlutterSettingsPlan("));
+        assertTrue(source.contains("!debugFlutterSettingsOnly"));
+    }
+
     private static HookRuntimePolicy createPolicy(boolean safeMode) {
         return createPolicy(safeMode, true);
     }
@@ -277,5 +336,14 @@ public class AppProcessHookInstallerTest {
         store.setSystemServerHooksEnabled(systemHooksEnabled);
         store.setGlobalLogEnabled(globalLogEnabled);
         return HookRuntimePolicy.fromStore(store);
+    }
+
+    private static String readSource(String relativePath) throws Exception {
+        java.nio.file.Path path = java.nio.file.Paths.get(relativePath);
+        if (!java.nio.file.Files.exists(path)) {
+            path = java.nio.file.Paths.get("app", relativePath);
+        }
+        return new String(java.nio.file.Files.readAllBytes(path),
+                java.nio.charset.StandardCharsets.UTF_8);
     }
 }

@@ -120,8 +120,14 @@
     <string name="font_debug_reason_not_injected_hint">Module not loaded. Check LSPosed and restart the app.</string>
     <string name="font_debug_reason_no_events">No events</string>
     <string name="font_debug_reason_no_events_hint">Injected, but no font paths hit. Open a text page or view totals.</string>
-    <string name="settings_hyperos_flutter_font_hook_label">Experimental HyperOS Flutter font hook</string>
-    <string name="settings_hyperos_flutter_font_hook_hint">Native text hook for HyperOS Flutter apps. Requires app restart.</string>
+    <string name="settings_experimental_title">Laboratory</string>
+    <string name="settings_experimental_hint">Flutter and native font routes.</string>
+    <string name="settings_flutter_font_hook_label">Flutter font route</string>
+    <string name="settings_flutter_font_hook_hint">Includes unverified experimental features</string>
+    <string name="settings_flutter_settings_font_hook_label">Flutter settings messages</string>
+    <string name="settings_flutter_settings_font_hook_hint">flutterSettingsFontEnabled</string>
+    <string name="settings_hyperos_flutter_font_hook_label">HyperOS native text</string>
+    <string name="settings_hyperos_flutter_font_hook_hint">hyperOsNativeFlutterFontEnabled</string>
     <string name="settings_about_label">About</string>
     <string name="settings_about_hint">Version, source code, and feedback.</string>
     <string name="settings_config_backup_label">Config backup</string>
