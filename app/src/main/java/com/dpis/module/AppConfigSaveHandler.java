@@ -61,7 +61,7 @@ final class AppConfigSaveHandler {
                 onChanged.run();
             }
             if (saved && emulationRequestedWithoutSystemScope) {
-                hint = R.string.emulation_requires_system_scope_hint;
+                hint = R.string.system_mode_requires_system_scope_hint;
             }
             return new int[] { 1, hint };
         } catch (NumberFormatException exception) {

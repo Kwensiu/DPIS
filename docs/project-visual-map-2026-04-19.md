@@ -111,9 +111,9 @@ flowchart TD
 - `DisplayHookInstaller` / `WindowMetricsHookInstaller`
   - 负责 viewport / display 相关覆写。
 - `ActivityThreadFontHookInstaller`
-  - 字体系统伪装路径。
+  - 字体系统模式路径。
 - `ForceTextSizeHookInstaller` / `PaintTextSizeFallbackHookInstaller` / `WebViewFontHookInstaller`
-  - 字体字段替换和兜底路径。
+  - 字体兼容模式和兜底路径。
 
 ### 4.4 system_server Hook 层
 

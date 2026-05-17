@@ -16,8 +16,8 @@ public class AppStatusFormatterTest {
             "Enabled",
             "Disabled",
             "Not enabled",
-            "Emulation",
-            "Replace",
+            "System",
+            "Compat",
             "Font",
             Locale.US);
 
@@ -27,8 +27,8 @@ public class AppStatusFormatterTest {
             "\u5DF2\u542F\u7528",
             "\u5DF2\u7981\u7528",
             "\u672A\u542F\u7528",
-            "\u4F2A\u88C5",
-            "\u66FF\u6362",
+            "\u7CFB\u7EDF",
+            "\u517C\u5BB9",
             "\u5B57\u4F53",
             Locale.CHINA);
 
@@ -41,7 +41,7 @@ public class AppStatusFormatterTest {
 
     @Test
     public void formatsInScopeEnabledStateWithLabels() {
-        assertEquals("Injected | 320dp(Emulation) | Font115%(Emulation)",
+        assertEquals("Injected | 320dp(System) | Font115%(System)",
                 AppStatusFormatter.format(
                         englishLabels,
                         true,
@@ -54,7 +54,7 @@ public class AppStatusFormatterTest {
 
     @Test
     public void formatsFontOnlyStateWithChineseLabels() {
-        assertEquals("\u672A\u6CE8\u5165 | \u672A\u542F\u7528 | \u5B57\u4F53110%(\u66FF\u6362)",
+        assertEquals("\u672A\u6CE8\u5165 | \u672A\u542F\u7528 | \u5B57\u4F53110%(\u517C\u5BB9)",
                 AppStatusFormatter.format(
                         chineseLabels,
                         false,

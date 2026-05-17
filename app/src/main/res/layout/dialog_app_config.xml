@@ -39,9 +39,9 @@
 
                     <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal">
 
-                        <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_viewport_mode_emulation_label" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="@string/dialog_viewport_mode_emulation" android:textAppearance="@style/TextAppearance.Material3.LabelMedium" />
+                        <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_viewport_mode_system_label" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="@string/dialog_viewport_mode_system" android:textAppearance="@style/TextAppearance.Material3.LabelMedium" />
 
-                        <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_viewport_mode_replace_label" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="@string/dialog_viewport_mode_replace" android:textAppearance="@style/TextAppearance.Material3.LabelMedium" />
+                        <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_viewport_mode_compat_label" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="@string/dialog_viewport_mode_compat" android:textAppearance="@style/TextAppearance.Material3.LabelMedium" />
                     </LinearLayout>
                 </FrameLayout>
             </FrameLayout>
@@ -65,9 +65,9 @@
 
                     <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal">
 
-                        <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_font_mode_emulation_label" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="@string/dialog_font_mode_emulation" android:textAppearance="@style/TextAppearance.Material3.LabelMedium" />
+                        <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_font_mode_system_label" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="@string/dialog_font_mode_system" android:textAppearance="@style/TextAppearance.Material3.LabelMedium" />
 
-                        <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_font_mode_replace_label" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="@string/dialog_font_mode_fallback" android:textAppearance="@style/TextAppearance.Material3.LabelMedium" />
+                        <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_font_mode_compat_label" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="@string/dialog_font_mode_compat" android:textAppearance="@style/TextAppearance.Material3.LabelMedium" />
                     </LinearLayout>
                 </FrameLayout>
             </FrameLayout>

@@ -54,8 +54,8 @@ final class AppStatusFormatter {
                 resources.getString(R.string.app_status_enabled),
                 resources.getString(R.string.app_status_disabled),
                 resources.getString(R.string.app_status_not_enabled),
-                resources.getString(R.string.app_status_mode_emulation),
-                resources.getString(R.string.app_status_mode_replace),
+                resources.getString(R.string.app_status_mode_system),
+                resources.getString(R.string.app_status_mode_compat),
                 resources.getString(R.string.app_status_font_prefix),
                 locale);
     }

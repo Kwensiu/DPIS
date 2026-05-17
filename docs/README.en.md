@@ -6,15 +6,16 @@
 
 [中文说明](../README.md) | English
 
-DPIS is an LSPosed/Xposed-based Android module for per-app display tuning (`virtual width + font size`) without changing global system display settings.
+DPIS is an LSPosed/Xposed-based Android module for per-app display tuning (`smallest width + font size`) without changing global system display settings.
 
 ## Core Capabilities
 
-- Configure per-app virtual width (`dp`)
+- Configure per-app smallest width (`dp`)
 - Configure per-app font scale (`50-300%`)
-- Both width and font support `Emulation` and `Replacement` modes
+- Both width and font support `System` and `Compat` modes
 - App list search and filtering (`All apps` / `Configured apps`)
 - System-layer hook toggle and safe mode
+- Experimental Flutter / HyperOS native font supplement routes
 
 ## Requirements
 
@@ -27,27 +28,29 @@ DPIS is an LSPosed/Xposed-based Android module for per-app display tuning (`virt
 1. Enable the DPIS module in LSPosed.
 2. Select the target app in scope. In regular cases you do not need `system`.
 3. Open DPIS and configure:
-   - Virtual width (`dp`)
+   - Smallest width (`dp`)
    - Font scale (`50-300%`)
-   - Width mode and font mode (`Emulation` / `Replacement`)
+   - Width mode and font mode (`System` / `Compat`)
 4. Save, then restart the target app process. Reboot the device if needed.
 
-If you use `Emulation`, also enable `system` scope in LSPosed. `Replacement` usually does not need it.
+If you use `System`, also enable `system` scope in LSPosed. `Compat` usually does not need it.
 
 ## Modes
 
 | Mode | Characteristics | Best for | Notes |
 | --- | --- | --- | --- |
-| `Emulation` | Closer to native system behavior, usually more natural | System-like rendering consistency | Depends on system-layer hooks; some apps do not support it |
-| `Replacement` | Direct field rewrite, more immediate | Most regular apps | May cause layout drift or scaling glitches |
+| `System` | Closer to native system behavior, usually more natural | System-like rendering consistency | Depends on system-layer hooks; some apps do not support it |
+| `Compat` | Uses in-process compatibility hooks to adjust scaling more directly | Most regular apps | May cause layout drift or scaling glitches |
+
+> Note: older UI labels used "Emulation / Replacement". The UI now shows "System / Compat".
 
 ## System-Layer Hook and Safe Mode
 
-- `Off`: only uses in-process overrides for the target app. Recommended with `Replacement`.
+- `Off`: only uses in-process overrides for the target app. Recommended with `Compat`.
 - `On`: enables the full `system_server` path, useful for debugging and comparison.
 - `On + Safe mode`: limits hooks to lower-risk entries (`activity-start`), recommended as the default.
 
-If you use `Emulation`, make sure LSPosed scope includes `system`. `Replacement` can usually work with only the target app selected.
+If you use `System`, make sure LSPosed scope includes `system`. `Compat` can usually work with only the target app selected.
 
 ## Logs and Diagnostics
 

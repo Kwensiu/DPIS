@@ -83,13 +83,13 @@ final class AppConfigDialogBinder {
                 new ModeToggle(
                         dialogView.findViewById(R.id.dialog_viewport_mode_toggle_button),
                         dialogView.findViewById(R.id.dialog_viewport_mode_toggle_thumb),
-                        dialogView.findViewById(R.id.dialog_viewport_mode_emulation_label),
-                        dialogView.findViewById(R.id.dialog_viewport_mode_replace_label)),
+                        dialogView.findViewById(R.id.dialog_viewport_mode_system_label),
+                        dialogView.findViewById(R.id.dialog_viewport_mode_compat_label)),
                 new ModeToggle(
                         dialogView.findViewById(R.id.dialog_font_mode_toggle_button),
                         dialogView.findViewById(R.id.dialog_font_mode_toggle_thumb),
-                        dialogView.findViewById(R.id.dialog_font_mode_emulation_label),
-                        dialogView.findViewById(R.id.dialog_font_mode_replace_label)),
+                        dialogView.findViewById(R.id.dialog_font_mode_system_label),
+                        dialogView.findViewById(R.id.dialog_font_mode_compat_label)),
                 dialogView.findViewById(R.id.dialog_scope_button),
                 dialogView.findViewById(R.id.dialog_start_button),
                 dialogView.findViewById(R.id.dialog_restart_button),

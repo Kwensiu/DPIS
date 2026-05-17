@@ -22,10 +22,10 @@
             android:orientation="vertical">
 
             <LinearLayout
-                android:id="@+id/help_tutorial_emulation_card"
+                android:id="@+id/help_tutorial_system_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/help_tutorial_emulation_card_background"
+                android:background="@drawable/help_tutorial_system_card_background"
                 android:orientation="vertical"
                 android:padding="18dp">
 
@@ -40,34 +40,34 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:includeFontPadding="false"
-                        android:text="@string/help_tutorial_emulation_title"
+                        android:text="@string/help_tutorial_system_title"
                         android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
                         android:textStyle="bold" />
 
                     <com.google.android.material.textview.MaterialTextView
-                        android:id="@+id/help_tutorial_emulation_badge"
+                        android:id="@+id/help_tutorial_system_badge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/help_tutorial_emulation_badge_background"
+                        android:background="@drawable/help_tutorial_system_badge_background"
                         android:gravity="center"
                         android:includeFontPadding="false"
                         android:paddingStart="10dp"
                         android:paddingTop="6dp"
                         android:paddingEnd="10dp"
                         android:paddingBottom="6dp"
-                        android:text="@string/help_tutorial_emulation_badge"
+                        android:text="@string/help_tutorial_system_badge"
                         android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
-                        android:textColor="@color/help_tutorial_emulation_badge_text"
+                        android:textColor="@color/help_tutorial_system_badge_text"
                         android:textStyle="bold" />
                 </LinearLayout>
 
                 <com.google.android.material.textview.MaterialTextView
-                    android:id="@+id/help_tutorial_emulation_summary"
+                    android:id="@+id/help_tutorial_system_summary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:lineSpacingExtra="2dp"
-                    android:text="@string/help_tutorial_emulation_summary"
+                    android:text="@string/help_tutorial_system_summary"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                     android:textColor="?attr/colorOnSurface" />
 
@@ -76,17 +76,17 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:lineSpacingExtra="2dp"
-                    android:text="@string/help_tutorial_emulation_points"
+                    android:text="@string/help_tutorial_system_points"
                     android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                     android:textColor="?attr/colorOnSurfaceVariant" />
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/help_tutorial_replace_card"
+                android:id="@+id/help_tutorial_compat_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:background="@drawable/help_tutorial_replace_card_background"
+                android:background="@drawable/help_tutorial_compat_card_background"
                 android:orientation="vertical"
                 android:padding="18dp">
 
@@ -101,34 +101,34 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:includeFontPadding="false"
-                        android:text="@string/help_tutorial_replace_title"
+                        android:text="@string/help_tutorial_compat_title"
                         android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
                         android:textStyle="bold" />
 
                     <com.google.android.material.textview.MaterialTextView
-                        android:id="@+id/help_tutorial_replace_badge"
+                        android:id="@+id/help_tutorial_compat_badge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/help_tutorial_replace_badge_background"
+                        android:background="@drawable/help_tutorial_compat_badge_background"
                         android:gravity="center"
                         android:includeFontPadding="false"
                         android:paddingStart="10dp"
                         android:paddingTop="6dp"
                         android:paddingEnd="10dp"
                         android:paddingBottom="6dp"
-                        android:text="@string/help_tutorial_replace_badge"
+                        android:text="@string/help_tutorial_compat_badge"
                         android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
-                        android:textColor="@color/help_tutorial_replace_badge_text"
+                        android:textColor="@color/help_tutorial_compat_badge_text"
                         android:textStyle="bold" />
                 </LinearLayout>
 
                 <com.google.android.material.textview.MaterialTextView
-                    android:id="@+id/help_tutorial_replace_summary"
+                    android:id="@+id/help_tutorial_compat_summary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:lineSpacingExtra="2dp"
-                    android:text="@string/help_tutorial_replace_summary"
+                    android:text="@string/help_tutorial_compat_summary"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                     android:textColor="?attr/colorOnSurface" />
 
@@ -137,7 +137,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:lineSpacingExtra="2dp"
-                    android:text="@string/help_tutorial_replace_points"
+                    android:text="@string/help_tutorial_compat_points"
                     android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                     android:textColor="?attr/colorOnSurfaceVariant" />
             </LinearLayout>

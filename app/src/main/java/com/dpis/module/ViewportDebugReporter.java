@@ -27,7 +27,7 @@ final class ViewportDebugReporter {
         boolean changed = result.widthDp != sourceWidthDp
                 || result.heightDp != sourceHeightDp
                 || result.densityDpi != sourceDensityDpi;
-        String modeText = ViewportApplyMode.FIELD_REWRITE.equals(viewportMode) ? "替换" : "伪装";
+        String modeText = ViewportApplyMode.FIELD_REWRITE.equals(viewportMode) ? "兼容" : "系统";
         if (!changed) {
             modeText = modeText + "(未变化)";
         }

@@ -2,7 +2,10 @@ package com.dpis.module;
 
 final class FontApplyMode {
     static final String OFF = "off";
+    // Persisted/runtime value. UI labels this as "System mode".
     static final String SYSTEM_EMULATION = "system_emulation";
+    // Persisted/runtime value. UI labels this as "Compat mode" to avoid
+    // confusion with future font family/style replacement features.
     static final String FIELD_REWRITE = "field_rewrite";
 
     private FontApplyMode() {

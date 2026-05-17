@@ -326,8 +326,8 @@ public final class FontDebugOverlayService extends Service {
         }
         String mode = store.getTargetFontApplyMode(packageName);
         return switch (FontApplyMode.normalize(mode)) {
-            case FontApplyMode.SYSTEM_EMULATION -> "伪装";
-            case FontApplyMode.FIELD_REWRITE -> "替换";
+            case FontApplyMode.SYSTEM_EMULATION -> "系统";
+            case FontApplyMode.FIELD_REWRITE -> "兼容";
             default -> "关闭";
         };
     }

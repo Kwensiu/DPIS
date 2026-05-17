@@ -1,6 +1,6 @@
 # HyperOS Gallery DP and Font Logic Chain
 
-本文解释 `com.miui.gallery` 在 DPIS 中的 DP、字体伪装、字体替换、HyperOS Rust/Flutter native hook 的完整链路。它基于当前代码、实机调试日志和相册最新包验证结果整理。
+本文解释 `com.miui.gallery` 在 DPIS 中的 DP、字体系统模式、字体兼容模式、HyperOS Rust/Flutter native hook 的完整链路。它基于当前代码、实机调试日志和相册最新包验证结果整理。
 
 ## 当前结论
 
@@ -8,7 +8,7 @@
 - 普通 Java 应用和 Gallery 的生效链路不同，不能把 Gallery 的问题泛化为所有应用都必须重启设备。
 - 普通 Java 应用通常在目标进程重启后就能重新加载 app 进程 hook，因此覆盖安装 DPIS 后往往可以即时调整。
 - Gallery 的关键 DP/字体链路额外依赖 `system_server` 和 HyperOS RustProcess hook；覆盖安装 DPIS 不会让已运行的 `system_server` 自动重新加载新模块代码。
-- 普通字体伪装主要通过 `Configuration.fontScale` 下发，但 Gallery 的 Flutter 文本不会完全服从这条 Java 链路。
+- 普通字体系统模式主要通过 `Configuration.fontScale` 下发，但 Gallery 的 Flutter 文本不会完全服从这条 Java 链路。
 - Gallery 的最终可控字体入口在 HyperOS Rust/Flutter native 链路：`RustProcessImpl.startRustProcess` → sibling `libdpis_native.so` → `libhyper_os_flutter.so` 的 paragraph 构建入口。
 - “重置后仍保持旧字体”的根因曾是 native system property 残留，而不是 DPIS UI 配置未删除；当前已通过 `HyperOsNativeFontPropertySyncer` 修复。
 
@@ -20,7 +20,7 @@ Gallery 的配置由 `dpi_config` 保存，核心 key 如下：
 - `viewport.com.miui.gallery.width_dp`：目标视口宽度。
 - `viewport.com.miui.gallery.mode`：DP/视口模式，常见为 `system_emulation` 或 `field_rewrite`。
 - `font.com.miui.gallery.scale_percent`：目标字体百分比，范围 `50..300`。
-- `font.com.miui.gallery.mode`：字体模式，常见为 `system_emulation` 或 `field_rewrite`。
+- `font.com.miui.gallery.mode`：字体模式，常见为 `system_emulation` 或 `field_rewrite`。UI 中分别显示为“系统”和“兼容”。
 - `target.com.miui.gallery.dpis_enabled`：临时禁用开关；`false` 表示保留配置但运行时不应用。
 - `font.hyperos_flutter_hook_enabled`：实验性 HyperOS Flutter 字体 hook 总开关。
 
@@ -63,15 +63,15 @@ system_server 的主要入口是 `SystemServerDisplayEnvironmentInstaller`：
 
 字体配置由 `font.com.miui.gallery.scale_percent` 和 `font.com.miui.gallery.mode` 决定。
 
-### 伪装模式
+### 系统模式
 
-`font.mode=system_emulation` 时，system_server/app Java 链路会尝试写入或伪装 `Configuration.fontScale`。
+`font.mode=system_emulation` 时，system_server/app Java 链路会尝试写入或模拟 `Configuration.fontScale`。
 
 这条链路对普通 Android View/TextView 更有效，但 Gallery 的关键界面大量走 HyperOS Flutter/Rust，因此只靠 `fontScale` 不能保证最终文本变化。
 
-### 替换/兜底模式
+### 兼容/兜底模式
 
-`font.mode=field_rewrite` 时，system_server 不把它当成 `fontScale` 伪装配置；Java app 进程中会走 `Paint`、`TextPaint`、`TextView`、span、WebView 等兜底 hook。
+`font.mode=field_rewrite` 时，system_server 不把它当成 `fontScale` 系统模式配置；Java app 进程中会走 `Paint`、`TextPaint`、`TextView`、span、WebView 等兼容 hook。
 
 这条链路对普通 Java 文本有效，但 Gallery 的 Flutter 文本仍可能绕过 Java hook。
 
@@ -147,7 +147,7 @@ Gallery 的 hash：
 - app 进程和 system_server 对应 hook 已安装。
 - 重启 Gallery 后读取新配置。
 
-### 普通字体伪装生效
+### 普通字体系统模式生效
 
 - `font.com.miui.gallery.scale_percent` 有效。
 - `font.com.miui.gallery.mode=system_emulation`。
