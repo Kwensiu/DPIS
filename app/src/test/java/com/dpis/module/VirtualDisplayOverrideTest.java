@@ -29,7 +29,7 @@ public class VirtualDisplayOverrideTest {
     @Test
     public void keepsWindowPixelSizeAtPhysicalBounds() {
         VirtualDisplayOverride.Result result = VirtualDisplayOverride.derive(
-                360, 736, 480, 1080, 2208, 300);
+                360, 736, 360, 480, 1080, 2208, 300);
 
         assertEquals(300, result.widthDp);
         assertEquals(613, result.heightDp);
@@ -72,15 +72,28 @@ public class VirtualDisplayOverrideTest {
     @Test
     public void keepsDensityStableAcrossOrientationForSameShortSideTarget() {
         VirtualDisplayOverride.Result portrait = VirtualDisplayOverride.derive(
-                412, 915, 420, 1080, 2400, 360);
+                412, 915, 412, 420, 1080, 2400, 360);
         VirtualDisplayOverride.Result landscape = VirtualDisplayOverride.derive(
-                915, 412, 420, 2400, 1080, 360);
+                915, 412, 412, 420, 2400, 1080, 360);
 
         assertEquals(481, portrait.densityDpi);
         assertEquals(481, landscape.densityDpi);
         assertEquals(360, portrait.widthDp);
         assertEquals(800, landscape.widthDp);
         assertEquals(360, landscape.heightDp);
+    }
+
+    @Test
+    public void targetMatchingSmallestWidthKeepsDisplayEnvironmentIdentity() {
+        VirtualDisplayOverride.Result result = VirtualDisplayOverride.derive(
+                393, 800, 360, 480, 1080, 2208, 360);
+
+        assertEquals(393, result.widthDp);
+        assertEquals(800, result.heightDp);
+        assertEquals(360, result.smallestWidthDp);
+        assertEquals(480, result.densityDpi);
+        assertEquals(1080, result.widthPx);
+        assertEquals(2208, result.heightPx);
     }
 
     private static void setTargetPackageName(String packageName) {

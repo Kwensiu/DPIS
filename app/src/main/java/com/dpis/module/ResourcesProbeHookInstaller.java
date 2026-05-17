@@ -83,7 +83,8 @@ final class ResourcesProbeHookInstaller {
         int sourceWidthDp = Math.max(1, Math.round(metrics.widthPixels * 160f / metrics.densityDpi));
         int sourceHeightDp = Math.max(1, Math.round(metrics.heightPixels * 160f / metrics.densityDpi));
         VirtualDisplayOverride.Result result = VirtualDisplayOverride.derive(
-                sourceWidthDp, sourceHeightDp, metrics.densityDpi,
+                sourceWidthDp, sourceHeightDp, Math.min(sourceWidthDp, sourceHeightDp),
+                metrics.densityDpi,
                 metrics.widthPixels, metrics.heightPixels, targetWidthDp);
         if (result == null) {
             return metrics;

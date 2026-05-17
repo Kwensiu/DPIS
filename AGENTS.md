@@ -73,6 +73,21 @@
   configure DPIS through the debug-only config entrypoint, use Autofish to launch
   and navigate the target app, then collect screenshots plus adb/LSPosed logs.
 
+## Runtime Hook Debugging Discipline
+- Treat `hook ready` as installation evidence only. Require a callback,
+  mutation, counter, or visible result before calling a route effective.
+- Probe one boundary at a time: entry, guard return, dependency availability,
+  hook install, callback hit, and final effect.
+- Do not diagnose a later stage until logs prove execution reached that stage.
+- Log the source of runtime context used by hooks, such as the classloader or
+  process entry point.
+- If evidence changes the working theory, update the plan before continuing;
+  do not keep executing an outdated hypothesis by inertia.
+- Do not add reproduction-target-specific runtime behavior unless explicitly
+  required.
+- Keep temporary high-volume probes debug-only or remove them before release
+  cleanup.
+
 ## Gradle Task Detection
 - Build scripts must not infer release tasks by scanning arbitrary Gradle arguments such as `--tests`.
 - Release signing checks should only trigger for actual release task names.

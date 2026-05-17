@@ -284,25 +284,28 @@ final class ResourcesManagerHookInstaller {
             }
             return;
         }
-        VirtualDisplayOverride.Result sharedResult = VirtualDisplayOverride.derive(
-                originalWidthDp > 0 ? originalWidthDp : result.widthDp,
-                originalHeightDp > 0 ? originalHeightDp : result.heightDp,
-                originalDensityDpi > 0 ? originalDensityDpi : result.densityDpi,
-                originalWidthDp > 0 && originalDensityDpi > 0
-                        ? Math.round(originalWidthDp * (originalDensityDpi / 160.0f))
-                        : result.widthDp,
-                originalHeightDp > 0 && originalDensityDpi > 0
-                        ? Math.round(originalHeightDp * (originalDensityDpi / 160.0f))
-                        : result.heightDp,
-                result.smallestWidthDp);
-        VirtualDisplayState.setUnlessDerivedFromTargetConfig(
-                sharedResult, originalSmallestWidthDp, targetViewportWidth);
+        if (originalDensityDpi > 0) {
+            VirtualDisplayOverride.Result sharedResult = VirtualDisplayOverride.derive(
+                    originalWidthDp > 0 ? originalWidthDp : result.widthDp,
+                    originalHeightDp > 0 ? originalHeightDp : result.heightDp,
+                    originalSmallestWidthDp > 0 ? originalSmallestWidthDp : result.smallestWidthDp,
+                    originalDensityDpi,
+                    originalWidthDp > 0
+                            ? Math.round(originalWidthDp * (originalDensityDpi / 160.0f))
+                            : result.widthDp,
+                    originalHeightDp > 0
+                            ? Math.round(originalHeightDp * (originalDensityDpi / 160.0f))
+                            : result.heightDp,
+                    result.smallestWidthDp);
+            VirtualDisplayState.setUnlessDerivedFromTargetConfig(
+                    sharedResult, originalSmallestWidthDp, targetViewportWidth);
+        }
         boolean applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
                 store, packageName);
         if (result.widthDp == originalWidthDp
                 && result.heightDp == originalHeightDp
                 && result.smallestWidthDp == originalSmallestWidthDp
-                && result.densityDpi == originalDensityDpi
+                && (result.densityDpi <= 0 || result.densityDpi == originalDensityDpi)
                 && !fontScale.changed) {
             VirtualDisplayOverride.Result stableResult =
                     VirtualDisplayState.getStableTargetResult(
@@ -329,7 +332,7 @@ final class ResourcesManagerHookInstaller {
                 && (result.widthDp != originalWidthDp
                 || result.heightDp != originalHeightDp
                 || result.smallestWidthDp != originalSmallestWidthDp
-                || result.densityDpi != originalDensityDpi)) {
+                || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi))) {
             ViewportOverride.apply(config, result);
         }
         String modeLabel = applyToConfiguration ? "config" : "metrics";

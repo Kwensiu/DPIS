@@ -38,6 +38,23 @@ public class FontScaleOverrideTest {
     }
 
     @Test
+    public void resolveAppliesFieldRewritePercentForResourcesFontDomain() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setSystemServerHooksEnabled(true);
+        String packageName = "com.example.flutterapp";
+        store.setTargetFontScalePercent(packageName, 300);
+        store.setTargetFontApplyMode(packageName, FontApplyMode.FIELD_REWRITE);
+
+        FontScaleOverride.Result result = FontScaleOverride.resolve(
+                store, packageName, 1.0f);
+
+        assertEquals(Integer.valueOf(300), result.targetPercent);
+        assertEquals(3.0f, result.effective, 0.0001f);
+        assertTrue(result.changed);
+    }
+
+    @Test
     public void resolveSkipsEmulationWhenSystemHookOff() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);

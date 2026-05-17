@@ -110,6 +110,156 @@ public class HyperOsFlutterFontHookConfigTest {
 
         assertTrue(source.contains("store.getTargetFontApplyMode(packageName)"));
         assertTrue(source.contains("FontApplyMode.isEnabled("));
+        assertFalse(source.contains("store == null || !store.isHyperOsFlutterFontHookEnabled()"));
+    }
+
+    @Test
+    public void nativeHookInstallerProbesGenericFlutterLibraryLoads() throws Exception {
+        String source = readSource("src/main/java/com/dpis/module/HyperOsFlutterFontHookInstaller.java");
+        String nativeSource = readSource("src/main/cpp/dpis_native.cpp");
+        String moduleMain = readSource("src/modern101/java/com/dpis/module/ModuleMain.java");
+        String appProcessInstaller = readSource("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+
+        assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));
+        assertTrue(moduleMain.contains("packagePlan.hyperOsNativeFlutterFontEnabled"));
+        assertTrue(appProcessInstaller.contains("fontDomainPlan.hyperOsNativeFlutterEnabled"));
+        assertTrue(appProcessInstaller.contains("HyperOsFlutterFontHookInstaller.install(xposed, packageName, store)"));
+        assertTrue(source.contains("installRuntimeLibraryProbe(xposed, packageName)"));
+        assertTrue(source.contains("installFlutterViewAttachProbe(xposed, packageName)"));
+        assertTrue(source.contains("private static final boolean DEBUG_PROBES = BuildConfig.DEBUG"));
+        assertTrue(source.contains("installDebugOnlyProbes(xposed, packageName)"));
+        assertTrue(source.contains("if (!DEBUG_PROBES)"));
+        assertTrue(source.contains("installActivityResumeProbe(xposed, packageName)"));
+        assertTrue(source.contains("installFrameProbe(xposed, packageName)"));
+        assertTrue(source.contains("installViewRootTraversalProbe(xposed, packageName)"));
+        assertTrue(source.contains("installHandlerDispatchProbe(xposed, packageName)"));
+        assertTrue(source.contains("\"handler-\" + remaining"));
+        assertTrue(source.contains("Handler dispatch Flutter probe ready"));
+        assertTrue(source.contains("\"view-root-\" + remaining"));
+        assertTrue(source.contains("ViewRoot traversal Flutter probe ready"));
+        assertTrue(source.contains("\"frame-\" + remaining"));
+        assertTrue(source.contains("Choreographer frame Flutter probe ready"));
+        assertTrue(source.contains("\"activity-resume\""));
+        assertTrue(source.contains("\"loadLibrary0\""));
+        assertTrue(source.contains("\"load0\""));
+        assertTrue(source.contains("onRuntimeLibraryLoaded(packageName, loadedName)"));
+        assertTrue(source.contains("genericFlutterProbeStatus(packageName, source)"));
+        assertTrue(source.contains("logGenericFlutterProbe(packageName, \"post-configure\")"));
+        assertTrue(source.contains("scheduleDelayedGenericFlutterProbe(packageName)"));
+        assertTrue(source.contains("if (DEBUG_PROBES)"));
+        assertTrue(source.contains("scheduleMainThreadGenericFlutterProbe(packageName)"));
+        assertTrue(source.contains("scheduleOneShotThreadGenericFlutterProbe(packageName)"));
+        assertTrue(source.contains("scheduleLateMapsProbe(packageName)"));
+        assertTrue(source.contains("logGenericFlutterProbe(packageName, \"post-install\")"));
+        assertTrue(source.contains("\"delayed-\" + delay + \"ms\""));
+        assertTrue(source.contains("\"main-delayed-\" + delay + \"ms\""));
+        assertTrue(source.contains("\"thread-delayed-8000ms\""));
+        assertTrue(source.contains("DPIS_FONT Flutter late maps probe"));
+        assertTrue(source.contains("findMappedLibraryBaseForTest(\"libapp.so\")"));
+        assertTrue(source.contains("\"flutter-view-attached \" + view.getClass().getName()"));
+        assertTrue(source.contains("findMappedLibraryBaseForTest(\"libflutter.so\")"));
+        assertTrue(source.contains("javaMapsBase="));
+        assertTrue(source.contains("isFlutterLibraryNameForTest"));
+        assertTrue(nativeSource.contains("kGenericFlutterLibrary = \"libflutter.so\""));
+        assertTrue(nativeSource.contains("kGenericFlutterAppLibrary = \"libapp.so\""));
+        assertTrue(nativeSource.contains("Generic Flutter font probe: process="));
+        assertTrue(nativeSource.contains("Generic Flutter poll thread start result="));
+        assertTrue(nativeSource.contains("Generic Flutter status tick: process="));
+        assertTrue(nativeSource.contains("bool is_debug_build()"));
+        assertTrue(nativeSource.contains("if (!is_debug_build())"));
+        assertTrue(nativeSource.contains("is_generic_flutter_font_hook_experiment_enabled()"));
+        assertTrue(nativeSource.contains("DPIS_GENERIC_FLUTTER_FONT_HOOK"));
+        assertTrue(nativeSource.contains("debug.dpis.generic_flutter_font_hook"));
+        assertTrue(nativeSource.contains("schedule_generic_flutter_status();"));
+        assertTrue(nativeSource.contains("!is_debug_build() && index >= 7"));
+        assertTrue(nativeSource.contains("\"native-poll-%d\""));
+        assertTrue(nativeSource.contains("Generic Flutter mapped: process="));
+        assertTrue(nativeSource.contains("+ \" route=\""));
+        assertFalse(nativeSource.contains("Last-resort generic Flutter route"));
+        assertTrue(nativeSource.contains("GENERIC_PUSH_STYLE_D11"));
+        assertFalse(nativeSource.contains("matches_verified_push_style_d11_window"));
+        assertFalse(nativeSource.contains("VERIFIED_PUSH_STYLE_D11"));
+        assertTrue(nativeSource.contains("g_generic_push_style_hooked.load(std::memory_order_acquire)"));
+        assertFalse(nativeSource.contains("&& g_generic_create_hooked.load(std::memory_order_acquire)"));
+        assertTrue(nativeSource.contains("inline_hook_arm64(push_target"));
+        assertTrue(nativeSource.contains("kGenericParagraphBuilderPushStyleOffset = 0x82d470"));
+        assertTrue(nativeSource.contains("Generic Flutter ParagraphBuilder::pushStyle hook result="));
+        assertTrue(nativeSource.contains("Generic Flutter ParagraphBuilder::pushStyle fontSize override: process="));
+        assertTrue(nativeSource.contains("\"status-probe \" + source"));
+        assertTrue(nativeSource.contains("overrideCalls="));
+        assertTrue(nativeSource.contains("createCalls="));
+        assertTrue(nativeSource.contains("pushStyleCalls="));
+        assertTrue(nativeSource.contains("lastInputMilli="));
+        assertTrue(nativeSource.contains("g_generic_get_scaled_font_size_hooked"));
+        assertTrue(nativeSource.contains("lastPollBase="));
+        assertTrue(nativeSource.contains("Generic Flutter native poll: process="));
+        assertTrue(nativeSource.contains("Flutter text string probe: process="));
+        assertTrue(nativeSource.contains("library="));
+        assertTrue(nativeSource.contains("bridge_log_info(\"DPIS_FONT \" + message)"));
+        assertTrue(nativeSource.contains("GetStaticMethodID("));
+        assertTrue(nativeSource.contains("Java_com_dpis_module_HyperOsFlutterFontHookInstaller_genericFlutterProbeStatus"));
+        assertTrue(nativeSource.contains("std::fopen(\"/proc/self/maps\", \"r\")"));
+        assertTrue(nativeSource.contains("detected-not-hooked"));
+        assertTrue(nativeSource.contains("push-style-d11-hooked"));
+        assertFalse(nativeSource.contains("Generic Flutter GetScaledFontSize hook result="));
+        assertFalse(nativeSource.contains("\"Generic Flutter ParagraphBuilder::Create hook result=\""));
+    }
+
+    @Test
+    public void genericFlutterNameDetectionCoversRuntimeAndPathForms() {
+        assertTrue(HyperOsFlutterFontHookInstaller.isFlutterLibraryNameForTest("flutter"));
+        assertTrue(HyperOsFlutterFontHookInstaller.isFlutterLibraryNameForTest("libflutter.so"));
+        assertTrue(HyperOsFlutterFontHookInstaller.isFlutterLibraryNameForTest(
+                "/data/app/example/lib/arm64/libflutter.so"));
+        assertTrue(HyperOsFlutterFontHookInstaller.isFlutterLibraryNameForTest(
+                "libhyper_os_flutter.so"));
+        assertFalse(HyperOsFlutterFontHookInstaller.isFlutterLibraryNameForTest("webviewchromium"));
+    }
+
+    @Test
+    public void flutterViewClassNameDetectionCoversFlutterEmbeddingAndPlugins() {
+        assertTrue(HyperOsFlutterFontHookInstaller.isFlutterViewClassNameForTest(
+                "io.flutter.embedding.android.FlutterView"));
+        assertTrue(HyperOsFlutterFontHookInstaller.isFlutterViewClassNameForTest(
+                "com.pichillilorenzo.flutter_inappwebview_android.webview.InAppWebView"));
+        assertFalse(HyperOsFlutterFontHookInstaller.isFlutterViewClassNameForTest(
+                "android.widget.TextView"));
+    }
+
+    @Test
+    public void genericFlutterProbeStatusParserReadsBaseAddress() {
+        String status = "Generic Flutter font probe: process=p package=p source=s"
+                + " handle=0 base=123456 configured=1 enabled=1"
+                + " targetFontScalePercent=300 status=detected-not-hooked";
+
+        assertEquals(123456L, HyperOsFlutterFontHookInstaller.parseFlutterBaseForTest(status));
+        assertEquals(0L, HyperOsFlutterFontHookInstaller.parseFlutterBaseForTest("base=bad"));
+        assertEquals(0L, HyperOsFlutterFontHookInstaller.parseFlutterBaseForTest(null));
+    }
+
+    @Test
+    public void mapsStartAddressParserReadsExecutableMappingBase() {
+        String line = "6f60e60000-6f6189f000 r-xp 00000000 fe:4f 2284291"
+                + " /data/app/example/lib/arm64/libflutter.so";
+
+        assertEquals(0x6f60e60000L,
+                HyperOsFlutterFontHookInstaller.parseMapsStartAddressForTest(line));
+        assertEquals(0L, HyperOsFlutterFontHookInstaller.parseMapsStartAddressForTest("bad"));
+    }
+
+    @Test
+    public void nativeLoaderCanResolveExtractedModuleLibraryFromLsposedClassLoaderText() {
+        String text = "LspModuleClassLoader[module=/data/app/~~id==/"
+                + "io.github.kwensiu.dpis-abcd==/base.apk, nativeLibraryDirectories=[]]";
+
+        assertEquals("/data/app/~~id==/io.github.kwensiu.dpis-abcd==/base.apk",
+                HyperOsFlutterFontHookInstaller.parseModuleApkPathForTest(text));
+        assertEquals("arm64",
+                HyperOsFlutterFontHookInstaller.nativeDirectoryNamesForAbi("arm64-v8a")[0]);
+        assertEquals("arm",
+                HyperOsFlutterFontHookInstaller.nativeDirectoryNamesForAbi("armeabi-v7a")[0]);
+        assertEquals("x86",
+                HyperOsFlutterFontHookInstaller.nativeDirectoryNamesForAbi("x86")[0]);
     }
 
     @Test

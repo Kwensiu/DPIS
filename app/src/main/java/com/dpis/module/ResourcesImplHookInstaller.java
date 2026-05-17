@@ -75,7 +75,7 @@ final class ResourcesImplHookInstaller {
         boolean needsViewportUpdate = result.widthDp != originalWidthDp
                 || result.heightDp != originalHeightDp
                 || result.smallestWidthDp != originalSmallestWidthDp
-                || result.densityDpi != originalDensityDpi;
+                || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi);
         boolean applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
                 store, packageName);
         int sourceWidthPx = metrics != null && metrics.widthPixels > 0
@@ -84,15 +84,20 @@ final class ResourcesImplHookInstaller {
         int sourceHeightPx = metrics != null && metrics.heightPixels > 0
                 ? metrics.heightPixels
                 : Math.round(originalHeightDp * (originalDensityDpi / 160.0f));
-        VirtualDisplayOverride.Result sharedResult = VirtualDisplayOverride.derive(
+        VirtualDisplayOverride.Result sharedResult = originalDensityDpi > 0
+                ? VirtualDisplayOverride.derive(
                 originalWidthDp > 0 ? originalWidthDp : result.widthDp,
                 originalHeightDp > 0 ? originalHeightDp : result.heightDp,
-                originalDensityDpi > 0 ? originalDensityDpi : result.densityDpi,
+                originalSmallestWidthDp > 0 ? originalSmallestWidthDp : result.smallestWidthDp,
+                originalDensityDpi,
                 sourceWidthPx,
                 sourceHeightPx,
-                result.smallestWidthDp);
-        VirtualDisplayState.setUnlessDerivedFromTargetConfig(
-                sharedResult, originalSmallestWidthDp, targetViewportWidth);
+                result.smallestWidthDp)
+                : null;
+        if (originalDensityDpi > 0) {
+            VirtualDisplayState.setUnlessDerivedFromTargetConfig(
+                    sharedResult, originalSmallestWidthDp, targetViewportWidth);
+        }
         String viewportMode = ViewportModePolicy.resolve(store, packageName);
         ViewportDebugReporter.report(
                 store,

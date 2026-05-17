@@ -13,12 +13,24 @@ final class AppProcessHookInstaller {
                         boolean viewportConfigured,
                         String viewportMode,
                         String fontMode,
-                        boolean fontScaleActive) throws Throwable {
+                        boolean fontScaleActive,
+                        boolean hyperOsNativeFlutterEnabled) throws Throwable {
         boolean viewportEnabled = resolveViewportHookEnabled(policy, viewportConfigured, viewportMode);
         FontHookPlan fontHookPlan = resolveFontHookPlan(policy, fontScaleActive, fontMode);
         boolean emulationEnabled = fontHookPlan.emulationEnabled;
-        boolean fallbackEnabled = fontHookPlan.fieldRewriteEnabled;
-        boolean resourcesHooksEnabled = viewportEnabled || emulationEnabled;
+        FontHookArbitration.FontDomainPlan fontDomainPlan = resolveFontDomainPlan(
+                fontHookPlan, hyperOsNativeFlutterEnabled);
+        DpisLog.i("DPIS_FONT app hook plan: package=" + packageName
+                + ", fontScaleActive=" + fontScaleActive
+                + ", fontMode=" + fontMode
+                + ", emulation=" + fontHookPlan.emulationEnabled
+                + ", fieldRewrite=" + fontHookPlan.fieldRewriteEnabled
+                + ", domain=" + fontDomainPlan.reason
+                + ", flutterSettings=" + fontDomainPlan.flutterSettingsEnabled
+                + ", hyperOsNativeFlutter=" + fontDomainPlan.hyperOsNativeFlutterEnabled
+                + ", genericNativeFlutter=" + fontDomainPlan.genericNativeFlutterEnabled);
+        boolean resourcesHooksEnabled =
+                resolveResourcesHooksEnabled(viewportEnabled, fontHookPlan, fontDomainPlan);
         if (resourcesHooksEnabled) {
             ResourcesManagerHookInstaller.install(xposed, packageName, store);
         }
@@ -31,8 +43,18 @@ final class AppProcessHookInstaller {
         if (emulationEnabled) {
             ActivityThreadFontHookInstaller.install(xposed, packageName, store);
         }
-        if (fallbackEnabled) {
-            ForceTextSizeHookInstaller.install(xposed, packageName, store);
+        if (fontDomainPlan.textViewHooksEnabled) {
+            ForceTextSizeHookInstaller.install(xposed, packageName, store, fontDomainPlan);
+        }
+        if (fontDomainPlan.flutterSettingsEnabled) {
+            DpisLog.i("DPIS_FONT installing Flutter settings font hooks for " + packageName);
+            FlutterSettingsFontHookInstaller.install(xposed, packageName, store, fontDomainPlan);
+        }
+        if (fontDomainPlan.hyperOsNativeFlutterEnabled) {
+            DpisLog.i("DPIS_FONT installing HyperOS native Flutter font hooks for " + packageName);
+            HyperOsFlutterFontHookInstaller.install(xposed, packageName, store);
+        }
+        if (fontDomainPlan.webViewTextZoomEnabled) {
             WebViewFontHookInstaller.install(xposed, packageName, store);
         }
         if (viewportEnabled) {
@@ -56,7 +78,17 @@ final class AppProcessHookInstaller {
         String mode = resolveProbeInstallMode(policy);
         DpisLog.i("hooks installed (" + mode + "): viewportEnabled=" + viewportEnabled
                 + ", viewportMode=" + viewportMode
-                + ", fontMode=" + fontMode + " for " + packageName);
+                + ", fontMode=" + fontMode
+                + ", fontDomainPlan=" + fontDomainPlan.reason
+                + ", resourcesFont=" + fontDomainPlan.resourcesFontEnabled
+                + ", textViewSpRewrite=" + fontDomainPlan.textViewSpRewriteEnabled
+                + ", textViewCurrentPxFallback="
+                + fontDomainPlan.textViewCurrentPxFallbackEnabled
+                + ", paintFallback=" + fontDomainPlan.paintFallbackEnabled
+                + ", flutterSettings=" + fontDomainPlan.flutterSettingsEnabled
+                + ", hyperOsNativeFlutter=" + fontDomainPlan.hyperOsNativeFlutterEnabled
+                + ", genericNativeFlutter=" + fontDomainPlan.genericNativeFlutterEnabled
+                + " for " + packageName);
         if (fontHookPlan.downgradedToEmulation) {
             DpisLog.i("safe mode downgraded font apply mode to emulation for " + packageName);
         }
@@ -84,6 +116,27 @@ final class AppProcessHookInstaller {
             return false;
         }
         return true;
+    }
+
+    static FontHookArbitration.FontDomainPlan resolveFontDomainPlan(FontHookPlan fontHookPlan) {
+        return resolveFontDomainPlan(fontHookPlan, false);
+    }
+
+    static FontHookArbitration.FontDomainPlan resolveFontDomainPlan(FontHookPlan fontHookPlan,
+                                                                    boolean hyperOsNativeFlutterEnabled) {
+        return FontHookArbitration.resolveDomainPlan(
+                fontHookPlan != null
+                        && (fontHookPlan.emulationEnabled || fontHookPlan.fieldRewriteEnabled),
+                fontHookPlan != null && fontHookPlan.fieldRewriteEnabled,
+                hyperOsNativeFlutterEnabled);
+    }
+
+    static boolean resolveResourcesHooksEnabled(boolean viewportEnabled,
+                                                FontHookPlan fontHookPlan,
+                                                FontHookArbitration.FontDomainPlan domainPlan) {
+        return viewportEnabled
+                || (fontHookPlan != null && fontHookPlan.emulationEnabled)
+                || (domainPlan != null && domainPlan.resourcesFontEnabled);
     }
 
     static FontHookPlan resolveFontHookPlan(HookRuntimePolicy policy,

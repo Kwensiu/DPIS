@@ -34,4 +34,17 @@ public class DisplayOverridePipelineTest {
         assertEquals(300, result.widthDp);
         assertEquals(576, result.densityDpi);
     }
+
+    @Test
+    public void targetMatchingSourceSmallestWidthIsIdentity() {
+        VirtualDisplayOverride.Result result = DisplayOverridePipeline.derive(
+                393, 800, 360, 480, 1080, 2208, 360);
+
+        assertEquals(393, result.widthDp);
+        assertEquals(800, result.heightDp);
+        assertEquals(360, result.smallestWidthDp);
+        assertEquals(480, result.densityDpi);
+        assertEquals(1080, result.widthPx);
+        assertEquals(2208, result.heightPx);
+    }
 }

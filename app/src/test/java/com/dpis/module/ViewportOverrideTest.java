@@ -54,4 +54,52 @@ public class ViewportOverrideTest {
         assertEquals(360, result.smallestWidthDp);
         assertEquals(481, result.densityDpi);
     }
+
+    @Test
+    public void preservesUnknownDensityInsteadOfDefaultingToMdpi() {
+        Configuration config = new Configuration();
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 736;
+        config.smallestScreenWidthDp = 360;
+        config.densityDpi = 0;
+
+        ViewportOverride.Result result = ViewportOverride.derive(config, 360);
+
+        assertEquals(360, result.widthDp);
+        assertEquals(736, result.heightDp);
+        assertEquals(360, result.smallestWidthDp);
+        assertEquals(0, result.densityDpi);
+    }
+
+    @Test
+    public void matchingTargetWidthIsNoOpForCompleteConfiguration() {
+        Configuration config = new Configuration();
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 736;
+        config.smallestScreenWidthDp = 360;
+        config.densityDpi = 480;
+
+        ViewportOverride.Result result = ViewportOverride.derive(config, 360);
+
+        assertEquals(360, result.widthDp);
+        assertEquals(736, result.heightDp);
+        assertEquals(360, result.smallestWidthDp);
+        assertEquals(480, result.densityDpi);
+    }
+
+    @Test
+    public void matchingSmallestWidthIsNoOpWhenCurrentWidthDiffers() {
+        Configuration config = new Configuration();
+        config.screenWidthDp = 393;
+        config.screenHeightDp = 800;
+        config.smallestScreenWidthDp = 360;
+        config.densityDpi = 480;
+
+        ViewportOverride.Result result = ViewportOverride.derive(config, 360);
+
+        assertEquals(393, result.widthDp);
+        assertEquals(800, result.heightDp);
+        assertEquals(360, result.smallestWidthDp);
+        assertEquals(480, result.densityDpi);
+    }
 }

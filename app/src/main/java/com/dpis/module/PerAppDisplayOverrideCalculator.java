@@ -13,7 +13,14 @@ final class PerAppDisplayOverrideCalculator {
         if (configuration == null || targetViewportWidthDp <= 0 || widthPx <= 0 || heightPx <= 0) {
             return null;
         }
-        ViewportOverride.Result viewport = ViewportOverride.derive(configuration, targetViewportWidthDp);
+        VirtualDisplayOverride.Result viewport = DisplayOverridePipeline.derive(
+                configuration.screenWidthDp,
+                configuration.screenHeightDp,
+                configuration.smallestScreenWidthDp,
+                configuration.densityDpi,
+                widthPx,
+                heightPx,
+                targetViewportWidthDp);
         if (viewport == null) {
             return null;
         }
