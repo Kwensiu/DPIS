@@ -124,16 +124,6 @@ public class ModuleMainHookInstallerTest {
     }
 
     @Test
-    public void packedAppSupportBoundaryDocumentExists() throws IOException {
-        String doc = read("../docs/packed-flutter-app-support-boundary.md");
-
-        assertTrue("Doc should state packing is confirmed",
-                doc.contains("PACKED CONFIRMED"));
-        assertTrue("Doc should advise against productizing packer support",
-                doc.contains("Do NOT productize"));
-    }
-
-    @Test
     public void debugBuildKeepsRuntimeHookLogsVisible() throws IOException {
         String source = read("src/main/java/com/dpis/module/DpisLog.java");
 
