@@ -55,6 +55,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -1187,6 +1188,16 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             }
 
             @Override
+            public void showFontHookDomains(AppListItem item, Runnable onStateChanged) {
+                MainActivity.this.showFontHookDomains(item, onStateChanged);
+            }
+
+            @Override
+            public String getFontHookDomainsButtonText(String packageName) {
+                return MainActivity.this.getFontHookDomainsButtonText(packageName);
+            }
+
+            @Override
             public int[] saveAppConfig(AppListItem item,
                     TextInputEditText viewportInput,
                     TextInputEditText fontScaleInput,
@@ -1209,6 +1220,96 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                 MainActivity.this.showToast(messageResId);
             }
         };
+    }
+
+    private void showFontHookDomains(AppListItem item, Runnable onStateChanged) {
+        if (item == null || item.packageName == null || item.packageName.isBlank()) {
+            return;
+        }
+        DpiConfigStore store = getUiConfigStore();
+        HookDomainOverrideStore overrideStore = new HookDomainOverrideStore(store);
+        Set<String> automaticKnownDomains = resolveAutomaticFontHookDomains(store, item.packageName);
+        HookDomainOverride currentOverride = overrideStore.read(item.packageName);
+        FontHookDomainDialog.show(this,
+                new FontHookDomainDialog.Host() {
+                    @Override
+                    public boolean saveCustom(String packageName,
+                            Set<String> selectedKnownDomains,
+                            Set<String> automaticKnownDomains,
+                            Set<String> unknownDomains) {
+                        boolean saved = overrideStore.saveCustomIfDifferentFromAutomatic(
+                                packageName,
+                                selectedKnownDomains,
+                                automaticKnownDomains,
+                                unknownDomains);
+                        if (saved) {
+                            requestAppsLoad();
+                        }
+                        return saved;
+                    }
+
+                    @Override
+                    public boolean restoreRecommended(String packageName) {
+                        boolean restored = overrideStore.restoreRecommended(packageName);
+                        if (restored) {
+                            requestAppsLoad();
+                        }
+                        return restored;
+                    }
+                },
+                item.packageName,
+                automaticKnownDomains,
+                currentOverride,
+                onStateChanged);
+    }
+
+    private String getFontHookDomainsButtonText(String packageName) {
+        HookDomainOverride override = new HookDomainOverrideStore(getUiConfigStore()).read(packageName);
+        if (!override.customPathEnabled) {
+            return getString(R.string.dialog_font_hook_domains_title);
+        }
+        int selectedCount = FontHookDomainRegistry.orderedKnownSubset(
+                override.enabledKnownDomains).size();
+        int totalCount = FontHookDomainRegistry.orderedIdsList().size();
+        return getString(R.string.dialog_font_hook_domains_title_with_count,
+                selectedCount, totalCount);
+    }
+
+    private Set<String> resolveAutomaticFontHookDomains(DpiConfigStore store, String packageName) {
+        if (store == null || packageName == null || packageName.isBlank()) {
+            return new LinkedHashSet<>();
+        }
+        HookRuntimePolicy policy = HookRuntimePolicy.fromStore(store);
+        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
+                policy,
+                packageName,
+                store.getTargetViewportWidthDp(packageName) != null,
+                store.getTargetViewportApplyMode(packageName),
+                isFontScaleActive(store.getTargetFontScalePercent(packageName)),
+                store.getTargetFontApplyMode(packageName),
+                false,
+                false,
+                HookDomainOverride.automatic(),
+                AppProcessHookInstaller.resolveDebugFontOverrideForPackage(packageName));
+        return parseKnownDomainCsv(plan.hookDomains);
+    }
+
+    private static boolean isFontScaleActive(Integer fontScalePercent) {
+        return fontScalePercent != null && fontScalePercent > 0 && fontScalePercent != 100;
+    }
+
+    private static Set<String> parseKnownDomainCsv(String rawDomains) {
+        LinkedHashSet<String> domains = new LinkedHashSet<>();
+        if (rawDomains == null || rawDomains.isBlank()) {
+            return domains;
+        }
+        for (String part : rawDomains.split(",")) {
+            String id = part == null ? "" : part.trim();
+            if (FontHookDomainRegistry.isKnown(id)) {
+                domains.add(id);
+            }
+        }
+        return FontHookDomainRegistry.orderedKnownSubset(domains);
     }
 
     private void executeHyperOsNativeProxyMount(

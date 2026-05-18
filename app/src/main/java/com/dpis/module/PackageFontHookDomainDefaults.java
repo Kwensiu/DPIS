@@ -1,0 +1,27 @@
+package com.dpis.module;
+
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+
+final class PackageFontHookDomainDefaults {
+    private static final Map<String, Set<String>> EXACT_DEFAULTS = createDefaults();
+
+    private PackageFontHookDomainDefaults() {
+    }
+
+    static Set<String> resolveExactDefaults(String packageName) {
+        if (packageName == null || packageName.isBlank()) {
+            return Collections.emptySet();
+        }
+        Set<String> defaults = EXACT_DEFAULTS.get(packageName);
+        return defaults == null ? Collections.emptySet() : defaults;
+    }
+
+    private static Map<String, Set<String>> createDefaults() {
+        LinkedHashMap<String, Set<String>> table = new LinkedHashMap<>();
+        return Collections.unmodifiableMap(table);
+    }
+
+}

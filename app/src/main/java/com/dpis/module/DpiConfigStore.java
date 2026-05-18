@@ -255,8 +255,9 @@ final class DpiConfigStore {
 
     boolean clearTargetViewportWidthDp(String packageName) {
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
-        if (getTargetFontScalePercent(packageName) == null
-                && !contains(keyForFontMode(packageName))) {
+        if (!hasAnyPackageConfigAfterRemoving(packageName,
+                keyForViewportWidth(packageName),
+                keyForViewportMode(packageName))) {
             packages.remove(packageName);
         }
         return commitBoth(editor -> editor
@@ -269,9 +270,7 @@ final class DpiConfigStore {
         String normalized = ViewportApplyMode.normalize(mode);
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
         if (!ViewportApplyMode.isEnabled(normalized)) {
-            if (getTargetViewportWidthDp(packageName) == null
-                    && getTargetFontScalePercent(packageName) == null
-                    && !contains(keyForFontMode(packageName))) {
+            if (!hasAnyPackageConfigAfterRemoving(packageName, keyForViewportMode(packageName))) {
                 packages.remove(packageName);
             }
             return commitBoth(editor -> editor
@@ -300,8 +299,7 @@ final class DpiConfigStore {
         String normalized = FontApplyMode.normalize(mode);
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
         if (FontApplyMode.OFF.equals(normalized)) {
-            if (getTargetViewportWidthDp(packageName) == null
-                    && getTargetFontScalePercent(packageName) == null) {
+            if (!hasAnyPackageConfigAfterRemoving(packageName, keyForFontMode(packageName))) {
                 packages.remove(packageName);
             }
             return commitBoth(editor -> editor
@@ -316,8 +314,7 @@ final class DpiConfigStore {
 
     boolean clearTargetFontScalePercent(String packageName) {
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
-        if (getTargetViewportWidthDp(packageName) == null
-                && !contains(keyForFontMode(packageName))) {
+        if (!hasAnyPackageConfigAfterRemoving(packageName, keyForFontScale(packageName))) {
             packages.remove(packageName);
         }
         return commitBoth(editor -> editor
@@ -348,10 +345,7 @@ final class DpiConfigStore {
     boolean setTargetDpisEnabled(String packageName, boolean enabled) {
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
         if (enabled) {
-            if (getTargetViewportWidthDp(packageName) == null
-                    && getTargetFontScalePercent(packageName) == null
-                    && !contains(keyForViewportMode(packageName))
-                    && !contains(keyForFontMode(packageName))) {
+            if (!hasAnyPackageConfigAfterRemoving(packageName, keyForDpisEnabled(packageName))) {
                 packages.remove(packageName);
                 return commitBoth(editor -> editor
                         .putStringSet(KEY_TARGET_PACKAGES, packages)
@@ -376,7 +370,93 @@ final class DpiConfigStore {
                 .remove(keyForViewportMode(packageName))
                 .remove(keyForFontScale(packageName))
                 .remove(keyForFontMode(packageName))
-                .remove(keyForDpisEnabled(packageName)));
+                .remove(keyForDpisEnabled(packageName))
+                .remove(keyForFontHookDomains(packageName)));
+    }
+
+    String getPackageFontHookDomainsRaw(String packageName) {
+        if (packageName == null || packageName.isBlank()) {
+            return null;
+        }
+        String key = keyForFontHookDomains(packageName);
+        if (!contains(key)) {
+            return null;
+        }
+        return getString(key, null);
+    }
+
+    boolean setPackageFontHookDomainsRaw(String packageName, String rawValue) {
+        if (packageName == null || packageName.isBlank() || rawValue == null) {
+            return false;
+        }
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        packages.add(packageName);
+        return commitBoth(editor -> editor
+                .putStringSet(KEY_TARGET_PACKAGES, packages)
+                .putString(keyForFontHookDomains(packageName), rawValue));
+    }
+
+    boolean clearPackageFontHookDomainsRaw(String packageName) {
+        if (packageName == null || packageName.isBlank()) {
+            return false;
+        }
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        if (getTargetViewportWidthDp(packageName) == null
+                && getTargetFontScalePercent(packageName) == null
+                && !contains(keyForViewportMode(packageName))
+                && !contains(keyForFontMode(packageName))
+                && isTargetDpisEnabled(packageName)) {
+            packages.remove(packageName);
+        }
+        return commitBoth(editor -> editor
+                .putStringSet(KEY_TARGET_PACKAGES, packages)
+                .remove(keyForFontHookDomains(packageName)));
+    }
+
+    private boolean hasAnyPackageConfigAfterRemoving(String packageName, String... removedKeys) {
+        String viewportWidthKey = keyForViewportWidth(packageName);
+        if (!isRemovedKey(viewportWidthKey, removedKeys)
+                && getTargetViewportWidthDp(packageName) != null) {
+            return true;
+        }
+        String viewportModeKey = keyForViewportMode(packageName);
+        if (!isRemovedKey(viewportModeKey, removedKeys)
+                && contains(viewportModeKey)) {
+            return true;
+        }
+        String fontScaleKey = keyForFontScale(packageName);
+        if (!isRemovedKey(fontScaleKey, removedKeys)
+                && getTargetFontScalePercent(packageName) != null) {
+            return true;
+        }
+        String fontModeKey = keyForFontMode(packageName);
+        if (!isRemovedKey(fontModeKey, removedKeys)
+                && contains(fontModeKey)) {
+            return true;
+        }
+        String dpisEnabledKey = keyForDpisEnabled(packageName);
+        if (!isRemovedKey(dpisEnabledKey, removedKeys)
+                && contains(dpisEnabledKey)) {
+            return true;
+        }
+        String hookDomainsKey = keyForFontHookDomains(packageName);
+        if (!isRemovedKey(hookDomainsKey, removedKeys)
+                && contains(hookDomainsKey)) {
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean isRemovedKey(String key, String... removedKeys) {
+        if (removedKeys == null) {
+            return false;
+        }
+        for (String removedKey : removedKeys) {
+            if (key.equals(removedKey)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     boolean ensureSeedConfig(Map<String, Integer> seedTargetViewportWidthDps) {
@@ -598,5 +678,9 @@ final class DpiConfigStore {
 
     private static String keyForDpisEnabled(String packageName) {
         return "target." + packageName + ".dpis_enabled";
+    }
+
+    private static String keyForFontHookDomains(String packageName) {
+        return "font." + packageName + ".hook_domains";
     }
 }

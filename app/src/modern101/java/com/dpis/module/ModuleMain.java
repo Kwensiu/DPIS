@@ -143,7 +143,8 @@ public final class ModuleMain extends XposedModule {
                     packagePlan.targetFontMode,
                     packagePlan.fontScaleActive,
                     packagePlan.flutterSettingsFontEnabled,
-                    packagePlan.hyperOsNativeFlutterFontEnabled);
+                    packagePlan.hyperOsNativeFlutterFontEnabled,
+                    packagePlan.hookDomainOverride);
         } catch (Throwable throwable) {
             appProcessInstallAttempted = false;
             DpisLog.e("failed to install app process hooks", throwable);
@@ -169,12 +170,14 @@ public final class ModuleMain extends XposedModule {
                 .resolveDebugFontOverrideForPackage(packageName);
         HookExecutionPlan executionPlan = HookExecutionPlanner.buildPlan(
                 policy,
+                packageName,
                 packagePlan.viewportConfigured,
                 packagePlan.targetViewportMode,
                 packagePlan.fontScaleActive,
                 packagePlan.targetFontMode,
                 packagePlan.flutterSettingsFontEnabled,
                 packagePlan.hyperOsNativeFlutterFontEnabled,
+                packagePlan.hookDomainOverride,
                 debugOverride);
         if (!executionPlan.flutterSettingsEnabled) {
             return;

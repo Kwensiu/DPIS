@@ -350,6 +350,22 @@ public class MainActivitySourceSmokeTest {
         assertTrue(receiver.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(store)"));
     }
 
+    @Test
+    public void appConfigHostWiresFontHookDomainEditor() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(source.contains("public void showFontHookDomains(AppListItem item, Runnable onStateChanged)"));
+        assertTrue(source.contains("MainActivity.this.showFontHookDomains(item, onStateChanged);"));
+        assertTrue(source.contains("public String getFontHookDomainsButtonText(String packageName)"));
+        assertTrue(source.contains("new HookDomainOverrideStore(store)"));
+        assertTrue(source.contains("FontHookDomainDialog.show(this,"));
+        assertTrue(source.contains("overrideStore.saveCustomIfDifferentFromAutomatic("));
+        assertTrue(source.contains("overrideStore.restoreRecommended(packageName)"));
+        assertTrue(source.contains("HookExecutionPlanner.buildPlan("));
+        assertTrue(source.contains("AppProcessHookInstaller.resolveDebugFontOverrideForPackage(packageName)"));
+        assertTrue(source.contains("dialog_font_hook_domains_title_with_count"));
+    }
+
     private static String read(String relativePath) throws IOException {
         return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
     }

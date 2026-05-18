@@ -98,6 +98,8 @@
             <com.google.android.material.button.MaterialButton android:id="@+id/dialog_dpis_toggle_button" style="@style/Widget.Dpis.DialogActionButton.Outlined" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_weight="1" android:minWidth="0dp" android:text="@string/dialog_dpis_disable_button" />
         </LinearLayout>
 
+        <com.google.android.material.button.MaterialButton android:id="@+id/dialog_font_hook_domains_button" style="@style/Widget.Dpis.DialogActionButton.Outlined" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:minWidth="0dp" android:text="@string/dialog_font_hook_domains_title" />
+
         <com.google.android.material.button.MaterialButton android:id="@+id/dialog_disable_button" style="@style/Widget.Dpis.DialogActionButton.Outlined" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:minWidth="0dp" android:paddingStart="16dp" android:paddingEnd="16dp" android:text="@string/dialog_disable_button" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

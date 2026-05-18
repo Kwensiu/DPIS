@@ -7,6 +7,7 @@ final class PerAppDisplayConfig {
     final String targetFontMode;
     final boolean hyperOsFlutterFontHookEnabled;
     final boolean viewportOverrideEnabled;
+    final HookDomainOverride hookDomainOverride;
 
     PerAppDisplayConfig(String packageName, int targetViewportWidthDp) {
         this(packageName, targetViewportWidthDp, null);
@@ -25,7 +26,8 @@ final class PerAppDisplayConfig {
 
     PerAppDisplayConfig(String packageName, Integer targetViewportWidthDp,
                         Integer targetFontScalePercent, String targetFontMode) {
-        this(packageName, targetViewportWidthDp, targetFontScalePercent, targetFontMode, false);
+        this(packageName, targetViewportWidthDp, targetFontScalePercent, targetFontMode, false,
+                HookDomainOverride.automatic());
     }
 
     PerAppDisplayConfig(String packageName,
@@ -33,6 +35,16 @@ final class PerAppDisplayConfig {
                         Integer targetFontScalePercent,
                         String targetFontMode,
                         boolean hyperOsFlutterFontHookEnabled) {
+        this(packageName, targetViewportWidthDp, targetFontScalePercent, targetFontMode,
+                hyperOsFlutterFontHookEnabled, HookDomainOverride.automatic());
+    }
+
+    PerAppDisplayConfig(String packageName,
+                        Integer targetViewportWidthDp,
+                        Integer targetFontScalePercent,
+                        String targetFontMode,
+                        boolean hyperOsFlutterFontHookEnabled,
+                        HookDomainOverride hookDomainOverride) {
         this.packageName = packageName;
         this.viewportOverrideEnabled =
                 targetViewportWidthDp != null && targetViewportWidthDp > 0;
@@ -40,6 +52,9 @@ final class PerAppDisplayConfig {
         this.targetFontScalePercent = targetFontScalePercent;
         this.targetFontMode = FontApplyMode.normalize(targetFontMode);
         this.hyperOsFlutterFontHookEnabled = hyperOsFlutterFontHookEnabled;
+        this.hookDomainOverride = hookDomainOverride != null
+                ? hookDomainOverride
+                : HookDomainOverride.automatic();
     }
 
     boolean hasViewportOverride() {

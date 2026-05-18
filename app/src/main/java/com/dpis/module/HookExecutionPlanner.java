@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 final class HookExecutionPlanner {
     private HookExecutionPlanner() {
     }
@@ -12,6 +16,80 @@ final class HookExecutionPlanner {
                                        boolean flutterSettingsFontEnabled,
                                        boolean hyperOsNativeFlutterEnabled,
                                        DebugFontOverride debugOverride) {
+        return buildPlan(
+                policy,
+                null,
+                viewportConfigured,
+                viewportMode,
+                fontScaleActive,
+                fontMode,
+                flutterSettingsFontEnabled,
+                hyperOsNativeFlutterEnabled,
+                HookDomainOverride.automatic(),
+                debugOverride);
+    }
+
+    static HookExecutionPlan buildPlan(HookRuntimePolicy policy,
+                                       String packageName,
+                                       boolean viewportConfigured,
+                                       String viewportMode,
+                                       boolean fontScaleActive,
+                                       String fontMode,
+                                       boolean flutterSettingsFontEnabled,
+                                       boolean hyperOsNativeFlutterEnabled,
+                                       HookDomainOverride hookDomainOverride,
+                                       DebugFontOverride debugOverride) {
+        return buildPlan(
+                policy,
+                packageName,
+                viewportConfigured,
+                viewportMode,
+                fontScaleActive,
+                fontMode,
+                flutterSettingsFontEnabled,
+                hyperOsNativeFlutterEnabled,
+                hookDomainOverride,
+                debugOverride,
+                PackageFontHookDomainDefaults.resolveExactDefaults(packageName));
+    }
+
+    static HookExecutionPlan buildPlanWithBuiltinDomainsForTest(
+            HookRuntimePolicy policy,
+            String packageName,
+            boolean viewportConfigured,
+            String viewportMode,
+            boolean fontScaleActive,
+            String fontMode,
+            boolean flutterSettingsFontEnabled,
+            boolean hyperOsNativeFlutterEnabled,
+            HookDomainOverride hookDomainOverride,
+            DebugFontOverride debugOverride,
+            Set<String> builtinDomainsForTest) {
+        return buildPlan(
+                policy,
+                packageName,
+                viewportConfigured,
+                viewportMode,
+                fontScaleActive,
+                fontMode,
+                flutterSettingsFontEnabled,
+                hyperOsNativeFlutterEnabled,
+                hookDomainOverride,
+                debugOverride,
+                builtinDomainsForTest);
+    }
+
+    private static HookExecutionPlan buildPlan(HookRuntimePolicy policy,
+                                               String packageName,
+                                               boolean viewportConfigured,
+                                               String viewportMode,
+                                               boolean fontScaleActive,
+                                               String fontMode,
+                                               boolean flutterSettingsFontEnabled,
+                                               boolean hyperOsNativeFlutterEnabled,
+                                               HookDomainOverride hookDomainOverride,
+                                               DebugFontOverride debugOverride,
+                                               Set<String> packageBuiltinDomains) {
         DebugFontOverride resolvedDebug = debugOverride == null
                 ? DebugFontOverride.none()
                 : debugOverride;
@@ -32,18 +110,51 @@ final class HookExecutionPlanner {
                 fieldRewriteEnabled,
                 flutterSettingsFontEnabled,
                 hyperOsNativeFlutterEnabled);
+        Set<String> automaticDomains = toDomainSet(domainPlan);
+        if (emulationEnabled) {
+            automaticDomains = mergeDomains(
+                    automaticDomains,
+                    Collections.singleton(FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT));
+        }
+        Set<String> builtinDomains = FontHookDomainRegistry.orderedKnownSubset(
+                packageBuiltinDomains);
+        HookDomainOverride resolvedOverride = hookDomainOverride != null
+                ? hookDomainOverride
+                : HookDomainOverride.automatic();
+        boolean customPathEffective = resolvedOverride.customPathEnabled
+                && resolvedFontMode == FontMode.FIELD_REWRITE;
+        if (!resolvedOverride.customPathEnabled || !customPathEffective) {
+            automaticDomains = mergeDomains(automaticDomains, builtinDomains);
+        } else {
+            builtinDomains = Collections.emptySet();
+        }
+        Set<String> shapedDomains = new LinkedHashSet<>(automaticDomains);
         if (resolvedDebug.forceFlutterSettings) {
-            domainPlan = createDebugFlutterSettingsPlan(domainPlan, resolvedDebug.flutterSettingsOnly);
+            if (resolvedDebug.flutterSettingsOnly) {
+                shapedDomains.clear();
+            }
+            shapedDomains.add(FontHookDomainRegistry.ID_FLUTTER_SETTINGS);
         }
         if (resolvedDebug.disableTextViewAbsoluteRewrite) {
-            domainPlan = createDebugDisableTextViewAbsoluteRewritePlan(domainPlan);
+            shapedDomains.remove(FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE);
         }
+        String hookDomainSource = "auto";
+        Set<String> finalDomains = shapedDomains;
+        if (customPathEffective) {
+            finalDomains = filterDomainsForResolvedMode(
+                    resolvedOverride.enabledKnownDomains,
+                    resolvedFontMode);
+            hookDomainSource = "custom";
+        }
+        domainPlan = toDomainPlan(finalDomains, domainPlan == null ? "none" : domainPlan.reason);
 
         boolean viewportEnabled = viewportEnabledBase;
         boolean resourcesHooksEnabled = !resolvedDebug.flutterSettingsOnly
                 && (viewportEnabled || emulationEnabled
                 || (domainPlan != null && domainPlan.resourcesFontEnabled));
-        boolean activityThreadFontEnabled = emulationEnabled && !resolvedDebug.flutterSettingsOnly;
+        boolean activityThreadFontEnabled = finalDomains.contains(
+                FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT)
+                && !resolvedDebug.flutterSettingsOnly;
         boolean textViewHooksEnabled = domainPlan != null
                 && domainPlan.textViewHooksEnabled
                 && !resolvedDebug.flutterSettingsOnly;
@@ -103,7 +214,11 @@ final class HookExecutionPlanner {
                 resolvedDebug.flutterSettingsOnly,
                 resolvedDebug.disableTextViewAbsoluteRewrite,
                 probeHooksRequested,
-                probeInstallMode);
+                probeInstallMode,
+                toCsv(finalDomains),
+                hookDomainSource,
+                toCsv(builtinDomains),
+                toUnknownCsv(resolvedOverride.unknownDomains));
     }
 
     static boolean resolveViewportHookEnabled(HookRuntimePolicy policy,
@@ -242,5 +357,103 @@ final class HookExecutionPlanner {
             return "disable-textview-absolute";
         }
         return "none";
+    }
+
+    private static Set<String> toDomainSet(FontHookArbitration.FontDomainPlan domainPlan) {
+        LinkedHashSet<String> domains = new LinkedHashSet<>();
+        if (domainPlan == null) {
+            return domains;
+        }
+        if (domainPlan.resourcesFontEnabled) {
+            domains.add(FontHookDomainRegistry.ID_RESOURCES_FONT);
+        }
+        if (domainPlan.textViewSpRewriteEnabled) {
+            domains.add(FontHookDomainRegistry.ID_TEXTVIEW_SP_REWRITE);
+        }
+        if (domainPlan.textViewAbsoluteRewriteEnabled) {
+            domains.add(FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE);
+        }
+        if (domainPlan.textViewCurrentPxFallbackEnabled) {
+            domains.add(FontHookDomainRegistry.ID_TEXTVIEW_CURRENT_PX_FALLBACK);
+        }
+        if (domainPlan.paintFallbackEnabled) {
+            domains.add(FontHookDomainRegistry.ID_PAINT_TEXT_SIZE_FALLBACK);
+        }
+        if (domainPlan.webViewTextZoomEnabled) {
+            domains.add(FontHookDomainRegistry.ID_WEBVIEW_TEXT_ZOOM);
+        }
+        if (domainPlan.flutterSettingsEnabled) {
+            domains.add(FontHookDomainRegistry.ID_FLUTTER_SETTINGS);
+        }
+        if (domainPlan.hyperOsNativeFlutterEnabled) {
+            domains.add(FontHookDomainRegistry.ID_HYPEROS_NATIVE_FLUTTER);
+        }
+        return FontHookDomainRegistry.orderedKnownSubset(domains);
+    }
+
+    private static FontHookArbitration.FontDomainPlan toDomainPlan(Set<String> domains, String reason) {
+        Set<String> normalized = FontHookDomainRegistry.orderedKnownSubset(domains);
+        boolean textViewSp = normalized.contains(FontHookDomainRegistry.ID_TEXTVIEW_SP_REWRITE);
+        boolean textViewAbsolute = normalized.contains(
+                FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE);
+        boolean textViewCurrentPx = normalized.contains(
+                FontHookDomainRegistry.ID_TEXTVIEW_CURRENT_PX_FALLBACK);
+        boolean paintFallback = normalized.contains(
+                FontHookDomainRegistry.ID_PAINT_TEXT_SIZE_FALLBACK);
+        boolean textViewHooks = textViewSp || textViewAbsolute || textViewCurrentPx || paintFallback;
+        return new FontHookArbitration.FontDomainPlan(
+                normalized.contains(FontHookDomainRegistry.ID_RESOURCES_FONT),
+                normalized.contains(FontHookDomainRegistry.ID_WEBVIEW_TEXT_ZOOM),
+                textViewHooks,
+                textViewSp,
+                textViewAbsolute,
+                textViewCurrentPx,
+                paintFallback,
+                normalized.contains(FontHookDomainRegistry.ID_FLUTTER_SETTINGS),
+                normalized.contains(FontHookDomainRegistry.ID_HYPEROS_NATIVE_FLUTTER),
+                false,
+                reason);
+    }
+
+    private static Set<String> mergeDomains(Set<String> left, Set<String> right) {
+        LinkedHashSet<String> merged = new LinkedHashSet<>();
+        if (left != null) {
+            merged.addAll(left);
+        }
+        if (right != null) {
+            merged.addAll(right);
+        }
+        return FontHookDomainRegistry.orderedKnownSubset(merged);
+    }
+
+    private static Set<String> filterDomainsForResolvedMode(Set<String> domains, FontMode mode) {
+        LinkedHashSet<String> filtered = new LinkedHashSet<>(
+                FontHookDomainRegistry.orderedKnownSubset(domains));
+        if (mode != FontMode.EMULATION) {
+            filtered.remove(FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT);
+        }
+        return filtered;
+    }
+
+    private static String toCsv(Set<String> domains) {
+        Set<String> ordered = FontHookDomainRegistry.orderedKnownSubset(domains);
+        if (ordered.isEmpty()) {
+            return "";
+        }
+        return String.join(",", ordered);
+    }
+
+    private static String toUnknownCsv(Set<String> domains) {
+        if (domains == null || domains.isEmpty()) {
+            return "";
+        }
+        LinkedHashSet<String> unknown = new LinkedHashSet<>();
+        for (String domain : domains) {
+            String id = domain == null ? "" : domain.trim();
+            if (!id.isEmpty() && !FontHookDomainRegistry.isKnown(id)) {
+                unknown.add(id);
+            }
+        }
+        return unknown.isEmpty() ? "" : String.join(",", unknown);
     }
 }

@@ -68,7 +68,8 @@ final class PerAppDisplayConfigSource {
         }
         return new PerAppDisplayConfig(packageName, targetViewportWidthDp,
                 targetFontScalePercent, targetFontMode,
-                packageConfig.hyperOsFlutterFontHookEnabled);
+                packageConfig.hyperOsFlutterFontHookEnabled,
+                packageConfig.hookDomainOverride);
     }
 
     Set<String> getConfiguredPackages() {

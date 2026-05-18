@@ -22,16 +22,19 @@ final class AppProcessHookInstaller {
                         String fontMode,
                         boolean fontScaleActive,
                         boolean flutterSettingsFontEnabled,
-                        boolean hyperOsNativeFlutterEnabled) throws Throwable {
+                        boolean hyperOsNativeFlutterEnabled,
+                        HookDomainOverride hookDomainOverride) throws Throwable {
         DebugFontOverride debugOverride = resolveDebugFontOverrideForPackage(packageName);
         HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
                 policy,
+                packageName,
                 viewportConfigured,
                 viewportMode,
                 fontScaleActive,
                 fontMode,
                 flutterSettingsFontEnabled,
                 hyperOsNativeFlutterEnabled,
+                hookDomainOverride,
                 debugOverride);
         DpisLog.i("DPIS_FONT app hook plan: package=" + packageName
                 + ", fontScaleActive=" + fontScaleActive
@@ -44,6 +47,10 @@ final class AppProcessHookInstaller {
                 + ", debugForceFlutterSettings=" + plan.debugForceFlutterSettings
                 + ", debugFlutterSettingsOnly=" + plan.debugFlutterSettingsOnly
                 + ", debugDisableTextViewAbsoluteRewrite=" + plan.debugDisableTextViewAbsoluteRewrite
+                + ", hookDomains=" + plan.hookDomains
+                + ", hookDomainSource=" + plan.hookDomainSource
+                + ", builtinDomains=" + plan.builtinDomains
+                + ", unknownCustomDomains=" + plan.unknownCustomDomains
                 + ", reason={" + plan.reason.formatForLog() + "}");
         installFromPlan(xposed, packageName, store, plan);
         if (plan.probeHooksRequested) {
@@ -66,6 +73,10 @@ final class AppProcessHookInstaller {
                 + ", flutterSettings=" + plan.fontDomainPlan.flutterSettingsEnabled
                 + ", hyperOsNativeFlutter=" + plan.fontDomainPlan.hyperOsNativeFlutterEnabled
                 + ", genericNativeFlutter=" + plan.fontDomainPlan.genericNativeFlutterEnabled
+                + ", hookDomains=" + plan.hookDomains
+                + ", hookDomainSource=" + plan.hookDomainSource
+                + ", builtinDomains=" + plan.builtinDomains
+                + ", unknownCustomDomains=" + plan.unknownCustomDomains
                 + ", debugForceFlutterSettings=" + plan.debugForceFlutterSettings
                 + ", debugFlutterSettingsOnly=" + plan.debugFlutterSettingsOnly
                 + ", debugDisableTextViewAbsoluteRewrite=" + plan.debugDisableTextViewAbsoluteRewrite

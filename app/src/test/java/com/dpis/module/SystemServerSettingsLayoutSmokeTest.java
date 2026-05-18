@@ -35,12 +35,11 @@ public class SystemServerSettingsLayoutSmokeTest {
     @Test
     public void stringsContainAboutAndHideLauncherConfiguration() throws IOException {
         String strings = read("src/main/res/values/strings.xml");
+        String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
         assertTrue(strings.contains("settings_section_other"));
         assertTrue(strings.contains("settings_experimental_title"));
-        assertTrue(strings.contains("settings_flutter_font_hook_label"));
-        assertTrue(strings.contains("settings_flutter_settings_font_hook_label"));
-        assertTrue(strings.contains("settings_hyperos_flutter_font_hook_label"));
+        assertTrue(strings.contains("settings_experimental_empty_state"));
         assertTrue(strings.contains("settings_about_label"));
         assertTrue(strings.contains("settings_config_backup_label"));
         assertTrue(strings.contains("config_backup_confirm_import_action"));
@@ -75,40 +74,33 @@ public class SystemServerSettingsLayoutSmokeTest {
     }
 
     @Test
-    public void disablingHyperOsFontHookClearsPublishedFontTargets() throws IOException {
+    public void experimentalSettingsActivityOnlySetsLayoutAndInsets() throws IOException {
         String source = read("src/main/java/com/dpis/module/ExperimentalSettingsActivity.java");
 
-        assertTrue(source.contains("if (!isChecked) {"));
-        assertTrue(source.contains("HyperOsNativeFontPropertySyncer.clearConfiguredFontTargetsAsync(store);"));
+        assertTrue(source.contains("setContentView(R.layout.activity_experimental_settings);"));
+        assertTrue(source.contains("applyInsets();"));
+        assertTrue(!source.contains("setFlutterFontHookEnabled"));
+        assertTrue(!source.contains("setFlutterSettingsFontHookEnabled"));
+        assertTrue(!source.contains("setHyperOsFlutterFontHookEnabled"));
     }
 
     @Test
-    public void experimentalSettingsPageContainsFlutterAndHyperOsSwitches() throws IOException {
+    public void experimentalSettingsPageShowsEmptyStateOnly() throws IOException {
         String manifest = read("src/main/AndroidManifest.xml");
         String layout = read("src/main/res/layout/activity_experimental_settings.xml");
         String strings = read("src/main/res/values/strings.xml");
-        String source = read("src/main/java/com/dpis/module/ExperimentalSettingsActivity.java");
+        String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
         assertTrue(manifest.contains(".ExperimentalSettingsActivity"));
-        assertTrue(layout.contains("android:id=\"@+id/experimental_settings_back_button\""));
-        assertTrue(layout.contains("android:id=\"@+id/row_flutter_font_hook\""));
-        assertTrue(layout.contains("android:id=\"@+id/row_flutter_settings_font_hook\""));
-        assertTrue(layout.contains("android:id=\"@+id/row_hyperos_flutter_font_hook\""));
-        assertTrue(source.contains("store.setFlutterFontHookEnabled(isChecked)"));
-        assertTrue(source.contains("store.setFlutterSettingsFontHookEnabled(isChecked)"));
-        assertTrue(source.contains("store.isFlutterFontHookEnabled()"));
-        assertTrue(source.contains("setRowEnabled(flutterSettingsFontHookRow, flutterEnabled);"));
-        assertTrue(source.contains("flutterSettingsFontHookSwitch.setEnabled(flutterEnabled);"));
-        assertTrue(source.contains("setRowEnabled(hyperOsFlutterFontHookRow, flutterEnabled);"));
-        assertTrue(source.contains("hyperOsFlutterFontHookSwitch.setEnabled(flutterEnabled);"));
-        assertTrue(layout.contains("@layout/item_experimental_switch"));
-        assertTrue(layout.contains("@layout/item_experimental_child_switch"));
-        String childLayout = read("src/main/res/layout/item_experimental_child_switch.xml");
-        assertTrue(childLayout.contains("@+id/setting_subtitle"));
-        assertTrue(childLayout.contains("android:fontFamily=\"monospace\""));
-        assertTrue(!childLayout.contains("@+id/setting_icon"));
-        assertTrue(strings.contains("flutterSettingsFontEnabled"));
-        assertTrue(strings.contains("hyperOsNativeFlutterFontEnabled"));
+        assertTrue(layout.contains("android:id=\"@+id/experimental_settings_content\""));
+        assertTrue(layout.contains("@string/settings_experimental_empty_state"));
+        assertTrue(layout.contains("android:textColor=\"?attr/colorOnSurfaceVariant\""));
+        assertTrue(!layout.contains("experimental_settings_back_button"));
+        assertTrue(!layout.contains("row_flutter_font_hook"));
+        assertTrue(!layout.contains("row_flutter_settings_font_hook"));
+        assertTrue(!layout.contains("row_hyperos_flutter_font_hook"));
+        assertTrue(strings.contains("<string name=\"settings_experimental_empty_state\">No experimental features</string>"));
+        assertTrue(zhStrings.contains("<string name=\"settings_experimental_empty_state\">暂无实验功能</string>"));
     }
 
     @Test

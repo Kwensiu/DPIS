@@ -44,6 +44,10 @@ final class AppConfigDialogBinder {
 
         boolean setDpisEnabled(String packageName, boolean enabled);
 
+        void showFontHookDomains(AppListItem item, Runnable onStateChanged);
+
+        String getFontHookDomainsButtonText(String packageName);
+
         int[] saveAppConfig(AppListItem item,
                 TextInputEditText viewportInput,
                 TextInputEditText fontScaleInput,
@@ -65,8 +69,8 @@ final class AppConfigDialogBinder {
         AppConfigDialogViews views = initDialogViews(dialogView);
         AppConfigDialogState state = bindDialogInitialState(item, views);
         AppConfigDialogActionStyle style = resolveDialogActionStyle(views.scopeButton);
-        refreshDialogState(views, state, style, systemHooksEnabled);
-        bindDialogValidation(dialogView, views, state, style, systemHooksEnabled);
+        refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);
+        bindDialogValidation(dialogView, item, views, state, style, systemHooksEnabled);
         bindDialogActions(dialogView, item, views, state, style, systemHooksEnabled);
     }
 
@@ -95,6 +99,7 @@ final class AppConfigDialogBinder {
                 dialogView.findViewById(R.id.dialog_restart_button),
                 dialogView.findViewById(R.id.dialog_stop_button),
                 dialogView.findViewById(R.id.dialog_dpis_toggle_button),
+                dialogView.findViewById(R.id.dialog_font_hook_domains_button),
                 dialogView.findViewById(R.id.dialog_disable_button),
                 dialogView.findViewById(R.id.dialog_save_button));
     }
@@ -128,7 +133,8 @@ final class AppConfigDialogBinder {
     private void refreshDialogState(AppConfigDialogViews views,
             AppConfigDialogState state,
             AppConfigDialogActionStyle style,
-            boolean systemHooksEnabled) {
+            boolean systemHooksEnabled,
+            String packageName) {
         updateDialogStatus(
                 views.statusView,
                 state.scopeSelected,
@@ -143,9 +149,11 @@ final class AppConfigDialogBinder {
                 style.defaultActionBgTint, style.defaultActionStrokeWidth, style.defaultActionTextColor);
         bindDpisToggleButton(views.dpisToggleButton, state.dpisEnabled,
                 style.defaultActionBgTint, style.defaultActionStrokeWidth, style.defaultActionTextColor);
+        bindFontHookDomainsButton(views.fontHookDomainsButton, packageName);
     }
 
     private void bindDialogValidation(View dialogView,
+            AppListItem item,
             AppConfigDialogViews views,
             AppConfigDialogState state,
             AppConfigDialogActionStyle style,
@@ -172,7 +180,7 @@ final class AppConfigDialogBinder {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,
                         views.fontInputLayout, views.fontInputView, views.saveButton);
-                refreshDialogState(views, state, style, systemHooksEnabled);
+                refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);
             }
 
             @Override
@@ -199,11 +207,11 @@ final class AppConfigDialogBinder {
             host.toggleScope(item, state.scopeSelected,
                     () -> {
                         state.scopeSelected = true;
-                        refreshDialogState(views, state, style, systemHooksEnabled);
+                        refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);
                     },
                     () -> {
                         state.scopeSelected = false;
-                        refreshDialogState(views, state, style, systemHooksEnabled);
+                        refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);
                     });
         });
         views.startButton.setOnClickListener(v -> {
@@ -223,8 +231,13 @@ final class AppConfigDialogBinder {
             boolean nextEnabled = !state.dpisEnabled;
             if (host.setDpisEnabled(item.packageName, nextEnabled)) {
                 state.dpisEnabled = nextEnabled;
-                refreshDialogState(views, state, style, systemHooksEnabled);
+                refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);
             }
+        });
+        views.fontHookDomainsButton.setOnClickListener(v -> {
+            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
+            host.showFontHookDomains(item,
+                    () -> bindFontHookDomainsButton(views.fontHookDomainsButton, item.packageName));
         });
         views.disableButton.setOnClickListener(v -> {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
@@ -234,7 +247,7 @@ final class AppConfigDialogBinder {
             bindFontModeToggle(views.fontModeToggle, FontApplyMode.FIELD_REWRITE, true);
             updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,
                     views.fontInputLayout, views.fontInputView, views.saveButton);
-            refreshDialogState(views, state, style, systemHooksEnabled);
+            refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);
         });
         views.saveButton.setOnClickListener(v -> {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
@@ -255,34 +268,34 @@ final class AppConfigDialogBinder {
         views.viewportModeToggle.container.setOnClickListener(v -> {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
             toggleViewportMode(views.viewportModeToggle);
-            refreshDialogState(views, state, style, systemHooksEnabled);
+            refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);
         });
         views.viewportModeToggle.emulationLabel.setOnClickListener(v -> {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
             bindViewportModeToggle(
                     views.viewportModeToggle, ViewportApplyMode.SYSTEM_EMULATION, true);
-            refreshDialogState(views, state, style, systemHooksEnabled);
+            refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);
         });
         views.viewportModeToggle.replaceLabel.setOnClickListener(v -> {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
             bindViewportModeToggle(
                     views.viewportModeToggle, ViewportApplyMode.FIELD_REWRITE, true);
-            refreshDialogState(views, state, style, systemHooksEnabled);
+            refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);
         });
         views.fontModeToggle.container.setOnClickListener(v -> {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
             toggleFontMode(views.fontModeToggle);
-            refreshDialogState(views, state, style, systemHooksEnabled);
+            refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);
         });
         views.fontModeToggle.emulationLabel.setOnClickListener(v -> {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
             bindFontModeToggle(views.fontModeToggle, FontApplyMode.SYSTEM_EMULATION, true);
-            refreshDialogState(views, state, style, systemHooksEnabled);
+            refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);
         });
         views.fontModeToggle.replaceLabel.setOnClickListener(v -> {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
             bindFontModeToggle(views.fontModeToggle, FontApplyMode.FIELD_REWRITE, true);
-            refreshDialogState(views, state, style, systemHooksEnabled);
+            refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);
         });
     }
 
@@ -599,6 +612,13 @@ final class AppConfigDialogBinder {
         dpisToggleButton.setContentDescription(buttonText);
     }
 
+    private void bindFontHookDomainsButton(MaterialButton button, String packageName) {
+        String buttonText = host.getFontHookDomainsButtonText(packageName);
+        button.setText(buttonText);
+        button.setIcon(null);
+        button.setContentDescription(buttonText);
+    }
+
     private static final class ModeToggle {
         final View container;
         final View thumb;
@@ -630,6 +650,7 @@ final class AppConfigDialogBinder {
         final MaterialButton restartButton;
         final MaterialButton stopButton;
         final MaterialButton dpisToggleButton;
+        final MaterialButton fontHookDomainsButton;
         final MaterialButton disableButton;
         final MaterialButton saveButton;
 
@@ -648,6 +669,7 @@ final class AppConfigDialogBinder {
                 MaterialButton restartButton,
                 MaterialButton stopButton,
                 MaterialButton dpisToggleButton,
+                MaterialButton fontHookDomainsButton,
                 MaterialButton disableButton,
                 MaterialButton saveButton) {
             this.iconView = iconView;
@@ -665,6 +687,7 @@ final class AppConfigDialogBinder {
             this.restartButton = restartButton;
             this.stopButton = stopButton;
             this.dpisToggleButton = dpisToggleButton;
+            this.fontHookDomainsButton = fontHookDomainsButton;
             this.disableButton = disableButton;
             this.saveButton = saveButton;
         }

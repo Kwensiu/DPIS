@@ -20,6 +20,10 @@ final class HookExecutionPlan {
     final boolean debugDisableTextViewAbsoluteRewrite;
     final boolean probeHooksRequested;
     final String probeInstallMode;
+    final String hookDomains;
+    final String hookDomainSource;
+    final String builtinDomains;
+    final String unknownCustomDomains;
 
     HookExecutionPlan(FontMode fontMode,
                       boolean viewportEnabled,
@@ -39,7 +43,11 @@ final class HookExecutionPlan {
                       boolean debugFlutterSettingsOnly,
                       boolean debugDisableTextViewAbsoluteRewrite,
                       boolean probeHooksRequested,
-                      String probeInstallMode) {
+                      String probeInstallMode,
+                      String hookDomains,
+                      String hookDomainSource,
+                      String builtinDomains,
+                      String unknownCustomDomains) {
         this.fontMode = fontMode;
         this.viewportEnabled = viewportEnabled;
         this.resourcesHooksEnabled = resourcesHooksEnabled;
@@ -59,5 +67,9 @@ final class HookExecutionPlan {
         this.debugDisableTextViewAbsoluteRewrite = debugDisableTextViewAbsoluteRewrite;
         this.probeHooksRequested = probeHooksRequested;
         this.probeInstallMode = probeInstallMode;
+        this.hookDomains = hookDomains;
+        this.hookDomainSource = hookDomainSource;
+        this.builtinDomains = builtinDomains;
+        this.unknownCustomDomains = unknownCustomDomains;
     }
 }

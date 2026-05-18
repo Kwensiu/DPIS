@@ -2,6 +2,8 @@ package com.dpis.module;
 
 import org.junit.Test;
 
+import java.util.Set;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -220,6 +222,150 @@ public class HookExecutionPlannerTest {
         assertEquals("viewport-system-hooks-off", emulationPlan.reason.fallback);
         assertTrue(rewritePlan.viewportEnabled);
         assertEquals(FontMode.FIELD_REWRITE, rewritePlan.fontMode);
+    }
+
+    @Test
+    public void customFieldRewritePathReplacesAutomaticDomainsAndRejectsActivityThread() {
+        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
+                createPolicy(false, true, false),
+                "com.example.app",
+                false,
+                ViewportApplyMode.OFF,
+                true,
+                FontApplyMode.FIELD_REWRITE,
+                false,
+                false,
+                new HookDomainOverride(
+                        true,
+                        Set.of(FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE,
+                                FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT),
+                        Set.of("removed_domain")),
+                DebugFontOverride.none());
+
+        assertEquals("custom", plan.hookDomainSource);
+        assertEquals("textview_absolute_rewrite", plan.hookDomains);
+        assertEquals("removed_domain", plan.unknownCustomDomains);
+        assertFalse(plan.resourcesHooksEnabled);
+        assertFalse(plan.activityThreadFontEnabled);
+        assertTrue(plan.textViewHooksEnabled);
+        assertTrue(plan.fontDomainPlan.textViewAbsoluteRewriteEnabled);
+        assertFalse(plan.webViewTextZoomEnabled);
+    }
+
+    @Test
+    public void emptyCustomFieldRewritePathDisablesAllFontDomains() {
+        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
+                createPolicy(false, true, false),
+                "com.example.app",
+                false,
+                ViewportApplyMode.OFF,
+                true,
+                FontApplyMode.FIELD_REWRITE,
+                true,
+                true,
+                new HookDomainOverride(true, Set.of(), Set.of()),
+                DebugFontOverride.none());
+
+        assertEquals("custom", plan.hookDomainSource);
+        assertEquals("", plan.hookDomains);
+        assertFalse(plan.resourcesHooksEnabled);
+        assertFalse(plan.activityThreadFontEnabled);
+        assertFalse(plan.textViewHooksEnabled);
+        assertFalse(plan.webViewTextZoomEnabled);
+        assertFalse(plan.flutterSettingsEnabled);
+        assertFalse(plan.hyperOsNativeFlutterEnabled);
+    }
+
+    @Test
+    public void customDomainsAreIgnoredOutsideFieldRewriteRuntime() {
+        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
+                createPolicy(false, true, false),
+                "com.example.app",
+                false,
+                ViewportApplyMode.OFF,
+                true,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                false,
+                new HookDomainOverride(
+                        true,
+                        Set.of(FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE),
+                        Set.of()),
+                DebugFontOverride.none());
+
+        assertEquals("auto", plan.hookDomainSource);
+        assertTrue(plan.resourcesHooksEnabled);
+        assertTrue(plan.activityThreadFontEnabled);
+        assertFalse(plan.textViewHooksEnabled);
+        assertEquals("resources_font,activity_thread_font,webview_text_zoom",
+                plan.hookDomains);
+    }
+
+    @Test
+    public void builtinDomainsAreReplacedByCustomFieldRewritePath() {
+        Set<String> builtin = Set.of(FontHookDomainRegistry.ID_HYPEROS_NATIVE_FLUTTER);
+        HookExecutionPlan automaticPlan = HookExecutionPlanner.buildPlanWithBuiltinDomainsForTest(
+                createPolicy(false, true, false),
+                "com.example.app",
+                false,
+                ViewportApplyMode.OFF,
+                true,
+                FontApplyMode.FIELD_REWRITE,
+                false,
+                false,
+                HookDomainOverride.automatic(),
+                DebugFontOverride.none(),
+                builtin);
+        HookExecutionPlan customPlan = HookExecutionPlanner.buildPlanWithBuiltinDomainsForTest(
+                createPolicy(false, true, false),
+                "com.example.app",
+                false,
+                ViewportApplyMode.OFF,
+                true,
+                FontApplyMode.FIELD_REWRITE,
+                false,
+                false,
+                new HookDomainOverride(
+                        true,
+                        Set.of(FontHookDomainRegistry.ID_RESOURCES_FONT),
+                        Set.of()),
+                DebugFontOverride.none(),
+                builtin);
+
+        assertEquals("hyperos_native_flutter", automaticPlan.builtinDomains);
+        assertTrue(automaticPlan.hyperOsNativeFlutterEnabled);
+        assertEquals("auto", automaticPlan.hookDomainSource);
+
+        assertEquals("", customPlan.builtinDomains);
+        assertFalse(customPlan.hyperOsNativeFlutterEnabled);
+        assertEquals("custom", customPlan.hookDomainSource);
+        assertEquals("resources_font", customPlan.hookDomains);
+    }
+
+    @Test
+    public void builtinDomainsStillApplyWhenCustomPathIsIgnoredOutsideFieldRewrite() {
+        HookExecutionPlan plan = HookExecutionPlanner.buildPlanWithBuiltinDomainsForTest(
+                createPolicy(false, true, false),
+                "com.example.app",
+                false,
+                ViewportApplyMode.OFF,
+                true,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                false,
+                new HookDomainOverride(
+                        true,
+                        Set.of(FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE),
+                        Set.of()),
+                DebugFontOverride.none(),
+                Set.of(FontHookDomainRegistry.ID_HYPEROS_NATIVE_FLUTTER));
+
+        assertEquals("auto", plan.hookDomainSource);
+        assertEquals("hyperos_native_flutter", plan.builtinDomains);
+        assertTrue(plan.hyperOsNativeFlutterEnabled);
+        assertFalse(plan.textViewHooksEnabled);
+        assertEquals("resources_font,activity_thread_font,webview_text_zoom,hyperos_native_flutter",
+                plan.hookDomains);
     }
 
     private static HookRuntimePolicy createPolicy(boolean safeMode,

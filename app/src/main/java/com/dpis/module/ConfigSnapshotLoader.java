@@ -14,6 +14,7 @@ final class ConfigSnapshotLoader {
         }
         Set<String> configuredPackages = store.getConfiguredPackages();
         Map<String, PackageConfigSnapshot> packages = new LinkedHashMap<>();
+        HookDomainOverrideStore overrideStore = new HookDomainOverrideStore(store);
         for (String packageName : configuredPackages) {
             if (packageName == null || packageName.isBlank()) {
                 continue;
@@ -25,9 +26,10 @@ final class ConfigSnapshotLoader {
                     store.getTargetViewportApplyMode(packageName),
                     store.getTargetFontScalePercent(packageName),
                     store.getTargetFontApplyMode(packageName),
-                    store.isFlutterFontHookEnabled(),
-                    store.isFlutterSettingsFontHookEnabled(),
-                    store.isHyperOsFlutterFontHookEnabled()));
+                    false,
+                    false,
+                    false,
+                    overrideStore.read(packageName)));
         }
         return new ConfigSnapshot(
                 packages.keySet(),
