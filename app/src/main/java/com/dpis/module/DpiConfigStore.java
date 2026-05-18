@@ -347,9 +347,6 @@ final class DpiConfigStore {
         if (enabled) {
             if (!hasAnyPackageConfigAfterRemoving(packageName, keyForDpisEnabled(packageName))) {
                 packages.remove(packageName);
-                return commitBoth(editor -> editor
-                        .putStringSet(KEY_TARGET_PACKAGES, packages)
-                        .remove(keyForDpisEnabled(packageName)));
             }
             return commitBoth(editor -> editor
                     .putStringSet(KEY_TARGET_PACKAGES, packages)
@@ -401,11 +398,7 @@ final class DpiConfigStore {
             return false;
         }
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
-        if (getTargetViewportWidthDp(packageName) == null
-                && getTargetFontScalePercent(packageName) == null
-                && !contains(keyForViewportMode(packageName))
-                && !contains(keyForFontMode(packageName))
-                && isTargetDpisEnabled(packageName)) {
+        if (!hasAnyPackageConfigAfterRemoving(packageName, keyForFontHookDomains(packageName))) {
             packages.remove(packageName);
         }
         return commitBoth(editor -> editor

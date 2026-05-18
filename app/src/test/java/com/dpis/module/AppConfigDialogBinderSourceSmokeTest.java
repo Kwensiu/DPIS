@@ -82,6 +82,9 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("setTitle(R.string.dialog_font_hook_domains_dialog_title)"));
         assertTrue(source.contains("host.saveCustom(packageName, selectedKnown, automaticKnown, unknown)"));
         assertTrue(source.contains("host.restoreRecommended(packageName)"));
+        assertTrue(source.contains("title.setText(resolveDomainTitleRes(domainId));"));
+        assertTrue(source.contains("title.setText(domainId);"));
+        assertFalse(source.contains("title.setText(known ? resolveDomainTitleRes(domainId) : 0);"));
         assertFalse(source.contains("setPositiveButton"));
         assertFalse(source.contains("setNegativeButton"));
         assertTrue(dialogLayout.contains("@+id/font_hook_domains_known_container"));

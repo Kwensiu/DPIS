@@ -302,50 +302,6 @@ final class HookExecutionPlanner {
         return "none";
     }
 
-    private static FontHookArbitration.FontDomainPlan createDebugFlutterSettingsPlan(
-            FontHookArbitration.FontDomainPlan source,
-            boolean flutterSettingsOnly) {
-        if (source == null) {
-            return new FontHookArbitration.FontDomainPlan(
-                    false, false, false, false, false,
-                    false, false, true, false, false,
-                    "debug-flutter-settings-domain-plan");
-        }
-        return new FontHookArbitration.FontDomainPlan(
-                !flutterSettingsOnly && source.resourcesFontEnabled,
-                !flutterSettingsOnly && source.webViewTextZoomEnabled,
-                !flutterSettingsOnly && source.textViewHooksEnabled,
-                !flutterSettingsOnly && source.textViewSpRewriteEnabled,
-                !flutterSettingsOnly && source.textViewAbsoluteRewriteEnabled,
-                !flutterSettingsOnly && source.textViewCurrentPxFallbackEnabled,
-                !flutterSettingsOnly && source.paintFallbackEnabled,
-                true,
-                !flutterSettingsOnly && source.hyperOsNativeFlutterEnabled,
-                false,
-                flutterSettingsOnly
-                        ? "debug-flutter-settings-only-domain-plan"
-                        : source.reason + "+debug-flutter-settings");
-    }
-
-    private static FontHookArbitration.FontDomainPlan createDebugDisableTextViewAbsoluteRewritePlan(
-            FontHookArbitration.FontDomainPlan source) {
-        if (source == null || !source.textViewAbsoluteRewriteEnabled) {
-            return source;
-        }
-        return new FontHookArbitration.FontDomainPlan(
-                source.resourcesFontEnabled,
-                source.webViewTextZoomEnabled,
-                source.textViewHooksEnabled,
-                source.textViewSpRewriteEnabled,
-                false,
-                source.textViewCurrentPxFallbackEnabled,
-                source.paintFallbackEnabled,
-                source.flutterSettingsEnabled,
-                source.hyperOsNativeFlutterEnabled,
-                source.genericNativeFlutterEnabled,
-                source.reason + "+debug-disable-textview-absolute");
-    }
-
     private static String resolveDebugReason(DebugFontOverride debugOverride) {
         if (debugOverride.forceFlutterSettings && debugOverride.disableTextViewAbsoluteRewrite) {
             return "force-flutter-settings+disable-textview-absolute";

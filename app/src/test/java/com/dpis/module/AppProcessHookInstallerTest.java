@@ -319,8 +319,10 @@ public class AppProcessHookInstallerTest {
         assertTrue(source.contains("if (!BuildConfig.DEBUG || packageName == null"));
         assertTrue(source.contains("DebugFontOverride.of("));
         assertTrue(source.contains("HookExecutionPlanner.buildPlan("));
-        assertTrue(planner.contains("createDebugFlutterSettingsPlan("));
-        assertTrue(planner.contains("createDebugDisableTextViewAbsoluteRewritePlan("));
+        assertTrue(planner.contains("if (resolvedDebug.forceFlutterSettings)"));
+        assertTrue(planner.contains("shapedDomains.add(FontHookDomainRegistry.ID_FLUTTER_SETTINGS);"));
+        assertTrue(planner.contains("if (resolvedDebug.disableTextViewAbsoluteRewrite)"));
+        assertTrue(planner.contains("shapedDomains.remove(FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE);"));
         assertTrue(planner.contains("!resolvedDebug.flutterSettingsOnly"));
     }
 

@@ -139,8 +139,9 @@ final class FontHookDomainDialog {
                 R.layout.item_font_hook_domain, null, false);
         MaterialTextView title = row.findViewById(R.id.font_hook_domain_title);
         MaterialTextView subtitle = row.findViewById(R.id.font_hook_domain_subtitle);
-        title.setText(known ? resolveDomainTitleRes(domainId) : 0);
-        if (!known) {
+        if (known) {
+            title.setText(resolveDomainTitleRes(domainId));
+        } else {
             title.setText(domainId);
         }
         subtitle.setText(domainId);

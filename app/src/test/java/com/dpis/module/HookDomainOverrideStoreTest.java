@@ -73,6 +73,21 @@ public class HookDomainOverrideStoreTest {
     }
 
     @Test
+    public void restoreKeepsPackageWhenExplicitDpisEnabledKeyRemains() {
+        DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
+        HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
+        assertTrue(store.save("com.example.app", orderedSet("resources_font"), Set.of()));
+        assertTrue(configStore.setTargetDpisEnabled("com.example.app", false));
+        assertTrue(configStore.setTargetDpisEnabled("com.example.app", true));
+        assertTrue(configStore.setTargetDpisEnabled("com.example.app", false));
+
+        assertTrue(store.restoreRecommended("com.example.app"));
+
+        assertNull(configStore.getPackageFontHookDomainsRaw("com.example.app"));
+        assertTrue(configStore.getConfiguredPackages().contains("com.example.app"));
+    }
+
+    @Test
     public void savingAutomaticKnownPathClearsKeyWhenNoUnknownIdsExist() {
         DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
         HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
