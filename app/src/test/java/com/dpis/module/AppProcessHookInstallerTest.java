@@ -140,9 +140,9 @@ public class AppProcessHookInstallerTest {
 
         assertTrue(domainPlan.resourcesFontEnabled);
         assertTrue(domainPlan.webViewTextZoomEnabled);
-        assertTrue(domainPlan.textViewHooksEnabled);
+        assertFalse(domainPlan.textViewHooksEnabled);
         assertFalse(domainPlan.textViewSpRewriteEnabled);
-        assertTrue(domainPlan.textViewAbsoluteRewriteEnabled);
+        assertFalse(domainPlan.textViewAbsoluteRewriteEnabled);
         assertFalse(domainPlan.textViewCurrentPxFallbackEnabled);
         assertFalse(domainPlan.flutterSettingsEnabled);
         assertFalse(domainPlan.hyperOsNativeFlutterEnabled);
@@ -193,16 +193,16 @@ public class AppProcessHookInstallerTest {
     }
 
     @Test
-    public void fieldRewriteKeepsIndependentDomainsButSkipsRiskierTextViewFallbacks() {
+    public void fieldRewriteKeepsIndependentDomainsButSkipsTextViewFallbacks() {
         FontHookArbitration.FontDomainPlan domainPlan =
                 AppProcessHookInstaller.resolveFontDomainPlan(
                         new AppProcessHookInstaller.FontHookPlan(false, true, false));
 
         assertTrue(domainPlan.webViewTextZoomEnabled);
-        assertTrue(domainPlan.textViewHooksEnabled);
+        assertFalse(domainPlan.textViewHooksEnabled);
         assertFalse(domainPlan.flutterSettingsEnabled);
         assertFalse(domainPlan.textViewSpRewriteEnabled);
-        assertTrue(domainPlan.textViewAbsoluteRewriteEnabled);
+        assertFalse(domainPlan.textViewAbsoluteRewriteEnabled);
         assertFalse(domainPlan.textViewCurrentPxFallbackEnabled);
         assertFalse(domainPlan.paintFallbackEnabled);
         assertFalse(domainPlan.hyperOsNativeFlutterEnabled);
@@ -253,10 +253,10 @@ public class AppProcessHookInstallerTest {
 
         assertTrue(fieldRewritePlan.resourcesFontEnabled);
         assertTrue(fieldRewritePlan.webViewTextZoomEnabled);
-        assertTrue(fieldRewritePlan.textViewHooksEnabled);
+        assertFalse(fieldRewritePlan.textViewHooksEnabled);
         assertFalse(fieldRewritePlan.flutterSettingsEnabled);
         assertFalse(fieldRewritePlan.textViewSpRewriteEnabled);
-        assertTrue(fieldRewritePlan.textViewAbsoluteRewriteEnabled);
+        assertFalse(fieldRewritePlan.textViewAbsoluteRewriteEnabled);
         assertFalse(fieldRewritePlan.textViewCurrentPxFallbackEnabled);
         assertFalse(fieldRewritePlan.paintFallbackEnabled);
         assertFalse(fieldRewritePlan.hyperOsNativeFlutterEnabled);
@@ -311,12 +311,17 @@ public class AppProcessHookInstallerTest {
     @Test
     public void debugFlutterSettingsPropertiesAreDebugOnlyAndPackageScoped() throws Exception {
         String source = readSource("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+        String planner = readSource("src/main/java/com/dpis/module/HookExecutionPlanner.java");
 
         assertTrue(source.contains("debug.dpis.font.force_flutter_settings_package"));
         assertTrue(source.contains("debug.dpis.font.flutter_settings_only_package"));
+        assertTrue(source.contains("debug.dpis.font.disable_textview_absolute_rewrite_package"));
         assertTrue(source.contains("if (!BuildConfig.DEBUG || packageName == null"));
-        assertTrue(source.contains("createDebugFlutterSettingsPlan("));
-        assertTrue(source.contains("!debugFlutterSettingsOnly"));
+        assertTrue(source.contains("DebugFontOverride.of("));
+        assertTrue(source.contains("HookExecutionPlanner.buildPlan("));
+        assertTrue(planner.contains("createDebugFlutterSettingsPlan("));
+        assertTrue(planner.contains("createDebugDisableTextViewAbsoluteRewritePlan("));
+        assertTrue(planner.contains("!resolvedDebug.flutterSettingsOnly"));
     }
 
     private static HookRuntimePolicy createPolicy(boolean safeMode) {

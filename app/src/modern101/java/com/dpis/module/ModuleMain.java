@@ -165,13 +165,18 @@ public final class ModuleMain extends XposedModule {
             return;
         }
         HookRuntimePolicy policy = HookRuntimePolicy.fromSnapshot(snapshot);
-        AppProcessHookInstaller.FontHookPlan fontPlan = AppProcessHookInstaller.resolveFontHookPlan(
-                policy, packagePlan.fontScaleActive, packagePlan.targetFontMode);
-        FontHookArbitration.FontDomainPlan domainPlan = AppProcessHookInstaller.resolveFontDomainPlan(
-                fontPlan,
+        DebugFontOverride debugOverride = AppProcessHookInstaller
+                .resolveDebugFontOverrideForPackage(packageName);
+        HookExecutionPlan executionPlan = HookExecutionPlanner.buildPlan(
+                policy,
+                packagePlan.viewportConfigured,
+                packagePlan.targetViewportMode,
+                packagePlan.fontScaleActive,
+                packagePlan.targetFontMode,
                 packagePlan.flutterSettingsFontEnabled,
-                packagePlan.hyperOsNativeFlutterFontEnabled);
-        if (!domainPlan.flutterSettingsEnabled) {
+                packagePlan.hyperOsNativeFlutterFontEnabled,
+                debugOverride);
+        if (!executionPlan.flutterSettingsEnabled) {
             return;
         }
         bridgeLog("flutter-retry proceeding: package=" + packageName
@@ -179,7 +184,7 @@ public final class ModuleMain extends XposedModule {
                 + ", fontPercent=" + packagePlan.targetFontScalePercent
                 + ", fontMode=" + packagePlan.targetFontMode);
         FlutterSettingsFontHookInstaller.retryWithAppClassLoader(
-                this, packageName, store, domainPlan, classLoader);
+                this, packageName, store, executionPlan.fontDomainPlan, classLoader);
     }
 
     private DpiConfigStore getOrCreateConfigStore() {
