@@ -21,6 +21,7 @@ public final class RuntimePropertyRecoveryCoordinatorSourceTest {
 
         assertTrue(source.contains("ViewportPropertySyncer.syncConfiguredTargetsAsync(store)"));
         assertTrue(source.contains("FontRuntimePropertySyncer.syncConfiguredTargetsAsync(store)"));
+        assertTrue(source.contains("FontHookDomainPropertySyncer.syncConfiguredTargetsAsync(store)"));
         assertTrue(source.contains("idempotent"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(remoteStore)"));

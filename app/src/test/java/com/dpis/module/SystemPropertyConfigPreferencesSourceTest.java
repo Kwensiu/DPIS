@@ -18,6 +18,15 @@ public class SystemPropertyConfigPreferencesSourceTest {
         assertTrue(source.contains("(now - cachedAtMillis) < SNAPSHOT_TTL_MILLIS"));
     }
 
+    @Test
+    public void readsHookDomainOverrideFromRuntimePropertyMirror() throws Exception {
+        String source = read("src/main/java/com/dpis/module/SystemPropertyConfigPreferences.java");
+
+        assertTrue(source.contains("FontHookDomainPropertyBridge.readOverride(packageName)"));
+        assertTrue(source.contains("values.put(hookDomainsKey(), String.join(\",\""));
+        assertTrue(source.contains("font.\" + packageName + \".hook_domains"));
+    }
+
     private static String read(String relativePath) throws Exception {
         Path path = Path.of(relativePath);
         if (!Files.exists(path)) {

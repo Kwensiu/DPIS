@@ -7,15 +7,15 @@ import static org.junit.Assert.assertTrue;
 
 public class FontHookArbitrationTest {
     @Test
-    public void fieldRewriteUsesResourcesFontDomainAndSkipsTextViewFallbacks() {
+    public void fieldRewriteUsesLowRiskTextViewRewritesAndSkipsBroaderFallbacks() {
         FontHookArbitration.FontDomainPlan plan =
                 FontHookArbitration.resolveDomainPlan(true, true);
 
         assertTrue(plan.resourcesFontEnabled);
         assertTrue(plan.webViewTextZoomEnabled);
-        assertFalse(plan.textViewHooksEnabled);
-        assertFalse(plan.textViewSpRewriteEnabled);
-        assertFalse(plan.textViewAbsoluteRewriteEnabled);
+        assertTrue(plan.textViewHooksEnabled);
+        assertTrue(plan.textViewSpRewriteEnabled);
+        assertTrue(plan.textViewAbsoluteRewriteEnabled);
         assertFalse(plan.textViewCurrentPxFallbackEnabled);
         assertFalse(plan.paintFallbackEnabled);
         assertFalse(plan.flutterSettingsEnabled);

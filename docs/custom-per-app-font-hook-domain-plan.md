@@ -31,23 +31,25 @@ Out of scope:
 
 ## Current Baseline
 
-After the calculator popup regression diagnosis, the stable automatic path for
-`field_rewrite` is:
+After the custom-domain work restored pre-editor user expectations, the
+automatic path for `field_rewrite` is:
 
 - `resources_font`
-- `webview_text_zoom`
-
-The default path deliberately excludes downstream TextView/Paint fallbacks:
-
 - `textview_sp_rewrite`
 - `textview_absolute_rewrite`
+- `webview_text_zoom`
+
+The default path deliberately excludes the higher-risk downstream TextView/Paint
+fallbacks:
+
 - `textview_current_px_fallback`
 - `paint_text_size_fallback`
 
-Reason: downstream TextView/Paint boundaries cannot reliably know whether an
-incoming text size has already been scaled by `Resources`, `scaledDensity`, or a
-UI library. Calculator's COUI popup demonstrated double scaling when
-`textview_absolute_rewrite` was enabled together with `Resources` fontScale.
+Reason: the low-risk `sp` and absolute TextView rewrites give most ordinary
+TextView apps the expected visible scaling, while current-px and Paint fallbacks
+are more likely to hit already-scaled or custom-rendered text. Calculator's COUI
+popup demonstrated why users still need a per-app way to turn
+`textview_absolute_rewrite` off when it double-scales a specific UI.
 
 ## Domain Registry
 
@@ -60,7 +62,8 @@ Create a font-only domain registry as the single source of truth for:
 - Display and planner order.
 - Mapping to and from `HookExecutionPlan` and `FontDomainPlan`.
 
-Initial known domains, in priority/display order:
+Initial known domains. Runtime/property encoding keeps a stable order; the
+dialog uses a separate display order so the recommended core path appears first.
 
 | Id | Group |
 | --- | --- |
@@ -249,14 +252,14 @@ Suggested structure:
       resources_font
 
 文本视图回退
-  [ ] TextView sp 重写
-      textview_sp_rewrite
-  [ ] TextView 绝对字号重写
-      textview_absolute_rewrite
+  [x] TextView sp 重写
+      ● textview_sp_rewrite
+  [x] TextView 绝对字号重写
+      ● textview_absolute_rewrite
   [ ] TextView 当前像素回退
-      textview_current_px_fallback
+      ● textview_current_px_fallback
   [ ] Paint 字号回退
-      paint_text_size_fallback
+      ● paint_text_size_fallback
 
 网页
   [x] WebView 文字缩放
@@ -341,8 +344,8 @@ Release-note points:
   and no longer participate in app-process font hook planning.
 - Apps that depended on those switches should enable the corresponding
   per-app custom chain entry instead.
-- `field_rewrite` uses the conservative default path described above; TextView
-  and Paint fallback domains are opt-in per app.
+- `field_rewrite` uses the default path described above; current-px and Paint
+  fallback domains are opt-in per app.
 
 Suggested implementation order:
 

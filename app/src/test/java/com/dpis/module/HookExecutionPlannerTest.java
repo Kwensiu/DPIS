@@ -52,7 +52,7 @@ public class HookExecutionPlannerTest {
     }
 
     @Test
-    public void fieldRewriteEnablesResourcesAndDisablesActivityThreadRoute() {
+    public void fieldRewriteEnablesLowRiskCoreDomainsAndDisablesActivityThreadRoute() {
         HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
                 createPolicy(false, true, false),
                 false,
@@ -66,10 +66,13 @@ public class HookExecutionPlannerTest {
         assertEquals(FontMode.FIELD_REWRITE, plan.fontMode);
         assertTrue(plan.resourcesHooksEnabled);
         assertFalse(plan.activityThreadFontEnabled);
-        assertFalse(plan.textViewHooksEnabled);
+        assertTrue(plan.textViewHooksEnabled);
         assertTrue(plan.webViewTextZoomEnabled);
         assertTrue(plan.fontDomainPlan.resourcesFontEnabled);
-        assertFalse(plan.fontDomainPlan.textViewAbsoluteRewriteEnabled);
+        assertTrue(plan.fontDomainPlan.textViewSpRewriteEnabled);
+        assertTrue(plan.fontDomainPlan.textViewAbsoluteRewriteEnabled);
+        assertEquals("resources_font,textview_sp_rewrite,textview_absolute_rewrite,webview_text_zoom",
+                plan.hookDomains);
         assertEquals("field-rewrite-domain-plan", plan.fontDomainPlan.reason);
     }
 
@@ -106,7 +109,7 @@ public class HookExecutionPlannerTest {
         assertFalse(plan.debugFlutterSettingsOnly);
         assertTrue(plan.flutterSettingsEnabled);
         assertTrue(plan.resourcesHooksEnabled);
-        assertFalse(plan.textViewHooksEnabled);
+        assertTrue(plan.textViewHooksEnabled);
         assertTrue(plan.hyperOsNativeFlutterEnabled);
         assertTrue(plan.viewportEnabled);
         assertEquals("force-flutter-settings", plan.reason.debugOverride);
@@ -140,7 +143,7 @@ public class HookExecutionPlannerTest {
     }
 
     @Test
-    public void debugDisableTextViewAbsoluteRewriteIsNoOpWhenDefaultAlreadySkipsIt() {
+    public void debugDisableTextViewAbsoluteRewriteKeepsSpRewriteRoute() {
         HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
                 createPolicy(false, true, false),
                 false,
@@ -153,14 +156,15 @@ public class HookExecutionPlannerTest {
 
         assertTrue(plan.debugDisableTextViewAbsoluteRewrite);
         assertTrue(plan.resourcesHooksEnabled);
-        assertFalse(plan.textViewHooksEnabled);
+        assertTrue(plan.textViewHooksEnabled);
         assertTrue(plan.webViewTextZoomEnabled);
         assertTrue(plan.fontDomainPlan.resourcesFontEnabled);
-        assertFalse(plan.fontDomainPlan.textViewHooksEnabled);
-        assertFalse(plan.fontDomainPlan.textViewSpRewriteEnabled);
+        assertTrue(plan.fontDomainPlan.textViewHooksEnabled);
+        assertTrue(plan.fontDomainPlan.textViewSpRewriteEnabled);
         assertFalse(plan.fontDomainPlan.textViewAbsoluteRewriteEnabled);
         assertFalse(plan.fontDomainPlan.textViewCurrentPxFallbackEnabled);
         assertFalse(plan.fontDomainPlan.paintFallbackEnabled);
+        assertEquals("resources_font,textview_sp_rewrite,webview_text_zoom", plan.hookDomains);
         assertEquals("field-rewrite-domain-plan", plan.fontDomainPlan.reason);
         assertEquals("disable-textview-absolute", plan.reason.debugOverride);
     }
@@ -366,6 +370,37 @@ public class HookExecutionPlannerTest {
         assertFalse(plan.textViewHooksEnabled);
         assertEquals("resources_font,activity_thread_font,webview_text_zoom,hyperos_native_flutter",
                 plan.hookDomains);
+    }
+
+    @Test
+    public void hyperOsDefaultPackagesReceiveNativeFlutterDomain() {
+        HookExecutionPlan galleryPlan = HookExecutionPlanner.buildPlan(
+                createPolicy(false, true, false),
+                "com.miui.gallery",
+                false,
+                ViewportApplyMode.OFF,
+                true,
+                FontApplyMode.FIELD_REWRITE,
+                false,
+                false,
+                HookDomainOverride.automatic(),
+                DebugFontOverride.none());
+        HookExecutionPlan weatherPlan = HookExecutionPlanner.buildPlan(
+                createPolicy(false, true, false),
+                "com.miui.weather2",
+                false,
+                ViewportApplyMode.OFF,
+                true,
+                FontApplyMode.FIELD_REWRITE,
+                false,
+                false,
+                HookDomainOverride.automatic(),
+                DebugFontOverride.none());
+
+        assertEquals("hyperos_native_flutter", galleryPlan.builtinDomains);
+        assertTrue(galleryPlan.hyperOsNativeFlutterEnabled);
+        assertEquals("hyperos_native_flutter", weatherPlan.builtinDomains);
+        assertTrue(weatherPlan.hyperOsNativeFlutterEnabled);
     }
 
     private static HookRuntimePolicy createPolicy(boolean safeMode,

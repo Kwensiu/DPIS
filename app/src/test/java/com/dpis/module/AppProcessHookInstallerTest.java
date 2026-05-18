@@ -140,9 +140,9 @@ public class AppProcessHookInstallerTest {
 
         assertTrue(domainPlan.resourcesFontEnabled);
         assertTrue(domainPlan.webViewTextZoomEnabled);
-        assertFalse(domainPlan.textViewHooksEnabled);
-        assertFalse(domainPlan.textViewSpRewriteEnabled);
-        assertFalse(domainPlan.textViewAbsoluteRewriteEnabled);
+        assertTrue(domainPlan.textViewHooksEnabled);
+        assertTrue(domainPlan.textViewSpRewriteEnabled);
+        assertTrue(domainPlan.textViewAbsoluteRewriteEnabled);
         assertFalse(domainPlan.textViewCurrentPxFallbackEnabled);
         assertFalse(domainPlan.flutterSettingsEnabled);
         assertFalse(domainPlan.hyperOsNativeFlutterEnabled);
@@ -193,16 +193,16 @@ public class AppProcessHookInstallerTest {
     }
 
     @Test
-    public void fieldRewriteKeepsIndependentDomainsButSkipsTextViewFallbacks() {
+    public void fieldRewriteKeepsLowRiskTextViewRewritesButSkipsBroaderFallbacks() {
         FontHookArbitration.FontDomainPlan domainPlan =
                 AppProcessHookInstaller.resolveFontDomainPlan(
                         new AppProcessHookInstaller.FontHookPlan(false, true, false));
 
         assertTrue(domainPlan.webViewTextZoomEnabled);
-        assertFalse(domainPlan.textViewHooksEnabled);
+        assertTrue(domainPlan.textViewHooksEnabled);
         assertFalse(domainPlan.flutterSettingsEnabled);
-        assertFalse(domainPlan.textViewSpRewriteEnabled);
-        assertFalse(domainPlan.textViewAbsoluteRewriteEnabled);
+        assertTrue(domainPlan.textViewSpRewriteEnabled);
+        assertTrue(domainPlan.textViewAbsoluteRewriteEnabled);
         assertFalse(domainPlan.textViewCurrentPxFallbackEnabled);
         assertFalse(domainPlan.paintFallbackEnabled);
         assertFalse(domainPlan.hyperOsNativeFlutterEnabled);
@@ -253,10 +253,10 @@ public class AppProcessHookInstallerTest {
 
         assertTrue(fieldRewritePlan.resourcesFontEnabled);
         assertTrue(fieldRewritePlan.webViewTextZoomEnabled);
-        assertFalse(fieldRewritePlan.textViewHooksEnabled);
+        assertTrue(fieldRewritePlan.textViewHooksEnabled);
         assertFalse(fieldRewritePlan.flutterSettingsEnabled);
-        assertFalse(fieldRewritePlan.textViewSpRewriteEnabled);
-        assertFalse(fieldRewritePlan.textViewAbsoluteRewriteEnabled);
+        assertTrue(fieldRewritePlan.textViewSpRewriteEnabled);
+        assertTrue(fieldRewritePlan.textViewAbsoluteRewriteEnabled);
         assertFalse(fieldRewritePlan.textViewCurrentPxFallbackEnabled);
         assertFalse(fieldRewritePlan.paintFallbackEnabled);
         assertFalse(fieldRewritePlan.hyperOsNativeFlutterEnabled);

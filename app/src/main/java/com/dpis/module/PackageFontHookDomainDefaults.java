@@ -21,6 +21,9 @@ final class PackageFontHookDomainDefaults {
 
     private static Map<String, Set<String>> createDefaults() {
         LinkedHashMap<String, Set<String>> table = new LinkedHashMap<>();
+        Set<String> hyperOsNativeFlutter = Set.of(FontHookDomainRegistry.ID_HYPEROS_NATIVE_FLUTTER);
+        table.put("com.miui.gallery", hyperOsNativeFlutter);
+        table.put("com.miui.weather2", hyperOsNativeFlutter);
         return Collections.unmodifiableMap(table);
     }
 

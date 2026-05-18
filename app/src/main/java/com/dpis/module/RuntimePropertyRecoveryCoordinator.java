@@ -19,5 +19,6 @@ final class RuntimePropertyRecoveryCoordinator {
         // are best-effort triggers; the actual source of truth remains the stored config.
         ViewportPropertySyncer.syncConfiguredTargetsAsync(store);
         FontRuntimePropertySyncer.syncConfiguredTargetsAsync(store);
+        FontHookDomainPropertySyncer.syncConfiguredTargetsAsync(store);
     }
 }

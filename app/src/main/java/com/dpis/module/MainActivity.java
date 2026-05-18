@@ -696,6 +696,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         }
         if (!enabled) {
             FontRuntimePropertySyncer.clearTargetAsync(packageName);
+            FontHookDomainPropertySyncer.clearTargetAsync(packageName);
             ViewportPropertySyncer.clearTargetAsync(packageName);
         }
         showToast(enabled ? R.string.dialog_dpis_enabled_status : R.string.dialog_dpis_disabled_status);
@@ -1243,6 +1244,14 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                                 automaticKnownDomains,
                                 unknownDomains);
                         if (saved) {
+                            HookDomainOverride override = overrideStore.read(packageName);
+                            if (override.customPathEnabled) {
+                                FontHookDomainPropertySyncer.publishTargetAsync(
+                                        packageName,
+                                        override.enabledKnownDomains);
+                            } else {
+                                FontHookDomainPropertySyncer.clearTargetAsync(packageName);
+                            }
                             requestAppsLoad();
                         }
                         return saved;
@@ -1252,6 +1261,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                     public boolean restoreRecommended(String packageName) {
                         boolean restored = overrideStore.restoreRecommended(packageName);
                         if (restored) {
+                            FontHookDomainPropertySyncer.clearTargetAsync(packageName);
                             requestAppsLoad();
                         }
                         return restored;
@@ -1268,9 +1278,9 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         if (!override.customPathEnabled) {
             return getString(R.string.dialog_font_hook_domains_title);
         }
-        int selectedCount = FontHookDomainRegistry.orderedCustomizableSubset(
+        int selectedCount = FontHookDomainRegistry.orderedCustomizableDisplaySubset(
                 override.enabledKnownDomains).size();
-        int totalCount = FontHookDomainRegistry.orderedCustomizableIdsList().size();
+        int totalCount = FontHookDomainRegistry.orderedCustomizableDisplayIdsList().size();
         return getString(R.string.dialog_font_hook_domains_title_with_count,
                 selectedCount, totalCount);
     }

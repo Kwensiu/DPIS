@@ -51,6 +51,12 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
             values.put(fontModeKey(), FontApplyMode.normalize(fontMode));
         }
         if (!values.isEmpty()) {
+            HookDomainOverride override = FontHookDomainPropertyBridge.readOverride(packageName);
+            if (override.customPathEnabled) {
+                values.put(hookDomainsKey(), String.join(",",
+                        FontHookDomainRegistry.orderedCustomizableSubset(
+                                override.enabledKnownDomains)));
+            }
             values.put(DpiConfigStore.KEY_TARGET_PACKAGES,
                     new LinkedHashSet<>(Collections.singleton(packageName)));
         }
@@ -149,5 +155,9 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
 
     private String fontModeKey() {
         return "font." + packageName + ".mode";
+    }
+
+    private String hookDomainsKey() {
+        return "font." + packageName + ".hook_domains";
     }
 }

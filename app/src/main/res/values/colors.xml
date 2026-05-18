@@ -6,6 +6,9 @@
     <color name="dpis_on_warn_container">#4A3400</color>
     <color name="dpis_success_container">#D5EFCF</color>
     <color name="dpis_on_success_container">#16351A</color>
+    <color name="font_hook_domain_risk_low">#2E9E55</color>
+    <color name="font_hook_domain_risk_medium">#D88916</color>
+    <color name="font_hook_domain_risk_high">#D64B45</color>
     <color name="help_tutorial_system_card_container">#F5F7FF</color>
     <color name="help_tutorial_system_card_stroke">#D9E1FF</color>
     <color name="help_tutorial_system_badge_container">#DDE7FF</color>

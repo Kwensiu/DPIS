@@ -106,9 +106,9 @@ final class FontHookArbitration {
             return new FontDomainPlan(
                     true,
                     true,
-                    false,
-                    false,
-                    false,
+                    true,
+                    true,
+                    true,
                     false,
                     false,
                     flutterSettingsEnabled,

@@ -82,8 +82,13 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("setTitle(R.string.dialog_font_hook_domains_dialog_title)"));
         assertTrue(source.contains("host.saveCustom(packageName, selectedKnown, automaticKnown, unknown)"));
         assertTrue(source.contains("host.restoreRecommended(packageName)"));
-        assertTrue(source.contains("FontHookDomainRegistry.orderedCustomizableIdsList()"));
-        assertTrue(source.contains("FontHookDomainRegistry.orderedCustomizableSubset("));
+        assertTrue(source.contains("FontHookDomainRegistry.orderedCustomizableDisplayIdsList()"));
+        assertTrue(source.contains("FontHookDomainRegistry.orderedCustomizableDisplaySubset("));
+        assertTrue(source.contains("createSubtitleText(activity, domainId)"));
+        assertTrue(source.contains("resolveRiskDotColorRes(domainId)"));
+        assertTrue(source.contains("font_hook_domain_risk_low"));
+        assertTrue(source.contains("font_hook_domain_risk_medium"));
+        assertTrue(source.contains("font_hook_domain_risk_high"));
         assertFalse(source.contains("new LinkedHashSet<>(FontHookDomainRegistry.orderedIdsList())"));
         assertTrue(source.contains("title.setText(resolveDomainTitleRes(domainId));"));
         assertTrue(source.contains("title.setText(domainId);"));

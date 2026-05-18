@@ -33,6 +33,17 @@ final class FontHookDomainRegistry {
             ID_FLUTTER_SETTINGS,
             ID_HYPEROS_NATIVE_FLUTTER);
 
+    private static final List<String> DISPLAY_ORDERED_IDS = List.of(
+            ID_RESOURCES_FONT,
+            ID_TEXTVIEW_SP_REWRITE,
+            ID_TEXTVIEW_ABSOLUTE_REWRITE,
+            ID_TEXTVIEW_CURRENT_PX_FALLBACK,
+            ID_PAINT_TEXT_SIZE_FALLBACK,
+            ID_WEBVIEW_TEXT_ZOOM,
+            ID_FLUTTER_SETTINGS,
+            ID_HYPEROS_NATIVE_FLUTTER,
+            ID_ACTIVITY_THREAD_FONT);
+
     private FontHookDomainRegistry() {
     }
 
@@ -61,8 +72,18 @@ final class FontHookDomainRegistry {
         return Collections.unmodifiableList(new ArrayList<>(ORDERED_IDS));
     }
 
+    static List<String> orderedDisplayIdsList() {
+        return Collections.unmodifiableList(new ArrayList<>(DISPLAY_ORDERED_IDS));
+    }
+
     static List<String> orderedCustomizableIdsList() {
         ArrayList<String> ids = new ArrayList<>(ORDERED_IDS);
+        ids.remove(ID_ACTIVITY_THREAD_FONT);
+        return Collections.unmodifiableList(ids);
+    }
+
+    static List<String> orderedCustomizableDisplayIdsList() {
+        ArrayList<String> ids = new ArrayList<>(DISPLAY_ORDERED_IDS);
         ids.remove(ID_ACTIVITY_THREAD_FONT);
         return Collections.unmodifiableList(ids);
     }
@@ -73,6 +94,19 @@ final class FontHookDomainRegistry {
         }
         LinkedHashSet<String> ordered = new LinkedHashSet<>();
         for (String id : orderedCustomizableIdsList()) {
+            if (domains.contains(id)) {
+                ordered.add(id);
+            }
+        }
+        return ordered;
+    }
+
+    static Set<String> orderedCustomizableDisplaySubset(Set<String> domains) {
+        if (domains == null || domains.isEmpty()) {
+            return new LinkedHashSet<>();
+        }
+        LinkedHashSet<String> ordered = new LinkedHashSet<>();
+        for (String id : orderedCustomizableDisplayIdsList()) {
             if (domains.contains(id)) {
                 ordered.add(id);
             }

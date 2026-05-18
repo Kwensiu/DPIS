@@ -1,11 +1,16 @@
 package com.dpis.module;
 
 import android.app.Activity;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
@@ -44,12 +49,12 @@ final class FontHookDomainDialog {
         View restoreButton = view.findViewById(R.id.font_hook_domains_restore_button);
 
         LinkedHashSet<String> knownIds = new LinkedHashSet<>(
-                FontHookDomainRegistry.orderedCustomizableIdsList());
+                FontHookDomainRegistry.orderedCustomizableDisplayIdsList());
         LinkedHashSet<String> automaticKnown = new LinkedHashSet<>(
-                FontHookDomainRegistry.orderedCustomizableSubset(automaticKnownDomains));
+                FontHookDomainRegistry.orderedCustomizableDisplaySubset(automaticKnownDomains));
         LinkedHashSet<String> selectedKnown = new LinkedHashSet<>(
                 currentOverride != null && currentOverride.customPathEnabled
-                        ? FontHookDomainRegistry.orderedCustomizableSubset(
+                        ? FontHookDomainRegistry.orderedCustomizableDisplaySubset(
                                 currentOverride.enabledKnownDomains)
                         : automaticKnown);
         LinkedHashSet<String> unknown = new LinkedHashSet<>(
@@ -186,8 +191,29 @@ final class FontHookDomainDialog {
         } else {
             title.setText(domainId);
         }
-        subtitle.setText(domainId);
+        subtitle.setText(known
+                ? createSubtitleText(activity, domainId)
+                : domainId);
         return row;
+    }
+
+    private static CharSequence createSubtitleText(Activity activity, String domainId) {
+        int colorRes = resolveRiskDotColorRes(domainId);
+        if (colorRes == 0) {
+            return domainId;
+        }
+        SpannableString subtitle = new SpannableString("\u25CF " + domainId);
+        subtitle.setSpan(
+                new ForegroundColorSpan(ContextCompat.getColor(activity, colorRes)),
+                0,
+                1,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        subtitle.setSpan(
+                new RelativeSizeSpan(0.72f),
+                0,
+                1,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return subtitle;
     }
 
     private static int dp(Activity activity, int value) {
@@ -229,6 +255,19 @@ final class FontHookDomainDialog {
             case FontHookDomainRegistry.ID_HYPEROS_NATIVE_FLUTTER ->
                     R.string.dialog_font_hook_domain_hyperos_native_flutter;
             default -> throw new IllegalArgumentException("Unknown domain id: " + domainId);
+        };
+    }
+
+    private static int resolveRiskDotColorRes(String domainId) {
+        return switch (domainId) {
+            case FontHookDomainRegistry.ID_TEXTVIEW_SP_REWRITE,
+                    FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE ->
+                    R.color.font_hook_domain_risk_low;
+            case FontHookDomainRegistry.ID_TEXTVIEW_CURRENT_PX_FALLBACK ->
+                    R.color.font_hook_domain_risk_medium;
+            case FontHookDomainRegistry.ID_PAINT_TEXT_SIZE_FALLBACK ->
+                    R.color.font_hook_domain_risk_high;
+            default -> 0;
         };
     }
 }

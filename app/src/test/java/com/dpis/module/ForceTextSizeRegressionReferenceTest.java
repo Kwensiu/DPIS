@@ -90,28 +90,28 @@ public class ForceTextSizeRegressionReferenceTest {
     }
 
     @Test
-    public void fontHookArbitrationKeepsResourcesWebViewAndSuppressesTextViewFallbacks() {
+    public void fontHookArbitrationKeepsLowRiskTextViewRewritesAndSuppressesBroaderFallbacks() {
         FontHookArbitration.FontDomainPlan plan =
                 FontHookArbitration.resolveDomainPlan(true, true);
 
         assertTrue(plan.resourcesFontEnabled);
         assertTrue(plan.webViewTextZoomEnabled);
-        assertFalse(plan.textViewHooksEnabled);
-        assertFalse(plan.textViewSpRewriteEnabled);
-        assertFalse(plan.textViewAbsoluteRewriteEnabled);
+        assertTrue(plan.textViewHooksEnabled);
+        assertTrue(plan.textViewSpRewriteEnabled);
+        assertTrue(plan.textViewAbsoluteRewriteEnabled);
         assertFalse(plan.textViewCurrentPxFallbackEnabled);
         assertFalse(plan.paintFallbackEnabled);
     }
 
     @Test
-    public void textViewUnitRewriteSkipsSpAndAbsoluteUnitsWhenResourcesOwnsFontScale() {
+    public void textViewUnitRewriteAllowsDefaultSpAndAbsoluteRewrites() {
         FontHookArbitration.FontDomainPlan plan =
                 FontHookArbitration.resolveDomainPlan(true, true);
 
-        assertFalse(ForceTextSizeHookInstaller.shouldForceTextUnitForTest(
+        assertTrue(ForceTextSizeHookInstaller.shouldForceTextUnitForTest(
                 android.util.TypedValue.COMPLEX_UNIT_SP,
                 plan));
-        assertFalse(ForceTextSizeHookInstaller.shouldForceTextUnitForTest(
+        assertTrue(ForceTextSizeHookInstaller.shouldForceTextUnitForTest(
                 android.util.TypedValue.COMPLEX_UNIT_PX,
                 plan));
     }
