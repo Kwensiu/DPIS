@@ -49,6 +49,10 @@
     <string name="dialog_font_hook_domains_dialog_title">Font compatibility mode</string>
     <string name="dialog_font_hook_domains_unknown_group">Unknown chain</string>
     <string name="dialog_font_hook_domains_restore_button">Restore recommended config</string>
+    <string name="dialog_font_hook_group_resources">Resource config</string>
+    <string name="dialog_font_hook_group_text_view_fallback">Text view fallbacks</string>
+    <string name="dialog_font_hook_group_web">Web</string>
+    <string name="dialog_font_hook_group_cross_runtime">Cross runtime</string>
     <string name="dialog_font_hook_domain_resources_font">Resources font</string>
     <string name="dialog_font_hook_domain_activity_thread_font">ActivityThread font</string>
     <string name="dialog_font_hook_domain_textview_sp_rewrite">TextView sp rewrite</string>

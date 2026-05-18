@@ -13,6 +13,7 @@ import com.google.android.material.textview.MaterialTextView;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -53,6 +54,7 @@ final class FontHookDomainDialog {
                 currentOverride != null ? currentOverride.unknownDomains : Set.of());
 
         Map<String, MaterialSwitch> switches = new LinkedHashMap<>();
+        Map<String, LinearLayout> groupContainers = createKnownGroups(activity, knownContainer);
         boolean[] binding = new boolean[] { false };
         for (String id : knownIds) {
             View row = createDomainRow(activity, id, true);
@@ -70,7 +72,10 @@ final class FontHookDomainDialog {
             });
             row.setOnClickListener(v -> switchView.toggle());
             switches.put(id, switchView);
-            knownContainer.addView(row);
+            LinearLayout groupContainer = groupContainers.get(FontHookDomainRegistry.groupFor(id));
+            if (groupContainer != null) {
+                groupContainer.addView(row);
+            }
         }
 
         bindUnknownRows(activity, unknownTitle, unknownContainer, unknown);
@@ -111,6 +116,41 @@ final class FontHookDomainDialog {
         selectedKnown.remove(id);
     }
 
+    private static Map<String, LinearLayout> createKnownGroups(Activity activity,
+                                                               LinearLayout knownContainer) {
+        Map<String, LinearLayout> containers = new LinkedHashMap<>();
+        List<String> groups = FontHookDomainRegistry.orderedGroups();
+        for (int index = 0; index < groups.size(); index++) {
+            String group = groups.get(index);
+            MaterialTextView title = createGroupTitle(activity, group);
+            LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            titleParams.topMargin = index == 0 ? 0 : dp(activity, 16);
+            knownContainer.addView(title, titleParams);
+
+            LinearLayout groupRows = new LinearLayout(activity);
+            groupRows.setOrientation(LinearLayout.VERTICAL);
+            LinearLayout.LayoutParams rowsParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            rowsParams.topMargin = dp(activity, 4);
+            knownContainer.addView(groupRows, rowsParams);
+            containers.put(group, groupRows);
+        }
+        return containers;
+    }
+
+    private static MaterialTextView createGroupTitle(Activity activity, String group) {
+        MaterialTextView title = new MaterialTextView(activity);
+        title.setText(resolveGroupTitleRes(group));
+        title.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelMedium);
+        title.setTextColor(com.google.android.material.color.MaterialColors.getColor(
+                title, com.google.android.material.R.attr.colorOnSurfaceVariant));
+        title.setIncludeFontPadding(false);
+        return title;
+    }
+
     private static void bindUnknownRows(Activity activity,
                                         MaterialTextView unknownTitle,
                                         LinearLayout unknownContainer,
@@ -122,9 +162,9 @@ final class FontHookDomainDialog {
             return;
         }
         unknownTitle.setVisibility(View.VISIBLE);
-        unknownContainer.setVisibility(View.VISIBLE);
-        for (String id : unknown) {
-            View row = createDomainRow(activity, id, false);
+            unknownContainer.setVisibility(View.VISIBLE);
+            for (String id : unknown) {
+                View row = createDomainRow(activity, id, false);
             row.setEnabled(false);
             row.setAlpha(0.58f);
             MaterialSwitch switchView = row.findViewById(R.id.font_hook_domain_switch);
@@ -146,6 +186,24 @@ final class FontHookDomainDialog {
         }
         subtitle.setText(domainId);
         return row;
+    }
+
+    private static int dp(Activity activity, int value) {
+        return Math.round(value * activity.getResources().getDisplayMetrics().density);
+    }
+
+    private static int resolveGroupTitleRes(String group) {
+        return switch (group) {
+            case FontHookDomainRegistry.GROUP_RESOURCES ->
+                    R.string.dialog_font_hook_group_resources;
+            case FontHookDomainRegistry.GROUP_TEXT_VIEW_FALLBACK ->
+                    R.string.dialog_font_hook_group_text_view_fallback;
+            case FontHookDomainRegistry.GROUP_WEB ->
+                    R.string.dialog_font_hook_group_web;
+            case FontHookDomainRegistry.GROUP_CROSS_RUNTIME ->
+                    R.string.dialog_font_hook_group_cross_runtime;
+            default -> throw new IllegalArgumentException("Unknown domain group: " + group);
+        };
     }
 
     private static int resolveDomainTitleRes(String domainId) {

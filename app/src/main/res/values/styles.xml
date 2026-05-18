@@ -39,6 +39,13 @@
         <item name="strokeColor">@color/dpis_warn_container</item>
     </style>
 
+    <style name="Widget.Dpis.DialogActionButton.Outlined.WarnOutline"
+        parent="Widget.Dpis.DialogActionButton.Outlined">
+        <item name="backgroundTint">@android:color/transparent</item>
+        <item name="android:textColor">@color/dpis_on_warn_container</item>
+        <item name="strokeColor">@color/dpis_warn_container</item>
+    </style>
+
     <style name="Widget.Dpis.DialogActionButton.Outlined.WarnBg"
         parent="Widget.Dpis.DialogActionButton.Outlined">
         <item name="strokeColor">#20F0A020</item>

@@ -49,6 +49,10 @@
     <string name="dialog_font_hook_domains_dialog_title">字体兼容模式</string>
     <string name="dialog_font_hook_domains_unknown_group">未知链路</string>
     <string name="dialog_font_hook_domains_restore_button">恢复推荐配置</string>
+    <string name="dialog_font_hook_group_resources">资源配置</string>
+    <string name="dialog_font_hook_group_text_view_fallback">文本视图回退</string>
+    <string name="dialog_font_hook_group_web">网页</string>
+    <string name="dialog_font_hook_group_cross_runtime">跨运行时</string>
     <string name="dialog_font_hook_domain_resources_font">Resources 字体</string>
     <string name="dialog_font_hook_domain_activity_thread_font">ActivityThread 字体</string>
     <string name="dialog_font_hook_domain_textview_sp_rewrite">TextView sp 改写</string>

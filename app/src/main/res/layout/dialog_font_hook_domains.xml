@@ -8,10 +8,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingStart="20dp"
+        android:paddingStart="24dp"
         android:paddingTop="8dp"
-        android:paddingEnd="20dp"
-        android:paddingBottom="8dp">
+        android:paddingEnd="24dp"
+        android:paddingBottom="16dp">
 
         <LinearLayout
             android:id="@+id/font_hook_domains_known_container"
@@ -23,7 +23,8 @@
             android:id="@+id/font_hook_domains_unknown_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="16dp"
+            android:includeFontPadding="false"
             android:text="@string/dialog_font_hook_domains_unknown_group"
             android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
             android:textColor="?attr/colorOnSurfaceVariant" />
@@ -32,15 +33,15 @@
             android:id="@+id/font_hook_domains_unknown_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="4dp"
             android:orientation="vertical" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/font_hook_domains_restore_button"
-            style="@style/Widget.Dpis.DialogActionButton.Outlined.WarnBg"
+            style="@style/Widget.Dpis.DialogActionButton.Outlined.WarnOutline"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="20dp"
             android:text="@string/dialog_font_hook_domains_restore_button" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
