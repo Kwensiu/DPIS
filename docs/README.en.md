@@ -15,7 +15,7 @@ DPIS is an LSPosed/Xposed-based Android module for per-app display tuning (`smal
 - Both width and font support `System` and `Compat` modes
 - App list search and filtering (`All apps` / `Configured apps`)
 - System-layer hook toggle and safe mode
-- Experimental Flutter / HyperOS native font supplement routes
+- Per-app custom font compatibility chains, including Flutter / HyperOS native supplement routes
 
 ## Requirements
 
@@ -43,6 +43,8 @@ If you use `System`, also enable `system` scope in LSPosed. `Compat` usually doe
 | `Compat` | Uses in-process compatibility hooks to adjust scaling more directly | Most regular apps | May cause layout drift or scaling glitches |
 
 > Note: older UI labels used "Emulation / Replacement". The UI now shows "System / Compat".
+
+Font `Compat` uses a conservative default chain to avoid duplicate scaling from downstream TextView/Paint fallbacks. For apps that need extra routes, open the target app details and use `Custom chain` in advanced actions. Changes take effect the next time the target app process starts.
 
 ## System-Layer Hook and Safe Mode
 

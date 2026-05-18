@@ -10,6 +10,8 @@
   - compat100 持久配置与运行态镜像重放说明，记录 100 版本的恢复边界和验证路径。
 - [font-hook-execution-plan-refactor.md](./font-hook-execution-plan-refactor.md)
   - 字体/视口 hook 执行计划重构说明，记录 planner/orchestrator 边界、debug 覆盖归属和后续迁移顺序。
+- [custom-per-app-font-hook-domain-plan.md](./custom-per-app-font-hook-domain-plan.md)
+  - 按应用自定义字体兼容链路说明，记录 hook domain 存储、调度、UI 和实验入口清理决策。
 - [final-validation-checklist-2026-04-17.md](./final-validation-checklist-2026-04-17.md)
   - 最终构建、测试、设备回归验收清单。
 

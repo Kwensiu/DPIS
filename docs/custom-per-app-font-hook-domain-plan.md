@@ -2,6 +2,8 @@
 
 Date: 2026-05-18
 
+Status: implemented in `26b37bd` and hardened in `9b8bb18`.
+
 ## Purpose
 
 Add a per-app editor for the effective hook path used by font compatibility mode.
@@ -329,6 +331,15 @@ The logs should expose the final domain id set directly, so diagnosis does not
 depend on inferring behavior from individual booleans.
 
 ## Implementation Notes
+
+Release-note points:
+
+- The old global Flutter/HyperOS experimental switches were removed from the UI
+  and no longer participate in app-process font hook planning.
+- Apps that depended on those switches should enable the corresponding
+  per-app custom chain entry instead.
+- `field_rewrite` uses the conservative default path described above; TextView
+  and Paint fallback domains are opt-in per app.
 
 Suggested implementation order:
 
