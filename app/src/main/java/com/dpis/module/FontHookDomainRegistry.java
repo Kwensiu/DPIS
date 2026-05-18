@@ -61,6 +61,25 @@ final class FontHookDomainRegistry {
         return Collections.unmodifiableList(new ArrayList<>(ORDERED_IDS));
     }
 
+    static List<String> orderedCustomizableIdsList() {
+        ArrayList<String> ids = new ArrayList<>(ORDERED_IDS);
+        ids.remove(ID_ACTIVITY_THREAD_FONT);
+        return Collections.unmodifiableList(ids);
+    }
+
+    static Set<String> orderedCustomizableSubset(Set<String> domains) {
+        if (domains == null || domains.isEmpty()) {
+            return new LinkedHashSet<>();
+        }
+        LinkedHashSet<String> ordered = new LinkedHashSet<>();
+        for (String id : orderedCustomizableIdsList()) {
+            if (domains.contains(id)) {
+                ordered.add(id);
+            }
+        }
+        return ordered;
+    }
+
     static List<String> orderedGroups() {
         return List.of(
                 GROUP_RESOURCES,

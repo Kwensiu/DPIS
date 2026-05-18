@@ -6,9 +6,9 @@ Status: implemented in `26b37bd` and hardened in `9b8bb18`.
 
 ## Purpose
 
-Add a per-app editor for the effective hook path used by font compatibility mode.
-This is not a new font mode. It only decides which font hook domains participate
-when an app runs through `field_rewrite`.
+Add a per-app editor for the hook domains that an app may use when it runs
+through font compatibility mode (`field_rewrite`). This is not a new font mode
+and it is not a preview of the currently active runtime plan.
 
 The main motivation is to keep the safe default path small while still allowing
 advanced users to opt into fallback domains for apps that need them.
@@ -90,7 +90,7 @@ Domain notes:
 - `resources_font` is the main Resources/ResourcesManager fontScale path.
 - `activity_thread_font` is an ActivityThread bind/configuration injection path.
   It is an earlier resource-configuration boundary than ordinary TextView/Paint
-  fallbacks and is not part of the current automatic default path.
+  fallbacks and is not part of the field-rewrite custom editor.
 
 ## Storage
 
@@ -135,7 +135,10 @@ Planner order:
 5. Derive final installer booleans.
 
 For non-`field_rewrite` modes, runtime ignores custom hook domains. The UI row
-can still open the editor because the editor only reads and writes configuration.
+can still open the editor because the editor only configures the app's future
+field-rewrite allowlist. The editor's recommended state is based on the
+field-rewrite recommendation and does not change when the app is currently saved
+in system/emulation mode.
 
 Saving a custom path does not affect an already-running target app process. The
 new hook path takes effect when the target app process starts again. This is
@@ -212,8 +215,8 @@ Dialog title:
 
 Dialog behavior:
 
-- Shows the current effective path on open.
-- If no custom path exists, shows the automatic/recommended path.
+- Shows the app's field-rewrite allowlist on open.
+- If no custom path exists, shows the field-rewrite recommended path.
 - If a custom path exists, shows the stored custom path.
 - Acts as an immediate editor.
 - Has no Cancel button.
@@ -244,8 +247,6 @@ Suggested structure:
 资源配置
   [x] 资源字体缩放
       resources_font
-  [ ] ActivityThread 字体配置
-      activity_thread_font
 
 文本视图回退
   [ ] TextView sp 重写
@@ -294,6 +295,8 @@ Post-change behavior:
 - Apps with custom paths use their saved custom domain id set.
 - Non-whitelisted apps that previously depended on a global experimental switch
   require the user to enable the relevant domain in that app's custom path.
+- `activity_thread_font` remains an internal system/emulation route and is not
+  exposed as a field-rewrite custom chain option.
 
 Keep the experimental settings page. If no experimental functions remain, show
 only a centered subdued title:

@@ -364,6 +364,10 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("HookExecutionPlanner.buildPlan("));
         assertTrue(source.contains("AppProcessHookInstaller.resolveDebugFontOverrideForPackage(packageName)"));
         assertTrue(source.contains("dialog_font_hook_domains_title_with_count"));
+        assertTrue(source.contains("FontHookDomainRegistry.orderedCustomizableIdsList().size()"));
+        assertTrue(source.contains("FontHookDomainRegistry.orderedCustomizableSubset("));
+        assertTrue(source.contains("FontApplyMode.FIELD_REWRITE"));
+        assertTrue(source.contains("ViewportApplyMode.OFF"));
     }
 
     private static String read(String relativePath) throws IOException {

@@ -43,12 +43,14 @@ final class FontHookDomainDialog {
         LinearLayout unknownContainer = view.findViewById(R.id.font_hook_domains_unknown_container);
         View restoreButton = view.findViewById(R.id.font_hook_domains_restore_button);
 
-        LinkedHashSet<String> knownIds = new LinkedHashSet<>(FontHookDomainRegistry.orderedIdsList());
+        LinkedHashSet<String> knownIds = new LinkedHashSet<>(
+                FontHookDomainRegistry.orderedCustomizableIdsList());
         LinkedHashSet<String> automaticKnown = new LinkedHashSet<>(
-                FontHookDomainRegistry.orderedKnownSubset(automaticKnownDomains));
+                FontHookDomainRegistry.orderedCustomizableSubset(automaticKnownDomains));
         LinkedHashSet<String> selectedKnown = new LinkedHashSet<>(
                 currentOverride != null && currentOverride.customPathEnabled
-                        ? currentOverride.enabledKnownDomains
+                        ? FontHookDomainRegistry.orderedCustomizableSubset(
+                                currentOverride.enabledKnownDomains)
                         : automaticKnown);
         LinkedHashSet<String> unknown = new LinkedHashSet<>(
                 currentOverride != null ? currentOverride.unknownDomains : Set.of());
@@ -162,9 +164,9 @@ final class FontHookDomainDialog {
             return;
         }
         unknownTitle.setVisibility(View.VISIBLE);
-            unknownContainer.setVisibility(View.VISIBLE);
-            for (String id : unknown) {
-                View row = createDomainRow(activity, id, false);
+        unknownContainer.setVisibility(View.VISIBLE);
+        for (String id : unknown) {
+            View row = createDomainRow(activity, id, false);
             row.setEnabled(false);
             row.setAlpha(0.58f);
             MaterialSwitch switchView = row.findViewById(R.id.font_hook_domain_switch);

@@ -59,6 +59,19 @@ public class HookDomainOverrideStoreTest {
     }
 
     @Test
+    public void saveDropsKnownDomainsThatAreNotCustomizable() {
+        DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
+        HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
+
+        assertTrue(store.save("com.example.app",
+                orderedSet("activity_thread_font", "resources_font", "webview_text_zoom"),
+                Set.of()));
+
+        assertEquals("resources_font,webview_text_zoom",
+                configStore.getPackageFontHookDomainsRaw("com.example.app"));
+    }
+
+    @Test
     public void restoreClearsCustomKeyAndUnknownIds() {
         DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
         HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);

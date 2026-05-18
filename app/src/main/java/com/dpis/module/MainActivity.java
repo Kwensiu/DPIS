@@ -1268,9 +1268,9 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         if (!override.customPathEnabled) {
             return getString(R.string.dialog_font_hook_domains_title);
         }
-        int selectedCount = FontHookDomainRegistry.orderedKnownSubset(
+        int selectedCount = FontHookDomainRegistry.orderedCustomizableSubset(
                 override.enabledKnownDomains).size();
-        int totalCount = FontHookDomainRegistry.orderedIdsList().size();
+        int totalCount = FontHookDomainRegistry.orderedCustomizableIdsList().size();
         return getString(R.string.dialog_font_hook_domains_title_with_count,
                 selectedCount, totalCount);
     }
@@ -1283,19 +1283,16 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
                 policy,
                 packageName,
-                store.getTargetViewportWidthDp(packageName) != null,
-                store.getTargetViewportApplyMode(packageName),
-                isFontScaleActive(store.getTargetFontScalePercent(packageName)),
-                store.getTargetFontApplyMode(packageName),
+                false,
+                ViewportApplyMode.OFF,
+                true,
+                FontApplyMode.FIELD_REWRITE,
                 false,
                 false,
                 HookDomainOverride.automatic(),
                 AppProcessHookInstaller.resolveDebugFontOverrideForPackage(packageName));
-        return parseKnownDomainCsv(plan.hookDomains);
-    }
-
-    private static boolean isFontScaleActive(Integer fontScalePercent) {
-        return fontScalePercent != null && fontScalePercent > 0 && fontScalePercent != 100;
+        return FontHookDomainRegistry.orderedCustomizableSubset(
+                parseKnownDomainCsv(plan.hookDomains));
     }
 
     private static Set<String> parseKnownDomainCsv(String rawDomains) {

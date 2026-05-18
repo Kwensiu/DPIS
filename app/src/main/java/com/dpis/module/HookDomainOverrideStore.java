@@ -28,7 +28,9 @@ final class HookDomainOverrideStore {
         if (configStore == null || packageName == null || packageName.isBlank()) {
             return false;
         }
-        String raw = formatCsv(enabledKnownDomains, unknownDomains);
+        String raw = formatCsv(
+                FontHookDomainRegistry.orderedCustomizableSubset(enabledKnownDomains),
+                unknownDomains);
         return configStore.setPackageFontHookDomainsRaw(packageName, raw);
     }
 
@@ -37,9 +39,9 @@ final class HookDomainOverrideStore {
                                                Set<String> automaticKnownDomains,
                                                Set<String> unknownDomains) {
         LinkedHashSet<String> normalizedSaved = new LinkedHashSet<>(
-                FontHookDomainRegistry.orderedKnownSubset(enabledKnownDomains));
+                FontHookDomainRegistry.orderedCustomizableSubset(enabledKnownDomains));
         LinkedHashSet<String> normalizedAuto = new LinkedHashSet<>(
-                FontHookDomainRegistry.orderedKnownSubset(automaticKnownDomains));
+                FontHookDomainRegistry.orderedCustomizableSubset(automaticKnownDomains));
         if (normalizedSaved.equals(normalizedAuto)
                 && (unknownDomains == null || unknownDomains.isEmpty())) {
             return restoreRecommended(packageName);
