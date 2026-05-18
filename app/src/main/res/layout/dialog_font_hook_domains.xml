@@ -38,7 +38,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/font_hook_domains_restore_button"
-            style="@style/Widget.Dpis.DialogActionButton.Outlined.WarnOutline"
+            style="@style/Widget.Dpis.DialogActionButton.Outlined.WarnBg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
