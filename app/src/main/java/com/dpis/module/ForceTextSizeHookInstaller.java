@@ -1,5 +1,6 @@
 package com.dpis.module;
 
+import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.widget.TextView;
 import android.text.NoCopySpan;
@@ -105,6 +106,11 @@ final class ForceTextSizeHookInstaller {
                             markAppliedTargetSize(textView, originalPx);
                             return result;
                         }
+                        if (unit == TypedValue.COMPLEX_UNIT_SP
+                                && isSpTextHandledByResources(textView, factor, domainPlan)) {
+                            recordResourcesHandledTextSize(textView, originalPx, factor);
+                            return result;
+                        }
                         boolean shouldForceUnit = shouldForceTextUnit(unit, domainPlan);
                         if (!shouldForceUnit) {
                             recordTextViewBase(textView, originalPx, factor);
@@ -119,6 +125,7 @@ final class ForceTextSizeHookInstaller {
                             textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, forcedPx);
                             recordTextViewBase(textView, originalPx, factor);
                             markAppliedTargetSize(textView, forcedPx);
+                            recordTextViewRewrite(textView, originalPx, forcedPx, factor, unit);
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
                         }
@@ -170,6 +177,10 @@ final class ForceTextSizeHookInstaller {
                             markAppliedTargetSize(textView, originalPx);
                             return result;
                         }
+                        if (isSpTextHandledByResources(textView, factor, domainPlan)) {
+                            recordResourcesHandledTextSize(textView, originalPx, factor);
+                            return result;
+                        }
                         if (!shouldRewriteDefaultSpTextSize(domainPlan)) {
                             recordTextViewBase(textView, originalPx, factor);
                             return result;
@@ -183,6 +194,13 @@ final class ForceTextSizeHookInstaller {
                             textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, forcedPx);
                             recordTextViewBase(textView, originalPx, factor);
                             markAppliedTargetSize(textView, forcedPx);
+                            TextViewFontProvenanceTracker.recordApplied(
+                                    textView,
+                                    originalPx,
+                                    forcedPx,
+                                    factor,
+                                    TextViewFontProvenanceTracker.Source.TEXTVIEW_SP_REWRITE,
+                                    TextViewFontProvenanceTracker.UnitKind.SP);
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
                         }
@@ -477,6 +495,10 @@ final class ForceTextSizeHookInstaller {
             if (!isCommentLikeNode(textView) || !isScaleFactorActive(factor)) {
                 return false;
             }
+            if (TextViewFontProvenanceTracker.hasStrongerProvenanceForCurrentPxFallback(
+                    textView, factor)) {
+                return false;
+            }
             float currentPx = textView.getTextSize();
             desiredPx = FontFieldRewriteMath.resolveScaledTextSize(
                     currentPx, factor, COMMENT_TEXT_BASE_TEXT_SIZES, textView);
@@ -630,6 +652,10 @@ final class ForceTextSizeHookInstaller {
         if (isKnownAppliedTextSize(textView, currentPx, factor)) {
             return false;
         }
+        if (TextViewFontProvenanceTracker.hasStrongerProvenanceForCurrentPxFallback(
+                textView, factor)) {
+            return false;
+        }
         float expectedPx = FontFieldRewriteMath.resolveScaledTextSize(
                 currentPx, factor, TEXT_VIEW_BASE_TEXT_SIZES, textView);
         if (!shouldApplyTargetSize(textView, expectedPx)) {
@@ -639,6 +665,13 @@ final class ForceTextSizeHookInstaller {
         try {
             textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, expectedPx);
             markAppliedTargetSize(textView, expectedPx);
+            TextViewFontProvenanceTracker.recordApplied(
+                    textView,
+                    currentPx,
+                    expectedPx,
+                    factor,
+                    TextViewFontProvenanceTracker.Source.TEXTVIEW_CURRENT_PX_FALLBACK,
+                    TextViewFontProvenanceTracker.UnitKind.UNKNOWN);
             return true;
         } finally {
             INTERNAL_UPDATE.set(Boolean.FALSE);
@@ -681,6 +714,41 @@ final class ForceTextSizeHookInstaller {
                 LAST_TARGET_TEXT_SIZES.get(textView))) {
             TEXT_VIEW_BASE_TEXT_SIZES.put(textView, basePx);
         }
+    }
+
+    private static void recordResourcesHandledTextSize(TextView textView, float currentPx, float factor) {
+        if (textView == null || currentPx <= 0f || !isScaleFactorActive(factor)) {
+            return;
+        }
+        float inferredBasePx = currentPx / factor;
+        if (inferredBasePx > 0f) {
+            TEXT_VIEW_BASE_TEXT_SIZES.put(textView, inferredBasePx);
+        }
+        markAppliedTargetSize(textView, currentPx);
+        TextViewFontProvenanceTracker.recordResourcesHandled(textView, currentPx, factor);
+    }
+
+    private static void recordTextViewRewrite(TextView textView,
+                                              float originalPx,
+                                              float forcedPx,
+                                              float factor,
+                                              int unit) {
+        TextViewFontProvenanceTracker.Source source;
+        TextViewFontProvenanceTracker.UnitKind unitKind;
+        if (unit == TypedValue.COMPLEX_UNIT_SP) {
+            source = TextViewFontProvenanceTracker.Source.TEXTVIEW_SP_REWRITE;
+            unitKind = TextViewFontProvenanceTracker.UnitKind.SP;
+        } else {
+            source = TextViewFontProvenanceTracker.Source.TEXTVIEW_ABSOLUTE_REWRITE;
+            unitKind = TextViewFontProvenanceTracker.UnitKind.ABSOLUTE;
+        }
+        TextViewFontProvenanceTracker.recordApplied(
+                textView,
+                originalPx,
+                forcedPx,
+                factor,
+                source,
+                unitKind);
     }
 
     private static CharSequence scaleSpans(Spanned source, float factor) {
@@ -882,6 +950,21 @@ final class ForceTextSizeHookInstaller {
     private static boolean shouldRewriteDefaultSpTextSize(
             FontHookArbitration.FontDomainPlan domainPlan) {
         return domainPlan == null || domainPlan.textViewSpRewriteEnabled;
+    }
+
+    private static boolean isSpTextHandledByResources(TextView textView,
+                                                      float factor,
+                                                      FontHookArbitration.FontDomainPlan domainPlan) {
+        if (textView == null || domainPlan == null || !domainPlan.resourcesFontEnabled) {
+            return false;
+        }
+        DisplayMetrics metrics = textView.getResources() != null
+                ? textView.getResources().getDisplayMetrics()
+                : null;
+        return metrics != null && FontFieldRewriteMath.isResourcesScaledDensityApplied(
+                metrics.density,
+                metrics.scaledDensity,
+                factor);
     }
 
     private static boolean shouldRewriteAbsoluteTextSize(

@@ -64,6 +64,14 @@ public class ForceTextSizeRegressionReferenceTest {
     }
 
     @Test
+    public void resourcesScaledDensityRecognizesAppliedFontFactor() {
+        assertTrue(FontFieldRewriteMath.isResourcesScaledDensityApplied(
+                2.1625f, 3.24375f, 1.5f));
+        assertFalse(FontFieldRewriteMath.isResourcesScaledDensityApplied(
+                2.1625f, 2.1625f, 1.5f));
+    }
+
+    @Test
     public void textSizeScalingReference_rebasesWhenCurrentClearlyChanges() {
         Map<Object, Float> base = new HashMap<>();
         Object key = new Object();
@@ -117,6 +125,11 @@ public class ForceTextSizeRegressionReferenceTest {
         assertTrue(source.contains("domainPlan.textViewCurrentPxFallbackEnabled"));
         assertTrue(source.contains("domainPlan.paintFallbackEnabled"));
         assertTrue(source.contains("DPIS_FONT Paint/TextPaint fallback suppressed"));
+        assertTrue(source.contains("isSpTextHandledByResources(textView, factor, domainPlan)"));
+        assertTrue(source.contains("recordResourcesHandledTextSize(textView, originalPx, factor)"));
+        assertTrue(source.contains("TextViewFontProvenanceTracker.recordResourcesHandled"));
+        assertTrue(source.contains("TextViewFontProvenanceTracker.Source.TEXTVIEW_CURRENT_PX_FALLBACK"));
+        assertTrue(source.contains("hasStrongerProvenanceForCurrentPxFallback"));
         assertTrue(source.indexOf("installTextViewAttachHook(")
                 < source.indexOf("installPaintTextSizeHooks("));
     }

@@ -100,6 +100,15 @@ final class FontFieldRewriteMath {
                 || !approximatelyEqual(incomingPx, basePx);
     }
 
+    static boolean isResourcesScaledDensityApplied(float density,
+                                                   float scaledDensity,
+                                                   float factor) {
+        if (density <= 0f || scaledDensity <= 0f || !isScaleFactorActive(factor)) {
+            return false;
+        }
+        return approximatelyEqual(scaledDensity / density, factor);
+    }
+
     static boolean approximatelyEqual(float firstPx, float secondPx) {
         float tolerance = Math.max(
                 ABSOLUTE_EPSILON_FLOOR_PX,
