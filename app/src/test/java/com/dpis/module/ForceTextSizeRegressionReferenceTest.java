@@ -32,6 +32,38 @@ public class ForceTextSizeRegressionReferenceTest {
     }
 
     @Test
+    public void textSizeProvenance_recognizesPreviouslyAppliedTargetSize() {
+        assertTrue(FontFieldRewriteMath.isKnownScaledTextSize(
+                36f, 2.0f, 36f));
+        assertFalse(FontFieldRewriteMath.shouldRecordTextBase(
+                36f, 2.0f, null, 36f));
+    }
+
+    @Test
+    public void textSizeProvenance_doesNotTreatScaledBaseAsProof() {
+        assertFalse(FontFieldRewriteMath.isKnownScaledTextSize(
+                36f, 2.0f, null));
+        assertTrue(FontFieldRewriteMath.shouldRecordTextBase(
+                36f, 2.0f, 18f, null));
+    }
+
+    @Test
+    public void textSizeProvenance_recordsNewUnscaledBase() {
+        assertTrue(FontFieldRewriteMath.shouldRecordTextBase(
+                20f, 2.0f, 18f, 36f));
+        assertFalse(FontFieldRewriteMath.isKnownScaledTextSize(
+                20f, 2.0f, 36f));
+    }
+
+    @Test
+    public void textSizeProvenance_usesRelativeToleranceForAppliedTarget() {
+        assertTrue(FontFieldRewriteMath.approximatelyEqual(80f, 80.6f));
+        assertFalse(FontFieldRewriteMath.approximatelyEqual(10f, 10.6f));
+        assertTrue(FontFieldRewriteMath.isKnownScaledTextSize(
+                80.6f, 2.0f, 80f));
+    }
+
+    @Test
     public void textSizeScalingReference_rebasesWhenCurrentClearlyChanges() {
         Map<Object, Float> base = new HashMap<>();
         Object key = new Object();

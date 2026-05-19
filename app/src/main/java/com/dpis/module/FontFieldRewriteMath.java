@@ -1,10 +1,12 @@
 package com.dpis.module;
 
-import java.util.Map;
 import java.util.Locale;
+import java.util.Map;
 
 final class FontFieldRewriteMath {
     private static final float SIZE_EPSILON_PX = 0.5f;
+    private static final float RELATIVE_EPSILON = 0.01f;
+    private static final float ABSOLUTE_EPSILON_FLOOR_PX = 0.25f;
 
     private FontFieldRewriteMath() {
     }
@@ -26,30 +28,6 @@ final class FontFieldRewriteMath {
         return originalSize * factor;
     }
 
-    static <T> float resolveScaledPaintSize(float incoming,
-                                            float factor,
-                                            Map<T, Float> baseMap,
-                                            T key) {
-        if (incoming <= 0f || !isScaleFactorActive(factor)) {
-            return incoming;
-        }
-        Float base = baseMap.get(key);
-        if (base == null || base <= 0f) {
-            base = incoming;
-            baseMap.put(key, base);
-        }
-        float expectedScaled = base * factor;
-        if (Math.abs(incoming - expectedScaled) < SIZE_EPSILON_PX) {
-            return incoming;
-        }
-        if (Math.abs(incoming - base) >= SIZE_EPSILON_PX) {
-            base = incoming;
-            baseMap.put(key, base);
-            expectedScaled = base * factor;
-        }
-        return expectedScaled;
-    }
-
     static <T> float resolveScaledTextSize(float currentPx,
                                            float factor,
                                            Map<T, Float> baseMap,
@@ -69,6 +47,64 @@ final class FontFieldRewriteMath {
             expectedPx = basePx * factor;
         }
         return expectedPx;
+    }
+
+    static boolean isKnownScaledTextSize(float currentPx,
+                                         float factor,
+                                         Float lastAppliedPx) {
+        if (currentPx <= 0f || !isScaleFactorActive(factor)) {
+            return false;
+        }
+        return lastAppliedPx != null
+                && lastAppliedPx > 0f
+                && approximatelyEqual(currentPx, lastAppliedPx);
+    }
+
+    static boolean isKnownAppliedPaintSize(float incomingPx,
+                                           float factor,
+                                           Float lastAppliedPx,
+                                           Float factorAtApply) {
+        if (incomingPx <= 0f || !isScaleFactorActive(factor)) {
+            return false;
+        }
+        if (factorAtApply == null
+                || Math.abs(factorAtApply - factor) > 0.001f) {
+            return false;
+        }
+        return lastAppliedPx != null
+                && lastAppliedPx > 0f
+                && approximatelyEqual(incomingPx, lastAppliedPx);
+    }
+
+    static boolean shouldRecordTextBase(float incomingPx,
+                                        float factor,
+                                        Float lastAppliedPx) {
+        if (incomingPx <= 0f || !isScaleFactorActive(factor)) {
+            return false;
+        }
+        if (isKnownScaledTextSize(incomingPx, factor, lastAppliedPx)) {
+            return false;
+        }
+        return true;
+    }
+
+    static boolean shouldRecordTextBase(float incomingPx,
+                                        float factor,
+                                        Float basePx,
+                                        Float lastAppliedPx) {
+        if (!shouldRecordTextBase(incomingPx, factor, lastAppliedPx)) {
+            return false;
+        }
+        return basePx == null
+                || basePx <= 0f
+                || !approximatelyEqual(incomingPx, basePx);
+    }
+
+    static boolean approximatelyEqual(float firstPx, float secondPx) {
+        float tolerance = Math.max(
+                ABSOLUTE_EPSILON_FLOOR_PX,
+                Math.max(Math.abs(firstPx), Math.abs(secondPx)) * RELATIVE_EPSILON);
+        return Math.abs(firstPx - secondPx) <= tolerance;
     }
 
     static boolean containsCommentHint(String text) {

@@ -51,6 +51,20 @@ are more likely to hit already-scaled or custom-rendered text. Calculator's COUI
 popup demonstrated why users still need a per-app way to turn
 `textview_absolute_rewrite` off when it double-scales a specific UI.
 
+TextView fallback domains also keep a lightweight provenance guard. When a
+TextView size route sees an original px value or applies a target px value, DPIS
+records that per TextView with weak references. Later TextView routes can skip
+values that match the already-applied target instead of multiplying them again.
+This is an idempotency guard for DPIS-managed TextView paths, not a general
+detector for every font size that an app or OEM framework may have pre-scaled.
+`paint_text_size_fallback` uses a weaker Paint/TextPaint provenance guard. It
+records the last DPIS-applied px value and factor per Paint object, and trusts
+only that explicit value as an idempotency signal. A value matching
+`basePx * factor` may be treated as an already-scaled safety net to avoid
+rebasing and multiplying it again, but it is not stored as provenance. Paint
+still lacks reliable View-level owner/lifecycle context, so the Paint domain
+remains an opt-in fallback.
+
 ## Domain Registry
 
 Create a font-only domain registry as the single source of truth for:
