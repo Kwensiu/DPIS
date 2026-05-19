@@ -4,6 +4,8 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 final class PaintProvenanceTracker {
+    private static final int MAX_SLOTS = 4;
+
     private static final Map<Object, Entry> ENTRIES =
             java.util.Collections.synchronizedMap(new WeakHashMap<>());
 
@@ -16,11 +18,17 @@ final class PaintProvenanceTracker {
             return false;
         }
         synchronized (entry) {
-            return FontFieldRewriteMath.isKnownAppliedPaintSize(
-                    incomingPx,
-                    factor,
-                    entry.lastAppliedPx,
-                    entry.factorAtApply);
+            for (int i = 0; i < MAX_SLOTS; i++) {
+                if (FontFieldRewriteMath.isKnownAppliedPaintSize(
+                        incomingPx,
+                        factor,
+                        entry.lastAppliedPxBySlot[i],
+                        entry.factorAtApplyBySlot[i])) {
+                    entry.promoteSlot(i);
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
@@ -30,19 +38,35 @@ final class PaintProvenanceTracker {
         }
         Entry entry = getOrCreateEntry(paint);
         synchronized (entry) {
-            if (entry.basePx > 0f) {
-                float expectedScaled = entry.basePx * factor;
-                if (FontFieldRewriteMath.approximatelyEqual(incomingPx, expectedScaled)) {
+            for (int i = 0; i < MAX_SLOTS; i++) {
+                Float lastAppliedPx = entry.lastAppliedPxBySlot[i];
+                Float factorAtApply = entry.factorAtApplyBySlot[i];
+                if (FontFieldRewriteMath.isKnownAppliedPaintSize(
+                        incomingPx, factor, lastAppliedPx, factorAtApply)) {
+                    entry.promoteSlot(i);
                     entry.lastTouchNanos = System.nanoTime();
                     return incomingPx;
                 }
             }
-            if (entry.basePx <= 0f
-                    || !FontFieldRewriteMath.approximatelyEqual(incomingPx, entry.basePx)) {
-                entry.basePx = incomingPx;
+
+            for (int i = 0; i < MAX_SLOTS; i++) {
+                if (entry.matchesKnownScaledSize(i, incomingPx, factor)) {
+                    entry.promoteSlot(i);
+                    entry.lastTouchNanos = System.nanoTime();
+                    return incomingPx;
+                }
             }
+
+            int slot = entry.findBaseSlot(incomingPx);
+            if (slot < 0) {
+                slot = entry.findReusableSlot();
+                entry.basePxBySlot[slot] = incomingPx;
+                entry.lastAppliedPxBySlot[slot] = null;
+                entry.factorAtApplyBySlot[slot] = null;
+            }
+            entry.promoteSlot(slot);
             entry.lastTouchNanos = System.nanoTime();
-            return entry.basePx * factor;
+            return entry.basePxBySlot[0] * factor;
         }
     }
 
@@ -52,8 +76,12 @@ final class PaintProvenanceTracker {
         }
         Entry entry = getOrCreateEntry(paint);
         synchronized (entry) {
-            entry.lastAppliedPx = appliedPx;
-            entry.factorAtApply = factor;
+            if (entry.basePxBySlot[0] <= 0f) {
+                entry.basePxBySlot[0] = appliedPx / factor;
+            }
+            entry.lastAppliedPxBySlot[0] = appliedPx;
+            entry.factorAtApplyBySlot[0] = factor;
+            entry.syncPrimaryFields();
             entry.lastTouchNanos = System.nanoTime();
         }
     }
@@ -64,13 +92,16 @@ final class PaintProvenanceTracker {
             return;
         }
         synchronized (entry) {
-            if (entry.lastAppliedPx == null || entry.lastAppliedPx <= 0f) {
-                return;
+            for (int i = 0; i < MAX_SLOTS; i++) {
+                Float lastAppliedPx = entry.lastAppliedPxBySlot[i];
+                if (lastAppliedPx != null
+                        && lastAppliedPx > 0f
+                        && !FontFieldRewriteMath.approximatelyEqual(currentPx, lastAppliedPx)) {
+                    entry.lastAppliedPxBySlot[i] = null;
+                    entry.factorAtApplyBySlot[i] = null;
+                }
             }
-            if (!FontFieldRewriteMath.approximatelyEqual(currentPx, entry.lastAppliedPx)) {
-                entry.lastAppliedPx = null;
-                entry.factorAtApply = null;
-            }
+            entry.syncPrimaryFields();
             entry.lastTouchNanos = System.nanoTime();
         }
     }
@@ -114,20 +145,81 @@ final class PaintProvenanceTracker {
         Float lastAppliedPx;
         Float factorAtApply;
         long lastTouchNanos;
+        final float[] basePxBySlot;
+        final Float[] lastAppliedPxBySlot;
+        final Float[] factorAtApplyBySlot;
 
         Entry() {
-            this(0f, null, null, 0L);
+            this(new float[MAX_SLOTS], new Float[MAX_SLOTS], new Float[MAX_SLOTS], 0L);
         }
 
         private Entry(Entry source) {
-            this(source.basePx, source.lastAppliedPx, source.factorAtApply, source.lastTouchNanos);
+            this(
+                    source.basePxBySlot.clone(),
+                    source.lastAppliedPxBySlot.clone(),
+                    source.factorAtApplyBySlot.clone(),
+                    source.lastTouchNanos);
         }
 
-        private Entry(float basePx, Float lastAppliedPx, Float factorAtApply, long lastTouchNanos) {
-            this.basePx = basePx;
-            this.lastAppliedPx = lastAppliedPx;
-            this.factorAtApply = factorAtApply;
+        private Entry(float[] basePxBySlot,
+                      Float[] lastAppliedPxBySlot,
+                      Float[] factorAtApplyBySlot,
+                      long lastTouchNanos) {
+            this.basePxBySlot = basePxBySlot;
+            this.lastAppliedPxBySlot = lastAppliedPxBySlot;
+            this.factorAtApplyBySlot = factorAtApplyBySlot;
+            syncPrimaryFields();
             this.lastTouchNanos = lastTouchNanos;
+        }
+
+        private int findBaseSlot(float incomingPx) {
+            for (int i = 0; i < MAX_SLOTS; i++) {
+                if (basePxBySlot[i] > 0f
+                        && FontFieldRewriteMath.approximatelyEqual(incomingPx, basePxBySlot[i])) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        private int findReusableSlot() {
+            for (int i = 0; i < MAX_SLOTS; i++) {
+                if (basePxBySlot[i] <= 0f) {
+                    return i;
+                }
+            }
+            return MAX_SLOTS - 1;
+        }
+
+        private boolean matchesKnownScaledSize(int slot, float incomingPx, float factor) {
+            float basePx = basePxBySlot[slot];
+            return basePx > 0f
+                    && FontFieldRewriteMath.approximatelyEqual(incomingPx, basePx * factor);
+        }
+
+        private void promoteSlot(int slot) {
+            if (slot <= 0) {
+                syncPrimaryFields();
+                return;
+            }
+            float basePx = basePxBySlot[slot];
+            Float lastAppliedPx = lastAppliedPxBySlot[slot];
+            Float factorAtApply = factorAtApplyBySlot[slot];
+            for (int i = slot; i > 0; i--) {
+                basePxBySlot[i] = basePxBySlot[i - 1];
+                lastAppliedPxBySlot[i] = lastAppliedPxBySlot[i - 1];
+                factorAtApplyBySlot[i] = factorAtApplyBySlot[i - 1];
+            }
+            basePxBySlot[0] = basePx;
+            lastAppliedPxBySlot[0] = lastAppliedPx;
+            factorAtApplyBySlot[0] = factorAtApply;
+            syncPrimaryFields();
+        }
+
+        private void syncPrimaryFields() {
+            basePx = basePxBySlot[0];
+            lastAppliedPx = lastAppliedPxBySlot[0];
+            factorAtApply = factorAtApplyBySlot[0];
         }
     }
 }

@@ -130,6 +130,8 @@ public class ForceTextSizeRegressionReferenceTest {
         assertTrue(source.contains("TextViewFontProvenanceTracker.recordResourcesHandled"));
         assertTrue(source.contains("TextViewFontProvenanceTracker.Source.TEXTVIEW_CURRENT_PX_FALLBACK"));
         assertTrue(source.contains("hasStrongerProvenanceForCurrentPxFallback"));
+        assertFalse(source.contains("isPxTextHandledByResources"));
+        assertFalse(source.contains("isCurrentPxHandledByResources"));
         assertTrue(source.indexOf("installTextViewAttachHook(")
                 < source.indexOf("installPaintTextSizeHooks("));
     }

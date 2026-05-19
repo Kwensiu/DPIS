@@ -77,6 +77,34 @@ public class PaintProvenanceTrackerTest {
     }
 
     @Test
+    public void reusedPaintKeepsMultipleBaseSizesFromAmplifyingEachOther() {
+        Object paint = new Object();
+
+        float firstAdjusted = PaintProvenanceTracker.resolveScaled(paint, 37f, 1.5f);
+        PaintProvenanceTracker.recordApplied(paint, firstAdjusted, 1.5f);
+        float secondAdjusted = PaintProvenanceTracker.resolveScaled(paint, 36f, 1.5f);
+        PaintProvenanceTracker.recordApplied(paint, secondAdjusted, 1.5f);
+
+        float firstAppliedAgain = PaintProvenanceTracker.resolveScaled(paint, 55.5f, 1.5f);
+
+        assertEquals(55.5f, firstAdjusted, 0.0001f);
+        assertEquals(54f, secondAdjusted, 0.0001f);
+        assertEquals(55.5f, firstAppliedAgain, 0.0001f);
+    }
+
+    @Test
+    public void doesNotTreatHigherOrderScaledSizeAsSafetyNet() {
+        Object paint = new Object();
+
+        float adjusted = PaintProvenanceTracker.resolveScaled(paint, 37f, 1.5f);
+        PaintProvenanceTracker.recordApplied(paint, adjusted, 1.5f);
+
+        float resolved = PaintProvenanceTracker.resolveScaled(paint, 83.25f, 1.5f);
+
+        assertEquals(124.875f, resolved, 0.0001f);
+    }
+
+    @Test
     public void rebasesWhenIncomingSizeChanges() {
         Object paint = new Object();
 
