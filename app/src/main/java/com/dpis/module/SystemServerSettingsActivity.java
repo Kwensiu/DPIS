@@ -716,6 +716,9 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
                 updateDialogButtons();
                 return;
             }
+            RuntimeDebugPropertySyncer.publishAsync(
+                    store.isGlobalLogEnabled(),
+                    requestedEnabled);
             if (requestedEnabled) {
                 startFontDebugOverlayService();
             } else {
@@ -963,6 +966,9 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             return;
         }
         DpisLog.setLoggingEnabled(isChecked);
+        RuntimeDebugPropertySyncer.publishAsync(
+                isChecked,
+                store.isFontDebugOverlayEnabled());
     }
 
     private void onHideLauncherIconChanged(CompoundButton buttonView, boolean isChecked) {

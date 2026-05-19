@@ -46,6 +46,10 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
             values.put(viewportWidthKey(), widthDp);
             values.put(viewportModeKey(), viewportMode);
         }
+        values.put(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED,
+                RuntimeDebugPropertyBridge.readGlobalLogEnabled());
+        values.put(DpiConfigStore.KEY_FONT_DEBUG_OVERLAY_ENABLED,
+                RuntimeDebugPropertyBridge.readFontDebugOverlayEnabled());
         if (fontScalePercent != null && fontScalePercent > 0) {
             values.put(fontScaleKey(), fontScalePercent);
             values.put(fontModeKey(), FontApplyMode.normalize(fontMode));

@@ -200,6 +200,16 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(source.contains("return getBoolean(KEY_SYSTEM_SERVER_HOOKS_ENABLED, true);"));
     }
 
+    @Test
+    public void settingsDebugSwitchesPublishRuntimeMirrors() throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+
+        assertTrue(source.contains("RuntimeDebugPropertySyncer.publishAsync("));
+        assertTrue(source.contains("isChecked,"));
+        assertTrue(source.contains("store.isFontDebugOverlayEnabled()"));
+        assertTrue(source.contains("requestedEnabled"));
+    }
+
     private static String read(String relativePath) throws IOException {
         return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
     }
