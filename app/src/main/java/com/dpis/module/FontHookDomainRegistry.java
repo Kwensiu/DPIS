@@ -1,7 +1,5 @@
 package com.dpis.module;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -44,6 +42,32 @@ final class FontHookDomainRegistry {
             ID_HYPEROS_NATIVE_FLUTTER,
             ID_ACTIVITY_THREAD_FONT);
 
+    private static final List<String> CUSTOMIZABLE_ORDERED_IDS = List.of(
+            ID_RESOURCES_FONT,
+            ID_TEXTVIEW_SP_REWRITE,
+            ID_TEXTVIEW_ABSOLUTE_REWRITE,
+            ID_TEXTVIEW_CURRENT_PX_FALLBACK,
+            ID_PAINT_TEXT_SIZE_FALLBACK,
+            ID_WEBVIEW_TEXT_ZOOM,
+            ID_FLUTTER_SETTINGS,
+            ID_HYPEROS_NATIVE_FLUTTER);
+
+    private static final List<String> CUSTOMIZABLE_DISPLAY_ORDERED_IDS = List.of(
+            ID_RESOURCES_FONT,
+            ID_TEXTVIEW_SP_REWRITE,
+            ID_TEXTVIEW_ABSOLUTE_REWRITE,
+            ID_TEXTVIEW_CURRENT_PX_FALLBACK,
+            ID_PAINT_TEXT_SIZE_FALLBACK,
+            ID_WEBVIEW_TEXT_ZOOM,
+            ID_FLUTTER_SETTINGS,
+            ID_HYPEROS_NATIVE_FLUTTER);
+
+    static {
+        requireSameDomainSet(ORDERED_IDS, DISPLAY_ORDERED_IDS, "display order");
+        requireSameDomainSet(CUSTOMIZABLE_ORDERED_IDS, CUSTOMIZABLE_DISPLAY_ORDERED_IDS,
+                "customizable display order");
+    }
+
     private FontHookDomainRegistry() {
     }
 
@@ -69,23 +93,19 @@ final class FontHookDomainRegistry {
     }
 
     static List<String> orderedIdsList() {
-        return Collections.unmodifiableList(new ArrayList<>(ORDERED_IDS));
+        return ORDERED_IDS;
     }
 
     static List<String> orderedDisplayIdsList() {
-        return Collections.unmodifiableList(new ArrayList<>(DISPLAY_ORDERED_IDS));
+        return DISPLAY_ORDERED_IDS;
     }
 
     static List<String> orderedCustomizableIdsList() {
-        ArrayList<String> ids = new ArrayList<>(ORDERED_IDS);
-        ids.remove(ID_ACTIVITY_THREAD_FONT);
-        return Collections.unmodifiableList(ids);
+        return CUSTOMIZABLE_ORDERED_IDS;
     }
 
     static List<String> orderedCustomizableDisplayIdsList() {
-        ArrayList<String> ids = new ArrayList<>(DISPLAY_ORDERED_IDS);
-        ids.remove(ID_ACTIVITY_THREAD_FONT);
-        return Collections.unmodifiableList(ids);
+        return CUSTOMIZABLE_DISPLAY_ORDERED_IDS;
     }
 
     static Set<String> orderedCustomizableSubset(Set<String> domains) {
@@ -132,5 +152,16 @@ final class FontHookDomainRegistry {
             case ID_FLUTTER_SETTINGS, ID_HYPEROS_NATIVE_FLUTTER -> GROUP_CROSS_RUNTIME;
             default -> "";
         };
+    }
+
+    private static void requireSameDomainSet(List<String> expected,
+                                             List<String> actual,
+                                             String label) {
+        LinkedHashSet<String> expectedSet = new LinkedHashSet<>(expected);
+        LinkedHashSet<String> actualSet = new LinkedHashSet<>(actual);
+        if (!expectedSet.equals(actualSet)) {
+            throw new IllegalStateException("Font hook domain " + label
+                    + " must contain the same ids as the stable order");
+        }
     }
 }

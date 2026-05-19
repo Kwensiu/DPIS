@@ -81,9 +81,6 @@ final class AppProcessHookInstaller {
                 + ", debugFlutterSettingsOnly=" + plan.debugFlutterSettingsOnly
                 + ", debugDisableTextViewAbsoluteRewrite=" + plan.debugDisableTextViewAbsoluteRewrite
                 + " for " + packageName);
-        if (!"none".equals(plan.reason.downgrade)) {
-            DpisLog.i("safe mode downgraded font apply mode to emulation for " + packageName);
-        }
     }
 
     static boolean shouldInstallProbeHooks(HookRuntimePolicy policy) {
@@ -175,8 +172,7 @@ final class AppProcessHookInstaller {
         FontMode resolved = HookExecutionPlanner.resolveFontMode(policy, fontScaleActive, fontMode);
         return new FontHookPlan(
                 resolved == FontMode.EMULATION,
-                resolved == FontMode.FIELD_REWRITE,
-                false);
+                resolved == FontMode.FIELD_REWRITE);
     }
 
     static DebugFontOverride resolveDebugFontOverrideForPackage(String packageName) {
@@ -235,14 +231,11 @@ final class AppProcessHookInstaller {
     static final class FontHookPlan {
         final boolean emulationEnabled;
         final boolean fieldRewriteEnabled;
-        final boolean downgradedToEmulation;
 
         FontHookPlan(boolean emulationEnabled,
-                     boolean fieldRewriteEnabled,
-                     boolean downgradedToEmulation) {
+                     boolean fieldRewriteEnabled) {
             this.emulationEnabled = emulationEnabled;
             this.fieldRewriteEnabled = fieldRewriteEnabled;
-            this.downgradedToEmulation = downgradedToEmulation;
         }
     }
 }

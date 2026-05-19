@@ -35,6 +35,21 @@ public class HookDomainOverrideStoreTest {
         assertTrue(override.enabledKnownDomains.isEmpty());
         assertTrue(override.unknownDomains.isEmpty());
         assertEquals("", configStore.getPackageFontHookDomainsRaw("com.example.app"));
+        assertTrue(configStore.getConfiguredPackages().contains("com.example.app"));
+    }
+
+    @Test
+    public void emptyCustomPathSurvivesSnapshotAsExplicitOptOut() {
+        DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
+        HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
+
+        assertTrue(store.save("com.example.app", Set.of(), Set.of()));
+
+        PackageConfigSnapshot snapshot =
+                ConfigSnapshotLoader.fromStore(configStore).getPackage("com.example.app");
+        assertTrue(snapshot.hookDomainOverride.customPathEnabled);
+        assertTrue(snapshot.hookDomainOverride.enabledKnownDomains.isEmpty());
+        assertTrue(snapshot.hookDomainOverride.unknownDomains.isEmpty());
     }
 
     @Test

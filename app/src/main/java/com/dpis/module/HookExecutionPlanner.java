@@ -123,7 +123,7 @@ final class HookExecutionPlanner {
                 : HookDomainOverride.automatic();
         boolean customPathEffective = resolvedOverride.customPathEnabled
                 && resolvedFontMode == FontMode.FIELD_REWRITE;
-        if (!resolvedOverride.customPathEnabled || !customPathEffective) {
+        if (!customPathEffective) {
             automaticDomains = mergeDomains(automaticDomains, builtinDomains);
         } else {
             builtinDomains = Collections.emptySet();
@@ -192,8 +192,7 @@ final class HookExecutionPlanner {
                         + ", domain=" + (domainPlan == null ? "none" : domainPlan.reason),
                 fallback,
                 suppressed,
-                debugReason,
-                "none");
+                debugReason);
 
         return new HookExecutionPlan(
                 resolvedFontMode,
