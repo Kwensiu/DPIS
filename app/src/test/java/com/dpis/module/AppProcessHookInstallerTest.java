@@ -320,6 +320,38 @@ public class AppProcessHookInstallerTest {
         assertTrue(planner.contains("!resolvedDebug.flutterSettingsOnly"));
     }
 
+    @Test
+    public void composeDiagnosticsAreWiredOnlyThroughResourcesFontDomain() throws Exception {
+        String source = readSource("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+        String installer = readSource(
+                "src/main/java/com/dpis/module/ComposeFontRuntimeDiagnosticsInstaller.java");
+
+        assertTrue(source.contains("ComposeFontRuntimeDiagnosticsInstaller.shouldInstall(plan)"));
+        assertTrue(source.contains("ComposeFontRuntimeDiagnosticsInstaller.install("));
+        assertTrue(installer.contains("domainPlan.resourcesFontEnabled"));
+        assertTrue(installer.contains("store.getTargetFontScalePercent(packageName)"));
+        assertTrue(installer.contains("activity.getWindow()"));
+        assertTrue(installer.contains("getDecorView()"));
+        assertTrue(installer.contains("addOnGlobalLayoutListener"));
+        assertTrue(installer.contains("removeOnGlobalLayoutListener"));
+        assertTrue(installer.contains("ComposeResourcesFontEvidence.isResourcesHandledCompose("));
+        assertTrue(installer.contains("FontDebugStatsReporter.record("));
+        assertFalse(installer.contains("ForceTextSizeHookInstaller"));
+    }
+
+    @Test
+    public void composeDiagnosticsDoNotSuppressGlobalTextViewOrResourceFontRoutes()
+            throws Exception {
+        String installer = readSource(
+                "src/main/java/com/dpis/module/ComposeFontRuntimeDiagnosticsInstaller.java");
+
+        assertFalse(installer.contains("textViewCurrentPxFallbackEnabled = false"));
+        assertFalse(installer.contains("paintFallbackEnabled = false"));
+        assertFalse(installer.contains("resourcesFontEnabled = false"));
+        assertFalse(installer.contains("setTargetFontScalePercent"));
+        assertFalse(installer.contains("clearTargetFontScalePercent"));
+    }
+
     private static HookRuntimePolicy createPolicy(boolean safeMode) {
         return createPolicy(safeMode, true);
     }

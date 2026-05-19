@@ -192,6 +192,15 @@ final class AppProcessHookInstaller {
                                         String packageName,
                                         DpiConfigStore store,
                                         HookExecutionPlan plan) throws Throwable {
+        if (ComposeFontRuntimeDiagnosticsInstaller.shouldInstall(plan)) {
+            ComposeFontRuntimeDiagnosticsInstaller.install(
+                    xposed,
+                    packageName,
+                    store,
+                    plan.fontDomainPlan,
+                    plan.hookDomains,
+                    plan.hookDomainSource);
+        }
         if (plan.resourcesHooksEnabled) {
             ResourcesManagerHookInstaller.install(xposed, packageName, store);
             ResourcesImplHookInstaller.install(xposed, packageName, store);
