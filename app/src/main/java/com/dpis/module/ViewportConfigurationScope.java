@@ -1,5 +1,6 @@
 package com.dpis.module;
 
+import android.annotation.SuppressLint;
 import android.content.res.Configuration;
 import android.graphics.Rect;
 
@@ -56,6 +57,7 @@ final class ViewportConfigurationScope {
                 || boundsArea < Math.round(maxArea * WINDOW_AREA_RATIO_THRESHOLD);
     }
 
+    @SuppressLint("BlockedPrivateApi")
     private static Object readWindowConfiguration(Configuration config) {
         if (config == null) {
             return null;
