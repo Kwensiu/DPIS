@@ -3,7 +3,7 @@
 Date: 2026-05-20
 
 Status: draft for review, with the first TextView/Paint arbitration slice and
-Compose runtime classification diagnostics implemented.
+Compose/resources scheduling slice implemented.
 
 ## Purpose
 
@@ -206,11 +206,56 @@ Implemented first-pass behavior:
   before `ActivityThread.currentApplication()` exists, it installs protected
   `Application.attach`/`onCreate` retry hooks instead of permanently skipping
   diagnostics.
-- Runtime diagnostics evaluate the current Activity decor root on resume and,
-  when DPIS runtime logging is enabled, on throttled global-layout changes.
-- The diagnostics only log and record font-debug stats. They do not modify the
-  target percentage, disable `resources_font`, or suppress TextView/Paint
-  fallback domains.
+- Runtime diagnostics evaluate the current Activity decor root on resume and on
+  throttled global-layout changes, even when ordinary runtime logging is
+  disabled, because the evidence now feeds scheduling.
+- Matching evidence feeds a short-lived process-local scheduler. The scheduler
+  suppresses Resources fontScale/scaledDensity writes back to the inferred base
+  font scale for the same package while the evidence is fresh.
+- The scheduler does not modify the configured target percentage, disable
+  `resources_font`, or suppress TextView/Paint fallback domains.
+
+### Implemented Slice: Resources Font Scheduling For Compose
+
+The current implementation can identify a Compose-heavy root and report that
+`resources_font` reached Compose. When all evidence matches, it also performs a
+narrow scheduling action: Resources fontScale/scaledDensity writes are
+temporarily suppressed to the inferred base font scale for that package.
+
+Working position:
+
+- Do not globally disable TextView current-px fallback just because a page is
+  Compose-heavy. TextView provenance remains the authority for real TextViews.
+- Do not enable Paint fallback by default as a workaround for Compose. Paint has
+  no reliable Compose owner or unit information.
+- Treat `resources_font` as the current broad compatibility owner for
+  Compose-heavy pages only when the full evidence set matches: domain enabled,
+  observed `Configuration.fontScale`, observed `scaledDensity / density`, and
+  current-root Compose classification.
+- If the automatic suppression is still visually unacceptable, the supported
+  user escape hatch remains the existing custom chain editor: disable
+  `resources_font` for that app and let remaining routes handle whatever
+  non-Compose Android text they can.
+- A real automatic fix needs a separate Compose-native backend or an explicit
+  Compose policy. It should not silently compensate the target factor inside
+  `resources_font`, because that would change the meaning of a configured
+  150% target and could regress non-Compose Resources users.
+
+For later Compose-native work, start by collecting one paired trace for a
+Compose-heavy app:
+
+1. `DPIS_FONT app hook plan` for the target package.
+2. `ComposeFontRuntimeDiagnosticsInstaller` evidence for the current root.
+3. Resources `fontScale`, `density`, and `scaledDensity` values.
+4. Visual expectation: whether disabling only `resources_font` brings the page
+   closer to the configured factor, and which remaining domains still produce
+   visible changes.
+
+The next implementation should remain a scheduling/backend decision, not a
+package-specific special case. Candidate outputs are:
+
+- a user-visible per-app Compose/resources policy is added;
+- a new Compose-native domain is researched and introduced separately.
 
 ### Step 2: Compose-Native Font Backend
 

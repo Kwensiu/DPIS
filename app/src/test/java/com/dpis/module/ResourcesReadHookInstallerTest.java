@@ -12,6 +12,7 @@ public class ResourcesReadHookInstallerTest {
     @After
     public void tearDown() {
         VirtualDisplayState.set(null);
+        ComposeResourcesFontScheduler.clearForTest();
     }
 
     @Test
@@ -129,5 +130,57 @@ public class ResourcesReadHookInstallerTest {
         assertEquals(360, config.smallestScreenWidthDp);
         assertEquals(0, config.densityDpi);
         assertEquals(null, VirtualDisplayState.get());
+    }
+
+    @Test
+    public void composeResourcesSuppressionDowngradesResourcesFontScale() {
+        FontHookArbitration.FontDomainPlan plan =
+                FontHookArbitration.resolveDomainPlan(true, false);
+        ComposeResourcesFontEvidence.Summary evidence = ComposeResourcesFontEvidence.summarize(
+                plan,
+                1.5f,
+                3.0f,
+                4.5f,
+                1.5f,
+                true);
+        ComposeResourcesFontScheduler.observe("com.example.target", evidence,
+                1.5f, 1.5f, System.currentTimeMillis());
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.fontScale = 1.5f;
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit().putInt("font.com.example.target.scale_percent", 150).commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        ResourcesReadHookInstaller.applyConfigurationOverride(config, "com.example.target", store,
+                "ResourcesRead(getConfiguration)");
+
+        assertEquals(1.0f, config.fontScale, 0.0001f);
+    }
+
+    @Test
+    public void metricsUseSuppressedComposeResourcesFontScale() {
+        FontHookArbitration.FontDomainPlan plan =
+                FontHookArbitration.resolveDomainPlan(true, false);
+        ComposeResourcesFontEvidence.Summary evidence = ComposeResourcesFontEvidence.summarize(
+                plan,
+                1.5f,
+                3.0f,
+                4.5f,
+                1.5f,
+                true);
+        ComposeResourcesFontScheduler.observe("com.example.target", evidence,
+                1.5f, 1.5f, System.currentTimeMillis());
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.fontScale = 1.5f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.densityDpi = 480;
+        metrics.density = 3.0f;
+        metrics.scaledDensity = 4.5f;
+
+        ResourcesReadHookInstaller.applyMetricsOverride(metrics, config, "com.example.target");
+
+        assertEquals(3.0f, metrics.scaledDensity, 0.0001f);
     }
 }

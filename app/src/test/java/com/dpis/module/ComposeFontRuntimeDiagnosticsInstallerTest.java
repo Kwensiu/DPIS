@@ -21,25 +21,16 @@ public class ComposeFontRuntimeDiagnosticsInstallerTest {
     }
 
     @Test
-    public void layoutListenerAttachesOnlyWhenRuntimeLoggingEnabled() {
-        assertTrue(ComposeFontRuntimeDiagnosticsInstaller.shouldAttachLayoutListener(true));
-        assertFalse(ComposeFontRuntimeDiagnosticsInstaller.shouldAttachLayoutListener(false));
-    }
-
-    @Test
-    public void layoutEvaluationRequiresLoggingAndThrottleWindow() {
+    public void layoutEvaluationUsesThrottleWindow() {
         long nowMs = 10_000L;
 
-        assertFalse(ComposeFontRuntimeDiagnosticsInstaller.shouldEvaluateFromLayout(
-                nowMs, 0L, false));
         assertTrue(ComposeFontRuntimeDiagnosticsInstaller.shouldEvaluateFromLayout(
-                nowMs, 0L, true));
+                nowMs, 0L));
         assertFalse(ComposeFontRuntimeDiagnosticsInstaller.shouldEvaluateFromLayout(
-                nowMs, nowMs - 100L, true));
+                nowMs, nowMs - 100L));
         assertTrue(ComposeFontRuntimeDiagnosticsInstaller.shouldEvaluateFromLayout(
                 nowMs,
-                nowMs - ComposeFontRuntimeDiagnosticsInstaller.LAYOUT_EVALUATE_THROTTLE_MS,
-                true));
+                nowMs - ComposeFontRuntimeDiagnosticsInstaller.LAYOUT_EVALUATE_THROTTLE_MS));
     }
 
     @Test

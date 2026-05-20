@@ -258,7 +258,7 @@ final class ResourcesManagerHookInstaller {
         if (config == null) {
             return;
         }
-        FontScaleOverride.Result fontScale = FontScaleOverride.resolve(
+        FontScaleOverride.Result fontScale = FontScaleOverride.resolveForResources(
                 store, packageName, config.fontScale);
         FontScaleOverride.applyToConfiguration(config, fontScale);
         int originalWidthDp = config.screenWidthDp;
@@ -267,18 +267,26 @@ final class ResourcesManagerHookInstaller {
         int originalDensityDpi = config.densityDpi;
         if (originalWidthDp <= 0 && originalHeightDp <= 0 && originalDensityDpi <= 0) {
             if (fontScale.changed) {
-                String fontMessage = "DPIS_FONT " + sourceTag + " override: fontScale "
+                String fontMessage = "DPIS_FONT " + sourceTag + " override: package="
+                        + packageName + ", fontScale "
                         + fontScale.original + " -> " + config.fontScale;
                 logIfChanged(packageName + ":" + sourceTag + ":font-only", fontMessage);
             }
             return;
         }
         Integer targetViewportWidth = TargetViewportWidthResolver.resolve(store, packageName);
+        boolean windowScoped = ViewportConfigurationScope.isWindowScoped(config);
+        VirtualDisplayOverride.Result stableTarget =
+                VirtualDisplayState.getForTarget(targetViewportWidth);
         ViewportOverride.Result result = ViewportOverride.derive(
-                config, targetViewportWidth != null ? targetViewportWidth : 0);
+                config,
+                targetViewportWidth != null ? targetViewportWidth : 0,
+                windowScoped,
+                stableTarget);
         if (result == null) {
             if (fontScale.changed) {
-                String fontMessage = "DPIS_FONT " + sourceTag + " override: fontScale "
+                String fontMessage = "DPIS_FONT " + sourceTag + " override: package="
+                        + packageName + ", fontScale "
                         + fontScale.original + " -> " + config.fontScale;
                 logIfChanged(packageName + ":" + sourceTag + ":font-only", fontMessage);
             }
@@ -292,7 +300,7 @@ final class ResourcesManagerHookInstaller {
                 0,
                 0,
                 result.smallestWidthDp);
-        if (sharedResult != null) {
+        if (!windowScoped && sharedResult != null) {
             VirtualDisplayState.setUnlessDerivedFromTargetConfig(
                     sharedResult, originalSmallestWidthDp, targetViewportWidth);
         }
@@ -310,7 +318,10 @@ final class ResourcesManagerHookInstaller {
                     && config.densityDpi != stableResult.densityDpi) {
                 config.densityDpi = stableResult.densityDpi;
                 String message = "DPIS_VIEWPORT " + sourceTag
-                        + " stable target: widthDp " + originalWidthDp
+                        + " stable target: package=" + packageName
+                        + ", targetViewportWidthDp=" + describeNullable(targetViewportWidth)
+                        + ", actual=" + describeConfiguration(config)
+                        + ", widthDp " + originalWidthDp
                         + " -> " + config.screenWidthDp
                         + ", heightDp " + originalHeightDp
                         + " -> " + config.screenHeightDp
@@ -333,7 +344,12 @@ final class ResourcesManagerHookInstaller {
         }
         String modeLabel = applyToConfiguration ? "config" : "metrics";
         String message = "DPIS_VIEWPORT " + sourceTag + " (" + modeLabel
-                + ") override: widthDp "
+                + ") override: package=" + packageName
+                + ", targetViewportWidthDp=" + describeNullable(targetViewportWidth)
+                + ", scope=" + (windowScoped ? "window" : "display")
+                + ", target=" + describeViewportResult(result)
+                + ", actual=" + describeConfiguration(config)
+                + ", widthDp "
                 + originalWidthDp + " -> " + result.widthDp
                 + ", heightDp " + originalHeightDp + " -> " + result.heightDp
                 + ", smallestWidthDp " + originalSmallestWidthDp + " -> "
@@ -362,5 +378,30 @@ final class ResourcesManagerHookInstaller {
         } catch (ReflectiveOperationException | RuntimeException ignored) {
             return null;
         }
+    }
+
+    private static String describeConfiguration(Configuration config) {
+        if (config == null) {
+            return "null";
+        }
+        return "{widthDp=" + config.screenWidthDp
+                + ",heightDp=" + config.screenHeightDp
+                + ",smallestWidthDp=" + config.smallestScreenWidthDp
+                + ",densityDpi=" + config.densityDpi
+                + ",fontScale=" + config.fontScale + "}";
+    }
+
+    private static String describeViewportResult(ViewportOverride.Result result) {
+        if (result == null) {
+            return "null";
+        }
+        return "{widthDp=" + result.widthDp
+                + ",heightDp=" + result.heightDp
+                + ",smallestWidthDp=" + result.smallestWidthDp
+                + ",densityDpi=" + result.densityDpi + "}";
+    }
+
+    private static String describeNullable(Integer value) {
+        return value == null ? "none" : String.valueOf(value);
     }
 }

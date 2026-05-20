@@ -233,7 +233,7 @@ final class AppProcessHookInstaller {
         if (plan.viewportProbeEnabled) {
             WindowManagerProbeHookInstaller.install(xposed, packageName);
             WindowSessionProbeHookInstaller.install(xposed);
-            ViewRootProbeHookInstaller.install(xposed);
+            ViewRootProbeHookInstaller.install(xposed, packageName);
         }
     }
 

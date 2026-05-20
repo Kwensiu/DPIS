@@ -5,7 +5,7 @@ import android.util.DisplayMetrics;
 import android.util.TypedValue;
 
 final class FontScaleOverride {
-    private static final float EPSILON = 0.0001f;
+    static final float EPSILON = 0.0001f;
 
     private FontScaleOverride() {
     }
@@ -22,6 +22,14 @@ final class FontScaleOverride {
                 : original;
         return new Result(original, effective, targetPercent,
                 Math.abs(effective - original) > EPSILON);
+    }
+
+    static Result resolveForResources(DpiConfigStore store,
+                                      String packageName,
+                                      float currentFontScale) {
+        return ComposeResourcesFontScheduler.maybeSuppressResourcesFont(
+                packageName,
+                resolve(store, packageName, currentFontScale));
     }
 
     static boolean applyToConfiguration(Configuration config, Result result) {

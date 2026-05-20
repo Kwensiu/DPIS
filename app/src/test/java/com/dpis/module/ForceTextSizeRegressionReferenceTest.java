@@ -83,14 +83,14 @@ public class ForceTextSizeRegressionReferenceTest {
     }
 
     @Test
-    public void textViewCurrentPxFallbackIsNotPartOfDefaultFieldRewritePlan() {
+    public void textViewCurrentPxFallbackIsPartOfDefaultFieldRewritePlan() {
         Map<Object, Float> base = new HashMap<>();
         Object key = new Object();
 
         FontHookArbitration.FontDomainPlan plan =
                 FontHookArbitration.resolveDomainPlan(true, true);
 
-        assertFalse(plan.textViewCurrentPxFallbackEnabled);
+        assertTrue(plan.textViewCurrentPxFallbackEnabled);
         assertTrue(base.isEmpty());
     }
 
@@ -137,7 +137,7 @@ public class ForceTextSizeRegressionReferenceTest {
     }
 
     @Test
-    public void fontHookArbitrationKeepsLowRiskTextViewRewritesAndSuppressesBroaderFallbacks() {
+    public void fontHookArbitrationKeepsTextViewFallbacksAndSuppressesPaintFallback() {
         FontHookArbitration.FontDomainPlan plan =
                 FontHookArbitration.resolveDomainPlan(true, true);
 
@@ -146,7 +146,7 @@ public class ForceTextSizeRegressionReferenceTest {
         assertTrue(plan.textViewHooksEnabled);
         assertTrue(plan.textViewSpRewriteEnabled);
         assertTrue(plan.textViewAbsoluteRewriteEnabled);
-        assertFalse(plan.textViewCurrentPxFallbackEnabled);
+        assertTrue(plan.textViewCurrentPxFallbackEnabled);
         assertFalse(plan.paintFallbackEnabled);
     }
 

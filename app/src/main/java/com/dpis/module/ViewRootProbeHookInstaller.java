@@ -25,11 +25,12 @@ final class ViewRootProbeHookInstaller {
     private static volatile String lastFrameLog;
     private static volatile String lastRelayoutLog;
     private static volatile String lastResizedLog;
+    private static volatile String installedPackageName;
 
     private ViewRootProbeHookInstaller() {
     }
 
-    static void install(XposedInterface xposed) throws ReflectiveOperationException {
+    static void install(XposedInterface xposed, String packageName) throws ReflectiveOperationException {
         if (hookInstalled) {
             return;
         }
@@ -37,6 +38,7 @@ final class ViewRootProbeHookInstaller {
             if (hookInstalled) {
                 return;
             }
+            installedPackageName = packageName;
             ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
             Class<?> viewRootImplClass = Class.forName("android.view.ViewRootImpl", false,
                     bootClassLoader);
@@ -51,7 +53,7 @@ final class ViewRootProbeHookInstaller {
                     .intercept(chain -> {
                         Object thisObject = chain.getThisObject();
                         if (LOG_COUNT.incrementAndGet() <= MAX_LOGS) {
-                            DpisLog.i(buildPerformTraversalsLog(thisObject));
+                            DpisLog.i(buildPerformTraversalsLog(installedPackageName, thisObject));
                             String rootViewLog = buildRootViewLog(thisObject);
                             if (rootViewLog != null) {
                                 DpisLog.i(rootViewLog);
@@ -67,7 +69,7 @@ final class ViewRootProbeHookInstaller {
                             if (args.size() >= 2
                                     && args.get(0) instanceof Integer widthMeasureSpec
                                     && args.get(1) instanceof Integer heightMeasureSpec) {
-                                String message = buildMeasureLog(widthMeasureSpec,
+                                String message = buildMeasureLog(installedPackageName, widthMeasureSpec,
                                         heightMeasureSpec);
                                 if (!message.equals(lastMeasureLog)) {
                                     lastMeasureLog = message;
@@ -123,12 +125,31 @@ final class ViewRootProbeHookInstaller {
                 + ", height=" + readIntField(viewRootImpl, "mHeight");
     }
 
+    static String buildPerformTraversalsLog(String packageName, Object viewRootImpl) {
+        return "ViewRoot probe(performTraversals): package=" + safePackage(packageName)
+                + ", width="
+                + readIntField(viewRootImpl, "mWidth")
+                + ", height=" + readIntField(viewRootImpl, "mHeight");
+    }
+
     static String buildViewLog(int width, int height) {
         return "ViewRoot probe(rootView): width=" + width + ", height=" + height;
     }
 
+    static String buildViewLog(String packageName, int width, int height) {
+        return "ViewRoot probe(rootView): package=" + safePackage(packageName)
+                + ", width=" + width + ", height=" + height;
+    }
+
     static String buildMeasureLog(int widthMeasureSpec, int heightMeasureSpec) {
         return "ViewRoot probe(performMeasure): widthSpec="
+                + describeMeasureSpec(widthMeasureSpec)
+                + ", heightSpec=" + describeMeasureSpec(heightMeasureSpec);
+    }
+
+    static String buildMeasureLog(String packageName, int widthMeasureSpec, int heightMeasureSpec) {
+        return "ViewRoot probe(performMeasure): package=" + safePackage(packageName)
+                + ", widthSpec="
                 + describeMeasureSpec(widthMeasureSpec)
                 + ", heightSpec=" + describeMeasureSpec(heightMeasureSpec);
     }
@@ -146,6 +167,14 @@ final class ViewRootProbeHookInstaller {
                 + ", oldWinFrame=" + oldWidth + "x" + oldHeight;
     }
 
+    static String buildSetFrameLog(String packageName, int oldWidth, int oldHeight,
+                                   int newWidth, int newHeight, boolean withinRelayout) {
+        return "ViewRoot probe(setFrame): package=" + safePackage(packageName)
+                + ", withinRelayout=" + withinRelayout
+                + ", frame=" + newWidth + "x" + newHeight
+                + ", oldWinFrame=" + oldWidth + "x" + oldHeight;
+    }
+
     static String buildRelayoutWindowLog(String stage, int result,
                                          int relayoutFrameWidth, int relayoutFrameHeight,
                                          int tmpFrameWidth, int tmpFrameHeight,
@@ -156,8 +185,24 @@ final class ViewRootProbeHookInstaller {
                 + ", winFrame=" + winFrameWidth + "x" + winFrameHeight;
     }
 
+    static String buildRelayoutWindowLog(String packageName, String stage, int result,
+                                         int relayoutFrameWidth, int relayoutFrameHeight,
+                                         int tmpFrameWidth, int tmpFrameHeight,
+                                         int winFrameWidth, int winFrameHeight) {
+        return "ViewRoot probe(relayoutWindow:" + stage + "): package=" + safePackage(packageName)
+                + ", result=" + result
+                + ", relayoutFrame=" + relayoutFrameWidth + "x" + relayoutFrameHeight
+                + ", tmpFrame=" + tmpFrameWidth + "x" + tmpFrameHeight
+                + ", winFrame=" + winFrameWidth + "x" + winFrameHeight;
+    }
+
     static String buildHandleResizedLog(int frameWidth, int frameHeight) {
         return "ViewRoot probe(handleResized): frame=" + frameWidth + "x" + frameHeight;
+    }
+
+    static String buildHandleResizedLog(String packageName, int frameWidth, int frameHeight) {
+        return "ViewRoot probe(handleResized): package=" + safePackage(packageName)
+                + ", frame=" + frameWidth + "x" + frameHeight;
     }
 
     static boolean shouldOverrideSetFrame(int relayoutFrameWidth, int relayoutFrameHeight,
@@ -178,14 +223,16 @@ final class ViewRootProbeHookInstaller {
         if (width <= 0 || height <= 0) {
             return null;
         }
-        return buildViewLog(width, height);
+        return buildViewLog(installedPackageName, width, height);
     }
 
     private static String buildSetFrameLog(Object viewRootImpl, Rect frame, boolean withinRelayout) {
         return buildSetFrameLog(
+                installedPackageName,
                 readRectWidth(viewRootImpl, "mWinFrame"),
                 readRectHeight(viewRootImpl, "mWinFrame"),
-                frame,
+                frame != null ? frame.width() : -1,
+                frame != null ? frame.height() : -1,
                 withinRelayout);
     }
 
@@ -232,6 +279,7 @@ final class ViewRootProbeHookInstaller {
             return;
         }
         String message = buildRelayoutWindowLog(
+                installedPackageName,
                 "after",
                 result instanceof Integer value ? value : -1,
                 readFirstRectWidth(readField(viewRootImpl, "mRelayoutResult")),
@@ -266,7 +314,7 @@ final class ViewRootProbeHookInstaller {
                 break;
             }
         }
-        String message = buildHandleResizedLog(frameWidth, frameHeight);
+        String message = buildHandleResizedLog(installedPackageName, frameWidth, frameHeight);
         if (!message.equals(lastResizedLog)) {
             lastResizedLog = message;
             DpisLog.i(message);
@@ -298,6 +346,10 @@ final class ViewRootProbeHookInstaller {
         } catch (ReflectiveOperationException ignored) {
             return -1;
         }
+    }
+
+    private static String safePackage(String packageName) {
+        return packageName == null || packageName.isBlank() ? "unknown" : packageName;
     }
 
     private static Object readField(Object target, String fieldName) {

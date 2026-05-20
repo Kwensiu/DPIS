@@ -37,19 +37,25 @@ automatic path for `field_rewrite` is:
 - `resources_font`
 - `textview_sp_rewrite`
 - `textview_absolute_rewrite`
+- `textview_current_px_fallback`
 - `webview_text_zoom`
 
-The default path deliberately excludes the higher-risk downstream TextView/Paint
-fallbacks:
+The default path includes the TextView current-px fallback because the
+TextView-level provenance tracker can now suppress it when Resources, SP rewrite,
+or absolute rewrite already owns the size for the same scale factor. This makes
+more ordinary TextView surfaces respond without requiring users to tune the
+custom chain first.
 
-- `textview_current_px_fallback`
+The default path still deliberately excludes the higher-risk Paint fallback:
+
 - `paint_text_size_fallback`
 
-Reason: the low-risk `sp` and absolute TextView rewrites give most ordinary
-TextView apps the expected visible scaling, while current-px and Paint fallbacks
-are more likely to hit already-scaled or custom-rendered text. Calculator's COUI
-popup demonstrated why users still need a per-app way to turn
-`textview_absolute_rewrite` off when it double-scales a specific UI.
+Reason: TextView current-px fallback is still a downstream fallback, but it has
+View-level lifecycle and stronger provenance than Paint. Paint/TextPaint remains
+more likely to hit already-scaled or custom-rendered text because it lacks a
+reliable View owner and unit information. Calculator's COUI popup demonstrated
+why users still need a per-app way to turn individual TextView domains off when
+a specific UI double-scales.
 
 TextView fallback domains also keep a lightweight provenance guard. When a
 TextView size route sees an original px value or applies a target px value, DPIS
@@ -270,7 +276,7 @@ Suggested structure:
       ● textview_sp_rewrite
   [x] TextView 绝对字号重写
       ● textview_absolute_rewrite
-  [ ] TextView 当前像素回退
+  [x] TextView 当前像素回退
       ● textview_current_px_fallback
   [ ] Paint 字号回退
       ● paint_text_size_fallback
@@ -358,8 +364,9 @@ Release-note points:
   and no longer participate in app-process font hook planning.
 - Apps that depended on those switches should enable the corresponding
   per-app custom chain entry instead.
-- `field_rewrite` uses the default path described above; current-px and Paint
-  fallback domains are opt-in per app.
+- `field_rewrite` uses the default path described above; TextView current-px is
+  part of the recommended TextView chain, while Paint fallback remains opt-in
+  per app.
 
 Suggested implementation order:
 

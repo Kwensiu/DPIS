@@ -29,6 +29,7 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
     private static final Map<Activity, ActivityState> ACTIVITY_STATES = new WeakHashMap<>();
     private static volatile boolean callbacksRegistered;
     private static volatile boolean applicationRetryHookInstalled;
+    private static volatile boolean activityFallbackHooksInstalled;
 
     private ComposeFontRuntimeDiagnosticsInstaller() {
     }
@@ -46,6 +47,8 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
         if (targetPercent == null || targetPercent <= 0) {
             return;
         }
+        installActivityFallbackHooks(xposed, packageName, store, domainPlan,
+                hookDomains, hookDomainSource);
         Application application = currentApplication();
         if (shouldDeferRegistration(application, callbacksRegistered)) {
             logIfChanged(buildFontLogKey(packageName, "compose-runtime-current-app-missing"),
@@ -71,16 +74,10 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
         return application == null && !alreadyRegistered;
     }
 
-    static boolean shouldAttachLayoutListener(boolean loggingEnabled) {
-        return loggingEnabled;
-    }
-
     static boolean shouldEvaluateFromLayout(long nowMs,
-                                            long lastLayoutEvaluationAtMs,
-                                            boolean loggingEnabled) {
-        return loggingEnabled
-                && (lastLayoutEvaluationAtMs <= 0
-                || nowMs - lastLayoutEvaluationAtMs >= LAYOUT_EVALUATE_THROTTLE_MS);
+                                            long lastLayoutEvaluationAtMs) {
+        return lastLayoutEvaluationAtMs <= 0
+                || nowMs - lastLayoutEvaluationAtMs >= LAYOUT_EVALUATE_THROTTLE_MS;
     }
 
     static Float resolveTargetFactor(Integer targetPercent) {
@@ -147,19 +144,25 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
         }
 
         boolean composeHeavy = ComposeFontRuntimeClassifier.isComposeHeavy(new AndroidViewTreeNode(root));
-        boolean resourcesHandled = ComposeResourcesFontEvidence.isResourcesHandledCompose(
+        ComposeResourcesFontEvidence.Summary evidence = ComposeResourcesFontEvidence.summarize(
                 domainPlan,
                 configuration.fontScale,
                 metrics.density,
                 metrics.scaledDensity,
                 targetFactor,
                 composeHeavy);
+        ComposeResourcesFontScheduler.observe(
+                packageName,
+                evidence,
+                configuration.fontScale,
+                targetFactor,
+                System.currentTimeMillis());
         String activityClass = activity.getClass().getName();
         String rootClass = root.getClass().getName();
         String stateKey = buildStateKey(
                 rootClass,
                 composeHeavy,
-                resourcesHandled,
+                evidence.resourcesHandled,
                 configuration.fontScale,
                 metrics.density,
                 metrics.scaledDensity);
@@ -173,7 +176,11 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
                 + ", activity=" + activityClass
                 + ", root=" + rootClass
                 + ", composeHeavy=" + composeHeavy
-                + ", resourcesHandled=" + resourcesHandled
+                + ", resourcesHandled=" + evidence.resourcesHandled
+                + ", resourcesFontDomainEnabled=" + evidence.resourcesFontDomainEnabled
+                + ", fontScaleMatches=" + evidence.fontScaleMatches
+                + ", scaledDensityRatioMatches=" + evidence.scaledDensityRatioMatches
+                + ", scaledDensityRatio=" + evidence.scaledDensityRatio
                 + ", fontScale=" + configuration.fontScale
                 + ", density=" + metrics.density
                 + ", scaledDensity=" + metrics.scaledDensity
@@ -181,7 +188,7 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
                 + ", hookDomains=" + safeValue(hookDomains)
                 + ", hookDomainSource=" + safeValue(hookDomainSource));
         FontDebugStatsReporter.record(
-                resourcesHandled ? "compose-resources-handled" : "compose-resources-observed",
+                evidence.resourcesHandled ? "compose-resources-handled" : "compose-resources-observed",
                 rootClass,
                 activity);
     }
@@ -192,10 +199,6 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
                                              FontHookArbitration.FontDomainPlan domainPlan,
                                              String hookDomains,
                                              String hookDomainSource) {
-        if (!shouldAttachLayoutListener(DpisLog.isLoggingEnabled())) {
-            cleanup(activity);
-            return;
-        }
         if (resolveCurrentTargetFactor(store, packageName) == null) {
             cleanup(activity);
             return;
@@ -211,11 +214,7 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
         removeLayoutListener(state);
         ViewTreeObserver.OnGlobalLayoutListener listener = () -> {
             long nowMs = System.currentTimeMillis();
-            if (!shouldEvaluateFromLayout(nowMs, state.lastLayoutEvaluationAtMs,
-                    DpisLog.isLoggingEnabled())) {
-                if (!DpisLog.isLoggingEnabled()) {
-                    removeLayoutListener(state);
-                }
+            if (!shouldEvaluateFromLayout(nowMs, state.lastLayoutEvaluationAtMs)) {
                 return;
             }
             state.lastLayoutEvaluationAtMs = nowMs;
@@ -342,6 +341,83 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
                 applicationRetryHookInstalled = false;
             }
             DpisLog.e("DPIS_FONT Compose runtime diagnostics retry hook failed for "
+                    + packageName, throwable);
+        }
+    }
+
+    private static void installActivityFallbackHooks(XposedInterface xposed,
+                                                     String packageName,
+                                                     DpiConfigStore store,
+                                                     FontHookArbitration.FontDomainPlan domainPlan,
+                                                     String hookDomains,
+                                                     String hookDomainSource) {
+        if (xposed == null || activityFallbackHooksInstalled) {
+            return;
+        }
+        synchronized (LOCK) {
+            if (activityFallbackHooksInstalled) {
+                return;
+            }
+            activityFallbackHooksInstalled = true;
+        }
+        try {
+            Method onResume = Activity.class.getDeclaredMethod("onResume");
+            xposed.hook(onResume)
+                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+                    .intercept(chain -> {
+                        Object result = chain.proceed();
+                        Object thisObject = chain.getThisObject();
+                        if (thisObject instanceof Activity activity) {
+                            evaluate(activity, packageName, store, domainPlan,
+                                    hookDomains, hookDomainSource);
+                            attachLayoutListener(activity, packageName, store, domainPlan,
+                                    hookDomains, hookDomainSource);
+                        }
+                        return result;
+                    });
+
+            Method onPause = Activity.class.getDeclaredMethod("onPause");
+            xposed.hook(onPause)
+                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+                    .intercept(chain -> {
+                        Object result = chain.proceed();
+                        Object thisObject = chain.getThisObject();
+                        if (thisObject instanceof Activity activity) {
+                            detachLayoutListener(activity);
+                        }
+                        return result;
+                    });
+
+            Method onStop = Activity.class.getDeclaredMethod("onStop");
+            xposed.hook(onStop)
+                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+                    .intercept(chain -> {
+                        Object result = chain.proceed();
+                        Object thisObject = chain.getThisObject();
+                        if (thisObject instanceof Activity activity) {
+                            detachLayoutListener(activity);
+                        }
+                        return result;
+                    });
+
+            Method onDestroy = Activity.class.getDeclaredMethod("onDestroy");
+            xposed.hook(onDestroy)
+                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+                    .intercept(chain -> {
+                        Object result = chain.proceed();
+                        Object thisObject = chain.getThisObject();
+                        if (thisObject instanceof Activity activity) {
+                            cleanup(activity);
+                        }
+                        return result;
+                    });
+            DpisLog.i("DPIS_FONT Compose runtime diagnostics activity fallback hooks ready for "
+                    + packageName);
+        } catch (Throwable throwable) {
+            synchronized (LOCK) {
+                activityFallbackHooksInstalled = false;
+            }
+            DpisLog.e("DPIS_FONT Compose runtime diagnostics activity fallback hooks failed for "
                     + packageName, throwable);
         }
     }

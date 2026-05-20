@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class ComposeResourcesFontEvidenceTest {
@@ -50,6 +51,47 @@ public class ComposeResourcesFontEvidenceTest {
                 3.0f,
                 1.5f,
                 true));
+    }
+
+    @Test
+    public void summaryExposesEachSchedulingEvidencePart() {
+        FontHookArbitration.FontDomainPlan plan =
+                FontHookArbitration.resolveDomainPlan(true, false);
+
+        ComposeResourcesFontEvidence.Summary summary = ComposeResourcesFontEvidence.summarize(
+                plan,
+                1.5f,
+                2.0f,
+                3.0f,
+                1.5f,
+                true);
+
+        assertTrue(summary.resourcesFontDomainEnabled);
+        assertTrue(summary.fontScaleMatches);
+        assertTrue(summary.scaledDensityRatioMatches);
+        assertTrue(summary.composeHeavyCurrentRoot);
+        assertTrue(summary.resourcesHandled);
+        assertEquals(1.5f, summary.scaledDensityRatio, 0.0001f);
+    }
+
+    @Test
+    public void partialSummaryDoesNotBecomeResourcesHandled() {
+        FontHookArbitration.FontDomainPlan plan =
+                FontHookArbitration.resolveDomainPlan(true, false);
+
+        ComposeResourcesFontEvidence.Summary summary = ComposeResourcesFontEvidence.summarize(
+                plan,
+                1.5f,
+                2.0f,
+                3.0f,
+                1.5f,
+                false);
+
+        assertTrue(summary.resourcesFontDomainEnabled);
+        assertTrue(summary.fontScaleMatches);
+        assertTrue(summary.scaledDensityRatioMatches);
+        assertFalse(summary.composeHeavyCurrentRoot);
+        assertFalse(summary.resourcesHandled);
     }
 
     @Test
