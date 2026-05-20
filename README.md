@@ -3,6 +3,8 @@
 
 ![GitHub Release](https://img.shields.io/github/v/release/Kwensiu/DPIS)
 ![License](https://img.shields.io/github/license/Kwensiu/DPIS)
+[![QQ Group](https://img.shields.io/badge/交流群-1081784676-12B7F5?logo=qq&logoColor=white)](https://qun.qq.com/universal-share/share?ac=1&authKey=IMGMoVIeXPmgs81WgvJEgurLGCeuV%2FWKh8wSxZIXIqtvAA6U%2BJLMtwzG0lrZj7CG&busi_data=eyJncm91cENvZGUiOiIxMDgxNzg0Njc2IiwidG9rZW4iOiI4RkllZjhUVnhGYlVXcEhHZDhyWHdzcDRkRDlGKzlBL0NId1lkMTN2WFJ4SStHa2Y1bmJMM1dlemY5eEFxdmg4IiwidWluIjoiMTA3MDU3NTUyMSJ9&data=8HydkH9NGrhzp1pPhpOFSYT4Qp1aeQZZDN-Y1nk8cp-RBsmsBnRwQ_vN2qXfmhqtTc_LXfOpR6Gv9UCswKRjKg&svctype=4&tempid=h5_group_info)
+
 
 中文说明 | [English](docs/README.en.md)
 
