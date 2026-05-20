@@ -137,7 +137,7 @@ public class ForceTextSizeRegressionReferenceTest {
     }
 
     @Test
-    public void fontHookArbitrationKeepsTextViewFallbacksAndSuppressesPaintFallback() {
+    public void fontHookArbitrationKeepsTextViewAndPaintFallbacks() {
         FontHookArbitration.FontDomainPlan plan =
                 FontHookArbitration.resolveDomainPlan(true, true);
 
@@ -147,7 +147,7 @@ public class ForceTextSizeRegressionReferenceTest {
         assertTrue(plan.textViewSpRewriteEnabled);
         assertTrue(plan.textViewAbsoluteRewriteEnabled);
         assertTrue(plan.textViewCurrentPxFallbackEnabled);
-        assertFalse(plan.paintFallbackEnabled);
+        assertTrue(plan.paintFallbackEnabled);
     }
 
     @Test

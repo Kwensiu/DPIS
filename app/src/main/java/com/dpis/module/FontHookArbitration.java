@@ -110,7 +110,7 @@ final class FontHookArbitration {
                     true,
                     true,
                     true,
-                    false,
+                    true,
                     flutterSettingsEnabled,
                     hyperOsNativeFlutterEnabled,
                     false,

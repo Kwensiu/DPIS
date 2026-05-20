@@ -72,7 +72,8 @@ public class HookExecutionPlannerTest {
         assertTrue(plan.fontDomainPlan.textViewSpRewriteEnabled);
         assertTrue(plan.fontDomainPlan.textViewAbsoluteRewriteEnabled);
         assertEquals("resources_font,textview_sp_rewrite,textview_absolute_rewrite,"
-                        + "textview_current_px_fallback,webview_text_zoom",
+                        + "textview_current_px_fallback,paint_text_size_fallback,"
+                        + "webview_text_zoom",
                 plan.hookDomains);
         assertEquals("field-rewrite-domain-plan", plan.fontDomainPlan.reason);
     }
@@ -164,9 +165,9 @@ public class HookExecutionPlannerTest {
         assertTrue(plan.fontDomainPlan.textViewSpRewriteEnabled);
         assertFalse(plan.fontDomainPlan.textViewAbsoluteRewriteEnabled);
         assertTrue(plan.fontDomainPlan.textViewCurrentPxFallbackEnabled);
-        assertFalse(plan.fontDomainPlan.paintFallbackEnabled);
+        assertTrue(plan.fontDomainPlan.paintFallbackEnabled);
         assertEquals("resources_font,textview_sp_rewrite,textview_current_px_fallback,"
-                + "webview_text_zoom", plan.hookDomains);
+                + "paint_text_size_fallback,webview_text_zoom", plan.hookDomains);
         assertEquals("field-rewrite-domain-plan", plan.fontDomainPlan.reason);
         assertEquals("disable-textview-absolute", plan.reason.debugOverride);
     }

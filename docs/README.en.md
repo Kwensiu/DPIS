@@ -44,7 +44,7 @@ If you use `System`, also enable `system` scope in LSPosed. `Compat` usually doe
 
 > Note: older UI labels used "Emulation / Replacement". The UI now shows "System / Compat".
 
-Font `Compat` uses a default chain for regular TextView apps and lets you tune extra fallback routes per app. For apps that need extra routes, or apps that need a default route disabled, open the target app details and use `Custom chain` in advanced actions. Changes take effect the next time the target app process starts.
+Font `Compat` enables the recommended Resources, TextView, and Paint fallback chain by default, with scheduling and provenance guards to reduce repeated scaling. If a specific app scales incorrectly, open the target app details and use `Custom chain` to disable individual routes. Changes take effect the next time the target app process starts.
 
 ## System-Layer Hook and Safe Mode
 

@@ -65,6 +65,10 @@ public class AppConfigDialogBinderSourceSmokeTest {
         String layout = read("src/main/res/layout/dialog_app_config.xml");
 
         assertTrue(layout.contains("android:id=\"@+id/dialog_font_hook_domains_button\""));
+        assertTrue(layout.indexOf("android:id=\"@+id/dialog_font_hook_domains_button\"")
+                < layout.indexOf("android:id=\"@+id/dialog_stop_button\""));
+        assertTrue(layout.indexOf("android:id=\"@+id/dialog_font_hook_domains_button\"")
+                < layout.indexOf("@string/dialog_advanced_section_title"));
         assertTrue(source.contains("void showFontHookDomains(AppListItem item, Runnable onStateChanged);"));
         assertTrue(source.contains("String getFontHookDomainsButtonText(String packageName);"));
         assertTrue(source.contains("views.fontHookDomainsButton.setOnClickListener"));

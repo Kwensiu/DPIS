@@ -7,7 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 public class FontHookArbitrationTest {
     @Test
-    public void fieldRewriteUsesTextViewFallbacksAndSkipsPaintFallback() {
+    public void fieldRewriteUsesFullRecommendedCompatFallbacks() {
         FontHookArbitration.FontDomainPlan plan =
                 FontHookArbitration.resolveDomainPlan(true, true);
 
@@ -17,7 +17,7 @@ public class FontHookArbitrationTest {
         assertTrue(plan.textViewSpRewriteEnabled);
         assertTrue(plan.textViewAbsoluteRewriteEnabled);
         assertTrue(plan.textViewCurrentPxFallbackEnabled);
-        assertFalse(plan.paintFallbackEnabled);
+        assertTrue(plan.paintFallbackEnabled);
         assertFalse(plan.flutterSettingsEnabled);
         assertFalse(plan.hyperOsNativeFlutterEnabled);
         assertFalse(plan.genericNativeFlutterEnabled);

@@ -24,8 +24,8 @@ The WeChat conversation-list reproduction shows the failure mode clearly:
 - Viewport rewrite makes WeChat run at `sw500dp`.
 - Resources font hooks report `fontScale=1.5` and
   `scaledDensity=density * 1.5`.
-- The reproduction uses custom hook-domain overrides that enable additional
-  TextView/Paint fallback domains beyond the default `field_rewrite` path.
+- The reproduction uses the full recommended `field_rewrite` path, including
+  downstream TextView/Paint fallback domains.
 - Some conversation titles become much larger than surrounding preview/date/tab
   text.
 
@@ -226,8 +226,9 @@ Working position:
 
 - Do not globally disable TextView current-px fallback just because a page is
   Compose-heavy. TextView provenance remains the authority for real TextViews.
-- Do not enable Paint fallback by default as a workaround for Compose. Paint has
-  no reliable Compose owner or unit information.
+- Do not let Compose evidence dynamically enable or disable Paint fallback.
+  Paint has no reliable Compose owner or unit information; it remains governed
+  by Paint provenance and per-app custom chain controls.
 - Treat `resources_font` as the current broad compatibility owner for
   Compose-heavy pages only when the full evidence set matches: domain enabled,
   observed `Configuration.fontScale`, observed `scaledDensity / density`, and

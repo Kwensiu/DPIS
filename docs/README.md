@@ -12,6 +12,10 @@
   - 字体/视口 hook 执行计划重构说明，记录 planner/orchestrator 边界、debug 覆盖归属和后续迁移顺序。
 - [custom-per-app-font-hook-domain-plan.md](./custom-per-app-font-hook-domain-plan.md)
   - 按应用自定义字体兼容链路说明，记录 hook domain 存储、调度、UI 和实验入口清理决策。
+- [font-domain-arbitration-provenance-plan.md](./font-domain-arbitration-provenance-plan.md)
+  - 字体链路调度与来源标记说明，记录 TextView/Paint provenance、Compose/resources_font 调度和后续 Compose-native 方向。
+- [compose-resources-font-scheduling-slice.md](./compose-resources-font-scheduling-slice.md)
+  - Compose/resources_font 调度切片说明，记录当前自动抑制重复 Resources 字体缩放的证据和边界。
 - [final-validation-checklist-2026-04-17.md](./final-validation-checklist-2026-04-17.md)
   - 最终构建、测试、设备回归验收清单。
 

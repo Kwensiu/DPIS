@@ -187,7 +187,7 @@ public class AppProcessHookInstallerTest {
     }
 
     @Test
-    public void fieldRewriteKeepsTextViewFallbacksButSkipsPaintFallback() {
+    public void fieldRewriteKeepsRecommendedTextViewAndPaintFallbacks() {
         FontHookArbitration.FontDomainPlan domainPlan =
                 AppProcessHookInstaller.resolveFontDomainPlan(
                         new AppProcessHookInstaller.FontHookPlan(false, true));
@@ -198,7 +198,7 @@ public class AppProcessHookInstallerTest {
         assertTrue(domainPlan.textViewSpRewriteEnabled);
         assertTrue(domainPlan.textViewAbsoluteRewriteEnabled);
         assertTrue(domainPlan.textViewCurrentPxFallbackEnabled);
-        assertFalse(domainPlan.paintFallbackEnabled);
+        assertTrue(domainPlan.paintFallbackEnabled);
         assertFalse(domainPlan.hyperOsNativeFlutterEnabled);
         assertFalse(domainPlan.genericNativeFlutterEnabled);
     }
@@ -252,7 +252,7 @@ public class AppProcessHookInstallerTest {
         assertTrue(fieldRewritePlan.textViewSpRewriteEnabled);
         assertTrue(fieldRewritePlan.textViewAbsoluteRewriteEnabled);
         assertTrue(fieldRewritePlan.textViewCurrentPxFallbackEnabled);
-        assertFalse(fieldRewritePlan.paintFallbackEnabled);
+        assertTrue(fieldRewritePlan.paintFallbackEnabled);
         assertFalse(fieldRewritePlan.hyperOsNativeFlutterEnabled);
         assertFalse(fieldRewritePlan.genericNativeFlutterEnabled);
     }
