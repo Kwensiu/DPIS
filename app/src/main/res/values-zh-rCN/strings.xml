@@ -24,7 +24,7 @@
     <string name="help_tutorial_compat_title">兼容模式</string>
     <string name="help_tutorial_compat_badge">覆盖更强</string>
     <string name="help_tutorial_compat_summary">通过应用进程内兼容链路直接调整缩放，生效更直接。</string>
-    <string name="help_tutorial_compat_points">• 仅需勾选目标应用\n• 更容易出现布局错位或缩放异常</string>
+    <string name="help_tutorial_compat_points">• 仅需勾选目标应用\n• 可自定义文字生效路径\n• 更容易出现布局错位或缩放异常</string>
     <string name="dialog_confirm_button">确认</string>
     <string name="tab_all_apps">全部应用</string>
     <string name="tab_configured_apps">已配置应用</string>
@@ -139,7 +139,7 @@
     <string name="font_debug_reason_no_events">无事件</string>
     <string name="font_debug_reason_no_events_hint">已注入但未命中字体链路，进入文字页面或切到累计窗口观察。</string>
     <string name="settings_experimental_title">实验室</string>
-    <string name="settings_experimental_hint">Flutter 与 native 字体链路。</string>
+    <string name="settings_experimental_hint">可开启未经验证的功能</string>
     <string name="settings_experimental_empty_state">暂无实验功能</string>
     <string name="settings_flutter_font_hook_label">Flutter 补充链路</string>
     <string name="settings_flutter_font_hook_hint">包含未验证的实验性功能</string>
