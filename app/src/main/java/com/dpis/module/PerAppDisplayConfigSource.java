@@ -66,9 +66,12 @@ final class PerAppDisplayConfigSource {
         if (targetViewportWidthDp == null && !fontConfigured) {
             return null;
         }
+        boolean hyperOsNativeFlutterEnabled = FontHookDomainDecision
+                .isHyperOsNativeFlutterEnabled(snapshot, packageConfig);
         return new PerAppDisplayConfig(packageName, targetViewportWidthDp,
                 targetFontScalePercent, targetFontMode,
-                packageConfig.hyperOsFlutterFontHookEnabled);
+                hyperOsNativeFlutterEnabled,
+                packageConfig.hookDomainOverride);
     }
 
     Set<String> getConfiguredPackages() {

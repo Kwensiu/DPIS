@@ -40,6 +40,16 @@ final class VirtualDisplayState {
         return current;
     }
 
+    static VirtualDisplayOverride.Result getForTarget(Integer targetWidthDp) {
+        if (current == null
+                || targetWidthDp == null
+                || targetWidthDp <= 0
+                || current.smallestWidthDp != targetWidthDp) {
+            return null;
+        }
+        return current;
+    }
+
     static VirtualDisplayOverride.Result get() {
         return current;
     }

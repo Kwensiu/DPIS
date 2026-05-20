@@ -45,7 +45,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("views.viewportInputView.addTextChangedListener(validationWatcher)"));
         assertTrue(source.contains("views.fontInputView.addTextChangedListener(validationWatcher)"));
         assertTrue(source.contains("updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,"));
-        assertTrue(source.contains("refreshDialogState(views, state, style, systemHooksEnabled);"));
+        assertTrue(source.contains("refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);"));
     }
 
     @Test
@@ -57,6 +57,54 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertFalse(source.contains("resolveHyperOsNativeWarningText("));
         assertFalse(source.contains("HyperOsNativeProxyStatus.inspect(activity, item.packageName)"));
         assertFalse(layout.contains("dialog_hyperos_native_warning"));
+    }
+
+    @Test
+    public void binderWiresFontHookDomainButtonToHost() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String layout = read("src/main/res/layout/dialog_app_config.xml");
+
+        assertTrue(layout.contains("android:id=\"@+id/dialog_font_hook_domains_button\""));
+        assertTrue(layout.indexOf("android:id=\"@+id/dialog_font_hook_domains_button\"")
+                < layout.indexOf("android:id=\"@+id/dialog_stop_button\""));
+        assertTrue(layout.indexOf("android:id=\"@+id/dialog_font_hook_domains_button\"")
+                < layout.indexOf("@string/dialog_advanced_section_title"));
+        assertTrue(source.contains("void showFontHookDomains(AppListItem item, Runnable onStateChanged);"));
+        assertTrue(source.contains("String getFontHookDomainsButtonText(String packageName);"));
+        assertTrue(source.contains("views.fontHookDomainsButton.setOnClickListener"));
+        assertTrue(source.contains("host.showFontHookDomains(item,"));
+        assertTrue(source.contains("host.getFontHookDomainsButtonText(packageName)"));
+        assertTrue(source.contains("bindFontHookDomainsButton(views.fontHookDomainsButton, packageName);"));
+    }
+
+    @Test
+    public void fontHookDomainDialogUsesImmediateEditorLayout() throws IOException {
+        String source = read("src/main/java/com/dpis/module/FontHookDomainDialog.java");
+        String dialogLayout = read("src/main/res/layout/dialog_font_hook_domains.xml");
+        String itemLayout = read("src/main/res/layout/item_font_hook_domain.xml");
+
+        assertTrue(source.contains("setTitle(R.string.dialog_font_hook_domains_dialog_title)"));
+        assertTrue(source.contains("host.saveCustom(packageName, selectedKnown, automaticKnown, unknown)"));
+        assertTrue(source.contains("host.restoreRecommended(packageName)"));
+        assertTrue(source.contains("FontHookDomainRegistry.orderedCustomizableDisplayIdsList()"));
+        assertTrue(source.contains("FontHookDomainRegistry.orderedCustomizableDisplaySubset("));
+        assertTrue(source.contains("createSubtitleText(activity, domainId)"));
+        assertTrue(source.contains("resolveRiskDotColorRes(domainId)"));
+        assertTrue(source.contains("font_hook_domain_risk_low"));
+        assertTrue(source.contains("font_hook_domain_risk_medium"));
+        assertTrue(source.contains("font_hook_domain_risk_high"));
+        assertFalse(source.contains("new LinkedHashSet<>(FontHookDomainRegistry.orderedIdsList())"));
+        assertTrue(source.contains("title.setText(resolveDomainTitleRes(domainId));"));
+        assertTrue(source.contains("title.setText(domainId);"));
+        assertFalse(source.contains("title.setText(known ? resolveDomainTitleRes(domainId) : 0);"));
+        assertFalse(source.contains("setPositiveButton"));
+        assertFalse(source.contains("setNegativeButton"));
+        assertTrue(dialogLayout.contains("@+id/font_hook_domains_known_container"));
+        assertTrue(dialogLayout.contains("@+id/font_hook_domains_unknown_container"));
+        assertTrue(dialogLayout.contains("@+id/font_hook_domains_restore_button"));
+        assertTrue(itemLayout.contains("@+id/font_hook_domain_title"));
+        assertTrue(itemLayout.contains("@+id/font_hook_domain_subtitle"));
+        assertTrue(itemLayout.contains("@+id/font_hook_domain_switch"));
     }
 
 
@@ -125,7 +173,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("FontRuntimePropertySyncer.publishTargetAsync("));
         assertTrue(source.contains("item.packageName, fontScalePercent"));
         assertTrue(source.contains("fontMode,"));
-        assertTrue(source.contains("store.isHyperOsFlutterFontHookEnabled()"));
+        assertTrue(source.contains("FontHookDomainDecision.isHyperOsNativeFlutterEnabled("));
         assertTrue(source.contains("FontApplyMode.SYSTEM_EMULATION.equals"));
     }
 

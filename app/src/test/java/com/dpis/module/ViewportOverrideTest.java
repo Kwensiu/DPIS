@@ -102,4 +102,41 @@ public class ViewportOverrideTest {
         assertEquals(360, result.smallestWidthDp);
         assertEquals(480, result.densityDpi);
     }
+
+    @Test
+    public void windowScopedConfigUsesStableDensityWithoutForcingTargetSmallestWidth() {
+        Configuration config = new Configuration();
+        config.screenWidthDp = 420;
+        config.screenHeightDp = 747;
+        config.smallestScreenWidthDp = 420;
+        config.densityDpi = 440;
+        VirtualDisplayOverride.Result stableTarget =
+                new VirtualDisplayOverride.Result(1798, 1200, 1200,
+                        285, 3200, 2136);
+
+        ViewportOverride.Result result = ViewportOverride.derive(config, 1200,
+                true, stableTarget);
+
+        assertEquals(648, result.widthDp);
+        assertEquals(1153, result.heightDp);
+        assertEquals(648, result.smallestWidthDp);
+        assertEquals(285, result.densityDpi);
+    }
+
+    @Test
+    public void windowScopedConfigIsNoOpWhenStableDensityIsUnavailable() {
+        Configuration config = new Configuration();
+        config.screenWidthDp = 420;
+        config.screenHeightDp = 747;
+        config.smallestScreenWidthDp = 420;
+        config.densityDpi = 440;
+
+        ViewportOverride.Result result = ViewportOverride.derive(config, 1200,
+                true, null);
+
+        assertEquals(420, result.widthDp);
+        assertEquals(747, result.heightDp);
+        assertEquals(420, result.smallestWidthDp);
+        assertEquals(440, result.densityDpi);
+    }
 }

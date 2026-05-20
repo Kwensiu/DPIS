@@ -87,6 +87,10 @@
   required.
 - Keep temporary high-volume probes debug-only or remove them before release
   cleanup.
+- Font compatibility hook domains are now configured per app through the custom
+  chain editor. Do not reintroduce the old global Flutter/HyperOS experimental
+  switches into app-process font hook planning; if a supplement route is needed,
+  model it as a domain or a documented built-in package default.
 
 ## Gradle Task Detection
 - Build scripts must not infer release tasks by scanning arbitrary Gradle arguments such as `--tests`.

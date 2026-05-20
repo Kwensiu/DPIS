@@ -44,7 +44,7 @@ public final class ModulePackagePlanTest {
     }
 
     @Test
-    public void carriesHyperOsNativeFlutterFlagForAppProcessDispatch() {
+    public void ignoresLegacyGlobalHyperOsNativeFlutterFlagForAppProcessDispatch() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 120);
         store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
@@ -54,11 +54,11 @@ public final class ModulePackagePlanTest {
         ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
 
         assertTrue(plan.fontEnabled);
-        assertTrue(plan.hyperOsNativeFlutterFontEnabled);
+        assertFalse(plan.hyperOsNativeFlutterFontEnabled);
     }
 
     @Test
-    public void carriesFlutterSettingsFlagForAppProcessDispatch() {
+    public void ignoresLegacyGlobalFlutterSettingsFlagForAppProcessDispatch() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 120);
         store.setTargetFontApplyMode("com.example.app", FontApplyMode.SYSTEM_EMULATION);
@@ -68,7 +68,7 @@ public final class ModulePackagePlanTest {
         ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
 
         assertTrue(plan.fontEnabled);
-        assertTrue(plan.flutterSettingsFontEnabled);
+        assertFalse(plan.flutterSettingsFontEnabled);
         assertFalse(plan.hyperOsNativeFlutterFontEnabled);
     }
 
@@ -147,7 +147,7 @@ public final class ModulePackagePlanTest {
 
         assertFalse(plan.targetDpisEnabled);
         assertTrue(plan.fontScaleActive);
-        assertTrue(plan.flutterSettingsFontEnabled);
+        assertFalse(plan.flutterSettingsFontEnabled);
         assertFalse(plan.shouldInstallHooks());
     }
 }

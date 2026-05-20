@@ -57,6 +57,7 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(prefs.contains("HyperOsFlutterFontBridge.readCompatFontScalePercent(packageName)"));
         assertTrue(prefs.contains("ViewportPropertyBridge.readCompatConfigWidthDp(packageName)"));
         assertTrue(prefs.contains("HyperOsFlutterFontBridge.readCompatFontMode(packageName)"));
+        assertTrue(prefs.contains("FontHookDomainPropertyBridge.readOverride(packageName)"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)"));
         assertTrue(app.contains("DpiConfigStore localStore = ConfigStoreFactory.createForModuleApp(this);"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(remoteStore)"));
@@ -108,6 +109,53 @@ public class HyperOsFlutterFontHookConfigTest {
         boolean shouldClear = (boolean) method.invoke(null, "com.miui.gallery", config);
 
         assertFalse(shouldClear);
+    }
+
+    @Test
+    public void rustProcessEnvironmentRequiresNativeDomain() {
+        PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(
+                ConfigSnapshot::empty,
+                packageName -> new PackageConfigSnapshot(
+                        packageName,
+                        true,
+                        null,
+                        ViewportApplyMode.OFF,
+                        300,
+                        FontApplyMode.FIELD_REWRITE,
+                        false,
+                        false,
+                        false,
+                        new HookDomainOverride(
+                                true,
+                                java.util.Set.of(FontHookDomainRegistry.ID_RESOURCES_FONT),
+                                java.util.Set.of())));
+
+        Object[] result = HyperOsRustProcessHookInstaller.applyEnvironmentArgsForLegacy(
+                source,
+                Arrays.asList("ignored",
+                        "com.miui.gallery",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        "/data/app/MIUIGallery/lib/arm64/libapp_gallery.so",
+                        ""));
+
+        assertEquals(null, result);
     }
 
     @Test

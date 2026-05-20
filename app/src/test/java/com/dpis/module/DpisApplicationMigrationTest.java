@@ -246,7 +246,7 @@ public class DpisApplicationMigrationTest {
     }
 
     @Test
-    public void seedsRemoteHyperOsFlutterFontHookFlagWhenRemoteMissing() throws Exception {
+    public void migrationDoesNotCopyLegacyGlobalFontHookFlags() throws Exception {
         FakePrefs localPrefs = new FakePrefs();
         DpiConfigStore local = new DpiConfigStore(localPrefs);
         assertTrue(local.setFlutterFontHookEnabled(true));
@@ -258,40 +258,9 @@ public class DpisApplicationMigrationTest {
 
         invokeMigrate(local, remote);
 
-        assertTrue(remote.isFlutterFontHookEnabled());
-        assertTrue(remote.isFlutterSettingsFontHookEnabled());
-        assertTrue(remote.isHyperOsFlutterFontHookEnabled());
-    }
-
-    @Test
-    public void legacyHyperOsFlutterFlagSeedsFlutterMasterWhenRemoteMissing() throws Exception {
-        FakePrefs localPrefs = new FakePrefs();
-        DpiConfigStore local = new DpiConfigStore(localPrefs);
-        assertTrue(local.setHyperOsFlutterFontHookEnabled(true));
-
-        FakePrefs remotePrefs = new FakePrefs();
-        DpiConfigStore remote = new DpiConfigStore(remotePrefs);
-
-        invokeMigrate(local, remote);
-
-        assertTrue(remote.isFlutterFontHookEnabled());
-        assertTrue(remote.isHyperOsFlutterFontHookEnabled());
-    }
-
-    @Test
-    public void explicitFlutterMasterOffIsPreservedDuringMigration() throws Exception {
-        FakePrefs localPrefs = new FakePrefs();
-        DpiConfigStore local = new DpiConfigStore(localPrefs);
-        assertTrue(local.setFlutterFontHookEnabled(false));
-        assertTrue(local.setHyperOsFlutterFontHookEnabled(true));
-
-        FakePrefs remotePrefs = new FakePrefs();
-        DpiConfigStore remote = new DpiConfigStore(remotePrefs);
-
-        invokeMigrate(local, remote);
-
-        assertTrue(!remote.isFlutterFontHookEnabled());
-        assertTrue(remote.isHyperOsFlutterFontHookEnabled());
+        assertFalse(remote.isFlutterFontHookEnabled());
+        assertFalse(remote.isFlutterSettingsFontHookEnabled());
+        assertFalse(remote.isHyperOsFlutterFontHookEnabled());
     }
 
     @Test

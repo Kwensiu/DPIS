@@ -32,6 +32,46 @@ public class ForceTextSizeRegressionReferenceTest {
     }
 
     @Test
+    public void textSizeProvenance_recognizesPreviouslyAppliedTargetSize() {
+        assertTrue(FontFieldRewriteMath.isKnownScaledTextSize(
+                36f, 2.0f, 36f));
+        assertFalse(FontFieldRewriteMath.shouldRecordTextBase(
+                36f, 2.0f, null, 36f));
+    }
+
+    @Test
+    public void textSizeProvenance_doesNotTreatScaledBaseAsProof() {
+        assertFalse(FontFieldRewriteMath.isKnownScaledTextSize(
+                36f, 2.0f, null));
+        assertTrue(FontFieldRewriteMath.shouldRecordTextBase(
+                36f, 2.0f, 18f, null));
+    }
+
+    @Test
+    public void textSizeProvenance_recordsNewUnscaledBase() {
+        assertTrue(FontFieldRewriteMath.shouldRecordTextBase(
+                20f, 2.0f, 18f, 36f));
+        assertFalse(FontFieldRewriteMath.isKnownScaledTextSize(
+                20f, 2.0f, 36f));
+    }
+
+    @Test
+    public void textSizeProvenance_usesRelativeToleranceForAppliedTarget() {
+        assertTrue(FontFieldRewriteMath.approximatelyEqual(80f, 80.6f));
+        assertFalse(FontFieldRewriteMath.approximatelyEqual(10f, 10.6f));
+        assertTrue(FontFieldRewriteMath.isKnownScaledTextSize(
+                80.6f, 2.0f, 80f));
+    }
+
+    @Test
+    public void resourcesScaledDensityRecognizesAppliedFontFactor() {
+        assertTrue(FontFieldRewriteMath.isResourcesScaledDensityApplied(
+                2.1625f, 3.24375f, 1.5f));
+        assertFalse(FontFieldRewriteMath.isResourcesScaledDensityApplied(
+                2.1625f, 2.1625f, 1.5f));
+    }
+
+    @Test
     public void textSizeScalingReference_rebasesWhenCurrentClearlyChanges() {
         Map<Object, Float> base = new HashMap<>();
         Object key = new Object();
@@ -43,14 +83,14 @@ public class ForceTextSizeRegressionReferenceTest {
     }
 
     @Test
-    public void textViewCurrentPxFallbackIsNotPartOfDefaultFieldRewritePlan() {
+    public void textViewCurrentPxFallbackIsPartOfDefaultFieldRewritePlan() {
         Map<Object, Float> base = new HashMap<>();
         Object key = new Object();
 
         FontHookArbitration.FontDomainPlan plan =
                 FontHookArbitration.resolveDomainPlan(true, true);
 
-        assertFalse(plan.textViewCurrentPxFallbackEnabled);
+        assertTrue(plan.textViewCurrentPxFallbackEnabled);
         assertTrue(base.isEmpty());
     }
 
@@ -85,30 +125,37 @@ public class ForceTextSizeRegressionReferenceTest {
         assertTrue(source.contains("domainPlan.textViewCurrentPxFallbackEnabled"));
         assertTrue(source.contains("domainPlan.paintFallbackEnabled"));
         assertTrue(source.contains("DPIS_FONT Paint/TextPaint fallback suppressed"));
+        assertTrue(source.contains("isSpTextHandledByResources(textView, factor, domainPlan)"));
+        assertTrue(source.contains("recordResourcesHandledTextSize(textView, originalPx, factor)"));
+        assertTrue(source.contains("TextViewFontProvenanceTracker.recordResourcesHandled"));
+        assertTrue(source.contains("TextViewFontProvenanceTracker.Source.TEXTVIEW_CURRENT_PX_FALLBACK"));
+        assertTrue(source.contains("hasStrongerProvenanceForCurrentPxFallback"));
+        assertFalse(source.contains("isPxTextHandledByResources"));
+        assertFalse(source.contains("isCurrentPxHandledByResources"));
         assertTrue(source.indexOf("installTextViewAttachHook(")
                 < source.indexOf("installPaintTextSizeHooks("));
     }
 
     @Test
-    public void fontHookArbitrationKeepsResourcesWebViewAndTextViewGapFillButSuppressesPaint() {
+    public void fontHookArbitrationKeepsTextViewAndPaintFallbacks() {
         FontHookArbitration.FontDomainPlan plan =
                 FontHookArbitration.resolveDomainPlan(true, true);
 
         assertTrue(plan.resourcesFontEnabled);
         assertTrue(plan.webViewTextZoomEnabled);
         assertTrue(plan.textViewHooksEnabled);
-        assertFalse(plan.textViewSpRewriteEnabled);
+        assertTrue(plan.textViewSpRewriteEnabled);
         assertTrue(plan.textViewAbsoluteRewriteEnabled);
-        assertFalse(plan.textViewCurrentPxFallbackEnabled);
-        assertFalse(plan.paintFallbackEnabled);
+        assertTrue(plan.textViewCurrentPxFallbackEnabled);
+        assertTrue(plan.paintFallbackEnabled);
     }
 
     @Test
-    public void textViewUnitRewriteSkipsSpWhenResourcesOwnsFontScale() {
+    public void textViewUnitRewriteAllowsDefaultSpAndAbsoluteRewrites() {
         FontHookArbitration.FontDomainPlan plan =
                 FontHookArbitration.resolveDomainPlan(true, true);
 
-        assertFalse(ForceTextSizeHookInstaller.shouldForceTextUnitForTest(
+        assertTrue(ForceTextSizeHookInstaller.shouldForceTextUnitForTest(
                 android.util.TypedValue.COMPLEX_UNIT_SP,
                 plan));
         assertTrue(ForceTextSizeHookInstaller.shouldForceTextUnitForTest(

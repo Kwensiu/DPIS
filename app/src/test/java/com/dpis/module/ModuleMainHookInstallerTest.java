@@ -60,8 +60,9 @@ public class ModuleMainHookInstallerTest {
         assertTrue(source.contains("retryFlutterHooksWithAppClassLoader("));
         assertTrue(source.contains("param.getClassLoader()"));
         assertTrue(source.contains("FlutterSettingsFontHookInstaller.retryWithAppClassLoader("));
-        assertTrue(source.contains("AppProcessHookInstaller.resolveFontHookPlan("));
-        assertTrue(source.contains("AppProcessHookInstaller.resolveFontDomainPlan("));
+        assertTrue(source.contains("resolveDebugFontOverrideForPackage(packageName)"));
+        assertTrue(source.contains("HookExecutionPlanner.buildPlan("));
+        assertTrue(source.contains("HookExecutionPlan executionPlan"));
         assertTrue(source.contains("!packagePlan.targetDpisEnabled || !packagePlan.fontScaleActive"));
         assertTrue(source.contains("packagePlan.flutterSettingsFontEnabled"));
         assertTrue(source.contains("packagePlan.hyperOsNativeFlutterFontEnabled"));

@@ -4,7 +4,6 @@ import android.graphics.Paint;
 
 import java.lang.reflect.Method;
 import java.util.Map;
-import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.github.libxposed.api.XposedInterface;
@@ -14,8 +13,6 @@ final class PaintTextSizeFallbackHookInstaller {
     private static volatile boolean hookInstalled;
     private static final ThreadLocal<Boolean> INTERNAL_UPDATE =
             ThreadLocal.withInitial(() -> Boolean.FALSE);
-    private static final Map<Paint, Float> BASE_TEXT_SIZES =
-            java.util.Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
     private static final Map<String, Integer> CALLER_SAMPLE_COUNTS = new ConcurrentHashMap<>();
     private static final float SIZE_EPSILON_PX = 0.5f;
@@ -58,7 +55,11 @@ final class PaintTextSizeFallbackHookInstaller {
                             return chain.proceed();
                         }
                         float incoming = (Float) chain.getArg(0);
-                        float adjusted = resolveScaledPaintSize(incoming, factor, paint);
+                        PaintProvenanceTracker.invalidateIfDrifted(paint, paint.getTextSize());
+                        if (PaintProvenanceTracker.isKnownApplied(paint, incoming, factor)) {
+                            return chain.proceed();
+                        }
+                        float adjusted = PaintProvenanceTracker.resolveScaled(paint, incoming, factor);
                         Object result = chain.proceed();
                         if (Math.abs(adjusted - incoming) < SIZE_EPSILON_PX) {
                             return result;
@@ -66,6 +67,7 @@ final class PaintTextSizeFallbackHookInstaller {
                         INTERNAL_UPDATE.set(Boolean.TRUE);
                         try {
                             paint.setTextSize(adjusted);
+                            PaintProvenanceTracker.recordApplied(paint, adjusted, factor);
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
                         }
@@ -95,27 +97,6 @@ final class PaintTextSizeFallbackHookInstaller {
             return 1.0f;
         }
         return percent / 100.0f;
-    }
-
-    private static float resolveScaledPaintSize(float incoming, float factor, Paint paint) {
-        if (incoming <= 0f || !isScaleFactorActive(factor)) {
-            return incoming;
-        }
-        Float base = BASE_TEXT_SIZES.get(paint);
-        if (base == null || base <= 0f) {
-            base = incoming;
-            BASE_TEXT_SIZES.put(paint, base);
-        }
-        float expectedScaled = base * factor;
-        if (Math.abs(incoming - expectedScaled) < SIZE_EPSILON_PX) {
-            return incoming;
-        }
-        if (Math.abs(incoming - base) >= SIZE_EPSILON_PX) {
-            base = incoming;
-            BASE_TEXT_SIZES.put(paint, base);
-            expectedScaled = base * factor;
-        }
-        return expectedScaled;
     }
 
     private static void logIfChanged(String key, String message) {

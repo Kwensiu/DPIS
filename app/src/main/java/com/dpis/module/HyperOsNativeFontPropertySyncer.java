@@ -1,6 +1,5 @@
 package com.dpis.module;
 
-import java.io.IOException;
 import java.util.LinkedHashSet;
 
 final class HyperOsNativeFontPropertySyncer {
@@ -59,7 +58,7 @@ final class HyperOsNativeFontPropertySyncer {
             if (store.isTargetDpisEnabled(packageName)
                     && fontScalePercent != null
                     && fontScalePercent > 0
-                    && shouldPublishForceFontOnRecovery(store, fontMode)) {
+                    && shouldPublishForceFontOnRecovery(store, packageName, fontMode)) {
                 publishForceFontTargetAsync(packageName, fontScalePercent);
             }
         }
@@ -123,11 +122,15 @@ final class HyperOsNativeFontPropertySyncer {
         return shouldPreserveCompatForceFont(store, packageName);
     }
 
-    static boolean shouldPublishForceFontOnRecoveryForTest(DpiConfigStore store, String fontMode) {
-        return shouldPublishForceFontOnRecovery(store, fontMode);
+    static boolean shouldPublishForceFontOnRecoveryForTest(DpiConfigStore store,
+                                                           String packageName,
+                                                           String fontMode) {
+        return shouldPublishForceFontOnRecovery(store, packageName, fontMode);
     }
 
-    private static boolean shouldPublishForceFontOnRecovery(DpiConfigStore store, String fontMode) {
+    private static boolean shouldPublishForceFontOnRecovery(DpiConfigStore store,
+                                                           String packageName,
+                                                           String fontMode) {
         if (store == null) {
             return false;
         }
@@ -135,7 +138,7 @@ final class HyperOsNativeFontPropertySyncer {
         if (FontApplyMode.FIELD_REWRITE.equals(normalizedMode)) {
             return true;
         }
-        return store.isHyperOsFlutterFontHookEnabled()
+        return FontHookDomainDecision.isHyperOsNativeFlutterEnabled(store, packageName)
                 && FontApplyMode.isEnabled(normalizedMode);
     }
 
@@ -156,18 +159,7 @@ final class HyperOsNativeFontPropertySyncer {
     }
 
     private static void runRootCommand(String command) {
-        Process process = null;
-        try {
-            process = Runtime.getRuntime().exec(new String[] { "su", "-c", command });
-            process.waitFor();
-        } catch (IOException ignored) {
-        } catch (InterruptedException ignored) {
-            Thread.currentThread().interrupt();
-        } finally {
-            if (process != null) {
-                process.destroy();
-            }
-        }
+        RootCommandRunner.run(command);
     }
     static String shellQuoteForTest(String value) {
         return shellQuote(value);

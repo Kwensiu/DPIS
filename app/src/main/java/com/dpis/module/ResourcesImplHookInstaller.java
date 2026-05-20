@@ -52,7 +52,7 @@ final class ResourcesImplHookInstaller {
             logIfChanged(packageName + ":skip", "ResourcesImpl skip: config is null");
             return;
         }
-        FontScaleOverride.Result fontScale = FontScaleOverride.resolve(
+        FontScaleOverride.Result fontScale = FontScaleOverride.resolveForResources(
                 store, packageName, config.fontScale);
         FontScaleOverride.applyToConfiguration(config, fontScale);
         int originalWidthDp = config.screenWidthDp;
@@ -60,8 +60,14 @@ final class ResourcesImplHookInstaller {
         int originalSmallestWidthDp = config.smallestScreenWidthDp;
         int originalDensityDpi = config.densityDpi;
         Integer targetViewportWidth = TargetViewportWidthResolver.resolve(store, packageName);
+        boolean windowScoped = ViewportConfigurationScope.isWindowScoped(config);
+        VirtualDisplayOverride.Result stableTarget =
+                VirtualDisplayState.getForTarget(targetViewportWidth);
         ViewportOverride.Result result = ViewportOverride.derive(
-                config, targetViewportWidth != null ? targetViewportWidth : 0);
+                config,
+                targetViewportWidth != null ? targetViewportWidth : 0,
+                windowScoped,
+                stableTarget);
         if (result == null) {
             FontScaleOverride.applyScaledDensity(metrics, config);
             logIfChanged(packageName + ":observe",
@@ -88,9 +94,10 @@ final class ResourcesImplHookInstaller {
                 sourceWidthPx,
                 sourceHeightPx,
                 result.smallestWidthDp);
-        if (sharedResult != null) {
+        VirtualDisplayOverride.Result publishableSharedResult = windowScoped ? null : sharedResult;
+        if (publishableSharedResult != null) {
             VirtualDisplayState.setUnlessDerivedFromTargetConfig(
-                    sharedResult, originalSmallestWidthDp, targetViewportWidth);
+                    publishableSharedResult, originalSmallestWidthDp, targetViewportWidth);
         }
         String viewportMode = ViewportModePolicy.resolve(store, packageName);
         ViewportDebugReporter.report(
@@ -101,7 +108,7 @@ final class ResourcesImplHookInstaller {
                 originalHeightDp,
                 originalDensityDpi,
                 result,
-                sharedResult,
+                publishableSharedResult,
                 applyToConfiguration);
         if (!needsViewportUpdate) {
             VirtualDisplayOverride.Result stableResult =
@@ -152,14 +159,16 @@ final class ResourcesImplHookInstaller {
             metrics.densityDpi = result.densityDpi;
             metrics.density = targetDensity;
             metrics.scaledDensity = targetScaledDensity;
-            if (sharedResult != null) {
-                metrics.widthPixels = sharedResult.widthPx;
-                metrics.heightPixels = sharedResult.heightPx;
+            if (publishableSharedResult != null) {
+                metrics.widthPixels = publishableSharedResult.widthPx;
+                metrics.heightPixels = publishableSharedResult.heightPx;
             }
         }
         String modeLabel = applyToConfiguration ? "config" : "metrics";
         logIfChanged(packageName + ":override",
-                "DPIS_VIEWPORT ResourcesImpl (" + modeLabel + ") override: widthDp "
+                "DPIS_VIEWPORT ResourcesImpl (" + modeLabel + ") override: scope="
+                        + (windowScoped ? "window" : "display")
+                        + ", widthDp "
                         + originalWidthDp + " -> " + result.widthDp
                         + ", heightDp " + originalHeightDp + " -> " + result.heightDp
                         + ", smallestWidthDp " + originalSmallestWidthDp + " -> "

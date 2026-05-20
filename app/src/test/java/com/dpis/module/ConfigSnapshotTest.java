@@ -67,7 +67,7 @@ public class ConfigSnapshotTest {
     }
 
     @Test
-    public void packageSnapshotCapturesFlutterFontFlags() {
+    public void packageSnapshotIgnoresLegacyGlobalExperimentalFlags() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 125);
         store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
@@ -79,8 +79,8 @@ public class ConfigSnapshotTest {
                 ConfigSnapshotLoader.fromStore(store).getPackage("com.example.app");
 
         assertNotNull(packageConfig);
-        assertTrue(packageConfig.flutterFontHookEnabled);
-        assertTrue(packageConfig.flutterSettingsFontHookEnabled);
-        assertTrue(packageConfig.hyperOsFlutterFontHookEnabled);
+        assertFalse(packageConfig.flutterFontHookEnabled);
+        assertFalse(packageConfig.flutterSettingsFontHookEnabled);
+        assertFalse(packageConfig.hyperOsFlutterFontHookEnabled);
     }
 }

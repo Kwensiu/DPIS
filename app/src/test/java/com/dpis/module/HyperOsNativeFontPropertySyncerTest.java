@@ -79,10 +79,12 @@ public class HyperOsNativeFontPropertySyncerTest {
         DpiConfigStore store = new DpiConfigStore(preferences);
 
         assertTrue(HyperOsNativeFontPropertySyncer.shouldPublishForceFontOnRecoveryForTest(
-                store, FontApplyMode.FIELD_REWRITE));
+                store, "com.miui.gallery", FontApplyMode.FIELD_REWRITE));
         assertFalse(HyperOsNativeFontPropertySyncer.shouldPublishForceFontOnRecoveryForTest(
-                store, FontApplyMode.OFF));
+                store, "com.miui.gallery", FontApplyMode.OFF));
         assertFalse(HyperOsNativeFontPropertySyncer.shouldPublishForceFontOnRecoveryForTest(
-                store, FontApplyMode.SYSTEM_EMULATION));
+                store, "com.example.app", FontApplyMode.SYSTEM_EMULATION));
+        assertTrue(HyperOsNativeFontPropertySyncer.shouldPublishForceFontOnRecoveryForTest(
+                store, "com.miui.gallery", FontApplyMode.SYSTEM_EMULATION));
     }
 }

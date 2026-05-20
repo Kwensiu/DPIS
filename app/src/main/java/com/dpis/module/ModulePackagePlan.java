@@ -13,6 +13,7 @@ final class ModulePackagePlan {
     final boolean fontEnabled;
     final boolean flutterSettingsFontEnabled;
     final boolean hyperOsNativeFlutterFontEnabled;
+    final HookDomainOverride hookDomainOverride;
 
     private ModulePackagePlan(String packageName,
                               Integer targetViewportWidthDp,
@@ -25,7 +26,8 @@ final class ModulePackagePlan {
                               boolean fontScaleActive,
                               boolean fontEnabled,
                               boolean flutterSettingsFontEnabled,
-                              boolean hyperOsNativeFlutterFontEnabled) {
+                              boolean hyperOsNativeFlutterFontEnabled,
+                              HookDomainOverride hookDomainOverride) {
         this.packageName = packageName;
         this.targetViewportWidthDp = targetViewportWidthDp;
         this.targetViewportMode = targetViewportMode;
@@ -38,6 +40,9 @@ final class ModulePackagePlan {
         this.fontEnabled = fontEnabled;
         this.flutterSettingsFontEnabled = flutterSettingsFontEnabled;
         this.hyperOsNativeFlutterFontEnabled = hyperOsNativeFlutterFontEnabled;
+        this.hookDomainOverride = hookDomainOverride != null
+                ? hookDomainOverride
+                : HookDomainOverride.automatic();
     }
 
     static ModulePackagePlan resolve(DpiConfigStore store, String packageName) {
@@ -78,7 +83,8 @@ final class ModulePackagePlan {
                     fontScaleActive,
                     false,
                     flutterSettingsFontEnabled,
-                    hyperOsNativeFlutterFontEnabled);
+                    hyperOsNativeFlutterFontEnabled,
+                    packageConfig.hookDomainOverride);
         }
         HookRuntimePolicy policy = HookRuntimePolicy.fromSnapshot(snapshot);
         boolean viewportConfigured = targetViewportWidthDp != null;
@@ -99,7 +105,8 @@ final class ModulePackagePlan {
                 fontScaleActive,
                 fontHookPlan.emulationEnabled || fontHookPlan.fieldRewriteEnabled,
                 flutterSettingsFontEnabled,
-                hyperOsNativeFlutterFontEnabled);
+                hyperOsNativeFlutterFontEnabled,
+                packageConfig.hookDomainOverride);
     }
 
     boolean shouldInstallHooks() {
@@ -128,6 +135,7 @@ final class ModulePackagePlan {
                 false,
                 false,
                 false,
-                false);
+                false,
+                HookDomainOverride.automatic());
     }
 }

@@ -39,7 +39,10 @@ final class ResourcesReadHookInstaller {
                         if (!(result instanceof Configuration configuration)) {
                             return result;
                         }
-                        applyConfigurationOverride(configuration, packageName, store,
+                        Object thisObject = chain.getThisObject();
+                        applyConfigurationOverride(
+                                thisObject instanceof Resources ? thisObject : null,
+                                configuration, packageName, store,
                                 "ResourcesRead(getConfiguration)");
                         return result;
                     });
@@ -62,7 +65,7 @@ final class ResourcesReadHookInstaller {
                         INTERNAL_UPDATE.set(Boolean.TRUE);
                         try {
                             Configuration config = resources.getConfiguration();
-                            applyMetricsOverride(metrics, config, packageName);
+                            applyMetricsOverride(resources, metrics, config, packageName);
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
                         }
@@ -78,10 +81,10 @@ final class ResourcesReadHookInstaller {
                             return result;
                         }
                         Configuration config = resources.getConfiguration();
-                        applyConfigurationOverride(config, packageName, store,
+                        applyConfigurationOverride(resources, config, packageName, store,
                                 "ResourcesRead(getSystem)");
                         DisplayMetrics metrics = resources.getDisplayMetrics();
-                        applyMetricsOverride(metrics, config, packageName);
+                        applyMetricsOverride(resources, metrics, config, packageName);
                         return result;
                     });
 
@@ -94,10 +97,19 @@ final class ResourcesReadHookInstaller {
                                            String packageName,
                                            DpiConfigStore store,
                                            String sourceTag) {
+        applyConfigurationOverride(null, config, packageName, store, sourceTag);
+    }
+
+    static void applyConfigurationOverride(Object resourceScope,
+                                           Configuration config,
+                                           String packageName,
+                                           DpiConfigStore store,
+                                           String sourceTag) {
         if (config == null) {
             return;
         }
-        FontScaleOverride.Result fontScale = FontScaleOverride.resolve(store, packageName, config.fontScale);
+        FontScaleOverride.Result fontScale = FontScaleOverride.resolveForResources(resourceScope,
+                store, packageName, config.fontScale);
         FontScaleOverride.applyToConfiguration(config, fontScale);
 
         int originalWidthDp = config.screenWidthDp;
@@ -106,12 +118,19 @@ final class ResourcesReadHookInstaller {
         int originalDensityDpi = config.densityDpi;
 
         Integer targetViewportWidth = TargetViewportWidthResolver.resolve(store, packageName);
+        boolean windowScoped = ViewportConfigurationScope.isWindowScoped(config);
+        VirtualDisplayOverride.Result stableTarget =
+                VirtualDisplayState.getForTarget(targetViewportWidth);
         ViewportOverride.Result result = ViewportOverride.derive(
-                config, targetViewportWidth != null ? targetViewportWidth : 0);
+                config,
+                targetViewportWidth != null ? targetViewportWidth : 0,
+                windowScoped,
+                stableTarget);
         if (result == null) {
             if (fontScale.changed) {
                 logIfChanged(packageName + ":" + sourceTag + ":font-only",
-                        "DPIS_FONT " + sourceTag + " override: fontScale "
+                        "DPIS_FONT " + sourceTag + " override: package=" + packageName
+                                + ", fontScale "
                                 + fontScale.original + " -> " + config.fontScale);
             }
             return;
@@ -134,7 +153,7 @@ final class ResourcesReadHookInstaller {
                 0,
                 0,
                 result.smallestWidthDp);
-        if (sharedResult != null) {
+        if (!windowScoped && sharedResult != null) {
             VirtualDisplayState.setUnlessDerivedFromTargetConfig(
                     sharedResult, originalSmallestWidthDp, targetViewportWidth);
         }
@@ -151,7 +170,9 @@ final class ResourcesReadHookInstaller {
                     && config.densityDpi != stableResult.densityDpi) {
                 config.densityDpi = stableResult.densityDpi;
                 logIfChanged(packageName + ":" + sourceTag + ":stable-target",
-                        "DPIS_VIEWPORT " + sourceTag + " stable target: widthDp="
+                        "DPIS_VIEWPORT " + sourceTag + " stable target: package=" + packageName
+                                + ", targetViewportWidthDp=" + describeNullable(targetViewportWidth)
+                                + ", widthDp="
                                 + config.screenWidthDp
                                 + ", heightDp=" + config.screenHeightDp
                                 + ", smallestWidthDp=" + config.smallestScreenWidthDp
@@ -163,7 +184,15 @@ final class ResourcesReadHookInstaller {
             return;
         }
         logIfChanged(packageName + ":" + sourceTag,
-                "DPIS_VIEWPORT " + sourceTag + " override: widthDp " + originalWidthDp
+                "DPIS_VIEWPORT " + sourceTag + " override: package=" + packageName
+                        + ", targetViewportWidthDp=" + describeNullable(targetViewportWidth)
+                        + ", scope=" + (windowScoped ? "window" : "display")
+                        + ", mode="
+                        + (ViewportModePolicy.shouldApplyConfigurationOverride(store, packageName)
+                        ? "config" : "metrics")
+                        + ", target=" + describeViewportResult(result)
+                        + ", actual=" + describeConfiguration(config)
+                        + ", widthDp " + originalWidthDp
                         + " -> " + config.screenWidthDp
                         + ", heightDp " + originalHeightDp + " -> " + config.screenHeightDp
                         + ", smallestWidthDp " + originalSmallestWidthDp + " -> "
@@ -175,20 +204,32 @@ final class ResourcesReadHookInstaller {
     static void applyMetricsOverride(DisplayMetrics metrics,
                                      Configuration config,
                                      String packageName) {
+        applyMetricsOverride(null, metrics, config, packageName);
+    }
+
+    static void applyMetricsOverride(Object resourceScope,
+                                     DisplayMetrics metrics,
+                                     Configuration config,
+                                     String packageName) {
         if (metrics == null || config == null) {
             return;
         }
         int targetDensityDpi = config.densityDpi > 0 ? config.densityDpi : metrics.densityDpi;
+        String densitySource = config.densityDpi > 0 ? "configuration" : "metrics";
         if (targetDensityDpi <= 0) {
             return;
         }
         VirtualDisplayOverride.Result applied = matchingVirtualDisplayState(config);
         if (applied != null && applied.densityDpi > 0) {
             targetDensityDpi = applied.densityDpi;
+            densitySource = "virtual-display-state";
         }
         metrics.densityDpi = targetDensityDpi;
         metrics.density = DensityOverride.densityFromDpi(targetDensityDpi);
-        float fontScale = config.fontScale > 0f ? config.fontScale : 1.0f;
+        float fontScale = ComposeResourcesFontScheduler.maybeSuppressMetricsFontScale(
+                resourceScope,
+                packageName,
+                config.fontScale > 0f ? config.fontScale : 1.0f);
         metrics.scaledDensity = DensityOverride.scaledDensityFrom(targetDensityDpi, fontScale);
         if (applied != null) {
             metrics.widthPixels = applied.widthPx;
@@ -196,7 +237,11 @@ final class ResourcesReadHookInstaller {
         }
 
         logIfChanged(packageName + ":ResourcesRead(getDisplayMetrics)",
-                "DPIS_VIEWPORT ResourcesRead(getDisplayMetrics) override: densityDpi="
+                "DPIS_VIEWPORT ResourcesRead(getDisplayMetrics) override: package=" + packageName
+                        + ", densitySource=" + densitySource
+                        + ", config=" + describeConfiguration(config)
+                        + ", virtualDisplay=" + describeVirtualDisplayResult(applied)
+                        + ", densityDpi="
                         + targetDensityDpi
                         + ", density=" + metrics.density
                         + ", scaledDensity=" + metrics.scaledDensity
@@ -221,5 +266,42 @@ final class ResourcesReadHookInstaller {
         if (!message.equals(previous)) {
             DpisLog.i(message);
         }
+    }
+
+    private static String describeConfiguration(Configuration config) {
+        if (config == null) {
+            return "null";
+        }
+        return "{widthDp=" + config.screenWidthDp
+                + ",heightDp=" + config.screenHeightDp
+                + ",smallestWidthDp=" + config.smallestScreenWidthDp
+                + ",densityDpi=" + config.densityDpi
+                + ",fontScale=" + config.fontScale + "}";
+    }
+
+    private static String describeViewportResult(ViewportOverride.Result result) {
+        if (result == null) {
+            return "null";
+        }
+        return "{widthDp=" + result.widthDp
+                + ",heightDp=" + result.heightDp
+                + ",smallestWidthDp=" + result.smallestWidthDp
+                + ",densityDpi=" + result.densityDpi + "}";
+    }
+
+    private static String describeVirtualDisplayResult(VirtualDisplayOverride.Result result) {
+        if (result == null) {
+            return "none";
+        }
+        return "{widthDp=" + result.widthDp
+                + ",heightDp=" + result.heightDp
+                + ",smallestWidthDp=" + result.smallestWidthDp
+                + ",densityDpi=" + result.densityDpi
+                + ",widthPx=" + result.widthPx
+                + ",heightPx=" + result.heightPx + "}";
+    }
+
+    private static String describeNullable(Integer value) {
+        return value == null ? "none" : String.valueOf(value);
     }
 }
