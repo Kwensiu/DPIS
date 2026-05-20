@@ -144,6 +144,7 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
         }
 
         boolean composeHeavy = ComposeFontRuntimeClassifier.isComposeHeavy(new AndroidViewTreeNode(root));
+        String scopeKey = buildScopeKey(activity, root);
         ComposeResourcesFontEvidence.Summary evidence = ComposeResourcesFontEvidence.summarize(
                 domainPlan,
                 configuration.fontScale,
@@ -153,6 +154,8 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
                 composeHeavy);
         ComposeResourcesFontScheduler.observe(
                 packageName,
+                scopeKey,
+                resources,
                 evidence,
                 configuration.fontScale,
                 targetFactor,
@@ -175,6 +178,7 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
         DpisLog.i("DPIS_FONT Compose runtime observed: package=" + packageName
                 + ", activity=" + activityClass
                 + ", root=" + rootClass
+                + ", scope=" + scopeKey
                 + ", composeHeavy=" + composeHeavy
                 + ", resourcesHandled=" + evidence.resourcesHandled
                 + ", resourcesFontDomainEnabled=" + evidence.resourcesFontDomainEnabled
@@ -446,6 +450,12 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
                 + "|" + fontScale
                 + "|" + density
                 + "|" + scaledDensity;
+    }
+
+    private static String buildScopeKey(Activity activity, View root) {
+        String activityClass = activity == null ? "unknown" : activity.getClass().getName();
+        int rootId = root == null ? 0 : System.identityHashCode(root);
+        return activityClass + "#" + Integer.toHexString(rootId);
     }
 
     private static String safeValue(String value) {

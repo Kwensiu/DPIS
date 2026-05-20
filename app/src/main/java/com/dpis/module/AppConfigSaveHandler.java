@@ -56,7 +56,8 @@ final class AppConfigSaveHandler {
                         item.packageName,
                         fontScalePercent,
                         fontMode,
-                        store.isHyperOsFlutterFontHookEnabled());
+                        FontHookDomainDecision.isHyperOsNativeFlutterEnabled(
+                                store, item.packageName));
                 FontHookDomainPropertySyncer.publishFromStoreAsync(item.packageName, store);
             }
             if (saved && onChanged != null) {

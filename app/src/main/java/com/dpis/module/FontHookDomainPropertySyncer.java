@@ -1,6 +1,5 @@
 package com.dpis.module;
 
-import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -76,8 +75,8 @@ final class FontHookDomainPropertySyncer {
     }
 
     private static String buildPublishCommand(String packageName, Set<String> enabledKnownDomains) {
-        String value = String.valueOf(
-                FontHookDomainPropertyBridge.encodeMask(enabledKnownDomains) + 1);
+        String value = FontHookDomainPropertyBridge.encodeOverrideValue(
+                packageName, enabledKnownDomains);
         return buildSetCommand(FontHookDomainPropertyBridge.propertyNameForPackage(packageName), value)
                 + "; " + buildSetCommand(
                         FontHookDomainPropertyBridge.persistentPropertyNameForPackage(packageName),
@@ -106,18 +105,7 @@ final class FontHookDomainPropertySyncer {
     }
 
     private static void runRootCommand(String command) {
-        Process process = null;
-        try {
-            process = Runtime.getRuntime().exec(new String[] { "su", "-c", command });
-            process.waitFor();
-        } catch (IOException ignored) {
-        } catch (InterruptedException ignored) {
-            Thread.currentThread().interrupt();
-        } finally {
-            if (process != null) {
-                process.destroy();
-            }
-        }
+        RootCommandRunner.run(command);
     }
 
     private static String shellQuote(String value) {

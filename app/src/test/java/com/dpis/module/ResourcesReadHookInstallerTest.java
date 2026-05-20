@@ -143,8 +143,6 @@ public class ResourcesReadHookInstallerTest {
                 4.5f,
                 1.5f,
                 true);
-        ComposeResourcesFontScheduler.observe("com.example.target", evidence,
-                1.5f, 1.5f, System.currentTimeMillis());
         Configuration config = new Configuration();
         config.densityDpi = 480;
         config.fontScale = 1.5f;
@@ -152,7 +150,11 @@ public class ResourcesReadHookInstallerTest {
         prefs.edit().putInt("font.com.example.target.scale_percent", 150).commit();
         DpiConfigStore store = new DpiConfigStore(prefs);
 
-        ResourcesReadHookInstaller.applyConfigurationOverride(config, "com.example.target", store,
+        Object resources = new Object();
+        ComposeResourcesFontScheduler.observe("com.example.target", "root-a", resources, evidence,
+                1.5f, 1.5f, System.currentTimeMillis());
+
+        ResourcesReadHookInstaller.applyConfigurationOverride(resources, config, "com.example.target", store,
                 "ResourcesRead(getConfiguration)");
 
         assertEquals(1.0f, config.fontScale, 0.0001f);
@@ -169,7 +171,8 @@ public class ResourcesReadHookInstallerTest {
                 4.5f,
                 1.5f,
                 true);
-        ComposeResourcesFontScheduler.observe("com.example.target", evidence,
+        Object resources = new Object();
+        ComposeResourcesFontScheduler.observe("com.example.target", "root-a", resources, evidence,
                 1.5f, 1.5f, System.currentTimeMillis());
         Configuration config = new Configuration();
         config.densityDpi = 480;
@@ -179,7 +182,7 @@ public class ResourcesReadHookInstallerTest {
         metrics.density = 3.0f;
         metrics.scaledDensity = 4.5f;
 
-        ResourcesReadHookInstaller.applyMetricsOverride(metrics, config, "com.example.target");
+        ResourcesReadHookInstaller.applyMetricsOverride(resources, metrics, config, "com.example.target");
 
         assertEquals(3.0f, metrics.scaledDensity, 0.0001f);
     }

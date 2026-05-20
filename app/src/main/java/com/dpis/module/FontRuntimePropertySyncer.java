@@ -1,6 +1,5 @@
 package com.dpis.module;
 
-import java.io.IOException;
 import java.util.LinkedHashSet;
 
 final class FontRuntimePropertySyncer {
@@ -52,7 +51,11 @@ final class FontRuntimePropertySyncer {
                         ? fontScalePercent
                         : 0;
                 appendCommand(command, buildTargetCommand(
-                        packageName, value, mode, store.isHyperOsFlutterFontHookEnabled()));
+                        packageName,
+                        value,
+                        mode,
+                        FontHookDomainDecision.isHyperOsNativeFlutterEnabled(
+                                store, packageName)));
             }
             if (command.length() > 0) {
                 runRootCommand(command.toString());
@@ -131,18 +134,7 @@ final class FontRuntimePropertySyncer {
     }
 
     private static void runRootCommand(String command) {
-        Process process = null;
-        try {
-            process = Runtime.getRuntime().exec(new String[] { "su", "-c", command });
-            process.waitFor();
-        } catch (IOException ignored) {
-        } catch (InterruptedException ignored) {
-            Thread.currentThread().interrupt();
-        } finally {
-            if (process != null) {
-                process.destroy();
-            }
-        }
+        RootCommandRunner.run(command);
     }
 
     private static String shellQuote(String value) {

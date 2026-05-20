@@ -27,7 +27,15 @@ final class FontScaleOverride {
     static Result resolveForResources(DpiConfigStore store,
                                       String packageName,
                                       float currentFontScale) {
+        return resolveForResources(null, store, packageName, currentFontScale);
+    }
+
+    static Result resolveForResources(Object resourceScope,
+                                      DpiConfigStore store,
+                                      String packageName,
+                                      float currentFontScale) {
         return ComposeResourcesFontScheduler.maybeSuppressResourcesFont(
+                resourceScope,
                 packageName,
                 resolve(store, packageName, currentFontScale));
     }

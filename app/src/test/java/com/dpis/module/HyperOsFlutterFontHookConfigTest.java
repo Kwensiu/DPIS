@@ -112,6 +112,53 @@ public class HyperOsFlutterFontHookConfigTest {
     }
 
     @Test
+    public void rustProcessEnvironmentRequiresNativeDomain() {
+        PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(
+                ConfigSnapshot::empty,
+                packageName -> new PackageConfigSnapshot(
+                        packageName,
+                        true,
+                        null,
+                        ViewportApplyMode.OFF,
+                        300,
+                        FontApplyMode.FIELD_REWRITE,
+                        false,
+                        false,
+                        false,
+                        new HookDomainOverride(
+                                true,
+                                java.util.Set.of(FontHookDomainRegistry.ID_RESOURCES_FONT),
+                                java.util.Set.of())));
+
+        Object[] result = HyperOsRustProcessHookInstaller.applyEnvironmentArgsForLegacy(
+                source,
+                Arrays.asList("ignored",
+                        "com.miui.gallery",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        "/data/app/MIUIGallery/lib/arm64/libapp_gallery.so",
+                        ""));
+
+        assertEquals(null, result);
+    }
+
+    @Test
     public void nativeHookInstallerRequiresEnabledFontMode() throws Exception {
         String source = readSource("src/main/java/com/dpis/module/HyperOsFlutterFontHookInstaller.java");
 

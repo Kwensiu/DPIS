@@ -1,6 +1,5 @@
 package com.dpis.module;
 
-import java.io.IOException;
 import java.util.LinkedHashSet;
 
 final class CompatFontPropertySyncer {
@@ -119,18 +118,7 @@ final class CompatFontPropertySyncer {
     }
 
     private static void runRootCommand(String command) {
-        Process process = null;
-        try {
-            process = Runtime.getRuntime().exec(new String[] { "su", "-c", command });
-            process.waitFor();
-        } catch (IOException ignored) {
-        } catch (InterruptedException ignored) {
-            Thread.currentThread().interrupt();
-        } finally {
-            if (process != null) {
-                process.destroy();
-            }
-        }
+        RootCommandRunner.run(command);
     }
 
     private static String shellQuote(String value) {

@@ -95,7 +95,8 @@ final class HyperOsRustProcessHookInstaller {
         PerAppDisplayConfig config = source.get(packageName);
         if (config == null
                 || config.targetFontScalePercent == null
-                || config.targetFontScalePercent <= 0) {
+                || config.targetFontScalePercent <= 0
+                || !config.hyperOsFlutterFontHookEnabled) {
             return null;
         }
         Object existingValue = args.get(ARG_ENVIRONMENTS);

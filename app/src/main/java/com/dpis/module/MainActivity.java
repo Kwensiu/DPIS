@@ -1252,6 +1252,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                             } else {
                                 FontHookDomainPropertySyncer.clearTargetAsync(packageName);
                             }
+                            publishFontRuntimeTarget(packageName, store);
                             requestAppsLoad();
                         }
                         return saved;
@@ -1262,6 +1263,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                         boolean restored = overrideStore.restoreRecommended(packageName);
                         if (restored) {
                             FontHookDomainPropertySyncer.clearTargetAsync(packageName);
+                            publishFontRuntimeTarget(packageName, store);
                             requestAppsLoad();
                         }
                         return restored;
@@ -1271,6 +1273,24 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                 automaticKnownDomains,
                 currentOverride,
                 onStateChanged);
+    }
+
+    private static void publishFontRuntimeTarget(String packageName, DpiConfigStore store) {
+        if (store == null || packageName == null || packageName.isBlank()) {
+            return;
+        }
+        Integer fontScalePercent = store.getTargetFontScalePercent(packageName);
+        if (!store.isTargetDpisEnabled(packageName)
+                || fontScalePercent == null
+                || fontScalePercent <= 0) {
+            FontRuntimePropertySyncer.clearTargetAsync(packageName);
+            return;
+        }
+        FontRuntimePropertySyncer.publishTargetAsync(
+                packageName,
+                fontScalePercent,
+                store.getTargetFontApplyMode(packageName),
+                FontHookDomainDecision.isHyperOsNativeFlutterEnabled(store, packageName));
     }
 
     private String getFontHookDomainsButtonText(String packageName) {

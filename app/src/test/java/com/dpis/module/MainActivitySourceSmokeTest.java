@@ -361,6 +361,8 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("FontHookDomainDialog.show(this,"));
         assertTrue(source.contains("overrideStore.saveCustomIfDifferentFromAutomatic("));
         assertTrue(source.contains("overrideStore.restoreRecommended(packageName)"));
+        assertTrue(source.contains("publishFontRuntimeTarget(packageName, store)"));
+        assertTrue(source.contains("FontRuntimePropertySyncer.publishTargetAsync("));
         assertTrue(source.contains("HookExecutionPlanner.buildPlan("));
         assertTrue(source.contains("AppProcessHookInstaller.resolveDebugFontOverrideForPackage(packageName)"));
         assertTrue(source.contains("dialog_font_hook_domains_title_with_count"));

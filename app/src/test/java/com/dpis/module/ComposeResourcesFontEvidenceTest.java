@@ -40,6 +40,27 @@ public class ComposeResourcesFontEvidenceTest {
     }
 
     @Test
+    public void composeClassifierStopsAtTraversalDepthLimit() {
+        FakeNode compose = node("androidx.compose.ui.platform.ComposeView");
+        FakeNode current = compose;
+        for (int i = 0; i < 40; i++) {
+            current = node("android.widget.FrameLayout", current);
+        }
+
+        assertFalse(ComposeFontRuntimeClassifier.isComposeHeavy(current));
+    }
+
+    @Test
+    public void composeClassifierStopsAtTraversalNodeLimit() {
+        FakeNode[] children = new FakeNode[520];
+        Arrays.fill(children, node("android.widget.TextView"));
+        children[519] = node("androidx.compose.ui.platform.ComposeView");
+
+        assertFalse(ComposeFontRuntimeClassifier.isComposeHeavy(
+                node("android.widget.FrameLayout", children)));
+    }
+
+    @Test
     public void resourcesHandledComposeRequiresAllEvidence() {
         FontHookArbitration.FontDomainPlan plan =
                 FontHookArbitration.resolveDomainPlan(true, false);

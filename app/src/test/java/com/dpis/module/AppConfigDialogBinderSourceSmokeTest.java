@@ -173,7 +173,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("FontRuntimePropertySyncer.publishTargetAsync("));
         assertTrue(source.contains("item.packageName, fontScalePercent"));
         assertTrue(source.contains("fontMode,"));
-        assertTrue(source.contains("store.isHyperOsFlutterFontHookEnabled()"));
+        assertTrue(source.contains("FontHookDomainDecision.isHyperOsNativeFlutterEnabled("));
         assertTrue(source.contains("FontApplyMode.SYSTEM_EMULATION.equals"));
     }
 

@@ -1,14 +1,16 @@
 package com.dpis.module;
 
+import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.WeakHashMap;
 
 final class ComposeResourcesFontScheduler {
     static final long SUPPRESSION_TTL_MS = 30_000L;
     private static final float MIN_BASE_FONT_SCALE = 0.5f;
     private static final float MAX_BASE_FONT_SCALE = 2.0f;
 
-    private static final Map<String, State> STATES = new ConcurrentHashMap<>();
+    private static final Map<Object, State> RESOURCE_STATES =
+            Collections.synchronizedMap(new WeakHashMap<>());
 
     private ComposeResourcesFontScheduler() {
     }
@@ -18,11 +20,24 @@ final class ComposeResourcesFontScheduler {
                         float observedFontScale,
                         float targetFactor,
                         long nowMs) {
-        if (packageName == null || packageName.isBlank() || evidence == null) {
+        // Package-only observations cannot safely suppress Resources reads.
+        // Suppression requires a concrete Resources owner observed from a root.
+    }
+
+    static void observe(String packageName,
+                        String scopeKey,
+                        Object resourceScope,
+                        ComposeResourcesFontEvidence.Summary evidence,
+                        float observedFontScale,
+                        float targetFactor,
+                        long nowMs) {
+        if (packageName == null || packageName.isBlank()
+                || resourceScope == null
+                || evidence == null) {
             return;
         }
         if (!evidence.composeHeavyCurrentRoot) {
-            STATES.remove(packageName);
+            RESOURCE_STATES.remove(resourceScope);
             return;
         }
         if (!evidence.resourcesHandled || targetFactor <= 0f || observedFontScale <= 0f) {
@@ -32,21 +47,35 @@ final class ComposeResourcesFontScheduler {
         if (baseFontScale < MIN_BASE_FONT_SCALE || baseFontScale > MAX_BASE_FONT_SCALE) {
             return;
         }
-        STATES.put(packageName, new State(baseFontScale, nowMs));
+        RESOURCE_STATES.put(resourceScope, new State(packageName, baseFontScale, nowMs));
     }
 
     static FontScaleOverride.Result maybeSuppressResourcesFont(String packageName,
                                                                FontScaleOverride.Result result) {
-        return maybeSuppressResourcesFont(packageName, result, System.currentTimeMillis());
+        return result;
+    }
+
+    static FontScaleOverride.Result maybeSuppressResourcesFont(Object resourceScope,
+                                                               String packageName,
+                                                               FontScaleOverride.Result result) {
+        return maybeSuppressResourcesFont(
+                resourceScope, packageName, result, System.currentTimeMillis());
     }
 
     static FontScaleOverride.Result maybeSuppressResourcesFont(String packageName,
                                                                FontScaleOverride.Result result,
                                                                long nowMs) {
+        return result;
+    }
+
+    static FontScaleOverride.Result maybeSuppressResourcesFont(Object resourceScope,
+                                                               String packageName,
+                                                               FontScaleOverride.Result result,
+                                                               long nowMs) {
         if (packageName == null || packageName.isBlank() || result == null) {
             return result;
         }
-        State state = activeState(packageName, nowMs);
+        State state = activeState(resourceScope, packageName, nowMs);
         if (state == null) {
             return result;
         }
@@ -58,17 +87,31 @@ final class ComposeResourcesFontScheduler {
     }
 
     static float maybeSuppressMetricsFontScale(String packageName, float currentFontScale) {
-        return maybeSuppressMetricsFontScale(packageName, currentFontScale, System.currentTimeMillis());
+        return currentFontScale > 0f ? currentFontScale : 1.0f;
+    }
+
+    static float maybeSuppressMetricsFontScale(Object resourceScope,
+                                               String packageName,
+                                               float currentFontScale) {
+        return maybeSuppressMetricsFontScale(
+                resourceScope, packageName, currentFontScale, System.currentTimeMillis());
     }
 
     static float maybeSuppressMetricsFontScale(String packageName,
+                                               float currentFontScale,
+                                               long nowMs) {
+        return currentFontScale > 0f ? currentFontScale : 1.0f;
+    }
+
+    static float maybeSuppressMetricsFontScale(Object resourceScope,
+                                               String packageName,
                                                float currentFontScale,
                                                long nowMs) {
         float original = currentFontScale > 0f ? currentFontScale : 1.0f;
         if (packageName == null || packageName.isBlank()) {
             return original;
         }
-        State state = activeState(packageName, nowMs);
+        State state = activeState(resourceScope, packageName, nowMs);
         if (state == null) {
             return original;
         }
@@ -76,26 +119,34 @@ final class ComposeResourcesFontScheduler {
     }
 
     static void clearForTest() {
-        STATES.clear();
+        RESOURCE_STATES.clear();
     }
 
-    private static State activeState(String packageName, long nowMs) {
-        State state = STATES.get(packageName);
+    private static State activeState(Object resourceScope, String packageName, long nowMs) {
+        if (resourceScope == null) {
+            return null;
+        }
+        State state = RESOURCE_STATES.get(resourceScope);
         if (state == null) {
             return null;
         }
+        if (!state.packageName.equals(packageName)) {
+            return null;
+        }
         if (nowMs - state.updatedAtMs > SUPPRESSION_TTL_MS) {
-            STATES.remove(packageName, state);
+            RESOURCE_STATES.remove(resourceScope);
             return null;
         }
         return state;
     }
 
     private static final class State {
+        final String packageName;
         final float baseFontScale;
         final long updatedAtMs;
 
-        State(float baseFontScale, long updatedAtMs) {
+        State(String packageName, float baseFontScale, long updatedAtMs) {
+            this.packageName = packageName;
             this.baseFontScale = baseFontScale;
             this.updatedAtMs = updatedAtMs;
         }

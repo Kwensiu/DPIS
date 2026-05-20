@@ -39,7 +39,10 @@ final class ResourcesReadHookInstaller {
                         if (!(result instanceof Configuration configuration)) {
                             return result;
                         }
-                        applyConfigurationOverride(configuration, packageName, store,
+                        Object thisObject = chain.getThisObject();
+                        applyConfigurationOverride(
+                                thisObject instanceof Resources ? thisObject : null,
+                                configuration, packageName, store,
                                 "ResourcesRead(getConfiguration)");
                         return result;
                     });
@@ -62,7 +65,7 @@ final class ResourcesReadHookInstaller {
                         INTERNAL_UPDATE.set(Boolean.TRUE);
                         try {
                             Configuration config = resources.getConfiguration();
-                            applyMetricsOverride(metrics, config, packageName);
+                            applyMetricsOverride(resources, metrics, config, packageName);
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
                         }
@@ -78,10 +81,10 @@ final class ResourcesReadHookInstaller {
                             return result;
                         }
                         Configuration config = resources.getConfiguration();
-                        applyConfigurationOverride(config, packageName, store,
+                        applyConfigurationOverride(resources, config, packageName, store,
                                 "ResourcesRead(getSystem)");
                         DisplayMetrics metrics = resources.getDisplayMetrics();
-                        applyMetricsOverride(metrics, config, packageName);
+                        applyMetricsOverride(resources, metrics, config, packageName);
                         return result;
                     });
 
@@ -94,10 +97,18 @@ final class ResourcesReadHookInstaller {
                                            String packageName,
                                            DpiConfigStore store,
                                            String sourceTag) {
+        applyConfigurationOverride(null, config, packageName, store, sourceTag);
+    }
+
+    static void applyConfigurationOverride(Object resourceScope,
+                                           Configuration config,
+                                           String packageName,
+                                           DpiConfigStore store,
+                                           String sourceTag) {
         if (config == null) {
             return;
         }
-        FontScaleOverride.Result fontScale = FontScaleOverride.resolveForResources(
+        FontScaleOverride.Result fontScale = FontScaleOverride.resolveForResources(resourceScope,
                 store, packageName, config.fontScale);
         FontScaleOverride.applyToConfiguration(config, fontScale);
 
@@ -193,6 +204,13 @@ final class ResourcesReadHookInstaller {
     static void applyMetricsOverride(DisplayMetrics metrics,
                                      Configuration config,
                                      String packageName) {
+        applyMetricsOverride(null, metrics, config, packageName);
+    }
+
+    static void applyMetricsOverride(Object resourceScope,
+                                     DisplayMetrics metrics,
+                                     Configuration config,
+                                     String packageName) {
         if (metrics == null || config == null) {
             return;
         }
@@ -209,6 +227,7 @@ final class ResourcesReadHookInstaller {
         metrics.densityDpi = targetDensityDpi;
         metrics.density = DensityOverride.densityFromDpi(targetDensityDpi);
         float fontScale = ComposeResourcesFontScheduler.maybeSuppressMetricsFontScale(
+                resourceScope,
                 packageName,
                 config.fontScale > 0f ? config.fontScale : 1.0f);
         metrics.scaledDensity = DensityOverride.scaledDensityFrom(targetDensityDpi, fontScale);

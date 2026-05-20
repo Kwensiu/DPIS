@@ -43,4 +43,22 @@ public class FontHookDomainPropertyBridgeTest {
         assertTrue(emptyCustom.customPathEnabled);
         assertTrue(emptyCustom.enabledKnownDomains.isEmpty());
     }
+
+    @Test
+    public void v2ValueRequiresMatchingPackageCheck() {
+        String value = FontHookDomainPropertyBridge.encodeOverrideValue(
+                "org.telegram.messenger",
+                Set.of(FontHookDomainRegistry.ID_PAINT_TEXT_SIZE_FALLBACK));
+
+        HookDomainOverride matching =
+                FontHookDomainPropertyBridge.parseOverrideValueForTest(value);
+        HookDomainOverride mismatched =
+                FontHookDomainPropertyBridge.parseOverrideValueForTest("v2:24473df468cb:17");
+
+        assertTrue(value.startsWith("v2:c9d161436703:"));
+        assertTrue(matching.customPathEnabled);
+        assertEquals(Set.of(FontHookDomainRegistry.ID_PAINT_TEXT_SIZE_FALLBACK),
+                matching.enabledKnownDomains);
+        assertFalse(mismatched.customPathEnabled);
+    }
 }

@@ -149,6 +149,31 @@ public class PerAppDisplayConfigSourceTest {
     }
 
     @Test
+    public void nativeFlutterFlagReflectsFinalDomainPlan() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.setTargetFontScalePercent("com.miui.gallery", 200));
+        assertTrue(store.setTargetFontApplyMode("com.miui.gallery", FontApplyMode.FIELD_REWRITE));
+
+        PerAppDisplayConfig automatic = new PerAppDisplayConfigSource(store)
+                .get("com.miui.gallery");
+
+        assertNotNull(automatic);
+        assertTrue(automatic.hyperOsFlutterFontHookEnabled);
+
+        assertTrue(new HookDomainOverrideStore(store).save(
+                "com.miui.gallery",
+                java.util.Set.of(FontHookDomainRegistry.ID_RESOURCES_FONT),
+                java.util.Set.of()));
+
+        PerAppDisplayConfig customWithoutNative = new PerAppDisplayConfigSource(store)
+                .get("com.miui.gallery");
+
+        assertNotNull(customWithoutNative);
+        assertFalse(customWithoutNative.hyperOsFlutterFontHookEnabled);
+    }
+
+    @Test
     public void reportsSystemServerHooksEnabledByDefault() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
 
