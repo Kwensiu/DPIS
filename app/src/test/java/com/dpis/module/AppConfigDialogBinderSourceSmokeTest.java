@@ -36,6 +36,35 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("views.saveButton.setOnClickListener"));
         assertTrue(source.contains("host.saveAppConfig("));
         assertTrue(source.contains("showSaveButtonFeedback(views.saveButton)"));
+        assertTrue(source.contains("requestScopeAfterSuccessfulSave(dialogView, item, views, state, style, systemHooksEnabled)"));
+    }
+
+    @Test
+    public void saveSuccessRequestsKnownMissingScopeOnce() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        int methodStart = source.indexOf("private void requestScopeAfterSuccessfulSave");
+        int methodEnd = source.indexOf("private static boolean hasActiveDialogConfig", methodStart);
+        String method = source.substring(methodStart, methodEnd);
+
+        assertTrue(method.contains("!state.scopeKnown || state.scopeSelected || state.scopeRequestPending"));
+        assertTrue(method.contains("state.scopeRequestPending = true;"));
+        assertTrue(method.contains("boolean requestStarted = host.requestScope(item,"));
+        assertTrue(method.contains("if (requestStarted)"));
+        assertTrue(method.contains("host.showToast(R.string.save_scope_request_notice)"));
+        assertTrue(method.contains("state.scopeRequestPending = false;"));
+    }
+
+    @Test
+    public void saveTimeScopeCallbacksOnlyRefreshAttachedSheet() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        int methodStart = source.indexOf("private void requestScopeAfterSuccessfulSave");
+        int methodEnd = source.indexOf("private static boolean hasActiveDialogConfig", methodStart);
+        String method = source.substring(methodStart, methodEnd);
+
+        assertTrue(method.contains("if (!dialogView.isAttachedToWindow())"));
+        assertTrue(method.contains("state.scopeSelected = true;"));
+        assertTrue(method.contains("refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);"));
+        assertTrue(method.contains("() -> state.scopeRequestPending = false"));
     }
 
     @Test

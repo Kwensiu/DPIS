@@ -118,6 +118,7 @@
     <string name="system_hooks_enabled_hint">Use only in-process DPI overrides when disabled.</string>
     <string name="system_hooks_scope_required">Enable system scope in LSPosed first</string>
     <string name="system_hooks_scope_request_notice">Check the request notification</string>
+    <string name="save_scope_request_notice">Saved. Check the scope request notification</string>
     <string name="system_mode_requires_system_scope_hint">System mode is disabled without system-layer Hook</string>
     <string name="system_safe_mode_label">Safe mode</string>
     <string name="system_safe_mode_hint">Limits high-risk hooks to reduce lag and flickering.</string>
