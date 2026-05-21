@@ -4,7 +4,7 @@ enum FontFileKind {
     TTF(".ttf"),
     OTF(".otf"),
     TTC(".ttc"),
-    UNSUPPORTED(".ttf");
+    UNSUPPORTED("");
 
     final String extension;
 

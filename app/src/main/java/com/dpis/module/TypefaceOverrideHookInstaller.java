@@ -157,6 +157,9 @@ final class TypefaceOverrideHookInstaller {
         }
         if (file == null) {
             file = PublishedFontFileResolver.resolve(typefaceId);
+            if (entry == null) {
+                ttcIndex = parseTtcIndexFromId(typefaceId);
+            }
         }
         if (file == null || !file.canRead()) {
             logIfChanged(packageName + ":unreadable:" + typefaceId,
@@ -203,6 +206,10 @@ final class TypefaceOverrideHookInstaller {
         return resolveStyle(originalStyle, explicitStyle);
     }
 
+    static int parseTtcIndexFromIdForTest(String typefaceId) {
+        return parseTtcIndexFromId(typefaceId);
+    }
+
     static Typeface resolveReplacementForTest(Typeface baseTypeface, Typeface original) {
         return resolveReplacement(baseTypeface, original, null);
     }
@@ -228,6 +235,20 @@ final class TypefaceOverrideHookInstaller {
             return explicitStyle;
         }
         return originalStyle != null ? originalStyle : Typeface.NORMAL;
+    }
+
+    private static int parseTtcIndexFromId(String typefaceId) {
+        int marker = typefaceId.lastIndexOf("_ttc_");
+        if (marker <= 0 || marker + 5 >= typefaceId.length()) {
+            return 0;
+        }
+        String suffix = typefaceId.substring(marker + 5);
+        try {
+            int index = Integer.parseInt(suffix);
+            return index >= 0 ? index : 0;
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
     }
 
     private static void logIfChanged(String key, String message) {

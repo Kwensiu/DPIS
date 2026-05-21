@@ -627,11 +627,15 @@ public final class FontLibraryActivity extends LocalizedActivity {
                     }
                     File ttcTempFile = tempFile;
                     tempFile = null;
+                    int faceCount = inspection.ttc.offsets.size();
+                    List<TtcFaceOption> options = findLoadableTtcFaces(
+                            ttcTempFile, sourceName, faceCount);
                     runOnUiThread(() -> showTtcFaceSelectionDialog(
                             ttcTempFile,
                             sourceName,
                             displayName,
-                            inspection.ttc.offsets.size()));
+                            options,
+                            faceCount));
                     return;
                 }
                 if (!isSupportedSingleFontFile(tempFile, inspection.kind)) {
@@ -666,8 +670,8 @@ public final class FontLibraryActivity extends LocalizedActivity {
             File tempFile,
             String sourceName,
             String displayName,
+            List<TtcFaceOption> options,
             int faceCount) {
-        List<TtcFaceOption> options = findLoadableTtcFaces(tempFile, sourceName, faceCount);
         int failedCount = Math.max(0, faceCount - options.size());
         if (options.isEmpty()) {
             tempFile.delete();

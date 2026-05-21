@@ -127,4 +127,13 @@ public final class TypefaceOverrideHookInstallerTest {
         assertTrue(source.contains("TextView draw hook ready"));
     }
 
+    @Test
+    public void parseTtcIndexFromIdExtractsIndex() {
+        assertEquals(2, TypefaceOverrideHookInstaller.parseTtcIndexFromIdForTest("font_abcd1234_ttc_2"));
+        assertEquals(127, TypefaceOverrideHookInstaller.parseTtcIndexFromIdForTest("font_abcd1234_ttc_127"));
+        assertEquals(0, TypefaceOverrideHookInstaller.parseTtcIndexFromIdForTest("font_abcd1234"));
+        assertEquals(0, TypefaceOverrideHookInstaller.parseTtcIndexFromIdForTest("font_abcd1234_ttc_"));
+        assertEquals(0, TypefaceOverrideHookInstaller.parseTtcIndexFromIdForTest("font_abcd1234_ttc_-1"));
+    }
+
 }
