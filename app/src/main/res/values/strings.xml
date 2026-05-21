@@ -152,6 +152,8 @@
     <string name="settings_experimental_title">Laboratory</string>
     <string name="settings_experimental_hint">Try unverified features</string>
     <string name="settings_experimental_empty_state">No experimental features</string>
+    <string name="settings_ttc_import_label">TTC font collections</string>
+    <string name="settings_ttc_import_hint">Import TrueType Collection files as separate faces. Experimental.</string>
     <string name="settings_flutter_font_hook_label">Flutter font route</string>
     <string name="settings_flutter_font_hook_hint">Includes unverified experimental features</string>
     <string name="settings_flutter_settings_font_hook_label">Flutter settings messages</string>

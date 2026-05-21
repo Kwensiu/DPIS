@@ -124,6 +124,23 @@ public class DpiConfigStoreTest {
     }
 
     @Test
+    public void ttcImportExperimentDefaultsOff() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+
+        assertFalse(store.isTtcFontImportEnabled());
+    }
+
+    @Test
+    public void ttcImportExperimentCanBeEnabledAndDisabled() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+
+        assertTrue(store.setTtcFontImportEnabled(true));
+        assertTrue(store.isTtcFontImportEnabled());
+        assertTrue(store.setTtcFontImportEnabled(false));
+        assertFalse(store.isTtcFontImportEnabled());
+    }
+
+    @Test
     public void clearsFontScaleWhenDisabled() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
