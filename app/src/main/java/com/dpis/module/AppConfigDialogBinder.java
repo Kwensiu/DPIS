@@ -50,6 +50,10 @@ final class AppConfigDialogBinder {
                 Runnable onTurnedInScope,
                 Runnable onTurnedOutScope);
 
+        boolean requestScope(AppListItem item,
+                Runnable onTurnedInScope,
+                Runnable onRequestFinished);
+
         void executeProcessAction(AppListItem item, ProcessAction action);
 
         void applyHyperOsNativeProxy(AppListItem item, Runnable onFinished);
@@ -285,6 +289,7 @@ final class AppConfigDialogBinder {
             if (result[0] == 1) {
                 showSaveButtonFeedback(views.saveButton);
                 syncHyperOsNativeProxyAfterSave(item, views, state);
+                requestScopeAfterSuccessfulSave(dialogView, item, views, state, style, systemHooksEnabled);
             }
             if (result[1] != 0) {
                 host.showToast(result[1]);
@@ -582,15 +587,15 @@ final class AppConfigDialogBinder {
         if (fontLibraryStore == null) {
             return null;
         }
+        FontLibraryEntry entry = fontLibraryStore.findById(option.id);
+        if (entry == null) {
+            return null;
+        }
         File fontFile = fontLibraryStore.resolveFontFile(option.id);
         if (fontFile == null) {
             return null;
         }
-        try {
-            return Typeface.createFromFile(fontFile);
-        } catch (RuntimeException ignored) {
-            return null;
-        }
+        return FontTypefaceLoader.load(fontFile, entry.ttcIndex);
     }
 
     private static String resolveFontOptionLabel(FontLibraryEntry entry) {
@@ -768,6 +773,34 @@ final class AppConfigDialogBinder {
             return;
         }
         host.unmountHyperOsNativeProxy(item, onFinished);
+    }
+
+    // State lifecycle is bound to the dialog instance; pending flag cleanup is
+    // best-effort since the state object is discarded when the dialog closes.
+    private void requestScopeAfterSuccessfulSave(View dialogView,
+            AppListItem item,
+            AppConfigDialogViews views,
+            AppConfigDialogState state,
+            AppConfigDialogActionStyle style,
+            boolean systemHooksEnabled) {
+        if (!state.scopeKnown || state.scopeSelected || state.scopeRequestPending) {
+            return;
+        }
+        state.scopeRequestPending = true;
+        boolean requestStarted = host.requestScope(item,
+                () -> {
+                    if (!dialogView.isAttachedToWindow()) {
+                        return;
+                    }
+                    state.scopeSelected = true;
+                    refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);
+                },
+                () -> state.scopeRequestPending = false);
+        if (requestStarted) {
+            host.showToast(R.string.save_scope_request_notice);
+        } else {
+            state.scopeRequestPending = false;
+        }
     }
 
     private static boolean hasActiveDialogConfig(AppConfigDialogViews views, AppConfigDialogState state) {
@@ -1055,6 +1088,7 @@ final class AppConfigDialogBinder {
     private static final class AppConfigDialogState {
         boolean scopeSelected;
         boolean scopeKnown;
+        boolean scopeRequestPending;
         boolean dpisEnabled;
         String selectedTypefaceId;
 

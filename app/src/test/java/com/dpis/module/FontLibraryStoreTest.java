@@ -346,6 +346,134 @@ public final class FontLibraryStoreTest {
         assertTrue(store.listFonts().isEmpty());
     }
 
+    @Test
+    public void oldMetadataDefaultsTtcIndexToZero() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        File dir = temporaryFolder.newFolder("fonts");
+        File stored = new File(dir, "font_old.ttf");
+        assertTrue(stored.createNewFile());
+        prefs.edit()
+                .putString("font.library.entries",
+                        "[{\"id\":\"font_old\",\"displayName\":\"Old\",\"sourceFileName\":\"Old.ttf\","
+                                + "\"storedFileName\":\"font_old.ttf\",\"storedPath\":\""
+                                + stored.getAbsolutePath().replace("\\", "\\\\")
+                                + "\",\"sha256\":\"abcdef\",\"importedAtEpochMs\":1234}]")
+                .commit();
+
+        FontLibraryStore store = new FontLibraryStore(prefs, dir);
+
+        assertEquals(0, store.findById("font_old").ttcIndex);
+    }
+
+    @Test
+    public void registersMultipleTtcFacesAgainstOneStoredFile() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        File dir = temporaryFolder.newFolder("fonts");
+        FontLibraryStore store = new FontLibraryStore(prefs, dir);
+
+        List<FontLibraryEntry> entries = store.registerCopiedFontFaces(
+                writeFile("Collection.ttc", "same-ttc-data"),
+                "Collection.ttc",
+                "Collection",
+                FontFileKind.TTC,
+                List.of(0, 2),
+                1234L);
+
+        assertEquals(2, entries.size());
+        assertTrue(entries.get(0).id.endsWith("_ttc_0"));
+        assertTrue(entries.get(1).id.endsWith("_ttc_2"));
+        assertEquals(0, entries.get(0).ttcIndex);
+        assertEquals(2, entries.get(1).ttcIndex);
+        assertEquals(entries.get(0).storedPath, entries.get(1).storedPath);
+        assertTrue(entries.get(0).storedFileName.endsWith(".ttc"));
+        assertEquals(2, store.listFonts().size());
+    }
+
+    @Test
+    public void reusesExistingTtcFaceByHashAndIndex() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
+        File first = writeFile("First.ttc", "same-ttc-data");
+        File second = writeFile("Second.ttc", "same-ttc-data");
+
+        List<FontLibraryEntry> firstEntries = store.registerCopiedFontFaces(
+                first, "First.ttc", "First", FontFileKind.TTC, List.of(1), 1000L);
+        List<FontLibraryEntry> secondEntries = store.registerCopiedFontFaces(
+                second, "Second.ttc", "Second", FontFileKind.TTC, List.of(1), 2000L);
+
+        assertEquals(firstEntries.get(0), secondEntries.get(0));
+        assertEquals(1, store.listFonts().size());
+    }
+
+    @Test
+    public void deletingOneTtcFaceKeepsSharedFileForOtherFaces() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
+        List<FontLibraryEntry> entries = store.registerCopiedFontFaces(
+                writeFile("Collection.ttc", "same-ttc-data"),
+                "Collection.ttc",
+                "Collection",
+                FontFileKind.TTC,
+                List.of(0, 1),
+                1234L);
+        File sharedFile = new File(entries.get(0).storedPath);
+
+        FontLibraryStore.DeleteResult result = store.deleteFont(
+                entries.get(0).id,
+                new DpiConfigStore(new FakePrefs()));
+
+        assertSame(FontLibraryStore.DeleteResult.DELETED, result);
+        assertNull(store.findById(entries.get(0).id));
+        assertNotNull(store.findById(entries.get(1).id));
+        assertTrue(sharedFile.isFile());
+    }
+
+    @Test
+    public void deletingLastTtcFaceDeletesSharedFile() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
+        List<FontLibraryEntry> entries = store.registerCopiedFontFaces(
+                writeFile("Collection.ttc", "same-ttc-data"),
+                "Collection.ttc",
+                "Collection",
+                FontFileKind.TTC,
+                List.of(0, 1),
+                1234L);
+        File sharedFile = new File(entries.get(0).storedPath);
+        assertSame(FontLibraryStore.DeleteResult.DELETED,
+                store.deleteFont(entries.get(0).id, new DpiConfigStore(new FakePrefs())));
+
+        FontLibraryStore.DeleteResult result = store.deleteFont(
+                entries.get(1).id,
+                new DpiConfigStore(new FakePrefs()));
+
+        assertSame(FontLibraryStore.DeleteResult.DELETED, result);
+        assertFalse(sharedFile.exists());
+    }
+
+    @Test
+    public void ttcBatchCommitFailureLeavesNoStoredFiles() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        File dir = temporaryFolder.newFolder("fonts");
+        FontLibraryStore store = new FontLibraryStore(prefs, dir);
+        prefs.setCommitResult(false);
+
+        try {
+            store.registerCopiedFontFaces(
+                    writeFile("Collection.ttc", "same-ttc-data"),
+                    "Collection.ttc",
+                    "Collection",
+                    FontFileKind.TTC,
+                    List.of(0, 1),
+                    1234L);
+        } catch (java.io.IOException expected) {
+            assertEquals(0, dir.listFiles().length);
+            return;
+        }
+
+        throw new AssertionError("Expected metadata write failure");
+    }
+
     private File writeFile(String name, String content) throws Exception {
         File file = temporaryFolder.newFile(name);
         try (FileOutputStream output = new FileOutputStream(file)) {

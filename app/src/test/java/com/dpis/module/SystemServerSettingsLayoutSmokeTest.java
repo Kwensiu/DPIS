@@ -85,7 +85,7 @@ public class SystemServerSettingsLayoutSmokeTest {
     }
 
     @Test
-    public void experimentalSettingsPageShowsEmptyStateOnly() throws IOException {
+    public void experimentalSettingsPageShowsTtcImportSwitch() throws IOException {
         String manifest = read("src/main/AndroidManifest.xml");
         String layout = read("src/main/res/layout/activity_experimental_settings.xml");
         String strings = read("src/main/res/values/strings.xml");
@@ -93,14 +93,17 @@ public class SystemServerSettingsLayoutSmokeTest {
 
         assertTrue(manifest.contains(".ExperimentalSettingsActivity"));
         assertTrue(layout.contains("android:id=\"@+id/experimental_settings_content\""));
-        assertTrue(layout.contains("@string/settings_experimental_empty_state"));
+        assertTrue(layout.contains("android:id=\"@+id/experimental_ttc_import_row\""));
+        assertTrue(layout.contains("android:id=\"@+id/experimental_ttc_import_switch\""));
+        assertTrue(layout.contains("@string/settings_ttc_import_label"));
+        assertTrue(layout.contains("@string/settings_ttc_import_hint"));
         assertTrue(layout.contains("android:textColor=\"?attr/colorOnSurfaceVariant\""));
         assertTrue(!layout.contains("experimental_settings_back_button"));
         assertTrue(!layout.contains("row_flutter_font_hook"));
         assertTrue(!layout.contains("row_flutter_settings_font_hook"));
         assertTrue(!layout.contains("row_hyperos_flutter_font_hook"));
-        assertTrue(strings.contains("<string name=\"settings_experimental_empty_state\">No experimental features</string>"));
-        assertTrue(zhStrings.contains("<string name=\"settings_experimental_empty_state\">暂无实验功能</string>"));
+        assertTrue(strings.contains("<string name=\"settings_ttc_import_label\">TTC font collections</string>"));
+        assertTrue(zhStrings.contains("<string name=\"settings_ttc_import_label\">TTC 字体集合</string>"));
     }
 
     @Test

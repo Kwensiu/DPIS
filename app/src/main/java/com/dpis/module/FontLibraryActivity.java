@@ -43,9 +43,6 @@ public final class FontLibraryActivity extends LocalizedActivity {
     private static final int REQUEST_IMPORT_FONT = 2001;
     private static final String FONT_PREVIEW_PRIMARY_TEXT = "AaBbCc 你好世界 123";
     private static final String FONT_PREVIEW_SECONDARY_TEXT = "The quick brown fox jumps over the lazy dog";
-    private static final int FONT_HEADER_TRUE_TYPE = 0x00010000;
-    private static final int FONT_HEADER_OPEN_TYPE = 0x4F54544F; // OTTO
-    private static final int FONT_HEADER_APPLE_TRUE_TYPE = 0x74727565; // true
 
     private LinearLayout listView;
     private MaterialTextView emptyView;
@@ -188,7 +185,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
             MaterialTextView preview = new MaterialTextView(this);
             preview.setText(FONT_PREVIEW_PRIMARY_TEXT);
             preview.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
-            Typeface previewTypeface = loadTypeface(fontFile);
+            Typeface previewTypeface = FontTypefaceLoader.load(fontFile, entry.ttcIndex);
             if (previewTypeface != null) {
                 preview.setTypeface(previewTypeface);
             }
@@ -238,7 +235,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
         File detailFontFile = fontLibraryStore.resolveFontFile(entry.id);
         if (detailFontFile != null) {
             content.addView(createDivider(18));
-            content.addView(createFontPreview(detailFontFile), topMarginParams(14));
+            content.addView(createFontPreview(detailFontFile, entry.ttcIndex), topMarginParams(14));
         }
 
         content.addView(createDivider(18));
@@ -300,11 +297,11 @@ public final class FontLibraryActivity extends LocalizedActivity {
         return header;
     }
 
-    private View createFontPreview(File fontFile) {
+    private View createFontPreview(File fontFile, int ttcIndex) {
         LinearLayout previewGroup = new LinearLayout(this);
         previewGroup.setOrientation(LinearLayout.VERTICAL);
 
-        Typeface previewTypeface = loadTypeface(fontFile);
+        Typeface previewTypeface = FontTypefaceLoader.load(fontFile, ttcIndex);
 
         MaterialTextView primary = new MaterialTextView(this);
         primary.setText(FONT_PREVIEW_PRIMARY_TEXT);
@@ -406,14 +403,6 @@ public final class FontLibraryActivity extends LocalizedActivity {
         TypedValue outValue = new TypedValue();
         getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
         return outValue.resourceId;
-    }
-
-    private Typeface loadTypeface(File fontFile) {
-        try {
-            return Typeface.createFromFile(fontFile);
-        } catch (RuntimeException ignored) {
-            return null;
-        }
     }
 
     private LinearLayout.LayoutParams topMarginParams(int topMarginDp) {
@@ -558,15 +547,20 @@ public final class FontLibraryActivity extends LocalizedActivity {
 
     @SuppressWarnings("deprecation")
     private void openFontImportPicker() {
+        List<String> mimeTypes = new ArrayList<>();
+        mimeTypes.add("font/ttf");
+        mimeTypes.add("font/otf");
+        mimeTypes.add("application/x-font-ttf");
+        mimeTypes.add("application/vnd.ms-opentype");
+        if (configStore.isTtcFontImportEnabled()) {
+            mimeTypes.add("font/collection");
+            mimeTypes.add("font/ttc");
+            mimeTypes.add("application/x-font-ttc");
+        }
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT)
                 .addCategory(Intent.CATEGORY_OPENABLE)
                 .setType("*/*")
-                .putExtra(Intent.EXTRA_MIME_TYPES, new String[] {
-                        "font/ttf",
-                        "font/otf",
-                        "application/x-font-ttf",
-                        "application/vnd.ms-opentype"
-                });
+                .putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes.toArray(new String[0]));
         try {
             startActivityForResult(intent, REQUEST_IMPORT_FONT);
         } catch (ActivityNotFoundException error) {
@@ -584,7 +578,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
             showToast(R.string.font_library_import_failed);
             return;
         }
-        if (!isSupportedFontInput(sourceName, mimeType)) {
+        if (!isPotentialFontInput(sourceName, mimeType)) {
             showToast(R.string.font_library_import_failed);
             return;
         }
@@ -626,14 +620,33 @@ public final class FontLibraryActivity extends LocalizedActivity {
                         resolveFontTempExtension(sourceName, mimeType),
                         getCacheDir());
                 copyUriToFile(uri, tempFile);
-                if (!isSupportedFontFile(tempFile)) {
+                FontFileInspector.Result inspection = FontFileInspector.inspect(tempFile);
+                if (inspection.kind == FontFileKind.TTC) {
+                    if (!configStore.isTtcFontImportEnabled()) {
+                        throw new IOException("TTC import disabled");
+                    }
+                    File ttcTempFile = tempFile;
+                    tempFile = null;
+                    int faceCount = inspection.ttc.offsets.size();
+                    List<TtcFaceOption> options = findLoadableTtcFaces(
+                            ttcTempFile, sourceName, faceCount);
+                    runOnUiThread(() -> showTtcFaceSelectionDialog(
+                            ttcTempFile,
+                            sourceName,
+                            displayName,
+                            options,
+                            faceCount));
+                    return;
+                }
+                if (!isSupportedSingleFontFile(tempFile, inspection.kind)) {
                     throw new IOException("Unable to parse font");
                 }
                 importedEntry = fontLibraryStore.registerCopiedFont(
                         tempFile,
                         sourceName,
                         displayName,
-                        System.currentTimeMillis());
+                        System.currentTimeMillis(),
+                        inspection.kind);
             } catch (IOException | RuntimeException error) {
                 importedEntry = null;
             } finally {
@@ -651,6 +664,257 @@ public final class FontLibraryActivity extends LocalizedActivity {
                 refreshFontList();
             });
         }, "dpis-font-import").start();
+    }
+
+    private void showTtcFaceSelectionDialog(
+            File tempFile,
+            String sourceName,
+            String displayName,
+            List<TtcFaceOption> options,
+            int faceCount) {
+        int failedCount = Math.max(0, faceCount - options.size());
+        if (options.isEmpty()) {
+            tempFile.delete();
+            showToast(R.string.font_library_import_failed);
+            return;
+        }
+
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        int padding = dp(20);
+        content.setPadding(padding, dp(16), padding, 0);
+
+        MaterialTextView subtitle = new MaterialTextView(this);
+        subtitle.setText(sourceName);
+        configureSingleLine(subtitle);
+        subtitle.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+        subtitle.setTextColor(MaterialColors.getColor(
+                listView, com.google.android.material.R.attr.colorOnSurfaceVariant));
+        content.addView(subtitle);
+
+        LinearLayout statusRow = new LinearLayout(this);
+        statusRow.setOrientation(LinearLayout.HORIZONTAL);
+        statusRow.setGravity(Gravity.CENTER_VERTICAL);
+        MaterialTextView selectedBadge = createTtcStatusBadge(
+                getString(R.string.font_library_ttc_selected_count, 0));
+        MaterialTextView failedBadge = createTtcStatusBadge(
+                getString(R.string.font_library_ttc_failed_faces, failedCount));
+        statusRow.addView(selectedBadge);
+        statusRow.addView(failedBadge);
+        content.addView(statusRow, topMarginParams(10));
+
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        actions.setGravity(Gravity.END);
+        MaterialTextView selectAll = createTtcTextAction(R.string.font_library_ttc_select_all);
+        MaterialTextView deselectAll = createTtcTextAction(R.string.font_library_ttc_deselect_all);
+        actions.addView(selectAll);
+        actions.addView(deselectAll);
+        content.addView(actions, topMarginParams(8));
+
+        boolean[] checked = new boolean[options.size()];
+        LinearLayout rows = new LinearLayout(this);
+        rows.setOrientation(LinearLayout.VERTICAL);
+        content.addView(rows, topMarginParams(8));
+        List<MaterialTextView> rowViews = new ArrayList<>();
+        for (TtcFaceOption option : options) {
+            MaterialTextView row = createTtcFaceRow(option.label, false);
+            rowViews.add(row);
+            rows.addView(row, topMarginParams(6));
+        }
+
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.font_library_ttc_select_title)
+                .setView(content)
+                .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
+                .setPositiveButton(R.string.font_library_import_action, null)
+                .create();
+        dialog.setOnCancelListener(unused -> tempFile.delete());
+        dialog.setOnDismissListener(unused -> {
+            if (tempFile.exists()) {
+                tempFile.delete();
+            }
+        });
+        dialog.setOnShowListener(unused -> {
+            bindDialogButtonHaptics(dialog);
+            android.widget.Button importButton =
+                    dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE);
+            importButton.setEnabled(false);
+            selectAll.setOnClickListener(v -> {
+                setAllTtcFaceRows(options, checked, rowViews, true);
+                selectedBadge.setText(getString(
+                        R.string.font_library_ttc_selected_count,
+                        countSelected(checked)));
+                importButton.setEnabled(true);
+            });
+            deselectAll.setOnClickListener(v -> {
+                setAllTtcFaceRows(options, checked, rowViews, false);
+                selectedBadge.setText(getString(R.string.font_library_ttc_selected_count, 0));
+                importButton.setEnabled(false);
+            });
+            for (int i = 0; i < rowViews.size(); i++) {
+                int rowIndex = i;
+                MaterialTextView row = rowViews.get(i);
+                row.setOnClickListener(v -> {
+                    checked[rowIndex] = !checked[rowIndex];
+                    updateTtcFaceRow(row, options.get(rowIndex).label, checked[rowIndex]);
+                    int selected = countSelected(checked);
+                    selectedBadge.setText(getString(
+                            R.string.font_library_ttc_selected_count,
+                            selected));
+                    importButton.setEnabled(selected > 0);
+                });
+            }
+            importButton.setOnClickListener(v -> importSelectedTtcFaces(
+                    dialog, tempFile, sourceName, displayName, options, checked));
+        });
+        dialog.show();
+    }
+
+    private void importSelectedTtcFaces(
+            androidx.appcompat.app.AlertDialog dialog,
+            File tempFile,
+            String sourceName,
+            String displayName,
+            List<TtcFaceOption> options,
+            boolean[] checked) {
+        List<Integer> indexes = new ArrayList<>();
+        for (int i = 0; i < checked.length; i++) {
+            if (checked[i]) {
+                indexes.add(options.get(i).index);
+            }
+        }
+        if (indexes.isEmpty()) {
+            return;
+        }
+        new Thread(() -> {
+            List<FontLibraryEntry> imported = List.of();
+            try {
+                imported = fontLibraryStore.registerCopiedFontFaces(
+                        tempFile,
+                        sourceName,
+                        displayName,
+                        FontFileKind.TTC,
+                        indexes,
+                        System.currentTimeMillis());
+            } catch (IOException | RuntimeException ignored) {
+                imported = List.of();
+            } finally {
+                if (tempFile.exists()) {
+                    tempFile.delete();
+                }
+            }
+            List<FontLibraryEntry> finalImported = imported;
+            runOnUiThread(() -> {
+                if (finalImported.isEmpty()) {
+                    showToast(R.string.font_library_import_failed);
+                    return;
+                }
+                dialog.dismiss();
+                showToast(R.string.font_library_import_count_success, finalImported.size());
+                refreshFontList();
+            });
+        }, "dpis-ttc-font-import").start();
+    }
+
+    private List<TtcFaceOption> findLoadableTtcFaces(File file, String sourceName, int faceCount) {
+        List<TtcFaceOption> result = new ArrayList<>();
+        for (int index = 0; index < faceCount; index++) {
+            if (FontTypefaceLoader.load(file, index) != null) {
+                result.add(new TtcFaceOption(index, sourceName + " (TTC " + index + ")"));
+            }
+        }
+        return result;
+    }
+
+    private MaterialTextView createTtcStatusBadge(String text) {
+        MaterialTextView badge = new MaterialTextView(this);
+        badge.setText(text);
+        badge.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelSmall);
+        badge.setTextColor(MaterialColors.getColor(
+                listView, com.google.android.material.R.attr.colorOnSecondaryContainer));
+        badge.setGravity(Gravity.CENTER);
+        badge.setPadding(dp(10), dp(5), dp(10), dp(5));
+        android.graphics.drawable.GradientDrawable background = new android.graphics.drawable.GradientDrawable();
+        background.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+        background.setCornerRadius(dp(999));
+        background.setColor(MaterialColors.getColor(
+                listView, com.google.android.material.R.attr.colorSecondaryContainer));
+        badge.setBackground(background);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.rightMargin = dp(8);
+        badge.setLayoutParams(params);
+        return badge;
+    }
+
+    private MaterialTextView createTtcTextAction(int textResId) {
+        MaterialTextView action = new MaterialTextView(this);
+        action.setText(textResId);
+        action.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelLarge);
+        action.setTextColor(MaterialColors.getColor(
+                listView, androidx.appcompat.R.attr.colorPrimary));
+        action.setGravity(Gravity.CENTER);
+        action.setPadding(dp(10), dp(6), dp(10), dp(6));
+        action.setClickable(true);
+        action.setFocusable(true);
+        action.setBackgroundResource(resolveSelectableItemBackground());
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.leftMargin = dp(8);
+        action.setLayoutParams(params);
+        return action;
+    }
+
+    private MaterialTextView createTtcFaceRow(String label, boolean selected) {
+        MaterialTextView row = new MaterialTextView(this);
+        row.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setMinHeight(dp(48));
+        row.setPadding(dp(14), dp(10), dp(14), dp(10));
+        row.setClickable(true);
+        row.setFocusable(true);
+        updateTtcFaceRow(row, label, selected);
+        return row;
+    }
+
+    private void updateTtcFaceRow(MaterialTextView row, String label, boolean selected) {
+        row.setText(selected ? label + "  ✓" : label);
+        row.setTypeface(Typeface.DEFAULT, selected ? Typeface.BOLD : Typeface.NORMAL);
+        android.graphics.drawable.GradientDrawable background = new android.graphics.drawable.GradientDrawable();
+        background.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+        background.setCornerRadius(dp(14));
+        background.setColor(MaterialColors.getColor(
+                listView,
+                selected
+                        ? com.google.android.material.R.attr.colorSecondaryContainer
+                        : com.google.android.material.R.attr.colorSurfaceContainerHigh));
+        background.setStroke(dp(1), MaterialColors.getColor(
+                listView, com.google.android.material.R.attr.colorOutlineVariant));
+        row.setBackground(background);
+    }
+
+    private void setAllTtcFaceRows(
+            List<TtcFaceOption> options,
+            boolean[] checked,
+            List<MaterialTextView> rows,
+            boolean selected) {
+        for (int i = 0; i < checked.length; i++) {
+            checked[i] = selected;
+            updateTtcFaceRow(rows.get(i), options.get(i).label, selected);
+        }
+    }
+
+    private int countSelected(boolean[] checked) {
+        int count = 0;
+        for (boolean selected : checked) {
+            if (selected) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private void copyUriToFile(Uri uri, File targetFile) throws IOException {
@@ -755,43 +1019,41 @@ public final class FontLibraryActivity extends LocalizedActivity {
         return displayName;
     }
 
-    private static boolean isSupportedFontInput(String displayName, String mimeType) {
+    private boolean isPotentialFontInput(String displayName, String mimeType) {
         String lowerName = displayName == null ? "" : displayName.toLowerCase(Locale.US);
-        return lowerName.endsWith(".ttf")
-                || lowerName.endsWith(".otf")
-                || "font/ttf".equals(mimeType)
+        if (lowerName.endsWith(".ttf") || lowerName.endsWith(".otf")) {
+            return true;
+        }
+        if (configStore.isTtcFontImportEnabled() && lowerName.endsWith(".ttc")) {
+            return true;
+        }
+        return "font/ttf".equals(mimeType)
                 || "font/otf".equals(mimeType)
                 || "application/x-font-ttf".equals(mimeType)
-                || "application/vnd.ms-opentype".equals(mimeType);
+                || "application/vnd.ms-opentype".equals(mimeType)
+                || (configStore.isTtcFontImportEnabled()
+                && ("font/ttc".equals(mimeType)
+                || "font/collection".equals(mimeType)
+                || "application/x-font-ttc".equals(mimeType)));
     }
 
-    private static boolean isSupportedFontFile(File file) {
-        if (file == null || !file.isFile()) {
+    private static boolean isSupportedSingleFontFile(File file, FontFileKind kind) {
+        if (file == null
+                || !file.isFile()
+                || kind == FontFileKind.TTC
+                || kind == FontFileKind.UNSUPPORTED) {
             return false;
         }
-        try (InputStream input = new java.io.FileInputStream(file)) {
-            byte[] header = new byte[4];
-            if (input.read(header) != header.length) {
-                return false;
-            }
-            int signature = ((header[0] & 0xFF) << 24)
-                    | ((header[1] & 0xFF) << 16)
-                    | ((header[2] & 0xFF) << 8)
-                    | (header[3] & 0xFF);
-            if (signature != FONT_HEADER_TRUE_TYPE
-                    && signature != FONT_HEADER_OPEN_TYPE
-                    && signature != FONT_HEADER_APPLE_TRUE_TYPE) {
-                return false;
-            }
-            Typeface.createFromFile(file);
-            return true;
-        } catch (IOException | RuntimeException error) {
-            return false;
-        }
+        return FontTypefaceLoader.load(file, 0) != null;
     }
 
     private static String resolveFontTempExtension(String displayName, String mimeType) {
         String lowerName = displayName == null ? "" : displayName.toLowerCase(Locale.US);
+        if (lowerName.endsWith(".ttc") || "font/ttc".equals(mimeType)
+                || "font/collection".equals(mimeType)
+                || "application/x-font-ttc".equals(mimeType)) {
+            return ".ttc";
+        }
         if (lowerName.endsWith(".otf") || "font/otf".equals(mimeType)
                 || "application/vnd.ms-opentype".equals(mimeType)) {
             return ".otf";
@@ -817,6 +1079,16 @@ public final class FontLibraryActivity extends LocalizedActivity {
 
         FontReference(String packageName, String label) {
             this.packageName = packageName;
+            this.label = label;
+        }
+    }
+
+    private static final class TtcFaceOption {
+        final int index;
+        final String label;
+
+        TtcFaceOption(int index, String label) {
+            this.index = index;
             this.label = label;
         }
     }

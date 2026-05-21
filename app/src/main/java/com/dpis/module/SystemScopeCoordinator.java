@@ -44,7 +44,28 @@ final class SystemScopeCoordinator {
             }
             return;
         }
-        host.showToast(R.string.system_hooks_scope_request_notice);
+        requestScope(packageName, appLabel, onTurnedInScope, null);
+    }
+
+    boolean requestScope(String packageName,
+            String appLabel,
+            Runnable onTurnedInScope,
+            Runnable onRequestFinished) {
+        return requestScope(packageName, appLabel, onTurnedInScope, onRequestFinished, true);
+    }
+
+    boolean requestScope(String packageName,
+            String appLabel,
+            Runnable onTurnedInScope,
+            Runnable onRequestFinished,
+            boolean showNotice) {
+        XposedService service = DpisApplication.getXposedService();
+        if (service == null) {
+            return false;
+        }
+        if (showNotice) {
+            host.showToast(R.string.system_hooks_scope_request_notice);
+        }
         try {
             service.requestScope(Collections.singletonList(packageName),
                     new XposedService.OnScopeEventListener() {
@@ -55,18 +76,30 @@ final class SystemScopeCoordinator {
                                 if (onTurnedInScope != null) {
                                     onTurnedInScope.run();
                                 }
+                                if (onRequestFinished != null) {
+                                    onRequestFinished.run();
+                                }
                                 host.requestAppsLoad();
                             });
                         }
 
                         @Override
                         public void onScopeRequestFailed(String message) {
-                            host.runOnUiThread(
-                                    () -> host.showToast(R.string.scope_add_failed, message));
+                            host.runOnUiThread(() -> {
+                                host.showToast(R.string.scope_add_failed, message);
+                                if (onRequestFinished != null) {
+                                    onRequestFinished.run();
+                                }
+                            });
                         }
                     });
+            return true;
         } catch (RuntimeException exception) {
             host.showToast(R.string.scope_add_failed, exception.getMessage());
+            if (onRequestFinished != null) {
+                onRequestFinished.run();
+            }
+            return false;
         }
     }
 

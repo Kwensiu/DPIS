@@ -10,6 +10,7 @@ final class FontLibraryEntry {
     final String storedPath;
     final String sha256;
     final long importedAtEpochMs;
+    final int ttcIndex;
 
     FontLibraryEntry(String id,
                      String displayName,
@@ -18,6 +19,17 @@ final class FontLibraryEntry {
                      String storedPath,
                      String sha256,
                      long importedAtEpochMs) {
+        this(id, displayName, sourceFileName, storedFileName, storedPath, sha256, importedAtEpochMs, 0);
+    }
+
+    FontLibraryEntry(String id,
+                     String displayName,
+                     String sourceFileName,
+                     String storedFileName,
+                     String storedPath,
+                     String sha256,
+                     long importedAtEpochMs,
+                     int ttcIndex) {
         this.id = id;
         this.displayName = displayName;
         this.sourceFileName = sourceFileName;
@@ -25,6 +37,7 @@ final class FontLibraryEntry {
         this.storedPath = storedPath;
         this.sha256 = sha256;
         this.importedAtEpochMs = importedAtEpochMs;
+        this.ttcIndex = Math.max(0, ttcIndex);
     }
 
     @Override
@@ -36,6 +49,7 @@ final class FontLibraryEntry {
             return false;
         }
         return importedAtEpochMs == other.importedAtEpochMs
+                && ttcIndex == other.ttcIndex
                 && Objects.equals(id, other.id)
                 && Objects.equals(displayName, other.displayName)
                 && Objects.equals(sourceFileName, other.sourceFileName)
@@ -53,6 +67,7 @@ final class FontLibraryEntry {
                 storedFileName,
                 storedPath,
                 sha256,
-                importedAtEpochMs);
+                importedAtEpochMs,
+                ttcIndex);
     }
 }

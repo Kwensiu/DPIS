@@ -148,9 +148,18 @@ final class TypefaceOverrideHookInstaller {
                             + ", typefaceId=" + typefaceId);
             return null;
         }
-        File file = fontLibraryStore.resolveFontFile(typefaceId);
+        FontLibraryEntry entry = fontLibraryStore.findById(typefaceId);
+        File file = null;
+        int ttcIndex = 0;
+        if (entry != null) {
+            file = fontLibraryStore.resolveFontFile(typefaceId);
+            ttcIndex = entry.ttcIndex;
+        }
         if (file == null) {
             file = PublishedFontFileResolver.resolve(typefaceId);
+            if (entry == null) {
+                ttcIndex = parseTtcIndexFromId(typefaceId);
+            }
         }
         if (file == null || !file.canRead()) {
             logIfChanged(packageName + ":unreadable:" + typefaceId,
@@ -158,15 +167,13 @@ final class TypefaceOverrideHookInstaller {
                             + ", typefaceId=" + typefaceId);
             return null;
         }
-        try {
-            return Typeface.createFromFile(file);
-        } catch (Throwable throwable) {
+        Typeface loaded = FontTypefaceLoader.load(file, ttcIndex);
+        if (loaded == null) {
             logIfChanged(packageName + ":load-failed:" + typefaceId,
                     LOG_PREFIX + "font load failed: package=" + packageName
-                            + ", typefaceId=" + typefaceId
-                            + ", error=" + throwable.getClass().getSimpleName());
-            return null;
+                            + ", typefaceId=" + typefaceId);
         }
+        return loaded;
     }
 
     private static void applyTextViewTypeface(TextView textView, Typeface replacement, Integer explicitStyle) {
@@ -199,6 +206,10 @@ final class TypefaceOverrideHookInstaller {
         return resolveStyle(originalStyle, explicitStyle);
     }
 
+    static int parseTtcIndexFromIdForTest(String typefaceId) {
+        return parseTtcIndexFromId(typefaceId);
+    }
+
     static Typeface resolveReplacementForTest(Typeface baseTypeface, Typeface original) {
         return resolveReplacement(baseTypeface, original, null);
     }
@@ -224,6 +235,20 @@ final class TypefaceOverrideHookInstaller {
             return explicitStyle;
         }
         return originalStyle != null ? originalStyle : Typeface.NORMAL;
+    }
+
+    private static int parseTtcIndexFromId(String typefaceId) {
+        int marker = typefaceId.lastIndexOf("_ttc_");
+        if (marker <= 0 || marker + 5 >= typefaceId.length()) {
+            return 0;
+        }
+        String suffix = typefaceId.substring(marker + 5);
+        try {
+            int index = Integer.parseInt(suffix);
+            return index >= 0 ? index : 0;
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
     }
 
     private static void logIfChanged(String key, String message) {

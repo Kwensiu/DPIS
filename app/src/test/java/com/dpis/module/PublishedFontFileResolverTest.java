@@ -33,6 +33,24 @@ public final class PublishedFontFileResolverTest {
     }
 
     @Test
+    public void resolvesPublishedTtcWhenOtherFormatsMissing() throws Exception {
+        File directory = temporaryFolder.newFolder("fonts");
+        File font = new File(directory, "dpis_font_abcd1234.ttc");
+        assertTrue(font.createNewFile());
+
+        assertEquals(font, PublishedFontFileResolver.resolveInDirectory(directory, "font_abcd1234"));
+    }
+
+    @Test
+    public void resolvesSharedPublishedTtcForFaceTypefaceId() throws Exception {
+        File directory = temporaryFolder.newFolder("fonts");
+        File font = new File(directory, "dpis_font_abcd1234.ttc");
+        assertTrue(font.createNewFile());
+
+        assertEquals(font, PublishedFontFileResolver.resolveInDirectory(directory, "font_abcd1234_ttc_2"));
+    }
+
+    @Test
     public void returnsNullForMissingOrBlankTypefaceId() throws Exception {
         File directory = temporaryFolder.newFolder("fonts");
 

@@ -1166,6 +1166,18 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             }
 
             @Override
+            public boolean requestScope(AppListItem item,
+                    Runnable onTurnedInScope,
+                    Runnable onRequestFinished) {
+                return systemScopeCoordinator.requestScope(
+                        item.packageName,
+                        item.label,
+                        onTurnedInScope,
+                        onRequestFinished,
+                        false);
+            }
+
+            @Override
             public void executeProcessAction(AppListItem item, AppConfigDialogBinder.ProcessAction action) {
                 executeDialogProcessAction(item, action);
             }
