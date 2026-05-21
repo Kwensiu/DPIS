@@ -18,7 +18,12 @@ public final class ExperimentalSettingsActivitySourceSmokeTest {
 
         assertTrue(source.contains("isTtcFontImportEnabled()"));
         assertTrue(source.contains("setTtcFontImportEnabled("));
-        assertTrue(layout.contains("experimental_ttc_import_switch"));
+        assertTrue(source.contains("icon.setVisibility(View.GONE);"));
+        assertTrue(source.contains("textColumnLayoutParams.setMarginStart(0);"));
+        assertTrue(layout.contains("experimental_ttc_import_row"));
+        assertTrue(layout.contains("com.google.android.material.card.MaterialCardView"));
+        assertTrue(layout.contains("app:strokeWidth=\"1dp\""));
+        assertTrue(layout.contains("item_settings_switch"));
         assertTrue(strings.contains("settings_ttc_import_label"));
         assertTrue(strings.contains("settings_ttc_import_hint"));
     }

@@ -94,10 +94,12 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(manifest.contains(".ExperimentalSettingsActivity"));
         assertTrue(layout.contains("android:id=\"@+id/experimental_settings_content\""));
         assertTrue(layout.contains("android:id=\"@+id/experimental_ttc_import_row\""));
-        assertTrue(layout.contains("android:id=\"@+id/experimental_ttc_import_switch\""));
-        assertTrue(layout.contains("@string/settings_ttc_import_label"));
-        assertTrue(layout.contains("@string/settings_ttc_import_hint"));
-        assertTrue(layout.contains("android:textColor=\"?attr/colorOnSurfaceVariant\""));
+        assertTrue(layout.contains("com.google.android.material.card.MaterialCardView"));
+        assertTrue(layout.contains("app:cardBackgroundColor=\"?attr/colorSurfaceContainerHigh\""));
+        assertTrue(layout.contains("app:cardCornerRadius=\"28dp\""));
+        assertTrue(layout.contains("app:strokeColor=\"?attr/colorOutlineVariant\""));
+        assertTrue(layout.contains("app:strokeWidth=\"1dp\""));
+        assertTrue(layout.contains("item_settings_switch"));
         assertTrue(!layout.contains("experimental_settings_back_button"));
         assertTrue(!layout.contains("row_flutter_font_hook"));
         assertTrue(!layout.contains("row_flutter_settings_font_hook"));

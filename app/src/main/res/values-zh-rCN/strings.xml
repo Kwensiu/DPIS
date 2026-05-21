@@ -153,7 +153,7 @@
     <string name="settings_experimental_hint">可开启未经验证的功能</string>
     <string name="settings_experimental_empty_state">暂无实验功能</string>
     <string name="settings_ttc_import_label">TTC 字体集合</string>
-    <string name="settings_ttc_import_hint">将 TrueType Collection 文件按独立 face 导入。实验性功能。</string>
+    <string name="settings_ttc_import_hint">将 TrueType Collection 文件按独立 face 导入</string>
     <string name="settings_flutter_font_hook_label">Flutter 补充链路</string>
     <string name="settings_flutter_font_hook_hint">包含未验证的实验性功能</string>
     <string name="settings_flutter_settings_font_hook_label">Flutter 设置消息</string>
