@@ -3,7 +3,10 @@ package com.dpis.module;
 import android.content.SharedPreferences;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -122,16 +125,6 @@ final class FontLibraryStore {
             long importedAtEpochMs) throws IOException {
         Objects.requireNonNull(sourceFile, "sourceFile");
         Objects.requireNonNull(fontDirectory, "fontDirectory");
-        byte[] bytes = Files.readAllBytes(sourceFile.toPath());
-        String sha256 = sha256(bytes);
-        List<FontLibraryEntry> entries = readEntries();
-        entries.removeIf(entry -> sha256.equals(entry.sha256) && resolveStoredFile(entry) == null);
-        for (FontLibraryEntry entry : entries) {
-            if (sha256.equals(entry.sha256)) {
-                return entry;
-            }
-        }
-
         if (!fontDirectory.exists() && !fontDirectory.mkdirs()) {
             throw new IOException("Unable to create font directory: " + fontDirectory);
         }
@@ -139,17 +132,32 @@ final class FontLibraryStore {
             throw new IOException("Font directory is not a directory: " + fontDirectory);
         }
 
-        String id = FONT_ID_PREFIX + sha256.substring(0, 16);
         String extension = resolveFontExtension(sourceFileName);
+        File tempFile = File.createTempFile("font_import_", extension, fontDirectory);
+        String sha256 = copyAndDigest(sourceFile, tempFile);
+
+        List<FontLibraryEntry> entries = readEntries();
+        entries.removeIf(entry -> sha256.equals(entry.sha256) && resolveStoredFile(entry) == null);
+        for (FontLibraryEntry entry : entries) {
+            if (sha256.equals(entry.sha256)) {
+                tempFile.delete();
+                return entry;
+            }
+        }
+
+        String id = FONT_ID_PREFIX + sha256.substring(0, 16);
         File stagingFile = new File(fontDirectory, id + extension);
-        Files.write(stagingFile.toPath(), bytes);
+        if (!tempFile.renameTo(stagingFile)) {
+            Files.copy(tempFile.toPath(), stagingFile.toPath());
+            tempFile.delete();
+        }
         stagingFile.setReadable(true, false);
         File targetFile = publishFontFile(stagingFile);
 
         FontLibraryEntry entry = new FontLibraryEntry(
                 id,
                 makeUniqueDisplayName(entries, requestedDisplayName, null),
-                sourceFileName != null ? sourceFileName : normalizeDisplayName(sourceFileName),
+                sourceFileName,
                 targetFile.getName(),
                 targetFile.getAbsolutePath(),
                 sha256,
@@ -470,10 +478,19 @@ final class FontLibraryStore {
         return ".ttf";
     }
 
-    private static String sha256(byte[] bytes) {
+    private static String copyAndDigest(File source, File destination) throws IOException {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashed = digest.digest(bytes);
+            try (InputStream in = new FileInputStream(source);
+                 OutputStream out = Files.newOutputStream(destination.toPath())) {
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    digest.update(buffer, 0, read);
+                    out.write(buffer, 0, read);
+                }
+            }
+            byte[] hashed = digest.digest();
             StringBuilder builder = new StringBuilder(hashed.length * 2);
             for (byte value : hashed) {
                 builder.append(String.format(Locale.US, "%02x", value & 0xff));

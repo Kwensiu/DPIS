@@ -298,8 +298,7 @@ final class AppStatusFormatter {
     }
 
     private static int[] resolveFontScaleSegmentRange(String statusText) {
-        int[] percentRange = resolveFirstSegmentRangeContaining(statusText, "%", 2);
-        return percentRange != null ? percentRange : resolveSegmentRange(statusText, 2);
+        return resolveFirstSegmentRangeContaining(statusText, "%", 2);
     }
 
     private static int[] resolveFirstSegmentRangeContaining(String statusText,

@@ -730,7 +730,8 @@ final class AppConfigDialogBinder {
 
     private static boolean hasActiveDialogConfig(AppConfigDialogViews views, AppConfigDialogState state) {
         return parsePositiveIntOrNullSafe(views.viewportInputView) != null
-                || parsePositiveIntOrNullSafe(views.fontInputView) != null;
+                || parsePositiveIntOrNullSafe(views.fontInputView) != null
+                || (state.selectedTypefaceId != null && !state.selectedTypefaceId.isBlank());
     }
 
     private static void setSaveAndResetButtonsEnabled(AppConfigDialogViews views, boolean enabled) {

@@ -67,13 +67,13 @@ public class AppConfigDialogBinderSourceSmokeTest {
     }
 
     @Test
-    public void binderDoesNotTreatSelectedTypefaceAsNativeProxyConfig() throws IOException {
+    public void binderTreatsSelectedTypefaceAsNativeProxyConfig() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
         int activeStart = source.indexOf("private static boolean hasActiveDialogConfig");
         int activeEnd = source.indexOf("private static void setSaveAndResetButtonsEnabled", activeStart);
         String activeBlock = source.substring(activeStart, activeEnd);
 
-        assertFalse(activeBlock.contains("state.selectedTypefaceId"));
+        assertTrue(activeBlock.contains("state.selectedTypefaceId"));
     }
 
     @Test
