@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.10.0](https://github.com/Kwensiu/DPIS/compare/v1.9.1...v1.10.0) (2026-05-21)
+
+
+### Features
+
+* add .ttc font collections ([#63](https://github.com/Kwensiu/DPIS/issues/63)) ([fe0a529](https://github.com/Kwensiu/DPIS/commit/fe0a5291e77a95e49f37911eea081b2858c9327e))
+* font file replacement ([#60](https://github.com/Kwensiu/DPIS/issues/60)) ([2b7de99](https://github.com/Kwensiu/DPIS/commit/2b7de9960d4cf604c0393b48e8e648dd1e3e43af))
+
+
+### UI
+
+* align experimental settings with main settings style ([29bce9f](https://github.com/Kwensiu/DPIS/commit/29bce9f515d57cd728c0ac5b1f9a425ff460debb))
+
 ## [1.9.1](https://github.com/Kwensiu/DPIS/compare/v1.9.0...v1.9.1) (2026-05-20)
 
 
