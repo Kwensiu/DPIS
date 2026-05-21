@@ -139,14 +139,14 @@ public final class ModulePackagePlanTest {
     }
 
     @Test
-    public void compat100LegacyDoesNotInstallForTypefaceOnlyPackage() {
+    public void compat100LegacyInstallsForTypefaceOnlyPackage() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetTypefaceId("com.example.app", "font_abcd1234");
 
         ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
 
         assertTrue(plan.shouldInstallHooks());
-        assertFalse(plan.shouldInstallCompat100LegacyHooks());
+        assertTrue(plan.shouldInstallCompat100LegacyHooks());
     }
 
     @Test

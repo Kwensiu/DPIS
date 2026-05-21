@@ -526,6 +526,7 @@ public class DpiConfigStoreTest {
         remotePrefs.edit()
                 .putBoolean(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED, true)
                 .putInt("viewport.com.max.xiaoheihe.width_dp", 420)
+                .putString("font.library.entries", "[{\"id\":\"font_abcd1234\"}]")
                 .commit();
         FakePrefs localPrefs = new FakePrefs();
         localPrefs.edit()
@@ -539,6 +540,40 @@ public class DpiConfigStoreTest {
         assertEquals(true, snapshot.get(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED));
         assertEquals(420, snapshot.get("viewport.com.max.xiaoheihe.width_dp"));
         assertEquals(135, snapshot.get("font.com.max.xiaoheihe.scale_percent"));
+        assertEquals("[{\"id\":\"font_abcd1234\"}]", snapshot.get("font.library.entries"));
+    }
+
+    @Test
+    public void snapshotBackupExcludesFontLibraryMetadataButKeepsTypefaceSelection() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
+                        new LinkedHashSet<>(Set.of("com.max.xiaoheihe")))
+                .putString("font.com.max.xiaoheihe.typeface_id", "font_abcd1234")
+                .putString("font.library.entries", "[{\"id\":\"font_abcd1234\"}]")
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        Map<String, Object> snapshot = store.snapshotBackup();
+
+        assertEquals("font_abcd1234", snapshot.get("font.com.max.xiaoheihe.typeface_id"));
+        assertFalse(snapshot.containsKey("font.library.entries"));
+    }
+
+    @Test
+    public void replaceBackupIgnoresFontLibraryMetadataButRestoresTypefaceSelection() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        LinkedHashMap<String, Object> values = new LinkedHashMap<>();
+        values.put(DpiConfigStore.KEY_TARGET_PACKAGES,
+                new LinkedHashSet<>(Set.of("com.max.xiaoheihe")));
+        values.put("font.com.max.xiaoheihe.typeface_id", "font_abcd1234");
+        values.put("font.library.entries", "[{\"id\":\"font_abcd1234\"}]");
+
+        assertTrue(store.replaceBackup(values));
+
+        assertEquals("font_abcd1234", store.getTargetTypefaceId("com.max.xiaoheihe"));
+        assertFalse(prefs.contains("font.library.entries"));
     }
 
     @Test

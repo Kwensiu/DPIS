@@ -92,6 +92,12 @@ final class ConfigStoreFactory {
                 null);
     }
 
+    static FontLibraryStore createFontLibraryForCompat100Host() {
+        return new FontLibraryStore(
+                new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpiConfigStore.GROUP),
+                null);
+    }
+
     static DpiConfigStore createForCompat100Host() {
         return new DpiConfigStore(
                 new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpiConfigStore.GROUP));

@@ -48,7 +48,7 @@ final class AppConfigSaveHandler {
             if (fontScalePercent == null) {
                 saved = store.clearTargetFontScalePercent(item.packageName) && saved;
                 saved = store.setTargetFontApplyMode(item.packageName, FontApplyMode.OFF) && saved;
-                FontRuntimePropertySyncer.clearTargetAsync(item.packageName);
+                FontRuntimePropertySyncer.clearFontScaleTargetAsync(item.packageName);
                 FontHookDomainPropertySyncer.clearTargetAsync(item.packageName);
             } else {
                 saved = store.setTargetFontScalePercent(item.packageName, fontScalePercent) && saved;
@@ -63,8 +63,10 @@ final class AppConfigSaveHandler {
             }
             if (selectedTypefaceId == null || selectedTypefaceId.isBlank()) {
                 saved = store.clearTargetTypefaceId(item.packageName) && saved;
+                FontRuntimePropertySyncer.publishTypefaceTargetAsync(item.packageName, null);
             } else {
                 saved = store.setTargetTypefaceId(item.packageName, selectedTypefaceId) && saved;
+                FontRuntimePropertySyncer.publishTypefaceTargetAsync(item.packageName, selectedTypefaceId);
             }
             if (saved && onChanged != null) {
                 onChanged.run();

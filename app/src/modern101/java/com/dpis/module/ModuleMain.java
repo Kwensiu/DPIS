@@ -54,6 +54,7 @@ public final class ModuleMain extends XposedModule {
         maybeLogFirstPackageReady(param.getPackageName());
         installAppProcessHooksIfConfigured(store, policy, snapshot, param.getPackageName(),
                 "package-ready");
+        retryTypefaceHooksWithPackageReady(store, snapshot, param.getPackageName());
         retryFlutterHooksWithAppClassLoader(store, snapshot, param.getClassLoader(),
                 param.getPackageName());
     }
@@ -133,6 +134,7 @@ public final class ModuleMain extends XposedModule {
                 + ", targetFontScalePercent=" + packagePlan.targetFontScalePercent
                 + ", targetFontMode=" + packagePlan.targetFontMode
                 + ", typefaceActive=" + packagePlan.typefaceActive
+                + ", targetTypefaceId=" + packagePlan.targetTypefaceId
                 + ", flutterSettingsFont=" + packagePlan.flutterSettingsFontEnabled
                 + ", hyperOsNativeFlutterFont=" + packagePlan.hyperOsNativeFlutterFontEnabled);
         appProcessInstallAttempted = true;
@@ -143,6 +145,7 @@ public final class ModuleMain extends XposedModule {
                     packagePlan.targetFontMode,
                     packagePlan.fontScaleActive,
                     packagePlan.typefaceActive,
+                    packagePlan.targetTypefaceId,
                     packagePlan.flutterSettingsFontEnabled,
                     packagePlan.hyperOsNativeFlutterFontEnabled,
                     packagePlan.hookDomainOverride);
@@ -189,6 +192,23 @@ public final class ModuleMain extends XposedModule {
                 + ", fontMode=" + packagePlan.targetFontMode);
         FlutterSettingsFontHookInstaller.retryWithAppClassLoader(
                 this, packageName, store, executionPlan.fontDomainPlan, classLoader);
+    }
+
+    private void retryTypefaceHooksWithPackageReady(DpiConfigStore store,
+            ConfigSnapshot snapshot,
+            String packageName) {
+        if (SystemServerProcess.isSystemServer(currentProcessName, packageName)) {
+            return;
+        }
+        ModulePackagePlan packagePlan = ModulePackagePlan.resolve(snapshot, packageName);
+        if (!packagePlan.targetDpisEnabled || !packagePlan.typefaceActive) {
+            return;
+        }
+        AppProcessHookInstaller.installTypefaceHooks(
+                this,
+                packagePlan.packageName,
+                store,
+                packagePlan.targetTypefaceId);
     }
 
     private DpiConfigStore getOrCreateConfigStore() {

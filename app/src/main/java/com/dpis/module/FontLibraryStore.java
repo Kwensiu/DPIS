@@ -112,6 +112,14 @@ final class FontLibraryStore {
             File sourceFile,
             String sourceFileName,
             long importedAtEpochMs) throws IOException {
+        return registerCopiedFont(sourceFile, sourceFileName, sourceFileName, importedAtEpochMs);
+    }
+
+    FontLibraryEntry registerCopiedFont(
+            File sourceFile,
+            String sourceFileName,
+            String requestedDisplayName,
+            long importedAtEpochMs) throws IOException {
         Objects.requireNonNull(sourceFile, "sourceFile");
         Objects.requireNonNull(fontDirectory, "fontDirectory");
         byte[] bytes = Files.readAllBytes(sourceFile.toPath());
@@ -140,8 +148,8 @@ final class FontLibraryStore {
 
         FontLibraryEntry entry = new FontLibraryEntry(
                 id,
-                normalizeDisplayName(sourceFileName),
-                normalizeDisplayName(sourceFileName),
+                makeUniqueDisplayName(entries, requestedDisplayName, null),
+                sourceFileName != null ? sourceFileName : normalizeDisplayName(sourceFileName),
                 targetFile.getName(),
                 targetFile.getAbsolutePath(),
                 sha256,
@@ -158,6 +166,40 @@ final class FontLibraryStore {
             stagingFile.delete();
         }
         return entry;
+    }
+
+    RenameResult renameFont(String id, String requestedDisplayName) {
+        String displayName = sanitizeDisplayName(requestedDisplayName);
+        if (displayName == null) {
+            return RenameResult.INVALID_NAME;
+        }
+        List<FontLibraryEntry> entries = readEntries();
+        boolean found = false;
+        for (FontLibraryEntry entry : entries) {
+            if (!entry.id.equals(id) && displayName.equalsIgnoreCase(entry.displayName.trim())) {
+                return RenameResult.DUPLICATE_NAME;
+            }
+        }
+        List<FontLibraryEntry> updatedEntries = new ArrayList<>(entries.size());
+        for (FontLibraryEntry entry : entries) {
+            if (entry.id.equals(id)) {
+                found = true;
+                updatedEntries.add(new FontLibraryEntry(
+                        entry.id,
+                        displayName,
+                        entry.sourceFileName,
+                        entry.storedFileName,
+                        entry.storedPath,
+                        entry.sha256,
+                        entry.importedAtEpochMs));
+            } else {
+                updatedEntries.add(entry);
+            }
+        }
+        if (!found) {
+            return RenameResult.NOT_FOUND;
+        }
+        return writeEntries(updatedEntries) ? RenameResult.RENAMED : RenameResult.WRITE_FAILED;
     }
 
     private File publishFontFile(File stagingFile) throws IOException {
@@ -354,11 +396,67 @@ final class FontLibraryStore {
         return builder.append('"').toString();
     }
 
-    private static String normalizeDisplayName(String sourceFileName) {
-        if (sourceFileName == null || sourceFileName.isBlank()) {
+    static String normalizeDisplayName(String sourceFileName) {
+        String sanitized = sanitizeDisplayName(sourceFileName);
+        if (sanitized == null) {
             return "Imported font";
         }
-        return sourceFileName;
+        return sanitized;
+    }
+
+    private static String makeUniqueDisplayName(
+            List<FontLibraryEntry> entries,
+            String requestedDisplayName,
+            String excludingId) {
+        String baseName = normalizeDisplayName(requestedDisplayName);
+        String candidate = baseName;
+        int suffix = 2;
+        while (containsDisplayName(entries, candidate, excludingId)) {
+            candidate = baseName + " (" + suffix + ")";
+            suffix++;
+        }
+        return candidate;
+    }
+
+    private static boolean containsDisplayName(
+            List<FontLibraryEntry> entries,
+            String displayName,
+            String excludingId) {
+        for (FontLibraryEntry entry : entries) {
+            if (entry.id.equals(excludingId)) {
+                continue;
+            }
+            if (displayName.equalsIgnoreCase(entry.displayName.trim())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String sanitizeDisplayName(String displayName) {
+        if (displayName == null) {
+            return null;
+        }
+        StringBuilder builder = new StringBuilder(displayName.length());
+        boolean previousWhitespace = false;
+        for (int i = 0; i < displayName.length(); i++) {
+            char character = displayName.charAt(i);
+            boolean whitespace = Character.isWhitespace(character) || Character.isISOControl(character);
+            if (whitespace) {
+                if (!previousWhitespace) {
+                    builder.append(' ');
+                    previousWhitespace = true;
+                }
+                continue;
+            }
+            builder.append(character);
+            previousWhitespace = false;
+        }
+        String sanitized = builder.toString().trim();
+        if (sanitized.isEmpty()) {
+            return null;
+        }
+        return sanitized.length() <= 80 ? sanitized : sanitized.substring(0, 80).trim();
     }
 
     private static String resolveFontExtension(String sourceFileName) {
@@ -415,6 +513,14 @@ final class FontLibraryStore {
         NOT_FOUND,
         IN_USE,
         DELETE_FAILED
+    }
+
+    enum RenameResult {
+        RENAMED,
+        NOT_FOUND,
+        INVALID_NAME,
+        DUPLICATE_NAME,
+        WRITE_FAILED
     }
 
     private static final class JsonCursor {

@@ -32,13 +32,13 @@ public class ConfigBackupCodecSourceSmokeTest {
         String settings = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
 
         assertTrue(store.contains("\"font.\" + packageName + \".typeface_id\""));
-        assertTrue(settings.contains("Map<String, Object> entries = localStore.snapshotAll();"));
+        assertTrue(settings.contains("Map<String, Object> entries = localStore.snapshotBackup();"));
         assertTrue(settings.contains("String payload = ConfigBackupCodec.encode(entries);"));
         assertTrue(codec.contains("encoded.put(KEY_TYPE, TYPE_STRING);"));
         assertTrue(codec.contains("case TYPE_STRING -> encoded.optString(KEY_VALUE, \"\")"));
         assertTrue(codec.contains("TYPE_STRING"));
         assertTrue(settings.contains("ConfigBackupCodec.decode(payload)"));
-        assertTrue(settings.contains("localStore.replaceAll(entries)"));
+        assertTrue(settings.contains("localStore.replaceBackup(entries)"));
         assertTrue(store.contains("!key.startsWith(\"font.library.\")"));
     }
 

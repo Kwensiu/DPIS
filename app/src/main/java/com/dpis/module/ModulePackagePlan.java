@@ -136,6 +136,7 @@ final class ModulePackagePlan {
     boolean shouldInstallCompat100LegacyHooks() {
         return targetDpisEnabled
                 && (viewportEnabled
+                || typefaceEnabled
                 || (fontScaleActive
                 && FontApplyMode.isEnabled(targetFontMode)));
     }

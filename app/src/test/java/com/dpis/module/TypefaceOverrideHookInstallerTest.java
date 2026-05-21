@@ -5,6 +5,7 @@ import android.graphics.Typeface;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public final class TypefaceOverrideHookInstallerTest {
     @Test
@@ -52,4 +53,76 @@ public final class TypefaceOverrideHookInstallerTest {
 
         assertEquals(Typeface.NORMAL, style);
     }
+
+    @Test
+    public void modernInstallerFallsBackToPublishedFontFile() throws Exception {
+        String source = new String(java.nio.file.Files.readAllBytes(
+                java.nio.file.Path.of("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java")),
+                java.nio.charset.StandardCharsets.UTF_8);
+
+        assertTrue(source.contains("PublishedFontFileResolver.resolve(typefaceId)"));
+        assertTrue(source.contains("SystemFontRegistry.loadTypeface(typefaceId)"));
+    }
+
+    @Test
+    public void modernInstallerAcceptsResolvedPlanTypefaceId() throws Exception {
+        String source = new String(java.nio.file.Files.readAllBytes(
+                java.nio.file.Path.of("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java")),
+                java.nio.charset.StandardCharsets.UTF_8);
+
+        assertTrue(source.contains("String targetTypefaceId"));
+        assertTrue(source.contains("String typefaceId = targetTypefaceId"));
+        assertTrue(source.contains("store.getTargetTypefaceId(packageName)"));
+        assertTrue(source.contains("target typeface loaded"));
+        assertTrue(source.contains("system typeface unavailable"));
+    }
+
+    @Test
+    public void modernInstallerGuardIsScopedToCurrentProcess() throws Exception {
+        String source = new String(java.nio.file.Files.readAllBytes(
+                java.nio.file.Path.of("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java")),
+                java.nio.charset.StandardCharsets.UTF_8);
+
+        assertTrue(source.contains("hookInstalledPid"));
+        assertTrue(source.contains("Process.myPid()"));
+        assertTrue(source.contains("isHookInstalledForCurrentProcess()"));
+    }
+
+    @Test
+    public void modernInstallerLogsFirstReplacementHits() throws Exception {
+        String source = new String(java.nio.file.Files.readAllBytes(
+                java.nio.file.Path.of("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java")),
+                java.nio.charset.StandardCharsets.UTF_8);
+
+        assertTrue(source.contains("replacement hit: package="));
+        assertTrue(source.contains("TextView.setTypeface(Typeface)"));
+        assertTrue(source.contains("TextView.setTypeface(Typeface,int)"));
+        assertTrue(source.contains("Paint.setTypeface"));
+    }
+
+    @Test
+    public void modernInstallerAppliesTypefaceWhenTextViewAttaches() throws Exception {
+        String source = new String(java.nio.file.Files.readAllBytes(
+                java.nio.file.Path.of("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java")),
+                java.nio.charset.StandardCharsets.UTF_8);
+
+        assertTrue(source.contains("installTextViewAttachHook("));
+        assertTrue(source.contains("getDeclaredMethod(\"onAttachedToWindow\")"));
+        assertTrue(source.contains("return View.class.getDeclaredMethod(\"onAttachedToWindow\")"));
+        assertTrue(source.contains("TextView.onAttachedToWindow"));
+        assertTrue(source.contains("TextView attach hook ready"));
+    }
+
+    @Test
+    public void modernInstallerAppliesTypefaceWhenTextViewDraws() throws Exception {
+        String source = new String(java.nio.file.Files.readAllBytes(
+                java.nio.file.Path.of("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java")),
+                java.nio.charset.StandardCharsets.UTF_8);
+
+        assertTrue(source.contains("installTextViewDrawHook("));
+        assertTrue(source.contains("getDeclaredMethod(\"onDraw\", Canvas.class)"));
+        assertTrue(source.contains("TextView.onDraw"));
+        assertTrue(source.contains("TextView draw hook ready"));
+    }
+
 }

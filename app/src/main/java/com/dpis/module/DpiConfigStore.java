@@ -509,13 +509,30 @@ final class DpiConfigStore {
     Map<String, Object> snapshotAll() {
         LinkedHashMap<String, Object> snapshot = new LinkedHashMap<>();
         if (mirrorPreferences != null) {
-            copyBackupEntries(snapshot, mirrorPreferences.getAll());
+            copyEntries(snapshot, mirrorPreferences.getAll(), false);
         }
-        copyBackupEntries(snapshot, preferences.getAll());
+        copyEntries(snapshot, preferences.getAll(), false);
+        return snapshot;
+    }
+
+    Map<String, Object> snapshotBackup() {
+        LinkedHashMap<String, Object> snapshot = new LinkedHashMap<>();
+        if (mirrorPreferences != null) {
+            copyEntries(snapshot, mirrorPreferences.getAll(), true);
+        }
+        copyEntries(snapshot, preferences.getAll(), true);
         return snapshot;
     }
 
     boolean replaceAll(Map<String, Object> entries) {
+        return replaceEntries(entries, false);
+    }
+
+    boolean replaceBackup(Map<String, Object> entries) {
+        return replaceEntries(entries, true);
+    }
+
+    private boolean replaceEntries(Map<String, Object> entries, boolean backupOnly) {
         if (entries == null) {
             return false;
         }
@@ -526,7 +543,7 @@ final class DpiConfigStore {
                 if (key == null || key.isEmpty()) {
                     continue;
                 }
-                if (!isBackupConfigKey(key)) {
+                if (backupOnly && !isBackupConfigKey(key)) {
                     continue;
                 }
                 putTypedValue(editor, key, entry.getValue());
@@ -534,13 +551,13 @@ final class DpiConfigStore {
         });
     }
 
-    private static void copyBackupEntries(Map<String, Object> target, Map<String, ?> source) {
+    private static void copyEntries(Map<String, Object> target, Map<String, ?> source, boolean backupOnly) {
         if (source == null) {
             return;
         }
         for (Map.Entry<String, ?> entry : source.entrySet()) {
             String key = entry.getKey();
-            if (key == null || key.isEmpty() || !isBackupConfigKey(key)) {
+            if (key == null || key.isEmpty() || (backupOnly && !isBackupConfigKey(key))) {
                 continue;
             }
             Object normalized = normalizeValue(entry.getValue());

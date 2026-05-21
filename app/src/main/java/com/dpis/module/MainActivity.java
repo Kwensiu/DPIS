@@ -6,8 +6,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
-import android.graphics.Typeface;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -48,7 +46,6 @@ import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textview.MaterialTextView;
 
 import java.io.File;
@@ -1196,6 +1193,11 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             @Override
             public String getFontHookDomainsButtonText(String packageName) {
                 return MainActivity.this.getFontHookDomainsButtonText(packageName);
+            }
+
+            @Override
+            public void openTypefaceLibrary() {
+                MainActivity.this.startActivity(new Intent(MainActivity.this, FontLibraryActivity.class));
             }
 
             @Override

@@ -26,6 +26,15 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(source.contains("ResourcesManagerHookInstaller.maybeApplyKeyOverride"));
         assertTrue(source.contains("\"createResourcesImpl\".equals(methodName)"));
         assertTrue(source.contains("\"android.content.res.ResourcesKey\".equals"));
+        assertTrue(source.contains("installTypefaceOverrideHook(packageName, plan.targetTypefaceId, store)"));
+        assertTrue(source.contains("Compat100TypefaceOverrideHookInstaller.install("));
+        assertTrue(source.contains("plan.typefaceEnabled"));
+        assertTrue(source.contains("boolean resourceHooksNeeded = plan.viewportEnabled"));
+        assertTrue(source.contains("if (resourceHooksNeeded)"));
+        assertTrue(source.indexOf("if (resourceHooksNeeded)")
+                < source.indexOf("installResourcesImplHook(packageName, store)"));
+        assertTrue(source.indexOf("installResourcesReadHooks(packageName, store)")
+                < source.indexOf("if (plan.typefaceEnabled)"));
         assertTrue(source.contains("ResourcesReadHookInstaller.applyConfigurationOverride"));
         assertTrue(source.contains("ResourcesReadHookInstaller.applyMetricsOverride"));
         assertTrue(source.contains("resolveActivePackageName(packageName)"));
@@ -45,6 +54,15 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(source.contains("implements IXposedHookLoadPackage, IXposedHookZygoteInit"));
         assertTrue(source.contains("public void initZygote(StartupParam startupParam)"));
         assertTrue(source.contains("installSystemServerHooksForCompat100();"));
+
+        String typefaceSource = read(
+                "src/compat100/java/com/dpis/module/Compat100TypefaceOverrideHookInstaller.java");
+        assertTrue(typefaceSource.contains("XposedBridge.hookMethod(setTypeface"));
+        assertTrue(typefaceSource.contains("XposedBridge.hookMethod(setTypefaceWithStyle"));
+        assertTrue(typefaceSource.contains("XposedBridge.hookMethod(paintSetTypeface"));
+        assertTrue(typefaceSource.contains("DPIS_FONT_STYLE "));
+        assertTrue(typefaceSource.contains("FontLibraryStore fontLibraryStore"));
+        assertTrue(typefaceSource.contains("PublishedFontFileResolver.resolve(typefaceId)"));
 
         String systemServerSource = read("src/compat100/java/com/dpis/module/Compat100SystemServerHookInstaller.java");
         assertTrue(systemServerSource.contains("android.app.servertransaction.LaunchActivityItem"));

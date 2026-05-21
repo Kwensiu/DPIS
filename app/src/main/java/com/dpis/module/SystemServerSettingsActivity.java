@@ -7,13 +7,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,7 +18,6 @@ import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -40,7 +36,6 @@ import org.json.JSONException;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -62,7 +57,6 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     private static final String SYSTEM_SCOPE_MODERN = "system";
     private static final int REQUEST_EXPORT_CONFIG_BACKUP = 1001;
     private static final int REQUEST_IMPORT_CONFIG_BACKUP = 1002;
-    private static final int REQUEST_IMPORT_FONT = 1003;
     private static final long CLEAR_CACHE_MIN_DISABLED_MS = 300L;
 
     private DpiConfigStore store;
@@ -83,7 +77,6 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     private int selectedWindow = FontDebugStatsStore.WINDOW_ALL;
 
     private BottomSheetDialog fontDebugDialog;
-    private BottomSheetDialog fontLibraryDialog;
     private MaterialButton dialogOverlayActionButton;
     private MaterialButton dialogStatsModeButton;
     private MaterialButton dialogStatsWindowButton;
@@ -144,7 +137,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
                 R.drawable.ic_upload_file_24,
                 R.string.settings_font_library_label,
                 R.string.settings_font_library_hint,
-                v -> showFontLibraryDialog());
+                v -> startActivity(new Intent(this, FontLibraryActivity.class)));
         backupConfigEntryRow = bindEntryRow(
                 R.id.row_config_backup,
                 R.drawable.ic_upload_file_24,
@@ -209,7 +202,6 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         super.onStop();
         statsHandler.removeCallbacks(statsRefreshRunnable);
         dismissFontDebugDialog();
-        dismissFontLibraryDialog();
     }
 
     @Override
@@ -233,9 +225,6 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             importConfigBackup(uri);
             return;
         }
-        if (requestCode == REQUEST_IMPORT_FONT) {
-            importFont(uri);
-        }
     }
 
     private void applyInsets() {
@@ -248,241 +237,6 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             return insets;
         });
         ViewCompat.requestApplyInsets(toolbar);
-    }
-
-    private void showFontLibraryDialog() {
-        if (store == null) {
-            showToast(R.string.status_save_requires_init);
-            return;
-        }
-        dismissFontLibraryDialog();
-        ViewGroup root = findViewById(android.R.id.content);
-        View dialogView = LayoutInflater.from(this).inflate(
-                R.layout.dialog_font_library, root, false);
-        MaterialButton importButton = dialogView.findViewById(R.id.font_library_import_button);
-        importButton.setOnClickListener(v -> openFontImportPicker());
-
-        BottomSheetDialog dialog = new BottomSheetDialog(this);
-        dialog.setContentView(dialogView);
-        dialog.setOnDismissListener(d -> fontLibraryDialog = null);
-        fontLibraryDialog = dialog;
-        refreshFontLibraryList(dialogView);
-        dialog.show();
-    }
-
-    private void dismissFontLibraryDialog() {
-        if (fontLibraryDialog != null) {
-            fontLibraryDialog.dismiss();
-        }
-    }
-
-    @SuppressWarnings("deprecation")
-    private void openFontImportPicker() {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT)
-                .addCategory(Intent.CATEGORY_OPENABLE)
-                .setType("*/*")
-                .putExtra(Intent.EXTRA_MIME_TYPES, new String[] {
-                        "font/ttf",
-                        "font/otf",
-                        "application/x-font-ttf",
-                        "application/vnd.ms-opentype"
-                });
-        try {
-            startActivityForResult(intent, REQUEST_IMPORT_FONT);
-        } catch (ActivityNotFoundException error) {
-            showToast(R.string.font_library_picker_failed);
-        }
-    }
-
-    private void importFont(Uri uri) {
-        new Thread(() -> {
-            File tempFile = null;
-            FontLibraryEntry importedEntry = null;
-            try {
-                String displayName = resolveDisplayName(uri);
-                String mimeType = getContentResolver().getType(uri);
-                if (!isSupportedFontInput(displayName, mimeType)) {
-                    throw new IOException("Unsupported font input");
-                }
-                tempFile = File.createTempFile(
-                        "dpis-font-import-",
-                        resolveFontTempExtension(displayName, mimeType),
-                        getCacheDir());
-                copyUriToFile(uri, tempFile);
-                Typeface typeface = Typeface.createFromFile(tempFile);
-                if (typeface == null) {
-                    throw new IOException("Unable to parse font");
-                }
-                FontLibraryStore fontLibraryStore = ConfigStoreFactory.createFontLibraryForModuleApp(
-                        this,
-                        DpisApplication.getXposedService());
-                importedEntry = fontLibraryStore.registerCopiedFontForTest(
-                        tempFile,
-                        displayName,
-                        System.currentTimeMillis());
-            } catch (IOException | RuntimeException error) {
-                importedEntry = null;
-            } finally {
-                if (tempFile != null && tempFile.exists()) {
-                    tempFile.delete();
-                }
-            }
-
-            FontLibraryEntry finalImportedEntry = importedEntry;
-            runOnUiThread(() -> {
-                if (finalImportedEntry == null) {
-                    showToast(R.string.font_library_import_failed);
-                    return;
-                }
-                showToast(R.string.font_library_import_success, finalImportedEntry.displayName);
-                refreshFontLibraryDialogList();
-            });
-        }, "dpis-font-import").start();
-    }
-
-    private void copyUriToFile(Uri uri, File targetFile) throws IOException {
-        try (InputStream input = getContentResolver().openInputStream(uri);
-                OutputStream output = new FileOutputStream(targetFile)) {
-            if (input == null) {
-                throw new IOException("Unable to open font input stream");
-            }
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = input.read(buffer)) != -1) {
-                output.write(buffer, 0, read);
-            }
-        }
-    }
-
-    private String resolveDisplayName(Uri uri) {
-        String displayName = null;
-        try (Cursor cursor = getContentResolver().query(
-                uri,
-                new String[] { OpenableColumns.DISPLAY_NAME },
-                null,
-                null,
-                null)) {
-            if (cursor != null && cursor.moveToFirst()) {
-                int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                if (index >= 0) {
-                    displayName = cursor.getString(index);
-                }
-            }
-        } catch (RuntimeException ignored) {
-            displayName = null;
-        }
-        if (displayName == null || displayName.isBlank()) {
-            String path = uri.getLastPathSegment();
-            displayName = path == null || path.isBlank() ? "Imported font" : path;
-        }
-        return displayName;
-    }
-
-    private static boolean isSupportedFontInput(String displayName, String mimeType) {
-        String lowerName = displayName == null ? "" : displayName.toLowerCase(Locale.US);
-        return lowerName.endsWith(".ttf")
-                || lowerName.endsWith(".otf")
-                || "font/ttf".equals(mimeType)
-                || "font/otf".equals(mimeType)
-                || "application/x-font-ttf".equals(mimeType)
-                || "application/vnd.ms-opentype".equals(mimeType);
-    }
-
-    private static String resolveFontTempExtension(String displayName, String mimeType) {
-        String lowerName = displayName == null ? "" : displayName.toLowerCase(Locale.US);
-        if (lowerName.endsWith(".otf") || "font/otf".equals(mimeType)
-                || "application/vnd.ms-opentype".equals(mimeType)) {
-            return ".otf";
-        }
-        return ".ttf";
-    }
-
-    private void refreshFontLibraryDialogList() {
-        if (fontLibraryDialog == null) {
-            return;
-        }
-        View contentView = fontLibraryDialog.findViewById(R.id.font_library_list);
-        if (contentView == null) {
-            return;
-        }
-        refreshFontLibraryList((View) contentView.getParent());
-    }
-
-    private void refreshFontLibraryList(View dialogView) {
-        ViewGroup listView = dialogView.findViewById(R.id.font_library_list);
-        MaterialTextView emptyView = dialogView.findViewById(R.id.font_library_empty);
-        FontLibraryStore fontLibraryStore = ConfigStoreFactory.createFontLibraryForModuleApp(
-                this,
-                DpisApplication.getXposedService());
-        List<FontLibraryEntry> entries = fontLibraryStore.listFonts();
-        listView.removeAllViews();
-        emptyView.setVisibility(entries.isEmpty() ? View.VISIBLE : View.GONE);
-        listView.setVisibility(entries.isEmpty() ? View.GONE : View.VISIBLE);
-        for (FontLibraryEntry entry : entries) {
-            listView.addView(createFontLibraryEntryRow(listView, entry));
-        }
-    }
-
-    private View createFontLibraryEntryRow(ViewGroup parent, FontLibraryEntry entry) {
-        LinearLayout row = new LinearLayout(this);
-        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setPadding(0, dp(8), 0, dp(8));
-        row.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        MaterialTextView titleView = new MaterialTextView(this);
-        titleView.setText(entry.displayName);
-        titleView.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
-        titleView.setSingleLine(false);
-        titleView.setLayoutParams(new LinearLayout.LayoutParams(
-                0,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                1f));
-        row.addView(titleView);
-
-        MaterialButton deleteButton = new MaterialButton(this);
-        deleteButton.setText(R.string.font_library_delete_action);
-        deleteButton.setMinWidth(0);
-        deleteButton.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                dp(40)));
-        deleteButton.setOnClickListener(v -> deleteFontLibraryEntry(entry));
-        row.addView(deleteButton);
-        return row;
-    }
-
-    private void deleteFontLibraryEntry(FontLibraryEntry entry) {
-        new Thread(() -> {
-            FontLibraryStore.DeleteResult result;
-            try {
-                FontLibraryStore fontLibraryStore = ConfigStoreFactory.createFontLibraryForModuleApp(
-                        this,
-                        DpisApplication.getXposedService());
-                DpiConfigStore configStore = ConfigStoreFactory.createForModuleApp(
-                        this,
-                        DpisApplication.getXposedService());
-                result = fontLibraryStore.deleteFont(entry.id, configStore);
-            } catch (RuntimeException error) {
-                result = FontLibraryStore.DeleteResult.DELETE_FAILED;
-            }
-
-            FontLibraryStore.DeleteResult finalResult = result;
-            runOnUiThread(() -> handleFontLibraryDeleteResult(finalResult));
-        }, "dpis-font-library-delete").start();
-    }
-
-    private void handleFontLibraryDeleteResult(FontLibraryStore.DeleteResult result) {
-        if (result == FontLibraryStore.DeleteResult.DELETED) {
-            refreshFontLibraryDialogList();
-            return;
-        }
-        if (result == FontLibraryStore.DeleteResult.IN_USE) {
-            showToast(R.string.font_library_delete_in_use);
-            return;
-        }
-        showToast(R.string.font_library_delete_failed);
     }
 
     private int dp(int value) {
@@ -773,7 +527,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             return;
         }
         new Thread(() -> {
-            Map<String, Object> entries = localStore.snapshotAll();
+            Map<String, Object> entries = localStore.snapshotBackup();
             boolean success = false;
             try {
                 String payload = ConfigBackupCodec.encode(entries);
@@ -809,7 +563,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
                 runOnUiThread(() -> showToast(R.string.config_backup_import_invalid));
                 return;
             }
-            if (!localStore.replaceAll(entries)) {
+            if (!localStore.replaceBackup(entries)) {
                 runOnUiThread(() -> showToast(R.string.config_backup_import_failed));
                 return;
             }

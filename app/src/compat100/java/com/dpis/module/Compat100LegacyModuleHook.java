@@ -69,10 +69,18 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
         }
         compatDebugLog("compat100 legacy package matched: package=" + packageName
                 + ", targetViewportWidthDp=" + plan.targetViewportWidthDp
-                + ", targetFontScalePercent=" + plan.targetFontScalePercent);
-        installResourcesImplHook(packageName, store);
-        installResourcesManagerHook(packageName, store);
-        installResourcesReadHooks(packageName, store);
+                + ", targetFontScalePercent=" + plan.targetFontScalePercent
+                + ", targetTypefaceId=" + plan.targetTypefaceId);
+        boolean resourceHooksNeeded = plan.viewportEnabled
+                || (plan.fontScaleActive && FontApplyMode.isEnabled(plan.targetFontMode));
+        if (resourceHooksNeeded) {
+            installResourcesImplHook(packageName, store);
+            installResourcesManagerHook(packageName, store);
+            installResourcesReadHooks(packageName, store);
+        }
+        if (plan.typefaceEnabled) {
+            installTypefaceOverrideHook(packageName, plan.targetTypefaceId, store);
+        }
         if (plan.viewportEnabled) {
             installDisplayHooks(packageName);
             installWindowMetricsHook();
@@ -88,6 +96,21 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
             compatDebugLog("compat100 legacy system_server hooks ready");
         } catch (Throwable throwable) {
             compatErrorLog("compat100 legacy system_server hooks failed: "
+                    + throwable.getClass().getName() + ": " + throwable.getMessage());
+        }
+    }
+
+    private static void installTypefaceOverrideHook(String packageName,
+                                                    String targetTypefaceId,
+                                                    DpiConfigStore store) {
+        try {
+            Compat100TypefaceOverrideHookInstaller.install(
+                    packageName,
+                    targetTypefaceId,
+                    store,
+                    ConfigStoreFactory.createFontLibraryForCompat100Host());
+        } catch (Throwable throwable) {
+            compatErrorLog("compat100 legacy typeface override hook failed: "
                     + throwable.getClass().getName() + ": " + throwable.getMessage());
         }
     }

@@ -73,13 +73,11 @@
             </FrameLayout>
         </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton android:id="@+id/dialog_font_hook_domains_button" style="@style/Widget.Dpis.DialogActionButton.Outlined" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:minWidth="0dp" android:text="@string/dialog_font_hook_domains_title" />
+        <LinearLayout android:id="@+id/dialog_typeface_row" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:baselineAligned="false" android:gravity="center_vertical" android:minHeight="@dimen/dialog_mode_toggle_row_min_height" android:orientation="horizontal">
 
-        <LinearLayout android:id="@+id/dialog_typeface_row" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:gravity="center_vertical" android:minHeight="44dp" android:orientation="horizontal">
+            <com.google.android.material.button.MaterialButton android:id="@+id/dialog_typeface_selector_button" style="@style/Widget.Dpis.DialogActionButton.Outlined" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:minWidth="0dp" android:ellipsize="end" android:maxLines="1" android:paddingStart="16dp" android:paddingEnd="16dp" android:text="@string/dialog_typeface_selector_value" />
 
-            <com.google.android.material.textview.MaterialTextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/dialog_typeface_label" android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
-
-            <com.google.android.material.button.MaterialButton android:id="@+id/dialog_typeface_selector_button" style="@style/Widget.Dpis.DialogActionButton.Outlined" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:minWidth="0dp" android:maxWidth="192dp" android:ellipsize="end" android:maxLines="1" android:paddingStart="16dp" android:paddingEnd="16dp" android:text="@string/dialog_typeface_default" />
+            <com.google.android.material.button.MaterialButton android:id="@+id/dialog_font_hook_domains_button" style="@style/Widget.Dpis.DialogActionButton.Outlined" android:layout_width="@dimen/dialog_mode_toggle_width" android:layout_height="wrap_content" android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start" android:minWidth="0dp" android:ellipsize="end" android:maxLines="1" android:paddingStart="12dp" android:paddingEnd="12dp" android:text="@string/dialog_font_hook_domains_title" />
         </LinearLayout>
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal">

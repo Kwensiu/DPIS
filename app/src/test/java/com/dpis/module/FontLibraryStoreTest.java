@@ -252,8 +252,84 @@ public final class FontLibraryStoreTest {
 
         FontLibraryEntry roundTripped = store.findById(entry.id);
         assertNotNull(roundTripped);
-        assertEquals(sourceFileName, roundTripped.displayName);
+        assertEquals("Display Font.ttf", roundTripped.displayName);
         assertEquals(sourceFileName, roundTripped.sourceFileName);
+    }
+
+    @Test
+    public void registersImportedFontWithCustomDisplayName() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
+
+        FontLibraryEntry entry = store.registerCopiedFont(
+                writeFile("Source.ttf", "fake-font-data"),
+                "Source.ttf",
+                "Friendly Name",
+                1234L);
+
+        assertEquals("Friendly Name", entry.displayName);
+        assertEquals("Source.ttf", entry.sourceFileName);
+    }
+
+    @Test
+    public void importedDisplayNamesAreUnique() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
+        store.registerCopiedFont(writeFile("One.ttf", "one"), "One.ttf", "Friendly", 1L);
+
+        FontLibraryEntry second = store.registerCopiedFont(
+                writeFile("Two.ttf", "two"),
+                "Two.ttf",
+                "friendly",
+                2L);
+
+        assertEquals("friendly (2)", second.displayName);
+    }
+
+    @Test
+    public void renamesImportedFontWhenNameIsUnique() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
+        FontLibraryEntry entry = store.registerCopiedFontForTest(
+                writeFile("Example.ttf", "fake-font-data"),
+                "Example.ttf",
+                1234L);
+
+        FontLibraryStore.RenameResult result = store.renameFont(entry.id, "Display Name");
+
+        assertSame(FontLibraryStore.RenameResult.RENAMED, result);
+        assertEquals("Display Name", store.findById(entry.id).displayName);
+    }
+
+    @Test
+    public void renameRejectsDuplicateDisplayName() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
+        store.registerCopiedFont(writeFile("One.ttf", "one"), "One.ttf", "One", 1L);
+        FontLibraryEntry second = store.registerCopiedFont(
+                writeFile("Two.ttf", "two"),
+                "Two.ttf",
+                "Two",
+                2L);
+
+        FontLibraryStore.RenameResult result = store.renameFont(second.id, "one");
+
+        assertSame(FontLibraryStore.RenameResult.DUPLICATE_NAME, result);
+        assertEquals("Two", store.findById(second.id).displayName);
+    }
+
+    @Test
+    public void renameRejectsBlankDisplayName() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
+        FontLibraryEntry entry = store.registerCopiedFontForTest(
+                writeFile("Example.ttf", "fake-font-data"),
+                "Example.ttf",
+                1234L);
+
+        FontLibraryStore.RenameResult result = store.renameFont(entry.id, " \n ");
+
+        assertSame(FontLibraryStore.RenameResult.INVALID_NAME, result);
     }
 
     @Test

@@ -4,16 +4,25 @@ import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.inputmethod.EditorInfo;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+
+import androidx.appcompat.app.AlertDialog;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textview.MaterialTextView;
@@ -51,6 +60,8 @@ final class AppConfigDialogBinder {
         void showFontHookDomains(AppListItem item, Runnable onStateChanged);
 
         String getFontHookDomainsButtonText(String packageName);
+
+        void openTypefaceLibrary();
 
         int[] saveAppConfig(AppListItem item,
                 TextInputEditText viewportInput,
@@ -313,64 +324,101 @@ final class AppConfigDialogBinder {
         views.typefaceSelectorButton.setOnClickListener(v -> {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
             showTypefaceSelector(views.typefaceSelectorButton, state,
-                    () -> refreshDialogState(views, state, style, systemHooksEnabled));
+                    () -> refreshDialogState(
+                            views, state, style, systemHooksEnabled, item.packageName));
         });
     }
 
     private void bindTypefaceSelector(MaterialButton selectorButton, String selectedTypefaceId) {
-        selectorButton.setText(resolveTypefaceDisplayText(selectedTypefaceId,
-                listFontLibraryEntries()));
+        selectorButton.setText(formatTypefaceSelectorText(resolveTypefaceDisplayText(
+                selectedTypefaceId, listFontLibraryEntries())));
     }
 
     private void showTypefaceSelector(MaterialButton selectorButton,
             AppConfigDialogState state,
             Runnable onSelectionChanged) {
-        List<FontLibraryEntry> entries = listFontLibraryEntries();
-        List<String> labels = new ArrayList<>(entries.size() + 1);
-        List<String> ids = new ArrayList<>(entries.size() + 1);
-        labels.add(activity.getString(R.string.dialog_typeface_default));
-        ids.add(null);
-        int checkedItem = 0;
-        boolean selectedTypefaceMissing = state.selectedTypefaceId != null
-                && !state.selectedTypefaceId.isBlank();
-        if (selectedTypefaceMissing) {
-            boolean found = false;
-            for (FontLibraryEntry entry : entries) {
-                if (state.selectedTypefaceId.equals(entry.id)) {
-                    found = true;
-                    break;
+        boolean selectedImported = state.selectedTypefaceId != null
+                && !state.selectedTypefaceId.isBlank()
+                && !SystemFontRegistry.isSystemFontId(state.selectedTypefaceId);
+        View root = LayoutInflater.from(activity).inflate(R.layout.dialog_typeface_selection, null, false);
+        TabLayout tabs = root.findViewById(R.id.typeface_tabs);
+        LinearLayout listView = root.findViewById(R.id.typeface_options_container);
+        MaterialButton importButton = root.findViewById(R.id.typeface_import_button);
+        MaterialButton doneButton = root.findViewById(R.id.typeface_dialog_done_button);
+        tabs.addTab(tabs.newTab().setText(R.string.dialog_typeface_tab_system));
+        tabs.addTab(tabs.newTab().setText(R.string.dialog_typeface_tab_imported));
+        AlertDialog[] dialogHolder = new AlertDialog[1];
+        Runnable showSystemFonts = () -> bindTypefaceOptionRows(
+                listView,
+                buildSystemTypefaceOptions(SystemFontRegistry.listRecommendedFonts(), state.selectedTypefaceId),
+                selectorButton,
+                state,
+                onSelectionChanged,
+                dialogHolder,
+                false);
+        Runnable showImportedFonts = () -> bindTypefaceOptionRows(
+                listView,
+                buildImportedTypefaceOptions(listFontLibraryEntries(), state.selectedTypefaceId),
+                selectorButton,
+                state,
+                onSelectionChanged,
+                dialogHolder,
+                true);
+        tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                if (tab.getPosition() == 1) {
+                    showImportedFonts.run();
+                    return;
                 }
+                showSystemFonts.run();
             }
-            if (!found) {
-                labels.add(activity.getString(R.string.dialog_typeface_missing));
-                ids.add(state.selectedTypefaceId);
-                checkedItem = 1;
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
             }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
+        });
+        importButton.setOnClickListener(v -> {
+            if (dialogHolder[0] != null) {
+                dialogHolder[0].dismiss();
+            }
+            host.openTypefaceLibrary();
+        });
+        dialogHolder[0] = new MaterialAlertDialogBuilder(activity)
+                .setView(root)
+                .create();
+        doneButton.setOnClickListener(v -> {
+            if (dialogHolder[0] != null) {
+                dialogHolder[0].dismiss();
+            }
+        });
+        dialogHolder[0].setCanceledOnTouchOutside(true);
+        dialogHolder[0].show();
+        TabLayout.Tab initialTab = tabs.getTabAt(selectedImported ? 1 : 0);
+        if (initialTab != null) {
+            initialTab.select();
         }
-        for (int i = 0; i < entries.size(); i++) {
-            FontLibraryEntry entry = entries.get(i);
-            labels.add(entry.displayName);
-            ids.add(entry.id);
-            if (entry.id.equals(state.selectedTypefaceId)) {
-                checkedItem = labels.size() - 1;
+        if (tabs.getSelectedTabPosition() == (selectedImported ? 1 : 0)) {
+            if (selectedImported) {
+                showImportedFonts.run();
+                return;
             }
+            showSystemFonts.run();
         }
-        new MaterialAlertDialogBuilder(activity)
-                .setSingleChoiceItems(labels.toArray(new CharSequence[0]), checkedItem,
-                        (dialog, which) -> {
-                            state.selectedTypefaceId = ids.get(which);
-                            selectorButton.setText(labels.get(which));
-                            if (onSelectionChanged != null) {
-                                onSelectionChanged.run();
-                            }
-                            dialog.dismiss();
-                        })
-                .show();
     }
 
     private String resolveTypefaceDisplayText(String selectedTypefaceId, List<FontLibraryEntry> entries) {
         if (selectedTypefaceId == null || selectedTypefaceId.isBlank()) {
             return activity.getString(R.string.dialog_typeface_default);
+        }
+        for (SystemFontEntry entry : SystemFontRegistry.listRecommendedFonts()) {
+            if (selectedTypefaceId.equals(entry.id)) {
+                return entry.displayName;
+            }
         }
         for (FontLibraryEntry entry : entries) {
             if (selectedTypefaceId.equals(entry.id)) {
@@ -378,6 +426,179 @@ final class AppConfigDialogBinder {
             }
         }
         return activity.getString(R.string.dialog_typeface_missing);
+    }
+
+    private List<TypefaceOption> buildSystemTypefaceOptions(
+            List<SystemFontEntry> entries,
+            String selectedTypefaceId) {
+        List<TypefaceOption> options = new ArrayList<>(entries.size() + 2);
+        options.add(new TypefaceOption(null, activity.getString(R.string.dialog_typeface_default)));
+        if (SystemFontRegistry.isSystemFontId(selectedTypefaceId)
+                && !containsSystemTypeface(entries, selectedTypefaceId)) {
+            options.add(new TypefaceOption(
+                    selectedTypefaceId,
+                    activity.getString(R.string.dialog_typeface_missing)));
+        }
+        for (SystemFontEntry entry : entries) {
+            options.add(new TypefaceOption(entry.id, entry.displayName));
+        }
+        return options;
+    }
+
+    private List<TypefaceOption> buildImportedTypefaceOptions(
+            List<FontLibraryEntry> entries,
+            String selectedTypefaceId) {
+        List<TypefaceOption> options = new ArrayList<>(entries.size() + 2);
+        options.add(new TypefaceOption(null, activity.getString(R.string.dialog_typeface_default)));
+        if (selectedTypefaceId != null
+                && !selectedTypefaceId.isBlank()
+                && !SystemFontRegistry.isSystemFontId(selectedTypefaceId)
+                && !containsImportedTypeface(entries, selectedTypefaceId)) {
+            options.add(new TypefaceOption(
+                    selectedTypefaceId,
+                    activity.getString(R.string.dialog_typeface_missing)));
+        }
+        if (entries.isEmpty()) {
+            options.add(new TypefaceOption(
+                    TypefaceOption.DISABLED_ID,
+                    activity.getString(R.string.dialog_typeface_imported_empty)));
+        }
+        for (FontLibraryEntry entry : entries) {
+            options.add(new TypefaceOption(entry.id, resolveFontOptionLabel(entry)));
+        }
+        return options;
+    }
+
+    private void bindTypefaceOptionRows(LinearLayout listView,
+            List<TypefaceOption> options,
+            MaterialButton selectorButton,
+            AppConfigDialogState state,
+            Runnable onSelectionChanged,
+            AlertDialog[] dialogHolder,
+            boolean editableImportedRows) {
+        listView.removeAllViews();
+        for (TypefaceOption option : options) {
+            View row = createTypefaceOptionRow(
+                    listView,
+                    option,
+                    option.matches(state.selectedTypefaceId),
+                    () -> {
+                if (option.isDisabled()) {
+                    return;
+                }
+                state.selectedTypefaceId = option.id;
+                selectorButton.setText(formatTypefaceSelectorText(option.label));
+                if (onSelectionChanged != null) {
+                    onSelectionChanged.run();
+                }
+                bindTypefaceOptionRows(
+                        listView,
+                        editableImportedRows
+                                ? buildImportedTypefaceOptions(listFontLibraryEntries(), state.selectedTypefaceId)
+                                : buildSystemTypefaceOptions(
+                                        SystemFontRegistry.listRecommendedFonts(), state.selectedTypefaceId),
+                        selectorButton,
+                        state,
+                        onSelectionChanged,
+                        dialogHolder,
+                        editableImportedRows);
+                    });
+            listView.addView(row, new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
+        }
+    }
+
+    private View createTypefaceOptionRow(ViewGroup parent,
+            TypefaceOption option,
+            boolean selected,
+            Runnable onSelect) {
+        FrameLayout row = new FrameLayout(activity);
+        row.setPadding(0, dpToPx(3), 0, dpToPx(3));
+        MaterialButton optionButton = createTypefaceOptionButton(parent, option.label, selected);
+        optionButton.setEnabled(!option.isDisabled());
+        optionButton.setOnClickListener(v -> onSelect.run());
+        row.addView(optionButton, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                dpToPx(44),
+                Gravity.CENTER_VERTICAL));
+        return row;
+    }
+
+    private MaterialButton createTypefaceOptionButton(
+            ViewGroup parent,
+            String text,
+            boolean selected) {
+        MaterialButton button = new MaterialButton(activity);
+        button.setText(text);
+        button.setMaxLines(1);
+        button.setEllipsize(TextUtils.TruncateAt.END);
+        button.setMinWidth(0);
+        button.setMinHeight(dpToPx(44));
+        button.setInsetTop(0);
+        button.setInsetBottom(0);
+        button.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        button.setTextAlignment(View.TEXT_ALIGNMENT_VIEW_START);
+        button.setPadding(dpToPx(16), 0, dpToPx(16), 0);
+        button.setCornerRadius(dpToPx(16));
+        button.setStrokeWidth(0);
+        int backgroundColor = selected
+                ? MaterialColors.getColor(parent, com.google.android.material.R.attr.colorSecondaryContainer)
+                : MaterialColors.getColor(parent, com.google.android.material.R.attr.colorSurfaceVariant);
+        int textColor = MaterialColors.getColor(
+                parent,
+                selected ? androidx.appcompat.R.attr.colorPrimary
+                        : com.google.android.material.R.attr.colorOnSurface);
+        button.setBackgroundTintList(ColorStateList.valueOf(backgroundColor));
+        button.setTextColor(textColor);
+        return button;
+    }
+
+    private static String resolveFontOptionLabel(FontLibraryEntry entry) {
+        String source = entry.sourceFileName != null ? entry.sourceFileName : "";
+        String display = entry.displayName != null ? entry.displayName.trim() : "";
+        if (!display.isEmpty() && !display.equals(source.trim())) {
+            return display;
+        }
+        return stripFontExtension(source);
+    }
+
+    private static String stripFontExtension(String sourceFileName) {
+        if (sourceFileName == null || sourceFileName.isBlank()) {
+            return "Imported font";
+        }
+        String trimmed = sourceFileName.trim();
+        String lower = trimmed.toLowerCase(java.util.Locale.US);
+        if (lower.endsWith(".ttf") || lower.endsWith(".otf")) {
+            return trimmed.substring(0, trimmed.length() - 4);
+        }
+        return trimmed;
+    }
+
+    private String formatTypefaceSelectorText(String displayText) {
+        return activity.getString(R.string.dialog_typeface_selector_value, displayText);
+    }
+
+    private static boolean containsSystemTypeface(List<SystemFontEntry> entries, String selectedTypefaceId) {
+        for (SystemFontEntry entry : entries) {
+            if (entry.id.equals(selectedTypefaceId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean containsImportedTypeface(List<FontLibraryEntry> entries, String selectedTypefaceId) {
+        for (FontLibraryEntry entry : entries) {
+            if (entry.id.equals(selectedTypefaceId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * activity.getResources().getDisplayMetrics().density);
     }
 
     private List<FontLibraryEntry> listFontLibraryEntries() {
@@ -816,6 +1037,29 @@ final class AppConfigDialogBinder {
             this.defaultActionBgTint = defaultActionBgTint;
             this.defaultActionStrokeWidth = defaultActionStrokeWidth;
             this.defaultActionTextColor = defaultActionTextColor;
+        }
+    }
+
+    private static final class TypefaceOption {
+        static final String DISABLED_ID = "__disabled__";
+
+        final String id;
+        final String label;
+
+        TypefaceOption(String id, String label) {
+            this.id = id;
+            this.label = label;
+        }
+
+        boolean isDisabled() {
+            return DISABLED_ID.equals(id);
+        }
+
+        boolean matches(String selectedTypefaceId) {
+            if (id == null) {
+                return selectedTypefaceId == null || selectedTypefaceId.isBlank();
+            }
+            return id.equals(selectedTypefaceId);
         }
     }
 }
