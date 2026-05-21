@@ -167,7 +167,13 @@
     <string name="font_library_import_action">Import font</string>
     <string name="font_library_empty">No imported fonts</string>
     <string name="font_library_import_success">Imported %1$s</string>
+    <string name="font_library_import_count_success">Imported %1$d faces</string>
     <string name="font_library_import_failed">Failed to import font</string>
+    <string name="font_library_ttc_select_title">选择导入 face</string>
+    <string name="font_library_ttc_selected_count">已选择 %1$d</string>
+    <string name="font_library_ttc_failed_faces">%1$d 个 face 无法导入</string>
+    <string name="font_library_ttc_select_all">Select all</string>
+    <string name="font_library_ttc_deselect_all">Deselect all</string>
     <string name="font_library_delete_action">Delete</string>
     <string name="font_library_rename_action">Rename</string>
     <string name="font_library_used_badge">In use</string>
