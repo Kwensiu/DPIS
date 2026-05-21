@@ -20,6 +20,24 @@ final class TouchFeedbackBinder {
                 DEFAULT_PRESS_ANIMATION_DURATION_MS);
     }
 
+    static void bindPressHaptic(View view) {
+        if (view == null) {
+            return;
+        }
+        view.setHapticFeedbackEnabled(true);
+        view.setOnTouchListener((pressedView, event) -> {
+            if (event == null) {
+                return false;
+            }
+            if (event.getActionMasked() == MotionEvent.ACTION_UP
+                    && pressedView.isEnabled()
+                    && isInsideView(pressedView, event)) {
+                performPressHaptic(pressedView);
+            }
+            return false;
+        });
+    }
+
     static void bindPressScaleAndHaptic(View view, float pressedScale, long animationDurationMs) {
         if (view == null) {
             return;
@@ -31,7 +49,7 @@ final class TouchFeedbackBinder {
             }
             int action = event.getActionMasked();
             if (action == MotionEvent.ACTION_DOWN) {
-                pressedView.performHapticFeedback(resolvePressHapticConstant());
+                performPressHaptic(pressedView);
                 animateScale(pressedView, pressedScale, animationDurationMs);
                 return false;
             }
@@ -51,6 +69,17 @@ final class TouchFeedbackBinder {
                 .setDuration(animationDurationMs)
                 .setInterpolator(new AccelerateDecelerateInterpolator())
                 .start();
+    }
+
+    private static void performPressHaptic(View view) {
+        view.performHapticFeedback(resolvePressHapticConstant());
+    }
+
+    private static boolean isInsideView(View view, MotionEvent event) {
+        return event.getX() >= 0
+                && event.getX() < view.getWidth()
+                && event.getY() >= 0
+                && event.getY() < view.getHeight();
     }
 
     private static int resolvePressHapticConstant() {

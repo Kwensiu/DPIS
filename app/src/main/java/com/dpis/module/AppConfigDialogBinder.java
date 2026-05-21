@@ -27,6 +27,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textview.MaterialTextView;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -330,8 +331,17 @@ final class AppConfigDialogBinder {
     }
 
     private void bindTypefaceSelector(MaterialButton selectorButton, String selectedTypefaceId) {
+        configureTypefaceSelectorMarquee(selectorButton);
         selectorButton.setText(formatTypefaceSelectorText(resolveTypefaceDisplayText(
                 selectedTypefaceId, listFontLibraryEntries())));
+    }
+
+    private void configureTypefaceSelectorMarquee(MaterialButton selectorButton) {
+        selectorButton.setSingleLine(true);
+        selectorButton.setHorizontallyScrolling(true);
+        selectorButton.setEllipsize(TextUtils.TruncateAt.MARQUEE);
+        selectorButton.setMarqueeRepeatLimit(-1);
+        selectorButton.setSelected(true);
     }
 
     private void showTypefaceSelector(MaterialButton selectorButton,
@@ -477,10 +487,12 @@ final class AppConfigDialogBinder {
             AlertDialog[] dialogHolder,
             boolean editableImportedRows) {
         listView.removeAllViews();
+        FontLibraryStore fontLibraryStore = editableImportedRows ? createFontLibraryStore() : null;
         for (TypefaceOption option : options) {
             View row = createTypefaceOptionRow(
                     listView,
                     option,
+                    resolveTypefaceOptionPreview(option, fontLibraryStore),
                     option.matches(state.selectedTypefaceId),
                     () -> {
                 if (option.isDisabled()) {
@@ -511,11 +523,13 @@ final class AppConfigDialogBinder {
 
     private View createTypefaceOptionRow(ViewGroup parent,
             TypefaceOption option,
+            Typeface previewTypeface,
             boolean selected,
             Runnable onSelect) {
         FrameLayout row = new FrameLayout(activity);
         row.setPadding(0, dpToPx(3), 0, dpToPx(3));
-        MaterialButton optionButton = createTypefaceOptionButton(parent, option.label, selected);
+        MaterialButton optionButton = createTypefaceOptionButton(
+                parent, option.label, previewTypeface, selected);
         optionButton.setEnabled(!option.isDisabled());
         optionButton.setOnClickListener(v -> onSelect.run());
         row.addView(optionButton, new FrameLayout.LayoutParams(
@@ -528,9 +542,13 @@ final class AppConfigDialogBinder {
     private MaterialButton createTypefaceOptionButton(
             ViewGroup parent,
             String text,
+            Typeface previewTypeface,
             boolean selected) {
         MaterialButton button = new MaterialButton(activity);
         button.setText(text);
+        if (previewTypeface != null) {
+            button.setTypeface(previewTypeface);
+        }
         button.setMaxLines(1);
         button.setEllipsize(TextUtils.TruncateAt.END);
         button.setMinWidth(0);
@@ -552,6 +570,27 @@ final class AppConfigDialogBinder {
         button.setBackgroundTintList(ColorStateList.valueOf(backgroundColor));
         button.setTextColor(textColor);
         return button;
+    }
+
+    private Typeface resolveTypefaceOptionPreview(TypefaceOption option, FontLibraryStore fontLibraryStore) {
+        if (option == null || option.id == null || option.id.isBlank() || option.isDisabled()) {
+            return null;
+        }
+        if (SystemFontRegistry.isSystemFontId(option.id)) {
+            return SystemFontRegistry.loadTypeface(option.id);
+        }
+        if (fontLibraryStore == null) {
+            return null;
+        }
+        File fontFile = fontLibraryStore.resolveFontFile(option.id);
+        if (fontFile == null) {
+            return null;
+        }
+        try {
+            return Typeface.createFromFile(fontFile);
+        } catch (RuntimeException ignored) {
+            return null;
+        }
     }
 
     private static String resolveFontOptionLabel(FontLibraryEntry entry) {
@@ -602,9 +641,12 @@ final class AppConfigDialogBinder {
     }
 
     private List<FontLibraryEntry> listFontLibraryEntries() {
-        FontLibraryStore fontLibraryStore = ConfigStoreFactory.createFontLibraryForModuleApp(
+        return createFontLibraryStore().listFonts();
+    }
+
+    private FontLibraryStore createFontLibraryStore() {
+        return ConfigStoreFactory.createFontLibraryForModuleApp(
                 activity, DpisApplication.getXposedService());
-        return fontLibraryStore.listFonts();
     }
 
     private static String normalizeTypefaceId(String typefaceId) {

@@ -175,6 +175,11 @@
     <string name="font_library_name_hint">显示名称</string>
     <string name="font_library_delete_title">删除字体？</string>
     <string name="font_library_delete_message">从字体库中删除“%1$s”？</string>
+    <string name="font_library_delete_in_use_message">“%1$s”正在被 %2$d 个应用使用。\n删除后这些应用的字体样式将恢复为系统默认。</string>
+    <string name="font_library_restore_default_action">恢复默认</string>
+    <string name="font_library_restore_app_font_title">恢复默认字体？</string>
+    <string name="font_library_restore_app_font_message">将“%1$s”的字体样式恢复为系统默认？</string>
+    <string name="font_library_restore_app_font_failed">恢复应用字体失败</string>
     <string name="font_library_name_invalid">字体名称无效</string>
     <string name="font_library_name_duplicate">字体名称已存在</string>
     <string name="font_library_delete_failed">删除字体失败</string>

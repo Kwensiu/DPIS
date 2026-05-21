@@ -9,6 +9,7 @@ import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,6 +41,8 @@ import java.util.Locale;
 
 public final class FontLibraryActivity extends LocalizedActivity {
     private static final int REQUEST_IMPORT_FONT = 2001;
+    private static final String FONT_PREVIEW_PRIMARY_TEXT = "AaBbCc 你好世界 123";
+    private static final String FONT_PREVIEW_SECONDARY_TEXT = "The quick brown fox jumps over the lazy dog";
 
     private LinearLayout listView;
     private MaterialTextView emptyView;
@@ -58,6 +61,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
         listView = findViewById(R.id.font_library_list);
         emptyView = findViewById(R.id.font_library_empty);
         AppCompatImageButton backButton = findViewById(R.id.font_library_back_button);
+        TouchFeedbackBinder.bindPressHaptic(backButton);
         backButton.setOnClickListener(v -> finish());
         FloatingActionButton importFab = findViewById(R.id.font_library_import_fab);
         TouchFeedbackBinder.bindPressScaleAndHaptic(importFab);
@@ -129,6 +133,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
         card.setRadius(dp(20));
         card.setClickable(true);
         card.setFocusable(true);
+        TouchFeedbackBinder.bindPressHaptic(card);
         card.setOnClickListener(v -> showFontDetails(entry));
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -154,8 +159,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
 
         MaterialTextView title = new MaterialTextView(this);
         title.setText(resolveFontTitle(entry));
-        title.setSingleLine(true);
-        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        configureSingleLine(title);
         title.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_TitleMedium);
         title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         titleRow.addView(title, new LinearLayout.LayoutParams(
@@ -168,12 +172,31 @@ public final class FontLibraryActivity extends LocalizedActivity {
 
         MaterialTextView subtitle = new MaterialTextView(this);
         subtitle.setText(entry.sourceFileName);
-        subtitle.setSingleLine(true);
-        subtitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        configureSingleLine(subtitle);
         subtitle.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
         subtitle.setTextColor(MaterialColors.getColor(
                 listView, com.google.android.material.R.attr.colorOnSurfaceVariant));
         textGroup.addView(subtitle);
+
+        File fontFile = fontLibraryStore.resolveFontFile(entry.id);
+        if (fontFile != null) {
+            textGroup.addView(createDivider(8));
+
+            MaterialTextView preview = new MaterialTextView(this);
+            preview.setText(FONT_PREVIEW_PRIMARY_TEXT);
+            preview.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+            Typeface previewTypeface = loadTypeface(fontFile);
+            if (previewTypeface != null) {
+                preview.setTypeface(previewTypeface);
+            }
+            configureSingleLine(preview);
+            preview.setTextColor(MaterialColors.getColor(
+                    listView, com.google.android.material.R.attr.colorOnSurface));
+            LinearLayout.LayoutParams previewParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            previewParams.topMargin = dp(8);
+            textGroup.addView(preview, previewParams);
+        }
 
         return card;
     }
@@ -205,56 +228,206 @@ public final class FontLibraryActivity extends LocalizedActivity {
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         int padding = dp(20);
-        content.setPadding(padding, dp(8), padding, 0);
+        content.setPadding(padding, dp(20), padding, 0);
 
-        MaterialTextView title = new MaterialTextView(this);
-        title.setText(resolveFontTitle(entry));
-        title.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_TitleMedium);
-        title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        content.addView(title);
+        content.addView(createFontDetailHeader(entry, !references.isEmpty()));
 
-        MaterialTextView subtitle = new MaterialTextView(this);
-        subtitle.setText(entry.sourceFileName);
-        subtitle.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-        subtitle.setTextColor(MaterialColors.getColor(
-                listView, com.google.android.material.R.attr.colorOnSurfaceVariant));
-        content.addView(subtitle);
+        File detailFontFile = fontLibraryStore.resolveFontFile(entry.id);
+        if (detailFontFile != null) {
+            content.addView(createDivider(18));
+            content.addView(createFontPreview(detailFontFile), topMarginParams(14));
+        }
 
-        MaterialTextView referencesTitle = new MaterialTextView(this);
-        referencesTitle.setText(R.string.font_library_used_by_title);
-        referencesTitle.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelLarge);
-        LinearLayout.LayoutParams refTitleParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        refTitleParams.topMargin = dp(16);
-        content.addView(referencesTitle, refTitleParams);
+        content.addView(createDivider(18));
+        androidx.appcompat.app.AlertDialog[] dialogHolder = new androidx.appcompat.app.AlertDialog[1];
+        content.addView(createReferenceSection(entry, references, dialogHolder), topMarginParams(14));
 
-        MaterialTextView referencesText = new MaterialTextView(this);
-        referencesText.setText(formatReferenceList(references));
-        referencesText.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-        referencesText.setTextColor(MaterialColors.getColor(
-                listView, com.google.android.material.R.attr.colorOnSurfaceVariant));
-        content.addView(referencesText);
-
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.font_library_detail_title)
+        dialogHolder[0] = new MaterialAlertDialogBuilder(this)
                 .setView(content)
                 .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
                 .setNeutralButton(R.string.font_library_rename_action, null)
                 .setPositiveButton(R.string.font_library_delete_action, null)
                 .create();
+        androidx.appcompat.app.AlertDialog dialog = dialogHolder[0];
         dialog.setOnShowListener(d -> {
+            bindDialogButtonHaptics(dialog);
             dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL)
                     .setOnClickListener(v -> promptRename(entry, dialog));
             dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
                     .setOnClickListener(v -> {
                         if (!references.isEmpty()) {
-                            showToast(R.string.font_library_delete_in_use);
+                            confirmForceDelete(entry, references, dialog);
                             return;
                         }
                         confirmDelete(entry, dialog);
                     });
         });
         dialog.show();
+    }
+
+    private View createFontDetailHeader(FontLibraryEntry entry, boolean inUse) {
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.TOP);
+        header.setBaselineAligned(false);
+
+        LinearLayout textGroup = new LinearLayout(this);
+        textGroup.setOrientation(LinearLayout.VERTICAL);
+
+        MaterialTextView title = new MaterialTextView(this);
+        title.setText(resolveFontTitle(entry));
+        configureSingleLine(title);
+        title.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_TitleMedium);
+        title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        textGroup.addView(title);
+
+        MaterialTextView subtitle = new MaterialTextView(this);
+        subtitle.setText(entry.sourceFileName);
+        configureSingleLine(subtitle);
+        subtitle.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+        subtitle.setTextColor(MaterialColors.getColor(
+                listView, com.google.android.material.R.attr.colorOnSurfaceVariant));
+        textGroup.addView(subtitle);
+
+        header.addView(textGroup, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        if (inUse) {
+            header.addView(createUsedBadge());
+        }
+        return header;
+    }
+
+    private View createFontPreview(File fontFile) {
+        LinearLayout previewGroup = new LinearLayout(this);
+        previewGroup.setOrientation(LinearLayout.VERTICAL);
+
+        Typeface previewTypeface = loadTypeface(fontFile);
+
+        MaterialTextView primary = new MaterialTextView(this);
+        primary.setText(FONT_PREVIEW_PRIMARY_TEXT);
+        configureSingleLine(primary);
+        primary.setTextSize(TypedValue.COMPLEX_UNIT_SP, 24);
+        primary.setTextColor(MaterialColors.getColor(
+                listView, com.google.android.material.R.attr.colorOnSurface));
+        if (previewTypeface != null) {
+            primary.setTypeface(previewTypeface);
+        }
+        previewGroup.addView(primary);
+
+        MaterialTextView secondary = new MaterialTextView(this);
+        secondary.setText(FONT_PREVIEW_SECONDARY_TEXT);
+        configureSingleLine(secondary);
+        secondary.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        secondary.setTextColor(MaterialColors.getColor(
+                listView, com.google.android.material.R.attr.colorOnSurfaceVariant));
+        if (previewTypeface != null) {
+            secondary.setTypeface(previewTypeface);
+        }
+        previewGroup.addView(secondary, topMarginParams(8));
+        return previewGroup;
+    }
+
+    private View createReferenceSection(FontLibraryEntry entry,
+            List<FontReference> references,
+            androidx.appcompat.app.AlertDialog[] dialogHolder) {
+        LinearLayout section = new LinearLayout(this);
+        section.setOrientation(LinearLayout.VERTICAL);
+
+        MaterialTextView title = new MaterialTextView(this);
+        title.setText(getString(R.string.font_library_used_by_title) + " · " + references.size());
+        title.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelLarge);
+        section.addView(title);
+
+        if (references.isEmpty()) {
+            MaterialTextView empty = new MaterialTextView(this);
+            empty.setText(R.string.font_library_unused);
+            empty.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+            empty.setTextColor(MaterialColors.getColor(
+                    listView, com.google.android.material.R.attr.colorOnSurfaceVariant));
+            section.addView(empty, topMarginParams(8));
+            return section;
+        }
+
+        for (FontReference reference : references) {
+            section.addView(createReferenceRow(entry, reference, dialogHolder), topMarginParams(8));
+        }
+        return section;
+    }
+
+    private View createReferenceRow(FontLibraryEntry entry,
+            FontReference reference,
+            androidx.appcompat.app.AlertDialog[] dialogHolder) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setClickable(true);
+        row.setFocusable(true);
+        row.setBackgroundResource(resolveSelectableItemBackground());
+        row.setPadding(dp(8), dp(6), dp(8), dp(6));
+        TouchFeedbackBinder.bindPressHaptic(row);
+        row.setOnClickListener(v -> confirmClearAppTypeface(entry, reference, dialogHolder[0]));
+
+        MaterialTextView label = new MaterialTextView(this);
+        label.setText(reference.label);
+        configureSingleLine(label);
+        label.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+        label.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        row.addView(label);
+
+        MaterialTextView packageName = new MaterialTextView(this);
+        packageName.setText(reference.packageName);
+        configureSingleLine(packageName);
+        packageName.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall);
+        packageName.setTextColor(MaterialColors.getColor(
+                listView, com.google.android.material.R.attr.colorOnSurfaceVariant));
+        row.addView(packageName, topMarginParams(2));
+        return row;
+    }
+
+    private View createDivider(int topMarginDp) {
+        View divider = new View(this);
+        divider.setBackgroundColor(MaterialColors.getColor(
+                listView, com.google.android.material.R.attr.colorOutlineVariant));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, dp(1)));
+        params.topMargin = dp(topMarginDp);
+        divider.setLayoutParams(params);
+        return divider;
+    }
+
+    private void configureSingleLine(MaterialTextView textView) {
+        textView.setSingleLine(true);
+        textView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+    }
+
+    private int resolveSelectableItemBackground() {
+        TypedValue outValue = new TypedValue();
+        getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+        return outValue.resourceId;
+    }
+
+    private Typeface loadTypeface(File fontFile) {
+        try {
+            return Typeface.createFromFile(fontFile);
+        } catch (RuntimeException ignored) {
+            return null;
+        }
+    }
+
+    private LinearLayout.LayoutParams topMarginParams(int topMarginDp) {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.topMargin = dp(topMarginDp);
+        return params;
+    }
+
+    private void bindDialogButtonHaptics(androidx.appcompat.app.AlertDialog dialog) {
+        TouchFeedbackBinder.bindPressHaptic(
+                dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE));
+        TouchFeedbackBinder.bindPressHaptic(
+                dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL));
+        TouchFeedbackBinder.bindPressHaptic(
+                dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE));
     }
 
     private void promptRename(FontLibraryEntry entry, androidx.appcompat.app.AlertDialog parentDialog) {
@@ -266,8 +439,9 @@ public final class FontLibraryActivity extends LocalizedActivity {
                 .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
                 .setPositiveButton(R.string.dialog_confirm_button, null)
                 .create();
-        dialog.setOnShowListener(d -> dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
-                .setOnClickListener(v -> {
+        dialog.setOnShowListener(d -> {
+            bindDialogButtonHaptics(dialog);
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
                     String displayName = input != null && input.getText() != null
                             ? input.getText().toString()
                             : "";
@@ -279,22 +453,104 @@ public final class FontLibraryActivity extends LocalizedActivity {
                     parentDialog.dismiss();
                     dialog.dismiss();
                     refreshFontList();
-                }));
+                });
+        });
         dialog.show();
     }
 
     private void confirmDelete(FontLibraryEntry entry, androidx.appcompat.app.AlertDialog parentDialog) {
-        new MaterialAlertDialogBuilder(this)
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.font_library_delete_title)
                 .setMessage(getString(R.string.font_library_delete_message, resolveFontTitle(entry)))
                 .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
-                .setPositiveButton(R.string.font_library_delete_action, (dialog, which) -> {
+                .setPositiveButton(R.string.font_library_delete_action, (unusedDialog, which) -> {
                     FontLibraryStore.DeleteResult result = fontLibraryStore.deleteFont(entry.id, configStore);
                     handleDeleteResult(result);
                     parentDialog.dismiss();
                     refreshFontList();
                 })
-                .show();
+                .create();
+        dialog.setOnShowListener(d -> bindDialogButtonHaptics(dialog));
+        dialog.show();
+    }
+
+    private void confirmForceDelete(FontLibraryEntry entry,
+            List<FontReference> references,
+            androidx.appcompat.app.AlertDialog parentDialog) {
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.font_library_delete_title)
+                .setMessage(getString(
+                        R.string.font_library_delete_in_use_message,
+                        resolveFontTitle(entry),
+                        references.size()))
+                .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
+                .setPositiveButton(R.string.font_library_delete_action, (unusedDialog, which) -> {
+                    FontLibraryStore.DeleteResult result = forceDeleteFont(entry, references);
+                    handleDeleteResult(result);
+                    if (result == FontLibraryStore.DeleteResult.DELETED) {
+                        parentDialog.dismiss();
+                        refreshFontList();
+                    }
+                })
+                .create();
+        dialog.setOnShowListener(d -> bindDialogButtonHaptics(dialog));
+        dialog.show();
+    }
+
+    private FontLibraryStore.DeleteResult forceDeleteFont(FontLibraryEntry entry, List<FontReference> references) {
+        List<String> clearedPackages = new ArrayList<>();
+        for (FontReference reference : references) {
+            if (!configStore.clearTargetTypefaceId(reference.packageName)) {
+                restoreTypefaceReferences(clearedPackages, entry.id);
+                return FontLibraryStore.DeleteResult.DELETE_FAILED;
+            }
+            clearedPackages.add(reference.packageName);
+        }
+
+        FontLibraryStore.DeleteResult result = fontLibraryStore.deleteFont(entry.id, configStore);
+        if (result != FontLibraryStore.DeleteResult.DELETED) {
+            restoreTypefaceReferences(clearedPackages, entry.id);
+            publishTypefaceReferences(clearedPackages, entry.id);
+        } else {
+            publishTypefaceReferences(clearedPackages, null);
+        }
+        return result;
+    }
+
+    private void restoreTypefaceReferences(List<String> packageNames, String typefaceId) {
+        for (String packageName : packageNames) {
+            configStore.setTargetTypefaceId(packageName, typefaceId);
+        }
+    }
+
+    private void publishTypefaceReferences(List<String> packageNames, String typefaceId) {
+        for (String packageName : packageNames) {
+            FontRuntimePropertySyncer.publishTypefaceTargetAsync(packageName, typefaceId);
+        }
+    }
+
+    private void confirmClearAppTypeface(FontLibraryEntry entry,
+            FontReference reference,
+            androidx.appcompat.app.AlertDialog parentDialog) {
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.font_library_restore_app_font_title)
+                .setMessage(getString(R.string.font_library_restore_app_font_message, reference.label))
+                .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
+                .setPositiveButton(R.string.font_library_restore_default_action, (unusedDialog, which) -> {
+                    if (!configStore.clearTargetTypefaceId(reference.packageName)) {
+                        showToast(R.string.font_library_restore_app_font_failed);
+                        return;
+                    }
+                    FontRuntimePropertySyncer.publishTypefaceTargetAsync(reference.packageName, null);
+                    refreshFontList();
+                    if (parentDialog != null) {
+                        parentDialog.dismiss();
+                    }
+                    showFontDetails(entry);
+                })
+                .create();
+        dialog.setOnShowListener(d -> bindDialogButtonHaptics(dialog));
+        dialog.show();
     }
 
     @SuppressWarnings("deprecation")
@@ -432,23 +688,6 @@ public final class FontLibraryActivity extends LocalizedActivity {
             // Fall back to package name for uninstalled or hidden apps.
         }
         return packageName;
-    }
-
-    private String formatReferenceList(List<FontReference> references) {
-        if (references.isEmpty()) {
-            return getString(R.string.font_library_unused);
-        }
-        StringBuilder builder = new StringBuilder();
-        for (FontReference reference : references) {
-            if (builder.length() > 0) {
-                builder.append('\n');
-            }
-            builder.append(reference.label)
-                    .append(" (")
-                    .append(reference.packageName)
-                    .append(')');
-        }
-        return builder.toString();
     }
 
     private void handleRenameResult(FontLibraryStore.RenameResult result) {

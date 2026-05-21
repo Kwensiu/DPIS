@@ -175,6 +175,11 @@
     <string name="font_library_name_hint">Display name</string>
     <string name="font_library_delete_title">Delete font?</string>
     <string name="font_library_delete_message">Delete “%1$s” from the font library?</string>
+    <string name="font_library_delete_in_use_message">“%1$s” is used by %2$d apps.\nDeleting it will reset those apps to the system default font.</string>
+    <string name="font_library_restore_default_action">Reset</string>
+    <string name="font_library_restore_app_font_title">Reset app font?</string>
+    <string name="font_library_restore_app_font_message">Reset %1$s to the system default font?</string>
+    <string name="font_library_restore_app_font_failed">Failed to reset app font</string>
     <string name="font_library_name_invalid">Font name is invalid.</string>
     <string name="font_library_name_duplicate">Font name already exists.</string>
     <string name="font_library_delete_failed">Failed to delete font</string>
