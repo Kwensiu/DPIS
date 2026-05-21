@@ -29,6 +29,7 @@ final class FontLibraryStore {
     private static final String JSON_STORED_PATH = "storedPath";
     private static final String JSON_SHA256 = "sha256";
     private static final String JSON_IMPORTED_AT_EPOCH_MS = "importedAtEpochMs";
+    private static final String JSON_TTC_INDEX = "ttcIndex";
 
     private final SharedPreferences preferences;
     private final File fontDirectory;
@@ -108,7 +109,9 @@ final class FontLibraryStore {
             return DeleteResult.DELETE_FAILED;
         }
         File file = new File(entry.storedPath);
-        if (file.exists() && !deleteStoredFile(file)) {
+        if (file.exists()
+                && !hasRemainingPathReference(remainingEntries, entry.storedPath)
+                && !deleteStoredFile(file)) {
             writeEntries(originalEntries);
             return DeleteResult.DELETE_FAILED;
         }
@@ -143,16 +146,24 @@ final class FontLibraryStore {
             String sourceFileName,
             String requestedDisplayName,
             long importedAtEpochMs) throws IOException {
-        Objects.requireNonNull(sourceFile, "sourceFile");
-        Objects.requireNonNull(fontDirectory, "fontDirectory");
-        if (!fontDirectory.exists() && !fontDirectory.mkdirs()) {
-            throw new IOException("Unable to create font directory: " + fontDirectory);
-        }
-        if (!fontDirectory.isDirectory()) {
-            throw new IOException("Font directory is not a directory: " + fontDirectory);
-        }
+        return registerCopiedFont(
+                sourceFile,
+                sourceFileName,
+                requestedDisplayName,
+                importedAtEpochMs,
+                null);
+    }
 
-        String extension = resolveFontExtension(sourceFileName);
+    synchronized FontLibraryEntry registerCopiedFont(
+            File sourceFile,
+            String sourceFileName,
+            String requestedDisplayName,
+            long importedAtEpochMs,
+            FontFileKind kind) throws IOException {
+        Objects.requireNonNull(sourceFile, "sourceFile");
+        ensureFontDirectory();
+
+        String extension = kind == null ? resolveFontExtension(sourceFileName) : kind.extension;
         File tempFile = File.createTempFile("font_import_", extension, fontDirectory);
         String sha256 = copyAndDigest(sourceFile, tempFile);
 
@@ -196,6 +207,97 @@ final class FontLibraryStore {
         return entry;
     }
 
+    synchronized List<FontLibraryEntry> registerCopiedFontFaces(
+            File sourceFile,
+            String sourceFileName,
+            String requestedDisplayName,
+            FontFileKind kind,
+            List<Integer> ttcIndexes,
+            long importedAtEpochMs) throws IOException {
+        if (kind != FontFileKind.TTC) {
+            return List.of(registerCopiedFont(
+                    sourceFile,
+                    sourceFileName,
+                    requestedDisplayName,
+                    importedAtEpochMs,
+                    kind));
+        }
+        Objects.requireNonNull(sourceFile, "sourceFile");
+        Objects.requireNonNull(ttcIndexes, "ttcIndexes");
+        if (ttcIndexes.isEmpty()) {
+            return List.of();
+        }
+        ensureFontDirectory();
+        File tempFile = File.createTempFile("font_import_", FontFileKind.TTC.extension, fontDirectory);
+        String sha256 = copyAndDigest(sourceFile, tempFile);
+        List<FontLibraryEntry> entries = readEntries();
+        List<FontLibraryEntry> result = new ArrayList<>();
+        List<Integer> missingIndexes = new ArrayList<>();
+        for (Integer index : ttcIndexes) {
+            if (index == null || index < 0) {
+                continue;
+            }
+            FontLibraryEntry existing = findExistingTtcEntry(entries, sha256, index);
+            if (existing != null) {
+                result.add(existing);
+                continue;
+            }
+            if (!missingIndexes.contains(index)) {
+                missingIndexes.add(index);
+            }
+        }
+        if (missingIndexes.isEmpty()) {
+            tempFile.delete();
+            return result;
+        }
+
+        String baseId = FONT_ID_PREFIX + sha256.substring(0, 16);
+        File targetFile = findExistingStoredFileForHash(entries, sha256);
+        File stagingFile = null;
+        if (targetFile == null) {
+            stagingFile = new File(fontDirectory, baseId + FontFileKind.TTC.extension);
+            if (stagingFile.exists() && !stagingFile.delete()) {
+                tempFile.delete();
+                throw new IOException("Unable to replace staging font file: " + stagingFile);
+            }
+            if (!tempFile.renameTo(stagingFile)) {
+                Files.copy(tempFile.toPath(), stagingFile.toPath());
+                tempFile.delete();
+            }
+            stagingFile.setReadable(true, false);
+            targetFile = publishFontFile(stagingFile);
+        } else {
+            tempFile.delete();
+        }
+
+        List<FontLibraryEntry> originalEntries = new ArrayList<>(entries);
+        for (Integer index : missingIndexes) {
+            String id = baseId + "_ttc_" + index;
+            FontLibraryEntry entry = new FontLibraryEntry(
+                    id,
+                    makeUniqueDisplayName(entries, requestedDisplayName + " (TTC " + index + ")", null),
+                    sourceFileName,
+                    targetFile.getName(),
+                    targetFile.getAbsolutePath(),
+                    sha256,
+                    importedAtEpochMs,
+                    index);
+            entries.add(entry);
+            result.add(entry);
+        }
+        if (!writeEntries(entries)) {
+            deleteStoredFileIfUnreferenced(targetFile, originalEntries);
+            if (stagingFile != null && !targetFile.equals(stagingFile)) {
+                stagingFile.delete();
+            }
+            throw new IOException("Unable to persist font library metadata");
+        }
+        if (stagingFile != null && !targetFile.equals(stagingFile)) {
+            stagingFile.delete();
+        }
+        return result;
+    }
+
     synchronized RenameResult renameFont(String id, String requestedDisplayName) {
         String displayName = sanitizeDisplayName(requestedDisplayName);
         if (displayName == null) {
@@ -219,7 +321,8 @@ final class FontLibraryStore {
                         entry.storedFileName,
                         entry.storedPath,
                         entry.sha256,
-                        entry.importedAtEpochMs));
+                        entry.importedAtEpochMs,
+                        entry.ttcIndex));
             } else {
                 updatedEntries.add(entry);
             }
@@ -251,6 +354,16 @@ final class FontLibraryStore {
         return publicFile;
     }
 
+    private void ensureFontDirectory() throws IOException {
+        Objects.requireNonNull(fontDirectory, "fontDirectory");
+        if (!fontDirectory.exists() && !fontDirectory.mkdirs()) {
+            throw new IOException("Unable to create font directory: " + fontDirectory);
+        }
+        if (!fontDirectory.isDirectory()) {
+            throw new IOException("Font directory is not a directory: " + fontDirectory);
+        }
+    }
+
     private boolean isReferenced(String id, DpiConfigStore configStore) {
         if (configStore == null) {
             return false;
@@ -266,6 +379,49 @@ final class FontLibraryStore {
     private static File resolveStoredFile(FontLibraryEntry entry) {
         File file = new File(entry.storedPath);
         return file.isFile() ? file : null;
+    }
+
+    private static FontLibraryEntry findExistingTtcEntry(
+            List<FontLibraryEntry> entries,
+            String sha256,
+            int ttcIndex) {
+        for (FontLibraryEntry entry : entries) {
+            if (sha256.equals(entry.sha256)
+                    && entry.ttcIndex == ttcIndex
+                    && resolveStoredFile(entry) != null) {
+                return entry;
+            }
+        }
+        return null;
+    }
+
+    private static File findExistingStoredFileForHash(List<FontLibraryEntry> entries, String sha256) {
+        for (FontLibraryEntry entry : entries) {
+            if (sha256.equals(entry.sha256)) {
+                File file = resolveStoredFile(entry);
+                if (file != null) {
+                    return file;
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean hasRemainingPathReference(List<FontLibraryEntry> entries, String storedPath) {
+        for (FontLibraryEntry entry : entries) {
+            if (storedPath.equals(entry.storedPath)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void deleteStoredFileIfUnreferenced(File file, List<FontLibraryEntry> entries) {
+        if (file != null
+                && file.exists()
+                && !hasRemainingPathReference(entries, file.getAbsolutePath())) {
+            deleteStoredFile(file);
+        }
     }
 
     private List<FontLibraryEntry> readEntries() {
@@ -321,6 +477,14 @@ final class FontLibraryStore {
         } catch (NumberFormatException ignored) {
             return null;
         }
+        int ttcIndex = 0;
+        if (object.containsKey(JSON_TTC_INDEX)) {
+            try {
+                ttcIndex = Math.max(0, Integer.parseInt(object.get(JSON_TTC_INDEX)));
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
         return new FontLibraryEntry(
                 id,
                 displayName,
@@ -328,7 +492,8 @@ final class FontLibraryStore {
                 storedFileName,
                 storedPath,
                 sha256,
-                importedAtEpochMs);
+                importedAtEpochMs,
+                ttcIndex);
     }
 
     private static String toJson(FontLibraryEntry entry) {
@@ -339,7 +504,8 @@ final class FontLibraryStore {
                 + jsonPair(JSON_STORED_FILE_NAME, entry.storedFileName) + ","
                 + jsonPair(JSON_STORED_PATH, entry.storedPath) + ","
                 + jsonPair(JSON_SHA256, entry.sha256) + ","
-                + quote(JSON_IMPORTED_AT_EPOCH_MS) + ":" + entry.importedAtEpochMs
+                + quote(JSON_IMPORTED_AT_EPOCH_MS) + ":" + entry.importedAtEpochMs + ","
+                + quote(JSON_TTC_INDEX) + ":" + entry.ttcIndex
                 + "}";
     }
 
