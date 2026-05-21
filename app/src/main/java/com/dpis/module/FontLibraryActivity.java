@@ -43,6 +43,9 @@ public final class FontLibraryActivity extends LocalizedActivity {
     private static final int REQUEST_IMPORT_FONT = 2001;
     private static final String FONT_PREVIEW_PRIMARY_TEXT = "AaBbCc 你好世界 123";
     private static final String FONT_PREVIEW_SECONDARY_TEXT = "The quick brown fox jumps over the lazy dog";
+    private static final int FONT_HEADER_TRUE_TYPE = 0x00010000;
+    private static final int FONT_HEADER_OPEN_TYPE = 0x4F54544F; // OTTO
+    private static final int FONT_HEADER_APPLE_TRUE_TYPE = 0x74727565; // true
 
     private LinearLayout listView;
     private MaterialTextView emptyView;
@@ -623,8 +626,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
                         resolveFontTempExtension(sourceName, mimeType),
                         getCacheDir());
                 copyUriToFile(uri, tempFile);
-                Typeface typeface = Typeface.createFromFile(tempFile);
-                if (typeface == null) {
+                if (!isSupportedFontFile(tempFile)) {
                     throw new IOException("Unable to parse font");
                 }
                 importedEntry = fontLibraryStore.registerCopiedFont(
@@ -761,6 +763,31 @@ public final class FontLibraryActivity extends LocalizedActivity {
                 || "font/otf".equals(mimeType)
                 || "application/x-font-ttf".equals(mimeType)
                 || "application/vnd.ms-opentype".equals(mimeType);
+    }
+
+    private static boolean isSupportedFontFile(File file) {
+        if (file == null || !file.isFile()) {
+            return false;
+        }
+        try (InputStream input = new java.io.FileInputStream(file)) {
+            byte[] header = new byte[4];
+            if (input.read(header) != header.length) {
+                return false;
+            }
+            int signature = ((header[0] & 0xFF) << 24)
+                    | ((header[1] & 0xFF) << 16)
+                    | ((header[2] & 0xFF) << 8)
+                    | (header[3] & 0xFF);
+            if (signature != FONT_HEADER_TRUE_TYPE
+                    && signature != FONT_HEADER_OPEN_TYPE
+                    && signature != FONT_HEADER_APPLE_TRUE_TYPE) {
+                return false;
+            }
+            Typeface.createFromFile(file);
+            return true;
+        } catch (IOException | RuntimeException error) {
+            return false;
+        }
     }
 
     private static String resolveFontTempExtension(String displayName, String mimeType) {
