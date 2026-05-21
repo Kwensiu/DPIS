@@ -92,6 +92,9 @@ final class SystemFontRegistry {
         if (font == null) {
             return null;
         }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            return null;
+        }
         File file = font.getFile();
         if (!file.canRead()) {
             return null;
