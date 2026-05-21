@@ -25,6 +25,23 @@ public class ConfigBackupCodecSourceSmokeTest {
         assertTrue(source.contains("Unsupported backup value type"));
     }
 
+    @Test
+    public void codecSupportsTypefaceIdStringEntries() throws IOException {
+        String codec = read("src/main/java/com/dpis/module/ConfigBackupCodec.java");
+        String store = read("src/main/java/com/dpis/module/DpiConfigStore.java");
+        String settings = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+
+        assertTrue(store.contains("\"font.\" + packageName + \".typeface_id\""));
+        assertTrue(settings.contains("Map<String, Object> entries = localStore.snapshotBackup();"));
+        assertTrue(settings.contains("String payload = ConfigBackupCodec.encode(entries);"));
+        assertTrue(codec.contains("encoded.put(KEY_TYPE, TYPE_STRING);"));
+        assertTrue(codec.contains("case TYPE_STRING -> encoded.optString(KEY_VALUE, \"\")"));
+        assertTrue(codec.contains("TYPE_STRING"));
+        assertTrue(settings.contains("ConfigBackupCodec.decode(payload)"));
+        assertTrue(settings.contains("localStore.replaceBackup(entries)"));
+        assertTrue(store.contains("!key.startsWith(\"font.library.\")"));
+    }
+
     private static String read(String relativePath) throws IOException {
         return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
     }

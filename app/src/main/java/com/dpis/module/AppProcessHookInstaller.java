@@ -21,6 +21,8 @@ final class AppProcessHookInstaller {
                         String viewportMode,
                         String fontMode,
                         boolean fontScaleActive,
+                        boolean typefaceActive,
+                        String targetTypefaceId,
                         boolean flutterSettingsFontEnabled,
                         boolean hyperOsNativeFlutterEnabled,
                         HookDomainOverride hookDomainOverride) throws Throwable {
@@ -52,6 +54,9 @@ final class AppProcessHookInstaller {
                 + ", builtinDomains=" + plan.builtinDomains
                 + ", unknownCustomDomains=" + plan.unknownCustomDomains
                 + ", reason={" + plan.reason.formatForLog() + "}");
+        if (typefaceActive) {
+            installTypefaceHooks(xposed, packageName, store, targetTypefaceId);
+        }
         installFromPlan(xposed, packageName, store, plan);
         if (plan.probeHooksRequested) {
             DpisLog.i("hooks installed (full): viewportEnabled=" + plan.viewportEnabled
@@ -234,6 +239,24 @@ final class AppProcessHookInstaller {
             WindowManagerProbeHookInstaller.install(xposed, packageName);
             WindowSessionProbeHookInstaller.install(xposed);
             ViewRootProbeHookInstaller.install(xposed, packageName);
+        }
+    }
+
+    static void installTypefaceHooks(XposedInterface xposed,
+                                     String packageName,
+                                     DpiConfigStore store,
+                                     String targetTypefaceId) {
+        try {
+            DpisLog.i("DPIS_FONT_STYLE install requested: package=" + packageName
+                    + ", targetTypefaceId=" + targetTypefaceId);
+            TypefaceOverrideHookInstaller.install(
+                    xposed,
+                    packageName,
+                    targetTypefaceId,
+                    store,
+                    ConfigStoreFactory.createFontLibraryForXposedHost(xposed));
+        } catch (Throwable throwable) {
+            DpisLog.e("failed to install typeface hooks: package=" + packageName, throwable);
         }
     }
 

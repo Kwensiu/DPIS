@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/font_library_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/font_library_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingTop="18dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="8dp">
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/font_library_back_button"
+                android:layout_width="@dimen/settings_back_button_size"
+                android:layout_height="@dimen/settings_back_button_size"
+                android:background="@drawable/bg_round_button_surface"
+                android:contentDescription="@string/system_settings_back"
+                android:padding="8dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_arrow_back_24"
+                app:tint="?attr/colorOnSurface" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/font_library_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:includeFontPadding="false"
+                android:text="@string/font_library_page_title"
+                android:textAppearance="@style/TextAppearance.Material3.HeadlineLarge"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <ScrollView
+            android:id="@+id/font_library_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:id="@+id/font_library_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="16dp"
+                android:paddingTop="12dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="120dp" />
+        </ScrollView>
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/font_library_empty"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:padding="24dp"
+            android:text="@string/font_library_empty"
+            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/font_library_import_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="@dimen/floating_actions_margin_end"
+        android:layout_marginBottom="@dimen/floating_actions_search_margin_bottom"
+        android:contentDescription="@string/font_library_import_action"
+        app:backgroundTint="?attr/colorPrimary"
+        app:elevation="6dp"
+        app:hoveredFocusedTranslationZ="8dp"
+        app:pressedTranslationZ="10dp"
+        app:rippleColor="@color/dpis_fab_ripple"
+        app:srcCompat="@drawable/ic_upload_file_24"
+        app:tint="?attr/colorOnPrimary" />
+</FrameLayout>

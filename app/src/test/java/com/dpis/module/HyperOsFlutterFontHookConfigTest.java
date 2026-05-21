@@ -44,6 +44,14 @@ public class HyperOsFlutterFontHookConfigTest {
     }
 
     @Test
+    public void bridgeTypefacePropertyNameUsesStablePackageHash() {
+        assertEquals("debug.dpis.typeface.a55b5fe1",
+                HyperOsFlutterFontBridge.typefacePropertyNameForPackage("com.miui.gallery"));
+        assertEquals("persist.debug.dpis.typeface.a55b5fe1",
+                HyperOsFlutterFontBridge.persistentTypefacePropertyNameForPackage("com.miui.gallery"));
+    }
+
+    @Test
     public void compat100FactoryUsesPackageSystemPropertiesWithoutExportedProvider() throws Exception {
         String factory = readSource("src/main/java/com/dpis/module/ConfigStoreFactory.java");
         String prefs = readSource("src/main/java/com/dpis/module/SystemPropertyConfigPreferences.java");
@@ -58,6 +66,7 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(prefs.contains("ViewportPropertyBridge.readCompatConfigWidthDp(packageName)"));
         assertTrue(prefs.contains("HyperOsFlutterFontBridge.readCompatFontMode(packageName)"));
         assertTrue(prefs.contains("FontHookDomainPropertyBridge.readOverride(packageName)"));
+        assertTrue(prefs.contains("HyperOsFlutterFontBridge.readTypefaceId(packageName)"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)"));
         assertTrue(app.contains("DpiConfigStore localStore = ConfigStoreFactory.createForModuleApp(this);"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(remoteStore)"));
@@ -122,6 +131,7 @@ public class HyperOsFlutterFontHookConfigTest {
                         ViewportApplyMode.OFF,
                         300,
                         FontApplyMode.FIELD_REWRITE,
+                        null,
                         false,
                         false,
                         false,

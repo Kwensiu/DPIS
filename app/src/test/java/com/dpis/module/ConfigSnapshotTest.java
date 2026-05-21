@@ -44,6 +44,18 @@ public class ConfigSnapshotTest {
     }
 
     @Test
+    public void snapshotIncludesTypefaceId() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setTargetTypefaceId("com.example.app", "font_abcd1234");
+
+        ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(store);
+        PackageConfigSnapshot packageConfig = snapshot.getPackage("com.example.app");
+
+        assertEquals("font_abcd1234", packageConfig.targetTypefaceId);
+    }
+
+    @Test
     public void configuredPackagesAreImmutable() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetViewportWidthDp("com.example.app", 360);

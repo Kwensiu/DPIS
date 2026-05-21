@@ -26,6 +26,7 @@ final class AppListVisibleSections {
                     item.viewportWidthDp,
                     item.fontScalePercent,
                     item.fontMode,
+                    item.typefaceId,
                     state)) {
                 visible.add(item);
             }

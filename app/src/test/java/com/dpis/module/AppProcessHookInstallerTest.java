@@ -2,6 +2,11 @@ package com.dpis.module;
 
 import org.junit.Test;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -258,6 +263,38 @@ public class AppProcessHookInstallerTest {
     }
 
     @Test
+    public void typefacePlanDoesNotEnableFontScaleHooks() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetTypefaceId("com.example.app", "font_abcd1234");
+
+        ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
+        AppProcessHookInstaller.FontHookPlan fontHookPlan =
+                AppProcessHookInstaller.resolveFontHookPlan(
+                        null, plan.fontScaleActive, plan.targetFontMode);
+
+        assertFalse(fontHookPlan.emulationEnabled);
+        assertFalse(fontHookPlan.fieldRewriteEnabled);
+        assertTrue(plan.typefaceEnabled);
+    }
+
+    @Test
+    public void typefaceInstallerIsIndependentFromResourcesHookGate() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+        String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+
+        assertTrue(source.contains("TypefaceOverrideHookInstaller.install("));
+        assertTrue(source.indexOf("installTypefaceHooks(xposed, packageName, store, targetTypefaceId);")
+                < source.indexOf("installFromPlan(xposed, packageName, store, plan);"));
+        assertTrue(moduleMain.contains("packagePlan.targetTypefaceId"));
+        assertTrue(moduleMain.contains("retryTypefaceHooksWithPackageReady"));
+        assertTrue(moduleMain.contains("AppProcessHookInstaller.installTypefaceHooks("));
+        assertTrue(source.contains("failed to install typeface hooks: package="));
+        assertFalse(source.contains("HookExecutionPlanner.buildPlan("
+                + "policy, packageName, viewportConfigured, viewportMode, fontScaleActive, fontMode,"
+                + " typefaceActive"));
+    }
+
+    @Test
     public void skipsProbeHookPathWhenSafetyModeEnabled() throws Exception {
         HookRuntimePolicy policy = createPolicy(true);
 
@@ -382,5 +419,9 @@ public class AppProcessHookInstallerTest {
         }
         return new String(java.nio.file.Files.readAllBytes(path),
                 java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    private static String read(String relativePath) throws IOException {
+        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
     }
 }

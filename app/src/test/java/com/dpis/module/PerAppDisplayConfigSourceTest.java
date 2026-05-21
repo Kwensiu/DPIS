@@ -75,6 +75,7 @@ public class PerAppDisplayConfigSourceTest {
                         ViewportApplyMode.FIELD_REWRITE,
                         200,
                         FontApplyMode.FIELD_REWRITE,
+                        null,
                         false,
                         false,
                         false));
@@ -102,6 +103,7 @@ public class PerAppDisplayConfigSourceTest {
                         ViewportApplyMode.OFF,
                         200,
                         FontApplyMode.FIELD_REWRITE,
+                        null,
                         false,
                         false,
                         false));
@@ -123,6 +125,7 @@ public class PerAppDisplayConfigSourceTest {
                         ViewportApplyMode.FIELD_REWRITE,
                         200,
                         FontApplyMode.FIELD_REWRITE,
+                        null,
                         false,
                         false,
                         false));

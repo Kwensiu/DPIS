@@ -3,10 +3,14 @@ package com.dpis.module;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import java.io.File;
+
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.service.XposedService;
 
 final class ConfigStoreFactory {
+    private static final File PUBLIC_FONT_DIRECTORY = new File("/data/local/tmp");
+
     private ConfigStoreFactory() {
     }
 
@@ -30,6 +34,31 @@ final class ConfigStoreFactory {
         return new DpiConfigStore(localPreferences);
     }
 
+    static FontLibraryStore createFontLibraryForModuleApp(Context context) {
+        SharedPreferences preferences =
+                context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE);
+        return new FontLibraryStore(preferences, new File(context.getFilesDir(), "fonts"),
+                PUBLIC_FONT_DIRECTORY);
+    }
+
+    static FontLibraryStore createFontLibraryForModuleApp(Context context, XposedService service) {
+        SharedPreferences localPreferences =
+                context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE);
+        SharedPreferences preferences = localPreferences;
+        if (service != null) {
+            try {
+                SharedPreferences remotePreferences = service.getRemotePreferences(DpiConfigStore.GROUP);
+                if (remotePreferences != null) {
+                    preferences = remotePreferences;
+                }
+            } catch (Throwable ignored) {
+                preferences = localPreferences;
+            }
+        }
+        return new FontLibraryStore(preferences, new File(context.getFilesDir(), "fonts"),
+                PUBLIC_FONT_DIRECTORY);
+    }
+
     static DpiConfigStore createForXposedHost(XposedInterface xposed) {
         SharedPreferences remotePreferences = null;
         if (xposed != null) {
@@ -44,6 +73,29 @@ final class ConfigStoreFactory {
         }
         return new DpiConfigStore(
                 new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpiConfigStore.GROUP));
+    }
+
+    static FontLibraryStore createFontLibraryForXposedHost(XposedInterface xposed) {
+        SharedPreferences remotePreferences = null;
+        if (xposed != null) {
+            try {
+                remotePreferences = xposed.getRemotePreferences(DpiConfigStore.GROUP);
+            } catch (Throwable ignored) {
+                // Fall back to legacy XSharedPreferences path when remote preferences are unavailable.
+            }
+        }
+        if (remotePreferences != null) {
+            return new FontLibraryStore(remotePreferences, null);
+        }
+        return new FontLibraryStore(
+                new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpiConfigStore.GROUP),
+                null);
+    }
+
+    static FontLibraryStore createFontLibraryForCompat100Host() {
+        return new FontLibraryStore(
+                new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpiConfigStore.GROUP),
+                null);
     }
 
     static DpiConfigStore createForCompat100Host() {

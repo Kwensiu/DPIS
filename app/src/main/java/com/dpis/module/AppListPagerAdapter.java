@@ -307,7 +307,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             String compactStatusText = AppStatusFormatter.formatCompact(
                     holder.status.getResources(), item.inScope, item.scopeKnown,
                     item.viewportWidthDp, item.viewportMode,
-                    item.fontScalePercent, item.fontMode, item.dpisEnabled);
+                    item.fontScalePercent, item.fontMode, item.typefaceId, item.dpisEnabled);
             boolean warnViewport = item.scopeKnown && AppStatusFormatter.shouldWarnViewportEmulation(
                     item.viewportWidthDp, item.viewportMode,
                     systemScopeSelectedSupplier.getAsBoolean(),
@@ -336,7 +336,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                 String compactStatusText = AppStatusFormatter.formatCompact(
                         holder.status.getResources(), item.inScope, item.scopeKnown,
                         item.viewportWidthDp, item.viewportMode,
-                        item.fontScalePercent, item.fontMode, item.dpisEnabled);
+                        item.fontScalePercent, item.fontMode, item.typefaceId, item.dpisEnabled);
                 boolean warnViewport = item.scopeKnown && AppStatusFormatter.shouldWarnViewportEmulation(
                         item.viewportWidthDp, item.viewportMode,
                         systemScopeSelectedSupplier.getAsBoolean(),
@@ -386,6 +386,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                         && oldItem.viewportMode.equals(newItem.viewportMode)
                         && Objects.equals(oldItem.fontScalePercent, newItem.fontScalePercent)
                         && oldItem.fontMode.equals(newItem.fontMode)
+                        && Objects.equals(oldItem.typefaceId, newItem.typefaceId)
                         && oldItem.dpisEnabled == newItem.dpisEnabled
                         && oldItem.systemApp == newItem.systemApp
                         && (oldItem.icon != null) == (newItem.icon != null);

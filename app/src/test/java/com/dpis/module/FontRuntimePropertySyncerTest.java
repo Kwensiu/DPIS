@@ -28,10 +28,22 @@ public class FontRuntimePropertySyncerTest {
 
     @Test
     public void clearTargetClearsAllFontRuntimeMirrors() {
-        assertEquals("setprop 'debug.dpis.font.a55b5fe1' '0'; "
-                        + "setprop 'debug.dpis.rustbin.a55b5fe1' '0'; "
-                        + expectedFontCommand("0", "off", "0"),
+        assertEquals(expectedClearFontScaleCommand() + "; "
+                        + expectedTypefaceCommand("0"),
                 FontRuntimePropertySyncer.buildClearTargetCommandForTest("com.miui.gallery"));
+    }
+
+    @Test
+    public void clearFontScaleTargetDoesNotClearTypefaceMirror() {
+        assertEquals(expectedClearFontScaleCommand(),
+                FontRuntimePropertySyncer.buildClearFontScaleCommandForTest("com.miui.gallery"));
+    }
+
+    @Test
+    public void typefacePublishesRuntimeMirror() {
+        assertEquals(expectedTypefaceCommand("font_abcd1234"),
+                FontRuntimePropertySyncer.buildTypefaceCommandForTest(
+                        "com.miui.gallery", "font_abcd1234"));
     }
 
     @Test
@@ -53,8 +65,12 @@ public class FontRuntimePropertySyncerTest {
         assertEquals("0", assignments[11]);
         assertEquals("persist.debug.dpis.fontmode.a55b5fe1", assignments[12]);
         assertEquals(FontApplyMode.OFF, assignments[13]);
-        assertEquals("debug.dpis.rustbin.a55b5fe1", assignments[14]);
+        assertEquals("debug.dpis.typeface.a55b5fe1", assignments[14]);
         assertEquals("0", assignments[15]);
+        assertEquals("persist.debug.dpis.typeface.a55b5fe1", assignments[16]);
+        assertEquals("0", assignments[17]);
+        assertEquals("debug.dpis.rustbin.a55b5fe1", assignments[18]);
+        assertEquals("0", assignments[19]);
     }
 
     private static String expectedFontCommand(String compatFont, String mode, String forceFont) {
@@ -64,5 +80,16 @@ public class FontRuntimePropertySyncerTest {
                 + "setprop 'persist.debug.dpis.fontmode.a55b5fe1' '" + mode + "'; "
                 + "setprop 'debug.dpis.forcefont.a55b5fe1' '" + forceFont + "'; "
                 + "setprop 'persist.debug.dpis.forcefont.a55b5fe1' '" + forceFont + "'";
+    }
+
+    private static String expectedClearFontScaleCommand() {
+        return "setprop 'debug.dpis.font.a55b5fe1' '0'; "
+                + "setprop 'debug.dpis.rustbin.a55b5fe1' '0'; "
+                + expectedFontCommand("0", "off", "0");
+    }
+
+    private static String expectedTypefaceCommand(String typefaceId) {
+        return "setprop 'debug.dpis.typeface.a55b5fe1' '" + typefaceId + "'; "
+                + "setprop 'persist.debug.dpis.typeface.a55b5fe1' '" + typefaceId + "'";
     }
 }

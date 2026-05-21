@@ -134,6 +134,16 @@ public class ModuleMainHookInstallerTest {
     }
 
     @Test
+    public void moduleMainUsesPackagePlanHookEligibilityGate() throws IOException {
+        String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+
+        assertTrue(moduleMain.contains("if (!packagePlan.shouldInstallHooks())"));
+        assertFalse(moduleMain.contains("packagePlan.targetViewportWidthDp == null"
+                + System.lineSeparator()
+                + "                && !packagePlan.fontScaleActive"));
+    }
+
+    @Test
     public void nativeFontHookUsesRustEnvironmentAsRuntimeFontSource() throws IOException {
         String nativeSource = read("src/main/cpp/dpis_native.cpp");
 

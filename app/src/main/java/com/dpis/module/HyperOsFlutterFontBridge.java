@@ -10,10 +10,12 @@ final class HyperOsFlutterFontBridge {
     // compatfont.* is non-zero only for system emulation; fontmode.* lets
     // compat100 interpret forcefont.* as field_rewrite when needed.
     private static final String COMPAT_FONT_MODE_PROPERTY_PREFIX = "debug.dpis.fontmode.";
+    private static final String TYPEFACE_PROPERTY_PREFIX = "debug.dpis.typeface.";
     private static final String RUST_BINARY_PROPERTY_PREFIX = "debug.dpis.rustbin.";
     private static final String PERSIST_FORCE_PROPERTY_PREFIX = "persist.debug.dpis.forcefont.";
     private static final String PERSIST_COMPAT_FONT_PROPERTY_PREFIX = "persist.debug.dpis.compatfont.";
     private static final String PERSIST_COMPAT_FONT_MODE_PROPERTY_PREFIX = "persist.debug.dpis.fontmode.";
+    private static final String PERSIST_TYPEFACE_PROPERTY_PREFIX = "persist.debug.dpis.typeface.";
 
     private HyperOsFlutterFontBridge() {
     }
@@ -34,6 +36,10 @@ final class HyperOsFlutterFontBridge {
         return COMPAT_FONT_MODE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
+    static String typefacePropertyNameForPackage(String packageName) {
+        return TYPEFACE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
+    }
+
     static String persistentForcePropertyNameForPackage(String packageName) {
         return PERSIST_FORCE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
@@ -44,6 +50,10 @@ final class HyperOsFlutterFontBridge {
 
     static String persistentCompatFontModePropertyNameForPackage(String packageName) {
         return PERSIST_COMPAT_FONT_MODE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
+    }
+
+    static String persistentTypefacePropertyNameForPackage(String packageName) {
+        return PERSIST_TYPEFACE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
     static Integer readForceFontScalePercent(String packageName) {
@@ -66,6 +76,19 @@ final class HyperOsFlutterFontBridge {
         return FontApplyMode.normalize(readPropertyWithPersistentFallback(
                 compatFontModePropertyNameForPackage(packageName),
                 persistentCompatFontModePropertyNameForPackage(packageName)));
+    }
+
+    static String readTypefaceId(String packageName) {
+        if (packageName == null || packageName.isEmpty()) {
+            return null;
+        }
+        String value = readPropertyWithPersistentFallback(
+                typefacePropertyNameForPackage(packageName),
+                persistentTypefacePropertyNameForPackage(packageName));
+        if (value == null || value.trim().isEmpty() || "0".equals(value.trim())) {
+            return null;
+        }
+        return value.trim();
     }
 
     private static Integer readPositiveIntProperty(String key, String persistentKey) {
@@ -146,6 +169,8 @@ final class HyperOsFlutterFontBridge {
                 persistentForcePropertyNameForPackage(packageName), "0",
                 persistentCompatFontPropertyNameForPackage(packageName), "0",
                 persistentCompatFontModePropertyNameForPackage(packageName), FontApplyMode.OFF,
+                typefacePropertyNameForPackage(packageName), "0",
+                persistentTypefacePropertyNameForPackage(packageName), "0",
                 rustBinaryPropertyNameForPackage(packageName), "0"
         };
     }

@@ -39,6 +39,57 @@ public class AppConfigDialogBinderSourceSmokeTest {
     }
 
     @Test
+    public void binder_wiresTypefaceSelector() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String saveHandler = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        String layout = read("src/main/res/layout/dialog_app_config.xml");
+        String selectorLayout = read("src/main/res/layout/dialog_typeface_selection.xml");
+
+        assertTrue(layout.contains("dialog_typeface_selector_button"));
+        assertTrue(layout.contains("@string/dialog_typeface_selector_value"));
+        assertTrue(layout.indexOf("android:id=\"@+id/dialog_typeface_selector_button\"")
+                < layout.indexOf("android:id=\"@+id/dialog_font_hook_domains_button\""));
+        assertTrue(source.contains("bindTypefaceSelector"));
+        assertTrue(source.contains("formatTypefaceSelectorText"));
+        assertTrue(source.contains("SystemFontRegistry.listRecommendedFonts()"));
+        assertTrue(source.contains("TabLayout"));
+        assertTrue(source.contains("R.layout.dialog_typeface_selection"));
+        assertTrue(source.contains("R.string.dialog_typeface_tab_system"));
+        assertTrue(source.contains("R.string.dialog_typeface_tab_imported"));
+        assertTrue(source.contains("host.openTypefaceLibrary"));
+        assertTrue(selectorLayout.contains("@string/dialog_typeface_manage_action"));
+        assertTrue(selectorLayout.contains("@string/dialog_typeface_done_action"));
+        assertTrue(source.contains("doneButton.setOnClickListener"));
+        assertFalse(source.contains("renameTypeface"));
+        assertFalse(source.contains("confirmDeleteTypeface"));
+        assertTrue(saveHandler.contains("setTargetTypefaceId"));
+        assertTrue(saveHandler.contains("clearTargetTypefaceId"));
+    }
+
+    @Test
+    public void binderTreatsSelectedTypefaceAsNativeProxyConfig() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        int activeStart = source.indexOf("private static boolean hasActiveDialogConfig");
+        int activeEnd = source.indexOf("private static void setSaveAndResetButtonsEnabled", activeStart);
+        String activeBlock = source.substring(activeStart, activeEnd);
+
+        assertTrue(activeBlock.contains("state.selectedTypefaceId"));
+    }
+
+    @Test
+    public void typefaceSelectorKeepsMissingCurrentChoiceChecked() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        int selectorStart = source.indexOf("private void showTypefaceSelector");
+        int selectorEnd = source.indexOf("private String resolveTypefaceDisplayText", selectorStart);
+        String selectorBlock = source.substring(selectorStart, selectorEnd);
+
+        assertTrue(source.contains("R.string.dialog_typeface_missing"));
+        assertTrue(source.contains("containsSystemTypeface"));
+        assertTrue(source.contains("containsImportedTypeface"));
+        assertTrue(source.contains("option.matches(state.selectedTypefaceId)"));
+    }
+
+    @Test
     public void binder_validationWatcherUpdatesSaveStateAndStatus() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
 
@@ -46,6 +97,10 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("views.fontInputView.addTextChangedListener(validationWatcher)"));
         assertTrue(source.contains("updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,"));
         assertTrue(source.contains("refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);"));
+        assertTrue(source.contains("AppStatusFormatter.formatCompact("));
+        assertTrue(source.contains("state.selectedTypefaceId"));
+        assertTrue(source.contains("showTypefaceSelector(views.typefaceSelectorButton, state,"));
+        assertTrue(source.contains("views, state, style, systemHooksEnabled, item.packageName"));
     }
 
     @Test
@@ -146,13 +201,14 @@ public class AppConfigDialogBinderSourceSmokeTest {
     }
 
     @Test
-    public void savingEmptyFontConfigClearsFontRuntimeTargets() throws IOException {
+    public void savingEmptyFontScaleClearsOnlyFontScaleRuntimeTargets() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
         int clearStart = source.indexOf("if (fontScalePercent == null)");
         int configuredStart = source.indexOf("} else {", clearStart);
         String clearBlock = source.substring(clearStart, configuredStart);
 
-        assertTrue(clearBlock.contains("FontRuntimePropertySyncer.clearTargetAsync(item.packageName)"));
+        assertTrue(clearBlock.contains("FontRuntimePropertySyncer.clearFontScaleTargetAsync(item.packageName)"));
+        assertFalse(clearBlock.contains("FontRuntimePropertySyncer.clearTargetAsync(item.packageName)"));
     }
 
     @Test
@@ -175,6 +231,15 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("fontMode,"));
         assertTrue(source.contains("FontHookDomainDecision.isHyperOsNativeFlutterEnabled("));
         assertTrue(source.contains("FontApplyMode.SYSTEM_EMULATION.equals"));
+    }
+
+    @Test
+    public void savingTypefaceConfigPublishesRuntimeTypefaceTarget() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+
+        assertTrue(source.contains("FontRuntimePropertySyncer.publishTypefaceTargetAsync(item.packageName, null)"));
+        assertTrue(source.contains(
+                "FontRuntimePropertySyncer.publishTypefaceTargetAsync(item.packageName, selectedTypefaceId)"));
     }
 
     private static String read(String relativePath) throws IOException {

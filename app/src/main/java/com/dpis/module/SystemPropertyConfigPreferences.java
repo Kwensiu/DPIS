@@ -42,6 +42,7 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
             fontScalePercent = forceFontScalePercent;
         }
         fontMode = resolveCompatFontMode(fontScalePercent, fontMode, forceFontScalePercent);
+        String typefaceId = HyperOsFlutterFontBridge.readTypefaceId(packageName);
         if (widthDp != null && widthDp > 0) {
             values.put(viewportWidthKey(), widthDp);
             values.put(viewportModeKey(), viewportMode);
@@ -53,6 +54,9 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
         if (fontScalePercent != null && fontScalePercent > 0) {
             values.put(fontScaleKey(), fontScalePercent);
             values.put(fontModeKey(), FontApplyMode.normalize(fontMode));
+        }
+        if (typefaceId != null && !typefaceId.isBlank()) {
+            values.put(typefaceIdKey(), typefaceId);
         }
         if (!values.isEmpty()) {
             HookDomainOverride override = FontHookDomainPropertyBridge.readOverride(packageName);
@@ -163,5 +167,9 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
 
     private String hookDomainsKey() {
         return "font." + packageName + ".hook_domains";
+    }
+
+    private String typefaceIdKey() {
+        return "font." + packageName + ".typeface_id";
     }
 }

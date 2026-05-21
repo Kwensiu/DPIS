@@ -6,8 +6,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
-import android.graphics.Typeface;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -48,7 +46,6 @@ import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textview.MaterialTextView;
 
 import java.io.File;
@@ -1199,11 +1196,17 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             }
 
             @Override
+            public void openTypefaceLibrary() {
+                MainActivity.this.startActivity(new Intent(MainActivity.this, FontLibraryActivity.class));
+            }
+
+            @Override
             public int[] saveAppConfig(AppListItem item,
                     TextInputEditText viewportInput,
                     TextInputEditText fontScaleInput,
                     String viewportMode,
-                    String fontMode) {
+                    String fontMode,
+                    String selectedTypefaceId) {
                 refreshSystemHookEffectiveEnabled();
                 return appConfigSaveHandler.save(
                         item,
@@ -1211,6 +1214,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                         fontScaleInput,
                         viewportMode,
                         fontMode,
+                        selectedTypefaceId,
                         isSystemHookEnabledFromStore(),
                         getUiConfigStore(),
                         MainActivity.this::requestAppsLoad);
@@ -1376,9 +1380,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
 
     private void executeDialogProcessAction(AppListItem item, AppConfigDialogBinder.ProcessAction action) {
         if (action == AppConfigDialogBinder.ProcessAction.RESTART
-                && item.hyperOsNativeProxyCandidate
-                && item.fontScalePercent != null
-                && item.fontScalePercent > 0) {
+                && shouldPrepareHyperOsNativeProxyForRestart(item)) {
             // Re-prepare before restart because APK updates can leave an old bind mount
             // pointing at a deleted module native library.
             executeHyperOsNativeProxyMount(item, true, success -> {
@@ -1389,6 +1391,22 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             return;
         }
         executeDialogProcessActionAfterHyperOsProxyReady(item, action);
+    }
+
+    private boolean shouldPrepareHyperOsNativeProxyForRestart(AppListItem item) {
+        if (item == null || !item.hyperOsNativeProxyCandidate) {
+            return false;
+        }
+        DpiConfigStore store = getUiConfigStore();
+        return store.isTargetDpisEnabled(item.packageName)
+                && hasActiveStoredConfig(store, item.packageName);
+    }
+
+    private static boolean hasActiveStoredConfig(DpiConfigStore store, String packageName) {
+        Integer widthDp = store.getTargetViewportWidthDp(packageName);
+        Integer fontScalePercent = store.getTargetFontScalePercent(packageName);
+        return widthDp != null
+                || fontScalePercent != null;
     }
 
     private void executeDialogProcessActionAfterHyperOsProxyReady(

@@ -19,9 +19,10 @@ final class AppListFilter {
                            boolean inScope,
                            Integer viewportWidthDp,
                            Integer fontScalePercent,
-                           String fontMode) {
+                           String fontMode,
+                           String typefaceId) {
         return matches(query, tab, label, packageName, systemApp, inScope,
-                viewportWidthDp, fontScalePercent, fontMode,
+                viewportWidthDp, fontScalePercent, fontMode, typefaceId,
                 AppListFilterState.noAdditionalConstraints());
     }
 
@@ -34,6 +35,7 @@ final class AppListFilter {
                            Integer viewportWidthDp,
                            Integer fontScalePercent,
                            String fontMode,
+                           String typefaceId,
                            AppListFilterState state) {
         String normalizedQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
         if (!normalizedQuery.isEmpty()) {
@@ -46,9 +48,11 @@ final class AppListFilter {
         }
         boolean fontConfigured = fontScalePercent != null
                 && FontApplyMode.isEnabled(FontApplyMode.normalize(fontMode));
+        boolean typefaceConfigured = typefaceId != null && !typefaceId.isBlank();
+        boolean anyFontConfigured = fontConfigured || typefaceConfigured;
         boolean matchesTab = switch (tab) {
             case ALL_APPS -> true;
-            case CONFIGURED_APPS -> inScope || viewportWidthDp != null || fontConfigured;
+            case CONFIGURED_APPS -> inScope || viewportWidthDp != null || anyFontConfigured;
         };
         if (!matchesTab) {
             return false;
@@ -66,6 +70,6 @@ final class AppListFilter {
         if (effectiveState.widthConfiguredOnly && viewportWidthDp == null) {
             return false;
         }
-        return !effectiveState.fontConfiguredOnly || fontConfigured;
+        return !effectiveState.fontConfiguredOnly || anyFontConfigured;
     }
 }

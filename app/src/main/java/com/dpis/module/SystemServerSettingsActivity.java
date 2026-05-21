@@ -35,6 +35,7 @@ import com.google.android.material.textview.MaterialTextView;
 import org.json.JSONException;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -68,6 +69,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     private View clearCacheEntryRow;
     private View fontDebugEntryRow;
     private View experimentalSettingsEntryRow;
+    private View fontLibraryEntryRow;
     private View backupConfigEntryRow;
     private volatile boolean clearCacheInProgress;
     private SharedPreferences statsPreferences;
@@ -130,6 +132,12 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
                 R.string.settings_experimental_title,
                 R.string.settings_experimental_hint,
                 v -> startActivity(new Intent(this, ExperimentalSettingsActivity.class)));
+        fontLibraryEntryRow = bindEntryRow(
+                R.id.row_font_library,
+                R.drawable.ic_upload_file_24,
+                R.string.settings_font_library_label,
+                R.string.settings_font_library_hint,
+                v -> startActivity(new Intent(this, FontLibraryActivity.class)));
         backupConfigEntryRow = bindEntryRow(
                 R.id.row_config_backup,
                 R.drawable.ic_upload_file_24,
@@ -215,6 +223,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         }
         if (requestCode == REQUEST_IMPORT_CONFIG_BACKUP) {
             importConfigBackup(uri);
+            return;
         }
     }
 
@@ -228,6 +237,10 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             return insets;
         });
         ViewCompat.requestApplyInsets(toolbar);
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     private MaterialSwitch bindSwitchRow(int rowId, int iconRes, int titleRes, int subtitleRes) {
@@ -514,7 +527,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             return;
         }
         new Thread(() -> {
-            Map<String, Object> entries = localStore.snapshotAll();
+            Map<String, Object> entries = localStore.snapshotBackup();
             boolean success = false;
             try {
                 String payload = ConfigBackupCodec.encode(entries);
@@ -550,7 +563,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
                 runOnUiThread(() -> showToast(R.string.config_backup_import_invalid));
                 return;
             }
-            if (!localStore.replaceAll(entries)) {
+            if (!localStore.replaceBackup(entries)) {
                 runOnUiThread(() -> showToast(R.string.config_backup_import_failed));
                 return;
             }
@@ -605,6 +618,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         hideLauncherIconSwitch.setEnabled(true);
         setRowEnabled(fontDebugEntryRow, true);
         setRowEnabled(experimentalSettingsEntryRow, true);
+        setRowEnabled(fontLibraryEntryRow, true);
         setRowEnabled(backupConfigEntryRow, true);
         hooksToggleController = new SystemHooksToggleController(
                 store,
@@ -623,6 +637,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         hideLauncherIconSwitch.setEnabled(false);
         setRowEnabled(fontDebugEntryRow, false);
         setRowEnabled(experimentalSettingsEntryRow, false);
+        setRowEnabled(fontLibraryEntryRow, false);
         setRowEnabled(backupConfigEntryRow, false);
         setRowEnabled(languageEntryRow, false);
         if (showInitToast) {
