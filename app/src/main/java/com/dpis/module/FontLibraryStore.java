@@ -52,6 +52,26 @@ final class FontLibraryStore {
         return entries;
     }
 
+    void purgeOrphanedFiles() {
+        if (fontDirectory == null || !fontDirectory.isDirectory()) {
+            return;
+        }
+        File[] files = fontDirectory.listFiles();
+        if (files == null) {
+            return;
+        }
+        List<FontLibraryEntry> entries = readEntries();
+        java.util.Set<String> knownPaths = new java.util.HashSet<>();
+        for (FontLibraryEntry entry : entries) {
+            knownPaths.add(entry.storedPath);
+        }
+        for (File file : files) {
+            if (!knownPaths.contains(file.getAbsolutePath())) {
+                file.delete();
+            }
+        }
+    }
+
     FontLibraryEntry findById(String id) {
         if (id == null || id.isBlank()) {
             return null;
@@ -73,7 +93,7 @@ final class FontLibraryStore {
         return file.isFile() ? file : null;
     }
 
-    DeleteResult deleteFont(String id, DpiConfigStore configStore) {
+    synchronized DeleteResult deleteFont(String id, DpiConfigStore configStore) {
         FontLibraryEntry entry = findById(id);
         if (entry == null) {
             return DeleteResult.NOT_FOUND;
@@ -118,7 +138,7 @@ final class FontLibraryStore {
         return registerCopiedFont(sourceFile, sourceFileName, sourceFileName, importedAtEpochMs);
     }
 
-    FontLibraryEntry registerCopiedFont(
+    synchronized FontLibraryEntry registerCopiedFont(
             File sourceFile,
             String sourceFileName,
             String requestedDisplayName,
@@ -176,7 +196,7 @@ final class FontLibraryStore {
         return entry;
     }
 
-    RenameResult renameFont(String id, String requestedDisplayName) {
+    synchronized RenameResult renameFont(String id, String requestedDisplayName) {
         String displayName = sanitizeDisplayName(requestedDisplayName);
         if (displayName == null) {
             return RenameResult.INVALID_NAME;
