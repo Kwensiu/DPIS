@@ -62,6 +62,8 @@ public final class TypefaceOverrideHookInstallerTest {
 
         assertTrue(source.contains("PublishedFontFileResolver.resolve(typefaceId)"));
         assertTrue(source.contains("SystemFontRegistry.loadTypeface(typefaceId)"));
+        assertTrue(source.contains("fontLibraryStore.findById(typefaceId)"));
+        assertTrue(source.contains("FontTypefaceLoader.load(file, ttcIndex)"));
     }
 
     @Test

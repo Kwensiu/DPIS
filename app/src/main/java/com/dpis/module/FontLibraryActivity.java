@@ -188,7 +188,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
             MaterialTextView preview = new MaterialTextView(this);
             preview.setText(FONT_PREVIEW_PRIMARY_TEXT);
             preview.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
-            Typeface previewTypeface = loadTypeface(fontFile);
+            Typeface previewTypeface = FontTypefaceLoader.load(fontFile, entry.ttcIndex);
             if (previewTypeface != null) {
                 preview.setTypeface(previewTypeface);
             }
@@ -238,7 +238,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
         File detailFontFile = fontLibraryStore.resolveFontFile(entry.id);
         if (detailFontFile != null) {
             content.addView(createDivider(18));
-            content.addView(createFontPreview(detailFontFile), topMarginParams(14));
+            content.addView(createFontPreview(detailFontFile, entry.ttcIndex), topMarginParams(14));
         }
 
         content.addView(createDivider(18));
@@ -300,11 +300,11 @@ public final class FontLibraryActivity extends LocalizedActivity {
         return header;
     }
 
-    private View createFontPreview(File fontFile) {
+    private View createFontPreview(File fontFile, int ttcIndex) {
         LinearLayout previewGroup = new LinearLayout(this);
         previewGroup.setOrientation(LinearLayout.VERTICAL);
 
-        Typeface previewTypeface = loadTypeface(fontFile);
+        Typeface previewTypeface = FontTypefaceLoader.load(fontFile, ttcIndex);
 
         MaterialTextView primary = new MaterialTextView(this);
         primary.setText(FONT_PREVIEW_PRIMARY_TEXT);
@@ -406,14 +406,6 @@ public final class FontLibraryActivity extends LocalizedActivity {
         TypedValue outValue = new TypedValue();
         getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
         return outValue.resourceId;
-    }
-
-    private Typeface loadTypeface(File fontFile) {
-        try {
-            return Typeface.createFromFile(fontFile);
-        } catch (RuntimeException ignored) {
-            return null;
-        }
     }
 
     private LinearLayout.LayoutParams topMarginParams(int topMarginDp) {

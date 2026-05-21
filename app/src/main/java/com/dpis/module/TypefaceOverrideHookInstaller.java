@@ -148,7 +148,13 @@ final class TypefaceOverrideHookInstaller {
                             + ", typefaceId=" + typefaceId);
             return null;
         }
-        File file = fontLibraryStore.resolveFontFile(typefaceId);
+        FontLibraryEntry entry = fontLibraryStore.findById(typefaceId);
+        File file = null;
+        int ttcIndex = 0;
+        if (entry != null) {
+            file = fontLibraryStore.resolveFontFile(typefaceId);
+            ttcIndex = entry.ttcIndex;
+        }
         if (file == null) {
             file = PublishedFontFileResolver.resolve(typefaceId);
         }
@@ -158,15 +164,13 @@ final class TypefaceOverrideHookInstaller {
                             + ", typefaceId=" + typefaceId);
             return null;
         }
-        try {
-            return Typeface.createFromFile(file);
-        } catch (Throwable throwable) {
+        Typeface loaded = FontTypefaceLoader.load(file, ttcIndex);
+        if (loaded == null) {
             logIfChanged(packageName + ":load-failed:" + typefaceId,
                     LOG_PREFIX + "font load failed: package=" + packageName
-                            + ", typefaceId=" + typefaceId
-                            + ", error=" + throwable.getClass().getSimpleName());
-            return null;
+                            + ", typefaceId=" + typefaceId);
         }
+        return loaded;
     }
 
     private static void applyTextViewTypeface(TextView textView, Typeface replacement, Integer explicitStyle) {

@@ -587,15 +587,15 @@ final class AppConfigDialogBinder {
         if (fontLibraryStore == null) {
             return null;
         }
+        FontLibraryEntry entry = fontLibraryStore.findById(option.id);
+        if (entry == null) {
+            return null;
+        }
         File fontFile = fontLibraryStore.resolveFontFile(option.id);
         if (fontFile == null) {
             return null;
         }
-        try {
-            return Typeface.createFromFile(fontFile);
-        } catch (RuntimeException ignored) {
-            return null;
-        }
+        return FontTypefaceLoader.load(fontFile, entry.ttcIndex);
     }
 
     private static String resolveFontOptionLabel(FontLibraryEntry entry) {
