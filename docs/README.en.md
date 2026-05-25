@@ -6,13 +6,15 @@
 
 [中文说明](../README.md) | English
 
-DPIS is an LSPosed/Xposed-based Android module for per-app display tuning (`smallest width + font size`) without changing global system display settings.
+DPIS is an LSPosed/Xposed-based Android module for per-app interface scale, smallest width, and font size tuning. It keeps display changes scoped to the target app as much as possible instead of changing global system display settings.
 
 ## Core Capabilities
 
-- Configure per-app smallest width (`dp`)
+- Configure per-app interface scale (`30-300%`), the default entry for new configs
+- Configure per-app smallest width (`dp`) when a fixed width target is needed
 - Configure per-app font scale (`50-300%`)
-- Both width and font support `System` and `Compat` modes
+- Interface scale apply strategy: `Auto`, `System`, or `Compat`
+- Font mode: `System` or `Compat`
 - App list search and filtering (`All apps` / `Configured apps`)
 - System-layer hook toggle and safe mode
 - Per-app custom font compatibility chains, including Flutter / HyperOS native supplement routes
@@ -28,23 +30,40 @@ DPIS is an LSPosed/Xposed-based Android module for per-app display tuning (`smal
 1. Enable the DPIS module in LSPosed.
 2. Select the target app in scope. In regular cases you do not need `system`.
 3. Open DPIS and configure:
-   - Smallest width (`dp`)
+   - Interface scale (`30-300%`, recommended default entry)
+   - Or switch to smallest width (`dp`)
    - Font scale (`50-300%`)
-   - Width mode and font mode (`System` / `Compat`)
+   - Font mode (`System` / `Compat`)
 4. Save, then restart the target app process. Reboot the device if needed.
 
-If you use `System`, also enable `system` scope in LSPosed. `Compat` usually does not need it.
+For most apps, start with the defaults: interface scale, system font mode, and the automatic interface scale strategy. If you explicitly use the system-layer route, also enable `system` scope in LSPosed. Compat routes usually do not need it.
 
-## Modes
+## Interface Scale and Smallest Width
 
-| Mode | Characteristics | Best for | Notes |
+| Setting | Input range | Best for | Notes |
 | --- | --- | --- | --- |
+| Interface scale | `30-300%` | Scaling the whole app UI up or down | Recommended default. DPIS computes the target width from the current display environment. |
+| Smallest width | Positive integer `dp` | Targeting a fixed width class | Useful for legacy configs, tablet layouts, or app-specific known-good values. |
+
+## Apply Strategy
+
+Interface scale can use one of three apply strategies. Keep `Auto` unless you have a reason to force a route.
+
+| Strategy | Characteristics | Best for | Notes |
+| --- | --- | --- | --- |
+| `Auto` | Prefers the system route and falls back silently | Default choice | Verify the final behavior in the target app |
 | `System` | Closer to native system behavior, usually more natural | System-like rendering consistency | Depends on system-layer hooks; some apps do not support it |
-| `Compat` | Uses in-process compatibility hooks to adjust scaling more directly | Most regular apps | May cause layout drift or scaling glitches |
+| `Compat` | Uses in-process field rewrite to adjust scaling directly | Regular apps or apps where the system route fails | May cause layout drift or scaling glitches |
 
 > Note: older UI labels used "Emulation / Replacement". The UI now shows "System / Compat".
 
-Font `Compat` enables the recommended Resources, TextView, and Paint fallback chain by default, with scheduling and provenance guards to reduce repeated scaling. If a specific app scales incorrectly, open the target app details and use `Custom chain` to disable individual routes. Changes take effect the next time the target app process starts.
+## Fonts and Hook Chains
+
+Font scale accepts `50-300%`. Unconfigured apps use system font mode by default; switch to `Compat` only when in-process rewriting is needed.
+
+Font `Compat` uses the recommended hook-chain set, including Resources, TextView, Paint, WebView, Flutter settings, and HyperOS native Flutter supplement routes. DPIS uses scheduling and provenance guards to reduce repeated scaling.
+
+If a specific app scales incorrectly, open the target app details and use `Hook chain` to disable individual routes. Changes take effect the next time the target app process starts.
 
 ## System-Layer Hook and Safe Mode
 
@@ -52,7 +71,7 @@ Font `Compat` enables the recommended Resources, TextView, and Paint fallback ch
 - `On`: enables the full `system_server` path, useful for debugging and comparison.
 - `On + Safe mode`: limits hooks to lower-risk entries (`activity-start`), recommended as the default.
 
-If you use `System`, make sure LSPosed scope includes `system`. `Compat` can usually work with only the target app selected.
+System-layer hooks mainly affect the system route and the automatic interface scale strategy. If `system` scope is not selected in LSPosed, the system route may not take effect. Compat routes can usually work with only the target app selected.
 
 ## Logs and Diagnostics
 
@@ -84,6 +103,7 @@ app/                      Main Android module
   src/compat100/java/     Legacy Xposed compatibility code
   src/test/java/          Unit tests
 docs/                     Active documentation
+docs/agents/              Agent collaboration config
 docs/archive/             Historical archived documentation
 refs/                     Local references (LSPosed / AOSP / libxposed)
 ```
@@ -105,6 +125,8 @@ The standard and legacy builds cannot coexist. They share the same package name,
 
 - Chinese README: [../README.md](../README.md)
 - Active docs: [README.md](README.md)
+- UI guidelines: [ui-guidelines.md](ui-guidelines.md)
+- Agent collaboration config: [agents/](agents/)
 - Archived docs: [archive/README.md](archive/README.md)
 
 ## License
