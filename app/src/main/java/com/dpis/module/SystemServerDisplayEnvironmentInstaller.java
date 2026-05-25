@@ -4,7 +4,6 @@ import android.content.res.Configuration;
 import android.content.pm.ActivityInfo;
 import android.graphics.Rect;
 import android.os.Binder;
-import android.os.SystemClock;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -909,7 +908,7 @@ final class SystemServerDisplayEnvironmentInstaller {
                 ViewportConfigurationScope.isWindowScoped(source.configuration)
                         ? ViewportSourceSnapshot.SCOPE_WINDOW
                         : ViewportSourceSnapshot.SCOPE_DISPLAY,
-                elapsedRealtime());
+                RuntimeClock.crossProcessMarkerMillis());
     }
 
     private static boolean shouldApplyPreProceedMutations(String entryName) {
@@ -1547,14 +1546,6 @@ final class SystemServerDisplayEnvironmentInstaller {
 
     private static List<Field> getAllFields(Class<?> clazz) {
         return REFLECTION_CACHE.getAllFields(clazz);
-    }
-
-    private static long elapsedRealtime() {
-        try {
-            return SystemClock.elapsedRealtime();
-        } catch (RuntimeException ignored) {
-            return System.currentTimeMillis();
-        }
     }
 
     private static String extractPackageFromText(String value) {

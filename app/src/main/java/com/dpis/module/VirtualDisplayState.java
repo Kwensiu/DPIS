@@ -1,11 +1,17 @@
 package com.dpis.module;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 final class VirtualDisplayState {
     private static final int MAX_RECORDS = 24;
-    private static final Map<String, ViewportRuntimeRecord> RECORDS = new ConcurrentHashMap<>();
+    private static final Map<String, ViewportRuntimeRecord> RECORDS =
+            new LinkedHashMap<>(MAX_RECORDS, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, ViewportRuntimeRecord> eldest) {
+                    return size() > MAX_RECORDS;
+                }
+            };
     private static volatile VirtualDisplayOverride.Result current;
 
     private VirtualDisplayState() {
@@ -14,7 +20,9 @@ final class VirtualDisplayState {
     static void set(VirtualDisplayOverride.Result result) {
         current = result;
         if (result == null) {
-            RECORDS.clear();
+            synchronized (RECORDS) {
+                RECORDS.clear();
+            }
             return;
         }
         ViewportTargetSpec targetSpec = ViewportTargetSpec.absoluteDp(result.smallestWidthDp);
@@ -32,10 +40,10 @@ final class VirtualDisplayState {
                 result,
                 legacySignature(result),
                 ViewportRuntimeRecord.PROVENANCE_APP_PROCESS,
-                elapsedRealtime(),
+                RuntimeClock.elapsedRealtimeMillis(),
                 ViewportSourceSnapshot.SCOPE_DISPLAY);
-        RECORDS.put(recordKey("*", targetSpec.fingerprint(), legacySignature(result)), record);
-        RECORDS.put(recordKey("*", targetSpec.fingerprint(), "sw:" + result.smallestWidthDp), record);
+        putRecord(recordKey("*", targetSpec.fingerprint(), legacySignature(result)), record);
+        putRecord(recordKey("*", targetSpec.fingerprint(), "sw:" + result.smallestWidthDp), record);
     }
 
     static ViewportRuntimeRecord findBySignature(String packageName,
@@ -44,13 +52,15 @@ final class VirtualDisplayState {
         if (targetSpec == null || signature == null) {
             return null;
         }
-        ViewportRuntimeRecord exact = packageName != null
-                ? RECORDS.get(recordKey(packageName, targetSpec.fingerprint(), signature))
-                : null;
-        if (exact != null) {
-            return exact;
+        synchronized (RECORDS) {
+            ViewportRuntimeRecord exact = packageName != null
+                    ? RECORDS.get(recordKey(packageName, targetSpec.fingerprint(), signature))
+                    : null;
+            if (exact != null) {
+                return exact;
+            }
+            return RECORDS.get(recordKey("*", targetSpec.fingerprint(), signature));
         }
-        return RECORDS.get(recordKey("*", targetSpec.fingerprint(), signature));
     }
 
     static boolean setUnlessDerivedFromTargetConfig(VirtualDisplayOverride.Result result,
@@ -98,17 +108,14 @@ final class VirtualDisplayState {
                 virtualDisplayResult,
                 resultSignature,
                 provenance,
-                elapsedRealtime(),
+                RuntimeClock.elapsedRealtimeMillis(),
                 source.scope);
         if (virtualDisplayResult != null) {
             current = virtualDisplayResult;
         }
-        if (RECORDS.size() >= MAX_RECORDS) {
-            RECORDS.clear();
-        }
-        RECORDS.put(recordKey(record.packageName, record.targetFingerprint, record.sourceSignature),
+        putRecord(recordKey(record.packageName, record.targetFingerprint, record.sourceSignature),
                 record);
-        RECORDS.put(recordKey(record.packageName, record.targetFingerprint, record.resultSignature),
+        putRecord(recordKey(record.packageName, record.targetFingerprint, record.resultSignature),
                 record);
         return record;
     }
@@ -136,11 +143,8 @@ final class VirtualDisplayState {
                 marker.provenance,
                 marker.elapsedRealtimeMillis,
                 ViewportSourceSnapshot.SCOPE_DISPLAY);
-        if (RECORDS.size() >= MAX_RECORDS) {
-            RECORDS.clear();
-        }
-        RECORDS.put(recordKey(packageName, record.targetFingerprint, record.sourceSignature), record);
-        RECORDS.put(recordKey(packageName, record.targetFingerprint, record.resultSignature), record);
+        putRecord(recordKey(packageName, record.targetFingerprint, record.sourceSignature), record);
+        putRecord(recordKey(packageName, record.targetFingerprint, record.resultSignature), record);
         return record;
     }
 
@@ -153,23 +157,16 @@ final class VirtualDisplayState {
         return findBySignature(packageName, targetSpec, source.sourceSignature());
     }
 
-    static ViewportRuntimeRecord findForResult(String packageName,
-                                               ViewportTargetSpec targetSpec,
-                                               ConfigurationLike result) {
-        if (result == null) {
-            return null;
-        }
-        return findBySignature(packageName, targetSpec, result.signature());
-    }
-
     static ViewportRuntimeRecord findDisplayRecordForTarget(String packageName,
                                                             ViewportTargetSpec targetSpec) {
         if (packageName == null || targetSpec == null) {
             return null;
         }
-        for (ViewportRuntimeRecord record : RECORDS.values()) {
-            if (record.matchesPackageAndTarget(packageName, targetSpec) && record.displayScoped()) {
-                return record;
+        synchronized (RECORDS) {
+            for (ViewportRuntimeRecord record : RECORDS.values()) {
+                if (record.matchesPackageAndTarget(packageName, targetSpec) && record.displayScoped()) {
+                    return record;
+                }
             }
         }
         return null;
@@ -209,15 +206,15 @@ final class VirtualDisplayState {
         return packageName + "|" + targetFingerprint + "|" + signature;
     }
 
-    private static long elapsedRealtime() {
-        try {
-            return android.os.SystemClock.elapsedRealtime();
-        } catch (RuntimeException ignored) {
-            return System.currentTimeMillis();
+    static int recordCountForTest() {
+        synchronized (RECORDS) {
+            return RECORDS.size();
         }
     }
 
-    interface ConfigurationLike {
-        String signature();
+    private static void putRecord(String key, ViewportRuntimeRecord record) {
+        synchronized (RECORDS) {
+            RECORDS.put(key, record);
+        }
     }
 }

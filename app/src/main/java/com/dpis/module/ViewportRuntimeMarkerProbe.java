@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 final class ViewportRuntimeMarkerProbe {
     private static final long LOG_MIN_INTERVAL_MILLIS = 2_000L;
+    private static final int MAX_LOG_KEYS = 128;
     private static final Map<String, Long> LAST_LOG_MILLIS = new ConcurrentHashMap<>();
 
     private ViewportRuntimeMarkerProbe() {
@@ -54,7 +55,7 @@ final class ViewportRuntimeMarkerProbe {
                         source,
                         viewportResult,
                         "s",
-                        elapsedRealtime());
+                        RuntimeClock.crossProcessMarkerMillis());
         if (record == null) {
             return;
         }
@@ -94,7 +95,7 @@ final class ViewportRuntimeMarkerProbe {
         ViewportRuntimeMarkerBridge.ParseResult result = ViewportRuntimeMarkerBridge.read(
                 packageName,
                 expectedTargetFingerprint,
-                elapsedRealtime());
+                RuntimeClock.crossProcessMarkerMillis());
         if (result.hit) {
             ViewportRuntimeMarkerBridge.MarkerRecord record = result.record;
             logAtMostEvery("app-hit|" + packageName + "|" + sourceTag
@@ -120,16 +121,11 @@ final class ViewportRuntimeMarkerProbe {
                 + ", property=" + ViewportRuntimeMarkerBridge.propertyNameForPackage(packageName));
     }
 
-    private static long elapsedRealtime() {
-        try {
-            return android.os.SystemClock.elapsedRealtime();
-        } catch (RuntimeException ignored) {
-            return System.currentTimeMillis();
-        }
-    }
-
     private static void logAtMostEvery(String key, String message) {
-        long now = elapsedRealtime();
+        long now = RuntimeClock.elapsedRealtimeMillis();
+        if (!LAST_LOG_MILLIS.containsKey(key) && LAST_LOG_MILLIS.size() >= MAX_LOG_KEYS) {
+            LAST_LOG_MILLIS.clear();
+        }
         Long previous = LAST_LOG_MILLIS.put(key, now);
         if (previous != null && now - previous < LOG_MIN_INTERVAL_MILLIS) {
             return;

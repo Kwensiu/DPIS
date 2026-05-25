@@ -45,4 +45,17 @@ public class AppConfigSaveHandlerTest {
 
         assertEquals(ViewportApplyMode.AUTO, resolvedMode);
     }
+
+    @Test
+    public void saveDefaultsInvalidViewportModeToAutoInsteadOfDroppingEnabledTarget() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+
+        String resolvedMode = AppConfigSaveHandler.resolveViewportApplyModeForSave(
+                store,
+                "com.example.app",
+                "unknown-mode",
+                ViewportTargetSpec.relativeScale(900));
+
+        assertEquals(ViewportApplyMode.AUTO, resolvedMode);
+    }
 }

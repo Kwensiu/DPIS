@@ -9,7 +9,9 @@ final class ViewportApplyMode {
     static final String LEGACY_FIELD_REWRITE = "field_rewrite";
     // Compatibility aliases for old call sites. Persisted values normalize to
     // SYSTEM / COMPAT.
+    @Deprecated
     static final String SYSTEM_EMULATION = SYSTEM;
+    @Deprecated
     static final String FIELD_REWRITE = COMPAT;
 
     private ViewportApplyMode() {

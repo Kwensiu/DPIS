@@ -7,6 +7,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
 
 final class ViewportRuntimeMarkerBridge {
+    // Android system property values are capped at 91 bytes including the
+    // terminating NUL in native storage, so keep encoded marker payloads within
+    // this conservative Java string length.
     static final int MAX_SYSTEM_PROPERTY_VALUE_LENGTH = 91;
 
     private static final String PROPERTY_PREFIX = "debug.dpis.vprtm.";

@@ -165,8 +165,16 @@ final class ResourcesReadHookInstaller {
                 0,
                 0,
                 result.smallestWidthDp);
-        if (!windowScoped && sharedResult != null) {
-            if (!resolution.spec.isRelativeScale()) {
+        if (!windowScoped) {
+            if (resolution.spec.isRelativeScale()) {
+                VirtualDisplayState.publish(
+                        packageName,
+                        resolution.spec,
+                        source,
+                        result,
+                        sharedResult,
+                        ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+            } else if (sharedResult != null) {
                 VirtualDisplayState.setUnlessDerivedFromTargetConfig(
                         sharedResult, originalSmallestWidthDp, targetViewportWidth);
             }

@@ -7,6 +7,7 @@ import org.junit.After;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class ResourcesReadHookInstallerTest {
     @After
@@ -130,6 +131,52 @@ public class ResourcesReadHookInstallerTest {
         assertEquals(360, config.smallestScreenWidthDp);
         assertEquals(0, config.densityDpi);
         assertEquals(null, VirtualDisplayState.get());
+    }
+
+    @Test
+    public void relativeScaleConfigurationReadPublishesVirtualDisplayRecordForMetricsReuse() {
+        Configuration config = new Configuration();
+        config.densityDpi = 420;
+        config.screenWidthDp = 400;
+        config.screenHeightDp = 800;
+        config.smallestScreenWidthDp = 400;
+        config.fontScale = 1.0f;
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(900);
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.fromConfiguration(
+                ViewportSourceSnapshot.ORIGIN_SYSTEM_CONFIGURATION,
+                config,
+                null);
+        VirtualDisplayState.publish(
+                "com.example.target",
+                targetSpec,
+                source,
+                new ViewportOverride.Result(360, 720, 360, 467),
+                null,
+                ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER);
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putString("viewport.com.example.target.target_type", "relative_scale")
+                .putInt("viewport.com.example.target.scale_permille", 900)
+                .putString("viewport.com.example.target.mode", ViewportApplyMode.AUTO)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        ResourcesReadHookInstaller.applyConfigurationOverride(config, "com.example.target", store,
+                "ResourcesRead(getConfiguration)");
+
+        assertEquals(360, config.smallestScreenWidthDp);
+        assertEquals(467, config.densityDpi);
+        ViewportRuntimeRecord record = VirtualDisplayState.findBySignature(
+                "com.example.target",
+                targetSpec,
+                ViewportRuntimeMarkerBridge.configurationSignature(
+                        360,
+                        720,
+                        360,
+                        467,
+                        ViewportSourceSnapshot.SCOPE_DISPLAY));
+        assertNotNull(record);
+        assertEquals(ViewportRuntimeRecord.PROVENANCE_APP_PROCESS, record.provenance);
     }
 
     @Test

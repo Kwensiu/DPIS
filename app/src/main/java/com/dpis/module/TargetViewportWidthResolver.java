@@ -58,7 +58,7 @@ final class TargetViewportWidthResolver {
         ViewportRuntimeMarkerBridge.ParseResult marker = ViewportRuntimeMarkerBridge.read(
                 packageName,
                 targetSpec.fingerprint(),
-                elapsedRealtime());
+                RuntimeClock.crossProcessMarkerMillis());
         if (marker.hit) {
             ViewportRuntimeRecord imported =
                     VirtualDisplayState.importMarker(packageName, targetSpec, marker);
@@ -127,11 +127,4 @@ final class TargetViewportWidthResolver {
                 runtimeOverride);
     }
 
-    private static long elapsedRealtime() {
-        try {
-            return android.os.SystemClock.elapsedRealtime();
-        } catch (RuntimeException ignored) {
-            return System.currentTimeMillis();
-        }
-    }
 }
