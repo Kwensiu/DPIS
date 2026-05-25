@@ -16,10 +16,11 @@ final class AppConfigSaveHandler {
             ViewportTargetSpec viewportTargetSpec = parseViewportTargetSpecOrNull(
                     viewportInput, viewportTargetType);
             Integer fontScalePercent = parseFontScalePercentOrNull(fontScaleInput);
-            String viewportApplyMode = item.viewportMode != null
-                    && ViewportApplyMode.isEnabled(item.viewportMode)
-                            ? item.viewportMode
-                            : ViewportApplyMode.AUTO;
+            if (store == null) {
+                return new int[] { 1, R.string.status_save_requires_init };
+            }
+            String viewportApplyMode = resolveViewportApplyModeForSave(
+                    store, item.packageName, item.viewportMode, viewportTargetSpec);
             boolean viewportEmulationIneffective = viewportTargetSpec != null
                     && viewportTargetSpec.isEnabled()
                     && ViewportApplyMode.SYSTEM.equals(
@@ -36,10 +37,6 @@ final class AppConfigSaveHandler {
                     viewportEmulationIneffective || fontEmulationIneffective;
             boolean saved = true;
             int hint = 0;
-            if (store == null) {
-                hint = R.string.status_save_requires_init;
-                return new int[] { 1, hint };
-            }
             if (viewportTargetSpec == null || !viewportTargetSpec.isEnabled()) {
                 saved = store.clearTargetViewportWidthDp(item.packageName) && saved;
                 saved = store.setTargetViewportApplyMode(item.packageName, ViewportApplyMode.OFF)
@@ -85,6 +82,24 @@ final class AppConfigSaveHandler {
         } catch (NumberFormatException exception) {
             return new int[] { 0, R.string.status_save_invalid };
         }
+    }
+
+    static String resolveViewportApplyModeForSave(DpiConfigStore store,
+            String packageName,
+            String itemViewportMode,
+            ViewportTargetSpec viewportTargetSpec) {
+        if (viewportTargetSpec == null || !viewportTargetSpec.isEnabled()) {
+            return ViewportApplyMode.OFF;
+        }
+        String persistedMode = store != null
+                ? store.getTargetViewportApplyMode(packageName)
+                : ViewportApplyMode.OFF;
+        if (ViewportApplyMode.isEnabled(persistedMode)) {
+            return persistedMode;
+        }
+        return ViewportApplyMode.isEnabled(itemViewportMode)
+                ? ViewportApplyMode.normalize(itemViewportMode)
+                : ViewportApplyMode.AUTO;
     }
 
     private static Integer parsePositiveIntOrNull(TextInputEditText inputView)
