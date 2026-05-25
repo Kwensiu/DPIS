@@ -314,7 +314,10 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     PerAppDisplayEnvironment preEnvironment = resolveTargetEnvironment(
                                             before, before, config);
                                     if (shouldApplyPreProceedMutations(target.entryName)) {
-                                        applyEnvironment(target.entryName, before, preEnvironment, config);
+                                        if (applyEnvironment(target.entryName, before, preEnvironment, config)) {
+                                            publishViewportMarkerProbe(
+                                                    target.entryName, packageName, before, preEnvironment, config);
+                                        }
                                     }
                                     proceedAttempted = true;
                                     result = chain.proceed();
@@ -345,6 +348,8 @@ final class SystemServerDisplayEnvironmentInstaller {
                                                 after.configuration, after.frame)
                                                 : null;
                                         if (applyEnvironment(target.entryName, after, effectiveEnvironment, config)) {
+                                            publishViewportMarkerProbe(
+                                                    target.entryName, packageName, after, effectiveEnvironment, config);
                                             if (loggingEnabled) {
                                                 String afterApplySummary = SystemServerDisplayDiagnostics.describeState(
                                                         mutated.configuration, mutated.frame);
@@ -496,6 +501,25 @@ final class SystemServerDisplayEnvironmentInstaller {
             logIfChanged("launch-activity-item|" + packageName, message,
                     resolveLogMinIntervalMs("launch-activity-item"));
         }
+    }
+
+    private static void publishViewportMarkerProbe(String entryName,
+                                                   String packageName,
+                                                   Snapshot source,
+                                                   PerAppDisplayEnvironment environment,
+                                                   PerAppDisplayConfig config) {
+        if (source == null || config == null || environment == null) {
+            return;
+        }
+        Configuration markerSourceConfiguration = source.configuration != null
+                ? new Configuration(source.configuration)
+                : null;
+        ViewportRuntimeMarkerProbe.publishSystemServerProbe(
+                packageName,
+                markerSourceConfiguration,
+                environment,
+                config.targetViewportWidthDp,
+                entryName);
     }
 
     private static String findActivityInfoPackage(List<Object> args) {

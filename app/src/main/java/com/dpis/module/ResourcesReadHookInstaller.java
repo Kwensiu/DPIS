@@ -118,6 +118,10 @@ final class ResourcesReadHookInstaller {
         int originalDensityDpi = config.densityDpi;
 
         Integer targetViewportWidth = TargetViewportWidthResolver.resolve(store, packageName);
+        if (targetViewportWidth != null) {
+            ViewportRuntimeMarkerProbe.observeAppProcessProbe(
+                    packageName, targetViewportWidth, sourceTag);
+        }
         boolean windowScoped = ViewportConfigurationScope.isWindowScoped(config);
         VirtualDisplayOverride.Result stableTarget =
                 VirtualDisplayState.getForTarget(targetViewportWidth);

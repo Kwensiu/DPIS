@@ -1,0 +1,289 @@
+package com.dpis.module;
+
+import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
+
+final class ViewportRuntimeMarkerBridge {
+    static final int MAX_SYSTEM_PROPERTY_VALUE_LENGTH = 91;
+
+    private static final String PROPERTY_PREFIX = "debug.dpis.vprtm.";
+    private static final String VALUE_VERSION = "v1";
+    private static final int HASH_HEX_LENGTH = 8;
+    private static final long MAX_AGE_MILLIS = 30_000L;
+    private static final String PROVENANCE_APP_PROCESS = "a";
+    private static final String PROVENANCE_SYSTEM_SERVER = "s";
+
+    private ViewportRuntimeMarkerBridge() {
+    }
+
+    static String propertyNameForPackage(String packageName) {
+        return PROPERTY_PREFIX + String.format(Locale.US, "%08x", safeString(packageName).hashCode());
+    }
+
+    static MarkerRecord createRecord(String packageName,
+                                     int targetSmallestWidthDp,
+                                     int sourceWidthDp,
+                                     int sourceHeightDp,
+                                     int sourceSmallestWidthDp,
+                                     int sourceDensityDpi,
+                                     int resultWidthDp,
+                                     int resultHeightDp,
+                                     int resultSmallestWidthDp,
+                                     int resultDensityDpi,
+                                     String provenance,
+                                     long elapsedRealtimeMillis) {
+        String targetFingerprint = "a" + toBase36(targetSmallestWidthDp);
+        String sourceSignature = signature(
+                sourceWidthDp,
+                sourceHeightDp,
+                sourceSmallestWidthDp,
+                sourceDensityDpi);
+        String resultSignature = signature(
+                resultWidthDp,
+                resultHeightDp,
+                resultSmallestWidthDp,
+                resultDensityDpi);
+        return new MarkerRecord(
+                packageCheck(packageName),
+                targetFingerprint,
+                sourceSignature,
+                Math.max(1, resultSmallestWidthDp),
+                resultSignature,
+                normalizeProvenance(provenance),
+                Math.max(0L, elapsedRealtimeMillis));
+    }
+
+    static String encode(MarkerRecord record) {
+        if (record == null) {
+            return "";
+        }
+        return VALUE_VERSION
+                + "|" + record.packageHash
+                + "|" + record.targetFingerprint
+                + "|" + record.sourceSignature
+                + "|" + toBase36(record.effectiveSmallestWidthDp)
+                + "|" + record.resultSignature
+                + "|" + record.provenance
+                + "|" + toBase36(record.elapsedRealtimeMillis);
+    }
+
+    static ParseResult parse(String packageName,
+                             String expectedTargetFingerprint,
+                             String raw,
+                             long nowElapsedRealtimeMillis) {
+        if (raw == null || raw.trim().isEmpty()) {
+            return ParseResult.miss("empty");
+        }
+        String normalized = raw.trim();
+        if (normalized.length() > MAX_SYSTEM_PROPERTY_VALUE_LENGTH) {
+            return ParseResult.miss("too-long");
+        }
+        String[] parts = normalized.split("\\|", -1);
+        if (parts.length != 8 || !VALUE_VERSION.equals(parts[0])) {
+            return ParseResult.miss("malformed");
+        }
+        String expectedPackageHash = packageCheck(packageName);
+        if (!expectedPackageHash.equals(parts[1])) {
+            return ParseResult.miss("package-mismatch");
+        }
+        if (expectedTargetFingerprint != null
+                && !expectedTargetFingerprint.isBlank()
+                && !expectedTargetFingerprint.equals(parts[2])) {
+            return ParseResult.miss("target-mismatch");
+        }
+        Integer effectiveSmallestWidthDp = parseBase36Int(parts[4]);
+        Long elapsedRealtimeMillis = parseBase36Long(parts[7]);
+        if (effectiveSmallestWidthDp == null || effectiveSmallestWidthDp <= 0
+                || elapsedRealtimeMillis == null || elapsedRealtimeMillis < 0) {
+            return ParseResult.miss("malformed");
+        }
+        String provenance = parseProvenance(parts[6]);
+        if (provenance == null) {
+            return ParseResult.miss("malformed");
+        }
+        long ageMillis = nowElapsedRealtimeMillis - elapsedRealtimeMillis;
+        if (ageMillis < 0 || ageMillis > MAX_AGE_MILLIS) {
+            return ParseResult.miss("stale");
+        }
+        MarkerRecord record = new MarkerRecord(
+                parts[1],
+                parts[2],
+                parts[3],
+                effectiveSmallestWidthDp,
+                parts[5],
+                provenance,
+                elapsedRealtimeMillis);
+        return ParseResult.hit(record, ageMillis);
+    }
+
+    static String targetFingerprintForAbsoluteDp(int targetSmallestWidthDp) {
+        return "a" + toBase36(targetSmallestWidthDp);
+    }
+
+    static boolean publish(String packageName, MarkerRecord record) {
+        if (packageName == null || packageName.isBlank() || record == null) {
+            return false;
+        }
+        String value = encode(record);
+        if (value.length() > MAX_SYSTEM_PROPERTY_VALUE_LENGTH) {
+            DpisLog.i("DPIS_VIEWPORT_MARKER publish skip: reason=too-long"
+                    + ", package=" + packageName
+                    + ", length=" + value.length());
+            return false;
+        }
+        return setSystemProperty(propertyNameForPackage(packageName), value);
+    }
+
+    static ParseResult read(String packageName,
+                            String expectedTargetFingerprint,
+                            long nowElapsedRealtimeMillis) {
+        if (packageName == null || packageName.isBlank()) {
+            return ParseResult.miss("empty-package");
+        }
+        String raw = readSystemProperty(propertyNameForPackage(packageName), "");
+        return parse(packageName, expectedTargetFingerprint, raw, nowElapsedRealtimeMillis);
+    }
+
+    private static boolean setSystemProperty(String key, String value) {
+        try {
+            Class<?> systemProperties = Class.forName("android.os.SystemProperties");
+            Method set = systemProperties.getDeclaredMethod("set", String.class, String.class);
+            set.invoke(null, key, value);
+            return true;
+        } catch (Throwable throwable) {
+            DpisLog.e("DPIS_VIEWPORT_MARKER publish failed: key=" + key, throwable);
+            return false;
+        }
+    }
+
+    private static String readSystemProperty(String key, String fallback) {
+        try {
+            Class<?> systemProperties = Class.forName("android.os.SystemProperties");
+            Method get = systemProperties.getDeclaredMethod("get", String.class, String.class);
+            Object value = get.invoke(null, key, fallback);
+            return value instanceof String ? (String) value : fallback;
+        } catch (Throwable ignored) {
+            return fallback;
+        }
+    }
+
+    private static String signature(int widthDp, int heightDp, int smallestWidthDp, int densityDpi) {
+        return shortHash(widthDp + "x" + heightDp + "s" + smallestWidthDp + "d" + densityDpi);
+    }
+
+    private static String packageCheck(String packageName) {
+        return shortHash(safeString(packageName));
+    }
+
+    private static String shortHash(String value) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] bytes = digest.digest(safeString(value).getBytes(StandardCharsets.UTF_8));
+            StringBuilder builder = new StringBuilder(HASH_HEX_LENGTH);
+            for (byte b : bytes) {
+                if (builder.length() >= HASH_HEX_LENGTH) {
+                    break;
+                }
+                builder.append(String.format(Locale.US, "%02x", b));
+            }
+            return builder.substring(0, HASH_HEX_LENGTH);
+        } catch (NoSuchAlgorithmException ignored) {
+            return String.format(Locale.US, "%08x", safeString(value).hashCode());
+        }
+    }
+
+    private static String normalizeProvenance(String provenance) {
+        return PROVENANCE_APP_PROCESS.equals(provenance)
+                ? PROVENANCE_APP_PROCESS
+                : PROVENANCE_SYSTEM_SERVER;
+    }
+
+    private static String parseProvenance(String provenance) {
+        if (PROVENANCE_APP_PROCESS.equals(provenance)) {
+            return PROVENANCE_APP_PROCESS;
+        }
+        if (PROVENANCE_SYSTEM_SERVER.equals(provenance)) {
+            return PROVENANCE_SYSTEM_SERVER;
+        }
+        return null;
+    }
+
+    private static String toBase36(int value) {
+        return Integer.toString(Math.max(0, value), 36);
+    }
+
+    private static String toBase36(long value) {
+        return Long.toString(Math.max(0L, value), 36);
+    }
+
+    private static Integer parseBase36Int(String value) {
+        try {
+            return Integer.parseInt(value, 36);
+        } catch (RuntimeException ignored) {
+            return null;
+        }
+    }
+
+    private static Long parseBase36Long(String value) {
+        try {
+            return Long.parseLong(value, 36);
+        } catch (RuntimeException ignored) {
+            return null;
+        }
+    }
+
+    private static String safeString(String value) {
+        return value == null ? "" : value;
+    }
+
+    static final class MarkerRecord {
+        final String packageHash;
+        final String targetFingerprint;
+        final String sourceSignature;
+        final int effectiveSmallestWidthDp;
+        final String resultSignature;
+        final String provenance;
+        final long elapsedRealtimeMillis;
+
+        MarkerRecord(String packageHash,
+                     String targetFingerprint,
+                     String sourceSignature,
+                     int effectiveSmallestWidthDp,
+                     String resultSignature,
+                     String provenance,
+                     long elapsedRealtimeMillis) {
+            this.packageHash = packageHash;
+            this.targetFingerprint = targetFingerprint;
+            this.sourceSignature = sourceSignature;
+            this.effectiveSmallestWidthDp = effectiveSmallestWidthDp;
+            this.resultSignature = resultSignature;
+            this.provenance = provenance;
+            this.elapsedRealtimeMillis = elapsedRealtimeMillis;
+        }
+    }
+
+    static final class ParseResult {
+        final boolean hit;
+        final MarkerRecord record;
+        final String reason;
+        final long ageMillis;
+
+        private ParseResult(boolean hit, MarkerRecord record, String reason, long ageMillis) {
+            this.hit = hit;
+            this.record = record;
+            this.reason = reason;
+            this.ageMillis = ageMillis;
+        }
+
+        static ParseResult hit(MarkerRecord record, long ageMillis) {
+            return new ParseResult(true, record, "hit", ageMillis);
+        }
+
+        static ParseResult miss(String reason) {
+            return new ParseResult(false, null, reason, -1L);
+        }
+    }
+}

@@ -60,6 +60,10 @@ final class ResourcesImplHookInstaller {
         int originalSmallestWidthDp = config.smallestScreenWidthDp;
         int originalDensityDpi = config.densityDpi;
         Integer targetViewportWidth = TargetViewportWidthResolver.resolve(store, packageName);
+        if (targetViewportWidth != null) {
+            ViewportRuntimeMarkerProbe.observeAppProcessProbe(
+                    packageName, targetViewportWidth, "ResourcesImpl");
+        }
         boolean windowScoped = ViewportConfigurationScope.isWindowScoped(config);
         VirtualDisplayOverride.Result stableTarget =
                 VirtualDisplayState.getForTarget(targetViewportWidth);
