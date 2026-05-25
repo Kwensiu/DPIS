@@ -168,6 +168,10 @@ public class AppConfigDialogBinderSourceSmokeTest {
         String itemLayout = read("src/main/res/layout/item_font_hook_domain.xml");
 
         assertTrue(source.contains("setTitle(R.string.dialog_font_hook_domains_dialog_title)"));
+        assertTrue(source.contains("dialog_hook_chain_tab_interface"));
+        assertTrue(source.contains("dialog_hook_chain_tab_font"));
+        assertTrue(source.contains("font_hook_domains_interface_page"));
+        assertTrue(source.contains("font_hook_domains_font_page"));
         assertTrue(source.contains("host.saveCustom(packageName, selectedKnown, automaticKnown, unknown)"));
         assertTrue(source.contains("host.restoreRecommended(packageName)"));
         assertTrue(source.contains("FontHookDomainRegistry.orderedCustomizableDisplayIdsList()"));
@@ -186,6 +190,9 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(dialogLayout.contains("@+id/font_hook_domains_known_container"));
         assertTrue(dialogLayout.contains("@+id/font_hook_domains_unknown_container"));
         assertTrue(dialogLayout.contains("@+id/font_hook_domains_restore_button"));
+        assertTrue(dialogLayout.contains("@+id/font_hook_domains_tabs"));
+        assertTrue(dialogLayout.contains("@+id/font_hook_domains_interface_page"));
+        assertTrue(dialogLayout.contains("@+id/font_hook_domains_font_page"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_title"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_subtitle"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_switch"));

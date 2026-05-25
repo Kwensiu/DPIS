@@ -56,8 +56,10 @@
     <string name="dialog_dpis_disable_button">已启用</string>
     <string name="dialog_font_hook_domains_title">Hook 链路</string>
     <string name="dialog_font_hook_domains_title_with_count">Hook(%1$d/%2$d)</string>
-    <string name="dialog_font_hook_domains_dialog_title">字体兼容模式</string>
-    <string name="dialog_viewport_apply_strategy_title">视口应用策略</string>
+    <string name="dialog_font_hook_domains_dialog_title">自定义 Hook 链路</string>
+    <string name="dialog_hook_chain_tab_interface">界面</string>
+    <string name="dialog_hook_chain_tab_font">字体</string>
+    <string name="dialog_viewport_apply_strategy_title">界面比例应用策略</string>
     <string name="dialog_viewport_apply_auto">Auto</string>
     <string name="dialog_viewport_apply_auto_subtitle">优先走系统路线，失败时静默回退。</string>
     <string name="dialog_viewport_apply_system">系统</string>

@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.textview.MaterialTextView;
 
 import java.util.LinkedHashMap;
@@ -46,6 +47,9 @@ final class FontHookDomainDialog {
                      Runnable onStateChanged) {
         View view = LayoutInflater.from(activity).inflate(
                 R.layout.dialog_font_hook_domains, null, false);
+        TabLayout tabs = view.findViewById(R.id.font_hook_domains_tabs);
+        View interfacePage = view.findViewById(R.id.font_hook_domains_interface_page);
+        View fontPage = view.findViewById(R.id.font_hook_domains_font_page);
         LinearLayout knownContainer = view.findViewById(R.id.font_hook_domains_known_container);
         LinearLayout viewportApplyContainer =
                 view.findViewById(R.id.font_hook_domains_viewport_apply_container);
@@ -68,6 +72,7 @@ final class FontHookDomainDialog {
                 ViewportApplyMode.normalize(currentViewportApplyMode)
         };
 
+        bindTabs(tabs, interfacePage, fontPage);
         bindViewportApplyRows(activity, viewportApplyContainer, host, packageName,
                 viewportApplyMode);
         Map<String, MaterialSwitch> switches = new LinkedHashMap<>();
@@ -123,6 +128,27 @@ final class FontHookDomainDialog {
                 .setView(view)
                 .create();
         dialog.show();
+    }
+
+    private static void bindTabs(TabLayout tabs, View interfacePage, View fontPage) {
+        tabs.addTab(tabs.newTab().setText(R.string.dialog_hook_chain_tab_interface));
+        tabs.addTab(tabs.newTab().setText(R.string.dialog_hook_chain_tab_font));
+        tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                boolean interfaceSelected = tab.getPosition() == 0;
+                interfacePage.setVisibility(interfaceSelected ? View.VISIBLE : View.GONE);
+                fontPage.setVisibility(interfaceSelected ? View.GONE : View.VISIBLE);
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
+        });
     }
 
     private static void bindViewportApplyRows(Activity activity,
