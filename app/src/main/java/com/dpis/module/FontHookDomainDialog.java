@@ -69,7 +69,7 @@ final class FontHookDomainDialog {
         LinkedHashSet<String> unknown = new LinkedHashSet<>(
                 currentOverride != null ? currentOverride.unknownDomains : Set.of());
         String[] viewportApplyMode = new String[] {
-                ViewportApplyMode.normalize(currentViewportApplyMode)
+                normalizeViewportApplyModeForDisplay(currentViewportApplyMode)
         };
 
         bindTabs(tabs, interfacePage, fontPage);
@@ -197,6 +197,9 @@ final class FontHookDomainDialog {
         switchView.setChecked(mode.equals(selectedMode));
         switchView.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!isChecked || mode.equals(ViewportApplyMode.normalize(selectedMode))) {
+                if (!isChecked && mode.equals(ViewportApplyMode.normalize(selectedMode))) {
+                    buttonView.setChecked(true);
+                }
                 return;
             }
             if (host.saveViewportApplyMode(packageName, mode)) {
@@ -212,6 +215,13 @@ final class FontHookDomainDialog {
             }
         });
         container.addView(row);
+    }
+
+    private static String normalizeViewportApplyModeForDisplay(String mode) {
+        String normalized = ViewportApplyMode.normalize(mode);
+        return ViewportApplyMode.isEnabled(normalized)
+                ? normalized
+                : ViewportApplyMode.AUTO;
     }
 
     private static void updateSelectedKnown(Set<String> selectedKnown, String id, boolean checked) {

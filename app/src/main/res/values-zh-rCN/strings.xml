@@ -2,9 +2,10 @@
 <resources>
     <string name="app_name">DPIS</string>
     <string name="module_description">独立调节应用 DPI 与文本大小</string>
-    <string name="dialog_viewport_hint">视口比例 / 固定 dp</string>
+    <string name="dialog_viewport_hint_scale">界面比例 50-200%</string>
+    <string name="dialog_viewport_hint_absolute">最小宽度 dp</string>
     <string name="dialog_viewport_mode_system">比例</string>
-    <string name="dialog_viewport_mode_compat">固定 dp</string>
+    <string name="dialog_viewport_mode_compat">宽度</string>
     <string name="dialog_font_scale_hint">字体 50–300%</string>
     <string name="dialog_font_mode_system">系统</string>
     <string name="dialog_font_mode_compat">兼容</string>

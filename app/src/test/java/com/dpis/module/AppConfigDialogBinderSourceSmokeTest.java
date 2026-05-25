@@ -170,6 +170,9 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("setTitle(R.string.dialog_font_hook_domains_dialog_title)"));
         assertTrue(source.contains("dialog_hook_chain_tab_interface"));
         assertTrue(source.contains("dialog_hook_chain_tab_font"));
+        assertTrue(source.contains("normalizeViewportApplyModeForDisplay(currentViewportApplyMode)"));
+        assertTrue(source.contains(": ViewportApplyMode.AUTO"));
+        assertTrue(source.contains("buttonView.setChecked(true);"));
         assertTrue(source.contains("font_hook_domains_interface_page"));
         assertTrue(source.contains("font_hook_domains_font_page"));
         assertTrue(source.contains("host.saveCustom(packageName, selectedKnown, automaticKnown, unknown)"));
@@ -191,11 +194,36 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(dialogLayout.contains("@+id/font_hook_domains_unknown_container"));
         assertTrue(dialogLayout.contains("@+id/font_hook_domains_restore_button"));
         assertTrue(dialogLayout.contains("@+id/font_hook_domains_tabs"));
+        assertTrue(dialogLayout.contains("app:tabBackground=\"@android:color/transparent\""));
         assertTrue(dialogLayout.contains("@+id/font_hook_domains_interface_page"));
         assertTrue(dialogLayout.contains("@+id/font_hook_domains_font_page"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_title"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_subtitle"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_switch"));
+    }
+
+    @Test
+    public void viewportTargetTypeControlsInputHintAndStackedLabels() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String layout = read("src/main/res/layout/dialog_app_config.xml");
+        String strings = read("src/main/res/values/strings.xml");
+        String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
+
+        assertTrue(layout.contains("android:hint=\"@string/dialog_viewport_hint_scale\""));
+        assertTrue(layout.contains("android:orientation=\"horizontal\""));
+        assertTrue(layout.contains("android:id=\"@+id/dialog_viewport_mode_system_label\" android:layout_width=\"0dp\" android:layout_height=\"match_parent\""));
+        assertTrue(layout.contains("android:id=\"@+id/dialog_viewport_mode_compat_label\" android:layout_width=\"0dp\" android:layout_height=\"match_parent\""));
+        assertTrue(source.contains("bindViewportInputHint(views.viewportInputLayout, item.viewportTargetSpec.type())"));
+        assertTrue(source.contains("bindViewportInputHint(views.viewportInputLayout, ViewportTargetType.RELATIVE_SCALE)"));
+        assertTrue(source.contains("bindViewportInputHint(views.viewportInputLayout, ViewportTargetType.ABSOLUTE_DP)"));
+        assertTrue(source.contains("dialogView.findViewById(R.id.dialog_viewport_mode_compat_label)),"));
+        assertFalse(source.contains("toggle.vertical"));
+        assertTrue(strings.contains("Interface scale 50-200%"));
+        assertTrue(strings.contains("Min width dp"));
+        assertTrue(zhStrings.contains("&#x754C;&#x9762;&#x6BD4;&#x4F8B; 50-200%")
+                || zhStrings.contains("界面比例 50-200%"));
+        assertTrue(zhStrings.contains("&#x6700;&#x5C0F;&#x5BBD;&#x5EA6; dp")
+                || zhStrings.contains("最小宽度 dp"));
     }
 
 

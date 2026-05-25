@@ -2,9 +2,10 @@
 <resources>
     <string name="app_name">DPIS</string>
     <string name="module_description">Per-app DPI &amp; text size</string>
-    <string name="dialog_viewport_hint">Viewport scale / fixed dp</string>
+    <string name="dialog_viewport_hint_scale">Interface scale 50-200%</string>
+    <string name="dialog_viewport_hint_absolute">Min width dp</string>
     <string name="dialog_viewport_mode_system">Scale</string>
-    <string name="dialog_viewport_mode_compat">Fixed dp</string>
+    <string name="dialog_viewport_mode_compat">Min width</string>
     <string name="dialog_font_scale_hint">Font 50–300%</string>
     <string name="dialog_font_mode_system">System</string>
     <string name="dialog_font_mode_compat">Compat</string>

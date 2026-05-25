@@ -25,7 +25,7 @@
 
             <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
 
-                <com.google.android.material.textfield.TextInputLayout android:id="@+id/dialog_viewport_input_layout" style="@style/Widget.Dpis.TextInputLayout.OutlinedBox.Compact" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/dialog_viewport_hint" app:endIconMode="clear_text" app:boxCornerRadiusBottomEnd="18dp" app:boxCornerRadiusBottomStart="18dp" app:boxCornerRadiusTopEnd="18dp" app:boxCornerRadiusTopStart="18dp">
+                <com.google.android.material.textfield.TextInputLayout android:id="@+id/dialog_viewport_input_layout" style="@style/Widget.Dpis.TextInputLayout.OutlinedBox.Compact" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/dialog_viewport_hint_scale" app:endIconMode="clear_text" app:boxCornerRadiusBottomEnd="18dp" app:boxCornerRadiusBottomStart="18dp" app:boxCornerRadiusTopEnd="18dp" app:boxCornerRadiusTopStart="18dp">
 
                     <com.google.android.material.textfield.TextInputEditText android:id="@+id/dialog_viewport_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:imeOptions="actionDone" android:inputType="number" android:minHeight="0dp" android:paddingTop="14dp" android:paddingBottom="12dp" />
                 </com.google.android.material.textfield.TextInputLayout>
@@ -39,9 +39,9 @@
 
                     <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal">
 
-                        <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_viewport_mode_system_label" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="@string/dialog_viewport_mode_system" android:textAppearance="@style/TextAppearance.Material3.LabelMedium" />
+                        <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_viewport_mode_system_label" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="@string/dialog_viewport_mode_system" android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
 
-                        <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_viewport_mode_compat_label" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="@string/dialog_viewport_mode_compat" android:textAppearance="@style/TextAppearance.Material3.LabelMedium" />
+                        <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_viewport_mode_compat_label" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="@string/dialog_viewport_mode_compat" android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
                     </LinearLayout>
                 </FrameLayout>
             </FrameLayout>

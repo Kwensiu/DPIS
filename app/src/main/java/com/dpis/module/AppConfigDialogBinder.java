@@ -135,6 +135,7 @@ final class AppConfigDialogBinder {
                 ? String.valueOf(item.fontScalePercent)
                 : "");
         bindViewportModeToggle(views.viewportModeToggle, item.viewportTargetSpec.type(), false);
+        bindViewportInputHint(views.viewportInputLayout, item.viewportTargetSpec.type());
         bindFontModeToggle(views.fontModeToggle, item.fontMode, false);
         String selectedTypefaceId = normalizeTypefaceId(item.typefaceId);
         bindTypefaceSelector(views.typefaceSelectorButton, selectedTypefaceId);
@@ -309,6 +310,7 @@ final class AppConfigDialogBinder {
         views.viewportModeToggle.container.setOnClickListener(v -> {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
             toggleViewportMode(views.viewportModeToggle, views.viewportInputView, state);
+            bindViewportInputHint(views.viewportInputLayout, resolveViewportMode(views.viewportModeToggle));
             updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,
                     views.viewportModeToggle,
                     views.fontInputLayout, views.fontInputView, views.saveButton);
@@ -318,6 +320,7 @@ final class AppConfigDialogBinder {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
             switchViewportTargetType(views.viewportModeToggle, views.viewportInputView, state,
                     ViewportTargetType.RELATIVE_SCALE, true);
+            bindViewportInputHint(views.viewportInputLayout, ViewportTargetType.RELATIVE_SCALE);
             updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,
                     views.viewportModeToggle,
                     views.fontInputLayout, views.fontInputView, views.saveButton);
@@ -327,6 +330,7 @@ final class AppConfigDialogBinder {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
             switchViewportTargetType(views.viewportModeToggle, views.viewportInputView, state,
                     ViewportTargetType.ABSOLUTE_DP, true);
+            bindViewportInputHint(views.viewportInputLayout, ViewportTargetType.ABSOLUTE_DP);
             updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,
                     views.viewportModeToggle,
                     views.fontInputLayout, views.fontInputView, views.saveButton);
@@ -978,6 +982,16 @@ final class AppConfigDialogBinder {
                 ViewportTargetType.RELATIVE_SCALE.equals(resolved), animate);
     }
 
+    private void bindViewportInputHint(TextInputLayout viewportInputLayout, String viewportTargetType) {
+        if (viewportInputLayout == null) {
+            return;
+        }
+        viewportInputLayout.setHint(ViewportTargetType.RELATIVE_SCALE.equals(
+                ViewportTargetType.normalize(viewportTargetType))
+                        ? R.string.dialog_viewport_hint_scale
+                        : R.string.dialog_viewport_hint_absolute);
+    }
+
     private static void toggleViewportMode(ModeToggle viewportModeToggle,
             TextInputEditText viewportInputView,
             AppConfigDialogState state) {
@@ -1029,16 +1043,17 @@ final class AppConfigDialogBinder {
         toggle.replaceLabel.setScaleX(emulationActive ? 1f : 1.04f);
         toggle.replaceLabel.setScaleY(emulationActive ? 1f : 1.04f);
         toggle.container.post(() -> {
-            int available = toggle.container.getWidth()
+            int availableWidth = toggle.container.getWidth()
                     - toggle.container.getPaddingLeft()
                     - toggle.container.getPaddingRight();
-            if (available <= 0) {
+            if (availableWidth <= 0) {
                 return;
             }
-            int half = available / 2;
+            int half = availableWidth / 2;
             FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) toggle.thumb.getLayoutParams();
-            if (params.width != half) {
+            if (params.width != half || params.height != FrameLayout.LayoutParams.MATCH_PARENT) {
                 params.width = half;
+                params.height = FrameLayout.LayoutParams.MATCH_PARENT;
                 toggle.thumb.setLayoutParams(params);
             }
             float target = emulationActive ? 0f : half;
@@ -1046,11 +1061,13 @@ final class AppConfigDialogBinder {
                 toggle.thumb.animate().cancel();
                 toggle.thumb.animate()
                         .translationX(target)
+                        .translationY(0f)
                         .setDuration(MODE_TOGGLE_ANIM_DURATION_MS)
                         .setInterpolator(new AccelerateDecelerateInterpolator())
                         .start();
             } else {
                 toggle.thumb.setTranslationX(target);
+                toggle.thumb.setTranslationY(0f);
             }
         });
     }
