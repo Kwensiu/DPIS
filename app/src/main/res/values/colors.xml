@@ -18,4 +18,6 @@
     <color name="help_tutorial_compat_badge_container">#FFE7C4</color>
     <color name="help_tutorial_compat_badge_text">#9A5A0B</color>
     <color name="dpis_fab_ripple">#332D61D8</color>
+    <color name="app_config_wizard_bubble_container">#6A6F77</color>
+    <color name="app_config_wizard_bubble_text">#F7F7F7</color>
 </resources>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/dialog_advanced_wizard_hint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_app_config_wizard_bubble"
+        android:gravity="center_vertical"
+        android:minHeight="36dp"
+        android:orientation="horizontal"
+        android:paddingStart="14dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="6dp"
+        android:paddingBottom="6dp">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/dialog_advanced_wizard_hint"
+            android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+            android:textColor="@color/app_config_wizard_bubble_text" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/dialog_advanced_wizard_close_button"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_app_config_wizard_close_button"
+            android:contentDescription="@string/dialog_advanced_wizard_close"
+            android:padding="7dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_close_24"
+            app:tint="@color/app_config_wizard_bubble_text" />
+    </LinearLayout>
+
+    <View
+        android:id="@+id/dialog_advanced_wizard_arrow"
+        android:layout_width="14dp"
+        android:layout_height="7dp"
+        android:background="@drawable/bg_app_config_wizard_arrow" />
+</LinearLayout>

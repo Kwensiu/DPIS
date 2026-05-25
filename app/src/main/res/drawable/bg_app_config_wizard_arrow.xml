@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="14dp"
+    android:height="7dp"
+    android:viewportWidth="14"
+    android:viewportHeight="7">
+    <path
+        android:fillColor="@color/app_config_wizard_bubble_container"
+        android:pathData="M0,0 L14,0 L7,7 Z" />
+</vector>
