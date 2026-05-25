@@ -2,6 +2,7 @@ package com.dpis.module;
 
 final class ModulePackagePlan {
     final String packageName;
+    final ViewportTargetSpec targetViewportSpec;
     final Integer targetViewportWidthDp;
     final String targetViewportMode;
     final Integer targetFontScalePercent;
@@ -19,6 +20,7 @@ final class ModulePackagePlan {
     final HookDomainOverride hookDomainOverride;
 
     private ModulePackagePlan(String packageName,
+                              ViewportTargetSpec targetViewportSpec,
                               Integer targetViewportWidthDp,
                               String targetViewportMode,
                               Integer targetFontScalePercent,
@@ -35,6 +37,11 @@ final class ModulePackagePlan {
                               boolean hyperOsNativeFlutterFontEnabled,
                               HookDomainOverride hookDomainOverride) {
         this.packageName = packageName;
+        this.targetViewportSpec = targetViewportSpec != null
+                ? targetViewportSpec
+                : (targetViewportWidthDp != null
+                        ? ViewportTargetSpec.absoluteDp(targetViewportWidthDp)
+                        : ViewportTargetSpec.off());
         this.targetViewportWidthDp = targetViewportWidthDp;
         this.targetViewportMode = targetViewportMode;
         this.targetFontScalePercent = targetFontScalePercent;
@@ -67,7 +74,10 @@ final class ModulePackagePlan {
         if (packageConfig == null) {
             return inactive(packageName);
         }
-        Integer targetViewportWidthDp = packageConfig.targetViewportWidthDp;
+        ViewportTargetSpec targetViewportSpec = packageConfig.targetViewportSpec;
+        Integer targetViewportWidthDp = targetViewportSpec.isAbsoluteDp()
+                ? targetViewportSpec.absoluteWidthDp()
+                : null;
         String targetViewportMode = packageConfig.targetViewportMode;
         Integer targetFontScalePercent = packageConfig.targetFontScalePercent;
         String targetFontMode = packageConfig.targetFontMode;
@@ -82,16 +92,17 @@ final class ModulePackagePlan {
                 && targetFontScalePercent != 100;
         boolean typefaceActive = targetTypefaceId != null && !targetTypefaceId.isBlank();
         if (!targetDpisEnabled
-                || (targetViewportWidthDp == null && !fontScaleActive && !typefaceActive)) {
+                || (!targetViewportSpec.isEnabled() && !fontScaleActive && !typefaceActive)) {
             return new ModulePackagePlan(
                     packageName,
+                    targetViewportSpec,
                     targetViewportWidthDp,
                     targetViewportMode,
                     targetFontScalePercent,
                     targetFontMode,
                     targetTypefaceId,
                     targetDpisEnabled,
-                    targetViewportWidthDp != null,
+                    targetViewportSpec.isEnabled(),
                     false,
                     fontScaleActive,
                     false,
@@ -102,7 +113,7 @@ final class ModulePackagePlan {
                     packageConfig.hookDomainOverride);
         }
         HookRuntimePolicy policy = HookRuntimePolicy.fromSnapshot(snapshot);
-        boolean viewportConfigured = targetViewportWidthDp != null;
+        boolean viewportConfigured = targetViewportSpec.isEnabled();
         boolean viewportEnabled = AppProcessHookInstaller.resolveViewportHookEnabled(
                 policy, viewportConfigured, targetViewportMode);
         AppProcessHookInstaller.FontHookPlan fontHookPlan =
@@ -110,6 +121,7 @@ final class ModulePackagePlan {
                         policy, fontScaleActive, targetFontMode);
         return new ModulePackagePlan(
                 packageName,
+                targetViewportSpec,
                 targetViewportWidthDp,
                 targetViewportMode,
                 targetFontScalePercent,
@@ -144,6 +156,7 @@ final class ModulePackagePlan {
     private static ModulePackagePlan inactive(String packageName) {
         return new ModulePackagePlan(
                 packageName,
+                ViewportTargetSpec.off(),
                 null,
                 ViewportApplyMode.OFF,
                 null,

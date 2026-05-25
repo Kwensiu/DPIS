@@ -74,4 +74,44 @@ public class VirtualDisplayStateTest {
 
         assertEquals(null, VirtualDisplayState.getStableTargetResult(360, 800));
     }
+
+    @Test
+    public void recordCacheEvictsOldEntriesWithoutClearingFreshEntries() {
+        for (int index = 0; index < 20; index++) {
+            ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(800 + index);
+            ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
+                    400 + index,
+                    800 + index,
+                    400 + index,
+                    420,
+                    1080,
+                    2208);
+            ViewportOverride.Result viewportResult = new ViewportOverride.Result(
+                    360 + index,
+                    720 + index,
+                    360 + index,
+                    472);
+
+            VirtualDisplayState.publish(
+                    "com.example.app",
+                    targetSpec,
+                    source,
+                    viewportResult,
+                    null,
+                    ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+        }
+
+        ViewportTargetSpec latestTarget = ViewportTargetSpec.relativeScale(819);
+        ViewportSourceSnapshot latestSource = ViewportSourceSnapshot.systemDisplayInfo(
+                419,
+                819,
+                419,
+                420,
+                1080,
+                2208);
+
+        assertTrue(VirtualDisplayState.recordCountForTest() <= 24);
+        assertEquals(379, VirtualDisplayState.findForSource(
+                "com.example.app", latestTarget, latestSource).effectiveSmallestWidthDp);
+    }
 }

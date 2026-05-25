@@ -6,21 +6,28 @@ final class AppConfigSaveHandler {
     int[] save(AppListItem item,
             TextInputEditText viewportInput,
             TextInputEditText fontScaleInput,
-            String viewportMode,
+            String viewportTargetType,
             String fontMode,
             String selectedTypefaceId,
             boolean systemHooksEnabled,
             DpiConfigStore store,
             Runnable onChanged) {
         try {
-            Integer widthDp = parsePositiveIntOrNull(viewportInput);
+            ViewportTargetSpec viewportTargetSpec = parseViewportTargetSpecOrNull(
+                    viewportInput, viewportTargetType);
             Integer fontScalePercent = parseFontScalePercentOrNull(fontScaleInput);
-            boolean viewportEmulationIneffective = widthDp != null
-                    && ViewportApplyMode.SYSTEM_EMULATION.equals(
-                            ViewportApplyMode.normalize(viewportMode))
-                    && !ViewportApplyMode.SYSTEM_EMULATION.equals(
+            if (store == null) {
+                return new int[] { 1, R.string.status_save_requires_init };
+            }
+            String viewportApplyMode = resolveViewportApplyModeForSave(
+                    store, item.packageName, item.viewportMode, viewportTargetSpec);
+            boolean viewportEmulationIneffective = viewportTargetSpec != null
+                    && viewportTargetSpec.isEnabled()
+                    && ViewportApplyMode.SYSTEM.equals(
+                            ViewportApplyMode.normalize(viewportApplyMode))
+                    && !ViewportApplyMode.SYSTEM.equals(
                             EffectiveModeResolver.resolveViewportMode(
-                                    viewportMode,
+                                    viewportApplyMode,
                                     systemHooksEnabled));
             boolean fontEmulationIneffective = fontScalePercent != null
                     && FontApplyMode.SYSTEM_EMULATION.equals(FontApplyMode.normalize(fontMode))
@@ -30,20 +37,17 @@ final class AppConfigSaveHandler {
                     viewportEmulationIneffective || fontEmulationIneffective;
             boolean saved = true;
             int hint = 0;
-            if (store == null) {
-                hint = R.string.status_save_requires_init;
-                return new int[] { 1, hint };
-            }
-            if (widthDp == null) {
+            if (viewportTargetSpec == null || !viewportTargetSpec.isEnabled()) {
                 saved = store.clearTargetViewportWidthDp(item.packageName) && saved;
                 saved = store.setTargetViewportApplyMode(item.packageName, ViewportApplyMode.OFF)
                         && saved;
                 ViewportPropertySyncer.clearTargetAsync(item.packageName);
             } else {
-                saved = store.setTargetViewportWidthDp(item.packageName, widthDp) && saved;
-                saved = store.setTargetViewportApplyMode(item.packageName, viewportMode)
+                saved = store.setTargetViewportSpec(item.packageName, viewportTargetSpec) && saved;
+                saved = store.setTargetViewportApplyMode(item.packageName, viewportApplyMode)
                         && saved;
-                ViewportPropertySyncer.publishTargetAsync(item.packageName, widthDp, viewportMode);
+                ViewportPropertySyncer.publishTargetAsync(
+                        item.packageName, viewportTargetSpec, viewportApplyMode);
             }
             if (fontScalePercent == null) {
                 saved = store.clearTargetFontScalePercent(item.packageName) && saved;
@@ -80,6 +84,24 @@ final class AppConfigSaveHandler {
         }
     }
 
+    static String resolveViewportApplyModeForSave(DpiConfigStore store,
+            String packageName,
+            String itemViewportMode,
+            ViewportTargetSpec viewportTargetSpec) {
+        if (viewportTargetSpec == null || !viewportTargetSpec.isEnabled()) {
+            return ViewportApplyMode.OFF;
+        }
+        String persistedMode = store != null
+                ? store.getTargetViewportApplyMode(packageName)
+                : ViewportApplyMode.OFF;
+        if (ViewportApplyMode.isEnabled(persistedMode)) {
+            return persistedMode;
+        }
+        return ViewportApplyMode.isEnabled(itemViewportMode)
+                ? ViewportApplyMode.normalize(itemViewportMode)
+                : ViewportApplyMode.AUTO;
+    }
+
     private static Integer parsePositiveIntOrNull(TextInputEditText inputView)
             throws NumberFormatException {
         String raw = inputView.getText() != null ? inputView.getText().toString().trim() : "";
@@ -91,6 +113,23 @@ final class AppConfigSaveHandler {
             throw new NumberFormatException("must be positive");
         }
         return value;
+    }
+
+    private static ViewportTargetSpec parseViewportTargetSpecOrNull(TextInputEditText inputView,
+                                                                    String viewportTargetType)
+            throws NumberFormatException {
+        Integer value = parsePositiveIntOrNull(inputView);
+        if (value == null) {
+            return ViewportTargetSpec.off();
+        }
+        if (ViewportTargetType.RELATIVE_SCALE.equals(
+                ViewportTargetType.normalize(viewportTargetType))) {
+            if (value < 50 || value > 200) {
+                throw new NumberFormatException("viewport scale out of range");
+            }
+            return ViewportTargetSpec.relativeScale(value * 10);
+        }
+        return ViewportTargetSpec.absoluteDp(value);
     }
 
     private static Integer parseFontScalePercentOrNull(TextInputEditText inputView)

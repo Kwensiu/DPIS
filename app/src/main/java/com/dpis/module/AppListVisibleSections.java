@@ -23,7 +23,7 @@ final class AppListVisibleSections {
                     item.packageName,
                     item.systemApp,
                     item.inScope,
-                    item.viewportWidthDp,
+                    item.viewportTargetSpec.isEnabled() ? item.viewportTargetSpec.activeValue() : null,
                     item.fontScalePercent,
                     item.fontMode,
                     item.typefaceId,

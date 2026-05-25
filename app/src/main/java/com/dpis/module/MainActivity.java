@@ -1284,10 +1284,21 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                         }
                         return restored;
                     }
+
+                    @Override
+                    public boolean saveViewportApplyMode(String packageName, String mode) {
+                        boolean saved = store.setTargetViewportApplyMode(packageName, mode);
+                        if (saved) {
+                            ViewportPropertySyncer.syncConfiguredTargetsAsync(store);
+                            requestAppsLoad();
+                        }
+                        return saved;
+                    }
                 },
                 item.packageName,
                 automaticKnownDomains,
                 currentOverride,
+                store.getTargetViewportApplyMode(item.packageName),
                 onStateChanged);
     }
 
@@ -1415,9 +1426,9 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     }
 
     private static boolean hasActiveStoredConfig(DpiConfigStore store, String packageName) {
-        Integer widthDp = store.getTargetViewportWidthDp(packageName);
+        ViewportTargetSpec viewportTargetSpec = store.getTargetViewportSpec(packageName);
         Integer fontScalePercent = store.getTargetFontScalePercent(packageName);
-        return widthDp != null
+        return viewportTargetSpec.isEnabled()
                 || fontScalePercent != null;
     }
 

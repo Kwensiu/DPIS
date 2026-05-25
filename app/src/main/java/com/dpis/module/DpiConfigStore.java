@@ -10,6 +10,8 @@ import java.util.Set;
 
 final class DpiConfigStore {
     private static final int MIN_VIEWPORT_WIDTH_DP = 1;
+    private static final int MIN_VIEWPORT_SCALE_PERMILLE = ViewportTargetSpec.MIN_SCALE_PERMILLE;
+    private static final int MAX_VIEWPORT_SCALE_PERMILLE = ViewportTargetSpec.MAX_SCALE_PERMILLE;
     private static final int MIN_FONT_SCALE_PERCENT = 50;
     private static final int MAX_FONT_SCALE_PERCENT = 300;
 
@@ -68,14 +70,55 @@ final class DpiConfigStore {
         return normalizeViewportWidth(widthDp);
     }
 
+    Integer getTargetViewportScalePermille(String packageName) {
+        String key = keyForViewportScalePermille(packageName);
+        if (!contains(key)) {
+            return null;
+        }
+        return normalizeViewportScalePermille(getNullableInt(key));
+    }
+
+    String getTargetViewportType(String packageName) {
+        String key = keyForViewportTargetType(packageName);
+        if (!contains(key)) {
+            return ViewportTargetType.OFF;
+        }
+        return ViewportTargetType.normalize(getString(key, ViewportTargetType.OFF));
+    }
+
+    ViewportTargetSpec getTargetViewportSpec(String packageName) {
+        String typeKey = keyForViewportTargetType(packageName);
+        String type = contains(typeKey)
+                ? ViewportTargetType.normalize(getString(typeKey, ViewportTargetType.OFF))
+                : ViewportTargetType.OFF;
+        if (ViewportTargetType.RELATIVE_SCALE.equals(type)) {
+            Integer scalePermille = getTargetViewportScalePermille(packageName);
+            return scalePermille != null
+                    ? ViewportTargetSpec.relativeScale(scalePermille)
+                    : ViewportTargetSpec.off();
+        }
+        if (ViewportTargetType.ABSOLUTE_DP.equals(type)) {
+            Integer widthDp = getTargetViewportWidthDp(packageName);
+            return widthDp != null ? ViewportTargetSpec.absoluteDp(widthDp) : ViewportTargetSpec.off();
+        }
+        Integer legacyWidthDp = getTargetViewportWidthDp(packageName);
+        return legacyWidthDp != null
+                ? ViewportTargetSpec.absoluteDp(legacyWidthDp)
+                : ViewportTargetSpec.off();
+    }
+
     String getTargetViewportApplyMode(String packageName) {
         String key = keyForViewportMode(packageName);
         if (contains(key)) {
             return ViewportApplyMode.normalize(getString(key, ViewportApplyMode.OFF));
         }
-        if (getTargetViewportWidthDp(packageName) != null) {
-            // 历史配置迁移：已有宽度但无模式时，默认视为系统模式。
-            return ViewportApplyMode.SYSTEM_EMULATION;
+        if (getTargetViewportWidthDp(packageName) != null
+                && !contains(keyForViewportTargetType(packageName))) {
+            // 历史配置迁移：已有宽度但无模式时，默认视为系统策略。
+            return ViewportApplyMode.SYSTEM;
+        }
+        if (getTargetViewportSpec(packageName).isEnabled()) {
+            return ViewportApplyMode.AUTO;
         }
         return ViewportApplyMode.OFF;
     }
@@ -267,19 +310,42 @@ final class DpiConfigStore {
         packages.add(packageName);
         return commitBoth(editor -> editor
                 .putStringSet(KEY_TARGET_PACKAGES, packages)
+                .putString(keyForViewportTargetType(packageName), ViewportTargetType.ABSOLUTE_DP)
                 .putInt(keyForViewportWidth(packageName), normalizedWidthDp));
+    }
+
+    boolean setTargetViewportSpec(String packageName, ViewportTargetSpec spec) {
+        ViewportTargetSpec normalized = spec != null ? spec : ViewportTargetSpec.off();
+        if (!normalized.isEnabled()) {
+            return clearTargetViewportWidthDp(packageName);
+        }
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        packages.add(packageName);
+        return commitBoth(editor -> {
+            editor.putStringSet(KEY_TARGET_PACKAGES, packages);
+            editor.putString(keyForViewportTargetType(packageName), normalized.type());
+            if (normalized.isRelativeScale()) {
+                editor.putInt(keyForViewportScalePermille(packageName), normalized.scalePermille());
+                return;
+            }
+            editor.putInt(keyForViewportWidth(packageName), normalized.absoluteWidthDp());
+        });
     }
 
     boolean clearTargetViewportWidthDp(String packageName) {
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
         if (!hasAnyPackageConfigAfterRemoving(packageName,
                 keyForViewportWidth(packageName),
+                keyForViewportTargetType(packageName),
+                keyForViewportScalePermille(packageName),
                 keyForViewportMode(packageName))) {
             packages.remove(packageName);
         }
         return commitBoth(editor -> editor
                 .putStringSet(KEY_TARGET_PACKAGES, packages)
                 .remove(keyForViewportWidth(packageName))
+                .remove(keyForViewportTargetType(packageName))
+                .remove(keyForViewportScalePermille(packageName))
                 .remove(keyForViewportMode(packageName)));
     }
 
@@ -407,6 +473,8 @@ final class DpiConfigStore {
         return commitBoth(editor -> editor
                 .putStringSet(KEY_TARGET_PACKAGES, packages)
                 .remove(keyForViewportWidth(packageName))
+                .remove(keyForViewportTargetType(packageName))
+                .remove(keyForViewportScalePermille(packageName))
                 .remove(keyForViewportMode(packageName))
                 .remove(keyForFontScale(packageName))
                 .remove(keyForTypefaceId(packageName))
@@ -454,6 +522,13 @@ final class DpiConfigStore {
         String viewportWidthKey = keyForViewportWidth(packageName);
         if (!isRemovedKey(viewportWidthKey, removedKeys)
                 && getTargetViewportWidthDp(packageName) != null) {
+            return true;
+        }
+        String viewportTargetTypeKey = keyForViewportTargetType(packageName);
+        String viewportScaleKey = keyForViewportScalePermille(packageName);
+        if ((!isRemovedKey(viewportTargetTypeKey, removedKeys)
+                || !isRemovedKey(viewportScaleKey, removedKeys))
+                && getTargetViewportSpec(packageName).isEnabled()) {
             return true;
         }
         String viewportModeKey = keyForViewportMode(packageName);
@@ -720,6 +795,15 @@ final class DpiConfigStore {
         return widthDp;
     }
 
+    private static Integer normalizeViewportScalePermille(Integer scalePermille) {
+        if (scalePermille == null
+                || scalePermille < MIN_VIEWPORT_SCALE_PERMILLE
+                || scalePermille > MAX_VIEWPORT_SCALE_PERMILLE) {
+            return null;
+        }
+        return scalePermille;
+    }
+
     private static Integer normalizeFontScalePercent(Integer percent) {
         if (percent == null
                 || percent < MIN_FONT_SCALE_PERCENT
@@ -742,6 +826,14 @@ final class DpiConfigStore {
 
     private static String keyForViewportWidth(String packageName) {
         return "viewport." + packageName + ".width_dp";
+    }
+
+    private static String keyForViewportTargetType(String packageName) {
+        return "viewport." + packageName + ".target_type";
+    }
+
+    private static String keyForViewportScalePermille(String packageName) {
+        return "viewport." + packageName + ".scale_permille";
     }
 
     private static String keyForViewportMode(String packageName) {

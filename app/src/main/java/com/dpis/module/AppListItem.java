@@ -7,7 +7,9 @@ final class AppListItem {
     final String packageName;
     final boolean inScope;
     final boolean scopeKnown;
+    final ViewportTargetSpec viewportTargetSpec;
     final Integer viewportWidthDp;
+    final Integer viewportScalePermille;
     final String viewportMode;
     final Integer fontScalePercent;
     final String fontMode;
@@ -25,12 +27,16 @@ final class AppListItem {
                 String viewportMode,
                 Integer fontScalePercent,
                 String fontMode,
+                String typefaceId,
                 boolean dpisEnabled,
                 boolean systemApp,
                 boolean hyperOsNativeProxyCandidate,
                 Drawable icon) {
         this(label, packageName, inScope, scopeKnown, viewportWidthDp, viewportMode,
-                fontScalePercent, fontMode, null, dpisEnabled, systemApp,
+                viewportWidthDp != null
+                        ? ViewportTargetSpec.absoluteDp(viewportWidthDp)
+                        : ViewportTargetSpec.off(),
+                fontScalePercent, fontMode, typefaceId, dpisEnabled, systemApp,
                 hyperOsNativeProxyCandidate, icon);
     }
 
@@ -42,6 +48,27 @@ final class AppListItem {
                 String viewportMode,
                 Integer fontScalePercent,
                 String fontMode,
+                boolean dpisEnabled,
+                boolean systemApp,
+                boolean hyperOsNativeProxyCandidate,
+                Drawable icon) {
+        this(label, packageName, inScope, scopeKnown, viewportWidthDp, viewportMode,
+                viewportWidthDp != null
+                        ? ViewportTargetSpec.absoluteDp(viewportWidthDp)
+                        : ViewportTargetSpec.off(),
+                fontScalePercent, fontMode, null, dpisEnabled, systemApp,
+                hyperOsNativeProxyCandidate, icon);
+    }
+
+    AppListItem(String label,
+                String packageName,
+                boolean inScope,
+                boolean scopeKnown,
+                Integer viewportWidthDp,
+                String viewportMode,
+                ViewportTargetSpec viewportTargetSpec,
+                Integer fontScalePercent,
+                String fontMode,
                 String typefaceId,
                 boolean dpisEnabled,
                 boolean systemApp,
@@ -51,7 +78,17 @@ final class AppListItem {
         this.packageName = packageName;
         this.inScope = inScope;
         this.scopeKnown = scopeKnown;
-        this.viewportWidthDp = viewportWidthDp;
+        this.viewportTargetSpec = viewportTargetSpec != null
+                ? viewportTargetSpec
+                : (viewportWidthDp != null
+                        ? ViewportTargetSpec.absoluteDp(viewportWidthDp)
+                        : ViewportTargetSpec.off());
+        this.viewportWidthDp = this.viewportTargetSpec.isAbsoluteDp()
+                ? Integer.valueOf(this.viewportTargetSpec.absoluteWidthDp())
+                : viewportWidthDp;
+        this.viewportScalePermille = this.viewportTargetSpec.isRelativeScale()
+                ? this.viewportTargetSpec.scalePermille()
+                : null;
         this.viewportMode = ViewportApplyMode.normalize(viewportMode);
         this.fontScalePercent = fontScalePercent;
         this.fontMode = FontApplyMode.normalize(fontMode);

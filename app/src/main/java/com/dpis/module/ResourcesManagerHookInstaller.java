@@ -274,10 +274,22 @@ final class ResourcesManagerHookInstaller {
             }
             return;
         }
-        Integer targetViewportWidth = TargetViewportWidthResolver.resolve(store, packageName);
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.fromConfiguration(
+                ViewportSourceSnapshot.ORIGIN_RESOURCES_MANAGER, config, null);
+        ViewportTargetResolution resolution =
+                TargetViewportWidthResolver.resolve(store, packageName, source);
+        Integer targetViewportWidth = resolution.hasTarget()
+                ? resolution.effectiveSmallestWidthDp
+                : null;
+        if (targetViewportWidth != null && resolution.spec.isEnabled()) {
+            ViewportRuntimeMarkerProbe.observeAppProcessProbe(
+                    packageName, resolution.spec, sourceTag);
+        }
         boolean windowScoped = ViewportConfigurationScope.isWindowScoped(config);
         VirtualDisplayOverride.Result stableTarget =
-                VirtualDisplayState.getForTarget(targetViewportWidth);
+                resolution.record != null && resolution.record.virtualDisplayResult != null
+                        ? resolution.record.virtualDisplayResult
+                        : VirtualDisplayState.getForTarget(targetViewportWidth);
         ViewportOverride.Result result = ViewportOverride.derive(
                 config,
                 targetViewportWidth != null ? targetViewportWidth : 0,
@@ -300,9 +312,21 @@ final class ResourcesManagerHookInstaller {
                 0,
                 0,
                 result.smallestWidthDp);
-        if (!windowScoped && sharedResult != null) {
-            VirtualDisplayState.setUnlessDerivedFromTargetConfig(
-                    sharedResult, originalSmallestWidthDp, targetViewportWidth);
+        if (!windowScoped && resolution.spec.isEnabled() && source != null) {
+            boolean canPublishRecord = true;
+            if (sharedResult != null) {
+                canPublishRecord = VirtualDisplayState.setUnlessDerivedFromTargetConfig(
+                        sharedResult, originalSmallestWidthDp, targetViewportWidth);
+            }
+            if (canPublishRecord) {
+                VirtualDisplayState.publish(
+                        packageName,
+                        resolution.spec,
+                        source,
+                        result,
+                        sharedResult,
+                        ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+            }
         }
         boolean applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
                 store, packageName);

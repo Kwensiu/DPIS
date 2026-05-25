@@ -2,9 +2,10 @@
 <resources>
     <string name="app_name">DPIS</string>
     <string name="module_description">独立调节应用 DPI 与文本大小</string>
-    <string name="dialog_viewport_hint">最小宽度 dp</string>
-    <string name="dialog_viewport_mode_system">系统</string>
-    <string name="dialog_viewport_mode_compat">兼容</string>
+    <string name="dialog_viewport_hint_scale">界面比例 50-200%</string>
+    <string name="dialog_viewport_hint_absolute">最小宽度 dp</string>
+    <string name="dialog_viewport_mode_system">比例</string>
+    <string name="dialog_viewport_mode_compat">宽度</string>
     <string name="dialog_font_scale_hint">字体 50–300%</string>
     <string name="dialog_font_mode_system">系统</string>
     <string name="dialog_font_mode_compat">兼容</string>
@@ -56,7 +57,16 @@
     <string name="dialog_dpis_disable_button">已启用</string>
     <string name="dialog_font_hook_domains_title">Hook 链路</string>
     <string name="dialog_font_hook_domains_title_with_count">Hook(%1$d/%2$d)</string>
-    <string name="dialog_font_hook_domains_dialog_title">字体兼容模式</string>
+    <string name="dialog_font_hook_domains_dialog_title">自定义 Hook 链路</string>
+    <string name="dialog_hook_chain_tab_interface">界面</string>
+    <string name="dialog_hook_chain_tab_font">字体</string>
+    <string name="dialog_viewport_apply_strategy_title">界面比例应用策略</string>
+    <string name="dialog_viewport_apply_auto">自动</string>
+    <string name="dialog_viewport_apply_auto_subtitle">优先走系统路线，失败时静默回退。</string>
+    <string name="dialog_viewport_apply_system">系统</string>
+    <string name="dialog_viewport_apply_system_subtitle">仅使用系统层路线。</string>
+    <string name="dialog_viewport_apply_compat">兼容</string>
+    <string name="dialog_viewport_apply_compat_subtitle">使用应用进程字段改写。</string>
     <string name="dialog_font_hook_domains_unknown_group">未知链路</string>
     <string name="dialog_font_hook_domains_restore_button">恢复推荐配置</string>
     <string name="dialog_font_hook_group_resources">资源配置</string>

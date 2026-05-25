@@ -11,11 +11,18 @@ final class ViewportPropertySyncer {
     }
 
     static void publishTargetAsync(String packageName, int widthDp, String mode) {
-        if (packageName == null || packageName.isBlank() || widthDp <= 0) {
+        publishTargetAsync(packageName, ViewportTargetSpec.absoluteDp(widthDp), mode);
+    }
+
+    static void publishTargetAsync(String packageName, ViewportTargetSpec targetSpec, String mode) {
+        if (packageName == null || packageName.isBlank()) {
+            return;
+        }
+        if (targetSpec == null || !targetSpec.isEnabled()) {
             return;
         }
         Thread publisherThread = new Thread(
-                () -> runRootCommand(buildCompatConfigCommand(packageName, widthDp, mode)),
+                () -> runRootCommand(buildCompatConfigCommand(packageName, targetSpec, mode)),
                 "DPIS-viewport-property-publisher");
         publisherThread.setDaemon(true);
         publisherThread.start();
@@ -42,15 +49,14 @@ final class ViewportPropertySyncer {
         Thread syncThread = new Thread(() -> {
             StringBuilder command = new StringBuilder();
             for (String packageName : packages) {
-                Integer widthDp = store.getTargetViewportWidthDp(packageName);
+                ViewportTargetSpec targetSpec = store.getTargetViewportSpec(packageName);
                 String mode = store.getTargetViewportApplyMode(packageName);
                 if (command.length() > 0) {
                     command.append("; ");
                 }
-                int targetWidthDp = widthDp != null ? widthDp : 0;
                 command.append(buildCompatConfigCommand(
                         packageName,
-                        store.isTargetDpisEnabled(packageName) ? targetWidthDp : 0,
+                        store.isTargetDpisEnabled(packageName) ? targetSpec : ViewportTargetSpec.off(),
                         mode));
             }
             if (command.length() > 0) {
@@ -70,18 +76,40 @@ final class ViewportPropertySyncer {
     }
 
     private static String buildCompatConfigCommand(String packageName, int widthDp, String mode) {
+        return buildCompatConfigCommand(packageName, ViewportTargetSpec.absoluteDp(widthDp), mode);
+    }
+
+    private static String buildCompatConfigCommand(String packageName,
+                                                   ViewportTargetSpec targetSpec,
+                                                   String mode) {
         String normalizedMode = ViewportApplyMode.normalize(mode);
-        boolean enabled = widthDp > 0 && ViewportApplyMode.isEnabled(normalizedMode);
+        ViewportTargetSpec normalizedTarget = targetSpec != null ? targetSpec : ViewportTargetSpec.off();
+        boolean enabled = normalizedTarget.isEnabled() && ViewportApplyMode.isEnabled(normalizedMode);
         // vp.* drives system emulation. vpcfg/vpmode preserve compat100 config
         // for field_rewrite without accidentally enabling emulation.
         int systemEmulationValue = enabled
-                && ViewportApplyMode.SYSTEM_EMULATION.equals(normalizedMode) ? widthDp : 0;
-        int compatConfigValue = enabled ? widthDp : 0;
+                && normalizedTarget.isAbsoluteDp()
+                && (ViewportApplyMode.SYSTEM.equals(normalizedMode)
+                || ViewportApplyMode.AUTO.equals(normalizedMode))
+                ? normalizedTarget.absoluteWidthDp() : 0;
+        int compatConfigValue = enabled && normalizedTarget.isAbsoluteDp()
+                ? normalizedTarget.absoluteWidthDp() : 0;
+        int scalePermilleValue = enabled && normalizedTarget.isRelativeScale()
+                ? normalizedTarget.scalePermille() : 0;
+        String targetType = enabled ? normalizedTarget.type() : ViewportTargetType.OFF;
         String compatMode = enabled ? normalizedMode : ViewportApplyMode.OFF;
         return buildSetCommandPair(
                         ViewportPropertyBridge.propertyNameForPackage(packageName),
                         ViewportPropertyBridge.persistentPropertyNameForPackage(packageName),
                         systemEmulationValue)
+                + "; " + buildSetCommandPair(
+                        ViewportPropertyBridge.targetTypePropertyNameForPackage(packageName),
+                        ViewportPropertyBridge.persistentTargetTypePropertyNameForPackage(packageName),
+                        targetType)
+                + "; " + buildSetCommandPair(
+                        ViewportPropertyBridge.scalePropertyNameForPackage(packageName),
+                        ViewportPropertyBridge.persistentScalePropertyNameForPackage(packageName),
+                        scalePermilleValue)
                 + "; " + buildSetCommandPair(
                         ViewportPropertyBridge.compatConfigPropertyNameForPackage(packageName),
                         ViewportPropertyBridge.persistentCompatConfigPropertyNameForPackage(packageName),

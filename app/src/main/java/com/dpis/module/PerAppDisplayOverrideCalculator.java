@@ -32,4 +32,23 @@ final class PerAppDisplayOverrideCalculator {
                 widthPx,
                 heightPx);
     }
+
+    static PerAppDisplayEnvironment calculate(Configuration configuration,
+                                              int widthPx,
+                                              int heightPx,
+                                              ViewportTargetSpec targetSpec) {
+        if (configuration == null || targetSpec == null || !targetSpec.isEnabled()) {
+            return null;
+        }
+        int sourceSmallest = configuration.smallestScreenWidthDp > 0
+                ? configuration.smallestScreenWidthDp
+                : Math.min(configuration.screenWidthDp, configuration.screenHeightDp);
+        if (sourceSmallest <= 0) {
+            return null;
+        }
+        int effectiveTarget = targetSpec.isRelativeScale()
+                ? Math.max(1, Math.round(sourceSmallest * targetSpec.scalePermille() / 1000.0f))
+                : targetSpec.absoluteWidthDp();
+        return calculate(configuration, widthPx, heightPx, effectiveTarget);
+    }
 }

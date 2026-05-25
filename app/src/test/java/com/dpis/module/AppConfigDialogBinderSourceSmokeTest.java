@@ -30,7 +30,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("ProcessAction.STOP"));
         assertTrue(source.contains("views.disableButton.setOnClickListener"));
         assertTrue(source.contains("views.viewportInputView.setText(\"\")"));
-        assertTrue(source.contains("bindViewportModeToggle(views.viewportModeToggle, ViewportApplyMode.FIELD_REWRITE, true)"));
+        assertTrue(source.contains("bindViewportModeToggle(views.viewportModeToggle, ViewportTargetType.RELATIVE_SCALE, true)"));
         assertTrue(source.contains("bindFontModeToggle(views.fontModeToggle, FontApplyMode.FIELD_REWRITE, true)"));
         assertTrue(source.contains("host.saveAppConfig("));
         assertTrue(source.contains("views.saveButton.setOnClickListener"));
@@ -63,7 +63,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
         assertTrue(method.contains("if (!dialogView.isAttachedToWindow())"));
         assertTrue(method.contains("state.scopeSelected = true;"));
-        assertTrue(method.contains("refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);"));
+        assertTrue(method.contains("refreshDialogState(views, state, style, systemHooksEnabled, item);"));
         assertTrue(method.contains("() -> state.scopeRequestPending = false"));
     }
 
@@ -125,11 +125,11 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("views.viewportInputView.addTextChangedListener(validationWatcher)"));
         assertTrue(source.contains("views.fontInputView.addTextChangedListener(validationWatcher)"));
         assertTrue(source.contains("updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,"));
-        assertTrue(source.contains("refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);"));
+        assertTrue(source.contains("refreshDialogState(views, state, style, systemHooksEnabled, item);"));
         assertTrue(source.contains("AppStatusFormatter.formatCompact("));
         assertTrue(source.contains("state.selectedTypefaceId"));
         assertTrue(source.contains("showTypefaceSelector(views.typefaceSelectorButton, state,"));
-        assertTrue(source.contains("views, state, style, systemHooksEnabled, item.packageName"));
+        assertTrue(source.contains("views, state, style, systemHooksEnabled, item"));
     }
 
     @Test
@@ -158,7 +158,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("views.fontHookDomainsButton.setOnClickListener"));
         assertTrue(source.contains("host.showFontHookDomains(item,"));
         assertTrue(source.contains("host.getFontHookDomainsButtonText(packageName)"));
-        assertTrue(source.contains("bindFontHookDomainsButton(views.fontHookDomainsButton, packageName);"));
+        assertTrue(source.contains("bindFontHookDomainsButton(views.fontHookDomainsButton, item.packageName);"));
     }
 
     @Test
@@ -166,8 +166,18 @@ public class AppConfigDialogBinderSourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/FontHookDomainDialog.java");
         String dialogLayout = read("src/main/res/layout/dialog_font_hook_domains.xml");
         String itemLayout = read("src/main/res/layout/item_font_hook_domain.xml");
+        String viewportModeLayout = read("src/main/res/layout/item_viewport_apply_mode.xml");
+        String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
         assertTrue(source.contains("setTitle(R.string.dialog_font_hook_domains_dialog_title)"));
+        assertTrue(source.contains("dialog_hook_chain_tab_interface"));
+        assertTrue(source.contains("dialog_hook_chain_tab_font"));
+        assertTrue(source.contains("normalizeViewportApplyModeForDisplay(currentViewportApplyMode)"));
+        assertTrue(source.contains(": ViewportApplyMode.AUTO"));
+        assertTrue(source.contains("R.layout.item_viewport_apply_mode"));
+        assertTrue(source.contains("MaterialRadioButton radioButton"));
+        assertTrue(source.contains("font_hook_domains_interface_page"));
+        assertTrue(source.contains("font_hook_domains_font_page"));
         assertTrue(source.contains("host.saveCustom(packageName, selectedKnown, automaticKnown, unknown)"));
         assertTrue(source.contains("host.restoreRecommended(packageName)"));
         assertTrue(source.contains("FontHookDomainRegistry.orderedCustomizableDisplayIdsList()"));
@@ -186,9 +196,44 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(dialogLayout.contains("@+id/font_hook_domains_known_container"));
         assertTrue(dialogLayout.contains("@+id/font_hook_domains_unknown_container"));
         assertTrue(dialogLayout.contains("@+id/font_hook_domains_restore_button"));
+        assertTrue(dialogLayout.contains("@+id/font_hook_domains_tabs"));
+        assertTrue(dialogLayout.contains("app:tabBackground=\"@android:color/transparent\""));
+        assertTrue(dialogLayout.contains("@+id/font_hook_domains_interface_page"));
+        assertTrue(dialogLayout.contains("@+id/font_hook_domains_font_page"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_title"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_subtitle"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_switch"));
+        assertTrue(viewportModeLayout.contains("@+id/viewport_apply_mode_radio"));
+        assertTrue(viewportModeLayout.contains("com.google.android.material.radiobutton.MaterialRadioButton"));
+        assertFalse(viewportModeLayout.contains("<FrameLayout"));
+        assertTrue(viewportModeLayout.contains("android:layout_width=\"wrap_content\""));
+        assertTrue(viewportModeLayout.contains("android:padding=\"0dp\""));
+        assertTrue(zhStrings.contains("<string name=\"dialog_viewport_apply_auto\">&#x81EA;&#x52A8;</string>")
+                || zhStrings.contains("<string name=\"dialog_viewport_apply_auto\">自动</string>"));
+    }
+
+    @Test
+    public void viewportTargetTypeControlsInputHintAndStackedLabels() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String layout = read("src/main/res/layout/dialog_app_config.xml");
+        String strings = read("src/main/res/values/strings.xml");
+        String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
+
+        assertTrue(layout.contains("android:hint=\"@string/dialog_viewport_hint_scale\""));
+        assertTrue(layout.contains("android:orientation=\"horizontal\""));
+        assertTrue(layout.contains("android:id=\"@+id/dialog_viewport_mode_system_label\" android:layout_width=\"0dp\" android:layout_height=\"match_parent\""));
+        assertTrue(layout.contains("android:id=\"@+id/dialog_viewport_mode_compat_label\" android:layout_width=\"0dp\" android:layout_height=\"match_parent\""));
+        assertTrue(source.contains("bindViewportInputHint(views.viewportInputLayout, item.viewportTargetSpec.type())"));
+        assertTrue(source.contains("bindViewportInputHint(views.viewportInputLayout, ViewportTargetType.RELATIVE_SCALE)"));
+        assertTrue(source.contains("bindViewportInputHint(views.viewportInputLayout, ViewportTargetType.ABSOLUTE_DP)"));
+        assertTrue(source.contains("dialogView.findViewById(R.id.dialog_viewport_mode_compat_label)),"));
+        assertFalse(source.contains("toggle.vertical"));
+        assertTrue(strings.contains("Interface scale 50-200%"));
+        assertTrue(strings.contains("Min width dp"));
+        assertTrue(zhStrings.contains("&#x754C;&#x9762;&#x6BD4;&#x4F8B; 50-200%")
+                || zhStrings.contains("界面比例 50-200%"));
+        assertTrue(zhStrings.contains("&#x6700;&#x5C0F;&#x5BBD;&#x5EA6; dp")
+                || zhStrings.contains("最小宽度 dp"));
     }
 
 
@@ -224,8 +269,9 @@ public class AppConfigDialogBinderSourceSmokeTest {
     public void savingViewportConfigPublishesRuntimeViewportTarget() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
 
-        assertTrue(source.contains("ViewportApplyMode.SYSTEM_EMULATION.equals"));
-        assertTrue(source.contains("ViewportPropertySyncer.publishTargetAsync(item.packageName, widthDp, viewportMode)"));
+        assertTrue(source.contains("ViewportApplyMode.SYSTEM.equals"));
+        assertTrue(source.contains("ViewportPropertySyncer.publishTargetAsync("));
+        assertTrue(source.contains("item.packageName, viewportTargetSpec, viewportApplyMode"));
         assertTrue(source.contains("ViewportPropertySyncer.clearTargetAsync(item.packageName)"));
     }
 

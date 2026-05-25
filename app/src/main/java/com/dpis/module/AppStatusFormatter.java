@@ -128,6 +128,20 @@ final class AppStatusFormatter {
     static String formatCompact(Resources resources,
             boolean inScope,
             boolean scopeKnown,
+            ViewportTargetSpec viewportTargetSpec,
+            String viewportMode,
+            Integer fontScalePercent,
+            String fontMode,
+            String typefaceId,
+            boolean dpisEnabled) {
+        return formatInternal(labelsFrom(resources), inScope, viewportTargetSpec,
+                viewportMode, fontScalePercent, fontMode, typefaceId, dpisEnabled,
+                scopeKnown, true);
+    }
+
+    static String formatCompact(Resources resources,
+            boolean inScope,
+            boolean scopeKnown,
             Integer viewportWidthDp,
             String viewportMode,
             Integer fontScalePercent,
@@ -149,6 +163,44 @@ final class AppStatusFormatter {
             boolean dpisEnabled) {
         return formatInternal(labels, inScope, viewportWidthDp, viewportMode,
                 fontScalePercent, fontMode, typefaceId, dpisEnabled, scopeKnown, true);
+    }
+
+    private static String formatInternal(Labels labels,
+            boolean inScope,
+            ViewportTargetSpec viewportTargetSpec,
+            String viewportMode,
+            Integer fontScalePercent,
+            String fontMode,
+            String typefaceId,
+            boolean dpisEnabled,
+            boolean scopeKnown,
+            boolean compact) {
+        Integer viewportWidthDp = viewportTargetSpec != null && viewportTargetSpec.isAbsoluteDp()
+                ? viewportTargetSpec.absoluteWidthDp()
+                : null;
+        String scopeText = scopeKnown
+                ? (inScope ? labels.injected : labels.notInjected)
+                : null;
+        if (!dpisEnabled) {
+            return joinSegments(scopeText, labels.disabled);
+        }
+        String normalizedViewportMode = ViewportApplyMode.normalize(viewportMode);
+        String widthText = viewportTargetSpec != null && viewportTargetSpec.isRelativeScale()
+                ? formatViewportScale(labels, viewportTargetSpec.scalePermille(),
+                        normalizedViewportMode, compact)
+                : (viewportWidthDp != null
+                        ? formatViewport(labels, viewportWidthDp, normalizedViewportMode, compact)
+                        : labels.notEnabled);
+        String fontFileText = typefaceId != null && !typefaceId.isBlank()
+                ? labels.fontFile
+                : null;
+        String normalizedFontMode = FontApplyMode.normalize(fontMode);
+        if (!FontApplyMode.isEnabled(normalizedFontMode) || fontScalePercent == null) {
+            return joinSegments(scopeText, widthText, fontFileText);
+        }
+        return joinSegments(scopeText, widthText,
+                fontFileText,
+                formatFont(labels, fontScalePercent, normalizedFontMode, compact));
     }
 
     private static String formatInternal(Labels labels,
@@ -188,6 +240,17 @@ final class AppStatusFormatter {
             String viewportMode,
             boolean compact) {
         String value = String.format(labels.locale, "%ddp", viewportWidthDp);
+        if (compact) {
+            return value;
+        }
+        return value + "(" + modeText(labels, viewportMode) + ")";
+    }
+
+    private static String formatViewportScale(Labels labels,
+            int scalePermille,
+            String viewportMode,
+            boolean compact) {
+        String value = String.format(labels.locale, "%d%%", scalePermille / 10);
         if (compact) {
             return value;
         }
@@ -240,6 +303,19 @@ final class AppStatusFormatter {
                 requested, systemHooksEnabled);
         return ViewportApplyMode.SYSTEM_EMULATION.equals(requested)
                 && !ViewportApplyMode.SYSTEM_EMULATION.equals(effective);
+    }
+
+    static boolean shouldWarnViewportEmulation(ViewportTargetSpec viewportTargetSpec,
+            String viewportMode,
+            boolean systemHooksEnabled,
+            boolean dpisEnabled) {
+        return shouldWarnViewportEmulation(
+                viewportTargetSpec != null && viewportTargetSpec.isEnabled()
+                        ? viewportTargetSpec.activeValue()
+                        : null,
+                viewportMode,
+                systemHooksEnabled,
+                dpisEnabled);
     }
 
     static boolean shouldWarnFontEmulation(Integer fontScalePercent,

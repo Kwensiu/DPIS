@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:fillViewport="true">
@@ -13,35 +14,79 @@
         android:paddingEnd="24dp"
         android:paddingBottom="16dp">
 
-        <LinearLayout
-            android:id="@+id/font_hook_domains_known_container"
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/font_hook_domains_tabs"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/font_hook_domains_unknown_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:includeFontPadding="false"
-            android:text="@string/dialog_font_hook_domains_unknown_group"
-            android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
-            android:textColor="?attr/colorOnSurfaceVariant" />
+            android:layout_marginBottom="16dp"
+            android:background="@android:color/transparent"
+            app:tabGravity="fill"
+            app:tabMode="fixed"
+            app:tabBackground="@android:color/transparent" />
 
         <LinearLayout
-            android:id="@+id/font_hook_domains_unknown_container"
+            android:id="@+id/font_hook_domains_interface_page"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:orientation="vertical" />
+            android:orientation="vertical">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/font_hook_domains_restore_button"
-            style="@style/Widget.Dpis.DialogActionButton.Outlined.WarnBg"
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/font_hook_domains_viewport_apply_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:text="@string/dialog_viewport_apply_strategy_title"
+                android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+            <LinearLayout
+                android:id="@+id/font_hook_domains_viewport_apply_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="16dp"
+                android:orientation="vertical" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/font_hook_domains_font_page"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="@string/dialog_font_hook_domains_restore_button" />
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/font_hook_domains_known_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/font_hook_domains_unknown_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:includeFontPadding="false"
+                android:text="@string/dialog_font_hook_domains_unknown_group"
+                android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+            <LinearLayout
+                android:id="@+id/font_hook_domains_unknown_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:orientation="vertical" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/font_hook_domains_restore_button"
+                style="@style/Widget.Dpis.DialogActionButton.Outlined.WarnBg"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/dialog_font_hook_domains_restore_button" />
+
+        </LinearLayout>
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
