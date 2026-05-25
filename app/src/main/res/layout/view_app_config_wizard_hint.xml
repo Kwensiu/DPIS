@@ -14,12 +14,12 @@
         android:layout_height="wrap_content"
         android:background="@drawable/bg_app_config_wizard_bubble"
         android:gravity="center_vertical"
-        android:minHeight="36dp"
+        android:minHeight="@dimen/dialog_app_config_wizard_hint_min_height"
         android:orientation="horizontal"
-        android:paddingStart="14dp"
-        android:paddingTop="6dp"
-        android:paddingEnd="6dp"
-        android:paddingBottom="6dp">
+        android:paddingStart="@dimen/dialog_app_config_wizard_hint_padding_start"
+        android:paddingTop="@dimen/dialog_app_config_wizard_hint_padding_vertical"
+        android:paddingEnd="@dimen/dialog_app_config_wizard_hint_padding_end"
+        android:paddingBottom="@dimen/dialog_app_config_wizard_hint_padding_vertical">
 
         <com.google.android.material.textview.MaterialTextView
             android:layout_width="wrap_content"
@@ -30,12 +30,12 @@
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/dialog_advanced_wizard_close_button"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:layout_marginStart="8dp"
+            android:layout_width="@dimen/dialog_app_config_wizard_hint_close_button_size"
+            android:layout_height="@dimen/dialog_app_config_wizard_hint_close_button_size"
+            android:layout_marginStart="@dimen/dialog_app_config_wizard_hint_close_button_spacing"
             android:background="@drawable/bg_app_config_wizard_close_button"
             android:contentDescription="@string/dialog_advanced_wizard_close"
-            android:padding="7dp"
+            android:padding="@dimen/dialog_app_config_wizard_hint_close_button_padding"
             android:scaleType="centerInside"
             android:src="@drawable/ic_close_24"
             app:tint="@color/app_config_wizard_bubble_text" />
@@ -43,7 +43,7 @@
 
     <View
         android:id="@+id/dialog_advanced_wizard_arrow"
-        android:layout_width="14dp"
-        android:layout_height="7dp"
+        android:layout_width="@dimen/dialog_app_config_wizard_hint_arrow_width"
+        android:layout_height="@dimen/dialog_app_config_wizard_hint_arrow_height"
         android:background="@drawable/bg_app_config_wizard_arrow" />
 </LinearLayout>

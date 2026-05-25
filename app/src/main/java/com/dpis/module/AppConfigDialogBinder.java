@@ -556,14 +556,15 @@ final class AppConfigDialogBinder {
             boolean selected,
             Runnable onSelect) {
         FrameLayout row = new FrameLayout(activity);
-        row.setPadding(0, dpToPx(3), 0, dpToPx(3));
+        int rowPaddingVertical = dimenPx(R.dimen.dialog_typeface_option_row_padding_vertical);
+        row.setPadding(0, rowPaddingVertical, 0, rowPaddingVertical);
         MaterialButton optionButton = createTypefaceOptionButton(
                 parent, option.label, previewTypeface, selected);
         optionButton.setEnabled(!option.isDisabled());
         optionButton.setOnClickListener(v -> onSelect.run());
         row.addView(optionButton, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
-                dpToPx(44),
+                dimenPx(R.dimen.dialog_typeface_option_min_height),
                 Gravity.CENTER_VERTICAL));
         return row;
     }
@@ -581,13 +582,14 @@ final class AppConfigDialogBinder {
         button.setMaxLines(1);
         button.setEllipsize(TextUtils.TruncateAt.END);
         button.setMinWidth(0);
-        button.setMinHeight(dpToPx(44));
+        button.setMinHeight(dimenPx(R.dimen.dialog_typeface_option_min_height));
         button.setInsetTop(0);
         button.setInsetBottom(0);
         button.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
         button.setTextAlignment(View.TEXT_ALIGNMENT_VIEW_START);
-        button.setPadding(dpToPx(16), 0, dpToPx(16), 0);
-        button.setCornerRadius(dpToPx(16));
+        int paddingHorizontal = dimenPx(R.dimen.dialog_typeface_option_padding_horizontal);
+        button.setPadding(paddingHorizontal, 0, paddingHorizontal, 0);
+        button.setCornerRadius(dimenPx(R.dimen.dialog_typeface_option_corner_radius));
         button.setStrokeWidth(0);
         int backgroundColor = selected
                 ? MaterialColors.getColor(parent, com.google.android.material.R.attr.colorSecondaryContainer)
@@ -677,6 +679,10 @@ final class AppConfigDialogBinder {
 
     private int dpToPx(int dp) {
         return Math.round(dp * activity.getResources().getDisplayMetrics().density);
+    }
+
+    private int dimenPx(int resId) {
+        return activity.getResources().getDimensionPixelSize(resId);
     }
 
     private List<FontLibraryEntry> listFontLibraryEntries() {

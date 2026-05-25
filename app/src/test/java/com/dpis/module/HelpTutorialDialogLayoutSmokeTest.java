@@ -73,9 +73,11 @@ public class HelpTutorialDialogLayoutSmokeTest {
     public void helpTutorialDialogUsesSameTopAndHorizontalInsetsForCardContent() throws IOException {
         String layout = read("src/main/res/layout/dialog_help_tutorial.xml");
 
-        assertTrue(layout.contains("android:paddingTop=\"20dp\""));
-        assertTrue(layout.contains("android:paddingStart=\"20dp\""));
-        assertTrue(layout.contains("android:paddingEnd=\"20dp\""));
+        assertTrue(layout.contains("@dimen/help_tutorial_dialog_padding_top"));
+        assertTrue(layout.contains("@dimen/help_tutorial_dialog_padding_horizontal"));
+        assertTrue(layout.contains("@dimen/help_tutorial_card_padding"));
+        assertTrue(layout.contains("@dimen/help_tutorial_body_spacing_top"));
+        assertTrue(layout.contains("@dimen/help_tutorial_confirm_spacing_top"));
     }
 
     private static String read(String relativePath) throws IOException {

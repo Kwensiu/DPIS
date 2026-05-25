@@ -18,6 +18,8 @@
   - Compose/resources_font 调度切片说明，记录当前自动抑制重复 Resources 字体缩放的证据和边界。
 - [final-validation-checklist-2026-04-17.md](./final-validation-checklist-2026-04-17.md)
   - 最终构建、测试、设备回归验收清单。
+- [ui-guidelines.md](./ui-guidelines.md)
+  - DPIS UI 变更约定，记录新增控件、弹窗、spacing/style 资源和测试边界的默认规则。
 
 ## 历史文档归档入口
 

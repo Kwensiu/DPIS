@@ -5,16 +5,16 @@
     android:layout_height="wrap_content"
     android:gravity="center_horizontal"
     android:orientation="vertical"
-    android:paddingStart="20dp"
-    android:paddingTop="20dp"
-    android:paddingEnd="20dp"
-    android:paddingBottom="16dp">
+    android:paddingStart="@dimen/dialog_surface_padding_horizontal"
+    android:paddingTop="@dimen/dialog_surface_padding_top"
+    android:paddingEnd="@dimen/dialog_surface_padding_horizontal"
+    android:paddingBottom="@dimen/dialog_surface_padding_bottom">
 
     <androidx.appcompat.widget.AppCompatImageView
-        android:layout_width="36dp"
-        android:layout_height="36dp"
+        android:layout_width="@dimen/dialog_status_icon_size"
+        android:layout_height="@dimen/dialog_status_icon_size"
         android:background="@drawable/bg_round_button_surface"
-        android:padding="8dp"
+        android:padding="@dimen/dialog_status_icon_padding"
         android:src="@drawable/ic_error_outline_24"
         app:tint="?attr/colorPrimary" />
 
@@ -22,7 +22,7 @@
         android:id="@+id/module_runtime_reload_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="@dimen/dialog_body_spacing"
         android:gravity="center"
         android:includeFontPadding="false"
         android:text="@string/module_runtime_reload_title"
@@ -33,9 +33,9 @@
         android:id="@+id/module_runtime_reload_message"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="@dimen/dialog_body_spacing"
         android:gravity="center"
-        android:lineSpacingExtra="2dp"
+        android:lineSpacingExtra="@dimen/dialog_text_line_spacing"
         android:text="@string/module_runtime_reload_message"
         android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
         android:textColor="?attr/colorOnSurfaceVariant" />
@@ -45,7 +45,7 @@
         style="@style/Widget.Dpis.DialogActionButton.Filled"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="18dp"
+        android:layout_marginTop="@dimen/dialog_action_spacing_top"
         android:ellipsize="end"
         android:maxLines="1"
         android:singleLine="true"

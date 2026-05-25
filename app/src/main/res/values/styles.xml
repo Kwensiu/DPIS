@@ -22,7 +22,7 @@
     <style name="Widget.Dpis.DialogActionButton.Outlined" parent="Widget.Material3.Button.OutlinedButton">
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
-        <item name="cornerRadius">18dp</item>
+        <item name="cornerRadius">@dimen/dialog_button_corner_radius</item>
     </style>
 
     <style name="Widget.Dpis.DialogActionButton.Outlined.Error"
@@ -100,19 +100,19 @@
     <style name="Widget.Dpis.DialogActionButton.Filled" parent="Widget.Material3.Button">
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
-        <item name="cornerRadius">18dp</item>
+        <item name="cornerRadius">@dimen/dialog_button_corner_radius</item>
     </style>
 
     <style name="Widget.Dpis.DialogActionButton.LanguageOption"
         parent="Widget.Material3.Button">
-        <item name="android:minHeight">52dp</item>
+        <item name="android:minHeight">@dimen/dialog_option_button_min_height</item>
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
-        <item name="android:paddingStart">18dp</item>
-        <item name="android:paddingEnd">18dp</item>
+        <item name="android:paddingStart">@dimen/dialog_option_button_padding_horizontal</item>
+        <item name="android:paddingEnd">@dimen/dialog_option_button_padding_horizontal</item>
         <item name="android:gravity">center_vertical|start</item>
         <item name="android:textAlignment">viewStart</item>
-        <item name="cornerRadius">20dp</item>
+        <item name="cornerRadius">@dimen/dialog_option_button_corner_radius</item>
         <item name="elevation">0dp</item>
         <item name="android:stateListAnimator">@null</item>
         <item name="rippleColor">?attr/colorControlHighlight</item>
@@ -126,10 +126,10 @@
 
     <style name="Widget.Dpis.DialogActionButton.TypefaceOption"
         parent="Widget.Dpis.DialogActionButton.LanguageOption">
-        <item name="android:minHeight">44dp</item>
-        <item name="android:paddingStart">14dp</item>
-        <item name="android:paddingEnd">14dp</item>
-        <item name="cornerRadius">16dp</item>
+        <item name="android:minHeight">@dimen/dialog_typeface_option_min_height</item>
+        <item name="android:paddingStart">@dimen/dialog_typeface_option_padding_horizontal</item>
+        <item name="android:paddingEnd">@dimen/dialog_typeface_option_padding_horizontal</item>
+        <item name="cornerRadius">@dimen/dialog_typeface_option_corner_radius</item>
     </style>
 
 </resources>

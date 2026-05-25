@@ -18,6 +18,9 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(layout.contains("android:id=\"@+id/row_config_backup\""));
         assertTrue(layout.contains("android:id=\"@+id/row_hide_launcher_icon\""));
         assertTrue(layout.contains("@string/settings_section_other"));
+        assertTrue(layout.contains("@dimen/page_toolbar_padding_horizontal"));
+        assertTrue(layout.contains("@dimen/page_card_corner_radius"));
+        assertTrue(layout.contains("@dimen/settings_divider_margin_horizontal"));
     }
 
     @Test
@@ -96,9 +99,9 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(layout.contains("android:id=\"@+id/experimental_ttc_import_row\""));
         assertTrue(layout.contains("com.google.android.material.card.MaterialCardView"));
         assertTrue(layout.contains("app:cardBackgroundColor=\"?attr/colorSurfaceContainerHigh\""));
-        assertTrue(layout.contains("app:cardCornerRadius=\"28dp\""));
+        assertTrue(layout.contains("app:cardCornerRadius=\"@dimen/page_card_corner_radius\""));
         assertTrue(layout.contains("app:strokeColor=\"?attr/colorOutlineVariant\""));
-        assertTrue(layout.contains("app:strokeWidth=\"1dp\""));
+        assertTrue(layout.contains("app:strokeWidth=\"@dimen/page_card_stroke_width\""));
         assertTrue(layout.contains("item_settings_switch"));
         assertTrue(!layout.contains("experimental_settings_back_button"));
         assertTrue(!layout.contains("row_flutter_font_hook"));
@@ -130,8 +133,16 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(actionDialog.contains("android:id=\"@+id/config_backup_export_button\""));
         assertTrue(actionDialog.contains("android:id=\"@+id/config_backup_import_button\""));
         assertTrue(actionDialog.contains("android:id=\"@+id/config_backup_close_button\""));
+        assertTrue(actionDialog.contains("@dimen/dialog_surface_padding_horizontal"));
+        assertTrue(actionDialog.contains("@dimen/dialog_action_spacing_top"));
+        assertTrue(actionDialog.contains("@dimen/dialog_action_spacing_between"));
+        assertTrue(actionDialog.contains("@dimen/dialog_footer_spacing_top"));
         assertTrue(confirmDialog.contains("android:id=\"@+id/config_backup_confirm_proceed_button\""));
         assertTrue(confirmDialog.contains("android:id=\"@+id/config_backup_confirm_cancel_button\""));
+        assertTrue(confirmDialog.contains("@dimen/dialog_surface_padding_horizontal"));
+        assertTrue(confirmDialog.contains("@dimen/dialog_body_spacing"));
+        assertTrue(confirmDialog.contains("@dimen/dialog_action_spacing_top"));
+        assertTrue(confirmDialog.contains("@dimen/dialog_action_spacing_between"));
     }
 
     @Test
@@ -144,11 +155,14 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(layout.contains("@style/Widget.Dpis.DialogActionButton.Process.Warn"));
         assertTrue(layout.contains("@style/Widget.Dpis.DialogActionButton.Process.Success"));
         assertTrue(styles.contains("name=\"Widget.Dpis.DialogActionButton.Process\""));
+        assertTrue(styles.contains("@dimen/dialog_button_corner_radius"));
+        assertTrue(styles.contains("@dimen/dialog_option_button_min_height"));
+        assertTrue(styles.contains("@dimen/dialog_option_button_corner_radius"));
         assertTrue(styles.contains("<item name=\"android:paddingStart\">4dp</item>"));
         assertTrue(styles.contains("<item name=\"android:minWidth\">0dp</item>"));
         assertTrue(styles.contains("<item name=\"android:singleLine\">true</item>"));
         assertTrue(styles.contains("<item name=\"android:letterSpacing\">0</item>"));
-        assertTrue(layout.contains("android:layout_marginStart=\"6dp\""));
+        assertTrue(layout.contains("android:layout_marginStart=\"@dimen/dialog_app_config_process_button_spacing_start\""));
         assertTrue(strings.contains("<string name=\"scope_remove_button\">Remove</string>"));
     }
 
@@ -156,6 +170,7 @@ public class SystemServerSettingsLayoutSmokeTest {
     public void settingsActivityRefreshesSwitchesWhenServiceStateChanges() throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
         String switchItemLayout = read("src/main/res/layout/item_settings_switch.xml");
+        String entryItemLayout = read("src/main/res/layout/item_settings_entry.xml");
 
         assertTrue(source.contains("implements DpisApplication.ServiceStateListener"));
         assertTrue(source.contains("DpisApplication.addServiceStateListener(this, true);"));
@@ -165,6 +180,12 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(source.contains("applyRestoredStoreState();"));
         assertTrue(source.contains("refreshStoreState(true);"));
         assertTrue(switchItemLayout.contains("android:saveEnabled=\"false\""));
+        assertTrue(switchItemLayout.contains("@dimen/settings_row_min_height"));
+        assertTrue(switchItemLayout.contains("@dimen/settings_row_padding_horizontal"));
+        assertTrue(switchItemLayout.contains("@dimen/settings_row_switch_spacing_start"));
+        assertTrue(entryItemLayout.contains("@dimen/settings_row_min_height"));
+        assertTrue(entryItemLayout.contains("@dimen/settings_row_padding_horizontal"));
+        assertTrue(entryItemLayout.contains("@dimen/settings_row_chevron_size"));
     }
 
     @Test
@@ -208,11 +229,17 @@ public class SystemServerSettingsLayoutSmokeTest {
     @Test
     public void settingsDebugSwitchesPublishRuntimeMirrors() throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+        String layout = read("src/main/res/layout/dialog_font_debug_stats.xml");
 
         assertTrue(source.contains("RuntimeDebugPropertySyncer.publishAsync("));
         assertTrue(source.contains("isChecked,"));
         assertTrue(source.contains("store.isFontDebugOverlayEnabled()"));
         assertTrue(source.contains("requestedEnabled"));
+        assertTrue(source.contains("R.layout.dialog_font_debug_stats"));
+        assertTrue(layout.contains("@dimen/font_debug_dialog_surface_padding_horizontal"));
+        assertTrue(layout.contains("@dimen/font_debug_dialog_stats_panel_height"));
+        assertTrue(layout.contains("@dimen/font_debug_dialog_action_button_height"));
+        assertTrue(layout.contains("@dimen/font_debug_dialog_filter_button_corner_radius"));
     }
 
     private static String read(String relativePath) throws IOException {

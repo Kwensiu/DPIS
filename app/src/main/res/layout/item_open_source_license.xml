@@ -4,12 +4,12 @@
     android:layout_height="wrap_content"
     android:foreground="?attr/selectableItemBackground"
     android:gravity="center_vertical"
-    android:minHeight="76dp"
+    android:minHeight="@dimen/open_source_license_item_min_height"
     android:orientation="vertical"
-    android:paddingStart="16dp"
-    android:paddingTop="10dp"
-    android:paddingEnd="16dp"
-    android:paddingBottom="10dp">
+    android:paddingStart="@dimen/open_source_license_item_padding_horizontal"
+    android:paddingTop="@dimen/open_source_license_item_padding_vertical"
+    android:paddingEnd="@dimen/open_source_license_item_padding_horizontal"
+    android:paddingBottom="@dimen/open_source_license_item_padding_vertical">
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/license_item_name"
@@ -23,7 +23,7 @@
         android:id="@+id/license_item_summary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
+        android:layout_marginTop="@dimen/open_source_license_item_summary_spacing_top"
         android:includeFontPadding="false"
         android:textAppearance="@style/TextAppearance.Material3.BodySmall"
         android:textColor="?attr/colorOnSurfaceVariant" />

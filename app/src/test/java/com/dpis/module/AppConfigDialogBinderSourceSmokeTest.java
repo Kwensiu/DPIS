@@ -88,6 +88,11 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("host.openTypefaceLibrary"));
         assertTrue(selectorLayout.contains("@string/dialog_typeface_manage_action"));
         assertTrue(selectorLayout.contains("@string/dialog_typeface_done_action"));
+        assertTrue(selectorLayout.contains("@dimen/dialog_surface_padding_horizontal"));
+        assertTrue(selectorLayout.contains("@dimen/dialog_typeface_list_height"));
+        assertTrue(selectorLayout.contains("@dimen/dialog_typeface_footer_button_height"));
+        assertTrue(source.contains("R.dimen.dialog_typeface_option_min_height"));
+        assertTrue(source.contains("R.dimen.dialog_typeface_option_padding_horizontal"));
         assertTrue(source.contains("doneButton.setOnClickListener"));
         assertFalse(source.contains("renameTypeface"));
         assertFalse(source.contains("confirmDeleteTypeface"));
@@ -149,6 +154,10 @@ public class AppConfigDialogBinderSourceSmokeTest {
         String layout = read("src/main/res/layout/dialog_app_config.xml");
 
         assertTrue(layout.contains("android:id=\"@+id/dialog_font_hook_domains_button\""));
+        assertTrue(layout.contains("@dimen/dialog_app_config_padding_horizontal"));
+        assertTrue(layout.contains("@dimen/dialog_app_config_drag_handle_width"));
+        assertTrue(layout.contains("@dimen/dialog_app_config_input_corner_radius"));
+        assertTrue(layout.contains("@dimen/dialog_app_config_process_button_spacing_start"));
         assertTrue(layout.indexOf("android:id=\"@+id/dialog_font_hook_domains_button\"")
                 < layout.indexOf("android:id=\"@+id/dialog_stop_button\""));
         assertTrue(layout.indexOf("android:id=\"@+id/dialog_font_hook_domains_button\"")
@@ -200,14 +209,21 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(dialogLayout.contains("app:tabBackground=\"@android:color/transparent\""));
         assertTrue(dialogLayout.contains("@+id/font_hook_domains_interface_page"));
         assertTrue(dialogLayout.contains("@+id/font_hook_domains_font_page"));
+        assertTrue(dialogLayout.contains("@dimen/font_hook_domains_dialog_padding_horizontal"));
+        assertTrue(dialogLayout.contains("@dimen/font_hook_domains_tabs_spacing_bottom"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_title"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_subtitle"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_switch"));
+        assertTrue(itemLayout.contains("@dimen/font_hook_domain_row_min_height"));
+        assertTrue(itemLayout.contains("@dimen/font_hook_domain_row_padding_vertical"));
         assertTrue(viewportModeLayout.contains("@+id/viewport_apply_mode_radio"));
         assertTrue(viewportModeLayout.contains("com.google.android.material.radiobutton.MaterialRadioButton"));
         assertFalse(viewportModeLayout.contains("<FrameLayout"));
         assertTrue(viewportModeLayout.contains("android:layout_width=\"wrap_content\""));
-        assertTrue(viewportModeLayout.contains("android:padding=\"0dp\""));
+        assertTrue(viewportModeLayout.contains("@dimen/viewport_apply_mode_row_min_height"));
+        assertTrue(viewportModeLayout.contains("@dimen/viewport_apply_mode_text_spacing_end"));
+        assertTrue(viewportModeLayout.contains("@dimen/viewport_apply_mode_radio_min_size"));
+        assertTrue(viewportModeLayout.contains("@dimen/viewport_apply_mode_radio_padding"));
         assertTrue(zhStrings.contains("<string name=\"dialog_viewport_apply_auto\">&#x81EA;&#x52A8;</string>")
                 || zhStrings.contains("<string name=\"dialog_viewport_apply_auto\">自动</string>"));
     }
@@ -234,6 +250,22 @@ public class AppConfigDialogBinderSourceSmokeTest {
                 || zhStrings.contains("界面比例 50-200%"));
         assertTrue(zhStrings.contains("&#x6700;&#x5C0F;&#x5BBD;&#x5EA6; dp")
                 || zhStrings.contains("最小宽度 dp"));
+    }
+
+    @Test
+    public void appConfigWizardHintUsesNamedDimensions() throws IOException {
+        String coordinator = read("src/main/java/com/dpis/module/AppConfigDialogCoordinator.java");
+        String hintLayout = read("src/main/res/layout/view_app_config_wizard_hint.xml");
+        String bubbleBackground = read("src/main/res/drawable/bg_app_config_wizard_bubble.xml");
+
+        assertTrue(coordinator.contains("R.layout.view_app_config_wizard_hint"));
+        assertTrue(hintLayout.contains("@dimen/dialog_app_config_wizard_hint_min_height"));
+        assertTrue(hintLayout.contains("@dimen/dialog_app_config_wizard_hint_padding_start"));
+        assertTrue(hintLayout.contains("@dimen/dialog_app_config_wizard_hint_close_button_size"));
+        assertTrue(hintLayout.contains("@dimen/dialog_app_config_wizard_hint_arrow_width"));
+        assertTrue(bubbleBackground.contains("@dimen/dialog_app_config_wizard_hint_corner_radius"));
+        assertFalse(hintLayout.contains("\"28dp\""));
+        assertFalse(hintLayout.contains("\"14dp\""));
     }
 
 

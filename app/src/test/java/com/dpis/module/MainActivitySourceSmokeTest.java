@@ -128,6 +128,12 @@ public class MainActivitySourceSmokeTest {
         assertTrue(runtimeLayout.contains("module_runtime_reload_title"));
         assertTrue(runtimeLayout.contains("module_runtime_reload_message"));
         assertTrue(runtimeLayout.contains("module_runtime_reload_ack_button"));
+        assertTrue(runtimeLayout.contains("@dimen/dialog_status_icon_size"));
+        assertTrue(runtimeLayout.contains("@dimen/dialog_status_icon_padding"));
+        assertTrue(runtimeLayout.contains("@dimen/dialog_surface_padding_horizontal"));
+        assertTrue(runtimeLayout.contains("@dimen/dialog_body_spacing"));
+        assertTrue(runtimeLayout.contains("@dimen/dialog_text_line_spacing"));
+        assertTrue(runtimeLayout.contains("@dimen/dialog_action_spacing_top"));
         String runtimeMessage = stringEntry(strings, "module_runtime_reload_message");
         String zhRuntimeTitle = stringEntry(zhStrings, "module_runtime_reload_title");
         String zhRuntimeMessage = stringEntry(zhStrings, "module_runtime_reload_message");
@@ -193,6 +199,11 @@ public class MainActivitySourceSmokeTest {
         assertTrue(layout.contains("startup_disclaimer_checkbox"));
         assertTrue(layout.contains("startup_disclaimer_accept_button"));
         assertTrue(layout.contains("startup_disclaimer_exit_button"));
+        assertTrue(layout.contains("@dimen/dialog_surface_padding_horizontal"));
+        assertTrue(layout.contains("@dimen/dialog_body_spacing"));
+        assertTrue(layout.contains("@dimen/dialog_text_line_spacing"));
+        assertTrue(layout.contains("@dimen/dialog_action_spacing_top"));
+        assertTrue(layout.contains("@dimen/dialog_action_spacing_between"));
     }
 
     @Test

@@ -4,10 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingStart="20dp"
-    android:paddingTop="20dp"
-    android:paddingEnd="20dp"
-    android:paddingBottom="18dp">
+    android:paddingStart="@dimen/font_debug_dialog_surface_padding_horizontal"
+    android:paddingTop="@dimen/font_debug_dialog_surface_padding_top"
+    android:paddingEnd="@dimen/font_debug_dialog_surface_padding_horizontal"
+    android:paddingBottom="@dimen/font_debug_dialog_surface_padding_bottom">
 
     <com.google.android.material.textview.MaterialTextView
         android:layout_width="wrap_content"
@@ -19,14 +19,14 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="@dimen/font_debug_dialog_filter_spacing_top"
         android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/dialog_stats_mode_button"
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="0dp"
-            android:layout_height="44dp"
+            android:layout_height="@dimen/font_debug_dialog_filter_button_height"
             android:layout_weight="1"
             android:ellipsize="end"
             android:insetTop="0dp"
@@ -34,14 +34,14 @@
             android:maxLines="1"
             android:minEms="9"
             android:textAllCaps="false"
-            app:cornerRadius="22dp" />
+            app:cornerRadius="@dimen/font_debug_dialog_filter_button_corner_radius" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/dialog_stats_window_button"
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="0dp"
-            android:layout_height="44dp"
-            android:layout_marginStart="12dp"
+            android:layout_height="@dimen/font_debug_dialog_filter_button_height"
+            android:layout_marginStart="@dimen/font_debug_dialog_filter_button_spacing"
             android:layout_weight="1"
             android:ellipsize="end"
             android:insetTop="0dp"
@@ -49,24 +49,24 @@
             android:maxLines="1"
             android:minEms="9"
             android:textAllCaps="false"
-            app:cornerRadius="22dp" />
+            app:cornerRadius="@dimen/font_debug_dialog_filter_button_corner_radius" />
     </LinearLayout>
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/dialog_stats_last_updated"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="@dimen/font_debug_dialog_metadata_spacing_top"
         android:textAppearance="@style/TextAppearance.Material3.BodySmall"
         android:textColor="?attr/colorOnSurfaceVariant" />
 
     <ScrollView
         android:id="@+id/dialog_stats_scroll"
         android:layout_width="match_parent"
-        android:layout_height="180dp"
-        android:layout_marginTop="8dp"
+        android:layout_height="@dimen/font_debug_dialog_stats_panel_height"
+        android:layout_marginTop="@dimen/font_debug_dialog_stats_panel_spacing_top"
         android:background="@drawable/bg_stats_panel_surface"
-        android:padding="12dp"
+        android:padding="@dimen/font_debug_dialog_stats_panel_padding"
         android:scrollbars="vertical">
 
         <com.google.android.material.textview.MaterialTextView
@@ -81,19 +81,19 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/dialog_overlay_action"
         android:layout_width="match_parent"
-        android:layout_height="46dp"
-        android:layout_marginTop="16dp"
+        android:layout_height="@dimen/font_debug_dialog_action_button_height"
+        android:layout_marginTop="@dimen/font_debug_dialog_primary_action_spacing_top"
         android:insetTop="0dp"
         android:insetBottom="0dp"
         android:textAllCaps="false"
-        app:cornerRadius="23dp" />
+        app:cornerRadius="@dimen/font_debug_dialog_action_button_corner_radius" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/dialog_stats_clear"
         style="?attr/materialButtonOutlinedStyle"
         android:layout_width="match_parent"
-        android:layout_height="46dp"
-        android:layout_marginTop="12dp"
+        android:layout_height="@dimen/font_debug_dialog_action_button_height"
+        android:layout_marginTop="@dimen/font_debug_dialog_secondary_action_spacing_top"
         android:insetTop="0dp"
         android:insetBottom="0dp"
         android:text="@string/font_debug_clear_button" />
@@ -102,8 +102,8 @@
         android:id="@+id/dialog_stats_close"
         style="?attr/materialButtonOutlinedStyle"
         android:layout_width="match_parent"
-        android:layout_height="46dp"
-        android:layout_marginTop="10dp"
+        android:layout_height="@dimen/font_debug_dialog_action_button_height"
+        android:layout_marginTop="@dimen/font_debug_dialog_close_action_spacing_top"
         android:insetTop="0dp"
         android:insetBottom="0dp"
         android:text="@string/dialog_cancel_button" />

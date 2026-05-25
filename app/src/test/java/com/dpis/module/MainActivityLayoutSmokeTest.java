@@ -27,13 +27,18 @@ public class MainActivityLayoutSmokeTest {
         assertTrue(layout.contains("android:id=\"@+id/search_input\""));
         assertTrue(layout.contains("android:id=\"@+id/search_filter_button\""));
         assertTrue(layout.contains("android:id=\"@+id/search_focus_fab\""));
-        assertTrue(countMatches(layout, "app:elevation=\"6dp\"") == 2);
-        assertTrue(countMatches(layout, "app:hoveredFocusedTranslationZ=\"8dp\"") == 2);
-        assertTrue(countMatches(layout, "app:pressedTranslationZ=\"10dp\"") == 2);
+        assertTrue(countMatches(layout, "app:elevation=\"@dimen/floating_actions_elevation\"") == 2);
+        assertTrue(countMatches(layout,
+                "app:hoveredFocusedTranslationZ=\"@dimen/floating_actions_hovered_focused_translation_z\"") == 2);
+        assertTrue(countMatches(layout,
+                "app:pressedTranslationZ=\"@dimen/floating_actions_pressed_translation_z\"") == 2);
         assertTrue(countMatches(layout, "app:rippleColor=\"@color/dpis_fab_ripple\"") == 2);
         assertTrue(layout.contains("android:id=\"@+id/top_container\""));
-        assertTrue(layout.contains("android:paddingStart=\"16dp\""));
-        assertTrue(layout.contains("android:paddingTop=\"16dp\""));
+        assertTrue(layout.contains("android:paddingStart=\"@dimen/main_toolbar_padding_horizontal\""));
+        assertTrue(layout.contains("android:paddingTop=\"@dimen/main_toolbar_padding_top\""));
+        assertTrue(layout.contains("@dimen/main_search_card_height"));
+        assertTrue(layout.contains("@dimen/main_search_action_button_size"));
+        assertTrue(layout.contains("@dimen/main_tabs_indicator_height"));
         assertTrue(layout.contains("android:src=\"@drawable/ic_search_24\""));
         assertTrue(layout.contains("android:src=\"@drawable/ic_tune_24\""));
         assertTrue(layout.contains("android:id=\"@+id/system_settings_button\""));

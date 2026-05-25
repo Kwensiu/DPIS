@@ -5,15 +5,15 @@
     android:clickable="true"
     android:focusable="true"
     android:gravity="center_vertical"
-    android:minHeight="64dp"
+    android:minHeight="@dimen/font_hook_domain_row_min_height"
     android:orientation="horizontal"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp">
+    android:paddingTop="@dimen/font_hook_domain_row_padding_vertical"
+    android:paddingBottom="@dimen/font_hook_domain_row_padding_vertical">
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
+        android:layout_marginEnd="@dimen/font_hook_domain_text_spacing_end"
         android:layout_weight="1"
         android:orientation="vertical">
 
@@ -28,7 +28,7 @@
             android:id="@+id/font_hook_domain_subtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
+            android:layout_marginTop="@dimen/font_hook_domain_subtitle_spacing_top"
             android:fontFamily="monospace"
             android:includeFontPadding="false"
             android:textAppearance="@style/TextAppearance.Material3.LabelSmall"

@@ -3,17 +3,17 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingTop="20dp"
-    android:paddingBottom="16dp">
+    android:paddingTop="@dimen/help_tutorial_dialog_padding_top"
+    android:paddingBottom="@dimen/help_tutorial_dialog_padding_bottom">
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:fillViewport="true"
         android:overScrollMode="ifContentScrolls"
-        android:paddingStart="20dp"
+        android:paddingStart="@dimen/help_tutorial_dialog_padding_horizontal"
         android:paddingTop="0dp"
-        android:paddingEnd="20dp"
+        android:paddingEnd="@dimen/help_tutorial_dialog_padding_horizontal"
         android:paddingBottom="0dp">
 
         <LinearLayout
@@ -27,7 +27,7 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/help_tutorial_system_card_background"
                 android:orientation="vertical"
-                android:padding="18dp">
+                android:padding="@dimen/help_tutorial_card_padding">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -51,10 +51,10 @@
                         android:background="@drawable/help_tutorial_system_badge_background"
                         android:gravity="center"
                         android:includeFontPadding="false"
-                        android:paddingStart="10dp"
-                        android:paddingTop="6dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="6dp"
+                        android:paddingStart="@dimen/help_tutorial_badge_padding_horizontal"
+                        android:paddingTop="@dimen/help_tutorial_badge_padding_vertical"
+                        android:paddingEnd="@dimen/help_tutorial_badge_padding_horizontal"
+                        android:paddingBottom="@dimen/help_tutorial_badge_padding_vertical"
                         android:text="@string/help_tutorial_system_badge"
                         android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
                         android:textColor="@color/help_tutorial_system_badge_text"
@@ -65,8 +65,8 @@
                     android:id="@+id/help_tutorial_system_summary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:lineSpacingExtra="2dp"
+                    android:layout_marginTop="@dimen/help_tutorial_body_spacing_top"
+                    android:lineSpacingExtra="@dimen/help_tutorial_text_line_spacing"
                     android:text="@string/help_tutorial_system_summary"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                     android:textColor="?attr/colorOnSurface" />
@@ -74,8 +74,8 @@
                 <com.google.android.material.textview.MaterialTextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:lineSpacingExtra="2dp"
+                    android:layout_marginTop="@dimen/help_tutorial_body_spacing_top"
+                    android:lineSpacingExtra="@dimen/help_tutorial_text_line_spacing"
                     android:text="@string/help_tutorial_system_points"
                     android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                     android:textColor="?attr/colorOnSurfaceVariant" />
@@ -85,10 +85,10 @@
                 android:id="@+id/help_tutorial_compat_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="@dimen/help_tutorial_card_spacing_top"
                 android:background="@drawable/help_tutorial_compat_card_background"
                 android:orientation="vertical"
-                android:padding="18dp">
+                android:padding="@dimen/help_tutorial_card_padding">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -112,10 +112,10 @@
                         android:background="@drawable/help_tutorial_compat_badge_background"
                         android:gravity="center"
                         android:includeFontPadding="false"
-                        android:paddingStart="10dp"
-                        android:paddingTop="6dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="6dp"
+                        android:paddingStart="@dimen/help_tutorial_badge_padding_horizontal"
+                        android:paddingTop="@dimen/help_tutorial_badge_padding_vertical"
+                        android:paddingEnd="@dimen/help_tutorial_badge_padding_horizontal"
+                        android:paddingBottom="@dimen/help_tutorial_badge_padding_vertical"
                         android:text="@string/help_tutorial_compat_badge"
                         android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
                         android:textColor="@color/help_tutorial_compat_badge_text"
@@ -126,8 +126,8 @@
                     android:id="@+id/help_tutorial_compat_summary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:lineSpacingExtra="2dp"
+                    android:layout_marginTop="@dimen/help_tutorial_body_spacing_top"
+                    android:lineSpacingExtra="@dimen/help_tutorial_text_line_spacing"
                     android:text="@string/help_tutorial_compat_summary"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                     android:textColor="?attr/colorOnSurface" />
@@ -135,8 +135,8 @@
                 <com.google.android.material.textview.MaterialTextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:lineSpacingExtra="2dp"
+                    android:layout_marginTop="@dimen/help_tutorial_body_spacing_top"
+                    android:lineSpacingExtra="@dimen/help_tutorial_text_line_spacing"
                     android:text="@string/help_tutorial_compat_points"
                     android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                     android:textColor="?attr/colorOnSurfaceVariant" />
@@ -149,8 +149,8 @@
         style="@style/Widget.Dpis.DialogActionButton.Filled"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="14dp"
-        android:layout_marginEnd="20dp"
+        android:layout_marginStart="@dimen/help_tutorial_dialog_padding_horizontal"
+        android:layout_marginTop="@dimen/help_tutorial_confirm_spacing_top"
+        android:layout_marginEnd="@dimen/help_tutorial_dialog_padding_horizontal"
         android:text="@string/dialog_confirm_button" />
 </LinearLayout>

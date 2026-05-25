@@ -66,6 +66,10 @@ public class SystemServerSettingsActivityFontLibrarySourceTest {
         assertTrue(layout.contains("font_library_back_button"));
         assertTrue(layout.contains("font_library_import_fab"));
         assertTrue(layout.contains("font_library_list"));
+        assertTrue(layout.contains("@dimen/page_toolbar_padding_horizontal"));
+        assertTrue(layout.contains("@dimen/font_library_list_padding_bottom"));
+        assertTrue(layout.contains("@dimen/font_library_empty_padding"));
+        assertTrue(layout.contains("@dimen/floating_actions_elevation"));
     }
 
     private static String read(String relativePath) throws IOException {

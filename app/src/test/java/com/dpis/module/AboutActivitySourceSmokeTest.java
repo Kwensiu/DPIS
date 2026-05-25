@@ -39,6 +39,10 @@ public class AboutActivitySourceSmokeTest {
         assertTrue(dialogLayout.contains("com.dpis.module.MaxHeightNestedScrollView"));
         assertTrue(dialogLayout.contains("android:scrollbars=\"vertical\""));
         assertTrue(dialogLayout.contains("android:fadeScrollbars=\"false\""));
+        assertTrue(dialogLayout.contains("@dimen/dialog_surface_padding_horizontal"));
+        assertTrue(dialogLayout.contains("@dimen/dialog_status_icon_size"));
+        assertTrue(dialogLayout.contains("@dimen/update_dialog_primary_button_spacing_top"));
+        assertTrue(dialogLayout.contains("@dimen/update_dialog_cancel_button_spacing_top"));
         assertTrue(!source.contains("private void executeApkDownload("));
         assertTrue(!source.contains("private void verifyDownloadedApk("));
         assertTrue(!source.contains("private static StartupUpdateManifest fetchUpdateManifest("));
@@ -74,6 +78,16 @@ public class AboutActivitySourceSmokeTest {
         String manifest = read("src/main/AndroidManifest.xml");
 
         assertTrue(manifest.contains("android:name=\".OpenSourceLicenseActivity\""));
+    }
+
+    @Test
+    public void aboutLayoutUsesNamedDimensions() throws IOException {
+        String layout = read("src/main/res/layout/activity_about.xml");
+
+        assertTrue(layout.contains("@dimen/about_content_padding_horizontal"));
+        assertTrue(layout.contains("@dimen/page_card_corner_radius"));
+        assertTrue(layout.contains("@dimen/about_app_card_padding"));
+        assertTrue(layout.contains("@dimen/about_divider_margin_horizontal"));
     }
 
     private static String read(String relativePath) throws IOException {

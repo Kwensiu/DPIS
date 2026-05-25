@@ -6,15 +6,15 @@
     android:clickable="true"
     android:focusable="true"
     android:gravity="center_vertical"
-    android:minHeight="64dp"
+    android:minHeight="@dimen/viewport_apply_mode_row_min_height"
     android:orientation="horizontal"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp">
+    android:paddingTop="@dimen/viewport_apply_mode_row_padding_vertical"
+    android:paddingBottom="@dimen/viewport_apply_mode_row_padding_vertical">
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
+        android:layout_marginEnd="@dimen/viewport_apply_mode_text_spacing_end"
         android:layout_weight="1"
         android:orientation="vertical">
 
@@ -29,7 +29,7 @@
             android:id="@+id/viewport_apply_mode_subtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
+            android:layout_marginTop="@dimen/viewport_apply_mode_subtitle_spacing_top"
             android:includeFontPadding="false"
             android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
             android:textColor="?attr/colorOnSurfaceVariant" />
@@ -40,9 +40,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:buttonTint="?attr/colorPrimary"
-        android:minWidth="0dp"
-        android:minHeight="0dp"
-        android:padding="0dp"
+        android:minWidth="@dimen/viewport_apply_mode_radio_min_size"
+        android:minHeight="@dimen/viewport_apply_mode_radio_min_size"
+        android:padding="@dimen/viewport_apply_mode_radio_padding"
         android:saveEnabled="false"
         app:useMaterialThemeColors="true" />
 </LinearLayout>

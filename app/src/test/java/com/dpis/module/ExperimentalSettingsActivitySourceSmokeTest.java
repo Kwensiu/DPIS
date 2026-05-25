@@ -22,7 +22,9 @@ public final class ExperimentalSettingsActivitySourceSmokeTest {
         assertTrue(source.contains("textColumnLayoutParams.setMarginStart(0);"));
         assertTrue(layout.contains("experimental_ttc_import_row"));
         assertTrue(layout.contains("com.google.android.material.card.MaterialCardView"));
-        assertTrue(layout.contains("app:strokeWidth=\"1dp\""));
+        assertTrue(layout.contains("@dimen/experimental_settings_content_padding"));
+        assertTrue(layout.contains("@dimen/page_card_corner_radius"));
+        assertTrue(layout.contains("@dimen/page_card_stroke_width"));
         assertTrue(layout.contains("item_settings_switch"));
         assertTrue(strings.contains("settings_ttc_import_label"));
         assertTrue(strings.contains("settings_ttc_import_hint"));
