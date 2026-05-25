@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.radiobutton.MaterialRadioButton;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.textview.MaterialTextView;
 
@@ -188,32 +189,24 @@ final class FontHookDomainDialog {
                                             String[] selectedModeRef) {
         String selectedMode = ViewportApplyMode.normalize(selectedModeRef[0]);
         View row = LayoutInflater.from(activity).inflate(
-                R.layout.item_font_hook_domain, container, false);
-        MaterialTextView title = row.findViewById(R.id.font_hook_domain_title);
-        MaterialTextView subtitle = row.findViewById(R.id.font_hook_domain_subtitle);
-        MaterialSwitch switchView = row.findViewById(R.id.font_hook_domain_switch);
+                R.layout.item_viewport_apply_mode, container, false);
+        MaterialTextView title = row.findViewById(R.id.viewport_apply_mode_title);
+        MaterialTextView subtitle = row.findViewById(R.id.viewport_apply_mode_subtitle);
+        MaterialRadioButton radioButton = row.findViewById(R.id.viewport_apply_mode_radio);
         title.setText(titleRes);
         subtitle.setText(subtitleRes);
-        switchView.setChecked(mode.equals(selectedMode));
-        switchView.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (!isChecked || mode.equals(ViewportApplyMode.normalize(selectedMode))) {
-                if (!isChecked && mode.equals(ViewportApplyMode.normalize(selectedMode))) {
-                    buttonView.setChecked(true);
-                }
+        radioButton.setChecked(mode.equals(selectedMode));
+        View.OnClickListener listener = v -> {
+            if (mode.equals(ViewportApplyMode.normalize(selectedModeRef[0]))) {
                 return;
             }
             if (host.saveViewportApplyMode(packageName, mode)) {
                 selectedModeRef[0] = mode;
                 bindViewportApplyRows(activity, container, host, packageName, selectedModeRef);
-            } else {
-                buttonView.setChecked(false);
             }
-        });
-        row.setOnClickListener(v -> {
-            if (!switchView.isChecked()) {
-                switchView.setChecked(true);
-            }
-        });
+        };
+        row.setOnClickListener(listener);
+        radioButton.setOnClickListener(listener);
         container.addView(row);
     }
 

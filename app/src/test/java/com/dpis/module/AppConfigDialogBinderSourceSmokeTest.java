@@ -166,13 +166,16 @@ public class AppConfigDialogBinderSourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/FontHookDomainDialog.java");
         String dialogLayout = read("src/main/res/layout/dialog_font_hook_domains.xml");
         String itemLayout = read("src/main/res/layout/item_font_hook_domain.xml");
+        String viewportModeLayout = read("src/main/res/layout/item_viewport_apply_mode.xml");
+        String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
         assertTrue(source.contains("setTitle(R.string.dialog_font_hook_domains_dialog_title)"));
         assertTrue(source.contains("dialog_hook_chain_tab_interface"));
         assertTrue(source.contains("dialog_hook_chain_tab_font"));
         assertTrue(source.contains("normalizeViewportApplyModeForDisplay(currentViewportApplyMode)"));
         assertTrue(source.contains(": ViewportApplyMode.AUTO"));
-        assertTrue(source.contains("buttonView.setChecked(true);"));
+        assertTrue(source.contains("R.layout.item_viewport_apply_mode"));
+        assertTrue(source.contains("MaterialRadioButton radioButton"));
         assertTrue(source.contains("font_hook_domains_interface_page"));
         assertTrue(source.contains("font_hook_domains_font_page"));
         assertTrue(source.contains("host.saveCustom(packageName, selectedKnown, automaticKnown, unknown)"));
@@ -200,6 +203,13 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(itemLayout.contains("@+id/font_hook_domain_title"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_subtitle"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_switch"));
+        assertTrue(viewportModeLayout.contains("@+id/viewport_apply_mode_radio"));
+        assertTrue(viewportModeLayout.contains("com.google.android.material.radiobutton.MaterialRadioButton"));
+        assertFalse(viewportModeLayout.contains("<FrameLayout"));
+        assertTrue(viewportModeLayout.contains("android:layout_width=\"wrap_content\""));
+        assertTrue(viewportModeLayout.contains("android:padding=\"0dp\""));
+        assertTrue(zhStrings.contains("<string name=\"dialog_viewport_apply_auto\">&#x81EA;&#x52A8;</string>")
+                || zhStrings.contains("<string name=\"dialog_viewport_apply_auto\">自动</string>"));
     }
 
     @Test
