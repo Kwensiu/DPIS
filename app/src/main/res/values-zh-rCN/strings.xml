@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">DPIS</string>
     <string name="module_description">独立调节应用 DPI 与文本大小</string>
-    <string name="dialog_viewport_hint_scale">界面比例 50-200%</string>
+    <string name="dialog_viewport_hint_scale">界面比例 30-300%</string>
     <string name="dialog_viewport_hint_absolute">最小宽度 dp</string>
     <string name="dialog_viewport_mode_system">比例</string>
     <string name="dialog_viewport_mode_compat">宽度</string>
@@ -23,7 +23,7 @@
     <string name="status_save_success_inline">已保存</string>
     <string name="status_save_success">已保存 %1$s 的参数</string>
     <string name="status_save_requires_init">remote preferences 未初始化，先重新打开模块 App</string>
-    <string name="status_save_invalid">最小宽度请输入正整数 dp；字体请输入 50–300 的整数</string>
+    <string name="status_save_invalid">界面比例请输入 30–300；最小宽度请输入正整数 dp；字体请输入 50–300 的整数</string>
     <string name="search_hint">搜索应用名或包名</string>
     <string name="search_clear">清除搜索</string>
     <string name="quick_search_button">快速搜索</string>

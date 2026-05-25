@@ -3,8 +3,10 @@ package com.dpis.module;
 import java.util.Objects;
 
 final class ViewportTargetSpec {
-    static final int MIN_SCALE_PERMILLE = 500;
-    static final int MAX_SCALE_PERMILLE = 2000;
+    static final int MIN_SCALE_PERCENT = 30;
+    static final int MAX_SCALE_PERCENT = 300;
+    static final int MIN_SCALE_PERMILLE = MIN_SCALE_PERCENT * 10;
+    static final int MAX_SCALE_PERMILLE = MAX_SCALE_PERCENT * 10;
     static final int DEFAULT_SCALE_PERMILLE = 1000;
 
     private final String type;

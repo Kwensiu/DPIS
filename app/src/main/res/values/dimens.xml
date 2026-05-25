@@ -117,6 +117,8 @@
     <dimen name="dialog_app_config_wizard_hint_padding_end">6dp</dimen>
     <dimen name="dialog_app_config_wizard_hint_padding_vertical">6dp</dimen>
     <dimen name="dialog_app_config_wizard_hint_corner_radius">18dp</dimen>
+    <dimen name="dialog_app_config_wizard_hint_overlay_margin_top">32dp</dimen>
+    <dimen name="dialog_app_config_wizard_hint_overlay_elevation">8dp</dimen>
     <dimen name="dialog_app_config_wizard_hint_close_button_size">28dp</dimen>
     <dimen name="dialog_app_config_wizard_hint_close_button_spacing">8dp</dimen>
     <dimen name="dialog_app_config_wizard_hint_close_button_padding">7dp</dimen>

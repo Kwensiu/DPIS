@@ -124,7 +124,8 @@ final class AppConfigSaveHandler {
         }
         if (ViewportTargetType.RELATIVE_SCALE.equals(
                 ViewportTargetType.normalize(viewportTargetType))) {
-            if (value < 50 || value > 200) {
+            if (value < ViewportTargetSpec.MIN_SCALE_PERCENT
+                    || value > ViewportTargetSpec.MAX_SCALE_PERCENT) {
                 throw new NumberFormatException("viewport scale out of range");
             }
             return ViewportTargetSpec.relativeScale(value * 10);

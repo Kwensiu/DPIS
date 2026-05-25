@@ -31,7 +31,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("views.disableButton.setOnClickListener"));
         assertTrue(source.contains("views.viewportInputView.setText(\"\")"));
         assertTrue(source.contains("bindViewportModeToggle(views.viewportModeToggle, ViewportTargetType.RELATIVE_SCALE, true)"));
-        assertTrue(source.contains("bindFontModeToggle(views.fontModeToggle, FontApplyMode.FIELD_REWRITE, true)"));
+        assertTrue(source.contains("bindFontModeToggle(views.fontModeToggle, FontApplyMode.SYSTEM_EMULATION, true)"));
         assertTrue(source.contains("host.saveAppConfig("));
         assertTrue(source.contains("views.saveButton.setOnClickListener"));
         assertTrue(source.contains("host.saveAppConfig("));
@@ -239,30 +239,69 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(layout.contains("android:orientation=\"horizontal\""));
         assertTrue(layout.contains("android:id=\"@+id/dialog_viewport_mode_system_label\" android:layout_width=\"0dp\" android:layout_height=\"match_parent\""));
         assertTrue(layout.contains("android:id=\"@+id/dialog_viewport_mode_compat_label\" android:layout_width=\"0dp\" android:layout_height=\"match_parent\""));
-        assertTrue(source.contains("bindViewportInputHint(views.viewportInputLayout, item.viewportTargetSpec.type())"));
+        assertTrue(source.contains("bindViewportInputHint(views.viewportInputLayout, initialViewportType)"));
         assertTrue(source.contains("bindViewportInputHint(views.viewportInputLayout, ViewportTargetType.RELATIVE_SCALE)"));
         assertTrue(source.contains("bindViewportInputHint(views.viewportInputLayout, ViewportTargetType.ABSOLUTE_DP)"));
         assertTrue(source.contains("dialogView.findViewById(R.id.dialog_viewport_mode_compat_label)),"));
         assertFalse(source.contains("toggle.vertical"));
-        assertTrue(strings.contains("Interface scale 50-200%"));
+        assertTrue(strings.contains("Interface scale 30-300%"));
         assertTrue(strings.contains("Min width dp"));
-        assertTrue(zhStrings.contains("&#x754C;&#x9762;&#x6BD4;&#x4F8B; 50-200%")
-                || zhStrings.contains("界面比例 50-200%"));
+        assertTrue(zhStrings.contains("&#x754C;&#x9762;&#x6BD4;&#x4F8B; 30-300%")
+                || zhStrings.contains("界面比例 30-300%"));
         assertTrue(zhStrings.contains("&#x6700;&#x5C0F;&#x5BBD;&#x5EA6; dp")
                 || zhStrings.contains("最小宽度 dp"));
     }
 
     @Test
+    public void appConfigSheetDefaultsToScaleAndSystemFontMode() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+
+        assertTrue(source.contains("String initialViewportType = initialViewportTargetType(item.viewportTargetSpec)"));
+        assertTrue(source.contains("bindViewportModeToggle(views.viewportModeToggle, initialViewportType, false)"));
+        assertTrue(source.contains("bindViewportInputHint(views.viewportInputLayout, initialViewportType)"));
+        assertTrue(source.contains("bindFontModeToggle(views.fontModeToggle, initialFontMode(item.fontMode), false)"));
+        assertTrue(source.contains("private static String initialViewportTargetType(ViewportTargetSpec spec)"));
+        assertTrue(source.contains("return FontApplyMode.isEnabled(normalized)"));
+        assertTrue(source.contains(": FontApplyMode.SYSTEM_EMULATION;"));
+    }
+
+    @Test
+    public void viewportModeSwitchKeepsSingleInputValue() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        int switchStart = source.indexOf("private static void switchViewportTargetType");
+        int visualStart = source.indexOf("private static void updateModeToggleVisual", switchStart);
+        String switchBlock = source.substring(switchStart, visualStart);
+
+        assertTrue(switchBlock.contains("bindViewportModeToggle(viewportModeToggle, nextType, animate);"));
+        assertFalse(source.contains("viewportScaleText"));
+        assertFalse(source.contains("viewportAbsoluteText"));
+        assertFalse(switchBlock.contains("viewportInputView.setText"));
+    }
+
+    @Test
     public void appConfigWizardHintUsesNamedDimensions() throws IOException {
         String coordinator = read("src/main/java/com/dpis/module/AppConfigDialogCoordinator.java");
+        String appConfigLayout = read("src/main/res/layout/dialog_app_config.xml");
         String hintLayout = read("src/main/res/layout/view_app_config_wizard_hint.xml");
         String bubbleBackground = read("src/main/res/drawable/bg_app_config_wizard_bubble.xml");
 
-        assertTrue(coordinator.contains("R.layout.view_app_config_wizard_hint"));
+        assertTrue(appConfigLayout.contains("@+id/dialog_advanced_wizard_hint_container"));
+        assertTrue(appConfigLayout.contains("@layout/view_app_config_wizard_hint"));
+        assertTrue(appConfigLayout.contains("<FrameLayout"));
+        assertTrue(appConfigLayout.contains("android:layout_gravity=\"top|center_horizontal\""));
+        assertTrue(appConfigLayout.contains("@dimen/dialog_app_config_wizard_hint_overlay_margin_top"));
+        assertTrue(appConfigLayout.contains("@dimen/dialog_app_config_wizard_hint_overlay_elevation"));
+        assertTrue(coordinator.contains("dialog_advanced_wizard_hint_container"));
+        assertTrue(coordinator.contains("hint.setVisibility(View.VISIBLE)"));
+        assertTrue(coordinator.contains("hint.setVisibility(View.GONE)"));
+        assertFalse(coordinator.contains("positionAdvancedWizardHint"));
+        assertFalse(coordinator.contains("overlayParent.addView"));
+        assertFalse(coordinator.contains("R.layout.view_app_config_wizard_hint"));
         assertTrue(hintLayout.contains("@dimen/dialog_app_config_wizard_hint_min_height"));
         assertTrue(hintLayout.contains("@dimen/dialog_app_config_wizard_hint_padding_start"));
         assertTrue(hintLayout.contains("@dimen/dialog_app_config_wizard_hint_close_button_size"));
         assertTrue(hintLayout.contains("@dimen/dialog_app_config_wizard_hint_arrow_width"));
+        assertTrue(hintLayout.contains("android:rotation=\"180\""));
         assertTrue(bubbleBackground.contains("@dimen/dialog_app_config_wizard_hint_corner_radius"));
         assertFalse(hintLayout.contains("\"28dp\""));
         assertFalse(hintLayout.contains("\"14dp\""));

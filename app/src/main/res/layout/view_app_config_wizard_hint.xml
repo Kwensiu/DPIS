@@ -8,6 +8,13 @@
     android:gravity="center_horizontal"
     android:orientation="vertical">
 
+    <View
+        android:id="@+id/dialog_advanced_wizard_arrow"
+        android:layout_width="@dimen/dialog_app_config_wizard_hint_arrow_width"
+        android:layout_height="@dimen/dialog_app_config_wizard_hint_arrow_height"
+        android:background="@drawable/bg_app_config_wizard_arrow"
+        android:rotation="180" />
+
     <LinearLayout
         android:id="@+id/dialog_advanced_wizard_hint"
         android:layout_width="wrap_content"
@@ -41,9 +48,4 @@
             app:tint="@color/app_config_wizard_bubble_text" />
     </LinearLayout>
 
-    <View
-        android:id="@+id/dialog_advanced_wizard_arrow"
-        android:layout_width="@dimen/dialog_app_config_wizard_hint_arrow_width"
-        android:layout_height="@dimen/dialog_app_config_wizard_hint_arrow_height"
-        android:background="@drawable/bg_app_config_wizard_arrow" />
 </LinearLayout>

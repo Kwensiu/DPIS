@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">DPIS</string>
     <string name="module_description">Per-app DPI &amp; text size</string>
-    <string name="dialog_viewport_hint_scale">Interface scale 50-200%</string>
+    <string name="dialog_viewport_hint_scale">Interface scale 30-300%</string>
     <string name="dialog_viewport_hint_absolute">Min width dp</string>
     <string name="dialog_viewport_mode_system">Scale</string>
     <string name="dialog_viewport_mode_compat">Min width</string>
@@ -23,7 +23,7 @@
     <string name="status_save_success_inline">Saved</string>
     <string name="status_save_success">Saved: %1$s</string>
     <string name="status_save_requires_init">Prefs uninitialized. Open DPIS first.</string>
-    <string name="status_save_invalid">Smallest width must be a positive integer; font scale must be 50–300.</string>
+    <string name="status_save_invalid">Interface scale must be 30–300; smallest width must be a positive integer; font scale must be 50–300.</string>
     <string name="search_hint">App or package name</string>
     <string name="search_clear">Clear search</string>
     <string name="quick_search_button">Quick search</string>

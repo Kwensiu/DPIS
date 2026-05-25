@@ -27,7 +27,13 @@ public class ViewportTargetSpecTest {
 
     @Test
     public void rejectsOutOfRangeRelativeScale() {
-        assertFalse(ViewportTargetSpec.relativeScale(499).isEnabled());
-        assertFalse(ViewportTargetSpec.relativeScale(2001).isEnabled());
+        assertFalse(ViewportTargetSpec.relativeScale(299).isEnabled());
+        assertFalse(ViewportTargetSpec.relativeScale(3001).isEnabled());
+    }
+
+    @Test
+    public void acceptsUpdatedRelativeScaleRange() {
+        assertTrue(ViewportTargetSpec.relativeScale(300).isEnabled());
+        assertTrue(ViewportTargetSpec.relativeScale(3000).isEnabled());
     }
 }
