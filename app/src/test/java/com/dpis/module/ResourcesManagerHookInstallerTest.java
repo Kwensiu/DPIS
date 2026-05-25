@@ -36,6 +36,43 @@ public class ResourcesManagerHookInstallerTest {
     }
 
     @Test
+    public void relativeScaleDoesNotApplyTwiceAfterConfigurationOnlyHookPublishesRecord() {
+        String packageName = "com.example.target";
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(900));
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.AUTO);
+        Configuration initial = new Configuration();
+        initial.screenWidthDp = 362;
+        initial.screenHeightDp = 783;
+        initial.smallestScreenWidthDp = 362;
+        initial.densityDpi = 478;
+        initial.fontScale = 1.0f;
+
+        ResourcesManagerHookInstaller.applyResourceOverrides(
+                initial, store, packageName, "ResourcesManagerActivity");
+
+        assertEquals(326, initial.screenWidthDp);
+        assertEquals(705, initial.screenHeightDp);
+        assertEquals(326, initial.smallestScreenWidthDp);
+        assertEquals(531, initial.densityDpi);
+
+        Configuration alreadyApplied = new Configuration();
+        alreadyApplied.screenWidthDp = 326;
+        alreadyApplied.screenHeightDp = 705;
+        alreadyApplied.smallestScreenWidthDp = 326;
+        alreadyApplied.densityDpi = 531;
+        alreadyApplied.fontScale = 1.0f;
+
+        ResourcesManagerHookInstaller.applyResourceOverrides(
+                alreadyApplied, store, packageName, "ResourcesRead");
+
+        assertEquals(326, alreadyApplied.screenWidthDp);
+        assertEquals(705, alreadyApplied.screenHeightDp);
+        assertEquals(326, alreadyApplied.smallestScreenWidthDp);
+        assertEquals(531, alreadyApplied.densityDpi);
+    }
+
+    @Test
     public void fillsEmptyResourcesKeyOverrideFromGlobalConfiguration() {
         FakePrefs prefs = new FakePrefs();
         prefs.edit()

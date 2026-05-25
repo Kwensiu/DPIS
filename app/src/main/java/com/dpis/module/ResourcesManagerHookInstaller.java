@@ -312,10 +312,13 @@ final class ResourcesManagerHookInstaller {
                 0,
                 0,
                 result.smallestWidthDp);
-        if (!windowScoped && sharedResult != null) {
-            boolean canPublishState = VirtualDisplayState.setUnlessDerivedFromTargetConfig(
-                    sharedResult, originalSmallestWidthDp, targetViewportWidth);
-            if (canPublishState && resolution.spec.isEnabled() && source != null) {
+        if (!windowScoped && resolution.spec.isEnabled() && source != null) {
+            boolean canPublishRecord = true;
+            if (sharedResult != null) {
+                canPublishRecord = VirtualDisplayState.setUnlessDerivedFromTargetConfig(
+                        sharedResult, originalSmallestWidthDp, targetViewportWidth);
+            }
+            if (canPublishRecord) {
                 VirtualDisplayState.publish(
                         packageName,
                         resolution.spec,
