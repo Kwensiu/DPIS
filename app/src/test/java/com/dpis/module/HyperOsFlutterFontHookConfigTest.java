@@ -60,10 +60,10 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(factory.contains("createForCompat100Host(String packageName)"));
         assertTrue(factory.contains("new SystemPropertyConfigPreferences(packageName)"));
         assertFalse(factory.contains("CompatConfigProviderPreferences"));
-        assertTrue(prefs.contains("ViewportPropertyBridge.readTargetWidthDp(packageName)"));
+        assertTrue(prefs.contains("ViewportPropertyBridge.readTargetSpec(packageName)"));
         assertTrue(prefs.contains("HyperOsFlutterFontBridge.readForceFontScalePercent(packageName)"));
         assertTrue(prefs.contains("HyperOsFlutterFontBridge.readCompatFontScalePercent(packageName)"));
-        assertTrue(prefs.contains("ViewportPropertyBridge.readCompatConfigWidthDp(packageName)"));
+        assertTrue(prefs.contains("viewportTargetSpec.isAbsoluteDp()"));
         assertTrue(prefs.contains("HyperOsFlutterFontBridge.readCompatFontMode(packageName)"));
         assertTrue(prefs.contains("FontHookDomainPropertyBridge.readOverride(packageName)"));
         assertTrue(prefs.contains("HyperOsFlutterFontBridge.readTypefaceId(packageName)"));

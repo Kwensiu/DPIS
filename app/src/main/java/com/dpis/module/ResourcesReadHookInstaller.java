@@ -117,14 +117,22 @@ final class ResourcesReadHookInstaller {
         int originalSmallestWidthDp = config.smallestScreenWidthDp;
         int originalDensityDpi = config.densityDpi;
 
-        Integer targetViewportWidth = TargetViewportWidthResolver.resolve(store, packageName);
-        if (targetViewportWidth != null) {
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.fromConfiguration(
+                ViewportSourceSnapshot.ORIGIN_RESOURCES_READ, config, null);
+        ViewportTargetResolution resolution =
+                TargetViewportWidthResolver.resolve(store, packageName, source);
+        Integer targetViewportWidth = resolution.hasTarget()
+                ? resolution.effectiveSmallestWidthDp
+                : null;
+        if (targetViewportWidth != null && resolution.spec.isEnabled()) {
             ViewportRuntimeMarkerProbe.observeAppProcessProbe(
-                    packageName, targetViewportWidth, sourceTag);
+                    packageName, resolution.spec, sourceTag);
         }
         boolean windowScoped = ViewportConfigurationScope.isWindowScoped(config);
         VirtualDisplayOverride.Result stableTarget =
-                VirtualDisplayState.getForTarget(targetViewportWidth);
+                resolution.record != null && resolution.record.virtualDisplayResult != null
+                        ? resolution.record.virtualDisplayResult
+                        : VirtualDisplayState.getForTarget(targetViewportWidth);
         ViewportOverride.Result result = ViewportOverride.derive(
                 config,
                 targetViewportWidth != null ? targetViewportWidth : 0,
@@ -158,8 +166,10 @@ final class ResourcesReadHookInstaller {
                 0,
                 result.smallestWidthDp);
         if (!windowScoped && sharedResult != null) {
-            VirtualDisplayState.setUnlessDerivedFromTargetConfig(
-                    sharedResult, originalSmallestWidthDp, targetViewportWidth);
+            if (!resolution.spec.isRelativeScale()) {
+                VirtualDisplayState.setUnlessDerivedFromTargetConfig(
+                        sharedResult, originalSmallestWidthDp, targetViewportWidth);
+            }
         }
 
         if (result.widthDp == originalWidthDp

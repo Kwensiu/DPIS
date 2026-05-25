@@ -17,26 +17,49 @@ final class ViewportRuntimeMarkerProbe {
                                          PerAppDisplayEnvironment result,
                                          int targetSmallestWidthDp,
                                          String entryName) {
+        publishSystemServerProbe(
+                packageName,
+                sourceConfiguration,
+                result,
+                ViewportTargetSpec.absoluteDp(targetSmallestWidthDp),
+                targetSmallestWidthDp,
+                entryName);
+    }
+
+    static void publishSystemServerProbe(String packageName,
+                                         Configuration sourceConfiguration,
+                                         PerAppDisplayEnvironment result,
+                                         ViewportTargetSpec targetSpec,
+                                         int effectiveSmallestWidthDp,
+                                         String entryName) {
         if (!BuildConfig.DEBUG || packageName == null || sourceConfiguration == null
-                || result == null || targetSmallestWidthDp <= 0) {
+                || result == null || targetSpec == null || !targetSpec.isEnabled()
+                || effectiveSmallestWidthDp <= 0) {
             return;
         }
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.fromConfiguration(
+                ViewportSourceSnapshot.ORIGIN_SYSTEM_CONFIGURATION,
+                sourceConfiguration,
+                null);
+        ViewportOverride.Result viewportResult = new ViewportOverride.Result(
+                result.widthDp,
+                result.heightDp,
+                result.smallestWidthDp,
+                result.densityDpi);
         ViewportRuntimeMarkerBridge.MarkerRecord record =
                 ViewportRuntimeMarkerBridge.createRecord(
                         packageName,
-                        targetSmallestWidthDp,
-                        sourceConfiguration.screenWidthDp,
-                        sourceConfiguration.screenHeightDp,
-                        sourceConfiguration.smallestScreenWidthDp,
-                        sourceConfiguration.densityDpi,
-                        result.widthDp,
-                        result.heightDp,
-                        result.smallestWidthDp,
-                        result.densityDpi,
+                        targetSpec,
+                        effectiveSmallestWidthDp,
+                        source,
+                        viewportResult,
                         "s",
                         elapsedRealtime());
+        if (record == null) {
+            return;
+        }
         String encoded = ViewportRuntimeMarkerBridge.encode(record);
-        boolean published = ViewportRuntimeMarkerBridge.publish(packageName, record);
+        boolean published = ViewportRuntimeMarkerBridge.isCurrentMarker(packageName, record);
         logAtMostEvery("system|" + packageName + "|" + entryName + "|" + published,
                 "DPIS_VIEWPORT_MARKER system publish: entry=" + entryName
                 + ", package=" + packageName
@@ -52,11 +75,22 @@ final class ViewportRuntimeMarkerProbe {
     static void observeAppProcessProbe(String packageName,
                                        int targetSmallestWidthDp,
                                        String sourceTag) {
-        if (!BuildConfig.DEBUG || packageName == null || targetSmallestWidthDp <= 0) {
+        observeAppProcessProbe(
+                packageName,
+                ViewportTargetSpec.absoluteDp(targetSmallestWidthDp),
+                sourceTag);
+    }
+
+    static void observeAppProcessProbe(String packageName,
+                                       ViewportTargetSpec targetSpec,
+                                       String sourceTag) {
+        if (!BuildConfig.DEBUG || packageName == null) {
             return;
         }
-        String expectedTargetFingerprint =
-                ViewportRuntimeMarkerBridge.targetFingerprintForAbsoluteDp(targetSmallestWidthDp);
+        if (targetSpec == null || !targetSpec.isEnabled()) {
+            return;
+        }
+        String expectedTargetFingerprint = targetSpec.fingerprint();
         ViewportRuntimeMarkerBridge.ParseResult result = ViewportRuntimeMarkerBridge.read(
                 packageName,
                 expectedTargetFingerprint,

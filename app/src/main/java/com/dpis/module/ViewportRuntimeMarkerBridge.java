@@ -56,6 +56,31 @@ final class ViewportRuntimeMarkerBridge {
                 Math.max(0L, elapsedRealtimeMillis));
     }
 
+    static MarkerRecord createRecord(String packageName,
+                                     ViewportTargetSpec targetSpec,
+                                     int effectiveSmallestWidthDp,
+                                     ViewportSourceSnapshot source,
+                                     ViewportOverride.Result result,
+                                     String provenance,
+                                     long elapsedRealtimeMillis) {
+        if (source == null || result == null) {
+            return null;
+        }
+        return new MarkerRecord(
+                packageCheck(packageName),
+                targetFingerprintForSpec(targetSpec),
+                source.sourceSignature(),
+                Math.max(1, effectiveSmallestWidthDp),
+                configurationSignature(
+                        result.widthDp,
+                        result.heightDp,
+                        result.smallestWidthDp,
+                        result.densityDpi,
+                        source.scope),
+                normalizeProvenance(provenance),
+                Math.max(0L, elapsedRealtimeMillis));
+    }
+
     static String encode(MarkerRecord record) {
         if (record == null) {
             return "";
@@ -123,6 +148,18 @@ final class ViewportRuntimeMarkerBridge {
         return "a" + toBase36(targetSmallestWidthDp);
     }
 
+    static String targetFingerprintForSpec(ViewportTargetSpec spec) {
+        return spec != null ? spec.fingerprint() : "off";
+    }
+
+    static String configurationSignature(int widthDp,
+                                         int heightDp,
+                                         int smallestWidthDp,
+                                         int densityDpi,
+                                         String scope) {
+        return signature(widthDp, heightDp, smallestWidthDp, densityDpi, scope);
+    }
+
     static boolean publish(String packageName, MarkerRecord record) {
         if (packageName == null || packageName.isBlank() || record == null) {
             return false;
@@ -135,6 +172,46 @@ final class ViewportRuntimeMarkerBridge {
             return false;
         }
         return setSystemProperty(propertyNameForPackage(packageName), value);
+    }
+
+    static boolean publishSystemServerRecord(String packageName,
+                                             ViewportTargetSpec targetSpec,
+                                             ConfigurationLike source,
+                                             ConfigurationLike result,
+                                             String scope,
+                                             long elapsedRealtimeMillis) {
+        if (packageName == null || packageName.isBlank()
+                || targetSpec == null || !targetSpec.isEnabled()
+                || source == null || result == null) {
+            return false;
+        }
+        MarkerRecord record = new MarkerRecord(
+                packageCheck(packageName),
+                targetFingerprintForSpec(targetSpec),
+                configurationSignature(
+                        source.widthDp(),
+                        source.heightDp(),
+                        source.smallestWidthDp(),
+                        source.densityDpi(),
+                        scope),
+                Math.max(1, result.smallestWidthDp()),
+                configurationSignature(
+                        result.widthDp(),
+                        result.heightDp(),
+                        result.smallestWidthDp(),
+                        result.densityDpi(),
+                        scope),
+                PROVENANCE_SYSTEM_SERVER,
+                Math.max(0L, elapsedRealtimeMillis));
+        return publish(packageName, record);
+    }
+
+    static boolean isCurrentMarker(String packageName, MarkerRecord record) {
+        if (packageName == null || packageName.isBlank() || record == null) {
+            return false;
+        }
+        String current = readSystemProperty(propertyNameForPackage(packageName), "");
+        return encode(record).equals(current);
     }
 
     static ParseResult read(String packageName,
@@ -171,7 +248,16 @@ final class ViewportRuntimeMarkerBridge {
     }
 
     private static String signature(int widthDp, int heightDp, int smallestWidthDp, int densityDpi) {
-        return shortHash(widthDp + "x" + heightDp + "s" + smallestWidthDp + "d" + densityDpi);
+        return signature(widthDp, heightDp, smallestWidthDp, densityDpi, "");
+    }
+
+    private static String signature(int widthDp,
+                                    int heightDp,
+                                    int smallestWidthDp,
+                                    int densityDpi,
+                                    String scope) {
+        return shortHash(widthDp + "x" + heightDp + "s" + smallestWidthDp
+                + "d" + densityDpi + "@" + safeString(scope));
     }
 
     private static String packageCheck(String packageName) {
@@ -263,6 +349,16 @@ final class ViewportRuntimeMarkerBridge {
             this.provenance = provenance;
             this.elapsedRealtimeMillis = elapsedRealtimeMillis;
         }
+    }
+
+    interface ConfigurationLike {
+        int widthDp();
+
+        int heightDp();
+
+        int smallestWidthDp();
+
+        int densityDpi();
     }
 
     static final class ParseResult {

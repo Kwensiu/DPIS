@@ -4,6 +4,7 @@ import android.content.res.Configuration;
 import android.content.pm.ActivityInfo;
 import android.graphics.Rect;
 import android.os.Binder;
+import android.os.SystemClock;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -314,9 +315,17 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     PerAppDisplayEnvironment preEnvironment = resolveTargetEnvironment(
                                             before, before, config);
                                     if (shouldApplyPreProceedMutations(target.entryName)) {
-                                        if (applyEnvironment(target.entryName, before, preEnvironment, config)) {
-                                            publishViewportMarkerProbe(
-                                                    target.entryName, packageName, before, preEnvironment, config);
+                                        PerAppDisplayEnvironment applyEnvironment =
+                                                resolveMarkerGatedEnvironment(
+                                                        target.entryName,
+                                                        packageName,
+                                                        before,
+                                                        preEnvironment,
+                                                        config);
+                                        if (applyEnvironment(
+                                                target.entryName, before, applyEnvironment, config)) {
+                                            logViewportMarkerProbe(
+                                                    target.entryName, packageName, before, applyEnvironment, config);
                                         }
                                     }
                                     proceedAttempted = true;
@@ -347,9 +356,16 @@ final class SystemServerDisplayEnvironmentInstaller {
                                                 ? SystemServerDisplayDiagnostics.describeState(
                                                 after.configuration, after.frame)
                                                 : null;
-                                        if (applyEnvironment(target.entryName, after, effectiveEnvironment, config)) {
-                                            publishViewportMarkerProbe(
-                                                    target.entryName, packageName, after, effectiveEnvironment, config);
+                                        PerAppDisplayEnvironment applyEnvironment =
+                                                resolveMarkerGatedEnvironment(
+                                                        target.entryName,
+                                                        packageName,
+                                                        after,
+                                                        effectiveEnvironment,
+                                                        config);
+                                        if (applyEnvironment(target.entryName, after, applyEnvironment, config)) {
+                                            logViewportMarkerProbe(
+                                                    target.entryName, packageName, after, applyEnvironment, config);
                                             if (loggingEnabled) {
                                                 String afterApplySummary = SystemServerDisplayDiagnostics.describeState(
                                                         mutated.configuration, mutated.frame);
@@ -471,7 +487,13 @@ final class SystemServerDisplayEnvironmentInstaller {
             int widthPx = resolveWidthPx(baseConfiguration, null);
             int heightPx = resolveHeightPx(baseConfiguration, null);
             environment = PerAppDisplayOverrideCalculator.calculate(
-                    baseConfiguration, widthPx, heightPx, config.targetViewportWidthDp);
+                    baseConfiguration, widthPx, heightPx, config.targetViewportSpec);
+            environment = resolveMarkerGatedEnvironment(
+                    "launch-activity-item",
+                    packageName,
+                    new Snapshot(baseConfiguration, null, null),
+                    environment,
+                    config);
         }
         String beforeSummary = DpisLog.isLoggingEnabled()
                 ? describeConfigurationArgs(args)
@@ -503,7 +525,7 @@ final class SystemServerDisplayEnvironmentInstaller {
         }
     }
 
-    private static void publishViewportMarkerProbe(String entryName,
+    private static void logViewportMarkerProbe(String entryName,
                                                    String packageName,
                                                    Snapshot source,
                                                    PerAppDisplayEnvironment environment,
@@ -518,7 +540,8 @@ final class SystemServerDisplayEnvironmentInstaller {
                 packageName,
                 markerSourceConfiguration,
                 environment,
-                config.targetViewportWidthDp,
+                config.targetViewportSpec,
+                environment.smallestWidthDp,
                 entryName);
     }
 
@@ -834,7 +857,59 @@ final class SystemServerDisplayEnvironmentInstaller {
         int widthPx = resolveWidthPx(configuration, frame);
         int heightPx = resolveHeightPx(configuration, frame);
         return PerAppDisplayOverrideCalculator.calculate(
-                configuration, widthPx, heightPx, config.targetViewportWidthDp);
+                configuration, widthPx, heightPx, config.targetViewportSpec);
+    }
+
+    private static PerAppDisplayEnvironment resolveMarkerGatedEnvironment(
+            String entryName,
+            String packageName,
+            Snapshot source,
+            PerAppDisplayEnvironment environment,
+            PerAppDisplayConfig config) {
+        if (environment == null || config == null || !config.targetViewportSpec.isRelativeScale()) {
+            return environment;
+        }
+        boolean published = publishViewportRuntimeMarker(
+                packageName,
+                source,
+                environment,
+                config);
+        if (published) {
+            return environment;
+        }
+        if (DpisLog.isLoggingEnabled()) {
+            logIfChanged("marker-gate|" + entryName + "|" + packageName,
+                    "system_server viewport skip: reason=marker-publish-failed"
+                            + ", entry=" + entryName
+                            + ", package=" + safeToString(packageName)
+                            + ", target=" + config.targetViewportSpec,
+                    resolveLogMinIntervalMs(entryName));
+        }
+        return null;
+    }
+
+    private static boolean publishViewportRuntimeMarker(String packageName,
+                                                        Snapshot source,
+                                                        PerAppDisplayEnvironment environment,
+                                                        PerAppDisplayConfig config) {
+        if (source == null || source.configuration == null
+                || environment == null || config == null
+                || !config.targetViewportSpec.isEnabled()) {
+            return false;
+        }
+        if (config.targetViewportSpec.isRelativeScale()
+                && ViewportConfigurationScope.isWindowScoped(source.configuration)) {
+            return false;
+        }
+        return ViewportRuntimeMarkerBridge.publishSystemServerRecord(
+                packageName,
+                config.targetViewportSpec,
+                new ConfigurationMarker(source.configuration),
+                new EnvironmentMarker(environment),
+                ViewportConfigurationScope.isWindowScoped(source.configuration)
+                        ? ViewportSourceSnapshot.SCOPE_WINDOW
+                        : ViewportSourceSnapshot.SCOPE_DISPLAY,
+                elapsedRealtime());
     }
 
     private static boolean shouldApplyPreProceedMutations(String entryName) {
@@ -905,7 +980,17 @@ final class SystemServerDisplayEnvironmentInstaller {
             return;
         }
         String beforeSummary = DpisLog.isLoggingEnabled() ? describeDisplayInfo(displayInfo) : null;
-        if (!applyDisplayInfo(displayInfo, environment)) {
+        Snapshot sourceSnapshot = new Snapshot(
+                configurationFromDisplayInfo(displayInfo),
+                null,
+                displayInfo);
+        PerAppDisplayEnvironment applyEnvironment = resolveMarkerGatedEnvironment(
+                entryName,
+                packageName,
+                sourceSnapshot,
+                environment,
+                config);
+        if (!applyDisplayInfo(displayInfo, applyEnvironment)) {
             return;
         }
         if (DpisLog.isLoggingEnabled()) {
@@ -954,6 +1039,18 @@ final class SystemServerDisplayEnvironmentInstaller {
 
     private static PerAppDisplayEnvironment resolveDisplayInfoEnvironment(Object displayInfo,
                                                                           PerAppDisplayConfig config) {
+        Configuration configuration = configurationFromDisplayInfo(displayInfo);
+        if (configuration == null) {
+            return null;
+        }
+        return PerAppDisplayOverrideCalculator.calculate(
+                configuration,
+                readIntField(displayInfo, "logicalWidth"),
+                readIntField(displayInfo, "logicalHeight"),
+                config.targetViewportSpec);
+    }
+
+    private static Configuration configurationFromDisplayInfo(Object displayInfo) {
         Integer logicalWidth = readIntField(displayInfo, "logicalWidth");
         Integer logicalHeight = readIntField(displayInfo, "logicalHeight");
         Integer logicalDensityDpi = readIntField(displayInfo, "logicalDensityDpi");
@@ -970,11 +1067,7 @@ final class SystemServerDisplayEnvironmentInstaller {
         configuration.smallestScreenWidthDp = Math.min(
                 configuration.screenWidthDp,
                 configuration.screenHeightDp);
-        return PerAppDisplayOverrideCalculator.calculate(
-                configuration,
-                logicalWidth,
-                logicalHeight,
-                config.targetViewportWidthDp);
+        return configuration;
     }
 
     private static PerAppDisplayEnvironment chooseEffectiveEnvironment(
@@ -1456,6 +1549,14 @@ final class SystemServerDisplayEnvironmentInstaller {
         return REFLECTION_CACHE.getAllFields(clazz);
     }
 
+    private static long elapsedRealtime() {
+        try {
+            return SystemClock.elapsedRealtime();
+        } catch (RuntimeException ignored) {
+            return System.currentTimeMillis();
+        }
+    }
+
     private static String extractPackageFromText(String value) {
         Set<String> candidates = new LinkedHashSet<>();
         collectPackagesFromText(value, candidates, 1);
@@ -1539,6 +1640,62 @@ final class SystemServerDisplayEnvironmentInstaller {
             this.configuration = configuration;
             this.frame = frame;
             this.displayInfo = displayInfo;
+        }
+    }
+
+    private static final class ConfigurationMarker implements ViewportRuntimeMarkerBridge.ConfigurationLike {
+        private final Configuration configuration;
+
+        ConfigurationMarker(Configuration configuration) {
+            this.configuration = configuration;
+        }
+
+        @Override
+        public int widthDp() {
+            return configuration.screenWidthDp;
+        }
+
+        @Override
+        public int heightDp() {
+            return configuration.screenHeightDp;
+        }
+
+        @Override
+        public int smallestWidthDp() {
+            return configuration.smallestScreenWidthDp;
+        }
+
+        @Override
+        public int densityDpi() {
+            return configuration.densityDpi;
+        }
+    }
+
+    private static final class EnvironmentMarker implements ViewportRuntimeMarkerBridge.ConfigurationLike {
+        private final PerAppDisplayEnvironment environment;
+
+        EnvironmentMarker(PerAppDisplayEnvironment environment) {
+            this.environment = environment;
+        }
+
+        @Override
+        public int widthDp() {
+            return environment.widthDp;
+        }
+
+        @Override
+        public int heightDp() {
+            return environment.heightDp;
+        }
+
+        @Override
+        public int smallestWidthDp() {
+            return environment.smallestWidthDp;
+        }
+
+        @Override
+        public int densityDpi() {
+            return environment.densityDpi;
         }
     }
 

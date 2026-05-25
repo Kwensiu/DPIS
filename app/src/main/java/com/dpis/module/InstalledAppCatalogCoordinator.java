@@ -82,6 +82,9 @@ final class InstalledAppCatalogCoordinator {
             Integer viewportWidth = store != null
                     ? store.getTargetViewportWidthDp(item.packageName)
                     : null;
+            ViewportTargetSpec viewportTargetSpec = store != null
+                    ? store.getTargetViewportSpec(item.packageName)
+                    : ViewportTargetSpec.off();
             String viewportMode = store != null
                     ? store.getTargetViewportApplyMode(item.packageName)
                     : ViewportApplyMode.OFF;
@@ -99,7 +102,7 @@ final class InstalledAppCatalogCoordinator {
             Drawable icon = resolveDisplayIcon(item);
             result.add(new AppListItem(item.label, item.packageName,
                     scopePackages.contains(item.packageName), scopeKnown, viewportWidth, viewportMode,
-                    fontScalePercent, fontMode, typefaceId, dpisEnabled, item.systemApp,
+                    viewportTargetSpec, fontScalePercent, fontMode, typefaceId, dpisEnabled, item.systemApp,
                     item.hyperOsNativeProxyCandidate, icon));
         }
         return result;

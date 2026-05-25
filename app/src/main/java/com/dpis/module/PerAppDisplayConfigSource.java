@@ -54,21 +54,27 @@ final class PerAppDisplayConfigSource {
         }
         // Runtime viewport properties are intentionally projected per package so
         // app-process changes can apply without rebuilding all configured packages.
-        Integer targetViewportWidthDp = TargetViewportWidthResolver.resolve(
-                packageConfig.targetViewportWidthDp,
-                packageConfig.targetViewportMode,
-                snapshot.isSystemServerHooksEnabled(),
-                ViewportPropertyBridge.readTargetWidthDp(packageName));
+        ViewportTargetSpec runtimeTargetSpec = ViewportPropertyBridge.readTargetSpec(packageName);
+        ViewportTargetSpec targetViewportSpec = runtimeTargetSpec.isEnabled()
+                ? runtimeTargetSpec
+                : packageConfig.targetViewportSpec;
+        String viewportMode = ViewportApplyMode.normalize(packageConfig.targetViewportMode);
+        if (ViewportApplyMode.COMPAT.equals(viewportMode) || ViewportApplyMode.OFF.equals(viewportMode)) {
+            targetViewportSpec = ViewportTargetSpec.off();
+        }
+        Integer targetViewportWidthDp = targetViewportSpec.isAbsoluteDp()
+                ? targetViewportSpec.absoluteWidthDp()
+                : null;
         Integer targetFontScalePercent = packageConfig.targetFontScalePercent;
         String targetFontMode = packageConfig.targetFontMode;
         boolean fontConfigured = FontApplyMode.isEnabled(targetFontMode)
                 && targetFontScalePercent != null;
-        if (targetViewportWidthDp == null && !fontConfigured) {
+        if (!targetViewportSpec.isEnabled() && !fontConfigured) {
             return null;
         }
         boolean hyperOsNativeFlutterEnabled = FontHookDomainDecision
                 .isHyperOsNativeFlutterEnabled(snapshot, packageConfig);
-        return new PerAppDisplayConfig(packageName, targetViewportWidthDp,
+        return new PerAppDisplayConfig(packageName, targetViewportSpec, viewportMode,
                 targetFontScalePercent, targetFontMode,
                 hyperOsNativeFlutterEnabled,
                 packageConfig.hookDomainOverride);

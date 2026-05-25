@@ -12,7 +12,7 @@ final class FontHookDomainDecision {
         return isHyperOsNativeFlutterEnabled(
                 HookRuntimePolicy.fromNullableStore(store),
                 packageName,
-                store.getTargetViewportWidthDp(packageName),
+                store.getTargetViewportSpec(packageName),
                 store.getTargetViewportApplyMode(packageName),
                 store.isTargetDpisEnabled(packageName) ? fontScalePercent : null,
                 store.getTargetFontApplyMode(packageName),
@@ -27,7 +27,7 @@ final class FontHookDomainDecision {
         return isHyperOsNativeFlutterEnabled(
                 HookRuntimePolicy.fromSnapshot(snapshot),
                 packageConfig.packageName,
-                packageConfig.targetViewportWidthDp,
+                packageConfig.targetViewportSpec,
                 packageConfig.targetViewportMode,
                 packageConfig.targetFontScalePercent,
                 packageConfig.targetFontMode,
@@ -36,12 +36,12 @@ final class FontHookDomainDecision {
 
     private static boolean isHyperOsNativeFlutterEnabled(HookRuntimePolicy policy,
                                                         String packageName,
-                                                        Integer targetViewportWidthDp,
+                                                        ViewportTargetSpec targetViewportSpec,
                                                         String targetViewportMode,
                                                         Integer targetFontScalePercent,
                                                         String targetFontMode,
                                                         HookDomainOverride hookDomainOverride) {
-        boolean viewportConfigured = targetViewportWidthDp != null && targetViewportWidthDp > 0;
+        boolean viewportConfigured = targetViewportSpec != null && targetViewportSpec.isEnabled();
         boolean fontScaleActive = targetFontScalePercent != null && targetFontScalePercent > 0;
         HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
                 policy,

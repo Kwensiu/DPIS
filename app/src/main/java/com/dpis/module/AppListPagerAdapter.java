@@ -306,10 +306,10 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             bindIcon(holder, item);
             String compactStatusText = AppStatusFormatter.formatCompact(
                     holder.status.getResources(), item.inScope, item.scopeKnown,
-                    item.viewportWidthDp, item.viewportMode,
+                    item.viewportTargetSpec, item.viewportMode,
                     item.fontScalePercent, item.fontMode, item.typefaceId, item.dpisEnabled);
             boolean warnViewport = item.scopeKnown && AppStatusFormatter.shouldWarnViewportEmulation(
-                    item.viewportWidthDp, item.viewportMode,
+                    item.viewportTargetSpec, item.viewportMode,
                     systemScopeSelectedSupplier.getAsBoolean(),
                     item.dpisEnabled);
             boolean warnFont = item.scopeKnown && AppStatusFormatter.shouldWarnFontEmulation(
@@ -335,10 +335,10 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                 AppListItem item = getItem(position);
                 String compactStatusText = AppStatusFormatter.formatCompact(
                         holder.status.getResources(), item.inScope, item.scopeKnown,
-                        item.viewportWidthDp, item.viewportMode,
+                        item.viewportTargetSpec, item.viewportMode,
                         item.fontScalePercent, item.fontMode, item.typefaceId, item.dpisEnabled);
                 boolean warnViewport = item.scopeKnown && AppStatusFormatter.shouldWarnViewportEmulation(
-                        item.viewportWidthDp, item.viewportMode,
+                        item.viewportTargetSpec, item.viewportMode,
                         systemScopeSelectedSupplier.getAsBoolean(),
                         item.dpisEnabled);
                 boolean warnFont = item.scopeKnown && AppStatusFormatter.shouldWarnFontEmulation(
@@ -383,6 +383,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                         && oldItem.inScope == newItem.inScope
                         && oldItem.scopeKnown == newItem.scopeKnown
                         && Objects.equals(oldItem.viewportWidthDp, newItem.viewportWidthDp)
+                        && Objects.equals(oldItem.viewportTargetSpec, newItem.viewportTargetSpec)
                         && oldItem.viewportMode.equals(newItem.viewportMode)
                         && Objects.equals(oldItem.fontScalePercent, newItem.fontScalePercent)
                         && oldItem.fontMode.equals(newItem.fontMode)

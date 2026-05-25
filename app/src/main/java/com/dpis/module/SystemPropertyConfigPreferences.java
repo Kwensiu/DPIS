@@ -28,11 +28,18 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
         // Compat100 publishes the current per-app values through system properties so
         // legacy app processes do not need to read DPIS private files from hook hot paths.
         LinkedHashMap<String, Object> values = new LinkedHashMap<>();
-        Integer widthDp = ViewportPropertyBridge.readCompatConfigWidthDp(packageName);
+        ViewportTargetSpec viewportTargetSpec = ViewportPropertyBridge.readTargetSpec(packageName);
+        Integer widthDp = viewportTargetSpec.isAbsoluteDp()
+                ? viewportTargetSpec.absoluteWidthDp()
+                : null;
         String viewportMode = ViewportPropertyBridge.readCompatMode(packageName);
         if (widthDp == null || widthDp <= 0 || !ViewportApplyMode.isEnabled(viewportMode)) {
             widthDp = ViewportPropertyBridge.readTargetWidthDp(packageName);
-            viewportMode = ViewportApplyMode.SYSTEM_EMULATION;
+            if (viewportTargetSpec.isRelativeScale() && ViewportApplyMode.isEnabled(viewportMode)) {
+                widthDp = null;
+            } else {
+                viewportMode = ViewportApplyMode.SYSTEM;
+            }
         }
         Integer fontScalePercent = HyperOsFlutterFontBridge.readCompatFontScalePercent(packageName);
         String fontMode = HyperOsFlutterFontBridge.readCompatFontMode(packageName);
@@ -43,8 +50,14 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
         }
         fontMode = resolveCompatFontMode(fontScalePercent, fontMode, forceFontScalePercent);
         String typefaceId = HyperOsFlutterFontBridge.readTypefaceId(packageName);
-        if (widthDp != null && widthDp > 0) {
-            values.put(viewportWidthKey(), widthDp);
+        if (viewportTargetSpec.isEnabled() && ViewportApplyMode.isEnabled(viewportMode)) {
+            values.put(viewportTargetTypeKey(), viewportTargetSpec.type());
+            if (viewportTargetSpec.isRelativeScale()) {
+                values.put(viewportScalePermilleKey(), viewportTargetSpec.scalePermille());
+            }
+            if (widthDp != null && widthDp > 0) {
+                values.put(viewportWidthKey(), widthDp);
+            }
             values.put(viewportModeKey(), viewportMode);
         }
         values.put(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED,
@@ -151,6 +164,14 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
 
     private String viewportWidthKey() {
         return "viewport." + packageName + ".width_dp";
+    }
+
+    private String viewportTargetTypeKey() {
+        return "viewport." + packageName + ".target_type";
+    }
+
+    private String viewportScalePermilleKey() {
+        return "viewport." + packageName + ".scale_permille";
     }
 
     private String viewportModeKey() {

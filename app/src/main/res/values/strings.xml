@@ -2,9 +2,9 @@
 <resources>
     <string name="app_name">DPIS</string>
     <string name="module_description">Per-app DPI &amp; text size</string>
-    <string name="dialog_viewport_hint">Smallest width (dp)</string>
-    <string name="dialog_viewport_mode_system">System</string>
-    <string name="dialog_viewport_mode_compat">Compat</string>
+    <string name="dialog_viewport_hint">Viewport scale / fixed dp</string>
+    <string name="dialog_viewport_mode_system">Scale</string>
+    <string name="dialog_viewport_mode_compat">Fixed dp</string>
     <string name="dialog_font_scale_hint">Font 50–300%</string>
     <string name="dialog_font_mode_system">System</string>
     <string name="dialog_font_mode_compat">Compat</string>
@@ -57,6 +57,13 @@
     <string name="dialog_font_hook_domains_title">Hook chain</string>
     <string name="dialog_font_hook_domains_title_with_count">Hook (%1$d/%2$d)</string>
     <string name="dialog_font_hook_domains_dialog_title">Font compatibility mode</string>
+    <string name="dialog_viewport_apply_strategy_title">Viewport apply strategy</string>
+    <string name="dialog_viewport_apply_auto">Auto</string>
+    <string name="dialog_viewport_apply_auto_subtitle">Prefer system route, fall back silently.</string>
+    <string name="dialog_viewport_apply_system">System</string>
+    <string name="dialog_viewport_apply_system_subtitle">Use system-server route only.</string>
+    <string name="dialog_viewport_apply_compat">Compat</string>
+    <string name="dialog_viewport_apply_compat_subtitle">Use app-process field rewrite.</string>
     <string name="dialog_font_hook_domains_unknown_group">Unknown chain</string>
     <string name="dialog_font_hook_domains_restore_button">Restore recommended config</string>
     <string name="dialog_font_hook_group_resources">Resource config</string>

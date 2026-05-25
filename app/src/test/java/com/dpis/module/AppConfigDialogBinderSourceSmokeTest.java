@@ -30,7 +30,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("ProcessAction.STOP"));
         assertTrue(source.contains("views.disableButton.setOnClickListener"));
         assertTrue(source.contains("views.viewportInputView.setText(\"\")"));
-        assertTrue(source.contains("bindViewportModeToggle(views.viewportModeToggle, ViewportApplyMode.FIELD_REWRITE, true)"));
+        assertTrue(source.contains("bindViewportModeToggle(views.viewportModeToggle, ViewportTargetType.RELATIVE_SCALE, true)"));
         assertTrue(source.contains("bindFontModeToggle(views.fontModeToggle, FontApplyMode.FIELD_REWRITE, true)"));
         assertTrue(source.contains("host.saveAppConfig("));
         assertTrue(source.contains("views.saveButton.setOnClickListener"));
@@ -63,7 +63,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
         assertTrue(method.contains("if (!dialogView.isAttachedToWindow())"));
         assertTrue(method.contains("state.scopeSelected = true;"));
-        assertTrue(method.contains("refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);"));
+        assertTrue(method.contains("refreshDialogState(views, state, style, systemHooksEnabled, item);"));
         assertTrue(method.contains("() -> state.scopeRequestPending = false"));
     }
 
@@ -125,11 +125,11 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("views.viewportInputView.addTextChangedListener(validationWatcher)"));
         assertTrue(source.contains("views.fontInputView.addTextChangedListener(validationWatcher)"));
         assertTrue(source.contains("updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,"));
-        assertTrue(source.contains("refreshDialogState(views, state, style, systemHooksEnabled, item.packageName);"));
+        assertTrue(source.contains("refreshDialogState(views, state, style, systemHooksEnabled, item);"));
         assertTrue(source.contains("AppStatusFormatter.formatCompact("));
         assertTrue(source.contains("state.selectedTypefaceId"));
         assertTrue(source.contains("showTypefaceSelector(views.typefaceSelectorButton, state,"));
-        assertTrue(source.contains("views, state, style, systemHooksEnabled, item.packageName"));
+        assertTrue(source.contains("views, state, style, systemHooksEnabled, item"));
     }
 
     @Test
@@ -158,7 +158,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("views.fontHookDomainsButton.setOnClickListener"));
         assertTrue(source.contains("host.showFontHookDomains(item,"));
         assertTrue(source.contains("host.getFontHookDomainsButtonText(packageName)"));
-        assertTrue(source.contains("bindFontHookDomainsButton(views.fontHookDomainsButton, packageName);"));
+        assertTrue(source.contains("bindFontHookDomainsButton(views.fontHookDomainsButton, item.packageName);"));
     }
 
     @Test
@@ -224,8 +224,9 @@ public class AppConfigDialogBinderSourceSmokeTest {
     public void savingViewportConfigPublishesRuntimeViewportTarget() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
 
-        assertTrue(source.contains("ViewportApplyMode.SYSTEM_EMULATION.equals"));
-        assertTrue(source.contains("ViewportPropertySyncer.publishTargetAsync(item.packageName, widthDp, viewportMode)"));
+        assertTrue(source.contains("ViewportApplyMode.SYSTEM.equals"));
+        assertTrue(source.contains("ViewportPropertySyncer.publishTargetAsync("));
+        assertTrue(source.contains("item.packageName, viewportTargetSpec, viewportApplyMode"));
         assertTrue(source.contains("ViewportPropertySyncer.clearTargetAsync(item.packageName)"));
     }
 

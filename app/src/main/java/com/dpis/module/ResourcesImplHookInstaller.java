@@ -59,14 +59,22 @@ final class ResourcesImplHookInstaller {
         int originalHeightDp = config.screenHeightDp;
         int originalSmallestWidthDp = config.smallestScreenWidthDp;
         int originalDensityDpi = config.densityDpi;
-        Integer targetViewportWidth = TargetViewportWidthResolver.resolve(store, packageName);
-        if (targetViewportWidth != null) {
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.fromConfiguration(
+                ViewportSourceSnapshot.ORIGIN_RESOURCES_IMPL, config, metrics);
+        ViewportTargetResolution resolution =
+                TargetViewportWidthResolver.resolve(store, packageName, source);
+        Integer targetViewportWidth = resolution.hasTarget()
+                ? resolution.effectiveSmallestWidthDp
+                : null;
+        if (targetViewportWidth != null && resolution.spec.isEnabled()) {
             ViewportRuntimeMarkerProbe.observeAppProcessProbe(
-                    packageName, targetViewportWidth, "ResourcesImpl");
+                    packageName, resolution.spec, "ResourcesImpl");
         }
         boolean windowScoped = ViewportConfigurationScope.isWindowScoped(config);
         VirtualDisplayOverride.Result stableTarget =
-                VirtualDisplayState.getForTarget(targetViewportWidth);
+                resolution.record != null && resolution.record.virtualDisplayResult != null
+                        ? resolution.record.virtualDisplayResult
+                        : VirtualDisplayState.getForTarget(targetViewportWidth);
         ViewportOverride.Result result = ViewportOverride.derive(
                 config,
                 targetViewportWidth != null ? targetViewportWidth : 0,
@@ -100,8 +108,17 @@ final class ResourcesImplHookInstaller {
                 result.smallestWidthDp);
         VirtualDisplayOverride.Result publishableSharedResult = windowScoped ? null : sharedResult;
         if (publishableSharedResult != null) {
-            VirtualDisplayState.setUnlessDerivedFromTargetConfig(
+            boolean canPublishState = VirtualDisplayState.setUnlessDerivedFromTargetConfig(
                     publishableSharedResult, originalSmallestWidthDp, targetViewportWidth);
+            if (canPublishState && resolution.spec.isEnabled() && source != null) {
+                VirtualDisplayState.publish(
+                        packageName,
+                        resolution.spec,
+                        source,
+                        result,
+                        publishableSharedResult,
+                        ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+            }
         }
         String viewportMode = ViewportModePolicy.resolve(store, packageName);
         ViewportDebugReporter.report(

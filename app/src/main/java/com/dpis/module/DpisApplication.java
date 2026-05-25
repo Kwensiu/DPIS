@@ -91,9 +91,9 @@ public final class DpisApplication extends Application implements XposedServiceH
         Set<String> localPackages = from.getConfiguredPackages();
         LinkedHashMap<String, Integer> seedViewportWidthDps = new LinkedHashMap<>();
         for (String packageName : localPackages) {
-            Integer viewportWidthDp = from.getTargetViewportWidthDp(packageName);
-            if (viewportWidthDp != null && viewportWidthDp > 0) {
-                seedViewportWidthDps.put(packageName, viewportWidthDp);
+            ViewportTargetSpec viewportTargetSpec = from.getTargetViewportSpec(packageName);
+            if (viewportTargetSpec.isAbsoluteDp()) {
+                seedViewportWidthDps.put(packageName, viewportTargetSpec.absoluteWidthDp());
             }
         }
         if (!seedViewportWidthDps.isEmpty()) {
@@ -107,6 +107,10 @@ public final class DpisApplication extends Application implements XposedServiceH
                 }
             }
             String viewportMode = from.getTargetViewportApplyMode(packageName);
+            ViewportTargetSpec viewportTargetSpec = from.getTargetViewportSpec(packageName);
+            if (viewportTargetSpec.isEnabled() && !to.getTargetViewportSpec(packageName).isEnabled()) {
+                to.setTargetViewportSpec(packageName, viewportTargetSpec);
+            }
             if (ViewportApplyMode.isEnabled(viewportMode)
                     && !to.hasPrimaryTargetViewportApplyMode(packageName)) {
                 to.setTargetViewportApplyMode(packageName, viewportMode);

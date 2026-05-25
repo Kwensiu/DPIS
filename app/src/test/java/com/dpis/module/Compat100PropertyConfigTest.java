@@ -10,7 +10,7 @@ public class Compat100PropertyConfigTest {
         String command = ViewportPropertySyncer.buildCompatConfigCommandForTest(
                 "com.max.xiaoheihe", 300, ViewportApplyMode.FIELD_REWRITE);
 
-        assertEquals(expectedViewportCommand("0", "300", "field_rewrite"), command);
+        assertEquals(expectedViewportCommand("0", "absolute_dp", "0", "300", "compat"), command);
     }
 
     @Test
@@ -18,25 +18,25 @@ public class Compat100PropertyConfigTest {
         String command = ViewportPropertySyncer.buildCompatConfigCommandForTest(
                 "com.max.xiaoheihe", 300, ViewportApplyMode.SYSTEM_EMULATION);
 
-        assertEquals(expectedViewportCommand("300", "300", "system_emulation"), command);
+        assertEquals(expectedViewportCommand("300", "absolute_dp", "0", "300", "system"), command);
     }
 
     @Test
     public void viewportOffOrInvalidWidthClearsRuntimeAndCompatConfig() {
-        assertEquals(expectedViewportCommand("0", "0", "off"),
+        assertEquals(expectedViewportCommand("0", "off", "0", "0", "off"),
                 ViewportPropertySyncer.buildCompatConfigCommandForTest(
                         "com.max.xiaoheihe", 300, ViewportApplyMode.OFF));
-        assertEquals(expectedViewportCommand("0", "0", "off"),
+        assertEquals(expectedViewportCommand("0", "off", "0", "0", "off"),
                 ViewportPropertySyncer.buildCompatConfigCommandForTest(
                         "com.max.xiaoheihe", 0, ViewportApplyMode.FIELD_REWRITE));
     }
 
     @Test
     public void viewportBoundaryWidthsArePreserved() {
-        assertEquals(expectedViewportCommand("0", "1", "field_rewrite"),
+        assertEquals(expectedViewportCommand("0", "absolute_dp", "0", "1", "compat"),
                 ViewportPropertySyncer.buildCompatConfigCommandForTest(
                         "com.max.xiaoheihe", 1, ViewportApplyMode.FIELD_REWRITE));
-        assertEquals(expectedViewportCommand("0", "9999", "field_rewrite"),
+        assertEquals(expectedViewportCommand("0", "absolute_dp", "0", "9999", "compat"),
                 ViewportPropertySyncer.buildCompatConfigCommandForTest(
                         "com.max.xiaoheihe", 9999, ViewportApplyMode.FIELD_REWRITE));
     }
@@ -104,9 +104,17 @@ public class Compat100PropertyConfigTest {
                         200, FontApplyMode.FIELD_REWRITE, null));
     }
 
-    private static String expectedViewportCommand(String viewport, String compatConfig, String mode) {
+    private static String expectedViewportCommand(String viewport,
+                                                  String targetType,
+                                                  String scalePermille,
+                                                  String compatConfig,
+                                                  String mode) {
         return "setprop 'debug.dpis.vp.eab4efd3' '" + viewport + "'; "
                 + "setprop 'persist.debug.dpis.vp.eab4efd3' '" + viewport + "'; "
+                + "setprop 'debug.dpis.vptype.eab4efd3' '" + targetType + "'; "
+                + "setprop 'persist.debug.dpis.vptype.eab4efd3' '" + targetType + "'; "
+                + "setprop 'debug.dpis.vpscale.eab4efd3' '" + scalePermille + "'; "
+                + "setprop 'persist.debug.dpis.vpscale.eab4efd3' '" + scalePermille + "'; "
                 + "setprop 'debug.dpis.vpcfg.eab4efd3' '" + compatConfig + "'; "
                 + "setprop 'persist.debug.dpis.vpcfg.eab4efd3' '" + compatConfig + "'; "
                 + "setprop 'debug.dpis.vpmode.eab4efd3' '" + mode + "'; "

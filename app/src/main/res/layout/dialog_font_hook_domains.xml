@@ -13,6 +13,23 @@
         android:paddingEnd="24dp"
         android:paddingBottom="16dp">
 
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/font_hook_domains_viewport_apply_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:includeFontPadding="false"
+            android:text="@string/dialog_viewport_apply_strategy_title"
+            android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+        <LinearLayout
+            android:id="@+id/font_hook_domains_viewport_apply_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="16dp"
+            android:orientation="vertical" />
+
         <LinearLayout
             android:id="@+id/font_hook_domains_known_container"
             android:layout_width="match_parent"

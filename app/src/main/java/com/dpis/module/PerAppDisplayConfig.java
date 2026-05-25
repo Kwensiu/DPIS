@@ -2,7 +2,9 @@ package com.dpis.module;
 
 final class PerAppDisplayConfig {
     final String packageName;
+    final ViewportTargetSpec targetViewportSpec;
     final int targetViewportWidthDp;
+    final String targetViewportMode;
     final Integer targetFontScalePercent;
     final String targetFontMode;
     final boolean hyperOsFlutterFontHookEnabled;
@@ -46,9 +48,14 @@ final class PerAppDisplayConfig {
                         boolean hyperOsFlutterFontHookEnabled,
                         HookDomainOverride hookDomainOverride) {
         this.packageName = packageName;
-        this.viewportOverrideEnabled =
-                targetViewportWidthDp != null && targetViewportWidthDp > 0;
-        this.targetViewportWidthDp = viewportOverrideEnabled ? targetViewportWidthDp : 0;
+        this.targetViewportSpec = targetViewportWidthDp != null && targetViewportWidthDp > 0
+                ? ViewportTargetSpec.absoluteDp(targetViewportWidthDp)
+                : ViewportTargetSpec.off();
+        this.viewportOverrideEnabled = targetViewportSpec.isEnabled();
+        this.targetViewportWidthDp = targetViewportSpec.isAbsoluteDp()
+                ? targetViewportSpec.absoluteWidthDp()
+                : 0;
+        this.targetViewportMode = ViewportApplyMode.normalize(ViewportApplyMode.SYSTEM);
         this.targetFontScalePercent = targetFontScalePercent;
         this.targetFontMode = FontApplyMode.normalize(targetFontMode);
         this.hyperOsFlutterFontHookEnabled = hyperOsFlutterFontHookEnabled;
@@ -59,5 +66,40 @@ final class PerAppDisplayConfig {
 
     boolean hasViewportOverride() {
         return viewportOverrideEnabled;
+    }
+
+    PerAppDisplayConfig withViewportTargetSpec(ViewportTargetSpec spec) {
+        return new PerAppDisplayConfig(
+                packageName,
+                spec,
+                targetViewportMode,
+                targetFontScalePercent,
+                targetFontMode,
+                hyperOsFlutterFontHookEnabled,
+                hookDomainOverride);
+    }
+
+    PerAppDisplayConfig(String packageName,
+                        ViewportTargetSpec targetViewportSpec,
+                        String targetViewportMode,
+                        Integer targetFontScalePercent,
+                        String targetFontMode,
+                        boolean hyperOsFlutterFontHookEnabled,
+                        HookDomainOverride hookDomainOverride) {
+        this.packageName = packageName;
+        this.targetViewportSpec = targetViewportSpec != null
+                ? targetViewportSpec
+                : ViewportTargetSpec.off();
+        this.viewportOverrideEnabled = this.targetViewportSpec.isEnabled();
+        this.targetViewportWidthDp = this.targetViewportSpec.isAbsoluteDp()
+                ? this.targetViewportSpec.absoluteWidthDp()
+                : 0;
+        this.targetViewportMode = ViewportApplyMode.normalize(targetViewportMode);
+        this.targetFontScalePercent = targetFontScalePercent;
+        this.targetFontMode = FontApplyMode.normalize(targetFontMode);
+        this.hyperOsFlutterFontHookEnabled = hyperOsFlutterFontHookEnabled;
+        this.hookDomainOverride = hookDomainOverride != null
+                ? hookDomainOverride
+                : HookDomainOverride.automatic();
     }
 }

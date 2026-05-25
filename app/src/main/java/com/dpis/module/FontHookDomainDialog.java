@@ -30,6 +30,8 @@ final class FontHookDomainDialog {
                            Set<String> unknownDomains);
 
         boolean restoreRecommended(String packageName);
+
+        boolean saveViewportApplyMode(String packageName, String mode);
     }
 
     private FontHookDomainDialog() {
@@ -40,10 +42,13 @@ final class FontHookDomainDialog {
                      String packageName,
                      Set<String> automaticKnownDomains,
                      HookDomainOverride currentOverride,
+                     String currentViewportApplyMode,
                      Runnable onStateChanged) {
         View view = LayoutInflater.from(activity).inflate(
                 R.layout.dialog_font_hook_domains, null, false);
         LinearLayout knownContainer = view.findViewById(R.id.font_hook_domains_known_container);
+        LinearLayout viewportApplyContainer =
+                view.findViewById(R.id.font_hook_domains_viewport_apply_container);
         MaterialTextView unknownTitle = view.findViewById(R.id.font_hook_domains_unknown_title);
         LinearLayout unknownContainer = view.findViewById(R.id.font_hook_domains_unknown_container);
         View restoreButton = view.findViewById(R.id.font_hook_domains_restore_button);
@@ -59,7 +64,12 @@ final class FontHookDomainDialog {
                         : automaticKnown);
         LinkedHashSet<String> unknown = new LinkedHashSet<>(
                 currentOverride != null ? currentOverride.unknownDomains : Set.of());
+        String[] viewportApplyMode = new String[] {
+                ViewportApplyMode.normalize(currentViewportApplyMode)
+        };
 
+        bindViewportApplyRows(activity, viewportApplyContainer, host, packageName,
+                viewportApplyMode);
         Map<String, MaterialSwitch> switches = new LinkedHashMap<>();
         Map<String, LinearLayout> groupContainers = createKnownGroups(activity, knownContainer);
         boolean[] binding = new boolean[] { false };
@@ -113,6 +123,69 @@ final class FontHookDomainDialog {
                 .setView(view)
                 .create();
         dialog.show();
+    }
+
+    private static void bindViewportApplyRows(Activity activity,
+                                              LinearLayout container,
+                                              Host host,
+                                              String packageName,
+                                              String[] selectedModeRef) {
+        if (container == null) {
+            return;
+        }
+        container.removeAllViews();
+        String normalizedSelected = ViewportApplyMode.normalize(selectedModeRef[0]);
+        addViewportApplyRow(activity, container, host, packageName,
+                ViewportApplyMode.AUTO,
+                R.string.dialog_viewport_apply_auto,
+                R.string.dialog_viewport_apply_auto_subtitle,
+                selectedModeRef);
+        addViewportApplyRow(activity, container, host, packageName,
+                ViewportApplyMode.SYSTEM,
+                R.string.dialog_viewport_apply_system,
+                R.string.dialog_viewport_apply_system_subtitle,
+                selectedModeRef);
+        addViewportApplyRow(activity, container, host, packageName,
+                ViewportApplyMode.COMPAT,
+                R.string.dialog_viewport_apply_compat,
+                R.string.dialog_viewport_apply_compat_subtitle,
+                selectedModeRef);
+    }
+
+    private static void addViewportApplyRow(Activity activity,
+                                            LinearLayout container,
+                                            Host host,
+                                            String packageName,
+                                            String mode,
+                                            int titleRes,
+                                            int subtitleRes,
+                                            String[] selectedModeRef) {
+        String selectedMode = ViewportApplyMode.normalize(selectedModeRef[0]);
+        View row = LayoutInflater.from(activity).inflate(
+                R.layout.item_font_hook_domain, container, false);
+        MaterialTextView title = row.findViewById(R.id.font_hook_domain_title);
+        MaterialTextView subtitle = row.findViewById(R.id.font_hook_domain_subtitle);
+        MaterialSwitch switchView = row.findViewById(R.id.font_hook_domain_switch);
+        title.setText(titleRes);
+        subtitle.setText(subtitleRes);
+        switchView.setChecked(mode.equals(selectedMode));
+        switchView.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (!isChecked || mode.equals(ViewportApplyMode.normalize(selectedMode))) {
+                return;
+            }
+            if (host.saveViewportApplyMode(packageName, mode)) {
+                selectedModeRef[0] = mode;
+                bindViewportApplyRows(activity, container, host, packageName, selectedModeRef);
+            } else {
+                buttonView.setChecked(false);
+            }
+        });
+        row.setOnClickListener(v -> {
+            if (!switchView.isChecked()) {
+                switchView.setChecked(true);
+            }
+        });
+        container.addView(row);
     }
 
     private static void updateSelectedKnown(Set<String> selectedKnown, String id, boolean checked) {
