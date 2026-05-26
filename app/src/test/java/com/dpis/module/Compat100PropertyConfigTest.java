@@ -22,6 +22,14 @@ public class Compat100PropertyConfigTest {
     }
 
     @Test
+    public void viewportRelativeScalePublishesScaleWithoutWidthOnlyValues() {
+        String command = ViewportPropertySyncer.buildCompatConfigCommandForTest(
+                "com.max.xiaoheihe", ViewportTargetSpec.relativeScale(1250), ViewportApplyMode.SYSTEM);
+
+        assertEquals(expectedViewportCommand("0", "relative_scale", "1250", "0", "system"), command);
+    }
+
+    @Test
     public void viewportOffOrInvalidWidthClearsRuntimeAndCompatConfig() {
         assertEquals(expectedViewportCommand("0", "off", "0", "0", "off"),
                 ViewportPropertySyncer.buildCompatConfigCommandForTest(
