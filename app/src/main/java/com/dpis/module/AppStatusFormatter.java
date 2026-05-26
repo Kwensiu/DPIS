@@ -21,8 +21,9 @@ final class AppStatusFormatter {
         final String notEnabled;
         final String emulation;
         final String replace;
+        final String viewportScale;
+        final String viewportWidth;
         final String font;
-        final String fontFile;
         final Locale locale;
 
         Labels(String injected,
@@ -32,8 +33,9 @@ final class AppStatusFormatter {
                 String notEnabled,
                 String emulation,
                 String replace,
+                String viewportScale,
+                String viewportWidth,
                 String font,
-                String fontFile,
                 Locale locale) {
             this.injected = injected;
             this.notInjected = notInjected;
@@ -42,8 +44,9 @@ final class AppStatusFormatter {
             this.notEnabled = notEnabled;
             this.emulation = emulation;
             this.replace = replace;
+            this.viewportScale = viewportScale;
+            this.viewportWidth = viewportWidth;
             this.font = font;
-            this.fontFile = fontFile;
             this.locale = locale;
         }
     }
@@ -59,8 +62,9 @@ final class AppStatusFormatter {
                 resources.getString(R.string.app_status_not_enabled),
                 resources.getString(R.string.app_status_mode_system),
                 resources.getString(R.string.app_status_mode_compat),
+                resources.getString(R.string.app_status_viewport_scale),
+                resources.getString(R.string.app_status_viewport_width),
                 resources.getString(R.string.app_status_font_prefix),
-                resources.getString(R.string.app_status_font_file),
                 locale);
     }
 
@@ -139,6 +143,20 @@ final class AppStatusFormatter {
                 scopeKnown, true);
     }
 
+    static String formatCompact(Labels labels,
+            boolean inScope,
+            boolean scopeKnown,
+            ViewportTargetSpec viewportTargetSpec,
+            String viewportMode,
+            Integer fontScalePercent,
+            String fontMode,
+            String typefaceId,
+            boolean dpisEnabled) {
+        return formatInternal(labels, inScope, viewportTargetSpec,
+                viewportMode, fontScalePercent, fontMode, typefaceId, dpisEnabled,
+                scopeKnown, true);
+    }
+
     static String formatCompact(Resources resources,
             boolean inScope,
             boolean scopeKnown,
@@ -191,16 +209,15 @@ final class AppStatusFormatter {
                 : (viewportWidthDp != null
                         ? formatViewport(labels, viewportWidthDp, normalizedViewportMode, compact)
                         : labels.notEnabled);
-        String fontFileText = typefaceId != null && !typefaceId.isBlank()
-                ? labels.fontFile
-                : null;
+        boolean hasCustomTypeface = typefaceId != null && !typefaceId.isBlank();
         String normalizedFontMode = FontApplyMode.normalize(fontMode);
         if (!FontApplyMode.isEnabled(normalizedFontMode) || fontScalePercent == null) {
-            return joinSegments(scopeText, widthText, fontFileText);
+            return joinSegments(scopeText, widthText,
+                    formatFont(labels, null, normalizedFontMode, compact, hasCustomTypeface));
         }
         return joinSegments(scopeText, widthText,
-                fontFileText,
-                formatFont(labels, fontScalePercent, normalizedFontMode, compact));
+                formatFont(labels, fontScalePercent, normalizedFontMode, compact,
+                        hasCustomTypeface));
     }
 
     private static String formatInternal(Labels labels,
@@ -223,23 +240,24 @@ final class AppStatusFormatter {
         String widthText = viewportWidthDp != null
                 ? formatViewport(labels, viewportWidthDp, normalizedViewportMode, compact)
                 : labels.notEnabled;
-        String fontFileText = typefaceId != null && !typefaceId.isBlank()
-                ? labels.fontFile
-                : null;
+        boolean hasCustomTypeface = typefaceId != null && !typefaceId.isBlank();
         String normalizedFontMode = FontApplyMode.normalize(fontMode);
         if (!FontApplyMode.isEnabled(normalizedFontMode) || fontScalePercent == null) {
-            return joinSegments(scopeText, widthText, fontFileText);
+            return joinSegments(scopeText, widthText,
+                    formatFont(labels, null, normalizedFontMode, compact, hasCustomTypeface));
         }
         return joinSegments(scopeText, widthText,
-                fontFileText,
-                formatFont(labels, fontScalePercent, normalizedFontMode, compact));
+                formatFont(labels, fontScalePercent, normalizedFontMode, compact,
+                        hasCustomTypeface));
     }
 
     private static String formatViewport(Labels labels,
             int viewportWidthDp,
             String viewportMode,
             boolean compact) {
-        String value = String.format(labels.locale, "%ddp", viewportWidthDp);
+        String value = labels.viewportWidth
+                + " "
+                + String.format(labels.locale, "%ddp", viewportWidthDp);
         if (compact) {
             return value;
         }
@@ -250,7 +268,9 @@ final class AppStatusFormatter {
             int scalePermille,
             String viewportMode,
             boolean compact) {
-        String value = String.format(labels.locale, "%d%%", scalePermille / 10);
+        String value = labels.viewportScale
+                + " "
+                + String.format(labels.locale, "%d%%", scalePermille / 10);
         if (compact) {
             return value;
         }
@@ -258,14 +278,22 @@ final class AppStatusFormatter {
     }
 
     private static String formatFont(Labels labels,
-            int fontScalePercent,
+            Integer fontScalePercent,
             String fontMode,
-            boolean compact) {
-        String value = String.format(labels.locale, "%d%%", fontScalePercent);
+            boolean compact,
+            boolean hasCustomTypeface) {
+        if (fontScalePercent == null && !hasCustomTypeface) {
+            return null;
+        }
+        String prefix = hasCustomTypeface ? labels.font + "[C]" : labels.font;
+        if (fontScalePercent == null) {
+            return prefix;
+        }
+        String value = prefix + " " + String.format(labels.locale, "%d%%", fontScalePercent);
         if (compact) {
             return value;
         }
-        return labels.font + value + "(" + modeText(labels, fontMode) + ")";
+        return value + "(" + modeText(labels, fontMode) + ")";
     }
 
     private static String modeText(Labels labels, String mode) {
