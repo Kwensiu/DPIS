@@ -1,6 +1,7 @@
 package com.dpis.module;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -72,6 +73,8 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(systemServerSource.contains("createForCompat100SystemServerHost"));
         assertTrue(systemServerSource.contains("applyLaunchActivityItemArgs(source, param.args)"));
         assertTrue(systemServerSource.contains("PerAppDisplayOverrideCalculator.calculate"));
+        assertTrue(systemServerSource.contains("config.targetViewportSpec"));
+        assertFalse(systemServerSource.contains("config.targetViewportWidthDp()"));
         assertTrue(systemServerSource.contains("ViewportOverride.apply"));
         assertTrue(systemServerSource.contains("FontApplyMode.SYSTEM_EMULATION"));
         assertTrue(systemServerSource.contains("Compat100RustProcessHookInstaller.install(source)"));

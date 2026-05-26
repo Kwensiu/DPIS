@@ -68,7 +68,7 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
             return;
         }
         compatDebugLog("compat100 legacy package matched: package=" + packageName
-                + ", targetViewportWidthDp=" + plan.targetViewportWidthDp
+                + ", targetViewportSpec=" + plan.targetViewportSpec
                 + ", targetFontScalePercent=" + plan.targetFontScalePercent
                 + ", targetTypefaceId=" + plan.targetTypefaceId);
         boolean resourceHooksNeeded = plan.viewportEnabled

@@ -95,7 +95,7 @@ final class Compat100SystemServerHookInstaller {
                     baseConfiguration,
                     resolveWidthPx(baseConfiguration),
                     resolveHeightPx(baseConfiguration),
-                    config.targetViewportWidthDp);
+                    config.targetViewportSpec);
         }
         boolean changed = false;
         for (Object arg : args) {

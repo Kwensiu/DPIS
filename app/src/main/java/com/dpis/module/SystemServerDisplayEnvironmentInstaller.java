@@ -836,7 +836,7 @@ final class SystemServerDisplayEnvironmentInstaller {
                                              Rect frame,
                                              PerAppDisplayConfig config) {
         if (environment == null || config == null) {
-            return "targetWidthDp=" + (config != null ? config.targetViewportWidthDp : -1);
+            return "targetWidthDp=" + (config != null ? config.targetViewportWidthDp() : -1);
         }
         return SystemServerDisplayDiagnostics.describeState(toConfiguration(environment), frame);
     }

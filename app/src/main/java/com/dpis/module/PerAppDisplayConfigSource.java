@@ -62,9 +62,6 @@ final class PerAppDisplayConfigSource {
         if (ViewportApplyMode.COMPAT.equals(viewportMode) || ViewportApplyMode.OFF.equals(viewportMode)) {
             targetViewportSpec = ViewportTargetSpec.off();
         }
-        Integer targetViewportWidthDp = targetViewportSpec.isAbsoluteDp()
-                ? targetViewportSpec.absoluteWidthDp()
-                : null;
         Integer targetFontScalePercent = packageConfig.targetFontScalePercent;
         String targetFontMode = packageConfig.targetFontMode;
         boolean fontConfigured = FontApplyMode.isEnabled(targetFontMode)

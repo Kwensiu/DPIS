@@ -129,7 +129,7 @@ public final class ModuleMain extends XposedModule {
         }
         DpisLog.i("target app matched: package=" + packageName
                 + ", source=" + source
-                + ", targetViewportWidthDp=" + packagePlan.targetViewportWidthDp
+                + ", targetViewportSpec=" + packagePlan.targetViewportSpec
                 + ", targetViewportMode=" + packagePlan.targetViewportMode
                 + ", targetFontScalePercent=" + packagePlan.targetFontScalePercent
                 + ", targetFontMode=" + packagePlan.targetFontMode

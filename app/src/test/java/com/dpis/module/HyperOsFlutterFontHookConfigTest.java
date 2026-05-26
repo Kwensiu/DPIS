@@ -127,7 +127,7 @@ public class HyperOsFlutterFontHookConfigTest {
                 packageName -> new PackageConfigSnapshot(
                         packageName,
                         true,
-                        null,
+                        (Integer) null,
                         ViewportApplyMode.OFF,
                         300,
                         FontApplyMode.FIELD_REWRITE,

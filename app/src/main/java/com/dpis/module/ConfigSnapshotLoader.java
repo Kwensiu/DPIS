@@ -23,7 +23,6 @@ final class ConfigSnapshotLoader {
                     packageName,
                     store.isTargetDpisEnabled(packageName),
                     store.getTargetViewportSpec(packageName),
-                    store.getTargetViewportWidthDp(packageName),
                     store.getTargetViewportApplyMode(packageName),
                     store.getTargetFontScalePercent(packageName),
                     store.getTargetFontApplyMode(packageName),
