@@ -163,12 +163,11 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("startupUpdateCheckCoordinator.maybeCheckForUpdatesOnStartup();"));
         assertTrue(source.contains("private volatile boolean startupUpdateDownloadInProgress;"));
         assertTrue(source.contains("private volatile boolean startupUpdateDownloadCancelRequested;"));
-        assertTrue(coordinatorSource.contains("if (state.startupCheckInProgress) {"));
+        assertTrue(coordinatorSource.contains("updateCoordinator.evaluateStartupCheck("));
         assertTrue(coordinatorSource.contains("updateCoordinator.markStartupCheckStarted(state)"));
-        assertTrue(!coordinatorSource.contains("updateCoordinator.evaluateStartupCheck("));
         assertTrue(coordinatorSource.contains("updateCoordinator.evaluatePromptDecision("));
         assertTrue(coordinatorSource.contains("updateCoordinator.markStartupCheckFinished("));
-        assertTrue(coordinatorSource.contains("UpdateManifestFetcher.fetch("));
+        assertTrue(coordinatorSource.contains("manifestFetcher.fetch("));
         assertTrue(storeSource.contains("KEY_LAST_UPDATE_CHECK_FAILED"));
         assertTrue(storeSource.contains("KEY_LAST_PROMPTED_UPDATE_VERSION_CODE"));
         assertTrue(manifestFetcherSource.contains("static StartupUpdateManifest fetch("));
