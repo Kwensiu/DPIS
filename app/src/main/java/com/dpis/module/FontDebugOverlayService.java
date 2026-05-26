@@ -205,14 +205,12 @@ public final class FontDebugOverlayService extends Service {
         int window = store != null ? store.getFontDebugSelectedWindow() : FontDebugStatsStore.WINDOW_ALL;
         long now = System.currentTimeMillis();
 
-        String statsKey = resolveStatsKey(mode, window);
-        String statsText = preferences.getString(statsKey, "暂无数据");
+        String statsKey = FontDebugStatsSchema.statsKeyFor(mode, window);
+        String statsText = preferences.getString(statsKey, FontDebugStatsSchema.NO_DATA_TEXT);
         if (isWindowExpired(window, updatedAt, now)) {
-            statsText = "暂无数据";
+            statsText = FontDebugStatsSchema.NO_DATA_TEXT;
         }
-        boolean hasFontStats = statsText != null
-                && !statsText.isBlank()
-                && !"暂无数据".equals(statsText.trim());
+        boolean hasFontStats = FontDebugStatsSchema.isNonEmptyStatsText(statsText);
         String unitBreakdown = buildUnitBreakdownFromStats(statsText);
         if ("unit: 0=0 1=0 2=0".equals(unitBreakdown)) {
             unitBreakdown = preferences.getString(FontDebugStatsStore.KEY_UNIT_BREAKDOWN_5S,
@@ -221,7 +219,7 @@ public final class FontDebugOverlayService extends Service {
         int topLimit = store != null
                 ? Math.max(3, store.getDebugInt(FontDebugStatsStore.KEY_FONT_DEBUG_OVERLAY_TOP_LIMIT, 3))
                 : 3;
-        String[] lines = (statsText == null ? "暂无数据" : statsText).split("\n");
+        String[] lines = (statsText == null ? FontDebugStatsSchema.NO_DATA_TEXT : statsText).split("\n");
         StringBuilder top = new StringBuilder();
         if (hasFontStats) {
             int limit = Math.min(topLimit, lines.length);
@@ -242,13 +240,12 @@ public final class FontDebugOverlayService extends Service {
             default -> "累计";
         };
         String viewportSummary = store != null
-                ? store.getDebugString(FontDebugStatsStore.KEY_VIEWPORT_DEBUG_SUMMARY, "视口: 暂无")
-                : "视口: 暂无";
+                ? store.getDebugString(FontDebugStatsStore.KEY_VIEWPORT_DEBUG_SUMMARY,
+                        FontDebugStatsSchema.NO_VIEWPORT_TEXT)
+                : FontDebugStatsSchema.NO_VIEWPORT_TEXT;
         String viewportSection = formatViewportSection(viewportSummary);
         String fontModeText = resolveFontModeText(viewportSummary);
-        boolean hasViewportSummary = viewportSummary != null
-                && !viewportSummary.isBlank()
-                && !"视口: 暂无".equals(viewportSummary);
+        boolean hasViewportSummary = FontDebugStatsSchema.isViewportSignal(viewportSummary);
         boolean loggingEnabled = store == null || store.isGlobalLogEnabled();
         String loggingNotice = loggingEnabled
                 ? ""
@@ -333,7 +330,7 @@ public final class FontDebugOverlayService extends Service {
     }
 
     private static String formatViewportSection(String viewportSummary) {
-        if (viewportSummary == null || viewportSummary.isBlank() || "视口: 暂无".equals(viewportSummary)) {
+        if (!FontDebugStatsSchema.isViewportSignal(viewportSummary)) {
             return "暂无";
         }
         String normalized = viewportSummary.trim();
@@ -392,18 +389,7 @@ public final class FontDebugOverlayService extends Service {
 
     private void clearDebugStatsData() {
         android.content.SharedPreferences preferences = FontDebugStatsStore.getPreferences(this);
-        preferences.edit()
-                .remove(FontDebugStatsStore.KEY_CHAIN_5S)
-                .remove(FontDebugStatsStore.KEY_CHAIN_30S)
-                .remove(FontDebugStatsStore.KEY_CHAIN_ALL)
-                .remove(FontDebugStatsStore.KEY_CHAIN_VIEW_5S)
-                .remove(FontDebugStatsStore.KEY_CHAIN_VIEW_30S)
-                .remove(FontDebugStatsStore.KEY_CHAIN_VIEW_ALL)
-                .remove(FontDebugStatsStore.KEY_EVENT_TOTAL)
-                .remove(FontDebugStatsStore.KEY_UPDATED_AT)
-                .remove(FontDebugStatsStore.KEY_UNIT_BREAKDOWN_5S)
-                .remove(FontDebugStatsStore.KEY_VIEWPORT_DEBUG_SUMMARY)
-                .apply();
+        FontDebugStatsStore.clearStats(preferences);
         Toast.makeText(this, getString(R.string.font_debug_clear_done), Toast.LENGTH_SHORT).show();
         renderOverlayText();
     }
@@ -458,25 +444,6 @@ public final class FontDebugOverlayService extends Service {
             }
         }
         return "unit: 0=" + unit0 + " 1=" + unit1 + " 2=" + unit2;
-    }
-
-    private static String resolveStatsKey(int mode, int window) {
-        if (mode == FontDebugStatsStore.MODE_CHAIN_VIEW) {
-            if (window == FontDebugStatsStore.WINDOW_5S) {
-                return FontDebugStatsStore.KEY_CHAIN_VIEW_5S;
-            }
-            if (window == FontDebugStatsStore.WINDOW_30S) {
-                return FontDebugStatsStore.KEY_CHAIN_VIEW_30S;
-            }
-            return FontDebugStatsStore.KEY_CHAIN_VIEW_ALL;
-        }
-        if (window == FontDebugStatsStore.WINDOW_5S) {
-            return FontDebugStatsStore.KEY_CHAIN_5S;
-        }
-        if (window == FontDebugStatsStore.WINDOW_30S) {
-            return FontDebugStatsStore.KEY_CHAIN_30S;
-        }
-        return FontDebugStatsStore.KEY_CHAIN_ALL;
     }
 
     private int dp(int value) {

@@ -176,7 +176,7 @@ final class FontDebugStatsReporter {
 
     private static String formatTopLines(Map<String, Integer> source) {
         if (source == null || source.isEmpty()) {
-            return "暂无数据";
+            return FontDebugStatsSchema.NO_DATA_TEXT;
         }
         List<Map.Entry<String, Integer>> entries = new ArrayList<>(source.entrySet());
         entries.sort((left, right) -> Integer.compare(right.getValue(), left.getValue()));

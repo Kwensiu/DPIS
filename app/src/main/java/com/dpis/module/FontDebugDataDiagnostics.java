@@ -40,34 +40,10 @@ final class FontDebugDataDiagnostics {
     }
 
     private static boolean hasAnyFontEventSignal(SharedPreferences preferences) {
-        if (preferences.getInt(FontDebugStatsStore.KEY_EVENT_TOTAL, 0) > 0) {
-            return true;
-        }
-        return hasNonEmptyValue(preferences, FontDebugStatsStore.KEY_CHAIN_5S)
-                || hasNonEmptyValue(preferences, FontDebugStatsStore.KEY_CHAIN_30S)
-                || hasNonEmptyValue(preferences, FontDebugStatsStore.KEY_CHAIN_ALL)
-                || hasNonEmptyValue(preferences, FontDebugStatsStore.KEY_CHAIN_VIEW_5S)
-                || hasNonEmptyValue(preferences, FontDebugStatsStore.KEY_CHAIN_VIEW_30S)
-                || hasNonEmptyValue(preferences, FontDebugStatsStore.KEY_CHAIN_VIEW_ALL);
+        return FontDebugStatsSchema.hasAnyFontEventSignal(preferences);
     }
 
     private static boolean hasViewportSignal(SharedPreferences preferences) {
-        if (!preferences.contains(FontDebugStatsStore.KEY_VIEWPORT_DEBUG_SUMMARY)) {
-            return false;
-        }
-        String summary = preferences.getString(FontDebugStatsStore.KEY_VIEWPORT_DEBUG_SUMMARY, "");
-        if (summary == null) {
-            return false;
-        }
-        String normalized = summary.trim();
-        return !normalized.isEmpty() && !"视口: 暂无".equals(normalized);
-    }
-
-    private static boolean hasNonEmptyValue(SharedPreferences preferences, String key) {
-        if (!preferences.contains(key)) {
-            return false;
-        }
-        String value = preferences.getString(key, "");
-        return value != null && !value.trim().isEmpty() && !"暂无数据".equals(value.trim());
+        return FontDebugStatsSchema.hasViewportSignal(preferences);
     }
 }
