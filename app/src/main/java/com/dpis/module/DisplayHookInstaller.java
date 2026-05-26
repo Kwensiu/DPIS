@@ -13,6 +13,7 @@ import io.github.libxposed.api.XposedInterface;
 final class DisplayHookInstaller {
     private static volatile boolean hookInstalled;
     private static volatile String targetPackageName;
+    private static volatile DpiConfigStore targetStore;
     private static volatile Method currentPackageNameMethod;
     private static volatile boolean currentPackageNameUnavailable;
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
@@ -20,7 +21,8 @@ final class DisplayHookInstaller {
     private DisplayHookInstaller() {
     }
 
-    static void install(XposedInterface xposed, String packageName) throws ReflectiveOperationException {
+    static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
+            throws ReflectiveOperationException {
         if (hookInstalled) {
             return;
         }
@@ -29,6 +31,7 @@ final class DisplayHookInstaller {
                 return;
             }
             targetPackageName = packageName;
+            targetStore = store;
             ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
             Class<?> displayClass = Class.forName("android.view.Display", false, bootClassLoader);
             hookDisplayMetricsMethod(xposed, displayClass, "getMetrics");
@@ -43,6 +46,10 @@ final class DisplayHookInstaller {
 
     static void setTargetPackageNameForCompat100(String packageName) {
         targetPackageName = packageName;
+    }
+
+    static void setTargetStoreForCompat100(DpiConfigStore store) {
+        targetStore = store;
     }
 
     private static void hookDisplayMetricsMethod(XposedInterface xposed, Class<?> displayClass,
@@ -98,7 +105,7 @@ final class DisplayHookInstaller {
         if (!shouldApplyOverrideForPackage(targetPackageName)) {
             return;
         }
-        VirtualDisplayOverride.Result override = VirtualDisplayState.get();
+        VirtualDisplayOverride.Result override = resolvePackageScopedOverride();
         if (override == null) {
             return;
         }
@@ -124,7 +131,7 @@ final class DisplayHookInstaller {
         if (!shouldApplyOverrideForPackage(targetPackageName)) {
             return;
         }
-        VirtualDisplayOverride.Result override = VirtualDisplayState.get();
+        VirtualDisplayOverride.Result override = resolvePackageScopedOverride();
         if (override == null) {
             return;
         }
@@ -141,7 +148,7 @@ final class DisplayHookInstaller {
         if (!shouldApplyOverrideForPackage(targetPackageName)) {
             return;
         }
-        VirtualDisplayOverride.Result override = VirtualDisplayState.get();
+        VirtualDisplayOverride.Result override = resolvePackageScopedOverride();
         if (override == null) {
             return;
         }
@@ -175,6 +182,32 @@ final class DisplayHookInstaller {
             return false;
         }
         return packageName.equals(currentPackageName);
+    }
+
+    static VirtualDisplayOverride.Result resolvePackageScopedOverrideForTest(String packageName,
+                                                                             DpiConfigStore store) {
+        return resolvePackageScopedOverride(packageName, store);
+    }
+
+    private static VirtualDisplayOverride.Result resolvePackageScopedOverride() {
+        return resolvePackageScopedOverride(targetPackageName, targetStore);
+    }
+
+    private static VirtualDisplayOverride.Result resolvePackageScopedOverride(String packageName,
+                                                                             DpiConfigStore store) {
+        if (packageName == null || packageName.isBlank() || store == null) {
+            return null;
+        }
+        ViewportTargetSpec targetSpec = ViewportPropertyBridge.readTargetSpec(packageName);
+        if (!targetSpec.isEnabled()) {
+            targetSpec = store.getTargetViewportSpec(packageName);
+        }
+        if (!targetSpec.isEnabled()) {
+            return null;
+        }
+        ViewportRuntimeRecord record =
+                VirtualDisplayState.findDisplayRecordForTarget(packageName, targetSpec);
+        return record != null ? record.virtualDisplayResult : null;
     }
 
     private static boolean writeIntField(Object target, String fieldName, int value) {

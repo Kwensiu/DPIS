@@ -82,7 +82,7 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
             installTypefaceOverrideHook(packageName, plan.targetTypefaceId, store);
         }
         if (plan.viewportEnabled) {
-            installDisplayHooks(packageName);
+            installDisplayHooks(packageName, store);
             installWindowMetricsHook();
         }
         if (FontApplyMode.FIELD_REWRITE.equals(FontApplyMode.normalize(plan.targetFontMode))) {
@@ -377,8 +377,9 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
         }
     }
 
-    private static void installDisplayHooks(String packageName) {
+    private static void installDisplayHooks(String packageName, DpiConfigStore store) {
         DisplayHookInstaller.setTargetPackageNameForCompat100(packageName);
+        DisplayHookInstaller.setTargetStoreForCompat100(store);
         if (!DISPLAY_HOOKED.compareAndSet(false, true)) {
             return;
         }

@@ -312,7 +312,7 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     }
                                     Snapshot before = captureSnapshot(thisObject, args);
                                     PerAppDisplayEnvironment preEnvironment = resolveTargetEnvironment(
-                                            before, before, config);
+                                            packageName, before, before, config);
                                     if (shouldApplyPreProceedMutations(target.entryName)) {
                                         PerAppDisplayEnvironment applyEnvironment =
                                                 resolveMarkerGatedEnvironment(
@@ -332,7 +332,7 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     proceeded = true;
                                     Snapshot after = captureSnapshot(thisObject, args);
                                     PerAppDisplayEnvironment environment = resolveTargetEnvironment(
-                                            before, after, config);
+                                            packageName, before, after, config);
                                     PerAppDisplayEnvironment effectiveEnvironment = chooseEffectiveEnvironment(
                                             preEnvironment, environment);
                                     if (loggingEnabled) {
@@ -482,11 +482,15 @@ final class SystemServerDisplayEnvironmentInstaller {
             return;
         }
         PerAppDisplayEnvironment environment = null;
-        if (config.hasViewportOverride()) {
+        if (hasSystemServerViewportOverride(config)) {
             int widthPx = resolveWidthPx(baseConfiguration, null);
             int heightPx = resolveHeightPx(baseConfiguration, null);
-            environment = PerAppDisplayOverrideCalculator.calculate(
-                    baseConfiguration, widthPx, heightPx, config.targetViewportSpec);
+            environment = resolveAlreadyAppliedRelativeScaleEnvironment(
+                    packageName, baseConfiguration, widthPx, heightPx, config);
+            if (environment == null) {
+                environment = PerAppDisplayOverrideCalculator.calculate(
+                        baseConfiguration, widthPx, heightPx, config.targetViewportSpec);
+            }
             environment = resolveMarkerGatedEnvironment(
                     "launch-activity-item",
                     packageName,
@@ -841,10 +845,11 @@ final class SystemServerDisplayEnvironmentInstaller {
         return SystemServerDisplayDiagnostics.describeState(toConfiguration(environment), frame);
     }
 
-    private static PerAppDisplayEnvironment resolveTargetEnvironment(Snapshot before,
+    private static PerAppDisplayEnvironment resolveTargetEnvironment(String packageName,
+                                                                     Snapshot before,
                                                                      Snapshot after,
                                                                      PerAppDisplayConfig config) {
-        if (config == null || !config.hasViewportOverride()) {
+        if (config == null || !hasSystemServerViewportOverride(config)) {
             return null;
         }
         Configuration configuration = after.configuration != null
@@ -855,8 +860,58 @@ final class SystemServerDisplayEnvironmentInstaller {
         }
         int widthPx = resolveWidthPx(configuration, frame);
         int heightPx = resolveHeightPx(configuration, frame);
+        PerAppDisplayEnvironment alreadyApplied = resolveAlreadyAppliedRelativeScaleEnvironment(
+                packageName, configuration, widthPx, heightPx, config);
+        if (alreadyApplied != null) {
+            return alreadyApplied;
+        }
         return PerAppDisplayOverrideCalculator.calculate(
                 configuration, widthPx, heightPx, config.targetViewportSpec);
+    }
+
+    private static PerAppDisplayEnvironment resolveAlreadyAppliedRelativeScaleEnvironment(
+            String packageName,
+            Configuration configuration,
+            int widthPx,
+            int heightPx,
+            PerAppDisplayConfig config) {
+        if (packageName == null || configuration == null || config == null
+                || !config.targetViewportSpec.isRelativeScale()) {
+            return null;
+        }
+        String scope = ViewportConfigurationScope.isWindowScoped(configuration)
+                ? ViewportSourceSnapshot.SCOPE_WINDOW
+                : ViewportSourceSnapshot.SCOPE_DISPLAY;
+        ViewportRuntimeMarkerBridge.ParseResult marker = ViewportRuntimeMarkerBridge.read(
+                packageName,
+                config.targetViewportSpec.fingerprint(),
+                RuntimeClock.crossProcessMarkerMillis());
+        if (!isAlreadyAppliedRelativeScaleMarker(configuration, scope, marker)) {
+            return null;
+        }
+        return new PerAppDisplayEnvironment(
+                configuration.screenWidthDp,
+                configuration.screenHeightDp,
+                configuration.smallestScreenWidthDp,
+                configuration.densityDpi,
+                widthPx,
+                heightPx);
+    }
+
+    private static boolean isAlreadyAppliedRelativeScaleMarker(
+            Configuration configuration,
+            String scope,
+            ViewportRuntimeMarkerBridge.ParseResult marker) {
+        if (configuration == null || marker == null || !marker.hit || marker.record == null) {
+            return false;
+        }
+        String sourceSignature = ViewportRuntimeMarkerBridge.configurationSignature(
+                configuration.screenWidthDp,
+                configuration.screenHeightDp,
+                configuration.smallestScreenWidthDp,
+                configuration.densityDpi,
+                scope);
+        return sourceSignature.equals(marker.record.resultSignature);
     }
 
     private static PerAppDisplayEnvironment resolveMarkerGatedEnvironment(
@@ -942,10 +997,18 @@ final class SystemServerDisplayEnvironmentInstaller {
     private static PerAppDisplayConfig selectConfigForSystemServer(
             PerAppDisplayConfig config) {
         if (config == null
-                || (!config.hasViewportOverride() && !hasSystemServerFontOverride(config))) {
+                || (!hasSystemServerViewportOverride(config) && !hasSystemServerFontOverride(config))) {
             return null;
         }
         return config;
+    }
+
+    private static boolean hasSystemServerViewportOverride(PerAppDisplayConfig config) {
+        if (config == null || !config.hasViewportOverride()) {
+            return false;
+        }
+        String mode = ViewportApplyMode.normalize(config.targetViewportMode);
+        return ViewportApplyMode.AUTO.equals(mode) || ViewportApplyMode.SYSTEM.equals(mode);
     }
 
     private static boolean hasSystemServerFontOverride(PerAppDisplayConfig config) {
@@ -1102,6 +1165,12 @@ final class SystemServerDisplayEnvironmentInstaller {
 
     static boolean shouldUseConfigInSystemServerForTest(PerAppDisplayConfig config) {
         return selectConfigForSystemServer(config) != null;
+    }
+
+    static boolean isAlreadyAppliedRelativeScaleMarkerForTest(Configuration configuration,
+                                                             String scope,
+                                                             ViewportRuntimeMarkerBridge.ParseResult marker) {
+        return isAlreadyAppliedRelativeScaleMarker(configuration, scope, marker);
     }
 
     static boolean shouldEmitLogForTest(String previousMessage,

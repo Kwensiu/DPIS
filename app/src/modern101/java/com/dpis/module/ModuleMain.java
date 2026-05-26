@@ -123,6 +123,17 @@ public final class ModuleMain extends XposedModule {
             DpisLog.i("target app disabled by dpis toggle: package=" + packageName);
             return;
         }
+        if (shouldSuppressSecondaryProcessViewport(currentProcessName, packagePlan)) {
+            DpisLog.i("secondary process viewport route suppressed: process="
+                    + currentProcessName + ", package=" + packageName
+                    + ", viewportMode=" + packagePlan.targetViewportMode);
+            packagePlan = packagePlan.withoutViewportRoute();
+            if (!packagePlan.hasSecondaryProcessSafeRoute()) {
+                DpisLog.i("target app disabled after secondary process viewport suppression: process="
+                        + currentProcessName + ", package=" + packageName);
+                return;
+            }
+        }
         if (!packagePlan.shouldInstallHooks()) {
             DpisLog.i("target app disabled: package=" + packageName);
             return;
@@ -144,6 +155,15 @@ public final class ModuleMain extends XposedModule {
             appProcessInstallAttempted = false;
             DpisLog.e("failed to install app process hooks", throwable);
         }
+    }
+
+    private static boolean shouldSuppressSecondaryProcessViewport(String processName,
+                                                                  ModulePackagePlan packagePlan) {
+        if (processName == null || processName.isBlank() || packagePlan == null
+                || packagePlan.packageName == null || packagePlan.packageName.isBlank()) {
+            return false;
+        }
+        return !processName.equals(packagePlan.packageName) && packagePlan.viewportEnabled;
     }
 
     private void retryFlutterHooksWithAppClassLoader(DpiConfigStore store,

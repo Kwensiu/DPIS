@@ -17,4 +17,3 @@ final class ViewportModePolicy {
         return ViewportApplyMode.COMPAT.equals(resolve(store, packageName));
     }
 }
-

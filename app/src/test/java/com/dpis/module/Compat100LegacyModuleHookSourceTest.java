@@ -14,13 +14,14 @@ public class Compat100LegacyModuleHookSourceTest {
     public void legacyEntryInstallsReplacementHooks() throws Exception {
         String source = read("src/compat100/java/com/dpis/module/Compat100LegacyModuleHook.java");
 
-        assertTrue(source.contains("installDisplayHooks(packageName)"));
+        assertTrue(source.contains("installDisplayHooks(packageName, store)"));
         assertTrue(source.contains("installWindowMetricsHook()"));
         assertTrue(source.contains("installFontFieldRewriteHooks(packageName, store)"));
         assertTrue(source.contains("DisplayHookInstaller.applyDisplayMetrics"));
         assertTrue(source.contains("DisplayHookInstaller.applyPoint"));
         assertTrue(source.contains("DisplayHookInstaller.applyDisplayInfo"));
         assertTrue(source.contains("DisplayHookInstaller.setTargetPackageNameForCompat100(packageName)"));
+        assertTrue(source.contains("DisplayHookInstaller.setTargetStoreForCompat100(store)"));
         assertTrue(source.contains("FONT_TEXTVIEW_UPDATE"));
         assertTrue(source.contains("installResourcesReadHooks(packageName, store)"));
         assertTrue(source.contains("installResourcesKeyHooks("));
@@ -51,6 +52,8 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(source.contains("installSystemServerHooksForCompat100()"));
         assertTrue(source.contains("Compat100SystemServerHookInstaller.install"));
         assertTrue(source.indexOf("DisplayHookInstaller.setTargetPackageNameForCompat100(packageName)")
+                < source.indexOf("DISPLAY_HOOKED.compareAndSet(false, true)"));
+        assertTrue(source.indexOf("DisplayHookInstaller.setTargetStoreForCompat100(store)")
                 < source.indexOf("DISPLAY_HOOKED.compareAndSet(false, true)"));
         assertTrue(source.contains("implements IXposedHookLoadPackage, IXposedHookZygoteInit"));
         assertTrue(source.contains("public void initZygote(StartupParam startupParam)"));

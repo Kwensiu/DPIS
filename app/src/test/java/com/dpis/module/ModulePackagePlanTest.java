@@ -33,6 +33,39 @@ public final class ModulePackagePlanTest {
     }
 
     @Test
+    public void viewportOnlyPackageHasNoSecondaryProcessSafeRouteAfterViewportSuppression() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.COMPAT);
+
+        ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app")
+                .withoutViewportRoute();
+
+        assertFalse(plan.viewportConfigured);
+        assertFalse(plan.viewportEnabled);
+        assertFalse(plan.hasSecondaryProcessSafeRoute());
+        assertFalse(plan.shouldInstallHooks());
+    }
+
+    @Test
+    public void fontRouteSurvivesSecondaryProcessViewportSuppression() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.COMPAT);
+        store.setTargetFontScalePercent("com.example.app", 120);
+        store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
+
+        ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app")
+                .withoutViewportRoute();
+
+        assertFalse(plan.viewportConfigured);
+        assertFalse(plan.viewportEnabled);
+        assertTrue(plan.fontEnabled);
+        assertTrue(plan.hasSecondaryProcessSafeRoute());
+        assertTrue(plan.shouldInstallHooks());
+    }
+
+    @Test
     public void installsFontHooksForConfiguredFontPackage() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 120);

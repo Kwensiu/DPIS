@@ -6,6 +6,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class DisplayHookInstallerTest {
     @Test
@@ -39,12 +40,53 @@ public class DisplayHookInstallerTest {
     @Test
     public void compat100CanInitializeDisplayTarget() {
         DisplayHookInstaller.setTargetPackageNameForCompat100("com.max.xiaoheihe");
+        DisplayHookInstaller.setTargetStoreForCompat100(new DpiConfigStore(new FakePrefs()));
         setCurrentPackageResolver("com.max.xiaoheihe");
 
         assertEquals(true, DisplayHookInstaller.shouldApplyOverrideForPackage("com.max.xiaoheihe"));
 
         DisplayHookInstaller.setTargetPackageNameForCompat100(null);
+        DisplayHookInstaller.setTargetStoreForCompat100(null);
         clearCurrentPackageResolver();
+    }
+
+    @Test
+    public void skipsGlobalDisplayStateWithoutPackageScopedRecord() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setTargetViewportSpec("com.tencent.mm", ViewportTargetSpec.relativeScale(1500));
+        VirtualDisplayState.set(new VirtualDisplayOverride.Result(900, 1800, 900,
+                240, 1080, 2160));
+
+        assertNull(DisplayHookInstaller.resolvePackageScopedOverrideForTest(
+                "com.tencent.mm", store));
+
+        VirtualDisplayState.set(null);
+    }
+
+    @Test
+    public void usesPackageScopedDisplayRecordForCurrentTarget() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        store.setTargetViewportSpec("com.tencent.mm", targetSpec);
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
+                360, 736, 360, 480, 1080, 2208);
+        VirtualDisplayOverride.Result virtualDisplay =
+                new VirtualDisplayOverride.Result(540, 1104, 540, 320, 1080, 2208);
+
+        VirtualDisplayState.publish(
+                "com.tencent.mm",
+                targetSpec,
+                source,
+                new ViewportOverride.Result(540, 1104, 540, 320),
+                virtualDisplay,
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+
+        assertEquals(320, DisplayHookInstaller.resolvePackageScopedOverrideForTest(
+                "com.tencent.mm", store).densityDpi);
+
+        VirtualDisplayState.set(null);
     }
 
     private static String testCurrentPackageName() {

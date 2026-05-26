@@ -143,6 +143,30 @@ final class ModulePackagePlan {
                 && FontApplyMode.isEnabled(targetFontMode)));
     }
 
+    boolean hasSecondaryProcessSafeRoute() {
+        return fontEnabled || typefaceEnabled;
+    }
+
+    ModulePackagePlan withoutViewportRoute() {
+        return new ModulePackagePlan(
+                packageName,
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                targetFontScalePercent,
+                targetFontMode,
+                targetTypefaceId,
+                targetDpisEnabled,
+                false,
+                false,
+                fontScaleActive,
+                fontEnabled,
+                typefaceActive,
+                typefaceEnabled,
+                flutterSettingsFontEnabled,
+                hyperOsNativeFlutterFontEnabled,
+                hookDomainOverride);
+    }
+
     HookExecutionPlan buildExecutionPlan(HookRuntimePolicy policy, DebugFontOverride debugOverride) {
         return HookExecutionPlanner.buildPlan(
                 policy,

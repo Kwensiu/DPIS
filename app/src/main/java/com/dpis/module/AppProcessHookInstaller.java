@@ -212,7 +212,7 @@ final class AppProcessHookInstaller {
         }
         if (plan.viewportEnabled) {
             WindowMetricsHookInstaller.install(xposed);
-            DisplayHookInstaller.install(xposed, packageName);
+            DisplayHookInstaller.install(xposed, packageName, store);
         }
         if (plan.resourcesProbeEnabled) {
             ResourcesProbeHookInstaller.install(xposed, packageName, store);
@@ -252,4 +252,5 @@ final class AppProcessHookInstaller {
             this.fieldRewriteEnabled = fieldRewriteEnabled;
         }
     }
+
 }
