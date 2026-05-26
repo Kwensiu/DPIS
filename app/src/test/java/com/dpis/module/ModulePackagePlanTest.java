@@ -33,6 +33,34 @@ public final class ModulePackagePlanTest {
     }
 
     @Test
+    public void autoViewportKeepsLegacyAppProcessViewportHooksAvailable() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setSystemServerHooksEnabled(true);
+        store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.AUTO);
+
+        ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
+
+        assertTrue(plan.viewportConfigured);
+        assertTrue(plan.viewportEnabled);
+        assertTrue(plan.shouldInstallCompat100LegacyHooks());
+    }
+
+    @Test
+    public void compatViewportUsesAppProcessViewportHooks() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setSystemServerHooksEnabled(true);
+        store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.COMPAT);
+
+        ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
+
+        assertTrue(plan.viewportConfigured);
+        assertTrue(plan.viewportEnabled);
+        assertTrue(plan.shouldInstallCompat100LegacyHooks());
+    }
+
+    @Test
     public void viewportOnlyPackageHasNoSecondaryProcessSafeRouteAfterViewportSuppression() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(1500));

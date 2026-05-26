@@ -78,6 +78,9 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(systemServerSource.contains("PerAppDisplayOverrideCalculator.calculate"));
         assertTrue(systemServerSource.contains("config.targetViewportSpec"));
         assertFalse(systemServerSource.contains("config.targetViewportWidthDp()"));
+        assertTrue(systemServerSource.contains("ViewportRuntimeMarkerBridge.publishSystemServerRecord"));
+        assertTrue(systemServerSource.contains("ViewportRuntimeMarkerBridge.read"));
+        assertTrue(systemServerSource.contains("matchesCurrentConfiguration"));
         assertTrue(systemServerSource.contains("ViewportOverride.apply"));
         assertTrue(systemServerSource.contains("FontApplyMode.SYSTEM_EMULATION"));
         assertTrue(systemServerSource.contains("Compat100RustProcessHookInstaller.install(source)"));
