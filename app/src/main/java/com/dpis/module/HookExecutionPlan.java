@@ -12,6 +12,7 @@ final class HookExecutionPlan {
     final boolean resourcesProbeEnabled;
     final boolean viewportProbeEnabled;
     final FontHookArbitration.FontDomainPlan fontDomainPlan;
+    final HookDomainPlan domainPlan;
     final PlanReason reason;
     final String resolvedViewportMode;
     final String resolvedFontMode;
@@ -36,6 +37,7 @@ final class HookExecutionPlan {
                       boolean resourcesProbeEnabled,
                       boolean viewportProbeEnabled,
                       FontHookArbitration.FontDomainPlan fontDomainPlan,
+                      HookDomainPlan domainPlan,
                       PlanReason reason,
                       String resolvedViewportMode,
                       String resolvedFontMode,
@@ -59,6 +61,7 @@ final class HookExecutionPlan {
         this.resourcesProbeEnabled = resourcesProbeEnabled;
         this.viewportProbeEnabled = viewportProbeEnabled;
         this.fontDomainPlan = fontDomainPlan;
+        this.domainPlan = domainPlan;
         this.reason = reason;
         this.resolvedViewportMode = resolvedViewportMode;
         this.resolvedFontMode = resolvedFontMode;
