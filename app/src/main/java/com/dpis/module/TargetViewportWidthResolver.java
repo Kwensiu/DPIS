@@ -51,7 +51,7 @@ final class TargetViewportWidthResolver {
         ViewportRuntimeRecord alreadyTargetRecord = VirtualDisplayState.findBySignature(
                 packageName,
                 targetSpec,
-                "sw:" + source.smallestWidthDp);
+                VirtualDisplayState.signatureForSmallestWidth(source.smallestWidthDp));
         if (alreadyTargetRecord != null) {
             return ViewportTargetResolution.fromRecord(alreadyTargetRecord, "already-target-record");
         }

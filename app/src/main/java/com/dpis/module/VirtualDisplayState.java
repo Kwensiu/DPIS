@@ -43,7 +43,8 @@ final class VirtualDisplayState {
                 RuntimeClock.elapsedRealtimeMillis(),
                 ViewportSourceSnapshot.SCOPE_DISPLAY);
         putRecord(recordKey("*", targetSpec.fingerprint(), legacySignature(result)), record);
-        putRecord(recordKey("*", targetSpec.fingerprint(), "sw:" + result.smallestWidthDp), record);
+        putRecord(recordKey("*", targetSpec.fingerprint(),
+                signatureForSmallestWidth(result.smallestWidthDp)), record);
     }
 
     static ViewportRuntimeRecord findBySignature(String packageName,
@@ -117,6 +118,8 @@ final class VirtualDisplayState {
                 record);
         putRecord(recordKey(record.packageName, record.targetFingerprint, record.resultSignature),
                 record);
+        putRecord(recordKey(record.packageName, record.targetFingerprint,
+                signatureForSmallestWidth(viewportResult.smallestWidthDp)), record);
         return record;
     }
 
@@ -145,6 +148,8 @@ final class VirtualDisplayState {
                 ViewportSourceSnapshot.SCOPE_DISPLAY);
         putRecord(recordKey(packageName, record.targetFingerprint, record.sourceSignature), record);
         putRecord(recordKey(packageName, record.targetFingerprint, record.resultSignature), record);
+        putRecord(recordKey(packageName, record.targetFingerprint,
+                signatureForSmallestWidth(record.effectiveSmallestWidthDp)), record);
         return record;
     }
 
@@ -199,7 +204,11 @@ final class VirtualDisplayState {
     }
 
     private static String legacySignature(VirtualDisplayOverride.Result result) {
-        return "sw:" + (result != null ? result.smallestWidthDp : 0);
+        return signatureForSmallestWidth(result != null ? result.smallestWidthDp : 0);
+    }
+
+    static String signatureForSmallestWidth(int smallestWidthDp) {
+        return "sw:" + Math.max(0, smallestWidthDp);
     }
 
     private static String recordKey(String packageName, String targetFingerprint, String signature) {

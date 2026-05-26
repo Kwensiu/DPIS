@@ -64,4 +64,33 @@ public class ViewportTargetResolverTest {
 
         assertFalse(result.hasTarget());
     }
+
+    @Test
+    public void relativeScaleReusesRecordWhenSourceAlreadyMatchesTargetWidth() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1200);
+        store.setTargetViewportSpec("com.example", targetSpec);
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
+                432, 883, 432, 410, 1080, 2208);
+        ViewportOverride.Result viewportResult = new ViewportOverride.Result(
+                518, 1059, 518, 342);
+        VirtualDisplayOverride.Result virtualDisplayResult = new VirtualDisplayOverride.Result(
+                518, 1059, 518, 342, 1080, 2208);
+        VirtualDisplayState.publish(
+                "com.example",
+                targetSpec,
+                source,
+                viewportResult,
+                virtualDisplayResult,
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+        ViewportSourceSnapshot alreadyTarget = ViewportSourceSnapshot.systemDisplayInfo(
+                518, 1059, 518, 410, 1080, 2208);
+
+        ViewportTargetResolution result =
+                TargetViewportWidthResolver.resolve(store, "com.example", alreadyTarget);
+
+        assertTrue(result.hasTarget());
+        assertEquals(518, result.effectiveSmallestWidthDp);
+        assertEquals("already-target-record", result.reason);
+    }
 }

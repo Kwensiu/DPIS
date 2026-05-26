@@ -354,4 +354,50 @@ public class ResourcesImplHookInstallerTest {
         assertEquals(500, config.smallestScreenWidthDp);
         assertEquals(346, config.densityDpi);
     }
+
+    @Test
+    public void relativeScaleDoesNotCompoundWhenConfigurationAlreadyMatchesTarget() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setTargetViewportSpec("com.tencent.mm", ViewportTargetSpec.relativeScale(1200));
+        store.setTargetViewportApplyMode("com.tencent.mm", ViewportApplyMode.AUTO);
+
+        Configuration firstConfig = new Configuration();
+        firstConfig.densityDpi = 410;
+        firstConfig.screenWidthDp = 432;
+        firstConfig.screenHeightDp = 883;
+        firstConfig.smallestScreenWidthDp = 432;
+        firstConfig.fontScale = 1.0f;
+        DisplayMetrics firstMetrics = new DisplayMetrics();
+        firstMetrics.widthPixels = 1080;
+        firstMetrics.heightPixels = 2208;
+        firstMetrics.densityDpi = 410;
+
+        ResourcesImplHookInstaller.applyDensityOverride(
+                "com.tencent.mm", firstConfig, firstMetrics, store);
+
+        assertEquals(518, firstConfig.smallestScreenWidthDp);
+
+        Configuration secondConfig = new Configuration();
+        secondConfig.densityDpi = 410;
+        secondConfig.screenWidthDp = 518;
+        secondConfig.screenHeightDp = 1059;
+        secondConfig.smallestScreenWidthDp = 518;
+        secondConfig.fontScale = 1.0f;
+        DisplayMetrics secondMetrics = new DisplayMetrics();
+        secondMetrics.widthPixels = 1080;
+        secondMetrics.heightPixels = 2208;
+        secondMetrics.densityDpi = 410;
+
+        ResourcesImplHookInstaller.applyDensityOverride(
+                "com.tencent.mm", secondConfig, secondMetrics, store);
+
+        assertEquals(518, secondConfig.screenWidthDp);
+        assertEquals(1059, secondConfig.screenHeightDp);
+        assertEquals(518, secondConfig.smallestScreenWidthDp);
+        assertEquals(342, secondConfig.densityDpi);
+        assertEquals(342, secondMetrics.densityDpi);
+        assertEquals(1080, secondMetrics.widthPixels);
+        assertEquals(2208, secondMetrics.heightPixels);
+    }
 }

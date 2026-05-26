@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class VirtualDisplayStateTest {
@@ -113,5 +114,31 @@ public class VirtualDisplayStateTest {
         assertTrue(VirtualDisplayState.recordCountForTest() <= 24);
         assertEquals(379, VirtualDisplayState.findForSource(
                 "com.example.app", latestTarget, latestSource).effectiveSmallestWidthDp);
+    }
+
+    @Test
+    public void importedMarkerCanBeFoundByEffectiveSmallestWidth() {
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1200);
+        ViewportRuntimeMarkerBridge.MarkerRecord marker =
+                new ViewportRuntimeMarkerBridge.MarkerRecord(
+                        "package",
+                        targetSpec.fingerprint(),
+                        "source",
+                        518,
+                        "result",
+                        ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER,
+                        1000L);
+        VirtualDisplayState.importMarker(
+                "com.example.app",
+                targetSpec,
+                ViewportRuntimeMarkerBridge.ParseResult.hit(marker, 0L));
+
+        ViewportRuntimeRecord record = VirtualDisplayState.findBySignature(
+                "com.example.app",
+                targetSpec,
+                VirtualDisplayState.signatureForSmallestWidth(518));
+
+        assertNotNull(record);
+        assertEquals(518, record.effectiveSmallestWidthDp);
     }
 }
