@@ -352,6 +352,9 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("ViewportPropertySyncer.publishTargetAsync("));
         assertTrue(source.contains("item.packageName, viewportTargetSpec, viewportApplyMode"));
         assertTrue(source.contains("ViewportPropertySyncer.clearTargetAsync(item.packageName)"));
+        assertTrue(source.contains("ViewportDraftValue.invalid()"));
+        assertFalse(source.contains("INVALID_DRAFT"));
+        assertFalse(source.contains("Integer.MIN_VALUE"));
     }
 
     @Test

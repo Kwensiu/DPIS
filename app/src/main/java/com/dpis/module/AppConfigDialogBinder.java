@@ -1151,13 +1151,14 @@ final class AppConfigDialogBinder {
             this.scopeKnown = scopeKnown;
             this.dpisEnabled = dpisEnabled;
             this.selectedTypefaceId = selectedTypefaceId;
-            this.viewportScaleInput = initialViewportScaleInput != null
-                    ? initialViewportScaleInput
-                    : "";
-            this.viewportAbsoluteInput = initialViewportAbsoluteInput != null
-                    ? initialViewportAbsoluteInput
-                    : "";
-            updateViewportInput(initialViewportType, initialViewportInput);
+            this.viewportScaleInput = valueOrEmpty(initialViewportScaleInput);
+            this.viewportAbsoluteInput = valueOrEmpty(initialViewportAbsoluteInput);
+            if (ViewportTargetType.ABSOLUTE_DP.equals(
+                    ViewportTargetType.normalize(initialViewportType))) {
+                this.viewportAbsoluteInput = valueOrEmpty(initialViewportInput);
+            } else {
+                this.viewportScaleInput = valueOrEmpty(initialViewportInput);
+            }
         }
 
         void updateViewportInput(String viewportTargetType, CharSequence input) {
@@ -1182,6 +1183,9 @@ final class AppConfigDialogBinder {
             viewportAbsoluteInput = "";
         }
 
+        private static String valueOrEmpty(String value) {
+            return value != null ? value : "";
+        }
     }
 
     private static final class AppConfigDialogActionStyle {

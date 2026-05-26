@@ -3,8 +3,6 @@ package com.dpis.module;
 import com.google.android.material.textfield.TextInputEditText;
 
 final class AppConfigSaveHandler {
-    private static final int INVALID_DRAFT = Integer.MIN_VALUE;
-
     int[] save(AppListItem item,
             TextInputEditText viewportInput,
             TextInputEditText fontScaleInput,
@@ -122,37 +120,63 @@ final class AppConfigSaveHandler {
             return true;
         }
         if (activeSpec.isRelativeScale()) {
+            ViewportDraftValue draft = parseViewportWidthDraft(viewportAbsoluteInput);
+            if (!draft.valid) {
+                return true;
+            }
             return store.setTargetViewportWidthDraft(
-                    packageName, parseViewportWidthDraft(viewportAbsoluteInput));
+                    packageName, draft.value);
         }
         if (activeSpec.isAbsoluteDp()) {
+            ViewportDraftValue draft = parseViewportScalePermilleDraft(viewportScaleInput);
+            if (!draft.valid) {
+                return true;
+            }
             return store.setTargetViewportScalePermilleDraft(
-                    packageName, parseViewportScalePermilleDraft(viewportScaleInput));
+                    packageName, draft.value);
         }
         return true;
     }
 
-    private static Integer parseViewportWidthDraft(String rawInput) {
+    private static ViewportDraftValue parseViewportWidthDraft(String rawInput) {
         String raw = rawInput != null ? rawInput.trim() : "";
         if (raw.isEmpty()) {
-            return null;
+            return ViewportDraftValue.valid(null);
         }
         Integer value = AppConfigInputValidation.parsePositiveIntOrNull(raw);
-        return value != null ? value : INVALID_DRAFT;
+        return value != null ? ViewportDraftValue.valid(value) : ViewportDraftValue.invalid();
     }
 
-    private static Integer parseViewportScalePermilleDraft(String rawInput) {
+    private static ViewportDraftValue parseViewportScalePermilleDraft(String rawInput) {
         String raw = rawInput != null ? rawInput.trim() : "";
         if (raw.isEmpty()) {
-            return null;
+            return ViewportDraftValue.valid(null);
         }
         Integer value = AppConfigInputValidation.parsePositiveIntOrNull(raw);
         if (value == null
                 || value < ViewportTargetSpec.MIN_SCALE_PERCENT
                 || value > ViewportTargetSpec.MAX_SCALE_PERCENT) {
-            return INVALID_DRAFT;
+            return ViewportDraftValue.invalid();
         }
-        return value * 10;
+        return ViewportDraftValue.valid(value * 10);
+    }
+
+    private static final class ViewportDraftValue {
+        final boolean valid;
+        final Integer value;
+
+        private ViewportDraftValue(boolean valid, Integer value) {
+            this.valid = valid;
+            this.value = value;
+        }
+
+        static ViewportDraftValue valid(Integer value) {
+            return new ViewportDraftValue(true, value);
+        }
+
+        static ViewportDraftValue invalid() {
+            return new ViewportDraftValue(false, null);
+        }
     }
 
     private static Integer parsePositiveIntOrNull(TextInputEditText inputView)

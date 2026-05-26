@@ -383,6 +383,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                         && oldItem.inScope == newItem.inScope
                         && oldItem.scopeKnown == newItem.scopeKnown
                         && Objects.equals(oldItem.viewportWidthDp, newItem.viewportWidthDp)
+                        && Objects.equals(oldItem.viewportScalePermille, newItem.viewportScalePermille)
                         && Objects.equals(oldItem.viewportTargetSpec, newItem.viewportTargetSpec)
                         && oldItem.viewportMode.equals(newItem.viewportMode)
                         && Objects.equals(oldItem.fontScalePercent, newItem.fontScalePercent)
