@@ -149,8 +149,10 @@ public class AppConfigDialogBinderSourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/AppConfigSheetModeValidationBinder.java")
                 + read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
 
-        assertTrue(source.contains("views.viewportInputView.addTextChangedListener(validationWatcher)"));
-        assertTrue(source.contains("views.fontInputView.addTextChangedListener(validationWatcher)"));
+        assertTrue(source.contains(
+                "views.viewportInputView.addTextChangedListener(viewportValidationWatcher)"));
+        assertTrue(source.contains(
+                "views.fontInputView.addTextChangedListener(fontValidationWatcher)"));
         assertTrue(source.contains("AppConfigDialogBinder.updateSaveButtonState("));
         assertTrue(source.contains("refreshDialogState(views, state, style, systemHooksEnabled, item);"));
         assertTrue(binderSource.contains("AppStatusFormatter.formatCompact("));
@@ -303,6 +305,11 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("String initialViewportInput = formatViewportInput(item.viewportTargetSpec)"));
         assertTrue(source.contains("state.updateViewportInput("));
         assertTrue(source.contains("AppConfigDialogBinder.resolveViewportMode(views.viewportModeToggle), s);"));
+        int fontWatcherStart = source.indexOf("TextWatcher fontValidationWatcher");
+        int fontWatcherEnd = source.indexOf(
+                "views.viewportInputView.addTextChangedListener", fontWatcherStart);
+        String fontWatcherBlock = source.substring(fontWatcherStart, fontWatcherEnd);
+        assertFalse(fontWatcherBlock.contains("state.updateViewportInput("));
         assertTrue(source.contains("AppConfigDialogBinder.toggleViewportMode("));
         assertTrue(source.contains("views.viewportModeToggle, views.viewportInputView, state);"));
         assertTrue(switchBlock.contains("bindViewportModeToggle(viewportModeToggle, nextType, animate);"));

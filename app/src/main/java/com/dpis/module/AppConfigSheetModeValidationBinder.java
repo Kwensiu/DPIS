@@ -34,7 +34,7 @@ final class AppConfigSheetModeValidationBinder {
         };
         views.viewportInputView.setOnEditorActionListener(doneListener);
         views.fontInputView.setOnEditorActionListener(doneListener);
-        TextWatcher validationWatcher = new TextWatcher() {
+        TextWatcher viewportValidationWatcher = new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
@@ -54,8 +54,26 @@ final class AppConfigSheetModeValidationBinder {
             public void afterTextChanged(Editable s) {
             }
         };
-        views.viewportInputView.addTextChangedListener(validationWatcher);
-        views.fontInputView.addTextChangedListener(validationWatcher);
+        TextWatcher fontValidationWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                AppConfigDialogBinder.updateSaveButtonState(
+                        views.viewportInputLayout, views.viewportInputView,
+                        views.viewportModeToggle,
+                        views.fontInputLayout, views.fontInputView, views.saveButton);
+                binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        };
+        views.viewportInputView.addTextChangedListener(viewportValidationWatcher);
+        views.fontInputView.addTextChangedListener(fontValidationWatcher);
     }
 
     void bindModeToggles(View dialogView,

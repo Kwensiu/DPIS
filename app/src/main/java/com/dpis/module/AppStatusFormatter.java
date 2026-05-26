@@ -386,14 +386,17 @@ final class AppStatusFormatter {
             return new int[0][];
         }
         List<int[]> ranges = new ArrayList<>(2);
+        int segmentCount = countSegments(statusText);
+        int viewportSegmentIndex = segmentCount >= 3 ? 1 : 0;
+        int fontMinSegmentIndex = segmentCount >= 3 ? 2 : 1;
         if (warnViewport) {
-            int[] viewportRange = resolveSegmentRange(statusText, 1);
+            int[] viewportRange = resolveSegmentRange(statusText, viewportSegmentIndex);
             if (viewportRange != null) {
                 ranges.add(viewportRange);
             }
         }
         if (warnFont) {
-            int[] fontRange = resolveFontScaleSegmentRange(statusText);
+            int[] fontRange = resolveFontScaleSegmentRange(statusText, fontMinSegmentIndex);
             if (fontRange != null) {
                 ranges.add(fontRange);
             }
@@ -401,8 +404,18 @@ final class AppStatusFormatter {
         return ranges.toArray(new int[0][]);
     }
 
-    private static int[] resolveFontScaleSegmentRange(String statusText) {
-        return resolveFirstSegmentRangeContaining(statusText, "%", 2);
+    private static int countSegments(String statusText) {
+        int count = 1;
+        for (int i = 0; i < statusText.length(); i++) {
+            if (statusText.charAt(i) == '|') {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static int[] resolveFontScaleSegmentRange(String statusText, int minSegmentIndex) {
+        return resolveFirstSegmentRangeContaining(statusText, "%", minSegmentIndex);
     }
 
     private static int[] resolveFirstSegmentRangeContaining(String statusText,

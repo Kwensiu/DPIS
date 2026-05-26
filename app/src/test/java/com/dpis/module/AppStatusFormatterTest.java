@@ -181,6 +181,23 @@ public class AppStatusFormatterTest {
     }
 
     @Test
+    public void warnsSegmentsWhenScopeSegmentIsHidden() {
+        String text = "Interface 106% | Font 115%";
+        int[][] ranges = AppStatusFormatter.resolveWarnSegmentRanges(text, true, true);
+        assertEquals(2, ranges.length);
+        assertArrayEquals(resolveExpectedRange(text, "Interface 106%"), ranges[0]);
+        assertArrayEquals(resolveExpectedRange(text, "Font 115%"), ranges[1]);
+    }
+
+    @Test
+    public void warnsOnlyViewportSegmentWhenScopeAndFontSegmentsAreHidden() {
+        String text = "Interface 320dp";
+        int[][] ranges = AppStatusFormatter.resolveWarnSegmentRanges(text, true, false);
+        assertEquals(1, ranges.length);
+        assertArrayEquals(resolveExpectedRange(text, "Interface 320dp"), ranges[0]);
+    }
+
+    @Test
     public void returnsNoRangesWhenNoSegmentNeedsWarning() {
         String text = "Injected | Interface 360dp | Font 120%";
         int[][] ranges = AppStatusFormatter.resolveWarnSegmentRanges(text, false, false);
