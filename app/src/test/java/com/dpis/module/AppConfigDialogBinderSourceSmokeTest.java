@@ -261,8 +261,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("bindViewportInputHint(views.viewportInputLayout, initialViewportType)"));
         assertTrue(source.contains("bindFontModeToggle(views.fontModeToggle, initialFontMode(item.fontMode), false)"));
         assertTrue(source.contains("private static String initialViewportTargetType(ViewportTargetSpec spec)"));
-        assertTrue(source.contains("return FontApplyMode.isEnabled(normalized)"));
-        assertTrue(source.contains(": FontApplyMode.SYSTEM_EMULATION;"));
+        assertTrue(source.contains("AppConfigInputValidation.initialFontMode(fontMode)"));
+        assertTrue(source.contains("AppConfigInputValidation.initialViewportTargetType(spec)"));
     }
 
     @Test

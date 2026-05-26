@@ -646,13 +646,7 @@ final class AppConfigDialogBinder {
     }
 
     private static String formatViewportInput(ViewportTargetSpec spec) {
-        if (spec == null || !spec.isEnabled()) {
-            return "";
-        }
-        if (spec.isRelativeScale()) {
-            return String.valueOf(spec.scalePermille() / 10);
-        }
-        return String.valueOf(spec.absoluteWidthDp());
+        return AppConfigInputValidation.formatViewportInput(spec);
     }
 
     private static boolean containsSystemTypeface(List<SystemFontEntry> entries, String selectedTypefaceId) {
@@ -724,9 +718,15 @@ final class AppConfigDialogBinder {
             TextInputLayout fontInputLayout,
             TextInputEditText fontInputView,
             MaterialButton saveButton) {
-        boolean viewportValid = isViewportValueOrEmpty(
-                viewportInputView, resolveViewportMode(viewportModeToggle));
-        boolean fontValid = isFontPercentOrEmpty(fontInputView);
+        String viewportRaw = viewportInputView.getText() != null
+                ? viewportInputView.getText().toString()
+                : "";
+        String fontRaw = fontInputView.getText() != null
+                ? fontInputView.getText().toString()
+                : "";
+        boolean viewportValid = AppConfigInputValidation.isViewportInputValid(
+                viewportRaw, resolveViewportMode(viewportModeToggle));
+        boolean fontValid = AppConfigInputValidation.isFontScaleInputValid(fontRaw);
         int defaultStrokeColor = MaterialColors.getColor(
                 viewportInputLayout, com.google.android.material.R.attr.colorOutline);
         int errorStrokeColor = MaterialColors.getColor(
@@ -740,48 +740,6 @@ final class AppConfigDialogBinder {
         boolean valid = viewportValid && fontValid;
         saveButton.setEnabled(valid);
         return valid;
-    }
-
-    private static boolean isPositiveIntOrEmpty(TextInputEditText inputView) {
-        String raw = inputView.getText() != null ? inputView.getText().toString().trim() : "";
-        if (raw.isEmpty()) {
-            return true;
-        }
-        try {
-            return Integer.parseInt(raw) > 0;
-        } catch (NumberFormatException ignored) {
-            return false;
-        }
-    }
-
-    private static boolean isViewportValueOrEmpty(TextInputEditText inputView, String targetType) {
-        String raw = inputView.getText() != null ? inputView.getText().toString().trim() : "";
-        if (raw.isEmpty()) {
-            return true;
-        }
-        try {
-            int value = Integer.parseInt(raw);
-            if (ViewportTargetType.RELATIVE_SCALE.equals(ViewportTargetType.normalize(targetType))) {
-                return value >= ViewportTargetSpec.MIN_SCALE_PERCENT
-                        && value <= ViewportTargetSpec.MAX_SCALE_PERCENT;
-            }
-            return value > 0;
-        } catch (NumberFormatException ignored) {
-            return false;
-        }
-    }
-
-    private static boolean isFontPercentOrEmpty(TextInputEditText inputView) {
-        String raw = inputView.getText() != null ? inputView.getText().toString().trim() : "";
-        if (raw.isEmpty()) {
-            return true;
-        }
-        try {
-            int value = Integer.parseInt(raw);
-            return value >= 50 && value <= 300;
-        } catch (NumberFormatException ignored) {
-            return false;
-        }
     }
 
     private void updateDialogStatus(MaterialTextView statusView,
@@ -878,67 +836,20 @@ final class AppConfigDialogBinder {
     }
 
     private static Integer parsePositiveIntOrNullSafe(TextInputEditText inputView) {
-        try {
-            return parsePositiveIntOrNull(inputView);
-        } catch (NumberFormatException exception) {
-            return null;
-        }
+        String raw = inputView.getText() != null ? inputView.getText().toString() : "";
+        return AppConfigInputValidation.parsePositiveIntOrNull(raw);
     }
 
     private static ViewportTargetSpec parseViewportTargetSpecOrNullSafe(
             TextInputEditText inputView,
             String viewportTargetType) {
-        try {
-            Integer value = parsePositiveIntOrNull(inputView);
-            if (value == null) {
-                return ViewportTargetSpec.off();
-            }
-            if (ViewportTargetType.RELATIVE_SCALE.equals(
-                    ViewportTargetType.normalize(viewportTargetType))) {
-                if (value < ViewportTargetSpec.MIN_SCALE_PERCENT
-                        || value > ViewportTargetSpec.MAX_SCALE_PERCENT) {
-                    return ViewportTargetSpec.off();
-                }
-                return ViewportTargetSpec.relativeScale(value * 10);
-            }
-            return ViewportTargetSpec.absoluteDp(value);
-        } catch (NumberFormatException exception) {
-            return ViewportTargetSpec.off();
-        }
+        String raw = inputView.getText() != null ? inputView.getText().toString() : "";
+        return AppConfigInputValidation.parseViewportTargetSpec(raw, viewportTargetType);
     }
 
     private static Integer parseFontScalePercentOrNullSafe(TextInputEditText inputView) {
-        try {
-            return parseFontScalePercentOrNull(inputView);
-        } catch (NumberFormatException exception) {
-            return null;
-        }
-    }
-
-    private static Integer parsePositiveIntOrNull(TextInputEditText inputView)
-            throws NumberFormatException {
-        String raw = inputView.getText() != null ? inputView.getText().toString().trim() : "";
-        if (raw.isEmpty()) {
-            return null;
-        }
-        int value = Integer.parseInt(raw);
-        if (value <= 0) {
-            throw new NumberFormatException("must be positive");
-        }
-        return value;
-    }
-
-    private static Integer parseFontScalePercentOrNull(TextInputEditText inputView)
-            throws NumberFormatException {
-        String raw = inputView.getText() != null ? inputView.getText().toString().trim() : "";
-        if (raw.isEmpty()) {
-            return null;
-        }
-        int value = Integer.parseInt(raw);
-        if (value < 50 || value > 300) {
-            throw new NumberFormatException("font scale out of range");
-        }
-        return value;
+        String raw = inputView.getText() != null ? inputView.getText().toString() : "";
+        return AppConfigInputValidation.parseFontScalePercentOrNull(raw);
     }
 
     private static String resolveFontMode(ModeToggle fontModeToggle) {
@@ -950,10 +861,7 @@ final class AppConfigDialogBinder {
     }
 
     private static String initialFontMode(String fontMode) {
-        String normalized = FontApplyMode.normalize(fontMode);
-        return FontApplyMode.isEnabled(normalized)
-                ? normalized
-                : FontApplyMode.SYSTEM_EMULATION;
+        return AppConfigInputValidation.initialFontMode(fontMode);
     }
 
     private static String resolveViewportMode(ModeToggle viewportModeToggle) {
@@ -965,9 +873,7 @@ final class AppConfigDialogBinder {
     }
 
     private static String initialViewportTargetType(ViewportTargetSpec spec) {
-        return spec != null && spec.isAbsoluteDp()
-                ? ViewportTargetType.ABSOLUTE_DP
-                : ViewportTargetType.RELATIVE_SCALE;
+        return AppConfigInputValidation.initialViewportTargetType(spec);
     }
 
     private static void bindFontModeToggle(ModeToggle fontModeToggle,
