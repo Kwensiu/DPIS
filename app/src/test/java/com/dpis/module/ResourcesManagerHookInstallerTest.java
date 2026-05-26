@@ -8,6 +8,8 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public class ResourcesManagerHookInstallerTest {
+    private static final String PACKAGE_NAME = "com.example.target";
+
     @After
     public void tearDown() {
         VirtualDisplayState.set(null);
@@ -25,10 +27,10 @@ public class ResourcesManagerHookInstallerTest {
         config.smallestScreenWidthDp = 800;
         config.fontScale = 1.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.com.example.target.width_dp", 800).commit();
+        putCompatViewport(prefs, 800);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
-        ResourcesManagerHookInstaller.applyResourceOverrides(config, store, "com.example.target",
+        ResourcesManagerHookInstaller.applyResourceOverrides(config, store, PACKAGE_NAME,
                 "ResourcesManager");
 
         assertEquals(216, config.densityDpi);
@@ -37,10 +39,9 @@ public class ResourcesManagerHookInstallerTest {
 
     @Test
     public void relativeScaleDoesNotApplyTwiceAfterConfigurationOnlyHookPublishesRecord() {
-        String packageName = "com.example.target";
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
-        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(900));
-        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.AUTO);
+        store.setTargetViewportSpec(PACKAGE_NAME, ViewportTargetSpec.relativeScale(900));
+        store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
         Configuration initial = new Configuration();
         initial.screenWidthDp = 362;
         initial.screenHeightDp = 783;
@@ -49,7 +50,7 @@ public class ResourcesManagerHookInstallerTest {
         initial.fontScale = 1.0f;
 
         ResourcesManagerHookInstaller.applyResourceOverrides(
-                initial, store, packageName, "ResourcesManagerActivity");
+                initial, store, PACKAGE_NAME, "ResourcesManagerActivity");
 
         assertEquals(326, initial.screenWidthDp);
         assertEquals(705, initial.screenHeightDp);
@@ -64,7 +65,7 @@ public class ResourcesManagerHookInstallerTest {
         alreadyApplied.fontScale = 1.0f;
 
         ResourcesManagerHookInstaller.applyResourceOverrides(
-                alreadyApplied, store, packageName, "ResourcesRead");
+                alreadyApplied, store, PACKAGE_NAME, "ResourcesRead");
 
         assertEquals(326, alreadyApplied.screenWidthDp);
         assertEquals(705, alreadyApplied.screenHeightDp);
@@ -75,10 +76,7 @@ public class ResourcesManagerHookInstallerTest {
     @Test
     public void fillsEmptyResourcesKeyOverrideFromGlobalConfiguration() {
         FakePrefs prefs = new FakePrefs();
-        prefs.edit()
-                .putInt("viewport.com.example.target.width_dp", 800)
-                .putString("viewport.com.example.target.mode", ViewportApplyMode.FIELD_REWRITE)
-                .commit();
+        putCompatViewport(prefs, 800);
         DpiConfigStore store = new DpiConfigStore(prefs);
         Configuration globalConfig = new Configuration();
         globalConfig.screenWidthDp = 360;
@@ -90,7 +88,7 @@ public class ResourcesManagerHookInstallerTest {
         FakeResourcesKey key = new FakeResourcesKey();
 
         ResourcesManagerHookInstaller.maybeApplyKeyOverride(
-                resourcesManager, key, store, "com.example.target", "createResourcesImpl");
+                resourcesManager, key, store, PACKAGE_NAME, "createResourcesImpl");
 
         assertEquals(800, key.mOverrideConfiguration.screenWidthDp);
         assertEquals(1636, key.mOverrideConfiguration.screenHeightDp);
@@ -102,10 +100,7 @@ public class ResourcesManagerHookInstallerTest {
     @Test
     public void keepsExistingResourcesKeyOverride() {
         FakePrefs prefs = new FakePrefs();
-        prefs.edit()
-                .putInt("viewport.com.example.target.width_dp", 800)
-                .putString("viewport.com.example.target.mode", ViewportApplyMode.FIELD_REWRITE)
-                .commit();
+        putCompatViewport(prefs, 800);
         DpiConfigStore store = new DpiConfigStore(prefs);
         Configuration globalConfig = new Configuration();
         globalConfig.screenWidthDp = 360;
@@ -120,7 +115,7 @@ public class ResourcesManagerHookInstallerTest {
 
         ResourcesManagerHookInstaller.maybeApplyKeyOverride(
                 new FakeResourcesManager(globalConfig), key, store,
-                "com.example.target", "createResourcesImpl");
+                PACKAGE_NAME, "createResourcesImpl");
 
         assertEquals(500, key.mOverrideConfiguration.screenWidthDp);
         assertEquals(1000, key.mOverrideConfiguration.screenHeightDp);
@@ -131,10 +126,7 @@ public class ResourcesManagerHookInstallerTest {
     @Test
     public void replacesResourcesKeyOverrideThatMatchesBaseActivityConfiguration() {
         FakePrefs prefs = new FakePrefs();
-        prefs.edit()
-                .putInt("viewport.com.example.target.width_dp", 800)
-                .putString("viewport.com.example.target.mode", ViewportApplyMode.SYSTEM_EMULATION)
-                .commit();
+        putCompatViewport(prefs, 800);
         DpiConfigStore store = new DpiConfigStore(prefs);
         Configuration globalConfig = new Configuration();
         globalConfig.screenWidthDp = 360;
@@ -150,7 +142,7 @@ public class ResourcesManagerHookInstallerTest {
 
         ResourcesManagerHookInstaller.maybeApplyKeyOverride(
                 new FakeResourcesManager(globalConfig), key, store,
-                "com.example.target", "createResourcesImpl");
+                PACKAGE_NAME, "createResourcesImpl");
 
         assertEquals(800, key.mOverrideConfiguration.screenWidthDp);
         assertEquals(1636, key.mOverrideConfiguration.screenHeightDp);
@@ -161,10 +153,7 @@ public class ResourcesManagerHookInstallerTest {
     @Test
     public void preservesExistingResourcesKeyFontOnlyOverride() {
         FakePrefs prefs = new FakePrefs();
-        prefs.edit()
-                .putInt("viewport.com.example.target.width_dp", 800)
-                .putString("viewport.com.example.target.mode", ViewportApplyMode.FIELD_REWRITE)
-                .commit();
+        putCompatViewport(prefs, 800);
         DpiConfigStore store = new DpiConfigStore(prefs);
         Configuration globalConfig = new Configuration();
         globalConfig.screenWidthDp = 360;
@@ -177,7 +166,7 @@ public class ResourcesManagerHookInstallerTest {
 
         ResourcesManagerHookInstaller.maybeApplyKeyOverride(
                 new FakeResourcesManager(globalConfig), key, store,
-                "com.example.target", "createResourcesImpl");
+                PACKAGE_NAME, "createResourcesImpl");
 
         assertEquals(800, key.mOverrideConfiguration.screenWidthDp);
         assertEquals(1636, key.mOverrideConfiguration.screenHeightDp);
@@ -195,13 +184,10 @@ public class ResourcesManagerHookInstallerTest {
         config.densityDpi = 420;
         config.fontScale = 1.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit()
-                .putInt("viewport.com.example.target.width_dp", 411)
-                .putString("viewport.com.example.target.mode", ViewportApplyMode.FIELD_REWRITE)
-                .commit();
+        putCompatViewport(prefs, 411);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
-        ResourcesManagerHookInstaller.applyResourceOverrides(config, store, "com.example.target",
+        ResourcesManagerHookInstaller.applyResourceOverrides(config, store, PACKAGE_NAME,
                 "ResourcesManager");
 
         assertEquals(448, config.screenWidthDp);
@@ -220,13 +206,10 @@ public class ResourcesManagerHookInstallerTest {
         config.densityDpi = 0;
         config.fontScale = 1.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit()
-                .putInt("viewport.com.example.target.width_dp", 360)
-                .putString("viewport.com.example.target.mode", ViewportApplyMode.FIELD_REWRITE)
-                .commit();
+        putCompatViewport(prefs, 360);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
-        ResourcesManagerHookInstaller.applyResourceOverrides(config, store, "com.example.target",
+        ResourcesManagerHookInstaller.applyResourceOverrides(config, store, PACKAGE_NAME,
                 "ResourcesManager");
 
         assertEquals(360, config.screenWidthDp);
@@ -245,13 +228,10 @@ public class ResourcesManagerHookInstallerTest {
         config.densityDpi = 480;
         config.fontScale = 1.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit()
-                .putInt("viewport.com.example.target.width_dp", 500)
-                .putString("viewport.com.example.target.mode", ViewportApplyMode.FIELD_REWRITE)
-                .commit();
+        putCompatViewport(prefs, 500);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
-        ResourcesManagerHookInstaller.applyResourceOverrides(config, store, "com.example.target",
+        ResourcesManagerHookInstaller.applyResourceOverrides(config, store, PACKAGE_NAME,
                 "ResourcesManager");
 
         assertEquals(500, config.smallestScreenWidthDp);
@@ -274,5 +254,12 @@ public class ResourcesManagerHookInstallerTest {
     private static final class FakeResourcesKey {
         @SuppressWarnings("unused")
         private final Configuration mOverrideConfiguration = new Configuration();
+    }
+
+    private static void putCompatViewport(FakePrefs prefs, int widthDp) {
+        prefs.edit()
+                .putInt("viewport." + PACKAGE_NAME + ".width_dp", widthDp)
+                .putString("viewport." + PACKAGE_NAME + ".mode", ViewportApplyMode.COMPAT)
+                .commit();
     }
 }

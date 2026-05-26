@@ -24,7 +24,7 @@ public class ResourcesImplHookInstallerTest {
         config.smallestScreenWidthDp = 600;
         config.fontScale = 1.1f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, null, store);
@@ -50,7 +50,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.widthPixels = 1200;
         metrics.heightPixels = 2000;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -120,7 +120,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.density = 3.0f;
         metrics.scaledDensity = 3.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -149,7 +149,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.density = 3.0f;
         metrics.scaledDensity = 3.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 200).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", 200);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -175,7 +175,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.density = 2.85f;
         metrics.scaledDensity = 2.85f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 800).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", 800);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -204,7 +204,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.scaledDensity = 3.45f;
 
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 360).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", 360);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -229,7 +229,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.density = 2.625f;
         metrics.scaledDensity = 2.625f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 411).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", 411);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -261,7 +261,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.density = 3.0f;
         metrics.scaledDensity = 3.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 360).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", 360);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -288,7 +288,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.density = 3.0f;
         metrics.scaledDensity = 3.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 500).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", 500);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -314,7 +314,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.density = 3.0f;
         metrics.scaledDensity = 3.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 500).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", 500);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -341,7 +341,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.density = 3.0f;
         metrics.scaledDensity = 3.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 500).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", 500);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -360,7 +360,7 @@ public class ResourcesImplHookInstallerTest {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
         store.setTargetViewportSpec("com.tencent.mm", ViewportTargetSpec.relativeScale(1200));
-        store.setTargetViewportApplyMode("com.tencent.mm", ViewportApplyMode.AUTO);
+        store.setTargetViewportApplyMode("com.tencent.mm", ViewportApplyMode.COMPAT);
 
         Configuration firstConfig = new Configuration();
         firstConfig.densityDpi = 410;
@@ -399,5 +399,12 @@ public class ResourcesImplHookInstallerTest {
         assertEquals(342, secondMetrics.densityDpi);
         assertEquals(1080, secondMetrics.widthPixels);
         assertEquals(2208, secondMetrics.heightPixels);
+    }
+
+    private static void putCompatViewport(FakePrefs prefs, String packageName, int widthDp) {
+        prefs.edit()
+                .putInt("viewport." + packageName + ".width_dp", widthDp)
+                .putString("viewport." + packageName + ".mode", ViewportApplyMode.COMPAT)
+                .commit();
     }
 }

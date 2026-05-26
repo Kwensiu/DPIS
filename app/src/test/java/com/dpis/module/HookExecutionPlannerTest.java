@@ -103,6 +103,40 @@ public class HookExecutionPlannerTest {
     }
 
     @Test
+    public void viewportAutoUsesSystemRouteWithoutAppProcessViewportHooksWhenAvailable() {
+        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
+                createPolicy(false, true, false),
+                true,
+                ViewportApplyMode.AUTO,
+                false,
+                FontApplyMode.OFF,
+                false,
+                false,
+                DebugFontOverride.none());
+
+        assertEquals(ViewportApplyMode.SYSTEM, plan.resolvedViewportMode);
+        assertFalse(plan.viewportEnabled);
+        assertFalse(plan.resourcesHooksEnabled);
+    }
+
+    @Test
+    public void viewportAutoFallsBackToAppProcessViewportHooksWhenSystemUnavailable() {
+        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
+                createPolicy(false, false, false),
+                true,
+                ViewportApplyMode.AUTO,
+                false,
+                FontApplyMode.OFF,
+                false,
+                false,
+                DebugFontOverride.none());
+
+        assertEquals(ViewportApplyMode.COMPAT, plan.resolvedViewportMode);
+        assertTrue(plan.viewportEnabled);
+        assertTrue(plan.resourcesHooksEnabled);
+    }
+
+    @Test
     public void debugForceFlutterSettingsKeepsOtherDomainsUnlessOnlyModeRequested() {
         HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
                 createPolicy(false, true, false),

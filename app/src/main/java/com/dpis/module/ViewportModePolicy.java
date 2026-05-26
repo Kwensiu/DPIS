@@ -6,13 +6,15 @@ final class ViewportModePolicy {
 
     static String resolve(DpiConfigStore store, String packageName) {
         if (store == null || packageName == null || packageName.isEmpty()) {
-            return ViewportApplyMode.SYSTEM_EMULATION;
+            return ViewportApplyMode.OFF;
         }
-        return ViewportApplyMode.normalize(store.getTargetViewportApplyMode(packageName));
+        return EffectiveModeResolver.resolveViewportMode(
+                store.getTargetViewportApplyMode(packageName),
+                store.isSystemServerHooksEnabled());
     }
 
     static boolean shouldApplyConfigurationOverride(DpiConfigStore store, String packageName) {
-        return ViewportApplyMode.isEnabled(resolve(store, packageName));
+        return ViewportApplyMode.COMPAT.equals(resolve(store, packageName));
     }
 }
 

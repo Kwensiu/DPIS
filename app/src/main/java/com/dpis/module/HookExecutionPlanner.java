@@ -98,7 +98,7 @@ final class HookExecutionPlanner {
                 ? EffectiveModeResolver.resolveViewportMode(viewportMode, systemHooksEnabled)
                 : ViewportApplyMode.OFF;
         boolean viewportEnabledBase = viewportConfigured
-                && !ViewportApplyMode.OFF.equals(resolvedViewportMode);
+                && ViewportApplyMode.COMPAT.equals(resolvedViewportMode);
 
         FontMode resolvedFontMode = resolveFontMode(policy, fontScaleActive, fontMode);
         boolean fontRouteEnabled = resolvedFontMode != FontMode.OFF;
