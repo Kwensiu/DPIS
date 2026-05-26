@@ -617,6 +617,34 @@ public class DpiConfigStoreTest {
         assertTrue(localOnly.getConfiguredPackages().contains("com.max.xiaoheihe"));
     }
 
+    @Test
+    public void viewportScaleDraftPersistsWithoutChangingAbsoluteActiveType() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.setTargetViewportSpec(
+                "com.example.app", ViewportTargetSpec.absoluteDp(480)));
+
+        assertTrue(store.setTargetViewportScalePermilleDraft("com.example.app", 1250));
+
+        assertTrue(store.getTargetViewportSpec("com.example.app").isAbsoluteDp());
+        assertEquals(Integer.valueOf(480), store.getTargetViewportWidthDp("com.example.app"));
+        assertEquals(Integer.valueOf(1250), store.getTargetViewportScalePermille("com.example.app"));
+    }
+
+    @Test
+    public void viewportWidthDraftPersistsWithoutChangingRelativeActiveType() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.setTargetViewportSpec(
+                "com.example.app", ViewportTargetSpec.relativeScale(1250)));
+
+        assertTrue(store.setTargetViewportWidthDraft("com.example.app", 480));
+
+        assertTrue(store.getTargetViewportSpec("com.example.app").isRelativeScale());
+        assertEquals(Integer.valueOf(1250), store.getTargetViewportScalePermille("com.example.app"));
+        assertEquals(Integer.valueOf(480), store.getTargetViewportWidthDp("com.example.app"));
+    }
+
     private static final class ThrowingIntReadPrefs implements SharedPreferences {
         private final FakePrefs delegate = new FakePrefs();
         private final Set<String> intReadFailureKeys;

@@ -35,6 +35,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("host.saveAppConfig("));
         assertTrue(source.contains("views.saveButton.setOnClickListener"));
         assertTrue(source.contains("host.saveAppConfig("));
+        assertTrue(source.contains("state.viewportScaleInput"));
+        assertTrue(source.contains("state.viewportAbsoluteInput"));
         assertTrue(source.contains("showSaveButtonFeedback(views.saveButton)"));
         assertTrue(source.contains("requestScopeAfterSuccessfulSave(dialogView, item, views, state, style, systemHooksEnabled)"));
     }

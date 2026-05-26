@@ -73,7 +73,9 @@ final class AppConfigDialogBinder {
                 TextInputEditText fontScaleInput,
                 String viewportMode,
                 String fontMode,
-                String selectedTypefaceId);
+                String selectedTypefaceId,
+                String viewportScaleInput,
+                String viewportAbsoluteInput);
 
         void showToast(int messageResId);
     }
@@ -132,6 +134,12 @@ final class AppConfigDialogBinder {
         views.packageView.setText(item.packageName);
         String initialViewportInput = formatViewportInput(item.viewportTargetSpec);
         views.viewportInputView.setText(initialViewportInput);
+        String initialViewportScaleInput = item.viewportScalePermille != null
+                ? String.valueOf(item.viewportScalePermille / 10)
+                : (item.viewportTargetSpec.isRelativeScale() ? initialViewportInput : "");
+        String initialViewportAbsoluteInput = item.viewportWidthDp != null
+                ? String.valueOf(item.viewportWidthDp)
+                : (item.viewportTargetSpec.isAbsoluteDp() ? initialViewportInput : "");
         views.fontInputView.setText(item.fontScalePercent != null
                 ? String.valueOf(item.fontScalePercent)
                 : "");
@@ -145,7 +153,11 @@ final class AppConfigDialogBinder {
                 views.viewportModeToggle,
                 views.fontInputLayout, views.fontInputView, views.saveButton);
         return new AppConfigDialogState(item.inScope, item.scopeKnown, item.dpisEnabled,
-                selectedTypefaceId, initialViewportType, initialViewportInput);
+                selectedTypefaceId,
+                initialViewportType,
+                initialViewportInput,
+                initialViewportScaleInput,
+                initialViewportAbsoluteInput);
     }
 
     private AppConfigDialogActionStyle resolveDialogActionStyle(MaterialButton baseButton) {
@@ -293,7 +305,9 @@ final class AppConfigDialogBinder {
                     views.fontInputView,
                     resolveViewportMode(views.viewportModeToggle),
                     resolveFontMode(views.fontModeToggle),
-                    state.selectedTypefaceId);
+                    state.selectedTypefaceId,
+                    state.viewportScaleInput,
+                    state.viewportAbsoluteInput);
             if (result[0] == 1) {
                 showSaveButtonFeedback(views.saveButton);
                 syncHyperOsNativeProxyAfterSave(item, views, state);
@@ -1130,11 +1144,19 @@ final class AppConfigDialogBinder {
                 boolean dpisEnabled,
                 String selectedTypefaceId,
                 String initialViewportType,
-                String initialViewportInput) {
+                String initialViewportInput,
+                String initialViewportScaleInput,
+                String initialViewportAbsoluteInput) {
             this.scopeSelected = scopeSelected;
             this.scopeKnown = scopeKnown;
             this.dpisEnabled = dpisEnabled;
             this.selectedTypefaceId = selectedTypefaceId;
+            this.viewportScaleInput = initialViewportScaleInput != null
+                    ? initialViewportScaleInput
+                    : "";
+            this.viewportAbsoluteInput = initialViewportAbsoluteInput != null
+                    ? initialViewportAbsoluteInput
+                    : "";
             updateViewportInput(initialViewportType, initialViewportInput);
         }
 

@@ -82,6 +82,9 @@ final class InstalledAppCatalogCoordinator {
             Integer viewportWidth = store != null
                     ? store.getTargetViewportWidthDp(item.packageName)
                     : null;
+            Integer viewportScalePermille = store != null
+                    ? store.getTargetViewportScalePermille(item.packageName)
+                    : null;
             ViewportTargetSpec viewportTargetSpec = store != null
                     ? store.getTargetViewportSpec(item.packageName)
                     : ViewportTargetSpec.off();
@@ -101,7 +104,8 @@ final class InstalledAppCatalogCoordinator {
                     || store.isTargetDpisEnabled(item.packageName);
             Drawable icon = resolveDisplayIcon(item);
             result.add(new AppListItem(item.label, item.packageName,
-                    scopePackages.contains(item.packageName), scopeKnown, viewportWidth, viewportMode,
+                    scopePackages.contains(item.packageName), scopeKnown, viewportWidth,
+                    viewportScalePermille, viewportMode,
                     viewportTargetSpec, fontScalePercent, fontMode, typefaceId, dpisEnabled, item.systemApp,
                     item.hyperOsNativeProxyCandidate, icon));
         }

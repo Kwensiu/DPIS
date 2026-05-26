@@ -3,12 +3,16 @@ package com.dpis.module;
 import com.google.android.material.textfield.TextInputEditText;
 
 final class AppConfigSaveHandler {
+    private static final int INVALID_DRAFT = Integer.MIN_VALUE;
+
     int[] save(AppListItem item,
             TextInputEditText viewportInput,
             TextInputEditText fontScaleInput,
             String viewportTargetType,
             String fontMode,
             String selectedTypefaceId,
+            String viewportScaleInput,
+            String viewportAbsoluteInput,
             boolean systemHooksEnabled,
             DpiConfigStore store,
             Runnable onChanged) {
@@ -44,6 +48,12 @@ final class AppConfigSaveHandler {
                 ViewportPropertySyncer.clearTargetAsync(item.packageName);
             } else {
                 saved = store.setTargetViewportSpec(item.packageName, viewportTargetSpec) && saved;
+                saved = saveInactiveViewportDraft(
+                        store,
+                        item.packageName,
+                        viewportTargetSpec,
+                        viewportScaleInput,
+                        viewportAbsoluteInput) && saved;
                 saved = store.setTargetViewportApplyMode(item.packageName, viewportApplyMode)
                         && saved;
                 ViewportPropertySyncer.publishTargetAsync(
@@ -100,6 +110,49 @@ final class AppConfigSaveHandler {
         return ViewportApplyMode.isEnabled(itemViewportMode)
                 ? ViewportApplyMode.normalize(itemViewportMode)
                 : ViewportApplyMode.AUTO;
+    }
+
+    private static boolean saveInactiveViewportDraft(DpiConfigStore store,
+            String packageName,
+            ViewportTargetSpec activeSpec,
+            String viewportScaleInput,
+            String viewportAbsoluteInput) {
+        if (store == null || packageName == null || packageName.isBlank()
+                || activeSpec == null || !activeSpec.isEnabled()) {
+            return true;
+        }
+        if (activeSpec.isRelativeScale()) {
+            return store.setTargetViewportWidthDraft(
+                    packageName, parseViewportWidthDraft(viewportAbsoluteInput));
+        }
+        if (activeSpec.isAbsoluteDp()) {
+            return store.setTargetViewportScalePermilleDraft(
+                    packageName, parseViewportScalePermilleDraft(viewportScaleInput));
+        }
+        return true;
+    }
+
+    private static Integer parseViewportWidthDraft(String rawInput) {
+        String raw = rawInput != null ? rawInput.trim() : "";
+        if (raw.isEmpty()) {
+            return null;
+        }
+        Integer value = AppConfigInputValidation.parsePositiveIntOrNull(raw);
+        return value != null ? value : INVALID_DRAFT;
+    }
+
+    private static Integer parseViewportScalePermilleDraft(String rawInput) {
+        String raw = rawInput != null ? rawInput.trim() : "";
+        if (raw.isEmpty()) {
+            return null;
+        }
+        Integer value = AppConfigInputValidation.parsePositiveIntOrNull(raw);
+        if (value == null
+                || value < ViewportTargetSpec.MIN_SCALE_PERCENT
+                || value > ViewportTargetSpec.MAX_SCALE_PERCENT) {
+            return INVALID_DRAFT;
+        }
+        return value * 10;
     }
 
     private static Integer parsePositiveIntOrNull(TextInputEditText inputView)

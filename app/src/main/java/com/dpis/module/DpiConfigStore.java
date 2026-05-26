@@ -332,6 +332,62 @@ final class DpiConfigStore {
         });
     }
 
+    boolean setTargetViewportWidthDraft(String packageName, Integer widthDp) {
+        if (packageName == null || packageName.isBlank()) {
+            return false;
+        }
+        if (widthDp != null && widthDp <= 0) {
+            return true;
+        }
+        String widthKey = keyForViewportWidth(packageName);
+        if (widthDp == null) {
+            LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+            if (!hasAnyPackageConfigAfterRemoving(packageName, widthKey)) {
+                packages.remove(packageName);
+            }
+            return commitBoth(editor -> editor
+                    .putStringSet(KEY_TARGET_PACKAGES, packages)
+                    .remove(widthKey));
+        }
+        Integer normalizedWidthDp = normalizeViewportWidth(widthDp);
+        if (normalizedWidthDp == null) {
+            return true;
+        }
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        packages.add(packageName);
+        return commitBoth(editor -> editor
+                .putStringSet(KEY_TARGET_PACKAGES, packages)
+                .putInt(widthKey, normalizedWidthDp));
+    }
+
+    boolean setTargetViewportScalePermilleDraft(String packageName, Integer scalePermille) {
+        if (packageName == null || packageName.isBlank()) {
+            return false;
+        }
+        if (scalePermille != null && scalePermille <= 0) {
+            return true;
+        }
+        String scaleKey = keyForViewportScalePermille(packageName);
+        if (scalePermille == null) {
+            LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+            if (!hasAnyPackageConfigAfterRemoving(packageName, scaleKey)) {
+                packages.remove(packageName);
+            }
+            return commitBoth(editor -> editor
+                    .putStringSet(KEY_TARGET_PACKAGES, packages)
+                    .remove(scaleKey));
+        }
+        Integer normalizedScalePermille = normalizeViewportScalePermille(scalePermille);
+        if (normalizedScalePermille == null) {
+            return true;
+        }
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        packages.add(packageName);
+        return commitBoth(editor -> editor
+                .putStringSet(KEY_TARGET_PACKAGES, packages)
+                .putInt(scaleKey, normalizedScalePermille));
+    }
+
     boolean clearTargetViewportWidthDp(String packageName) {
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
         if (!hasAnyPackageConfigAfterRemoving(packageName,
