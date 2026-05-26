@@ -266,16 +266,22 @@ public class AppConfigDialogBinderSourceSmokeTest {
     }
 
     @Test
-    public void viewportModeSwitchKeepsSingleInputValue() throws IOException {
+    public void viewportModeSwitchKeepsSeparateInputValues() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
         int switchStart = source.indexOf("private static void switchViewportTargetType");
         int visualStart = source.indexOf("private static void updateModeToggleVisual", switchStart);
         String switchBlock = source.substring(switchStart, visualStart);
 
+        assertTrue(source.contains("String initialViewportInput = formatViewportInput(item.viewportTargetSpec)"));
+        assertTrue(source.contains("state.updateViewportInput(resolveViewportMode(views.viewportModeToggle), s);"));
+        assertTrue(source.contains("toggleViewportMode(views.viewportModeToggle, views.viewportInputView, state)"));
         assertTrue(switchBlock.contains("bindViewportModeToggle(viewportModeToggle, nextType, animate);"));
+        assertTrue(switchBlock.contains("state.updateViewportInput(resolveViewportMode(viewportModeToggle),"));
+        assertTrue(switchBlock.contains("viewportInputView.setText(state.viewportInputFor(nextType));"));
+        assertTrue(source.contains("String viewportInputFor(String viewportTargetType)"));
+        assertTrue(source.contains("void clearViewportInputs()"));
         assertFalse(source.contains("viewportScaleText"));
         assertFalse(source.contains("viewportAbsoluteText"));
-        assertFalse(switchBlock.contains("viewportInputView.setText"));
     }
 
     @Test
