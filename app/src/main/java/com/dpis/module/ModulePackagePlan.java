@@ -143,6 +143,20 @@ final class ModulePackagePlan {
                 && FontApplyMode.isEnabled(targetFontMode)));
     }
 
+    HookExecutionPlan buildExecutionPlan(HookRuntimePolicy policy, DebugFontOverride debugOverride) {
+        return HookExecutionPlanner.buildPlan(
+                policy,
+                packageName,
+                viewportConfigured,
+                targetViewportMode,
+                fontScaleActive,
+                targetFontMode,
+                flutterSettingsFontEnabled,
+                hyperOsNativeFlutterFontEnabled,
+                hookDomainOverride,
+                debugOverride);
+    }
+
     Integer targetViewportWidthDp() {
         return targetViewportSpec.isAbsoluteDp()
                 ? targetViewportSpec.absoluteWidthDp()

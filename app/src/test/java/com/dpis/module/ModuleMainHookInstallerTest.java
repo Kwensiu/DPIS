@@ -61,7 +61,7 @@ public class ModuleMainHookInstallerTest {
         assertTrue(source.contains("param.getClassLoader()"));
         assertTrue(source.contains("FlutterSettingsFontHookInstaller.retryWithAppClassLoader("));
         assertTrue(source.contains("resolveDebugFontOverrideForPackage(packageName)"));
-        assertTrue(source.contains("HookExecutionPlanner.buildPlan("));
+        assertTrue(source.contains("packagePlan.buildExecutionPlan("));
         assertTrue(source.contains("HookExecutionPlan executionPlan"));
         assertTrue(source.contains("!packagePlan.targetDpisEnabled || !packagePlan.fontScaleActive"));
         assertTrue(source.contains("packagePlan.flutterSettingsFontEnabled"));
@@ -74,7 +74,7 @@ public class ModuleMainHookInstallerTest {
         String appProcessInstaller = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
 
         assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));
-        assertTrue(moduleMain.contains("AppProcessHookInstaller.install("));
+        assertTrue(moduleMain.contains("AppProcessHookInstaller.install(this, store, policy, packagePlan)"));
         assertTrue(appProcessInstaller.contains("HyperOsFlutterFontHookInstaller.install("));
         assertTrue(appProcessInstaller.contains("resolveFontDomainPlan("));
         assertTrue(appProcessInstaller.contains("hyperOsNativeFlutterEnabled"));
