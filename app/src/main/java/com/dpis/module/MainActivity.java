@@ -108,6 +108,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             UPDATE_READ_TIMEOUT_MS);
     private StartupUpdateDialogCoordinator startupUpdateDialogCoordinator;
     private ReleaseNotesController releaseNotesController;
+    private AppListFilterStateStore appListFilterStateStore;
 
     private MainViewModel mainViewModel;
     private AppListPagerAdapter pagerAdapter;
@@ -151,10 +152,11 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                 System::currentTimeMillis,
                 UPDATE_CONNECT_TIMEOUT_MS,
                 UPDATE_READ_TIMEOUT_MS);
+        appListFilterStateStore = new AppListFilterStateStore(this);
 
         RetainedState retainedState = (RetainedState) getLastNonConfigurationInstance();
         String initialQuery = "";
-        AppListFilterState initialFilterState = AppListFilterState.defaultState();
+        AppListFilterState initialFilterState = appListFilterStateStore.load();
         List<AppListItem> initialAppsSnapshot = Collections.emptyList();
         Set<AppListPage> initialRefreshingPages = EnumSet.noneOf(AppListPage.class);
         if (retainedState != null) {
@@ -792,11 +794,13 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         fontOnlySwitch.setChecked(state.filterState.fontConfiguredOnly);
 
         android.widget.CompoundButton.OnCheckedChangeListener listener = (buttonView, isChecked) -> {
-            dispatchMainUiAction(MainUiAction.filterChanged(new AppListFilterState(
+            AppListFilterState filterState = new AppListFilterState(
                     showSystemSwitch.isChecked(),
                     injectedOnlySwitch.isChecked(),
                     widthOnlySwitch.isChecked(),
-                    fontOnlySwitch.isChecked())));
+                    fontOnlySwitch.isChecked());
+            appListFilterStateStore.save(filterState);
+            dispatchMainUiAction(MainUiAction.filterChanged(filterState));
         };
         showSystemSwitch.setOnCheckedChangeListener(listener);
         injectedOnlySwitch.setOnCheckedChangeListener(listener);

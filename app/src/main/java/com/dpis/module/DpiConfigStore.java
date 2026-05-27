@@ -708,7 +708,10 @@ final class DpiConfigStore {
     }
 
     private static boolean isBackupConfigKey(String key) {
-        return key != null && !key.startsWith("font.library.");
+        return key != null
+                && !key.startsWith("font.library.")
+                && !key.startsWith("font.debug.")
+                && !key.startsWith("runtime.");
     }
 
     private boolean contains(String key) {

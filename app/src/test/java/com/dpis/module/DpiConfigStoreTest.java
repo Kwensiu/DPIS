@@ -568,6 +568,9 @@ public class DpiConfigStoreTest {
                         new LinkedHashSet<>(Set.of("com.max.xiaoheihe")))
                 .putString("font.com.max.xiaoheihe.typeface_id", "font_abcd1234")
                 .putString("font.library.entries", "[{\"id\":\"font_abcd1234\"}]")
+                .putBoolean("font.debug.overlay_enabled", true)
+                .putString("runtime.log.ring", "debug log")
+                .putString("runtime.log.token", "token")
                 .commit();
         DpiConfigStore store = new DpiConfigStore(prefs);
 
@@ -575,6 +578,9 @@ public class DpiConfigStoreTest {
 
         assertEquals("font_abcd1234", snapshot.get("font.com.max.xiaoheihe.typeface_id"));
         assertFalse(snapshot.containsKey("font.library.entries"));
+        assertFalse(snapshot.containsKey("font.debug.overlay_enabled"));
+        assertFalse(snapshot.containsKey("runtime.log.ring"));
+        assertFalse(snapshot.containsKey("runtime.log.token"));
     }
 
     @Test
@@ -586,11 +592,17 @@ public class DpiConfigStoreTest {
                 new LinkedHashSet<>(Set.of("com.max.xiaoheihe")));
         values.put("font.com.max.xiaoheihe.typeface_id", "font_abcd1234");
         values.put("font.library.entries", "[{\"id\":\"font_abcd1234\"}]");
+        values.put("font.debug.overlay_enabled", true);
+        values.put("runtime.log.ring", "debug log");
+        values.put("runtime.log.token", "token");
 
         assertTrue(store.replaceBackup(values));
 
         assertEquals("font_abcd1234", store.getTargetTypefaceId("com.max.xiaoheihe"));
         assertFalse(prefs.contains("font.library.entries"));
+        assertFalse(prefs.contains("font.debug.overlay_enabled"));
+        assertFalse(prefs.contains("runtime.log.ring"));
+        assertFalse(prefs.contains("runtime.log.token"));
     }
 
     @Test
