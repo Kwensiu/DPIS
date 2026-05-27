@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.11.0](https://github.com/Kwensiu/DPIS/compare/v1.10.0...v1.11.0) (2026-05-27)
+
+
+### Features
+
+* add app sheet advanced action hint ([d8b05c2](https://github.com/Kwensiu/DPIS/commit/d8b05c2fa88553bfc1972229c9cbc046966c2569))
+* add viewport relative scale route ([#66](https://github.com/Kwensiu/DPIS/issues/66)) ([85a261e](https://github.com/Kwensiu/DPIS/commit/85a261e3478d4ed8da5b4d08ec683d5f39be1b92))
+
+
+### Bug Fixes
+
+* align app config sheet defaults ([e7ee271](https://github.com/Kwensiu/DPIS/commit/e7ee271be3b863bea089e7901fa40cfee1d60344))
+* harden viewport scale config and hook routing ([#68](https://github.com/Kwensiu/DPIS/issues/68)) ([b10ed3f](https://github.com/Kwensiu/DPIS/commit/b10ed3f424089f802cd2747c1b76d233275c9a5e))
+* persist list filters and trim backups ([b1ead23](https://github.com/Kwensiu/DPIS/commit/b1ead231bdb370863e4a08e033fc28fee7d795f5))
+
+
+### UI
+
+* refine shared page chrome and dimension naming ([c38ba83](https://github.com/Kwensiu/DPIS/commit/c38ba83590bfff728f7de7c894edc9421b924078))
+
 ## [1.10.0](https://github.com/Kwensiu/DPIS/compare/v1.9.1...v1.10.0) (2026-05-21)
 
 
