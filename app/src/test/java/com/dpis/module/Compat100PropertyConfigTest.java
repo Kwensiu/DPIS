@@ -112,6 +112,25 @@ public class Compat100PropertyConfigTest {
                         200, FontApplyMode.FIELD_REWRITE, null));
     }
 
+    @Test
+    public void compat100MainProcessCanResolveAutoViewportAsCompat() {
+        assertEquals(ViewportApplyMode.COMPAT,
+                SystemPropertyConfigPreferences.resolveCompatViewportModeForTest(
+                        ViewportApplyMode.AUTO,
+                        ViewportTargetSpec.relativeScale(1500),
+                        true));
+        assertEquals(ViewportApplyMode.AUTO,
+                SystemPropertyConfigPreferences.resolveCompatViewportModeForTest(
+                        ViewportApplyMode.AUTO,
+                        ViewportTargetSpec.relativeScale(1500),
+                        false));
+        assertEquals(ViewportApplyMode.AUTO,
+                SystemPropertyConfigPreferences.resolveCompatViewportModeForTest(
+                        ViewportApplyMode.AUTO,
+                        ViewportTargetSpec.off(),
+                        true));
+    }
+
     private static String expectedViewportCommand(String viewport,
                                                   String targetType,
                                                   String scalePermille,

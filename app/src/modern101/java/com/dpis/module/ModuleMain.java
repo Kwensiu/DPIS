@@ -101,8 +101,12 @@ public final class ModuleMain extends XposedModule {
         if (processName == null || processName.isBlank()) {
             return fallbackStore;
         }
+        // module-loaded runs before package-ready and only has the process name.
+        // For per-app runtime mirrors, treat auto viewport as the app-process
+        // projection route. Relative scale intentionally avoids system_server
+        // viewport mutation, while absolute targets may still use system_server.
         return new DpiConfigStore(
-                new SystemPropertyConfigPreferences(processName));
+                new SystemPropertyConfigPreferences(processName, true));
     }
 
     private void installAppProcessHooksIfConfigured(DpiConfigStore store,
@@ -163,7 +167,9 @@ public final class ModuleMain extends XposedModule {
                 || packagePlan.packageName == null || packagePlan.packageName.isBlank()) {
             return false;
         }
-        return !processName.equals(packagePlan.packageName) && packagePlan.viewportEnabled;
+        return !processName.equals(packagePlan.packageName)
+                && !processName.startsWith(packagePlan.packageName + ":")
+                && packagePlan.viewportEnabled;
     }
 
     private void retryFlutterHooksWithAppClassLoader(DpiConfigStore store,

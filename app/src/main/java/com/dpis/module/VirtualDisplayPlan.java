@@ -31,4 +31,34 @@ final class VirtualDisplayPlan {
                 sourceHeightPx,
                 targetSmallestWidthDp);
     }
+
+    static VirtualDisplayOverride.Result deriveAbsoluteResultFromPhysicalPixels(
+            int sourceWidthDp,
+            int sourceHeightDp,
+            int sourceSmallestWidthDp,
+            int sourceWidthPx,
+            int sourceHeightPx,
+            int targetSmallestWidthDp) {
+        if (sourceWidthDp <= 0
+                || sourceHeightDp <= 0
+                || sourceSmallestWidthDp <= 0
+                || sourceWidthPx <= 0
+                || sourceHeightPx <= 0
+                || targetSmallestWidthDp <= 0) {
+            return null;
+        }
+        float viewportScale = (float) targetSmallestWidthDp / (float) sourceSmallestWidthDp;
+        int targetWidthDp = Math.max(1, Math.round(sourceWidthDp * viewportScale));
+        int targetHeightDp = Math.max(1, Math.round(sourceHeightDp * viewportScale));
+        int targetDensityDpi = Math.max(1,
+                Math.round(Math.min(sourceWidthPx, sourceHeightPx)
+                        * 160.0f / targetSmallestWidthDp));
+        return new VirtualDisplayOverride.Result(
+                targetWidthDp,
+                targetHeightDp,
+                targetSmallestWidthDp,
+                targetDensityDpi,
+                sourceWidthPx,
+                sourceHeightPx);
+    }
 }

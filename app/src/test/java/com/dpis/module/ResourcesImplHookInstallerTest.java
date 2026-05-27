@@ -356,11 +356,110 @@ public class ResourcesImplHookInstallerTest {
     }
 
     @Test
-    public void relativeScaleDoesNotCompoundWhenConfigurationAlreadyMatchesTarget() {
+    public void absoluteViewportRecordRestoresDensityWhenTargetConfigWasReDerived() {
+        String packageName = "com.example.viewport";
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.absoluteDp(500);
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
+                360,
+                736,
+                360,
+                480,
+                1080,
+                2208);
+        VirtualDisplayState.publish(
+                packageName,
+                targetSpec,
+                source,
+                new ViewportOverride.Result(500, 1022, 500, 346),
+                null,
+                ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER);
+        Configuration config = new Configuration();
+        config.densityDpi = 432;
+        config.screenWidthDp = 500;
+        config.screenHeightDp = 1022;
+        config.smallestScreenWidthDp = 500;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 2208;
+        metrics.densityDpi = 432;
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
-        store.setTargetViewportSpec("com.tencent.mm", ViewportTargetSpec.relativeScale(1200));
-        store.setTargetViewportApplyMode("com.tencent.mm", ViewportApplyMode.COMPAT);
+        store.setTargetViewportSpec(packageName, targetSpec);
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+
+        ResourcesImplHookInstaller.applyDensityOverride(packageName, config, metrics, store);
+
+        assertEquals(500, config.screenWidthDp);
+        assertEquals(1022, config.screenHeightDp);
+        assertEquals(500, config.smallestScreenWidthDp);
+        assertEquals(346, config.densityDpi);
+        assertEquals(346, metrics.densityDpi);
+    }
+
+    @Test
+    public void absoluteViewportUsesPhysicalPixelsWhenSourceDensityDrifted() {
+        String packageName = "com.example.viewport";
+        Configuration config = new Configuration();
+        config.densityDpi = 432;
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 736;
+        config.smallestScreenWidthDp = 360;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 2208;
+        metrics.densityDpi = 432;
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.absoluteDp(500));
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+
+        ResourcesImplHookInstaller.applyDensityOverride(packageName, config, metrics, store);
+
+        assertEquals(500, config.screenWidthDp);
+        assertEquals(1022, config.screenHeightDp);
+        assertEquals(500, config.smallestScreenWidthDp);
+        assertEquals(346, config.densityDpi);
+        assertEquals(346, metrics.densityDpi);
+        assertEquals(1080, metrics.widthPixels);
+        assertEquals(2208, metrics.heightPixels);
+    }
+
+    @Test
+    public void absoluteViewportUsesPhysicalPixelsWhenConfigAndMetricsDensityDisagree() {
+        String packageName = "com.example.viewport";
+        Configuration config = new Configuration();
+        config.densityDpi = 432;
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 736;
+        config.smallestScreenWidthDp = 360;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 2208;
+        metrics.densityDpi = 480;
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.absoluteDp(500));
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+
+        ResourcesImplHookInstaller.applyDensityOverride(packageName, config, metrics, store);
+
+        assertEquals(500, config.screenWidthDp);
+        assertEquals(1022, config.screenHeightDp);
+        assertEquals(500, config.smallestScreenWidthDp);
+        assertEquals(346, config.densityDpi);
+        assertEquals(346, metrics.densityDpi);
+    }
+
+    @Test
+    public void relativeScaleDoesNotCompoundWhenConfigurationAlreadyMatchesTarget() {
+        String packageName = "com.example.viewport";
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(1200));
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
 
         Configuration firstConfig = new Configuration();
         firstConfig.densityDpi = 410;
@@ -374,7 +473,7 @@ public class ResourcesImplHookInstallerTest {
         firstMetrics.densityDpi = 410;
 
         ResourcesImplHookInstaller.applyDensityOverride(
-                "com.tencent.mm", firstConfig, firstMetrics, store);
+                packageName, firstConfig, firstMetrics, store);
 
         assertEquals(518, firstConfig.smallestScreenWidthDp);
 
@@ -390,7 +489,7 @@ public class ResourcesImplHookInstallerTest {
         secondMetrics.densityDpi = 410;
 
         ResourcesImplHookInstaller.applyDensityOverride(
-                "com.tencent.mm", secondConfig, secondMetrics, store);
+                packageName, secondConfig, secondMetrics, store);
 
         assertEquals(518, secondConfig.screenWidthDp);
         assertEquals(1059, secondConfig.screenHeightDp);

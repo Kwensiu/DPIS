@@ -482,7 +482,7 @@ final class SystemServerDisplayEnvironmentInstaller {
             return;
         }
         PerAppDisplayEnvironment environment = null;
-        if (hasSystemServerViewportOverride(config)) {
+        if (shouldApplySystemServerViewportMutation(config)) {
             int widthPx = resolveWidthPx(baseConfiguration, null);
             int heightPx = resolveHeightPx(baseConfiguration, null);
             environment = resolveAlreadyAppliedRelativeScaleEnvironment(
@@ -506,9 +506,10 @@ final class SystemServerDisplayEnvironmentInstaller {
         boolean fontChanged = false;
         for (Object arg : args) {
             if (arg instanceof Configuration configuration) {
-                if (environment != null) {
-                    changed |= applyConfiguration(configuration, environment);
-                }
+                // LaunchActivityItem configurations are compared against the
+                // ActivityRecord's full configuration during launch. Mutating
+                // viewport fields here can make the new activity immediately
+                // relaunch for screen size / density changes.
                 boolean appliedFont = applyFontScale(configuration, config);
                 fontChanged |= appliedFont;
                 changed |= appliedFont;
@@ -849,7 +850,7 @@ final class SystemServerDisplayEnvironmentInstaller {
                                                                      Snapshot before,
                                                                      Snapshot after,
                                                                      PerAppDisplayConfig config) {
-        if (config == null || !hasSystemServerViewportOverride(config)) {
+        if (config == null || !shouldApplySystemServerViewportMutation(config)) {
             return null;
         }
         Configuration configuration = after.configuration != null
@@ -996,8 +997,12 @@ final class SystemServerDisplayEnvironmentInstaller {
 
     private static PerAppDisplayConfig selectConfigForSystemServer(
             PerAppDisplayConfig config) {
-        if (config == null
-                || (!hasSystemServerViewportOverride(config) && !hasSystemServerFontOverride(config))) {
+        if (config == null) {
+            return null;
+        }
+        boolean applyViewport = shouldApplySystemServerViewportMutation(config);
+        boolean applyFont = hasSystemServerFontOverride(config);
+        if (!applyViewport && !applyFont) {
             return null;
         }
         return config;
@@ -1034,6 +1039,10 @@ final class SystemServerDisplayEnvironmentInstaller {
         PerAppDisplayConfig config = selectConfigForSystemServer(source.get(packageName));
         if (config == null) {
             logDisplayManagerInfoSkip(entryName, "no-viewport-config", callingUid, packageName, displayInfo);
+            return;
+        }
+        if (!shouldApplySystemServerViewportMutation(config)) {
+            logDisplayManagerInfoSkip(entryName, "no-viewport-mutation", callingUid, packageName, displayInfo);
             return;
         }
         PerAppDisplayEnvironment environment = resolveDisplayInfoEnvironment(displayInfo, config);
@@ -1190,7 +1199,9 @@ final class SystemServerDisplayEnvironmentInstaller {
                                             PerAppDisplayEnvironment environment,
                                             PerAppDisplayConfig config) {
         boolean changed = false;
-        if (snapshot.configuration != null && environment != null) {
+        boolean applyViewport = environment != null
+                && shouldApplySystemServerViewportMutation(config);
+        if (snapshot.configuration != null && applyViewport) {
             changed |= applyConfiguration(snapshot.configuration, environment);
         }
         if (snapshot.configuration != null) {
@@ -1200,13 +1211,18 @@ final class SystemServerDisplayEnvironmentInstaller {
             }
             changed |= fontChanged;
         }
-        if (environment != null && shouldApplyFrame(entryName) && snapshot.frame != null) {
+        if (applyViewport && shouldApplyFrame(entryName) && snapshot.frame != null) {
             changed |= applyFrame(snapshot.frame, environment.widthPx, environment.heightPx);
         }
-        if (environment != null && shouldApplyDisplayInfo(entryName) && snapshot.displayInfo != null) {
+        if (applyViewport && shouldApplyDisplayInfo(entryName) && snapshot.displayInfo != null) {
             changed |= applyDisplayInfo(snapshot.displayInfo, environment);
         }
         return changed;
+    }
+
+    private static boolean shouldApplySystemServerViewportMutation(PerAppDisplayConfig config) {
+        return hasSystemServerViewportOverride(config)
+                && !config.targetViewportSpec.isRelativeScale();
     }
 
     private static boolean shouldApplyFrame(String entryName) {

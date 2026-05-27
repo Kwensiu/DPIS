@@ -287,10 +287,12 @@ final class ResourcesManagerHookInstaller {
         }
         boolean windowScoped = ViewportConfigurationScope.isWindowScoped(config);
         VirtualDisplayOverride.Result stableTarget =
-                resolution.record != null && resolution.record.virtualDisplayResult != null
-                        ? resolution.record.virtualDisplayResult
-                        : VirtualDisplayState.getForTarget(targetViewportWidth);
-        ViewportOverride.Result result = ViewportOverride.derive(
+                ViewportResolvedTarget.virtualDisplayResult(resolution, targetViewportWidth);
+        ViewportOverride.Result resolvedRecordResult =
+                ViewportResolvedTarget.viewportResult(resolution, windowScoped);
+        ViewportOverride.Result result = resolvedRecordResult != null
+                ? resolvedRecordResult
+                : ViewportOverride.derive(
                 config,
                 targetViewportWidth != null ? targetViewportWidth : 0,
                 windowScoped,
@@ -338,7 +340,8 @@ final class ResourcesManagerHookInstaller {
             VirtualDisplayOverride.Result stableResult =
                     VirtualDisplayState.getStableTargetResult(
                             originalSmallestWidthDp, targetViewportWidth);
-            if (stableResult != null && stableResult.densityDpi > 0
+            if (result.densityDpi <= 0
+                    && stableResult != null && stableResult.densityDpi > 0
                     && config.densityDpi != stableResult.densityDpi) {
                 config.densityDpi = stableResult.densityDpi;
                 String message = "DPIS_VIEWPORT " + sourceTag

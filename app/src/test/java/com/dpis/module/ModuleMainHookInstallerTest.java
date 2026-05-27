@@ -34,7 +34,7 @@ public class ModuleMainHookInstallerTest {
         assertTrue(appProcessInstaller.contains("HyperOsFlutterFontHookInstaller.install(xposed, packageName, store)"));
         assertTrue(moduleMain.contains("maybeInstallAppProcessFromModuleLoaded("));
         assertTrue(moduleMain.contains("installAppProcessHooksIfConfigured("));
-        assertTrue(moduleMain.contains("new SystemPropertyConfigPreferences(processName)"));
+        assertTrue(moduleMain.contains("new SystemPropertyConfigPreferences(processName, true)"));
         assertTrue(moduleMain.contains("module-loaded app hook install enter"));
         assertTrue(moduleMain.contains("module-loaded app hook install failed"));
         assertTrue(moduleMain.contains("rawBridgeLog("));
@@ -141,6 +141,13 @@ public class ModuleMainHookInstallerTest {
         assertFalse(moduleMain.contains("packagePlan.targetViewportWidthDp == null"
                 + System.lineSeparator()
                 + "                && !packagePlan.fontScaleActive"));
+    }
+
+    @Test
+    public void moduleMainAllowsPackageOwnedSecondaryProcessesForViewportHooks() throws IOException {
+        String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+
+        assertTrue(moduleMain.contains("!processName.startsWith(packagePlan.packageName + \":\")"));
     }
 
     @Test

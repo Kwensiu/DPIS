@@ -122,6 +122,31 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     }
 
     @Test
+    public void launchActivityItemDoesNotMutateViewportConfig()
+            throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+        int methodIndex = source.indexOf("private static void applyLaunchActivityItemArgs");
+        int nextMethodIndex = source.indexOf("private static void logViewportMarkerProbe", methodIndex);
+        assertTrue(methodIndex > 0);
+        assertTrue(nextMethodIndex > methodIndex);
+
+        String method = source.substring(methodIndex, nextMethodIndex);
+        assertTrue(method.contains("resolveMarkerGatedEnvironment("));
+        assertFalse(method.contains("applyConfiguration(configuration, environment)"));
+    }
+
+    @Test
+    public void relativeScaleIsExcludedFromSystemServerViewportMutation()
+            throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+        assertTrue(source.contains("private static boolean shouldApplySystemServerViewportMutation"));
+        assertTrue(source.contains("&& !config.targetViewportSpec.isRelativeScale()"));
+        assertTrue(source.contains("boolean applyViewport = environment != null"));
+        assertTrue(source.contains("shouldApplySystemServerViewportMutation(config);"));
+        assertTrue(source.contains("if (!shouldApplySystemServerViewportMutation(config))"));
+    }
+
+    @Test
     public void emitsWhenMessageChangesAndNoThrottle() {
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldEmitLogForTest("a", "b", 1000L, 900L, 0L));

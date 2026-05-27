@@ -130,27 +130,61 @@ final class VirtualDisplayState {
             return null;
         }
         ViewportRuntimeMarkerBridge.MarkerRecord marker = parseResult.record;
-        ViewportOverride.Result viewportResult = new ViewportOverride.Result(
+        boolean hasCompleteResult = marker.resultWidthDp > 0
+                && marker.resultHeightDp > 0
+                && marker.resultSmallestWidthDp > 0
+                && marker.resultDensityDpi > 0;
+        ViewportOverride.Result viewportResult = hasCompleteResult
+                ? new ViewportOverride.Result(
+                marker.resultWidthDp,
+                marker.resultHeightDp,
+                marker.resultSmallestWidthDp,
+                marker.resultDensityDpi)
+                : new ViewportOverride.Result(
                 marker.effectiveSmallestWidthDp,
                 marker.effectiveSmallestWidthDp,
                 marker.effectiveSmallestWidthDp,
                 0);
+        VirtualDisplayOverride.Result virtualDisplayResult = completeMarkerVirtualDisplayResult(
+                marker, hasCompleteResult);
         ViewportRuntimeRecord record = new ViewportRuntimeRecord(
                 packageName,
                 targetSpec,
                 marker.sourceSignature,
                 marker.effectiveSmallestWidthDp,
                 viewportResult,
-                null,
+                virtualDisplayResult,
                 marker.resultSignature,
                 marker.provenance,
                 marker.elapsedRealtimeMillis,
                 ViewportSourceSnapshot.SCOPE_DISPLAY);
+        if (virtualDisplayResult != null) {
+            current = virtualDisplayResult;
+        }
         putRecord(recordKey(packageName, record.targetFingerprint, record.sourceSignature), record);
         putRecord(recordKey(packageName, record.targetFingerprint, record.resultSignature), record);
         putRecord(recordKey(packageName, record.targetFingerprint,
                 signatureForSmallestWidth(record.effectiveSmallestWidthDp)), record);
         return record;
+    }
+
+    private static VirtualDisplayOverride.Result completeMarkerVirtualDisplayResult(
+            ViewportRuntimeMarkerBridge.MarkerRecord marker,
+            boolean hasCompleteResult) {
+        if (!hasCompleteResult
+                || current == null
+                || current.smallestWidthDp != marker.resultSmallestWidthDp
+                || current.widthPx <= 0
+                || current.heightPx <= 0) {
+            return null;
+        }
+        return new VirtualDisplayOverride.Result(
+                marker.resultWidthDp,
+                marker.resultHeightDp,
+                marker.resultSmallestWidthDp,
+                marker.resultDensityDpi,
+                current.widthPx,
+                current.heightPx);
     }
 
     static ViewportRuntimeRecord findForSource(String packageName,

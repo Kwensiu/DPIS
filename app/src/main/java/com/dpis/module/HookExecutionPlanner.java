@@ -97,8 +97,8 @@ final class HookExecutionPlanner {
         String resolvedViewportMode = viewportConfigured
                 ? EffectiveModeResolver.resolveViewportMode(viewportMode, systemHooksEnabled)
                 : ViewportApplyMode.OFF;
-        boolean viewportEnabledBase = viewportConfigured
-                && ViewportApplyMode.COMPAT.equals(resolvedViewportMode);
+        boolean viewportEnabledBase = shouldInstallViewportRoute(
+                viewportConfigured, viewportMode, resolvedViewportMode);
 
         FontMode resolvedFontMode = resolveFontMode(policy, fontScaleActive, fontMode);
         boolean fontRouteEnabled = resolvedFontMode != FontMode.OFF;
@@ -231,8 +231,19 @@ final class HookExecutionPlanner {
             return false;
         }
         boolean systemHooksEnabled = policy == null || policy.systemServerHooksEnabled;
-        String normalized = EffectiveModeResolver.resolveViewportMode(viewportMode, systemHooksEnabled);
-        return !ViewportApplyMode.OFF.equals(normalized);
+        String resolved = EffectiveModeResolver.resolveViewportMode(viewportMode, systemHooksEnabled);
+        return shouldInstallViewportRoute(viewportConfigured, viewportMode, resolved);
+    }
+
+    private static boolean shouldInstallViewportRoute(boolean viewportConfigured,
+                                                      String requestedViewportMode,
+                                                      String resolvedViewportMode) {
+        if (!viewportConfigured) {
+            return false;
+        }
+        String requested = ViewportApplyMode.normalize(requestedViewportMode);
+        return ViewportApplyMode.COMPAT.equals(resolvedViewportMode)
+                || ViewportApplyMode.AUTO.equals(requested);
     }
 
     static FontMode resolveFontMode(HookRuntimePolicy policy,

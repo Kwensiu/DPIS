@@ -77,13 +77,25 @@ public class AppProcessHookInstallerTest {
     }
 
     @Test
-    public void systemHookOffDisablesViewportEmulationHooks() {
+    public void explicitSystemViewportDoesNotInstallAppProcessHooks() {
+        HookRuntimePolicy policy = createPolicy(false, true);
+
+        boolean enabled = AppProcessHookInstaller.resolveViewportHookEnabled(
+                policy,
+                true,
+                ViewportApplyMode.SYSTEM);
+
+        assertFalse(enabled);
+    }
+
+    @Test
+    public void systemHookOffDisablesExplicitSystemViewportHooks() {
         HookRuntimePolicy policy = createPolicy(false, false);
 
         boolean enabled = AppProcessHookInstaller.resolveViewportHookEnabled(
                 policy,
                 true,
-                ViewportApplyMode.SYSTEM_EMULATION);
+                ViewportApplyMode.SYSTEM);
 
         assertFalse(enabled);
     }

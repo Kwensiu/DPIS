@@ -30,19 +30,37 @@ final class TargetViewportWidthResolver {
             return ViewportTargetResolution.none("target-off");
         }
         String requestedMode = store.getTargetViewportApplyMode(packageName);
+        String normalizedRequestedMode = ViewportApplyMode.normalize(requestedMode);
         String mode = EffectiveModeResolver.resolveViewportMode(
                 requestedMode,
                 store.isSystemServerHooksEnabled());
         if (ViewportApplyMode.OFF.equals(mode)) {
             return ViewportTargetResolution.none("mode-off");
         }
-        if (targetSpec.isAbsoluteDp()) {
-            return ViewportTargetResolution.resolved(
-                    targetSpec, targetSpec.absoluteWidthDp(), source, "absolute-dp");
-        }
+        boolean compatMode = ViewportApplyMode.COMPAT.equals(mode);
         if (source == null || !source.validForTargetResolution()) {
+            if (compatMode && targetSpec.isAbsoluteDp()) {
+                return ViewportTargetResolution.resolved(
+                        targetSpec, targetSpec.absoluteWidthDp(), source, "absolute-dp");
+            }
             return ViewportTargetResolution.none("invalid-source");
         }
+        ViewportRuntimeMarkerBridge.ParseResult marker = ViewportRuntimeMarkerBridge.read(
+                packageName,
+                targetSpec.fingerprint(),
+                RuntimeClock.crossProcessMarkerMillis());
+        ViewportRuntimeRecord importedMarkerRecord = null;
+        if (marker.hit) {
+            importedMarkerRecord = VirtualDisplayState.importMarker(packageName, targetSpec, marker);
+            if (targetSpec.isAbsoluteDp()
+                    || hasCompleteMarkerResult(marker.record)
+                    || source.sourceSignature().equals(marker.record.sourceSignature)
+                    || source.sourceSignature().equals(marker.record.resultSignature)) {
+                return ViewportTargetResolution.fromRecord(importedMarkerRecord, "system-marker");
+            }
+        }
+        boolean compatDerivationAllowed = canDeriveCompatTarget(
+                normalizedRequestedMode, mode, marker);
         ViewportRuntimeRecord localRecord =
                 VirtualDisplayState.findForSource(packageName, targetSpec, source);
         if (localRecord != null) {
@@ -55,25 +73,27 @@ final class TargetViewportWidthResolver {
         if (alreadyTargetRecord != null) {
             return ViewportTargetResolution.fromRecord(alreadyTargetRecord, "already-target-record");
         }
-        ViewportRuntimeMarkerBridge.ParseResult marker = ViewportRuntimeMarkerBridge.read(
-                packageName,
-                targetSpec.fingerprint(),
-                RuntimeClock.crossProcessMarkerMillis());
-        if (marker.hit) {
-            ViewportRuntimeRecord imported =
-                    VirtualDisplayState.importMarker(packageName, targetSpec, marker);
-            if (source.sourceSignature().equals(marker.record.sourceSignature)
-                    || source.sourceSignature().equals(marker.record.resultSignature)) {
-                return ViewportTargetResolution.fromRecord(imported, "system-marker");
-            }
-        }
         ViewportRuntimeRecord displayRecord =
                 VirtualDisplayState.findDisplayRecordForTarget(packageName, targetSpec);
+        if (displayRecord == null) {
+            displayRecord = importedMarkerRecord;
+        }
         if (source.windowScoped()) {
             if (displayRecord != null) {
                 return ViewportTargetResolution.fromRecord(displayRecord, "window-borrow");
             }
+            if (compatDerivationAllowed && targetSpec.isAbsoluteDp()) {
+                return ViewportTargetResolution.resolved(
+                        targetSpec, targetSpec.absoluteWidthDp(), source, "absolute-window");
+            }
             return ViewportTargetResolution.none("window-no-display-record");
+        }
+        if (!compatDerivationAllowed) {
+            return ViewportTargetResolution.none("system-route-no-compat-fallback");
+        }
+        if (targetSpec.isAbsoluteDp()) {
+            return ViewportTargetResolution.resolved(
+                    targetSpec, targetSpec.absoluteWidthDp(), source, "absolute-dp");
         }
         if (!source.canPublishFreshRelativeBaseline()) {
             return ViewportTargetResolution.none("source-not-fresh-baseline");
@@ -82,6 +102,28 @@ final class TargetViewportWidthResolver {
                 Math.round((source.smallestWidthDp * targetSpec.scalePermille()) / 1000.0f));
         return ViewportTargetResolution.resolved(
                 targetSpec, effectiveTarget, source, "relative-scale");
+    }
+
+    private static boolean canDeriveCompatTarget(String requestedMode,
+                                                 String resolvedMode,
+                                                 ViewportRuntimeMarkerBridge.ParseResult marker) {
+        if (ViewportApplyMode.COMPAT.equals(resolvedMode)) {
+            return true;
+        }
+        return ViewportApplyMode.AUTO.equals(requestedMode)
+                && ViewportApplyMode.SYSTEM.equals(resolvedMode)
+                && isClearSystemRouteFailure(marker);
+    }
+
+    private static boolean isClearSystemRouteFailure(ViewportRuntimeMarkerBridge.ParseResult marker) {
+        if (marker == null || marker.hit) {
+            return false;
+        }
+        return "target-mismatch".equals(marker.reason)
+                || "package-mismatch".equals(marker.reason)
+                || "malformed".equals(marker.reason)
+                || "too-long".equals(marker.reason)
+                || "stale".equals(marker.reason);
     }
 
     static Integer resolve(Integer targetViewportWidthDp,
@@ -125,6 +167,14 @@ final class TargetViewportWidthResolver {
                 store.getTargetViewportApplyMode(packageName),
                 store.isSystemServerHooksEnabled(),
                 runtimeOverride);
+    }
+
+    private static boolean hasCompleteMarkerResult(ViewportRuntimeMarkerBridge.MarkerRecord record) {
+        return record != null
+                && record.resultWidthDp > 0
+                && record.resultHeightDp > 0
+                && record.resultSmallestWidthDp > 0
+                && record.resultDensityDpi > 0;
     }
 
 }

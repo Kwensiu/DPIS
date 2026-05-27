@@ -56,7 +56,7 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
             installSystemServerHooksForCompat100();
             return;
         }
-        DpiConfigStore store = ConfigStoreFactory.createForCompat100Host(packageName);
+        DpiConfigStore store = createCompat100Store(packageName, lpparam.processName);
         DpisLog.setLoggingEnabled(store.isGlobalLogEnabled());
         compatDebugLog("compat100 legacy handleLoadPackage: package=" + packageName
                 + ", process=" + lpparam.processName);
@@ -66,6 +66,18 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
             compatDebugLog("compat100 legacy package skipped: package=" + packageName
                     + ", configuredPackages=" + snapshot.getConfiguredPackages());
             return;
+        }
+        if (shouldSuppressSecondaryProcessViewport(lpparam.processName, plan)) {
+            compatDebugLog("compat100 legacy secondary process viewport route suppressed: process="
+                    + lpparam.processName + ", package=" + packageName
+                    + ", viewportMode=" + plan.targetViewportMode);
+            plan = plan.withoutViewportRoute();
+            if (!plan.shouldInstallCompat100LegacyHooks()) {
+                compatDebugLog("compat100 legacy package skipped after secondary process"
+                        + " viewport suppression: package=" + packageName
+                        + ", process=" + lpparam.processName);
+                return;
+            }
         }
         compatDebugLog("compat100 legacy package matched: package=" + packageName
                 + ", targetViewportSpec=" + plan.targetViewportSpec
@@ -88,6 +100,24 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
         if (FontApplyMode.FIELD_REWRITE.equals(FontApplyMode.normalize(plan.targetFontMode))) {
             installFontFieldRewriteHooks(packageName, store);
         }
+    }
+
+    private static DpiConfigStore createCompat100Store(String packageName, String processName) {
+        if (packageName != null && packageName.equals(processName)) {
+            return ConfigStoreFactory.createForCompat100MainProcessHost(packageName);
+        }
+        return ConfigStoreFactory.createForCompat100Host(packageName);
+    }
+
+    private static boolean shouldSuppressSecondaryProcessViewport(String processName,
+                                                                  ModulePackagePlan plan) {
+        if (processName == null || processName.isBlank() || plan == null
+                || plan.packageName == null || plan.packageName.isBlank()) {
+            return false;
+        }
+        return !processName.equals(plan.packageName)
+                && !processName.startsWith(plan.packageName + ":")
+                && plan.viewportEnabled;
     }
 
     private static void installSystemServerHooksForCompat100() {
@@ -172,12 +202,13 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
                             "Compat100LegacyResourcesManager");
                 }
             });
-            int activityHookCount = installUpdateResourcesForActivityHook(
-                    resourcesManagerClass, packageName, store);
-            int createHookCount = installResourceCreationHooks(
-                    resourcesManagerClass, packageName, store);
-            int keyHookCount = installResourcesKeyHooks(
-                    resourcesManagerClass, packageName, store);
+            // compat100 keeps viewport mutations on stable resource/read/display
+            // boundaries. ResourcesManager activity/create/key hooks can reapply
+            // per-activity configuration during navigation and drift from the
+            // system_server launch configuration, so they stay disabled here.
+            int activityHookCount = 0;
+            int createHookCount = 0;
+            int keyHookCount = 0;
             compatDebugLog("compat100 legacy ResourcesManager hook ready"
                     + " (activityHooks=" + activityHookCount
                     + ", createHooks=" + createHookCount

@@ -58,7 +58,8 @@ public class HyperOsFlutterFontHookConfigTest {
         String app = readSource("src/main/java/com/dpis/module/DpisApplication.java");
 
         assertTrue(factory.contains("createForCompat100Host(String packageName)"));
-        assertTrue(factory.contains("new SystemPropertyConfigPreferences(packageName)"));
+        assertTrue(factory.contains("new SystemPropertyConfigPreferences("
+                + "packageName, resolveAutoViewportAsCompat)"));
         assertFalse(factory.contains("CompatConfigProviderPreferences"));
         assertTrue(prefs.contains("ViewportPropertyBridge.readTargetSpec(packageName)"));
         assertTrue(prefs.contains("HyperOsFlutterFontBridge.readForceFontScalePercent(packageName)"));

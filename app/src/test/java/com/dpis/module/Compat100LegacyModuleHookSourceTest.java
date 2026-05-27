@@ -33,6 +33,9 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(source.contains("plan.typefaceEnabled"));
         assertTrue(source.contains("boolean resourceHooksNeeded = plan.viewportEnabled"));
         assertTrue(source.contains("if (resourceHooksNeeded)"));
+        assertTrue(source.contains("int activityHookCount = 0;"));
+        assertTrue(source.contains("int createHookCount = 0;"));
+        assertTrue(source.contains("int keyHookCount = 0;"));
         assertTrue(source.indexOf("if (resourceHooksNeeded)")
                 < source.indexOf("installResourcesImplHook(packageName, store)"));
         assertTrue(source.indexOf("installResourcesReadHooks(packageName, store)")
@@ -58,6 +61,13 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(source.contains("implements IXposedHookLoadPackage, IXposedHookZygoteInit"));
         assertTrue(source.contains("public void initZygote(StartupParam startupParam)"));
         assertTrue(source.contains("installSystemServerHooksForCompat100();"));
+        assertTrue(source.contains("createCompat100Store(packageName, lpparam.processName)"));
+        assertTrue(source.contains("createForCompat100MainProcessHost(packageName)"));
+        assertTrue(source.contains("shouldSuppressSecondaryProcessViewport(lpparam.processName, plan)"));
+        assertTrue(source.contains("compat100 legacy secondary process viewport route suppressed"));
+        assertTrue(source.contains("!processName.startsWith(plan.packageName + \":\")"));
+        assertTrue(source.contains("plan.withoutViewportRoute()"));
+        assertTrue(source.contains("package skipped after secondary process"));
 
         String typefaceSource = read(
                 "src/compat100/java/com/dpis/module/Compat100TypefaceOverrideHookInstaller.java");
@@ -84,6 +94,16 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(systemServerSource.contains("ViewportOverride.apply"));
         assertTrue(systemServerSource.contains("FontApplyMode.SYSTEM_EMULATION"));
         assertTrue(systemServerSource.contains("Compat100RustProcessHookInstaller.install(source)"));
+        int launchApplyIndex = systemServerSource.indexOf("static void applyLaunchActivityItemArgs");
+        int afterLaunchApplyIndex = systemServerSource.indexOf(
+                "private static String findActivityInfoPackage", launchApplyIndex);
+        assertTrue(launchApplyIndex > 0);
+        assertTrue(afterLaunchApplyIndex > launchApplyIndex);
+        String launchApplyMethod = systemServerSource.substring(
+                launchApplyIndex, afterLaunchApplyIndex);
+        assertTrue(launchApplyMethod.contains(
+                "resolveTargetEnvironment(packageName, baseConfiguration, config)"));
+        assertFalse(launchApplyMethod.contains("applyConfiguration(configuration, environment)"));
 
         String compatRustSource = read("src/compat100/java/com/dpis/module/Compat100RustProcessHookInstaller.java");
         assertTrue(compatRustSource.contains("XposedBridge.hookMethod(method"));

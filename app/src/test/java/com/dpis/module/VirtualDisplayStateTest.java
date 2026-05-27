@@ -141,4 +141,67 @@ public class VirtualDisplayStateTest {
         assertNotNull(record);
         assertEquals(518, record.effectiveSmallestWidthDp);
     }
+
+    @Test
+    public void importedCompleteMarkerPreservesSystemServerResultDensity() {
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        ViewportRuntimeMarkerBridge.MarkerRecord marker =
+                new ViewportRuntimeMarkerBridge.MarkerRecord(
+                        "package",
+                        targetSpec.fingerprint(),
+                        "source",
+                        540,
+                        "result",
+                        540,
+                        1104,
+                        540,
+                        320,
+                        ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER,
+                        1000L);
+        VirtualDisplayState.importMarker(
+                "com.example.app",
+                targetSpec,
+                ViewportRuntimeMarkerBridge.ParseResult.hit(marker, 0L));
+
+        ViewportRuntimeRecord record = VirtualDisplayState.findBySignature(
+                "com.example.app",
+                targetSpec,
+                VirtualDisplayState.signatureForSmallestWidth(540));
+
+        assertNotNull(record);
+        assertEquals(540, record.viewportResult.smallestWidthDp);
+        assertEquals(320, record.viewportResult.densityDpi);
+    }
+
+    @Test
+    public void importedCompleteMarkerRefreshesMatchingVirtualDisplayDensity() {
+        VirtualDisplayState.set(new VirtualDisplayOverride.Result(
+                540, 1104, 540, 288, 1080, 2208));
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        ViewportRuntimeMarkerBridge.MarkerRecord marker =
+                new ViewportRuntimeMarkerBridge.MarkerRecord(
+                        "package",
+                        targetSpec.fingerprint(),
+                        "source",
+                        540,
+                        "result",
+                        540,
+                        1104,
+                        540,
+                        320,
+                        ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER,
+                        1000L);
+
+        ViewportRuntimeRecord record = VirtualDisplayState.importMarker(
+                "com.example.app",
+                targetSpec,
+                ViewportRuntimeMarkerBridge.ParseResult.hit(marker, 0L));
+
+        assertNotNull(record);
+        assertNotNull(record.virtualDisplayResult);
+        assertEquals(320, record.virtualDisplayResult.densityDpi);
+        assertEquals(320, VirtualDisplayState.get().densityDpi);
+        assertEquals(1080, VirtualDisplayState.get().widthPx);
+        assertEquals(2208, VirtualDisplayState.get().heightPx);
+    }
 }

@@ -96,9 +96,10 @@ final class Compat100SystemServerHookInstaller {
         boolean changed = false;
         for (Object arg : args) {
             if (arg instanceof Configuration configuration) {
-                if (environment != null) {
-                    changed |= applyConfiguration(configuration, environment);
-                }
+                // Keep launch-time ActivityRecord configuration stable. The
+                // published marker lets app-process hooks apply viewport state
+                // without forcing ActivityTaskManager to relaunch the activity
+                // for screen size / density drift during navigation.
                 changed |= applyFontScale(configuration, config);
             }
         }

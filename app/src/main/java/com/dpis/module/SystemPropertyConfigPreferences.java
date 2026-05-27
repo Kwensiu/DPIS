@@ -11,11 +11,17 @@ import java.util.Set;
 final class SystemPropertyConfigPreferences implements SharedPreferences {
     private static final long SNAPSHOT_TTL_MILLIS = 2_000L;
     private final String packageName;
+    private final boolean resolveAutoViewportAsCompat;
     private volatile Map<String, Object> cachedSnapshot;
     private volatile long cachedAtMillis;
 
     SystemPropertyConfigPreferences(String packageName) {
+        this(packageName, false);
+    }
+
+    SystemPropertyConfigPreferences(String packageName, boolean resolveAutoViewportAsCompat) {
         this.packageName = packageName;
+        this.resolveAutoViewportAsCompat = resolveAutoViewportAsCompat;
     }
 
     @Override
@@ -41,6 +47,8 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
                 viewportMode = ViewportApplyMode.SYSTEM;
             }
         }
+        viewportMode = resolveCompatViewportMode(
+                viewportMode, viewportTargetSpec, resolveAutoViewportAsCompat);
         Integer fontScalePercent = HyperOsFlutterFontBridge.readCompatFontScalePercent(packageName);
         String fontMode = HyperOsFlutterFontBridge.readCompatFontMode(packageName);
         Integer forceFontScalePercent = null;
@@ -145,6 +153,25 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
                                                String rawMode,
                                                Integer forceFontScalePercent) {
         return resolveCompatFontMode(compatFontScalePercent, rawMode, forceFontScalePercent);
+    }
+
+    static String resolveCompatViewportModeForTest(String rawMode,
+                                                   ViewportTargetSpec targetSpec,
+                                                   boolean resolveAutoViewportAsCompat) {
+        return resolveCompatViewportMode(rawMode, targetSpec, resolveAutoViewportAsCompat);
+    }
+
+    private static String resolveCompatViewportMode(String rawMode,
+                                                    ViewportTargetSpec targetSpec,
+                                                    boolean resolveAutoViewportAsCompat) {
+        String mode = ViewportApplyMode.normalize(rawMode);
+        if (resolveAutoViewportAsCompat
+                && targetSpec != null
+                && targetSpec.isEnabled()
+                && ViewportApplyMode.AUTO.equals(mode)) {
+            return ViewportApplyMode.COMPAT;
+        }
+        return mode;
     }
 
     private static String resolveCompatFontMode(Integer fontScalePercent,

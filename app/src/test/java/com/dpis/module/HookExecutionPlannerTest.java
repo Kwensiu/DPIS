@@ -103,7 +103,7 @@ public class HookExecutionPlannerTest {
     }
 
     @Test
-    public void viewportAutoUsesSystemRouteWithoutAppProcessViewportHooksWhenAvailable() {
+    public void viewportAutoUsesSystemFirstRouteWithAppProcessFallbackHooksWhenAvailable() {
         HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
                 createPolicy(false, true, false),
                 true,
@@ -115,8 +115,8 @@ public class HookExecutionPlannerTest {
                 DebugFontOverride.none());
 
         assertEquals(ViewportApplyMode.SYSTEM, plan.resolvedViewportMode);
-        assertFalse(plan.viewportEnabled);
-        assertFalse(plan.resourcesHooksEnabled);
+        assertTrue(plan.viewportEnabled);
+        assertTrue(plan.resourcesHooksEnabled);
     }
 
     @Test

@@ -95,6 +95,25 @@ public class VirtualDisplayOverrideTest {
         assertEquals(2208, result.heightPx);
     }
 
+    @Test
+    public void absolutePhysicalPixelPlanIgnoresDriftedSourceDensity() {
+        VirtualDisplayOverride.Result result =
+                VirtualDisplayPlan.deriveAbsoluteResultFromPhysicalPixels(
+                        360,
+                        736,
+                        360,
+                        1080,
+                        2208,
+                        500);
+
+        assertEquals(500, result.widthDp);
+        assertEquals(1022, result.heightDp);
+        assertEquals(500, result.smallestWidthDp);
+        assertEquals(346, result.densityDpi);
+        assertEquals(1080, result.widthPx);
+        assertEquals(2208, result.heightPx);
+    }
+
     private static void setTargetPackageName(String packageName) {
         try {
             Field field = DisplayHookInstaller.class.getDeclaredField("targetPackageName");

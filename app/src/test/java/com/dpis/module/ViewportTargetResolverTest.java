@@ -17,6 +17,7 @@ public class ViewportTargetResolverTest {
     public void relativeScaleUsesCurrentDisplaySmallestWidth() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetViewportSpec("com.example", ViewportTargetSpec.relativeScale(1060));
+        store.setTargetViewportApplyMode("com.example", ViewportApplyMode.COMPAT);
         ViewportSourceSnapshot inner = ViewportSourceSnapshot.systemDisplayInfo(
                 850, 1100, 850, 320, 1700, 2200);
         ViewportSourceSnapshot outer = ViewportSourceSnapshot.systemDisplayInfo(
@@ -37,6 +38,7 @@ public class ViewportTargetResolverTest {
     public void absoluteDpPreservesLegacyTarget() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetViewportSpec("com.example", ViewportTargetSpec.absoluteDp(900));
+        store.setTargetViewportApplyMode("com.example", ViewportApplyMode.COMPAT);
         ViewportSourceSnapshot outer = ViewportSourceSnapshot.systemDisplayInfo(
                 411, 900, 411, 420, 1176, 2546);
 
@@ -51,6 +53,7 @@ public class ViewportTargetResolverTest {
     public void resourcesReadDoesNotCreateFreshRelativeBaseline() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetViewportSpec("com.example", ViewportTargetSpec.relativeScale(1060));
+        store.setTargetViewportApplyMode("com.example", ViewportApplyMode.COMPAT);
         android.content.res.Configuration config = new android.content.res.Configuration();
         config.screenWidthDp = 411;
         config.screenHeightDp = 900;
@@ -70,6 +73,7 @@ public class ViewportTargetResolverTest {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1200);
         store.setTargetViewportSpec("com.example", targetSpec);
+        store.setTargetViewportApplyMode("com.example", ViewportApplyMode.COMPAT);
         ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
                 432, 883, 432, 410, 1080, 2208);
         ViewportOverride.Result viewportResult = new ViewportOverride.Result(
@@ -93,4 +97,35 @@ public class ViewportTargetResolverTest {
         assertEquals(518, result.effectiveSmallestWidthDp);
         assertEquals("already-target-record", result.reason);
     }
+
+    @Test
+    public void explicitSystemDoesNotDeriveCompatTargetWithoutSystemRecord() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec("com.example", ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportApplyMode("com.example", ViewportApplyMode.SYSTEM);
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
+                411, 900, 411, 420, 1176, 2546);
+
+        ViewportTargetResolution result =
+                TargetViewportWidthResolver.resolve(store, "com.example", source);
+
+        assertFalse(result.hasTarget());
+        assertEquals("system-route-no-compat-fallback", result.reason);
+    }
+
+    @Test
+    public void autoSystemDoesNotFallbackForEmptyMarker() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec("com.example", ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportApplyMode("com.example", ViewportApplyMode.AUTO);
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
+                411, 900, 411, 420, 1176, 2546);
+
+        ViewportTargetResolution result =
+                TargetViewportWidthResolver.resolve(store, "com.example", source);
+
+        assertFalse(result.hasTarget());
+        assertEquals("system-route-no-compat-fallback", result.reason);
+    }
+
 }
