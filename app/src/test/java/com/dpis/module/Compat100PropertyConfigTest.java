@@ -113,22 +113,31 @@ public class Compat100PropertyConfigTest {
     }
 
     @Test
-    public void compat100MainProcessCanResolveAutoViewportAsCompat() {
+    public void compat100MainProcessKeepsAutoRelativeScaleSystemFirst() {
         assertEquals(ViewportApplyMode.COMPAT,
                 RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
                         ViewportApplyMode.AUTO,
-                        ViewportTargetSpec.relativeScale(1500),
-                        true));
+                        ViewportTargetSpec.absoluteDp(500),
+                        RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ABSOLUTE_TARGETS_ONLY));
         assertEquals(ViewportApplyMode.AUTO,
                 RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
                         ViewportApplyMode.AUTO,
                         ViewportTargetSpec.relativeScale(1500),
-                        false));
+                        RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ABSOLUTE_TARGETS_ONLY));
         assertEquals(ViewportApplyMode.AUTO,
                 RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
                         ViewportApplyMode.AUTO,
                         ViewportTargetSpec.off(),
-                        true));
+                        RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ABSOLUTE_TARGETS_ONLY));
+    }
+
+    @Test
+    public void modernRuntimeMirrorCanResolveAutoRelativeScaleAsAppProcessRoute() {
+        assertEquals(ViewportApplyMode.COMPAT,
+                RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
+                        ViewportApplyMode.AUTO,
+                        ViewportTargetSpec.relativeScale(1500),
+                        RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET));
     }
 
     private static String expectedViewportCommand(String viewport,

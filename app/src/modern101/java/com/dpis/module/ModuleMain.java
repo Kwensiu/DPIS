@@ -113,7 +113,8 @@ public final class ModuleMain extends XposedModule {
         // projection route. Relative scale intentionally avoids system_server
         // viewport mutation, while absolute targets may still use system_server.
         return new DpiConfigStore(
-                new RuntimePropertyConfigPreferences(packageName, true));
+                new RuntimePropertyConfigPreferences(packageName,
+                        RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET));
     }
 
     private static String packageNameFromProcessName(String processName) {

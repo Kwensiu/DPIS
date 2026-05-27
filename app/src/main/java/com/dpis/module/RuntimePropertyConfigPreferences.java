@@ -11,18 +11,27 @@ import java.util.Set;
 final class RuntimePropertyConfigPreferences implements SharedPreferences {
     private static final long SNAPSHOT_TTL_MILLIS = 2_000L;
     private final String packageName;
-    private final boolean resolveAutoViewportAsAppProcessRoute;
+    private final AutoViewportRuntimeRoute autoViewportRuntimeRoute;
     private volatile Map<String, Object> cachedSnapshot;
     private volatile long cachedAtMillis;
 
     RuntimePropertyConfigPreferences(String packageName) {
-        this(packageName, false);
+        this(packageName, AutoViewportRuntimeRoute.NONE);
     }
 
     RuntimePropertyConfigPreferences(String packageName,
                                      boolean resolveAutoViewportAsAppProcessRoute) {
+        this(packageName, resolveAutoViewportAsAppProcessRoute
+                ? AutoViewportRuntimeRoute.ANY_ENABLED_TARGET
+                : AutoViewportRuntimeRoute.NONE);
+    }
+
+    RuntimePropertyConfigPreferences(String packageName,
+                                     AutoViewportRuntimeRoute autoViewportRuntimeRoute) {
         this.packageName = packageName;
-        this.resolveAutoViewportAsAppProcessRoute = resolveAutoViewportAsAppProcessRoute;
+        this.autoViewportRuntimeRoute = autoViewportRuntimeRoute != null
+                ? autoViewportRuntimeRoute
+                : AutoViewportRuntimeRoute.NONE;
     }
 
     @Override
@@ -49,7 +58,7 @@ final class RuntimePropertyConfigPreferences implements SharedPreferences {
             }
         }
         viewportMode = resolveRuntimeViewportMode(
-                viewportMode, viewportTargetSpec, resolveAutoViewportAsAppProcessRoute);
+                viewportMode, viewportTargetSpec, autoViewportRuntimeRoute);
         Integer fontScalePercent = HyperOsFlutterFontBridge.readCompatFontScalePercent(packageName);
         String fontMode = HyperOsFlutterFontBridge.readCompatFontMode(packageName);
         Integer forceFontScalePercent = null;
@@ -159,20 +168,52 @@ final class RuntimePropertyConfigPreferences implements SharedPreferences {
     static String resolveRuntimeViewportModeForTest(String rawMode,
                                                    ViewportTargetSpec targetSpec,
                                                    boolean resolveAutoViewportAsAppProcessRoute) {
-        return resolveRuntimeViewportMode(rawMode, targetSpec, resolveAutoViewportAsAppProcessRoute);
+        return resolveRuntimeViewportMode(rawMode, targetSpec,
+                resolveAutoViewportAsAppProcessRoute
+                        ? AutoViewportRuntimeRoute.ANY_ENABLED_TARGET
+                        : AutoViewportRuntimeRoute.NONE);
+    }
+
+    static String resolveRuntimeViewportModeForTest(String rawMode,
+                                                   ViewportTargetSpec targetSpec,
+                                                   AutoViewportRuntimeRoute autoViewportRuntimeRoute) {
+        return resolveRuntimeViewportMode(rawMode, targetSpec, autoViewportRuntimeRoute);
     }
 
     private static String resolveRuntimeViewportMode(String rawMode,
                                                     ViewportTargetSpec targetSpec,
-                                                    boolean resolveAutoViewportAsAppProcessRoute) {
+                                                    AutoViewportRuntimeRoute autoViewportRuntimeRoute) {
         String mode = ViewportApplyMode.normalize(rawMode);
-        if (resolveAutoViewportAsAppProcessRoute
+        if (autoViewportRuntimeRoute != null
+                && autoViewportRuntimeRoute.shouldUseAppProcessRoute(targetSpec)
                 && targetSpec != null
-                && targetSpec.isEnabled()
                 && ViewportApplyMode.AUTO.equals(mode)) {
             return ViewportApplyMode.COMPAT;
         }
         return mode;
+    }
+
+    enum AutoViewportRuntimeRoute {
+        NONE {
+            @Override
+            boolean shouldUseAppProcessRoute(ViewportTargetSpec targetSpec) {
+                return false;
+            }
+        },
+        ABSOLUTE_TARGETS_ONLY {
+            @Override
+            boolean shouldUseAppProcessRoute(ViewportTargetSpec targetSpec) {
+                return targetSpec != null && targetSpec.isAbsoluteDp();
+            }
+        },
+        ANY_ENABLED_TARGET {
+            @Override
+            boolean shouldUseAppProcessRoute(ViewportTargetSpec targetSpec) {
+                return targetSpec != null && targetSpec.isEnabled();
+            }
+        };
+
+        abstract boolean shouldUseAppProcessRoute(ViewportTargetSpec targetSpec);
     }
 
     private static String resolveRuntimeFontMode(Integer fontScalePercent,

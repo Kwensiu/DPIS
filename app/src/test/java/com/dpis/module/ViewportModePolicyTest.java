@@ -50,6 +50,20 @@ public class ViewportModePolicyTest {
     }
 
     @Test
+    public void relativeScaleDoesNotForceConfigurationOverrideInSystemRoute() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setSystemServerHooksEnabled(true);
+        store.setTargetViewportSpec("com.example.target", ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.AUTO);
+
+        String mode = ViewportModePolicy.resolve(store, "com.example.target");
+
+        assertEquals(ViewportApplyMode.SYSTEM, mode);
+        assertFalse(ViewportModePolicy.shouldApplyConfigurationOverride(store, "com.example.target"));
+    }
+
+    @Test
     public void autoFallsBackToCompatConfigurationOverrideWhenSystemHookOff() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);

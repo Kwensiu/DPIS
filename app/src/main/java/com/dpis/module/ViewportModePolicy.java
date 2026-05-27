@@ -14,14 +14,6 @@ final class ViewportModePolicy {
     }
 
     static boolean shouldApplyConfigurationOverride(DpiConfigStore store, String packageName) {
-        String mode = resolve(store, packageName);
-        if (ViewportApplyMode.COMPAT.equals(mode)) {
-            return true;
-        }
-        if (ViewportApplyMode.OFF.equals(mode) || store == null || packageName == null) {
-            return false;
-        }
-        ViewportTargetSpec spec = store.getTargetViewportSpec(packageName);
-        return spec.isRelativeScale();
+        return ViewportApplyMode.COMPAT.equals(resolve(store, packageName));
     }
 }
