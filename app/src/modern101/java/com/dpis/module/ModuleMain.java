@@ -68,16 +68,19 @@ public final class ModuleMain extends XposedModule {
             DpisLog.i("module-loaded app hook install skipped system process: process=" + processName);
             return;
         }
-        DpiConfigStore runtimeStore = createModuleLoadedAppProcessStore(store, processName);
+        String packageName = packageNameFromProcessName(processName);
+        DpiConfigStore runtimeStore = createModuleLoadedAppProcessStore(store, packageName);
         ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(runtimeStore);
         String source = "module-loaded";
-        if (!snapshot.isConfigured(processName)) {
+        if (!snapshot.isConfigured(packageName)) {
             ConfigSnapshot fallbackSnapshot = ConfigSnapshotLoader.fromStore(store);
-            if (!fallbackSnapshot.isConfigured(processName)) {
+            if (!fallbackSnapshot.isConfigured(packageName)) {
                 rawBridgeLog("module-loaded app config unavailable: process=" + processName
+                        + ", package=" + packageName
                         + ", propertyPackages=" + snapshot.getConfiguredPackages()
                         + ", fallbackPackages=" + fallbackSnapshot.getConfiguredPackages());
                 DpisLog.i("module-loaded app config unavailable: process=" + processName
+                        + ", package=" + packageName
                         + ", propertyPackages=" + snapshot.getConfiguredPackages()
                         + ", fallbackPackages=" + fallbackSnapshot.getConfiguredPackages());
                 return;
@@ -86,27 +89,39 @@ public final class ModuleMain extends XposedModule {
             snapshot = fallbackSnapshot;
             source = "module-loaded-fallback";
             rawBridgeLog("module-loaded app config fallback: process=" + processName
+                    + ", package=" + packageName
                     + ", packages=" + snapshot.getConfiguredPackages());
             DpisLog.i("module-loaded app config fallback: process=" + processName
+                    + ", package=" + packageName
                     + ", packages=" + snapshot.getConfiguredPackages());
         }
         HookRuntimePolicy policy = HookRuntimePolicy.fromSnapshot(snapshot);
         DpisLog.setLoggingEnabled(policy.globalLogEnabled);
-        installAppProcessHooksIfConfigured(runtimeStore, policy, snapshot, processName,
+        installAppProcessHooksIfConfigured(runtimeStore, policy, snapshot, packageName,
                 source);
     }
 
     private static DpiConfigStore createModuleLoadedAppProcessStore(DpiConfigStore fallbackStore,
-            String processName) {
-        if (processName == null || processName.isBlank()) {
+            String packageName) {
+        if (packageName == null || packageName.isBlank()) {
             return fallbackStore;
         }
         // module-loaded runs before package-ready and only has the process name.
+        // Secondary app processes are configured by their owning package, not by
+        // the full process name suffix.
         // For per-app runtime mirrors, treat auto viewport as the app-process
         // projection route. Relative scale intentionally avoids system_server
         // viewport mutation, while absolute targets may still use system_server.
         return new DpiConfigStore(
-                new SystemPropertyConfigPreferences(processName, true));
+                new SystemPropertyConfigPreferences(packageName, true));
+    }
+
+    private static String packageNameFromProcessName(String processName) {
+        if (processName == null) {
+            return null;
+        }
+        int separator = processName.indexOf(':');
+        return separator > 0 ? processName.substring(0, separator) : processName;
     }
 
     private void installAppProcessHooksIfConfigured(DpiConfigStore store,
