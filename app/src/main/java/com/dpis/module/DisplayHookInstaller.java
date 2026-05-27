@@ -198,10 +198,7 @@ final class DisplayHookInstaller {
         if (packageName == null || packageName.isBlank() || store == null) {
             return null;
         }
-        ViewportTargetSpec targetSpec = ViewportPropertyBridge.readTargetSpec(packageName);
-        if (!targetSpec.isEnabled()) {
-            targetSpec = store.getTargetViewportSpec(packageName);
-        }
+        ViewportTargetSpec targetSpec = store.getTargetViewportSpec(packageName);
         if (!targetSpec.isEnabled()) {
             return null;
         }

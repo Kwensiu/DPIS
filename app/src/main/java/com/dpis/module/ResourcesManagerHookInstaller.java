@@ -330,12 +330,13 @@ final class ResourcesManagerHookInstaller {
                         ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
             }
         }
+        boolean needsViewportUpdate = result.widthDp != originalWidthDp
+                || result.heightDp != originalHeightDp
+                || result.smallestWidthDp != originalSmallestWidthDp
+                || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi);
         boolean applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
-                store, packageName);
-        if (result.widthDp == originalWidthDp
-                && result.heightDp == originalHeightDp
-                && result.smallestWidthDp == originalSmallestWidthDp
-                && (result.densityDpi <= 0 || result.densityDpi == originalDensityDpi)
+                store, packageName, resolution, needsViewportUpdate);
+        if (!needsViewportUpdate
                 && !fontScale.changed) {
             VirtualDisplayOverride.Result stableResult =
                     VirtualDisplayState.getStableTargetResult(
@@ -362,11 +363,7 @@ final class ResourcesManagerHookInstaller {
             }
             return;
         }
-        if (applyToConfiguration
-                && (result.widthDp != originalWidthDp
-                || result.heightDp != originalHeightDp
-                || result.smallestWidthDp != originalSmallestWidthDp
-                || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi))) {
+        if (applyToConfiguration && needsViewportUpdate) {
             ViewportOverride.apply(config, result);
         }
         String modeLabel = applyToConfiguration ? "config" : "metrics";

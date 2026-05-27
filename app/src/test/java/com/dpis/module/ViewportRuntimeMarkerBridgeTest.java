@@ -140,6 +140,23 @@ public class ViewportRuntimeMarkerBridgeTest {
     }
 
     @Test
+    public void parseAllowingStaleAcceptsMatchingCompleteMarker() {
+        ViewportRuntimeMarkerBridge.MarkerRecord record = marker("org.telegram.messenger", 1_000L);
+
+        ViewportRuntimeMarkerBridge.ParseResult result =
+                ViewportRuntimeMarkerBridge.parseAllowingStale(
+                        "org.telegram.messenger",
+                        record.targetFingerprint,
+                        ViewportRuntimeMarkerBridge.encode(record),
+                        60_000L);
+
+        assertTrue(result.hit);
+        assertEquals(1_093, result.record.resultWidthDp);
+        assertEquals(900, result.record.resultSmallestWidthDp);
+        assertEquals(326, result.record.resultDensityDpi);
+    }
+
+    @Test
     public void parseRejectsTooLongMarkerBeforeTryingValueHeuristics() {
         StringBuilder raw = new StringBuilder();
         for (int i = 0; i <= ViewportRuntimeMarkerBridge.MAX_SYSTEM_PROPERTY_VALUE_LENGTH; i++) {

@@ -64,6 +64,36 @@ public class ViewportModePolicyTest {
     }
 
     @Test
+    public void autoAppliesGuardedConfigurationFallbackWhenSystemRouteStillNeedsViewportUpdate() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        ViewportTargetSpec spec = ViewportTargetSpec.relativeScale(1500);
+        store.setSystemServerHooksEnabled(true);
+        store.setTargetViewportSpec("com.example.target", spec);
+        store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.AUTO);
+        ViewportTargetResolution resolution =
+                ViewportTargetResolution.resolved(spec, 540, null, "system-marker");
+
+        assertTrue(ViewportModePolicy.shouldApplyConfigurationOverride(
+                store, "com.example.target", resolution, true));
+    }
+
+    @Test
+    public void autoDoesNotApplyGuardedConfigurationFallbackWhenConfigurationAlreadyMatches() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        ViewportTargetSpec spec = ViewportTargetSpec.relativeScale(1500);
+        store.setSystemServerHooksEnabled(true);
+        store.setTargetViewportSpec("com.example.target", spec);
+        store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.AUTO);
+        ViewportTargetResolution resolution =
+                ViewportTargetResolution.resolved(spec, 540, null, "derived");
+
+        assertFalse(ViewportModePolicy.shouldApplyConfigurationOverride(
+                store, "com.example.target", resolution, false));
+    }
+
+    @Test
     public void autoFallsBackToCompatConfigurationOverrideWhenSystemHookOff() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);

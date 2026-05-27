@@ -179,35 +179,16 @@ final class AppConfigSaveHandler {
         }
     }
 
-    private static Integer parsePositiveIntOrNull(TextInputEditText inputView)
-            throws NumberFormatException {
-        String raw = inputView.getText() != null ? inputView.getText().toString().trim() : "";
-        if (raw.isEmpty()) {
-            return null;
-        }
-        int value = Integer.parseInt(raw);
-        if (value <= 0) {
-            throw new NumberFormatException("must be positive");
-        }
-        return value;
-    }
-
     private static ViewportTargetSpec parseViewportTargetSpecOrNull(TextInputEditText inputView,
                                                                     String viewportTargetType)
             throws NumberFormatException {
-        Integer value = parsePositiveIntOrNull(inputView);
-        if (value == null) {
-            return ViewportTargetSpec.off();
+        String raw = inputView.getText() != null ? inputView.getText().toString().trim() : "";
+        if (!AppConfigInputValidation.isViewportInputValid(raw, viewportTargetType)) {
+            throw new NumberFormatException("invalid viewport target");
         }
-        if (ViewportTargetType.RELATIVE_SCALE.equals(
-                ViewportTargetType.normalize(viewportTargetType))) {
-            if (value < ViewportTargetSpec.MIN_SCALE_PERCENT
-                    || value > ViewportTargetSpec.MAX_SCALE_PERCENT) {
-                throw new NumberFormatException("viewport scale out of range");
-            }
-            return ViewportTargetSpec.relativeScale(value * 10);
-        }
-        return ViewportTargetSpec.absoluteDp(value);
+        ViewportTargetSpec spec =
+                AppConfigInputValidation.parseViewportTargetSpec(raw, viewportTargetType);
+        return spec;
     }
 
     private static Integer parseFontScalePercentOrNull(TextInputEditText inputView)
@@ -216,9 +197,9 @@ final class AppConfigSaveHandler {
         if (raw.isEmpty()) {
             return null;
         }
-        int value = Integer.parseInt(raw);
-        if (value < 50 || value > 300) {
-            throw new NumberFormatException("font scale out of range");
+        Integer value = AppConfigInputValidation.parseFontScalePercentOrNull(raw);
+        if (value == null) {
+            throw new NumberFormatException("invalid font scale");
         }
         return value;
     }

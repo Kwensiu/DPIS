@@ -128,7 +128,7 @@ final class ResourcesImplHookInstaller {
                 || result.smallestWidthDp != originalSmallestWidthDp
                 || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi);
         boolean applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
-                store, packageName);
+                store, packageName, resolution, needsViewportUpdate);
         VirtualDisplayOverride.Result sharedResult =
                 trustedDisplayTarget != null
                         ? trustedDisplayTarget

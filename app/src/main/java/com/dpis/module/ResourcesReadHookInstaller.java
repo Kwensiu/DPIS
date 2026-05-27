@@ -150,11 +150,14 @@ final class ResourcesReadHookInstaller {
             return;
         }
 
-        if (result.widthDp != originalWidthDp
+        boolean needsViewportUpdate = result.widthDp != originalWidthDp
                 || result.heightDp != originalHeightDp
                 || result.smallestWidthDp != originalSmallestWidthDp
-                || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi)) {
-            if (ViewportModePolicy.shouldApplyConfigurationOverride(store, packageName)) {
+                || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi);
+        boolean applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
+                store, packageName, resolution, needsViewportUpdate);
+        if (needsViewportUpdate) {
+            if (applyToConfiguration) {
                 ViewportOverride.apply(config, result);
             }
         }
@@ -213,8 +216,7 @@ final class ResourcesReadHookInstaller {
                         + ", targetViewportWidthDp=" + describeNullable(targetViewportWidth)
                         + ", scope=" + (windowScoped ? "window" : "display")
                         + ", mode="
-                        + (ViewportModePolicy.shouldApplyConfigurationOverride(store, packageName)
-                        ? "config" : "metrics")
+                        + (applyToConfiguration ? "config" : "metrics")
                         + ", target=" + describeViewportResult(result)
                         + ", actual=" + describeConfiguration(config)
                         + ", widthDp " + originalWidthDp

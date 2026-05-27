@@ -112,6 +112,21 @@ final class ViewportRuntimeMarkerBridge {
                              String expectedTargetFingerprint,
                              String raw,
                              long nowElapsedRealtimeMillis) {
+        return parse(packageName, expectedTargetFingerprint, raw, nowElapsedRealtimeMillis, false);
+    }
+
+    static ParseResult parseAllowingStale(String packageName,
+                                          String expectedTargetFingerprint,
+                                          String raw,
+                                          long nowElapsedRealtimeMillis) {
+        return parse(packageName, expectedTargetFingerprint, raw, nowElapsedRealtimeMillis, true);
+    }
+
+    private static ParseResult parse(String packageName,
+                                     String expectedTargetFingerprint,
+                                     String raw,
+                                     long nowElapsedRealtimeMillis,
+                                     boolean allowStale) {
         if (raw == null || raw.trim().isEmpty()) {
             return ParseResult.miss("empty");
         }
@@ -165,7 +180,7 @@ final class ViewportRuntimeMarkerBridge {
             return ParseResult.miss("malformed");
         }
         long ageMillis = nowElapsedRealtimeMillis - elapsedRealtimeMillis;
-        if (ageMillis < 0 || ageMillis > MAX_AGE_MILLIS) {
+        if (ageMillis < 0 || (!allowStale && ageMillis > MAX_AGE_MILLIS)) {
             return ParseResult.miss("stale");
         }
         MarkerRecord record = new MarkerRecord(
@@ -265,6 +280,17 @@ final class ViewportRuntimeMarkerBridge {
         }
         String raw = readSystemProperty(propertyNameForPackage(packageName), "");
         return parse(packageName, expectedTargetFingerprint, raw, nowElapsedRealtimeMillis);
+    }
+
+    static ParseResult readAllowingStale(String packageName,
+                                         String expectedTargetFingerprint,
+                                         long nowElapsedRealtimeMillis) {
+        if (packageName == null || packageName.isBlank()) {
+            return ParseResult.miss("empty-package");
+        }
+        String raw = readSystemProperty(propertyNameForPackage(packageName), "");
+        return parseAllowingStale(
+                packageName, expectedTargetFingerprint, raw, nowElapsedRealtimeMillis);
     }
 
     private static boolean setSystemProperty(String key, String value) {

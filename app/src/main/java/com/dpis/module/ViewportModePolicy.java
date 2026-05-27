@@ -16,4 +16,23 @@ final class ViewportModePolicy {
     static boolean shouldApplyConfigurationOverride(DpiConfigStore store, String packageName) {
         return ViewportApplyMode.COMPAT.equals(resolve(store, packageName));
     }
+
+    static boolean shouldApplyConfigurationOverride(DpiConfigStore store,
+                                                    String packageName,
+                                                    ViewportTargetResolution resolution,
+                                                    boolean viewportNeedsUpdate) {
+        if (shouldApplyConfigurationOverride(store, packageName)) {
+            return true;
+        }
+        if (!viewportNeedsUpdate || store == null || packageName == null || packageName.isEmpty()
+                || resolution == null || !resolution.hasTarget()) {
+            return false;
+        }
+        String requestedMode = ViewportApplyMode.normalize(
+                store.getTargetViewportApplyMode(packageName));
+        if (!ViewportApplyMode.AUTO.equals(requestedMode) || !store.isSystemServerHooksEnabled()) {
+            return false;
+        }
+        return true;
+    }
 }

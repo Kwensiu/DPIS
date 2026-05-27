@@ -100,7 +100,7 @@ public final class LegacyModuleManifestMetadataTest {
         assertTrue(source.contains("implements IXposedHookLoadPackage"));
         assertTrue(source.contains("createForCompat100Host(packageName)"));
         assertTrue(source.contains("shouldInstallCompat100LegacyHooks()"));
-        assertTrue(source.contains("shouldInstallEarlyViewportHooks("));
+        assertFalse(source.contains("shouldInstallEarlyViewportHooks("));
         assertTrue(source.contains("XposedBridge.hookMethod("));
         assertTrue(source.contains("ResourcesImplHookInstaller.applyDensityOverride("));
         assertTrue(source.contains("Compat100LegacyResourcesManager"));

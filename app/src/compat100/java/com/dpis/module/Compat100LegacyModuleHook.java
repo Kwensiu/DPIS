@@ -94,14 +94,8 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
             installTypefaceOverrideHook(packageName, plan.targetTypefaceId, store);
         }
         if (plan.viewportEnabled) {
-            if (shouldInstallEarlyViewportHooks(plan)) {
-                installDisplayHooks(packageName, store);
-                installWindowMetricsHook();
-            } else {
-                compatDebugLog("compat100 legacy early viewport hooks skipped: package="
-                        + packageName + ", viewportMode=" + plan.targetViewportMode
-                        + ", targetViewportSpec=" + plan.targetViewportSpec);
-            }
+            installDisplayHooks(packageName, store);
+            installWindowMetricsHook();
         }
         if (FontApplyMode.FIELD_REWRITE.equals(FontApplyMode.normalize(plan.targetFontMode))) {
             installFontFieldRewriteHooks(packageName, store);
@@ -124,14 +118,6 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
         return !processName.equals(plan.packageName)
                 && !processName.startsWith(plan.packageName + ":")
                 && plan.viewportEnabled;
-    }
-
-    private static boolean shouldInstallEarlyViewportHooks(ModulePackagePlan plan) {
-        if (plan == null || !plan.viewportEnabled) {
-            return false;
-        }
-        return !(ViewportApplyMode.AUTO.equals(ViewportApplyMode.normalize(plan.targetViewportMode))
-                && plan.targetViewportSpec.isRelativeScale());
     }
 
     private static void installSystemServerHooksForCompat100() {

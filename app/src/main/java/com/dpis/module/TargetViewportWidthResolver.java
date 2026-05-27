@@ -45,6 +45,18 @@ final class TargetViewportWidthResolver {
             }
             return ViewportTargetResolution.none("invalid-source");
         }
+        ViewportRuntimeRecord localRecord =
+                VirtualDisplayState.findForSource(packageName, targetSpec, source);
+        if (localRecord != null) {
+            return ViewportTargetResolution.fromRecord(localRecord, "local-source-record");
+        }
+        ViewportRuntimeRecord alreadyTargetRecord = VirtualDisplayState.findBySignature(
+                packageName,
+                targetSpec,
+                VirtualDisplayState.signatureForSmallestWidth(source.smallestWidthDp));
+        if (alreadyTargetRecord != null) {
+            return ViewportTargetResolution.fromRecord(alreadyTargetRecord, "already-target-record");
+        }
         ViewportRuntimeMarkerBridge.ParseResult marker = ViewportRuntimeMarkerBridge.read(
                 packageName,
                 targetSpec.fingerprint(),
@@ -58,21 +70,21 @@ final class TargetViewportWidthResolver {
                     || source.sourceSignature().equals(marker.record.resultSignature)) {
                 return ViewportTargetResolution.fromRecord(importedMarkerRecord, "system-marker");
             }
+        } else if (isStaleSystemMarker(marker)) {
+            ViewportRuntimeMarkerBridge.ParseResult staleMarker =
+                    ViewportRuntimeMarkerBridge.readAllowingStale(
+                            packageName,
+                            targetSpec.fingerprint(),
+                            RuntimeClock.crossProcessMarkerMillis());
+            if (staleMarker.hit && hasCompleteMarkerResult(staleMarker.record)) {
+                importedMarkerRecord =
+                        VirtualDisplayState.importMarker(packageName, targetSpec, staleMarker);
+                return ViewportTargetResolution.fromRecord(
+                        importedMarkerRecord, "stale-system-marker");
+            }
         }
         boolean compatDerivationAllowed = canDeriveCompatTarget(
                 normalizedRequestedMode, mode, marker);
-        ViewportRuntimeRecord localRecord =
-                VirtualDisplayState.findForSource(packageName, targetSpec, source);
-        if (localRecord != null) {
-            return ViewportTargetResolution.fromRecord(localRecord, "local-source-record");
-        }
-        ViewportRuntimeRecord alreadyTargetRecord = VirtualDisplayState.findBySignature(
-                packageName,
-                targetSpec,
-                VirtualDisplayState.signatureForSmallestWidth(source.smallestWidthDp));
-        if (alreadyTargetRecord != null) {
-            return ViewportTargetResolution.fromRecord(alreadyTargetRecord, "already-target-record");
-        }
         ViewportRuntimeRecord displayRecord =
                 VirtualDisplayState.findDisplayRecordForTarget(packageName, targetSpec);
         if (displayRecord == null) {
@@ -124,6 +136,10 @@ final class TargetViewportWidthResolver {
                 || "malformed".equals(marker.reason)
                 || "too-long".equals(marker.reason)
                 || "stale".equals(marker.reason);
+    }
+
+    private static boolean isStaleSystemMarker(ViewportRuntimeMarkerBridge.ParseResult marker) {
+        return marker != null && !marker.hit && "stale".equals(marker.reason);
     }
 
     static Integer resolve(Integer targetViewportWidthDp,
