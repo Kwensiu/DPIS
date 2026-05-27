@@ -194,6 +194,6 @@ UI 规范化应按小批次推进。每个批次只处理一种 UI 类型，并�
 | `dialog_font_debug_stats.xml` | 调试 bottom sheet，包含筛选按钮、长文本、overlay 控制、清除和关闭动作。 | 保持现有行为；用 `font_debug_dialog_*` dimen 记录当前值。改变统计面板高度策略前，需要真机验证。 |
 | `dialog_font_hook_domains.xml` | 领域编辑器，包含 tab、已知/未知分组、恢复推荐和动态生成行。 | 按领域编辑器处理。未审查 `FontHookDomainDialog` 前，不套普通选项列表规则。 |
 | `dialog_list_filters.xml` | 紧凑筛选 bottom sheet，不是普通 dialog。 | 先建立 bottom sheet spacing 规则；保持拖拽条和纯开关结构。 |
-| `dialog_app_config.xml` | 主应用配置 bottom sheet，包含输入、分段切换、进程操作、保存和高级控制。 | 避免大范围 XML 格式化或 spacing 替换。只在具体 app 配置工作流需要时修改。 |
+| `dialog_app_config.xml` | 主应用配置 bottom sheet，包含输入、分段切换、进程操作、保存和高级控制。 | 避免大范围 XML 格式化或 spacing 替换。只在具体 app 配置工作流需要时修改。`viewport` 采用双草稿持久化：`scale` 与 `width` 分别保存，当前模式只决定生效目标；空值清除对应草稿，非法值不覆盖已存草稿。 |
 | `dialog_help_tutorial.xml` | 说明型卡片 dialog，有自定义卡片和 badge 样式。 | 按帮助/教程内容处理，不强行套普通 dialog spacing。 |
 | `dialog_update_available.xml` | 更新 dialog，包含可展开更新日志和安装/取消动作。 | 继续排除；等高度、滚动和底部动作可见性重新设计并真机验证后再处理。 |

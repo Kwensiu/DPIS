@@ -14,6 +14,22 @@ public class EffectiveModeResolverTest {
     }
 
     @Test
+    public void viewportAutoPrefersSystemWhenSystemHooksEnabled() {
+        String mode = EffectiveModeResolver.resolveViewportMode(
+                ViewportApplyMode.AUTO, true);
+
+        assertEquals(ViewportApplyMode.SYSTEM, mode);
+    }
+
+    @Test
+    public void viewportAutoFallsBackToCompatWhenSystemHooksDisabled() {
+        String mode = EffectiveModeResolver.resolveViewportMode(
+                ViewportApplyMode.AUTO, false);
+
+        assertEquals(ViewportApplyMode.COMPAT, mode);
+    }
+
+    @Test
     public void fontEmulationTurnsOffWhenSystemHooksDisabled() {
         String mode = EffectiveModeResolver.resolveFontMode(
                 FontApplyMode.SYSTEM_EMULATION, false);

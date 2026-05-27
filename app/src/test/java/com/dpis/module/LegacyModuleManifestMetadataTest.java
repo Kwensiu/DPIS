@@ -100,6 +100,7 @@ public final class LegacyModuleManifestMetadataTest {
         assertTrue(source.contains("implements IXposedHookLoadPackage"));
         assertTrue(source.contains("createForCompat100Host(packageName)"));
         assertTrue(source.contains("shouldInstallCompat100LegacyHooks()"));
+        assertFalse(source.contains("shouldInstallEarlyViewportHooks("));
         assertTrue(source.contains("XposedBridge.hookMethod("));
         assertTrue(source.contains("ResourcesImplHookInstaller.applyDensityOverride("));
         assertTrue(source.contains("Compat100LegacyResourcesManager"));
@@ -117,10 +118,11 @@ public final class LegacyModuleManifestMetadataTest {
                 "src", "main", "java", "com", "dpis", "module", "CompatConfigProvider.java")));
         assertFalse(factory.contains("CompatConfigProviderPreferences"));
         String compatFactory = factory.substring(factory.indexOf("createForCompat100Host"));
-        int propertyIndex = compatFactory.indexOf("SystemPropertyConfigPreferences");
+        int propertyIndex = compatFactory.indexOf("RuntimePropertyConfigPreferences");
         int xSharedIndex = compatFactory.indexOf("XSharedPreferencesAdapter");
         assertTrue(propertyIndex >= 0);
         assertTrue(xSharedIndex >= 0);
+        assertTrue(factory.contains("AutoViewportRuntimeRoute.ABSOLUTE_TARGETS_ONLY"));
         assertTrue(compatFactory.contains("new DpiConfigStore("));
     }
 

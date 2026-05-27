@@ -49,6 +49,9 @@ public class HookExecutionPlannerTest {
         assertTrue(plan.webViewTextZoomEnabled);
         assertTrue(plan.flutterSettingsEnabled);
         assertTrue(plan.hyperOsNativeFlutterEnabled);
+        assertTrue(plan.domainPlan.hasActivityThreadFont());
+        assertTrue(plan.domainPlan.hasFlutterSettings());
+        assertTrue(plan.domainPlan.hasHyperOsNativeFlutter());
     }
 
     @Test
@@ -71,6 +74,10 @@ public class HookExecutionPlannerTest {
         assertTrue(plan.fontDomainPlan.resourcesFontEnabled);
         assertTrue(plan.fontDomainPlan.textViewSpRewriteEnabled);
         assertTrue(plan.fontDomainPlan.textViewAbsoluteRewriteEnabled);
+        assertTrue(plan.domainPlan.hasResourcesFont());
+        assertTrue(plan.domainPlan.hasTextViewSpRewrite());
+        assertTrue(plan.domainPlan.hasTextViewAbsoluteRewrite());
+        assertEquals(plan.domainPlan.enabledDomainsCsv(), plan.hookDomains);
         assertEquals("resources_font,textview_sp_rewrite,textview_absolute_rewrite,"
                         + "textview_current_px_fallback,paint_text_size_fallback,"
                         + "webview_text_zoom",
@@ -91,6 +98,40 @@ public class HookExecutionPlannerTest {
                 DebugFontOverride.none());
 
         assertEquals(FontMode.OFF, plan.fontMode);
+        assertTrue(plan.viewportEnabled);
+        assertTrue(plan.resourcesHooksEnabled);
+    }
+
+    @Test
+    public void viewportAutoUsesSystemFirstRouteWithAppProcessFallbackHooksWhenAvailable() {
+        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
+                createPolicy(false, true, false),
+                true,
+                ViewportApplyMode.AUTO,
+                false,
+                FontApplyMode.OFF,
+                false,
+                false,
+                DebugFontOverride.none());
+
+        assertEquals(ViewportApplyMode.SYSTEM, plan.resolvedViewportMode);
+        assertTrue(plan.viewportEnabled);
+        assertTrue(plan.resourcesHooksEnabled);
+    }
+
+    @Test
+    public void viewportAutoFallsBackToAppProcessViewportHooksWhenSystemUnavailable() {
+        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
+                createPolicy(false, false, false),
+                true,
+                ViewportApplyMode.AUTO,
+                false,
+                FontApplyMode.OFF,
+                false,
+                false,
+                DebugFontOverride.none());
+
+        assertEquals(ViewportApplyMode.COMPAT, plan.resolvedViewportMode);
         assertTrue(plan.viewportEnabled);
         assertTrue(plan.resourcesHooksEnabled);
     }
@@ -252,6 +293,9 @@ public class HookExecutionPlannerTest {
         assertEquals("custom", plan.hookDomainSource);
         assertEquals("textview_absolute_rewrite", plan.hookDomains);
         assertEquals("removed_domain", plan.unknownCustomDomains);
+        assertEquals("custom", plan.domainPlan.source);
+        assertEquals("textview_absolute_rewrite", plan.domainPlan.enabledDomainsCsv());
+        assertEquals("removed_domain", plan.domainPlan.unknownDomainsCsv());
         assertFalse(plan.resourcesHooksEnabled);
         assertFalse(plan.activityThreadFontEnabled);
         assertTrue(plan.textViewHooksEnabled);
@@ -297,10 +341,13 @@ public class HookExecutionPlannerTest {
                 new HookDomainOverride(
                         true,
                         Set.of(FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE),
-                        Set.of()),
+                        Set.of("ignored_domain")),
                 DebugFontOverride.none());
 
         assertEquals("auto", plan.hookDomainSource);
+        assertEquals("auto", plan.domainPlan.source);
+        assertEquals("ignored_domain", plan.unknownCustomDomains);
+        assertEquals("ignored_domain", plan.domainPlan.unknownDomainsCsv());
         assertTrue(plan.resourcesHooksEnabled);
         assertTrue(plan.activityThreadFontEnabled);
         assertFalse(plan.textViewHooksEnabled);
@@ -340,10 +387,13 @@ public class HookExecutionPlannerTest {
                 builtin);
 
         assertEquals("hyperos_native_flutter", automaticPlan.builtinDomains);
+        assertEquals("hyperos_native_flutter", automaticPlan.domainPlan.builtinDomainsCsv());
         assertTrue(automaticPlan.hyperOsNativeFlutterEnabled);
+        assertTrue(automaticPlan.domainPlan.hasHyperOsNativeFlutter());
         assertEquals("auto", automaticPlan.hookDomainSource);
 
         assertEquals("", customPlan.builtinDomains);
+        assertEquals("", customPlan.domainPlan.builtinDomainsCsv());
         assertFalse(customPlan.hyperOsNativeFlutterEnabled);
         assertEquals("custom", customPlan.hookDomainSource);
         assertEquals("resources_font", customPlan.hookDomains);
@@ -369,7 +419,9 @@ public class HookExecutionPlannerTest {
 
         assertEquals("auto", plan.hookDomainSource);
         assertEquals("hyperos_native_flutter", plan.builtinDomains);
+        assertEquals("hyperos_native_flutter", plan.domainPlan.builtinDomainsCsv());
         assertTrue(plan.hyperOsNativeFlutterEnabled);
+        assertTrue(plan.domainPlan.hasHyperOsNativeFlutter());
         assertFalse(plan.textViewHooksEnabled);
         assertEquals("resources_font,activity_thread_font,webview_text_zoom,hyperos_native_flutter",
                 plan.hookDomains);
@@ -401,9 +453,13 @@ public class HookExecutionPlannerTest {
                 DebugFontOverride.none());
 
         assertEquals("hyperos_native_flutter", galleryPlan.builtinDomains);
+        assertEquals("hyperos_native_flutter", galleryPlan.domainPlan.builtinDomainsCsv());
         assertTrue(galleryPlan.hyperOsNativeFlutterEnabled);
+        assertTrue(galleryPlan.domainPlan.hasHyperOsNativeFlutter());
         assertEquals("hyperos_native_flutter", weatherPlan.builtinDomains);
+        assertEquals("hyperos_native_flutter", weatherPlan.domainPlan.builtinDomainsCsv());
         assertTrue(weatherPlan.hyperOsNativeFlutterEnabled);
+        assertTrue(weatherPlan.domainPlan.hasHyperOsNativeFlutter());
     }
 
     private static HookRuntimePolicy createPolicy(boolean safeMode,

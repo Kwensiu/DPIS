@@ -804,7 +804,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
                 || dialogStatsContentView == null) {
             return;
         }
-        String key = resolveStatsKey(selectedMode, selectedWindow);
+        String key = FontDebugStatsSchema.statsKeyFor(selectedMode, selectedWindow);
         String statsText = statsPreferences.getString(key, null);
         long updatedAt = statsPreferences.getLong(FontDebugStatsStore.KEY_UPDATED_AT, 0L);
         int eventTotal = statsPreferences.getInt(FontDebugStatsStore.KEY_EVENT_TOTAL, 0);
@@ -888,25 +888,6 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             dialogOverlayActionButton.setBackgroundTintList(ColorStateList.valueOf(bgColor));
             dialogOverlayActionButton.setTextColor(fgColor);
         }
-    }
-
-    private static String resolveStatsKey(int mode, int window) {
-        if (mode == FontDebugStatsStore.MODE_CHAIN_VIEW) {
-            if (window == FontDebugStatsStore.WINDOW_5S) {
-                return FontDebugStatsStore.KEY_CHAIN_VIEW_5S;
-            }
-            if (window == FontDebugStatsStore.WINDOW_30S) {
-                return FontDebugStatsStore.KEY_CHAIN_VIEW_30S;
-            }
-            return FontDebugStatsStore.KEY_CHAIN_VIEW_ALL;
-        }
-        if (window == FontDebugStatsStore.WINDOW_5S) {
-            return FontDebugStatsStore.KEY_CHAIN_5S;
-        }
-        if (window == FontDebugStatsStore.WINDOW_30S) {
-            return FontDebugStatsStore.KEY_CHAIN_30S;
-        }
-        return FontDebugStatsStore.KEY_CHAIN_ALL;
     }
 
     private void onHooksEnabledChanged(CompoundButton buttonView, boolean isChecked) {

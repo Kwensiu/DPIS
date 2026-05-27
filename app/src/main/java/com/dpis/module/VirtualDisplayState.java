@@ -43,7 +43,8 @@ final class VirtualDisplayState {
                 RuntimeClock.elapsedRealtimeMillis(),
                 ViewportSourceSnapshot.SCOPE_DISPLAY);
         putRecord(recordKey("*", targetSpec.fingerprint(), legacySignature(result)), record);
-        putRecord(recordKey("*", targetSpec.fingerprint(), "sw:" + result.smallestWidthDp), record);
+        putRecord(recordKey("*", targetSpec.fingerprint(),
+                signatureForSmallestWidth(result.smallestWidthDp)), record);
     }
 
     static ViewportRuntimeRecord findBySignature(String packageName,
@@ -117,6 +118,8 @@ final class VirtualDisplayState {
                 record);
         putRecord(recordKey(record.packageName, record.targetFingerprint, record.resultSignature),
                 record);
+        putRecord(recordKey(record.packageName, record.targetFingerprint,
+                signatureForSmallestWidth(viewportResult.smallestWidthDp)), record);
         return record;
     }
 
@@ -127,25 +130,61 @@ final class VirtualDisplayState {
             return null;
         }
         ViewportRuntimeMarkerBridge.MarkerRecord marker = parseResult.record;
-        ViewportOverride.Result viewportResult = new ViewportOverride.Result(
+        boolean hasCompleteResult = marker.resultWidthDp > 0
+                && marker.resultHeightDp > 0
+                && marker.resultSmallestWidthDp > 0
+                && marker.resultDensityDpi > 0;
+        ViewportOverride.Result viewportResult = hasCompleteResult
+                ? new ViewportOverride.Result(
+                marker.resultWidthDp,
+                marker.resultHeightDp,
+                marker.resultSmallestWidthDp,
+                marker.resultDensityDpi)
+                : new ViewportOverride.Result(
                 marker.effectiveSmallestWidthDp,
                 marker.effectiveSmallestWidthDp,
                 marker.effectiveSmallestWidthDp,
                 0);
+        VirtualDisplayOverride.Result virtualDisplayResult = completeMarkerVirtualDisplayResult(
+                marker, hasCompleteResult);
         ViewportRuntimeRecord record = new ViewportRuntimeRecord(
                 packageName,
                 targetSpec,
                 marker.sourceSignature,
                 marker.effectiveSmallestWidthDp,
                 viewportResult,
-                null,
+                virtualDisplayResult,
                 marker.resultSignature,
                 marker.provenance,
                 marker.elapsedRealtimeMillis,
                 ViewportSourceSnapshot.SCOPE_DISPLAY);
+        if (virtualDisplayResult != null) {
+            current = virtualDisplayResult;
+        }
         putRecord(recordKey(packageName, record.targetFingerprint, record.sourceSignature), record);
         putRecord(recordKey(packageName, record.targetFingerprint, record.resultSignature), record);
+        putRecord(recordKey(packageName, record.targetFingerprint,
+                signatureForSmallestWidth(record.effectiveSmallestWidthDp)), record);
         return record;
+    }
+
+    private static VirtualDisplayOverride.Result completeMarkerVirtualDisplayResult(
+            ViewportRuntimeMarkerBridge.MarkerRecord marker,
+            boolean hasCompleteResult) {
+        if (!hasCompleteResult
+                || current == null
+                || current.smallestWidthDp != marker.resultSmallestWidthDp
+                || current.widthPx <= 0
+                || current.heightPx <= 0) {
+            return null;
+        }
+        return new VirtualDisplayOverride.Result(
+                marker.resultWidthDp,
+                marker.resultHeightDp,
+                marker.resultSmallestWidthDp,
+                marker.resultDensityDpi,
+                current.widthPx,
+                current.heightPx);
     }
 
     static ViewportRuntimeRecord findForSource(String packageName,
@@ -199,7 +238,11 @@ final class VirtualDisplayState {
     }
 
     private static String legacySignature(VirtualDisplayOverride.Result result) {
-        return "sw:" + (result != null ? result.smallestWidthDp : 0);
+        return signatureForSmallestWidth(result != null ? result.smallestWidthDp : 0);
+    }
+
+    static String signatureForSmallestWidth(int smallestWidthDp) {
+        return "sw:" + Math.max(0, smallestWidthDp);
     }
 
     private static String recordKey(String packageName, String targetFingerprint, String signature) {

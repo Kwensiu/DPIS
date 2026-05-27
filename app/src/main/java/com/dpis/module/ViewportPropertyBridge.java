@@ -80,25 +80,17 @@ final class ViewportPropertyBridge {
         if (packageName == null || packageName.isEmpty()) {
             return ViewportTargetSpec.off();
         }
-        String type = ViewportTargetType.normalize(readPropertyWithPersistentFallback(
+        String type = readPropertyWithPersistentFallback(
                 targetTypePropertyNameForPackage(packageName),
-                persistentTargetTypePropertyNameForPackage(packageName)));
-        Integer widthDp = readCompatConfigWidthDp(packageName);
-        if (widthDp == null || widthDp <= 0) {
-            widthDp = readTargetWidthDp(packageName);
-        }
+                persistentTargetTypePropertyNameForPackage(packageName));
+        Integer widthDp = readTargetWidthDp(packageName);
+        Integer compatConfigWidthDp = readCompatConfigWidthDp(packageName);
         Integer scalePermille = readOverrideValue(
                 scalePropertyNameForPackage(packageName),
                 persistentScalePropertyNameForPackage(packageName));
-        if (ViewportTargetType.RELATIVE_SCALE.equals(type)) {
-            return scalePermille != null
-                    ? ViewportTargetSpec.relativeScale(scalePermille)
-                    : ViewportTargetSpec.off();
-        }
-        if (ViewportTargetType.ABSOLUTE_DP.equals(type)) {
-            return widthDp != null ? ViewportTargetSpec.absoluteDp(widthDp) : ViewportTargetSpec.off();
-        }
-        return widthDp != null ? ViewportTargetSpec.absoluteDp(widthDp) : ViewportTargetSpec.off();
+        ViewportPropertyProjection.Decoded decoded = ViewportPropertyProjection.decode(
+                widthDp, type, scalePermille, compatConfigWidthDp, null);
+        return decoded.targetSpec;
     }
 
     static String readCompatMode(String packageName) {

@@ -13,7 +13,8 @@ final class ViewportRuntimeMarkerBridge {
     static final int MAX_SYSTEM_PROPERTY_VALUE_LENGTH = 91;
 
     private static final String PROPERTY_PREFIX = "debug.dpis.vprtm.";
-    private static final String VALUE_VERSION = "v1";
+    private static final String VALUE_VERSION = "v2";
+    private static final String LEGACY_VALUE_VERSION = "v1";
     private static final int HASH_HEX_LENGTH = 8;
     private static final long MAX_AGE_MILLIS = 30_000L;
     private static final String PROVENANCE_APP_PROCESS = "a";
@@ -55,6 +56,10 @@ final class ViewportRuntimeMarkerBridge {
                 sourceSignature,
                 Math.max(1, resultSmallestWidthDp),
                 resultSignature,
+                resultWidthDp,
+                resultHeightDp,
+                resultSmallestWidthDp,
+                resultDensityDpi,
                 normalizeProvenance(provenance),
                 Math.max(0L, elapsedRealtimeMillis));
     }
@@ -80,6 +85,10 @@ final class ViewportRuntimeMarkerBridge {
                         result.smallestWidthDp,
                         result.densityDpi,
                         source.scope),
+                result.widthDp,
+                result.heightDp,
+                result.smallestWidthDp,
+                result.densityDpi,
                 normalizeProvenance(provenance),
                 Math.max(0L, elapsedRealtimeMillis));
     }
@@ -94,6 +103,7 @@ final class ViewportRuntimeMarkerBridge {
                 + "|" + record.sourceSignature
                 + "|" + toBase36(record.effectiveSmallestWidthDp)
                 + "|" + record.resultSignature
+                + "|" + encodeResult(record)
                 + "|" + record.provenance
                 + "|" + toBase36(record.elapsedRealtimeMillis);
     }
@@ -102,6 +112,21 @@ final class ViewportRuntimeMarkerBridge {
                              String expectedTargetFingerprint,
                              String raw,
                              long nowElapsedRealtimeMillis) {
+        return parse(packageName, expectedTargetFingerprint, raw, nowElapsedRealtimeMillis, false);
+    }
+
+    static ParseResult parseAllowingStale(String packageName,
+                                          String expectedTargetFingerprint,
+                                          String raw,
+                                          long nowElapsedRealtimeMillis) {
+        return parse(packageName, expectedTargetFingerprint, raw, nowElapsedRealtimeMillis, true);
+    }
+
+    private static ParseResult parse(String packageName,
+                                     String expectedTargetFingerprint,
+                                     String raw,
+                                     long nowElapsedRealtimeMillis,
+                                     boolean allowStale) {
         if (raw == null || raw.trim().isEmpty()) {
             return ParseResult.miss("empty");
         }
@@ -110,7 +135,11 @@ final class ViewportRuntimeMarkerBridge {
             return ParseResult.miss("too-long");
         }
         String[] parts = normalized.split("\\|", -1);
-        if (parts.length != 8 || !VALUE_VERSION.equals(parts[0])) {
+        boolean legacy = LEGACY_VALUE_VERSION.equals(parts[0]);
+        boolean current = VALUE_VERSION.equals(parts[0]);
+        if ((!legacy && !current)
+                || (legacy && parts.length != 8)
+                || (current && parts.length != 9)) {
             return ParseResult.miss("malformed");
         }
         String expectedPackageHash = packageCheck(packageName);
@@ -123,17 +152,35 @@ final class ViewportRuntimeMarkerBridge {
             return ParseResult.miss("target-mismatch");
         }
         Integer effectiveSmallestWidthDp = parseBase36Int(parts[4]);
-        Long elapsedRealtimeMillis = parseBase36Long(parts[7]);
-        if (effectiveSmallestWidthDp == null || effectiveSmallestWidthDp <= 0
-                || elapsedRealtimeMillis == null || elapsedRealtimeMillis < 0) {
+        if (effectiveSmallestWidthDp == null || effectiveSmallestWidthDp <= 0) {
             return ParseResult.miss("malformed");
         }
-        String provenance = parseProvenance(parts[6]);
+        int provenanceIndex = legacy ? 6 : 7;
+        int elapsedIndex = legacy ? 7 : 8;
+        String provenance = parseProvenance(parts[provenanceIndex]);
         if (provenance == null) {
             return ParseResult.miss("malformed");
         }
+        int resultWidthDp = 0;
+        int resultHeightDp = 0;
+        int resultSmallestWidthDp = 0;
+        int resultDensityDpi = 0;
+        if (current) {
+            int[] result = parseResult(parts[6]);
+            if (result == null) {
+                return ParseResult.miss("malformed");
+            }
+            resultWidthDp = result[0];
+            resultHeightDp = result[1];
+            resultSmallestWidthDp = result[2];
+            resultDensityDpi = result[3];
+        }
+        Long elapsedRealtimeMillis = parseBase36Long(parts[elapsedIndex]);
+        if (elapsedRealtimeMillis == null || elapsedRealtimeMillis < 0) {
+            return ParseResult.miss("malformed");
+        }
         long ageMillis = nowElapsedRealtimeMillis - elapsedRealtimeMillis;
-        if (ageMillis < 0 || ageMillis > MAX_AGE_MILLIS) {
+        if (ageMillis < 0 || (!allowStale && ageMillis > MAX_AGE_MILLIS)) {
             return ParseResult.miss("stale");
         }
         MarkerRecord record = new MarkerRecord(
@@ -142,6 +189,10 @@ final class ViewportRuntimeMarkerBridge {
                 parts[3],
                 effectiveSmallestWidthDp,
                 parts[5],
+                resultWidthDp,
+                resultHeightDp,
+                resultSmallestWidthDp,
+                resultDensityDpi,
                 provenance,
                 elapsedRealtimeMillis);
         return ParseResult.hit(record, ageMillis);
@@ -204,6 +255,10 @@ final class ViewportRuntimeMarkerBridge {
                         result.smallestWidthDp(),
                         result.densityDpi(),
                         scope),
+                result.widthDp(),
+                result.heightDp(),
+                result.smallestWidthDp(),
+                result.densityDpi(),
                 PROVENANCE_SYSTEM_SERVER,
                 Math.max(0L, elapsedRealtimeMillis));
         return publish(packageName, record);
@@ -225,6 +280,17 @@ final class ViewportRuntimeMarkerBridge {
         }
         String raw = readSystemProperty(propertyNameForPackage(packageName), "");
         return parse(packageName, expectedTargetFingerprint, raw, nowElapsedRealtimeMillis);
+    }
+
+    static ParseResult readAllowingStale(String packageName,
+                                         String expectedTargetFingerprint,
+                                         long nowElapsedRealtimeMillis) {
+        if (packageName == null || packageName.isBlank()) {
+            return ParseResult.miss("empty-package");
+        }
+        String raw = readSystemProperty(propertyNameForPackage(packageName), "");
+        return parseAllowingStale(
+                packageName, expectedTargetFingerprint, raw, nowElapsedRealtimeMillis);
     }
 
     private static boolean setSystemProperty(String key, String value) {
@@ -252,6 +318,32 @@ final class ViewportRuntimeMarkerBridge {
 
     private static String signature(int widthDp, int heightDp, int smallestWidthDp, int densityDpi) {
         return signature(widthDp, heightDp, smallestWidthDp, densityDpi, "");
+    }
+
+    private static String encodeResult(MarkerRecord record) {
+        return toBase36(record.resultWidthDp)
+                + "." + toBase36(record.resultHeightDp)
+                + "." + toBase36(record.resultSmallestWidthDp)
+                + "." + toBase36(record.resultDensityDpi);
+    }
+
+    private static int[] parseResult(String value) {
+        if (value == null) {
+            return null;
+        }
+        String[] parts = value.split("\\.", -1);
+        if (parts.length != 4) {
+            return null;
+        }
+        int[] result = new int[4];
+        for (int i = 0; i < parts.length; i++) {
+            Integer parsed = parseBase36Int(parts[i]);
+            if (parsed == null || parsed < 0) {
+                return null;
+            }
+            result[i] = parsed;
+        }
+        return result;
     }
 
     private static String signature(int widthDp,
@@ -334,6 +426,10 @@ final class ViewportRuntimeMarkerBridge {
         final String sourceSignature;
         final int effectiveSmallestWidthDp;
         final String resultSignature;
+        final int resultWidthDp;
+        final int resultHeightDp;
+        final int resultSmallestWidthDp;
+        final int resultDensityDpi;
         final String provenance;
         final long elapsedRealtimeMillis;
 
@@ -344,11 +440,39 @@ final class ViewportRuntimeMarkerBridge {
                      String resultSignature,
                      String provenance,
                      long elapsedRealtimeMillis) {
+            this(packageHash,
+                    targetFingerprint,
+                    sourceSignature,
+                    effectiveSmallestWidthDp,
+                    resultSignature,
+                    0,
+                    0,
+                    0,
+                    0,
+                    provenance,
+                    elapsedRealtimeMillis);
+        }
+
+        MarkerRecord(String packageHash,
+                     String targetFingerprint,
+                     String sourceSignature,
+                     int effectiveSmallestWidthDp,
+                     String resultSignature,
+                     int resultWidthDp,
+                     int resultHeightDp,
+                     int resultSmallestWidthDp,
+                     int resultDensityDpi,
+                     String provenance,
+                     long elapsedRealtimeMillis) {
             this.packageHash = packageHash;
             this.targetFingerprint = targetFingerprint;
             this.sourceSignature = sourceSignature;
             this.effectiveSmallestWidthDp = effectiveSmallestWidthDp;
             this.resultSignature = resultSignature;
+            this.resultWidthDp = resultWidthDp;
+            this.resultHeightDp = resultHeightDp;
+            this.resultSmallestWidthDp = resultSmallestWidthDp;
+            this.resultDensityDpi = resultDensityDpi;
             this.provenance = provenance;
             this.elapsedRealtimeMillis = elapsedRealtimeMillis;
         }

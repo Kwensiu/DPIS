@@ -8,10 +8,10 @@ import java.nio.file.Path;
 
 import org.junit.Test;
 
-public class SystemPropertyConfigPreferencesSourceTest {
+public class RuntimePropertyConfigPreferencesSourceTest {
     @Test
     public void usesTtlBasedSnapshotRefresh() throws Exception {
-        String source = read("src/main/java/com/dpis/module/SystemPropertyConfigPreferences.java");
+        String source = read("src/main/java/com/dpis/module/RuntimePropertyConfigPreferences.java");
 
         assertTrue(source.contains("SNAPSHOT_TTL_MILLIS = 2_000L"));
         assertTrue(source.contains("cachedAtMillis"));
@@ -20,7 +20,7 @@ public class SystemPropertyConfigPreferencesSourceTest {
 
     @Test
     public void readsHookDomainOverrideFromRuntimePropertyMirror() throws Exception {
-        String source = read("src/main/java/com/dpis/module/SystemPropertyConfigPreferences.java");
+        String source = read("src/main/java/com/dpis/module/RuntimePropertyConfigPreferences.java");
 
         assertTrue(source.contains("FontHookDomainPropertyBridge.readOverride(packageName)"));
         assertTrue(source.contains("values.put(hookDomainsKey(), String.join(\",\""));
@@ -29,7 +29,7 @@ public class SystemPropertyConfigPreferencesSourceTest {
 
     @Test
     public void readsDebugSwitchesFromRuntimePropertyMirror() throws Exception {
-        String source = read("src/main/java/com/dpis/module/SystemPropertyConfigPreferences.java");
+        String source = read("src/main/java/com/dpis/module/RuntimePropertyConfigPreferences.java");
 
         assertTrue(source.contains("DpiConfigStore.KEY_GLOBAL_LOG_ENABLED"));
         assertTrue(source.contains("RuntimeDebugPropertyBridge.readGlobalLogEnabled()"));

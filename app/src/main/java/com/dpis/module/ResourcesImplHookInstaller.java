@@ -71,11 +71,44 @@ final class ResourcesImplHookInstaller {
                     packageName, resolution.spec, "ResourcesImpl");
         }
         boolean windowScoped = ViewportConfigurationScope.isWindowScoped(config);
+        int sourceWidthPx = metrics != null ? metrics.widthPixels : 0;
+        int sourceHeightPx = metrics != null ? metrics.heightPixels : 0;
         VirtualDisplayOverride.Result stableTarget =
-                resolution.record != null && resolution.record.virtualDisplayResult != null
-                        ? resolution.record.virtualDisplayResult
-                        : VirtualDisplayState.getForTarget(targetViewportWidth);
-        ViewportOverride.Result result = ViewportOverride.derive(
+                ViewportResolvedTarget.virtualDisplayResult(resolution, targetViewportWidth);
+        VirtualDisplayOverride.Result stableTargetForResult =
+                stableTarget != null
+                        && targetViewportWidth != null
+                        && stableTarget.smallestWidthDp == targetViewportWidth
+                        && originalDensityDpi != stableTarget.densityDpi
+                        ? stableTarget
+                        : null;
+        VirtualDisplayOverride.Result pixelDerivedTarget =
+                !windowScoped
+                        && stableTargetForResult == null
+                        && targetViewportWidth != null
+                        && resolution.spec.isAbsoluteDp()
+                        && originalDensityDpi > 0
+                        && (originalSmallestWidthDp != targetViewportWidth
+                        || (metrics != null && originalDensityDpi != metrics.densityDpi))
+                        ? VirtualDisplayPlan.deriveAbsoluteResultFromPhysicalPixels(
+                        originalWidthDp,
+                        originalHeightDp,
+                        originalSmallestWidthDp,
+                        sourceWidthPx,
+                        sourceHeightPx,
+                        targetViewportWidth)
+                        : null;
+        VirtualDisplayOverride.Result trustedDisplayTarget =
+                stableTargetForResult != null ? stableTargetForResult : pixelDerivedTarget;
+        ViewportOverride.Result resolvedRecordResult =
+                ViewportResolvedTarget.viewportResult(resolution, windowScoped);
+        ViewportOverride.Result trustedDisplayResult =
+                ViewportResolvedTarget.viewportResult(trustedDisplayTarget);
+        ViewportOverride.Result result = resolvedRecordResult != null
+                ? resolvedRecordResult
+                : trustedDisplayResult != null
+                ? trustedDisplayResult
+                : ViewportOverride.derive(
                 config,
                 targetViewportWidth != null ? targetViewportWidth : 0,
                 windowScoped,
@@ -95,17 +128,18 @@ final class ResourcesImplHookInstaller {
                 || result.smallestWidthDp != originalSmallestWidthDp
                 || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi);
         boolean applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
-                store, packageName);
-        int sourceWidthPx = metrics != null ? metrics.widthPixels : 0;
-        int sourceHeightPx = metrics != null ? metrics.heightPixels : 0;
-        VirtualDisplayOverride.Result sharedResult = VirtualDisplayPlan.derivePublishableResult(
-                originalWidthDp,
-                originalHeightDp,
-                originalSmallestWidthDp,
-                originalDensityDpi,
-                sourceWidthPx,
-                sourceHeightPx,
-                result.smallestWidthDp);
+                store, packageName, resolution, needsViewportUpdate);
+        VirtualDisplayOverride.Result sharedResult =
+                trustedDisplayTarget != null
+                        ? trustedDisplayTarget
+                        : VirtualDisplayPlan.derivePublishableResult(
+                        originalWidthDp,
+                        originalHeightDp,
+                        originalSmallestWidthDp,
+                        originalDensityDpi,
+                        sourceWidthPx,
+                        sourceHeightPx,
+                        result.smallestWidthDp);
         VirtualDisplayOverride.Result publishableSharedResult = windowScoped ? null : sharedResult;
         if (publishableSharedResult != null) {
             boolean canPublishState = VirtualDisplayState.setUnlessDerivedFromTargetConfig(
@@ -135,7 +169,8 @@ final class ResourcesImplHookInstaller {
             VirtualDisplayOverride.Result stableResult =
                     VirtualDisplayState.getStableTargetResult(
                             originalSmallestWidthDp, targetViewportWidth);
-            if (stableResult != null && stableResult.densityDpi > 0
+            if (result.densityDpi <= 0
+                    && stableResult != null && stableResult.densityDpi > 0
                     && config.densityDpi != stableResult.densityDpi) {
                 config.densityDpi = stableResult.densityDpi;
                 if (metrics != null) {

@@ -2,6 +2,9 @@ package com.dpis.module;
 
 import org.junit.Test;
 
+import java.util.Set;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -27,6 +30,67 @@ public final class ModulePackagePlanTest {
         assertTrue(plan.viewportConfigured);
         assertTrue(plan.viewportEnabled);
         assertFalse(plan.fontScaleActive);
+    }
+
+    @Test
+    public void autoViewportKeepsLegacyAppProcessViewportHooksAvailable() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setSystemServerHooksEnabled(true);
+        store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.AUTO);
+
+        ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
+
+        assertTrue(plan.viewportConfigured);
+        assertTrue(plan.viewportEnabled);
+        assertTrue(plan.shouldInstallCompat100LegacyHooks());
+    }
+
+    @Test
+    public void compatViewportUsesAppProcessViewportHooks() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setSystemServerHooksEnabled(true);
+        store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.COMPAT);
+
+        ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
+
+        assertTrue(plan.viewportConfigured);
+        assertTrue(plan.viewportEnabled);
+        assertTrue(plan.shouldInstallCompat100LegacyHooks());
+    }
+
+    @Test
+    public void viewportOnlyPackageHasNoSecondaryProcessSafeRouteAfterViewportSuppression() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.COMPAT);
+
+        ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app")
+                .withoutViewportRoute();
+
+        assertFalse(plan.viewportConfigured);
+        assertFalse(plan.viewportEnabled);
+        assertFalse(plan.hasSecondaryProcessSafeRoute());
+        assertFalse(plan.shouldInstallHooks());
+    }
+
+    @Test
+    public void fontRouteSurvivesSecondaryProcessViewportSuppression() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.COMPAT);
+        store.setTargetFontScalePercent("com.example.app", 120);
+        store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
+
+        ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app")
+                .withoutViewportRoute();
+
+        assertFalse(plan.viewportConfigured);
+        assertFalse(plan.viewportEnabled);
+        assertTrue(plan.fontEnabled);
+        assertTrue(plan.hasSecondaryProcessSafeRoute());
+        assertTrue(plan.shouldInstallHooks());
     }
 
     @Test
@@ -188,5 +252,46 @@ public final class ModulePackagePlanTest {
         assertTrue(plan.fontScaleActive);
         assertFalse(plan.flutterSettingsFontEnabled);
         assertFalse(plan.shouldInstallHooks());
+    }
+
+    @Test
+    public void buildExecutionPlanForwardsCustomHookDomainOverride() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetFontScalePercent("com.example.app", 120);
+        store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
+        assertTrue(new HookDomainOverrideStore(store).save(
+                "com.example.app",
+                Set.of(FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE),
+                Set.of("removed_domain")));
+
+        ModulePackagePlan packagePlan = ModulePackagePlan.resolve(store, "com.example.app");
+        HookExecutionPlan executionPlan = packagePlan.buildExecutionPlan(
+                HookRuntimePolicy.fromStore(store),
+                DebugFontOverride.none());
+
+        assertEquals("custom", executionPlan.hookDomainSource);
+        assertEquals("textview_absolute_rewrite", executionPlan.hookDomains);
+        assertEquals("removed_domain", executionPlan.unknownCustomDomains);
+        assertTrue(executionPlan.textViewHooksEnabled);
+        assertFalse(executionPlan.resourcesHooksEnabled);
+    }
+
+    @Test
+    public void buildExecutionPlanForwardsDebugOverride() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetFontScalePercent("com.example.app", 120);
+        store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
+
+        ModulePackagePlan packagePlan = ModulePackagePlan.resolve(store, "com.example.app");
+        HookExecutionPlan executionPlan = packagePlan.buildExecutionPlan(
+                HookRuntimePolicy.fromStore(store),
+                DebugFontOverride.of(false, false, true));
+
+        assertTrue(executionPlan.debugDisableTextViewAbsoluteRewrite);
+        assertTrue(executionPlan.textViewHooksEnabled);
+        assertTrue(executionPlan.fontDomainPlan.textViewSpRewriteEnabled);
+        assertFalse(executionPlan.fontDomainPlan.textViewAbsoluteRewriteEnabled);
+        assertEquals("resources_font,textview_sp_rewrite,textview_current_px_fallback,"
+                + "paint_text_size_fallback,webview_text_zoom", executionPlan.hookDomains);
     }
 }

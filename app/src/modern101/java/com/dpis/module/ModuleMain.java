@@ -68,16 +68,19 @@ public final class ModuleMain extends XposedModule {
             DpisLog.i("module-loaded app hook install skipped system process: process=" + processName);
             return;
         }
-        DpiConfigStore runtimeStore = createModuleLoadedAppProcessStore(store, processName);
+        String packageName = packageNameFromProcessName(processName);
+        DpiConfigStore runtimeStore = createModuleLoadedAppProcessStore(store, packageName);
         ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(runtimeStore);
         String source = "module-loaded";
-        if (!snapshot.isConfigured(processName)) {
+        if (!snapshot.isConfigured(packageName)) {
             ConfigSnapshot fallbackSnapshot = ConfigSnapshotLoader.fromStore(store);
-            if (!fallbackSnapshot.isConfigured(processName)) {
+            if (!fallbackSnapshot.isConfigured(packageName)) {
                 rawBridgeLog("module-loaded app config unavailable: process=" + processName
+                        + ", package=" + packageName
                         + ", propertyPackages=" + snapshot.getConfiguredPackages()
                         + ", fallbackPackages=" + fallbackSnapshot.getConfiguredPackages());
                 DpisLog.i("module-loaded app config unavailable: process=" + processName
+                        + ", package=" + packageName
                         + ", propertyPackages=" + snapshot.getConfiguredPackages()
                         + ", fallbackPackages=" + fallbackSnapshot.getConfiguredPackages());
                 return;
@@ -86,23 +89,40 @@ public final class ModuleMain extends XposedModule {
             snapshot = fallbackSnapshot;
             source = "module-loaded-fallback";
             rawBridgeLog("module-loaded app config fallback: process=" + processName
+                    + ", package=" + packageName
                     + ", packages=" + snapshot.getConfiguredPackages());
             DpisLog.i("module-loaded app config fallback: process=" + processName
+                    + ", package=" + packageName
                     + ", packages=" + snapshot.getConfiguredPackages());
         }
         HookRuntimePolicy policy = HookRuntimePolicy.fromSnapshot(snapshot);
         DpisLog.setLoggingEnabled(policy.globalLogEnabled);
-        installAppProcessHooksIfConfigured(runtimeStore, policy, snapshot, processName,
+        installAppProcessHooksIfConfigured(runtimeStore, policy, snapshot, packageName,
                 source);
     }
 
     private static DpiConfigStore createModuleLoadedAppProcessStore(DpiConfigStore fallbackStore,
-            String processName) {
-        if (processName == null || processName.isBlank()) {
+            String packageName) {
+        if (packageName == null || packageName.isBlank()) {
             return fallbackStore;
         }
+        // module-loaded runs before package-ready and only has the process name.
+        // Secondary app processes are configured by their owning package, not by
+        // the full process name suffix.
+        // For per-app runtime mirrors, treat auto viewport as the app-process
+        // projection route. Relative scale intentionally avoids system_server
+        // viewport mutation, while absolute targets may still use system_server.
         return new DpiConfigStore(
-                new SystemPropertyConfigPreferences(processName));
+                new RuntimePropertyConfigPreferences(packageName,
+                        RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET));
+    }
+
+    private static String packageNameFromProcessName(String processName) {
+        if (processName == null) {
+            return null;
+        }
+        int separator = processName.indexOf(':');
+        return separator > 0 ? processName.substring(0, separator) : processName;
     }
 
     private void installAppProcessHooksIfConfigured(DpiConfigStore store,
@@ -123,13 +143,24 @@ public final class ModuleMain extends XposedModule {
             DpisLog.i("target app disabled by dpis toggle: package=" + packageName);
             return;
         }
+        if (shouldSuppressSecondaryProcessViewport(currentProcessName, packagePlan)) {
+            DpisLog.i("secondary process viewport route suppressed: process="
+                    + currentProcessName + ", package=" + packageName
+                    + ", viewportMode=" + packagePlan.targetViewportMode);
+            packagePlan = packagePlan.withoutViewportRoute();
+            if (!packagePlan.hasSecondaryProcessSafeRoute()) {
+                DpisLog.i("target app disabled after secondary process viewport suppression: process="
+                        + currentProcessName + ", package=" + packageName);
+                return;
+            }
+        }
         if (!packagePlan.shouldInstallHooks()) {
             DpisLog.i("target app disabled: package=" + packageName);
             return;
         }
         DpisLog.i("target app matched: package=" + packageName
                 + ", source=" + source
-                + ", targetViewportWidthDp=" + packagePlan.targetViewportWidthDp
+                + ", targetViewportSpec=" + packagePlan.targetViewportSpec
                 + ", targetViewportMode=" + packagePlan.targetViewportMode
                 + ", targetFontScalePercent=" + packagePlan.targetFontScalePercent
                 + ", targetFontMode=" + packagePlan.targetFontMode
@@ -139,20 +170,22 @@ public final class ModuleMain extends XposedModule {
                 + ", hyperOsNativeFlutterFont=" + packagePlan.hyperOsNativeFlutterFontEnabled);
         appProcessInstallAttempted = true;
         try {
-            AppProcessHookInstaller.install(this, packageName, store, policy,
-                    packagePlan.viewportConfigured,
-                    packagePlan.targetViewportMode,
-                    packagePlan.targetFontMode,
-                    packagePlan.fontScaleActive,
-                    packagePlan.typefaceActive,
-                    packagePlan.targetTypefaceId,
-                    packagePlan.flutterSettingsFontEnabled,
-                    packagePlan.hyperOsNativeFlutterFontEnabled,
-                    packagePlan.hookDomainOverride);
+            AppProcessHookInstaller.install(this, store, policy, packagePlan);
         } catch (Throwable throwable) {
             appProcessInstallAttempted = false;
             DpisLog.e("failed to install app process hooks", throwable);
         }
+    }
+
+    private static boolean shouldSuppressSecondaryProcessViewport(String processName,
+                                                                  ModulePackagePlan packagePlan) {
+        if (processName == null || processName.isBlank() || packagePlan == null
+                || packagePlan.packageName == null || packagePlan.packageName.isBlank()) {
+            return false;
+        }
+        return !processName.equals(packagePlan.packageName)
+                && !processName.startsWith(packagePlan.packageName + ":")
+                && packagePlan.viewportEnabled;
     }
 
     private void retryFlutterHooksWithAppClassLoader(DpiConfigStore store,
@@ -172,17 +205,7 @@ public final class ModuleMain extends XposedModule {
         HookRuntimePolicy policy = HookRuntimePolicy.fromSnapshot(snapshot);
         DebugFontOverride debugOverride = AppProcessHookInstaller
                 .resolveDebugFontOverrideForPackage(packageName);
-        HookExecutionPlan executionPlan = HookExecutionPlanner.buildPlan(
-                policy,
-                packageName,
-                packagePlan.viewportConfigured,
-                packagePlan.targetViewportMode,
-                packagePlan.fontScaleActive,
-                packagePlan.targetFontMode,
-                packagePlan.flutterSettingsFontEnabled,
-                packagePlan.hyperOsNativeFlutterFontEnabled,
-                packagePlan.hookDomainOverride,
-                debugOverride);
+        HookExecutionPlan executionPlan = packagePlan.buildExecutionPlan(policy, debugOverride);
         if (!executionPlan.flutterSettingsEnabled) {
             return;
         }

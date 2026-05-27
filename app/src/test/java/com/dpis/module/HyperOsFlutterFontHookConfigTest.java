@@ -54,11 +54,12 @@ public class HyperOsFlutterFontHookConfigTest {
     @Test
     public void compat100FactoryUsesPackageSystemPropertiesWithoutExportedProvider() throws Exception {
         String factory = readSource("src/main/java/com/dpis/module/ConfigStoreFactory.java");
-        String prefs = readSource("src/main/java/com/dpis/module/SystemPropertyConfigPreferences.java");
+        String prefs = readSource("src/main/java/com/dpis/module/RuntimePropertyConfigPreferences.java");
         String app = readSource("src/main/java/com/dpis/module/DpisApplication.java");
 
         assertTrue(factory.contains("createForCompat100Host(String packageName)"));
-        assertTrue(factory.contains("new SystemPropertyConfigPreferences(packageName)"));
+        assertTrue(factory.contains("new RuntimePropertyConfigPreferences(packageName, autoViewportRuntimeRoute)"));
+        assertTrue(factory.contains("AutoViewportRuntimeRoute.ABSOLUTE_TARGETS_ONLY"));
         assertFalse(factory.contains("CompatConfigProviderPreferences"));
         assertTrue(prefs.contains("ViewportPropertyBridge.readTargetSpec(packageName)"));
         assertTrue(prefs.contains("HyperOsFlutterFontBridge.readForceFontScalePercent(packageName)"));
@@ -127,7 +128,7 @@ public class HyperOsFlutterFontHookConfigTest {
                 packageName -> new PackageConfigSnapshot(
                         packageName,
                         true,
-                        null,
+                        (Integer) null,
                         ViewportApplyMode.OFF,
                         300,
                         FontApplyMode.FIELD_REWRITE,

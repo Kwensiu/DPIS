@@ -13,8 +13,23 @@ import org.junit.Test;
 public class AppConfigDialogBinderSourceSmokeTest {
     @Test
     public void binder_wiresExpectedActionButtons() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String binderSource = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String interactionsSource = read("src/main/java/com/dpis/module/AppConfigSheetInteractions.java");
+        String source = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java")
+                + read("src/main/java/com/dpis/module/AppConfigSheetModeValidationBinder.java");
 
+        assertTrue(binderSource.contains("new AppConfigSheetInteractions(this, host)"));
+        assertTrue(binderSource.contains(".bind(dialogView, item, views, state, style, systemHooksEnabled);"));
+        assertTrue(interactionsSource.contains("new AppConfigSheetModeValidationBinder(binder, host)"));
+        assertTrue(interactionsSource.contains("new AppConfigSheetActionBinder(binder, host)"));
+        assertTrue(interactionsSource.contains(
+                "modeValidationBinder.bindDialogValidation(dialogView, item, views, state, style, systemHooksEnabled);"));
+        assertTrue(interactionsSource.contains(
+                "actionBinder.bindDialogActions(dialogView, item, views, state, style, systemHooksEnabled);"));
+        assertTrue(interactionsSource.contains(
+                "modeValidationBinder.bindModeToggles(dialogView, item, views, state, style, systemHooksEnabled);"));
+        assertTrue(interactionsSource.contains(
+                "actionBinder.bindTypefaceSelectorAction(dialogView, item, views, state, style, systemHooksEnabled);"));
         assertTrue(source.contains("views.scopeButton.setOnClickListener"));
         assertTrue(source.contains("host.toggleScope(item, state.scopeSelected"));
         assertTrue(source.contains("views.dpisToggleButton.setOnClickListener"));
@@ -22,27 +37,32 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("views.startButton.setOnClickListener"));
         assertTrue(source.contains("ProcessAction.START"));
         assertTrue(source.contains("syncHyperOsNativeProxyAfterSave(item, views, state)"));
-        assertTrue(source.contains("host.applyHyperOsNativeProxy(item, onFinished)"));
-        assertTrue(source.contains("host.unmountHyperOsNativeProxy(item"));
         assertTrue(source.contains("views.restartButton.setOnClickListener"));
         assertTrue(source.contains("ProcessAction.RESTART"));
         assertTrue(source.contains("views.stopButton.setOnClickListener"));
         assertTrue(source.contains("ProcessAction.STOP"));
         assertTrue(source.contains("views.disableButton.setOnClickListener"));
         assertTrue(source.contains("views.viewportInputView.setText(\"\")"));
-        assertTrue(source.contains("bindViewportModeToggle(views.viewportModeToggle, ViewportTargetType.RELATIVE_SCALE, true)"));
-        assertTrue(source.contains("bindFontModeToggle(views.fontModeToggle, FontApplyMode.SYSTEM_EMULATION, true)"));
+        assertTrue(source.contains("AppConfigDialogBinder.bindViewportModeToggle("));
+        assertTrue(source.contains("views.viewportModeToggle, ViewportTargetType.RELATIVE_SCALE, true)"));
+        assertTrue(source.contains("AppConfigDialogBinder.bindFontModeToggle("));
+        assertTrue(source.contains("views.fontModeToggle, FontApplyMode.SYSTEM_EMULATION, true)"));
         assertTrue(source.contains("host.saveAppConfig("));
         assertTrue(source.contains("views.saveButton.setOnClickListener"));
         assertTrue(source.contains("host.saveAppConfig("));
+        assertTrue(source.contains("state.viewportScaleInput"));
+        assertTrue(source.contains("state.viewportAbsoluteInput"));
         assertTrue(source.contains("showSaveButtonFeedback(views.saveButton)"));
-        assertTrue(source.contains("requestScopeAfterSuccessfulSave(dialogView, item, views, state, style, systemHooksEnabled)"));
+        assertTrue(source.contains("binder.requestScopeAfterSuccessfulSave("));
+        assertTrue(source.contains("dialogView, item, views, state, style, systemHooksEnabled);"));
+        assertTrue(binderSource.contains("host.applyHyperOsNativeProxy(item, onFinished)"));
+        assertTrue(binderSource.contains("host.unmountHyperOsNativeProxy(item"));
     }
 
     @Test
     public void saveSuccessRequestsKnownMissingScopeOnce() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
-        int methodStart = source.indexOf("private void requestScopeAfterSuccessfulSave");
+        int methodStart = source.indexOf("void requestScopeAfterSuccessfulSave");
         int methodEnd = source.indexOf("private static boolean hasActiveDialogConfig", methodStart);
         String method = source.substring(methodStart, methodEnd);
 
@@ -57,7 +77,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
     @Test
     public void saveTimeScopeCallbacksOnlyRefreshAttachedSheet() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
-        int methodStart = source.indexOf("private void requestScopeAfterSuccessfulSave");
+        int methodStart = source.indexOf("void requestScopeAfterSuccessfulSave");
         int methodEnd = source.indexOf("private static boolean hasActiveDialogConfig", methodStart);
         String method = source.substring(methodStart, methodEnd);
 
@@ -113,7 +133,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
     @Test
     public void typefaceSelectorKeepsMissingCurrentChoiceChecked() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
-        int selectorStart = source.indexOf("private void showTypefaceSelector");
+        int selectorStart = source.indexOf("void showTypefaceSelector");
         int selectorEnd = source.indexOf("private String resolveTypefaceDisplayText", selectorStart);
         String selectorBlock = source.substring(selectorStart, selectorEnd);
 
@@ -125,13 +145,17 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void binder_validationWatcherUpdatesSaveStateAndStatus() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String binderSource = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String source = read("src/main/java/com/dpis/module/AppConfigSheetModeValidationBinder.java")
+                + read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
 
-        assertTrue(source.contains("views.viewportInputView.addTextChangedListener(validationWatcher)"));
-        assertTrue(source.contains("views.fontInputView.addTextChangedListener(validationWatcher)"));
-        assertTrue(source.contains("updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,"));
+        assertTrue(source.contains(
+                "views.viewportInputView.addTextChangedListener(viewportValidationWatcher)"));
+        assertTrue(source.contains(
+                "views.fontInputView.addTextChangedListener(fontValidationWatcher)"));
+        assertTrue(source.contains("AppConfigDialogBinder.updateSaveButtonState("));
         assertTrue(source.contains("refreshDialogState(views, state, style, systemHooksEnabled, item);"));
-        assertTrue(source.contains("AppStatusFormatter.formatCompact("));
+        assertTrue(binderSource.contains("AppStatusFormatter.formatCompact("));
         assertTrue(source.contains("state.selectedTypefaceId"));
         assertTrue(source.contains("showTypefaceSelector(views.typefaceSelectorButton, state,"));
         assertTrue(source.contains("views, state, style, systemHooksEnabled, item"));
@@ -150,7 +174,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void binderWiresFontHookDomainButtonToHost() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String binderSource = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String source = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
         String layout = read("src/main/res/layout/dialog_app_config.xml");
 
         assertTrue(layout.contains("android:id=\"@+id/dialog_font_hook_domains_button\""));
@@ -162,12 +187,12 @@ public class AppConfigDialogBinderSourceSmokeTest {
                 < layout.indexOf("android:id=\"@+id/dialog_stop_button\""));
         assertTrue(layout.indexOf("android:id=\"@+id/dialog_font_hook_domains_button\"")
                 < layout.indexOf("@string/dialog_advanced_section_title"));
-        assertTrue(source.contains("void showFontHookDomains(AppListItem item, Runnable onStateChanged);"));
-        assertTrue(source.contains("String getFontHookDomainsButtonText(String packageName);"));
+        assertTrue(binderSource.contains("void showFontHookDomains(AppListItem item, Runnable onStateChanged);"));
+        assertTrue(binderSource.contains("String getFontHookDomainsButtonText(String packageName);"));
         assertTrue(source.contains("views.fontHookDomainsButton.setOnClickListener"));
         assertTrue(source.contains("host.showFontHookDomains(item,"));
-        assertTrue(source.contains("host.getFontHookDomainsButtonText(packageName)"));
-        assertTrue(source.contains("bindFontHookDomainsButton(views.fontHookDomainsButton, item.packageName);"));
+        assertTrue(binderSource.contains("host.getFontHookDomainsButtonText(packageName)"));
+        assertTrue(source.contains("binder.bindFontHookDomainsButton(views.fontHookDomainsButton, item.packageName)"));
     }
 
     @Test
@@ -230,7 +255,9 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void viewportTargetTypeControlsInputHintAndStackedLabels() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java")
+                + read("src/main/java/com/dpis/module/AppConfigSheetInteractions.java")
+                + read("src/main/java/com/dpis/module/AppConfigSheetModeValidationBinder.java");
         String layout = read("src/main/res/layout/dialog_app_config.xml");
         String strings = read("src/main/res/values/strings.xml");
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
@@ -261,21 +288,37 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("bindViewportInputHint(views.viewportInputLayout, initialViewportType)"));
         assertTrue(source.contains("bindFontModeToggle(views.fontModeToggle, initialFontMode(item.fontMode), false)"));
         assertTrue(source.contains("private static String initialViewportTargetType(ViewportTargetSpec spec)"));
-        assertTrue(source.contains("return FontApplyMode.isEnabled(normalized)"));
-        assertTrue(source.contains(": FontApplyMode.SYSTEM_EMULATION;"));
+        assertTrue(source.contains("AppConfigInputValidation.initialFontMode(fontMode)"));
+        assertTrue(source.contains("AppConfigInputValidation.initialViewportTargetType(spec)"));
     }
 
     @Test
-    public void viewportModeSwitchKeepsSingleInputValue() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
-        int switchStart = source.indexOf("private static void switchViewportTargetType");
-        int visualStart = source.indexOf("private static void updateModeToggleVisual", switchStart);
-        String switchBlock = source.substring(switchStart, visualStart);
+    public void viewportModeSwitchKeepsSeparateInputValues() throws IOException {
+        String binderSource = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String source = binderSource
+                + read("src/main/java/com/dpis/module/AppConfigSheetInteractions.java")
+                + read("src/main/java/com/dpis/module/AppConfigSheetModeValidationBinder.java");
+        int switchStart = binderSource.indexOf("static void switchViewportTargetType");
+        int visualStart = binderSource.indexOf("private static void updateModeToggleVisual", switchStart);
+        String switchBlock = binderSource.substring(switchStart, visualStart);
 
+        assertTrue(source.contains("String initialViewportInput = formatViewportInput(item.viewportTargetSpec)"));
+        assertTrue(source.contains("state.updateViewportInput("));
+        assertTrue(source.contains("AppConfigDialogBinder.resolveViewportMode(views.viewportModeToggle), s);"));
+        int fontWatcherStart = source.indexOf("TextWatcher fontValidationWatcher");
+        int fontWatcherEnd = source.indexOf(
+                "views.viewportInputView.addTextChangedListener", fontWatcherStart);
+        String fontWatcherBlock = source.substring(fontWatcherStart, fontWatcherEnd);
+        assertFalse(fontWatcherBlock.contains("state.updateViewportInput("));
+        assertTrue(source.contains("AppConfigDialogBinder.toggleViewportMode("));
+        assertTrue(source.contains("views.viewportModeToggle, views.viewportInputView, state);"));
         assertTrue(switchBlock.contains("bindViewportModeToggle(viewportModeToggle, nextType, animate);"));
+        assertTrue(switchBlock.contains("state.updateViewportInput(resolveViewportMode(viewportModeToggle),"));
+        assertTrue(switchBlock.contains("viewportInputView.setText(state.viewportInputFor(nextType));"));
+        assertTrue(source.contains("String viewportInputFor(String viewportTargetType)"));
+        assertTrue(source.contains("void clearViewportInputs()"));
         assertFalse(source.contains("viewportScaleText"));
         assertFalse(source.contains("viewportAbsoluteText"));
-        assertFalse(switchBlock.contains("viewportInputView.setText"));
     }
 
     @Test
@@ -328,7 +371,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void resetButtonOnlyClearsDialogInputsUntilSaved() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String source = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
         int resetStart = source.indexOf("views.disableButton.setOnClickListener");
         int saveStart = source.indexOf("views.saveButton.setOnClickListener");
         String resetBlock = source.substring(resetStart, saveStart);
@@ -344,6 +387,9 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("ViewportPropertySyncer.publishTargetAsync("));
         assertTrue(source.contains("item.packageName, viewportTargetSpec, viewportApplyMode"));
         assertTrue(source.contains("ViewportPropertySyncer.clearTargetAsync(item.packageName)"));
+        assertTrue(source.contains("ViewportDraftValue.invalid()"));
+        assertFalse(source.contains("INVALID_DRAFT"));
+        assertFalse(source.contains("Integer.MIN_VALUE"));
     }
 
     @Test

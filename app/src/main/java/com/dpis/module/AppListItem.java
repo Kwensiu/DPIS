@@ -65,6 +65,7 @@ final class AppListItem {
                 boolean inScope,
                 boolean scopeKnown,
                 Integer viewportWidthDp,
+                Integer viewportScalePermille,
                 String viewportMode,
                 ViewportTargetSpec viewportTargetSpec,
                 Integer fontScalePercent,
@@ -87,8 +88,8 @@ final class AppListItem {
                 ? Integer.valueOf(this.viewportTargetSpec.absoluteWidthDp())
                 : viewportWidthDp;
         this.viewportScalePermille = this.viewportTargetSpec.isRelativeScale()
-                ? this.viewportTargetSpec.scalePermille()
-                : null;
+                ? Integer.valueOf(this.viewportTargetSpec.scalePermille())
+                : viewportScalePermille;
         this.viewportMode = ViewportApplyMode.normalize(viewportMode);
         this.fontScalePercent = fontScalePercent;
         this.fontMode = FontApplyMode.normalize(fontMode);
@@ -97,5 +98,24 @@ final class AppListItem {
         this.systemApp = systemApp;
         this.hyperOsNativeProxyCandidate = hyperOsNativeProxyCandidate;
         this.icon = icon;
+    }
+
+    AppListItem(String label,
+                String packageName,
+                boolean inScope,
+                boolean scopeKnown,
+                Integer viewportWidthDp,
+                String viewportMode,
+                ViewportTargetSpec viewportTargetSpec,
+                Integer fontScalePercent,
+                String fontMode,
+                String typefaceId,
+                boolean dpisEnabled,
+                boolean systemApp,
+                boolean hyperOsNativeProxyCandidate,
+                Drawable icon) {
+        this(label, packageName, inScope, scopeKnown, viewportWidthDp, null, viewportMode,
+                viewportTargetSpec, fontScalePercent, fontMode, typefaceId, dpisEnabled, systemApp,
+                hyperOsNativeProxyCandidate, icon);
     }
 }

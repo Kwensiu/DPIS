@@ -3,7 +3,6 @@ package com.dpis.module;
 final class ModulePackagePlan {
     final String packageName;
     final ViewportTargetSpec targetViewportSpec;
-    final Integer targetViewportWidthDp;
     final String targetViewportMode;
     final Integer targetFontScalePercent;
     final String targetFontMode;
@@ -21,7 +20,6 @@ final class ModulePackagePlan {
 
     private ModulePackagePlan(String packageName,
                               ViewportTargetSpec targetViewportSpec,
-                              Integer targetViewportWidthDp,
                               String targetViewportMode,
                               Integer targetFontScalePercent,
                               String targetFontMode,
@@ -39,10 +37,7 @@ final class ModulePackagePlan {
         this.packageName = packageName;
         this.targetViewportSpec = targetViewportSpec != null
                 ? targetViewportSpec
-                : (targetViewportWidthDp != null
-                        ? ViewportTargetSpec.absoluteDp(targetViewportWidthDp)
-                        : ViewportTargetSpec.off());
-        this.targetViewportWidthDp = targetViewportWidthDp;
+                : ViewportTargetSpec.off();
         this.targetViewportMode = targetViewportMode;
         this.targetFontScalePercent = targetFontScalePercent;
         this.targetFontMode = targetFontMode;
@@ -75,9 +70,6 @@ final class ModulePackagePlan {
             return inactive(packageName);
         }
         ViewportTargetSpec targetViewportSpec = packageConfig.targetViewportSpec;
-        Integer targetViewportWidthDp = targetViewportSpec.isAbsoluteDp()
-                ? targetViewportSpec.absoluteWidthDp()
-                : null;
         String targetViewportMode = packageConfig.targetViewportMode;
         Integer targetFontScalePercent = packageConfig.targetFontScalePercent;
         String targetFontMode = packageConfig.targetFontMode;
@@ -96,7 +88,6 @@ final class ModulePackagePlan {
             return new ModulePackagePlan(
                     packageName,
                     targetViewportSpec,
-                    targetViewportWidthDp,
                     targetViewportMode,
                     targetFontScalePercent,
                     targetFontMode,
@@ -122,7 +113,6 @@ final class ModulePackagePlan {
         return new ModulePackagePlan(
                 packageName,
                 targetViewportSpec,
-                targetViewportWidthDp,
                 targetViewportMode,
                 targetFontScalePercent,
                 targetFontMode,
@@ -153,11 +143,54 @@ final class ModulePackagePlan {
                 && FontApplyMode.isEnabled(targetFontMode)));
     }
 
+    boolean hasSecondaryProcessSafeRoute() {
+        return fontEnabled || typefaceEnabled;
+    }
+
+    ModulePackagePlan withoutViewportRoute() {
+        return new ModulePackagePlan(
+                packageName,
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                targetFontScalePercent,
+                targetFontMode,
+                targetTypefaceId,
+                targetDpisEnabled,
+                false,
+                false,
+                fontScaleActive,
+                fontEnabled,
+                typefaceActive,
+                typefaceEnabled,
+                flutterSettingsFontEnabled,
+                hyperOsNativeFlutterFontEnabled,
+                hookDomainOverride);
+    }
+
+    HookExecutionPlan buildExecutionPlan(HookRuntimePolicy policy, DebugFontOverride debugOverride) {
+        return HookExecutionPlanner.buildPlan(
+                policy,
+                packageName,
+                viewportConfigured,
+                targetViewportMode,
+                fontScaleActive,
+                targetFontMode,
+                flutterSettingsFontEnabled,
+                hyperOsNativeFlutterFontEnabled,
+                hookDomainOverride,
+                debugOverride);
+    }
+
+    Integer targetViewportWidthDp() {
+        return targetViewportSpec.isAbsoluteDp()
+                ? targetViewportSpec.absoluteWidthDp()
+                : null;
+    }
+
     private static ModulePackagePlan inactive(String packageName) {
         return new ModulePackagePlan(
                 packageName,
                 ViewportTargetSpec.off(),
-                null,
                 ViewportApplyMode.OFF,
                 null,
                 FontApplyMode.OFF,

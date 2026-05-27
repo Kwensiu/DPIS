@@ -10,7 +10,22 @@
 - Build outputs/logs are generated under `app/build/` and should not be edited manually.
 - Documentation:
   - Active docs: `docs/`
+  - Agent collaboration config: `docs/agents/`
   - Historical/archived docs: `docs/archive/`
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues for `Kwensiu/DPIS`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the default Matt Pocock skill label roles unless the repository labels are intentionally changed. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+DPIS currently uses a single-context documentation layout. See `docs/agents/domain.md`.
 
 ## Build, Test, and Development Commands
 - Build debug APKs (both flavors):

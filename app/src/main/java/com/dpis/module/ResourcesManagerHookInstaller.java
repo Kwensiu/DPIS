@@ -287,10 +287,12 @@ final class ResourcesManagerHookInstaller {
         }
         boolean windowScoped = ViewportConfigurationScope.isWindowScoped(config);
         VirtualDisplayOverride.Result stableTarget =
-                resolution.record != null && resolution.record.virtualDisplayResult != null
-                        ? resolution.record.virtualDisplayResult
-                        : VirtualDisplayState.getForTarget(targetViewportWidth);
-        ViewportOverride.Result result = ViewportOverride.derive(
+                ViewportResolvedTarget.virtualDisplayResult(resolution, targetViewportWidth);
+        ViewportOverride.Result resolvedRecordResult =
+                ViewportResolvedTarget.viewportResult(resolution, windowScoped);
+        ViewportOverride.Result result = resolvedRecordResult != null
+                ? resolvedRecordResult
+                : ViewportOverride.derive(
                 config,
                 targetViewportWidth != null ? targetViewportWidth : 0,
                 windowScoped,
@@ -328,17 +330,19 @@ final class ResourcesManagerHookInstaller {
                         ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
             }
         }
+        boolean needsViewportUpdate = result.widthDp != originalWidthDp
+                || result.heightDp != originalHeightDp
+                || result.smallestWidthDp != originalSmallestWidthDp
+                || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi);
         boolean applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
-                store, packageName);
-        if (result.widthDp == originalWidthDp
-                && result.heightDp == originalHeightDp
-                && result.smallestWidthDp == originalSmallestWidthDp
-                && (result.densityDpi <= 0 || result.densityDpi == originalDensityDpi)
+                store, packageName, resolution, needsViewportUpdate);
+        if (!needsViewportUpdate
                 && !fontScale.changed) {
             VirtualDisplayOverride.Result stableResult =
                     VirtualDisplayState.getStableTargetResult(
                             originalSmallestWidthDp, targetViewportWidth);
-            if (stableResult != null && stableResult.densityDpi > 0
+            if (result.densityDpi <= 0
+                    && stableResult != null && stableResult.densityDpi > 0
                     && config.densityDpi != stableResult.densityDpi) {
                 config.densityDpi = stableResult.densityDpi;
                 String message = "DPIS_VIEWPORT " + sourceTag
@@ -359,11 +363,7 @@ final class ResourcesManagerHookInstaller {
             }
             return;
         }
-        if (applyToConfiguration
-                && (result.widthDp != originalWidthDp
-                || result.heightDp != originalHeightDp
-                || result.smallestWidthDp != originalSmallestWidthDp
-                || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi))) {
+        if (applyToConfiguration && needsViewportUpdate) {
             ViewportOverride.apply(config, result);
         }
         String modeLabel = applyToConfiguration ? "config" : "metrics";

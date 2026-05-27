@@ -9,6 +9,8 @@ final class AppConfigSaveHandler {
             String viewportTargetType,
             String fontMode,
             String selectedTypefaceId,
+            String viewportScaleInput,
+            String viewportAbsoluteInput,
             boolean systemHooksEnabled,
             DpiConfigStore store,
             Runnable onChanged) {
@@ -44,6 +46,12 @@ final class AppConfigSaveHandler {
                 ViewportPropertySyncer.clearTargetAsync(item.packageName);
             } else {
                 saved = store.setTargetViewportSpec(item.packageName, viewportTargetSpec) && saved;
+                saved = saveInactiveViewportDraft(
+                        store,
+                        item.packageName,
+                        viewportTargetSpec,
+                        viewportScaleInput,
+                        viewportAbsoluteInput) && saved;
                 saved = store.setTargetViewportApplyMode(item.packageName, viewportApplyMode)
                         && saved;
                 ViewportPropertySyncer.publishTargetAsync(
@@ -102,35 +110,85 @@ final class AppConfigSaveHandler {
                 : ViewportApplyMode.AUTO;
     }
 
-    private static Integer parsePositiveIntOrNull(TextInputEditText inputView)
-            throws NumberFormatException {
-        String raw = inputView.getText() != null ? inputView.getText().toString().trim() : "";
+    private static boolean saveInactiveViewportDraft(DpiConfigStore store,
+            String packageName,
+            ViewportTargetSpec activeSpec,
+            String viewportScaleInput,
+            String viewportAbsoluteInput) {
+        if (store == null || packageName == null || packageName.isBlank()
+                || activeSpec == null || !activeSpec.isEnabled()) {
+            return true;
+        }
+        if (activeSpec.isRelativeScale()) {
+            ViewportDraftValue draft = parseViewportWidthDraft(viewportAbsoluteInput);
+            if (!draft.valid) {
+                return true;
+            }
+            return store.setTargetViewportWidthDraft(
+                    packageName, draft.value);
+        }
+        if (activeSpec.isAbsoluteDp()) {
+            ViewportDraftValue draft = parseViewportScalePermilleDraft(viewportScaleInput);
+            if (!draft.valid) {
+                return true;
+            }
+            return store.setTargetViewportScalePermilleDraft(
+                    packageName, draft.value);
+        }
+        return true;
+    }
+
+    private static ViewportDraftValue parseViewportWidthDraft(String rawInput) {
+        String raw = rawInput != null ? rawInput.trim() : "";
         if (raw.isEmpty()) {
-            return null;
+            return ViewportDraftValue.valid(null);
         }
-        int value = Integer.parseInt(raw);
-        if (value <= 0) {
-            throw new NumberFormatException("must be positive");
+        Integer value = AppConfigInputValidation.parsePositiveIntOrNull(raw);
+        return value != null ? ViewportDraftValue.valid(value) : ViewportDraftValue.invalid();
+    }
+
+    private static ViewportDraftValue parseViewportScalePermilleDraft(String rawInput) {
+        String raw = rawInput != null ? rawInput.trim() : "";
+        if (raw.isEmpty()) {
+            return ViewportDraftValue.valid(null);
         }
-        return value;
+        Integer value = AppConfigInputValidation.parsePositiveIntOrNull(raw);
+        if (value == null
+                || value < ViewportTargetSpec.MIN_SCALE_PERCENT
+                || value > ViewportTargetSpec.MAX_SCALE_PERCENT) {
+            return ViewportDraftValue.invalid();
+        }
+        return ViewportDraftValue.valid(value * 10);
+    }
+
+    private static final class ViewportDraftValue {
+        final boolean valid;
+        final Integer value;
+
+        private ViewportDraftValue(boolean valid, Integer value) {
+            this.valid = valid;
+            this.value = value;
+        }
+
+        static ViewportDraftValue valid(Integer value) {
+            return new ViewportDraftValue(true, value);
+        }
+
+        static ViewportDraftValue invalid() {
+            return new ViewportDraftValue(false, null);
+        }
     }
 
     private static ViewportTargetSpec parseViewportTargetSpecOrNull(TextInputEditText inputView,
                                                                     String viewportTargetType)
             throws NumberFormatException {
-        Integer value = parsePositiveIntOrNull(inputView);
-        if (value == null) {
-            return ViewportTargetSpec.off();
+        String raw = inputView.getText() != null ? inputView.getText().toString().trim() : "";
+        if (!AppConfigInputValidation.isViewportInputValid(raw, viewportTargetType)) {
+            throw new NumberFormatException("invalid viewport target");
         }
-        if (ViewportTargetType.RELATIVE_SCALE.equals(
-                ViewportTargetType.normalize(viewportTargetType))) {
-            if (value < ViewportTargetSpec.MIN_SCALE_PERCENT
-                    || value > ViewportTargetSpec.MAX_SCALE_PERCENT) {
-                throw new NumberFormatException("viewport scale out of range");
-            }
-            return ViewportTargetSpec.relativeScale(value * 10);
-        }
-        return ViewportTargetSpec.absoluteDp(value);
+        ViewportTargetSpec spec =
+                AppConfigInputValidation.parseViewportTargetSpec(raw, viewportTargetType);
+        return spec;
     }
 
     private static Integer parseFontScalePercentOrNull(TextInputEditText inputView)
@@ -139,9 +197,9 @@ final class AppConfigSaveHandler {
         if (raw.isEmpty()) {
             return null;
         }
-        int value = Integer.parseInt(raw);
-        if (value < 50 || value > 300) {
-            throw new NumberFormatException("font scale out of range");
+        Integer value = AppConfigInputValidation.parseFontScalePercentOrNull(raw);
+        if (value == null) {
+            throw new NumberFormatException("invalid font scale");
         }
         return value;
     }

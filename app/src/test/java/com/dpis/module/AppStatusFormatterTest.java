@@ -18,8 +18,9 @@ public class AppStatusFormatterTest {
             "Not enabled",
             "System",
             "Compat",
+            "Interface",
+            "Interface",
             "Font",
-            "Font file",
             Locale.US);
 
     private final AppStatusFormatter.Labels chineseLabels = new AppStatusFormatter.Labels(
@@ -30,8 +31,9 @@ public class AppStatusFormatterTest {
             "\u672A\u542F\u7528",
             "\u7CFB\u7EDF",
             "\u517C\u5BB9",
+            "\u754C\u9762",
+            "\u754C\u9762",
             "\u5B57\u4F53",
-            "\u5B57\u4F53\u6587\u4EF6",
             Locale.CHINA);
 
     @Test
@@ -43,7 +45,7 @@ public class AppStatusFormatterTest {
 
     @Test
     public void formatsInScopeEnabledStateWithLabels() {
-        assertEquals("Injected | 320dp(System) | Font file | Font115%(System)",
+        assertEquals("Injected | Interface 320dp(System) | Font[C] 115%(System)",
                 AppStatusFormatter.format(
                         englishLabels,
                         true,
@@ -57,7 +59,7 @@ public class AppStatusFormatterTest {
 
     @Test
     public void formatsFontOnlyStateWithChineseLabels() {
-        assertEquals("\u672A\u6CE8\u5165 | \u672A\u542F\u7528 | \u5B57\u4F53\u6587\u4EF6 | \u5B57\u4F53110%(\u517C\u5BB9)",
+        assertEquals("\u672A\u6CE8\u5165 | \u672A\u542F\u7528 | \u5B57\u4F53[C] 110%(\u517C\u5BB9)",
                 AppStatusFormatter.format(
                         chineseLabels,
                         false,
@@ -85,7 +87,7 @@ public class AppStatusFormatterTest {
 
     @Test
     public void formatsCompactStatusWithoutStringStripping() {
-        assertEquals("Injected | 320dp | Font file | 115%",
+        assertEquals("Injected | Interface 320dp | Font[C] 115%",
                 AppStatusFormatter.formatCompact(
                         englishLabels,
                         true,
@@ -99,7 +101,7 @@ public class AppStatusFormatterTest {
 
     @Test
     public void hidesStatusScopeSegmentWhenScopeCannotBeRead() {
-        assertEquals("320dp",
+        assertEquals("Interface 320dp",
                 AppStatusFormatter.formatCompact(
                         englishLabels,
                         false,
@@ -155,34 +157,81 @@ public class AppStatusFormatterTest {
 
     @Test
     public void warnsOnlyViewportSegmentWhenOnlyViewportEmulationFails() {
-        String text = "Injected | 360dp | Font file | 120%";
+        String text = "Injected | Interface 360dp | Font[C] 120%";
         int[][] ranges = AppStatusFormatter.resolveWarnSegmentRanges(text, true, false);
         assertEquals(1, ranges.length);
-        assertArrayEquals(resolveExpectedRange(text, "360dp"), ranges[0]);
+        assertArrayEquals(resolveExpectedRange(text, "Interface 360dp"), ranges[0]);
     }
 
     @Test
     public void warnsOnlyFontSegmentWhenOnlyFontEmulationFails() {
-        String text = "Injected | 360dp | Font file | 120%";
+        String text = "Injected | Interface 360dp | Font[C] 120%";
         int[][] ranges = AppStatusFormatter.resolveWarnSegmentRanges(text, false, true);
         assertEquals(1, ranges.length);
-        assertArrayEquals(resolveExpectedRange(text, "120%"), ranges[0]);
+        assertArrayEquals(resolveExpectedRange(text, "Font[C] 120%"), ranges[0]);
     }
 
     @Test
     public void warnsBothSegmentsWhenBothEmulationsFail() {
-        String text = "Injected | 360dp | Font file | 120%";
+        String text = "Injected | Interface 360dp | Font[C] 120%";
         int[][] ranges = AppStatusFormatter.resolveWarnSegmentRanges(text, true, true);
         assertEquals(2, ranges.length);
-        assertArrayEquals(resolveExpectedRange(text, "360dp"), ranges[0]);
-        assertArrayEquals(resolveExpectedRange(text, "120%"), ranges[1]);
+        assertArrayEquals(resolveExpectedRange(text, "Interface 360dp"), ranges[0]);
+        assertArrayEquals(resolveExpectedRange(text, "Font[C] 120%"), ranges[1]);
+    }
+
+    @Test
+    public void warnsSegmentsWhenScopeSegmentIsHidden() {
+        String text = "Interface 106% | Font 115%";
+        int[][] ranges = AppStatusFormatter.resolveWarnSegmentRanges(text, true, true);
+        assertEquals(2, ranges.length);
+        assertArrayEquals(resolveExpectedRange(text, "Interface 106%"), ranges[0]);
+        assertArrayEquals(resolveExpectedRange(text, "Font 115%"), ranges[1]);
+    }
+
+    @Test
+    public void warnsOnlyViewportSegmentWhenScopeAndFontSegmentsAreHidden() {
+        String text = "Interface 320dp";
+        int[][] ranges = AppStatusFormatter.resolveWarnSegmentRanges(text, true, false);
+        assertEquals(1, ranges.length);
+        assertArrayEquals(resolveExpectedRange(text, "Interface 320dp"), ranges[0]);
     }
 
     @Test
     public void returnsNoRangesWhenNoSegmentNeedsWarning() {
-        String text = "Injected | 360dp | 120%";
+        String text = "Injected | Interface 360dp | Font 120%";
         int[][] ranges = AppStatusFormatter.resolveWarnSegmentRanges(text, false, false);
         assertEquals(0, ranges.length);
+    }
+
+    @Test
+    public void formatsRelativeScaleCompactStatus() {
+        assertEquals("Injected | Interface 106% | Font 115%",
+                AppStatusFormatter.formatCompact(
+                        englishLabels,
+                        true,
+                        true,
+                        ViewportTargetSpec.relativeScale(1060),
+                        ViewportApplyMode.AUTO,
+                        115,
+                        FontApplyMode.SYSTEM_EMULATION,
+                        null,
+                        true));
+    }
+
+    @Test
+    public void formatsCustomTypefaceWithoutFontScaleAsSingleFontSegment() {
+        assertEquals("Injected | Interface 100% | Font[C]",
+                AppStatusFormatter.formatCompact(
+                        englishLabels,
+                        true,
+                        true,
+                        ViewportTargetSpec.relativeScale(1000),
+                        ViewportApplyMode.AUTO,
+                        null,
+                        FontApplyMode.OFF,
+                        "font_roboto",
+                        true));
     }
 
     private static int[] resolveExpectedRange(String fullText, String segmentText) {

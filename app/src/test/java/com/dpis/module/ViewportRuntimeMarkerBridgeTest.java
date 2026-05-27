@@ -35,7 +35,39 @@ public class ViewportRuntimeMarkerBridgeTest {
         assertEquals(record.sourceSignature, result.record.sourceSignature);
         assertEquals(record.resultSignature, result.record.resultSignature);
         assertEquals(900, result.record.effectiveSmallestWidthDp);
+        assertEquals(1_093, result.record.resultWidthDp);
+        assertEquals(900, result.record.resultHeightDp);
+        assertEquals(900, result.record.resultSmallestWidthDp);
+        assertEquals(326, result.record.resultDensityDpi);
         assertEquals("s", result.record.provenance);
+    }
+
+    @Test
+    public void parseAcceptsLegacyMarkerWithoutCompleteResult() {
+        ViewportRuntimeMarkerBridge.MarkerRecord record = marker("org.telegram.messenger", 1_000L);
+        String encoded = ViewportRuntimeMarkerBridge.encode(record);
+        String[] parts = encoded.split("\\|", -1);
+        String legacyEncoded = "v1"
+                + "|" + parts[1]
+                + "|" + parts[2]
+                + "|" + parts[3]
+                + "|" + parts[4]
+                + "|" + parts[5]
+                + "|" + parts[7]
+                + "|" + parts[8];
+
+        ViewportRuntimeMarkerBridge.ParseResult result = ViewportRuntimeMarkerBridge.parse(
+                "org.telegram.messenger",
+                record.targetFingerprint,
+                legacyEncoded,
+                1_500L);
+
+        assertTrue(result.hit);
+        assertEquals(900, result.record.effectiveSmallestWidthDp);
+        assertEquals(0, result.record.resultWidthDp);
+        assertEquals(0, result.record.resultHeightDp);
+        assertEquals(0, result.record.resultSmallestWidthDp);
+        assertEquals(0, result.record.resultDensityDpi);
     }
 
     @Test
@@ -105,6 +137,23 @@ public class ViewportRuntimeMarkerBridgeTest {
 
         assertFalse(result.hit);
         assertEquals("stale", result.reason);
+    }
+
+    @Test
+    public void parseAllowingStaleAcceptsMatchingCompleteMarker() {
+        ViewportRuntimeMarkerBridge.MarkerRecord record = marker("org.telegram.messenger", 1_000L);
+
+        ViewportRuntimeMarkerBridge.ParseResult result =
+                ViewportRuntimeMarkerBridge.parseAllowingStale(
+                        "org.telegram.messenger",
+                        record.targetFingerprint,
+                        ViewportRuntimeMarkerBridge.encode(record),
+                        60_000L);
+
+        assertTrue(result.hit);
+        assertEquals(1_093, result.record.resultWidthDp);
+        assertEquals(900, result.record.resultSmallestWidthDp);
+        assertEquals(326, result.record.resultDensityDpi);
     }
 
     @Test

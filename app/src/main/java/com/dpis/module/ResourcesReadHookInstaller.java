@@ -130,10 +130,12 @@ final class ResourcesReadHookInstaller {
         }
         boolean windowScoped = ViewportConfigurationScope.isWindowScoped(config);
         VirtualDisplayOverride.Result stableTarget =
-                resolution.record != null && resolution.record.virtualDisplayResult != null
-                        ? resolution.record.virtualDisplayResult
-                        : VirtualDisplayState.getForTarget(targetViewportWidth);
-        ViewportOverride.Result result = ViewportOverride.derive(
+                ViewportResolvedTarget.virtualDisplayResult(resolution, targetViewportWidth);
+        ViewportOverride.Result resolvedRecordResult =
+                ViewportResolvedTarget.viewportResult(resolution, windowScoped);
+        ViewportOverride.Result result = resolvedRecordResult != null
+                ? resolvedRecordResult
+                : ViewportOverride.derive(
                 config,
                 targetViewportWidth != null ? targetViewportWidth : 0,
                 windowScoped,
@@ -148,11 +150,14 @@ final class ResourcesReadHookInstaller {
             return;
         }
 
-        if (result.widthDp != originalWidthDp
+        boolean needsViewportUpdate = result.widthDp != originalWidthDp
                 || result.heightDp != originalHeightDp
                 || result.smallestWidthDp != originalSmallestWidthDp
-                || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi)) {
-            if (ViewportModePolicy.shouldApplyConfigurationOverride(store, packageName)) {
+                || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi);
+        boolean applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
+                store, packageName, resolution, needsViewportUpdate);
+        if (needsViewportUpdate) {
+            if (applyToConfiguration) {
                 ViewportOverride.apply(config, result);
             }
         }
@@ -166,7 +171,7 @@ final class ResourcesReadHookInstaller {
                 0,
                 result.smallestWidthDp);
         if (!windowScoped) {
-            if (resolution.spec.isRelativeScale()) {
+            if (resolution.spec.isEnabled()) {
                 VirtualDisplayState.publish(
                         packageName,
                         resolution.spec,
@@ -188,7 +193,8 @@ final class ResourcesReadHookInstaller {
             VirtualDisplayOverride.Result stableResult =
                     VirtualDisplayState.getStableTargetResult(
                             originalSmallestWidthDp, targetViewportWidth);
-            if (stableResult != null && stableResult.densityDpi > 0
+            if (result.densityDpi <= 0
+                    && stableResult != null && stableResult.densityDpi > 0
                     && config.densityDpi != stableResult.densityDpi) {
                 config.densityDpi = stableResult.densityDpi;
                 logIfChanged(packageName + ":" + sourceTag + ":stable-target",
@@ -210,8 +216,7 @@ final class ResourcesReadHookInstaller {
                         + ", targetViewportWidthDp=" + describeNullable(targetViewportWidth)
                         + ", scope=" + (windowScoped ? "window" : "display")
                         + ", mode="
-                        + (ViewportModePolicy.shouldApplyConfigurationOverride(store, packageName)
-                        ? "config" : "metrics")
+                        + (applyToConfiguration ? "config" : "metrics")
                         + ", target=" + describeViewportResult(result)
                         + ", actual=" + describeConfiguration(config)
                         + ", widthDp " + originalWidthDp

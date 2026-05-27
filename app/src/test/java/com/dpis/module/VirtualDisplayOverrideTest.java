@@ -23,6 +23,7 @@ public class VirtualDisplayOverrideTest {
     public void tearDown() {
         VirtualDisplayState.set(null);
         setTargetPackageName(null);
+        DisplayHookInstaller.setTargetStoreForCompat100(null);
         clearCurrentPackageResolver();
     }
 
@@ -40,9 +41,8 @@ public class VirtualDisplayOverrideTest {
     }
 
     @Test
-    public void appliesDisplayMetricsFromSharedState() {
-        VirtualDisplayState.set(new VirtualDisplayOverride.Result(300, 613, 300,
-                576, 1080, 2208));
+    public void appliesDisplayMetricsFromPackageScopedRecord() {
+        publishTargetRecord();
         DisplayMetrics metrics = new DisplayMetrics();
         metrics.widthPixels = 1080;
         metrics.heightPixels = 2208;
@@ -56,12 +56,11 @@ public class VirtualDisplayOverrideTest {
     }
 
     @Test
-    public void appliesPointFromSharedState() {
-        VirtualDisplayState.set(new VirtualDisplayOverride.Result(300, 613, 300,
-                576, 1080, 2208));
+    public void appliesPointFromPackageScopedRecord() {
+        publishTargetRecord();
         Point point = new Point();
-        point.x = 1080;
-        point.y = 2208;
+        point.x = 1;
+        point.y = 2;
 
         DisplayHookInstaller.applyPoint(point, "test");
 
@@ -92,6 +91,25 @@ public class VirtualDisplayOverrideTest {
         assertEquals(800, result.heightDp);
         assertEquals(360, result.smallestWidthDp);
         assertEquals(480, result.densityDpi);
+        assertEquals(1080, result.widthPx);
+        assertEquals(2208, result.heightPx);
+    }
+
+    @Test
+    public void absolutePhysicalPixelPlanIgnoresDriftedSourceDensity() {
+        VirtualDisplayOverride.Result result =
+                VirtualDisplayPlan.deriveAbsoluteResultFromPhysicalPixels(
+                        360,
+                        736,
+                        360,
+                        1080,
+                        2208,
+                        500);
+
+        assertEquals(500, result.widthDp);
+        assertEquals(1022, result.heightDp);
+        assertEquals(500, result.smallestWidthDp);
+        assertEquals(346, result.densityDpi);
         assertEquals(1080, result.widthPx);
         assertEquals(2208, result.heightPx);
     }
@@ -138,5 +156,19 @@ public class VirtualDisplayOverrideTest {
         } catch (ReflectiveOperationException e) {
             throw new AssertionError(e);
         }
+    }
+
+    private static void publishTargetRecord() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.absoluteDp(300);
+        store.setTargetViewportSpec("com.max.xiaoheihe", targetSpec);
+        DisplayHookInstaller.setTargetStoreForCompat100(store);
+        VirtualDisplayState.publish(
+                "com.max.xiaoheihe",
+                targetSpec,
+                ViewportSourceSnapshot.systemDisplayInfo(360, 736, 360, 480, 1080, 2208),
+                new ViewportOverride.Result(300, 613, 300, 576),
+                new VirtualDisplayOverride.Result(300, 613, 300, 576, 1080, 2208),
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
     }
 }

@@ -75,6 +75,12 @@ final class ViewportPropertySyncer {
         return buildCompatConfigCommand(packageName, widthDp, mode);
     }
 
+    static String buildCompatConfigCommandForTest(String packageName,
+                                                  ViewportTargetSpec targetSpec,
+                                                  String mode) {
+        return buildCompatConfigCommand(packageName, targetSpec, mode);
+    }
+
     private static String buildCompatConfigCommand(String packageName, int widthDp, String mode) {
         return buildCompatConfigCommand(packageName, ViewportTargetSpec.absoluteDp(widthDp), mode);
     }
@@ -82,42 +88,27 @@ final class ViewportPropertySyncer {
     private static String buildCompatConfigCommand(String packageName,
                                                    ViewportTargetSpec targetSpec,
                                                    String mode) {
-        String normalizedMode = ViewportApplyMode.normalize(mode);
-        ViewportTargetSpec normalizedTarget = targetSpec != null ? targetSpec : ViewportTargetSpec.off();
-        boolean enabled = normalizedTarget.isEnabled() && ViewportApplyMode.isEnabled(normalizedMode);
-        // vp.* drives system emulation. vpcfg/vpmode preserve compat100 config
-        // for field_rewrite without accidentally enabling emulation.
-        int systemEmulationValue = enabled
-                && normalizedTarget.isAbsoluteDp()
-                && (ViewportApplyMode.SYSTEM.equals(normalizedMode)
-                || ViewportApplyMode.AUTO.equals(normalizedMode))
-                ? normalizedTarget.absoluteWidthDp() : 0;
-        int compatConfigValue = enabled && normalizedTarget.isAbsoluteDp()
-                ? normalizedTarget.absoluteWidthDp() : 0;
-        int scalePermilleValue = enabled && normalizedTarget.isRelativeScale()
-                ? normalizedTarget.scalePermille() : 0;
-        String targetType = enabled ? normalizedTarget.type() : ViewportTargetType.OFF;
-        String compatMode = enabled ? normalizedMode : ViewportApplyMode.OFF;
+        ViewportPropertyProjection.Encoded enc = ViewportPropertyProjection.encode(targetSpec, mode);
         return buildSetCommandPair(
                         ViewportPropertyBridge.propertyNameForPackage(packageName),
                         ViewportPropertyBridge.persistentPropertyNameForPackage(packageName),
-                        systemEmulationValue)
+                        enc.systemEmulationValue)
                 + "; " + buildSetCommandPair(
                         ViewportPropertyBridge.targetTypePropertyNameForPackage(packageName),
                         ViewportPropertyBridge.persistentTargetTypePropertyNameForPackage(packageName),
-                        targetType)
+                        enc.targetType)
                 + "; " + buildSetCommandPair(
                         ViewportPropertyBridge.scalePropertyNameForPackage(packageName),
                         ViewportPropertyBridge.persistentScalePropertyNameForPackage(packageName),
-                        scalePermilleValue)
+                        enc.scalePermille)
                 + "; " + buildSetCommandPair(
                         ViewportPropertyBridge.compatConfigPropertyNameForPackage(packageName),
                         ViewportPropertyBridge.persistentCompatConfigPropertyNameForPackage(packageName),
-                        compatConfigValue)
+                        enc.compatConfigValue)
                 + "; " + buildSetCommandPair(
                         ViewportPropertyBridge.compatModePropertyNameForPackage(packageName),
                         ViewportPropertyBridge.persistentCompatModePropertyNameForPackage(packageName),
-                        compatMode);
+                        enc.compatMode);
     }
 
     private static String buildClearCommand(String packageName) {

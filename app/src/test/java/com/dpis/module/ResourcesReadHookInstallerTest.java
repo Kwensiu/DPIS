@@ -10,6 +10,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class ResourcesReadHookInstallerTest {
+    private static final String PACKAGE_NAME = "com.example.target";
+
     @After
     public void tearDown() {
         VirtualDisplayState.set(null);
@@ -27,10 +29,10 @@ public class ResourcesReadHookInstallerTest {
         config.smallestScreenWidthDp = 800;
         config.fontScale = 1.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.com.example.target.width_dp", 800).commit();
+        putCompatViewport(prefs, 800);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
-        ResourcesReadHookInstaller.applyConfigurationOverride(config, "com.example.target", store,
+        ResourcesReadHookInstaller.applyConfigurationOverride(config, PACKAGE_NAME, store,
                 "ResourcesRead(getConfiguration)");
 
         assertEquals(216, config.densityDpi);
@@ -54,7 +56,7 @@ public class ResourcesReadHookInstallerTest {
         metrics.widthPixels = 1080;
         metrics.heightPixels = 2208;
 
-        ResourcesReadHookInstaller.applyMetricsOverride(metrics, config, "com.example.target");
+        ResourcesReadHookInstaller.applyMetricsOverride(metrics, config, PACKAGE_NAME);
 
         assertEquals(216, metrics.densityDpi);
         assertEquals(DensityOverride.densityFromDpi(216), metrics.density, 0.0001f);
@@ -81,7 +83,7 @@ public class ResourcesReadHookInstallerTest {
         metrics.widthPixels = 0;
         metrics.heightPixels = 0;
 
-        ResourcesReadHookInstaller.applyMetricsOverride(metrics, config, "com.example.target");
+        ResourcesReadHookInstaller.applyMetricsOverride(metrics, config, PACKAGE_NAME);
 
         assertEquals(346, metrics.densityDpi);
         assertEquals(DensityOverride.densityFromDpi(346), metrics.density, 0.0001f);
@@ -98,10 +100,10 @@ public class ResourcesReadHookInstallerTest {
         config.smallestScreenWidthDp = 411;
         config.fontScale = 1.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.com.example.target.width_dp", 411).commit();
+        putCompatViewport(prefs, 411);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
-        ResourcesReadHookInstaller.applyConfigurationOverride(config, "com.example.target", store,
+        ResourcesReadHookInstaller.applyConfigurationOverride(config, PACKAGE_NAME, store,
                 "ResourcesRead(getConfiguration)");
 
         assertEquals(448, config.screenWidthDp);
@@ -120,10 +122,10 @@ public class ResourcesReadHookInstallerTest {
         config.smallestScreenWidthDp = 360;
         config.fontScale = 1.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.com.example.target.width_dp", 360).commit();
+        putCompatViewport(prefs, 360);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
-        ResourcesReadHookInstaller.applyConfigurationOverride(config, "com.example.target", store,
+        ResourcesReadHookInstaller.applyConfigurationOverride(config, PACKAGE_NAME, store,
                 "ResourcesRead(getConfiguration)");
 
         assertEquals(360, config.screenWidthDp);
@@ -147,27 +149,23 @@ public class ResourcesReadHookInstallerTest {
                 config,
                 null);
         VirtualDisplayState.publish(
-                "com.example.target",
+                PACKAGE_NAME,
                 targetSpec,
                 source,
                 new ViewportOverride.Result(360, 720, 360, 467),
                 null,
                 ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER);
-        FakePrefs prefs = new FakePrefs();
-        prefs.edit()
-                .putString("viewport.com.example.target.target_type", "relative_scale")
-                .putInt("viewport.com.example.target.scale_permille", 900)
-                .putString("viewport.com.example.target.mode", ViewportApplyMode.AUTO)
-                .commit();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec(PACKAGE_NAME, targetSpec);
+        store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
 
-        ResourcesReadHookInstaller.applyConfigurationOverride(config, "com.example.target", store,
+        ResourcesReadHookInstaller.applyConfigurationOverride(config, PACKAGE_NAME, store,
                 "ResourcesRead(getConfiguration)");
 
         assertEquals(360, config.smallestScreenWidthDp);
         assertEquals(467, config.densityDpi);
         ViewportRuntimeRecord record = VirtualDisplayState.findBySignature(
-                "com.example.target",
+                PACKAGE_NAME,
                 targetSpec,
                 ViewportRuntimeMarkerBridge.configurationSignature(
                         360,
@@ -194,14 +192,14 @@ public class ResourcesReadHookInstallerTest {
         config.densityDpi = 480;
         config.fontScale = 1.5f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("font.com.example.target.scale_percent", 150).commit();
+        prefs.edit().putInt("font." + PACKAGE_NAME + ".scale_percent", 150).commit();
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         Object resources = new Object();
-        ComposeResourcesFontScheduler.observe("com.example.target", "root-a", resources, evidence,
+        ComposeResourcesFontScheduler.observe(PACKAGE_NAME, "root-a", resources, evidence,
                 1.5f, 1.5f, System.currentTimeMillis());
 
-        ResourcesReadHookInstaller.applyConfigurationOverride(resources, config, "com.example.target", store,
+        ResourcesReadHookInstaller.applyConfigurationOverride(resources, config, PACKAGE_NAME, store,
                 "ResourcesRead(getConfiguration)");
 
         assertEquals(1.0f, config.fontScale, 0.0001f);
@@ -219,7 +217,7 @@ public class ResourcesReadHookInstallerTest {
                 1.5f,
                 true);
         Object resources = new Object();
-        ComposeResourcesFontScheduler.observe("com.example.target", "root-a", resources, evidence,
+        ComposeResourcesFontScheduler.observe(PACKAGE_NAME, "root-a", resources, evidence,
                 1.5f, 1.5f, System.currentTimeMillis());
         Configuration config = new Configuration();
         config.densityDpi = 480;
@@ -229,8 +227,15 @@ public class ResourcesReadHookInstallerTest {
         metrics.density = 3.0f;
         metrics.scaledDensity = 4.5f;
 
-        ResourcesReadHookInstaller.applyMetricsOverride(resources, metrics, config, "com.example.target");
+        ResourcesReadHookInstaller.applyMetricsOverride(resources, metrics, config, PACKAGE_NAME);
 
         assertEquals(3.0f, metrics.scaledDensity, 0.0001f);
+    }
+
+    private static void putCompatViewport(FakePrefs prefs, int widthDp) {
+        prefs.edit()
+                .putInt("viewport." + PACKAGE_NAME + ".width_dp", widthDp)
+                .putString("viewport." + PACKAGE_NAME + ".mode", ViewportApplyMode.COMPAT)
+                .commit();
     }
 }

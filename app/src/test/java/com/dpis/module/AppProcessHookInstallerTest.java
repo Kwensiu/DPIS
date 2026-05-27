@@ -77,13 +77,25 @@ public class AppProcessHookInstallerTest {
     }
 
     @Test
-    public void systemHookOffDisablesViewportEmulationHooks() {
+    public void explicitSystemViewportDoesNotInstallAppProcessHooks() {
+        HookRuntimePolicy policy = createPolicy(false, true);
+
+        boolean enabled = AppProcessHookInstaller.resolveViewportHookEnabled(
+                policy,
+                true,
+                ViewportApplyMode.SYSTEM);
+
+        assertFalse(enabled);
+    }
+
+    @Test
+    public void systemHookOffDisablesExplicitSystemViewportHooks() {
         HookRuntimePolicy policy = createPolicy(false, false);
 
         boolean enabled = AppProcessHookInstaller.resolveViewportHookEnabled(
                 policy,
                 true,
-                ViewportApplyMode.SYSTEM_EMULATION);
+                ViewportApplyMode.SYSTEM);
 
         assertFalse(enabled);
     }
@@ -283,15 +295,13 @@ public class AppProcessHookInstallerTest {
         String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
 
         assertTrue(source.contains("TypefaceOverrideHookInstaller.install("));
-        assertTrue(source.indexOf("installTypefaceHooks(xposed, packageName, store, targetTypefaceId);")
+        assertTrue(source.indexOf("installTypefaceHooks(xposed, packageName, store, packagePlan.targetTypefaceId);")
                 < source.indexOf("installFromPlan(xposed, packageName, store, plan);"));
         assertTrue(moduleMain.contains("packagePlan.targetTypefaceId"));
         assertTrue(moduleMain.contains("retryTypefaceHooksWithPackageReady"));
         assertTrue(moduleMain.contains("AppProcessHookInstaller.installTypefaceHooks("));
         assertTrue(source.contains("failed to install typeface hooks: package="));
-        assertFalse(source.contains("HookExecutionPlanner.buildPlan("
-                + "policy, packageName, viewportConfigured, viewportMode, fontScaleActive, fontMode,"
-                + " typefaceActive"));
+        assertFalse(source.contains("HookExecutionPlanner.buildPlan("));
     }
 
     @Test
@@ -343,13 +353,16 @@ public class AppProcessHookInstallerTest {
     public void debugFlutterSettingsPropertiesAreDebugOnlyAndPackageScoped() throws Exception {
         String source = readSource("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
         String planner = readSource("src/main/java/com/dpis/module/HookExecutionPlanner.java");
+        String packagePlan = readSource("src/main/java/com/dpis/module/ModulePackagePlan.java");
 
         assertTrue(source.contains("debug.dpis.font.force_flutter_settings_package"));
         assertTrue(source.contains("debug.dpis.font.flutter_settings_only_package"));
         assertTrue(source.contains("debug.dpis.font.disable_textview_absolute_rewrite_package"));
         assertTrue(source.contains("if (!BuildConfig.DEBUG || packageName == null"));
         assertTrue(source.contains("DebugFontOverride.of("));
-        assertTrue(source.contains("HookExecutionPlanner.buildPlan("));
+        assertTrue(source.contains("packagePlan.buildExecutionPlan("));
+        assertFalse(source.contains("HookExecutionPlanner.buildPlan("));
+        assertTrue(packagePlan.contains("HookExecutionPlanner.buildPlan("));
         assertTrue(planner.contains("if (resolvedDebug.forceFlutterSettings)"));
         assertTrue(planner.contains("shapedDomains.add(FontHookDomainRegistry.ID_FLUTTER_SETTINGS);"));
         assertTrue(planner.contains("if (resolvedDebug.disableTextViewAbsoluteRewrite)"));

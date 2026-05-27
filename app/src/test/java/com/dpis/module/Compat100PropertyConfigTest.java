@@ -22,6 +22,14 @@ public class Compat100PropertyConfigTest {
     }
 
     @Test
+    public void viewportRelativeScalePublishesScaleWithoutWidthOnlyValues() {
+        String command = ViewportPropertySyncer.buildCompatConfigCommandForTest(
+                "com.max.xiaoheihe", ViewportTargetSpec.relativeScale(1250), ViewportApplyMode.SYSTEM);
+
+        assertEquals(expectedViewportCommand("0", "relative_scale", "1250", "0", "system"), command);
+    }
+
+    @Test
     public void viewportOffOrInvalidWidthClearsRuntimeAndCompatConfig() {
         assertEquals(expectedViewportCommand("0", "off", "0", "0", "off"),
                 ViewportPropertySyncer.buildCompatConfigCommandForTest(
@@ -83,25 +91,53 @@ public class Compat100PropertyConfigTest {
     @Test
     public void legacyCompatFontPropertyDefaultsToSystemEmulationWithoutMode() {
         assertEquals(FontApplyMode.SYSTEM_EMULATION,
-                SystemPropertyConfigPreferences.resolveCompatFontModeForTest(
+                RuntimePropertyConfigPreferences.resolveRuntimeFontModeForTest(
                         200, FontApplyMode.OFF, null));
     }
 
     @Test
     public void forceFontPropertyDefaultsToFieldRewriteWithoutMode() {
         assertEquals(FontApplyMode.FIELD_REWRITE,
-                SystemPropertyConfigPreferences.resolveCompatFontModeForTest(
+                RuntimePropertyConfigPreferences.resolveRuntimeFontModeForTest(
                         200, FontApplyMode.OFF, 200));
     }
 
     @Test
     public void explicitCompatFontModeOverridesPropertyOrigin() {
         assertEquals(FontApplyMode.SYSTEM_EMULATION,
-                SystemPropertyConfigPreferences.resolveCompatFontModeForTest(
+                RuntimePropertyConfigPreferences.resolveRuntimeFontModeForTest(
                         200, FontApplyMode.SYSTEM_EMULATION, 200));
         assertEquals(FontApplyMode.FIELD_REWRITE,
-                SystemPropertyConfigPreferences.resolveCompatFontModeForTest(
+                RuntimePropertyConfigPreferences.resolveRuntimeFontModeForTest(
                         200, FontApplyMode.FIELD_REWRITE, null));
+    }
+
+    @Test
+    public void compat100MainProcessKeepsAutoRelativeScaleSystemFirst() {
+        assertEquals(ViewportApplyMode.COMPAT,
+                RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
+                        ViewportApplyMode.AUTO,
+                        ViewportTargetSpec.absoluteDp(500),
+                        RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ABSOLUTE_TARGETS_ONLY));
+        assertEquals(ViewportApplyMode.AUTO,
+                RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
+                        ViewportApplyMode.AUTO,
+                        ViewportTargetSpec.relativeScale(1500),
+                        RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ABSOLUTE_TARGETS_ONLY));
+        assertEquals(ViewportApplyMode.AUTO,
+                RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
+                        ViewportApplyMode.AUTO,
+                        ViewportTargetSpec.off(),
+                        RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ABSOLUTE_TARGETS_ONLY));
+    }
+
+    @Test
+    public void modernRuntimeMirrorCanResolveAutoRelativeScaleAsAppProcessRoute() {
+        assertEquals(ViewportApplyMode.COMPAT,
+                RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
+                        ViewportApplyMode.AUTO,
+                        ViewportTargetSpec.relativeScale(1500),
+                        RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET));
     }
 
     private static String expectedViewportCommand(String viewport,

@@ -62,9 +62,6 @@ final class PerAppDisplayConfigSource {
         if (ViewportApplyMode.COMPAT.equals(viewportMode) || ViewportApplyMode.OFF.equals(viewportMode)) {
             targetViewportSpec = ViewportTargetSpec.off();
         }
-        Integer targetViewportWidthDp = targetViewportSpec.isAbsoluteDp()
-                ? targetViewportSpec.absoluteWidthDp()
-                : null;
         Integer targetFontScalePercent = packageConfig.targetFontScalePercent;
         String targetFontMode = packageConfig.targetFontMode;
         boolean fontConfigured = FontApplyMode.isEnabled(targetFontMode)
@@ -102,7 +99,7 @@ final class PerAppDisplayConfigSource {
 
     private static PackageConfigSnapshot loadCompat100RuntimePropertyConfig(String packageName) {
         ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(
-                new DpiConfigStore(new SystemPropertyConfigPreferences(packageName)));
+                new DpiConfigStore(new RuntimePropertyConfigPreferences(packageName)));
         return snapshot.getPackage(packageName);
     }
 }

@@ -20,6 +20,8 @@
   - 最终构建、测试、设备回归验收清单。
 - [ui-guidelines.md](./ui-guidelines.md)
   - DPIS UI 变更约定，记录新增控件、弹窗、spacing/style 资源和测试边界的默认规则。
+- [agents/](./agents/)
+  - Agent 协作配置，记录 issue tracker、triage 标签和领域文档读取规则。
 
 ## 历史文档归档入口
 

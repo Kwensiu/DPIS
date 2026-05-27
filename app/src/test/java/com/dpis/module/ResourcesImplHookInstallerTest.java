@@ -24,7 +24,7 @@ public class ResourcesImplHookInstallerTest {
         config.smallestScreenWidthDp = 600;
         config.fontScale = 1.1f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, null, store);
@@ -50,7 +50,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.widthPixels = 1200;
         metrics.heightPixels = 2000;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -120,7 +120,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.density = 3.0f;
         metrics.scaledDensity = 3.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -149,7 +149,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.density = 3.0f;
         metrics.scaledDensity = 3.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 200).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", 200);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -175,7 +175,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.density = 2.85f;
         metrics.scaledDensity = 2.85f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 800).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", 800);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -204,7 +204,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.scaledDensity = 3.45f;
 
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 360).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", 360);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -229,7 +229,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.density = 2.625f;
         metrics.scaledDensity = 2.625f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 411).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", 411);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -261,7 +261,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.density = 3.0f;
         metrics.scaledDensity = 3.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 360).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", 360);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -288,7 +288,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.density = 3.0f;
         metrics.scaledDensity = 3.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 500).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", 500);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -314,7 +314,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.density = 3.0f;
         metrics.scaledDensity = 3.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 500).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", 500);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -341,7 +341,7 @@ public class ResourcesImplHookInstallerTest {
         metrics.density = 3.0f;
         metrics.scaledDensity = 3.0f;
         FakePrefs prefs = new FakePrefs();
-        prefs.edit().putInt("viewport.bin.mt.plus.canary.width_dp", 500).commit();
+        putCompatViewport(prefs, "bin.mt.plus.canary", 500);
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
@@ -353,5 +353,157 @@ public class ResourcesImplHookInstallerTest {
         assertEquals(2208, VirtualDisplayState.get().heightPx);
         assertEquals(500, config.smallestScreenWidthDp);
         assertEquals(346, config.densityDpi);
+    }
+
+    @Test
+    public void absoluteViewportRecordRestoresDensityWhenTargetConfigWasReDerived() {
+        String packageName = "com.example.viewport";
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.absoluteDp(500);
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
+                360,
+                736,
+                360,
+                480,
+                1080,
+                2208);
+        VirtualDisplayState.publish(
+                packageName,
+                targetSpec,
+                source,
+                new ViewportOverride.Result(500, 1022, 500, 346),
+                null,
+                ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER);
+        Configuration config = new Configuration();
+        config.densityDpi = 432;
+        config.screenWidthDp = 500;
+        config.screenHeightDp = 1022;
+        config.smallestScreenWidthDp = 500;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 2208;
+        metrics.densityDpi = 432;
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setTargetViewportSpec(packageName, targetSpec);
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+
+        ResourcesImplHookInstaller.applyDensityOverride(packageName, config, metrics, store);
+
+        assertEquals(500, config.screenWidthDp);
+        assertEquals(1022, config.screenHeightDp);
+        assertEquals(500, config.smallestScreenWidthDp);
+        assertEquals(346, config.densityDpi);
+        assertEquals(346, metrics.densityDpi);
+    }
+
+    @Test
+    public void absoluteViewportUsesPhysicalPixelsWhenSourceDensityDrifted() {
+        String packageName = "com.example.viewport";
+        Configuration config = new Configuration();
+        config.densityDpi = 432;
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 736;
+        config.smallestScreenWidthDp = 360;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 2208;
+        metrics.densityDpi = 432;
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.absoluteDp(500));
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+
+        ResourcesImplHookInstaller.applyDensityOverride(packageName, config, metrics, store);
+
+        assertEquals(500, config.screenWidthDp);
+        assertEquals(1022, config.screenHeightDp);
+        assertEquals(500, config.smallestScreenWidthDp);
+        assertEquals(346, config.densityDpi);
+        assertEquals(346, metrics.densityDpi);
+        assertEquals(1080, metrics.widthPixels);
+        assertEquals(2208, metrics.heightPixels);
+    }
+
+    @Test
+    public void absoluteViewportUsesPhysicalPixelsWhenConfigAndMetricsDensityDisagree() {
+        String packageName = "com.example.viewport";
+        Configuration config = new Configuration();
+        config.densityDpi = 432;
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 736;
+        config.smallestScreenWidthDp = 360;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 2208;
+        metrics.densityDpi = 480;
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.absoluteDp(500));
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+
+        ResourcesImplHookInstaller.applyDensityOverride(packageName, config, metrics, store);
+
+        assertEquals(500, config.screenWidthDp);
+        assertEquals(1022, config.screenHeightDp);
+        assertEquals(500, config.smallestScreenWidthDp);
+        assertEquals(346, config.densityDpi);
+        assertEquals(346, metrics.densityDpi);
+    }
+
+    @Test
+    public void relativeScaleDoesNotCompoundWhenConfigurationAlreadyMatchesTarget() {
+        String packageName = "com.example.viewport";
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(1200));
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+
+        Configuration firstConfig = new Configuration();
+        firstConfig.densityDpi = 410;
+        firstConfig.screenWidthDp = 432;
+        firstConfig.screenHeightDp = 883;
+        firstConfig.smallestScreenWidthDp = 432;
+        firstConfig.fontScale = 1.0f;
+        DisplayMetrics firstMetrics = new DisplayMetrics();
+        firstMetrics.widthPixels = 1080;
+        firstMetrics.heightPixels = 2208;
+        firstMetrics.densityDpi = 410;
+
+        ResourcesImplHookInstaller.applyDensityOverride(
+                packageName, firstConfig, firstMetrics, store);
+
+        assertEquals(518, firstConfig.smallestScreenWidthDp);
+
+        Configuration secondConfig = new Configuration();
+        secondConfig.densityDpi = 410;
+        secondConfig.screenWidthDp = 518;
+        secondConfig.screenHeightDp = 1059;
+        secondConfig.smallestScreenWidthDp = 518;
+        secondConfig.fontScale = 1.0f;
+        DisplayMetrics secondMetrics = new DisplayMetrics();
+        secondMetrics.widthPixels = 1080;
+        secondMetrics.heightPixels = 2208;
+        secondMetrics.densityDpi = 410;
+
+        ResourcesImplHookInstaller.applyDensityOverride(
+                packageName, secondConfig, secondMetrics, store);
+
+        assertEquals(518, secondConfig.screenWidthDp);
+        assertEquals(1059, secondConfig.screenHeightDp);
+        assertEquals(518, secondConfig.smallestScreenWidthDp);
+        assertEquals(342, secondConfig.densityDpi);
+        assertEquals(342, secondMetrics.densityDpi);
+        assertEquals(1080, secondMetrics.widthPixels);
+        assertEquals(2208, secondMetrics.heightPixels);
+    }
+
+    private static void putCompatViewport(FakePrefs prefs, String packageName, int widthDp) {
+        prefs.edit()
+                .putInt("viewport." + packageName + ".width_dp", widthDp)
+                .putString("viewport." + packageName + ".mode", ViewportApplyMode.COMPAT)
+                .commit();
     }
 }

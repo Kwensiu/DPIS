@@ -30,7 +30,7 @@ public class PerAppDisplayConfigSourceTest {
 
         assertNotNull(config);
         assertFalse(config.hasViewportOverride());
-        assertEquals(0, config.targetViewportWidthDp);
+        assertEquals(0, config.targetViewportWidthDp());
         assertEquals(Integer.valueOf(125), config.targetFontScalePercent);
     }
 
@@ -83,7 +83,7 @@ public class PerAppDisplayConfigSourceTest {
         PerAppDisplayConfig config = source.get("com.example.target");
 
         assertNotNull(config);
-        assertEquals(500, config.targetViewportWidthDp);
+        assertEquals(500, config.targetViewportWidthDp());
         assertEquals(Integer.valueOf(200), config.targetFontScalePercent);
         assertEquals(FontApplyMode.FIELD_REWRITE, config.targetFontMode);
     }
@@ -99,7 +99,7 @@ public class PerAppDisplayConfigSourceTest {
                 packageName -> new PackageConfigSnapshot(
                         packageName,
                         true,
-                        null,
+                        (Integer) null,
                         ViewportApplyMode.OFF,
                         200,
                         FontApplyMode.FIELD_REWRITE,
@@ -133,7 +133,7 @@ public class PerAppDisplayConfigSourceTest {
         PerAppDisplayConfig config = source.get("com.example.target");
 
         assertNotNull(config);
-        assertEquals(600, config.targetViewportWidthDp);
+        assertEquals(600, config.targetViewportWidthDp());
         assertEquals(Integer.valueOf(200), config.targetFontScalePercent);
     }
 
@@ -148,7 +148,7 @@ public class PerAppDisplayConfigSourceTest {
 
         assertNotNull(config);
         assertTrue(config.hasViewportOverride());
-        assertEquals(360, config.targetViewportWidthDp);
+        assertEquals(360, config.targetViewportWidthDp());
     }
 
     @Test

@@ -34,7 +34,10 @@ public class ModuleMainHookInstallerTest {
         assertTrue(appProcessInstaller.contains("HyperOsFlutterFontHookInstaller.install(xposed, packageName, store)"));
         assertTrue(moduleMain.contains("maybeInstallAppProcessFromModuleLoaded("));
         assertTrue(moduleMain.contains("installAppProcessHooksIfConfigured("));
-        assertTrue(moduleMain.contains("new SystemPropertyConfigPreferences(processName)"));
+        assertTrue(moduleMain.contains(
+                "RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET"));
+        assertTrue(moduleMain.contains("packageNameFromProcessName(processName)"));
+        assertTrue(moduleMain.contains("installAppProcessHooksIfConfigured(runtimeStore, policy, snapshot, packageName,"));
         assertTrue(moduleMain.contains("module-loaded app hook install enter"));
         assertTrue(moduleMain.contains("module-loaded app hook install failed"));
         assertTrue(moduleMain.contains("rawBridgeLog("));
@@ -61,7 +64,7 @@ public class ModuleMainHookInstallerTest {
         assertTrue(source.contains("param.getClassLoader()"));
         assertTrue(source.contains("FlutterSettingsFontHookInstaller.retryWithAppClassLoader("));
         assertTrue(source.contains("resolveDebugFontOverrideForPackage(packageName)"));
-        assertTrue(source.contains("HookExecutionPlanner.buildPlan("));
+        assertTrue(source.contains("packagePlan.buildExecutionPlan("));
         assertTrue(source.contains("HookExecutionPlan executionPlan"));
         assertTrue(source.contains("!packagePlan.targetDpisEnabled || !packagePlan.fontScaleActive"));
         assertTrue(source.contains("packagePlan.flutterSettingsFontEnabled"));
@@ -74,7 +77,7 @@ public class ModuleMainHookInstallerTest {
         String appProcessInstaller = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
 
         assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));
-        assertTrue(moduleMain.contains("AppProcessHookInstaller.install("));
+        assertTrue(moduleMain.contains("AppProcessHookInstaller.install(this, store, policy, packagePlan)"));
         assertTrue(appProcessInstaller.contains("HyperOsFlutterFontHookInstaller.install("));
         assertTrue(appProcessInstaller.contains("resolveFontDomainPlan("));
         assertTrue(appProcessInstaller.contains("hyperOsNativeFlutterEnabled"));
@@ -141,6 +144,13 @@ public class ModuleMainHookInstallerTest {
         assertFalse(moduleMain.contains("packagePlan.targetViewportWidthDp == null"
                 + System.lineSeparator()
                 + "                && !packagePlan.fontScaleActive"));
+    }
+
+    @Test
+    public void moduleMainAllowsPackageOwnedSecondaryProcessesForViewportHooks() throws IOException {
+        String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+
+        assertTrue(moduleMain.contains("!processName.startsWith(packagePlan.packageName + \":\")"));
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.dpis.module;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -13,13 +14,14 @@ public class Compat100LegacyModuleHookSourceTest {
     public void legacyEntryInstallsReplacementHooks() throws Exception {
         String source = read("src/compat100/java/com/dpis/module/Compat100LegacyModuleHook.java");
 
-        assertTrue(source.contains("installDisplayHooks(packageName)"));
+        assertTrue(source.contains("installDisplayHooks(packageName, store)"));
         assertTrue(source.contains("installWindowMetricsHook()"));
         assertTrue(source.contains("installFontFieldRewriteHooks(packageName, store)"));
         assertTrue(source.contains("DisplayHookInstaller.applyDisplayMetrics"));
         assertTrue(source.contains("DisplayHookInstaller.applyPoint"));
         assertTrue(source.contains("DisplayHookInstaller.applyDisplayInfo"));
         assertTrue(source.contains("DisplayHookInstaller.setTargetPackageNameForCompat100(packageName)"));
+        assertTrue(source.contains("DisplayHookInstaller.setTargetStoreForCompat100(store)"));
         assertTrue(source.contains("FONT_TEXTVIEW_UPDATE"));
         assertTrue(source.contains("installResourcesReadHooks(packageName, store)"));
         assertTrue(source.contains("installResourcesKeyHooks("));
@@ -31,6 +33,9 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(source.contains("plan.typefaceEnabled"));
         assertTrue(source.contains("boolean resourceHooksNeeded = plan.viewportEnabled"));
         assertTrue(source.contains("if (resourceHooksNeeded)"));
+        assertTrue(source.contains("int activityHookCount = 0;"));
+        assertTrue(source.contains("int createHookCount = 0;"));
+        assertTrue(source.contains("int keyHookCount = 0;"));
         assertTrue(source.indexOf("if (resourceHooksNeeded)")
                 < source.indexOf("installResourcesImplHook(packageName, store)"));
         assertTrue(source.indexOf("installResourcesReadHooks(packageName, store)")
@@ -51,9 +56,18 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(source.contains("Compat100SystemServerHookInstaller.install"));
         assertTrue(source.indexOf("DisplayHookInstaller.setTargetPackageNameForCompat100(packageName)")
                 < source.indexOf("DISPLAY_HOOKED.compareAndSet(false, true)"));
+        assertTrue(source.indexOf("DisplayHookInstaller.setTargetStoreForCompat100(store)")
+                < source.indexOf("DISPLAY_HOOKED.compareAndSet(false, true)"));
         assertTrue(source.contains("implements IXposedHookLoadPackage, IXposedHookZygoteInit"));
         assertTrue(source.contains("public void initZygote(StartupParam startupParam)"));
         assertTrue(source.contains("installSystemServerHooksForCompat100();"));
+        assertTrue(source.contains("createCompat100Store(packageName, lpparam.processName)"));
+        assertTrue(source.contains("createForCompat100MainProcessHost(packageName)"));
+        assertTrue(source.contains("shouldSuppressSecondaryProcessViewport(lpparam.processName, plan)"));
+        assertTrue(source.contains("compat100 legacy secondary process viewport route suppressed"));
+        assertTrue(source.contains("!processName.startsWith(plan.packageName + \":\")"));
+        assertTrue(source.contains("plan.withoutViewportRoute()"));
+        assertTrue(source.contains("package skipped after secondary process"));
 
         String typefaceSource = read(
                 "src/compat100/java/com/dpis/module/Compat100TypefaceOverrideHookInstaller.java");
@@ -72,9 +86,24 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(systemServerSource.contains("createForCompat100SystemServerHost"));
         assertTrue(systemServerSource.contains("applyLaunchActivityItemArgs(source, param.args)"));
         assertTrue(systemServerSource.contains("PerAppDisplayOverrideCalculator.calculate"));
+        assertTrue(systemServerSource.contains("config.targetViewportSpec"));
+        assertFalse(systemServerSource.contains("config.targetViewportWidthDp()"));
+        assertTrue(systemServerSource.contains("ViewportRuntimeMarkerBridge.publishSystemServerRecord"));
+        assertTrue(systemServerSource.contains("ViewportRuntimeMarkerBridge.read"));
+        assertTrue(systemServerSource.contains("matchesCurrentConfiguration"));
         assertTrue(systemServerSource.contains("ViewportOverride.apply"));
         assertTrue(systemServerSource.contains("FontApplyMode.SYSTEM_EMULATION"));
         assertTrue(systemServerSource.contains("Compat100RustProcessHookInstaller.install(source)"));
+        int launchApplyIndex = systemServerSource.indexOf("static void applyLaunchActivityItemArgs");
+        int afterLaunchApplyIndex = systemServerSource.indexOf(
+                "private static String findActivityInfoPackage", launchApplyIndex);
+        assertTrue(launchApplyIndex > 0);
+        assertTrue(afterLaunchApplyIndex > launchApplyIndex);
+        String launchApplyMethod = systemServerSource.substring(
+                launchApplyIndex, afterLaunchApplyIndex);
+        assertTrue(launchApplyMethod.contains(
+                "resolveTargetEnvironment(packageName, baseConfiguration, config)"));
+        assertFalse(launchApplyMethod.contains("applyConfiguration(configuration, environment)"));
 
         String compatRustSource = read("src/compat100/java/com/dpis/module/Compat100RustProcessHookInstaller.java");
         assertTrue(compatRustSource.contains("XposedBridge.hookMethod(method"));

@@ -14,33 +14,15 @@ final class AppProcessHookInstaller {
     }
 
     static void install(XposedInterface xposed,
-                        String packageName,
                         DpiConfigStore store,
                         HookRuntimePolicy policy,
-                        boolean viewportConfigured,
-                        String viewportMode,
-                        String fontMode,
-                        boolean fontScaleActive,
-                        boolean typefaceActive,
-                        String targetTypefaceId,
-                        boolean flutterSettingsFontEnabled,
-                        boolean hyperOsNativeFlutterEnabled,
-                        HookDomainOverride hookDomainOverride) throws Throwable {
+                        ModulePackagePlan packagePlan) throws Throwable {
+        String packageName = packagePlan.packageName;
         DebugFontOverride debugOverride = resolveDebugFontOverrideForPackage(packageName);
-        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
-                policy,
-                packageName,
-                viewportConfigured,
-                viewportMode,
-                fontScaleActive,
-                fontMode,
-                flutterSettingsFontEnabled,
-                hyperOsNativeFlutterEnabled,
-                hookDomainOverride,
-                debugOverride);
+        HookExecutionPlan plan = packagePlan.buildExecutionPlan(policy, debugOverride);
         DpisLog.i("DPIS_FONT app hook plan: package=" + packageName
-                + ", fontScaleActive=" + fontScaleActive
-                + ", fontMode=" + fontMode
+                + ", fontScaleActive=" + packagePlan.fontScaleActive
+                + ", fontMode=" + packagePlan.targetFontMode
                 + ", resolvedFontMode=" + plan.resolvedFontMode
                 + ", resolvedViewportMode=" + plan.resolvedViewportMode
                 + ", domain=" + plan.fontDomainPlan.reason
@@ -54,19 +36,19 @@ final class AppProcessHookInstaller {
                 + ", builtinDomains=" + plan.builtinDomains
                 + ", unknownCustomDomains=" + plan.unknownCustomDomains
                 + ", reason={" + plan.reason.formatForLog() + "}");
-        if (typefaceActive) {
-            installTypefaceHooks(xposed, packageName, store, targetTypefaceId);
+        if (packagePlan.typefaceActive) {
+            installTypefaceHooks(xposed, packageName, store, packagePlan.targetTypefaceId);
         }
         installFromPlan(xposed, packageName, store, plan);
         if (plan.probeHooksRequested) {
             DpisLog.i("hooks installed (full): viewportEnabled=" + plan.viewportEnabled
-                    + ", viewportMode=" + viewportMode
-                    + ", fontMode=" + fontMode + " for " + packageName);
+                    + ", viewportMode=" + packagePlan.targetViewportMode
+                    + ", fontMode=" + packagePlan.targetFontMode + " for " + packageName);
             return;
         }
         DpisLog.i("hooks installed (" + plan.probeInstallMode + "): viewportEnabled=" + plan.viewportEnabled
-                + ", viewportMode=" + viewportMode
-                + ", fontMode=" + fontMode
+                + ", viewportMode=" + packagePlan.targetViewportMode
+                + ", fontMode=" + packagePlan.targetFontMode
                 + ", fontDomainPlan=" + plan.fontDomainPlan.reason
                 + ", resourcesFont=" + plan.fontDomainPlan.resourcesFontEnabled
                 + ", textViewSpRewrite=" + plan.fontDomainPlan.textViewSpRewriteEnabled
@@ -230,7 +212,7 @@ final class AppProcessHookInstaller {
         }
         if (plan.viewportEnabled) {
             WindowMetricsHookInstaller.install(xposed);
-            DisplayHookInstaller.install(xposed, packageName);
+            DisplayHookInstaller.install(xposed, packageName, store);
         }
         if (plan.resourcesProbeEnabled) {
             ResourcesProbeHookInstaller.install(xposed, packageName, store);
@@ -270,4 +252,5 @@ final class AppProcessHookInstaller {
             this.fieldRewriteEnabled = fieldRewriteEnabled;
         }
     }
+
 }

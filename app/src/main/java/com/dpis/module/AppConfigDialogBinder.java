@@ -3,17 +3,13 @@ package com.dpis.module;
 import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
-import android.text.Editable;
 import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.inputmethod.EditorInfo;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
@@ -73,7 +69,9 @@ final class AppConfigDialogBinder {
                 TextInputEditText fontScaleInput,
                 String viewportMode,
                 String fontMode,
-                String selectedTypefaceId);
+                String selectedTypefaceId,
+                String viewportScaleInput,
+                String viewportAbsoluteInput);
 
         void showToast(int messageResId);
     }
@@ -91,8 +89,8 @@ final class AppConfigDialogBinder {
         AppConfigDialogState state = bindDialogInitialState(item, views);
         AppConfigDialogActionStyle style = resolveDialogActionStyle(views.scopeButton);
         refreshDialogState(views, state, style, systemHooksEnabled, item);
-        bindDialogValidation(dialogView, item, views, state, style, systemHooksEnabled);
-        bindDialogActions(dialogView, item, views, state, style, systemHooksEnabled);
+        new AppConfigSheetInteractions(this, host)
+                .bind(dialogView, item, views, state, style, systemHooksEnabled);
     }
 
     private AppConfigDialogViews initDialogViews(View dialogView) {
@@ -130,7 +128,14 @@ final class AppConfigDialogBinder {
         views.iconView.setImageDrawable(item.icon);
         views.titleView.setText(item.label);
         views.packageView.setText(item.packageName);
-        views.viewportInputView.setText(formatViewportInput(item.viewportTargetSpec));
+        String initialViewportInput = formatViewportInput(item.viewportTargetSpec);
+        views.viewportInputView.setText(initialViewportInput);
+        String initialViewportScaleInput = item.viewportScalePermille != null
+                ? String.valueOf(item.viewportScalePermille / 10)
+                : (item.viewportTargetSpec.isRelativeScale() ? initialViewportInput : "");
+        String initialViewportAbsoluteInput = item.viewportWidthDp != null
+                ? String.valueOf(item.viewportWidthDp)
+                : (item.viewportTargetSpec.isAbsoluteDp() ? initialViewportInput : "");
         views.fontInputView.setText(item.fontScalePercent != null
                 ? String.valueOf(item.fontScalePercent)
                 : "");
@@ -144,7 +149,11 @@ final class AppConfigDialogBinder {
                 views.viewportModeToggle,
                 views.fontInputLayout, views.fontInputView, views.saveButton);
         return new AppConfigDialogState(item.inScope, item.scopeKnown, item.dpisEnabled,
-                selectedTypefaceId);
+                selectedTypefaceId,
+                initialViewportType,
+                initialViewportInput,
+                initialViewportScaleInput,
+                initialViewportAbsoluteInput);
     }
 
     private AppConfigDialogActionStyle resolveDialogActionStyle(MaterialButton baseButton) {
@@ -156,7 +165,7 @@ final class AppConfigDialogBinder {
                 defaultActionStrokeWidth, defaultActionTextColor);
     }
 
-    private void refreshDialogState(AppConfigDialogViews views,
+    void refreshDialogState(AppConfigDialogViews views,
             AppConfigDialogState state,
             AppConfigDialogActionStyle style,
             boolean systemHooksEnabled,
@@ -181,176 +190,7 @@ final class AppConfigDialogBinder {
         bindFontHookDomainsButton(views.fontHookDomainsButton, item.packageName);
     }
 
-    private void bindDialogValidation(View dialogView,
-            AppListItem item,
-            AppConfigDialogViews views,
-            AppConfigDialogState state,
-            AppConfigDialogActionStyle style,
-            boolean systemHooksEnabled) {
-        android.widget.TextView.OnEditorActionListener doneListener = (v, actionId, event) -> {
-            boolean isDoneAction = actionId == EditorInfo.IME_ACTION_DONE;
-            boolean isEnterDown = event != null
-                    && event.getAction() == KeyEvent.ACTION_DOWN
-                    && event.getKeyCode() == KeyEvent.KEYCODE_ENTER;
-            if (!isDoneAction && !isEnterDown) {
-                return false;
-            }
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            return true;
-        };
-        views.viewportInputView.setOnEditorActionListener(doneListener);
-        views.fontInputView.setOnEditorActionListener(doneListener);
-        TextWatcher validationWatcher = new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,
-                        views.viewportModeToggle,
-                        views.fontInputLayout, views.fontInputView, views.saveButton);
-                refreshDialogState(views, state, style, systemHooksEnabled, item);
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-        };
-        views.viewportInputView.addTextChangedListener(validationWatcher);
-        views.fontInputView.addTextChangedListener(validationWatcher);
-    }
-
-    private void bindDialogActions(View dialogView,
-            AppListItem item,
-            AppConfigDialogViews views,
-            AppConfigDialogState state,
-            AppConfigDialogActionStyle style,
-            boolean systemHooksEnabled) {
-        dialogView.setFocusable(true);
-        dialogView.setFocusableInTouchMode(true);
-        dialogView.setClickable(true);
-        dialogView.setOnClickListener(
-                v -> host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView));
-        views.scopeButton.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            host.toggleScope(item, state.scopeSelected,
-                    () -> {
-                        state.scopeSelected = true;
-                        refreshDialogState(views, state, style, systemHooksEnabled, item);
-                    },
-                    () -> {
-                        state.scopeSelected = false;
-                        refreshDialogState(views, state, style, systemHooksEnabled, item);
-                    });
-        });
-        views.startButton.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            host.executeProcessAction(item, ProcessAction.START);
-        });
-        views.restartButton.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            host.executeProcessAction(item, ProcessAction.RESTART);
-        });
-        views.stopButton.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            host.executeProcessAction(item, ProcessAction.STOP);
-        });
-        views.dpisToggleButton.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            boolean nextEnabled = !state.dpisEnabled;
-            if (host.setDpisEnabled(item.packageName, nextEnabled)) {
-                state.dpisEnabled = nextEnabled;
-                refreshDialogState(views, state, style, systemHooksEnabled, item);
-            }
-        });
-        views.fontHookDomainsButton.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            host.showFontHookDomains(item,
-                    () -> bindFontHookDomainsButton(views.fontHookDomainsButton, item.packageName));
-        });
-        views.disableButton.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            views.viewportInputView.setText("");
-            views.fontInputView.setText("");
-            state.selectedTypefaceId = null;
-            bindTypefaceSelector(views.typefaceSelectorButton, state.selectedTypefaceId);
-            bindViewportModeToggle(views.viewportModeToggle, ViewportTargetType.RELATIVE_SCALE, true);
-            bindFontModeToggle(views.fontModeToggle, FontApplyMode.SYSTEM_EMULATION, true);
-            updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,
-                    views.viewportModeToggle,
-                    views.fontInputLayout, views.fontInputView, views.saveButton);
-            refreshDialogState(views, state, style, systemHooksEnabled, item);
-        });
-        views.saveButton.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            int[] result = host.saveAppConfig(
-                    item,
-                    views.viewportInputView,
-                    views.fontInputView,
-                    resolveViewportMode(views.viewportModeToggle),
-                    resolveFontMode(views.fontModeToggle),
-                    state.selectedTypefaceId);
-            if (result[0] == 1) {
-                showSaveButtonFeedback(views.saveButton);
-                syncHyperOsNativeProxyAfterSave(item, views, state);
-                requestScopeAfterSuccessfulSave(dialogView, item, views, state, style, systemHooksEnabled);
-            }
-            if (result[1] != 0) {
-                host.showToast(result[1]);
-            }
-        });
-        views.viewportModeToggle.container.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            toggleViewportMode(views.viewportModeToggle);
-            bindViewportInputHint(views.viewportInputLayout, resolveViewportMode(views.viewportModeToggle));
-            updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,
-                    views.viewportModeToggle,
-                    views.fontInputLayout, views.fontInputView, views.saveButton);
-            refreshDialogState(views, state, style, systemHooksEnabled, item);
-        });
-        views.viewportModeToggle.emulationLabel.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            switchViewportTargetType(views.viewportModeToggle, ViewportTargetType.RELATIVE_SCALE, true);
-            bindViewportInputHint(views.viewportInputLayout, ViewportTargetType.RELATIVE_SCALE);
-            updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,
-                    views.viewportModeToggle,
-                    views.fontInputLayout, views.fontInputView, views.saveButton);
-            refreshDialogState(views, state, style, systemHooksEnabled, item);
-        });
-        views.viewportModeToggle.replaceLabel.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            switchViewportTargetType(views.viewportModeToggle, ViewportTargetType.ABSOLUTE_DP, true);
-            bindViewportInputHint(views.viewportInputLayout, ViewportTargetType.ABSOLUTE_DP);
-            updateSaveButtonState(views.viewportInputLayout, views.viewportInputView,
-                    views.viewportModeToggle,
-                    views.fontInputLayout, views.fontInputView, views.saveButton);
-            refreshDialogState(views, state, style, systemHooksEnabled, item);
-        });
-        views.fontModeToggle.container.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            toggleFontMode(views.fontModeToggle);
-            refreshDialogState(views, state, style, systemHooksEnabled, item);
-        });
-        views.fontModeToggle.emulationLabel.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            bindFontModeToggle(views.fontModeToggle, FontApplyMode.SYSTEM_EMULATION, true);
-            refreshDialogState(views, state, style, systemHooksEnabled, item);
-        });
-        views.fontModeToggle.replaceLabel.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            bindFontModeToggle(views.fontModeToggle, FontApplyMode.FIELD_REWRITE, true);
-            refreshDialogState(views, state, style, systemHooksEnabled, item);
-        });
-        views.typefaceSelectorButton.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            showTypefaceSelector(views.typefaceSelectorButton, state,
-                    () -> refreshDialogState(
-                            views, state, style, systemHooksEnabled, item));
-        });
-    }
-
-    private void bindTypefaceSelector(MaterialButton selectorButton, String selectedTypefaceId) {
+    void bindTypefaceSelector(MaterialButton selectorButton, String selectedTypefaceId) {
         configureTypefaceSelectorMarquee(selectorButton);
         selectorButton.setText(formatTypefaceSelectorText(resolveTypefaceDisplayText(
                 selectedTypefaceId, listFontLibraryEntries())));
@@ -364,7 +204,7 @@ final class AppConfigDialogBinder {
         selectorButton.setSelected(true);
     }
 
-    private void showTypefaceSelector(MaterialButton selectorButton,
+    void showTypefaceSelector(MaterialButton selectorButton,
             AppConfigDialogState state,
             Runnable onSelectionChanged) {
         boolean selectedImported = state.selectedTypefaceId != null
@@ -641,13 +481,7 @@ final class AppConfigDialogBinder {
     }
 
     private static String formatViewportInput(ViewportTargetSpec spec) {
-        if (spec == null || !spec.isEnabled()) {
-            return "";
-        }
-        if (spec.isRelativeScale()) {
-            return String.valueOf(spec.scalePermille() / 10);
-        }
-        return String.valueOf(spec.absoluteWidthDp());
+        return AppConfigInputValidation.formatViewportInput(spec);
     }
 
     private static boolean containsSystemTypeface(List<SystemFontEntry> entries, String selectedTypefaceId) {
@@ -689,7 +523,7 @@ final class AppConfigDialogBinder {
         return typefaceId != null && !typefaceId.isBlank() ? typefaceId : null;
     }
 
-    private static void showSaveButtonFeedback(MaterialButton saveButton) {
+    static void showSaveButtonFeedback(MaterialButton saveButton) {
         if (saveButton == null) {
             return;
         }
@@ -713,15 +547,21 @@ final class AppConfigDialogBinder {
         saveButton.postDelayed(restore, 1500);
     }
 
-    private static boolean updateSaveButtonState(TextInputLayout viewportInputLayout,
+    static boolean updateSaveButtonState(TextInputLayout viewportInputLayout,
             TextInputEditText viewportInputView,
             ModeToggle viewportModeToggle,
             TextInputLayout fontInputLayout,
             TextInputEditText fontInputView,
             MaterialButton saveButton) {
-        boolean viewportValid = isViewportValueOrEmpty(
-                viewportInputView, resolveViewportMode(viewportModeToggle));
-        boolean fontValid = isFontPercentOrEmpty(fontInputView);
+        String viewportRaw = viewportInputView.getText() != null
+                ? viewportInputView.getText().toString()
+                : "";
+        String fontRaw = fontInputView.getText() != null
+                ? fontInputView.getText().toString()
+                : "";
+        boolean viewportValid = AppConfigInputValidation.isViewportInputValid(
+                viewportRaw, resolveViewportMode(viewportModeToggle));
+        boolean fontValid = AppConfigInputValidation.isFontScaleInputValid(fontRaw);
         int defaultStrokeColor = MaterialColors.getColor(
                 viewportInputLayout, com.google.android.material.R.attr.colorOutline);
         int errorStrokeColor = MaterialColors.getColor(
@@ -735,48 +575,6 @@ final class AppConfigDialogBinder {
         boolean valid = viewportValid && fontValid;
         saveButton.setEnabled(valid);
         return valid;
-    }
-
-    private static boolean isPositiveIntOrEmpty(TextInputEditText inputView) {
-        String raw = inputView.getText() != null ? inputView.getText().toString().trim() : "";
-        if (raw.isEmpty()) {
-            return true;
-        }
-        try {
-            return Integer.parseInt(raw) > 0;
-        } catch (NumberFormatException ignored) {
-            return false;
-        }
-    }
-
-    private static boolean isViewportValueOrEmpty(TextInputEditText inputView, String targetType) {
-        String raw = inputView.getText() != null ? inputView.getText().toString().trim() : "";
-        if (raw.isEmpty()) {
-            return true;
-        }
-        try {
-            int value = Integer.parseInt(raw);
-            if (ViewportTargetType.RELATIVE_SCALE.equals(ViewportTargetType.normalize(targetType))) {
-                return value >= ViewportTargetSpec.MIN_SCALE_PERCENT
-                        && value <= ViewportTargetSpec.MAX_SCALE_PERCENT;
-            }
-            return value > 0;
-        } catch (NumberFormatException ignored) {
-            return false;
-        }
-    }
-
-    private static boolean isFontPercentOrEmpty(TextInputEditText inputView) {
-        String raw = inputView.getText() != null ? inputView.getText().toString().trim() : "";
-        if (raw.isEmpty()) {
-            return true;
-        }
-        try {
-            int value = Integer.parseInt(raw);
-            return value >= 50 && value <= 300;
-        } catch (NumberFormatException ignored) {
-            return false;
-        }
     }
 
     private void updateDialogStatus(MaterialTextView statusView,
@@ -815,7 +613,7 @@ final class AppConfigDialogBinder {
         statusView.setText(dialogStatusText);
     }
 
-    private void syncHyperOsNativeProxyAfterSave(
+    void syncHyperOsNativeProxyAfterSave(
             AppListItem item, AppConfigDialogViews views, AppConfigDialogState state) {
         if (!item.hyperOsNativeProxyCandidate) {
             return;
@@ -833,7 +631,7 @@ final class AppConfigDialogBinder {
 
     // State lifecycle is bound to the dialog instance; pending flag cleanup is
     // best-effort since the state object is discarded when the dialog closes.
-    private void requestScopeAfterSuccessfulSave(View dialogView,
+    void requestScopeAfterSuccessfulSave(View dialogView,
             AppListItem item,
             AppConfigDialogViews views,
             AppConfigDialogState state,
@@ -873,70 +671,23 @@ final class AppConfigDialogBinder {
     }
 
     private static Integer parsePositiveIntOrNullSafe(TextInputEditText inputView) {
-        try {
-            return parsePositiveIntOrNull(inputView);
-        } catch (NumberFormatException exception) {
-            return null;
-        }
+        String raw = inputView.getText() != null ? inputView.getText().toString() : "";
+        return AppConfigInputValidation.parsePositiveIntOrNull(raw);
     }
 
     private static ViewportTargetSpec parseViewportTargetSpecOrNullSafe(
             TextInputEditText inputView,
             String viewportTargetType) {
-        try {
-            Integer value = parsePositiveIntOrNull(inputView);
-            if (value == null) {
-                return ViewportTargetSpec.off();
-            }
-            if (ViewportTargetType.RELATIVE_SCALE.equals(
-                    ViewportTargetType.normalize(viewportTargetType))) {
-                if (value < ViewportTargetSpec.MIN_SCALE_PERCENT
-                        || value > ViewportTargetSpec.MAX_SCALE_PERCENT) {
-                    return ViewportTargetSpec.off();
-                }
-                return ViewportTargetSpec.relativeScale(value * 10);
-            }
-            return ViewportTargetSpec.absoluteDp(value);
-        } catch (NumberFormatException exception) {
-            return ViewportTargetSpec.off();
-        }
+        String raw = inputView.getText() != null ? inputView.getText().toString() : "";
+        return AppConfigInputValidation.parseViewportTargetSpec(raw, viewportTargetType);
     }
 
     private static Integer parseFontScalePercentOrNullSafe(TextInputEditText inputView) {
-        try {
-            return parseFontScalePercentOrNull(inputView);
-        } catch (NumberFormatException exception) {
-            return null;
-        }
+        String raw = inputView.getText() != null ? inputView.getText().toString() : "";
+        return AppConfigInputValidation.parseFontScalePercentOrNull(raw);
     }
 
-    private static Integer parsePositiveIntOrNull(TextInputEditText inputView)
-            throws NumberFormatException {
-        String raw = inputView.getText() != null ? inputView.getText().toString().trim() : "";
-        if (raw.isEmpty()) {
-            return null;
-        }
-        int value = Integer.parseInt(raw);
-        if (value <= 0) {
-            throw new NumberFormatException("must be positive");
-        }
-        return value;
-    }
-
-    private static Integer parseFontScalePercentOrNull(TextInputEditText inputView)
-            throws NumberFormatException {
-        String raw = inputView.getText() != null ? inputView.getText().toString().trim() : "";
-        if (raw.isEmpty()) {
-            return null;
-        }
-        int value = Integer.parseInt(raw);
-        if (value < 50 || value > 300) {
-            throw new NumberFormatException("font scale out of range");
-        }
-        return value;
-    }
-
-    private static String resolveFontMode(ModeToggle fontModeToggle) {
+    static String resolveFontMode(ModeToggle fontModeToggle) {
         Object modeTag = fontModeToggle.container.getTag();
         if (FontApplyMode.SYSTEM_EMULATION.equals(modeTag)) {
             return FontApplyMode.SYSTEM_EMULATION;
@@ -945,13 +696,10 @@ final class AppConfigDialogBinder {
     }
 
     private static String initialFontMode(String fontMode) {
-        String normalized = FontApplyMode.normalize(fontMode);
-        return FontApplyMode.isEnabled(normalized)
-                ? normalized
-                : FontApplyMode.SYSTEM_EMULATION;
+        return AppConfigInputValidation.initialFontMode(fontMode);
     }
 
-    private static String resolveViewportMode(ModeToggle viewportModeToggle) {
+    static String resolveViewportMode(ModeToggle viewportModeToggle) {
         Object modeTag = viewportModeToggle.container.getTag();
         if (ViewportTargetType.ABSOLUTE_DP.equals(modeTag)) {
             return ViewportTargetType.ABSOLUTE_DP;
@@ -960,12 +708,10 @@ final class AppConfigDialogBinder {
     }
 
     private static String initialViewportTargetType(ViewportTargetSpec spec) {
-        return spec != null && spec.isAbsoluteDp()
-                ? ViewportTargetType.ABSOLUTE_DP
-                : ViewportTargetType.RELATIVE_SCALE;
+        return AppConfigInputValidation.initialViewportTargetType(spec);
     }
 
-    private static void bindFontModeToggle(ModeToggle fontModeToggle,
+    static void bindFontModeToggle(ModeToggle fontModeToggle,
             String fontMode,
             boolean animate) {
         String resolved = FontApplyMode.SYSTEM_EMULATION.equals(fontMode)
@@ -975,14 +721,14 @@ final class AppConfigDialogBinder {
         updateModeToggleVisual(fontModeToggle, FontApplyMode.SYSTEM_EMULATION.equals(resolved), animate);
     }
 
-    private static void toggleFontMode(ModeToggle fontModeToggle) {
+    static void toggleFontMode(ModeToggle fontModeToggle) {
         String nextMode = FontApplyMode.FIELD_REWRITE.equals(resolveFontMode(fontModeToggle))
                 ? FontApplyMode.SYSTEM_EMULATION
                 : FontApplyMode.FIELD_REWRITE;
         bindFontModeToggle(fontModeToggle, nextMode, true);
     }
 
-    private static void bindViewportModeToggle(ModeToggle viewportModeToggle,
+    static void bindViewportModeToggle(ModeToggle viewportModeToggle,
             String viewportTargetType,
             boolean animate) {
         String resolved = ViewportTargetType.ABSOLUTE_DP.equals(
@@ -994,7 +740,7 @@ final class AppConfigDialogBinder {
                 ViewportTargetType.RELATIVE_SCALE.equals(resolved), animate);
     }
 
-    private void bindViewportInputHint(TextInputLayout viewportInputLayout, String viewportTargetType) {
+    void bindViewportInputHint(TextInputLayout viewportInputLayout, String viewportTargetType) {
         if (viewportInputLayout == null) {
             return;
         }
@@ -1004,18 +750,25 @@ final class AppConfigDialogBinder {
                         : R.string.dialog_viewport_hint_absolute);
     }
 
-    private static void toggleViewportMode(ModeToggle viewportModeToggle) {
+    static void toggleViewportMode(ModeToggle viewportModeToggle,
+            TextInputEditText viewportInputView,
+            AppConfigDialogState state) {
         String nextMode = ViewportTargetType.ABSOLUTE_DP.equals(
                 resolveViewportMode(viewportModeToggle))
                         ? ViewportTargetType.RELATIVE_SCALE
                         : ViewportTargetType.ABSOLUTE_DP;
-        switchViewportTargetType(viewportModeToggle, nextMode, true);
+        switchViewportTargetType(viewportModeToggle, viewportInputView, state, nextMode, true);
     }
 
-    private static void switchViewportTargetType(ModeToggle viewportModeToggle,
+    static void switchViewportTargetType(ModeToggle viewportModeToggle,
+            TextInputEditText viewportInputView,
+            AppConfigDialogState state,
             String nextType,
             boolean animate) {
+        state.updateViewportInput(resolveViewportMode(viewportModeToggle),
+                viewportInputView.getText());
         bindViewportModeToggle(viewportModeToggle, nextType, animate);
+        viewportInputView.setText(state.viewportInputFor(nextType));
     }
 
     private static void updateModeToggleVisual(ModeToggle toggle,
@@ -1114,14 +867,14 @@ final class AppConfigDialogBinder {
         dpisToggleButton.setContentDescription(buttonText);
     }
 
-    private void bindFontHookDomainsButton(MaterialButton button, String packageName) {
+    void bindFontHookDomainsButton(MaterialButton button, String packageName) {
         String buttonText = host.getFontHookDomainsButtonText(packageName);
         button.setText(buttonText);
         button.setIcon(null);
         button.setContentDescription(buttonText);
     }
 
-    private static final class ModeToggle {
+    static final class ModeToggle {
         final View container;
         final View thumb;
         final MaterialTextView emulationLabel;
@@ -1136,7 +889,7 @@ final class AppConfigDialogBinder {
         }
     }
 
-    private static final class AppConfigDialogViews {
+    static final class AppConfigDialogViews {
         final android.widget.ImageView iconView;
         final MaterialTextView titleView;
         final MaterialTextView packageView;
@@ -1198,25 +951,65 @@ final class AppConfigDialogBinder {
         }
     }
 
-    private static final class AppConfigDialogState {
+    static final class AppConfigDialogState {
         boolean scopeSelected;
         boolean scopeKnown;
         boolean scopeRequestPending;
         boolean dpisEnabled;
         String selectedTypefaceId;
+        String viewportScaleInput = "";
+        String viewportAbsoluteInput = "";
 
         AppConfigDialogState(boolean scopeSelected,
                 boolean scopeKnown,
                 boolean dpisEnabled,
-                String selectedTypefaceId) {
+                String selectedTypefaceId,
+                String initialViewportType,
+                String initialViewportInput,
+                String initialViewportScaleInput,
+                String initialViewportAbsoluteInput) {
             this.scopeSelected = scopeSelected;
             this.scopeKnown = scopeKnown;
             this.dpisEnabled = dpisEnabled;
             this.selectedTypefaceId = selectedTypefaceId;
+            this.viewportScaleInput = valueOrEmpty(initialViewportScaleInput);
+            this.viewportAbsoluteInput = valueOrEmpty(initialViewportAbsoluteInput);
+            if (ViewportTargetType.ABSOLUTE_DP.equals(
+                    ViewportTargetType.normalize(initialViewportType))) {
+                this.viewportAbsoluteInput = valueOrEmpty(initialViewportInput);
+            } else {
+                this.viewportScaleInput = valueOrEmpty(initialViewportInput);
+            }
+        }
+
+        void updateViewportInput(String viewportTargetType, CharSequence input) {
+            String normalized = ViewportTargetType.normalize(viewportTargetType);
+            String value = input != null ? input.toString() : "";
+            if (ViewportTargetType.ABSOLUTE_DP.equals(normalized)) {
+                viewportAbsoluteInput = value;
+                return;
+            }
+            viewportScaleInput = value;
+        }
+
+        String viewportInputFor(String viewportTargetType) {
+            return ViewportTargetType.ABSOLUTE_DP.equals(
+                    ViewportTargetType.normalize(viewportTargetType))
+                            ? viewportAbsoluteInput
+                            : viewportScaleInput;
+        }
+
+        void clearViewportInputs() {
+            viewportScaleInput = "";
+            viewportAbsoluteInput = "";
+        }
+
+        private static String valueOrEmpty(String value) {
+            return value != null ? value : "";
         }
     }
 
-    private static final class AppConfigDialogActionStyle {
+    static final class AppConfigDialogActionStyle {
         final ColorStateList defaultActionBgTint;
         final int defaultActionStrokeWidth;
         final int defaultActionTextColor;

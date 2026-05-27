@@ -8,14 +8,30 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-final class SystemPropertyConfigPreferences implements SharedPreferences {
+final class RuntimePropertyConfigPreferences implements SharedPreferences {
     private static final long SNAPSHOT_TTL_MILLIS = 2_000L;
     private final String packageName;
+    private final AutoViewportRuntimeRoute autoViewportRuntimeRoute;
     private volatile Map<String, Object> cachedSnapshot;
     private volatile long cachedAtMillis;
 
-    SystemPropertyConfigPreferences(String packageName) {
+    RuntimePropertyConfigPreferences(String packageName) {
+        this(packageName, AutoViewportRuntimeRoute.NONE);
+    }
+
+    RuntimePropertyConfigPreferences(String packageName,
+                                     boolean resolveAutoViewportAsAppProcessRoute) {
+        this(packageName, resolveAutoViewportAsAppProcessRoute
+                ? AutoViewportRuntimeRoute.ANY_ENABLED_TARGET
+                : AutoViewportRuntimeRoute.NONE);
+    }
+
+    RuntimePropertyConfigPreferences(String packageName,
+                                     AutoViewportRuntimeRoute autoViewportRuntimeRoute) {
         this.packageName = packageName;
+        this.autoViewportRuntimeRoute = autoViewportRuntimeRoute != null
+                ? autoViewportRuntimeRoute
+                : AutoViewportRuntimeRoute.NONE;
     }
 
     @Override
@@ -25,8 +41,8 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
         if (snapshot != null && (now - cachedAtMillis) < SNAPSHOT_TTL_MILLIS) {
             return snapshot;
         }
-        // Compat100 publishes the current per-app values through system properties so
-        // legacy app processes do not need to read DPIS private files from hook hot paths.
+        // Runtime app-process hooks read the current per-app values from system properties so
+        // hook hot paths do not need to read DPIS private files directly.
         LinkedHashMap<String, Object> values = new LinkedHashMap<>();
         ViewportTargetSpec viewportTargetSpec = ViewportPropertyBridge.readTargetSpec(packageName);
         Integer widthDp = viewportTargetSpec.isAbsoluteDp()
@@ -41,6 +57,8 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
                 viewportMode = ViewportApplyMode.SYSTEM;
             }
         }
+        viewportMode = resolveRuntimeViewportMode(
+                viewportMode, viewportTargetSpec, autoViewportRuntimeRoute);
         Integer fontScalePercent = HyperOsFlutterFontBridge.readCompatFontScalePercent(packageName);
         String fontMode = HyperOsFlutterFontBridge.readCompatFontMode(packageName);
         Integer forceFontScalePercent = null;
@@ -48,7 +66,7 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
             forceFontScalePercent = HyperOsFlutterFontBridge.readForceFontScalePercent(packageName);
             fontScalePercent = forceFontScalePercent;
         }
-        fontMode = resolveCompatFontMode(fontScalePercent, fontMode, forceFontScalePercent);
+        fontMode = resolveRuntimeFontMode(fontScalePercent, fontMode, forceFontScalePercent);
         String typefaceId = HyperOsFlutterFontBridge.readTypefaceId(packageName);
         if (viewportTargetSpec.isEnabled() && ViewportApplyMode.isEnabled(viewportMode)) {
             values.put(viewportTargetTypeKey(), viewportTargetSpec.type());
@@ -130,7 +148,7 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
 
     @Override
     public Editor edit() {
-        throw new UnsupportedOperationException("SystemPropertyConfigPreferences is read-only");
+        throw new UnsupportedOperationException("RuntimePropertyConfigPreferences is read-only");
     }
 
     @Override
@@ -141,13 +159,64 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
     public void unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
     }
 
-    static String resolveCompatFontModeForTest(Integer compatFontScalePercent,
+    static String resolveRuntimeFontModeForTest(Integer runtimeFontScalePercent,
                                                String rawMode,
                                                Integer forceFontScalePercent) {
-        return resolveCompatFontMode(compatFontScalePercent, rawMode, forceFontScalePercent);
+        return resolveRuntimeFontMode(runtimeFontScalePercent, rawMode, forceFontScalePercent);
     }
 
-    private static String resolveCompatFontMode(Integer fontScalePercent,
+    static String resolveRuntimeViewportModeForTest(String rawMode,
+                                                   ViewportTargetSpec targetSpec,
+                                                   boolean resolveAutoViewportAsAppProcessRoute) {
+        return resolveRuntimeViewportMode(rawMode, targetSpec,
+                resolveAutoViewportAsAppProcessRoute
+                        ? AutoViewportRuntimeRoute.ANY_ENABLED_TARGET
+                        : AutoViewportRuntimeRoute.NONE);
+    }
+
+    static String resolveRuntimeViewportModeForTest(String rawMode,
+                                                   ViewportTargetSpec targetSpec,
+                                                   AutoViewportRuntimeRoute autoViewportRuntimeRoute) {
+        return resolveRuntimeViewportMode(rawMode, targetSpec, autoViewportRuntimeRoute);
+    }
+
+    private static String resolveRuntimeViewportMode(String rawMode,
+                                                    ViewportTargetSpec targetSpec,
+                                                    AutoViewportRuntimeRoute autoViewportRuntimeRoute) {
+        String mode = ViewportApplyMode.normalize(rawMode);
+        if (autoViewportRuntimeRoute != null
+                && autoViewportRuntimeRoute.shouldUseAppProcessRoute(targetSpec)
+                && targetSpec != null
+                && ViewportApplyMode.AUTO.equals(mode)) {
+            return ViewportApplyMode.COMPAT;
+        }
+        return mode;
+    }
+
+    enum AutoViewportRuntimeRoute {
+        NONE {
+            @Override
+            boolean shouldUseAppProcessRoute(ViewportTargetSpec targetSpec) {
+                return false;
+            }
+        },
+        ABSOLUTE_TARGETS_ONLY {
+            @Override
+            boolean shouldUseAppProcessRoute(ViewportTargetSpec targetSpec) {
+                return targetSpec != null && targetSpec.isAbsoluteDp();
+            }
+        },
+        ANY_ENABLED_TARGET {
+            @Override
+            boolean shouldUseAppProcessRoute(ViewportTargetSpec targetSpec) {
+                return targetSpec != null && targetSpec.isEnabled();
+            }
+        };
+
+        abstract boolean shouldUseAppProcessRoute(ViewportTargetSpec targetSpec);
+    }
+
+    private static String resolveRuntimeFontMode(Integer fontScalePercent,
                                                 String rawMode,
                                                 Integer forceFontScalePercent) {
         String mode = FontApplyMode.normalize(rawMode);
