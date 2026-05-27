@@ -99,7 +99,7 @@ final class PerAppDisplayConfigSource {
 
     private static PackageConfigSnapshot loadCompat100RuntimePropertyConfig(String packageName) {
         ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(
-                new DpiConfigStore(new SystemPropertyConfigPreferences(packageName)));
+                new DpiConfigStore(new RuntimePropertyConfigPreferences(packageName)));
         return snapshot.getPackage(packageName);
     }
 }

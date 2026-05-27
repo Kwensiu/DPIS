@@ -117,7 +117,7 @@ public final class LegacyModuleManifestMetadataTest {
                 "src", "main", "java", "com", "dpis", "module", "CompatConfigProvider.java")));
         assertFalse(factory.contains("CompatConfigProviderPreferences"));
         String compatFactory = factory.substring(factory.indexOf("createForCompat100Host"));
-        int propertyIndex = compatFactory.indexOf("SystemPropertyConfigPreferences");
+        int propertyIndex = compatFactory.indexOf("RuntimePropertyConfigPreferences");
         int xSharedIndex = compatFactory.indexOf("XSharedPreferencesAdapter");
         assertTrue(propertyIndex >= 0);
         assertTrue(xSharedIndex >= 0);

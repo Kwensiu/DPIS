@@ -34,7 +34,7 @@ public class ModuleMainHookInstallerTest {
         assertTrue(appProcessInstaller.contains("HyperOsFlutterFontHookInstaller.install(xposed, packageName, store)"));
         assertTrue(moduleMain.contains("maybeInstallAppProcessFromModuleLoaded("));
         assertTrue(moduleMain.contains("installAppProcessHooksIfConfigured("));
-        assertTrue(moduleMain.contains("new SystemPropertyConfigPreferences(packageName, true)"));
+        assertTrue(moduleMain.contains("new RuntimePropertyConfigPreferences(packageName, true)"));
         assertTrue(moduleMain.contains("packageNameFromProcessName(processName)"));
         assertTrue(moduleMain.contains("installAppProcessHooksIfConfigured(runtimeStore, policy, snapshot, packageName,"));
         assertTrue(moduleMain.contains("module-loaded app hook install enter"));

@@ -8,20 +8,21 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-final class SystemPropertyConfigPreferences implements SharedPreferences {
+final class RuntimePropertyConfigPreferences implements SharedPreferences {
     private static final long SNAPSHOT_TTL_MILLIS = 2_000L;
     private final String packageName;
-    private final boolean resolveAutoViewportAsCompat;
+    private final boolean resolveAutoViewportAsAppProcessRoute;
     private volatile Map<String, Object> cachedSnapshot;
     private volatile long cachedAtMillis;
 
-    SystemPropertyConfigPreferences(String packageName) {
+    RuntimePropertyConfigPreferences(String packageName) {
         this(packageName, false);
     }
 
-    SystemPropertyConfigPreferences(String packageName, boolean resolveAutoViewportAsCompat) {
+    RuntimePropertyConfigPreferences(String packageName,
+                                     boolean resolveAutoViewportAsAppProcessRoute) {
         this.packageName = packageName;
-        this.resolveAutoViewportAsCompat = resolveAutoViewportAsCompat;
+        this.resolveAutoViewportAsAppProcessRoute = resolveAutoViewportAsAppProcessRoute;
     }
 
     @Override
@@ -31,8 +32,8 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
         if (snapshot != null && (now - cachedAtMillis) < SNAPSHOT_TTL_MILLIS) {
             return snapshot;
         }
-        // Compat100 publishes the current per-app values through system properties so
-        // legacy app processes do not need to read DPIS private files from hook hot paths.
+        // Runtime app-process hooks read the current per-app values from system properties so
+        // hook hot paths do not need to read DPIS private files directly.
         LinkedHashMap<String, Object> values = new LinkedHashMap<>();
         ViewportTargetSpec viewportTargetSpec = ViewportPropertyBridge.readTargetSpec(packageName);
         Integer widthDp = viewportTargetSpec.isAbsoluteDp()
@@ -47,8 +48,8 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
                 viewportMode = ViewportApplyMode.SYSTEM;
             }
         }
-        viewportMode = resolveCompatViewportMode(
-                viewportMode, viewportTargetSpec, resolveAutoViewportAsCompat);
+        viewportMode = resolveRuntimeViewportMode(
+                viewportMode, viewportTargetSpec, resolveAutoViewportAsAppProcessRoute);
         Integer fontScalePercent = HyperOsFlutterFontBridge.readCompatFontScalePercent(packageName);
         String fontMode = HyperOsFlutterFontBridge.readCompatFontMode(packageName);
         Integer forceFontScalePercent = null;
@@ -56,7 +57,7 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
             forceFontScalePercent = HyperOsFlutterFontBridge.readForceFontScalePercent(packageName);
             fontScalePercent = forceFontScalePercent;
         }
-        fontMode = resolveCompatFontMode(fontScalePercent, fontMode, forceFontScalePercent);
+        fontMode = resolveRuntimeFontMode(fontScalePercent, fontMode, forceFontScalePercent);
         String typefaceId = HyperOsFlutterFontBridge.readTypefaceId(packageName);
         if (viewportTargetSpec.isEnabled() && ViewportApplyMode.isEnabled(viewportMode)) {
             values.put(viewportTargetTypeKey(), viewportTargetSpec.type());
@@ -138,7 +139,7 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
 
     @Override
     public Editor edit() {
-        throw new UnsupportedOperationException("SystemPropertyConfigPreferences is read-only");
+        throw new UnsupportedOperationException("RuntimePropertyConfigPreferences is read-only");
     }
 
     @Override
@@ -149,23 +150,23 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
     public void unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
     }
 
-    static String resolveCompatFontModeForTest(Integer compatFontScalePercent,
+    static String resolveRuntimeFontModeForTest(Integer runtimeFontScalePercent,
                                                String rawMode,
                                                Integer forceFontScalePercent) {
-        return resolveCompatFontMode(compatFontScalePercent, rawMode, forceFontScalePercent);
+        return resolveRuntimeFontMode(runtimeFontScalePercent, rawMode, forceFontScalePercent);
     }
 
-    static String resolveCompatViewportModeForTest(String rawMode,
+    static String resolveRuntimeViewportModeForTest(String rawMode,
                                                    ViewportTargetSpec targetSpec,
-                                                   boolean resolveAutoViewportAsCompat) {
-        return resolveCompatViewportMode(rawMode, targetSpec, resolveAutoViewportAsCompat);
+                                                   boolean resolveAutoViewportAsAppProcessRoute) {
+        return resolveRuntimeViewportMode(rawMode, targetSpec, resolveAutoViewportAsAppProcessRoute);
     }
 
-    private static String resolveCompatViewportMode(String rawMode,
+    private static String resolveRuntimeViewportMode(String rawMode,
                                                     ViewportTargetSpec targetSpec,
-                                                    boolean resolveAutoViewportAsCompat) {
+                                                    boolean resolveAutoViewportAsAppProcessRoute) {
         String mode = ViewportApplyMode.normalize(rawMode);
-        if (resolveAutoViewportAsCompat
+        if (resolveAutoViewportAsAppProcessRoute
                 && targetSpec != null
                 && targetSpec.isEnabled()
                 && ViewportApplyMode.AUTO.equals(mode)) {
@@ -174,7 +175,7 @@ final class SystemPropertyConfigPreferences implements SharedPreferences {
         return mode;
     }
 
-    private static String resolveCompatFontMode(Integer fontScalePercent,
+    private static String resolveRuntimeFontMode(Integer fontScalePercent,
                                                 String rawMode,
                                                 Integer forceFontScalePercent) {
         String mode = FontApplyMode.normalize(rawMode);

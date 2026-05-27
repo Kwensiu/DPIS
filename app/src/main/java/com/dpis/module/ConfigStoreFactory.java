@@ -118,7 +118,7 @@ final class ConfigStoreFactory {
 
     private static DpiConfigStore createForCompat100Host(
             String packageName,
-            boolean resolveAutoViewportAsCompat) {
+            boolean resolveAutoViewportAsAppProcessRoute) {
         SharedPreferences xSharedPreferences =
                 new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpiConfigStore.GROUP);
         if (packageName == null || packageName.isBlank()) {
@@ -128,7 +128,7 @@ final class ConfigStoreFactory {
         // read the per-package system-property bridge first, with XSharedPreferences kept
         // only as a startup fallback for older or unsynced configuration.
         return new DpiConfigStore(
-                new SystemPropertyConfigPreferences(packageName, resolveAutoViewportAsCompat),
+                new RuntimePropertyConfigPreferences(packageName, resolveAutoViewportAsAppProcessRoute),
                 xSharedPreferences);
     }
 }

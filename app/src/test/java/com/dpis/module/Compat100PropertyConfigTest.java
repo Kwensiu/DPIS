@@ -91,41 +91,41 @@ public class Compat100PropertyConfigTest {
     @Test
     public void legacyCompatFontPropertyDefaultsToSystemEmulationWithoutMode() {
         assertEquals(FontApplyMode.SYSTEM_EMULATION,
-                SystemPropertyConfigPreferences.resolveCompatFontModeForTest(
+                RuntimePropertyConfigPreferences.resolveRuntimeFontModeForTest(
                         200, FontApplyMode.OFF, null));
     }
 
     @Test
     public void forceFontPropertyDefaultsToFieldRewriteWithoutMode() {
         assertEquals(FontApplyMode.FIELD_REWRITE,
-                SystemPropertyConfigPreferences.resolveCompatFontModeForTest(
+                RuntimePropertyConfigPreferences.resolveRuntimeFontModeForTest(
                         200, FontApplyMode.OFF, 200));
     }
 
     @Test
     public void explicitCompatFontModeOverridesPropertyOrigin() {
         assertEquals(FontApplyMode.SYSTEM_EMULATION,
-                SystemPropertyConfigPreferences.resolveCompatFontModeForTest(
+                RuntimePropertyConfigPreferences.resolveRuntimeFontModeForTest(
                         200, FontApplyMode.SYSTEM_EMULATION, 200));
         assertEquals(FontApplyMode.FIELD_REWRITE,
-                SystemPropertyConfigPreferences.resolveCompatFontModeForTest(
+                RuntimePropertyConfigPreferences.resolveRuntimeFontModeForTest(
                         200, FontApplyMode.FIELD_REWRITE, null));
     }
 
     @Test
     public void compat100MainProcessCanResolveAutoViewportAsCompat() {
         assertEquals(ViewportApplyMode.COMPAT,
-                SystemPropertyConfigPreferences.resolveCompatViewportModeForTest(
+                RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
                         ViewportApplyMode.AUTO,
                         ViewportTargetSpec.relativeScale(1500),
                         true));
         assertEquals(ViewportApplyMode.AUTO,
-                SystemPropertyConfigPreferences.resolveCompatViewportModeForTest(
+                RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
                         ViewportApplyMode.AUTO,
                         ViewportTargetSpec.relativeScale(1500),
                         false));
         assertEquals(ViewportApplyMode.AUTO,
-                SystemPropertyConfigPreferences.resolveCompatViewportModeForTest(
+                RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
                         ViewportApplyMode.AUTO,
                         ViewportTargetSpec.off(),
                         true));
