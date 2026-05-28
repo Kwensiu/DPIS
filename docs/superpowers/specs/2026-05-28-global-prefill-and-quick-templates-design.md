@@ -306,6 +306,86 @@ font file is absent.
 - `XposedService` unavailable, unknown scope state, or `requestScope(List)`
   failure does not roll back saved package config.
 
+## Implementation Tracking
+
+This section is for later main-agent and sub-agent execution. It is intentionally
+more operational than the design sections above.
+
+Status markers:
+
+- `[ ]`: not started.
+- `[x]`: implementation is complete, but verification is not complete or not yet
+  reviewed.
+- `[✓]`: implementation is complete and verified against the listed checks.
+
+Rules for agents:
+
+- A sub-agent may change `[ ]` to `[x]` only after code and related tests/docs
+  for that slice are implemented.
+- A sub-agent may change `[x]` to `[✓]` only after the slice-specific
+  verification has run and the result is recorded in its handoff.
+- If verification cannot run, keep `[x]` and record the blocker.
+- Do not mark another slice unless the work and verification for that slice were
+  actually performed.
+- Keep implementation commits scoped to one slice when practical.
+
+### Repository Path Overview
+
+Project root:
+
+- `E:\System\Documents\GitHub\DPIS`
+
+Primary production code directory:
+
+- `E:\System\Documents\GitHub\DPIS\app\src\main\java\com\dpis\module`
+
+Primary resource directory:
+
+- `E:\System\Documents\GitHub\DPIS\app\src\main\res`
+
+Flavor-specific modern API entry:
+
+- `E:\System\Documents\GitHub\DPIS\app\src\modern101\java\com\dpis\module\ModuleMain.java`
+
+Flavor-specific compat API entry:
+
+- `E:\System\Documents\GitHub\DPIS\app\src\compat100\java\com\dpis\module`
+
+Primary unit test directory:
+
+- `E:\System\Documents\GitHub\DPIS\app\src\test\java\com\dpis\module`
+
+### Implementation Slices
+
+| Status | Slice | Scope | Candidate Files | Verification |
+| --- | --- | --- | --- | --- |
+| `[ ]` | Foundation model and stores | Add `TemplateConfigValue`, global prefill persistence, quick template persistence, selected package persistence, stable ID handling, and missing-font-safe reads. | `app/src/main/java/com/dpis/module/TemplateConfigValue.java`, `GlobalPrefillStore.java`, `QuickTemplateStore.java`, `DpiConfigStore.java`; tests under `app/src/test/java/com/dpis/module/` | Store tests prove no writes to `target_packages`, template values round-trip, selected packages round-trip, invalid or missing entries are handled. |
+| `[ ]` | Backup and import integration | Include global prefill and quick template keys in config backup/import while still excluding font binary files and runtime/debug state. | `app/src/main/java/com/dpis/module/DpiConfigStore.java`, `ConfigBackupCodec.java`, `SystemServerSettingsActivity.java`; tests in `DpiConfigStoreTest` or new backup tests | Backup tests prove prefill/templates are exported/imported and font binaries are not included. |
+| `[ ]` | Global prefill sheet state | For completely unconfigured apps, construct temporary app sheet state from global prefill without persisting or publishing until save. Add generic preview/unsaved state UI in the sheet. | `MainActivity.java`, `InstalledAppCatalogCoordinator.java`, `AppListItem.java`, `AppConfigDialogBinder.java`, `AppConfigSaveHandler.java`, `dialog_app_config.xml`, `strings.xml` | Tests prove configured apps ignore prefill, unconfigured apps display prefill only as preview, saving converts preview into real config. |
+| `[ ]` | Workspace navigation UI | Add bottom `应用 / 模板` workspace switch, preserve current app workspace behavior, and hide or replace app list tabs while template workspace is active. | `activity_status.xml`, `MainActivity.java`, `MainUiState.java`, possible new `MainWorkspaceMode.java`, `strings.xml`, `dimens.xml`, layout smoke tests | Source/layout smoke tests prove both workspace entries exist and app tabs are not active controls in template workspace. |
+| `[ ]` | Template workspace cards | Render global prefill fixed card and quick template cards with summaries, missing-font state, and actions `应用 / 编辑 / 选择`. | New binder/adapter candidates: `TemplateWorkspaceBinder.java`, `QuickTemplateListAdapter.java`; resources under `app/src/main/res/layout/` and `values/` | UI smoke tests prove card structure, actions, strings, and missing-font display hooks exist. |
+| `[ ]` | Global prefill edit page | Add dedicated `全局预填` edit page using app-config validation semantics, without scope/process/enable controls. | Candidate `GlobalPrefillActivity.java` or page controller, shared form binder, new layout under `app/src/main/res/layout/` | Tests prove save/reset write only `default_config.*` and never write app package config. |
+| `[ ]` | Quick template edit page | Add dedicated template edit page for name and reusable config values. Preserve selected packages when config values change. | Candidate `QuickTemplateEditActivity.java`, `TemplateConfigFormBinder.java`, layouts/strings | Tests prove name validation, config validation, save/update behavior, and selected package preservation. |
+| `[ ]` | Quick template app selection page | Add per-template app selection page with installed app list, selection persistence, search/filter if reused, and `已配置` badge for configured apps. | Candidate `QuickTemplateTargetSelectionActivity.java`, `QuickTemplateTargetAdapter.java`, existing `InstalledAppCatalogCoordinator.java`, new item layout | Tests prove selected packages persist and configured apps are identified without implying template ownership. |
+| `[ ]` | Batch apply coordinator | Apply selected template values to selected packages, overwrite configured apps after confirmation, publish runtime properties for successful writes, and summarize partial failures. | `QuickTemplateApplyCoordinator.java`, `TemplateConfigValue.java`, `AppConfigSaveHandler.java` or extracted save helper, runtime syncers | Unit tests prove multi-package writes, overwrite behavior, partial failure summary, no `失败 0 个`, and no process/HyperOS proxy side effects. |
+| `[ ]` | Batch scope request | For modern101, send at most one `requestScope(List)` after successful batch writes. For compat100/service unavailable/unknown scope, keep config and show manual-scope guidance. | `BatchScopeRequestCoordinator.java`, `SystemScopeCoordinator.java`, `MainActivity.java`, modern/compat tests as source smoke if needed | Tests prove one batch request call, no singleton loop fallback, partial approved callback handled by refresh, compat/manual path message exists. |
+| `[ ]` | Strings, dimensions, and UI polish | Add localized English and Simplified Chinese strings, semantic dimensions, accessible labels, and confirmation copy. Follow `docs/ui-guidelines.md`. | `app/src/main/res/values/strings.xml`, `values-zh-rCN/strings.xml`, `dimens.xml`, layouts, drawable resources if needed | `StringResourceParityTest` and layout smoke tests pass; no hard-coded user-visible text in Java/XML where resources are expected. |
+| `[ ]` | End-to-end verification | Run focused tests, full debug unit tests, then perform real-device or screenshot validation for main workspace, edit pages, selection page, apply confirmation, and preview sheet state. | Test suite and runtime validation evidence; no production code required unless bugs are found | `./gradlew :app:testAllDebugUnitTests` passes; UI/runtime validation notes are added to the final implementation handoff. |
+
+### Slice Dependency Notes
+
+- Foundation model and stores should land first because every other slice
+  depends on stable value objects and key semantics.
+- Backup/import can run after foundation and before UI.
+- Workspace navigation can run independently after foundation, but card content
+  needs store APIs.
+- Global prefill sheet state depends on global prefill storage and should avoid
+  coupling to quick template UI.
+- Batch apply depends on quick template storage and should be developed before
+  batch scope request.
+- Batch scope request must not be implemented by looping over the existing
+  single-app scope request API.
+
 ## Testing Strategy
 
 Add or update unit/source-smoke coverage for:
