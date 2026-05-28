@@ -1214,8 +1214,11 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             }
 
             @Override
-            public String getFontHookDomainsButtonText(AppListItem item, String previewFontHookDomainsRaw) {
-                return MainActivity.this.getFontHookDomainsButtonText(item, previewFontHookDomainsRaw);
+            public String getFontHookDomainsButtonText(AppListItem item,
+                    boolean previewFromGlobalPrefill,
+                    String previewFontHookDomainsRaw) {
+                return MainActivity.this.getFontHookDomainsButtonText(
+                        item, previewFromGlobalPrefill, previewFontHookDomainsRaw);
             }
 
             @Override
@@ -1274,11 +1277,9 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         }
         DpiConfigStore store = getUiConfigStore();
         Set<String> automaticKnownDomains = resolveAutomaticFontHookDomains(store, item.packageName);
-        boolean previewMode = item.previewFromGlobalPrefill;
+        boolean previewMode = state != null && state.previewFromGlobalPrefill;
         HookDomainOverride currentOverride = previewMode
-                ? HookDomainOverrideStore.fromRaw(state != null
-                        ? state.previewFontHookDomainsRaw
-                        : item.previewFontHookDomainsRaw)
+                ? HookDomainOverrideStore.fromRaw(state.previewFontHookDomainsRaw)
                 : new HookDomainOverrideStore(store).read(item.packageName);
         FontHookDomainDialog.show(this,
                 new FontHookDomainDialog.Host() {
@@ -1378,8 +1379,10 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                 FontHookDomainDecision.isHyperOsNativeFlutterEnabled(store, packageName));
     }
 
-    private String getFontHookDomainsButtonText(AppListItem item, String previewFontHookDomainsRaw) {
-        HookDomainOverride override = item != null && item.previewFromGlobalPrefill
+    private String getFontHookDomainsButtonText(AppListItem item,
+            boolean previewFromGlobalPrefill,
+            String previewFontHookDomainsRaw) {
+        HookDomainOverride override = previewFromGlobalPrefill
                 ? HookDomainOverrideStore.fromRaw(previewFontHookDomainsRaw)
                 : new HookDomainOverrideStore(getUiConfigStore()).read(item != null ? item.packageName : null);
         if (!override.customPathEnabled) {

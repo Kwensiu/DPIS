@@ -370,7 +370,9 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("public void showFontHookDomains(AppListItem item,"));
         assertTrue(source.contains("AppConfigDialogBinder.AppConfigDialogState state,"));
         assertTrue(source.contains("MainActivity.this.showFontHookDomains(item, state, onStateChanged);"));
-        assertTrue(source.contains("public String getFontHookDomainsButtonText(AppListItem item, String previewFontHookDomainsRaw)"));
+        assertTrue(source.contains("public String getFontHookDomainsButtonText(AppListItem item,"));
+        assertTrue(source.contains("boolean previewFromGlobalPrefill,"));
+        assertTrue(source.contains("MainActivity.this.getFontHookDomainsButtonText("));
         assertTrue(source.contains("new HookDomainOverrideStore(store)"));
         assertTrue(source.contains("FontHookDomainDialog.show(this,"));
         assertTrue(source.contains("overrideStore.saveCustomIfDifferentFromAutomatic("));
@@ -393,8 +395,9 @@ public class MainActivitySourceSmokeTest {
         int methodEnd = source.indexOf("private static void publishFontRuntimeTarget", methodStart);
         String method = source.substring(methodStart, methodEnd);
 
-        assertTrue(method.contains("boolean previewMode = item.previewFromGlobalPrefill"));
-        assertTrue(method.contains("HookDomainOverrideStore.fromRaw(state != null"));
+        assertTrue(method.contains("boolean previewMode = state != null && state.previewFromGlobalPrefill"));
+        assertFalse(method.contains("boolean previewMode = item.previewFromGlobalPrefill"));
+        assertTrue(method.contains("HookDomainOverrideStore.fromRaw(state.previewFontHookDomainsRaw)"));
         assertTrue(method.contains("state.previewFontHookDomainsRaw = HookDomainOverrideStore.rawValueForSelection("));
         assertTrue(method.contains("state.previewFontHookDomainsRaw = null;"));
         assertTrue(method.contains("if (previewMode)"));
@@ -406,6 +409,18 @@ public class MainActivitySourceSmokeTest {
         assertTrue(realRestore > previewBranch);
         assertTrue(method.indexOf("return true;", previewBranch) < realStoreWrite);
         assertTrue(method.indexOf("return true;", realStoreWrite) < realRestore);
+    }
+
+    @Test
+    public void fontHookDomainButtonTextUsesMutablePreviewStateFlag() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+        int methodStart = source.indexOf("private String getFontHookDomainsButtonText(AppListItem item,");
+        int methodEnd = source.indexOf("private Set<String> resolveAutomaticFontHookDomains", methodStart);
+        String method = source.substring(methodStart, methodEnd);
+
+        assertTrue(method.contains("boolean previewFromGlobalPrefill,"));
+        assertTrue(method.contains("HookDomainOverride override = previewFromGlobalPrefill"));
+        assertFalse(method.contains("item.previewFromGlobalPrefill"));
     }
 
     private static String read(String relativePath) throws IOException {

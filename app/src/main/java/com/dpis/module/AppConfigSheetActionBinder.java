@@ -59,7 +59,10 @@ final class AppConfigSheetActionBinder {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
             host.showFontHookDomains(item, state,
                     () -> binder.bindFontHookDomainsButton(
-                            views.fontHookDomainsButton, item, state.previewFontHookDomainsRaw));
+                            views.fontHookDomainsButton,
+                            item,
+                            state.previewFromGlobalPrefill,
+                            state.previewFontHookDomainsRaw));
         });
         views.disableButton.setOnClickListener(v -> {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);

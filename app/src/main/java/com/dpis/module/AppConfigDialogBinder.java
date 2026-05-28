@@ -62,7 +62,9 @@ final class AppConfigDialogBinder {
                 AppConfigDialogState state,
                 Runnable onStateChanged);
 
-        String getFontHookDomainsButtonText(AppListItem item, String previewFontHookDomainsRaw);
+        String getFontHookDomainsButtonText(AppListItem item,
+                boolean previewFromGlobalPrefill,
+                String previewFontHookDomainsRaw);
 
         void openTypefaceLibrary();
 
@@ -201,7 +203,11 @@ final class AppConfigDialogBinder {
                 style.defaultActionBgTint, style.defaultActionStrokeWidth, style.defaultActionTextColor);
         bindDpisToggleButton(views.dpisToggleButton, state.dpisEnabled,
                 style.defaultActionBgTint, style.defaultActionStrokeWidth, style.defaultActionTextColor);
-        bindFontHookDomainsButton(views.fontHookDomainsButton, item, state.previewFontHookDomainsRaw);
+        bindFontHookDomainsButton(
+                views.fontHookDomainsButton,
+                item,
+                state.previewFromGlobalPrefill,
+                state.previewFontHookDomainsRaw);
     }
 
     private void bindPreviewStatus(MaterialTextView previewStatusView, boolean previewFromGlobalPrefill) {
@@ -901,8 +907,12 @@ final class AppConfigDialogBinder {
         dpisToggleButton.setContentDescription(buttonText);
     }
 
-    void bindFontHookDomainsButton(MaterialButton button, AppListItem item, String previewFontHookDomainsRaw) {
-        String buttonText = host.getFontHookDomainsButtonText(item, previewFontHookDomainsRaw);
+    void bindFontHookDomainsButton(MaterialButton button,
+            AppListItem item,
+            boolean previewFromGlobalPrefill,
+            String previewFontHookDomainsRaw) {
+        String buttonText = host.getFontHookDomainsButtonText(
+                item, previewFromGlobalPrefill, previewFontHookDomainsRaw);
         button.setText(buttonText);
         button.setIcon(null);
         button.setContentDescription(buttonText);

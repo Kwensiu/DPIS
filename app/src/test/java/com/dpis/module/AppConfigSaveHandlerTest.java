@@ -91,6 +91,41 @@ public class AppConfigSaveHandlerTest {
         assertFalse(store.hasRealPackageConfig(item.packageName));
     }
 
+    @Test
+    public void hookDomainOnlyPreviewSavePersistsRealPackageConfig() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                null,
+                FontApplyMode.OFF,
+                null,
+                "resources_font"));
+
+        assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(
+                store, item, item.previewFontHookDomainsRaw));
+
+        assertEquals("resources_font", store.getPackageFontHookDomainsRaw(item.packageName));
+        assertTrue(store.getConfiguredPackages().contains(item.packageName));
+    }
+
+    @Test
+    public void clearedHookDomainPreviewDoesNotForcePackageConfig() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                null,
+                FontApplyMode.OFF,
+                null,
+                "resources_font"));
+
+        assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(store, item, null));
+
+        assertFalse(store.hasRealPackageConfig(item.packageName));
+        assertFalse(store.getConfiguredPackages().contains(item.packageName));
+    }
+
     private static AppListItem app(String packageName) {
         return new AppListItem("Example",
                 packageName,

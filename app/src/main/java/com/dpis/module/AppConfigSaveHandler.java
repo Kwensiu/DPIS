@@ -40,6 +40,7 @@ final class AppConfigSaveHandler {
                     viewportEmulationIneffective || fontEmulationIneffective;
             boolean saved = true;
             int hint = 0;
+            saved = persistPreviewOnlyConfig(store, item, previewFontHookDomainsRaw) && saved;
             if (viewportTargetSpec == null || !viewportTargetSpec.isEnabled()) {
                 saved = store.clearTargetViewportWidthDp(item.packageName) && saved;
                 saved = store.setTargetViewportApplyMode(item.packageName, ViewportApplyMode.OFF)
@@ -62,18 +63,15 @@ final class AppConfigSaveHandler {
                 saved = store.clearTargetFontScalePercent(item.packageName) && saved;
                 saved = store.setTargetFontApplyMode(item.packageName, FontApplyMode.OFF) && saved;
                 FontRuntimePropertySyncer.clearFontScaleTargetAsync(item.packageName);
-                FontHookDomainPropertySyncer.clearTargetAsync(item.packageName);
             } else {
                 saved = store.setTargetFontScalePercent(item.packageName, fontScalePercent) && saved;
                 saved = store.setTargetFontApplyMode(item.packageName, fontMode) && saved;
-                saved = persistPreviewOnlyConfig(store, item, previewFontHookDomainsRaw) && saved;
                 FontRuntimePropertySyncer.publishTargetAsync(
                         item.packageName,
                         fontScalePercent,
                         fontMode,
                         FontHookDomainDecision.isHyperOsNativeFlutterEnabled(
                                 store, item.packageName));
-                FontHookDomainPropertySyncer.publishFromStoreAsync(item.packageName, store);
             }
             if (selectedTypefaceId == null || selectedTypefaceId.isBlank()) {
                 saved = store.clearTargetTypefaceId(item.packageName) && saved;
@@ -82,6 +80,7 @@ final class AppConfigSaveHandler {
                 saved = store.setTargetTypefaceId(item.packageName, selectedTypefaceId) && saved;
                 FontRuntimePropertySyncer.publishTypefaceTargetAsync(item.packageName, selectedTypefaceId);
             }
+            publishFontHookDomainsAfterSave(item.packageName, store);
             if (saved && onChanged != null) {
                 onChanged.run();
             }
@@ -97,11 +96,19 @@ final class AppConfigSaveHandler {
     static boolean persistPreviewOnlyConfig(DpiConfigStore store,
             AppListItem item,
             String previewFontHookDomainsRaw) {
-        if (store == null || item == null || !item.previewFromGlobalPrefill
-                || previewFontHookDomainsRaw == null) {
+        if (store == null || item == null || previewFontHookDomainsRaw == null) {
             return true;
         }
         return store.setPackageFontHookDomainsRaw(item.packageName, previewFontHookDomainsRaw);
+    }
+
+    private static void publishFontHookDomainsAfterSave(String packageName, DpiConfigStore store) {
+        HookDomainOverride override = new HookDomainOverrideStore(store).read(packageName);
+        if (override.customPathEnabled) {
+            FontHookDomainPropertySyncer.publishTargetAsync(packageName, override.enabledKnownDomains);
+            return;
+        }
+        FontHookDomainPropertySyncer.clearTargetAsync(packageName);
     }
 
     static String resolveViewportApplyModeForSave(DpiConfigStore store,

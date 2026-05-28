@@ -239,11 +239,14 @@ public class AppConfigDialogBinderSourceSmokeTest {
                 < layout.indexOf("@string/dialog_advanced_section_title"));
         assertTrue(binderSource.contains("void showFontHookDomains(AppListItem item,"));
         assertTrue(binderSource.contains("AppConfigDialogState state,"));
-        assertTrue(binderSource.contains("String getFontHookDomainsButtonText(AppListItem item, String previewFontHookDomainsRaw);"));
+        assertTrue(binderSource.contains("String getFontHookDomainsButtonText(AppListItem item,"));
+        assertTrue(binderSource.contains("boolean previewFromGlobalPrefill,"));
+        assertTrue(binderSource.contains("String previewFontHookDomainsRaw);"));
         assertTrue(source.contains("views.fontHookDomainsButton.setOnClickListener"));
         assertTrue(source.contains("host.showFontHookDomains(item, state,"));
-        assertTrue(binderSource.contains("host.getFontHookDomainsButtonText(item, previewFontHookDomainsRaw)"));
-        assertTrue(source.contains("views.fontHookDomainsButton, item, state.previewFontHookDomainsRaw"));
+        assertTrue(binderSource.contains("item, previewFromGlobalPrefill, previewFontHookDomainsRaw"));
+        assertTrue(source.contains("state.previewFromGlobalPrefill"));
+        assertTrue(source.contains("state.previewFontHookDomainsRaw"));
     }
 
     @Test
@@ -452,6 +455,18 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
         assertTrue(clearBlock.contains("FontRuntimePropertySyncer.clearFontScaleTargetAsync(item.packageName)"));
         assertFalse(clearBlock.contains("FontRuntimePropertySyncer.clearTargetAsync(item.packageName)"));
+        assertFalse(clearBlock.contains("FontHookDomainPropertySyncer.clearTargetAsync(item.packageName)"));
+    }
+
+    @Test
+    public void savingPreviewHookDomainsIsIndependentFromFontScaleBranch() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        int persistCall = source.indexOf("persistPreviewOnlyConfig(store, item, previewFontHookDomainsRaw)");
+        int fontScaleBranch = source.indexOf("if (fontScalePercent == null)");
+
+        assertTrue(persistCall > 0);
+        assertTrue(fontScaleBranch > persistCall);
+        assertTrue(source.contains("publishFontHookDomainsAfterSave(item.packageName, store);"));
     }
 
     @Test
