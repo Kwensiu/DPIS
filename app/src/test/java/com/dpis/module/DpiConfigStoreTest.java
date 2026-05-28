@@ -705,6 +705,36 @@ public class DpiConfigStoreTest {
         assertTrue(store.getConfiguredPackages().contains("com.tencent.mm"));
     }
 
+    @Test
+    public void hasRealPackageConfigTreatsMissingTypefaceIdAsConfig() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+
+        assertTrue(store.setTargetTypefaceId("com.example.app", "missing_font_id"));
+
+        assertTrue(store.hasRealPackageConfig("com.example.app"));
+        assertEquals("missing_font_id", store.getTargetTypefaceId("com.example.app"));
+    }
+
+    @Test
+    public void packageTemplateConfigValueRoundTripsCopyableFieldsOnly() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        TemplateConfigValue value = new TemplateConfigValue(
+                ViewportTargetSpec.relativeScale(1100),
+                ViewportApplyMode.AUTO,
+                140,
+                FontApplyMode.FIELD_REWRITE,
+                "missing_font_id",
+                "resources_font,textview_sp");
+
+        assertTrue(store.writePackageTemplateConfigValue("com.example.app", value));
+
+        assertEquals(value, store.readPackageTemplateConfigValue("com.example.app"));
+        assertTrue(store.getConfiguredPackages().contains("com.example.app"));
+        assertTrue(store.isTargetDpisEnabled("com.example.app"));
+        assertFalse(prefs.contains("target.com.example.app.dpis_enabled"));
+    }
+
     private static final class ThrowingIntReadPrefs implements SharedPreferences {
         private final FakePrefs delegate = new FakePrefs();
         private final Set<String> intReadFailureKeys;

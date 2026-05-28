@@ -639,6 +639,85 @@ final class DpiConfigStore {
                 .remove(keyForFontHookDomains(packageName)));
     }
 
+    boolean hasRealPackageConfig(String packageName) {
+        if (packageName == null || packageName.isBlank()) {
+            return false;
+        }
+        return getConfiguredPackages().contains(packageName)
+                || hasAnyPackageConfigAfterRemoving(packageName);
+    }
+
+    TemplateConfigValue readPackageTemplateConfigValue(String packageName) {
+        if (packageName == null || packageName.isBlank()) {
+            return TemplateConfigValue.EMPTY;
+        }
+        return new TemplateConfigValue(
+                getTargetViewportSpec(packageName),
+                getTargetViewportApplyMode(packageName),
+                getTargetFontScalePercent(packageName),
+                getTargetFontApplyMode(packageName),
+                getTargetTypefaceId(packageName),
+                getPackageFontHookDomainsRaw(packageName));
+    }
+
+    boolean writePackageTemplateConfigValue(String packageName, TemplateConfigValue value) {
+        if (packageName == null || packageName.isBlank()) {
+            return false;
+        }
+        TemplateConfigValue normalized = value != null ? value : TemplateConfigValue.EMPTY;
+        if (!normalized.hasAnyValue()) {
+            return clearTargetPackageConfig(packageName);
+        }
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        packages.add(packageName);
+        return commitBoth(editor -> {
+            editor.putStringSet(KEY_TARGET_PACKAGES, packages);
+            removePackageTemplateConfigKeys(editor, packageName);
+            if (normalized.viewportTargetSpec.isEnabled()) {
+                editor.putString(
+                        keyForViewportTargetType(packageName),
+                        normalized.viewportTargetSpec.type());
+                if (normalized.viewportTargetSpec.isRelativeScale()) {
+                    editor.putInt(
+                            keyForViewportScalePermille(packageName),
+                            normalized.viewportTargetSpec.scalePermille());
+                } else {
+                    editor.putInt(
+                            keyForViewportWidth(packageName),
+                            normalized.viewportTargetSpec.absoluteWidthDp());
+                }
+            }
+            if (ViewportApplyMode.isEnabled(normalized.viewportApplyMode)) {
+                editor.putString(keyForViewportMode(packageName), normalized.viewportApplyMode);
+            }
+            if (normalized.fontScalePercent != null) {
+                editor.putInt(keyForFontScale(packageName), normalized.fontScalePercent);
+            }
+            if (FontApplyMode.isEnabled(normalized.fontApplyMode)) {
+                editor.putString(keyForFontMode(packageName), normalized.fontApplyMode);
+            }
+            if (normalized.typefaceId != null) {
+                editor.putString(keyForTypefaceId(packageName), normalized.typefaceId);
+            }
+            if (normalized.fontHookDomainsRaw != null) {
+                editor.putString(keyForFontHookDomains(packageName), normalized.fontHookDomainsRaw);
+            }
+        });
+    }
+
+    private static void removePackageTemplateConfigKeys(
+            SharedPreferences.Editor editor,
+            String packageName) {
+        editor.remove(keyForViewportWidth(packageName))
+                .remove(keyForViewportTargetType(packageName))
+                .remove(keyForViewportScalePermille(packageName))
+                .remove(keyForViewportMode(packageName))
+                .remove(keyForFontScale(packageName))
+                .remove(keyForTypefaceId(packageName))
+                .remove(keyForFontMode(packageName))
+                .remove(keyForFontHookDomains(packageName));
+    }
+
     private boolean hasAnyPackageConfigAfterRemoving(String packageName, String... removedKeys) {
         String viewportWidthKey = keyForViewportWidth(packageName);
         if (!isRemovedKey(viewportWidthKey, removedKeys)

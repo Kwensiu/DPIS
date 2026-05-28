@@ -1,0 +1,218 @@
+package com.dpis.module;
+
+import android.content.SharedPreferences;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+
+final class QuickTemplateStore {
+    static final String KEY_TEMPLATE_IDS = "template.ids";
+
+    private final SharedPreferences preferences;
+
+    QuickTemplateStore(SharedPreferences preferences) {
+        this.preferences = preferences;
+    }
+
+    String newTemplateId() {
+        return UUID.randomUUID().toString();
+    }
+
+    List<QuickTemplate> readAll() {
+        ArrayList<QuickTemplate> templates = new ArrayList<>();
+        for (String id : getTemplateIds()) {
+            QuickTemplate template = read(id);
+            if (template != null) {
+                templates.add(template);
+            }
+        }
+        return templates;
+    }
+
+    QuickTemplate read(String id) {
+        String normalizedId = normalizeId(id);
+        if (normalizedId == null) {
+            return null;
+        }
+        String prefix = prefixFor(normalizedId);
+        String name = getString(prefix + "name", null);
+        if (name == null || name.trim().isEmpty()) {
+            return null;
+        }
+        long updatedAt = getLong(prefix + "updated_at", 0L);
+        return new QuickTemplate(
+                normalizedId,
+                name.trim(),
+                updatedAt,
+                getSelectedPackages(normalizedId),
+                TemplateConfigPreferences.read(preferences, prefix + "config."));
+    }
+
+    boolean save(QuickTemplate template) {
+        String normalizedId = template != null ? normalizeId(template.id) : null;
+        if (template == null
+                || normalizedId == null
+                || template.name == null
+                || template.name.trim().isEmpty()) {
+            return false;
+        }
+        LinkedHashSet<String> ids = getTemplateIds();
+        ids.add(normalizedId);
+        String prefix = prefixFor(normalizedId);
+        SharedPreferences.Editor editor = preferences.edit()
+                .putStringSet(KEY_TEMPLATE_IDS, ids)
+                .putString(prefix + "name", template.name.trim())
+                .putLong(prefix + "updated_at", template.updatedAt)
+                .putStringSet(prefix + "selected_packages",
+                        sanitizeStringSet(template.selectedPackages));
+        TemplateConfigPreferences.write(editor, prefix + "config.", template.configValue);
+        return editor.commit();
+    }
+
+    boolean setSelectedPackages(String id, Set<String> packageNames) {
+        String normalizedId = normalizeId(id);
+        if (normalizedId == null || !getTemplateIds().contains(normalizedId)) {
+            return false;
+        }
+        return preferences.edit()
+                .putStringSet(prefixFor(normalizedId) + "selected_packages",
+                        sanitizeStringSet(packageNames))
+                .commit();
+    }
+
+    boolean delete(String id) {
+        String normalizedId = normalizeId(id);
+        if (normalizedId == null) {
+            return false;
+        }
+        LinkedHashSet<String> ids = getTemplateIds();
+        ids.remove(normalizedId);
+        String prefix = prefixFor(normalizedId);
+        SharedPreferences.Editor editor = preferences.edit()
+                .putStringSet(KEY_TEMPLATE_IDS, ids)
+                .remove(prefix + "name")
+                .remove(prefix + "updated_at")
+                .remove(prefix + "selected_packages");
+        TemplateConfigPreferences.clear(editor, prefix + "config.");
+        return editor.commit();
+    }
+
+    private LinkedHashSet<String> getTemplateIds() {
+        LinkedHashSet<String> ids = new LinkedHashSet<>();
+        Set<String> storedIds = getStringSet(KEY_TEMPLATE_IDS);
+        if (storedIds == null) {
+            return ids;
+        }
+        for (String id : storedIds) {
+            String normalized = normalizeId(id);
+            if (normalized != null) {
+                ids.add(normalized);
+            }
+        }
+        return ids;
+    }
+
+    private LinkedHashSet<String> getSelectedPackages(String id) {
+        return sanitizeStringSet(getStringSet(prefixFor(id) + "selected_packages"));
+    }
+
+    private Set<String> getStringSet(String key) {
+        try {
+            return preferences.getStringSet(key, Collections.emptySet());
+        } catch (ClassCastException ignored) {
+            return Collections.emptySet();
+        }
+    }
+
+    private String getString(String key, String defaultValue) {
+        try {
+            return preferences.getString(key, defaultValue);
+        } catch (ClassCastException ignored) {
+            return defaultValue;
+        }
+    }
+
+    private long getLong(String key, long defaultValue) {
+        try {
+            return preferences.getLong(key, defaultValue);
+        } catch (ClassCastException ignored) {
+            return defaultValue;
+        }
+    }
+
+    private static String prefixFor(String id) {
+        return "template." + id + ".";
+    }
+
+    private static String normalizeId(String id) {
+        if (id == null) {
+            return null;
+        }
+        String trimmed = id.trim();
+        return trimmed.isEmpty() || trimmed.contains(".") ? null : trimmed;
+    }
+
+    private static LinkedHashSet<String> sanitizeStringSet(Set<String> values) {
+        LinkedHashSet<String> sanitized = new LinkedHashSet<>();
+        if (values == null) {
+            return sanitized;
+        }
+        for (String value : values) {
+            if (value == null) {
+                continue;
+            }
+            String trimmed = value.trim();
+            if (!trimmed.isEmpty()) {
+                sanitized.add(trimmed);
+            }
+        }
+        return sanitized;
+    }
+
+    static final class QuickTemplate {
+        final String id;
+        final String name;
+        final long updatedAt;
+        final Set<String> selectedPackages;
+        final TemplateConfigValue configValue;
+
+        QuickTemplate(
+                String id,
+                String name,
+                long updatedAt,
+                Set<String> selectedPackages,
+                TemplateConfigValue configValue) {
+            this.id = id;
+            this.name = name;
+            this.updatedAt = updatedAt;
+            this.selectedPackages = Collections.unmodifiableSet(
+                    sanitizeStringSet(selectedPackages));
+            this.configValue = configValue != null ? configValue : TemplateConfigValue.EMPTY;
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) {
+                return true;
+            }
+            if (!(object instanceof QuickTemplate other)) {
+                return false;
+            }
+            return updatedAt == other.updatedAt
+                    && id.equals(other.id)
+                    && name.equals(other.name)
+                    && selectedPackages.equals(other.selectedPackages)
+                    && configValue.equals(other.configValue);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, name, updatedAt, selectedPackages, configValue);
+        }
+    }
+}
