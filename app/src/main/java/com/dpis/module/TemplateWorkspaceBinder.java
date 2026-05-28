@@ -24,7 +24,8 @@ final class TemplateWorkspaceBinder {
         this.preferences = context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE);
         this.formatter = new TemplateConfigSummaryFormatter(
                 new ResourceSummaryText(context),
-                new AndroidTypefaceResolver(context));
+                new TemplateTypefaceResolver(() -> ConfigStoreFactory.createFontLibraryForModuleApp(
+                        context, DpisApplication.getXposedService())));
         this.quickTemplateListAdapter = new QuickTemplateListAdapter(
                 context,
                 formatter,
@@ -81,35 +82,6 @@ final class TemplateWorkspaceBinder {
 
     private void showNotWiredToast() {
         Toast.makeText(context, R.string.template_workspace_not_wired, Toast.LENGTH_SHORT).show();
-    }
-
-    private static final class AndroidTypefaceResolver
-            implements TemplateConfigSummaryFormatter.TypefaceResolver {
-        private final Context context;
-
-        AndroidTypefaceResolver(Context context) {
-            this.context = context;
-        }
-
-        @Override
-        public TemplateConfigSummaryFormatter.TypefaceStatus resolve(String typefaceId) {
-            if (typefaceId == null || typefaceId.isBlank()) {
-                return TemplateConfigSummaryFormatter.TypefaceStatus.none();
-            }
-            for (SystemFontEntry entry : SystemFontRegistry.listRecommendedFonts()) {
-                if (typefaceId.equals(entry.id)) {
-                    return TemplateConfigSummaryFormatter.TypefaceStatus.resolved(
-                            typefaceId, entry.displayName);
-                }
-            }
-            FontLibraryEntry imported = ConfigStoreFactory.createFontLibraryForModuleApp(
-                    context, DpisApplication.getXposedService()).findById(typefaceId);
-            if (imported != null) {
-                return TemplateConfigSummaryFormatter.TypefaceStatus.resolved(
-                        typefaceId, imported.displayName);
-            }
-            return TemplateConfigSummaryFormatter.TypefaceStatus.missing(typefaceId);
-        }
     }
 
     private static final class ResourceSummaryText implements TemplateConfigSummaryFormatter.Text {
