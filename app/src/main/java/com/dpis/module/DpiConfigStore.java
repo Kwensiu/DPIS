@@ -30,6 +30,11 @@ final class DpiConfigStore {
     static final String KEY_TTC_FONT_IMPORT_ENABLED = "font.ttc_import_enabled";
     static final String KEY_HIDE_LAUNCHER_ICON = "ui.hide_launcher_icon";
     static final String KEY_STARTUP_DISCLAIMER_ACCEPTED = "ui.startup_disclaimer_accepted";
+    private static final String[] BACKUP_EXCLUDED_PREFIXES = {
+            "font.library.",
+            "font.debug.",
+            "runtime."
+    };
 
     private final SharedPreferences preferences;
     private final SharedPreferences mirrorPreferences;
@@ -831,14 +836,14 @@ final class DpiConfigStore {
     }
 
     boolean replaceAll(Map<String, Object> entries) {
-        return replaceEntries(entries, false);
+        return replaceEntries(entries);
     }
 
     boolean replaceBackup(Map<String, Object> entries) {
-        return replaceEntries(entries, true);
+        return replaceBackupEntries(entries);
     }
 
-    private boolean replaceEntries(Map<String, Object> entries, boolean backupOnly) {
+    private boolean replaceEntries(Map<String, Object> entries) {
         if (entries == null) {
             return false;
         }
@@ -849,12 +854,45 @@ final class DpiConfigStore {
                 if (key == null || key.isEmpty()) {
                     continue;
                 }
-                if (backupOnly && !isBackupConfigKey(key)) {
-                    continue;
-                }
                 putTypedValue(editor, key, entry.getValue());
             }
         });
+    }
+
+    private boolean replaceBackupEntries(Map<String, Object> entries) {
+        if (entries == null) {
+            return false;
+        }
+        boolean primaryCommitted = replaceBackupEntries(preferences, entries);
+        if (mirrorPreferences == null) {
+            return primaryCommitted;
+        }
+        try {
+            return primaryCommitted && replaceBackupEntries(mirrorPreferences, entries);
+        } catch (UnsupportedOperationException ignored) {
+            return primaryCommitted;
+        }
+    }
+
+    private static boolean replaceBackupEntries(
+            SharedPreferences targetPreferences,
+            Map<String, Object> entries) {
+        LinkedHashMap<String, Object> preservedEntries = new LinkedHashMap<>();
+        copyExcludedBackupEntries(preservedEntries, targetPreferences.getAll());
+
+        SharedPreferences.Editor editor = targetPreferences.edit();
+        editor.clear();
+        for (Map.Entry<String, Object> entry : preservedEntries.entrySet()) {
+            putTypedValue(editor, entry.getKey(), entry.getValue());
+        }
+        for (Map.Entry<String, Object> entry : entries.entrySet()) {
+            String key = entry.getKey();
+            if (key == null || key.isEmpty() || isBackupExcludedKey(key)) {
+                continue;
+            }
+            putTypedValue(editor, key, entry.getValue());
+        }
+        return editor.commit();
     }
 
     private static void copyEntries(Map<String, Object> target, Map<String, ?> source, boolean backupOnly) {
@@ -874,10 +912,37 @@ final class DpiConfigStore {
     }
 
     private static boolean isBackupConfigKey(String key) {
-        return key != null
-                && !key.startsWith("font.library.")
-                && !key.startsWith("font.debug.")
-                && !key.startsWith("runtime.");
+        return key != null && !isBackupExcludedKey(key);
+    }
+
+    private static boolean isBackupExcludedKey(String key) {
+        if (key == null) {
+            return false;
+        }
+        for (String prefix : BACKUP_EXCLUDED_PREFIXES) {
+            if (key.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void copyExcludedBackupEntries(
+            Map<String, Object> target,
+            Map<String, ?> source) {
+        if (source == null) {
+            return;
+        }
+        for (Map.Entry<String, ?> entry : source.entrySet()) {
+            String key = entry.getKey();
+            if (key == null || key.isEmpty() || !isBackupExcludedKey(key)) {
+                continue;
+            }
+            Object normalized = normalizeValue(entry.getValue());
+            if (normalized != null) {
+                target.put(key, normalized);
+            }
+        }
     }
 
     private boolean contains(String key) {

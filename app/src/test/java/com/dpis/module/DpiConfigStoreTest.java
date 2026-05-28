@@ -648,25 +648,77 @@ public class DpiConfigStoreTest {
     }
 
     @Test
-    public void replaceBackupIgnoresFontLibraryMetadataButRestoresTypefaceSelection() {
+    public void replaceBackupIgnoresIncomingExcludedStateButPreservesLocalExcludedState() {
         FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putString("font.library.entries", "[{\"id\":\"local_font\"}]")
+                .putString("font.library.migration_state", "local_done")
+                .putBoolean("font.debug.overlay_enabled", true)
+                .putString("runtime.log.ring", "local debug log")
+                .putString("runtime.log.token", "local token")
+                .commit();
         DpiConfigStore store = new DpiConfigStore(prefs);
         LinkedHashMap<String, Object> values = new LinkedHashMap<>();
         values.put(DpiConfigStore.KEY_TARGET_PACKAGES,
                 new LinkedHashSet<>(Set.of("com.max.xiaoheihe")));
         values.put("font.com.max.xiaoheihe.typeface_id", "font_abcd1234");
-        values.put("font.library.entries", "[{\"id\":\"font_abcd1234\"}]");
-        values.put("font.debug.overlay_enabled", true);
-        values.put("runtime.log.ring", "debug log");
-        values.put("runtime.log.token", "token");
+        values.put("font.library.entries", "[{\"id\":\"incoming_font\"}]");
+        values.put("font.library.migration_state", "incoming_done");
+        values.put("font.debug.overlay_enabled", false);
+        values.put("runtime.log.ring", "incoming debug log");
+        values.put("runtime.log.token", "incoming token");
 
         assertTrue(store.replaceBackup(values));
 
         assertEquals("font_abcd1234", store.getTargetTypefaceId("com.max.xiaoheihe"));
-        assertFalse(prefs.contains("font.library.entries"));
-        assertFalse(prefs.contains("font.debug.overlay_enabled"));
-        assertFalse(prefs.contains("runtime.log.ring"));
-        assertFalse(prefs.contains("runtime.log.token"));
+        assertEquals("[{\"id\":\"local_font\"}]", prefs.getString("font.library.entries", null));
+        assertEquals("local_done", prefs.getString("font.library.migration_state", null));
+        assertTrue(prefs.getBoolean("font.debug.overlay_enabled", false));
+        assertEquals("local debug log", prefs.getString("runtime.log.ring", null));
+        assertEquals("local token", prefs.getString("runtime.log.token", null));
+    }
+
+    @Test
+    public void replaceBackupRemovesStaleBackupManagedKeysWhilePreservingExcludedKeys() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
+                        new LinkedHashSet<>(Set.of("com.old.app")))
+                .putInt("viewport.com.old.app.width_dp", 360)
+                .putString("font.com.old.app.typeface_id", "font_old")
+                .putString("default_config.font.typeface_id", "font_old_default")
+                .putStringSet(QuickTemplateStore.KEY_TEMPLATE_IDS,
+                        new LinkedHashSet<>(Set.of("old_template")))
+                .putString("template.old_template.name", "Old")
+                .putString("template.old_template.config.font.typeface_id", "font_old_template")
+                .putString("font.library.entries", "[{\"id\":\"font_local\"}]")
+                .putString("font.library.migration_state", "local_done")
+                .putBoolean("font.debug.overlay_enabled", true)
+                .putString("runtime.log.ring", "local debug log")
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        LinkedHashMap<String, Object> values = new LinkedHashMap<>();
+        values.put(DpiConfigStore.KEY_TARGET_PACKAGES,
+                new LinkedHashSet<>(Set.of("com.new.app")));
+        values.put("font.com.new.app.typeface_id", "font_new");
+        values.put("default_config.font.typeface_id", "font_new_default");
+        values.put("font.library.entries", "[{\"id\":\"font_incoming\"}]");
+
+        assertTrue(store.replaceBackup(values));
+
+        assertFalse(store.getConfiguredPackages().contains("com.old.app"));
+        assertTrue(store.getConfiguredPackages().contains("com.new.app"));
+        assertNull(store.getTargetViewportWidthDp("com.old.app"));
+        assertNull(store.getTargetTypefaceId("com.old.app"));
+        assertEquals("font_new", store.getTargetTypefaceId("com.new.app"));
+        assertEquals("font_new_default", new GlobalPrefillStore(prefs).read().typefaceId);
+        assertFalse(prefs.contains(QuickTemplateStore.KEY_TEMPLATE_IDS));
+        assertFalse(prefs.contains("template.old_template.name"));
+        assertFalse(prefs.contains("template.old_template.config.font.typeface_id"));
+        assertEquals("[{\"id\":\"font_local\"}]", prefs.getString("font.library.entries", null));
+        assertEquals("local_done", prefs.getString("font.library.migration_state", null));
+        assertTrue(prefs.getBoolean("font.debug.overlay_enabled", false));
+        assertEquals("local debug log", prefs.getString("runtime.log.ring", null));
     }
 
     @Test
