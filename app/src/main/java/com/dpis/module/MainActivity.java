@@ -39,6 +39,7 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
@@ -67,6 +68,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     private static final int SEARCH_FAB_SCROLL_TRIGGER_DY = 8;
     private static final String STATE_CURRENT_QUERY = "state.current_query";
     private static final String STATE_CURRENT_PAGE = "state.current_page";
+    private static final String STATE_WORKSPACE_MODE = "state.workspace_mode";
     private static final String STATE_FILTER_SHOW_SYSTEM = "state.filter.show_system";
     private static final String STATE_FILTER_INJECTED_ONLY = "state.filter.injected_only";
     private static final String STATE_FILTER_WIDTH_ONLY = "state.filter.width_only";
@@ -113,6 +115,10 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     private MainViewModel mainViewModel;
     private AppListPagerAdapter pagerAdapter;
     private ViewPager2 appPager;
+    private TabLayout filterTabs;
+    private View appWorkspaceDivider;
+    private View templateWorkspaceContainer;
+    private MaterialButtonToggleGroup workspaceSwitch;
     private SparseArray<Parcelable> restoredPageScrollStates;
     private EditText searchInput;
     private FloatingActionButton searchFocusFab;
@@ -157,11 +163,13 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         RetainedState retainedState = (RetainedState) getLastNonConfigurationInstance();
         String initialQuery = "";
         AppListFilterState initialFilterState = appListFilterStateStore.load();
+        MainWorkspaceMode initialWorkspaceMode = MainWorkspaceMode.APP;
         List<AppListItem> initialAppsSnapshot = Collections.emptyList();
         Set<AppListPage> initialRefreshingPages = EnumSet.noneOf(AppListPage.class);
         if (retainedState != null) {
             initialQuery = retainedState.query;
             initialFilterState = retainedState.filterState;
+            initialWorkspaceMode = retainedState.workspaceMode;
             restoredPageScrollStates = retainedState.pageScrollStates;
             initialRefreshingPages = decodeRefreshingPages(retainedState.refreshingPagePositions);
             initialAppsSnapshot = new ArrayList<>(retainedState.appsSnapshot);
@@ -174,6 +182,8 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                     savedInstanceState.getBoolean(STATE_FILTER_INJECTED_ONLY, false),
                     savedInstanceState.getBoolean(STATE_FILTER_WIDTH_ONLY, false),
                     savedInstanceState.getBoolean(STATE_FILTER_FONT_ONLY, false));
+            initialWorkspaceMode = MainWorkspaceMode.fromName(
+                    savedInstanceState.getString(STATE_WORKSPACE_MODE));
             restoredPageScrollStates = savedInstanceState.getSparseParcelableArray(STATE_PAGE_SCROLL_STATES);
             initialRefreshingPages = decodeRefreshingPages(
                     savedInstanceState.getIntArray(STATE_REFRESHING_PAGES));
@@ -182,10 +192,15 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                 initialQuery,
                 initialFilterState,
                 initialAppsSnapshot,
-                initialRefreshingPages));
+                initialRefreshingPages,
+                initialWorkspaceMode));
 
         searchFilterButton = findViewById(R.id.search_filter_button);
         appPager = findViewById(R.id.app_pager);
+        filterTabs = findViewById(R.id.filter_tabs);
+        appWorkspaceDivider = findViewById(R.id.app_workspace_divider);
+        templateWorkspaceContainer = findViewById(R.id.template_workspace_container);
+        workspaceSwitch = findViewById(R.id.workspace_switch);
         pagerAdapter = new AppListPagerAdapter(
                 this::showEditDialog,
                 this::onPageRefreshRequested,
@@ -201,10 +216,10 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             appPager.setCurrentItem(retainedState.currentPage, false);
         }
 
-        TabLayout tabLayout = findViewById(R.id.filter_tabs);
-        new TabLayoutMediator(tabLayout, appPager,
+        new TabLayoutMediator(filterTabs, appPager,
                 (tab, position) -> tab.setText(getString(AppListPage.fromPosition(position).titleRes())))
                 .attach();
+        bindWorkspaceSwitch();
         searchFilterButton.setOnClickListener(v -> showFilterDialog());
         bindFabTouchFeedback(searchFocusFab);
         bindFabTouchFeedback(helpFab);
@@ -335,6 +350,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         super.onSaveInstanceState(outState);
         MainUiState state = requireUiState();
         outState.putString(STATE_CURRENT_QUERY, state.query);
+        outState.putString(STATE_WORKSPACE_MODE, state.workspaceMode.name());
         outState.putBoolean(STATE_FILTER_SHOW_SYSTEM, state.filterState.showSystemApps);
         outState.putBoolean(STATE_FILTER_INJECTED_ONLY, state.filterState.injectedOnly);
         outState.putBoolean(STATE_FILTER_WIDTH_ONLY, state.filterState.widthConfiguredOnly);
@@ -377,6 +393,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                 snapshot,
                 state.query,
                 state.filterState,
+                state.workspaceMode,
                 currentPage,
                 pageScrollStates,
                 captureRefreshingPagePositions());
@@ -761,8 +778,58 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         if (state == null) {
             return;
         }
+        applyWorkspaceMode(state.workspaceMode);
         applyFilter();
         applyRefreshingStatesToPager();
+    }
+
+    private void bindWorkspaceSwitch() {
+        if (workspaceSwitch == null) {
+            return;
+        }
+        workspaceSwitch.check(workspaceButtonId(requireUiState().workspaceMode));
+        workspaceSwitch.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked) {
+                return;
+            }
+            dispatchMainUiAction(MainUiAction.workspaceModeChanged(workspaceModeForButtonId(checkedId)));
+        });
+    }
+
+    private void applyWorkspaceMode(MainWorkspaceMode workspaceMode) {
+        MainWorkspaceMode mode = workspaceMode != null ? workspaceMode : MainWorkspaceMode.APP;
+        boolean appWorkspace = mode == MainWorkspaceMode.APP;
+        setVisible(filterTabs, appWorkspace);
+        setVisible(appWorkspaceDivider, appWorkspace);
+        setVisible(appPager, appWorkspace);
+        setVisible(templateWorkspaceContainer, !appWorkspace);
+        if (searchFilterButton != null) {
+            searchFilterButton.setEnabled(appWorkspace);
+            searchFilterButton.setVisibility(appWorkspace ? View.VISIBLE : View.GONE);
+        }
+        if (workspaceSwitch != null && workspaceSwitch.getCheckedButtonId() != workspaceButtonId(mode)) {
+            workspaceSwitch.check(workspaceButtonId(mode));
+        }
+    }
+
+    private static void setVisible(View view, boolean visible) {
+        if (view != null) {
+            view.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private static int workspaceButtonId(MainWorkspaceMode workspaceMode) {
+        if (workspaceMode == MainWorkspaceMode.TEMPLATE) {
+            return R.id.workspace_template_button;
+        }
+        return R.id.workspace_app_button;
+    }
+
+    private static MainWorkspaceMode workspaceModeForButtonId(int checkedId) {
+        if (checkedId == R.id.workspace_template_button) {
+            return MainWorkspaceMode.TEMPLATE;
+        }
+        return MainWorkspaceMode.APP;
     }
 
     private void handleMainUiEffects(List<MainUiEffect> effects) {
@@ -1540,6 +1607,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         final List<AppListItem> appsSnapshot;
         final String query;
         final AppListFilterState filterState;
+        final MainWorkspaceMode workspaceMode;
         final int currentPage;
         final SparseArray<Parcelable> pageScrollStates;
         final int[] refreshingPagePositions;
@@ -1547,12 +1615,14 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         RetainedState(List<AppListItem> appsSnapshot,
                 String query,
                 AppListFilterState filterState,
+                MainWorkspaceMode workspaceMode,
                 int currentPage,
                 SparseArray<Parcelable> pageScrollStates,
                 int[] refreshingPagePositions) {
             this.appsSnapshot = appsSnapshot;
             this.query = query != null ? query : "";
             this.filterState = filterState != null ? filterState : AppListFilterState.defaultState();
+            this.workspaceMode = workspaceMode != null ? workspaceMode : MainWorkspaceMode.APP;
             this.currentPage = currentPage;
             this.pageScrollStates = pageScrollStates != null ? pageScrollStates.clone() : null;
             this.refreshingPagePositions = refreshingPagePositions != null

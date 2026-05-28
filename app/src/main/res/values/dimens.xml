@@ -5,6 +5,7 @@
     <dimen name="settings_section_inset_start">20dp</dimen>
     <dimen name="floating_actions_margin_end">24dp</dimen>
     <dimen name="floating_actions_search_margin_bottom">40dp</dimen>
+    <dimen name="floating_actions_main_workspace_margin_bottom">104dp</dimen>
     <dimen name="floating_actions_gap">20dp</dimen>
     <dimen name="floating_actions_elevation">6dp</dimen>
     <dimen name="floating_actions_hovered_focused_translation_z">8dp</dimen>
@@ -36,6 +37,12 @@
     <dimen name="main_tabs_spacing_top">2dp</dimen>
     <dimen name="main_tabs_indicator_height">3dp</dimen>
     <dimen name="main_content_divider_height">1dp</dimen>
+    <dimen name="main_workspace_switch_margin_horizontal">16dp</dimen>
+    <dimen name="main_workspace_switch_margin_top">8dp</dimen>
+    <dimen name="main_workspace_switch_margin_bottom">16dp</dimen>
+    <dimen name="main_workspace_switch_button_height">44dp</dimen>
+    <dimen name="template_workspace_placeholder_padding_horizontal">24dp</dimen>
+    <dimen name="template_workspace_placeholder_message_spacing_top">6dp</dimen>
 
     <!-- Settings rows and settings pages. -->
     <dimen name="settings_row_min_height">88dp</dimen>

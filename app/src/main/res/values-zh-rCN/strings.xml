@@ -42,6 +42,10 @@
     <string name="help_tutorial_compat_summary">通过应用进程内兼容链路直接调整缩放，生效更直接。</string>
     <string name="help_tutorial_compat_points">• 仅需勾选目标应用\n• 可自定义文字生效路径\n• 更容易出现布局错位或缩放异常</string>
     <string name="dialog_confirm_button">确认</string>
+    <string name="workspace_app">应用</string>
+    <string name="workspace_template">模板</string>
+    <string name="template_workspace_placeholder_title">模板工作区</string>
+    <string name="template_workspace_placeholder_message">模板卡片将在这里显示。</string>
     <string name="tab_all_apps">全部应用</string>
     <string name="tab_configured_apps">已配置应用</string>
     <string name="filter_button">筛选</string>

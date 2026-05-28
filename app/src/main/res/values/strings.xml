@@ -42,6 +42,10 @@
     <string name="help_tutorial_compat_summary">Uses in-process compatibility hooks to adjust scaling more directly.</string>
     <string name="help_tutorial_compat_points">• Only needs target app selection\n• Customizable text apply routes\n• Prone to layout or scaling glitches</string>
     <string name="dialog_confirm_button">Confirm</string>
+    <string name="workspace_app">Apps</string>
+    <string name="workspace_template">Templates</string>
+    <string name="template_workspace_placeholder_title">Template workspace</string>
+    <string name="template_workspace_placeholder_message">Template cards will appear here.</string>
     <string name="tab_all_apps">All apps</string>
     <string name="tab_configured_apps">Configured apps</string>
     <string name="filter_button">Filter</string>

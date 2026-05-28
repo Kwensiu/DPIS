@@ -27,6 +27,9 @@ public class MainActivitySourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(source.contains("R.id.app_pager"));
+        assertTrue(source.contains("R.id.workspace_switch"));
+        assertTrue(source.contains("R.id.workspace_app_button"));
+        assertTrue(source.contains("R.id.workspace_template_button"));
         assertTrue(source.contains("R.id.search_focus_fab"));
         assertTrue(source.contains("new TabLayoutMediator("));
         assertTrue(source.contains("searchFilterButton.setOnClickListener"));
@@ -48,6 +51,27 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("setOnCheckedChangeListener"));
         assertTrue(!source.contains("R.id.filter_apply_button"));
         assertTrue(!source.contains("R.id.filter_reset_button"));
+    }
+
+    @Test
+    public void workspaceSwitchHidesAppControlsInTemplateWorkspace() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(source.contains("STATE_WORKSPACE_MODE"));
+        assertTrue(source.contains("MainWorkspaceMode.fromName("));
+        assertTrue(source.contains("bindWorkspaceSwitch()"));
+        assertTrue(source.contains("workspaceSwitch.addOnButtonCheckedListener"));
+        assertTrue(source.contains("MainUiAction.workspaceModeChanged("));
+        assertTrue(source.contains("applyWorkspaceMode(state.workspaceMode);"));
+        assertTrue(source.contains("boolean appWorkspace = mode == MainWorkspaceMode.APP;"));
+        assertTrue(source.contains("setVisible(filterTabs, appWorkspace);"));
+        assertTrue(source.contains("setVisible(appWorkspaceDivider, appWorkspace);"));
+        assertTrue(source.contains("setVisible(appPager, appWorkspace);"));
+        assertTrue(source.contains("setVisible(templateWorkspaceContainer, !appWorkspace);"));
+        assertTrue(source.contains("searchFilterButton.setEnabled(appWorkspace);"));
+        assertTrue(source.contains("searchFilterButton.setVisibility(appWorkspace ? View.VISIBLE : View.GONE);"));
+        assertTrue(source.contains("workspaceModeForButtonId(int checkedId)"));
+        assertTrue(source.contains("checkedId == R.id.workspace_template_button"));
     }
 
     @Test

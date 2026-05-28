@@ -42,6 +42,11 @@ final class MainViewModel {
             state = state.withRefreshingPage(mark.page, true);
             return Collections.emptyList();
         }
+        if (action instanceof MainUiAction.WorkspaceModeChanged) {
+            MainUiAction.WorkspaceModeChanged changed = (MainUiAction.WorkspaceModeChanged) action;
+            state = state.withWorkspaceMode(changed.workspaceMode);
+            return Collections.emptyList();
+        }
         if (action instanceof MainUiAction.RequestAppsLoad) {
             MainUiAction.RequestAppsLoad request = (MainUiAction.RequestAppsLoad) action;
             return requestAppsLoad(request.forceInstalledAppCatalogReload);
