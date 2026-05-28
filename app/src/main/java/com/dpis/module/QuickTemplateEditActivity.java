@@ -59,6 +59,7 @@ public final class QuickTemplateEditActivity extends LocalizedActivity {
     private TextInputEditText fontInputView;
     private AppConfigDialogBinder.ModeToggle viewportModeToggle;
     private AppConfigDialogBinder.ModeToggle fontModeToggle;
+    private MaterialButton viewportApplyModeButton;
     private MaterialButton typefaceSelectorButton;
     private MaterialButton hookDomainsButton;
     private MaterialButton deleteButton;
@@ -72,7 +73,11 @@ public final class QuickTemplateEditActivity extends LocalizedActivity {
                 DpiConfigStore.GROUP, MODE_PRIVATE);
         quickTemplateStore = new QuickTemplateStore(preferences);
         typefaceBinder = new AppConfigDialogBinder(this, createTypefaceHost());
-        resolveTemplate(savedInstanceState);
+        if (!resolveTemplate(savedInstanceState)) {
+            showToast(R.string.quick_template_missing);
+            finish();
+            return;
+        }
         bindViews();
         bindToolbar();
         applyInsets();
@@ -109,24 +114,31 @@ public final class QuickTemplateEditActivity extends LocalizedActivity {
         }
     }
 
-    private void resolveTemplate(Bundle savedInstanceState) {
+    private boolean resolveTemplate(Bundle savedInstanceState) {
         String restoredId = savedInstanceState != null
                 ? savedInstanceState.getString(STATE_TEMPLATE_ID)
                 : null;
         String extraId = getIntent() != null
                 ? getIntent().getStringExtra(EXTRA_TEMPLATE_ID)
                 : null;
-        String requestedId = restoredId != null ? restoredId : extraId;
+        boolean editRequested = extraId != null && !extraId.trim().isEmpty();
+        String requestedId = editRequested ? extraId : restoredId;
         if (requestedId != null && !requestedId.trim().isEmpty()) {
             originalTemplate = quickTemplateStore.read(requestedId);
         }
         if (originalTemplate != null) {
             templateId = originalTemplate.id;
             isNewTemplate = false;
-        } else {
-            templateId = quickTemplateStore.newTemplateId();
-            isNewTemplate = true;
+            return true;
         }
+        if (editRequested) {
+            return false;
+        }
+        templateId = requestedId != null && !requestedId.trim().isEmpty()
+                ? requestedId.trim()
+                : quickTemplateStore.newTemplateId();
+        isNewTemplate = true;
+        return true;
     }
 
     private void bindViews() {
@@ -148,6 +160,7 @@ public final class QuickTemplateEditActivity extends LocalizedActivity {
                 findViewById(R.id.quick_template_edit_font_mode_toggle_thumb),
                 findViewById(R.id.quick_template_edit_font_mode_system_label),
                 findViewById(R.id.quick_template_edit_font_mode_compat_label));
+        viewportApplyModeButton = findViewById(R.id.quick_template_edit_viewport_apply_mode_button);
         typefaceSelectorButton = findViewById(R.id.quick_template_edit_typeface_selector_button);
         hookDomainsButton = findViewById(R.id.quick_template_edit_font_hook_domains_button);
         deleteButton = findViewById(R.id.quick_template_edit_delete_button);
@@ -241,6 +254,7 @@ public final class QuickTemplateEditActivity extends LocalizedActivity {
         typefaceBinder.bindViewportInputHint(viewportInputLayout, initialViewportType);
         AppConfigDialogBinder.bindFontModeToggle(
                 fontModeToggle, AppConfigInputValidation.initialFontMode(initialFontMode), false);
+        refreshViewportApplyModeButton();
         typefaceBinder.bindTypefaceSelector(typefaceSelectorButton, state.selectedTypefaceId);
         refreshHookDomainsButton();
         refreshValidationUi();
@@ -248,6 +262,7 @@ public final class QuickTemplateEditActivity extends LocalizedActivity {
 
     private void bindActions() {
         TouchFeedbackBinder.bindPressHaptic(typefaceSelectorButton);
+        TouchFeedbackBinder.bindPressHaptic(viewportApplyModeButton);
         TouchFeedbackBinder.bindPressHaptic(hookDomainsButton);
         TouchFeedbackBinder.bindPressHaptic(deleteButton);
         TouchFeedbackBinder.bindPressHaptic(saveButton);
@@ -268,6 +283,7 @@ public final class QuickTemplateEditActivity extends LocalizedActivity {
                 typefaceSelectorButton,
                 state,
                 this::refreshValidationUi));
+        viewportApplyModeButton.setOnClickListener(v -> showViewportApplyModeDialog());
         hookDomainsButton.setOnClickListener(v -> showHookDomainsDialog());
         deleteButton.setOnClickListener(v -> confirmDelete());
         saveButton.setOnClickListener(v -> saveTemplate());
@@ -317,6 +333,7 @@ public final class QuickTemplateEditActivity extends LocalizedActivity {
                     @Override
                     public boolean saveViewportApplyMode(String packageName, String mode) {
                         state.viewportApplyMode = ViewportApplyMode.normalize(mode);
+                        refreshViewportApplyModeButton();
                         refreshValidationUi();
                         return true;
                     }
@@ -326,6 +343,37 @@ public final class QuickTemplateEditActivity extends LocalizedActivity {
                 HookDomainOverrideStore.fromRaw(state.previewFontHookDomainsRaw),
                 state.viewportApplyMode,
                 this::refreshHookDomainsButton);
+    }
+
+    private void showViewportApplyModeDialog() {
+        String[] modes = {
+                ViewportApplyMode.AUTO,
+                ViewportApplyMode.SYSTEM,
+                ViewportApplyMode.COMPAT
+        };
+        CharSequence[] labels = {
+                getString(R.string.dialog_viewport_apply_auto),
+                getString(R.string.dialog_viewport_apply_system),
+                getString(R.string.dialog_viewport_apply_compat)
+        };
+        int checkedIndex = 0;
+        String currentMode = normalizeViewportApplyModeForDisplay(state.viewportApplyMode);
+        for (int index = 0; index < modes.length; index++) {
+            if (modes[index].equals(currentMode)) {
+                checkedIndex = index;
+                break;
+            }
+        }
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.dialog_viewport_apply_strategy_title)
+                .setSingleChoiceItems(labels, checkedIndex, (selectedDialog, which) -> {
+                    state.viewportApplyMode = modes[which];
+                    refreshViewportApplyModeButton();
+                    refreshValidationUi();
+                    selectedDialog.dismiss();
+                })
+                .create();
+        dialog.show();
     }
 
     private void confirmDelete() {
@@ -417,6 +465,33 @@ public final class QuickTemplateEditActivity extends LocalizedActivity {
                 R.string.dialog_font_hook_domains_title_with_count,
                 selectedCount,
                 totalCount));
+    }
+
+    private void refreshViewportApplyModeButton() {
+        if (viewportApplyModeButton == null || state == null) {
+            return;
+        }
+        viewportApplyModeButton.setText(getString(
+                R.string.quick_template_viewport_apply_mode_value,
+                viewportApplyModeLabel(state.viewportApplyMode)));
+    }
+
+    private String viewportApplyModeLabel(String mode) {
+        String normalized = normalizeViewportApplyModeForDisplay(mode);
+        if (ViewportApplyMode.SYSTEM.equals(normalized)) {
+            return getString(R.string.dialog_viewport_apply_system);
+        }
+        if (ViewportApplyMode.COMPAT.equals(normalized)) {
+            return getString(R.string.dialog_viewport_apply_compat);
+        }
+        return getString(R.string.dialog_viewport_apply_auto);
+    }
+
+    private static String normalizeViewportApplyModeForDisplay(String mode) {
+        String normalized = ViewportApplyMode.normalize(mode);
+        return ViewportApplyMode.isEnabled(normalized)
+                ? normalized
+                : ViewportApplyMode.AUTO;
     }
 
     private AppConfigDialogBinder.Host createTypefaceHost() {

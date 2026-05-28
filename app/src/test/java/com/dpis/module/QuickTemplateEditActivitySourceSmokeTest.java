@@ -28,9 +28,11 @@ public class QuickTemplateEditActivitySourceSmokeTest {
         assertTrue(source.contains("quickTemplateStore.delete("));
         assertTrue(source.contains("quickTemplateStore.read("));
         assertTrue(source.contains("quickTemplateStore.newTemplateId()"));
+        assertTrue(source.contains("showToast(R.string.quick_template_missing)"));
         assertTrue(source.contains("MaterialAlertDialogBuilder"));
         assertTrue(source.contains("R.string.quick_template_delete_title"));
         assertTrue(source.contains("R.string.quick_template_name_required"));
+        assertTrue(source.contains("R.string.quick_template_viewport_apply_mode_value"));
         assertTrue(saveHandler.contains("R.string.quick_template_save_success"));
         assertTrue(saveHandler.contains("R.string.quick_template_save_failed"));
         assertTrue(source.contains("R.string.quick_template_delete_success"));
@@ -43,6 +45,9 @@ public class QuickTemplateEditActivitySourceSmokeTest {
         assertTrue(source.contains("AppConfigDialogBinder.toggleFontMode"));
         assertTrue(source.contains("AppConfigDialogBinder.resolveViewportMode"));
         assertTrue(source.contains("AppConfigDialogBinder.resolveFontMode"));
+        assertTrue(source.contains("showViewportApplyModeDialog()"));
+        assertTrue(source.contains("setSingleChoiceItems(labels, checkedIndex"));
+        assertTrue(source.contains("state.viewportApplyMode = modes[which]"));
         assertTrue(source.contains("protected void onSaveInstanceState(Bundle outState)"));
         assertTrue(source.contains("STATE_TEMPLATE_ID"));
         assertTrue(source.contains("STATE_NAME_INPUT"));
@@ -55,14 +60,20 @@ public class QuickTemplateEditActivitySourceSmokeTest {
         assertTrue(layout.contains("android:id=\"@+id/quick_template_edit_name_layout\""));
         assertTrue(layout.contains("android:id=\"@+id/quick_template_edit_name_input\""));
         assertTrue(layout.contains("android:id=\"@+id/quick_template_edit_viewport_input_layout\""));
+        assertTrue(layout.contains("android:id=\"@+id/quick_template_edit_viewport_apply_mode_button\""));
         assertTrue(layout.contains("android:id=\"@+id/quick_template_edit_font_scale_input_layout\""));
         assertTrue(layout.contains("android:id=\"@+id/quick_template_edit_typeface_selector_button\""));
         assertTrue(layout.contains("android:id=\"@+id/quick_template_edit_font_hook_domains_button\""));
         assertTrue(layout.contains("android:id=\"@+id/quick_template_edit_save_button\""));
         assertTrue(layout.contains("android:id=\"@+id/quick_template_edit_delete_button\""));
         assertTrue(layout.contains("@string/quick_template_name_hint"));
+        assertTrue(layout.contains("@string/dialog_viewport_apply_strategy_title"));
         assertTrue(layout.contains("WarnOutline"));
         assertFalse(layout.contains("dialog_disable_button"));
+        assertFalse(layout.contains("dialog_scope_button"));
+        assertFalse(layout.contains("dialog_start_button"));
+        assertFalse(layout.contains("dialog_stop_button"));
+        assertFalse(layout.contains("dialog_dpis_enable_button"));
     }
 
     @Test

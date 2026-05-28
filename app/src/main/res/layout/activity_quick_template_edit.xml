@@ -154,6 +154,17 @@
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/quick_template_edit_viewport_apply_mode_button"
+                style="@style/Widget.Dpis.DialogActionButton.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/template_workspace_action_button_height"
+                android:layout_marginTop="@dimen/dialog_app_config_selector_spacing_top"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:minWidth="0dp"
+                android:text="@string/dialog_viewport_apply_strategy_title" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
