@@ -65,6 +65,8 @@ public class TemplateWorkspaceLayoutSmokeTest {
         assertTrue(binder.contains("new TemplateTypefaceResolver("));
         assertTrue(read("src/main/java/com/dpis/module/TemplateTypefaceResolver.java")
                 .contains("fontLibraryStore.resolveFontFile(typefaceId) != null"));
+        assertTrue(read("src/main/java/com/dpis/module/TemplateTypefaceResolver.java")
+                .contains("SystemFontRegistry.loadTypeface(typefaceId) != null"));
         assertTrue(binder.contains("R.id.global_prefill_missing_font"));
         assertTrue(adapter.contains("R.id.quick_template_missing_font"));
         assertTrue(adapter.contains("R.id.quick_template_apply_button"));

@@ -21,10 +21,26 @@ public final class TemplateTypefaceResolverTest {
         String systemFontId = SystemFontRegistry.buildFamilyIdForTest("sans-serif");
 
         TemplateConfigSummaryFormatter.TypefaceStatus status =
-                new TemplateTypefaceResolver(() -> null).resolve(systemFontId);
+                new TemplateTypefaceResolver(
+                        () -> null,
+                        new FakeSystemTypefaceProvider(systemFontId, "Sans Serif"))
+                        .resolve(systemFontId);
 
         assertFalse(status.missing);
         assertNotNull(status.displayName);
+    }
+
+    @Test
+    public void reportsStaleSystemFontIdMissing() {
+        String staleSystemFontId = SystemFontRegistry.buildFontIdForTest(
+                "/system/fonts/not-present-on-this-device.ttf",
+                0);
+
+        TemplateConfigSummaryFormatter.TypefaceStatus status =
+                new TemplateTypefaceResolver(() -> null).resolve(staleSystemFontId);
+
+        assertTrue(status.missing);
+        assertFalse(staleSystemFontId.isBlank());
     }
 
     @Test
@@ -68,5 +84,26 @@ public final class TemplateTypefaceResolverTest {
             output.write(content.getBytes(StandardCharsets.UTF_8));
         }
         return file;
+    }
+
+    private static final class FakeSystemTypefaceProvider
+            implements TemplateTypefaceResolver.SystemTypefaceProvider {
+        private final String loadableId;
+        private final String displayName;
+
+        FakeSystemTypefaceProvider(String loadableId, String displayName) {
+            this.loadableId = loadableId;
+            this.displayName = displayName;
+        }
+
+        @Override
+        public boolean canLoad(String typefaceId) {
+            return loadableId.equals(typefaceId);
+        }
+
+        @Override
+        public String displayName(String typefaceId) {
+            return displayName;
+        }
     }
 }
