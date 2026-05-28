@@ -167,12 +167,10 @@ public final class GlobalPrefillActivity extends LocalizedActivity {
         String initialFontMode = savedInstanceState != null
                 ? savedInstanceState.getString(STATE_FONT_MODE, value.fontApplyMode)
                 : value.fontApplyMode;
-        String initialTypefaceId = savedInstanceState != null
-                ? savedInstanceState.getString(STATE_TYPEFACE_ID, value.typefaceId)
-                : value.typefaceId;
-        String initialHookDomainsRaw = savedInstanceState != null
-                ? savedInstanceState.getString(STATE_FONT_HOOK_DOMAINS, value.fontHookDomainsRaw)
-                : value.fontHookDomainsRaw;
+        String initialTypefaceId = restoredNullableString(
+                savedInstanceState, STATE_TYPEFACE_ID, value.typefaceId);
+        String initialHookDomainsRaw = restoredNullableString(
+                savedInstanceState, STATE_FONT_HOOK_DOMAINS, value.fontHookDomainsRaw);
         state = new AppConfigDialogBinder.AppConfigDialogState(
                 false,
                 false,
@@ -417,5 +415,14 @@ public final class GlobalPrefillActivity extends LocalizedActivity {
 
     private static String textOf(TextInputEditText view) {
         return view.getText() != null ? view.getText().toString() : "";
+    }
+
+    private static String restoredNullableString(Bundle savedInstanceState,
+            String key,
+            String fallback) {
+        if (savedInstanceState == null || !savedInstanceState.containsKey(key)) {
+            return fallback;
+        }
+        return savedInstanceState.getString(key);
     }
 }

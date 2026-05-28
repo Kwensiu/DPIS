@@ -27,6 +27,8 @@ public class GlobalPrefillActivitySourceSmokeTest {
         assertTrue(source.contains("STATE_TYPEFACE_ID"));
         assertTrue(source.contains("STATE_FONT_HOOK_DOMAINS"));
         assertTrue(source.contains("state.updateViewportInput(viewportTargetType, viewportInputView.getText())"));
+        assertTrue(source.contains("restoredNullableString("));
+        assertTrue(source.contains("!savedInstanceState.containsKey(key)"));
         assertTrue(source.contains("new GlobalPrefillSaveHandler()"));
         assertTrue(source.contains("FontHookDomainDialog.show(this,"));
         assertTrue(source.contains("new GlobalPrefillStore(preferences)"));
