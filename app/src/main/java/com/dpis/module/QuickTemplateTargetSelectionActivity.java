@@ -149,6 +149,8 @@ public final class QuickTemplateTargetSelectionActivity extends LocalizedActivit
                 .thenComparing(item -> item.packageName));
         allItems.clear();
         allItems.addAll(loaded);
+        pruneSelectedPackagesToInstalledApps(selectedPackages, allItems);
+        refreshSelectedCount();
         filterApps();
     }
 
@@ -184,6 +186,10 @@ public final class QuickTemplateTargetSelectionActivity extends LocalizedActivit
         } else {
             selectedPackages.remove(packageName);
         }
+        refreshSelectedCount();
+    }
+
+    private void refreshSelectedCount() {
         subtitleView.setText(getString(
                 R.string.quick_template_targets_selected_count,
                 selectedPackages.size()));
@@ -204,6 +210,34 @@ public final class QuickTemplateTargetSelectionActivity extends LocalizedActivit
 
     private static String textOf(TextInputEditText view) {
         return view.getText() != null ? view.getText().toString() : "";
+    }
+
+    static LinkedHashSet<String> pruneSelectedPackagesToInstalledApps(
+            Set<String> selectedPackages,
+            List<TargetAppItem> installedItems) {
+        LinkedHashSet<String> installedPackages = new LinkedHashSet<>();
+        if (installedItems != null) {
+            for (TargetAppItem item : installedItems) {
+                if (item != null && item.packageName != null && !item.packageName.isBlank()) {
+                    installedPackages.add(item.packageName.trim());
+                }
+            }
+        }
+        LinkedHashSet<String> pruned = new LinkedHashSet<>();
+        if (selectedPackages != null) {
+            for (String packageName : selectedPackages) {
+                if (packageName == null) {
+                    continue;
+                }
+                String trimmed = packageName.trim();
+                if (installedPackages.contains(trimmed)) {
+                    pruned.add(trimmed);
+                }
+            }
+            selectedPackages.clear();
+            selectedPackages.addAll(pruned);
+        }
+        return pruned;
     }
 
     static final class TargetAppItem {

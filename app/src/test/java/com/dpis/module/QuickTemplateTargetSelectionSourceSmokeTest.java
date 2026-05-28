@@ -24,10 +24,12 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(manifest.contains(".QuickTemplateTargetSelectionActivity"));
         assertTrue(activity.contains("EXTRA_TEMPLATE_ID = \"quick_template_targets.template_id\""));
         assertTrue(activity.contains("quickTemplateStore.setSelectedPackages(template.id, selectedPackages)"));
+        assertTrue(activity.contains("pruneSelectedPackagesToInstalledApps(selectedPackages, allItems)"));
         assertTrue(activity.contains("configStore.hasRealPackageConfig(applicationInfo.packageName)"));
         assertTrue(activity.contains("getInstalledApplications("));
         assertTrue(adapter.contains("MaterialCheckBox"));
         assertTrue(adapter.contains("quick_template_target_configured_badge"));
+        assertFalse(adapter.contains("selectionListener.onSelectionChanged(item.packageName, selected);"));
         assertTrue(layout.contains("android:id=\"@+id/quick_template_targets_search_input\""));
         assertTrue(layout.contains("android:id=\"@+id/quick_template_targets_save_button\""));
         assertTrue(itemLayout.contains("@string/quick_template_targets_configured_badge"));

@@ -60,9 +60,6 @@ final class QuickTemplateTargetAdapter
         holder.root.setOnClickListener(v -> {
             boolean selected = !selectedPackages.contains(item.packageName);
             holder.checkbox.setChecked(selected);
-            if (selectionListener != null) {
-                selectionListener.onSelectionChanged(item.packageName, selected);
-            }
         });
         holder.checkbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (selectionListener != null) {
