@@ -35,7 +35,7 @@
                 </com.google.android.material.textfield.TextInputLayout>
             </FrameLayout>
 
-            <FrameLayout android:id="@+id/dialog_viewport_mode_toggle_button" android:layout_width="@dimen/dialog_mode_toggle_width" android:layout_height="match_parent" android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start" android:clickable="true" android:focusable="true">
+            <FrameLayout android:id="@+id/dialog_viewport_mode_toggle_button" android:layout_width="@dimen/dialog_mode_toggle_width" android:layout_height="match_parent" android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start" android:clickable="true" android:contentDescription="@string/dialog_viewport_mode_toggle_description" android:focusable="true">
 
                 <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginTop="@dimen/dialog_mode_toggle_content_offset_top" android:background="@drawable/bg_mode_toggle_track">
 
@@ -61,7 +61,7 @@
                 </com.google.android.material.textfield.TextInputLayout>
             </FrameLayout>
 
-            <FrameLayout android:id="@+id/dialog_font_mode_toggle_button" android:layout_width="@dimen/dialog_mode_toggle_width" android:layout_height="match_parent" android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start" android:clickable="true" android:focusable="true">
+            <FrameLayout android:id="@+id/dialog_font_mode_toggle_button" android:layout_width="@dimen/dialog_mode_toggle_width" android:layout_height="match_parent" android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start" android:clickable="true" android:contentDescription="@string/dialog_font_mode_toggle_description" android:focusable="true">
 
                 <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginTop="@dimen/dialog_mode_toggle_content_offset_top" android:background="@drawable/bg_mode_toggle_track">
 

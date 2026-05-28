@@ -44,9 +44,11 @@
     <string name="dialog_confirm_button">确认</string>
     <string name="workspace_app">应用</string>
     <string name="workspace_template">模板</string>
+    <string name="dialog_viewport_mode_toggle_description">切换界面数值类型</string>
+    <string name="dialog_font_mode_toggle_description">切换字体应用路线</string>
     <string name="template_workspace_global_prefill_title">全局预填</string>
-    <string name="template_workspace_quick_templates_title">快速模板</string>
-    <string name="template_workspace_quick_templates_empty">暂无快速模板。</string>
+    <string name="template_workspace_quick_templates_title">快捷模板</string>
+    <string name="template_workspace_quick_templates_empty">暂无快捷模板。</string>
     <string name="template_workspace_summary_empty">暂无已配置参数。</string>
     <string name="template_workspace_summary_viewport_scale">界面 %1$d.%2$d%%</string>
     <string name="template_workspace_summary_viewport_width">界面 %1$ddp</string>

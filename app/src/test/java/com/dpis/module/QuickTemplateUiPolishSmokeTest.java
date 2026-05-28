@@ -28,13 +28,48 @@ public class QuickTemplateUiPolishSmokeTest {
         assertTrue(targetLayout.contains("@string/status_save_button"));
         assertTrue(targetItem.contains("@string/quick_template_targets_configured_badge"));
         assertTrue(targetLayout.contains("@dimen/template_target_content_padding_horizontal"));
+        assertTrue(targetLayout.contains("@dimen/template_target_save_button_height"));
+        assertTrue(targetLayout.contains("@dimen/template_target_save_button_margin_bottom"));
+        assertFalse(targetLayout.contains("@dimen/main_workspace_"));
         assertTrue(targetItem.contains("@dimen/template_target_row_min_height"));
+        assertTrue(targetItem.contains("@dimen/template_target_badge_padding_horizontal"));
+        assertTrue(editLayout.contains("@dimen/quick_template_edit_content_padding_horizontal"));
+        assertTrue(editLayout.contains("@string/dialog_viewport_mode_toggle_description"));
+        assertTrue(editLayout.contains("@string/dialog_font_mode_toggle_description"));
+        assertTrue(editLayout.contains("android:foreground=\"?attr/selectableItemBackground\""));
+        assertFalse(editLayout.contains("@dimen/global_prefill_content_padding_horizontal"));
         assertTrue(dimens.contains("template_target_content_padding_horizontal"));
+        assertTrue(dimens.contains("template_target_save_button_height"));
+        assertTrue(dimens.contains("template_target_save_button_margin_bottom"));
         assertTrue(dimens.contains("template_target_row_padding_vertical"));
+        assertTrue(dimens.contains("template_target_badge_padding_horizontal"));
+        assertTrue(dimens.contains("quick_template_edit_content_padding_horizontal"));
         assertTrue(strings.contains("quick_template_apply_confirm_message"));
         assertTrue(zhStrings.contains("quick_template_apply_confirm_message"));
+        assertTrue(zhStrings.contains("快捷模板"));
+        assertFalse(zhStrings.contains("快速模板"));
         assertTrue(strings.contains("No app process or HyperOS proxy action"));
         assertTrue(zhStrings.contains("不会执行进程操作或 HyperOS 代理操作"));
+    }
+
+    @Test
+    public void sharedModeToggleLayoutsKeepThumbBehindLabels() throws IOException {
+        String appConfigLayout = read("src/main/res/layout/dialog_app_config.xml");
+        String prefillLayout = read("src/main/res/layout/activity_global_prefill.xml");
+        String editLayout = read("src/main/res/layout/activity_quick_template_edit.xml");
+        String strings = read("src/main/res/values/strings.xml");
+        String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
+
+        assertTrue(appConfigLayout.contains("@string/dialog_viewport_mode_toggle_description"));
+        assertTrue(appConfigLayout.contains("@string/dialog_font_mode_toggle_description"));
+        assertThumbUsesFrameLayout(prefillLayout, "global_prefill_viewport_mode_toggle_thumb");
+        assertThumbUsesFrameLayout(prefillLayout, "global_prefill_font_mode_toggle_thumb");
+        assertThumbUsesFrameLayout(editLayout, "quick_template_edit_viewport_mode_toggle_thumb");
+        assertThumbUsesFrameLayout(editLayout, "quick_template_edit_font_mode_toggle_thumb");
+        assertTrue(strings.contains("dialog_viewport_mode_toggle_description"));
+        assertTrue(strings.contains("dialog_font_mode_toggle_description"));
+        assertTrue(zhStrings.contains("dialog_viewport_mode_toggle_description"));
+        assertTrue(zhStrings.contains("dialog_font_mode_toggle_description"));
     }
 
     @Test
@@ -48,5 +83,13 @@ public class QuickTemplateUiPolishSmokeTest {
 
     private static String read(String relativePath) throws IOException {
         return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
+    }
+
+    private static void assertThumbUsesFrameLayout(String layout, String thumbId) {
+        int thumbIndex = layout.indexOf("android:id=\"@+id/" + thumbId + "\"");
+        assertTrue(thumbIndex >= 0);
+        int frameBeforeThumb = layout.lastIndexOf("<FrameLayout", thumbIndex);
+        int linearBeforeThumb = layout.lastIndexOf("<LinearLayout", thumbIndex);
+        assertTrue(frameBeforeThumb > linearBeforeThumb);
     }
 }

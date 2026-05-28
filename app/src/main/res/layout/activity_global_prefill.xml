@@ -75,40 +75,52 @@
                     android:layout_width="@dimen/dialog_mode_toggle_width"
                     android:layout_height="@dimen/dialog_mode_toggle_row_min_height">
 
-                    <LinearLayout
+                    <FrameLayout
                         android:id="@+id/global_prefill_viewport_mode_toggle_button"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:background="@drawable/bg_mode_toggle_track"
                         android:clickable="true"
+                        android:contentDescription="@string/dialog_viewport_mode_toggle_description"
                         android:focusable="true"
-                        android:orientation="horizontal"
-                        android:padding="@dimen/dialog_mode_toggle_content_offset_top">
+                        android:foreground="?attr/selectableItemBackground">
 
-                        <View
-                            android:id="@+id/global_prefill_viewport_mode_toggle_thumb"
-                            android:layout_width="0dp"
+                        <FrameLayout
+                            android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:background="@drawable/bg_mode_toggle_thumb" />
+                            android:layout_marginTop="@dimen/dialog_mode_toggle_content_offset_top"
+                            android:background="@drawable/bg_mode_toggle_track">
 
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/global_prefill_viewport_mode_system_label"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:gravity="center"
-                            android:text="@string/dialog_viewport_mode_system"
-                            android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
+                            <View
+                                android:id="@+id/global_prefill_viewport_mode_toggle_thumb"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/bg_mode_toggle_thumb" />
 
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/global_prefill_viewport_mode_compat_label"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:gravity="center"
-                            android:text="@string/dialog_viewport_mode_compat"
-                            android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
-                    </LinearLayout>
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="horizontal">
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/global_prefill_viewport_mode_system_label"
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="1"
+                                    android:gravity="center"
+                                    android:text="@string/dialog_viewport_mode_system"
+                                    android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/global_prefill_viewport_mode_compat_label"
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="1"
+                                    android:gravity="center"
+                                    android:text="@string/dialog_viewport_mode_compat"
+                                    android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
+                            </LinearLayout>
+                        </FrameLayout>
+                    </FrameLayout>
                 </FrameLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -151,40 +163,52 @@
                     android:layout_width="@dimen/dialog_mode_toggle_width"
                     android:layout_height="@dimen/dialog_mode_toggle_row_min_height">
 
-                    <LinearLayout
+                    <FrameLayout
                         android:id="@+id/global_prefill_font_mode_toggle_button"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:background="@drawable/bg_mode_toggle_track"
                         android:clickable="true"
+                        android:contentDescription="@string/dialog_font_mode_toggle_description"
                         android:focusable="true"
-                        android:orientation="horizontal"
-                        android:padding="@dimen/dialog_mode_toggle_content_offset_top">
+                        android:foreground="?attr/selectableItemBackground">
 
-                        <View
-                            android:id="@+id/global_prefill_font_mode_toggle_thumb"
-                            android:layout_width="0dp"
+                        <FrameLayout
+                            android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:background="@drawable/bg_mode_toggle_thumb" />
+                            android:layout_marginTop="@dimen/dialog_mode_toggle_content_offset_top"
+                            android:background="@drawable/bg_mode_toggle_track">
 
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/global_prefill_font_mode_system_label"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:gravity="center"
-                            android:text="@string/dialog_font_mode_system"
-                            android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
+                            <View
+                                android:id="@+id/global_prefill_font_mode_toggle_thumb"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/bg_mode_toggle_thumb" />
 
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/global_prefill_font_mode_compat_label"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:gravity="center"
-                            android:text="@string/dialog_font_mode_compat"
-                            android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
-                    </LinearLayout>
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="horizontal">
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/global_prefill_font_mode_system_label"
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="1"
+                                    android:gravity="center"
+                                    android:text="@string/dialog_font_mode_system"
+                                    android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/global_prefill_font_mode_compat_label"
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="1"
+                                    android:gravity="center"
+                                    android:text="@string/dialog_font_mode_compat"
+                                    android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
+                            </LinearLayout>
+                        </FrameLayout>
+                    </FrameLayout>
                 </FrameLayout>
 
                 <com.google.android.material.textfield.TextInputLayout

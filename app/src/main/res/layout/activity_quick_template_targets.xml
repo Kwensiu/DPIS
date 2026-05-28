@@ -111,9 +111,9 @@
         android:id="@+id/quick_template_targets_save_button"
         style="@style/Widget.Dpis.DialogActionButton.Filled"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/main_workspace_switch_button_height"
+        android:layout_height="@dimen/template_target_save_button_height"
         android:layout_marginStart="@dimen/template_target_content_padding_horizontal"
         android:layout_marginEnd="@dimen/template_target_content_padding_horizontal"
-        android:layout_marginBottom="@dimen/main_workspace_switch_margin_bottom"
+        android:layout_marginBottom="@dimen/template_target_save_button_margin_bottom"
         android:text="@string/status_save_button" />
 </LinearLayout>

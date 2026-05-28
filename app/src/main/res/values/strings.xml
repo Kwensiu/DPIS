@@ -44,6 +44,8 @@
     <string name="dialog_confirm_button">Confirm</string>
     <string name="workspace_app">Apps</string>
     <string name="workspace_template">Templates</string>
+    <string name="dialog_viewport_mode_toggle_description">Switch interface value type</string>
+    <string name="dialog_font_mode_toggle_description">Switch font apply route</string>
     <string name="template_workspace_global_prefill_title">Global prefill</string>
     <string name="template_workspace_quick_templates_title">Quick templates</string>
     <string name="template_workspace_quick_templates_empty">No quick templates yet.</string>

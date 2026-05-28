@@ -58,9 +58,13 @@
     <dimen name="template_target_search_spacing_top">8dp</dimen>
     <dimen name="template_target_list_padding_top">12dp</dimen>
     <dimen name="template_target_list_padding_bottom">24dp</dimen>
+    <dimen name="template_target_save_button_height">44dp</dimen>
+    <dimen name="template_target_save_button_margin_bottom">16dp</dimen>
     <dimen name="template_target_row_min_height">72dp</dimen>
     <dimen name="template_target_row_padding_horizontal">4dp</dimen>
     <dimen name="template_target_row_padding_vertical">10dp</dimen>
+    <dimen name="template_target_badge_padding_horizontal">8dp</dimen>
+    <dimen name="template_target_badge_padding_vertical">3dp</dimen>
 
     <!-- Settings rows and settings pages. -->
     <dimen name="settings_row_min_height">88dp</dimen>
@@ -96,6 +100,9 @@
     <dimen name="global_prefill_content_padding_horizontal">20dp</dimen>
     <dimen name="global_prefill_content_padding_top">16dp</dimen>
     <dimen name="global_prefill_content_padding_bottom">24dp</dimen>
+    <dimen name="quick_template_edit_content_padding_horizontal">20dp</dimen>
+    <dimen name="quick_template_edit_content_padding_top">16dp</dimen>
+    <dimen name="quick_template_edit_content_padding_bottom">24dp</dimen>
     <dimen name="about_content_padding_horizontal">16dp</dimen>
     <dimen name="about_content_padding_top">18dp</dimen>
     <dimen name="about_content_padding_bottom">24dp</dimen>
