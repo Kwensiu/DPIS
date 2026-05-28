@@ -20,6 +20,13 @@ public class GlobalPrefillActivitySourceSmokeTest {
 
         assertTrue(manifest.contains(".GlobalPrefillActivity"));
         assertTrue(source.contains("setContentView(R.layout.activity_global_prefill);"));
+        assertTrue(source.contains("bindForm(savedInstanceState);"));
+        assertTrue(source.contains("protected void onSaveInstanceState(Bundle outState)"));
+        assertTrue(source.contains("STATE_VIEWPORT_TARGET_TYPE"));
+        assertTrue(source.contains("STATE_VIEWPORT_APPLY_MODE"));
+        assertTrue(source.contains("STATE_TYPEFACE_ID"));
+        assertTrue(source.contains("STATE_FONT_HOOK_DOMAINS"));
+        assertTrue(source.contains("state.updateViewportInput(viewportTargetType, viewportInputView.getText())"));
         assertTrue(source.contains("new GlobalPrefillSaveHandler()"));
         assertTrue(source.contains("FontHookDomainDialog.show(this,"));
         assertTrue(source.contains("new GlobalPrefillStore(preferences)"));

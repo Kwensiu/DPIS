@@ -22,6 +22,15 @@ import java.util.Set;
 
 public final class GlobalPrefillActivity extends LocalizedActivity {
     private static final String PREFILL_PACKAGE_NAME = "__global_prefill__";
+    private static final String STATE_VIEWPORT_TARGET_TYPE = "global_prefill.viewport_target_type";
+    private static final String STATE_VIEWPORT_INPUT = "global_prefill.viewport_input";
+    private static final String STATE_VIEWPORT_SCALE_INPUT = "global_prefill.viewport_scale_input";
+    private static final String STATE_VIEWPORT_ABSOLUTE_INPUT = "global_prefill.viewport_absolute_input";
+    private static final String STATE_VIEWPORT_APPLY_MODE = "global_prefill.viewport_apply_mode";
+    private static final String STATE_FONT_INPUT = "global_prefill.font_input";
+    private static final String STATE_FONT_MODE = "global_prefill.font_mode";
+    private static final String STATE_TYPEFACE_ID = "global_prefill.typeface_id";
+    private static final String STATE_FONT_HOOK_DOMAINS = "global_prefill.font_hook_domains";
 
     private final GlobalPrefillSaveHandler saveHandler = new GlobalPrefillSaveHandler();
 
@@ -52,8 +61,26 @@ public final class GlobalPrefillActivity extends LocalizedActivity {
         bindViews();
         bindToolbar();
         applyInsets();
-        bindForm();
+        bindForm(savedInstanceState);
         bindActions();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        String viewportTargetType = AppConfigDialogBinder.resolveViewportMode(viewportModeToggle);
+        if (state != null) {
+            state.updateViewportInput(viewportTargetType, viewportInputView.getText());
+            outState.putString(STATE_VIEWPORT_SCALE_INPUT, state.viewportScaleInput);
+            outState.putString(STATE_VIEWPORT_ABSOLUTE_INPUT, state.viewportAbsoluteInput);
+            outState.putString(STATE_VIEWPORT_APPLY_MODE, state.viewportApplyMode);
+            outState.putString(STATE_TYPEFACE_ID, state.selectedTypefaceId);
+            outState.putString(STATE_FONT_HOOK_DOMAINS, state.previewFontHookDomainsRaw);
+        }
+        outState.putString(STATE_VIEWPORT_TARGET_TYPE, viewportTargetType);
+        outState.putString(STATE_VIEWPORT_INPUT, textOf(viewportInputView));
+        outState.putString(STATE_FONT_INPUT, textOf(fontInputView));
+        outState.putString(STATE_FONT_MODE, AppConfigDialogBinder.resolveFontMode(fontModeToggle));
     }
 
     @Override
@@ -113,39 +140,58 @@ public final class GlobalPrefillActivity extends LocalizedActivity {
         ViewCompat.requestApplyInsets(content);
     }
 
-    private void bindForm() {
+    private void bindForm(Bundle savedInstanceState) {
         TemplateConfigValue value = globalPrefillStore.read();
-        String initialViewportInput = AppConfigInputValidation.formatViewportInput(
+        String storedViewportInput = AppConfigInputValidation.formatViewportInput(
                 value.viewportTargetSpec);
-        String initialViewportScaleInput = value.viewportTargetSpec.isRelativeScale()
-                ? initialViewportInput
-                : "";
-        String initialViewportAbsoluteInput = value.viewportTargetSpec.isAbsoluteDp()
-                ? initialViewportInput
-                : "";
-        String initialViewportType = AppConfigInputValidation.initialViewportTargetType(
-                value.viewportTargetSpec);
+        String initialViewportType = savedInstanceState != null
+                ? ViewportTargetType.normalize(savedInstanceState.getString(
+                        STATE_VIEWPORT_TARGET_TYPE,
+                        AppConfigInputValidation.initialViewportTargetType(value.viewportTargetSpec)))
+                : AppConfigInputValidation.initialViewportTargetType(value.viewportTargetSpec);
+        String initialViewportInput = savedInstanceState != null
+                ? savedInstanceState.getString(STATE_VIEWPORT_INPUT, storedViewportInput)
+                : storedViewportInput;
+        String initialViewportScaleInput = savedInstanceState != null
+                ? savedInstanceState.getString(STATE_VIEWPORT_SCALE_INPUT, "")
+                : (value.viewportTargetSpec.isRelativeScale() ? storedViewportInput : "");
+        String initialViewportAbsoluteInput = savedInstanceState != null
+                ? savedInstanceState.getString(STATE_VIEWPORT_ABSOLUTE_INPUT, "")
+                : (value.viewportTargetSpec.isAbsoluteDp() ? storedViewportInput : "");
+        String initialViewportApplyMode = savedInstanceState != null
+                ? savedInstanceState.getString(STATE_VIEWPORT_APPLY_MODE, value.viewportApplyMode)
+                : value.viewportApplyMode;
+        String initialFontInput = savedInstanceState != null
+                ? savedInstanceState.getString(STATE_FONT_INPUT, "")
+                : (value.fontScalePercent != null ? String.valueOf(value.fontScalePercent) : "");
+        String initialFontMode = savedInstanceState != null
+                ? savedInstanceState.getString(STATE_FONT_MODE, value.fontApplyMode)
+                : value.fontApplyMode;
+        String initialTypefaceId = savedInstanceState != null
+                ? savedInstanceState.getString(STATE_TYPEFACE_ID, value.typefaceId)
+                : value.typefaceId;
+        String initialHookDomainsRaw = savedInstanceState != null
+                ? savedInstanceState.getString(STATE_FONT_HOOK_DOMAINS, value.fontHookDomainsRaw)
+                : value.fontHookDomainsRaw;
         state = new AppConfigDialogBinder.AppConfigDialogState(
                 false,
                 false,
                 true,
                 false,
-                value.fontHookDomainsRaw,
-                value.viewportApplyMode,
-                value.typefaceId,
+                initialHookDomainsRaw,
+                initialViewportApplyMode,
+                initialTypefaceId,
                 initialViewportType,
                 initialViewportInput,
                 initialViewportScaleInput,
                 initialViewportAbsoluteInput);
         viewportInputView.setText(initialViewportInput);
-        fontInputView.setText(value.fontScalePercent != null
-                ? String.valueOf(value.fontScalePercent)
-                : "");
+        fontInputView.setText(initialFontInput);
         AppConfigDialogBinder.bindViewportModeToggle(
                 viewportModeToggle, initialViewportType, false);
         typefaceBinder.bindViewportInputHint(viewportInputLayout, initialViewportType);
         AppConfigDialogBinder.bindFontModeToggle(
-                fontModeToggle, AppConfigInputValidation.initialFontMode(value.fontApplyMode), false);
+                fontModeToggle, AppConfigInputValidation.initialFontMode(initialFontMode), false);
         typefaceBinder.bindTypefaceSelector(typefaceSelectorButton, state.selectedTypefaceId);
         refreshHookDomainsButton();
         refreshValidationUi();
