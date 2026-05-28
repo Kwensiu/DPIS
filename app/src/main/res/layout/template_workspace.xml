@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/template_workspace_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipToPadding="false"
+    android:fillViewport="true"
+    android:paddingStart="@dimen/template_workspace_padding_horizontal"
+    android:paddingTop="@dimen/template_workspace_padding_top"
+    android:paddingEnd="@dimen/template_workspace_padding_horizontal"
+    android:paddingBottom="@dimen/template_workspace_padding_bottom"
+    android:visibility="gone">
+
+    <LinearLayout
+        android:id="@+id/template_workspace_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/global_prefill_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+            app:cardCornerRadius="@dimen/template_workspace_card_corner_radius"
+            app:strokeWidth="@dimen/page_card_stroke_width">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/template_workspace_card_padding">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/global_prefill_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/template_workspace_global_prefill_title"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:textColor="?attr/colorOnSurface" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/global_prefill_summary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/template_workspace_text_spacing_top"
+                    android:lineSpacingExtra="@dimen/dialog_text_line_spacing"
+                    android:text="@string/template_workspace_summary_empty"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/global_prefill_missing_font"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/template_workspace_text_spacing_top"
+                    android:textAppearance="?attr/textAppearanceLabelMedium"
+                    android:textColor="@color/dpis_on_warn_container"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/template_workspace_actions_spacing_top"
+                    android:gravity="end"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/global_prefill_edit_button"
+                        style="@style/Widget.Dpis.DialogActionButton.Outlined"
+                        android:layout_width="wrap_content"
+                        android:layout_height="@dimen/template_workspace_action_button_height"
+                        android:minWidth="0dp"
+                        android:text="@string/template_workspace_action_edit" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/global_prefill_reset_button"
+                        style="@style/Widget.Dpis.DialogActionButton.Outlined.WarnOutline"
+                        android:layout_width="wrap_content"
+                        android:layout_height="@dimen/template_workspace_action_button_height"
+                        android:layout_marginStart="@dimen/dialog_action_spacing_between"
+                        android:minWidth="0dp"
+                        android:text="@string/template_workspace_action_reset" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/quick_template_section_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/template_workspace_section_spacing_top"
+            android:text="@string/template_workspace_quick_templates_title"
+            android:textAppearance="?attr/textAppearanceTitleSmall"
+            android:textColor="?attr/colorOnSurface" />
+
+        <LinearLayout
+            android:id="@+id/quick_template_list_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/template_workspace_list_spacing_top"
+            android:orientation="vertical" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/quick_template_empty_state"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/template_workspace_empty_spacing_top"
+            android:gravity="center"
+            android:padding="@dimen/template_workspace_empty_padding"
+            android:text="@string/template_workspace_quick_templates_empty"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

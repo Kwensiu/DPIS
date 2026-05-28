@@ -118,6 +118,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     private TabLayout filterTabs;
     private View appWorkspaceDivider;
     private View templateWorkspaceContainer;
+    private TemplateWorkspaceBinder templateWorkspaceBinder;
     private MaterialButtonToggleGroup workspaceSwitch;
     private SparseArray<Parcelable> restoredPageScrollStates;
     private EditText searchInput;
@@ -200,6 +201,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         filterTabs = findViewById(R.id.filter_tabs);
         appWorkspaceDivider = findViewById(R.id.app_workspace_divider);
         templateWorkspaceContainer = findViewById(R.id.template_workspace_container);
+        templateWorkspaceBinder = new TemplateWorkspaceBinder(this);
         workspaceSwitch = findViewById(R.id.workspace_switch);
         pagerAdapter = new AppListPagerAdapter(
                 this::showEditDialog,
@@ -311,6 +313,9 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         refreshSystemHookEffectiveEnabled();
         if (pagerAdapter != null) {
             pagerAdapter.refreshVisibleStatuses();
+        }
+        if (requireUiState().workspaceMode == MainWorkspaceMode.TEMPLATE) {
+            bindTemplateWorkspace();
         }
         DpisApplication.addServiceStateListener(this, true);
     }
@@ -809,6 +814,15 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         }
         if (workspaceSwitch != null && workspaceSwitch.getCheckedButtonId() != workspaceButtonId(mode)) {
             workspaceSwitch.check(workspaceButtonId(mode));
+        }
+        if (!appWorkspace) {
+            bindTemplateWorkspace();
+        }
+    }
+
+    private void bindTemplateWorkspace() {
+        if (templateWorkspaceBinder != null) {
+            templateWorkspaceBinder.bind(templateWorkspaceContainer);
         }
     }
 

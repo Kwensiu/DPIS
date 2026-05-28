@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/quick_template_card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+    app:cardCornerRadius="@dimen/template_workspace_card_corner_radius"
+    app:strokeWidth="@dimen/page_card_stroke_width">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/template_workspace_card_padding">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/quick_template_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:textColor="?attr/colorOnSurface" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/quick_template_summary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/template_workspace_text_spacing_top"
+            android:lineSpacingExtra="@dimen/dialog_text_line_spacing"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/quick_template_updated"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/template_workspace_text_spacing_top"
+            android:textAppearance="?attr/textAppearanceLabelMedium"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/quick_template_missing_font"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/template_workspace_text_spacing_top"
+            android:textAppearance="?attr/textAppearanceLabelMedium"
+            android:textColor="@color/dpis_on_warn_container"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/template_workspace_actions_spacing_top"
+            android:gravity="end"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/quick_template_apply_button"
+                style="@style/Widget.Dpis.DialogActionButton.Filled"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/template_workspace_action_button_height"
+                android:minWidth="0dp"
+                android:text="@string/template_workspace_action_apply" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/quick_template_edit_button"
+                style="@style/Widget.Dpis.DialogActionButton.Outlined"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/template_workspace_action_button_height"
+                android:layout_marginStart="@dimen/dialog_action_spacing_between"
+                android:minWidth="0dp"
+                android:text="@string/template_workspace_action_edit" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/quick_template_select_button"
+                style="@style/Widget.Dpis.DialogActionButton.Outlined"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/template_workspace_action_button_height"
+                android:layout_marginStart="@dimen/dialog_action_spacing_between"
+                android:minWidth="0dp"
+                android:text="@string/template_workspace_action_select" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

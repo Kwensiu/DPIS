@@ -41,8 +41,19 @@
     <dimen name="main_workspace_switch_margin_top">8dp</dimen>
     <dimen name="main_workspace_switch_margin_bottom">16dp</dimen>
     <dimen name="main_workspace_switch_button_height">44dp</dimen>
-    <dimen name="template_workspace_placeholder_padding_horizontal">24dp</dimen>
-    <dimen name="template_workspace_placeholder_message_spacing_top">6dp</dimen>
+    <dimen name="template_workspace_padding_horizontal">16dp</dimen>
+    <dimen name="template_workspace_padding_top">14dp</dimen>
+    <dimen name="template_workspace_padding_bottom">120dp</dimen>
+    <dimen name="template_workspace_card_corner_radius">24dp</dimen>
+    <dimen name="template_workspace_card_padding">18dp</dimen>
+    <dimen name="template_workspace_text_spacing_top">6dp</dimen>
+    <dimen name="template_workspace_actions_spacing_top">14dp</dimen>
+    <dimen name="template_workspace_action_button_height">42dp</dimen>
+    <dimen name="template_workspace_section_spacing_top">22dp</dimen>
+    <dimen name="template_workspace_list_spacing_top">10dp</dimen>
+    <dimen name="template_workspace_card_spacing_top">12dp</dimen>
+    <dimen name="template_workspace_empty_spacing_top">8dp</dimen>
+    <dimen name="template_workspace_empty_padding">20dp</dimen>
 
     <!-- Settings rows and settings pages. -->
     <dimen name="settings_row_min_height">88dp</dimen>

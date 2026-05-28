@@ -44,9 +44,7 @@ public class MainActivityLayoutSmokeTest {
         assertTrue(layout.contains("android:id=\"@+id/system_settings_button\""));
         assertTrue(layout.contains("android:id=\"@+id/app_pager\""));
         assertTrue(layout.contains("android:id=\"@+id/app_workspace_divider\""));
-        assertTrue(layout.contains("android:id=\"@+id/template_workspace_container\""));
-        assertTrue(layout.contains("android:id=\"@+id/template_workspace_placeholder_title\""));
-        assertTrue(layout.contains("android:id=\"@+id/template_workspace_placeholder_message\""));
+        assertTrue(layout.contains("<include layout=\"@layout/template_workspace\""));
         assertTrue(layout.contains("android:id=\"@+id/workspace_switch\""));
         assertTrue(layout.contains("android:id=\"@+id/workspace_app_button\""));
         assertTrue(layout.contains("android:id=\"@+id/workspace_template_button\""));
@@ -56,8 +54,8 @@ public class MainActivityLayoutSmokeTest {
         assertTrue(strings.contains("tab_all_apps"));
         assertTrue(strings.contains("workspace_app"));
         assertTrue(strings.contains("workspace_template"));
-        assertTrue(strings.contains("template_workspace_placeholder_title"));
-        assertTrue(strings.contains("template_workspace_placeholder_message"));
+        assertTrue(strings.contains("template_workspace_global_prefill_title"));
+        assertTrue(strings.contains("template_workspace_quick_templates_title"));
         assertTrue(strings.contains("quick_search_button"));
         assertTrue(Files.exists(Path.of("src/main/res/drawable/ic_tune_24.xml")));
     }
