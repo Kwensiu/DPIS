@@ -95,6 +95,9 @@
     <string name="quick_template_apply_confirm_message">DPIS 将把此模板写入 %1$d 个应用，并覆盖 %2$d 个已配置应用。批量应用期间不会执行进程操作或 HyperOS 代理操作。可用时，保存后可能请求加入作用域。</string>
     <string name="quick_template_apply_result_success">已应用到 %1$d 个应用</string>
     <string name="quick_template_apply_result_partial">已应用到 %1$d 个应用；失败 %2$d 个</string>
+    <string name="quick_template_scope_request_started">已向 LSPosed 请求为 %1$d 个应用加入作用域，请到 LSPosed 确认。</string>
+    <string name="quick_template_scope_request_approved">LSPosed 已批准 %1$d 个应用，正在按实际作用域状态刷新。</string>
+    <string name="quick_template_scope_manual_required">配置已保存，请手动将所选应用加入 LSPosed 作用域。</string>
     <string name="tab_all_apps">全部应用</string>
     <string name="tab_configured_apps">已配置应用</string>
     <string name="filter_button">筛选</string>

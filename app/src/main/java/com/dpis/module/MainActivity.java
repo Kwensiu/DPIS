@@ -1333,7 +1333,28 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         } else {
             showToast(R.string.quick_template_apply_result_success, result.successCount());
         }
+        new BatchScopeRequestCoordinator(createBatchScopeRequestHost())
+                .requestMissingScope(result.successfulPackages);
         bindTemplateWorkspace();
+    }
+
+    private BatchScopeRequestCoordinator.Host createBatchScopeRequestHost() {
+        return new BatchScopeRequestCoordinator.Host() {
+            @Override
+            public void showToast(int messageResId, Object... formatArgs) {
+                MainActivity.this.showToast(messageResId, formatArgs);
+            }
+
+            @Override
+            public void requestAppsLoad() {
+                MainActivity.this.requestAppsLoad();
+            }
+
+            @Override
+            public void runOnUiThread(Runnable runnable) {
+                MainActivity.this.runOnUiThread(runnable);
+            }
+        };
     }
 
     private AppConfigDialogBinder.Host createAppConfigDialogHost() {
