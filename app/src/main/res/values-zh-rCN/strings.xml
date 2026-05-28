@@ -83,6 +83,13 @@
     <string name="quick_template_delete_success">已删除模板</string>
     <string name="quick_template_delete_failed">删除模板失败</string>
     <string name="quick_template_create_action">新建模板</string>
+    <string name="quick_template_targets_title">选择应用：%1$s</string>
+    <string name="quick_template_targets_selected_count">已选择 %1$d 个应用</string>
+    <string name="quick_template_targets_configured_badge">已配置</string>
+    <string name="quick_template_targets_empty">没有匹配的应用。</string>
+    <string name="quick_template_targets_save_success">已保存模板应用选择</string>
+    <string name="quick_template_targets_save_failed">保存应用选择失败</string>
+    <string name="quick_template_target_missing">模板已不存在</string>
     <string name="tab_all_apps">全部应用</string>
     <string name="tab_configured_apps">已配置应用</string>
     <string name="filter_button">筛选</string>

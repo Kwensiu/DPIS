@@ -54,6 +54,13 @@
     <dimen name="template_workspace_card_spacing_top">12dp</dimen>
     <dimen name="template_workspace_empty_spacing_top">8dp</dimen>
     <dimen name="template_workspace_empty_padding">20dp</dimen>
+    <dimen name="template_target_content_padding_horizontal">16dp</dimen>
+    <dimen name="template_target_search_spacing_top">8dp</dimen>
+    <dimen name="template_target_list_padding_top">12dp</dimen>
+    <dimen name="template_target_list_padding_bottom">24dp</dimen>
+    <dimen name="template_target_row_min_height">72dp</dimen>
+    <dimen name="template_target_row_padding_horizontal">4dp</dimen>
+    <dimen name="template_target_row_padding_vertical">10dp</dimen>
 
     <!-- Settings rows and settings pages. -->
     <dimen name="settings_row_min_height">88dp</dimen>

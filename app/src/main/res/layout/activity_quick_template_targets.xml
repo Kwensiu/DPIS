@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/quick_template_targets_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/page_toolbar_padding_horizontal"
+        android:paddingTop="@dimen/page_toolbar_padding_top"
+        android:paddingEnd="@dimen/page_toolbar_padding_horizontal"
+        android:paddingBottom="@dimen/page_toolbar_padding_bottom">
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/quick_template_targets_back_button"
+            android:layout_width="@dimen/page_back_button_size"
+            android:layout_height="@dimen/page_back_button_size"
+            android:background="@drawable/bg_round_button_surface"
+            android:contentDescription="@string/system_settings_back"
+            android:padding="@dimen/page_back_button_padding"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_arrow_back_24" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/page_title_spacing_start"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/quick_template_targets_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
+                android:textStyle="bold" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/quick_template_targets_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/template_workspace_text_spacing_top"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/quick_template_targets_search_layout"
+        style="@style/Widget.Dpis.TextInputLayout.OutlinedBox.Compact"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/template_target_content_padding_horizontal"
+        android:layout_marginTop="@dimen/template_target_search_spacing_top"
+        android:layout_marginEnd="@dimen/template_target_content_padding_horizontal"
+        android:hint="@string/search_hint"
+        app:boxCornerRadiusBottomEnd="@dimen/dialog_app_config_input_corner_radius"
+        app:boxCornerRadiusBottomStart="@dimen/dialog_app_config_input_corner_radius"
+        app:boxCornerRadiusTopEnd="@dimen/dialog_app_config_input_corner_radius"
+        app:boxCornerRadiusTopStart="@dimen/dialog_app_config_input_corner_radius"
+        app:endIconMode="clear_text">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/quick_template_targets_search_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:minHeight="0dp"
+            android:paddingTop="@dimen/dialog_app_config_input_padding_top"
+            android:paddingBottom="@dimen/dialog_app_config_input_padding_bottom" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/quick_template_targets_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingStart="@dimen/template_target_content_padding_horizontal"
+            android:paddingTop="@dimen/template_target_list_padding_top"
+            android:paddingEnd="@dimen/template_target_content_padding_horizontal"
+            android:paddingBottom="@dimen/template_target_list_padding_bottom" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/quick_template_targets_empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:padding="@dimen/template_workspace_empty_padding"
+            android:text="@string/quick_template_targets_empty"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/quick_template_targets_save_button"
+        style="@style/Widget.Dpis.DialogActionButton.Filled"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/main_workspace_switch_button_height"
+        android:layout_marginStart="@dimen/template_target_content_padding_horizontal"
+        android:layout_marginEnd="@dimen/template_target_content_padding_horizontal"
+        android:layout_marginBottom="@dimen/main_workspace_switch_margin_bottom"
+        android:text="@string/status_save_button" />
+</LinearLayout>

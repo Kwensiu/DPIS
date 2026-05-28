@@ -23,6 +23,8 @@ final class TemplateWorkspaceBinder {
     interface QuickTemplateActions {
         void edit(String templateId);
 
+        void select(String templateId);
+
         void create();
     }
 
@@ -111,7 +113,9 @@ final class TemplateWorkspaceBinder {
     }
 
     private void onSelectTemplate(String templateId) {
-        showNotWiredToast();
+        if (quickTemplateActions != null) {
+            quickTemplateActions.select(templateId);
+        }
     }
 
     private void bindMissingFont(MaterialTextView view,

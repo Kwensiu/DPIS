@@ -1266,6 +1266,13 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             }
 
             @Override
+            public void select(String templateId) {
+                Intent intent = new Intent(MainActivity.this, QuickTemplateTargetSelectionActivity.class);
+                intent.putExtra(QuickTemplateTargetSelectionActivity.EXTRA_TEMPLATE_ID, templateId);
+                startActivity(intent);
+            }
+
+            @Override
             public void create() {
                 startActivity(new Intent(MainActivity.this, QuickTemplateEditActivity.class));
             }
