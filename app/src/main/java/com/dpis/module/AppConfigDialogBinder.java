@@ -841,10 +841,13 @@ final class AppConfigDialogBinder {
                 return;
             }
             int half = availableWidth / 2;
-            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) toggle.thumb.getLayoutParams();
-            if (params.width != half || params.height != FrameLayout.LayoutParams.MATCH_PARENT) {
+            ViewGroup.LayoutParams params = toggle.thumb.getLayoutParams();
+            if (params == null) {
+                params = new ViewGroup.LayoutParams(half, ViewGroup.LayoutParams.MATCH_PARENT);
+            }
+            if (params.width != half || params.height != ViewGroup.LayoutParams.MATCH_PARENT) {
                 params.width = half;
-                params.height = FrameLayout.LayoutParams.MATCH_PARENT;
+                params.height = ViewGroup.LayoutParams.MATCH_PARENT;
                 toggle.thumb.setLayoutParams(params);
             }
             float target = emulationActive ? 0f : half;
