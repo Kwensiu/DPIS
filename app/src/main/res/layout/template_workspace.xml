@@ -95,6 +95,15 @@
             android:textAppearance="?attr/textAppearanceTitleSmall"
             android:textColor="?attr/colorOnSurface" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/quick_template_create_button"
+            style="@style/Widget.Dpis.DialogActionButton.Outlined"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/template_workspace_action_button_height"
+            android:layout_marginTop="@dimen/template_workspace_list_spacing_top"
+            android:minWidth="0dp"
+            android:text="@string/quick_template_create_action" />
+
         <LinearLayout
             android:id="@+id/quick_template_list_container"
             android:layout_width="match_parent"

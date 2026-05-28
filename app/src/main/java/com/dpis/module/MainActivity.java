@@ -201,7 +201,8 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         filterTabs = findViewById(R.id.filter_tabs);
         appWorkspaceDivider = findViewById(R.id.app_workspace_divider);
         templateWorkspaceContainer = findViewById(R.id.template_workspace_container);
-        templateWorkspaceBinder = new TemplateWorkspaceBinder(this, createTemplateWorkspaceActions());
+        templateWorkspaceBinder = new TemplateWorkspaceBinder(this, createTemplateWorkspaceActions(),
+                createQuickTemplateActions());
         workspaceSwitch = findViewById(R.id.workspace_switch);
         pagerAdapter = new AppListPagerAdapter(
                 this::showEditDialog,
@@ -1249,6 +1250,24 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                     return;
                 }
                 showToast(R.string.global_prefill_reset_failed);
+            }
+        };
+    }
+
+    private TemplateWorkspaceBinder.QuickTemplateActions createQuickTemplateActions() {
+        return new TemplateWorkspaceBinder.QuickTemplateActions() {
+            @Override
+            public void edit(String templateId) {
+                Intent intent = new Intent(MainActivity.this, QuickTemplateEditActivity.class);
+                if (templateId != null && !templateId.isEmpty()) {
+                    intent.putExtra(QuickTemplateEditActivity.EXTRA_TEMPLATE_ID, templateId);
+                }
+                startActivity(intent);
+            }
+
+            @Override
+            public void create() {
+                startActivity(new Intent(MainActivity.this, QuickTemplateEditActivity.class));
             }
         };
     }

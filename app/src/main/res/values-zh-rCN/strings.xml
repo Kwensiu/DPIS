@@ -72,6 +72,17 @@
     <string name="global_prefill_save_failed">保存全局预填失败</string>
     <string name="global_prefill_reset_success">已重置全局预填</string>
     <string name="global_prefill_reset_failed">重置全局预填失败</string>
+    <string name="quick_template_edit_page_title_new">新建模板</string>
+    <string name="quick_template_edit_page_title_edit">编辑模板</string>
+    <string name="quick_template_name_hint">模板名称</string>
+    <string name="quick_template_name_required">模板名称不能为空</string>
+    <string name="quick_template_save_success">已保存模板</string>
+    <string name="quick_template_save_failed">保存模板失败</string>
+    <string name="quick_template_delete_title">删除模板？</string>
+    <string name="quick_template_delete_message">删除\"%1$s\"？已写入的应用配置不受影响。</string>
+    <string name="quick_template_delete_success">已删除模板</string>
+    <string name="quick_template_delete_failed">删除模板失败</string>
+    <string name="quick_template_create_action">新建模板</string>
     <string name="tab_all_apps">全部应用</string>
     <string name="tab_configured_apps">已配置应用</string>
     <string name="filter_button">筛选</string>

@@ -56,7 +56,7 @@ public class GlobalPrefillActivitySourceSmokeTest {
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
         String binder = read("src/main/java/com/dpis/module/TemplateWorkspaceBinder.java");
 
-        assertTrue(mainActivity.contains("new TemplateWorkspaceBinder(this, createTemplateWorkspaceActions())"));
+        assertTrue(mainActivity.contains("new TemplateWorkspaceBinder(this, createTemplateWorkspaceActions(),"));
         assertTrue(mainActivity.contains("new Intent(MainActivity.this, GlobalPrefillActivity.class)"));
         assertTrue(mainActivity.contains("showToast(R.string.global_prefill_reset_success);"));
         assertTrue(mainActivity.contains("bindTemplateWorkspace();"));

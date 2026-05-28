@@ -15,19 +15,29 @@ final class QuickTemplateListAdapter {
         String format(long updatedAt);
     }
 
+    interface TemplateAction {
+        void run(String templateId);
+    }
+
     private final Context context;
     private final TemplateConfigSummaryFormatter formatter;
     private final UpdatedTimeFormatter updatedTimeFormatter;
-    private final Runnable placeholderAction;
+    private final TemplateAction editAction;
+    private final TemplateAction applyAction;
+    private final TemplateAction selectAction;
 
     QuickTemplateListAdapter(Context context,
             TemplateConfigSummaryFormatter formatter,
             UpdatedTimeFormatter updatedTimeFormatter,
-            Runnable placeholderAction) {
+            TemplateAction editAction,
+            TemplateAction applyAction,
+            TemplateAction selectAction) {
         this.context = context;
         this.formatter = formatter;
         this.updatedTimeFormatter = updatedTimeFormatter;
-        this.placeholderAction = placeholderAction;
+        this.editAction = editAction;
+        this.applyAction = applyAction;
+        this.selectAction = selectAction;
     }
 
     void bind(LinearLayout listContainer,
@@ -67,9 +77,9 @@ final class QuickTemplateListAdapter {
         summaryView.setText(result.summary());
         updatedView.setText(updatedTimeFormatter.format(template.updatedAt));
         bindMissingFont(missingFontView, result.typefaceStatus);
-        bindPlaceholderAction(card.findViewById(R.id.quick_template_apply_button));
-        bindPlaceholderAction(card.findViewById(R.id.quick_template_edit_button));
-        bindPlaceholderAction(card.findViewById(R.id.quick_template_select_button));
+        bindAction(card.findViewById(R.id.quick_template_apply_button), template.id, applyAction);
+        bindAction(card.findViewById(R.id.quick_template_edit_button), template.id, editAction);
+        bindAction(card.findViewById(R.id.quick_template_select_button), template.id, selectAction);
     }
 
     private void bindMissingFont(MaterialTextView view,
@@ -85,10 +95,11 @@ final class QuickTemplateListAdapter {
         view.setText("");
     }
 
-    private void bindPlaceholderAction(MaterialButton button) {
+    private void bindAction(MaterialButton button, String templateId, TemplateAction action) {
+        TouchFeedbackBinder.bindPressHaptic(button);
         button.setOnClickListener(v -> {
-            if (placeholderAction != null) {
-                placeholderAction.run();
+            if (action != null) {
+                action.run(templateId);
             }
         });
     }

@@ -20,15 +20,25 @@ final class TemplateWorkspaceBinder {
         void reset();
     }
 
+    interface QuickTemplateActions {
+        void edit(String templateId);
+
+        void create();
+    }
+
     private final Context context;
     private final SharedPreferences preferences;
     private final TemplateConfigSummaryFormatter formatter;
     private final QuickTemplateListAdapter quickTemplateListAdapter;
     private final GlobalPrefillActions globalPrefillActions;
+    private final QuickTemplateActions quickTemplateActions;
 
-    TemplateWorkspaceBinder(Context context, GlobalPrefillActions globalPrefillActions) {
+    TemplateWorkspaceBinder(Context context,
+            GlobalPrefillActions globalPrefillActions,
+            QuickTemplateActions quickTemplateActions) {
         this.context = context;
         this.globalPrefillActions = globalPrefillActions;
+        this.quickTemplateActions = quickTemplateActions;
         this.preferences = context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE);
         this.formatter = new TemplateConfigSummaryFormatter(
                 new ResourceSummaryText(context),
@@ -38,7 +48,9 @@ final class TemplateWorkspaceBinder {
                 context,
                 formatter,
                 this::formatUpdatedTime,
-                this::showNotWiredToast);
+                this::onEditTemplate,
+                this::onApplyTemplate,
+                this::onSelectTemplate);
     }
 
     void bind(View workspaceView) {
@@ -46,6 +58,7 @@ final class TemplateWorkspaceBinder {
             return;
         }
         bindGlobalPrefill(workspaceView);
+        bindCreateTemplateButton(workspaceView);
         LinearLayout listContainer = workspaceView.findViewById(R.id.quick_template_list_container);
         MaterialTextView emptyState = workspaceView.findViewById(R.id.quick_template_empty_state);
         List<QuickTemplateStore.QuickTemplate> templates =
@@ -72,6 +85,33 @@ final class TemplateWorkspaceBinder {
                 globalPrefillActions.reset();
             }
         });
+    }
+
+    private void bindCreateTemplateButton(View workspaceView) {
+        MaterialButton createButton = workspaceView.findViewById(R.id.quick_template_create_button);
+        if (createButton == null) {
+            return;
+        }
+        TouchFeedbackBinder.bindPressHaptic(createButton);
+        createButton.setOnClickListener(v -> {
+            if (quickTemplateActions != null) {
+                quickTemplateActions.create();
+            }
+        });
+    }
+
+    private void onEditTemplate(String templateId) {
+        if (quickTemplateActions != null) {
+            quickTemplateActions.edit(templateId);
+        }
+    }
+
+    private void onApplyTemplate(String templateId) {
+        showNotWiredToast();
+    }
+
+    private void onSelectTemplate(String templateId) {
+        showNotWiredToast();
     }
 
     private void bindMissingFont(MaterialTextView view,

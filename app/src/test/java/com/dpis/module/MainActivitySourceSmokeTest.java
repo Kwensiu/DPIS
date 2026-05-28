@@ -69,7 +69,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("setVisible(appPager, appWorkspace);"));
         assertTrue(source.contains("setVisible(templateWorkspaceContainer, !appWorkspace);"));
         assertTrue(source.contains(
-                "templateWorkspaceBinder = new TemplateWorkspaceBinder(this, createTemplateWorkspaceActions());"));
+                "templateWorkspaceBinder = new TemplateWorkspaceBinder(this, createTemplateWorkspaceActions(),"));
         assertTrue(source.contains("bindTemplateWorkspace();"));
         assertTrue(source.contains("templateWorkspaceBinder.bind(templateWorkspaceContainer);"));
         assertTrue(source.contains("searchFilterButton.setEnabled(appWorkspace);"));

@@ -46,6 +46,9 @@
             android:name=".GlobalPrefillActivity"
             android:exported="false" />
         <activity
+            android:name=".QuickTemplateEditActivity"
+            android:exported="false" />
+        <activity
             android:name=".ExperimentalSettingsActivity"
             android:exported="false" />
         <activity
