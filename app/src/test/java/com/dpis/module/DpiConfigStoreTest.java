@@ -12,6 +12,7 @@ import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -584,7 +585,7 @@ public class DpiConfigStoreTest {
     }
 
     @Test
-    public void snapshotBackupExcludesPrefillAndTemplateKeysUntilBackupSlice() {
+    public void snapshotBackupIncludesPrefillAndTemplateKeysWithoutFontLibraryMetadata() {
         FakePrefs prefs = new FakePrefs();
         assertTrue(new GlobalPrefillStore(prefs).write(new TemplateConfigValue(
                 ViewportTargetSpec.absoluteDp(411),
@@ -605,6 +606,12 @@ public class DpiConfigStoreTest {
                         FontApplyMode.SYSTEM_EMULATION,
                         "missing_template_font_id",
                         "textview_sp"))));
+        prefs.edit()
+                .putString("font.library.entries", "[{\"id\":\"missing_font_id\"}]")
+                .putString("font.library.migration_state", "done")
+                .putBoolean("font.debug.overlay_enabled", true)
+                .putString("runtime.log.ring", "debug log")
+                .commit();
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         Map<String, Object> all = store.snapshotAll();
@@ -612,11 +619,32 @@ public class DpiConfigStoreTest {
 
         assertEquals("missing_font_id", all.get("default_config.font.typeface_id"));
         assertEquals("Compact", all.get("template.template_a.name"));
-        assertFalse(backup.containsKey("default_config.font.typeface_id"));
-        assertFalse(backup.containsKey("default_config.viewport.width_dp"));
-        assertFalse(backup.containsKey(QuickTemplateStore.KEY_TEMPLATE_IDS));
-        assertFalse(backup.containsKey("template.template_a.name"));
-        assertFalse(backup.containsKey("template.template_a.config.font.typeface_id"));
+        assertEquals("missing_font_id", backup.get("default_config.font.typeface_id"));
+        assertEquals(411, backup.get("default_config.viewport.width_dp"));
+        assertEquals(ViewportApplyMode.AUTO, backup.get("default_config.viewport.mode"));
+        assertEquals(120, backup.get("default_config.font.scale_percent"));
+        assertEquals("resources_font", backup.get("default_config.font.hook_domains"));
+        assertEquals(new LinkedHashSet<>(Set.of("template_a")),
+                backup.get(QuickTemplateStore.KEY_TEMPLATE_IDS));
+        assertEquals("Compact", backup.get("template.template_a.name"));
+        assertEquals(1000L, backup.get("template.template_a.updated_at"));
+        assertEquals(new LinkedHashSet<>(Set.of("com.example.app")),
+                backup.get("template.template_a.selected_packages"));
+        assertEquals(ViewportTargetType.RELATIVE_SCALE,
+                backup.get("template.template_a.config.viewport.target_type"));
+        assertEquals(1100, backup.get("template.template_a.config.viewport.scale_permille"));
+        assertEquals(ViewportApplyMode.COMPAT,
+                backup.get("template.template_a.config.viewport.mode"));
+        assertEquals(115, backup.get("template.template_a.config.font.scale_percent"));
+        assertEquals(FontApplyMode.SYSTEM_EMULATION,
+                backup.get("template.template_a.config.font.mode"));
+        assertEquals("missing_template_font_id",
+                backup.get("template.template_a.config.font.typeface_id"));
+        assertEquals("textview_sp", backup.get("template.template_a.config.font.hook_domains"));
+        assertFalse(backup.containsKey("font.library.entries"));
+        assertFalse(backup.containsKey("font.library.migration_state"));
+        assertFalse(backup.containsKey("font.debug.overlay_enabled"));
+        assertFalse(backup.containsKey("runtime.log.ring"));
     }
 
     @Test
@@ -642,7 +670,7 @@ public class DpiConfigStoreTest {
     }
 
     @Test
-    public void replaceBackupIgnoresPrefillAndTemplateKeysUntilBackupSlice() {
+    public void replaceBackupRestoresPrefillAndTemplateKeysWithMissingTypefaceIds() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
         LinkedHashMap<String, Object> values = new LinkedHashMap<>();
@@ -651,19 +679,55 @@ public class DpiConfigStoreTest {
         values.put("font.com.max.xiaoheihe.typeface_id", "font_abcd1234");
         values.put("default_config.font.typeface_id", "missing_font_id");
         values.put("default_config.viewport.width_dp", 411);
+        values.put("default_config.viewport.target_type", ViewportTargetType.ABSOLUTE_DP);
+        values.put("default_config.viewport.mode", ViewportApplyMode.AUTO);
+        values.put("default_config.font.scale_percent", 120);
+        values.put("default_config.font.mode", FontApplyMode.FIELD_REWRITE);
+        values.put("default_config.font.hook_domains", "resources_font");
         values.put(QuickTemplateStore.KEY_TEMPLATE_IDS,
                 new LinkedHashSet<>(Set.of("template_a")));
         values.put("template.template_a.name", "Compact");
+        values.put("template.template_a.updated_at", 1000L);
+        values.put("template.template_a.selected_packages",
+                new LinkedHashSet<>(Set.of("com.example.app")));
+        values.put("template.template_a.config.viewport.target_type",
+                ViewportTargetType.RELATIVE_SCALE);
+        values.put("template.template_a.config.viewport.scale_permille", 1100);
+        values.put("template.template_a.config.viewport.mode", ViewportApplyMode.COMPAT);
+        values.put("template.template_a.config.font.scale_percent", 115);
+        values.put("template.template_a.config.font.mode", FontApplyMode.SYSTEM_EMULATION);
         values.put("template.template_a.config.font.typeface_id", "missing_template_font_id");
+        values.put("template.template_a.config.font.hook_domains", "textview_sp");
+        values.put("font.library.entries",
+                "[{\"id\":\"missing_font_id\"},{\"id\":\"missing_template_font_id\"}]");
+        values.put("font.library.migration_state", "done");
 
         assertTrue(store.replaceBackup(values));
 
         assertEquals("font_abcd1234", store.getTargetTypefaceId("com.max.xiaoheihe"));
-        assertFalse(prefs.contains("default_config.font.typeface_id"));
-        assertFalse(prefs.contains("default_config.viewport.width_dp"));
-        assertFalse(prefs.contains(QuickTemplateStore.KEY_TEMPLATE_IDS));
-        assertFalse(prefs.contains("template.template_a.name"));
-        assertFalse(prefs.contains("template.template_a.config.font.typeface_id"));
+        TemplateConfigValue prefill = new GlobalPrefillStore(prefs).read();
+        assertEquals(ViewportTargetSpec.absoluteDp(411), prefill.viewportTargetSpec);
+        assertEquals(ViewportApplyMode.AUTO, prefill.viewportApplyMode);
+        assertEquals(Integer.valueOf(120), prefill.fontScalePercent);
+        assertEquals(FontApplyMode.FIELD_REWRITE, prefill.fontApplyMode);
+        assertEquals("missing_font_id", prefill.typefaceId);
+        assertEquals("resources_font", prefill.fontHookDomainsRaw);
+
+        QuickTemplateStore.QuickTemplate template = new QuickTemplateStore(prefs).read("template_a");
+        assertNotNull(template);
+        assertEquals("Compact", template.name);
+        assertEquals(1000L, template.updatedAt);
+        assertEquals(new LinkedHashSet<>(Set.of("com.example.app")),
+                template.selectedPackages);
+        assertEquals(ViewportTargetSpec.relativeScale(1100),
+                template.configValue.viewportTargetSpec);
+        assertEquals(ViewportApplyMode.COMPAT, template.configValue.viewportApplyMode);
+        assertEquals(Integer.valueOf(115), template.configValue.fontScalePercent);
+        assertEquals(FontApplyMode.SYSTEM_EMULATION, template.configValue.fontApplyMode);
+        assertEquals("missing_template_font_id", template.configValue.typefaceId);
+        assertEquals("textview_sp", template.configValue.fontHookDomainsRaw);
+        assertFalse(prefs.contains("font.library.entries"));
+        assertFalse(prefs.contains("font.library.migration_state"));
     }
 
     @Test
