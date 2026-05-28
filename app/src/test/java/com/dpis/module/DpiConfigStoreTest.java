@@ -584,6 +584,42 @@ public class DpiConfigStoreTest {
     }
 
     @Test
+    public void snapshotBackupExcludesPrefillAndTemplateKeysUntilBackupSlice() {
+        FakePrefs prefs = new FakePrefs();
+        assertTrue(new GlobalPrefillStore(prefs).write(new TemplateConfigValue(
+                ViewportTargetSpec.absoluteDp(411),
+                ViewportApplyMode.AUTO,
+                120,
+                FontApplyMode.FIELD_REWRITE,
+                "missing_font_id",
+                "resources_font")));
+        assertTrue(new QuickTemplateStore(prefs).save(new QuickTemplateStore.QuickTemplate(
+                "template_a",
+                "Compact",
+                1000L,
+                Set.of("com.example.app"),
+                new TemplateConfigValue(
+                        ViewportTargetSpec.relativeScale(1100),
+                        ViewportApplyMode.COMPAT,
+                        115,
+                        FontApplyMode.SYSTEM_EMULATION,
+                        "missing_template_font_id",
+                        "textview_sp"))));
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        Map<String, Object> all = store.snapshotAll();
+        Map<String, Object> backup = store.snapshotBackup();
+
+        assertEquals("missing_font_id", all.get("default_config.font.typeface_id"));
+        assertEquals("Compact", all.get("template.template_a.name"));
+        assertFalse(backup.containsKey("default_config.font.typeface_id"));
+        assertFalse(backup.containsKey("default_config.viewport.width_dp"));
+        assertFalse(backup.containsKey(QuickTemplateStore.KEY_TEMPLATE_IDS));
+        assertFalse(backup.containsKey("template.template_a.name"));
+        assertFalse(backup.containsKey("template.template_a.config.font.typeface_id"));
+    }
+
+    @Test
     public void replaceBackupIgnoresFontLibraryMetadataButRestoresTypefaceSelection() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
@@ -603,6 +639,31 @@ public class DpiConfigStoreTest {
         assertFalse(prefs.contains("font.debug.overlay_enabled"));
         assertFalse(prefs.contains("runtime.log.ring"));
         assertFalse(prefs.contains("runtime.log.token"));
+    }
+
+    @Test
+    public void replaceBackupIgnoresPrefillAndTemplateKeysUntilBackupSlice() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        LinkedHashMap<String, Object> values = new LinkedHashMap<>();
+        values.put(DpiConfigStore.KEY_TARGET_PACKAGES,
+                new LinkedHashSet<>(Set.of("com.max.xiaoheihe")));
+        values.put("font.com.max.xiaoheihe.typeface_id", "font_abcd1234");
+        values.put("default_config.font.typeface_id", "missing_font_id");
+        values.put("default_config.viewport.width_dp", 411);
+        values.put(QuickTemplateStore.KEY_TEMPLATE_IDS,
+                new LinkedHashSet<>(Set.of("template_a")));
+        values.put("template.template_a.name", "Compact");
+        values.put("template.template_a.config.font.typeface_id", "missing_template_font_id");
+
+        assertTrue(store.replaceBackup(values));
+
+        assertEquals("font_abcd1234", store.getTargetTypefaceId("com.max.xiaoheihe"));
+        assertFalse(prefs.contains("default_config.font.typeface_id"));
+        assertFalse(prefs.contains("default_config.viewport.width_dp"));
+        assertFalse(prefs.contains(QuickTemplateStore.KEY_TEMPLATE_IDS));
+        assertFalse(prefs.contains("template.template_a.name"));
+        assertFalse(prefs.contains("template.template_a.config.font.typeface_id"));
     }
 
     @Test
