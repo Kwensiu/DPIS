@@ -101,7 +101,9 @@ final class AppConfigSheetActionBinder {
                 }
             }
             if (result[0] == 1) {
+                state.previewFromGlobalPrefill = false;
                 AppConfigDialogBinder.showSaveButtonFeedback(views.saveButton);
+                binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
                 binder.syncHyperOsNativeProxyAfterSave(item, views, state);
                 binder.requestScopeAfterSuccessfulSave(
                         dialogView, item, views, state, style, systemHooksEnabled);

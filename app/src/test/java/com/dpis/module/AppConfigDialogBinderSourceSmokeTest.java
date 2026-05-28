@@ -88,6 +88,26 @@ public class AppConfigDialogBinderSourceSmokeTest {
     }
 
     @Test
+    public void appConfigSheetShowsGlobalPrefillPreviewIndicatorUntilSave() throws IOException {
+        String binderSource = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String actionSource = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
+        String layout = read("src/main/res/layout/dialog_app_config.xml");
+        String strings = read("src/main/res/values/strings.xml");
+        String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
+
+        assertTrue(layout.contains("android:id=\"@+id/dialog_preview_status\""));
+        assertTrue(layout.contains("@string/dialog_global_prefill_preview_status"));
+        assertTrue(layout.contains("android:visibility=\"gone\""));
+        assertTrue(binderSource.contains("dialogView.findViewById(R.id.dialog_preview_status)"));
+        assertTrue(binderSource.contains("bindPreviewStatus(views.previewStatusView, state.previewFromGlobalPrefill)"));
+        assertTrue(binderSource.contains("previewStatusView.setVisibility(previewFromGlobalPrefill ? View.VISIBLE : View.GONE)"));
+        assertTrue(actionSource.contains("state.previewFromGlobalPrefill = false;"));
+        assertTrue(actionSource.contains("binder.refreshDialogState(views, state, style, systemHooksEnabled, item);"));
+        assertTrue(strings.contains("Preview from global prefill"));
+        assertTrue(zhStrings.contains("来自全局预填的预览"));
+    }
+
+    @Test
     public void saveSuccessRequestsKnownMissingScopeOnce() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
         int methodStart = source.indexOf("void requestScopeAfterSuccessfulSave");

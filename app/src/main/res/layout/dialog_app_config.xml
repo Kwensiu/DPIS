@@ -20,6 +20,8 @@
 
                 <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dialog_app_config_status_spacing_top" android:maxLines="1" android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
 
+                <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_preview_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dialog_app_config_status_spacing_top" android:text="@string/dialog_global_prefill_preview_status" android:textAppearance="@style/TextAppearance.Material3.BodySmall" android:textColor="?attr/colorPrimary" android:visibility="gone" />
+
             </LinearLayout>
         </LinearLayout>
 

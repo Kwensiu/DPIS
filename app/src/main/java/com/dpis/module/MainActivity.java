@@ -1137,12 +1137,17 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         if (pagerAdapter != null) {
             pagerAdapter.refreshVisibleStatuses();
         }
+        DpiConfigStore store = getUiConfigStore();
+        TemplateConfigValue globalPrefill = new GlobalPrefillStore(
+                getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE)).read();
+        AppListItem sheetItem = AppConfigPrefillPreview.applyIfEligible(
+                item, store, globalPrefill);
         boolean systemHooksEnabled = isSystemHookEnabledFromStore();
         ViewGroup root = findViewById(android.R.id.content);
         View dialogView = LayoutInflater.from(this).inflate(
                 R.layout.dialog_app_config, root, false);
         new AppConfigDialogBinder(this, createAppConfigDialogHost()).bind(
-                dialogView, item, systemHooksEnabled);
+                dialogView, sheetItem, systemHooksEnabled);
         new AppConfigDialogCoordinator(this).show(dialogView);
     }
 

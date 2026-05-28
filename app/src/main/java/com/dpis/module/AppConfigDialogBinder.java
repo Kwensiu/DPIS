@@ -106,6 +106,7 @@ final class AppConfigDialogBinder {
                 dialogView.findViewById(R.id.dialog_title),
                 dialogView.findViewById(R.id.dialog_package),
                 dialogView.findViewById(R.id.dialog_status),
+                dialogView.findViewById(R.id.dialog_preview_status),
                 dialogView.findViewById(R.id.dialog_viewport_input_layout),
                 dialogView.findViewById(R.id.dialog_viewport_input),
                 dialogView.findViewById(R.id.dialog_font_scale_input_layout),
@@ -156,6 +157,7 @@ final class AppConfigDialogBinder {
                 views.viewportModeToggle,
                 views.fontInputLayout, views.fontInputView, views.saveButton);
         return new AppConfigDialogState(item.inScope, item.scopeKnown, item.dpisEnabled,
+                item.previewFromGlobalPrefill,
                 selectedTypefaceId,
                 initialViewportType,
                 initialViewportInput,
@@ -190,11 +192,19 @@ final class AppConfigDialogBinder {
                 systemHooksEnabled,
                 item.packageName,
                 item.viewportMode);
+        bindPreviewStatus(views.previewStatusView, state.previewFromGlobalPrefill);
         bindScopeButton(views.scopeButton, state.scopeSelected, state.scopeKnown,
                 style.defaultActionBgTint, style.defaultActionStrokeWidth, style.defaultActionTextColor);
         bindDpisToggleButton(views.dpisToggleButton, state.dpisEnabled,
                 style.defaultActionBgTint, style.defaultActionStrokeWidth, style.defaultActionTextColor);
         bindFontHookDomainsButton(views.fontHookDomainsButton, item.packageName);
+    }
+
+    private void bindPreviewStatus(MaterialTextView previewStatusView, boolean previewFromGlobalPrefill) {
+        previewStatusView.setVisibility(previewFromGlobalPrefill ? View.VISIBLE : View.GONE);
+        if (previewFromGlobalPrefill) {
+            previewStatusView.setText(R.string.dialog_global_prefill_preview_status);
+        }
     }
 
     void bindTypefaceSelector(MaterialButton selectorButton, String selectedTypefaceId) {
@@ -914,6 +924,7 @@ final class AppConfigDialogBinder {
         final MaterialTextView titleView;
         final MaterialTextView packageView;
         final MaterialTextView statusView;
+        final MaterialTextView previewStatusView;
         final TextInputLayout viewportInputLayout;
         final TextInputEditText viewportInputView;
         final TextInputLayout fontInputLayout;
@@ -934,6 +945,7 @@ final class AppConfigDialogBinder {
                 MaterialTextView titleView,
                 MaterialTextView packageView,
                 MaterialTextView statusView,
+                MaterialTextView previewStatusView,
                 TextInputLayout viewportInputLayout,
                 TextInputEditText viewportInputView,
                 TextInputLayout fontInputLayout,
@@ -953,6 +965,7 @@ final class AppConfigDialogBinder {
             this.titleView = titleView;
             this.packageView = packageView;
             this.statusView = statusView;
+            this.previewStatusView = previewStatusView;
             this.viewportInputLayout = viewportInputLayout;
             this.viewportInputView = viewportInputView;
             this.fontInputLayout = fontInputLayout;
@@ -976,6 +989,7 @@ final class AppConfigDialogBinder {
         boolean scopeKnown;
         boolean scopeRequestPending;
         boolean dpisEnabled;
+        boolean previewFromGlobalPrefill;
         String selectedTypefaceId;
         String viewportScaleInput = "";
         String viewportAbsoluteInput = "";
@@ -983,6 +997,7 @@ final class AppConfigDialogBinder {
         AppConfigDialogState(boolean scopeSelected,
                 boolean scopeKnown,
                 boolean dpisEnabled,
+                boolean previewFromGlobalPrefill,
                 String selectedTypefaceId,
                 String initialViewportType,
                 String initialViewportInput,
@@ -991,6 +1006,7 @@ final class AppConfigDialogBinder {
             this.scopeSelected = scopeSelected;
             this.scopeKnown = scopeKnown;
             this.dpisEnabled = dpisEnabled;
+            this.previewFromGlobalPrefill = previewFromGlobalPrefill;
             this.selectedTypefaceId = selectedTypefaceId;
             this.viewportScaleInput = valueOrEmpty(initialViewportScaleInput);
             this.viewportAbsoluteInput = valueOrEmpty(initialViewportAbsoluteInput);

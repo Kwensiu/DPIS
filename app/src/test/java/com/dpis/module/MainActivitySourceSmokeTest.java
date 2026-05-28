@@ -277,6 +277,9 @@ public class MainActivitySourceSmokeTest {
     public void showEditDialog_delegatesSheetPresentationToCoordinator() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
+        assertTrue(source.contains("new GlobalPrefillStore("));
+        assertTrue(source.contains("AppConfigPrefillPreview.applyIfEligible("));
+        assertTrue(source.contains("dialogView, sheetItem, systemHooksEnabled"));
         assertTrue(source.contains("new AppConfigDialogBinder(this, createAppConfigDialogHost()).bind("));
         assertTrue(source.contains("new AppConfigDialogCoordinator(this).show("));
         assertTrue(!source.contains("private void bindDialogValidation("));
