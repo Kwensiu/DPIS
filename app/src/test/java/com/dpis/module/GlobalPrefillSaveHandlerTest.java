@@ -1,0 +1,111 @@
+package com.dpis.module;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+public class GlobalPrefillSaveHandlerTest {
+    @Test
+    public void saveWritesOnlyDefaultConfigKeys() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.absoluteDp(411)));
+        assertTrue(store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.SYSTEM));
+        assertTrue(store.setTargetFontScalePercent("com.example.app", 120));
+        assertTrue(store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE));
+        assertTrue(store.setTargetTypefaceId("com.example.app", "existing_font"));
+        assertTrue(store.setPackageFontHookDomainsRaw("com.example.app", "resources_font"));
+        Map<String, Object> beforeNonDefault = nonDefaultEntries(prefs);
+
+        GlobalPrefillSaveHandler.Result result = new GlobalPrefillSaveHandler().save(
+                new GlobalPrefillStore(prefs),
+                new GlobalPrefillSaveHandler.Request(
+                        "125",
+                        ViewportTargetType.RELATIVE_SCALE,
+                        ViewportApplyMode.SYSTEM,
+                        "150",
+                        FontApplyMode.FIELD_REWRITE,
+                        "missing_font_id",
+                        "resources_font,unknown_domain"));
+
+        assertTrue(result.success);
+        assertEquals(beforeNonDefault, nonDefaultEntries(prefs));
+        assertEquals(new TemplateConfigValue(
+                        ViewportTargetSpec.relativeScale(1250),
+                        ViewportApplyMode.SYSTEM,
+                        150,
+                        FontApplyMode.FIELD_REWRITE,
+                        "missing_font_id",
+                        "resources_font,unknown_domain"),
+                new GlobalPrefillStore(prefs).read());
+        assertEquals(Set.of("com.example.app"), store.getConfiguredPackages());
+    }
+
+    @Test
+    public void saveWithInvalidNumericInputDoesNotChangeStoredValues() {
+        FakePrefs prefs = new FakePrefs();
+        GlobalPrefillStore globalPrefillStore = new GlobalPrefillStore(prefs);
+        assertTrue(globalPrefillStore.write(new TemplateConfigValue(
+                ViewportTargetSpec.absoluteDp(480),
+                ViewportApplyMode.AUTO,
+                135,
+                FontApplyMode.SYSTEM_EMULATION,
+                "font_before",
+                "resources_font")));
+        Map<String, Object> before = new HashMap<>(prefs.getAll());
+
+        GlobalPrefillSaveHandler.Result result = new GlobalPrefillSaveHandler().save(
+                globalPrefillStore,
+                new GlobalPrefillSaveHandler.Request(
+                        "301",
+                        ViewportTargetType.RELATIVE_SCALE,
+                        ViewportApplyMode.SYSTEM,
+                        "150",
+                        FontApplyMode.FIELD_REWRITE,
+                        "font_after",
+                        "resources_font"));
+
+        assertFalse(result.success);
+        assertEquals(R.string.status_save_invalid, result.messageResId);
+        assertEquals(before, prefs.getAll());
+    }
+
+    @Test
+    public void clearLeavesPackageConfigAndTargetPackagesUntouched() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.setTargetFontScalePercent("com.example.app", 110));
+        assertTrue(store.setTargetTypefaceId("com.example.app", "existing_font"));
+        GlobalPrefillStore globalPrefillStore = new GlobalPrefillStore(prefs);
+        assertTrue(globalPrefillStore.write(new TemplateConfigValue(
+                ViewportTargetSpec.absoluteDp(540),
+                ViewportApplyMode.COMPAT,
+                180,
+                FontApplyMode.FIELD_REWRITE,
+                "missing_font_id",
+                "resources_font")));
+        Map<String, Object> beforeNonDefault = nonDefaultEntries(prefs);
+
+        assertTrue(globalPrefillStore.clear());
+
+        assertEquals(beforeNonDefault, nonDefaultEntries(prefs));
+        assertEquals(TemplateConfigValue.EMPTY, globalPrefillStore.read());
+        assertEquals(Set.of("com.example.app"), store.getConfiguredPackages());
+    }
+
+    private static Map<String, Object> nonDefaultEntries(FakePrefs prefs) {
+        Map<String, Object> result = new HashMap<>();
+        for (Map.Entry<String, ?> entry : prefs.getAll().entrySet()) {
+            if (!entry.getKey().startsWith("default_config.")) {
+                result.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return result;
+    }
+}

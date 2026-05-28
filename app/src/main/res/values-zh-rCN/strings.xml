@@ -66,6 +66,12 @@
     <string name="template_workspace_action_select">选择</string>
     <string name="template_workspace_action_reset">重置</string>
     <string name="template_workspace_not_wired">模板操作暂未接入。</string>
+    <string name="global_prefill_page_title">全局预填</string>
+    <string name="global_prefill_page_description">仅用于预填全新且未配置的应用。这里保存不会修改任何应用配置，也不会变更作用域状态。</string>
+    <string name="global_prefill_save_success">已保存全局预填</string>
+    <string name="global_prefill_save_failed">保存全局预填失败</string>
+    <string name="global_prefill_reset_success">已重置全局预填</string>
+    <string name="global_prefill_reset_failed">重置全局预填失败</string>
     <string name="tab_all_apps">全部应用</string>
     <string name="tab_configured_apps">已配置应用</string>
     <string name="filter_button">筛选</string>

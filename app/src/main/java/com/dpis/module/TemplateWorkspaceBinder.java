@@ -14,13 +14,21 @@ import java.util.Date;
 import java.util.List;
 
 final class TemplateWorkspaceBinder {
+    interface GlobalPrefillActions {
+        void edit();
+
+        void reset();
+    }
+
     private final Context context;
     private final SharedPreferences preferences;
     private final TemplateConfigSummaryFormatter formatter;
     private final QuickTemplateListAdapter quickTemplateListAdapter;
+    private final GlobalPrefillActions globalPrefillActions;
 
-    TemplateWorkspaceBinder(Context context) {
+    TemplateWorkspaceBinder(Context context, GlobalPrefillActions globalPrefillActions) {
         this.context = context;
+        this.globalPrefillActions = globalPrefillActions;
         this.preferences = context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE);
         this.formatter = new TemplateConfigSummaryFormatter(
                 new ResourceSummaryText(context),
@@ -54,8 +62,16 @@ final class TemplateWorkspaceBinder {
         MaterialButton resetButton = workspaceView.findViewById(R.id.global_prefill_reset_button);
         summaryView.setText(result.summary());
         bindMissingFont(missingFontView, result.typefaceStatus);
-        editButton.setOnClickListener(v -> showNotWiredToast());
-        resetButton.setOnClickListener(v -> showNotWiredToast());
+        editButton.setOnClickListener(v -> {
+            if (globalPrefillActions != null) {
+                globalPrefillActions.edit();
+            }
+        });
+        resetButton.setOnClickListener(v -> {
+            if (globalPrefillActions != null) {
+                globalPrefillActions.reset();
+            }
+        });
     }
 
     private void bindMissingFont(MaterialTextView view,

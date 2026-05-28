@@ -66,6 +66,12 @@
     <string name="template_workspace_action_select">Select</string>
     <string name="template_workspace_action_reset">Reset</string>
     <string name="template_workspace_not_wired">Template action is not wired yet.</string>
+    <string name="global_prefill_page_title">Global prefill</string>
+    <string name="global_prefill_page_description">Used only to prefill brand-new unconfigured apps. Saving here does not modify any app config or scope state.</string>
+    <string name="global_prefill_save_success">Global prefill saved</string>
+    <string name="global_prefill_save_failed">Failed to save global prefill</string>
+    <string name="global_prefill_reset_success">Global prefill reset</string>
+    <string name="global_prefill_reset_failed">Failed to reset global prefill</string>
     <string name="tab_all_apps">All apps</string>
     <string name="tab_configured_apps">Configured apps</string>
     <string name="filter_button">Filter</string>

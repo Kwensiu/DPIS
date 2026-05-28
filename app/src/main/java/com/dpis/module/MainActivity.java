@@ -201,7 +201,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         filterTabs = findViewById(R.id.filter_tabs);
         appWorkspaceDivider = findViewById(R.id.app_workspace_divider);
         templateWorkspaceContainer = findViewById(R.id.template_workspace_container);
-        templateWorkspaceBinder = new TemplateWorkspaceBinder(this);
+        templateWorkspaceBinder = new TemplateWorkspaceBinder(this, createTemplateWorkspaceActions());
         workspaceSwitch = findViewById(R.id.workspace_switch);
         pagerAdapter = new AppListPagerAdapter(
                 this::showEditDialog,
@@ -1230,6 +1230,27 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         new AppConfigDialogBinder(this, createAppConfigDialogHost()).bind(
                 dialogView, sheetItem, systemHooksEnabled);
         new AppConfigDialogCoordinator(this).show(dialogView);
+    }
+
+    private TemplateWorkspaceBinder.GlobalPrefillActions createTemplateWorkspaceActions() {
+        return new TemplateWorkspaceBinder.GlobalPrefillActions() {
+            @Override
+            public void edit() {
+                startActivity(new Intent(MainActivity.this, GlobalPrefillActivity.class));
+            }
+
+            @Override
+            public void reset() {
+                GlobalPrefillStore store = new GlobalPrefillStore(
+                        getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE));
+                if (store.clear()) {
+                    showToast(R.string.global_prefill_reset_success);
+                    bindTemplateWorkspace();
+                    return;
+                }
+                showToast(R.string.global_prefill_reset_failed);
+            }
+        };
     }
 
     private AppConfigDialogBinder.Host createAppConfigDialogHost() {
