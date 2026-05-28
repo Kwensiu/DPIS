@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class AppConfigSaveHandlerTest {
@@ -135,6 +136,60 @@ public class AppConfigSaveHandlerTest {
 
         assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(store, item, null));
 
+        assertFalse(store.hasRealPackageConfig(item.packageName));
+        assertFalse(store.getConfiguredPackages().contains(item.packageName));
+    }
+
+    @Test
+    public void resetClearsPreviewOnlyHookDomainsAndViewportApplyMode() {
+        AppConfigDialogBinder.AppConfigDialogState state =
+                new AppConfigDialogBinder.AppConfigDialogState(
+                        false,
+                        true,
+                        true,
+                        true,
+                        "resources_font",
+                        ViewportApplyMode.COMPAT,
+                        null,
+                        ViewportTargetType.RELATIVE_SCALE,
+                        "",
+                        "",
+                        "");
+
+        state.clearPreviewOnlyStateForReset();
+
+        assertNull(state.previewFontHookDomainsRaw);
+        assertEquals(ViewportApplyMode.OFF, state.viewportApplyMode);
+    }
+
+    @Test
+    public void resetThenSaveDoesNotPersistHiddenPreviewHookDomains() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.COMPAT,
+                null,
+                FontApplyMode.OFF,
+                null,
+                "resources_font"));
+        AppConfigDialogBinder.AppConfigDialogState state =
+                new AppConfigDialogBinder.AppConfigDialogState(
+                        false,
+                        true,
+                        true,
+                        true,
+                        item.previewFontHookDomainsRaw,
+                        item.viewportMode,
+                        null,
+                        ViewportTargetType.RELATIVE_SCALE,
+                        "",
+                        "",
+                        "");
+
+        state.clearPreviewOnlyStateForReset();
+
+        assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(
+                store, item, state.previewFontHookDomainsRaw));
         assertFalse(store.hasRealPackageConfig(item.packageName));
         assertFalse(store.getConfiguredPackages().contains(item.packageName));
     }

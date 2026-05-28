@@ -204,6 +204,7 @@ final class AppConfigDialogBinder {
         bindScopeButton(views.scopeButton, state.scopeSelected, state.scopeKnown,
                 style.defaultActionBgTint, style.defaultActionStrokeWidth, style.defaultActionTextColor);
         bindDpisToggleButton(views.dpisToggleButton, state.dpisEnabled,
+                state.previewFromGlobalPrefill,
                 style.defaultActionBgTint, style.defaultActionStrokeWidth, style.defaultActionTextColor);
         bindFontHookDomainsButton(
                 views.fontHookDomainsButton,
@@ -890,6 +891,7 @@ final class AppConfigDialogBinder {
 
     private void bindDpisToggleButton(MaterialButton dpisToggleButton,
             boolean dpisEnabled,
+            boolean previewFromGlobalPrefill,
             ColorStateList defaultBgTint,
             int defaultStrokeWidth,
             int defaultTextColor) {
@@ -907,6 +909,8 @@ final class AppConfigDialogBinder {
         dpisToggleButton.setTextColor(enabledActive ? activeFgColor : defaultTextColor);
         dpisToggleButton.setStrokeWidth(enabledActive ? 0 : defaultStrokeWidth);
         dpisToggleButton.setContentDescription(buttonText);
+        dpisToggleButton.setEnabled(!previewFromGlobalPrefill);
+        dpisToggleButton.setAlpha(previewFromGlobalPrefill ? 0.6f : 1f);
     }
 
     void bindFontHookDomainsButton(MaterialButton button,
@@ -1060,6 +1064,14 @@ final class AppConfigDialogBinder {
         void clearViewportInputs() {
             viewportScaleInput = "";
             viewportAbsoluteInput = "";
+        }
+
+        void clearPreviewOnlyStateForReset() {
+            if (!previewFromGlobalPrefill) {
+                return;
+            }
+            previewFontHookDomainsRaw = null;
+            viewportApplyMode = ViewportApplyMode.OFF;
         }
 
         private static String valueOrEmpty(String value) {

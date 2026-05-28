@@ -48,6 +48,9 @@ final class AppConfigSheetActionBinder {
         });
         views.dpisToggleButton.setOnClickListener(v -> {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
+            if (state.previewFromGlobalPrefill) {
+                return;
+            }
             boolean nextEnabled = !state.dpisEnabled;
             if (host.setDpisEnabled(item.packageName, nextEnabled)) {
                 state.dpisEnabled = nextEnabled;
@@ -67,6 +70,7 @@ final class AppConfigSheetActionBinder {
             WechatTargetFieldSheetBinder.clearDraft(dialogView);
             state.selectedTypefaceId = null;
             state.clearViewportInputs();
+            state.clearPreviewOnlyStateForReset();
             binder.bindTypefaceSelector(views.typefaceSelectorButton, state.selectedTypefaceId);
             AppConfigDialogBinder.bindViewportModeToggle(
                     views.viewportModeToggle, ViewportTargetType.RELATIVE_SCALE, true);

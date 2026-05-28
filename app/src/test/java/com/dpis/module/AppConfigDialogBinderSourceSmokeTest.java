@@ -43,6 +43,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("ProcessAction.STOP"));
         assertTrue(source.contains("views.disableButton.setOnClickListener"));
         assertTrue(source.contains("views.viewportInputView.setText(\"\")"));
+        assertTrue(source.contains("state.clearPreviewOnlyStateForReset();"));
         assertTrue(source.contains("AppConfigDialogBinder.bindViewportModeToggle("));
         assertTrue(source.contains("views.viewportModeToggle, ViewportTargetType.RELATIVE_SCALE, true)"));
         assertTrue(source.contains("AppConfigDialogBinder.bindFontModeToggle("));
@@ -102,11 +103,29 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(binderSource.contains("dialogView.findViewById(R.id.dialog_preview_status)"));
         assertTrue(binderSource.contains("bindPreviewStatus(views.previewStatusView, state.previewFromGlobalPrefill)"));
         assertTrue(binderSource.contains("previewStatusView.setVisibility(previewFromGlobalPrefill ? View.VISIBLE : View.GONE)"));
+        assertTrue(binderSource.contains("bindDpisToggleButton(views.dpisToggleButton, state.dpisEnabled"));
+        assertTrue(binderSource.contains("state.previewFromGlobalPrefill,"));
+        assertTrue(binderSource.contains("dpisToggleButton.setEnabled(!previewFromGlobalPrefill);"));
+        assertTrue(binderSource.contains("dpisToggleButton.setAlpha(previewFromGlobalPrefill ? 0.6f : 1f);"));
         assertTrue(actionSource.contains("state.previewFromGlobalPrefill = false;"));
         assertTrue(actionSource.contains("state.previewFontHookDomainsRaw = null;"));
         assertTrue(actionSource.contains("binder.refreshDialogState(views, state, style, systemHooksEnabled, item);"));
         assertTrue(strings.contains("Preview from global prefill"));
         assertTrue(zhStrings.contains("来自全局预填的预览"));
+    }
+
+    @Test
+    public void previewDpisToggleReturnsBeforeWritingPackageConfig() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
+        int toggleStart = source.indexOf("views.dpisToggleButton.setOnClickListener");
+        int toggleEnd = source.indexOf("views.fontHookDomainsButton.setOnClickListener", toggleStart);
+        String toggleBlock = source.substring(toggleStart, toggleEnd);
+
+        int previewGuard = toggleBlock.indexOf("if (state.previewFromGlobalPrefill)");
+        int storeWrite = toggleBlock.indexOf("host.setDpisEnabled(item.packageName, nextEnabled)");
+        assertTrue(previewGuard > 0);
+        assertTrue(storeWrite > previewGuard);
+        assertTrue(toggleBlock.indexOf("return;", previewGuard) < storeWrite);
     }
 
     @Test
