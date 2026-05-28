@@ -72,7 +72,8 @@ public class AppConfigSaveHandlerTest {
                 null,
                 "resources_font"));
 
-        assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(store, item));
+        assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(
+                store, item, "resources_font"));
 
         assertTrue(store.hasRealPackageConfig(item.packageName));
         assertTrue(store.getConfiguredPackages().contains(item.packageName));
@@ -85,7 +86,7 @@ public class AppConfigSaveHandlerTest {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
 
-        assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(store, item));
+        assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(store, item, null));
 
         assertFalse(store.hasRealPackageConfig(item.packageName));
     }

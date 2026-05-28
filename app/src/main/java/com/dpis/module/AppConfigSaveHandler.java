@@ -9,6 +9,7 @@ final class AppConfigSaveHandler {
             String viewportTargetType,
             String fontMode,
             String selectedTypefaceId,
+            String previewFontHookDomainsRaw,
             String viewportScaleInput,
             String viewportAbsoluteInput,
             boolean systemHooksEnabled,
@@ -65,7 +66,7 @@ final class AppConfigSaveHandler {
             } else {
                 saved = store.setTargetFontScalePercent(item.packageName, fontScalePercent) && saved;
                 saved = store.setTargetFontApplyMode(item.packageName, fontMode) && saved;
-                saved = persistPreviewOnlyConfig(store, item) && saved;
+                saved = persistPreviewOnlyConfig(store, item, previewFontHookDomainsRaw) && saved;
                 FontRuntimePropertySyncer.publishTargetAsync(
                         item.packageName,
                         fontScalePercent,
@@ -73,12 +74,6 @@ final class AppConfigSaveHandler {
                         FontHookDomainDecision.isHyperOsNativeFlutterEnabled(
                                 store, item.packageName));
                 FontHookDomainPropertySyncer.publishFromStoreAsync(item.packageName, store);
-            }
-            if (fontScalePercent == null) {
-                saved = persistPreviewOnlyConfig(store, item) && saved;
-                if (item.previewFromGlobalPrefill && item.previewFontHookDomainsRaw != null) {
-                    FontHookDomainPropertySyncer.publishFromStoreAsync(item.packageName, store);
-                }
             }
             if (selectedTypefaceId == null || selectedTypefaceId.isBlank()) {
                 saved = store.clearTargetTypefaceId(item.packageName) && saved;
@@ -99,12 +94,14 @@ final class AppConfigSaveHandler {
         }
     }
 
-    static boolean persistPreviewOnlyConfig(DpiConfigStore store, AppListItem item) {
+    static boolean persistPreviewOnlyConfig(DpiConfigStore store,
+            AppListItem item,
+            String previewFontHookDomainsRaw) {
         if (store == null || item == null || !item.previewFromGlobalPrefill
-                || item.previewFontHookDomainsRaw == null) {
+                || previewFontHookDomainsRaw == null) {
             return true;
         }
-        return store.setPackageFontHookDomainsRaw(item.packageName, item.previewFontHookDomainsRaw);
+        return store.setPackageFontHookDomainsRaw(item.packageName, previewFontHookDomainsRaw);
     }
 
     static String resolveViewportApplyModeForSave(DpiConfigStore store,

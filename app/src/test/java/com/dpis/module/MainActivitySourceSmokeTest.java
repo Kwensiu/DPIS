@@ -367,13 +367,14 @@ public class MainActivitySourceSmokeTest {
     public void appConfigHostWiresFontHookDomainEditor() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
-        assertTrue(source.contains("public void showFontHookDomains(AppListItem item, Runnable onStateChanged)"));
-        assertTrue(source.contains("MainActivity.this.showFontHookDomains(item, onStateChanged);"));
-        assertTrue(source.contains("public String getFontHookDomainsButtonText(String packageName)"));
+        assertTrue(source.contains("public void showFontHookDomains(AppListItem item,"));
+        assertTrue(source.contains("AppConfigDialogBinder.AppConfigDialogState state,"));
+        assertTrue(source.contains("MainActivity.this.showFontHookDomains(item, state, onStateChanged);"));
+        assertTrue(source.contains("public String getFontHookDomainsButtonText(AppListItem item, String previewFontHookDomainsRaw)"));
         assertTrue(source.contains("new HookDomainOverrideStore(store)"));
         assertTrue(source.contains("FontHookDomainDialog.show(this,"));
         assertTrue(source.contains("overrideStore.saveCustomIfDifferentFromAutomatic("));
-        assertTrue(source.contains("overrideStore.restoreRecommended(packageName)"));
+        assertTrue(source.contains("new HookDomainOverrideStore(store).restoreRecommended(packageName)"));
         assertTrue(source.contains("publishFontRuntimeTarget(packageName, store)"));
         assertTrue(source.contains("FontRuntimePropertySyncer.publishTargetAsync("));
         assertTrue(source.contains("HookExecutionPlanner.buildPlan("));
@@ -383,6 +384,28 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("FontHookDomainRegistry.orderedCustomizableDisplaySubset("));
         assertTrue(source.contains("FontApplyMode.FIELD_REWRITE"));
         assertTrue(source.contains("ViewportApplyMode.OFF"));
+    }
+
+    @Test
+    public void previewFontHookDomainEditorUsesSheetStateOnly() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+        int methodStart = source.indexOf("private void showFontHookDomains(AppListItem item,");
+        int methodEnd = source.indexOf("private static void publishFontRuntimeTarget", methodStart);
+        String method = source.substring(methodStart, methodEnd);
+
+        assertTrue(method.contains("boolean previewMode = item.previewFromGlobalPrefill"));
+        assertTrue(method.contains("HookDomainOverrideStore.fromRaw(state != null"));
+        assertTrue(method.contains("state.previewFontHookDomainsRaw = HookDomainOverrideStore.rawValueForSelection("));
+        assertTrue(method.contains("state.previewFontHookDomainsRaw = null;"));
+        assertTrue(method.contains("if (previewMode)"));
+
+        int previewBranch = method.indexOf("if (previewMode)");
+        int realStoreWrite = method.indexOf("overrideStore.saveCustomIfDifferentFromAutomatic(", previewBranch);
+        int realRestore = method.indexOf("new HookDomainOverrideStore(store).restoreRecommended(packageName)", previewBranch);
+        assertTrue(realStoreWrite > previewBranch);
+        assertTrue(realRestore > previewBranch);
+        assertTrue(method.indexOf("return true;", previewBranch) < realStoreWrite);
+        assertTrue(method.indexOf("return true;", realStoreWrite) < realRestore);
     }
 
     private static String read(String relativePath) throws IOException {

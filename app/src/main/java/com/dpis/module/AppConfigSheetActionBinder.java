@@ -57,8 +57,9 @@ final class AppConfigSheetActionBinder {
         });
         views.fontHookDomainsButton.setOnClickListener(v -> {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            host.showFontHookDomains(item,
-                    () -> binder.bindFontHookDomainsButton(views.fontHookDomainsButton, item.packageName));
+            host.showFontHookDomains(item, state,
+                    () -> binder.bindFontHookDomainsButton(
+                            views.fontHookDomainsButton, item, state.previewFontHookDomainsRaw));
         });
         views.disableButton.setOnClickListener(v -> {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
@@ -88,6 +89,7 @@ final class AppConfigSheetActionBinder {
                     AppConfigDialogBinder.resolveViewportMode(views.viewportModeToggle),
                     AppConfigDialogBinder.resolveFontMode(views.fontModeToggle),
                     state.selectedTypefaceId,
+                    state.previewFontHookDomainsRaw,
                     state.viewportScaleInput,
                     state.viewportAbsoluteInput);
             if (result[0] == 1) {
@@ -102,6 +104,7 @@ final class AppConfigSheetActionBinder {
             }
             if (result[0] == 1) {
                 state.previewFromGlobalPrefill = false;
+                state.previewFontHookDomainsRaw = null;
                 AppConfigDialogBinder.showSaveButtonFeedback(views.saveButton);
                 binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
                 binder.syncHyperOsNativeProxyAfterSave(item, views, state);

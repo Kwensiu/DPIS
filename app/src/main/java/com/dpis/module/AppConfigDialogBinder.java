@@ -58,9 +58,11 @@ final class AppConfigDialogBinder {
 
         boolean setDpisEnabled(String packageName, boolean enabled);
 
-        void showFontHookDomains(AppListItem item, Runnable onStateChanged);
+        void showFontHookDomains(AppListItem item,
+                AppConfigDialogState state,
+                Runnable onStateChanged);
 
-        String getFontHookDomainsButtonText(String packageName);
+        String getFontHookDomainsButtonText(AppListItem item, String previewFontHookDomainsRaw);
 
         void openTypefaceLibrary();
 
@@ -70,6 +72,7 @@ final class AppConfigDialogBinder {
                 String viewportMode,
                 String fontMode,
                 String selectedTypefaceId,
+                String previewFontHookDomainsRaw,
                 String viewportScaleInput,
                 String viewportAbsoluteInput);
 
@@ -158,6 +161,7 @@ final class AppConfigDialogBinder {
                 views.fontInputLayout, views.fontInputView, views.saveButton);
         return new AppConfigDialogState(item.inScope, item.scopeKnown, item.dpisEnabled,
                 item.previewFromGlobalPrefill,
+                item.previewFontHookDomainsRaw,
                 selectedTypefaceId,
                 initialViewportType,
                 initialViewportInput,
@@ -197,7 +201,7 @@ final class AppConfigDialogBinder {
                 style.defaultActionBgTint, style.defaultActionStrokeWidth, style.defaultActionTextColor);
         bindDpisToggleButton(views.dpisToggleButton, state.dpisEnabled,
                 style.defaultActionBgTint, style.defaultActionStrokeWidth, style.defaultActionTextColor);
-        bindFontHookDomainsButton(views.fontHookDomainsButton, item.packageName);
+        bindFontHookDomainsButton(views.fontHookDomainsButton, item, state.previewFontHookDomainsRaw);
     }
 
     private void bindPreviewStatus(MaterialTextView previewStatusView, boolean previewFromGlobalPrefill) {
@@ -897,8 +901,8 @@ final class AppConfigDialogBinder {
         dpisToggleButton.setContentDescription(buttonText);
     }
 
-    void bindFontHookDomainsButton(MaterialButton button, String packageName) {
-        String buttonText = host.getFontHookDomainsButtonText(packageName);
+    void bindFontHookDomainsButton(MaterialButton button, AppListItem item, String previewFontHookDomainsRaw) {
+        String buttonText = host.getFontHookDomainsButtonText(item, previewFontHookDomainsRaw);
         button.setText(buttonText);
         button.setIcon(null);
         button.setContentDescription(buttonText);
@@ -990,6 +994,7 @@ final class AppConfigDialogBinder {
         boolean scopeRequestPending;
         boolean dpisEnabled;
         boolean previewFromGlobalPrefill;
+        String previewFontHookDomainsRaw;
         String selectedTypefaceId;
         String viewportScaleInput = "";
         String viewportAbsoluteInput = "";
@@ -998,6 +1003,7 @@ final class AppConfigDialogBinder {
                 boolean scopeKnown,
                 boolean dpisEnabled,
                 boolean previewFromGlobalPrefill,
+                String previewFontHookDomainsRaw,
                 String selectedTypefaceId,
                 String initialViewportType,
                 String initialViewportInput,
@@ -1007,6 +1013,7 @@ final class AppConfigDialogBinder {
             this.scopeKnown = scopeKnown;
             this.dpisEnabled = dpisEnabled;
             this.previewFromGlobalPrefill = previewFromGlobalPrefill;
+            this.previewFontHookDomainsRaw = previewFontHookDomainsRaw;
             this.selectedTypefaceId = selectedTypefaceId;
             this.viewportScaleInput = valueOrEmpty(initialViewportScaleInput);
             this.viewportAbsoluteInput = valueOrEmpty(initialViewportAbsoluteInput);

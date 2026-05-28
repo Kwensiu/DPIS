@@ -53,6 +53,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("host.saveAppConfig("));
         assertTrue(source.contains("state.viewportScaleInput"));
         assertTrue(source.contains("state.viewportAbsoluteInput"));
+        assertTrue(source.contains("state.previewFontHookDomainsRaw"));
         assertTrue(source.contains("showSaveButtonFeedback(views.saveButton)"));
         assertTrue(source.contains("binder.requestScopeAfterSuccessfulSave("));
         assertTrue(source.contains("dialogView, item, views, state, style, systemHooksEnabled);"));
@@ -102,6 +103,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(binderSource.contains("bindPreviewStatus(views.previewStatusView, state.previewFromGlobalPrefill)"));
         assertTrue(binderSource.contains("previewStatusView.setVisibility(previewFromGlobalPrefill ? View.VISIBLE : View.GONE)"));
         assertTrue(actionSource.contains("state.previewFromGlobalPrefill = false;"));
+        assertTrue(actionSource.contains("state.previewFontHookDomainsRaw = null;"));
         assertTrue(actionSource.contains("binder.refreshDialogState(views, state, style, systemHooksEnabled, item);"));
         assertTrue(strings.contains("Preview from global prefill"));
         assertTrue(zhStrings.contains("来自全局预填的预览"));
@@ -235,12 +237,13 @@ public class AppConfigDialogBinderSourceSmokeTest {
                 < layout.indexOf("android:id=\"@+id/dialog_stop_button\""));
         assertTrue(layout.indexOf("android:id=\"@+id/dialog_font_hook_domains_button\"")
                 < layout.indexOf("@string/dialog_advanced_section_title"));
-        assertTrue(binderSource.contains("void showFontHookDomains(AppListItem item, Runnable onStateChanged);"));
-        assertTrue(binderSource.contains("String getFontHookDomainsButtonText(String packageName);"));
+        assertTrue(binderSource.contains("void showFontHookDomains(AppListItem item,"));
+        assertTrue(binderSource.contains("AppConfigDialogState state,"));
+        assertTrue(binderSource.contains("String getFontHookDomainsButtonText(AppListItem item, String previewFontHookDomainsRaw);"));
         assertTrue(source.contains("views.fontHookDomainsButton.setOnClickListener"));
-        assertTrue(source.contains("host.showFontHookDomains(item,"));
-        assertTrue(binderSource.contains("host.getFontHookDomainsButtonText(packageName)"));
-        assertTrue(source.contains("binder.bindFontHookDomainsButton(views.fontHookDomainsButton, item.packageName)"));
+        assertTrue(source.contains("host.showFontHookDomains(item, state,"));
+        assertTrue(binderSource.contains("host.getFontHookDomainsButtonText(item, previewFontHookDomainsRaw)"));
+        assertTrue(source.contains("views.fontHookDomainsButton, item, state.previewFontHookDomainsRaw"));
     }
 
     @Test

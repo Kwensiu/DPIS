@@ -171,6 +171,30 @@ public class HookDomainOverrideStoreTest {
         assertEquals(orderedSet("removed_domain"), snapshot.hookDomainOverride.unknownDomains);
     }
 
+    @Test
+    public void rawValueForSelectionReturnsNullWhenSelectionMatchesAutomaticAndNoUnknowns() {
+        assertNull(HookDomainOverrideStore.rawValueForSelection(
+                orderedSet("resources_font", "webview_text_zoom"),
+                orderedSet("resources_font", "webview_text_zoom"),
+                Set.of()));
+    }
+
+    @Test
+    public void rawValueForSelectionKeepsPreviewDomainsWithoutWritingStoreState() {
+        DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
+        HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
+
+        String raw = HookDomainOverrideStore.rawValueForSelection(
+                orderedSet("hyperos_native_flutter", "resources_font"),
+                orderedSet("resources_font"),
+                orderedSet("removed_domain"));
+
+        assertEquals("resources_font,hyperos_native_flutter,removed_domain", raw);
+        assertFalse(configStore.getConfiguredPackages().contains("com.example.app"));
+        assertNull(configStore.getPackageFontHookDomainsRaw("com.example.app"));
+        assertTrue(store.read("com.example.app").enabledKnownDomains.isEmpty());
+    }
+
     private static LinkedHashSet<String> orderedSet(String... values) {
         LinkedHashSet<String> set = new LinkedHashSet<>();
         for (String value : values) {

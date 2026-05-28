@@ -1207,13 +1207,15 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             }
 
             @Override
-            public void showFontHookDomains(AppListItem item, Runnable onStateChanged) {
-                MainActivity.this.showFontHookDomains(item, onStateChanged);
+            public void showFontHookDomains(AppListItem item,
+                    AppConfigDialogBinder.AppConfigDialogState state,
+                    Runnable onStateChanged) {
+                MainActivity.this.showFontHookDomains(item, state, onStateChanged);
             }
 
             @Override
-            public String getFontHookDomainsButtonText(String packageName) {
-                return MainActivity.this.getFontHookDomainsButtonText(packageName);
+            public String getFontHookDomainsButtonText(AppListItem item, String previewFontHookDomainsRaw) {
+                return MainActivity.this.getFontHookDomainsButtonText(item, previewFontHookDomainsRaw);
             }
 
             @Override
@@ -1228,6 +1230,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                     String viewportMode,
                     String fontMode,
                     String selectedTypefaceId,
+                    String previewFontHookDomainsRaw,
                     String viewportScaleInput,
                     String viewportAbsoluteInput) {
                 refreshSystemHookEffectiveEnabled();
@@ -1238,6 +1241,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                         viewportMode,
                         fontMode,
                         selectedTypefaceId,
+                        previewFontHookDomainsRaw,
                         viewportScaleInput,
                         viewportAbsoluteInput,
                         isSystemHookEnabledFromStore(),
@@ -1262,14 +1266,20 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         };
     }
 
-    private void showFontHookDomains(AppListItem item, Runnable onStateChanged) {
+    private void showFontHookDomains(AppListItem item,
+            AppConfigDialogBinder.AppConfigDialogState state,
+            Runnable onStateChanged) {
         if (item == null || item.packageName == null || item.packageName.isBlank()) {
             return;
         }
         DpiConfigStore store = getUiConfigStore();
-        HookDomainOverrideStore overrideStore = new HookDomainOverrideStore(store);
         Set<String> automaticKnownDomains = resolveAutomaticFontHookDomains(store, item.packageName);
-        HookDomainOverride currentOverride = overrideStore.read(item.packageName);
+        boolean previewMode = item.previewFromGlobalPrefill;
+        HookDomainOverride currentOverride = previewMode
+                ? HookDomainOverrideStore.fromRaw(state != null
+                        ? state.previewFontHookDomainsRaw
+                        : item.previewFontHookDomainsRaw)
+                : new HookDomainOverrideStore(store).read(item.packageName);
         FontHookDomainDialog.show(this,
                 new FontHookDomainDialog.Host() {
                     @Override
@@ -1277,6 +1287,19 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                             Set<String> selectedKnownDomains,
                             Set<String> automaticKnownDomains,
                             Set<String> unknownDomains) {
+                        if (previewMode) {
+                            if (state != null) {
+                                state.previewFontHookDomainsRaw = HookDomainOverrideStore.rawValueForSelection(
+                                        selectedKnownDomains,
+                                        automaticKnownDomains,
+                                        unknownDomains);
+                            }
+                            if (onStateChanged != null) {
+                                onStateChanged.run();
+                            }
+                            return true;
+                        }
+                        HookDomainOverrideStore overrideStore = new HookDomainOverrideStore(store);
                         boolean saved = overrideStore.saveCustomIfDifferentFromAutomatic(
                                 packageName,
                                 selectedKnownDomains,
@@ -1299,7 +1322,16 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
 
                     @Override
                     public boolean restoreRecommended(String packageName) {
-                        boolean restored = overrideStore.restoreRecommended(packageName);
+                        if (previewMode) {
+                            if (state != null) {
+                                state.previewFontHookDomainsRaw = null;
+                            }
+                            if (onStateChanged != null) {
+                                onStateChanged.run();
+                            }
+                            return true;
+                        }
+                        boolean restored = new HookDomainOverrideStore(store).restoreRecommended(packageName);
                         if (restored) {
                             FontHookDomainPropertySyncer.clearTargetAsync(packageName);
                             publishFontRuntimeTarget(packageName, store);
@@ -1310,6 +1342,9 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
 
                     @Override
                     public boolean saveViewportApplyMode(String packageName, String mode) {
+                        if (previewMode) {
+                            return true;
+                        }
                         boolean saved = store.setTargetViewportApplyMode(packageName, mode);
                         if (saved) {
                             ViewportPropertySyncer.syncConfiguredTargetsAsync(store);
@@ -1343,8 +1378,10 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                 FontHookDomainDecision.isHyperOsNativeFlutterEnabled(store, packageName));
     }
 
-    private String getFontHookDomainsButtonText(String packageName) {
-        HookDomainOverride override = new HookDomainOverrideStore(getUiConfigStore()).read(packageName);
+    private String getFontHookDomainsButtonText(AppListItem item, String previewFontHookDomainsRaw) {
+        HookDomainOverride override = item != null && item.previewFromGlobalPrefill
+                ? HookDomainOverrideStore.fromRaw(previewFontHookDomainsRaw)
+                : new HookDomainOverrideStore(getUiConfigStore()).read(item != null ? item.packageName : null);
         if (!override.customPathEnabled) {
             return getString(R.string.dialog_font_hook_domains_title);
         }
