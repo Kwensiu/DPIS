@@ -1257,6 +1257,11 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     private TemplateWorkspaceBinder.QuickTemplateActions createQuickTemplateActions() {
         return new TemplateWorkspaceBinder.QuickTemplateActions() {
             @Override
+            public void apply(String templateId) {
+                applyQuickTemplate(templateId);
+            }
+
+            @Override
             public void edit(String templateId) {
                 Intent intent = new Intent(MainActivity.this, QuickTemplateEditActivity.class);
                 if (templateId != null && !templateId.isEmpty()) {
@@ -1277,6 +1282,58 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                 startActivity(new Intent(MainActivity.this, QuickTemplateEditActivity.class));
             }
         };
+    }
+
+    private void applyQuickTemplate(String templateId) {
+        QuickTemplateStore store = new QuickTemplateStore(
+                getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE));
+        QuickTemplateStore.QuickTemplate template = store.read(templateId);
+        if (template == null) {
+            showToast(R.string.quick_template_target_missing);
+            bindTemplateWorkspace();
+            return;
+        }
+        QuickTemplateApplyCoordinator coordinator = new QuickTemplateApplyCoordinator(
+                new DpiConfigStore(getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE)));
+        QuickTemplateApplyCoordinator.Plan plan = coordinator.plan(template);
+        if (plan.targetCount <= 0) {
+            showToast(R.string.quick_template_apply_empty_selection);
+            return;
+        }
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setTitle(getString(R.string.quick_template_apply_confirm_title, template.name))
+                .setMessage(getString(
+                        R.string.quick_template_apply_confirm_message,
+                        plan.targetCount,
+                        plan.overwriteCount))
+                .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
+                .setPositiveButton(R.string.template_workspace_action_apply,
+                        (unusedDialog, which) -> finishQuickTemplateApply(coordinator, template))
+                .create();
+        dialog.setOnShowListener(d -> {
+            TouchFeedbackBinder.bindPressHaptic(
+                    dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE));
+            TouchFeedbackBinder.bindPressHaptic(
+                    dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE));
+        });
+        dialog.show();
+    }
+
+    private void finishQuickTemplateApply(QuickTemplateApplyCoordinator coordinator,
+            QuickTemplateStore.QuickTemplate template) {
+        QuickTemplateApplyCoordinator.Result result = coordinator.apply(template);
+        if (result.emptySelection) {
+            showToast(R.string.quick_template_apply_empty_selection);
+            return;
+        }
+        if (result.failureCount() > 0) {
+            showToast(R.string.quick_template_apply_result_partial,
+                    result.successCount(),
+                    result.failureCount());
+        } else {
+            showToast(R.string.quick_template_apply_result_success, result.successCount());
+        }
+        bindTemplateWorkspace();
     }
 
     private AppConfigDialogBinder.Host createAppConfigDialogHost() {

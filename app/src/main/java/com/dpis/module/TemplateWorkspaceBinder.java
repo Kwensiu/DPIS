@@ -21,6 +21,8 @@ final class TemplateWorkspaceBinder {
     }
 
     interface QuickTemplateActions {
+        void apply(String templateId);
+
         void edit(String templateId);
 
         void select(String templateId);
@@ -109,7 +111,9 @@ final class TemplateWorkspaceBinder {
     }
 
     private void onApplyTemplate(String templateId) {
-        showNotWiredToast();
+        if (quickTemplateActions != null) {
+            quickTemplateActions.apply(templateId);
+        }
     }
 
     private void onSelectTemplate(String templateId) {

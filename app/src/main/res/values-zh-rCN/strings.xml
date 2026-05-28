@@ -90,6 +90,11 @@
     <string name="quick_template_targets_save_success">已保存模板应用选择</string>
     <string name="quick_template_targets_save_failed">保存应用选择失败</string>
     <string name="quick_template_target_missing">模板已不存在</string>
+    <string name="quick_template_apply_empty_selection">请先至少选择一个应用再应用模板。</string>
+    <string name="quick_template_apply_confirm_title">应用“%1$s”？</string>
+    <string name="quick_template_apply_confirm_message">DPIS 将把此模板写入 %1$d 个应用，并覆盖 %2$d 个已配置应用。批量应用期间不会执行进程操作或 HyperOS 代理操作。可用时，保存后可能请求加入作用域。</string>
+    <string name="quick_template_apply_result_success">已应用到 %1$d 个应用</string>
+    <string name="quick_template_apply_result_partial">已应用到 %1$d 个应用；失败 %2$d 个</string>
     <string name="tab_all_apps">全部应用</string>
     <string name="tab_configured_apps">已配置应用</string>
     <string name="filter_button">筛选</string>

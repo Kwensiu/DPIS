@@ -90,6 +90,11 @@
     <string name="quick_template_targets_save_success">Template app selection saved</string>
     <string name="quick_template_targets_save_failed">Failed to save app selection</string>
     <string name="quick_template_target_missing">Template no longer exists</string>
+    <string name="quick_template_apply_empty_selection">Select at least one app before applying this template.</string>
+    <string name="quick_template_apply_confirm_title">Apply \"%1$s\"?</string>
+    <string name="quick_template_apply_confirm_message">DPIS will write this template to %1$d apps and overwrite %2$d configured apps. No app process or HyperOS proxy action will run during batch apply. Scope may be requested after saving when available.</string>
+    <string name="quick_template_apply_result_success">Template applied to %1$d apps</string>
+    <string name="quick_template_apply_result_partial">Template applied to %1$d apps; failed %2$d</string>
     <string name="tab_all_apps">All apps</string>
     <string name="tab_configured_apps">Configured apps</string>
     <string name="filter_button">Filter</string>
