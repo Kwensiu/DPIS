@@ -17,11 +17,15 @@ final class QuickTemplateApplyCoordinator {
         void publish(String packageName, TemplateConfigValue value);
     }
 
+    interface TargetPackageFilter {
+        boolean isAllowed(String packageName);
+    }
+
     private final ConfigWriter configWriter;
     private final RuntimePublisher runtimePublisher;
 
     QuickTemplateApplyCoordinator(DpiConfigStore store) {
-        this(new StoreConfigWriter(store), new FontRuntimePublisher(store));
+        this(new StoreConfigWriter(store), new StoreRuntimePublisher(store));
     }
 
     QuickTemplateApplyCoordinator(ConfigWriter configWriter, RuntimePublisher runtimePublisher) {
@@ -30,8 +34,13 @@ final class QuickTemplateApplyCoordinator {
     }
 
     Plan plan(QuickTemplateStore.QuickTemplate template) {
+        return plan(template, null);
+    }
+
+    Plan plan(QuickTemplateStore.QuickTemplate template, TargetPackageFilter targetPackageFilter) {
         LinkedHashSet<String> targets = sanitizePackages(
                 template != null ? template.selectedPackages : null);
+        targets = filterPackages(targets, targetPackageFilter);
         int overwriteCount = 0;
         if (configWriter != null) {
             for (String packageName : targets) {
@@ -44,10 +53,15 @@ final class QuickTemplateApplyCoordinator {
     }
 
     Result apply(QuickTemplateStore.QuickTemplate template) {
+        return apply(template, null);
+    }
+
+    Result apply(QuickTemplateStore.QuickTemplate template, TargetPackageFilter targetPackageFilter) {
         if (configWriter == null || template == null) {
             return Result.failure(Collections.emptyList(), Collections.emptyList());
         }
         LinkedHashSet<String> targets = sanitizePackages(template.selectedPackages);
+        targets = filterPackages(targets, targetPackageFilter);
         if (targets.isEmpty()) {
             return Result.emptySelection();
         }
@@ -83,6 +97,21 @@ final class QuickTemplateApplyCoordinator {
             }
         }
         return sanitized;
+    }
+
+    private static LinkedHashSet<String> filterPackages(
+            LinkedHashSet<String> packageNames,
+            TargetPackageFilter targetPackageFilter) {
+        if (targetPackageFilter == null || packageNames == null || packageNames.isEmpty()) {
+            return packageNames != null ? packageNames : new LinkedHashSet<>();
+        }
+        LinkedHashSet<String> filtered = new LinkedHashSet<>();
+        for (String packageName : packageNames) {
+            if (targetPackageFilter.isAllowed(packageName)) {
+                filtered.add(packageName);
+            }
+        }
+        return filtered;
     }
 
     static final class Plan {
@@ -145,27 +174,105 @@ final class QuickTemplateApplyCoordinator {
         }
     }
 
-    private static final class FontRuntimePublisher implements RuntimePublisher {
+    static final class RuntimePublishPlan {
+        final boolean publishViewport;
+        final ViewportTargetSpec viewportTargetSpec;
+        final String viewportApplyMode;
+        final boolean publishFontScale;
+        final Integer fontScalePercent;
+        final String fontApplyMode;
+        final boolean hyperOsNativeFontHookEnabled;
+        final String typefaceId;
+        final boolean publishFontHookDomains;
+        final Set<String> fontHookDomains;
+
+        private RuntimePublishPlan(
+                boolean publishViewport,
+                ViewportTargetSpec viewportTargetSpec,
+                String viewportApplyMode,
+                boolean publishFontScale,
+                Integer fontScalePercent,
+                String fontApplyMode,
+                boolean hyperOsNativeFontHookEnabled,
+                String typefaceId,
+                boolean publishFontHookDomains,
+                Set<String> fontHookDomains) {
+            this.publishViewport = publishViewport;
+            this.viewportTargetSpec = viewportTargetSpec != null
+                    ? viewportTargetSpec
+                    : ViewportTargetSpec.off();
+            this.viewportApplyMode = ViewportApplyMode.normalize(viewportApplyMode);
+            this.publishFontScale = publishFontScale;
+            this.fontScalePercent = fontScalePercent;
+            this.fontApplyMode = FontApplyMode.normalize(fontApplyMode);
+            this.hyperOsNativeFontHookEnabled = hyperOsNativeFontHookEnabled;
+            this.typefaceId = typefaceId;
+            this.publishFontHookDomains = publishFontHookDomains;
+            this.fontHookDomains = Collections.unmodifiableSet(new LinkedHashSet<>(
+                    fontHookDomains != null ? fontHookDomains : Collections.emptySet()));
+        }
+
+        static RuntimePublishPlan from(
+                TemplateConfigValue value,
+                HookDomainOverride hookDomainOverride,
+                boolean hyperOsNativeFontHookEnabled) {
+            TemplateConfigValue normalized = value != null ? value : TemplateConfigValue.EMPTY;
+            HookDomainOverride override = hookDomainOverride != null
+                    ? hookDomainOverride
+                    : HookDomainOverride.automatic();
+            boolean viewportEnabled = normalized.viewportTargetSpec.isEnabled();
+            boolean fontScaleEnabled = normalized.fontScalePercent != null;
+            return new RuntimePublishPlan(
+                    viewportEnabled,
+                    normalized.viewportTargetSpec,
+                    viewportEnabled ? normalized.viewportApplyMode : ViewportApplyMode.OFF,
+                    fontScaleEnabled,
+                    normalized.fontScalePercent,
+                    fontScaleEnabled ? normalized.fontApplyMode : FontApplyMode.OFF,
+                    hyperOsNativeFontHookEnabled,
+                    normalized.typefaceId,
+                    override.customPathEnabled,
+                    override.enabledKnownDomains);
+        }
+    }
+
+    private static final class StoreRuntimePublisher implements RuntimePublisher {
         private final DpiConfigStore store;
 
-        FontRuntimePublisher(DpiConfigStore store) {
+        StoreRuntimePublisher(DpiConfigStore store) {
             this.store = store;
         }
 
         @Override
         public void publish(String packageName, TemplateConfigValue value) {
-            TemplateConfigValue normalized = value != null ? value : TemplateConfigValue.EMPTY;
-            if (normalized.fontScalePercent != null) {
+            RuntimePublishPlan plan = RuntimePublishPlan.from(
+                    value,
+                    new HookDomainOverrideStore(store).read(packageName),
+                    FontHookDomainDecision.isHyperOsNativeFlutterEnabled(store, packageName));
+            if (plan.publishViewport) {
+                ViewportPropertySyncer.publishTargetAsync(
+                        packageName,
+                        plan.viewportTargetSpec,
+                        plan.viewportApplyMode);
+            } else {
+                ViewportPropertySyncer.clearTargetAsync(packageName);
+            }
+            if (plan.publishFontScale) {
                 FontRuntimePropertySyncer.publishTargetAsync(
                         packageName,
-                        normalized.fontScalePercent,
-                        normalized.fontApplyMode,
-                        FontHookDomainDecision.isHyperOsNativeFlutterEnabled(store, packageName));
+                        plan.fontScalePercent,
+                        plan.fontApplyMode,
+                        plan.hyperOsNativeFontHookEnabled);
             } else {
                 FontRuntimePropertySyncer.clearFontScaleTargetAsync(packageName);
             }
             FontRuntimePropertySyncer.publishTypefaceTargetAsync(
-                    packageName, normalized.typefaceId);
+                    packageName, plan.typefaceId);
+            if (plan.publishFontHookDomains) {
+                FontHookDomainPropertySyncer.publishTargetAsync(packageName, plan.fontHookDomains);
+            } else {
+                FontHookDomainPropertySyncer.clearTargetAsync(packageName);
+            }
         }
     }
 }

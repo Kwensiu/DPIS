@@ -2,6 +2,7 @@ package com.dpis.module;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -73,6 +74,73 @@ public class QuickTemplateApplyCoordinatorTest {
 
         assertTrue(result.emptySelection);
         assertTrue(writer.writes.isEmpty());
+    }
+
+    @Test
+    public void targetFilterSkipsStalePackagesBeforePlanningAndWriting() {
+        FakeWriter writer = new FakeWriter();
+        writer.configuredPackages.add("com.example.installed");
+        writer.configuredPackages.add("com.example.removed");
+        RecordingPublisher publisher = new RecordingPublisher();
+        QuickTemplateApplyCoordinator coordinator =
+                new QuickTemplateApplyCoordinator(writer, publisher);
+        QuickTemplateApplyCoordinator.TargetPackageFilter installedOnly =
+                packageName -> !"com.example.removed".equals(packageName);
+        QuickTemplateStore.QuickTemplate template = template(
+                orderedSet("com.example.installed", "com.example.removed"),
+                templateValue());
+
+        QuickTemplateApplyCoordinator.Plan plan = coordinator.plan(template, installedOnly);
+        QuickTemplateApplyCoordinator.Result result = coordinator.apply(template, installedOnly);
+
+        assertEquals(1, plan.targetCount);
+        assertEquals(1, plan.overwriteCount);
+        assertEquals(List.of("com.example.installed"), writer.writes);
+        assertEquals(List.of("com.example.installed"), publisher.publishedPackages);
+        assertEquals(List.of("com.example.installed"), result.successfulPackages);
+        assertTrue(result.failedPackages.isEmpty());
+    }
+
+    @Test
+    public void runtimePublishPlanMirrorsSingleAppSaveForEnabledTemplateValues() {
+        QuickTemplateApplyCoordinator.RuntimePublishPlan plan =
+                QuickTemplateApplyCoordinator.RuntimePublishPlan.from(
+                        templateValue(),
+                        new HookDomainOverride(
+                                true,
+                                orderedSet("resources_font", "typeface"),
+                                Set.of("unknown_domain")),
+                        true);
+
+        assertTrue(plan.publishViewport);
+        assertEquals(ViewportTargetSpec.absoluteDp(411), plan.viewportTargetSpec);
+        assertEquals(ViewportApplyMode.AUTO, plan.viewportApplyMode);
+        assertTrue(plan.publishFontScale);
+        assertEquals(Integer.valueOf(115), plan.fontScalePercent);
+        assertEquals(FontApplyMode.SYSTEM_EMULATION, plan.fontApplyMode);
+        assertTrue(plan.hyperOsNativeFontHookEnabled);
+        assertEquals("font_a", plan.typefaceId);
+        assertTrue(plan.publishFontHookDomains);
+        assertEquals(orderedSet("resources_font", "typeface"), plan.fontHookDomains);
+    }
+
+    @Test
+    public void runtimePublishPlanClearsRuntimeStateForEmptyTemplateValues() {
+        QuickTemplateApplyCoordinator.RuntimePublishPlan plan =
+                QuickTemplateApplyCoordinator.RuntimePublishPlan.from(
+                        TemplateConfigValue.EMPTY,
+                        HookDomainOverride.automatic(),
+                        false);
+
+        assertFalse(plan.publishViewport);
+        assertEquals(ViewportTargetSpec.off(), plan.viewportTargetSpec);
+        assertEquals(ViewportApplyMode.OFF, plan.viewportApplyMode);
+        assertFalse(plan.publishFontScale);
+        assertNull(plan.fontScalePercent);
+        assertEquals(FontApplyMode.OFF, plan.fontApplyMode);
+        assertNull(plan.typefaceId);
+        assertFalse(plan.publishFontHookDomains);
+        assertTrue(plan.fontHookDomains.isEmpty());
     }
 
     private static QuickTemplateStore.QuickTemplate template(

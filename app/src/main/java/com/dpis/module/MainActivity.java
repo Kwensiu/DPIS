@@ -1295,7 +1295,9 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         }
         QuickTemplateApplyCoordinator coordinator = new QuickTemplateApplyCoordinator(
                 new DpiConfigStore(getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE)));
-        QuickTemplateApplyCoordinator.Plan plan = coordinator.plan(template);
+        QuickTemplateApplyCoordinator.TargetPackageFilter installedPackageFilter =
+                this::isInstalledTemplateTargetPackage;
+        QuickTemplateApplyCoordinator.Plan plan = coordinator.plan(template, installedPackageFilter);
         if (plan.targetCount <= 0) {
             showToast(R.string.quick_template_apply_empty_selection);
             return;
@@ -1308,7 +1310,8 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                         plan.overwriteCount))
                 .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
                 .setPositiveButton(R.string.template_workspace_action_apply,
-                        (unusedDialog, which) -> finishQuickTemplateApply(coordinator, template))
+                        (unusedDialog, which) -> finishQuickTemplateApply(
+                                coordinator, template, installedPackageFilter))
                 .create();
         dialog.setOnShowListener(d -> {
             TouchFeedbackBinder.bindPressHaptic(
@@ -1321,7 +1324,13 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
 
     private void finishQuickTemplateApply(QuickTemplateApplyCoordinator coordinator,
             QuickTemplateStore.QuickTemplate template) {
-        QuickTemplateApplyCoordinator.Result result = coordinator.apply(template);
+        finishQuickTemplateApply(coordinator, template, null);
+    }
+
+    private void finishQuickTemplateApply(QuickTemplateApplyCoordinator coordinator,
+            QuickTemplateStore.QuickTemplate template,
+            QuickTemplateApplyCoordinator.TargetPackageFilter targetPackageFilter) {
+        QuickTemplateApplyCoordinator.Result result = coordinator.apply(template, targetPackageFilter);
         if (result.emptySelection) {
             showToast(R.string.quick_template_apply_empty_selection);
             return;
@@ -1336,6 +1345,24 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         new BatchScopeRequestCoordinator(createBatchScopeRequestHost())
                 .requestMissingScope(result.successfulPackages);
         bindTemplateWorkspace();
+    }
+
+    private boolean isInstalledTemplateTargetPackage(String packageName) {
+        if (packageName == null || packageName.isBlank() || getPackageName().equals(packageName)) {
+            return false;
+        }
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                getPackageManager().getApplicationInfo(
+                        packageName,
+                        PackageManager.ApplicationInfoFlags.of(0));
+            } else {
+                getPackageManager().getApplicationInfo(packageName, 0);
+            }
+            return true;
+        } catch (PackageManager.NameNotFoundException ignored) {
+            return false;
+        }
     }
 
     private BatchScopeRequestCoordinator.Host createBatchScopeRequestHost() {
