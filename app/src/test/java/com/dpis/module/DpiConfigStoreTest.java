@@ -735,6 +735,24 @@ public class DpiConfigStoreTest {
         assertFalse(prefs.contains("target.com.example.app.dpis_enabled"));
     }
 
+    @Test
+    public void emptyPackageTemplateConfigValuePreservesDisabledStateAndMembership() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.setTargetDpisEnabled("com.example.app", false));
+        assertTrue(store.setTargetViewportWidthDp("com.example.app", 411));
+        assertTrue(store.setTargetTypefaceId("com.example.app", "missing_font_id"));
+
+        assertTrue(store.writePackageTemplateConfigValue(
+                "com.example.app", TemplateConfigValue.EMPTY));
+
+        assertFalse(store.isTargetDpisEnabled("com.example.app"));
+        assertTrue(store.getConfiguredPackages().contains("com.example.app"));
+        assertNull(store.getTargetViewportWidthDp("com.example.app"));
+        assertNull(store.getTargetTypefaceId("com.example.app"));
+        assertTrue(prefs.contains("target.com.example.app.dpis_enabled"));
+    }
+
     private static final class ThrowingIntReadPrefs implements SharedPreferences {
         private final FakePrefs delegate = new FakePrefs();
         private final Set<String> intReadFailureKeys;

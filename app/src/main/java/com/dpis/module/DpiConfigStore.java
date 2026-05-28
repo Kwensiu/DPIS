@@ -666,7 +666,16 @@ final class DpiConfigStore {
         }
         TemplateConfigValue normalized = value != null ? value : TemplateConfigValue.EMPTY;
         if (!normalized.hasAnyValue()) {
-            return clearTargetPackageConfig(packageName);
+            LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+            if (hasAnyPackageConfigAfterRemoving(packageName, templateConfigKeysForPackage(packageName))) {
+                packages.add(packageName);
+            } else {
+                packages.remove(packageName);
+            }
+            return commitBoth(editor -> {
+                editor.putStringSet(KEY_TARGET_PACKAGES, packages);
+                removePackageTemplateConfigKeys(editor, packageName);
+            });
         }
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
         packages.add(packageName);
@@ -708,14 +717,22 @@ final class DpiConfigStore {
     private static void removePackageTemplateConfigKeys(
             SharedPreferences.Editor editor,
             String packageName) {
-        editor.remove(keyForViewportWidth(packageName))
-                .remove(keyForViewportTargetType(packageName))
-                .remove(keyForViewportScalePermille(packageName))
-                .remove(keyForViewportMode(packageName))
-                .remove(keyForFontScale(packageName))
-                .remove(keyForTypefaceId(packageName))
-                .remove(keyForFontMode(packageName))
-                .remove(keyForFontHookDomains(packageName));
+        for (String key : templateConfigKeysForPackage(packageName)) {
+            editor.remove(key);
+        }
+    }
+
+    private static String[] templateConfigKeysForPackage(String packageName) {
+        return new String[] {
+                keyForViewportWidth(packageName),
+                keyForViewportTargetType(packageName),
+                keyForViewportScalePermille(packageName),
+                keyForViewportMode(packageName),
+                keyForFontScale(packageName),
+                keyForTypefaceId(packageName),
+                keyForFontMode(packageName),
+                keyForFontHookDomains(packageName)
+        };
     }
 
     private boolean hasAnyPackageConfigAfterRemoving(String packageName, String... removedKeys) {

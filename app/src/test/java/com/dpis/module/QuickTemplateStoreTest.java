@@ -68,6 +68,36 @@ public class QuickTemplateStoreTest {
     }
 
     @Test
+    public void readAllSortsByUpdatedAtNameAndId() {
+        FakePrefs prefs = new FakePrefs();
+        QuickTemplateStore store = new QuickTemplateStore(prefs);
+        assertTrue(store.save(new QuickTemplateStore.QuickTemplate(
+                "template_b",
+                "Beta",
+                1000L,
+                Set.of(),
+                TemplateConfigValue.EMPTY)));
+        assertTrue(store.save(new QuickTemplateStore.QuickTemplate(
+                "template_a",
+                "Alpha",
+                2000L,
+                Set.of(),
+                TemplateConfigValue.EMPTY)));
+        assertTrue(store.save(new QuickTemplateStore.QuickTemplate(
+                "template_c",
+                "Alpha",
+                2000L,
+                Set.of(),
+                TemplateConfigValue.EMPTY)));
+
+        List<QuickTemplateStore.QuickTemplate> templates = store.readAll();
+
+        assertEquals("template_a", templates.get(0).id);
+        assertEquals("template_c", templates.get(1).id);
+        assertEquals("template_b", templates.get(2).id);
+    }
+
+    @Test
     public void invalidTemplateEntriesAreIgnoredWithoutCrashingOrErasingTypefaceId() {
         FakePrefs prefs = new FakePrefs();
         prefs.edit()
