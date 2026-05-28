@@ -1231,6 +1231,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                     TextInputEditText viewportInput,
                     TextInputEditText fontScaleInput,
                     String viewportMode,
+                    String viewportApplyMode,
                     String fontMode,
                     String selectedTypefaceId,
                     String previewFontHookDomainsRaw,
@@ -1242,6 +1243,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                         viewportInput,
                         fontScaleInput,
                         viewportMode,
+                        viewportApplyMode,
                         fontMode,
                         selectedTypefaceId,
                         previewFontHookDomainsRaw,
@@ -1344,6 +1346,12 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                     @Override
                     public boolean saveViewportApplyMode(String packageName, String mode) {
                         if (previewMode) {
+                            if (state != null) {
+                                state.viewportApplyMode = ViewportApplyMode.normalize(mode);
+                            }
+                            if (onStateChanged != null) {
+                                onStateChanged.run();
+                            }
                             return true;
                         }
                         boolean saved = store.setTargetViewportApplyMode(packageName, mode);
@@ -1357,7 +1365,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                 item.packageName,
                 automaticKnownDomains,
                 currentOverride,
-                store.getTargetViewportApplyMode(item.packageName),
+                previewMode ? state.viewportApplyMode : store.getTargetViewportApplyMode(item.packageName),
                 onStateChanged);
     }
 

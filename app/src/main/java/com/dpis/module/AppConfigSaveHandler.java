@@ -7,6 +7,7 @@ final class AppConfigSaveHandler {
             TextInputEditText viewportInput,
             TextInputEditText fontScaleInput,
             String viewportTargetType,
+            String currentViewportApplyMode,
             String fontMode,
             String selectedTypefaceId,
             String previewFontHookDomainsRaw,
@@ -23,7 +24,7 @@ final class AppConfigSaveHandler {
                 return new int[] { 1, R.string.status_save_requires_init };
             }
             String viewportApplyMode = resolveViewportApplyModeForSave(
-                    store, item.packageName, item.viewportMode, viewportTargetSpec);
+                    store, item.packageName, currentViewportApplyMode, viewportTargetSpec);
             boolean viewportEmulationIneffective = viewportTargetSpec != null
                     && viewportTargetSpec.isEnabled()
                     && ViewportApplyMode.SYSTEM.equals(

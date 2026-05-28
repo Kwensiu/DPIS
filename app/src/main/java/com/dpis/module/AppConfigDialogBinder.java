@@ -72,6 +72,7 @@ final class AppConfigDialogBinder {
                 TextInputEditText viewportInput,
                 TextInputEditText fontScaleInput,
                 String viewportMode,
+                String viewportApplyMode,
                 String fontMode,
                 String selectedTypefaceId,
                 String previewFontHookDomainsRaw,
@@ -164,6 +165,7 @@ final class AppConfigDialogBinder {
         return new AppConfigDialogState(item.inScope, item.scopeKnown, item.dpisEnabled,
                 item.previewFromGlobalPrefill,
                 item.previewFontHookDomainsRaw,
+                item.viewportMode,
                 selectedTypefaceId,
                 initialViewportType,
                 initialViewportInput,
@@ -197,7 +199,7 @@ final class AppConfigDialogBinder {
                 state.selectedTypefaceId,
                 systemHooksEnabled,
                 item.packageName,
-                item.viewportMode);
+                state.viewportApplyMode);
         bindPreviewStatus(views.previewStatusView, state.previewFromGlobalPrefill);
         bindScopeButton(views.scopeButton, state.scopeSelected, state.scopeKnown,
                 style.defaultActionBgTint, style.defaultActionStrokeWidth, style.defaultActionTextColor);
@@ -1005,6 +1007,7 @@ final class AppConfigDialogBinder {
         boolean dpisEnabled;
         boolean previewFromGlobalPrefill;
         String previewFontHookDomainsRaw;
+        String viewportApplyMode;
         String selectedTypefaceId;
         String viewportScaleInput = "";
         String viewportAbsoluteInput = "";
@@ -1014,6 +1017,7 @@ final class AppConfigDialogBinder {
                 boolean dpisEnabled,
                 boolean previewFromGlobalPrefill,
                 String previewFontHookDomainsRaw,
+                String viewportApplyMode,
                 String selectedTypefaceId,
                 String initialViewportType,
                 String initialViewportInput,
@@ -1024,6 +1028,7 @@ final class AppConfigDialogBinder {
             this.dpisEnabled = dpisEnabled;
             this.previewFromGlobalPrefill = previewFromGlobalPrefill;
             this.previewFontHookDomainsRaw = previewFontHookDomainsRaw;
+            this.viewportApplyMode = ViewportApplyMode.normalize(viewportApplyMode);
             this.selectedTypefaceId = selectedTypefaceId;
             this.viewportScaleInput = valueOrEmpty(initialViewportScaleInput);
             this.viewportAbsoluteInput = valueOrEmpty(initialViewportAbsoluteInput);

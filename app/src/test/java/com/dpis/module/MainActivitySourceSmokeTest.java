@@ -400,15 +400,20 @@ public class MainActivitySourceSmokeTest {
         assertTrue(method.contains("HookDomainOverrideStore.fromRaw(state.previewFontHookDomainsRaw)"));
         assertTrue(method.contains("state.previewFontHookDomainsRaw = HookDomainOverrideStore.rawValueForSelection("));
         assertTrue(method.contains("state.previewFontHookDomainsRaw = null;"));
+        assertTrue(method.contains("state.viewportApplyMode = ViewportApplyMode.normalize(mode);"));
+        assertTrue(method.contains("previewMode ? state.viewportApplyMode : store.getTargetViewportApplyMode(item.packageName)"));
         assertTrue(method.contains("if (previewMode)"));
 
         int previewBranch = method.indexOf("if (previewMode)");
         int realStoreWrite = method.indexOf("overrideStore.saveCustomIfDifferentFromAutomatic(", previewBranch);
         int realRestore = method.indexOf("new HookDomainOverrideStore(store).restoreRecommended(packageName)", previewBranch);
+        int realViewportWrite = method.indexOf("store.setTargetViewportApplyMode(packageName, mode)", previewBranch);
         assertTrue(realStoreWrite > previewBranch);
         assertTrue(realRestore > previewBranch);
+        assertTrue(realViewportWrite > previewBranch);
         assertTrue(method.indexOf("return true;", previewBranch) < realStoreWrite);
         assertTrue(method.indexOf("return true;", realStoreWrite) < realRestore);
+        assertTrue(method.indexOf("return true;", realRestore) < realViewportWrite);
     }
 
     @Test

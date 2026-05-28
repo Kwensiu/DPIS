@@ -62,6 +62,19 @@ public class AppConfigSaveHandlerTest {
     }
 
     @Test
+    public void saveUsesPreviewViewportApplyModeFallbackBeforeRealConfigExists() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+
+        String resolvedMode = AppConfigSaveHandler.resolveViewportApplyModeForSave(
+                store,
+                "com.example.app",
+                ViewportApplyMode.COMPAT,
+                ViewportTargetSpec.relativeScale(900));
+
+        assertEquals(ViewportApplyMode.COMPAT, resolvedMode);
+    }
+
+    @Test
     public void savingPreviewOnlyConfigConvertsHiddenPrefillDomainsToRealPackageConfig() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(

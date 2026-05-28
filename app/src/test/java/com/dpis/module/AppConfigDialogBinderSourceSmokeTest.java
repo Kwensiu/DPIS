@@ -447,6 +447,20 @@ public class AppConfigDialogBinderSourceSmokeTest {
     }
 
     @Test
+    public void previewViewportApplyModeUsesMutableSheetStateForStatusAndSave() throws IOException {
+        String binderSource = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String actionSource = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
+        String saveSource = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+
+        assertTrue(binderSource.contains("String viewportApplyMode;"));
+        assertTrue(binderSource.contains("this.viewportApplyMode = ViewportApplyMode.normalize(viewportApplyMode);"));
+        assertTrue(binderSource.contains("state.viewportApplyMode"));
+        assertTrue(actionSource.contains("state.viewportApplyMode"));
+        assertTrue(saveSource.contains("String currentViewportApplyMode"));
+        assertTrue(saveSource.contains("store, item.packageName, currentViewportApplyMode, viewportTargetSpec"));
+    }
+
+    @Test
     public void savingEmptyFontScaleClearsOnlyFontScaleRuntimeTargets() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
         int clearStart = source.indexOf("if (fontScalePercent == null)");
