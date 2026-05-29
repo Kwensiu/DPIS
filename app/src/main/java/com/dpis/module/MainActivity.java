@@ -39,9 +39,9 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.navigation.NavigationBarView;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.tabs.TabLayout;
@@ -119,12 +119,13 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     private View appWorkspaceDivider;
     private View templateWorkspaceContainer;
     private TemplateWorkspaceBinder templateWorkspaceBinder;
-    private MaterialButtonToggleGroup workspaceSwitch;
+    private NavigationBarView workspaceSwitch;
     private SparseArray<Parcelable> restoredPageScrollStates;
     private EditText searchInput;
     private FloatingActionButton searchFocusFab;
     private FloatingActionButton helpFab;
     private boolean searchFabHidden;
+    private boolean updatingWorkspaceSelection;
     private ImageButton searchFilterButton;
     private boolean cachedSystemHookEffectiveEnabled;
     private boolean skipNextImmediateServiceReload;
@@ -266,16 +267,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             searchInput.setText(restoredQuery);
             searchInput.setSelection(restoredQuery.length());
         }
-        searchInput.setOnFocusChangeListener((view, hasFocus) -> {
-            if (hasFocus) {
-                searchInput.setHint("");
-                return;
-            }
-            CharSequence current = searchInput.getText();
-            if (current == null || current.length() == 0) {
-                searchInput.setHint(getString(R.string.search_hint));
-            }
-        });
+        searchInput.setOnFocusChangeListener((view, hasFocus) -> updateSearchHint());
 
         View systemSettingsButton = findViewById(R.id.system_settings_button);
         systemSettingsButton
@@ -793,12 +785,14 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         if (workspaceSwitch == null) {
             return;
         }
-        workspaceSwitch.check(workspaceButtonId(requireUiState().workspaceMode));
-        workspaceSwitch.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (!isChecked) {
-                return;
+        selectWorkspaceItem(workspaceButtonId(requireUiState().workspaceMode));
+        workspaceSwitch.setOnItemSelectedListener(item -> {
+            if (updatingWorkspaceSelection) {
+                return true;
             }
-            dispatchMainUiAction(MainUiAction.workspaceModeChanged(workspaceModeForButtonId(checkedId)));
+            dispatchMainUiAction(MainUiAction.workspaceModeChanged(
+                    workspaceModeForButtonId(item.getItemId())));
+            return true;
         });
     }
 
@@ -809,13 +803,16 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         setVisible(appWorkspaceDivider, appWorkspace);
         setVisible(appPager, appWorkspace);
         setVisible(templateWorkspaceContainer, !appWorkspace);
+        setVisible(searchFocusFab, appWorkspace);
+        setVisible(helpFab, appWorkspace);
         if (searchFilterButton != null) {
             searchFilterButton.setEnabled(appWorkspace);
             searchFilterButton.setVisibility(appWorkspace ? View.VISIBLE : View.GONE);
         }
-        if (workspaceSwitch != null && workspaceSwitch.getCheckedButtonId() != workspaceButtonId(mode)) {
-            workspaceSwitch.check(workspaceButtonId(mode));
+        if (workspaceSwitch != null && workspaceSwitch.getSelectedItemId() != workspaceButtonId(mode)) {
+            selectWorkspaceItem(workspaceButtonId(mode));
         }
+        updateSearchHint(mode);
         if (!appWorkspace) {
             bindTemplateWorkspace();
         }
@@ -823,7 +820,45 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
 
     private void bindTemplateWorkspace() {
         if (templateWorkspaceBinder != null) {
-            templateWorkspaceBinder.bind(templateWorkspaceContainer);
+            templateWorkspaceBinder.bind(templateWorkspaceContainer, requireUiState().query);
+        }
+    }
+
+    private void updateSearchHint() {
+        updateSearchHint(requireUiState().workspaceMode);
+    }
+
+    private void updateSearchHint(MainWorkspaceMode workspaceMode) {
+        if (searchInput == null) {
+            return;
+        }
+        boolean templateWorkspace = workspaceMode == MainWorkspaceMode.TEMPLATE;
+        CharSequence current = searchInput.getText();
+        boolean empty = current == null || current.length() == 0;
+        if (templateWorkspace) {
+            if (searchInput.hasFocus() || empty) {
+                searchInput.setHint(getString(R.string.template_search_hint));
+            }
+            return;
+        }
+        if (searchInput.hasFocus()) {
+            searchInput.setHint("");
+            return;
+        }
+        if (empty) {
+            searchInput.setHint(getString(R.string.search_hint));
+        }
+    }
+
+    private void selectWorkspaceItem(int itemId) {
+        if (workspaceSwitch == null) {
+            return;
+        }
+        updatingWorkspaceSelection = true;
+        try {
+            workspaceSwitch.setSelectedItemId(itemId);
+        } finally {
+            updatingWorkspaceSelection = false;
         }
     }
 
@@ -1237,19 +1272,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         return new TemplateWorkspaceBinder.GlobalPrefillActions() {
             @Override
             public void edit() {
-                startActivity(new Intent(MainActivity.this, GlobalPrefillActivity.class));
-            }
-
-            @Override
-            public void reset() {
-                GlobalPrefillStore store = new GlobalPrefillStore(
-                        getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE));
-                if (store.clear()) {
-                    showToast(R.string.global_prefill_reset_success);
-                    bindTemplateWorkspace();
-                    return;
-                }
-                showToast(R.string.global_prefill_reset_failed);
+                GlobalPrefillSheetDialog.show(MainActivity.this, MainActivity.this::bindTemplateWorkspace);
             }
         };
     }
@@ -1263,11 +1286,8 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
 
             @Override
             public void edit(String templateId) {
-                Intent intent = new Intent(MainActivity.this, QuickTemplateEditActivity.class);
-                if (templateId != null && !templateId.isEmpty()) {
-                    intent.putExtra(QuickTemplateEditActivity.EXTRA_TEMPLATE_ID, templateId);
-                }
-                startActivity(intent);
+                QuickTemplateEditSheetDialog.show(
+                        MainActivity.this, templateId, MainActivity.this::bindTemplateWorkspace);
             }
 
             @Override
@@ -1279,7 +1299,31 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
 
             @Override
             public void create() {
-                startActivity(new Intent(MainActivity.this, QuickTemplateEditActivity.class));
+                QuickTemplateEditSheetDialog.show(
+                        MainActivity.this, null, MainActivity.this::bindTemplateWorkspace);
+            }
+
+            @Override
+            public void sort(List<QuickTemplateStore.QuickTemplate> templates) {
+                QuickTemplateSortDialog.show(MainActivity.this, templates, new QuickTemplateSortDialog.Host() {
+                    @Override
+                    public boolean saveOrder(List<String> orderedIds) {
+                        return new QuickTemplateStore(
+                                getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE))
+                                .reorder(orderedIds);
+                    }
+
+                    @Override
+                    public void onOrderSaved() {
+                        showToast(R.string.quick_template_sort_saved);
+                        bindTemplateWorkspace();
+                    }
+
+                    @Override
+                    public void showToast(int messageResId) {
+                        MainActivity.this.showToast(messageResId);
+                    }
+                });
             }
         };
     }

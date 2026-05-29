@@ -6,7 +6,10 @@
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingStart="@dimen/dialog_app_config_padding_horizontal" android:paddingTop="@dimen/dialog_app_config_padding_top" android:paddingEnd="@dimen/dialog_app_config_padding_horizontal" android:paddingBottom="@dimen/dialog_app_config_padding_bottom">
 
-        <View android:id="@+id/dialog_drag_handle" android:layout_width="@dimen/dialog_app_config_drag_handle_width" android:layout_height="@dimen/dialog_app_config_drag_handle_height" android:layout_gravity="center_horizontal" android:background="@drawable/bg_dialog_drag_handle" />
+        <FrameLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:minHeight="@dimen/sheet_unsaved_badge_min_height">
+
+            <include layout="@layout/view_sheet_unsaved_badge_handle" />
+        </FrameLayout>
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dialog_app_config_header_spacing_top" android:gravity="center_vertical" android:minHeight="@dimen/dialog_app_config_header_min_height" android:orientation="horizontal">
 
@@ -19,8 +22,6 @@
                 <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_package" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dialog_app_config_package_spacing_top" android:ellipsize="middle" android:maxLines="1" android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
                 <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dialog_app_config_status_spacing_top" android:maxLines="1" android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
-
-                <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_preview_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dialog_app_config_status_spacing_top" android:text="@string/dialog_global_prefill_preview_status" android:textAppearance="@style/TextAppearance.Material3.BodySmall" android:textColor="?attr/colorPrimary" android:visibility="gone" />
 
             </LinearLayout>
         </LinearLayout>

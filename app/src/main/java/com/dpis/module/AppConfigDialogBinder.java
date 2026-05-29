@@ -100,6 +100,9 @@ final class AppConfigDialogBinder {
         WechatTargetFieldSheetBinder.bind(dialogView, item,
                 () -> updateSaveButtonState(dialogView, views));
         updateSaveButtonState(dialogView, views);
+        state.captureSavedDraft(views, item != null && item.previewFromGlobalPrefill);
+        state.bindUnsavedBadge(SheetUnsavedBadgeBinder.bind(
+                dialogView, () -> state.hasUnsavedChanges(views)));
         AppConfigDialogActionStyle style = resolveDialogActionStyle(views.scopeButton);
         refreshDialogState(views, state, style, systemHooksEnabled, item);
         new AppConfigSheetInteractions(this, host)
@@ -112,7 +115,6 @@ final class AppConfigDialogBinder {
                 dialogView.findViewById(R.id.dialog_title),
                 dialogView.findViewById(R.id.dialog_package),
                 dialogView.findViewById(R.id.dialog_status),
-                dialogView.findViewById(R.id.dialog_preview_status),
                 dialogView.findViewById(R.id.dialog_viewport_input_layout),
                 dialogView.findViewById(R.id.dialog_viewport_input),
                 dialogView.findViewById(R.id.dialog_font_scale_input_layout),
@@ -200,7 +202,6 @@ final class AppConfigDialogBinder {
                 systemHooksEnabled,
                 item.packageName,
                 state.viewportApplyMode);
-        bindPreviewStatus(views.previewStatusView, state.previewFromGlobalPrefill);
         bindScopeButton(views.scopeButton, state.scopeSelected, state.scopeKnown,
                 style.defaultActionBgTint, style.defaultActionStrokeWidth, style.defaultActionTextColor);
         bindDpisToggleButton(views.dpisToggleButton, state.dpisEnabled,
@@ -211,13 +212,7 @@ final class AppConfigDialogBinder {
                 item,
                 state.previewFromGlobalPrefill,
                 state.previewFontHookDomainsRaw);
-    }
-
-    private void bindPreviewStatus(MaterialTextView previewStatusView, boolean previewFromGlobalPrefill) {
-        previewStatusView.setVisibility(previewFromGlobalPrefill ? View.VISIBLE : View.GONE);
-        if (previewFromGlobalPrefill) {
-            previewStatusView.setText(R.string.dialog_global_prefill_preview_status);
-        }
+        state.refreshUnsavedBadge();
     }
 
     void bindTypefaceSelector(MaterialButton selectorButton, String selectedTypefaceId) {
@@ -620,6 +615,14 @@ final class AppConfigDialogBinder {
         return valid;
     }
 
+    private static String textOf(TextInputEditText view) {
+        return view != null && view.getText() != null ? view.getText().toString() : "";
+    }
+
+    private static String normalizeDraftText(String value) {
+        return value != null ? value.trim() : "";
+    }
+
     private void updateDialogStatus(MaterialTextView statusView,
             boolean inScope,
             boolean scopeKnown,
@@ -947,7 +950,6 @@ final class AppConfigDialogBinder {
         final MaterialTextView titleView;
         final MaterialTextView packageView;
         final MaterialTextView statusView;
-        final MaterialTextView previewStatusView;
         final TextInputLayout viewportInputLayout;
         final TextInputEditText viewportInputView;
         final TextInputLayout fontInputLayout;
@@ -968,7 +970,6 @@ final class AppConfigDialogBinder {
                 MaterialTextView titleView,
                 MaterialTextView packageView,
                 MaterialTextView statusView,
-                MaterialTextView previewStatusView,
                 TextInputLayout viewportInputLayout,
                 TextInputEditText viewportInputView,
                 TextInputLayout fontInputLayout,
@@ -988,7 +989,6 @@ final class AppConfigDialogBinder {
             this.titleView = titleView;
             this.packageView = packageView;
             this.statusView = statusView;
-            this.previewStatusView = previewStatusView;
             this.viewportInputLayout = viewportInputLayout;
             this.viewportInputView = viewportInputView;
             this.fontInputLayout = fontInputLayout;
@@ -1018,6 +1018,8 @@ final class AppConfigDialogBinder {
         String selectedTypefaceId;
         String viewportScaleInput = "";
         String viewportAbsoluteInput = "";
+        private SheetUnsavedBadgeBinder unsavedBadgeBinder;
+        private String savedDraftSignature = "";
 
         AppConfigDialogState(boolean scopeSelected,
                 boolean scopeKnown,
@@ -1075,6 +1077,52 @@ final class AppConfigDialogBinder {
             }
             previewFontHookDomainsRaw = null;
             viewportApplyMode = ViewportApplyMode.OFF;
+        }
+
+        void bindUnsavedBadge(SheetUnsavedBadgeBinder binder) {
+            unsavedBadgeBinder = binder;
+            refreshUnsavedBadge();
+        }
+
+        void captureSavedDraft(AppConfigDialogViews views, boolean previewBaseline) {
+            savedDraftSignature = previewBaseline
+                    ? emptyDraftSignature()
+                    : currentDraftSignature(views);
+            refreshUnsavedBadge();
+        }
+
+        boolean hasUnsavedChanges(AppConfigDialogViews views) {
+            return !savedDraftSignature.equals(currentDraftSignature(views));
+        }
+
+        void refreshUnsavedBadge() {
+            if (unsavedBadgeBinder != null) {
+                unsavedBadgeBinder.refresh();
+            }
+        }
+
+        private String currentDraftSignature(AppConfigDialogViews views) {
+            return String.join("|",
+                    normalizeDraftText(textOf(views.viewportInputView)),
+                    AppConfigDialogBinder.resolveViewportMode(views.viewportModeToggle),
+                    ViewportApplyMode.normalize(viewportApplyMode),
+                    normalizeDraftText(textOf(views.fontInputView)),
+                    AppConfigDialogBinder.resolveFontMode(views.fontModeToggle),
+                    normalizeDraftText(selectedTypefaceId),
+                    normalizeDraftText(previewFontHookDomainsRaw),
+                    previewFromGlobalPrefill ? "preview" : "stored");
+        }
+
+        private String emptyDraftSignature() {
+            return String.join("|",
+                    "",
+                    ViewportTargetType.RELATIVE_SCALE,
+                    ViewportApplyMode.OFF,
+                    "",
+                    FontApplyMode.SYSTEM_EMULATION,
+                    "",
+                    "",
+                    "stored");
         }
 
         private static String valueOrEmpty(String value) {

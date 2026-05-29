@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="?attr/colorPrimaryContainer" />
+    <stroke
+        android:width="@dimen/sheet_unsaved_badge_stroke_width"
+        android:color="?attr/colorPrimary" />
+    <corners android:radius="@dimen/sheet_unsaved_badge_corner_radius" />
+</shape>

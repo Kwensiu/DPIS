@@ -109,6 +109,7 @@ final class AppConfigSheetActionBinder {
             if (result[0] == 1) {
                 state.previewFromGlobalPrefill = false;
                 state.previewFontHookDomainsRaw = null;
+                state.captureSavedDraft(views, false);
                 AppConfigDialogBinder.showSaveButtonFeedback(views.saveButton);
                 binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
                 binder.syncHyperOsNativeProxyAfterSave(item, views, state);

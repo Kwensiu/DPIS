@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/workspace_app_button"
+        android:icon="@drawable/ic_apps_24"
+        android:title="@string/workspace_app" />
+    <item
+        android:id="@+id/workspace_template_button"
+        android:icon="@drawable/ic_template_24"
+        android:title="@string/workspace_template" />
+</menu>

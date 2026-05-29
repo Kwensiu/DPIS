@@ -68,7 +68,7 @@ public class QuickTemplateStoreTest {
     }
 
     @Test
-    public void readAllSortsByUpdatedAtNameAndId() {
+    public void saveAppendsNewTemplatesToTheEndWithoutReorderingExistingEntries() {
         FakePrefs prefs = new FakePrefs();
         QuickTemplateStore store = new QuickTemplateStore(prefs);
         assertTrue(store.save(new QuickTemplateStore.QuickTemplate(
@@ -92,9 +92,86 @@ public class QuickTemplateStoreTest {
 
         List<QuickTemplateStore.QuickTemplate> templates = store.readAll();
 
-        assertEquals("template_a", templates.get(0).id);
+        assertEquals("template_b", templates.get(0).id);
+        assertEquals("template_a", templates.get(1).id);
+        assertEquals("template_c", templates.get(2).id);
+
+        assertTrue(store.reorder(List.of("template_b", "template_c", "template_a")));
+
+        templates = store.readAll();
+
+        assertEquals("template_b", templates.get(0).id);
         assertEquals("template_c", templates.get(1).id);
-        assertEquals("template_b", templates.get(2).id);
+        assertEquals("template_a", templates.get(2).id);
+        assertEquals("template_b\ntemplate_c\ntemplate_a",
+                prefs.getString(QuickTemplateStore.KEY_TEMPLATE_ORDER, null));
+    }
+
+    @Test
+    public void newTemplatesAreAppendedToTheEndOfTheStoredOrder() {
+        FakePrefs prefs = new FakePrefs();
+        QuickTemplateStore store = new QuickTemplateStore(prefs);
+        assertTrue(store.save(new QuickTemplateStore.QuickTemplate(
+                "template_a",
+                "Alpha",
+                1000L,
+                Set.of(),
+                TemplateConfigValue.EMPTY)));
+        assertTrue(store.save(new QuickTemplateStore.QuickTemplate(
+                "template_b",
+                "Beta",
+                2000L,
+                Set.of(),
+                TemplateConfigValue.EMPTY)));
+
+        List<QuickTemplateStore.QuickTemplate> templates = store.readAll();
+        assertEquals("template_a", templates.get(0).id);
+        assertEquals("template_b", templates.get(1).id);
+
+        assertTrue(store.save(new QuickTemplateStore.QuickTemplate(
+                "template_c",
+                "Gamma",
+                3000L,
+                Set.of(),
+                TemplateConfigValue.EMPTY)));
+
+        templates = store.readAll();
+        assertEquals("template_a", templates.get(0).id);
+        assertEquals("template_b", templates.get(1).id);
+        assertEquals("template_c", templates.get(2).id);
+    }
+
+    @Test
+    public void deletePreservesStoredOrderForRemainingTemplates() {
+        FakePrefs prefs = new FakePrefs();
+        QuickTemplateStore store = new QuickTemplateStore(prefs);
+        assertTrue(store.save(new QuickTemplateStore.QuickTemplate(
+                "template_a",
+                "Alpha",
+                1000L,
+                Set.of(),
+                TemplateConfigValue.EMPTY)));
+        assertTrue(store.save(new QuickTemplateStore.QuickTemplate(
+                "template_b",
+                "Beta",
+                2000L,
+                Set.of(),
+                TemplateConfigValue.EMPTY)));
+        assertTrue(store.save(new QuickTemplateStore.QuickTemplate(
+                "template_c",
+                "Gamma",
+                3000L,
+                Set.of(),
+                TemplateConfigValue.EMPTY)));
+        assertTrue(store.reorder(List.of("template_c", "template_a", "template_b")));
+
+        assertTrue(store.delete("template_a"));
+
+        List<QuickTemplateStore.QuickTemplate> templates = store.readAll();
+        assertEquals("template_c", templates.get(0).id);
+        assertEquals("template_b", templates.get(1).id);
+        assertEquals("template_c\ntemplate_b",
+                prefs.getString(QuickTemplateStore.KEY_TEMPLATE_ORDER, null));
     }
 
     @Test

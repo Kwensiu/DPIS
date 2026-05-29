@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <View
+        android:id="@+id/sheet_drag_handle"
+        android:layout_width="@dimen/dialog_app_config_drag_handle_width"
+        android:layout_height="@dimen/dialog_app_config_drag_handle_height"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_dialog_drag_handle" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/sheet_unsaved_badge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_sheet_unsaved_badge"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:minHeight="@dimen/sheet_unsaved_badge_min_height"
+        android:paddingStart="@dimen/sheet_unsaved_badge_padding_horizontal"
+        android:paddingTop="@dimen/sheet_unsaved_badge_padding_vertical"
+        android:paddingEnd="@dimen/sheet_unsaved_badge_padding_horizontal"
+        android:paddingBottom="@dimen/sheet_unsaved_badge_padding_vertical"
+        android:text="@string/sheet_unsaved_badge"
+        android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+        android:textColor="?attr/colorOnPrimaryContainer"
+        android:visibility="gone" />
+</merge>

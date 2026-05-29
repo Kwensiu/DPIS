@@ -118,6 +118,12 @@
         <item name="cornerRadius">@dimen/dialog_button_corner_radius</item>
     </style>
 
+    <style name="Widget.Dpis.TemplateWorkspace.ApplyButton" parent="Widget.Dpis.DialogActionButton.Filled">
+        <item name="cornerRadius">@dimen/template_workspace_action_button_height</item>
+        <item name="android:paddingStart">@dimen/template_workspace_apply_button_padding_horizontal</item>
+        <item name="android:paddingEnd">@dimen/template_workspace_apply_button_padding_horizontal</item>
+    </style>
+
     <style name="Widget.Dpis.DialogActionButton.LanguageOption"
         parent="Widget.Material3.Button">
         <item name="android:minHeight">@dimen/dialog_option_button_min_height</item>

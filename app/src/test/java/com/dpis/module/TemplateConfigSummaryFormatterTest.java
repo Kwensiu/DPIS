@@ -22,9 +22,15 @@ public class TemplateConfigSummaryFormatterTest {
         TemplateConfigSummaryFormatter.Result result = formatter.format(value);
 
         assertEquals(
-                "Interface 112.5% · Interface route: Auto · Font 120% · Font route: Compat"
+                "Interface 112.5% · Font 120% · Font route: Compat"
                         + " · Font style: Demo Font · Custom hook chain",
                 result.summary());
+        assertEquals(5, result.summaryParts.size());
+        assertEquals("Interface 112.5%", result.summaryParts.get(0));
+        assertEquals("Font 120%", result.summaryParts.get(1));
+        assertEquals("Font route: Compat", result.summaryParts.get(2));
+        assertEquals("Font style: Demo Font", result.summaryParts.get(3));
+        assertEquals("Custom hook chain", result.summaryParts.get(4));
         assertFalse(result.typefaceStatus.missing);
     }
 
@@ -43,6 +49,9 @@ public class TemplateConfigSummaryFormatterTest {
         TemplateConfigSummaryFormatter.Result result = formatter.format(value);
 
         assertEquals("Interface 411dp · Interface route: Compat", result.summary());
+        assertEquals(2, result.summaryParts.size());
+        assertEquals("Interface 411dp", result.summaryParts.get(0));
+        assertEquals("Interface route: Compat", result.summaryParts.get(1));
         assertTrue(result.typefaceStatus.missing);
         assertEquals("font_missing", result.typefaceStatus.typefaceId);
     }
@@ -53,7 +62,27 @@ public class TemplateConfigSummaryFormatterTest {
                 .format(TemplateConfigValue.EMPTY);
 
         assertEquals("No values configured.", result.summary());
+        assertTrue(result.summaryParts.isEmpty());
         assertFalse(result.typefaceStatus.missing);
+    }
+
+    @Test
+    public void missingTypefaceOnlyDoesNotCreateConfiguredSummaryPart() {
+        TemplateConfigValue value = new TemplateConfigValue(
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                null,
+                FontApplyMode.OFF,
+                "font_missing",
+                null);
+
+        TemplateConfigSummaryFormatter.Result result = newFormatter(id ->
+                TemplateConfigSummaryFormatter.TypefaceStatus.missing(id)).format(value);
+
+        assertEquals("No values configured.", result.summary());
+        assertTrue(result.summaryParts.isEmpty());
+        assertTrue(result.typefaceStatus.missing);
+        assertEquals("font_missing", result.typefaceStatus.typefaceId);
     }
 
     private static TemplateConfigSummaryFormatter newFormatter(

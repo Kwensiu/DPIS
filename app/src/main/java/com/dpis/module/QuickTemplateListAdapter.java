@@ -5,36 +5,32 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.LinearLayout;
 
-import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textview.MaterialTextView;
 
 import java.util.List;
 
 final class QuickTemplateListAdapter {
-    interface UpdatedTimeFormatter {
-        String format(long updatedAt);
-    }
-
     interface TemplateAction {
         void run(String templateId);
     }
 
     private final Context context;
     private final TemplateConfigSummaryFormatter formatter;
-    private final UpdatedTimeFormatter updatedTimeFormatter;
+    private final TemplateSummaryChipBinder summaryChipBinder;
     private final TemplateAction editAction;
     private final TemplateAction applyAction;
     private final TemplateAction selectAction;
 
     QuickTemplateListAdapter(Context context,
             TemplateConfigSummaryFormatter formatter,
-            UpdatedTimeFormatter updatedTimeFormatter,
+            TemplateSummaryChipBinder summaryChipBinder,
             TemplateAction editAction,
             TemplateAction applyAction,
             TemplateAction selectAction) {
         this.context = context;
         this.formatter = formatter;
-        this.updatedTimeFormatter = updatedTimeFormatter;
+        this.summaryChipBinder = summaryChipBinder;
         this.editAction = editAction;
         this.applyAction = applyAction;
         this.selectAction = selectAction;
@@ -43,11 +39,20 @@ final class QuickTemplateListAdapter {
     void bind(LinearLayout listContainer,
             MaterialTextView emptyState,
             List<QuickTemplateStore.QuickTemplate> templates) {
+        bind(listContainer, emptyState, templates,
+                context.getString(R.string.template_workspace_quick_templates_empty));
+    }
+
+    void bind(LinearLayout listContainer,
+            MaterialTextView emptyState,
+            List<QuickTemplateStore.QuickTemplate> templates,
+            String emptyText) {
         if (listContainer == null || emptyState == null) {
             return;
         }
         listContainer.removeAllViews();
         boolean empty = templates == null || templates.isEmpty();
+        emptyState.setText(emptyText);
         emptyState.setVisibility(empty ? View.VISIBLE : View.GONE);
         if (empty) {
             return;
@@ -70,32 +75,16 @@ final class QuickTemplateListAdapter {
     private void bindCard(View card, QuickTemplateStore.QuickTemplate template) {
         TemplateConfigSummaryFormatter.Result result = formatter.format(template.configValue);
         MaterialTextView titleView = card.findViewById(R.id.quick_template_title);
-        MaterialTextView summaryView = card.findViewById(R.id.quick_template_summary);
-        MaterialTextView updatedView = card.findViewById(R.id.quick_template_updated);
-        MaterialTextView missingFontView = card.findViewById(R.id.quick_template_missing_font);
+        ChipGroup summaryChips = card.findViewById(R.id.quick_template_summary_chips);
+        MaterialTextView emptySummaryView = card.findViewById(R.id.quick_template_empty_summary);
         titleView.setText(template.name);
-        summaryView.setText(result.summary());
-        updatedView.setText(updatedTimeFormatter.format(template.updatedAt));
-        bindMissingFont(missingFontView, result.typefaceStatus);
+        summaryChipBinder.bind(summaryChips, emptySummaryView, result);
         bindAction(card.findViewById(R.id.quick_template_apply_button), template.id, applyAction);
         bindAction(card.findViewById(R.id.quick_template_edit_button), template.id, editAction);
         bindAction(card.findViewById(R.id.quick_template_select_button), template.id, selectAction);
     }
 
-    private void bindMissingFont(MaterialTextView view,
-            TemplateConfigSummaryFormatter.TypefaceStatus typefaceStatus) {
-        if (typefaceStatus != null && typefaceStatus.missing) {
-            view.setVisibility(View.VISIBLE);
-            view.setText(context.getString(
-                    R.string.template_workspace_missing_font,
-                    typefaceStatus.typefaceId));
-            return;
-        }
-        view.setVisibility(View.GONE);
-        view.setText("");
-    }
-
-    private void bindAction(MaterialButton button, String templateId, TemplateAction action) {
+    private void bindAction(View button, String templateId, TemplateAction action) {
         TouchFeedbackBinder.bindPressHaptic(button);
         button.setOnClickListener(v -> {
             if (action != null) {

@@ -90,28 +90,18 @@ public class AppConfigDialogBinderSourceSmokeTest {
     }
 
     @Test
-    public void appConfigSheetShowsGlobalPrefillPreviewIndicatorUntilSave() throws IOException {
+    public void appConfigSheetUsesUnsavedBadgeInsteadOfPreviewIndicator() throws IOException {
         String binderSource = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
-        String actionSource = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
         String layout = read("src/main/res/layout/dialog_app_config.xml");
-        String strings = read("src/main/res/values/strings.xml");
-        String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
-        assertTrue(layout.contains("android:id=\"@+id/dialog_preview_status\""));
-        assertTrue(layout.contains("@string/dialog_global_prefill_preview_status"));
-        assertTrue(layout.contains("android:visibility=\"gone\""));
-        assertTrue(binderSource.contains("dialogView.findViewById(R.id.dialog_preview_status)"));
-        assertTrue(binderSource.contains("bindPreviewStatus(views.previewStatusView, state.previewFromGlobalPrefill)"));
-        assertTrue(binderSource.contains("previewStatusView.setVisibility(previewFromGlobalPrefill ? View.VISIBLE : View.GONE)"));
+        assertTrue(layout.contains("@layout/view_sheet_unsaved_badge_handle"));
+        assertFalse(layout.contains("dialog_preview_status"));
+        assertFalse(layout.contains("dialog_global_prefill_preview_status"));
+        assertTrue(binderSource.contains("state.captureSavedDraft(views, item != null && item.previewFromGlobalPrefill);"));
+        assertTrue(binderSource.contains("SheetUnsavedBadgeBinder.bind("));
         assertTrue(binderSource.contains("bindDpisToggleButton(views.dpisToggleButton, state.dpisEnabled"));
-        assertTrue(binderSource.contains("state.previewFromGlobalPrefill,"));
         assertTrue(binderSource.contains("dpisToggleButton.setEnabled(!previewFromGlobalPrefill);"));
         assertTrue(binderSource.contains("dpisToggleButton.setAlpha(previewFromGlobalPrefill ? 0.6f : 1f);"));
-        assertTrue(actionSource.contains("state.previewFromGlobalPrefill = false;"));
-        assertTrue(actionSource.contains("state.previewFontHookDomainsRaw = null;"));
-        assertTrue(actionSource.contains("binder.refreshDialogState(views, state, style, systemHooksEnabled, item);"));
-        assertTrue(strings.contains("Preview from global prefill"));
-        assertTrue(zhStrings.contains("来自全局预填的预览"));
     }
 
     @Test
@@ -249,7 +239,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
         assertTrue(layout.contains("android:id=\"@+id/dialog_font_hook_domains_button\""));
         assertTrue(layout.contains("@dimen/dialog_app_config_padding_horizontal"));
-        assertTrue(layout.contains("@dimen/dialog_app_config_drag_handle_width"));
+        assertTrue(layout.contains("@layout/view_sheet_unsaved_badge_handle"));
         assertTrue(layout.contains("@dimen/dialog_app_config_input_corner_radius"));
         assertTrue(layout.contains("@dimen/dialog_app_config_process_button_spacing_start"));
         assertTrue(layout.indexOf("android:id=\"@+id/dialog_font_hook_domains_button\"")

@@ -81,7 +81,8 @@ final class AppListItem {
                 Drawable icon) {
         this(label, packageName, inScope, scopeKnown, viewportWidthDp, viewportScalePermille,
                 viewportMode, viewportTargetSpec, fontScalePercent, fontMode, typefaceId,
-                dpisEnabled, systemApp, hyperOsNativeProxyCandidate, false, null, icon);
+                appSpecificConfigActive, dpisEnabled, systemApp, hyperOsNativeProxyCandidate,
+                false, null, icon);
     }
 
     private AppListItem(String label,
@@ -95,6 +96,7 @@ final class AppListItem {
                 Integer fontScalePercent,
                 String fontMode,
                 String typefaceId,
+                boolean appSpecificConfigActive,
                 boolean dpisEnabled,
                 boolean systemApp,
                 boolean hyperOsNativeProxyCandidate,
@@ -170,6 +172,7 @@ final class AppListItem {
                 normalized.fontScalePercent,
                 normalized.fontApplyMode,
                 normalized.typefaceId,
+                appSpecificConfigActive,
                 dpisEnabled,
                 systemApp,
                 hyperOsNativeProxyCandidate,

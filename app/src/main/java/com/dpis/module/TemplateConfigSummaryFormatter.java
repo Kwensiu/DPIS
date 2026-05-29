@@ -52,7 +52,8 @@ final class TemplateConfigSummaryFormatter {
         } else if (viewportTargetSpec.isAbsoluteDp()) {
             parts.add(text.viewportWidth(viewportTargetSpec.absoluteWidthDp()));
         }
-        if (ViewportApplyMode.isEnabled(normalized.viewportApplyMode)) {
+        if (ViewportApplyMode.SYSTEM.equals(normalized.viewportApplyMode)
+                || ViewportApplyMode.COMPAT.equals(normalized.viewportApplyMode)) {
             parts.add(text.viewportMode(modeLabel(normalized.viewportApplyMode)));
         }
         if (normalized.fontScalePercent != null) {
@@ -68,10 +69,7 @@ final class TemplateConfigSummaryFormatter {
         if (normalized.fontHookDomainsRaw != null) {
             parts.add(text.hookDomains());
         }
-        if (parts.isEmpty()) {
-            parts.add(text.emptySummary());
-        }
-        return new Result(parts, typefaceStatus);
+        return new Result(parts, typefaceStatus, text.emptySummary());
     }
 
     private TypefaceStatus resolveTypeface(String typefaceId) {
@@ -104,13 +102,18 @@ final class TemplateConfigSummaryFormatter {
     static final class Result {
         final List<String> summaryParts;
         final TypefaceStatus typefaceStatus;
+        private final String emptySummary;
 
-        Result(List<String> summaryParts, TypefaceStatus typefaceStatus) {
+        Result(List<String> summaryParts, TypefaceStatus typefaceStatus, String emptySummary) {
             this.summaryParts = List.copyOf(summaryParts);
             this.typefaceStatus = typefaceStatus != null ? typefaceStatus : TypefaceStatus.none();
+            this.emptySummary = emptySummary != null ? emptySummary : "";
         }
 
         String summary() {
+            if (summaryParts.isEmpty()) {
+                return emptySummary;
+            }
             return String.join(" · ", summaryParts);
         }
     }

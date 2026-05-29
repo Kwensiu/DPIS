@@ -60,7 +60,9 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("STATE_WORKSPACE_MODE"));
         assertTrue(source.contains("MainWorkspaceMode.fromName("));
         assertTrue(source.contains("bindWorkspaceSwitch()"));
-        assertTrue(source.contains("workspaceSwitch.addOnButtonCheckedListener"));
+        assertTrue(source.contains("workspaceSwitch.setOnItemSelectedListener"));
+        assertTrue(source.contains("private boolean updatingWorkspaceSelection;"));
+        assertTrue(source.contains("private void selectWorkspaceItem(int itemId)"));
         assertTrue(source.contains("MainUiAction.workspaceModeChanged("));
         assertTrue(source.contains("applyWorkspaceMode(state.workspaceMode);"));
         assertTrue(source.contains("boolean appWorkspace = mode == MainWorkspaceMode.APP;"));
@@ -68,10 +70,14 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("setVisible(appWorkspaceDivider, appWorkspace);"));
         assertTrue(source.contains("setVisible(appPager, appWorkspace);"));
         assertTrue(source.contains("setVisible(templateWorkspaceContainer, !appWorkspace);"));
+        assertTrue(source.contains("setVisible(searchFocusFab, appWorkspace);"));
+        assertTrue(source.contains("setVisible(helpFab, appWorkspace);"));
         assertTrue(source.contains(
                 "templateWorkspaceBinder = new TemplateWorkspaceBinder(this, createTemplateWorkspaceActions(),"));
         assertTrue(source.contains("bindTemplateWorkspace();"));
-        assertTrue(source.contains("templateWorkspaceBinder.bind(templateWorkspaceContainer);"));
+        assertTrue(source.contains("templateWorkspaceBinder.bind(templateWorkspaceContainer, requireUiState().query);"));
+        assertTrue(source.contains("R.string.template_search_hint"));
+        assertTrue(source.contains("QuickTemplateSortDialog.show"));
         assertTrue(source.contains("searchFilterButton.setEnabled(appWorkspace);"));
         assertTrue(source.contains("searchFilterButton.setVisibility(appWorkspace ? View.VISIBLE : View.GONE);"));
         assertTrue(source.contains("workspaceModeForButtonId(int checkedId)"));

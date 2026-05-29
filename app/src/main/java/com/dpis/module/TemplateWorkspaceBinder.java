@@ -6,18 +6,16 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textview.MaterialTextView;
 
-import java.text.DateFormat;
-import java.util.Date;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Locale;
 
 final class TemplateWorkspaceBinder {
     interface GlobalPrefillActions {
         void edit();
-
-        void reset();
     }
 
     interface QuickTemplateActions {
@@ -28,14 +26,18 @@ final class TemplateWorkspaceBinder {
         void select(String templateId);
 
         void create();
+
+        void sort(List<QuickTemplateStore.QuickTemplate> templates);
     }
 
     private final Context context;
     private final SharedPreferences preferences;
     private final TemplateConfigSummaryFormatter formatter;
+    private final TemplateSummaryChipBinder summaryChipBinder;
     private final QuickTemplateListAdapter quickTemplateListAdapter;
     private final GlobalPrefillActions globalPrefillActions;
     private final QuickTemplateActions quickTemplateActions;
+    private static final float DISABLED_ACTION_ALPHA = 0.45f;
 
     TemplateWorkspaceBinder(Context context,
             GlobalPrefillActions globalPrefillActions,
@@ -48,51 +50,66 @@ final class TemplateWorkspaceBinder {
                 new ResourceSummaryText(context),
                 new TemplateTypefaceResolver(() -> ConfigStoreFactory.createFontLibraryForModuleApp(
                         context, DpisApplication.getXposedService())));
+        this.summaryChipBinder = new TemplateSummaryChipBinder(context);
         this.quickTemplateListAdapter = new QuickTemplateListAdapter(
                 context,
                 formatter,
-                this::formatUpdatedTime,
+                summaryChipBinder,
                 this::onEditTemplate,
                 this::onApplyTemplate,
                 this::onSelectTemplate);
     }
 
-    void bind(View workspaceView) {
+    void bind(View workspaceView, String query) {
         if (workspaceView == null) {
             return;
         }
         bindGlobalPrefill(workspaceView);
-        bindCreateTemplateButton(workspaceView);
         LinearLayout listContainer = workspaceView.findViewById(R.id.quick_template_list_container);
         MaterialTextView emptyState = workspaceView.findViewById(R.id.quick_template_empty_state);
-        List<QuickTemplateStore.QuickTemplate> templates =
-                new QuickTemplateStore(preferences).readAll();
-        quickTemplateListAdapter.bind(listContainer, emptyState, templates);
+        List<QuickTemplateStore.QuickTemplate> templates = new QuickTemplateStore(preferences).readAll();
+        bindHeaderActions(workspaceView, templates);
+        String normalizedQuery = normalizeQuery(query);
+        boolean searching = !normalizedQuery.isEmpty();
+        setVisible(workspaceView.findViewById(R.id.global_prefill_card), !searching);
+        setVisible(workspaceView.findViewById(R.id.quick_template_section_header), !searching);
+        quickTemplateListAdapter.bind(
+                listContainer,
+                emptyState,
+                searching ? filterTemplates(templates, normalizedQuery) : templates,
+                searching ? context.getString(R.string.quick_template_search_empty)
+                        : context.getString(R.string.template_workspace_quick_templates_empty));
     }
 
     private void bindGlobalPrefill(View workspaceView) {
         TemplateConfigValue value = new GlobalPrefillStore(preferences).read();
         TemplateConfigSummaryFormatter.Result result = formatter.format(value);
-        MaterialTextView summaryView = workspaceView.findViewById(R.id.global_prefill_summary);
-        MaterialTextView missingFontView = workspaceView.findViewById(R.id.global_prefill_missing_font);
-        MaterialButton editButton = workspaceView.findViewById(R.id.global_prefill_edit_button);
-        MaterialButton resetButton = workspaceView.findViewById(R.id.global_prefill_reset_button);
-        summaryView.setText(result.summary());
-        bindMissingFont(missingFontView, result.typefaceStatus);
+        ChipGroup summaryChips = workspaceView.findViewById(R.id.global_prefill_summary_chips);
+        MaterialTextView emptySummaryView = workspaceView.findViewById(R.id.global_prefill_empty_summary);
+        View editButton = workspaceView.findViewById(R.id.global_prefill_edit_button);
+        summaryChipBinder.bind(summaryChips, emptySummaryView, result);
+        TouchFeedbackBinder.bindPressHaptic(editButton);
         editButton.setOnClickListener(v -> {
             if (globalPrefillActions != null) {
                 globalPrefillActions.edit();
             }
         });
-        resetButton.setOnClickListener(v -> {
-            if (globalPrefillActions != null) {
-                globalPrefillActions.reset();
-            }
-        });
     }
 
-    private void bindCreateTemplateButton(View workspaceView) {
-        MaterialButton createButton = workspaceView.findViewById(R.id.quick_template_create_button);
+    private void bindHeaderActions(View workspaceView, List<QuickTemplateStore.QuickTemplate> templates) {
+        View sortButton = workspaceView.findViewById(R.id.quick_template_sort_button);
+        if (sortButton != null) {
+            boolean sortEnabled = templates != null && !templates.isEmpty();
+            sortButton.setEnabled(sortEnabled);
+            sortButton.setAlpha(sortEnabled ? 1f : DISABLED_ACTION_ALPHA);
+            TouchFeedbackBinder.bindPressHaptic(sortButton);
+            sortButton.setOnClickListener(v -> {
+                if (quickTemplateActions != null) {
+                    quickTemplateActions.sort(new QuickTemplateStore(preferences).readAll());
+                }
+            });
+        }
+        View createButton = workspaceView.findViewById(R.id.quick_template_create_button);
         if (createButton == null) {
             return;
         }
@@ -122,30 +139,33 @@ final class TemplateWorkspaceBinder {
         }
     }
 
-    private void bindMissingFont(MaterialTextView view,
-            TemplateConfigSummaryFormatter.TypefaceStatus typefaceStatus) {
-        if (typefaceStatus != null && typefaceStatus.missing) {
-            view.setVisibility(View.VISIBLE);
-            view.setText(context.getString(
-                    R.string.template_workspace_missing_font,
-                    typefaceStatus.typefaceId));
-            return;
-        }
-        view.setVisibility(View.GONE);
-        view.setText("");
-    }
-
-    private String formatUpdatedTime(long updatedAt) {
-        if (updatedAt <= 0L) {
-            return context.getString(R.string.template_workspace_updated_unknown);
-        }
-        DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
-        return context.getString(R.string.template_workspace_updated_time,
-                dateFormat.format(new Date(updatedAt)));
-    }
-
     private void showNotWiredToast() {
         Toast.makeText(context, R.string.template_workspace_not_wired, Toast.LENGTH_SHORT).show();
+    }
+
+    private static List<QuickTemplateStore.QuickTemplate> filterTemplates(
+            List<QuickTemplateStore.QuickTemplate> templates,
+            String normalizedQuery) {
+        ArrayList<QuickTemplateStore.QuickTemplate> filtered = new ArrayList<>();
+        if (templates == null) {
+            return filtered;
+        }
+        for (QuickTemplateStore.QuickTemplate template : templates) {
+            if (template.name.toLowerCase(Locale.ROOT).contains(normalizedQuery)) {
+                filtered.add(template);
+            }
+        }
+        return filtered;
+    }
+
+    private static String normalizeQuery(String query) {
+        return query != null ? query.trim().toLowerCase(Locale.ROOT) : "";
+    }
+
+    private static void setVisible(View view, boolean visible) {
+        if (view != null) {
+            view.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
     }
 
     private static final class ResourceSummaryText implements TemplateConfigSummaryFormatter.Text {
