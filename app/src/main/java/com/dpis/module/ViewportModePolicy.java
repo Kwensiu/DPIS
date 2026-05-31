@@ -30,7 +30,9 @@ final class ViewportModePolicy {
         }
         String requestedMode = ViewportApplyMode.normalize(
                 store.getTargetViewportApplyMode(packageName));
-        if (!ViewportApplyMode.AUTO.equals(requestedMode) || !store.isSystemServerHooksEnabled()) {
+        if ((!ViewportApplyMode.AUTO.equals(requestedMode)
+                && !ViewportApplyMode.SYSTEM.equals(requestedMode))
+                || !store.isSystemServerHooksEnabled()) {
             return false;
         }
         return true;

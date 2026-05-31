@@ -77,7 +77,7 @@ public class AppProcessHookInstallerTest {
     }
 
     @Test
-    public void explicitSystemViewportDoesNotInstallAppProcessHooks() {
+    public void explicitSystemViewportInstallsResourcesFallbackHooks() {
         HookRuntimePolicy policy = createPolicy(false, true);
 
         boolean enabled = AppProcessHookInstaller.resolveViewportHookEnabled(
@@ -85,7 +85,62 @@ public class AppProcessHookInstallerTest {
                 true,
                 ViewportApplyMode.SYSTEM);
 
-        assertFalse(enabled);
+        assertTrue(enabled);
+    }
+
+    @Test
+    public void absoluteSystemViewportSkipsDisplaySupplementHooks() {
+        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
+                createPolicy(false, true),
+                true,
+                ViewportApplyMode.SYSTEM,
+                false,
+                FontApplyMode.OFF,
+                false,
+                false,
+                DebugFontOverride.none());
+
+        assertTrue(plan.viewportEnabled);
+        assertTrue(plan.resourcesHooksEnabled);
+        assertFalse(AppProcessHookInstaller.shouldInstallAppProcessViewportSupplementHooksForTest(
+                plan,
+                ViewportTargetSpec.absoluteDp(300)));
+    }
+
+    @Test
+    public void compatViewportKeepsDisplaySupplementHooks() {
+        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
+                createPolicy(false, false),
+                true,
+                ViewportApplyMode.AUTO,
+                false,
+                FontApplyMode.OFF,
+                false,
+                false,
+                DebugFontOverride.none());
+
+        assertTrue(plan.viewportEnabled);
+        assertTrue(AppProcessHookInstaller.shouldInstallAppProcessViewportSupplementHooksForTest(
+                plan,
+                ViewportTargetSpec.absoluteDp(300)));
+    }
+
+    @Test
+    public void relativeSystemViewportSkipsDisplaySupplementHooks() {
+        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
+                createPolicy(false, true),
+                true,
+                ViewportApplyMode.AUTO,
+                false,
+                FontApplyMode.OFF,
+                false,
+                false,
+                DebugFontOverride.none());
+
+        assertTrue(plan.viewportEnabled);
+        assertFalse(AppProcessHookInstaller.shouldInstallAppProcessViewportSupplementHooksForTest(
+                plan,
+                ViewportTargetSpec.relativeScale(1200)));
     }
 
     @Test
@@ -296,7 +351,8 @@ public class AppProcessHookInstallerTest {
 
         assertTrue(source.contains("TypefaceOverrideHookInstaller.install("));
         assertTrue(source.indexOf("installTypefaceHooks(xposed, packageName, store, packagePlan.targetTypefaceId);")
-                < source.indexOf("installFromPlan(xposed, packageName, store, plan);"));
+                < source.indexOf("installFromPlan(xposed, packageName, store, plan,"
+                + " packagePlan.targetViewportSpec);"));
         assertTrue(moduleMain.contains("packagePlan.targetTypefaceId"));
         assertTrue(moduleMain.contains("retryTypefaceHooksWithPackageReady"));
         assertTrue(moduleMain.contains("AppProcessHookInstaller.installTypefaceHooks("));

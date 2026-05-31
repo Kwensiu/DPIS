@@ -28,7 +28,7 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     public void postProceedDisabledForConfigDispatchOnly() {
         assertFalse(SystemServerDisplayEnvironmentInstaller
                 .shouldApplyPostProceedMutationsForTest("config-dispatch"));
-        assertFalse(SystemServerDisplayEnvironmentInstaller
+        assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldApplyPostProceedMutationsForTest("activity-start"));
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldApplyPostProceedMutationsForTest("display-content-config"));
@@ -78,10 +78,12 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
                 .shouldInstallTargetForTest("display-content-config", true));
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldInstallTargetForTest("activity-start", true));
-        assertFalse(SystemServerDisplayEnvironmentInstaller
+        assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldInstallTargetForTest("config-dispatch", true));
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldInstallTargetForTest("launch-activity-item", true));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldInstallTargetForTest("display-manager-info", true));
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldInstallTargetForTest("hyperos-rust-process", true));
     }
@@ -100,6 +102,8 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
                 .shouldInstallTargetForTest("config-dispatch", false));
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldInstallTargetForTest("launch-activity-item", false));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldInstallTargetForTest("display-manager-info", false));
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldInstallTargetForTest("hyperos-rust-process", false));
     }
@@ -122,7 +126,7 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     }
 
     @Test
-    public void launchActivityItemDoesNotMutateViewportConfig()
+    public void launchActivityItemRestoresViewportConfigMutation()
             throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
         int methodIndex = source.indexOf("private static void applyLaunchActivityItemArgs");
@@ -132,18 +136,25 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
 
         String method = source.substring(methodIndex, nextMethodIndex);
         assertTrue(method.contains("resolveMarkerGatedEnvironment("));
-        assertFalse(method.contains("applyConfiguration(configuration, environment)"));
+        assertTrue(method.contains("applyConfiguration(configuration, environment)"));
+        assertTrue(method.contains("applyLaunchActivityItemConfigurationFields("));
+        assertTrue(source.contains("applyLaunchActivityItemObject(source, chain.getThisObject())"));
+        assertTrue(source.contains("system_server launch-activity-item post-init failed"));
     }
 
     @Test
-    public void relativeScaleIsExcludedFromSystemServerViewportMutation()
+    public void relativeScaleUsesMarkerGatedExplicitSystemServerViewportMutation()
             throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
         assertTrue(source.contains("private static boolean shouldApplySystemServerViewportMutation"));
+        assertTrue(source.contains("if (ViewportApplyMode.SYSTEM.equals(mode))"));
+        assertTrue(source.contains("ViewportApplyMode.AUTO.equals(mode)"));
         assertTrue(source.contains("&& !config.targetViewportSpec.isRelativeScale()"));
         assertTrue(source.contains("boolean applyViewport = environment != null"));
         assertTrue(source.contains("shouldApplySystemServerViewportMutation(config);"));
         assertTrue(source.contains("if (!shouldApplySystemServerViewportMutation(config))"));
+        assertTrue(source.contains("resolveMarkerGatedEnvironment("));
+        assertTrue(source.contains("config.targetViewportSpec.isRelativeScale()"));
     }
 
     @Test

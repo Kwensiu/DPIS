@@ -64,6 +64,19 @@ final class SystemServerDisplayEnvironmentInstaller {
             "configuration",
             "mConfiguration"
     };
+    private static final String[] WINDOW_CONTAINER_CONFIGURATION_FIELD_NAMES = new String[]{
+            "mFullConfiguration",
+            "mResolvedOverrideConfiguration",
+            "mMergedOverrideConfiguration",
+            "mTmpConfig",
+            "mConfiguration",
+            "configuration"
+    };
+    private static final String[] MERGED_CONFIGURATION_FIELD_NAMES = new String[]{
+            "mGlobalConfig",
+            "mOverrideConfig",
+            "mMergedConfig"
+    };
     private static final String[] DISPLAY_INFO_FIELD_NAMES = new String[]{
             "displayInfo",
             "mDisplayInfo",
@@ -321,8 +334,11 @@ final class SystemServerDisplayEnvironmentInstaller {
                                                         before,
                                                         preEnvironment,
                                                         config);
-                                        if (applyEnvironment(
-                                                target.entryName, before, applyEnvironment, config)) {
+                                        boolean changed = applyEnvironment(
+                                                target.entryName, before, applyEnvironment, config);
+                                        changed |= applyConfigDispatchObject(
+                                                target.entryName, thisObject, applyEnvironment);
+                                        if (changed) {
                                             logViewportMarkerProbe(
                                                     target.entryName, packageName, before, applyEnvironment, config);
                                         }
@@ -335,6 +351,10 @@ final class SystemServerDisplayEnvironmentInstaller {
                                             packageName, before, after, config);
                                     PerAppDisplayEnvironment effectiveEnvironment = chooseEffectiveEnvironment(
                                             preEnvironment, environment);
+                                    if ("config-dispatch".equals(target.entryName)) {
+                                        applyConfigDispatchObject(
+                                                target.entryName, thisObject, effectiveEnvironment);
+                                    }
                                     if (loggingEnabled) {
                                         logTargetComputation(target.entryName, packageName,
                                                 preEnvironment, environment, effectiveEnvironment);
@@ -450,14 +470,23 @@ final class SystemServerDisplayEnvironmentInstaller {
             xposed.hook(constructor)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
                     .intercept(chain -> {
+                        Object result;
                         try {
                             if (source.isSystemServerHooksEnabled()) {
                                 applyLaunchActivityItemArgs(source, chain.getArgs());
                             }
                         } catch (Throwable throwable) {
-                            DpisLog.e("system_server launch-activity-item failed", throwable);
+                            DpisLog.e("system_server launch-activity-item pre-init failed", throwable);
                         }
-                        return chain.proceed();
+                        result = chain.proceed();
+                        try {
+                            if (source.isSystemServerHooksEnabled()) {
+                                applyLaunchActivityItemObject(source, chain.getThisObject());
+                            }
+                        } catch (Throwable throwable) {
+                            DpisLog.e("system_server launch-activity-item post-init failed", throwable);
+                        }
+                        return result;
                     });
             hooked = true;
         }
@@ -506,14 +535,17 @@ final class SystemServerDisplayEnvironmentInstaller {
         boolean fontChanged = false;
         for (Object arg : args) {
             if (arg instanceof Configuration configuration) {
-                // LaunchActivityItem configurations are compared against the
-                // ActivityRecord's full configuration during launch. Mutating
-                // viewport fields here can make the new activity immediately
-                // relaunch for screen size / density changes.
+                if (environment != null) {
+                    changed |= applyConfiguration(configuration, environment);
+                }
                 boolean appliedFont = applyFontScale(configuration, config);
                 fontChanged |= appliedFont;
                 changed |= appliedFont;
             }
+        }
+        Object activityItem = findLaunchActivityItem(args);
+        if (activityItem != null && environment != null) {
+            changed |= applyLaunchActivityItemConfigurationFields(activityItem, environment);
         }
         if (fontChanged) {
             HyperOsFlutterFontBridge.publishTarget(packageName, config);
@@ -567,6 +599,129 @@ final class SystemServerDisplayEnvironmentInstaller {
             }
         }
         return null;
+    }
+
+    private static void applyLaunchActivityItemObject(PerAppDisplayConfigSource source,
+                                                      Object launchActivityItem) {
+        if (source == null || launchActivityItem == null) {
+            return;
+        }
+        ActivityInfo activityInfo = readLaunchActivityInfo(launchActivityItem);
+        String packageName = activityInfo != null ? activityInfo.packageName : null;
+        if (packageName == null || !isLikelyPackageName(packageName)) {
+            return;
+        }
+        PerAppDisplayConfig config = selectConfigForSystemServer(source.get(packageName));
+        if (config == null || !shouldApplySystemServerViewportMutation(config)) {
+            return;
+        }
+        Configuration baseConfiguration = readLaunchActivityConfiguration(launchActivityItem);
+        if (baseConfiguration == null) {
+            return;
+        }
+        int widthPx = resolveWidthPx(baseConfiguration, null);
+        int heightPx = resolveHeightPx(baseConfiguration, null);
+        PerAppDisplayEnvironment environment = resolveAlreadyAppliedRelativeScaleEnvironment(
+                packageName, baseConfiguration, widthPx, heightPx, config);
+        if (environment == null) {
+            environment = PerAppDisplayOverrideCalculator.calculate(
+                    baseConfiguration, widthPx, heightPx, config.targetViewportSpec);
+        }
+        environment = resolveMarkerGatedEnvironment(
+                "launch-activity-item",
+                packageName,
+                new Snapshot(baseConfiguration, null, null),
+                environment,
+                config);
+        if (environment == null) {
+            return;
+        }
+        if (applyLaunchActivityItemConfigurationFields(launchActivityItem, environment)
+                && DpisLog.isLoggingEnabled()) {
+            logIfChanged("launch-activity-item-object|" + packageName,
+                    "system_server launch-activity-item object apply: package=" + packageName
+                            + ", target=" + describeEnvironment(environment),
+                    resolveLogMinIntervalMs("launch-activity-item"));
+        }
+    }
+
+    private static ActivityInfo readLaunchActivityInfo(Object launchActivityItem) {
+        Object value = readField(launchActivityItem, "mInfo");
+        return value instanceof ActivityInfo info ? info : null;
+    }
+
+    private static Configuration readLaunchActivityConfiguration(Object launchActivityItem) {
+        Object override = readField(launchActivityItem, "mOverrideConfig");
+        if (override instanceof Configuration configuration) {
+            return configuration;
+        }
+        Object current = readField(launchActivityItem, "mCurConfig");
+        return current instanceof Configuration configuration ? configuration : null;
+    }
+
+    private static Object findLaunchActivityItem(List<Object> args) {
+        if (args == null || args.isEmpty()) {
+            return null;
+        }
+        for (Object arg : args) {
+            if (arg != null
+                    && "android.app.servertransaction.LaunchActivityItem".equals(
+                    arg.getClass().getName())) {
+                return arg;
+            }
+        }
+        return null;
+    }
+
+    private static boolean applyLaunchActivityItemConfigurationFields(
+            Object launchActivityItem,
+            PerAppDisplayEnvironment environment) {
+        if (launchActivityItem == null || environment == null) {
+            return false;
+        }
+        boolean changed = false;
+        changed |= applyConfigurationField(launchActivityItem, "mCurConfig", environment);
+        changed |= applyConfigurationField(launchActivityItem, "mOverrideConfig", environment);
+        return changed;
+    }
+
+    private static boolean applyConfigurationField(Object target,
+                                                   String fieldName,
+                                                   PerAppDisplayEnvironment environment) {
+        Object value = readField(target, fieldName);
+        if (!(value instanceof Configuration configuration)) {
+            return false;
+        }
+        return applyConfiguration(configuration, environment);
+    }
+
+    private static boolean applyConfigDispatchObject(String entryName,
+                                                     Object target,
+                                                     PerAppDisplayEnvironment environment) {
+        if (!"config-dispatch".equals(entryName) || target == null || environment == null) {
+            return false;
+        }
+        boolean changed = false;
+        for (String fieldName : WINDOW_CONTAINER_CONFIGURATION_FIELD_NAMES) {
+            changed |= applyConfigurationField(target, fieldName, environment);
+        }
+        for (String fieldName : CONFIGURATION_FIELD_NAMES) {
+            Object value = readField(target, fieldName);
+            changed |= applyMergedConfigurationFields(value, environment);
+        }
+        return changed;
+    }
+
+    private static boolean applyMergedConfigurationFields(Object target,
+                                                          PerAppDisplayEnvironment environment) {
+        if (target == null || environment == null) {
+            return false;
+        }
+        boolean changed = false;
+        for (String fieldName : MERGED_CONFIGURATION_FIELD_NAMES) {
+            changed |= applyConfigurationField(target, fieldName, environment);
+        }
+        return changed;
     }
 
     private static String describeConfigurationArgs(List<Object> args) {
@@ -1013,7 +1168,11 @@ final class SystemServerDisplayEnvironmentInstaller {
             return false;
         }
         String mode = ViewportApplyMode.normalize(config.targetViewportMode);
-        return ViewportApplyMode.AUTO.equals(mode) || ViewportApplyMode.SYSTEM.equals(mode);
+        if (ViewportApplyMode.SYSTEM.equals(mode)) {
+            return true;
+        }
+        return ViewportApplyMode.AUTO.equals(mode)
+                && !config.targetViewportSpec.isRelativeScale();
     }
 
     private static boolean hasSystemServerFontOverride(PerAppDisplayConfig config) {
@@ -1221,8 +1380,7 @@ final class SystemServerDisplayEnvironmentInstaller {
     }
 
     private static boolean shouldApplySystemServerViewportMutation(PerAppDisplayConfig config) {
-        return hasSystemServerViewportOverride(config)
-                && !config.targetViewportSpec.isRelativeScale();
+        return hasSystemServerViewportOverride(config);
     }
 
     private static boolean shouldApplyFrame(String entryName) {

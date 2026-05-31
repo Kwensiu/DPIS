@@ -120,6 +120,23 @@ public class HookExecutionPlannerTest {
     }
 
     @Test
+    public void viewportSystemInstallsAppProcessResourcesFallbackHooksWhenAvailable() {
+        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
+                createPolicy(false, true, false),
+                true,
+                ViewportApplyMode.SYSTEM,
+                false,
+                FontApplyMode.OFF,
+                false,
+                false,
+                DebugFontOverride.none());
+
+        assertEquals(ViewportApplyMode.SYSTEM, plan.resolvedViewportMode);
+        assertTrue(plan.viewportEnabled);
+        assertTrue(plan.resourcesHooksEnabled);
+    }
+
+    @Test
     public void viewportAutoFallsBackToAppProcessViewportHooksWhenSystemUnavailable() {
         HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
                 createPolicy(false, false, false),
