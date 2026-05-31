@@ -1168,7 +1168,11 @@ final class SystemServerDisplayEnvironmentInstaller {
             return false;
         }
         String mode = ViewportApplyMode.normalize(config.targetViewportMode);
-        return ViewportApplyMode.AUTO.equals(mode) || ViewportApplyMode.SYSTEM.equals(mode);
+        if (ViewportApplyMode.SYSTEM.equals(mode)) {
+            return true;
+        }
+        return ViewportApplyMode.AUTO.equals(mode)
+                && !config.targetViewportSpec.isRelativeScale();
     }
 
     private static boolean hasSystemServerFontOverride(PerAppDisplayConfig config) {

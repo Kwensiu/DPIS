@@ -72,6 +72,15 @@ public class SystemServerDisplayEnvironmentInstallerEnvironmentSelectionTest {
                 false,
                 HookDomainOverride.automatic()
         );
+        PerAppDisplayConfig explicitSystemRelativeViewport = new PerAppDisplayConfig(
+                "com.example.target",
+                ViewportTargetSpec.relativeScale(1500),
+                ViewportApplyMode.SYSTEM,
+                null,
+                FontApplyMode.OFF,
+                false,
+                HookDomainOverride.automatic()
+        );
         PerAppDisplayConfig relativeViewportWithFont = new PerAppDisplayConfig(
                 "com.example.target",
                 ViewportTargetSpec.relativeScale(1500),
@@ -92,8 +101,10 @@ public class SystemServerDisplayEnvironmentInstallerEnvironmentSelectionTest {
                 .shouldUseConfigInSystemServerForTest(autoViewport));
         assertFalse(SystemServerDisplayEnvironmentInstaller
                 .shouldUseConfigInSystemServerForTest(compatViewport));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
+        assertFalse(SystemServerDisplayEnvironmentInstaller
                 .shouldUseConfigInSystemServerForTest(relativeViewport));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerForTest(explicitSystemRelativeViewport));
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldUseConfigInSystemServerForTest(relativeViewportWithFont));
     }

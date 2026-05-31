@@ -143,11 +143,13 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     }
 
     @Test
-    public void relativeScaleUsesMarkerGatedSystemServerViewportMutation()
+    public void relativeScaleUsesMarkerGatedExplicitSystemServerViewportMutation()
             throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
         assertTrue(source.contains("private static boolean shouldApplySystemServerViewportMutation"));
-        assertFalse(source.contains("&& !config.targetViewportSpec.isRelativeScale()"));
+        assertTrue(source.contains("if (ViewportApplyMode.SYSTEM.equals(mode))"));
+        assertTrue(source.contains("ViewportApplyMode.AUTO.equals(mode)"));
+        assertTrue(source.contains("&& !config.targetViewportSpec.isRelativeScale()"));
         assertTrue(source.contains("boolean applyViewport = environment != null"));
         assertTrue(source.contains("shouldApplySystemServerViewportMutation(config);"));
         assertTrue(source.contains("if (!shouldApplySystemServerViewportMutation(config))"));
