@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.1](https://github.com/Kwensiu/DPIS/compare/v1.11.0...v1.11.1) (2026-05-31)
+
+
+### Bug Fixes
+
+* restore launch activity viewport system route ([#72](https://github.com/Kwensiu/DPIS/issues/72)) ([1aec464](https://github.com/Kwensiu/DPIS/commit/1aec46463fb76b29bca9969e2b4fce78559698c5))
+
 ## [1.11.0](https://github.com/Kwensiu/DPIS/compare/v1.10.0...v1.11.0) (2026-05-27)
 
 
