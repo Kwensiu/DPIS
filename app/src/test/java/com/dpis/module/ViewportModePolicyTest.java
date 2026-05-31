@@ -79,6 +79,21 @@ public class ViewportModePolicyTest {
     }
 
     @Test
+    public void explicitSystemAppliesGuardedConfigurationFallbackWhenSystemRouteStillNeedsViewportUpdate() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        ViewportTargetSpec spec = ViewportTargetSpec.absoluteDp(300);
+        store.setSystemServerHooksEnabled(true);
+        store.setTargetViewportSpec("com.example.target", spec);
+        store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.SYSTEM);
+        ViewportTargetResolution resolution =
+                ViewportTargetResolution.resolved(spec, 300, null, "system-marker");
+
+        assertTrue(ViewportModePolicy.shouldApplyConfigurationOverride(
+                store, "com.example.target", resolution, true));
+    }
+
+    @Test
     public void autoDoesNotApplyGuardedConfigurationFallbackWhenConfigurationAlreadyMatches() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);

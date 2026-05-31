@@ -78,10 +78,12 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
                 .shouldInstallTargetForTest("display-content-config", true));
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldInstallTargetForTest("activity-start", true));
-        assertFalse(SystemServerDisplayEnvironmentInstaller
+        assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldInstallTargetForTest("config-dispatch", true));
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldInstallTargetForTest("launch-activity-item", true));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldInstallTargetForTest("display-manager-info", true));
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldInstallTargetForTest("hyperos-rust-process", true));
     }
@@ -100,6 +102,8 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
                 .shouldInstallTargetForTest("config-dispatch", false));
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldInstallTargetForTest("launch-activity-item", false));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldInstallTargetForTest("display-manager-info", false));
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldInstallTargetForTest("hyperos-rust-process", false));
     }

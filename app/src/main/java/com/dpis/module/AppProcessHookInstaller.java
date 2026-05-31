@@ -39,7 +39,14 @@ final class AppProcessHookInstaller {
         if (packagePlan.typefaceActive) {
             installTypefaceHooks(xposed, packageName, store, packagePlan.targetTypefaceId);
         }
-        installFromPlan(xposed, packageName, store, plan);
+        if (plan.viewportEnabled) {
+            AppProcessViewportStateSeeder.seedAbsoluteTarget(
+                    packageName,
+                    packagePlan.targetViewportSpec,
+                    packagePlan.targetViewportMode,
+                    policy == null || policy.systemServerHooksEnabled);
+        }
+        installFromPlan(xposed, packageName, store, plan, packagePlan.targetViewportSpec);
         if (plan.probeHooksRequested) {
             DpisLog.i("hooks installed (full): viewportEnabled=" + plan.viewportEnabled
                     + ", viewportMode=" + packagePlan.targetViewportMode
@@ -178,7 +185,8 @@ final class AppProcessHookInstaller {
     private static void installFromPlan(XposedInterface xposed,
                                         String packageName,
                                         DpiConfigStore store,
-                                        HookExecutionPlan plan) throws Throwable {
+                                        HookExecutionPlan plan,
+                                        ViewportTargetSpec targetViewportSpec) throws Throwable {
         if (ComposeFontRuntimeDiagnosticsInstaller.shouldInstall(plan)) {
             ComposeFontRuntimeDiagnosticsInstaller.install(
                     xposed,
@@ -210,9 +218,14 @@ final class AppProcessHookInstaller {
         if (plan.webViewTextZoomEnabled) {
             WebViewFontHookInstaller.install(xposed, packageName, store);
         }
-        if (plan.viewportEnabled) {
+        if (shouldInstallAppProcessViewportSupplementHooks(plan, targetViewportSpec)) {
             WindowMetricsHookInstaller.install(xposed);
             DisplayHookInstaller.install(xposed, packageName, store);
+        } else if (plan.viewportEnabled) {
+            DpisLog.i("viewport app-process supplement hooks skipped: package="
+                    + packageName
+                    + ", resolvedViewportMode=" + plan.resolvedViewportMode
+                    + ", targetViewportSpec=" + targetViewportSpec);
         }
         if (plan.resourcesProbeEnabled) {
             ResourcesProbeHookInstaller.install(xposed, packageName, store);
@@ -222,6 +235,23 @@ final class AppProcessHookInstaller {
             WindowSessionProbeHookInstaller.install(xposed);
             ViewRootProbeHookInstaller.install(xposed, packageName);
         }
+    }
+
+    static boolean shouldInstallAppProcessViewportSupplementHooksForTest(
+            HookExecutionPlan plan,
+            ViewportTargetSpec targetViewportSpec) {
+        return shouldInstallAppProcessViewportSupplementHooks(plan, targetViewportSpec);
+    }
+
+    private static boolean shouldInstallAppProcessViewportSupplementHooks(
+            HookExecutionPlan plan,
+            ViewportTargetSpec targetViewportSpec) {
+        if (plan == null || !plan.viewportEnabled) {
+            return false;
+        }
+        return !ViewportApplyMode.SYSTEM.equals(plan.resolvedViewportMode)
+                || targetViewportSpec == null
+                || !targetViewportSpec.isAbsoluteDp();
     }
 
     static void installTypefaceHooks(XposedInterface xposed,
