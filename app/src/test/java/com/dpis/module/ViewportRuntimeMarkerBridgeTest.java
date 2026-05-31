@@ -173,6 +173,36 @@ public class ViewportRuntimeMarkerBridgeTest {
         assertEquals("too-long", result.reason);
     }
 
+    @Test
+    public void publishCanBeReadFromProcessLocalFallbackWhenSystemPropertyUnavailable() {
+        ViewportTargetSpec spec = ViewportTargetSpec.relativeScale(1500);
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
+                360, 792, 360, 480, 1080, 2376);
+        ViewportOverride.Result result = new ViewportOverride.Result(
+                540, 1188, 540, 320);
+        boolean published = ViewportRuntimeMarkerBridge.publish(
+                "com.tencent.mm",
+                ViewportRuntimeMarkerBridge.createRecord(
+                        "com.tencent.mm",
+                        spec,
+                        540,
+                        source,
+                        result,
+                        "s",
+                        1_000L));
+
+        ViewportRuntimeMarkerBridge.ParseResult parsed = ViewportRuntimeMarkerBridge.read(
+                "com.tencent.mm",
+                spec.fingerprint(),
+                1_500L);
+
+        assertTrue(published);
+        assertTrue(parsed.hit);
+        assertEquals(540, parsed.record.effectiveSmallestWidthDp);
+        assertEquals(540, parsed.record.resultSmallestWidthDp);
+        assertEquals(320, parsed.record.resultDensityDpi);
+    }
+
     private static ViewportRuntimeMarkerBridge.MarkerRecord marker(String packageName,
                                                                    long elapsedRealtimeMillis) {
         return ViewportRuntimeMarkerBridge.createRecord(

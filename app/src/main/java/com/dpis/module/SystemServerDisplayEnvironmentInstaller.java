@@ -621,8 +621,12 @@ final class SystemServerDisplayEnvironmentInstaller {
         }
         int widthPx = resolveWidthPx(baseConfiguration, null);
         int heightPx = resolveHeightPx(baseConfiguration, null);
-        PerAppDisplayEnvironment environment = PerAppDisplayOverrideCalculator.calculate(
-                baseConfiguration, widthPx, heightPx, config.targetViewportSpec);
+        PerAppDisplayEnvironment environment = resolveAlreadyAppliedRelativeScaleEnvironment(
+                packageName, baseConfiguration, widthPx, heightPx, config);
+        if (environment == null) {
+            environment = PerAppDisplayOverrideCalculator.calculate(
+                    baseConfiguration, widthPx, heightPx, config.targetViewportSpec);
+        }
         environment = resolveMarkerGatedEnvironment(
                 "launch-activity-item",
                 packageName,
@@ -1372,8 +1376,7 @@ final class SystemServerDisplayEnvironmentInstaller {
     }
 
     private static boolean shouldApplySystemServerViewportMutation(PerAppDisplayConfig config) {
-        return hasSystemServerViewportOverride(config)
-                && !config.targetViewportSpec.isRelativeScale();
+        return hasSystemServerViewportOverride(config);
     }
 
     private static boolean shouldApplyFrame(String entryName) {

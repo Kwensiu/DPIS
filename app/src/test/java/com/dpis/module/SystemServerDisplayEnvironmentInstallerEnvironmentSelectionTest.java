@@ -92,7 +92,7 @@ public class SystemServerDisplayEnvironmentInstallerEnvironmentSelectionTest {
                 .shouldUseConfigInSystemServerForTest(autoViewport));
         assertFalse(SystemServerDisplayEnvironmentInstaller
                 .shouldUseConfigInSystemServerForTest(compatViewport));
-        assertFalse(SystemServerDisplayEnvironmentInstaller
+        assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldUseConfigInSystemServerForTest(relativeViewport));
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldUseConfigInSystemServerForTest(relativeViewportWithFont));

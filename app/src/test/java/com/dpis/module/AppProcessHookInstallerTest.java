@@ -126,7 +126,7 @@ public class AppProcessHookInstallerTest {
     }
 
     @Test
-    public void relativeSystemViewportKeepsDisplaySupplementHooks() {
+    public void relativeSystemViewportSkipsDisplaySupplementHooks() {
         HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
                 createPolicy(false, true),
                 true,
@@ -138,7 +138,7 @@ public class AppProcessHookInstallerTest {
                 DebugFontOverride.none());
 
         assertTrue(plan.viewportEnabled);
-        assertTrue(AppProcessHookInstaller.shouldInstallAppProcessViewportSupplementHooksForTest(
+        assertFalse(AppProcessHookInstaller.shouldInstallAppProcessViewportSupplementHooksForTest(
                 plan,
                 ViewportTargetSpec.relativeScale(1200)));
     }

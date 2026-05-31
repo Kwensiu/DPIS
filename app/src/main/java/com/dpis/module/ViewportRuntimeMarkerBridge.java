@@ -5,6 +5,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 final class ViewportRuntimeMarkerBridge {
     // Android system property values are capped at 91 bytes including the
@@ -19,6 +21,7 @@ final class ViewportRuntimeMarkerBridge {
     private static final long MAX_AGE_MILLIS = 30_000L;
     private static final String PROVENANCE_APP_PROCESS = "a";
     private static final String PROVENANCE_SYSTEM_SERVER = "s";
+    private static final Map<String, String> PROCESS_LOCAL_MARKERS = new ConcurrentHashMap<>();
 
     private ViewportRuntimeMarkerBridge() {
     }
@@ -225,7 +228,15 @@ final class ViewportRuntimeMarkerBridge {
                     + ", length=" + value.length());
             return false;
         }
-        return setSystemProperty(propertyNameForPackage(packageName), value);
+        String propertyName = propertyNameForPackage(packageName);
+        PROCESS_LOCAL_MARKERS.put(propertyName, value);
+        boolean systemPropertyWritten = setSystemProperty(propertyName, value);
+        if (!systemPropertyWritten) {
+            DpisLog.i("DPIS_VIEWPORT_MARKER publish using process-local fallback"
+                    + ", package=" + packageName
+                    + ", property=" + propertyName);
+        }
+        return true;
     }
 
     static boolean publishSystemServerRecord(String packageName,
@@ -279,7 +290,13 @@ final class ViewportRuntimeMarkerBridge {
             return ParseResult.miss("empty-package");
         }
         String raw = readSystemProperty(propertyNameForPackage(packageName), "");
-        return parse(packageName, expectedTargetFingerprint, raw, nowElapsedRealtimeMillis);
+        ParseResult result = parse(packageName, expectedTargetFingerprint, raw, nowElapsedRealtimeMillis);
+        if (result.hit) {
+            return result;
+        }
+        ParseResult localResult = readProcessLocal(
+                packageName, expectedTargetFingerprint, nowElapsedRealtimeMillis, false);
+        return localResult.hit ? localResult : result;
     }
 
     static ParseResult readAllowingStale(String packageName,
@@ -289,8 +306,24 @@ final class ViewportRuntimeMarkerBridge {
             return ParseResult.miss("empty-package");
         }
         String raw = readSystemProperty(propertyNameForPackage(packageName), "");
-        return parseAllowingStale(
+        ParseResult result = parseAllowingStale(
                 packageName, expectedTargetFingerprint, raw, nowElapsedRealtimeMillis);
+        if (result.hit) {
+            return result;
+        }
+        ParseResult localResult = readProcessLocal(
+                packageName, expectedTargetFingerprint, nowElapsedRealtimeMillis, true);
+        return localResult.hit ? localResult : result;
+    }
+
+    private static ParseResult readProcessLocal(String packageName,
+                                                String expectedTargetFingerprint,
+                                                long nowElapsedRealtimeMillis,
+                                                boolean allowStale) {
+        String raw = PROCESS_LOCAL_MARKERS.get(propertyNameForPackage(packageName));
+        return allowStale
+                ? parseAllowingStale(packageName, expectedTargetFingerprint, raw, nowElapsedRealtimeMillis)
+                : parse(packageName, expectedTargetFingerprint, raw, nowElapsedRealtimeMillis);
     }
 
     private static boolean setSystemProperty(String key, String value) {

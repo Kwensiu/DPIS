@@ -249,9 +249,7 @@ final class AppProcessHookInstaller {
         if (plan == null || !plan.viewportEnabled) {
             return false;
         }
-        return !ViewportApplyMode.SYSTEM.equals(plan.resolvedViewportMode)
-                || targetViewportSpec == null
-                || !targetViewportSpec.isAbsoluteDp();
+        return !ViewportApplyMode.SYSTEM.equals(plan.resolvedViewportMode);
     }
 
     static void installTypefaceHooks(XposedInterface xposed,
