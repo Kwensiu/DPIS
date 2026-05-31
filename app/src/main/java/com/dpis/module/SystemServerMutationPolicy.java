@@ -15,7 +15,7 @@ final class SystemServerMutationPolicy {
     }
 
     static boolean shouldApplyPostProceedMutations(String entryName) {
-        return !shouldApplyPreProceedMutations(entryName);
+        return !ENTRY_CONFIG_DISPATCH.equals(entryName);
     }
 
     static boolean shouldInstallTarget(String entryName, boolean safeModeEnabled) {

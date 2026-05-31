@@ -28,7 +28,7 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     public void postProceedDisabledForConfigDispatchOnly() {
         assertFalse(SystemServerDisplayEnvironmentInstaller
                 .shouldApplyPostProceedMutationsForTest("config-dispatch"));
-        assertFalse(SystemServerDisplayEnvironmentInstaller
+        assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldApplyPostProceedMutationsForTest("activity-start"));
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldApplyPostProceedMutationsForTest("display-content-config"));
@@ -122,7 +122,7 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     }
 
     @Test
-    public void launchActivityItemDoesNotMutateViewportConfig()
+    public void launchActivityItemRestoresViewportConfigMutation()
             throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
         int methodIndex = source.indexOf("private static void applyLaunchActivityItemArgs");
@@ -132,7 +132,10 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
 
         String method = source.substring(methodIndex, nextMethodIndex);
         assertTrue(method.contains("resolveMarkerGatedEnvironment("));
-        assertFalse(method.contains("applyConfiguration(configuration, environment)"));
+        assertTrue(method.contains("applyConfiguration(configuration, environment)"));
+        assertTrue(method.contains("applyLaunchActivityItemConfigurationFields("));
+        assertTrue(source.contains("applyLaunchActivityItemObject(source, chain.getThisObject())"));
+        assertTrue(source.contains("system_server launch-activity-item post-init failed"));
     }
 
     @Test
