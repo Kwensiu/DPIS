@@ -84,7 +84,7 @@ final class TargetViewportWidthResolver {
             }
         }
         boolean compatDerivationAllowed = canDeriveCompatTarget(
-                normalizedRequestedMode, mode, marker);
+                normalizedRequestedMode, mode, targetSpec, marker);
         ViewportRuntimeRecord displayRecord =
                 VirtualDisplayState.findDisplayRecordForTarget(packageName, targetSpec);
         if (displayRecord == null) {
@@ -118,8 +118,15 @@ final class TargetViewportWidthResolver {
 
     private static boolean canDeriveCompatTarget(String requestedMode,
                                                  String resolvedMode,
+                                                 ViewportTargetSpec targetSpec,
                                                  ViewportRuntimeMarkerBridge.ParseResult marker) {
         if (ViewportApplyMode.COMPAT.equals(resolvedMode)) {
+            return true;
+        }
+        if (ViewportApplyMode.SYSTEM.equals(requestedMode)
+                && ViewportApplyMode.SYSTEM.equals(resolvedMode)
+                && targetSpec != null
+                && targetSpec.isAbsoluteDp()) {
             return true;
         }
         return ViewportApplyMode.AUTO.equals(requestedMode)

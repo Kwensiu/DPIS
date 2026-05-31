@@ -114,6 +114,22 @@ public class ViewportTargetResolverTest {
     }
 
     @Test
+    public void explicitSystemAbsoluteDpDerivesAppProcessFallbackWithoutSystemRecord() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec("com.example", ViewportTargetSpec.absoluteDp(300));
+        store.setTargetViewportApplyMode("com.example", ViewportApplyMode.SYSTEM);
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
+                360, 792, 360, 480, 1080, 2376);
+
+        ViewportTargetResolution result =
+                TargetViewportWidthResolver.resolve(store, "com.example", source);
+
+        assertTrue(result.hasTarget());
+        assertEquals(300, result.effectiveSmallestWidthDp);
+        assertEquals("absolute-dp", result.reason);
+    }
+
+    @Test
     public void autoSystemDoesNotFallbackForEmptyMarker() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetViewportSpec("com.example", ViewportTargetSpec.relativeScale(1500));

@@ -64,6 +64,19 @@ final class SystemServerDisplayEnvironmentInstaller {
             "configuration",
             "mConfiguration"
     };
+    private static final String[] WINDOW_CONTAINER_CONFIGURATION_FIELD_NAMES = new String[]{
+            "mFullConfiguration",
+            "mResolvedOverrideConfiguration",
+            "mMergedOverrideConfiguration",
+            "mTmpConfig",
+            "mConfiguration",
+            "configuration"
+    };
+    private static final String[] MERGED_CONFIGURATION_FIELD_NAMES = new String[]{
+            "mGlobalConfig",
+            "mOverrideConfig",
+            "mMergedConfig"
+    };
     private static final String[] DISPLAY_INFO_FIELD_NAMES = new String[]{
             "displayInfo",
             "mDisplayInfo",
@@ -321,8 +334,11 @@ final class SystemServerDisplayEnvironmentInstaller {
                                                         before,
                                                         preEnvironment,
                                                         config);
-                                        if (applyEnvironment(
-                                                target.entryName, before, applyEnvironment, config)) {
+                                        boolean changed = applyEnvironment(
+                                                target.entryName, before, applyEnvironment, config);
+                                        changed |= applyConfigDispatchObject(
+                                                target.entryName, thisObject, applyEnvironment);
+                                        if (changed) {
                                             logViewportMarkerProbe(
                                                     target.entryName, packageName, before, applyEnvironment, config);
                                         }
@@ -335,6 +351,10 @@ final class SystemServerDisplayEnvironmentInstaller {
                                             packageName, before, after, config);
                                     PerAppDisplayEnvironment effectiveEnvironment = chooseEffectiveEnvironment(
                                             preEnvironment, environment);
+                                    if ("config-dispatch".equals(target.entryName)) {
+                                        applyConfigDispatchObject(
+                                                target.entryName, thisObject, effectiveEnvironment);
+                                    }
                                     if (loggingEnabled) {
                                         logTargetComputation(target.entryName, packageName,
                                                 preEnvironment, environment, effectiveEnvironment);
@@ -669,6 +689,35 @@ final class SystemServerDisplayEnvironmentInstaller {
             return false;
         }
         return applyConfiguration(configuration, environment);
+    }
+
+    private static boolean applyConfigDispatchObject(String entryName,
+                                                     Object target,
+                                                     PerAppDisplayEnvironment environment) {
+        if (!"config-dispatch".equals(entryName) || target == null || environment == null) {
+            return false;
+        }
+        boolean changed = false;
+        for (String fieldName : WINDOW_CONTAINER_CONFIGURATION_FIELD_NAMES) {
+            changed |= applyConfigurationField(target, fieldName, environment);
+        }
+        for (String fieldName : CONFIGURATION_FIELD_NAMES) {
+            Object value = readField(target, fieldName);
+            changed |= applyMergedConfigurationFields(value, environment);
+        }
+        return changed;
+    }
+
+    private static boolean applyMergedConfigurationFields(Object target,
+                                                          PerAppDisplayEnvironment environment) {
+        if (target == null || environment == null) {
+            return false;
+        }
+        boolean changed = false;
+        for (String fieldName : MERGED_CONFIGURATION_FIELD_NAMES) {
+            changed |= applyConfigurationField(target, fieldName, environment);
+        }
+        return changed;
     }
 
     private static String describeConfigurationArgs(List<Object> args) {
