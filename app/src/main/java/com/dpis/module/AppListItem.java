@@ -14,6 +14,7 @@ final class AppListItem {
     final Integer fontScalePercent;
     final String fontMode;
     final String typefaceId;
+    final boolean appSpecificConfigActive;
     final boolean dpisEnabled;
     final boolean systemApp;
     final boolean hyperOsNativeProxyCandidate;
@@ -36,7 +37,7 @@ final class AppListItem {
                 viewportWidthDp != null
                         ? ViewportTargetSpec.absoluteDp(viewportWidthDp)
                         : ViewportTargetSpec.off(),
-                fontScalePercent, fontMode, typefaceId, dpisEnabled, systemApp,
+                fontScalePercent, fontMode, typefaceId, false, dpisEnabled, systemApp,
                 hyperOsNativeProxyCandidate, icon);
     }
 
@@ -56,7 +57,7 @@ final class AppListItem {
                 viewportWidthDp != null
                         ? ViewportTargetSpec.absoluteDp(viewportWidthDp)
                         : ViewportTargetSpec.off(),
-                fontScalePercent, fontMode, null, dpisEnabled, systemApp,
+                fontScalePercent, fontMode, null, false, dpisEnabled, systemApp,
                 hyperOsNativeProxyCandidate, icon);
     }
 
@@ -71,6 +72,7 @@ final class AppListItem {
                 Integer fontScalePercent,
                 String fontMode,
                 String typefaceId,
+                boolean appSpecificConfigActive,
                 boolean dpisEnabled,
                 boolean systemApp,
                 boolean hyperOsNativeProxyCandidate,
@@ -94,6 +96,7 @@ final class AppListItem {
         this.fontScalePercent = fontScalePercent;
         this.fontMode = FontApplyMode.normalize(fontMode);
         this.typefaceId = typefaceId;
+        this.appSpecificConfigActive = appSpecificConfigActive;
         this.dpisEnabled = dpisEnabled;
         this.systemApp = systemApp;
         this.hyperOsNativeProxyCandidate = hyperOsNativeProxyCandidate;
@@ -110,12 +113,17 @@ final class AppListItem {
                 Integer fontScalePercent,
                 String fontMode,
                 String typefaceId,
+                boolean appSpecificConfigActive,
                 boolean dpisEnabled,
                 boolean systemApp,
                 boolean hyperOsNativeProxyCandidate,
                 Drawable icon) {
         this(label, packageName, inScope, scopeKnown, viewportWidthDp, null, viewportMode,
-                viewportTargetSpec, fontScalePercent, fontMode, typefaceId, dpisEnabled, systemApp,
-                hyperOsNativeProxyCandidate, icon);
+                viewportTargetSpec, fontScalePercent, fontMode, typefaceId,
+                appSpecificConfigActive, dpisEnabled, systemApp, hyperOsNativeProxyCandidate, icon);
+    }
+
+    boolean hasAppSpecificConfig() {
+        return appSpecificConfigActive;
     }
 }

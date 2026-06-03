@@ -1241,6 +1241,16 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             }
 
             @Override
+            public DpiConfigStore getConfigStore() {
+                return MainActivity.this.getUiConfigStore();
+            }
+
+            @Override
+            public void requestAppsLoad() {
+                MainActivity.this.requestAppsLoad();
+            }
+
+            @Override
             public void showToast(int messageResId) {
                 MainActivity.this.showToast(messageResId);
             }
@@ -1437,7 +1447,8 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         ViewportTargetSpec viewportTargetSpec = store.getTargetViewportSpec(packageName);
         Integer fontScalePercent = store.getTargetFontScalePercent(packageName);
         return viewportTargetSpec.isEnabled()
-                || fontScalePercent != null;
+                || fontScalePercent != null
+                || store.hasTargetAppSpecificConfig(packageName);
     }
 
     private void executeDialogProcessActionAfterHyperOsProxyReady(

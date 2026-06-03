@@ -37,6 +37,7 @@ public class SystemScopeCoordinatorSourceTest {
     }
 
     private static String read(String relativePath) throws Exception {
-        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
+        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8)
+                .replace("\r\n", "\n");
     }
 }

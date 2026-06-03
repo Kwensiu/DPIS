@@ -23,7 +23,7 @@ final class AppListFilter {
                            String typefaceId) {
         return matches(query, tab, label, packageName, systemApp, inScope,
                 viewportWidthDp, fontScalePercent, fontMode, typefaceId,
-                AppListFilterState.noAdditionalConstraints());
+                false, AppListFilterState.noAdditionalConstraints());
     }
 
     static boolean matches(String query,
@@ -36,6 +36,22 @@ final class AppListFilter {
                            Integer fontScalePercent,
                            String fontMode,
                            String typefaceId,
+                           AppListFilterState state) {
+        return matches(query, tab, label, packageName, systemApp, inScope,
+                viewportWidthDp, fontScalePercent, fontMode, typefaceId, false, state);
+    }
+
+    static boolean matches(String query,
+                           Tab tab,
+                           String label,
+                           String packageName,
+                           boolean systemApp,
+                           boolean inScope,
+                           Integer viewportWidthDp,
+                           Integer fontScalePercent,
+                           String fontMode,
+                           String typefaceId,
+                           boolean appSpecificConfigActive,
                            AppListFilterState state) {
         String normalizedQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
         if (!normalizedQuery.isEmpty()) {
@@ -52,7 +68,8 @@ final class AppListFilter {
         boolean anyFontConfigured = fontConfigured || typefaceConfigured;
         boolean matchesTab = switch (tab) {
             case ALL_APPS -> true;
-            case CONFIGURED_APPS -> inScope || viewportWidthDp != null || anyFontConfigured;
+            case CONFIGURED_APPS -> inScope || viewportWidthDp != null
+                    || anyFontConfigured || appSpecificConfigActive;
         };
         if (!matchesTab) {
             return false;

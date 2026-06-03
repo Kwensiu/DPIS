@@ -657,6 +657,54 @@ public class DpiConfigStoreTest {
         assertEquals(Integer.valueOf(480), store.getTargetViewportWidthDp("com.example.app"));
     }
 
+    @Test
+    public void wechatTargetFieldAddsAndClearsConfiguredPackage() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertTrue(store.setWechatTargetField("com.tencent.mm", 600));
+        assertEquals(Integer.valueOf(600), store.getWechatTargetField("com.tencent.mm"));
+        assertTrue(store.hasTargetAppSpecificConfig("com.tencent.mm"));
+        assertTrue(store.getConfiguredPackages().contains("com.tencent.mm"));
+
+        assertTrue(store.clearWechatTargetField("com.tencent.mm"));
+        assertNull(store.getWechatTargetField("com.tencent.mm"));
+        assertFalse(store.hasTargetAppSpecificConfig("com.tencent.mm"));
+        assertFalse(store.getConfiguredPackages().contains("com.tencent.mm"));
+    }
+
+    @Test
+    public void wechatTargetFieldIgnoresUnsupportedPackageAndOutOfRangeValues() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+
+        assertTrue(store.setWechatTargetField("com.example.app", 600));
+        assertNull(store.getWechatTargetField("com.example.app"));
+        assertFalse(store.getConfiguredPackages().contains("com.example.app"));
+
+        assertTrue(store.setWechatTargetField("com.tencent.mm", 199));
+        assertNull(store.getWechatTargetField("com.tencent.mm"));
+        assertFalse(store.getConfiguredPackages().contains("com.tencent.mm"));
+
+        assertTrue(store.setWechatTargetField("com.tencent.mm", 200));
+        assertEquals(Integer.valueOf(200), store.getWechatTargetField("com.tencent.mm"));
+        assertTrue(store.getConfiguredPackages().contains("com.tencent.mm"));
+    }
+
+    @Test
+    public void migratesLegacyWechatViewportWidthToTargetField() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        assertTrue(store.setTargetViewportWidthDp("com.tencent.mm", 300));
+        assertTrue(store.setTargetViewportApplyMode("com.tencent.mm", ViewportApplyMode.SYSTEM));
+
+        assertTrue(store.migrateWechatViewportToTargetFieldIfNeeded());
+
+        assertEquals(Integer.valueOf(300), store.getWechatTargetField("com.tencent.mm"));
+        assertNull(store.getTargetViewportWidthDp("com.tencent.mm"));
+        assertEquals(ViewportApplyMode.OFF,
+                store.getTargetViewportApplyMode("com.tencent.mm"));
+        assertTrue(store.getConfiguredPackages().contains("com.tencent.mm"));
+    }
+
     private static final class ThrowingIntReadPrefs implements SharedPreferences {
         private final FakePrefs delegate = new FakePrefs();
         private final Set<String> intReadFailureKeys;

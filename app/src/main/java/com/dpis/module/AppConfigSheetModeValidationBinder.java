@@ -43,10 +43,7 @@ final class AppConfigSheetModeValidationBinder {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 state.updateViewportInput(
                         AppConfigDialogBinder.resolveViewportMode(views.viewportModeToggle), s);
-                AppConfigDialogBinder.updateSaveButtonState(
-                        views.viewportInputLayout, views.viewportInputView,
-                        views.viewportModeToggle,
-                        views.fontInputLayout, views.fontInputView, views.saveButton);
+                AppConfigDialogBinder.updateSaveButtonState(dialogView, views);
                 binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
             }
 
@@ -61,10 +58,7 @@ final class AppConfigSheetModeValidationBinder {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                AppConfigDialogBinder.updateSaveButtonState(
-                        views.viewportInputLayout, views.viewportInputView,
-                        views.viewportModeToggle,
-                        views.fontInputLayout, views.fontInputView, views.saveButton);
+                AppConfigDialogBinder.updateSaveButtonState(dialogView, views);
                 binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
             }
 
@@ -89,10 +83,7 @@ final class AppConfigSheetModeValidationBinder {
             binder.bindViewportInputHint(
                     views.viewportInputLayout,
                     AppConfigDialogBinder.resolveViewportMode(views.viewportModeToggle));
-            AppConfigDialogBinder.updateSaveButtonState(
-                    views.viewportInputLayout, views.viewportInputView,
-                    views.viewportModeToggle,
-                    views.fontInputLayout, views.fontInputView, views.saveButton);
+            AppConfigDialogBinder.updateSaveButtonState(dialogView, views);
             binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
         });
         views.viewportModeToggle.emulationLabel.setOnClickListener(v -> {
@@ -101,10 +92,7 @@ final class AppConfigSheetModeValidationBinder {
                     views.viewportModeToggle, views.viewportInputView, state,
                     ViewportTargetType.RELATIVE_SCALE, true);
             binder.bindViewportInputHint(views.viewportInputLayout, ViewportTargetType.RELATIVE_SCALE);
-            AppConfigDialogBinder.updateSaveButtonState(
-                    views.viewportInputLayout, views.viewportInputView,
-                    views.viewportModeToggle,
-                    views.fontInputLayout, views.fontInputView, views.saveButton);
+            AppConfigDialogBinder.updateSaveButtonState(dialogView, views);
             binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
         });
         views.viewportModeToggle.replaceLabel.setOnClickListener(v -> {
@@ -113,10 +101,7 @@ final class AppConfigSheetModeValidationBinder {
                     views.viewportModeToggle, views.viewportInputView, state,
                     ViewportTargetType.ABSOLUTE_DP, true);
             binder.bindViewportInputHint(views.viewportInputLayout, ViewportTargetType.ABSOLUTE_DP);
-            AppConfigDialogBinder.updateSaveButtonState(
-                    views.viewportInputLayout, views.viewportInputView,
-                    views.viewportModeToggle,
-                    views.fontInputLayout, views.fontInputView, views.saveButton);
+            AppConfigDialogBinder.updateSaveButtonState(dialogView, views);
             binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
         });
         views.fontModeToggle.container.setOnClickListener(v -> {

@@ -98,6 +98,8 @@
     <dimen name="dialog_app_config_input_corner_radius">18dp</dimen>
     <dimen name="dialog_app_config_input_padding_top">14dp</dimen>
     <dimen name="dialog_app_config_input_padding_bottom">12dp</dimen>
+    <dimen name="dialog_wechat_help_button_size">48dp</dimen>
+    <dimen name="dialog_wechat_help_button_padding">12dp</dimen>
     <dimen name="dialog_app_config_selector_spacing_top">12dp</dimen>
     <dimen name="dialog_app_config_typeface_button_padding_horizontal">16dp</dimen>
     <dimen name="dialog_app_config_hook_domains_button_padding_horizontal">12dp</dimen>

@@ -140,6 +140,21 @@ final class DpiConfigStore {
         return normalizeTypefaceId(getString(key, null));
     }
 
+    Integer getWechatTargetField(String packageName) {
+        if (!WechatTargetFieldConfig.appliesTo(packageName)) {
+            return null;
+        }
+        String key = keyForWechatTargetField(packageName);
+        if (!contains(key)) {
+            return null;
+        }
+        return WechatTargetFieldConfig.normalize(getNullableInt(key));
+    }
+
+    boolean hasTargetAppSpecificConfig(String packageName) {
+        return getWechatTargetField(packageName) != null;
+    }
+
     String getTargetFontApplyMode(String packageName) {
         String key = keyForFontMode(packageName);
         if (contains(key)) {
@@ -446,6 +461,42 @@ final class DpiConfigStore {
                 .putString(keyForTypefaceId(packageName), normalizedTypefaceId));
     }
 
+    boolean setWechatTargetField(String packageName, Integer targetField) {
+        if (!WechatTargetFieldConfig.appliesTo(packageName)) {
+            return true;
+        }
+        Integer normalized = WechatTargetFieldConfig.normalize(targetField);
+        if (normalized == null) {
+            return clearWechatTargetField(packageName);
+        }
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        packages.add(packageName);
+        return commitBoth(editor -> editor
+                .putStringSet(KEY_TARGET_PACKAGES, packages)
+                .putInt(keyForWechatTargetField(packageName), normalized));
+    }
+
+    boolean migrateWechatViewportToTargetFieldIfNeeded() {
+        String packageName = WechatTargetFieldConfig.PACKAGE_NAME;
+        if (getWechatTargetField(packageName) != null) {
+            return true;
+        }
+        Integer legacyViewportWidth = getTargetViewportWidthDp(packageName);
+        Integer targetField = WechatTargetFieldConfig.normalize(legacyViewportWidth);
+        if (targetField == null) {
+            return true;
+        }
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        packages.add(packageName);
+        return commitBoth(editor -> editor
+                .putStringSet(KEY_TARGET_PACKAGES, packages)
+                .putInt(keyForWechatTargetField(packageName), targetField)
+                .remove(keyForViewportWidth(packageName))
+                .remove(keyForViewportTargetType(packageName))
+                .remove(keyForViewportScalePermille(packageName))
+                .remove(keyForViewportMode(packageName)));
+    }
+
     boolean setTargetFontApplyMode(String packageName, String mode) {
         String normalized = FontApplyMode.normalize(mode);
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
@@ -481,6 +532,19 @@ final class DpiConfigStore {
         return commitBoth(editor -> editor
                 .putStringSet(KEY_TARGET_PACKAGES, packages)
                 .remove(keyForTypefaceId(packageName)));
+    }
+
+    boolean clearWechatTargetField(String packageName) {
+        if (!WechatTargetFieldConfig.appliesTo(packageName)) {
+            return true;
+        }
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        if (!hasAnyPackageConfigAfterRemoving(packageName, keyForWechatTargetField(packageName))) {
+            packages.remove(packageName);
+        }
+        return commitBoth(editor -> editor
+                .putStringSet(KEY_TARGET_PACKAGES, packages)
+                .remove(keyForWechatTargetField(packageName)));
     }
 
     boolean hasPrimaryTargetViewportWidthDp(String packageName) {
@@ -536,7 +600,8 @@ final class DpiConfigStore {
                 .remove(keyForTypefaceId(packageName))
                 .remove(keyForFontMode(packageName))
                 .remove(keyForDpisEnabled(packageName))
-                .remove(keyForFontHookDomains(packageName)));
+                .remove(keyForFontHookDomains(packageName))
+                .remove(keyForWechatTargetField(packageName)));
     }
 
     String getPackageFontHookDomainsRaw(String packageName) {
@@ -610,6 +675,11 @@ final class DpiConfigStore {
         String dpisEnabledKey = keyForDpisEnabled(packageName);
         if (!isRemovedKey(dpisEnabledKey, removedKeys)
                 && contains(dpisEnabledKey)) {
+            return true;
+        }
+        String wechatTargetFieldKey = keyForWechatTargetField(packageName);
+        if (!isRemovedKey(wechatTargetFieldKey, removedKeys)
+                && getWechatTargetField(packageName) != null) {
             return true;
         }
         String hookDomainsKey = keyForFontHookDomains(packageName);
@@ -917,5 +987,9 @@ final class DpiConfigStore {
 
     private static String keyForFontHookDomains(String packageName) {
         return "font." + packageName + ".hook_domains";
+    }
+
+    private static String keyForWechatTargetField(String packageName) {
+        return "wechat." + packageName + ".target_field";
     }
 }

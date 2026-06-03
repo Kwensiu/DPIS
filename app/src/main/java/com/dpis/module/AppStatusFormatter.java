@@ -138,9 +138,23 @@ final class AppStatusFormatter {
             String fontMode,
             String typefaceId,
             boolean dpisEnabled) {
+        return formatCompact(resources, inScope, scopeKnown, viewportTargetSpec, viewportMode,
+                fontScalePercent, fontMode, typefaceId, dpisEnabled, false);
+    }
+
+    static String formatCompact(Resources resources,
+            boolean inScope,
+            boolean scopeKnown,
+            ViewportTargetSpec viewportTargetSpec,
+            String viewportMode,
+            Integer fontScalePercent,
+            String fontMode,
+            String typefaceId,
+            boolean dpisEnabled,
+            boolean appSpecificConfigActive) {
         return formatInternal(labelsFrom(resources), inScope, viewportTargetSpec,
                 viewportMode, fontScalePercent, fontMode, typefaceId, dpisEnabled,
-                scopeKnown, true);
+                scopeKnown, true, appSpecificConfigActive);
     }
 
     static String formatCompact(Labels labels,
@@ -154,7 +168,7 @@ final class AppStatusFormatter {
             boolean dpisEnabled) {
         return formatInternal(labels, inScope, viewportTargetSpec,
                 viewportMode, fontScalePercent, fontMode, typefaceId, dpisEnabled,
-                scopeKnown, true);
+                scopeKnown, true, false);
     }
 
     static String formatCompact(Resources resources,
@@ -193,6 +207,21 @@ final class AppStatusFormatter {
             boolean dpisEnabled,
             boolean scopeKnown,
             boolean compact) {
+        return formatInternal(labels, inScope, viewportTargetSpec, viewportMode,
+                fontScalePercent, fontMode, typefaceId, dpisEnabled, scopeKnown, compact, false);
+    }
+
+    private static String formatInternal(Labels labels,
+            boolean inScope,
+            ViewportTargetSpec viewportTargetSpec,
+            String viewportMode,
+            Integer fontScalePercent,
+            String fontMode,
+            String typefaceId,
+            boolean dpisEnabled,
+            boolean scopeKnown,
+            boolean compact,
+            boolean appSpecificConfigActive) {
         Integer viewportWidthDp = viewportTargetSpec != null && viewportTargetSpec.isAbsoluteDp()
                 ? viewportTargetSpec.absoluteWidthDp()
                 : null;
@@ -208,7 +237,7 @@ final class AppStatusFormatter {
                         normalizedViewportMode, compact)
                 : (viewportWidthDp != null
                         ? formatViewport(labels, viewportWidthDp, normalizedViewportMode, compact)
-                        : labels.notEnabled);
+                        : (appSpecificConfigActive ? labels.enabled : labels.notEnabled));
         boolean hasCustomTypeface = typefaceId != null && !typefaceId.isBlank();
         String normalizedFontMode = FontApplyMode.normalize(fontMode);
         if (!FontApplyMode.isEnabled(normalizedFontMode) || fontScalePercent == null) {

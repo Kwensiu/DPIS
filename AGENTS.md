@@ -37,6 +37,12 @@ DPIS currently uses a single-context documentation layout. See `docs/agents/doma
   - For filtered tests, use a real flavor test task such as `./gradlew :app:testModern101DebugUnitTest --tests com.dpis.module.ModulePackagePlanTest`.
 - Build then install (PowerShell):
   - `./gradlew :app:assembleModern101Debug; if ($LASTEXITCODE -eq 0) { adb install -r "app/build/outputs/apk/modern101/debug/app-modern101-debug.apk" }`
+- Install debug APKs through Gradle when validating LSPosed module updates:
+  - `./gradlew :app:installModern101Debug`
+  - `./gradlew :app:installCompat100Debug`
+  - If installing from Android Studio, disable deployment optimization. LSPosed
+    may fail to update the module when optimized deployment is used, leaving
+    stale module paths or optimized code active after reinstall/reboot.
 - Clean root build directory:
   - `./gradlew Delete`
 
@@ -88,9 +94,49 @@ DPIS currently uses a single-context documentation layout. See `docs/agents/doma
   configure DPIS through the debug-only config entrypoint, use Autofish to launch
   and navigate the target app, then collect screenshots plus adb/LSPosed logs.
 
+## Frida Runtime Probes
+- Frida may be used as a read-only Android app-process probe when Xposed rebuilds
+  would be too slow. Prefer it for process lists, current Activity/resources,
+  View tree metrics, and one-off method return inspection.
+- Current Windows user install path (example):
+  `$env:APPDATA\Python\Python314\Scripts\frida.exe` and
+  `$env:APPDATA\Python\Python314\Scripts\frida-ps.exe`.
+- Current device server pattern:
+  push `frida-server-<version>-android-arm64` to `/data/local/tmp/frida-server`,
+  then run it as root with
+  `adb -s <device> shell su 0 sh -c "nohup /data/local/tmp/frida-server >/data/local/tmp/frida.log 2>&1 &"`.
+- Example process check:
+  `& "$env:APPDATA\Python\Python314\Scripts\frida-ps.exe" -U | Select-String -Pattern 'com.tencent.mm|PID|Name'`.
+- Keep Frida artifacts local. Do not commit `.frida/`, downloaded servers,
+  temporary Frida scripts, captures, or generated debug evidence unless they are
+  intentionally promoted into documented tooling.
+- Treat Frida as supporting evidence only. It complements DPIS/LSPosed logs and
+  `dumpsys`; it does not replace system_server `ActivityRecord`,
+  WindowManager, or DisplayManager evidence.
+
 ## Runtime Hook Debugging Discipline
+- `docs/compat100-runtime-resync.md` and
+  `docs/modern101-runtime-resync.md` are the DPIS living route documents for
+  viewport/runtime hook routes. Before adding, modifying, or removing any
+  viewport/runtime hook route, read the relevant document, and read both when
+  touching shared code under `app/src/main/java/com/dpis/module/`.
+- `docs/private/` contains app-specific investigation notes and must stay
+  uncommitted. Public route documents should record reusable conclusions and
+  safe reproduction boundaries, not private device paths, tokens, screenshots,
+  or app-specific raw logs.
+- Record every new route exploration, route detail adjustment, abandoned
+  attempt, and runtime finding in the relevant living route document. Treat
+  failed experiments as valuable evidence: do not delete them unless they are
+  demonstrably duplicated or misleading; mark them as inactive, superseded, or
+  rejected with a short reason.
 - Treat `hook ready` as installation evidence only. Require a callback,
   mutation, counter, or visible result before calling a route effective.
+- For LSPosed diagnostics (both flavors), use `/data/adb/lspd/log/modules_*.log`
+  and `verbose_*.log` as the primary source when proving module entry or
+  hook execution. `logcat` is useful for cross-checking forwarded
+  `LSPosedFramework` lines, but absence in plain `logcat` is not a reliable
+  negative signal. See `docs/lsposed-diagnostics.md` for the pull-and-filter
+  path.
 - Probe one boundary at a time: entry, guard return, dependency availability,
   hook install, callback hit, and final effect.
 - Do not diagnose a later stage until logs prove execution reached that stage.

@@ -60,6 +60,9 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
         DpisLog.setLoggingEnabled(store.isGlobalLogEnabled());
         compatDebugLog("compat100 legacy handleLoadPackage: package=" + packageName
                 + ", process=" + lpparam.processName);
+        if (Compat100AppSpecificRouteInstaller.handleLoadPackage(lpparam)) {
+            return;
+        }
         ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(store);
         ModulePackagePlan plan = ModulePackagePlan.resolve(snapshot, packageName);
         if (!plan.shouldInstallCompat100LegacyHooks()) {
@@ -646,4 +649,5 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
         } catch (Throwable ignored) {
         }
     }
+
 }

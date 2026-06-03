@@ -40,6 +40,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         DpiConfigStore localStore = ConfigStoreFactory.createForModuleApp(this);
         DpiConfigStore remoteStore = ConfigStoreFactory.createForModuleApp(this, service);
         migrateConfig(localStore, remoteStore);
+        remoteStore.migrateWechatViewportToTargetFieldIfNeeded();
         // Keep local SharedPreferences as a cold-start mirror before the Xposed
         // service is rebound. Compat100 app processes cannot load XSharedPreferences.
         mirrorConfig(remoteStore, localStore);
@@ -125,6 +126,7 @@ public final class DpisApplication extends Application implements XposedServiceH
                 }
             }
         }
+        migrateWechatTargetField(from, to);
         if (from.hasSystemServerHooksEnabled() && !to.hasSystemServerHooksEnabled()) {
             to.setSystemServerHooksEnabled(from.isSystemServerHooksEnabled());
         }
@@ -137,6 +139,24 @@ public final class DpisApplication extends Application implements XposedServiceH
         if (from.hasLauncherIconHidden() && !to.hasLauncherIconHidden()) {
             to.setLauncherIconHidden(from.isLauncherIconHidden());
         }
+    }
+
+    private static void migrateWechatTargetField(DpiConfigStore from, DpiConfigStore to) {
+        if (from == null || to == null) {
+            return;
+        }
+        String packageName = WechatTargetFieldConfig.PACKAGE_NAME;
+        Integer targetField = from.getWechatTargetField(packageName);
+        if (targetField == null) {
+            targetField = WechatTargetFieldConfig.normalize(
+                    from.getTargetViewportWidthDp(packageName));
+        }
+        if (targetField == null || to.getWechatTargetField(packageName) != null) {
+            return;
+        }
+        to.setWechatTargetField(packageName, targetField);
+        to.clearTargetViewportWidthDp(packageName);
+        to.setTargetViewportApplyMode(packageName, ViewportApplyMode.OFF);
     }
 
     private static void mirrorConfig(DpiConfigStore from, DpiConfigStore to) {

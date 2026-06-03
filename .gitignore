@@ -31,3 +31,6 @@ Thumbs.db
 /dpis-check.txt
 
 /archive/
+
+# Private investigation notes (not committed)
+docs/private/

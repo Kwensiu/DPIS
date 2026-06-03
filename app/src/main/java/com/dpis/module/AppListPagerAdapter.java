@@ -307,7 +307,8 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             String compactStatusText = AppStatusFormatter.formatCompact(
                     holder.status.getResources(), item.inScope, item.scopeKnown,
                     item.viewportTargetSpec, item.viewportMode,
-                    item.fontScalePercent, item.fontMode, item.typefaceId, item.dpisEnabled);
+                    item.fontScalePercent, item.fontMode, item.typefaceId, item.dpisEnabled,
+                    item.hasAppSpecificConfig());
             boolean warnViewport = item.scopeKnown && AppStatusFormatter.shouldWarnViewportEmulation(
                     item.viewportTargetSpec, item.viewportMode,
                     systemScopeSelectedSupplier.getAsBoolean(),
@@ -336,7 +337,8 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                 String compactStatusText = AppStatusFormatter.formatCompact(
                         holder.status.getResources(), item.inScope, item.scopeKnown,
                         item.viewportTargetSpec, item.viewportMode,
-                        item.fontScalePercent, item.fontMode, item.typefaceId, item.dpisEnabled);
+                        item.fontScalePercent, item.fontMode, item.typefaceId, item.dpisEnabled,
+                        item.hasAppSpecificConfig());
                 boolean warnViewport = item.scopeKnown && AppStatusFormatter.shouldWarnViewportEmulation(
                         item.viewportTargetSpec, item.viewportMode,
                         systemScopeSelectedSupplier.getAsBoolean(),
@@ -389,6 +391,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                         && Objects.equals(oldItem.fontScalePercent, newItem.fontScalePercent)
                         && oldItem.fontMode.equals(newItem.fontMode)
                         && Objects.equals(oldItem.typefaceId, newItem.typefaceId)
+                        && oldItem.appSpecificConfigActive == newItem.appSpecificConfigActive
                         && oldItem.dpisEnabled == newItem.dpisEnabled
                         && oldItem.systemApp == newItem.systemApp
                         && (oldItem.icon != null) == (newItem.icon != null);
