@@ -4,6 +4,7 @@ import android.app.AndroidAppHelper;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -141,10 +142,21 @@ final class WechatTargetFieldCompat100HookInstaller {
             }
             PackageInfo packageInfo = packageManager.getPackageInfo(
                     WechatTargetFieldConfig.PACKAGE_NAME, 0);
-            return packageInfo != null ? packageInfo.getLongVersionCode() : 0L;
+            return resolvePackageVersionCode(packageInfo);
         } catch (Throwable ignored) {
             return 0L;
         }
+    }
+
+    private static long resolvePackageVersionCode(PackageInfo packageInfo) {
+        if (packageInfo == null) {
+            return 0L;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            return packageInfo.getLongVersionCode();
+        }
+        //noinspection deprecation
+        return packageInfo.versionCode;
     }
 
     private static Context resolveSystemContext() {

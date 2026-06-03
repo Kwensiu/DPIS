@@ -3,6 +3,7 @@ package com.dpis.module;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 
 final class WechatTargetFieldSupport {
     private WechatTargetFieldSupport() {
@@ -27,10 +28,21 @@ final class WechatTargetFieldSupport {
             }
             PackageInfo packageInfo = packageManager.getPackageInfo(
                     WechatTargetFieldConfig.PACKAGE_NAME, 0);
-            return packageInfo != null ? packageInfo.getLongVersionCode() : 0L;
+            return resolvePackageVersionCode(packageInfo);
         } catch (Throwable ignored) {
             return 0L;
         }
+    }
+
+    private static long resolvePackageVersionCode(PackageInfo packageInfo) {
+        if (packageInfo == null) {
+            return 0L;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            return packageInfo.getLongVersionCode();
+        }
+        //noinspection deprecation
+        return packageInfo.versionCode;
     }
 
     static final class State {
