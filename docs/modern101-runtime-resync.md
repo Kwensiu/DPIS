@@ -1,34 +1,210 @@
 # modern101 Runtime Resync
 
-This document records modern101 runtime route decisions present in this branch.
+This is the living tracker for the 101-line viewport investigation.
 
-## WeChat Native Target Field
+## Living Document Rules
 
-Status: active.
+- Read this document before adding, changing, or removing any modern101
+  viewport/runtime route. If the change touches shared runtime code under
+  `app/src/main/java/com/dpis/module/`, also read
+  `docs/compat100-runtime-resync.md`. See `docs/private/` for
+  app-specific investigation notes (not committed).
+- Record every new route exploration, route detail adjustment, failed attempt,
+  unused path, and important runtime finding here. Treat experiments as
+  accumulated evidence, not disposable notes.
+- Do not delete historical route records unless they are duplicated or
+  misleading. Prefer marking them `active`, `inactive`, `superseded`,
+  `rejected`, or `unknown`, with a short reason and the evidence that changed
+  the decision.
+- Keep the tree and ledger aligned: when a route moves between active and
+  inactive use, update both the route tree and the experiment ledger.
 
-Scope: `com.tencent.mm` main WeChat process only. The route does not target
-AppBrand, XWeb, TBS, or mini-program processes.
+## Current Question
 
-Mechanism:
+How does `modern101` route viewport changes through libxposed, and how do we
+keep future 100-line experiments from accidentally changing 101 behavior?
 
-- modern101 `ModuleMain` treats WeChat as a dedicated route. The main process
-  installs `WechatTargetFieldModernHookInstaller`; secondary WeChat processes
-  return without generic viewport/font hooks.
-- Runtime selection uses the shared `WechatTargetFieldRoutes.java` registry
-  keyed by exact WeChat `versionCode`. All entries are peers; there is no
-  primary route and no probing fallback for unlisted versions.
-- `PackageReadyParam.getApplicationInfo()` is the preferred source for
-  `longVersionCode`, with application/system context `PackageManager` lookups
-  as fallbacks.
-- Getter routes use libxposed `intercept` to return the configured target value
-  directly. Constructor-field routes run the original constructor first, then
-  write `screenResolution_target_field` on `chain.getThisObject()`.
-- The target value is read from the same DPIS runtime property used by
-  compat100. Invalid, missing, or out-of-range values leave WeChat untouched.
+## Route Map
 
-Runtime finding:
+```text
+Viewport mode
+  auto
+    -> system hooks enabled  => system
+    -> system hooks disabled => compat
 
-- API 101 constructor hook usage matches the existing system-server pattern in
-  `SystemServerDisplayEnvironmentInstaller`: call `chain.proceed()`, then read
-  `chain.getThisObject()`. The WeChat `8.0.71` constructor-field route should
-  still be verified on-device before treating API 101 behavior as fully proven.
+  system
+    -> libxposed system_server route
+    -> SystemServerDisplayEnvironmentInstaller owns system-side mutation
+
+  compat
+    -> libxposed app-process route
+    -> AppProcessHookInstaller owns Resources / Display / WindowMetrics hooks
+```
+
+## Full Tree
+
+```text
+DPIS modern101 target package
+  |
+  +-- entry
+  |     |
+  |     +-- app/src/modern101/java/com/dpis/module/ModuleMain.java
+  |           |
+  |           +-- onModuleLoaded
+  |           |     |
+  |           |     +-- record current process
+  |           |     +-- initialize host config store
+  |           |     +-- maybeInstallAppProcessFromModuleLoaded
+  |           |
+  |           +-- onPackageReady
+  |                 |
+  |                 +-- maybeInstallSystemServerFromPackageReady
+  |                 +-- installAppProcessHooksIfConfigured
+  |                 +-- retryTypefaceHooksWithPackageReady
+  |                 +-- retryFlutterHooksWithAppClassLoader
+  |
+  +-- system_server route
+  |     |
+  |     +-- guard:
+  |     |     SystemServerMutationPolicy.shouldInstallSystemServerHooks
+  |     |
+  |     +-- installer:
+  |     |     SystemServerDisplayEnvironmentInstaller.install
+  |     |
+  |     +-- source:
+  |     |     PerAppDisplayConfigSource
+  |     |
+  |     +-- important entries:
+  |           |
+  |           +-- activity-start
+  |           +-- launch-activity-item
+  |           +-- config-dispatch
+  |           +-- display-content-config
+  |           +-- display-manager-info
+  |           +-- relayout-dispatch
+  |           +-- display-policy-layout
+  |           +-- hyperos-rust-process
+  |
+  +-- app-process route
+        |
+        +-- guard:
+        |     ModulePackagePlan.resolve
+        |
+        +-- planner:
+        |     HookExecutionPlanner.buildPlan
+        |
+        +-- installer:
+              AppProcessHookInstaller.install
+                |
+                +-- ResourcesManagerHookInstaller
+                |     ResourcesManager.applyConfigurationToResources
+                |     ResourcesManager.updateResourcesForActivity
+                |     ResourcesManager create/get resource methods
+                |     ResourcesKey override fill
+                |
+                +-- ResourcesImplHookInstaller
+                |     ResourcesImpl.updateConfiguration
+                |
+                +-- ResourcesReadHookInstaller
+                |     Resources.getConfiguration
+                |     Resources.getDisplayMetrics
+                |     Resources.getSystem
+                |
+                +-- DisplayHookInstaller
+                |     Display.getMetrics
+                |     Display.getRealMetrics
+                |     Display.getSize
+                |     Display.getRealSize
+                |     Display.getDisplayInfo
+                |
+                +-- WindowMetricsHookInstaller
+                |     WindowMetrics.getBounds
+                |
+                +-- font / typeface / Flutter font routes
+                      FlutterSettingsFontHookInstaller
+                      HyperOsFlutterFontHookInstaller
+                      WebViewFontHookInstaller
+                      TypefaceOverrideHookInstaller
+```
+
+## Mode Tree
+
+```text
+requested mode
+  |
+  +-- system
+  |     |
+  |     +-- EffectiveModeResolver => system
+  |     +-- expects system_server scope and hook installation
+  |     +-- app-process resources may observe and publish records
+  |     +-- app-process Display / WindowMetrics supplement is skipped when resolved mode is system
+  |
+  +-- compat
+  |     |
+  |     +-- EffectiveModeResolver => compat
+  |     +-- app-process resources apply configuration directly
+  |     +-- Display / WindowMetrics supplement is installed
+  |
+  +-- auto
+        |
+        +-- system hooks enabled
+        |     |
+        |     +-- EffectiveModeResolver => system
+        |     +-- must be debugged as system unless a guarded fallback is designed
+        |
+        +-- system hooks disabled
+              |
+              +-- EffectiveModeResolver => compat
+```
+
+## 101 / 100 Boundary
+
+```text
+101-only
+  |
+  +-- app/src/modern101/java/com/dpis/module/ModuleMain.java
+  +-- libxposed XposedModule lifecycle
+  +-- SystemServerDisplayEnvironmentInstaller installation through XposedInterface
+
+100-only
+  |
+  +-- app/src/compat100/java/com/dpis/module/Compat100LegacyModuleHook.java
+  +-- legacy IXposedHookLoadPackage / IXposedHookZygoteInit lifecycle
+  +-- Compat100SystemServerHookInstaller
+  +-- Compat100-specific WebView layout JS supplement
+
+shared
+  |
+  +-- AppProcessHookInstaller
+  +-- HookExecutionPlanner
+  +-- ResourcesManagerHookInstaller
+  +-- ResourcesImplHookInstaller
+  +-- ResourcesReadHookInstaller
+  +-- DisplayHookInstaller / WindowMetricsHookInstaller
+  +-- ViewportModePolicy / EffectiveModeResolver
+```
+
+## Experiment Ledger
+
+Keep every trial here. Do not delete failed attempts. Mark them as inactive or
+superseded.
+
+| Date | Route | Change | Status | Evidence | Notes |
+| --- | --- | --- | --- | --- | --- |
+| 2026-06-01 | system | `launch-activity-item` system route restored in 101 work | active baseline | commit history contains launch route restoration | Keep separate from compat100 experiments |
+| 2026-06-01 | shared app-process | ResourcesKey empty override fill | active / shared | unit test covers empty override fill | Shared path; check 101 tests when changing |
+
+## Safety Rules
+
+- Changes under `app/src/main/java/` are shared and must be reviewed for both
+  100 and 101.
+- Any change to `ResourcesManagerHookInstaller`, `ResourcesImplHookInstaller`,
+  `ResourcesReadHookInstaller`, `DisplayHookInstaller`,
+  `WindowMetricsHookInstaller`, `HookExecutionPlanner`, or
+  `ViewportModePolicy` is a 101-impacting change.
+- For 101 system route, require system_server install evidence plus
+  callback/mutation evidence. `hook ready` alone is not enough.
+
+## Update Log
+
+- 2026-06-01: initial tracker created.

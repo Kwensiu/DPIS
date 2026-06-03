@@ -46,6 +46,17 @@ unless it is explicitly testing legacy compatibility.
 
 ## Runtime Routes
 
+- `docs/modern101-runtime-resync.md` and `docs/compat100-runtime-resync.md`
+  are the DPIS living route documents for viewport/runtime hook routes.
+- `docs/private/` contains app-specific investigation notes (not committed).
+
+Before changing viewport/runtime hook routes, read the relevant document.
+For shared code under `app/src/main/java/com/dpis/module/`, read both. Any new
+route exploration, route detail adjustment, failed attempt, or runtime finding
+must be recorded in the appropriate document. Do not delete historical
+experiments unless they are duplicated or misleading; mark them as inactive,
+superseded, or rejected with evidence.
+
 System route:
 
 - Runs in `system_server`.
