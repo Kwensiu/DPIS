@@ -75,6 +75,17 @@
             </FrameLayout>
         </LinearLayout>
 
+        <LinearLayout android:id="@+id/dialog_wechat_target_field_row" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dialog_app_config_input_row_spacing_top" android:baselineAligned="false" android:gravity="center_vertical" android:minHeight="@dimen/dialog_mode_toggle_row_min_height" android:orientation="horizontal" android:visibility="gone">
+
+            <FrameLayout android:layout_width="match_parent" android:layout_height="wrap_content">
+
+                <com.google.android.material.textfield.TextInputLayout android:id="@+id/dialog_wechat_target_field_input_layout" style="@style/Widget.Dpis.TextInputLayout.OutlinedBox.Compact" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/dialog_wechat_target_field_hint" app:endIconMode="clear_text" app:boxCornerRadiusBottomEnd="@dimen/dialog_app_config_input_corner_radius" app:boxCornerRadiusBottomStart="@dimen/dialog_app_config_input_corner_radius" app:boxCornerRadiusTopEnd="@dimen/dialog_app_config_input_corner_radius" app:boxCornerRadiusTopStart="@dimen/dialog_app_config_input_corner_radius">
+
+                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/dialog_wechat_target_field_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:imeOptions="actionDone" android:inputType="number" android:minHeight="0dp" android:paddingTop="@dimen/dialog_app_config_input_padding_top" android:paddingBottom="@dimen/dialog_app_config_input_padding_bottom" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </FrameLayout>
+        </LinearLayout>
+
         <LinearLayout android:id="@+id/dialog_typeface_row" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dialog_app_config_selector_spacing_top" android:baselineAligned="false" android:gravity="center_vertical" android:minHeight="@dimen/dialog_mode_toggle_row_min_height" android:orientation="horizontal">
 
             <com.google.android.material.button.MaterialButton android:id="@+id/dialog_typeface_selector_button" style="@style/Widget.Dpis.DialogActionButton.Outlined" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:minWidth="0dp" android:ellipsize="marquee" android:marqueeRepeatLimit="marquee_forever" android:maxLines="1" android:paddingStart="@dimen/dialog_app_config_typeface_button_padding_horizontal" android:paddingEnd="@dimen/dialog_app_config_typeface_button_padding_horizontal" android:text="@string/dialog_typeface_selector_value" />

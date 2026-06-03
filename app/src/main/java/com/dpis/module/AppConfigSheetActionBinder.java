@@ -51,6 +51,7 @@ final class AppConfigSheetActionBinder {
             boolean nextEnabled = !state.dpisEnabled;
             if (host.setDpisEnabled(item.packageName, nextEnabled)) {
                 state.dpisEnabled = nextEnabled;
+                WechatTargetFieldSheetBinder.publishForDpisState(item.packageName, nextEnabled);
                 binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
             }
         });
@@ -63,6 +64,7 @@ final class AppConfigSheetActionBinder {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
             views.viewportInputView.setText("");
             views.fontInputView.setText("");
+            WechatTargetFieldSheetBinder.clearDraft(dialogView);
             state.selectedTypefaceId = null;
             state.clearViewportInputs();
             binder.bindTypefaceSelector(views.typefaceSelectorButton, state.selectedTypefaceId);
@@ -70,10 +72,7 @@ final class AppConfigSheetActionBinder {
                     views.viewportModeToggle, ViewportTargetType.RELATIVE_SCALE, true);
             AppConfigDialogBinder.bindFontModeToggle(
                     views.fontModeToggle, FontApplyMode.SYSTEM_EMULATION, true);
-            AppConfigDialogBinder.updateSaveButtonState(
-                    views.viewportInputLayout, views.viewportInputView,
-                    views.viewportModeToggle,
-                    views.fontInputLayout, views.fontInputView, views.saveButton);
+            AppConfigDialogBinder.updateSaveButtonState(dialogView, views);
             binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
         });
         views.saveButton.setOnClickListener(v -> {
@@ -87,6 +86,16 @@ final class AppConfigSheetActionBinder {
                     state.selectedTypefaceId,
                     state.viewportScaleInput,
                     state.viewportAbsoluteInput);
+            if (result[0] == 1) {
+                DpiConfigStore store = host.getConfigStore();
+                if (!WechatTargetFieldSheetBinder.save(
+                        dialogView, item.packageName, state.dpisEnabled, store)) {
+                    result[0] = 0;
+                    result[1] = R.string.status_save_invalid;
+                } else {
+                    host.requestAppsLoad();
+                }
+            }
             if (result[0] == 1) {
                 AppConfigDialogBinder.showSaveButtonFeedback(views.saveButton);
                 binder.syncHyperOsNativeProxyAfterSave(item, views, state);

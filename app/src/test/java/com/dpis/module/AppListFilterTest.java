@@ -102,6 +102,22 @@ public class AppListFilterTest {
     }
 
     @Test
+    public void configuredTabIncludesAppSpecificConfigOnlyApps() {
+        assertTrue(AppListFilter.matches("",
+                AppListFilter.Tab.CONFIGURED_APPS,
+                "WeChat",
+                "com.tencent.mm",
+                false,
+                false,
+                null,
+                null,
+                FontApplyMode.OFF,
+                null,
+                true,
+                AppListFilterState.noAdditionalConstraints()));
+    }
+
+    @Test
     public void configuredTabStillSupportsQueryFiltering() {
         assertTrue(AppListFilter.matches("tie",
                 AppListFilter.Tab.CONFIGURED_APPS,

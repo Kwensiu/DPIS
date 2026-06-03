@@ -100,13 +100,16 @@ final class InstalledAppCatalogCoordinator {
             String typefaceId = store != null
                     ? store.getTargetTypefaceId(item.packageName)
                     : null;
+            boolean appSpecificConfigActive = store != null
+                    && store.hasTargetAppSpecificConfig(item.packageName);
             boolean dpisEnabled = store == null
                     || store.isTargetDpisEnabled(item.packageName);
             Drawable icon = resolveDisplayIcon(item);
             result.add(new AppListItem(item.label, item.packageName,
                     scopePackages.contains(item.packageName), scopeKnown, viewportWidth,
                     viewportScalePermille, viewportMode,
-                    viewportTargetSpec, fontScalePercent, fontMode, typefaceId, dpisEnabled, item.systemApp,
+                    viewportTargetSpec, fontScalePercent, fontMode, typefaceId,
+                    appSpecificConfigActive, dpisEnabled, item.systemApp,
                     item.hyperOsNativeProxyCandidate, icon));
         }
         return result;

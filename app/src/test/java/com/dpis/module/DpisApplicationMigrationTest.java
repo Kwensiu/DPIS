@@ -158,6 +158,25 @@ public class DpisApplicationMigrationTest {
     }
 
     @Test
+    public void migratesLocalWechatViewportWidthToRemoteTargetField() throws Exception {
+        FakePrefs localPrefs = new FakePrefs();
+        DpiConfigStore local = new DpiConfigStore(localPrefs);
+        assertTrue(local.setTargetViewportWidthDp("com.tencent.mm", 300));
+        assertTrue(local.setTargetViewportApplyMode("com.tencent.mm", ViewportApplyMode.SYSTEM));
+
+        FakePrefs remotePrefs = new FakePrefs();
+        DpiConfigStore remote = new DpiConfigStore(remotePrefs);
+
+        invokeMigrate(local, remote);
+
+        assertEquals(Integer.valueOf(300), remote.getWechatTargetField("com.tencent.mm"));
+        assertNull(remote.getTargetViewportWidthDp("com.tencent.mm"));
+        assertEquals(ViewportApplyMode.OFF,
+                remote.getTargetViewportApplyMode("com.tencent.mm"));
+        assertTrue(remote.getConfiguredPackages().contains("com.tencent.mm"));
+    }
+
+    @Test
     public void preservesRemoteOnlyPackageConfigDuringMigration() throws Exception {
         FakePrefs localPrefs = new FakePrefs();
         DpiConfigStore local = new DpiConfigStore(localPrefs);

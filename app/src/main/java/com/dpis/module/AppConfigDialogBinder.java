@@ -73,6 +73,10 @@ final class AppConfigDialogBinder {
                 String viewportScaleInput,
                 String viewportAbsoluteInput);
 
+        DpiConfigStore getConfigStore();
+
+        void requestAppsLoad();
+
         void showToast(int messageResId);
     }
 
@@ -87,6 +91,9 @@ final class AppConfigDialogBinder {
     void bind(View dialogView, AppListItem item, boolean systemHooksEnabled) {
         AppConfigDialogViews views = initDialogViews(dialogView);
         AppConfigDialogState state = bindDialogInitialState(item, views);
+        WechatTargetFieldSheetBinder.bind(dialogView, item,
+                () -> updateSaveButtonState(dialogView, views));
+        updateSaveButtonState(dialogView, views);
         AppConfigDialogActionStyle style = resolveDialogActionStyle(views.scopeButton);
         refreshDialogState(views, state, style, systemHooksEnabled, item);
         new AppConfigSheetInteractions(this, host)
@@ -574,6 +581,19 @@ final class AppConfigDialogBinder {
         fontInputLayout.setBoxStrokeColor(fontValid ? defaultStrokeColor : errorStrokeColor);
         boolean valid = viewportValid && fontValid;
         saveButton.setEnabled(valid);
+        return valid;
+    }
+
+    static boolean updateSaveButtonState(View dialogView, AppConfigDialogViews views) {
+        boolean genericValid = updateSaveButtonState(
+                views.viewportInputLayout,
+                views.viewportInputView,
+                views.viewportModeToggle,
+                views.fontInputLayout,
+                views.fontInputView,
+                views.saveButton);
+        boolean valid = genericValid && WechatTargetFieldSheetBinder.isInputValid(dialogView);
+        views.saveButton.setEnabled(valid);
         return valid;
     }
 

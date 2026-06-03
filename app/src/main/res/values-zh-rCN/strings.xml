@@ -9,6 +9,7 @@
     <string name="dialog_font_scale_hint">字体 50–300%</string>
     <string name="dialog_font_mode_system">系统</string>
     <string name="dialog_font_mode_compat">兼容</string>
+    <string name="dialog_wechat_target_field_hint">微信目标值 300-1200</string>
     <string name="dialog_typeface_label">字体文件</string>
     <string name="dialog_typeface_selector_value">字体样式: %1$s</string>
     <string name="dialog_typeface_dialog_title">字体选择</string>
