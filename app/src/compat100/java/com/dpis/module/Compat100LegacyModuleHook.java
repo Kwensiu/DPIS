@@ -9,7 +9,6 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.HashSet;
@@ -32,12 +31,6 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
     private static final AtomicBoolean DISPLAY_HOOKED = new AtomicBoolean(false);
     private static final AtomicBoolean WINDOW_METRICS_HOOKED = new AtomicBoolean(false);
     private static final AtomicBoolean FONT_FIELD_REWRITE_HOOKED = new AtomicBoolean(false);
-    private static final AtomicBoolean WECHAT_TARGET_FIELD_HOOKED = new AtomicBoolean(false);
-    private static final String WECHAT_PACKAGE = "com.tencent.mm";
-    private static final String WECHAT_TARGET_FIELD_PROPERTY =
-            "debug.dpis.wechat.targetfield.c5fe9776";
-    private static final int WECHAT_TARGET_FIELD_MIN = 300;
-    private static final int WECHAT_TARGET_FIELD_MAX = 1200;
     private static final ThreadLocal<Boolean> FONT_TEXTVIEW_UPDATE =
             ThreadLocal.withInitial(() -> Boolean.FALSE);
     private static final ThreadLocal<Boolean> RESOURCES_READ_INTERNAL_UPDATE =
@@ -67,12 +60,7 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
         DpisLog.setLoggingEnabled(store.isGlobalLogEnabled());
         compatDebugLog("compat100 legacy handleLoadPackage: package=" + packageName
                 + ", process=" + lpparam.processName);
-        if (WECHAT_PACKAGE.equals(packageName)) {
-            if (WECHAT_PACKAGE.equals(lpparam.processName)) {
-                installWechatTargetFieldHooks(lpparam.classLoader);
-            }
-            compatDebugLog("compat100 WeChat target-field route suppresses generic hooks: process="
-                    + lpparam.processName);
+        if (Compat100AppSpecificRouteInstaller.handleLoadPackage(lpparam)) {
             return;
         }
         ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(store);
@@ -640,87 +628,6 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
         }
     }
 
-    private static void installWechatTargetFieldHooks(ClassLoader classLoader) {
-        if (classLoader == null || !WECHAT_TARGET_FIELD_HOOKED.compareAndSet(false, true)) {
-            return;
-        }
-        if (installWechatTargetFieldGetterHook(classLoader)) {
-            return;
-        }
-        if (installLegacyWechatTargetFieldConstructorHook(classLoader)) {
-            return;
-        }
-        WECHAT_TARGET_FIELD_HOOKED.set(false);
-    }
-
-    private static boolean installWechatTargetFieldGetterHook(ClassLoader classLoader) {
-        try {
-            Class<?> densityManagerClass = Class.forName("w45.f", false, classLoader);
-            Method targetGetter = densityManagerClass.getDeclaredMethod("g");
-            targetGetter.setAccessible(true);
-            XposedBridge.hookMethod(targetGetter, new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) {
-                    int target = resolveWechatTargetField();
-                    if (target > 0) {
-                        param.setResult(target);
-                    }
-                }
-            });
-            compatDebugLog("compat100 WeChat target-field getter hook ready: w45.f#g");
-            return true;
-        } catch (Throwable throwable) {
-            compatErrorLog("compat100 WeChat target-field getter hook failed: "
-                    + throwable.getClass().getName() + ": " + throwable.getMessage());
-            return false;
-        }
-    }
-
-    private static boolean installLegacyWechatTargetFieldConstructorHook(ClassLoader classLoader) {
-        try {
-            Class<?> densityManagerClass = Class.forName("q35.f", false, classLoader);
-            Field targetField = densityManagerClass.getDeclaredField("screenResolution_target_field");
-            targetField.setAccessible(true);
-            XposedBridge.hookAllConstructors(densityManagerClass, new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                    int target = resolveWechatTargetField();
-                    if (target <= 0 || param.thisObject == null) {
-                        return;
-                    }
-                    targetField.setInt(param.thisObject, target);
-                }
-            });
-            compatDebugLog("compat100 WeChat target-field constructor hook ready: q35.f");
-            return true;
-        } catch (Throwable throwable) {
-            compatErrorLog("compat100 WeChat target-field constructor hook failed: "
-                    + throwable.getClass().getName() + ": " + throwable.getMessage());
-            return false;
-        }
-    }
-
-    private static int resolveWechatTargetField() {
-        int value = readSystemPropertyInt(WECHAT_TARGET_FIELD_PROPERTY);
-        return value >= WECHAT_TARGET_FIELD_MIN && value <= WECHAT_TARGET_FIELD_MAX ? value : 0;
-    }
-
-    private static int readSystemPropertyInt(String propertyName) {
-        if (propertyName == null || propertyName.isBlank()) {
-            return 0;
-        }
-        try {
-            Class<?> systemProperties = Class.forName("android.os.SystemProperties");
-            Method get = systemProperties.getDeclaredMethod("get", String.class, String.class);
-            Object raw = get.invoke(null, propertyName, "0");
-            if (raw instanceof String value) {
-                return Integer.parseInt(value.trim());
-            }
-        } catch (Throwable ignored) {
-        }
-        return 0;
-    }
-
     private static void compatLog(String message) {
         DpisLog.i(message);
     }
@@ -742,4 +649,5 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
         } catch (Throwable ignored) {
         }
     }
+
 }

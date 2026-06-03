@@ -52,7 +52,13 @@ final class WechatTargetFieldSheetBinder {
         if (inputView == null || inputView.getText() == null) {
             return true;
         }
-        return WechatTargetFieldConfig.isInputValid(inputView.getText().toString());
+        String raw = inputView.getText().toString();
+        WechatTargetFieldSupport.State support =
+                WechatTargetFieldSupport.current(dialogView.getContext());
+        if (!support.supported) {
+            return raw.isBlank();
+        }
+        return WechatTargetFieldConfig.isInputValid(raw);
     }
 
     static boolean save(View dialogView, String packageName, boolean dpisEnabled,
@@ -107,32 +113,34 @@ final class WechatTargetFieldSheetBinder {
         return WechatTargetFieldConfig.parseOrNull(inputView.getText().toString());
     }
 
-    private static Integer readTargetFieldOrNull(TextInputEditText inputView) {
-        if (inputView == null || inputView.getText() == null) {
-            return null;
-        }
-        return WechatTargetFieldConfig.parseOrNull(inputView.getText().toString());
-    }
-
-    private static boolean isBlankWechatInput(View dialogView) {
-        TextInputEditText inputView = inputView(dialogView);
-        return inputView == null || inputView.getText() == null
-                || inputView.getText().toString().isBlank();
-    }
-
     private static void updateValidationState(TextInputLayout inputLayout,
             TextInputEditText inputView) {
         if (inputLayout == null || inputView == null) {
             return;
         }
-        boolean valid = inputView.getText() == null
-                || WechatTargetFieldConfig.isInputValid(inputView.getText().toString());
+        String raw = inputView.getText() != null ? inputView.getText().toString() : "";
+        WechatTargetFieldSupport.State support =
+                WechatTargetFieldSupport.current(inputLayout.getContext());
+        boolean supported = support.supported;
+        boolean blank = raw.isBlank();
+        boolean valid = supported
+                ? WechatTargetFieldConfig.isInputValid(raw)
+                : blank;
         int defaultStrokeColor = MaterialColors.getColor(
                 inputLayout, com.google.android.material.R.attr.colorOutline);
         int errorStrokeColor = MaterialColors.getColor(
                 inputLayout, androidx.appcompat.R.attr.colorError);
-        inputLayout.setError(null);
-        inputLayout.setErrorEnabled(false);
+        if (!supported && !blank) {
+            inputLayout.setHelperText(null);
+            inputLayout.setError(inputLayout.getContext().getString(
+                    R.string.dialog_wechat_target_field_unsupported));
+            inputLayout.setErrorEnabled(true);
+        } else {
+            inputLayout.setError(null);
+            inputLayout.setErrorEnabled(false);
+            inputLayout.setHelperText(supported ? null : inputLayout.getContext().getString(
+                    R.string.dialog_wechat_target_field_unsupported));
+        }
         inputLayout.setBoxStrokeColor(valid ? defaultStrokeColor : errorStrokeColor);
     }
 

@@ -1,0 +1,187 @@
+package com.dpis.module;
+
+import android.app.AndroidAppHelper;
+import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XposedBridge;
+import de.robv.android.xposed.callbacks.XC_LoadPackage;
+
+final class WechatTargetFieldCompat100HookInstaller {
+    private static final AtomicBoolean HOOKED = new AtomicBoolean(false);
+
+    private WechatTargetFieldCompat100HookInstaller() {
+    }
+
+    static void install(XC_LoadPackage.LoadPackageParam lpparam) {
+        ClassLoader classLoader = lpparam != null ? lpparam.classLoader : null;
+        if (classLoader == null || !HOOKED.compareAndSet(false, true)) {
+            return;
+        }
+        if (!installRoute(classLoader, lpparam)) {
+            HOOKED.set(false);
+        }
+    }
+
+    private static boolean installRoute(
+            ClassLoader classLoader,
+            XC_LoadPackage.LoadPackageParam lpparam) {
+        long versionCode = resolveWechatVersionCode(lpparam);
+        WechatTargetFieldRoutes.Route route = WechatTargetFieldRoutes.forVersionCode(versionCode);
+        if (route == null) {
+            DpisLog.i("compat100 WeChat target-field hook unsupported: versionCode="
+                    + versionCode);
+            return false;
+        }
+        switch (route.kind) {
+            case GETTER:
+                return installGetterHook(classLoader, route, versionCode);
+            case CONSTRUCTOR_FIELD:
+                return installConstructorFieldHook(classLoader, route, versionCode);
+            default:
+                DpisLog.i("compat100 WeChat target-field hook unsupported kind: "
+                        + route.kind + ", versionCode=" + versionCode);
+                return false;
+        }
+    }
+
+    private static boolean installGetterHook(ClassLoader classLoader,
+            WechatTargetFieldRoutes.Route route, long versionCode) {
+        try {
+            Class<?> densityManagerClass = Class.forName(route.className, false, classLoader);
+            Method targetGetter = densityManagerClass.getDeclaredMethod(route.memberName);
+            targetGetter.setAccessible(true);
+            XposedBridge.hookMethod(targetGetter, new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    int target = resolveWechatTargetField();
+                    if (target > 0) {
+                        param.setResult(target);
+                    }
+                }
+            });
+            DpisLog.i("compat100 WeChat target-field getter hook ready: "
+                    + route.routeKey() + ", versionCode=" + versionCode);
+            return true;
+        } catch (Throwable throwable) {
+            DpisLog.e("compat100 WeChat target-field getter hook failed: "
+                    + route.routeKey() + ", versionCode=" + versionCode + ", "
+                    + throwable.getClass().getName() + ": " + throwable.getMessage(), throwable);
+        }
+        return false;
+    }
+
+    private static boolean installConstructorFieldHook(ClassLoader classLoader,
+            WechatTargetFieldRoutes.Route route, long versionCode) {
+        try {
+            Class<?> densityManagerClass = Class.forName(route.className, false, classLoader);
+            Field targetField = densityManagerClass.getDeclaredField(route.memberName);
+            targetField.setAccessible(true);
+            XposedBridge.hookAllConstructors(densityManagerClass, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    int target = resolveWechatTargetField();
+                    if (target <= 0 || param.thisObject == null) {
+                        return;
+                    }
+                    targetField.setInt(param.thisObject, target);
+                }
+            });
+            DpisLog.i("compat100 WeChat target-field constructor-field hook ready: "
+                    + route.routeKey() + ", versionCode=" + versionCode);
+            return true;
+        } catch (Throwable throwable) {
+            DpisLog.e("compat100 WeChat target-field constructor-field hook failed: "
+                    + route.routeKey() + ", versionCode=" + versionCode + ", "
+                    + throwable.getClass().getName() + ": " + throwable.getMessage(), throwable);
+        }
+        return false;
+    }
+
+    private static long resolveWechatVersionCode(XC_LoadPackage.LoadPackageParam lpparam) {
+        long versionCode = resolveWechatVersionCode(lpparam != null ? lpparam.appInfo : null);
+        if (versionCode > 0L) {
+            return versionCode;
+        }
+        versionCode = resolveWechatVersionCode(AndroidAppHelper.currentApplication());
+        if (versionCode > 0L) {
+            return versionCode;
+        }
+        return resolveWechatVersionCode(resolveSystemContext());
+    }
+
+    private static long resolveWechatVersionCode(Object appInfo) {
+        try {
+            if (appInfo == null) {
+                return 0L;
+            }
+            Object value = appInfo.getClass().getField("longVersionCode").get(appInfo);
+            if (value instanceof Long versionCode) {
+                return versionCode;
+            }
+        } catch (Throwable ignored) {
+        }
+        return 0L;
+    }
+
+    private static long resolveWechatVersionCode(Context context) {
+        try {
+            if (context == null) {
+                return 0L;
+            }
+            PackageManager packageManager = context.getPackageManager();
+            if (packageManager == null) {
+                return 0L;
+            }
+            PackageInfo packageInfo = packageManager.getPackageInfo(
+                    WechatTargetFieldConfig.PACKAGE_NAME, 0);
+            return packageInfo != null ? packageInfo.getLongVersionCode() : 0L;
+        } catch (Throwable ignored) {
+            return 0L;
+        }
+    }
+
+    private static Context resolveSystemContext() {
+        try {
+            Class<?> activityThread = Class.forName("android.app.ActivityThread");
+            Method currentActivityThread = activityThread.getDeclaredMethod("currentActivityThread");
+            Object thread = currentActivityThread.invoke(null);
+            if (thread == null) {
+                return null;
+            }
+            Method getSystemContext = activityThread.getDeclaredMethod("getSystemContext");
+            Object context = getSystemContext.invoke(thread);
+            return context instanceof Context ? (Context) context : null;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private static int resolveWechatTargetField() {
+        int value = readSystemPropertyInt(WechatTargetFieldPropertyBridge.propertyNameForPackage(
+                WechatTargetFieldConfig.PACKAGE_NAME));
+        return WechatTargetFieldConfig.normalize(value) != null ? value : 0;
+    }
+
+    private static int readSystemPropertyInt(String propertyName) {
+        if (propertyName == null || propertyName.isBlank()) {
+            return 0;
+        }
+        try {
+            Class<?> systemProperties = Class.forName("android.os.SystemProperties");
+            Method get = systemProperties.getDeclaredMethod("get", String.class, String.class);
+            Object raw = get.invoke(null, propertyName, "0");
+            if (raw instanceof String value) {
+                return Integer.parseInt(value.trim());
+            }
+        } catch (Throwable ignored) {
+        }
+        return 0;
+    }
+}

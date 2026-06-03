@@ -52,6 +52,9 @@ public final class ModuleMain extends XposedModule {
         SystemServerDisplayDiagnostics.flushPending();
         maybeInstallSystemServerFromPackageReady(store, policy, param.getPackageName());
         maybeLogFirstPackageReady(param.getPackageName());
+        if (Modern101AppSpecificRouteInstaller.handlePackageReady(this, param, currentProcessName)) {
+            return;
+        }
         installAppProcessHooksIfConfigured(store, policy, snapshot, param.getPackageName(),
                 "package-ready");
         retryTypefaceHooksWithPackageReady(store, snapshot, param.getPackageName());
@@ -97,6 +100,10 @@ public final class ModuleMain extends XposedModule {
         }
         HookRuntimePolicy policy = HookRuntimePolicy.fromSnapshot(snapshot);
         DpisLog.setLoggingEnabled(policy.globalLogEnabled);
+        if (Modern101AppSpecificRouteInstaller.shouldSuppressModuleLoadedGenericHooks(
+                packageName, processName)) {
+            return;
+        }
         installAppProcessHooksIfConfigured(runtimeStore, policy, snapshot, packageName,
                 source);
     }

@@ -77,6 +77,10 @@ final class AppConfigSheetActionBinder {
         });
         views.saveButton.setOnClickListener(v -> {
             host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
+            if (!WechatTargetFieldSheetBinder.isInputValid(dialogView)) {
+                host.showToast(R.string.status_save_invalid);
+                return;
+            }
             int[] result = host.saveAppConfig(
                     item,
                     views.viewportInputView,

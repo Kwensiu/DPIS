@@ -63,6 +63,11 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(source.contains("installSystemServerHooksForCompat100();"));
         assertTrue(source.contains("createCompat100Store(packageName, lpparam.processName)"));
         assertTrue(source.contains("createForCompat100MainProcessHost(packageName)"));
+        assertTrue(source.contains("Compat100AppSpecificRouteInstaller.handleLoadPackage(lpparam)"));
+        assertFalse(source.contains("com.tencent.mm"));
+        assertFalse(source.contains("WECHAT_PACKAGE"));
+        assertFalse(source.contains("screenResolution_target_field"));
+        assertFalse(source.contains("WechatTargetFieldRoutes.forVersionCode"));
         assertTrue(source.contains("shouldSuppressSecondaryProcessViewport(lpparam.processName, plan)"));
         assertTrue(source.contains("compat100 legacy secondary process viewport route suppressed"));
         assertTrue(source.contains("!processName.startsWith(plan.packageName + \":\")"));
@@ -113,6 +118,23 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(rustSource.indexOf("return null;")
                 < rustSource.indexOf("Object existingValue = args.get(ARG_ENVIRONMENTS);"));
         assertTrue(!rustSource.contains("HyperOsFlutterFontBridge.clearTarget(packageName);"));
+    }
+
+    @Test
+    public void compat100AppSpecificRouteInstallerOwnsWechatTargetFieldRoute() throws Exception {
+        String router = read("src/compat100/java/com/dpis/module/Compat100AppSpecificRouteInstaller.java");
+        String installer = read(
+                "src/compat100/java/com/dpis/module/WechatTargetFieldCompat100HookInstaller.java");
+
+        assertTrue(router.contains("WechatTargetFieldConfig.appliesTo(lpparam.packageName)"));
+        assertTrue(router.contains("WechatTargetFieldConfig.appliesTo(lpparam.processName)"));
+        assertTrue(router.contains("WechatTargetFieldCompat100HookInstaller.install(lpparam)"));
+        assertTrue(router.contains("app-specific route suppresses generic hooks"));
+        assertTrue(installer.contains("WechatTargetFieldRoutes.forVersionCode(versionCode)"));
+        assertTrue(installer.contains("switch (route.kind)"));
+        assertTrue(installer.contains("XposedBridge.hookMethod(targetGetter"));
+        assertTrue(installer.contains("XposedBridge.hookAllConstructors"));
+        assertTrue(installer.contains("afterHookedMethod"));
     }
 
     private static String read(String relativePath) throws Exception {

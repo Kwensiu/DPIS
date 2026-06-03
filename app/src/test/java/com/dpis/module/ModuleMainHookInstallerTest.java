@@ -22,6 +22,36 @@ public class ModuleMainHookInstallerTest {
     }
 
     @Test
+    public void moduleMainDelegatesAppSpecificRoutes() throws IOException {
+        String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+
+        assertTrue(moduleMain.contains("Modern101AppSpecificRouteInstaller.handlePackageReady("));
+        assertTrue(moduleMain.contains(
+                "Modern101AppSpecificRouteInstaller.shouldSuppressModuleLoadedGenericHooks("));
+        assertFalse(moduleMain.contains("WECHAT_PACKAGE"));
+        assertFalse(moduleMain.contains("com.tencent.mm"));
+        assertFalse(moduleMain.contains("WechatTargetFieldModernHookInstaller.install("));
+    }
+
+    @Test
+    public void modern101AppSpecificRouteInstallerRoutesWechatTargetField() throws IOException {
+        String router = read(
+                "src/modern101/java/com/dpis/module/Modern101AppSpecificRouteInstaller.java");
+        String installer = read(
+                "src/modern101/java/com/dpis/module/WechatTargetFieldModernHookInstaller.java");
+
+        assertTrue(router.contains("WechatTargetFieldConfig.appliesTo(param.getPackageName())"));
+        assertTrue(router.contains("WechatTargetFieldConfig.appliesTo(processName)"));
+        assertTrue(router.contains("WechatTargetFieldModernHookInstaller.install("));
+        assertTrue(router.contains("param.getClassLoader()"));
+        assertTrue(router.contains("param.getApplicationInfo()"));
+        assertTrue(router.contains("app-specific route suppresses generic hooks"));
+        assertTrue(installer.contains("ApplicationInfo applicationInfo"));
+        assertTrue(installer.contains("resolveWechatVersionCode(applicationInfo, packageName)"));
+        assertTrue(installer.contains("switch (route.kind)"));
+    }
+
+    @Test
     public void moduleMainConfiguresHyperOsFlutterNativeFontHook() throws IOException {
         String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
         String build = read("build.gradle.kts");

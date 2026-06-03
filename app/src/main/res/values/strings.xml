@@ -10,6 +10,7 @@
     <string name="dialog_font_mode_system">System</string>
     <string name="dialog_font_mode_compat">Compat</string>
     <string name="dialog_wechat_target_field_hint">WeChat target 300-1200</string>
+    <string name="dialog_wechat_target_field_unsupported">Current WeChat version is not adapted</string>
     <string name="dialog_typeface_label">Font file</string>
     <string name="dialog_typeface_selector_value">Font style: %1$s</string>
     <string name="dialog_typeface_dialog_title">Choose font</string>

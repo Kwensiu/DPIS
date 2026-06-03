@@ -49,6 +49,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("views.fontModeToggle, FontApplyMode.SYSTEM_EMULATION, true)"));
         assertTrue(source.contains("host.saveAppConfig("));
         assertTrue(source.contains("views.saveButton.setOnClickListener"));
+        assertTrue(source.contains("if (!WechatTargetFieldSheetBinder.isInputValid(dialogView))"));
         assertTrue(source.contains("host.saveAppConfig("));
         assertTrue(source.contains("state.viewportScaleInput"));
         assertTrue(source.contains("state.viewportAbsoluteInput"));
@@ -57,6 +58,23 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("dialogView, item, views, state, style, systemHooksEnabled);"));
         assertTrue(binderSource.contains("host.applyHyperOsNativeProxy(item, onFinished)"));
         assertTrue(binderSource.contains("host.unmountHyperOsNativeProxy(item"));
+    }
+
+    @Test
+    public void wechatTargetFieldBlocksUnsupportedNonBlankInput() throws IOException {
+        String binder = read("src/main/java/com/dpis/module/WechatTargetFieldSheetBinder.java");
+        String strings = read("src/main/res/values/strings.xml");
+        String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
+
+        assertTrue(binder.contains("WechatTargetFieldSupport.current(dialogView.getContext())"));
+        assertTrue(binder.contains("WechatTargetFieldSupport.current(inputLayout.getContext())"));
+        assertTrue(binder.contains("if (!support.supported)"));
+        assertTrue(binder.contains("return raw.isBlank();"));
+        assertTrue(binder.contains("R.string.dialog_wechat_target_field_unsupported"));
+        assertTrue(binder.contains("setHelperText(supported ? null"));
+        assertTrue(binder.contains("setError(inputLayout.getContext().getString("));
+        assertTrue(strings.contains("dialog_wechat_target_field_unsupported"));
+        assertTrue(zhStrings.contains("未适配当前微信版本"));
     }
 
     @Test
