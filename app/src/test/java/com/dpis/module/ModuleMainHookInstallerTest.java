@@ -45,10 +45,13 @@ public class ModuleMainHookInstallerTest {
         assertTrue(router.contains("WechatTargetFieldModernHookInstaller.install("));
         assertTrue(router.contains("param.getClassLoader()"));
         assertTrue(router.contains("param.getApplicationInfo()"));
-        assertTrue(router.contains("app-specific route suppresses generic hooks"));
+        assertTrue(router.contains("alongside generic hooks"));
         assertTrue(installer.contains("ApplicationInfo applicationInfo"));
-        assertTrue(installer.contains("resolveWechatVersionCode(applicationInfo, packageName)"));
+        assertTrue(installer.contains("resolveWechatVersionCode"));
         assertTrue(installer.contains("switch (route.kind)"));
+        assertTrue(installer.contains("installSetterHook(xposed, densityManagerClass"));
+        assertTrue(installer.contains("xposed.hook(setter)"));
+        assertTrue(installer.contains("chain.getArgs().set(0, target)"));
     }
 
     @Test

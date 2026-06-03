@@ -3,6 +3,7 @@ package com.dpis.module;
 import java.util.LinkedHashSet;
 
 final class WechatTargetFieldPropertySyncer {
+
     private WechatTargetFieldPropertySyncer() {
     }
 
@@ -47,14 +48,28 @@ final class WechatTargetFieldPropertySyncer {
         syncThread.start();
     }
 
+    static String buildTargetCommandForTest(String packageName, Integer targetField) {
+        return buildTargetCommand(packageName, targetField);
+    }
+
     private static String buildTargetCommand(String packageName, Integer targetField) {
         Integer normalized = WechatTargetFieldConfig.normalize(targetField);
         String value = normalized != null ? String.valueOf(normalized) : "0";
-        return buildSetCommand(WechatTargetFieldPropertyBridge.propertyNameForPackage(packageName), value);
+        return buildSetCommandPair(
+                WechatTargetFieldPropertyBridge.propertyNameForPackage(packageName),
+                WechatTargetFieldPropertyBridge.persistentPropertyNameForPackage(packageName),
+                value);
     }
 
     private static String buildSetCommand(String property, String value) {
         return "setprop " + shellQuote(property) + " " + shellQuote(value);
+    }
+
+    private static String buildSetCommandPair(String property, String persistentProperty,
+            String value) {
+        return buildSetCommand(property, value)
+                + "; "
+                + buildSetCommand(persistentProperty, value);
     }
 
     private static String shellQuote(String value) {

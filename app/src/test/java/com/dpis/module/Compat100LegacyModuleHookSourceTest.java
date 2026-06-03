@@ -129,10 +129,13 @@ public class Compat100LegacyModuleHookSourceTest {
         assertTrue(router.contains("WechatTargetFieldConfig.appliesTo(lpparam.packageName)"));
         assertTrue(router.contains("WechatTargetFieldConfig.appliesTo(lpparam.processName)"));
         assertTrue(router.contains("WechatTargetFieldCompat100HookInstaller.install(lpparam)"));
-        assertTrue(router.contains("app-specific route suppresses generic hooks"));
+        assertTrue(router.contains("alongside generic hooks"));
         assertTrue(installer.contains("WechatTargetFieldRoutes.forVersionCode(versionCode)"));
         assertTrue(installer.contains("switch (route.kind)"));
         assertTrue(installer.contains("XposedBridge.hookMethod(targetGetter"));
+        assertTrue(installer.contains("installSetterHook(densityManagerClass"));
+        assertTrue(installer.contains("XposedBridge.hookMethod(setter"));
+        assertTrue(installer.contains("param.args[0] = target"));
         assertTrue(installer.contains("XposedBridge.hookAllConstructors"));
         assertTrue(installer.contains("afterHookedMethod"));
     }

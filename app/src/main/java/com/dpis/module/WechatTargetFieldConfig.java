@@ -2,7 +2,7 @@ package com.dpis.module;
 
 final class WechatTargetFieldConfig {
     static final String PACKAGE_NAME = "com.tencent.mm";
-    static final int MIN_TARGET_FIELD = 300;
+    static final int MIN_TARGET_FIELD = 200;
     static final int MAX_TARGET_FIELD = 1200;
 
     private WechatTargetFieldConfig() {

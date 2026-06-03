@@ -19,20 +19,17 @@ final class Modern101AppSpecificRouteInstaller {
                     param.getApplicationInfo(),
                     param.getPackageName());
         }
-        logSuppressed(processName);
-        return true;
+        DpisLog.i("modern101 app-specific route installed alongside generic hooks: package="
+                + WechatTargetFieldConfig.PACKAGE_NAME + ", process=" + processName);
+        return false;
     }
 
     static boolean shouldSuppressModuleLoadedGenericHooks(String packageName, String processName) {
         if (!WechatTargetFieldConfig.appliesTo(packageName)) {
             return false;
         }
-        logSuppressed(processName);
-        return true;
-    }
-
-    private static void logSuppressed(String processName) {
-        DpisLog.i("modern101 app-specific route suppresses generic hooks: package="
+        DpisLog.i("modern101 app-specific route allowing generic hooks alongside: package="
                 + WechatTargetFieldConfig.PACKAGE_NAME + ", process=" + processName);
+        return false;
     }
 }

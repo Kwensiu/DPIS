@@ -13,8 +13,8 @@ final class Compat100AppSpecificRouteInstaller {
         if (WechatTargetFieldConfig.appliesTo(lpparam.processName)) {
             WechatTargetFieldCompat100HookInstaller.install(lpparam);
         }
-        DpisLog.i("compat100 app-specific route suppresses generic hooks: package="
+        DpisLog.i("compat100 app-specific route installed alongside generic hooks: package="
                 + WechatTargetFieldConfig.PACKAGE_NAME + ", process=" + lpparam.processName);
-        return true;
+        return false;
     }
 }

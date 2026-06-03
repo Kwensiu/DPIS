@@ -9,7 +9,10 @@
     <string name="dialog_font_scale_hint">Font 50–300%</string>
     <string name="dialog_font_mode_system">System</string>
     <string name="dialog_font_mode_compat">Compat</string>
-    <string name="dialog_wechat_target_field_hint">WeChat target 300-1200</string>
+    <string name="dialog_wechat_target_field_hint">WeChat independent route 200-1200</string>
+    <string name="dialog_wechat_target_field_help_button">WeChat independent route help</string>
+    <string name="dialog_wechat_target_field_help_title">WeChat independent route</string>
+    <string name="dialog_wechat_target_field_help_message">Use a WeChat-specific route for scaling instead of the generic DPI-related chain. Some newer versions are adapted; please send feedback if it does not take effect.\n\nRange: 200-1200\n\nMini Programs are not supported yet.</string>
     <string name="dialog_wechat_target_field_unsupported">Current WeChat version is not adapted</string>
     <string name="dialog_typeface_label">Font file</string>
     <string name="dialog_typeface_selector_value">Font style: %1$s</string>

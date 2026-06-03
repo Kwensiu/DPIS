@@ -15,12 +15,16 @@ import static org.junit.Assert.assertTrue;
 public class WechatTargetFieldRoutesTest {
     @Test
     public void resolvesExactVersionCodeRoutes() {
-        assertRoute(3100L, "8.0.72", WechatTargetFieldRoutes.Kind.GETTER, "w45.f", "g");
-        assertRoute(3080L, "8.0.71", WechatTargetFieldRoutes.Kind.CONSTRUCTOR_FIELD,
-                "q35.f", "screenResolution_target_field");
-        assertRoute(3060L, "8.0.70", WechatTargetFieldRoutes.Kind.GETTER, "d25.f", "g");
-        assertRoute(3040L, "8.0.69", WechatTargetFieldRoutes.Kind.GETTER, "az4.f", "g");
-        assertRoute(2460L, "8.0.42", WechatTargetFieldRoutes.Kind.GETTER, "hy3.d", "g");
+        assertRoute(3100L, "8.0.72", WechatTargetFieldRoutes.Kind.GETTER, "w45.f",
+                "g", null);
+        assertRoute(3080L, "8.0.71", WechatTargetFieldRoutes.Kind.GETTER,
+                "q35.f", "g", "k");
+        assertRoute(3060L, "8.0.70", WechatTargetFieldRoutes.Kind.GETTER, "d25.f",
+                "g", null);
+        assertRoute(3040L, "8.0.69", WechatTargetFieldRoutes.Kind.GETTER, "az4.f",
+                "g", "k");
+        assertRoute(2460L, "8.0.42", WechatTargetFieldRoutes.Kind.GETTER, "hy3.d",
+                "g", null);
     }
 
     @Test
@@ -46,7 +50,8 @@ public class WechatTargetFieldRoutesTest {
     }
 
     private static void assertRoute(long versionCode, String versionName,
-            WechatTargetFieldRoutes.Kind kind, String className, String memberName) {
+            WechatTargetFieldRoutes.Kind kind, String className, String memberName,
+            String setterName) {
         WechatTargetFieldRoutes.Route route = WechatTargetFieldRoutes.forVersionCode(versionCode);
         assertNotNull(route);
         assertEquals(versionCode, route.versionCode);
@@ -54,6 +59,9 @@ public class WechatTargetFieldRoutesTest {
         assertEquals(kind, route.kind);
         assertEquals(className, route.className);
         assertEquals(memberName, route.memberName);
+        assertEquals(setterName, route.setterName);
         assertEquals(className + "#" + memberName, route.routeKey());
+        assertEquals(setterName != null ? className + "#" + setterName : "",
+                route.setterRouteKey());
     }
 }

@@ -681,9 +681,13 @@ public class DpiConfigStoreTest {
         assertNull(store.getWechatTargetField("com.example.app"));
         assertFalse(store.getConfiguredPackages().contains("com.example.app"));
 
-        assertTrue(store.setWechatTargetField("com.tencent.mm", 299));
+        assertTrue(store.setWechatTargetField("com.tencent.mm", 199));
         assertNull(store.getWechatTargetField("com.tencent.mm"));
         assertFalse(store.getConfiguredPackages().contains("com.tencent.mm"));
+
+        assertTrue(store.setWechatTargetField("com.tencent.mm", 200));
+        assertEquals(Integer.valueOf(200), store.getWechatTargetField("com.tencent.mm"));
+        assertTrue(store.getConfiguredPackages().contains("com.tencent.mm"));
     }
 
     @Test

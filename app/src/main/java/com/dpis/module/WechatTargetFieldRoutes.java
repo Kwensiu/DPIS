@@ -6,10 +6,9 @@ import java.util.List;
 final class WechatTargetFieldRoutes {
     private static final Route[] ROUTES = {
             Route.getter(3100L, "8.0.72", "w45.f", "g"),
-            Route.constructorField(3080L, "8.0.71", "q35.f",
-                    "screenResolution_target_field"),
+            Route.getter(3080L, "8.0.71", "q35.f", "g", "k"),
             Route.getter(3060L, "8.0.70", "d25.f", "g"),
-            Route.getter(3040L, "8.0.69", "az4.f", "g"),
+            Route.getter(3040L, "8.0.69", "az4.f", "g", "k"),
             Route.getter(2460L, "8.0.42", "hy3.d", "g")
     };
 
@@ -46,29 +45,43 @@ final class WechatTargetFieldRoutes {
         final Kind kind;
         final String className;
         final String memberName;
+        final String setterName;
 
         private Route(long versionCode, String versionName, Kind kind, String className,
-                String memberName) {
+                String memberName, String setterName) {
             this.versionCode = versionCode;
             this.versionName = versionName;
             this.kind = kind;
             this.className = className;
             this.memberName = memberName;
+            this.setterName = setterName;
         }
 
         static Route getter(long versionCode, String versionName, String className,
                 String methodName) {
-            return new Route(versionCode, versionName, Kind.GETTER, className, methodName);
+            return getter(versionCode, versionName, className, methodName, null);
+        }
+
+        static Route getter(long versionCode, String versionName, String className,
+                String methodName, String setterName) {
+            return new Route(versionCode, versionName, Kind.GETTER, className, methodName,
+                    setterName);
         }
 
         static Route constructorField(long versionCode, String versionName, String className,
                 String fieldName) {
             return new Route(versionCode, versionName, Kind.CONSTRUCTOR_FIELD, className,
-                    fieldName);
+                    fieldName, null);
         }
 
         String routeKey() {
             return className + "#" + memberName;
+        }
+
+        String setterRouteKey() {
+            return setterName != null && !setterName.isBlank()
+                    ? className + "#" + setterName
+                    : "";
         }
     }
 

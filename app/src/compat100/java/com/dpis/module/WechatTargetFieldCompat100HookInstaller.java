@@ -69,6 +69,7 @@ final class WechatTargetFieldCompat100HookInstaller {
             });
             DpisLog.i("compat100 WeChat target-field getter hook ready: "
                     + route.routeKey() + ", versionCode=" + versionCode);
+            installSetterHook(densityManagerClass, route, versionCode);
             return true;
         } catch (Throwable throwable) {
             DpisLog.e("compat100 WeChat target-field getter hook failed: "
@@ -76,6 +77,42 @@ final class WechatTargetFieldCompat100HookInstaller {
                     + throwable.getClass().getName() + ": " + throwable.getMessage(), throwable);
         }
         return false;
+    }
+
+    private static void installSetterHook(Class<?> densityManagerClass,
+            WechatTargetFieldRoutes.Route route, long versionCode) {
+        if (route.setterName == null || route.setterName.isBlank()) {
+            DpisLog.i("compat100 WeChat target-field setter hook skipped: "
+                    + "no setter route for " + route.routeKey()
+                    + ", versionCode=" + versionCode);
+            return;
+        }
+        try {
+            Method setter = densityManagerClass.getDeclaredMethod(route.setterName, int.class);
+            if (!java.lang.reflect.Modifier.isStatic(setter.getModifiers())
+                    || setter.getReturnType() != void.class) {
+                DpisLog.i("compat100 WeChat target-field setter hook skipped: "
+                        + "route is not static void(int): " + route.setterRouteKey()
+                        + ", versionCode=" + versionCode);
+                return;
+            }
+            setter.setAccessible(true);
+            XposedBridge.hookMethod(setter, new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    int target = resolveWechatTargetField();
+                    if (target > 0 && param.args != null && param.args.length > 0) {
+                        param.args[0] = target;
+                    }
+                }
+            });
+            DpisLog.i("compat100 WeChat target-field setter hook ready: "
+                    + route.setterRouteKey() + ", versionCode=" + versionCode);
+        } catch (Throwable throwable) {
+            DpisLog.e("compat100 WeChat target-field setter hook failed: "
+                    + route.setterRouteKey() + ", versionCode=" + versionCode + ", "
+                    + throwable.getClass().getName() + ": " + throwable.getMessage(), throwable);
+        }
     }
 
     private static boolean installConstructorFieldHook(ClassLoader classLoader,
@@ -176,24 +213,7 @@ final class WechatTargetFieldCompat100HookInstaller {
     }
 
     private static int resolveWechatTargetField() {
-        int value = readSystemPropertyInt(WechatTargetFieldPropertyBridge.propertyNameForPackage(
-                WechatTargetFieldConfig.PACKAGE_NAME));
-        return WechatTargetFieldConfig.normalize(value) != null ? value : 0;
-    }
-
-    private static int readSystemPropertyInt(String propertyName) {
-        if (propertyName == null || propertyName.isBlank()) {
-            return 0;
-        }
-        try {
-            Class<?> systemProperties = Class.forName("android.os.SystemProperties");
-            Method get = systemProperties.getDeclaredMethod("get", String.class, String.class);
-            Object raw = get.invoke(null, propertyName, "0");
-            if (raw instanceof String value) {
-                return Integer.parseInt(value.trim());
-            }
-        } catch (Throwable ignored) {
-        }
-        return 0;
+        return WechatTargetFieldPropertyBridge.readTargetField(
+                WechatTargetFieldConfig.PACKAGE_NAME);
     }
 }

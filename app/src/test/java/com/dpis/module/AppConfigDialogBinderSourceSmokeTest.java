@@ -71,9 +71,19 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(binder.contains("if (!support.supported)"));
         assertTrue(binder.contains("return raw.isBlank();"));
         assertTrue(binder.contains("R.string.dialog_wechat_target_field_unsupported"));
+        assertTrue(binder.contains("dialog_wechat_target_field_help_button"));
+        assertTrue(binder.contains("HapticFeedbackConstants.VIRTUAL_KEY"));
+        assertTrue(binder.contains("MaterialAlertDialogBuilder"));
+        assertTrue(binder.contains("R.string.dialog_wechat_target_field_help_title"));
+        assertTrue(binder.contains("R.string.dialog_wechat_target_field_help_message"));
         assertTrue(binder.contains("setHelperText(supported ? null"));
         assertTrue(binder.contains("setError(inputLayout.getContext().getString("));
+        assertTrue(strings.contains("WeChat independent route 200-1200"));
+        assertTrue(strings.contains("WeChat-specific route"));
+        assertTrue(strings.contains("Mini Programs are not supported yet."));
         assertTrue(strings.contains("dialog_wechat_target_field_unsupported"));
+        assertTrue(zhStrings.contains("微信独立链路 200-1200"));
+        assertTrue(zhStrings.contains("暂不支持小程序"));
         assertTrue(zhStrings.contains("未适配当前微信版本"));
     }
 

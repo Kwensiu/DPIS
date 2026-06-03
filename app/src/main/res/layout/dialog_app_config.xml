@@ -77,13 +77,15 @@
 
         <LinearLayout android:id="@+id/dialog_wechat_target_field_row" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dialog_app_config_input_row_spacing_top" android:baselineAligned="false" android:gravity="center_vertical" android:minHeight="@dimen/dialog_mode_toggle_row_min_height" android:orientation="horizontal" android:visibility="gone">
 
-            <FrameLayout android:layout_width="match_parent" android:layout_height="wrap_content">
+            <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
 
                 <com.google.android.material.textfield.TextInputLayout android:id="@+id/dialog_wechat_target_field_input_layout" style="@style/Widget.Dpis.TextInputLayout.OutlinedBox.Compact" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/dialog_wechat_target_field_hint" app:endIconMode="clear_text" app:boxCornerRadiusBottomEnd="@dimen/dialog_app_config_input_corner_radius" app:boxCornerRadiusBottomStart="@dimen/dialog_app_config_input_corner_radius" app:boxCornerRadiusTopEnd="@dimen/dialog_app_config_input_corner_radius" app:boxCornerRadiusTopStart="@dimen/dialog_app_config_input_corner_radius">
 
                     <com.google.android.material.textfield.TextInputEditText android:id="@+id/dialog_wechat_target_field_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:imeOptions="actionDone" android:inputType="number" android:minHeight="0dp" android:paddingTop="@dimen/dialog_app_config_input_padding_top" android:paddingBottom="@dimen/dialog_app_config_input_padding_bottom" />
                 </com.google.android.material.textfield.TextInputLayout>
             </FrameLayout>
+
+            <com.google.android.material.button.MaterialButton android:id="@+id/dialog_wechat_target_field_help_button" style="@style/Widget.Dpis.DialogIconButton.Outlined" android:layout_width="@dimen/dialog_wechat_help_button_size" android:layout_height="@dimen/dialog_wechat_help_button_size" android:layout_gravity="bottom" android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start" android:contentDescription="@string/dialog_wechat_target_field_help_button" android:minWidth="0dp" android:minHeight="0dp" android:padding="@dimen/dialog_wechat_help_button_padding" app:icon="@drawable/ic_question_mark_24" app:iconGravity="textStart" app:iconPadding="0dp" />
         </LinearLayout>
 
         <LinearLayout android:id="@+id/dialog_typeface_row" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dialog_app_config_selector_spacing_top" android:baselineAligned="false" android:gravity="center_vertical" android:minHeight="@dimen/dialog_mode_toggle_row_min_height" android:orientation="horizontal">

@@ -2,9 +2,11 @@ package com.dpis.module;
 
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.HapticFeedbackConstants;
 import android.view.View;
 
 import com.google.android.material.color.MaterialColors;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -24,6 +26,13 @@ final class WechatTargetFieldSheetBinder {
             return;
         }
         row.setVisibility(View.VISIBLE);
+        View helpButton = helpButton(dialogView);
+        if (helpButton != null) {
+            helpButton.setOnClickListener(v -> {
+                v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+                showHelpDialog(v);
+            });
+        }
         DpiConfigStore store = DpisApplication.getConfigStore();
         Integer initial = store != null ? store.getWechatTargetField(item.packageName) : null;
         inputView.setText(initial != null ? String.valueOf(initial) : "");
@@ -154,5 +163,20 @@ final class WechatTargetFieldSheetBinder {
 
     private static TextInputEditText inputView(View dialogView) {
         return dialogView.findViewById(R.id.dialog_wechat_target_field_input);
+    }
+
+    private static View helpButton(View dialogView) {
+        return dialogView.findViewById(R.id.dialog_wechat_target_field_help_button);
+    }
+
+    private static void showHelpDialog(View anchor) {
+        if (anchor == null) {
+            return;
+        }
+        new MaterialAlertDialogBuilder(anchor.getContext())
+                .setTitle(R.string.dialog_wechat_target_field_help_title)
+                .setMessage(R.string.dialog_wechat_target_field_help_message)
+                .setPositiveButton(R.string.dialog_close_button, null)
+                .show();
     }
 }

@@ -193,6 +193,8 @@ superseded.
 | --- | --- | --- | --- | --- | --- |
 | 2026-06-01 | system | `launch-activity-item` system route restored in 101 work | active baseline | commit history contains launch route restoration | Keep separate from compat100 experiments |
 | 2026-06-01 | shared app-process | ResourcesKey empty override fill | active / shared | unit test covers empty override fill | Shared path; check 101 tests when changing |
+| 2026-06-04 | WeChat target-field | Keep app-specific route alongside generic hooks and add the required write-side companion route for versions that need it | active | Public record keeps only the reusable route decision; detailed version-specific evidence lives in `docs/private/wechat-target-field.md` | Do not add or change version-specific WeChat routes without fresh evidence |
+| 2026-06-04 | WeChat 8.0.71 target-field | Replace stale constructor-field route with the verified current route shape | active | Public record keeps only the reusable route decision; detailed evidence lives in `docs/private/wechat-target-field.md` | Do not reintroduce constructor-field route without fresh version-specific evidence |
 
 ## Safety Rules
 
@@ -208,3 +210,6 @@ superseded.
 ## Update Log
 
 - 2026-06-01: initial tracker created.
+- 2026-06-04: WeChat target-field route no longer suppresses generic app-process
+  hooks; target-field runtime property publication now mirrors volatile and
+  persistent properties, and hook reads use persistent fallback.

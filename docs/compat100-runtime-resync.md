@@ -161,6 +161,8 @@ See `docs/private/` for app-specific investigation notes.
 | 2026-06-01 | compat | App-process viewport supplement skipped for system mode | current design | Design gate, not a bug |
 | 2026-06-01 | compat100 | FlutterJNI viewport metrics bridge | active, per-app guarded | Covers Flutter/mixed shells; guard scope per target |
 | 2026-06-02 | compat100 | LaunchActivityItem post-construction object mutation | active | Aligns legacy launch delivery with modern101 |
+| 2026-06-04 | WeChat target-field | Keep app-specific route alongside generic hooks, share target-field runtime property handling, and add the required write-side companion route for versions that need it | active | Public record keeps only the reusable route decision; detailed version-specific evidence lives in `docs/private/wechat-target-field.md` | Do not add or change version-specific WeChat routes without fresh evidence |
+| 2026-06-04 | WeChat 8.0.71 target-field | Replace stale constructor-field route with the verified current route shape | active | Shared route registry decision; detailed evidence lives in `docs/private/wechat-target-field.md` | Do not reintroduce constructor-field route without fresh version-specific evidence |
 
 ## Safety Rules
 
@@ -186,3 +188,7 @@ See `docs/private/` for app-specific investigation notes.
   align legacy launch delivery with modern101.
 - 2026-06-03: consolidated app-process viewport policy into a domain switch
   with per-app guard configuration.
+- 2026-06-04: WeChat target-field route no longer suppresses generic app-process
+  hooks; shared target-field runtime property handling now writes and reads with
+  persistent fallback. Compat100 shares the write-side companion route support
+  used by versions that need it.
