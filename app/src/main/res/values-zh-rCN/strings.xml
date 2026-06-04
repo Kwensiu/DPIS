@@ -15,6 +15,7 @@
     <string name="dialog_wechat_target_field_help_message">使用微信专用路线进行缩放，独立于 DPI 相关通用链路。已适配部分新版本，若不生效可反馈。\n\n调整范围：200-1200\n\n暂不支持小程序。</string>
     <string name="dialog_wechat_target_field_unsupported">未适配当前微信版本</string>
     <string name="dialog_typeface_label">字体文件</string>
+    <string name="dialog_typeface_style_label">字体样式</string>
     <string name="dialog_typeface_selector_value">字体样式: %1$s</string>
     <string name="dialog_typeface_dialog_title">字体选择</string>
     <string name="dialog_typeface_default">系统默认</string>
@@ -129,6 +130,8 @@
     <string name="scope_remove_failed">移出作用域失败，请重试</string>
     <string name="dialog_title">应用设置</string>
     <string name="dialog_advanced_section_title">高级操作</string>
+    <string name="dialog_config_section_title">配置</string>
+    <string name="dialog_process_section_title">进程操作</string>
     <string name="dialog_advanced_wizard_hint">上拉展开高级操作</string>
     <string name="dialog_advanced_wizard_close">关闭高级操作提示</string>
     <string name="dialog_disable_button">重置</string>

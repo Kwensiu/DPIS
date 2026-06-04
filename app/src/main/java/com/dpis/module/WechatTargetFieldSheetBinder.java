@@ -99,9 +99,6 @@ final class WechatTargetFieldSheetBinder {
             return false;
         }
         boolean saved = store.setWechatTargetField(packageName, targetField);
-        saved = store.clearTargetViewportWidthDp(packageName) && saved;
-        saved = store.setTargetViewportApplyMode(packageName, ViewportApplyMode.OFF) && saved;
-        ViewportPropertySyncer.clearTargetAsync(packageName);
         WechatTargetFieldPropertySyncer.publishTargetAsync(
                 packageName, dpisEnabled ? targetField : null);
         return saved;

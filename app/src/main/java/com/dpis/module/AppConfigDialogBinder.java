@@ -1063,6 +1063,29 @@ final class AppConfigDialogBinder {
             }
         }
 
+        static AppConfigDialogState fromItem(AppListItem item) {
+            String viewportInput = AppConfigInputValidation.formatViewportInput(item.viewportTargetSpec);
+            String viewportTargetType = AppConfigInputValidation.initialViewportTargetType(item.viewportTargetSpec);
+            String viewportScaleInput = item.viewportScalePermille != null
+                    ? String.valueOf(item.viewportScalePermille / 10)
+                    : (item.viewportTargetSpec.isRelativeScale() ? viewportInput : "");
+            String viewportAbsoluteInput = item.viewportWidthDp != null
+                    ? String.valueOf(item.viewportWidthDp)
+                    : (item.viewportTargetSpec.isAbsoluteDp() ? viewportInput : "");
+            return new AppConfigDialogState(
+                    item.inScope,
+                    item.scopeKnown,
+                    item.dpisEnabled,
+                    item.previewFromGlobalPrefill,
+                    item.previewFontHookDomainsRaw,
+                    item.viewportMode,
+                    item.typefaceId,
+                    viewportTargetType,
+                    viewportInput,
+                    viewportScaleInput,
+                    viewportAbsoluteInput);
+        }
+
         void updateViewportInput(String viewportTargetType, CharSequence input) {
             String normalized = ViewportTargetType.normalize(viewportTargetType);
             String value = input != null ? input.toString() : "";

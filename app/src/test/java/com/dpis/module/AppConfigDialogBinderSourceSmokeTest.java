@@ -91,6 +91,19 @@ public class AppConfigDialogBinderSourceSmokeTest {
     }
 
     @Test
+    public void wechatTargetFieldSaveDoesNotClearViewportConfig() throws IOException {
+        String binder = read("src/main/java/com/dpis/module/WechatTargetFieldSheetBinder.java");
+        int saveStart = binder.indexOf("private static boolean saveTargetField(");
+        int saveEnd = binder.indexOf("static void clearDraft", saveStart);
+        String saveBlock = binder.substring(saveStart, saveEnd);
+
+        assertTrue(saveBlock.contains("store.setWechatTargetField(packageName, targetField)"));
+        assertFalse(saveBlock.contains("clearTargetViewportWidthDp(packageName)"));
+        assertFalse(saveBlock.contains("setTargetViewportApplyMode(packageName, ViewportApplyMode.OFF)"));
+        assertFalse(saveBlock.contains("ViewportPropertySyncer.clearTargetAsync(packageName)"));
+    }
+
+    @Test
     public void appConfigSheetUsesUnsavedBadgeInsteadOfPreviewIndicator() throws IOException {
         String binderSource = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
         String layout = read("src/main/res/layout/dialog_app_config.xml");

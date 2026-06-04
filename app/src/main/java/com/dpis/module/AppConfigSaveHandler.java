@@ -23,6 +23,39 @@ final class AppConfigSaveHandler {
             if (store == null) {
                 return new int[] { 1, R.string.status_save_requires_init };
             }
+            return saveResolved(item,
+                    viewportTargetSpec,
+                    currentViewportApplyMode,
+                    fontScalePercent,
+                    fontMode,
+                    selectedTypefaceId,
+                    previewFontHookDomainsRaw,
+                    viewportScaleInput,
+                    viewportAbsoluteInput,
+                    systemHooksEnabled,
+                    store,
+                    onChanged);
+        } catch (NumberFormatException exception) {
+            return new int[] { 0, R.string.status_save_invalid };
+        }
+    }
+
+    int[] saveResolved(AppListItem item,
+            ViewportTargetSpec viewportTargetSpec,
+            String currentViewportApplyMode,
+            Integer fontScalePercent,
+            String fontMode,
+            String selectedTypefaceId,
+            String previewFontHookDomainsRaw,
+            String viewportScaleInput,
+            String viewportAbsoluteInput,
+            boolean systemHooksEnabled,
+            DpiConfigStore store,
+            Runnable onChanged) {
+        if (store == null) {
+            return new int[] { 1, R.string.status_save_requires_init };
+        }
+        try {
             String viewportApplyMode = resolveViewportApplyModeForSave(
                     store, item.packageName, currentViewportApplyMode, viewportTargetSpec);
             boolean viewportEmulationIneffective = viewportTargetSpec != null

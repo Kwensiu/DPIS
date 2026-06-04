@@ -1,0 +1,495 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/land_detail_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingTop="@dimen/main_land_detail_top_padding">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="@dimen/land_app_detail_padding_horizontal"
+            android:paddingEnd="@dimen/land_app_detail_padding_horizontal"
+            android:paddingBottom="@dimen/land_app_detail_padding_bottom">
+
+            <LinearLayout
+                android:id="@+id/land_detail_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:minHeight="@dimen/land_app_detail_header_min_height"
+                android:orientation="horizontal"
+                android:paddingTop="@dimen/land_app_detail_header_padding_top"
+                android:paddingBottom="@dimen/land_app_detail_header_padding_bottom">
+
+                <ImageView
+                    android:id="@+id/land_detail_app_icon"
+                    android:layout_width="@dimen/land_app_detail_icon_size"
+                    android:layout_height="@dimen/land_app_detail_icon_size"
+                    android:layout_marginEnd="@dimen/land_app_detail_icon_spacing_end"
+                    android:contentDescription="@null"
+                    android:scaleType="fitCenter" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/land_detail_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                        android:textStyle="bold" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/land_detail_package"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/land_app_detail_package_spacing_top"
+                        android:ellipsize="middle"
+                        android:maxLines="1"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/land_app_detail_status_spacing_top"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/land_detail_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/land_detail_unsaved_badge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/land_app_detail_badge_spacing_start"
+                            android:background="@drawable/bg_sheet_unsaved_badge"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:minHeight="@dimen/land_app_detail_badge_min_height"
+                            android:paddingStart="@dimen/land_app_detail_badge_padding_horizontal"
+                            android:paddingTop="@dimen/land_app_detail_badge_padding_vertical"
+                            android:paddingEnd="@dimen/land_app_detail_badge_padding_horizontal"
+                            android:paddingBottom="@dimen/land_app_detail_badge_padding_vertical"
+                            android:text="@string/sheet_unsaved_badge"
+                            android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+                            android:textColor="?attr/colorOnPrimaryContainer"
+                            android:visibility="gone" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/land_app_detail_section_gap"
+                android:orientation="vertical"
+                android:paddingStart="@dimen/land_app_detail_input_group_padding_horizontal"
+                android:paddingEnd="@dimen/land_app_detail_input_group_padding_horizontal">
+
+                <LinearLayout
+                    android:id="@+id/land_detail_viewport_editor"
+                    style="@style/Widget.Dpis.LandDetailEditor">
+
+                    <FrameLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:minWidth="@dimen/land_app_detail_editor_input_min_width">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/land_detail_viewport_input_layout"
+                            style="@style/Widget.Dpis.TextInputLayout.OutlinedBox.Compact"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="@string/dialog_viewport_hint_scale"
+                            app:boxCornerRadiusBottomEnd="@dimen/dialog_app_config_input_corner_radius"
+                            app:boxCornerRadiusBottomStart="@dimen/dialog_app_config_input_corner_radius"
+                            app:boxCornerRadiusTopEnd="@dimen/dialog_app_config_input_corner_radius"
+                            app:boxCornerRadiusTopStart="@dimen/dialog_app_config_input_corner_radius"
+                            app:endIconMode="clear_text">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/land_detail_viewport_input"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:imeOptions="actionDone"
+                                android:inputType="number"
+                                android:maxLength="3"
+                                android:minHeight="0dp"
+                                android:paddingTop="@dimen/dialog_app_config_input_padding_top"
+                                android:paddingBottom="@dimen/dialog_app_config_input_padding_bottom"
+                                android:selectAllOnFocus="true" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </FrameLayout>
+
+                    <FrameLayout
+                        android:id="@+id/land_detail_viewport_mode_toggle_button"
+                        android:layout_width="@dimen/dialog_mode_toggle_width"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start"
+                        android:clickable="true"
+                        android:contentDescription="@string/dialog_viewport_mode_toggle_description"
+                        android:focusable="true">
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_marginTop="@dimen/dialog_mode_toggle_content_offset_top"
+                            android:background="@drawable/bg_mode_toggle_track">
+
+                            <View
+                                android:id="@+id/land_detail_viewport_mode_toggle_thumb"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/bg_mode_toggle_thumb" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="horizontal">
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/land_detail_viewport_mode_scale_label"
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="1"
+                                    android:gravity="center"
+                                    android:text="@string/dialog_viewport_mode_system"
+                                    android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/land_detail_viewport_mode_width_label"
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="1"
+                                    android:gravity="center"
+                                    android:text="@string/dialog_viewport_mode_compat"
+                                    android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
+                            </LinearLayout>
+                        </FrameLayout>
+                    </FrameLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/land_detail_font_scale_editor"
+                    style="@style/Widget.Dpis.LandDetailEditor">
+
+                    <FrameLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:minWidth="@dimen/land_app_detail_editor_input_min_width">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/land_detail_font_scale_input_layout"
+                            style="@style/Widget.Dpis.TextInputLayout.OutlinedBox.Compact"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="@string/dialog_font_scale_hint"
+                            app:boxCornerRadiusBottomEnd="@dimen/dialog_app_config_input_corner_radius"
+                            app:boxCornerRadiusBottomStart="@dimen/dialog_app_config_input_corner_radius"
+                            app:boxCornerRadiusTopEnd="@dimen/dialog_app_config_input_corner_radius"
+                            app:boxCornerRadiusTopStart="@dimen/dialog_app_config_input_corner_radius"
+                            app:endIconMode="clear_text">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/land_detail_font_scale_input"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:imeOptions="actionDone"
+                                android:inputType="number"
+                                android:maxLength="3"
+                                android:minHeight="0dp"
+                                android:paddingTop="@dimen/dialog_app_config_input_padding_top"
+                                android:paddingBottom="@dimen/dialog_app_config_input_padding_bottom"
+                                android:selectAllOnFocus="true" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </FrameLayout>
+
+                    <FrameLayout
+                        android:id="@+id/land_detail_font_mode_toggle_button"
+                        android:layout_width="@dimen/dialog_mode_toggle_width"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start"
+                        android:clickable="true"
+                        android:contentDescription="@string/dialog_font_mode_toggle_description"
+                        android:focusable="true">
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_marginTop="@dimen/dialog_mode_toggle_content_offset_top"
+                            android:background="@drawable/bg_mode_toggle_track">
+
+                            <View
+                                android:id="@+id/land_detail_font_mode_toggle_thumb"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/bg_mode_toggle_thumb" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="horizontal">
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/land_detail_font_mode_system_label"
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="1"
+                                    android:gravity="center"
+                                    android:text="@string/dialog_font_mode_system"
+                                    android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/land_detail_font_mode_compat_label"
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="1"
+                                    android:gravity="center"
+                                    android:text="@string/dialog_font_mode_compat"
+                                    android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
+                            </LinearLayout>
+                        </FrameLayout>
+                    </FrameLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/dialog_wechat_target_field_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dialog_app_config_input_row_spacing_top"
+                    android:baselineAligned="false"
+                    android:gravity="center_vertical"
+                    android:minHeight="@dimen/dialog_mode_toggle_row_min_height"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <FrameLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/dialog_wechat_target_field_input_layout"
+                            style="@style/Widget.Dpis.TextInputLayout.OutlinedBox.Compact"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="@string/dialog_wechat_target_field_hint"
+                            app:boxCornerRadiusBottomEnd="@dimen/dialog_app_config_input_corner_radius"
+                            app:boxCornerRadiusBottomStart="@dimen/dialog_app_config_input_corner_radius"
+                            app:boxCornerRadiusTopEnd="@dimen/dialog_app_config_input_corner_radius"
+                            app:boxCornerRadiusTopStart="@dimen/dialog_app_config_input_corner_radius"
+                            app:endIconMode="clear_text">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/dialog_wechat_target_field_input"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:imeOptions="actionDone"
+                                android:inputType="number"
+                                android:minHeight="0dp"
+                                android:paddingTop="@dimen/dialog_app_config_input_padding_top"
+                                android:paddingBottom="@dimen/dialog_app_config_input_padding_bottom" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </FrameLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/dialog_wechat_target_field_help_button"
+                        style="@style/Widget.Dpis.DialogIconButton.Outlined"
+                        android:layout_width="@dimen/dialog_wechat_help_button_size"
+                        android:layout_height="@dimen/dialog_wechat_help_button_size"
+                        android:layout_gravity="bottom"
+                        android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start"
+                        android:contentDescription="@string/dialog_wechat_target_field_help_button"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:padding="@dimen/dialog_wechat_help_button_padding"
+                        app:icon="@drawable/ic_question_mark_24"
+                        app:iconGravity="textStart"
+                        app:iconPadding="0dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/land_detail_typeface_row"
+            style="@style/Widget.Dpis.LandDetailRow"
+            android:layout_marginTop="@dimen/land_app_detail_section_gap"
+            android:background="@drawable/bg_land_detail_connected_row_top"
+            android:contentDescription="@string/dialog_typeface_style_label"
+            android:foreground="@drawable/ripple_land_detail_connected_row_top"
+            android:paddingStart="@dimen/land_app_detail_card_padding"
+            android:paddingEnd="@dimen/land_app_detail_card_padding">
+
+            <com.google.android.material.textview.MaterialTextView
+                style="@style/Widget.Dpis.LandDetailRowLabel"
+                android:text="@string/dialog_typeface_style_label" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/land_detail_typeface_value"
+                style="@style/Widget.Dpis.LandDetailRowValue" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                style="@style/Widget.Dpis.LandDetailRowChevron" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/land_detail_hook_chain_row"
+            style="@style/Widget.Dpis.LandDetailRow"
+            android:layout_marginTop="@dimen/land_app_detail_connected_row_gap"
+            android:background="@drawable/bg_land_detail_connected_row_bottom"
+            android:contentDescription="@string/dialog_font_hook_domains_title"
+            android:foreground="@drawable/ripple_land_detail_connected_row_bottom"
+            android:paddingStart="@dimen/land_app_detail_card_padding"
+            android:paddingEnd="@dimen/land_app_detail_card_padding">
+
+            <com.google.android.material.textview.MaterialTextView
+                style="@style/Widget.Dpis.LandDetailRowLabel"
+                android:text="@string/dialog_font_hook_domains_title" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/land_detail_hook_chain_value"
+                style="@style/Widget.Dpis.LandDetailRowValue" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                style="@style/Widget.Dpis.LandDetailRowChevron" />
+        </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/land_app_detail_section_gap"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/land_detail_stop_button"
+                    style="@style/Widget.Dpis.DialogActionButton.Process.Error"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:text="@string/dialog_stop_button" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/land_detail_restart_button"
+                    style="@style/Widget.Dpis.DialogActionButton.Process.Warn"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/dialog_app_config_process_button_spacing_start"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:text="@string/dialog_restart_button" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/land_detail_start_button"
+                    style="@style/Widget.Dpis.DialogActionButton.Process.Success"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/dialog_app_config_process_button_spacing_start"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:text="@string/dialog_start_button" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/land_app_detail_action_gap"
+                android:layout_marginBottom="0dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/land_detail_save_button"
+                    style="@style/Widget.Dpis.DialogActionButton.Filled"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/status_save_button" />
+            </LinearLayout>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/land_app_detail_section_gap"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                app:cardCornerRadius="@dimen/land_app_detail_card_corner_radius"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/land_app_detail_card_padding">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dialog_advanced_section_title"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/land_app_detail_inner_gap"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/land_detail_scope_row"
+                            style="@style/Widget.Dpis.DialogActionButton.Outlined"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:minWidth="0dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/land_detail_dpis_toggle_row"
+                            style="@style/Widget.Dpis.DialogActionButton.Outlined"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/land_app_detail_action_button_spacing"
+                            android:layout_weight="1"
+                            android:minWidth="0dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/land_detail_reset_row"
+                            style="@style/Widget.Dpis.DialogActionButton.Outlined.Error"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/land_app_detail_action_button_spacing"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:text="@string/dialog_disable_button" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</FrameLayout>

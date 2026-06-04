@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <!-- Shared app chrome. -->
     <dimen name="page_back_button_size">36dp</dimen>
@@ -24,7 +24,43 @@
     <dimen name="main_land_toolbar_padding_top">4dp</dimen>
     <dimen name="main_toolbar_padding_bottom">6dp</dimen>
     <dimen name="main_land_detail_padding">18dp</dimen>
-    <dimen name="main_land_detail_top_padding">12dp</dimen>
+    <dimen name="main_land_detail_top_padding">0dp</dimen>
+    <dimen name="land_app_detail_padding_horizontal">20dp</dimen>
+    <dimen name="land_app_detail_padding_bottom">24dp</dimen>
+    <dimen name="land_app_detail_header_min_height">64dp</dimen>
+    <dimen name="land_app_detail_header_padding_top">0dp</dimen>
+    <dimen name="land_app_detail_header_padding_bottom">6dp</dimen>
+    <dimen name="land_app_detail_icon_size">56dp</dimen>
+    <dimen name="land_app_detail_icon_spacing_end">16dp</dimen>
+    <dimen name="land_app_detail_package_spacing_top">2dp</dimen>
+    <dimen name="land_app_detail_status_spacing_top">3dp</dimen>
+    <dimen name="land_app_detail_badge_spacing_start">8dp</dimen>
+    <dimen name="land_app_detail_badge_min_height">18dp</dimen>
+    <dimen name="land_app_detail_badge_padding_horizontal">6dp</dimen>
+    <dimen name="land_app_detail_badge_padding_vertical">1dp</dimen>
+    <dimen name="land_app_detail_section_spacing_top">18dp</dimen>
+    <dimen name="land_app_detail_card_spacing_top">2dp</dimen>
+    <dimen name="land_app_detail_card_padding">12dp</dimen>
+    <dimen name="land_app_detail_input_group_padding_horizontal">4dp</dimen>
+    <dimen name="land_app_detail_section_gap">8dp</dimen>
+    <dimen name="land_app_detail_action_gap">8dp</dimen>
+    <dimen name="land_app_detail_inner_gap">6dp</dimen>
+    <dimen name="land_app_detail_card_corner_radius">8dp</dimen>
+    <dimen name="land_app_detail_connected_row_inner_radius">3dp</dimen>
+    <dimen name="land_app_detail_connected_row_gap">2dp</dimen>
+    <dimen name="land_app_detail_row_min_height">54dp</dimen>
+    <dimen name="land_app_detail_row_padding_horizontal">4dp</dimen>
+    <dimen name="land_app_detail_row_padding_vertical">8dp</dimen>
+    <dimen name="land_app_detail_row_label_width">116dp</dimen>
+    <dimen name="land_app_detail_chevron_size">24dp</dimen>
+    <dimen name="land_app_detail_chevron_spacing_start">8dp</dimen>
+    <dimen name="land_app_detail_editor_min_height">56dp</dimen>
+    <dimen name="land_app_detail_editor_input_width">176dp</dimen>
+    <dimen name="land_app_detail_editor_input_min_width">132dp</dimen>
+    <dimen name="land_app_detail_editor_input_spacing_top">6dp</dimen>
+    <dimen name="land_app_detail_editor_slider_spacing_start">18dp</dimen>
+    <dimen name="land_app_detail_button_row_spacing_top">10dp</dimen>
+    <dimen name="land_app_detail_action_button_spacing">8dp</dimen>
     <dimen name="main_search_card_height">52dp</dimen>
     <dimen name="main_search_card_corner_radius">24dp</dimen>
     <dimen name="main_search_card_stroke_width">0dp</dimen>
@@ -60,7 +96,9 @@
     <dimen name="template_workspace_chip_corner_radius">14dp</dimen>
     <dimen name="template_workspace_empty_summary_min_height">32dp</dimen>
     <dimen name="template_workspace_empty_summary_corner_radius">16dp</dimen>
-    <dimen name="template_workspace_empty_summary_padding_horizontal">12dp</dimen>
+    <dimen
+        name="template_workspace_empty_summary_padding_horizontal"
+    >12dp</dimen>
     <dimen name="template_workspace_empty_summary_padding_vertical">6dp</dimen>
     <dimen name="template_workspace_icon_button_size">38dp</dimen>
     <dimen name="template_workspace_icon_button_padding">9dp</dimen>
@@ -68,7 +106,9 @@
     <dimen name="template_workspace_action_button_height">42dp</dimen>
     <dimen name="template_workspace_header_action_button_size">36dp</dimen>
     <dimen name="template_workspace_header_action_button_padding">8dp</dimen>
-    <dimen name="template_workspace_apply_button_padding_horizontal">22dp</dimen>
+    <dimen
+        name="template_workspace_apply_button_padding_horizontal"
+    >22dp</dimen>
     <dimen name="template_workspace_header_action_button_spacing">8dp</dimen>
     <dimen name="template_workspace_section_spacing_top">22dp</dimen>
     <dimen name="template_workspace_section_title_inset_start">12dp</dimen>
@@ -169,8 +209,12 @@
     <dimen name="dialog_wechat_help_button_size">48dp</dimen>
     <dimen name="dialog_wechat_help_button_padding">12dp</dimen>
     <dimen name="dialog_app_config_selector_spacing_top">12dp</dimen>
-    <dimen name="dialog_app_config_typeface_button_padding_horizontal">16dp</dimen>
-    <dimen name="dialog_app_config_hook_domains_button_padding_horizontal">12dp</dimen>
+    <dimen
+        name="dialog_app_config_typeface_button_padding_horizontal"
+    >16dp</dimen>
+    <dimen
+        name="dialog_app_config_hook_domains_button_padding_horizontal"
+    >12dp</dimen>
     <dimen name="dialog_app_config_process_row_spacing_top">12dp</dimen>
     <dimen name="dialog_app_config_process_button_spacing_start">6dp</dimen>
     <dimen name="dialog_app_config_save_row_spacing_top">12dp</dimen>
@@ -181,7 +225,9 @@
     <dimen name="dialog_app_config_advanced_title_spacing_top">8dp</dimen>
     <dimen name="dialog_app_config_advanced_row_spacing_top">8dp</dimen>
     <dimen name="dialog_app_config_disable_button_spacing_top">8dp</dimen>
-    <dimen name="dialog_app_config_disable_button_padding_horizontal">16dp</dimen>
+    <dimen
+        name="dialog_app_config_disable_button_padding_horizontal"
+    >16dp</dimen>
     <dimen name="dialog_app_config_half_expanded_down_offset">1dp</dimen>
     <dimen name="dialog_app_config_wizard_hint_min_height">36dp</dimen>
     <dimen name="dialog_app_config_wizard_hint_padding_start">14dp</dimen>

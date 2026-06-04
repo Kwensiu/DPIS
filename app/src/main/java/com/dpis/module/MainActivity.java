@@ -683,6 +683,21 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         ViewCompat.requestApplyInsets(searchFocusFab);
     }
 
+    private void applyLandDetailContentInsets(View detailView) {
+        View scrollView = detailView.findViewById(R.id.land_detail_scroll);
+        if (scrollView == null) {
+            return;
+        }
+        final int baseTopPadding = scrollView.getPaddingTop();
+        final int baseBottomPadding = scrollView.getPaddingBottom();
+        ViewCompat.setOnApplyWindowInsetsListener(scrollView, (view, windowInsets) -> {
+            Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            view.setPadding(view.getPaddingLeft(), baseTopPadding + systemBars.top,
+                    view.getPaddingRight(), baseBottomPadding + systemBars.bottom);
+            return windowInsets;
+        });
+    }
+
     private int resolveSearchFabSizePx() {
         if (searchFocusFab == null) {
             return getResources().getDimensionPixelSize(
@@ -1443,15 +1458,214 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                 item, store, globalPrefill);
         boolean systemHooksEnabled = isSystemHookEnabledFromStore();
         View dialogView = LayoutInflater.from(this).inflate(
-                R.layout.dialog_app_config, landDetailContent, false);
-        new AppConfigDialogBinder(this, createAppConfigDialogHost(), false).bind(
-                dialogView, sheetItem, systemHooksEnabled);
+                R.layout.view_land_app_detail, landDetailContent, false);
+        applyLandDetailContentInsets(dialogView);
+        new LandAppDetailPaneBinder(this, new LandAppDetailPaneBinder.Actions() {
+            @Override
+            public void saveDraft(AppListItem editorItem,
+                    Integer viewportValue,
+                    String viewportTargetType,
+                    Integer fontPercent,
+                    String fontMode,
+                    String selectedTypefaceId,
+                    String previewFontHookDomainsRaw,
+                    String viewportApplyMode,
+                    String viewportScaleInput,
+                    String viewportAbsoluteInput,
+                    boolean dpisEnabled,
+                    View root,
+                    MaterialButton saveButton) {
+                saveLandDetailDraft(editorItem,
+                        viewportValue,
+                        viewportTargetType,
+                        fontPercent,
+                        fontMode,
+                        selectedTypefaceId,
+                        previewFontHookDomainsRaw,
+                        viewportApplyMode,
+                        viewportScaleInput,
+                        viewportAbsoluteInput,
+                        dpisEnabled,
+                        root,
+                        saveButton);
+            }
+
+            @Override
+            public void showTypefaceSelector(AppListItem editorItem,
+                    AppConfigDialogBinder.AppConfigDialogState state,
+                    Runnable onChanged) {
+                showLandDetailTypefaceSelector(editorItem, state, onChanged);
+            }
+
+            @Override
+            public void showHookDomains(AppListItem editorItem,
+                    AppConfigDialogBinder.AppConfigDialogState state,
+                    Runnable onChanged) {
+                showLandDetailHookDomains(editorItem, state, onChanged);
+            }
+
+            @Override
+            public void toggleScope(AppListItem editorItem) {
+                toggleLandDetailScope(editorItem);
+            }
+
+            @Override
+            public boolean setDpisEnabled(String packageName, boolean enabled) {
+                boolean saved = MainActivity.this.setDpisEnabled(packageName, enabled);
+                if (saved) {
+                    WechatTargetFieldSheetBinder.publishForDpisState(packageName, enabled);
+                    requestAppsLoad();
+                }
+                return saved;
+            }
+
+            @Override
+            public void executeProcessAction(AppListItem processItem,
+                    AppConfigDialogBinder.ProcessAction action) {
+                executeDialogProcessAction(processItem, action);
+            }
+
+            @Override
+            public String getFontHookDomainsButtonText(AppListItem detailItem,
+                    boolean previewFromGlobalPrefill,
+                    String previewFontHookDomainsRaw) {
+                return MainActivity.this.getFontHookDomainsButtonText(
+                        detailItem, previewFromGlobalPrefill, previewFontHookDomainsRaw);
+            }
+        }).bind(dialogView, sheetItem, systemHooksEnabled);
         landDetailContent.removeAllViews();
         landDetailContent.addView(dialogView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
+        View scrollView = dialogView.findViewById(R.id.land_detail_scroll);
+        if (scrollView != null) {
+            ViewCompat.requestApplyInsets(scrollView);
+        }
         setVisible(landDetailEmptyView, false);
         setVisible(landDetailContent, true);
+    }
+
+    private void saveLandDetailDraft(AppListItem item,
+            Integer viewportValue,
+            String viewportTargetType,
+            Integer fontPercent,
+            String fontMode,
+            String selectedTypefaceId,
+            String previewFontHookDomainsRaw,
+            String viewportApplyMode,
+            String viewportScaleInput,
+            String viewportAbsoluteInput,
+            boolean dpisEnabled,
+            View root,
+            MaterialButton saveButton) {
+        if (item == null || item.packageName == null || item.packageName.isBlank()) {
+            return;
+        }
+        DpiConfigStore store = getUiConfigStore();
+        ViewportTargetSpec spec = viewportValue == null
+                ? ViewportTargetSpec.off()
+                : (ViewportTargetType.ABSOLUTE_DP.equals(
+                    ViewportTargetType.normalize(viewportTargetType))
+                            ? ViewportTargetSpec.absoluteDp(viewportValue)
+                            : ViewportTargetSpec.relativeScale(viewportValue * 10));
+        int[] result = saveLandDetailResolvedConfig(
+                item,
+                spec,
+                viewportApplyMode,
+                fontPercent,
+                fontPercent == null ? FontApplyMode.OFF : fontMode,
+                selectedTypefaceId,
+                previewFontHookDomainsRaw,
+                viewportScaleInput,
+                viewportAbsoluteInput);
+        boolean wechatSaved = WechatTargetFieldSheetBinder.save(
+                root, item.packageName, dpisEnabled, store);
+        if (result[1] != 0) {
+            showToast(result[1]);
+        }
+        if (result[0] != 1 || !wechatSaved) {
+            showToast(R.string.system_settings_save_failed);
+            return;
+        }
+        AppConfigDialogBinder.showSaveButtonFeedback(saveButton);
+    }
+
+    private int[] saveLandDetailResolvedConfig(AppListItem item,
+            ViewportTargetSpec viewportTargetSpec,
+            String viewportApplyMode,
+            Integer fontScalePercent,
+            String fontMode,
+            String selectedTypefaceId,
+            String previewFontHookDomainsRaw,
+            String viewportScaleInput,
+            String viewportAbsoluteInput) {
+        return appConfigSaveHandler.saveResolved(
+                item,
+                viewportTargetSpec,
+                viewportApplyMode,
+                fontScalePercent,
+                fontMode,
+                selectedTypefaceId,
+                previewFontHookDomainsRaw,
+                viewportScaleInput,
+                viewportAbsoluteInput,
+                isSystemHookEnabledFromStore(),
+                getUiConfigStore(),
+                this::requestAppsLoad);
+    }
+
+    private String viewportScaleDraftFor(AppListItem item, ViewportTargetSpec activeSpec) {
+        if (activeSpec != null && activeSpec.isRelativeScale()) {
+            return String.valueOf(activeSpec.scalePermille() / 10);
+        }
+        if (item.viewportScalePermille != null) {
+            return String.valueOf(item.viewportScalePermille / 10);
+        }
+        return "";
+    }
+
+    private String viewportAbsoluteDraftFor(AppListItem item, ViewportTargetSpec activeSpec) {
+        if (activeSpec != null && activeSpec.isAbsoluteDp()) {
+            return String.valueOf(activeSpec.absoluteWidthDp());
+        }
+        if (item.viewportWidthDp != null) {
+            return String.valueOf(item.viewportWidthDp);
+        }
+        return "";
+    }
+
+    private void toggleLandDetailScope(AppListItem item) {
+        if (item == null || !item.scopeKnown) {
+            return;
+        }
+        systemScopeCoordinator.toggleScope(
+                item.packageName,
+                item.label,
+                item.inScope,
+                this::requestAppsLoad,
+                this::requestAppsLoad);
+    }
+
+    private void showLandDetailTypefaceSelector(AppListItem item,
+            AppConfigDialogBinder.AppConfigDialogState state,
+            Runnable onChanged) {
+        if (item == null || item.packageName == null || item.packageName.isBlank()) {
+            return;
+        }
+        MaterialButton selectorAnchor = new MaterialButton(this);
+        new AppConfigDialogBinder(this, createAppConfigDialogHost()).showTypefaceSelector(
+                selectorAnchor,
+                state,
+                onChanged);
+    }
+
+    private void showLandDetailHookDomains(AppListItem item,
+            AppConfigDialogBinder.AppConfigDialogState state,
+            Runnable onChanged) {
+        if (item == null || item.packageName == null || item.packageName.isBlank()) {
+            return;
+        }
+        showFontHookDomains(item, state, onChanged);
     }
 
     private TemplateWorkspaceBinder.GlobalPrefillActions createTemplateWorkspaceActions() {

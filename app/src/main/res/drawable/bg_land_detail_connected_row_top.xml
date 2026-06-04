@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="?attr/colorSurfaceContainer" />
+    <corners
+        android:topLeftRadius="@dimen/land_app_detail_card_corner_radius"
+        android:topRightRadius="@dimen/land_app_detail_card_corner_radius"
+        android:bottomLeftRadius="@dimen/land_app_detail_connected_row_inner_radius"
+        android:bottomRightRadius="@dimen/land_app_detail_connected_row_inner_radius" />
+</shape>

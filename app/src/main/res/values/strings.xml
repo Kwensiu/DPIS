@@ -15,6 +15,7 @@
     <string name="dialog_wechat_target_field_help_message">Use a WeChat-specific route for scaling instead of the generic DPI-related chain. Some newer versions are adapted; please send feedback if it does not take effect.\n\nRange: 200-1200\n\nMini Programs are not supported yet.</string>
     <string name="dialog_wechat_target_field_unsupported">Current WeChat version is not adapted</string>
     <string name="dialog_typeface_label">Font file</string>
+    <string name="dialog_typeface_style_label">Font style</string>
     <string name="dialog_typeface_selector_value">Font style: %1$s</string>
     <string name="dialog_typeface_dialog_title">Choose font</string>
     <string name="dialog_typeface_default">System default</string>
@@ -129,6 +130,8 @@
     <string name="scope_remove_failed">Remove from scope failed.</string>
     <string name="dialog_title">App settings</string>
     <string name="dialog_advanced_section_title">Advanced</string>
+    <string name="dialog_config_section_title">Configuration</string>
+    <string name="dialog_process_section_title">Process actions</string>
     <string name="dialog_advanced_wizard_hint">Swipe up for advanced actions</string>
     <string name="dialog_advanced_wizard_close">Dismiss advanced actions hint</string>
     <string name="dialog_disable_button">Reset</string>
