@@ -199,6 +199,7 @@
     <string name="filter_font_only">Font configured</string>
     <string name="system_settings_title">Settings</string>
     <string name="system_settings_section_general">General</string>
+    <string name="settings_section_theme">Theme</string>
     <string name="settings_section_other">Other</string>
     <string name="system_settings_back">Back</string>
     <string name="system_hooks_enabled_label">System-layer hook</string>
@@ -249,6 +250,14 @@
     <string name="settings_hyperos_flutter_font_hook_hint">hyperOsNativeFlutterFontEnabled</string>
     <string name="settings_font_library_label">Font library</string>
     <string name="settings_font_library_hint">Import and manage fonts for per-app replacement.</string>
+    <string name="settings_predictive_back_label">Predictive back gesture</string>
+    <string name="settings_predictive_back_hint">Enable support for predictive back gestures.</string>
+    <string name="settings_interface_scale_label">Interface scale</string>
+    <string name="settings_interface_scale_hint">Adjust DPIS screen density.</string>
+    <string name="settings_interface_scale_value">%1$d%%</string>
+    <string name="settings_interface_scale_dialog_title">Interface scale</string>
+    <string name="settings_interface_scale_input_hint">Scale 60-120%</string>
+    <string name="settings_interface_scale_input_error">Enter a number from 60 to 120.</string>
     <string name="font_library_dialog_title">Font library</string>
     <string name="font_library_page_title">Font library</string>
     <string name="font_library_import_action">Import font</string>

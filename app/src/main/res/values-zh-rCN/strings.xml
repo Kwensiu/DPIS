@@ -199,6 +199,7 @@
     <string name="filter_font_only">仅显示已设字体应用</string>
     <string name="system_settings_title">设置</string>
     <string name="system_settings_section_general">常规</string>
+    <string name="settings_section_theme">主题</string>
     <string name="settings_section_other">其他</string>
     <string name="system_settings_back">返回</string>
     <string name="system_hooks_enabled_label">系统层 Hook</string>
@@ -249,6 +250,14 @@
     <string name="settings_hyperos_flutter_font_hook_hint">hyperOsNativeFlutterFontEnabled</string>
     <string name="settings_font_library_label">字体库</string>
     <string name="settings_font_library_hint">导入并管理用于按应用替换的字体。</string>
+    <string name="settings_predictive_back_label">预测性返回手势</string>
+    <string name="settings_predictive_back_hint">启用对预测性手势返回的支持</string>
+    <string name="settings_interface_scale_label">界面缩放</string>
+    <string name="settings_interface_scale_hint">调整 DPIS 自身界面密度。</string>
+    <string name="settings_interface_scale_value">%1$d%%</string>
+    <string name="settings_interface_scale_dialog_title">界面缩放</string>
+    <string name="settings_interface_scale_input_hint">缩放 60-120%</string>
+    <string name="settings_interface_scale_input_error">请输入 60 到 120 之间的数字。</string>
     <string name="font_library_dialog_title">字体库</string>
     <string name="font_library_page_title">字体库</string>
     <string name="font_library_import_action">导入字体</string>

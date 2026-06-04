@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/settings_slider_row_min_height"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/settings_row_padding_horizontal"
+    android:paddingTop="@dimen/settings_row_padding_vertical"
+    android:paddingEnd="@dimen/settings_row_padding_horizontal"
+    android:paddingBottom="@dimen/settings_row_padding_vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/setting_icon"
+            android:layout_width="@dimen/settings_row_icon_size"
+            android:layout_height="@dimen/settings_row_icon_size"
+            android:contentDescription="@null"
+            app:tint="?attr/colorOnSurfaceVariant" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/settings_row_text_spacing_start"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/setting_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                android:textStyle="bold" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/setting_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/settings_row_subtitle_spacing_top"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+        </LinearLayout>
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/setting_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/settings_row_trailing_spacing_start"
+            android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/setting_chevron"
+            android:layout_width="@dimen/settings_row_chevron_size"
+            android:layout_height="@dimen/settings_row_chevron_size"
+            android:layout_marginStart="@dimen/settings_slider_value_chevron_spacing"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_chevron_right_24"
+            app:tint="?attr/colorOnSurfaceVariant" />
+    </LinearLayout>
+
+    <com.google.android.material.slider.Slider
+        android:id="@+id/setting_slider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/settings_slider_margin_start"
+        android:layout_marginTop="@dimen/settings_slider_spacing_top"
+        android:stepSize="10"
+        android:valueFrom="60"
+        android:valueTo="120" />
+</LinearLayout>

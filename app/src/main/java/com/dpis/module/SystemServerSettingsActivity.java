@@ -13,8 +13,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.view.LayoutInflater;
+import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -30,7 +32,10 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.slider.Slider;
 import com.google.android.material.textview.MaterialTextView;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import org.json.JSONException;
 
@@ -64,6 +69,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     private MaterialSwitch safeModeSwitch;
     private MaterialSwitch globalLogSwitch;
     private MaterialSwitch hideLauncherIconSwitch;
+    private MaterialSwitch predictiveBackSwitch;
     private View primarySwitchCard;
     private View languageEntryRow;
     private View clearCacheEntryRow;
@@ -71,6 +77,10 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     private View experimentalSettingsEntryRow;
     private View fontLibraryEntryRow;
     private View backupConfigEntryRow;
+    private View interfaceScaleRow;
+    private Slider interfaceScaleSlider;
+    private MaterialTextView interfaceScaleValueView;
+    private int lastInterfaceScaleFeedbackPercent = AppUiScaleManager.DEFAULT_SCALE_PERCENT;
     private volatile boolean clearCacheInProgress;
     private SharedPreferences statsPreferences;
     private int selectedMode = FontDebugStatsStore.MODE_CHAIN;
@@ -138,6 +148,12 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
                 R.string.settings_font_library_label,
                 R.string.settings_font_library_hint,
                 v -> startActivity(new Intent(this, FontLibraryActivity.class)));
+        predictiveBackSwitch = bindSwitchRow(
+                R.id.row_predictive_back,
+                R.drawable.ic_arrow_back_24,
+                R.string.settings_predictive_back_label,
+                R.string.settings_predictive_back_hint);
+        bindInterfaceScaleRow();
         backupConfigEntryRow = bindEntryRow(
                 R.id.row_config_backup,
                 R.drawable.ic_upload_file_24,
@@ -176,6 +192,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         safeModeSwitch.setOnCheckedChangeListener(this::onSafeModeChanged);
         globalLogSwitch.setOnCheckedChangeListener(this::onGlobalLogChanged);
         hideLauncherIconSwitch.setOnCheckedChangeListener(this::onHideLauncherIconChanged);
+        predictiveBackSwitch.setOnCheckedChangeListener(this::onPredictiveBackChanged);
         refreshStoreState(true);
     }
 
@@ -275,6 +292,171 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         subtitleView.setText(subtitleRes);
         row.setOnClickListener(clickListener);
         return row;
+    }
+
+    private void bindInterfaceScaleRow() {
+        interfaceScaleRow = findViewById(R.id.row_interface_scale);
+        ImageView iconView = interfaceScaleRow.findViewById(R.id.setting_icon);
+        MaterialTextView titleView = interfaceScaleRow.findViewById(R.id.setting_title);
+        MaterialTextView subtitleView = interfaceScaleRow.findViewById(R.id.setting_subtitle);
+        interfaceScaleValueView = interfaceScaleRow.findViewById(R.id.setting_value);
+        interfaceScaleSlider = interfaceScaleRow.findViewById(R.id.setting_slider);
+
+        iconView.setImageResource(R.drawable.ic_fit_width_24);
+        titleView.setText(R.string.settings_interface_scale_label);
+        subtitleView.setText(R.string.settings_interface_scale_hint);
+        interfaceScaleSlider.setValueFrom(AppUiScaleManager.MIN_SCALE_PERCENT);
+        interfaceScaleSlider.setValueTo(AppUiScaleManager.MAX_SCALE_PERCENT);
+        interfaceScaleSlider.setStepSize(10f);
+        interfaceScaleRow.setOnClickListener(v -> showInterfaceScaleDialog());
+        interfaceScaleSlider.addOnChangeListener((slider, value, fromUser) -> {
+            if (fromUser) {
+                int percent = normalizeInterfaceScaleSliderPercent(Math.round(value));
+                updateInterfaceScaleValue(percent);
+                performInterfaceScaleStepFeedback(percent);
+            }
+        });
+        interfaceScaleSlider.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
+            @Override
+            public void onStartTrackingTouch(Slider slider) {
+                int percent = AppUiScaleManager.normalizeScalePercent(Math.round(slider.getValue()));
+                lastInterfaceScaleFeedbackPercent = percent;
+                updateInterfaceScaleValue(percent);
+            }
+
+            @Override
+            public void onStopTrackingTouch(Slider slider) {
+                saveInterfaceScalePercent(Math.round(slider.getValue()));
+            }
+        });
+        updateInterfaceScaleValue(AppUiScaleManager.getScalePercent(this));
+    }
+
+    private void setInterfaceScalePercentSilently(int percent) {
+        if (interfaceScaleSlider == null) {
+            return;
+        }
+        int normalized = AppUiScaleManager.normalizeScalePercent(percent);
+        interfaceScaleSlider.clearOnChangeListeners();
+        interfaceScaleSlider.setValue(nearestInterfaceScaleSliderPercent(normalized));
+        interfaceScaleSlider.addOnChangeListener((slider, value, fromUser) -> {
+            if (fromUser) {
+                int percentValue = normalizeInterfaceScaleSliderPercent(Math.round(value));
+                updateInterfaceScaleValue(percentValue);
+                performInterfaceScaleStepFeedback(percentValue);
+            }
+        });
+        lastInterfaceScaleFeedbackPercent = nearestInterfaceScaleSliderPercent(normalized);
+        updateInterfaceScaleValue(normalized);
+    }
+
+    private void updateInterfaceScaleValue(int percent) {
+        if (interfaceScaleValueView != null) {
+            interfaceScaleValueView.setText(getString(
+                    R.string.settings_interface_scale_value,
+                    AppUiScaleManager.normalizeScalePercent(percent)));
+        }
+    }
+
+    private void saveInterfaceScalePercent(int percent) {
+        if (store == null) {
+            setInterfaceScalePercentSilently(AppUiScaleManager.getScalePercent(this));
+            showToast(R.string.system_settings_save_failed);
+            return;
+        }
+        int normalized = AppUiScaleManager.normalizeScalePercent(percent);
+        if (normalized == store.getInterfaceScalePercent()) {
+            updateInterfaceScaleValue(normalized);
+            return;
+        }
+        if (!store.setInterfaceScalePercent(normalized)) {
+            setInterfaceScalePercentSilently(store.getInterfaceScalePercent());
+            showToast(R.string.system_settings_save_failed);
+            return;
+        }
+        recreate();
+    }
+
+    private void showInterfaceScaleDialog() {
+        if (store == null) {
+            showToast(R.string.status_save_requires_init);
+            return;
+        }
+        View dialogView = LayoutInflater.from(this).inflate(
+                R.layout.dialog_interface_scale, null, false);
+        TextInputLayout inputLayout = dialogView.findViewById(R.id.interface_scale_input_layout);
+        TextInputEditText inputView = dialogView.findViewById(R.id.interface_scale_input);
+        MaterialButton cancelButton = dialogView.findViewById(R.id.interface_scale_cancel_button);
+        MaterialButton saveButton = dialogView.findViewById(R.id.interface_scale_save_button);
+
+        inputView.setText(String.valueOf(store.getInterfaceScalePercent()));
+        inputView.setSelection(inputView.length());
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+        dialog.setOnShowListener(unused -> {
+            inputView.requestFocus();
+            inputView.postDelayed(() -> {
+                InputMethodManager imm = getSystemService(InputMethodManager.class);
+                if (imm != null) {
+                    imm.showSoftInput(inputView, InputMethodManager.SHOW_IMPLICIT);
+                }
+            }, 120L);
+        });
+        cancelButton.setOnClickListener(v -> dialog.dismiss());
+        saveButton.setOnClickListener(v -> {
+            Integer parsed = parseInterfaceScaleInput(inputView);
+            if (parsed == null
+                    || parsed < AppUiScaleManager.MIN_SCALE_PERCENT
+                    || parsed > AppUiScaleManager.MAX_SCALE_PERCENT) {
+                inputLayout.setError(getString(R.string.settings_interface_scale_input_error));
+                return;
+            }
+            inputLayout.setError(null);
+            dialog.dismiss();
+            saveInterfaceScalePercent(parsed);
+        });
+        inputView.setOnEditorActionListener((view, actionId, event) -> {
+            saveButton.performClick();
+            return true;
+        });
+        dialog.show();
+    }
+
+    private Integer parseInterfaceScaleInput(TextInputEditText inputView) {
+        if (inputView == null || inputView.getText() == null) {
+            return null;
+        }
+        String value = inputView.getText().toString().trim();
+        if (value.isEmpty()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    private void performInterfaceScaleStepFeedback(int percent) {
+        if (percent == lastInterfaceScaleFeedbackPercent || interfaceScaleSlider == null) {
+            return;
+        }
+        lastInterfaceScaleFeedbackPercent = percent;
+        interfaceScaleSlider.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+    }
+
+    private int normalizeInterfaceScaleSliderPercent(int percent) {
+        return nearestInterfaceScaleSliderPercent(
+                AppUiScaleManager.normalizeScalePercent(percent));
+    }
+
+    private int nearestInterfaceScaleSliderPercent(int percent) {
+        int normalized = AppUiScaleManager.normalizeScalePercent(percent);
+        int min = AppUiScaleManager.MIN_SCALE_PERCENT;
+        int rounded = Math.round((normalized - min) / 10f) * 10 + min;
+        return AppUiScaleManager.normalizeScalePercent(rounded);
     }
 
     private void showLanguageDialog(View anchor) {
@@ -588,7 +770,11 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         setCheckedSilently(globalLogSwitch,
                 store.isGlobalLogEnabled(),
                 this::onGlobalLogChanged);
+        setCheckedSilently(predictiveBackSwitch,
+                store.isPredictiveBackEnabled(),
+                this::onPredictiveBackChanged);
         DpisLog.setLoggingEnabled(store.isGlobalLogEnabled());
+        setInterfaceScalePercentSilently(store.getInterfaceScalePercent());
 
         applyLauncherIconVisibilityFromStore();
         syncHooksSwitchWithScope();
@@ -616,10 +802,13 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         safeModeSwitch.setEnabled(true);
         globalLogSwitch.setEnabled(true);
         hideLauncherIconSwitch.setEnabled(true);
+        predictiveBackSwitch.setEnabled(true);
+        interfaceScaleSlider.setEnabled(true);
         setRowEnabled(fontDebugEntryRow, true);
         setRowEnabled(experimentalSettingsEntryRow, true);
         setRowEnabled(fontLibraryEntryRow, true);
         setRowEnabled(backupConfigEntryRow, true);
+        setRowEnabled(interfaceScaleRow, true);
         hooksToggleController = new SystemHooksToggleController(
                 store,
                 new ActivitySystemScopeGateway(),
@@ -635,10 +824,13 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         safeModeSwitch.setEnabled(false);
         globalLogSwitch.setEnabled(false);
         hideLauncherIconSwitch.setEnabled(false);
+        predictiveBackSwitch.setEnabled(false);
+        interfaceScaleSlider.setEnabled(false);
         setRowEnabled(fontDebugEntryRow, false);
         setRowEnabled(experimentalSettingsEntryRow, false);
         setRowEnabled(fontLibraryEntryRow, false);
         setRowEnabled(backupConfigEntryRow, false);
+        setRowEnabled(interfaceScaleRow, false);
         setRowEnabled(languageEntryRow, false);
         if (showInitToast) {
             showToast(R.string.status_save_requires_init);
@@ -965,6 +1157,16 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         RuntimeDebugPropertySyncer.publishAsync(
                 isChecked,
                 store.isFontDebugOverlayEnabled());
+    }
+
+    private void onPredictiveBackChanged(CompoundButton buttonView, boolean isChecked) {
+        if (store == null) {
+            return;
+        }
+        if (!store.setPredictiveBackEnabled(isChecked)) {
+            setCheckedSilently(predictiveBackSwitch, !isChecked, this::onPredictiveBackChanged);
+            showToast(R.string.system_settings_save_failed);
+        }
     }
 
     private void onHideLauncherIconChanged(CompoundButton buttonView, boolean isChecked) {

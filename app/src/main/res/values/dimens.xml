@@ -98,6 +98,10 @@
     <dimen name="settings_row_trailing_spacing_start">12dp</dimen>
     <dimen name="settings_row_switch_spacing_start">16dp</dimen>
     <dimen name="settings_row_chevron_size">20dp</dimen>
+    <dimen name="settings_slider_row_min_height">112dp</dimen>
+    <dimen name="settings_slider_margin_start">0dp</dimen>
+    <dimen name="settings_slider_spacing_top">8dp</dimen>
+    <dimen name="settings_slider_value_chevron_spacing">4dp</dimen>
     <dimen name="settings_content_padding_horizontal">16dp</dimen>
     <dimen name="settings_content_padding_bottom">24dp</dimen>
     <dimen name="settings_section_spacing_top">24dp</dimen>

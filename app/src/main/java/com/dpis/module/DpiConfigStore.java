@@ -29,6 +29,8 @@ final class DpiConfigStore {
     static final String KEY_HYPEROS_FLUTTER_FONT_HOOK_ENABLED = "font.hyperos_flutter_hook_enabled";
     static final String KEY_TTC_FONT_IMPORT_ENABLED = "font.ttc_import_enabled";
     static final String KEY_HIDE_LAUNCHER_ICON = "ui.hide_launcher_icon";
+    static final String KEY_INTERFACE_SCALE_PERCENT = "ui.interface_scale_percent";
+    static final String KEY_PREDICTIVE_BACK_ENABLED = "ui.predictive_back_enabled";
     static final String KEY_STARTUP_DISCLAIMER_ACCEPTED = "ui.startup_disclaimer_accepted";
     private static final String[] BACKUP_EXCLUDED_PREFIXES = {
             "font.library.",
@@ -221,6 +223,24 @@ final class DpiConfigStore {
 
     boolean setLauncherIconHidden(boolean hidden) {
         return commitBoth(editor -> editor.putBoolean(KEY_HIDE_LAUNCHER_ICON, hidden));
+    }
+
+    int getInterfaceScalePercent() {
+        return AppUiScaleManager.normalizeScalePercent(
+                getInt(KEY_INTERFACE_SCALE_PERCENT, AppUiScaleManager.DEFAULT_SCALE_PERCENT));
+    }
+
+    boolean setInterfaceScalePercent(int percent) {
+        return commitBoth(editor -> editor.putInt(
+                KEY_INTERFACE_SCALE_PERCENT, AppUiScaleManager.normalizeScalePercent(percent)));
+    }
+
+    boolean isPredictiveBackEnabled() {
+        return getBoolean(KEY_PREDICTIVE_BACK_ENABLED, AppPredictiveBackManager.DEFAULT_ENABLED);
+    }
+
+    boolean setPredictiveBackEnabled(boolean enabled) {
+        return commitBoth(editor -> editor.putBoolean(KEY_PREDICTIVE_BACK_ENABLED, enabled));
     }
 
     boolean isStartupDisclaimerAccepted() {
