@@ -27,6 +27,21 @@ public class MainActivitySourceSmokeTest {
     }
 
     @Test
+    public void landDetailSaveRequestsScopeAfterSuccessfulSave() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+        String binder = read("src/main/java/com/dpis/module/LandAppDetailPaneBinder.java");
+
+        assertTrue(binder.contains("void saveDraft(AppListItem item,\n"
+                + "                AppConfigDialogBinder.AppConfigDialogState state,"));
+        assertTrue(source.contains("requestLandDetailScopeAfterSuccessfulSave(item, state);"));
+        assertTrue(source.contains("!state.scopeKnown"));
+        assertTrue(source.contains("state.scopeSelected"));
+        assertTrue(source.contains("state.scopeRequestPending"));
+        assertTrue(source.contains("systemScopeCoordinator.requestScope("));
+        assertTrue(source.contains("showToast(R.string.save_scope_request_notice);"));
+    }
+
+    @Test
     public void mainActivityWiresPagerMediatorAndFilterEntry()
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
@@ -740,7 +755,8 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("new LandAppDetailPaneBinder(this"));
         assertTrue(
             source.contains(
-                "saveLandDetailDraft(editorItem,"
+                "saveLandDetailDraft(editorItem,\n"
+                    + "                        state,"
             )
         );
         assertTrue(
@@ -749,7 +765,11 @@ public class MainActivitySourceSmokeTest {
         assertTrue(
             source.contains("showLandDetailHookDomains(editorItem, state, onChanged);")
         );
-        assertTrue(source.contains("toggleLandDetailScope(editorItem);"));
+        assertTrue(
+            source.contains(
+                "toggleLandDetailScope(editorItem, currentlyInScope, onTurnedInScope, onTurnedOutScope);"
+            )
+        );
         assertTrue(
             source.contains(
                 "public boolean setDpisEnabled(String packageName, boolean enabled)"
@@ -866,25 +886,33 @@ public class MainActivitySourceSmokeTest {
             "android:paddingTop=\"@dimen/main_land_detail_top_padding\""
         ));
         assertFalse(layout.contains("android:layout_height=\"@dimen/main_content_divider_height\""));
-        assertTrue(layout.contains("@dimen/land_app_detail_input_group_padding_horizontal"));
+        assertFalse(layout.contains("@dimen/land_app_detail_input_group_padding_horizontal"));
         assertTrue(layout.contains("@dimen/land_app_detail_section_gap"));
-        assertTrue(layout.contains("@dimen/land_app_detail_action_gap"));
-        assertTrue(layout.contains("@dimen/land_app_detail_inner_gap"));
+        assertTrue(layout.contains("@dimen/land_app_detail_editor_row_spacing"));
+        assertTrue(layout.contains("@dimen/land_app_detail_card_inner_spacing"));
         assertFalse(layout.contains("@dimen/dialog_app_config_process_row_spacing_top"));
         assertFalse(layout.contains("@dimen/dialog_app_config_save_row_spacing_top"));
         assertFalse(layout.contains("@drawable/bg_land_detail_process_capsule"));
-        assertTrue(layout.contains("app:cardBackgroundColor=\"?attr/colorSurfaceContainer\""));
-        assertFalse(layout.contains("app:strokeColor=\"?attr/colorOutlineVariant\""));
-        assertFalse(layout.contains("app:strokeWidth=\"@dimen/land_app_detail_card_stroke_width\""));
-        assertTrue(layout.contains("app:strokeWidth=\"0dp\""));
-        assertTrue(layout.contains("android:layout_marginBottom=\"0dp\""));
+        int advancedCardStart = layout.indexOf("<!-- Advanced Actions Card -->");
+        int advancedCardEnd = layout.indexOf("</com.google.android.material.card.MaterialCardView>",
+                advancedCardStart);
+        String advancedCardBlock = layout.substring(advancedCardStart, advancedCardEnd);
+        assertTrue(advancedCardBlock.contains(
+                "app:cardBackgroundColor=\"?attr/colorSurfaceContainer\""));
+        assertFalse(advancedCardBlock.contains("app:strokeColor=\"?attr/colorOutlineVariant\""));
+        assertFalse(advancedCardBlock.contains(
+                "app:strokeWidth=\"@dimen/land_app_detail_card_stroke_width\""));
+        assertTrue(advancedCardBlock.contains("app:strokeWidth=\"0dp\""));
+        assertTrue(layout.contains(
+                "android:layout_marginBottom=\"@dimen/land_app_detail_dock_margin_bottom\""));
         int landStatusStart = layout.indexOf("android:id=\"@+id/land_detail_status\"");
         int landStatusEnd = layout.indexOf("/>", landStatusStart);
         String landStatusBlock = layout.substring(landStatusStart, landStatusEnd);
         assertTrue(landStatusBlock.contains("android:layout_width=\"wrap_content\""));
         assertFalse(landStatusBlock.contains("android:layout_weight=\"1\""));
-        assertTrue(layout.indexOf("android:id=\"@+id/land_detail_save_button\"")
-            < layout.indexOf("android:id=\"@+id/land_detail_scope_row\""));
+        assertTrue(layout.contains("android:id=\"@+id/land_detail_action_dock\""));
+        assertTrue(layout.contains("android:id=\"@+id/land_detail_save_button\""));
+        assertTrue(layout.contains("android:id=\"@+id/land_detail_scope_row\""));
         assertTrue(
             layout.contains("android:id=\"@+id/land_detail_viewport_input\"")
         );
@@ -967,7 +995,8 @@ public class MainActivitySourceSmokeTest {
         assertTrue(
             binder.contains("AppConfigDialogBinder.bindFontModeToggle(")
         );
-        assertTrue(binder.contains("actions.toggleScope(item)"));
+        assertTrue(binder.contains("actions.toggleScope(item,\n"
+                + "                    state.scopeSelected,"));
         assertTrue(binder.contains("actions.setDpisEnabled(item.packageName, nextEnabled)"));
         assertTrue(binder.contains("resetDraft(root, item, state"));
         assertTrue(binder.contains("state.clearViewportInputs();"));
@@ -980,10 +1009,11 @@ public class MainActivitySourceSmokeTest {
         assertTrue(binder.contains("actions.showTypefaceSelector(item"));
         assertTrue(binder.contains("actions.showHookDomains(item, state"));
         assertTrue(dimens.contains("land_app_detail_card_padding"));
-        assertTrue(dimens.contains("land_app_detail_input_group_padding_horizontal"));
         assertTrue(dimens.contains("land_app_detail_section_gap"));
-        assertTrue(dimens.contains("land_app_detail_action_gap"));
-        assertTrue(dimens.contains("land_app_detail_inner_gap"));
+        assertTrue(dimens.contains("land_app_detail_card_gap"));
+        assertTrue(dimens.contains("land_app_detail_card_inner_spacing"));
+        assertTrue(dimens.contains("land_app_detail_list_item_padding_horizontal"));
+        assertTrue(dimens.contains("land_app_detail_editor_row_spacing"));
         assertTrue(dimens.contains("land_app_detail_editor_input_min_width"));
         assertTrue(dimens.contains("land_app_detail_connected_row_inner_radius"));
     }

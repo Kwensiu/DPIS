@@ -20,6 +20,7 @@ import java.util.ArrayList;
 final class LandAppDetailPaneBinder {
     interface Actions {
         void saveDraft(AppListItem item,
+                AppConfigDialogBinder.AppConfigDialogState state,
                 Integer viewportValue,
                 String viewportTargetType,
                 Integer fontPercent,
@@ -516,6 +517,7 @@ final class LandAppDetailPaneBinder {
             Integer fontPercent = parsePercentOrNull(textOf(fontInput));
             actions.saveDraft(
                     item,
+                    state,
                     viewportValue,
                     AppConfigDialogBinder.resolveViewportMode(viewportToggle),
                     fontPercent,
@@ -579,7 +581,7 @@ final class LandAppDetailPaneBinder {
         saveButton.setContentDescription(activity.getString(R.string.status_save_button));
         if (compact) {
             saveButton.setText(null);
-            saveButton.setIconResource(R.drawable.ic_check_24);
+            saveButton.setIconResource(R.drawable.ic_save_24dp);
             saveButton.setIconGravity(MaterialButton.ICON_GRAVITY_TEXT_START);
         } else {
             saveButton.setIcon(null);

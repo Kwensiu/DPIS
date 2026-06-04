@@ -1463,6 +1463,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         new LandAppDetailPaneBinder(this, new LandAppDetailPaneBinder.Actions() {
             @Override
             public void saveDraft(AppListItem editorItem,
+                    AppConfigDialogBinder.AppConfigDialogState state,
                     Integer viewportValue,
                     String viewportTargetType,
                     Integer fontPercent,
@@ -1476,6 +1477,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                     View root,
                     MaterialButton saveButton) {
                 saveLandDetailDraft(editorItem,
+                        state,
                         viewportValue,
                         viewportTargetType,
                         fontPercent,
@@ -1549,6 +1551,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     }
 
     private void saveLandDetailDraft(AppListItem item,
+            AppConfigDialogBinder.AppConfigDialogState state,
             Integer viewportValue,
             String viewportTargetType,
             Integer fontPercent,
@@ -1591,6 +1594,29 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             return;
         }
         AppConfigDialogBinder.showSaveButtonFeedback(saveButton);
+        requestLandDetailScopeAfterSuccessfulSave(item, state);
+    }
+
+    private void requestLandDetailScopeAfterSuccessfulSave(AppListItem item,
+            AppConfigDialogBinder.AppConfigDialogState state) {
+        if (item == null || state == null
+                || !state.scopeKnown
+                || state.scopeSelected
+                || state.scopeRequestPending) {
+            return;
+        }
+        state.scopeRequestPending = true;
+        boolean requestStarted = systemScopeCoordinator.requestScope(
+                item.packageName,
+                item.label,
+                () -> state.scopeSelected = true,
+                () -> state.scopeRequestPending = false,
+                false);
+        if (requestStarted) {
+            showToast(R.string.save_scope_request_notice);
+            return;
+        }
+        state.scopeRequestPending = false;
     }
 
     private int[] saveLandDetailResolvedConfig(AppListItem item,

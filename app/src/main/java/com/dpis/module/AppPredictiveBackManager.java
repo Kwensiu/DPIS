@@ -9,8 +9,6 @@ final class AppPredictiveBackManager {
     }
 
     static boolean isEnabled(Context context) {
-        return context
-                .getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE)
-                .getBoolean(DpiConfigStore.KEY_PREDICTIVE_BACK_ENABLED, DEFAULT_ENABLED);
+        return ConfigStoreFactory.createForModuleApp(context).isPredictiveBackEnabled();
     }
 }

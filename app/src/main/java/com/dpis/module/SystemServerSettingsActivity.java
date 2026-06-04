@@ -1187,7 +1187,9 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         if (!store.setPredictiveBackEnabled(isChecked)) {
             setCheckedSilently(predictiveBackSwitch, !isChecked, this::onPredictiveBackChanged);
             showToast(R.string.system_settings_save_failed);
+            return;
         }
+        syncPredictiveBackCallback();
     }
 
     private void onHideLauncherIconChanged(CompoundButton buttonView, boolean isChecked) {

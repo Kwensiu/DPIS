@@ -45,7 +45,7 @@ abstract class LocalizedActivity extends Activity {
         super.onDestroy();
     }
 
-    private void syncPredictiveBackCallback() {
+    protected final void syncPredictiveBackCallback() {
         if (AppPredictiveBackManager.isEnabled(this)) {
             registerPredictiveBackCallbackIfEnabled();
         } else {
