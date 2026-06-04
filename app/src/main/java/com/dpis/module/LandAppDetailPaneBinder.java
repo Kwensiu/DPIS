@@ -1,15 +1,21 @@
 package com.dpis.module;
 
 import android.app.Activity;
+import android.content.res.ColorStateList;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textview.MaterialTextView;
+
+import java.util.ArrayList;
 
 final class LandAppDetailPaneBinder {
     interface Actions {
@@ -35,7 +41,10 @@ final class LandAppDetailPaneBinder {
                 AppConfigDialogBinder.AppConfigDialogState state,
                 Runnable onChanged);
 
-        void toggleScope(AppListItem item);
+        void toggleScope(AppListItem item,
+                boolean currentlyInScope,
+                Runnable onTurnedInScope,
+                Runnable onTurnedOutScope);
 
         boolean setDpisEnabled(String packageName, boolean enabled);
 
@@ -61,6 +70,8 @@ final class LandAppDetailPaneBinder {
         MaterialTextView statusView = root.findViewById(R.id.land_detail_status);
         MaterialTextView unsavedBadge = root.findViewById(R.id.land_detail_unsaved_badge);
         MaterialButton saveButton = root.findViewById(R.id.land_detail_save_button);
+        MaterialButton scopeButton = root.findViewById(R.id.land_detail_scope_row);
+        MaterialButton dpisToggleButton = root.findViewById(R.id.land_detail_dpis_toggle_row);
 
         iconView.setImageDrawable(item.icon);
         titleView.setText(item.label);
@@ -80,42 +91,52 @@ final class LandAppDetailPaneBinder {
             updateSaveButtonState(root, saveButton);
         }));
         MaterialTextView hookValue = root.findViewById(R.id.land_detail_hook_chain_value);
-        hookValue.setText(actions.getFontHookDomainsButtonText(
-                item, state.previewFromGlobalPrefill, state.previewFontHookDomainsRaw));
-        bindValueRow(root,
-                R.id.land_detail_hook_chain_row,
-                R.id.land_detail_hook_chain_value,
-                hookValue.getText().toString(),
-                () -> actions.showHookDomains(item, state, () -> hookValue.setText(
-                        actions.getFontHookDomainsButtonText(
-                                item, state.previewFromGlobalPrefill, state.previewFontHookDomainsRaw))));
+        hookValue.setText(formatHookChainValue(state));
+        bindEditorRow(root, R.id.land_detail_hook_chain_row, () -> actions.showHookDomains(item, state, () -> {
+            hookValue.setText(formatHookChainValue(state));
+            updateSaveButtonState(root, saveButton);
+        }));
 
-        bindAdvancedButton(root,
-                R.id.land_detail_scope_row,
-                item.scopeKnown && item.inScope ? R.string.scope_remove_button : R.string.scope_add_button,
-                () -> actions.toggleScope(item));
-        bindAdvancedButton(root,
-                R.id.land_detail_dpis_toggle_row,
-                item.dpisEnabled ? R.string.dialog_dpis_disable_button : R.string.dialog_dpis_enable_button,
-                () -> {
+        ActionButtonStyle scopeStyle = ActionButtonStyle.capture(scopeButton);
+        ActionButtonStyle dpisStyle = ActionButtonStyle.capture(dpisToggleButton);
+        refreshScopeButton(scopeButton, state, scopeStyle);
+        refreshDpisToggleButton(dpisToggleButton, state, dpisStyle);
+        bindAdvancedButton(root, R.id.land_detail_scope_row, () -> {
+            clearLandDetailInputFocus(root);
+            actions.toggleScope(item,
+                    state.scopeSelected,
+                    () -> {
+                        state.scopeSelected = true;
+                        refreshScopeButton(scopeButton, state, scopeStyle);
+                    },
+                    () -> {
+                        state.scopeSelected = false;
+                        refreshScopeButton(scopeButton, state, scopeStyle);
+                    });
+        });
+        bindAdvancedButton(root, R.id.land_detail_dpis_toggle_row, () -> {
+                    clearLandDetailInputFocus(root);
+                    if (state.previewFromGlobalPrefill) {
+                        return;
+                    }
                     boolean nextEnabled = !state.dpisEnabled;
                     if (actions.setDpisEnabled(item.packageName, nextEnabled)) {
                         state.dpisEnabled = nextEnabled;
-                        MaterialButton button = root.findViewById(R.id.land_detail_dpis_toggle_row);
-                        button.setText(nextEnabled
-                                ? R.string.dialog_dpis_disable_button
-                                : R.string.dialog_dpis_enable_button);
+                        refreshDpisToggleButton(dpisToggleButton, state, dpisStyle);
+                        statusView.setText(formatStatus(item, systemHooksEnabled));
                     }
                 });
         bindAdvancedButton(root,
                 R.id.land_detail_reset_row,
                 R.string.dialog_disable_button,
                 () -> resetDraft(root, item, state, typefaceValue, hookValue, saveButton));
+        bindAdaptiveAdvancedActions(root);
 
         bindProcessButton(root, R.id.land_detail_start_button, item, AppConfigDialogBinder.ProcessAction.START);
         bindProcessButton(root, R.id.land_detail_restart_button, item, AppConfigDialogBinder.ProcessAction.RESTART);
         bindProcessButton(root, R.id.land_detail_stop_button, item, AppConfigDialogBinder.ProcessAction.STOP);
         bindSaveButton(root, item, state, saveButton);
+        bindAdaptiveActionDock(root, saveButton);
         updateSaveButtonState(root, saveButton);
     }
 
@@ -321,20 +342,130 @@ final class LandAppDetailPaneBinder {
         }
     }
 
-    private void bindValueRow(View root, int rowId, int valueId, String value, Runnable action) {
-        View row = root.findViewById(rowId);
-        MaterialTextView valueView = root.findViewById(valueId);
-        valueView.setText(value);
-        bindEditorRow(row, action);
-    }
-
-    private void bindAdvancedButton(View root,
-            int buttonId,
-            int textResId,
-            Runnable action) {
+    private void bindAdvancedButton(View root, int buttonId, int textResId, Runnable action) {
         MaterialButton button = root.findViewById(buttonId);
         button.setText(textResId);
         bindEditorRow(button, action);
+    }
+
+    private void bindAdvancedButton(View root, int buttonId, Runnable action) {
+        bindEditorRow(root.findViewById(buttonId), action);
+    }
+
+    private void refreshScopeButton(MaterialButton scopeButton,
+            AppConfigDialogBinder.AppConfigDialogState state,
+            ActionButtonStyle style) {
+        if (scopeButton == null || state == null || style == null) {
+            return;
+        }
+        int activeBgColor = MaterialColors.getColor(
+                scopeButton, com.google.android.material.R.attr.colorSecondaryContainer);
+        int activeFgColor = MaterialColors.getColor(
+                scopeButton, com.google.android.material.R.attr.colorOnSecondaryContainer);
+        int scopeTextRes = state.scopeKnown
+                ? (state.scopeSelected ? R.string.scope_remove_button : R.string.scope_add_button)
+                : R.string.scope_add_button;
+        boolean activeScopeStyle = state.scopeKnown && state.scopeSelected;
+        scopeButton.setIcon(null);
+        scopeButton.setText(scopeTextRes);
+        scopeButton.setBackgroundTintList(activeScopeStyle
+                ? ColorStateList.valueOf(activeBgColor)
+                : style.defaultBgTint);
+        scopeButton.setTextColor(activeScopeStyle ? activeFgColor : style.defaultTextColor);
+        scopeButton.setStrokeWidth(activeScopeStyle ? 0 : style.defaultStrokeWidth);
+        scopeButton.setContentDescription(activity.getString(scopeTextRes));
+        scopeButton.setEnabled(state.scopeKnown);
+        scopeButton.setAlpha(state.scopeKnown ? 1f : 0.6f);
+    }
+
+    private void refreshDpisToggleButton(MaterialButton dpisToggleButton,
+            AppConfigDialogBinder.AppConfigDialogState state,
+            ActionButtonStyle style) {
+        if (dpisToggleButton == null || state == null || style == null) {
+            return;
+        }
+        int activeBgColor = MaterialColors.getColor(
+                dpisToggleButton, com.google.android.material.R.attr.colorSecondaryContainer);
+        int activeFgColor = MaterialColors.getColor(
+                dpisToggleButton, com.google.android.material.R.attr.colorOnSecondaryContainer);
+        String buttonText = activity.getString(state.dpisEnabled
+                ? R.string.dialog_dpis_disable_button
+                : R.string.dialog_dpis_enable_button);
+        boolean enabledActive = state.dpisEnabled;
+        dpisToggleButton.setIcon(null);
+        dpisToggleButton.setText(buttonText);
+        dpisToggleButton.setBackgroundTintList(enabledActive
+                ? ColorStateList.valueOf(activeBgColor)
+                : style.defaultBgTint);
+        dpisToggleButton.setTextColor(enabledActive ? activeFgColor : style.defaultTextColor);
+        dpisToggleButton.setStrokeWidth(enabledActive ? 0 : style.defaultStrokeWidth);
+        dpisToggleButton.setContentDescription(buttonText);
+        dpisToggleButton.setEnabled(!state.previewFromGlobalPrefill);
+        dpisToggleButton.setAlpha(state.previewFromGlobalPrefill ? 0.6f : 1f);
+    }
+
+    private void clearLandDetailInputFocus(View root) {
+        if (root == null) {
+            return;
+        }
+        TextInputEditText viewportInput = root.findViewById(R.id.land_detail_viewport_input);
+        TextInputEditText fontInput = root.findViewById(R.id.land_detail_font_scale_input);
+        if (viewportInput != null) {
+            viewportInput.clearFocus();
+        }
+        if (fontInput != null) {
+            fontInput.clearFocus();
+        }
+        root.requestFocus();
+    }
+
+    private void bindAdaptiveAdvancedActions(View root) {
+        if (root == null) {
+            return;
+        }
+        root.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
+                updateAdvancedActionsLayout(view));
+        root.post(() -> updateAdvancedActionsLayout(root));
+    }
+
+    private void updateAdvancedActionsLayout(View root) {
+        if (root == null || root.getWidth() <= 0) {
+            return;
+        }
+        LinearLayout primaryRow = root.findViewById(R.id.land_detail_advanced_primary_row);
+        LinearLayout resetRow = root.findViewById(R.id.land_detail_advanced_reset_row);
+        MaterialButton resetButton = root.findViewById(R.id.land_detail_reset_row);
+        if (primaryRow == null || resetRow == null || resetButton == null) {
+            return;
+        }
+        int buttonMinWidth = activity.getResources().getDimensionPixelSize(
+                R.dimen.land_app_detail_advanced_button_wrap_min_width);
+        int spacing = activity.getResources().getDimensionPixelSize(
+                R.dimen.land_app_detail_action_button_spacing);
+        int contentHorizontalPadding = activity.getResources().getDimensionPixelSize(
+                R.dimen.land_app_detail_padding_horizontal) * 2
+                + activity.getResources().getDimensionPixelSize(R.dimen.land_app_detail_card_padding) * 2;
+        int threeButtonRequiredWidth = buttonMinWidth * 3 + spacing * 2 + contentHorizontalPadding;
+        boolean wrapReset = root.getWidth() < threeButtonRequiredWidth;
+        if (wrapReset && resetButton.getParent() != resetRow) {
+            primaryRow.removeView(resetButton);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            resetRow.addView(resetButton, params);
+            resetRow.setVisibility(View.VISIBLE);
+        } else if (!wrapReset && resetButton.getParent() != primaryRow) {
+            resetRow.removeView(resetButton);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    1f);
+            params.setMarginStart(spacing);
+            primaryRow.addView(resetButton, params);
+            resetRow.setVisibility(View.GONE);
+        } else {
+            resetRow.setVisibility(wrapReset ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void bindEditorRow(View root, int rowId, Runnable action) {
@@ -399,6 +530,61 @@ final class LandAppDetailPaneBinder {
                     saveButton);
         });
         TouchFeedbackBinder.bindPressHaptic(saveButton);
+    }
+
+    private void bindAdaptiveActionDock(View root, MaterialButton saveButton) {
+        if (root == null || saveButton == null) {
+            return;
+        }
+        root.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
+                updateSaveButtonPresentation(view, saveButton));
+        root.post(() -> updateSaveButtonPresentation(root, saveButton));
+    }
+
+    private void updateSaveButtonPresentation(View root, MaterialButton saveButton) {
+        int rootWidth = root != null ? root.getWidth() : 0;
+        if (rootWidth <= 0 || saveButton == null) {
+            return;
+        }
+        int dockHorizontalMargins = activity.getResources().getDimensionPixelSize(
+                R.dimen.land_app_detail_dock_margin_horizontal) * 2;
+        int dockPadding = activity.getResources().getDimensionPixelSize(
+                R.dimen.land_app_detail_dock_padding) * 2;
+        int saveExpandedWidth = activity.getResources().getDimensionPixelSize(
+                R.dimen.land_app_detail_dock_save_expanded_min_width);
+        int saveCompactWidth = activity.getResources().getDimensionPixelSize(
+                R.dimen.land_app_detail_dock_button_height);
+        int spacing = activity.getResources().getDimensionPixelSize(
+                R.dimen.land_app_detail_dock_button_spacing);
+        int processButtonWidth = activity.getResources().getDimensionPixelSize(
+                R.dimen.land_app_detail_dock_process_button_min_width) * 3;
+        int processDividerWidth = activity.getResources().getDimensionPixelSize(
+                R.dimen.land_app_detail_dock_process_divider_width) * 2;
+        int expandedRequiredWidth = dockHorizontalMargins
+                + dockPadding
+                + saveExpandedWidth
+                + spacing
+                + processButtonWidth
+                + processDividerWidth;
+        boolean compact = rootWidth < expandedRequiredWidth;
+        int targetWidth = compact ? saveCompactWidth : saveExpandedWidth;
+        ViewGroup.LayoutParams params = saveButton.getLayoutParams();
+        if (params != null && params.width != targetWidth) {
+            params.width = targetWidth;
+            saveButton.setLayoutParams(params);
+        }
+        saveButton.setMinWidth(targetWidth);
+        saveButton.setMinimumWidth(targetWidth);
+        saveButton.setIconPadding(0);
+        saveButton.setContentDescription(activity.getString(R.string.status_save_button));
+        if (compact) {
+            saveButton.setText(null);
+            saveButton.setIconResource(R.drawable.ic_check_24);
+            saveButton.setIconGravity(MaterialButton.ICON_GRAVITY_TEXT_START);
+        } else {
+            saveButton.setIcon(null);
+            saveButton.setText(R.string.status_save_button);
+        }
     }
 
     private boolean updateSaveButtonState(View root, MaterialButton saveButton) {
@@ -468,8 +654,7 @@ final class LandAppDetailPaneBinder {
         state.clearViewportInputs();
         state.clearPreviewOnlyStateForReset();
         typefaceValue.setText(formatTypefaceValue(state.selectedTypefaceId));
-        hookValue.setText(actions.getFontHookDomainsButtonText(
-                item, state.previewFromGlobalPrefill, state.previewFontHookDomainsRaw));
+        hookValue.setText(formatHookChainValue(state));
         AppConfigDialogBinder.bindViewportModeToggle(
                 viewportToggle, ViewportTargetType.RELATIVE_SCALE, true);
         bindViewportInputHint(viewportInputLayout, ViewportTargetType.RELATIVE_SCALE);
@@ -520,6 +705,54 @@ final class LandAppDetailPaneBinder {
             return imported.displayName;
         }
         return activity.getString(R.string.dialog_typeface_missing_named, typefaceId);
+    }
+
+    private String formatHookChainValue(AppConfigDialogBinder.AppConfigDialogState state) {
+        ArrayList<String> parts = new ArrayList<>();
+        String viewportMode = state != null ? ViewportApplyMode.normalize(state.viewportApplyMode) : ViewportApplyMode.OFF;
+        if (ViewportApplyMode.SYSTEM.equals(viewportMode)) {
+            parts.add(activity.getString(R.string.land_detail_hook_chain_viewport_system));
+        } else if (ViewportApplyMode.COMPAT.equals(viewportMode)) {
+            parts.add(activity.getString(R.string.land_detail_hook_chain_viewport_compat));
+        }
+
+        HookDomainOverride override = HookDomainOverrideStore.fromRaw(
+                state != null ? state.previewFontHookDomainsRaw : null);
+        if (override.customPathEnabled) {
+            int selectedCount = FontHookDomainRegistry.orderedCustomizableDisplaySubset(
+                    override.enabledKnownDomains).size();
+            int totalCount = FontHookDomainRegistry.orderedCustomizableDisplayIdsList().size();
+            parts.add(activity.getString(
+                    R.string.land_detail_hook_chain_font_count, selectedCount, totalCount));
+        }
+        if (parts.isEmpty()) {
+            return activity.getString(R.string.land_detail_hook_chain_default);
+        }
+        return String.join(activity.getString(R.string.land_detail_hook_chain_separator), parts);
+    }
+
+    private static final class ActionButtonStyle {
+        final ColorStateList defaultBgTint;
+        final int defaultStrokeWidth;
+        final int defaultTextColor;
+
+        private ActionButtonStyle(ColorStateList defaultBgTint,
+                int defaultStrokeWidth,
+                int defaultTextColor) {
+            this.defaultBgTint = defaultBgTint;
+            this.defaultStrokeWidth = defaultStrokeWidth;
+            this.defaultTextColor = defaultTextColor;
+        }
+
+        static ActionButtonStyle capture(MaterialButton button) {
+            if (button == null) {
+                return null;
+            }
+            return new ActionButtonStyle(
+                    button.getBackgroundTintList(),
+                    button.getStrokeWidth(),
+                    MaterialColors.getColor(button, androidx.appcompat.R.attr.colorPrimary));
+        }
     }
 
 }

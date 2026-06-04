@@ -1505,8 +1505,11 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             }
 
             @Override
-            public void toggleScope(AppListItem editorItem) {
-                toggleLandDetailScope(editorItem);
+            public void toggleScope(AppListItem editorItem,
+                    boolean currentlyInScope,
+                    Runnable onTurnedInScope,
+                    Runnable onTurnedOutScope) {
+                toggleLandDetailScope(editorItem, currentlyInScope, onTurnedInScope, onTurnedOutScope);
             }
 
             @Override
@@ -1634,16 +1637,29 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         return "";
     }
 
-    private void toggleLandDetailScope(AppListItem item) {
+    private void toggleLandDetailScope(AppListItem item,
+            boolean currentlyInScope,
+            Runnable onTurnedInScope,
+            Runnable onTurnedOutScope) {
         if (item == null || !item.scopeKnown) {
             return;
         }
         systemScopeCoordinator.toggleScope(
                 item.packageName,
                 item.label,
-                item.inScope,
-                this::requestAppsLoad,
-                this::requestAppsLoad);
+                currentlyInScope,
+                () -> {
+                    if (onTurnedInScope != null) {
+                        onTurnedInScope.run();
+                    }
+                    requestAppsLoad();
+                },
+                () -> {
+                    if (onTurnedOutScope != null) {
+                        onTurnedOutScope.run();
+                    }
+                    requestAppsLoad();
+                });
     }
 
     private void showLandDetailTypefaceSelector(AppListItem item,

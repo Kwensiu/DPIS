@@ -6,6 +6,10 @@
     <color name="dpis_on_warn_container">#4A3400</color>
     <color name="dpis_success_container">#D5EFCF</color>
     <color name="dpis_on_success_container">#16351A</color>
+    <color name="land_detail_dock_stop_text">#9F5A52</color>
+    <color name="land_detail_dock_warn_text">#8F6400</color>
+    <color name="land_detail_dock_success_text">#3F7B45</color>
+    <color name="land_detail_chevron_color">#6F7480</color>
     <color name="font_hook_domain_risk_low">#2E9E55</color>
     <color name="font_hook_domain_risk_medium">#D88916</color>
     <color name="font_hook_domain_risk_high">#D64B45</color>

@@ -223,21 +223,21 @@
         <item name="android:layout_height">wrap_content</item>
         <item
             name="android:minHeight"
-        >@dimen/land_app_detail_row_min_height</item>
+        >@dimen/land_app_detail_list_item_min_height</item>
         <item name="android:orientation">horizontal</item>
         <item name="android:gravity">center_vertical</item>
         <item
             name="android:paddingStart"
-        >@dimen/land_app_detail_row_padding_horizontal</item>
+        >@dimen/land_app_detail_list_item_padding_horizontal</item>
         <item
             name="android:paddingEnd"
-        >@dimen/land_app_detail_row_padding_horizontal</item>
+        >@dimen/land_app_detail_list_item_padding_horizontal</item>
         <item
             name="android:paddingTop"
-        >@dimen/land_app_detail_row_padding_vertical</item>
+        >@dimen/land_app_detail_list_item_padding_vertical</item>
         <item
             name="android:paddingBottom"
-        >@dimen/land_app_detail_row_padding_vertical</item>
+        >@dimen/land_app_detail_list_item_padding_vertical</item>
         <item name="android:background">?attr/selectableItemBackground</item>
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
@@ -249,7 +249,7 @@
     >
         <item
             name="android:layout_width"
-        >@dimen/land_app_detail_row_label_width</item>
+        >@dimen/land_app_detail_list_item_label_width</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:ellipsize">end</item>
         <item name="android:maxLines">1</item>
@@ -302,16 +302,16 @@
         <item name="android:gravity">center_vertical</item>
         <item
             name="android:paddingStart"
-        >@dimen/land_app_detail_row_padding_horizontal</item>
+        >@dimen/land_app_detail_list_item_padding_horizontal</item>
         <item
             name="android:paddingEnd"
-        >@dimen/land_app_detail_row_padding_horizontal</item>
+        >@dimen/land_app_detail_list_item_padding_horizontal</item>
         <item
             name="android:paddingTop"
-        >@dimen/land_app_detail_row_padding_vertical</item>
+        >@dimen/land_app_detail_list_item_padding_vertical</item>
         <item
-            name="android:paddingBottom"
-        >@dimen/land_app_detail_row_padding_vertical</item>
+         name="android:paddingBottom"
+        >@dimen/land_app_detail_list_item_padding_vertical</item>
     </style>
 
     <style

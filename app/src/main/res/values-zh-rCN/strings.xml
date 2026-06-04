@@ -37,6 +37,11 @@
     <string name="quick_search_button">快速搜索</string>
     <string name="land_detail_empty_title">选择应用</string>
     <string name="land_detail_empty_message">横屏时会在这里显示应用配置。</string>
+    <string name="land_detail_hook_chain_default">默认</string>
+    <string name="land_detail_hook_chain_viewport_system">界面[系统]</string>
+    <string name="land_detail_hook_chain_viewport_compat">界面[兼容]</string>
+    <string name="land_detail_hook_chain_font_count">字体链路[%1$d/%2$d]</string>
+    <string name="land_detail_hook_chain_separator"> · </string>
     <string name="help_button">帮助</string>
     <string name="help_tutorial_system_title">系统模式</string>
     <string name="help_tutorial_system_badge">更接近原生</string>
