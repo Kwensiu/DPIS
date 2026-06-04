@@ -32,6 +32,12 @@ final class DpiConfigStore {
     static final String KEY_INTERFACE_SCALE_PERCENT = "ui.interface_scale_percent";
     static final String KEY_PREDICTIVE_BACK_ENABLED = "ui.predictive_back_enabled";
     static final String KEY_STARTUP_DISCLAIMER_ACCEPTED = "ui.startup_disclaimer_accepted";
+    private static final String[] LOCAL_ONLY_MIRROR_KEYS = {
+            KEY_HIDE_LAUNCHER_ICON,
+            KEY_INTERFACE_SCALE_PERCENT,
+            KEY_PREDICTIVE_BACK_ENABLED,
+            KEY_STARTUP_DISCLAIMER_ACCEPTED
+    };
     private static final String[] BACKUP_EXCLUDED_PREFIXES = {
             "font.library.",
             "font.debug.",
@@ -214,46 +220,43 @@ final class DpiConfigStore {
     }
 
     boolean isLauncherIconHidden() {
-        return getBoolean(KEY_HIDE_LAUNCHER_ICON, false);
+        return getLocalOnlyBoolean(KEY_HIDE_LAUNCHER_ICON, false);
     }
 
     boolean hasLauncherIconHidden() {
-        return containsInPrimary(KEY_HIDE_LAUNCHER_ICON);
+        return containsLocalOnly(KEY_HIDE_LAUNCHER_ICON);
     }
 
     boolean setLauncherIconHidden(boolean hidden) {
-        return commitBoth(editor -> editor.putBoolean(KEY_HIDE_LAUNCHER_ICON, hidden));
+        return commitLocalOnly(editor -> editor.putBoolean(KEY_HIDE_LAUNCHER_ICON, hidden));
     }
 
     int getInterfaceScalePercent() {
         return AppUiScaleManager.normalizeScalePercent(
-                getInt(KEY_INTERFACE_SCALE_PERCENT, AppUiScaleManager.DEFAULT_SCALE_PERCENT));
+                getLocalOnlyInt(KEY_INTERFACE_SCALE_PERCENT,
+                        AppUiScaleManager.DEFAULT_SCALE_PERCENT));
     }
 
     boolean setInterfaceScalePercent(int percent) {
-        return commitBoth(editor -> editor.putInt(
+        return commitLocalOnly(editor -> editor.putInt(
                 KEY_INTERFACE_SCALE_PERCENT, AppUiScaleManager.normalizeScalePercent(percent)));
     }
 
     boolean isPredictiveBackEnabled() {
-        return getBoolean(KEY_PREDICTIVE_BACK_ENABLED, AppPredictiveBackManager.DEFAULT_ENABLED);
+        return getLocalOnlyBoolean(KEY_PREDICTIVE_BACK_ENABLED,
+                AppPredictiveBackManager.DEFAULT_ENABLED);
     }
 
     boolean setPredictiveBackEnabled(boolean enabled) {
-        return commitBoth(editor -> editor.putBoolean(KEY_PREDICTIVE_BACK_ENABLED, enabled));
+        return commitLocalOnly(editor -> editor.putBoolean(KEY_PREDICTIVE_BACK_ENABLED, enabled));
     }
 
     boolean isStartupDisclaimerAccepted() {
-        if (preferences.contains(KEY_STARTUP_DISCLAIMER_ACCEPTED)) {
-            return preferences.getBoolean(KEY_STARTUP_DISCLAIMER_ACCEPTED, false)
-                    || (mirrorPreferences != null
-                    && mirrorPreferences.getBoolean(KEY_STARTUP_DISCLAIMER_ACCEPTED, false));
-        }
-        return getBoolean(KEY_STARTUP_DISCLAIMER_ACCEPTED, false);
+        return getLocalOnlyBoolean(KEY_STARTUP_DISCLAIMER_ACCEPTED, false);
     }
 
     boolean setStartupDisclaimerAccepted(boolean accepted) {
-        return commitBoth(editor -> editor.putBoolean(KEY_STARTUP_DISCLAIMER_ACCEPTED, accepted));
+        return commitLocalOnly(editor -> editor.putBoolean(KEY_STARTUP_DISCLAIMER_ACCEPTED, accepted));
     }
 
     boolean isFontDebugOverlayEnabled() {
@@ -846,6 +849,20 @@ final class DpiConfigStore {
         return snapshot;
     }
 
+    Map<String, Object> snapshotLocalMirror() {
+        LinkedHashMap<String, Object> snapshot = new LinkedHashMap<>(snapshotAll());
+        for (String key : LOCAL_ONLY_MIRROR_KEYS) {
+            snapshot.remove(key);
+        }
+        return snapshot;
+    }
+
+    Map<String, Object> snapshotLocalOnlyMirrorValues() {
+        LinkedHashMap<String, Object> snapshot = new LinkedHashMap<>();
+        copyLocalOnlyEntries(snapshot, localOnlyPreferences().getAll());
+        return snapshot;
+    }
+
     Map<String, Object> snapshotBackup() {
         LinkedHashMap<String, Object> snapshot = new LinkedHashMap<>();
         if (mirrorPreferences != null) {
@@ -974,8 +991,21 @@ final class DpiConfigStore {
         return preferences.contains(key);
     }
 
+    private boolean containsLocalOnly(String key) {
+        return localOnlyPreferences().contains(key);
+    }
+
     private int getInt(String key, int defaultValue) {
         Integer value = readPreferenceValue(key, prefs -> prefs.getInt(key, defaultValue));
+        return value != null ? value : defaultValue;
+    }
+
+    private int getLocalOnlyInt(String key, int defaultValue) {
+        SharedPreferences localPreferences = localOnlyPreferences();
+        if (!localPreferences.contains(key)) {
+            return defaultValue;
+        }
+        Integer value = readPreferenceValue(localPreferences, prefs -> prefs.getInt(key, defaultValue));
         return value != null ? value : defaultValue;
     }
 
@@ -986,6 +1016,15 @@ final class DpiConfigStore {
 
     private boolean getBoolean(String key, boolean defaultValue) {
         Boolean value = readPreferenceValue(key, prefs -> prefs.getBoolean(key, defaultValue));
+        return value != null ? value : defaultValue;
+    }
+
+    private boolean getLocalOnlyBoolean(String key, boolean defaultValue) {
+        SharedPreferences localPreferences = localOnlyPreferences();
+        if (!localPreferences.contains(key)) {
+            return defaultValue;
+        }
+        Boolean value = readPreferenceValue(localPreferences, prefs -> prefs.getBoolean(key, defaultValue));
         return value != null ? value : defaultValue;
     }
 
@@ -1025,6 +1064,43 @@ final class DpiConfigStore {
         } catch (UnsupportedOperationException ignored) {
             return primaryCommitted;
         }
+    }
+
+    private boolean commitLocalOnly(EditorAction action) {
+        SharedPreferences.Editor editor = localOnlyPreferences().edit();
+        action.apply(editor);
+        return editor.commit();
+    }
+
+    private SharedPreferences localOnlyPreferences() {
+        return mirrorPreferences != null ? mirrorPreferences : preferences;
+    }
+
+    private static void copyLocalOnlyEntries(
+            Map<String, Object> target,
+            Map<String, ?> source) {
+        if (source == null) {
+            return;
+        }
+        for (Map.Entry<String, ?> entry : source.entrySet()) {
+            String key = entry.getKey();
+            if (key == null || key.isEmpty() || !isLocalOnlyMirrorKey(key)) {
+                continue;
+            }
+            Object normalized = normalizeValue(entry.getValue());
+            if (normalized != null) {
+                target.put(key, normalized);
+            }
+        }
+    }
+
+    private static boolean isLocalOnlyMirrorKey(String key) {
+        for (String localOnlyKey : LOCAL_ONLY_MIRROR_KEYS) {
+            if (localOnlyKey.equals(key)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private interface EditorAction {

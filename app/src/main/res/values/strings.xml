@@ -19,6 +19,7 @@
     <string name="dialog_typeface_dialog_title">Choose font</string>
     <string name="dialog_typeface_default">System default</string>
     <string name="dialog_typeface_missing">Selected font is unavailable</string>
+    <string name="dialog_typeface_missing_named">%1$s [unavailable]</string>
     <string name="dialog_typeface_tab_system">System fonts</string>
     <string name="dialog_typeface_tab_imported">My fonts</string>
     <string name="dialog_typeface_imported_empty">No imported fonts</string>
@@ -33,6 +34,8 @@
     <string name="template_search_hint">Template name</string>
     <string name="search_clear">Clear search</string>
     <string name="quick_search_button">Quick search</string>
+    <string name="land_detail_empty_title">Select an app</string>
+    <string name="land_detail_empty_message">App configuration appears here in landscape.</string>
     <string name="help_button">Help</string>
     <string name="help_tutorial_system_title">System mode</string>
     <string name="help_tutorial_system_badge">Native</string>
@@ -81,6 +84,7 @@
     <string name="quick_template_edit_sheet_subtitle">Customize a batch config template without binding apps.</string>
     <string name="quick_template_name_hint">Template name</string>
     <string name="quick_template_name_required">Template name is required</string>
+    <string name="quick_template_name_duplicate">Template name already exists</string>
     <string name="quick_template_missing">Template no longer exists</string>
     <string name="quick_template_viewport_apply_mode_value">Interface route: %1$s</string>
     <string name="quick_template_save_success">Template saved</string>
@@ -106,7 +110,8 @@
     <string name="quick_template_target_missing">Template no longer exists</string>
     <string name="quick_template_apply_empty_selection">Select at least one app before applying this template.</string>
     <string name="quick_template_apply_confirm_title">Apply \"%1$s\"?</string>
-    <string name="quick_template_apply_confirm_message">DPIS will write this template to %1$d apps and overwrite %2$d configured apps. No app process or HyperOS proxy action will run during batch apply. Scope may be requested after saving when available.</string>
+    <string name="quick_template_apply_confirm_message">Apply to %1$d apps.</string>
+    <string name="quick_template_apply_confirm_message_overwrite">Apply to %1$d apps. %2$d existing configs will be overwritten.</string>
     <string name="quick_template_apply_result_success">Template applied to %1$d apps</string>
     <string name="quick_template_apply_result_partial">Template applied to %1$d apps; failed %2$d</string>
     <string name="quick_template_scope_request_started">Requested LSPosed scope for %1$d apps. Check LSPosed to approve.</string>
@@ -186,9 +191,8 @@
     <string name="dialog_dpis_disabled_status">Disabled</string>
     <string name="startup_disclaimer_title">Risk Notice and Disclaimer</string>
     <string name="startup_disclaimer_message">This module runs in a Root/LSPosed environment and may cause system instability, data loss, boot loops, or account bans.\n\nPlease back up your data. You assume all risks associated with using this module.\n\nThe developer is not responsible for any damage or loss caused by this module.</string>
-    <string name="startup_disclaimer_checkbox_text">I agree to the Risk Notice and Disclaimer</string>
+    <string name="startup_disclaimer_checkbox_text">I have read and agree</string>
     <string name="startup_disclaimer_accept_button">Agree and continue</string>
-    <string name="startup_disclaimer_exit_button">Disagree and exit</string>
     <string name="startup_disclaimer_save_failed">Failed to save consent.</string>
     <string name="dialog_cancel_button">Close</string>
     <string name="dialog_close_button">Close</string>

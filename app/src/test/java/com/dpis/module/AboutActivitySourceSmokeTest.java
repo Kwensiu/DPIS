@@ -32,6 +32,7 @@ public class AboutActivitySourceSmokeTest {
         assertTrue(source.contains("R.string.about_update_action_view_release"));
         assertTrue(source.contains("UpdateDownloadCoordinator.showDialogIdleState("));
         assertTrue(source.contains("updateDownloadCoordinator.startDownload("));
+        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialog, this)"));
         assertTrue(manifestFetcherSource.contains("final class UpdateManifestFetcher"));
         assertTrue(source.contains("UpdateAvailableDialog.create("));
         assertTrue(dialogSource.contains("R.id.update_dialog_cancel_button"));

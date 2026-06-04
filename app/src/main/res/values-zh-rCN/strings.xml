@@ -19,6 +19,7 @@
     <string name="dialog_typeface_dialog_title">字体选择</string>
     <string name="dialog_typeface_default">系统默认</string>
     <string name="dialog_typeface_missing">所选字体不可用</string>
+    <string name="dialog_typeface_missing_named">%1$s [不可用]</string>
     <string name="dialog_typeface_tab_system">系统字体</string>
     <string name="dialog_typeface_tab_imported">我的字体</string>
     <string name="dialog_typeface_imported_empty">暂无已导入字体</string>
@@ -33,6 +34,8 @@
     <string name="template_search_hint">搜索模板名</string>
     <string name="search_clear">清除搜索</string>
     <string name="quick_search_button">快速搜索</string>
+    <string name="land_detail_empty_title">选择应用</string>
+    <string name="land_detail_empty_message">横屏时会在这里显示应用配置。</string>
     <string name="help_button">帮助</string>
     <string name="help_tutorial_system_title">系统模式</string>
     <string name="help_tutorial_system_badge">更接近原生</string>
@@ -81,6 +84,7 @@
     <string name="quick_template_edit_sheet_subtitle">自定义批量配置模板，不绑定应用</string>
     <string name="quick_template_name_hint">模板名称</string>
     <string name="quick_template_name_required">模板名称不能为空</string>
+    <string name="quick_template_name_duplicate">模板名称已存在</string>
     <string name="quick_template_missing">模板已不存在</string>
     <string name="quick_template_viewport_apply_mode_value">界面路线：%1$s</string>
     <string name="quick_template_save_success">已保存模板</string>
@@ -105,8 +109,9 @@
     <string name="quick_template_targets_save_failed">保存应用选择失败</string>
     <string name="quick_template_target_missing">模板已不存在</string>
     <string name="quick_template_apply_empty_selection">请先至少选择一个应用再应用模板。</string>
-    <string name="quick_template_apply_confirm_title">应用“%1$s”？</string>
-    <string name="quick_template_apply_confirm_message">DPIS 将把此模板写入 %1$d 个应用，并覆盖 %2$d 个已配置应用。批量应用期间不会执行进程操作或 HyperOS 代理操作。可用时，保存后可能请求加入作用域。</string>
+    <string name="quick_template_apply_confirm_title">应用模板「%1$s」？</string>
+    <string name="quick_template_apply_confirm_message">将应用到 %1$d 个应用。</string>
+    <string name="quick_template_apply_confirm_message_overwrite">将应用到 %1$d 个应用，其中 %2$d 个已有配置会被覆盖。</string>
     <string name="quick_template_apply_result_success">已应用到 %1$d 个应用</string>
     <string name="quick_template_apply_result_partial">已应用到 %1$d 个应用；失败 %2$d 个</string>
     <string name="quick_template_scope_request_started">已向 LSPosed 请求为 %1$d 个应用加入作用域，请到 LSPosed 确认。</string>
@@ -186,9 +191,8 @@
     <string name="dialog_dpis_disabled_status">已禁用</string>
     <string name="startup_disclaimer_title">风险提示与免责声明</string>
     <string name="startup_disclaimer_message">本模块基于 Root/LSPosed 环境运行，可能导致系统不稳定、功能异常、数据丢失、设备变砖、无法开机或账号风控等风险。\n\n你应确认已备份重要数据，并自行承担安装、使用、卸载本模块产生的风险与后果。\n\n在法律允许范围内，开发者不对因使用或误用本模块造成的间接损失、数据损失、收益损失承担责任。</string>
-    <string name="startup_disclaimer_checkbox_text">我已阅读并同意《风险提示与免责声明》</string>
+    <string name="startup_disclaimer_checkbox_text">我已阅读并同意</string>
     <string name="startup_disclaimer_accept_button">同意并继续</string>
-    <string name="startup_disclaimer_exit_button">不同意并退出</string>
     <string name="startup_disclaimer_save_failed">记录同意状态失败，请重试</string>
     <string name="dialog_cancel_button">关闭</string>
     <string name="dialog_close_button">关闭</string>

@@ -215,4 +215,19 @@ public class QuickTemplateStoreTest {
 
         assertNull(store.read("template_a"));
     }
+
+    @Test
+    public void duplicateNameCheckIgnoresCaseWhitespaceAndExcludedTemplate() {
+        QuickTemplateStore store = new QuickTemplateStore(new FakePrefs());
+        assertTrue(store.save(new QuickTemplateStore.QuickTemplate(
+                "template_a",
+                "Daily Font",
+                1L,
+                Set.of(),
+                TemplateConfigValue.EMPTY)));
+
+        assertTrue(store.hasDuplicateName(" daily font ", "template_b"));
+        assertFalse(store.hasDuplicateName(" daily font ", "template_a"));
+        assertFalse(store.hasDuplicateName("Other", null));
+    }
 }

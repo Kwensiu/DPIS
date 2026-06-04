@@ -173,10 +173,12 @@ final class WechatTargetFieldSheetBinder {
         if (anchor == null) {
             return;
         }
-        new MaterialAlertDialogBuilder(anchor.getContext())
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(anchor.getContext())
                 .setTitle(R.string.dialog_wechat_target_field_help_title)
                 .setMessage(R.string.dialog_wechat_target_field_help_message)
                 .setPositiveButton(R.string.dialog_close_button, null)
-                .show();
+                .create();
+        dialog.show();
+        DialogWindowSizer.applyStandardWidth(dialog, anchor.getContext());
     }
 }

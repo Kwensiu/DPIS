@@ -116,6 +116,7 @@ final class StartupUpdateDialogCoordinator {
                 host.openUrl(releasePageUrl);
             });
             dialogHandle.dialog.show();
+            DialogWindowSizer.applyLargeWidth(dialogHandle.dialog, activity);
             loadReleaseNotes(
                     releaseNotesText,
                     dialogHandle.dialog,
@@ -138,6 +139,7 @@ final class StartupUpdateDialogCoordinator {
         });
         dialogHandle.dialog.setOnDismissListener(unused -> host.cancelActiveUpdateDownload());
         dialogHandle.dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialogHandle.dialog, activity);
         loadReleaseNotes(
                 releaseNotesText,
                 dialogHandle.dialog,
@@ -181,15 +183,21 @@ final class StartupUpdateDialogCoordinator {
                 .inflate(R.layout.dialog_startup_disclaimer, null, false);
         MaterialCheckBox agreementCheckBox = dialogView.findViewById(R.id.startup_disclaimer_checkbox);
         MaterialButton acceptButton = dialogView.findViewById(R.id.startup_disclaimer_accept_button);
-        MaterialButton exitButton = dialogView.findViewById(R.id.startup_disclaimer_exit_button);
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
                 .setView(dialogView)
                 .create();
         dialog.setCancelable(false);
         dialog.setCanceledOnTouchOutside(false);
-        dialog.setOnKeyListener((unused, keyCode, event) -> keyCode == android.view.KeyEvent.KEYCODE_BACK
-                && event.getAction() == android.view.KeyEvent.ACTION_UP);
+        dialog.setOnKeyListener((unused, keyCode, event) -> {
+            if (keyCode != android.view.KeyEvent.KEYCODE_BACK) {
+                return false;
+            }
+            if (event.getAction() == android.view.KeyEvent.ACTION_UP) {
+                host.finishActivity();
+            }
+            return true;
+        });
 
         agreementCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> acceptButton.setEnabled(isChecked));
         acceptButton.setOnClickListener(v -> {
@@ -205,7 +213,7 @@ final class StartupUpdateDialogCoordinator {
                 onAccepted.run();
             }
         });
-        exitButton.setOnClickListener(v -> host.finishActivity());
         dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialog, activity);
     }
 }

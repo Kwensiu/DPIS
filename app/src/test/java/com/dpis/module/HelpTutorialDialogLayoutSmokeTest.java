@@ -12,12 +12,14 @@ import org.junit.Test;
 public class HelpTutorialDialogLayoutSmokeTest {
     @Test
     public void helpTutorialDialogLayoutContainsTwoCardsAndConfirmButton() throws IOException {
+        String source = read("src/main/java/com/dpis/module/HelpTutorialDialog.java");
         String layout = read("src/main/res/layout/dialog_help_tutorial.xml");
         String strings = read("src/main/res/values/strings.xml");
 
         assertTrue(layout.contains("android:id=\"@+id/help_tutorial_system_card\""));
         assertTrue(layout.contains("android:id=\"@+id/help_tutorial_compat_card\""));
         assertTrue(layout.contains("android:id=\"@+id/help_tutorial_confirm_button\""));
+        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialog, activity)"));
         assertTrue(strings.contains("name=\"help_tutorial_system_badge\""));
         assertTrue(strings.contains("name=\"help_tutorial_compat_badge\""));
         assertTrue(!strings.contains("name=\"help_tutorial_message\""));

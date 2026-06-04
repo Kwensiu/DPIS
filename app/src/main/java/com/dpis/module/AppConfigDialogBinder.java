@@ -29,6 +29,7 @@ import java.util.List;
 
 final class AppConfigDialogBinder {
     private static final long MODE_TOGGLE_ANIM_DURATION_MS = 200L;
+    private final boolean showDragHandle;
 
     enum ProcessAction {
         START,
@@ -90,8 +91,13 @@ final class AppConfigDialogBinder {
     private final Host host;
 
     AppConfigDialogBinder(Activity activity, Host host) {
+        this(activity, host, true);
+    }
+
+    AppConfigDialogBinder(Activity activity, Host host, boolean showDragHandle) {
         this.activity = activity;
         this.host = host;
+        this.showDragHandle = showDragHandle;
     }
 
     void bind(View dialogView, AppListItem item, boolean systemHooksEnabled) {
@@ -102,7 +108,7 @@ final class AppConfigDialogBinder {
         updateSaveButtonState(dialogView, views);
         state.captureSavedDraft(views, item != null && item.previewFromGlobalPrefill);
         state.bindUnsavedBadge(SheetUnsavedBadgeBinder.bind(
-                dialogView, () -> state.hasUnsavedChanges(views)));
+                dialogView, () -> state.hasUnsavedChanges(views), showDragHandle));
         AppConfigDialogActionStyle style = resolveDialogActionStyle(views.scopeButton);
         refreshDialogState(views, state, style, systemHooksEnabled, item);
         new AppConfigSheetInteractions(this, host)
@@ -293,6 +299,7 @@ final class AppConfigDialogBinder {
         });
         dialogHolder[0].setCanceledOnTouchOutside(true);
         dialogHolder[0].show();
+        DialogWindowSizer.applyLargeWidth(dialogHolder[0], activity);
         TabLayout.Tab initialTab = tabs.getTabAt(selectedImported ? 1 : 0);
         if (initialTab != null) {
             initialTab.select();
@@ -320,7 +327,7 @@ final class AppConfigDialogBinder {
                 return entry.displayName;
             }
         }
-        return activity.getString(R.string.dialog_typeface_missing);
+        return formatMissingTypefaceLabel(selectedTypefaceId);
     }
 
     private List<TypefaceOption> buildSystemTypefaceOptions(
@@ -332,7 +339,7 @@ final class AppConfigDialogBinder {
                 && !containsSystemTypeface(entries, selectedTypefaceId)) {
             options.add(new TypefaceOption(
                     selectedTypefaceId,
-                    activity.getString(R.string.dialog_typeface_missing)));
+                    formatMissingTypefaceLabel(selectedTypefaceId)));
         }
         for (SystemFontEntry entry : entries) {
             options.add(new TypefaceOption(entry.id, entry.displayName));
@@ -351,7 +358,7 @@ final class AppConfigDialogBinder {
                 && !containsImportedTypeface(entries, selectedTypefaceId)) {
             options.add(new TypefaceOption(
                     selectedTypefaceId,
-                    activity.getString(R.string.dialog_typeface_missing)));
+                    formatMissingTypefaceLabel(selectedTypefaceId)));
         }
         if (entries.isEmpty()) {
             options.add(new TypefaceOption(
@@ -516,6 +523,13 @@ final class AppConfigDialogBinder {
             }
         }
         return false;
+    }
+
+    private String formatMissingTypefaceLabel(String typefaceId) {
+        String displayId = typefaceId != null && !typefaceId.isBlank()
+                ? typefaceId
+                : activity.getString(R.string.dialog_typeface_missing);
+        return activity.getString(R.string.dialog_typeface_missing_named, displayId);
     }
 
     private static boolean containsImportedTypeface(List<FontLibraryEntry> entries, String selectedTypefaceId) {

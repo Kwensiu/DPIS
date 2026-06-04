@@ -383,6 +383,7 @@ final class QuickTemplateEditSheetDialog {
                     dialog.getButton(AlertDialog.BUTTON_POSITIVE));
         });
         dialog.show();
+        DialogWindowSizer.applyStandardWidth(dialog, activity);
     }
 
     private void deleteTemplate() {
@@ -403,7 +404,7 @@ final class QuickTemplateEditSheetDialog {
     private void saveTemplate() {
         String name = textOf(nameInputView).trim();
         if (TextUtils.isEmpty(name)) {
-            nameInputLayout.setError(activity.getString(R.string.quick_template_name_required));
+            bindNameErrorState(false, R.string.quick_template_name_required);
             showToast(R.string.quick_template_name_required);
             return;
         }
@@ -422,6 +423,9 @@ final class QuickTemplateEditSheetDialog {
                         AppConfigDialogBinder.resolveFontMode(fontModeToggle),
                         state.selectedTypefaceId,
                         normalizeTemplateHookDomainsRaw(state.previewFontHookDomainsRaw)));
+        if (!result.success && result.messageResId == R.string.quick_template_name_duplicate) {
+            bindNameErrorState(false, R.string.quick_template_name_duplicate);
+        }
         showToast(result.messageResId);
         if (result.success) {
             if (onUpdated != null) {
@@ -437,14 +441,22 @@ final class QuickTemplateEditSheetDialog {
                 textOf(viewportInputView),
                 AppConfigDialogBinder.resolveViewportMode(viewportModeToggle));
         boolean fontValid = AppConfigInputValidation.isFontScaleInputValid(textOf(fontInputView));
-        nameInputLayout.setError(nameValid
-                ? null
-                : activity.getString(R.string.quick_template_name_required));
+        bindNameErrorState(nameValid, R.string.quick_template_name_required);
         bindInputErrorState(viewportInputLayout, viewportValid);
         bindInputErrorState(fontInputLayout, fontValid);
         saveButton.setEnabled(nameValid && viewportValid && fontValid);
         refreshUnsavedBadge();
         return nameValid && viewportValid && fontValid;
+    }
+
+    private void bindNameErrorState(boolean valid, int messageResId) {
+        if (valid) {
+            nameInputLayout.setError(null);
+            nameInputLayout.setErrorEnabled(false);
+            return;
+        }
+        nameInputLayout.setErrorEnabled(true);
+        nameInputLayout.setError(activity.getString(messageResId));
     }
 
     private static void bindInputErrorState(TextInputLayout inputLayout, boolean valid) {

@@ -37,7 +37,12 @@ public class QuickTemplateEditSheetDialogSourceSmokeTest {
         assertTrue(source.contains("showToast(R.string.quick_template_missing)"));
         assertTrue(source.contains("MaterialAlertDialogBuilder"));
         assertTrue(source.contains("R.string.quick_template_delete_title"));
+        assertTrue(source.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"));
         assertTrue(source.contains("R.string.quick_template_name_required"));
+        assertTrue(source.contains("R.string.quick_template_name_duplicate"));
+        assertTrue(source.contains("bindNameErrorState(nameValid, R.string.quick_template_name_required)"));
+        assertTrue(source.contains("bindNameErrorState(false, R.string.quick_template_name_required)"));
+        assertTrue(source.contains("bindNameErrorState(false, R.string.quick_template_name_duplicate)"));
         assertTrue(saveHandler.contains("R.string.quick_template_save_success"));
         assertTrue(saveHandler.contains("R.string.quick_template_save_failed"));
         assertTrue(source.contains("R.string.quick_template_delete_success"));

@@ -21,7 +21,10 @@
     <!-- Main app screen. -->
     <dimen name="main_toolbar_padding_horizontal">16dp</dimen>
     <dimen name="main_toolbar_padding_top">16dp</dimen>
+    <dimen name="main_land_toolbar_padding_top">4dp</dimen>
     <dimen name="main_toolbar_padding_bottom">6dp</dimen>
+    <dimen name="main_land_detail_padding">18dp</dimen>
+    <dimen name="main_land_detail_top_padding">12dp</dimen>
     <dimen name="main_search_card_height">52dp</dimen>
     <dimen name="main_search_card_corner_radius">24dp</dimen>
     <dimen name="main_search_card_stroke_width">0dp</dimen>
@@ -147,6 +150,10 @@
     <dimen name="sheet_unsaved_badge_min_height">28dp</dimen>
     <dimen name="sheet_unsaved_badge_padding_horizontal">12dp</dimen>
     <dimen name="sheet_unsaved_badge_padding_vertical">4dp</dimen>
+    <dimen name="sheet_unsaved_inline_badge_spacing_start">8dp</dimen>
+    <dimen name="sheet_unsaved_inline_badge_min_height">22dp</dimen>
+    <dimen name="sheet_unsaved_inline_badge_padding_horizontal">8dp</dimen>
+    <dimen name="sheet_unsaved_inline_badge_padding_vertical">2dp</dimen>
     <dimen name="sheet_unsaved_badge_corner_radius">14dp</dimen>
     <dimen name="sheet_unsaved_badge_stroke_width">1dp</dimen>
     <dimen name="dialog_app_config_header_spacing_top">10dp</dimen>
@@ -198,6 +205,10 @@
     <dimen name="dialog_action_spacing_between">8dp</dimen>
     <dimen name="dialog_footer_spacing_top">12dp</dimen>
     <dimen name="dialog_text_line_spacing">2dp</dimen>
+    <dimen name="dialog_window_margin_horizontal">16dp</dimen>
+    <dimen name="dialog_window_compact_max_width">360dp</dimen>
+    <dimen name="dialog_window_standard_max_width">420dp</dimen>
+    <dimen name="dialog_window_large_max_width">560dp</dimen>
     <dimen name="dialog_status_icon_size">36dp</dimen>
     <dimen name="dialog_status_icon_padding">8dp</dimen>
     <dimen name="dialog_button_corner_radius">18dp</dimen>

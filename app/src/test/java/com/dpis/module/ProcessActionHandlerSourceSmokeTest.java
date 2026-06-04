@@ -81,6 +81,7 @@ public class ProcessActionHandlerSourceSmokeTest {
         assertTrue(source.contains("process_action_confirm_message"));
         assertTrue(source.contains("process_action_confirm_proceed_button"));
         assertTrue(source.contains("process_action_confirm_cancel_button"));
+        assertTrue(source.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"));
         assertTrue(layout.contains("@dimen/dialog_surface_padding_horizontal"));
         assertTrue(layout.contains("@dimen/dialog_body_spacing"));
         assertTrue(layout.contains("@dimen/dialog_action_spacing_top"));

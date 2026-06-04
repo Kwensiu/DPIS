@@ -26,5 +26,6 @@ final class HelpTutorialDialog {
                 .create();
         confirmButton.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialog, activity);
     }
 }

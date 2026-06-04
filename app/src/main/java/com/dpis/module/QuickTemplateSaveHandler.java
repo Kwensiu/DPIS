@@ -15,6 +15,9 @@ final class QuickTemplateSaveHandler {
         if (name.isEmpty()) {
             return Result.failure(R.string.quick_template_name_required, request.templateId);
         }
+        if (store.hasDuplicateName(name, request.templateId)) {
+            return Result.failure(R.string.quick_template_name_duplicate, request.templateId);
+        }
         if (!AppConfigInputValidation.isViewportInputValid(
                 request.viewportInput, request.viewportTargetType)
                 || !AppConfigInputValidation.isFontScaleInputValid(request.fontScaleInput)) {

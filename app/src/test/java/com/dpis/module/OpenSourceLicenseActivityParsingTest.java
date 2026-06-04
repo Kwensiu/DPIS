@@ -54,6 +54,15 @@ public class OpenSourceLicenseActivityParsingTest {
     }
 
     @Test
+    public void licenseDetailDialogUsesMaterialLargeWidth() throws IOException {
+        String source = read("src/main/java/com/dpis/module/OpenSourceLicenseActivity.java");
+
+        assertTrue(source.contains("new MaterialAlertDialogBuilder(this)"));
+        assertTrue(source.contains("androidx.appcompat.app.AlertDialog dialog = builder.create();"));
+        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialog, this);"));
+    }
+
+    @Test
     public void notFoundPathShowsMissingThirdPartyLicenseIndicator() throws IOException {
         String source = read("src/main/java/com/dpis/module/OpenSourceLicenseActivity.java")
                 .replace("\r\n", "\n");

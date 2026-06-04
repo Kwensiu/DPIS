@@ -98,6 +98,46 @@ public class QuickTemplateSaveHandlerTest {
     }
 
     @Test
+    public void duplicateNameBlocksSaveButAllowsEditingSameTemplateName() {
+        QuickTemplateStore store = new QuickTemplateStore(new FakePrefs());
+        assertTrue(store.save(new QuickTemplateStore.QuickTemplate(
+                "template_a",
+                "Daily Font",
+                1000L,
+                Set.of(),
+                TemplateConfigValue.EMPTY)));
+
+        QuickTemplateSaveHandler.Result duplicate = handler.save(store, new QuickTemplateSaveHandler.Request(
+                "template_b",
+                " daily font ",
+                "",
+                ViewportTargetType.OFF,
+                ViewportApplyMode.OFF,
+                "",
+                FontApplyMode.OFF,
+                null,
+                null));
+
+        assertFalse(duplicate.success);
+        assertEquals(R.string.quick_template_name_duplicate, duplicate.messageResId);
+        assertNull(store.read("template_b"));
+
+        QuickTemplateSaveHandler.Result sameTemplate = handler.save(store, new QuickTemplateSaveHandler.Request(
+                "template_a",
+                "Daily Font",
+                "",
+                ViewportTargetType.OFF,
+                ViewportApplyMode.OFF,
+                "",
+                FontApplyMode.OFF,
+                null,
+                null));
+
+        assertTrue(sameTemplate.success);
+        assertEquals("Daily Font", store.read("template_a").name);
+    }
+
+    @Test
     public void invalidConfigBlocksSave() {
         QuickTemplateStore store = new QuickTemplateStore(new FakePrefs());
 

@@ -33,7 +33,7 @@ public class TemplateWorkspaceLayoutSmokeTest {
         assertTrue(layout.contains("@string/template_workspace_action_edit_global_prefill"));
         assertTrue(layout.contains("androidx.appcompat.widget.AppCompatImageButton"));
         assertTrue(layout.contains("android:scaleType=\"centerInside\""));
-        assertTrue(layout.contains("@drawable/ic_edit_24"));
+        assertTrue(layout.contains("@drawable/ic_chevron_right_24"));
         assertFalse(layout.contains("@string/template_workspace_action_reset"));
         assertTrue(strings.contains("template_workspace_missing_font"));
         assertTrue(strings.contains("template_workspace_global_prefill_subtitle"));
@@ -118,6 +118,8 @@ public class TemplateWorkspaceLayoutSmokeTest {
                 .contains("quick_template_sort_button"));
         assertTrue(read("src/main/java/com/dpis/module/QuickTemplateSortDialog.java")
                 .contains("ItemTouchHelper"));
+        assertTrue(read("src/main/java/com/dpis/module/QuickTemplateSortDialog.java")
+                .contains("DialogWindowSizer.applyLargeWidth(dialog, activity)"));
         assertFalse(adapter.contains("quick_template_updated"));
     }
 

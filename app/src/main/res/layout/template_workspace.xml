@@ -69,11 +69,11 @@
                         android:layout_width="@dimen/template_workspace_icon_button_size"
                         android:layout_height="@dimen/template_workspace_icon_button_size"
                         android:layout_marginStart="@dimen/dialog_action_spacing_between"
-                        android:background="@drawable/bg_round_button_surface"
+                        android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="@string/template_workspace_action_edit_global_prefill"
                         android:padding="@dimen/template_workspace_icon_button_padding"
                         android:scaleType="centerInside"
-                        android:src="@drawable/ic_edit_24"
+                        android:src="@drawable/ic_chevron_right_24"
                         app:tint="?attr/colorOnSurfaceVariant" />
                 </LinearLayout>
 

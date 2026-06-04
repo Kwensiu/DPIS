@@ -43,6 +43,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
     private static final int REQUEST_IMPORT_FONT = 2001;
     private static final String FONT_PREVIEW_PRIMARY_TEXT = "AaBbCc 你好世界 123";
     private static final String FONT_PREVIEW_SECONDARY_TEXT = "The quick brown fox jumps over the lazy dog";
+    private static final float FONT_DETAIL_DIALOG_MAX_HEIGHT_FRACTION = 0.72f;
 
     private LinearLayout listView;
     private MaterialTextView emptyView;
@@ -229,6 +230,9 @@ public final class FontLibraryActivity extends LocalizedActivity {
         content.setOrientation(LinearLayout.VERTICAL);
         int padding = dp(20);
         content.setPadding(padding, dp(20), padding, 0);
+        MaxHeightNestedScrollView scrollView = new MaxHeightNestedScrollView(this);
+        scrollView.setFillViewport(false);
+        scrollView.setMaxHeightFraction(FONT_DETAIL_DIALOG_MAX_HEIGHT_FRACTION);
 
         content.addView(createFontDetailHeader(entry, !references.isEmpty()));
 
@@ -241,9 +245,12 @@ public final class FontLibraryActivity extends LocalizedActivity {
         content.addView(createDivider(18));
         androidx.appcompat.app.AlertDialog[] dialogHolder = new androidx.appcompat.app.AlertDialog[1];
         content.addView(createReferenceSection(entry, references, dialogHolder), topMarginParams(14));
+        scrollView.addView(content, new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
 
         dialogHolder[0] = new MaterialAlertDialogBuilder(this)
-                .setView(content)
+                .setView(scrollView)
                 .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
                 .setNeutralButton(R.string.font_library_rename_action, null)
                 .setPositiveButton(R.string.font_library_delete_action, null)
@@ -263,6 +270,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
                     });
         });
         dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialog, this);
     }
 
     private View createFontDetailHeader(FontLibraryEntry entry, boolean inUse) {
@@ -448,6 +456,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
                 });
         });
         dialog.show();
+        DialogWindowSizer.applyStandardWidth(dialog, this);
     }
 
     private void confirmDelete(FontLibraryEntry entry, androidx.appcompat.app.AlertDialog parentDialog) {
@@ -464,6 +473,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
                 .create();
         dialog.setOnShowListener(d -> bindDialogButtonHaptics(dialog));
         dialog.show();
+        DialogWindowSizer.applyStandardWidth(dialog, this);
     }
 
     private void confirmForceDelete(FontLibraryEntry entry,
@@ -487,6 +497,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
                 .create();
         dialog.setOnShowListener(d -> bindDialogButtonHaptics(dialog));
         dialog.show();
+        DialogWindowSizer.applyStandardWidth(dialog, this);
     }
 
     private FontLibraryStore.DeleteResult forceDeleteFont(FontLibraryEntry entry, List<FontReference> references) {
@@ -543,6 +554,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
                 .create();
         dialog.setOnShowListener(d -> bindDialogButtonHaptics(dialog));
         dialog.show();
+        DialogWindowSizer.applyStandardWidth(dialog, this);
     }
 
     @SuppressWarnings("deprecation")
@@ -584,17 +596,19 @@ public final class FontLibraryActivity extends LocalizedActivity {
         }
         TextInputLayout inputLayout = createNameInput(FontLibraryStore.normalizeDisplayName(sourceName));
         TextInputEditText input = (TextInputEditText) inputLayout.getEditText();
-        new MaterialAlertDialogBuilder(this)
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.font_library_name_title)
                 .setView(inputLayout)
                 .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
-                .setPositiveButton(R.string.dialog_confirm_button, (dialog, which) -> {
+                .setPositiveButton(R.string.dialog_confirm_button, (unusedDialog, which) -> {
                     String displayName = input != null && input.getText() != null
                             ? input.getText().toString()
                             : "";
                     importFont(uri, sourceName, mimeType, displayName);
                 })
-                .show();
+                .create();
+        dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialog, this);
     }
 
     private TextInputLayout createNameInput(String initialName) {
@@ -769,6 +783,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
                     dialog, tempFile, sourceName, displayName, options, checked));
         });
         dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialog, this);
     }
 
     private void importSelectedTtcFaces(

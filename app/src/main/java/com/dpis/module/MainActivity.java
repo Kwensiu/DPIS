@@ -34,6 +34,8 @@ import android.widget.Toast;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -118,6 +120,12 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     private TabLayout filterTabs;
     private View appWorkspaceDivider;
     private View templateWorkspaceContainer;
+    private View landListPageView;
+    private View landDetailEmptyView;
+    private FrameLayout landDetailContent;
+    private AppListPagerAdapter.AppListPageController landListController;
+    private AppListPage landCurrentPage = AppListPage.ALL_APPS;
+    private final SparseArray<Parcelable> landScrollStates = new SparseArray<>();
     private TemplateWorkspaceBinder templateWorkspaceBinder;
     private NavigationBarView workspaceSwitch;
     private SparseArray<Parcelable> restoredPageScrollStates;
@@ -126,6 +134,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     private FloatingActionButton helpFab;
     private boolean searchFabHidden;
     private boolean updatingWorkspaceSelection;
+    private boolean updatingFilterTabSelection;
     private ImageButton searchFilterButton;
     private boolean cachedSystemHookEffectiveEnabled;
     private boolean skipNextImmediateServiceReload;
@@ -202,27 +211,33 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         filterTabs = findViewById(R.id.filter_tabs);
         appWorkspaceDivider = findViewById(R.id.app_workspace_divider);
         templateWorkspaceContainer = findViewById(R.id.template_workspace_container);
+        landListPageView = findViewById(R.id.land_app_list_page);
+        landDetailEmptyView = findViewById(R.id.land_detail_empty);
+        landDetailContent = findViewById(R.id.land_detail_content);
         templateWorkspaceBinder = new TemplateWorkspaceBinder(this, createTemplateWorkspaceActions(),
                 createQuickTemplateActions());
         workspaceSwitch = findViewById(R.id.workspace_switch);
-        pagerAdapter = new AppListPagerAdapter(
-                this::showEditDialog,
-                this::onPageRefreshRequested,
-                this::onPageListScrolled,
-                this::onIconLoadRequested,
-                this::isSystemHookEnabledFromStore);
-        pagerAdapter.restorePageScrollStates(restoredPageScrollStates);
-        appPager.setAdapter(pagerAdapter);
+        if (appPager != null) {
+            pagerAdapter = new AppListPagerAdapter(
+                    this::showEditDialog,
+                    this::onPageRefreshRequested,
+                    this::onPageListScrolled,
+                    this::onIconLoadRequested,
+                    this::isSystemHookEnabledFromStore);
+            pagerAdapter.restorePageScrollStates(restoredPageScrollStates);
+            appPager.setAdapter(pagerAdapter);
+        } else {
+            restoreLandscapeScrollStates(restoredPageScrollStates);
+        }
+        bindLandscapeListController();
         applyRefreshingStatesToPager();
         if (savedInstanceState != null) {
-            appPager.setCurrentItem(savedInstanceState.getInt(STATE_CURRENT_PAGE, 0), false);
+            setCurrentAppListPage(AppListPage.fromPosition(savedInstanceState.getInt(STATE_CURRENT_PAGE, 0)), false);
         } else if (retainedState != null) {
-            appPager.setCurrentItem(retainedState.currentPage, false);
+            setCurrentAppListPage(AppListPage.fromPosition(retainedState.currentPage), false);
         }
 
-        new TabLayoutMediator(filterTabs, appPager,
-                (tab, position) -> tab.setText(getString(AppListPage.fromPosition(position).titleRes())))
-                .attach();
+        bindFilterTabs();
         bindWorkspaceSwitch();
         searchFilterButton.setOnClickListener(v -> showFilterDialog());
         bindFabTouchFeedback(searchFocusFab);
@@ -304,9 +319,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     protected void onStart() {
         super.onStart();
         refreshSystemHookEffectiveEnabled();
-        if (pagerAdapter != null) {
-            pagerAdapter.refreshVisibleStatuses();
-        }
+        refreshVisibleAppListStatuses();
         if (requireUiState().workspaceMode == MainWorkspaceMode.TEMPLATE) {
             bindTemplateWorkspace();
         }
@@ -332,9 +345,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     public void onServiceStateChanged() {
         runOnUiThread(() -> {
             refreshSystemHookEffectiveEnabled();
-            if (pagerAdapter != null) {
-                pagerAdapter.refreshVisibleStatuses();
-            }
+            refreshVisibleAppListStatuses();
             if (skipNextImmediateServiceReload) {
                 skipNextImmediateServiceReload = false;
                 return;
@@ -355,11 +366,14 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         outState.putBoolean(STATE_FILTER_FONT_ONLY, state.filterState.fontConfiguredOnly);
         if (appPager != null) {
             outState.putInt(STATE_CURRENT_PAGE, appPager.getCurrentItem());
+        } else {
+            outState.putInt(STATE_CURRENT_PAGE, landCurrentPage.position());
         }
-        if (pagerAdapter != null) {
+        SparseArray<Parcelable> pageScrollStates = captureAppListScrollStates();
+        if (pageScrollStates != null) {
             outState.putSparseParcelableArray(
                     STATE_PAGE_SCROLL_STATES,
-                    pagerAdapter.capturePageScrollStates());
+                    pageScrollStates);
         }
         outState.putIntArray(STATE_REFRESHING_PAGES, captureRefreshingPagePositions());
     }
@@ -383,10 +397,8 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     public Object onRetainNonConfigurationInstance() {
         MainUiState state = requireUiState();
         List<AppListItem> snapshot = state.appsSnapshot();
-        int currentPage = appPager != null ? appPager.getCurrentItem() : 0;
-        SparseArray<Parcelable> pageScrollStates = pagerAdapter != null
-                ? pagerAdapter.capturePageScrollStates()
-                : restoredPageScrollStates;
+        int currentPage = appPager != null ? appPager.getCurrentItem() : landCurrentPage.position();
+        SparseArray<Parcelable> pageScrollStates = captureAppListScrollStates();
         return new RetainedState(
                 snapshot,
                 state.query,
@@ -416,6 +428,46 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         installedAppCatalogCoordinator.onIconLoadRequested(packageName);
     }
 
+    private void refreshVisibleAppListStatuses() {
+        if (pagerAdapter != null) {
+            pagerAdapter.refreshVisibleStatuses();
+        }
+        if (landListController != null) {
+            landListController.refreshStatuses();
+        }
+    }
+
+    private SparseArray<Parcelable> captureAppListScrollStates() {
+        if (pagerAdapter != null) {
+            return pagerAdapter.capturePageScrollStates();
+        }
+        captureCurrentLandscapeScrollState();
+        SparseArray<Parcelable> states = new SparseArray<>();
+        for (int i = 0; i < landScrollStates.size(); i++) {
+            states.put(landScrollStates.keyAt(i), landScrollStates.valueAt(i));
+        }
+        return states;
+    }
+
+    private void restoreLandscapeScrollStates(SparseArray<Parcelable> states) {
+        landScrollStates.clear();
+        if (states == null) {
+            return;
+        }
+        for (int i = 0; i < states.size(); i++) {
+            landScrollStates.put(states.keyAt(i), states.valueAt(i));
+        }
+    }
+
+    private void captureCurrentLandscapeScrollState() {
+        if (landListController != null) {
+            Parcelable landState = landListController.captureScrollState();
+            if (landState != null) {
+                landScrollStates.put(landCurrentPage.position(), landState);
+            }
+        }
+    }
+
     private static Set<AppListPage> decodeRefreshingPages(int[] pagePositions) {
         EnumSet<AppListPage> refreshingPages = EnumSet.noneOf(AppListPage.class);
         if (pagePositions == null) {
@@ -437,13 +489,98 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         return positions;
     }
 
-    private void applyRefreshingStatesToPager() {
-        if (pagerAdapter == null) {
+    private void bindLandscapeListController() {
+        if (landListPageView == null) {
             return;
         }
-        MainUiState state = requireUiState();
+        SwipeRefreshLayout swipeRefreshLayout = landListPageView.findViewById(R.id.page_swipe_refresh);
+        RecyclerView recyclerView = landListPageView.findViewById(R.id.page_list);
+        landListController = new AppListPagerAdapter.AppListPageController(
+                swipeRefreshLayout,
+                recyclerView,
+                this::showEditDialog,
+                this::onPageRefreshRequested,
+                this::onPageListScrolled,
+                this::onIconLoadRequested,
+                this::isSystemHookEnabledFromStore);
+        landListController.setSwipeRefreshEnabled(false);
+    }
+
+    private void bindFilterTabs() {
+        if (filterTabs == null) {
+            return;
+        }
+        if (appPager != null) {
+            new TabLayoutMediator(filterTabs, appPager,
+                    (tab, position) -> tab.setText(getString(AppListPage.fromPosition(position).titleRes())))
+                    .attach();
+            return;
+        }
+        filterTabs.removeAllTabs();
         for (AppListPage page : AppListPage.values()) {
-            pagerAdapter.setRefreshing(page, state.isRefreshing(page));
+            TabLayout.Tab tab = filterTabs.newTab()
+                    .setText(getString(page.titleRes()));
+            filterTabs.addTab(tab, page == landCurrentPage);
+        }
+        filterTabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                if (updatingFilterTabSelection) {
+                    return;
+                }
+                setCurrentAppListPage(AppListPage.fromPosition(tab.getPosition()), true);
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
+        });
+    }
+
+    private void setCurrentAppListPage(AppListPage page, boolean submit) {
+        AppListPage nextPage = page != null ? page : AppListPage.ALL_APPS;
+        if (appPager != null) {
+            appPager.setCurrentItem(nextPage.position(), false);
+            if (submit) {
+                applyFilter();
+                applyRefreshingStatesToPager();
+            }
+            return;
+        }
+        if (landCurrentPage != nextPage) {
+            captureCurrentLandscapeScrollState();
+        }
+        landCurrentPage = nextPage;
+        if (filterTabs != null) {
+            TabLayout.Tab selectedTab = filterTabs.getTabAt(nextPage.position());
+            if (selectedTab != null && !selectedTab.isSelected()) {
+                updatingFilterTabSelection = true;
+                try {
+                    selectedTab.select();
+                } finally {
+                    updatingFilterTabSelection = false;
+                }
+            }
+        }
+        if (submit) {
+            applyFilter();
+            applyRefreshingStatesToPager();
+        }
+    }
+
+    private void applyRefreshingStatesToPager() {
+        MainUiState state = requireUiState();
+        if (pagerAdapter != null) {
+            for (AppListPage page : AppListPage.values()) {
+                pagerAdapter.setRefreshing(page, state.isRefreshing(page));
+            }
+        }
+        if (landListController != null) {
+            landListController.setRefreshing(state.isRefreshing(landCurrentPage));
         }
     }
 
@@ -515,8 +652,9 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         View topContainer = findViewById(R.id.top_container);
         final int baseTopPadding = topContainer.getPaddingTop();
         ViewCompat.setOnApplyWindowInsetsListener(topContainer, (view, windowInsets) -> {
-            Insets statusBars = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars());
-            view.setPadding(view.getPaddingLeft(), baseTopPadding + statusBars.top,
+            Insets safeDrawing = windowInsets.getInsets(
+                    WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            view.setPadding(view.getPaddingLeft(), baseTopPadding + safeDrawing.top,
                     view.getPaddingRight(), view.getPaddingBottom());
             return windowInsets;
         });
@@ -741,12 +879,18 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     }
 
     private void applyFilter() {
-        if (pagerAdapter == null) {
-            return;
-        }
         MainUiState state = requireUiState();
-        for (AppListPage page : AppListPage.values()) {
-            pagerAdapter.submitPage(page, state.visibleItems(page));
+        if (pagerAdapter != null) {
+            for (AppListPage page : AppListPage.values()) {
+                pagerAdapter.submitPage(page, state.visibleItems(page));
+            }
+        }
+        if (landListController != null) {
+            landListController.bind(
+                    landCurrentPage,
+                    state.visibleItems(landCurrentPage),
+                    landScrollStates.get(landCurrentPage.position()),
+                    state.isRefreshing(landCurrentPage));
         }
     }
 
@@ -802,9 +946,18 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         setVisible(filterTabs, appWorkspace);
         setVisible(appWorkspaceDivider, appWorkspace);
         setVisible(appPager, appWorkspace);
+        setVisible(landListPageView, appWorkspace);
         setVisible(templateWorkspaceContainer, !appWorkspace);
-        setVisible(searchFocusFab, appWorkspace);
-        setVisible(helpFab, appWorkspace);
+        if (!appWorkspace) {
+            setVisible(landDetailEmptyView, true);
+            setVisible(landDetailContent, false);
+            if (landDetailContent != null) {
+                landDetailContent.removeAllViews();
+            }
+        }
+        boolean floatingActionsVisible = appWorkspace && !isLandscapeDetailMode();
+        setVisible(searchFocusFab, floatingActionsVisible);
+        setVisible(helpFab, floatingActionsVisible);
         if (searchFilterButton != null) {
             searchFilterButton.setEnabled(appWorkspace);
             searchFilterButton.setVisibility(appWorkspace ? View.VISIBLE : View.GONE);
@@ -816,6 +969,10 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         if (!appWorkspace) {
             bindTemplateWorkspace();
         }
+    }
+
+    private boolean isLandscapeDetailMode() {
+        return landDetailContent != null && landDetailEmptyView != null;
     }
 
     private void bindTemplateWorkspace() {
@@ -928,7 +1085,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
 
     private boolean maybeShowStartupDisclaimerDialog() {
         return startupUpdateDialogCoordinator().maybeShowStartupDisclaimerDialog(
-                getUiConfigStore(),
+                new DpiConfigStore(getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE)),
                 this::maybeCheckForUpdatesOnStartup);
     }
 
@@ -949,6 +1106,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             continueStartupDialogsAfterRuntimeReloadAdvice();
         });
         dialog.show();
+        DialogWindowSizer.applyStandardWidth(dialog, this);
         return true;
     }
 
@@ -1251,9 +1409,14 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
     }
 
     private void showEditDialog(AppListItem item) {
-        if (pagerAdapter != null) {
-            pagerAdapter.refreshVisibleStatuses();
+        if (isLandscapeDetailMode()) {
+            showEditDetailPane(item);
+            return;
         }
+        showEditBottomSheet(item);
+    }
+
+    private void showEditBottomSheet(AppListItem item) {
         DpiConfigStore store = getUiConfigStore();
         TemplateConfigValue globalPrefill = new GlobalPrefillStore(
                 getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE)).read();
@@ -1266,6 +1429,29 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
         new AppConfigDialogBinder(this, createAppConfigDialogHost()).bind(
                 dialogView, sheetItem, systemHooksEnabled);
         new AppConfigDialogCoordinator(this).show(dialogView);
+    }
+
+    private void showEditDetailPane(AppListItem item) {
+        if (landDetailContent == null) {
+            showEditBottomSheet(item);
+            return;
+        }
+        DpiConfigStore store = getUiConfigStore();
+        TemplateConfigValue globalPrefill = new GlobalPrefillStore(
+                getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE)).read();
+        AppListItem sheetItem = AppConfigPrefillPreview.applyIfEligible(
+                item, store, globalPrefill);
+        boolean systemHooksEnabled = isSystemHookEnabledFromStore();
+        View dialogView = LayoutInflater.from(this).inflate(
+                R.layout.dialog_app_config, landDetailContent, false);
+        new AppConfigDialogBinder(this, createAppConfigDialogHost(), false).bind(
+                dialogView, sheetItem, systemHooksEnabled);
+        landDetailContent.removeAllViews();
+        landDetailContent.addView(dialogView, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+        setVisible(landDetailEmptyView, false);
+        setVisible(landDetailContent, true);
     }
 
     private TemplateWorkspaceBinder.GlobalPrefillActions createTemplateWorkspaceActions() {
@@ -1346,12 +1532,17 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
             showToast(R.string.quick_template_apply_empty_selection);
             return;
         }
+        String message = plan.overwriteCount > 0
+                ? getString(
+                        R.string.quick_template_apply_confirm_message_overwrite,
+                        plan.targetCount,
+                        plan.overwriteCount)
+                : getString(
+                        R.string.quick_template_apply_confirm_message,
+                        plan.targetCount);
         androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setTitle(getString(R.string.quick_template_apply_confirm_title, template.name))
-                .setMessage(getString(
-                        R.string.quick_template_apply_confirm_message,
-                        plan.targetCount,
-                        plan.overwriteCount))
+                .setMessage(message)
                 .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
                 .setPositiveButton(R.string.template_workspace_action_apply,
                         (unusedDialog, which) -> finishQuickTemplateApply(
@@ -1364,6 +1555,7 @@ public final class MainActivity extends LocalizedActivity implements DpisApplica
                     dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE));
         });
         dialog.show();
+        DialogWindowSizer.applyStandardWidth(dialog, this);
     }
 
     private void finishQuickTemplateApply(QuickTemplateApplyCoordinator coordinator,

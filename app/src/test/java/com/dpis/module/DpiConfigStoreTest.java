@@ -543,6 +543,7 @@ public class DpiConfigStoreTest {
         FakePrefs remotePrefs = new FakePrefs();
         remotePrefs.edit()
                 .putBoolean(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED, true)
+                .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
                 .putInt("viewport.com.max.xiaoheihe.width_dp", 420)
                 .putString("font.library.entries", "[{\"id\":\"font_abcd1234\"}]")
                 .commit();
@@ -559,6 +560,67 @@ public class DpiConfigStoreTest {
         assertEquals(420, snapshot.get("viewport.com.max.xiaoheihe.width_dp"));
         assertEquals(135, snapshot.get("font.com.max.xiaoheihe.scale_percent"));
         assertEquals("[{\"id\":\"font_abcd1234\"}]", snapshot.get("font.library.entries"));
+        assertEquals(true, snapshot.get(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED));
+    }
+
+    @Test
+    public void snapshotLocalMirrorExcludesLocalOnlyUiState() {
+        FakePrefs remotePrefs = new FakePrefs();
+        remotePrefs.edit()
+                .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
+                .putInt(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT, 73)
+                .putBoolean(DpiConfigStore.KEY_PREDICTIVE_BACK_ENABLED, false)
+                .putBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, true)
+                .putBoolean(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED, true)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(remotePrefs);
+
+        Map<String, Object> snapshot = store.snapshotLocalMirror();
+
+        assertFalse(snapshot.containsKey(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED));
+        assertFalse(snapshot.containsKey(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT));
+        assertFalse(snapshot.containsKey(DpiConfigStore.KEY_PREDICTIVE_BACK_ENABLED));
+        assertFalse(snapshot.containsKey(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON));
+        assertEquals(true, snapshot.get(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED));
+    }
+
+    @Test
+    public void localOnlyUiStateIgnoresRemoteFallbackWhenLocalMissing() {
+        FakePrefs remotePrefs = new FakePrefs();
+        remotePrefs.edit()
+                .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
+                .putInt(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT, 73)
+                .putBoolean(DpiConfigStore.KEY_PREDICTIVE_BACK_ENABLED, false)
+                .putBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, true)
+                .commit();
+        FakePrefs localPrefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(remotePrefs, localPrefs);
+
+        assertFalse(store.isStartupDisclaimerAccepted());
+        assertEquals(AppUiScaleManager.DEFAULT_SCALE_PERCENT, store.getInterfaceScalePercent());
+        assertTrue(store.isPredictiveBackEnabled());
+        assertFalse(store.isLauncherIconHidden());
+    }
+
+    @Test
+    public void localOnlyUiStateWritesToLocalMirrorWhenRemoteStoreIsPrimary() {
+        FakePrefs remotePrefs = new FakePrefs();
+        FakePrefs localPrefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(remotePrefs, localPrefs);
+
+        assertTrue(store.setStartupDisclaimerAccepted(true));
+        assertTrue(store.setInterfaceScalePercent(73));
+        assertTrue(store.setPredictiveBackEnabled(false));
+        assertTrue(store.setLauncherIconHidden(true));
+
+        assertFalse(remotePrefs.contains(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED));
+        assertFalse(remotePrefs.contains(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT));
+        assertFalse(remotePrefs.contains(DpiConfigStore.KEY_PREDICTIVE_BACK_ENABLED));
+        assertFalse(remotePrefs.contains(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON));
+        assertTrue(localPrefs.getBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, false));
+        assertEquals(73, localPrefs.getInt(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT, 0));
+        assertFalse(localPrefs.getBoolean(DpiConfigStore.KEY_PREDICTIVE_BACK_ENABLED, true));
+        assertTrue(localPrefs.getBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, false));
     }
 
     @Test

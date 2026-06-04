@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -74,6 +75,24 @@ final class QuickTemplateStore {
                 updatedAt,
                 getSelectedPackages(normalizedId),
                 TemplateConfigPreferences.read(preferences, prefix + "config."));
+    }
+
+    boolean hasDuplicateName(String name, String excludedId) {
+        String normalizedName = normalizeName(name);
+        if (normalizedName == null) {
+            return false;
+        }
+        String normalizedExcludedId = normalizeId(excludedId);
+        for (QuickTemplate template : readAll()) {
+            if (normalizedExcludedId != null && normalizedExcludedId.equals(template.id)) {
+                continue;
+            }
+            String candidateName = normalizeName(template.name);
+            if (normalizedName.equals(candidateName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     boolean save(QuickTemplate template) {
@@ -224,6 +243,14 @@ final class QuickTemplateStore {
         }
         String trimmed = id.trim();
         return trimmed.isEmpty() || trimmed.contains(".") ? null : trimmed;
+    }
+
+    private static String normalizeName(String name) {
+        if (name == null) {
+            return null;
+        }
+        String trimmed = name.trim();
+        return trimmed.isEmpty() ? null : trimmed.toLowerCase(Locale.ROOT);
     }
 
     private static LinkedHashSet<String> sanitizeStringSet(Set<String> values) {

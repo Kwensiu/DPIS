@@ -293,6 +293,7 @@ public class DpisApplicationMigrationTest {
         assertTrue(remote.setHyperOsFlutterFontHookEnabled(true));
         assertTrue(remote.setTargetFontScalePercent("com.miui.weather2", 200));
         assertTrue(remote.setTargetFontApplyMode("com.miui.weather2", FontApplyMode.FIELD_REWRITE));
+        assertTrue(remote.setStartupDisclaimerAccepted(true));
 
         invokeMigrate(local, remote);
         invokeMirror(remote, local);
@@ -301,6 +302,67 @@ public class DpisApplicationMigrationTest {
         assertTrue(local.getConfiguredPackages().contains("com.miui.weather2"));
         assertEquals(Integer.valueOf(200), local.getTargetFontScalePercent("com.miui.weather2"));
         assertEquals(FontApplyMode.FIELD_REWRITE, local.getTargetFontApplyMode("com.miui.weather2"));
+        assertFalse(local.isStartupDisclaimerAccepted());
+    }
+
+    @Test
+    public void mirrorPreservesLocalStartupDisclaimerConsent() throws Exception {
+        FakePrefs localPrefs = new FakePrefs();
+        DpiConfigStore local = new DpiConfigStore(localPrefs);
+        assertTrue(local.setStartupDisclaimerAccepted(true));
+
+        FakePrefs remotePrefs = new FakePrefs();
+        DpiConfigStore remote = new DpiConfigStore(remotePrefs);
+        assertTrue(remote.setTargetFontScalePercent("com.miui.weather2", 200));
+
+        invokeMirror(remote, local);
+
+        assertTrue(local.isStartupDisclaimerAccepted());
+        assertEquals(Integer.valueOf(200), local.getTargetFontScalePercent("com.miui.weather2"));
+    }
+
+    @Test
+    public void mirrorPreservesLocalOnlyUiState() throws Exception {
+        FakePrefs localPrefs = new FakePrefs();
+        DpiConfigStore local = new DpiConfigStore(localPrefs);
+        assertTrue(local.setStartupDisclaimerAccepted(true));
+        assertTrue(local.setInterfaceScalePercent(73));
+        assertTrue(local.setPredictiveBackEnabled(false));
+        assertTrue(local.setLauncherIconHidden(true));
+
+        FakePrefs remotePrefs = new FakePrefs();
+        DpiConfigStore remote = new DpiConfigStore(remotePrefs);
+        assertTrue(remote.setTargetFontScalePercent("com.miui.weather2", 200));
+
+        invokeMirror(remote, local);
+
+        assertTrue(local.isStartupDisclaimerAccepted());
+        assertEquals(73, local.getInterfaceScalePercent());
+        assertFalse(local.isPredictiveBackEnabled());
+        assertTrue(local.isLauncherIconHidden());
+        assertEquals(Integer.valueOf(200), local.getTargetFontScalePercent("com.miui.weather2"));
+    }
+
+    @Test
+    public void mirrorDoesNotReviveRemoteOnlyUiState() throws Exception {
+        FakePrefs localPrefs = new FakePrefs();
+        DpiConfigStore local = new DpiConfigStore(localPrefs);
+
+        FakePrefs remotePrefs = new FakePrefs();
+        remotePrefs.edit()
+                .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
+                .putInt(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT, 73)
+                .putBoolean(DpiConfigStore.KEY_PREDICTIVE_BACK_ENABLED, false)
+                .putBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, true)
+                .commit();
+        DpiConfigStore remote = new DpiConfigStore(remotePrefs);
+
+        invokeMirror(remote, local);
+
+        assertFalse(local.isStartupDisclaimerAccepted());
+        assertEquals(AppUiScaleManager.DEFAULT_SCALE_PERCENT, local.getInterfaceScalePercent());
+        assertTrue(local.isPredictiveBackEnabled());
+        assertFalse(local.isLauncherIconHidden());
     }
 
     private static void invokeMigrate(DpiConfigStore from, DpiConfigStore to) throws Exception {

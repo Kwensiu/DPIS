@@ -27,11 +27,15 @@ public class MainActivitySourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(source.contains("R.id.app_pager"));
+        assertTrue(source.contains("R.id.land_app_list_page"));
         assertTrue(source.contains("R.id.workspace_switch"));
         assertTrue(source.contains("R.id.workspace_app_button"));
         assertTrue(source.contains("R.id.workspace_template_button"));
         assertTrue(source.contains("R.id.search_focus_fab"));
         assertTrue(source.contains("new TabLayoutMediator("));
+        assertTrue(source.contains("bindLandscapeListController();"));
+        assertTrue(source.contains("landListController = new AppListPagerAdapter.AppListPageController("));
+        assertTrue(source.contains("if (appPager != null) {\n            pagerAdapter = new AppListPagerAdapter("));
         assertTrue(source.contains("searchFilterButton.setOnClickListener"));
         assertTrue(source.contains("helpFab.setOnClickListener"));
         assertTrue(source.contains("showHelpTutorialDialog()"));
@@ -70,8 +74,9 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("setVisible(appWorkspaceDivider, appWorkspace);"));
         assertTrue(source.contains("setVisible(appPager, appWorkspace);"));
         assertTrue(source.contains("setVisible(templateWorkspaceContainer, !appWorkspace);"));
-        assertTrue(source.contains("setVisible(searchFocusFab, appWorkspace);"));
-        assertTrue(source.contains("setVisible(helpFab, appWorkspace);"));
+        assertTrue(source.contains("boolean floatingActionsVisible = appWorkspace && !isLandscapeDetailMode();"));
+        assertTrue(source.contains("setVisible(searchFocusFab, floatingActionsVisible);"));
+        assertTrue(source.contains("setVisible(helpFab, floatingActionsVisible);"));
         assertTrue(source.contains(
                 "templateWorkspaceBinder = new TemplateWorkspaceBinder(this, createTemplateWorkspaceActions(),"));
         assertTrue(source.contains("bindTemplateWorkspace();"));
@@ -154,6 +159,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("ModuleRuntimeReloadAdvisor.markReloadAdviceAcknowledged(this)"));
         assertTrue(source.contains("R.layout.dialog_module_runtime_reload_advice"));
         assertTrue(source.contains("new MaterialAlertDialogBuilder(this)"));
+        assertTrue(source.contains("DialogWindowSizer.applyStandardWidth(dialog, this)"));
         assertTrue(source.contains("module_runtime_reload_ack_button"));
         assertTrue(!source.contains("ModuleRuntimeReloader.softReloadAsync("));
         assertTrue(!source.contains("module_runtime_reload_now_button"));
@@ -180,6 +186,39 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("maybeShowStartupDisclaimerDialog()"));
         assertTrue(source.contains("if (!maybeShowStartupDisclaimerDialog()) {"));
         assertTrue(source.contains("startupUpdateDialogCoordinator().maybeShowStartupDisclaimerDialog("));
+        assertTrue(source.contains("new DpiConfigStore(getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE))"));
+    }
+
+    @Test
+    public void dialogWindowSizerUsesResponsivePresetConstraints() throws IOException {
+        String source = read("src/main/java/com/dpis/module/DialogWindowSizer.java");
+        String dimens = read("src/main/res/values/dimens.xml");
+        String integers = read("src/main/res/values/integers.xml");
+
+        assertTrue(source.contains("applyCompactWidth(AlertDialog dialog, Context context)"));
+        assertTrue(source.contains("applyStandardWidth(AlertDialog dialog, Context context)"));
+        assertTrue(source.contains("applyLargeWidth(AlertDialog dialog, Context context)"));
+        assertTrue(source.contains("dialog_window_margin_horizontal"));
+        assertTrue(source.contains("resolvePreset(context, preset)"));
+        assertTrue(source.contains("R.integer.dialog_window_large_min_width_dp"));
+        assertTrue(source.contains("? Preset.STANDARD"));
+        assertTrue(source.contains("calculateWindowWidth(screenWidth"));
+        assertTrue(source.contains("screenWidth - horizontalMargin * 2"));
+        assertTrue(source.contains("COMPACT(R.dimen.dialog_window_compact_max_width, 0.88f)"));
+        assertTrue(source.contains("STANDARD(R.dimen.dialog_window_standard_max_width, 0.90f)"));
+        assertTrue(source.contains("LARGE(R.dimen.dialog_window_large_max_width, 0.92f)"));
+        assertTrue(dimens.contains("dialog_window_margin_horizontal\">16dp"));
+        assertTrue(dimens.contains("dialog_window_compact_max_width\">360dp"));
+        assertTrue(dimens.contains("dialog_window_standard_max_width\">420dp"));
+        assertTrue(dimens.contains("dialog_window_large_max_width\">560dp"));
+        assertTrue(integers.contains("dialog_window_large_min_width_dp\">600"));
+    }
+
+    @Test
+    public void dialogWindowSizerTreatsHorizontalMarginAsPerSideInset() {
+        assertTrue(DialogWindowSizer.calculateWindowWidth(360, 16, 420, 0.90f) == 324);
+        assertTrue(DialogWindowSizer.calculateWindowWidth(1000, 16, 560, 0.92f) == 560);
+        assertTrue(DialogWindowSizer.calculateWindowWidth(24, 16, 420, 0.90f) == 0);
     }
 
     @Test
@@ -227,16 +266,19 @@ public class MainActivitySourceSmokeTest {
     public void startupDisclaimerLayoutKeepsScrollableContent() throws IOException {
         String layout = read("src/main/res/layout/dialog_startup_disclaimer.xml");
 
-        assertTrue(layout.contains("androidx.core.widget.NestedScrollView"));
+        assertTrue(layout.contains("com.dpis.module.MaxHeightNestedScrollView"));
+        assertTrue(layout.contains("app:maxHeightFraction=\"0.45\""));
         assertTrue(layout.contains("startup_disclaimer_message"));
         assertTrue(layout.contains("startup_disclaimer_checkbox"));
+        assertTrue(layout.indexOf("</com.dpis.module.MaxHeightNestedScrollView>")
+                < layout.indexOf("android:id=\"@+id/startup_disclaimer_checkbox\""));
         assertTrue(layout.contains("startup_disclaimer_accept_button"));
-        assertTrue(layout.contains("startup_disclaimer_exit_button"));
+        assertTrue(!layout.contains("startup_disclaimer_exit_button"));
         assertTrue(layout.contains("@dimen/dialog_surface_padding_horizontal"));
         assertTrue(layout.contains("@dimen/dialog_body_spacing"));
         assertTrue(layout.contains("@dimen/dialog_text_line_spacing"));
         assertTrue(layout.contains("@dimen/dialog_action_spacing_top"));
-        assertTrue(layout.contains("@dimen/dialog_action_spacing_between"));
+        assertTrue(!layout.contains("@dimen/dialog_action_spacing_between"));
     }
 
     @Test
@@ -260,7 +302,23 @@ public class MainActivitySourceSmokeTest {
 
         String applyFilterBody = source.substring(applyFilterStart, applyFilterEnd);
         assertTrue(applyFilterBody.contains("pagerAdapter.submitPage("));
+        assertTrue(applyFilterBody.contains("landListController.bind("));
+        assertTrue(applyFilterBody.contains("state.visibleItems(landCurrentPage)"));
+        assertTrue(applyFilterBody.contains("landScrollStates.get(landCurrentPage.position())"));
+        assertFalse(applyFilterBody.contains("restoredPageScrollStates.remove"));
         assertTrue(!applyFilterBody.contains("pagerAdapter.refreshVisibleStatuses();"));
+    }
+
+    @Test
+    public void landscapeList_keepsScrollStateSeparateFromPagerAdapter() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(source.contains("private final SparseArray<Parcelable> landScrollStates = new SparseArray<>();"));
+        assertTrue(source.contains("restoreLandscapeScrollStates(restoredPageScrollStates);"));
+        assertTrue(source.contains("private void captureCurrentLandscapeScrollState()"));
+        assertTrue(source.contains("landScrollStates.put(landCurrentPage.position(), landState);"));
+        assertTrue(source.contains("return pagerAdapter.capturePageScrollStates();"));
+        assertTrue(source.contains("for (int i = 0; i < landScrollStates.size(); i++)"));
     }
 
     @Test
@@ -308,17 +366,59 @@ public class MainActivitySourceSmokeTest {
     }
 
     @Test
-    public void showEditDialog_delegatesSheetPresentationToCoordinator() throws IOException {
+    public void showEditDialog_usesSheetCoordinatorInPortraitAndDetailPaneInLandscape() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(source.contains("new GlobalPrefillStore("));
         assertTrue(source.contains("AppConfigPrefillPreview.applyIfEligible("));
         assertTrue(source.contains("dialogView, sheetItem, systemHooksEnabled"));
+        assertTrue(source.contains("private void showEditBottomSheet(AppListItem item)"));
         assertTrue(source.contains("new AppConfigDialogBinder(this, createAppConfigDialogHost()).bind("));
         assertTrue(source.contains("new AppConfigDialogCoordinator(this).show("));
+        assertTrue(source.contains("private void showEditDetailPane(AppListItem item)"));
+        assertTrue(source.contains("new AppConfigDialogBinder(this, createAppConfigDialogHost(), false).bind("));
+        assertTrue(source.contains("landDetailContent.addView(dialogView"));
         assertTrue(!source.contains("private void bindDialogValidation("));
         assertTrue(!source.contains("private void bindDialogActions("));
         assertTrue(!source.contains("private void refreshDialogState("));
+    }
+
+    @Test
+    public void showEditDialog_doesNotRefreshListRowsBeforeOpeningDetail() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+        int methodStart = source.indexOf("private void showEditDialog(AppListItem item) {");
+        int methodEnd = source.indexOf("private void showEditBottomSheet(AppListItem item)", methodStart);
+        assertTrue(methodStart >= 0);
+        assertTrue(methodEnd > methodStart);
+
+        String methodBody = source.substring(methodStart, methodEnd);
+        assertFalse(methodBody.contains("refreshVisibleStatuses"));
+    }
+
+    @Test
+    public void appListAdapter_usesStableIdsAndPositionBasedClickBinding() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppListPagerAdapter.java");
+
+        assertTrue(source.contains("setHasStableIds(true);"));
+        assertTrue(source.contains("public long getItemId(int position)"));
+        assertTrue(source.contains("holder.getBindingAdapterPosition();"));
+        assertTrue(source.contains("position == RecyclerView.NO_POSITION"));
+        assertTrue(source.contains("onAppClickListener.onAppClicked(getItem(position));"));
+    }
+
+    @Test
+    public void landscapeStatusLayout_usesFlatDetailPane() throws IOException {
+        String layout = read("src/main/res/layout-land/activity_status.xml");
+
+        assertTrue(layout.contains("@+id/land_root_row"));
+        assertTrue(layout.contains("@+id/land_app_list_page"));
+        assertTrue(layout.contains("@layout/item_app_list_page"));
+        assertFalse(layout.contains("@+id/app_pager"));
+        assertTrue(layout.contains("@+id/land_detail_pane"));
+        assertTrue(layout.contains("@+id/land_detail_content"));
+        assertTrue(layout.contains("<FrameLayout\n                android:id=\"@+id/land_detail_pane\""));
+        assertFalse(layout.contains("<com.google.android.material.card.MaterialCardView\n"
+                + "                android:id=\"@+id/land_detail_pane\""));
     }
 
     @Test

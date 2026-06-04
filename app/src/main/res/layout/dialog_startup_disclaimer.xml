@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -18,12 +19,15 @@
         android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
         android:textStyle="bold" />
 
-    <androidx.core.widget.NestedScrollView
+    <com.dpis.module.MaxHeightNestedScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/dialog_body_spacing"
         android:fillViewport="true"
-        android:overScrollMode="ifContentScrolls">
+        android:overScrollMode="ifContentScrolls"
+        android:scrollbarStyle="insideInset"
+        android:scrollbars="vertical"
+        app:maxHeightFraction="0.45">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -38,15 +42,15 @@
                 android:text="@string/startup_disclaimer_message"
                 android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                 android:textColor="?attr/colorOnSurfaceVariant" />
-
-            <com.google.android.material.checkbox.MaterialCheckBox
-                android:id="@+id/startup_disclaimer_checkbox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/dialog_body_spacing"
-                android:text="@string/startup_disclaimer_checkbox_text" />
         </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
+    </com.dpis.module.MaxHeightNestedScrollView>
+
+    <com.google.android.material.checkbox.MaterialCheckBox
+        android:id="@+id/startup_disclaimer_checkbox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/dialog_body_spacing"
+        android:text="@string/startup_disclaimer_checkbox_text" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/startup_disclaimer_accept_button"
@@ -56,13 +60,5 @@
         android:layout_marginTop="@dimen/dialog_action_spacing_top"
         android:enabled="false"
         android:text="@string/startup_disclaimer_accept_button" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/startup_disclaimer_exit_button"
-        style="@style/Widget.Dpis.DialogActionButton.Outlined"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/dialog_action_spacing_between"
-        android:text="@string/startup_disclaimer_exit_button" />
 
 </LinearLayout>

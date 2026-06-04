@@ -4,6 +4,7 @@ import android.app.Application;
 import com.google.android.material.color.DynamicColors;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -20,12 +21,14 @@ public final class DpisApplication extends Application implements XposedServiceH
     private static final Set<ServiceStateListener> SERVICE_STATE_LISTENERS =
             new CopyOnWriteArraySet<>();
 
+    private static volatile DpisApplication instance;
     private static volatile DpiConfigStore configStore;
     private static volatile XposedService xposedService;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        instance = this;
         DynamicColors.applyToActivitiesIfAvailable(this);
         HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(this);
         configStore = ConfigStoreFactory.createForModuleApp(this);
@@ -66,6 +69,21 @@ public final class DpisApplication extends Application implements XposedServiceH
 
     static XposedService getXposedService() {
         return xposedService;
+    }
+
+    static void reloadConfigStore() {
+        DpisApplication application = instance;
+        if (application == null) {
+            return;
+        }
+        XposedService service = xposedService;
+        DpiConfigStore refreshedStore = service != null
+                ? ConfigStoreFactory.createForModuleApp(application, service)
+                : ConfigStoreFactory.createForModuleApp(application);
+        configStore = refreshedStore;
+        DpisLog.setLoggingEnabled(refreshedStore.isGlobalLogEnabled());
+        RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore);
+        notifyServiceStateChanged();
     }
 
     static void addServiceStateListener(ServiceStateListener listener, boolean notifyImmediately) {
@@ -163,6 +181,9 @@ public final class DpisApplication extends Application implements XposedServiceH
         if (from == null || to == null || from == to) {
             return;
         }
-        to.replaceAll(from.snapshotAll());
+        Map<String, Object> localOnlyValues = to.snapshotLocalOnlyMirrorValues();
+        Map<String, Object> snapshot = from.snapshotLocalMirror();
+        snapshot.putAll(localOnlyValues);
+        to.replaceAll(snapshot);
     }
 }

@@ -121,6 +121,7 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(source.contains("R.string.system_safe_mode_disable_confirm_message"));
         assertTrue(source.contains("if (!store.setSystemServerSafeModeEnabled(false))"));
         assertTrue(source.contains("setCheckedSilently(safeModeSwitch, true"));
+        assertTrue(source.contains("DialogWindowSizer.applyStandardWidth(dialog, this)"));
         assertTrue(strings.contains("system_safe_mode_disable_confirm_title"));
         assertTrue(strings.contains("system_safe_mode_disable_confirm_message"));
     }
@@ -143,6 +144,18 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(confirmDialog.contains("@dimen/dialog_body_spacing"));
         assertTrue(confirmDialog.contains("@dimen/dialog_action_spacing_top"));
         assertTrue(confirmDialog.contains("@dimen/dialog_action_spacing_between"));
+    }
+
+    @Test
+    public void settingsDialogsUseSharedWindowSizer() throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+
+        assertTrue(source.contains("R.layout.dialog_interface_scale"));
+        assertTrue(source.contains("R.layout.dialog_language_selection"));
+        assertTrue(source.contains("R.layout.dialog_config_backup"));
+        assertTrue(source.contains("R.layout.dialog_config_backup_confirm"));
+        assertTrue(occurrences(source, "DialogWindowSizer.applyLargeWidth(dialog, this)") >= 4);
+        assertTrue(occurrences(source, "DialogWindowSizer.applyStandardWidth(dialog, this)") >= 2);
     }
 
     @Test
@@ -215,6 +228,31 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(source.contains("if (!persistLauncherIconState(true))"));
         assertTrue(source.contains("setCheckedSilently(hideLauncherIconSwitch, false"));
         assertTrue(source.contains("dialog.setOnCancelListener"));
+        assertTrue(source.contains("DialogWindowSizer.applyStandardWidth(dialog, this)"));
+    }
+
+    @Test
+    public void configBackupImportConfirmsAfterFileSelectionAndHotReloadsDpisConfig() throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+        String application = read("src/main/java/com/dpis/module/DpisApplication.java");
+
+        assertTrue(source.contains("importButton.setOnClickListener(v -> {"));
+        assertTrue(source.contains("launchImportBackupPicker();"));
+        assertTrue(source.contains("private void showImportBackupConfirmDialog(Uri uri)"));
+        assertTrue(source.contains("showImportBackupConfirmDialog(uri);"));
+        assertTrue(source.contains("importConfigBackup(uri);"));
+        assertTrue(source.contains("relaunchDpisTask();"));
+        assertTrue(source.contains("private void relaunchDpisTask()"));
+        assertTrue(source.contains("DpisApplication.reloadConfigStore();"));
+        assertTrue(source.contains("new Intent(this, MainActivity.class)"));
+        assertTrue(source.contains("Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK"));
+        assertTrue(source.contains("startActivity(intent);"));
+        assertTrue(source.contains("finishAffinity();"));
+        assertTrue(application.contains("static void reloadConfigStore()"));
+        assertTrue(application.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)"));
+        assertTrue(application.contains("notifyServiceStateChanged();"));
+        assertTrue(!source.contains("android.os.Process.killProcess(android.os.Process.myPid())"));
+        assertTrue(!source.contains("RootCommandRunner.run(\"reboot\")"));
     }
 
     @Test
@@ -244,5 +282,15 @@ public class SystemServerSettingsLayoutSmokeTest {
 
     private static String read(String relativePath) throws IOException {
         return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
+    }
+
+    private static int occurrences(String value, String needle) {
+        int count = 0;
+        int index = 0;
+        while ((index = value.indexOf(needle, index)) >= 0) {
+            count++;
+            index += needle.length();
+        }
+        return count;
     }
 }

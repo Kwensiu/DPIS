@@ -239,21 +239,29 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             return;
         }
         if (requestCode == REQUEST_IMPORT_CONFIG_BACKUP) {
-            importConfigBackup(uri);
+            showImportBackupConfirmDialog(uri);
             return;
         }
     }
 
     private void applyInsets() {
+        View root = findViewById(R.id.settings_root);
         View toolbar = findViewById(R.id.settings_toolbar);
+        final int baseRootPaddingLeft = root.getPaddingLeft();
+        final int baseRootPaddingRight = root.getPaddingRight();
         final int baseTopPadding = toolbar.getPaddingTop();
-        ViewCompat.setOnApplyWindowInsetsListener(toolbar, (view, insets) -> {
-            Insets statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
-            view.setPadding(view.getPaddingLeft(), baseTopPadding + statusBars.top,
-                    view.getPaddingRight(), view.getPaddingBottom());
+        final int baseToolbarPaddingLeft = toolbar.getPaddingLeft();
+        final int baseToolbarPaddingRight = toolbar.getPaddingRight();
+        ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
+            Insets safeDrawing = insets.getInsets(
+                    WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            view.setPadding(baseRootPaddingLeft + safeDrawing.left, view.getPaddingTop(),
+                    baseRootPaddingRight + safeDrawing.right, view.getPaddingBottom());
+            toolbar.setPadding(baseToolbarPaddingLeft, baseTopPadding + safeDrawing.top,
+                    baseToolbarPaddingRight, toolbar.getPaddingBottom());
             return insets;
         });
-        ViewCompat.requestApplyInsets(toolbar);
+        ViewCompat.requestApplyInsets(root);
     }
 
     private int dp(int value) {
@@ -422,6 +430,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             return true;
         });
         dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialog, this);
     }
 
     private Integer parseInterfaceScaleInput(TextInputEditText inputView) {
@@ -489,6 +498,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         updateLanguageOptionButtonStyles(optionButtons, selectedIndex);
         cancelButton.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialog, this);
     }
 
     private void onLanguageOptionSelected(androidx.appcompat.app.AlertDialog dialog,
@@ -648,10 +658,11 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         });
         importButton.setOnClickListener(v -> {
             dialog.dismiss();
-            showImportBackupConfirmDialog();
+            launchImportBackupPicker();
         });
         closeButton.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialog, this);
     }
 
     @SuppressWarnings("deprecation")
@@ -683,7 +694,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         }
     }
 
-    private void showImportBackupConfirmDialog() {
+    private void showImportBackupConfirmDialog(Uri uri) {
         View dialogView = LayoutInflater.from(this).inflate(
                 R.layout.dialog_config_backup_confirm, null, false);
         MaterialButton proceedButton = dialogView.findViewById(R.id.config_backup_confirm_proceed_button);
@@ -696,10 +707,11 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
 
         proceedButton.setOnClickListener(v -> {
             dialog.dismiss();
-            launchImportBackupPicker();
+            importConfigBackup(uri);
         });
         cancelButton.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialog, this);
     }
 
     private void exportConfigBackup(Uri uri) {
@@ -751,10 +763,18 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             }
             int entryCount = entries.size();
             runOnUiThread(() -> {
-                applyRestoredStoreState();
                 showToast(R.string.config_backup_import_success, entryCount);
+                relaunchDpisTask();
             });
         }, "dpis-config-backup-import").start();
+    }
+
+    private void relaunchDpisTask() {
+        DpisApplication.reloadConfigStore();
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finishAffinity();
     }
 
     private void applyRestoredStoreState() {
@@ -1142,6 +1162,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         dialog.setOnCancelListener(unused -> setCheckedSilently(safeModeSwitch, true,
                 this::onSafeModeChanged));
         dialog.show();
+        DialogWindowSizer.applyStandardWidth(dialog, this);
     }
 
     private void onGlobalLogChanged(CompoundButton buttonView, boolean isChecked) {
@@ -1211,6 +1232,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         dialog.setOnCancelListener(unused -> setCheckedSilently(hideLauncherIconSwitch, false,
                 this::onHideLauncherIconChanged));
         dialog.show();
+        DialogWindowSizer.applyStandardWidth(dialog, this);
     }
 
     private boolean canDrawOverlays() {

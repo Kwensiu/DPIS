@@ -69,6 +69,7 @@ final class QuickTemplateSortDialog {
         });
         dialog.setCanceledOnTouchOutside(true);
         dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialog, activity);
     }
 
     private static final class SortAdapter extends RecyclerView.Adapter<SortHolder> {

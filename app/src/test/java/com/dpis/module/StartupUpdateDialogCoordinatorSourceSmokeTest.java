@@ -21,6 +21,8 @@ public class StartupUpdateDialogCoordinatorSourceSmokeTest {
         assertTrue(source.contains("R.layout.dialog_startup_disclaimer"));
         assertTrue(source.contains("setStartupDisclaimerAccepted(true)"));
         assertTrue(source.contains("UpdateAvailableDialog.create("));
+        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialogHandle.dialog, activity)"));
+        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialog, activity)"));
         assertTrue(source.contains("dialogHandle.cancelButton.setOnClickListener"));
         assertTrue(source.contains("if (host.isDownloadInProgress()) {"));
         int cancelStart = source.indexOf("dialogHandle.cancelButton.setOnClickListener(v -> {");

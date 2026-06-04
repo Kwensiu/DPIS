@@ -264,6 +264,7 @@ public final class AboutActivity extends LocalizedActivity {
             primaryButton.setText(R.string.about_update_action_view_release);
             primaryButton.setOnClickListener(v -> openUrl(releasePageUrl));
             dialog.show();
+            DialogWindowSizer.applyLargeWidth(dialog, this);
             return;
         }
 
@@ -284,6 +285,7 @@ public final class AboutActivity extends LocalizedActivity {
 
         dialog.setOnDismissListener(unused -> updateDownloadCoordinator.cancelActiveDownload());
         dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialog, this);
     }
 
     private void loadReleaseNotes(MaterialTextView releaseNotesText,

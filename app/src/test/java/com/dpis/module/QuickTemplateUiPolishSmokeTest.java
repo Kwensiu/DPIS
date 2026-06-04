@@ -57,11 +57,15 @@ public class QuickTemplateUiPolishSmokeTest {
         assertTrue(dimens.contains("template_config_sheet_padding_bottom"));
         assertTrue(dimens.contains("template_config_sheet_save_row_spacing_bottom"));
         assertTrue(strings.contains("quick_template_apply_confirm_message"));
+        assertTrue(strings.contains("quick_template_apply_confirm_message_overwrite"));
         assertTrue(zhStrings.contains("quick_template_apply_confirm_message"));
+        assertTrue(zhStrings.contains("quick_template_apply_confirm_message_overwrite"));
         assertTrue(zhStrings.contains("快捷模板"));
         assertFalse(zhStrings.contains("快速模板"));
-        assertTrue(strings.contains("No app process or HyperOS proxy action"));
-        assertTrue(zhStrings.contains("不会执行进程操作或 HyperOS 代理操作"));
+        assertTrue(strings.contains("Apply to %1$d apps."));
+        assertTrue(strings.contains("%2$d existing configs will be overwritten."));
+        assertTrue(zhStrings.contains("将应用到 %1$d 个应用。"));
+        assertTrue(zhStrings.contains("%2$d 个已有配置会被覆盖"));
     }
 
     @Test
