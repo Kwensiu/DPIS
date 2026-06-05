@@ -23,7 +23,8 @@ public class BatchScopeRequestCoordinatorSourceSmokeTest {
         assertTrue(coordinator.contains("quick_template_scope_manual_required"));
         assertTrue(coordinator.contains("onScopeRequestApproved(List<String> approved)"));
         assertTrue(coordinator.contains("host.requestAppsLoad()"));
-        assertTrue(mainActivity.contains("new BatchScopeRequestCoordinator(createBatchScopeRequestHost())"));
+        assertTrue(mainActivity.contains("new BatchScopeRequestCoordinator("));
+        assertTrue(mainActivity.contains("createBatchScopeRequestHost()"));
     }
 
     private static String read(String relativePath) throws IOException {

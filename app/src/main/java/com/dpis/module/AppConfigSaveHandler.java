@@ -8,9 +8,11 @@ final class AppConfigSaveHandler {
             TextInputEditText fontScaleInput,
             String viewportTargetType,
             String currentViewportApplyMode,
+            boolean viewportApplyModeResetRequested,
             String fontMode,
             String selectedTypefaceId,
-            String previewFontHookDomainsRaw,
+            String draftFontHookDomainsRaw,
+            boolean fontHookDomainsResetRequested,
             String viewportScaleInput,
             String viewportAbsoluteInput,
             boolean systemHooksEnabled,
@@ -26,10 +28,12 @@ final class AppConfigSaveHandler {
             return saveResolved(item,
                     viewportTargetSpec,
                     currentViewportApplyMode,
+                    viewportApplyModeResetRequested,
                     fontScalePercent,
                     fontMode,
                     selectedTypefaceId,
-                    previewFontHookDomainsRaw,
+                    draftFontHookDomainsRaw,
+                    fontHookDomainsResetRequested,
                     viewportScaleInput,
                     viewportAbsoluteInput,
                     systemHooksEnabled,
@@ -43,10 +47,12 @@ final class AppConfigSaveHandler {
     int[] saveResolved(AppListItem item,
             ViewportTargetSpec viewportTargetSpec,
             String currentViewportApplyMode,
+            boolean viewportApplyModeResetRequested,
             Integer fontScalePercent,
             String fontMode,
             String selectedTypefaceId,
-            String previewFontHookDomainsRaw,
+            String draftFontHookDomainsRaw,
+            boolean fontHookDomainsResetRequested,
             String viewportScaleInput,
             String viewportAbsoluteInput,
             boolean systemHooksEnabled,
@@ -57,7 +63,8 @@ final class AppConfigSaveHandler {
         }
         try {
             String viewportApplyMode = resolveViewportApplyModeForSave(
-                    store, item.packageName, currentViewportApplyMode, viewportTargetSpec);
+                    store, item.packageName, currentViewportApplyMode,
+                    viewportApplyModeResetRequested, viewportTargetSpec);
             boolean viewportEmulationIneffective = viewportTargetSpec != null
                     && viewportTargetSpec.isEnabled()
                     && ViewportApplyMode.SYSTEM.equals(
@@ -74,7 +81,9 @@ final class AppConfigSaveHandler {
                     viewportEmulationIneffective || fontEmulationIneffective;
             boolean saved = true;
             int hint = 0;
-            saved = persistPreviewOnlyConfig(store, item, previewFontHookDomainsRaw) && saved;
+            saved = persistPreviewOnlyConfig(
+                    store, item, draftFontHookDomainsRaw, fontHookDomainsResetRequested)
+                    && saved;
             if (viewportTargetSpec == null || !viewportTargetSpec.isEnabled()) {
                 saved = store.clearTargetViewportWidthDp(item.packageName) && saved;
                 saved = store.setTargetViewportApplyMode(item.packageName, ViewportApplyMode.OFF)
@@ -129,11 +138,18 @@ final class AppConfigSaveHandler {
 
     static boolean persistPreviewOnlyConfig(DpiConfigStore store,
             AppListItem item,
-            String previewFontHookDomainsRaw) {
-        if (store == null || item == null || previewFontHookDomainsRaw == null) {
+            String draftFontHookDomainsRaw,
+            boolean fontHookDomainsResetRequested) {
+        if (store == null || item == null) {
             return true;
         }
-        return store.setPackageFontHookDomainsRaw(item.packageName, previewFontHookDomainsRaw);
+        if (fontHookDomainsResetRequested) {
+            return new HookDomainOverrideStore(store).restoreRecommended(item.packageName);
+        }
+        if (draftFontHookDomainsRaw == null) {
+            return true;
+        }
+        return store.setPackageFontHookDomainsRaw(item.packageName, draftFontHookDomainsRaw);
     }
 
     private static void publishFontHookDomainsAfterSave(String packageName, DpiConfigStore store) {
@@ -148,8 +164,12 @@ final class AppConfigSaveHandler {
     static String resolveViewportApplyModeForSave(DpiConfigStore store,
             String packageName,
             String itemViewportMode,
+            boolean viewportApplyModeResetRequested,
             ViewportTargetSpec viewportTargetSpec) {
         if (viewportTargetSpec == null || !viewportTargetSpec.isEnabled()) {
+            return ViewportApplyMode.OFF;
+        }
+        if (viewportApplyModeResetRequested) {
             return ViewportApplyMode.OFF;
         }
         String persistedMode = store != null

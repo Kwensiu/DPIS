@@ -8,52 +8,64 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-
-import com.google.android.material.color.MaterialColors;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textview.MaterialTextView;
-
 import java.util.ArrayList;
 
 final class LandAppDetailPaneBinder {
+
     interface Actions {
-        void saveDraft(AppListItem item,
+
+        void saveDraft(
+                AppListItem item,
                 AppConfigDialogBinder.AppConfigDialogState state,
                 Integer viewportValue,
                 String viewportTargetType,
                 Integer fontPercent,
                 String fontMode,
                 String selectedTypefaceId,
-                String previewFontHookDomainsRaw,
+                String draftFontHookDomainsRaw,
                 String viewportApplyMode,
+                boolean viewportApplyModeResetRequested,
+                boolean fontHookDomainsResetRequested,
                 String viewportScaleInput,
                 String viewportAbsoluteInput,
                 boolean dpisEnabled,
                 View root,
-                MaterialButton saveButton);
+                MaterialButton saveButton
+        );
 
-        void showTypefaceSelector(AppListItem item,
+        void showTypefaceSelector(
+                AppListItem item,
                 AppConfigDialogBinder.AppConfigDialogState state,
-                Runnable onChanged);
+                Runnable onChanged
+        );
 
-        void showHookDomains(AppListItem item,
+        void showHookDomains(
+                AppListItem item,
                 AppConfigDialogBinder.AppConfigDialogState state,
-                Runnable onChanged);
+                Runnable onChanged
+        );
 
-        void toggleScope(AppListItem item,
+        void toggleScope(
+                AppListItem item,
                 boolean currentlyInScope,
                 Runnable onTurnedInScope,
-                Runnable onTurnedOutScope);
+                Runnable onTurnedOutScope
+        );
 
         boolean setDpisEnabled(String packageName, boolean enabled);
 
-        void executeProcessAction(AppListItem item, AppConfigDialogBinder.ProcessAction action);
+        void executeProcessAction(
+                AppListItem item,
+                AppConfigDialogBinder.ProcessAction action
+        );
 
-        String getFontHookDomainsButtonText(AppListItem item,
-                boolean previewFromGlobalPrefill,
-                String previewFontHookDomainsRaw);
+        void onDraftStateChanged(AppConfigDialogBinder.AppConfigDialogState state);
+
     }
 
     private final Activity activity;
@@ -67,44 +79,83 @@ final class LandAppDetailPaneBinder {
     void bind(View root, AppListItem item, boolean systemHooksEnabled) {
         ImageView iconView = root.findViewById(R.id.land_detail_app_icon);
         MaterialTextView titleView = root.findViewById(R.id.land_detail_title);
-        MaterialTextView packageView = root.findViewById(R.id.land_detail_package);
-        MaterialTextView statusView = root.findViewById(R.id.land_detail_status);
-        MaterialTextView unsavedBadge = root.findViewById(R.id.land_detail_unsaved_badge);
-        MaterialButton saveButton = root.findViewById(R.id.land_detail_save_button);
-        MaterialButton scopeButton = root.findViewById(R.id.land_detail_scope_row);
-        MaterialButton dpisToggleButton = root.findViewById(R.id.land_detail_dpis_toggle_row);
+        MaterialTextView packageView = root.findViewById(
+                R.id.land_detail_package
+        );
+        MaterialTextView statusView = root.findViewById(
+                R.id.land_detail_status
+        );
+        MaterialTextView unsavedBadge = root.findViewById(
+                R.id.land_detail_unsaved_badge
+        );
+        MaterialButton saveButton = root.findViewById(
+                R.id.land_detail_save_button
+        );
+        MaterialButton scopeButton = root.findViewById(
+                R.id.land_detail_scope_row
+        );
+        MaterialButton dpisToggleButton = root.findViewById(
+                R.id.land_detail_dpis_toggle_row
+        );
 
         iconView.setImageDrawable(item.icon);
         titleView.setText(item.label);
         packageView.setText(item.packageName);
         statusView.setText(formatStatus(item, systemHooksEnabled));
-        unsavedBadge.setVisibility(item.previewFromGlobalPrefill ? View.VISIBLE : View.GONE);
-        AppConfigDialogBinder.AppConfigDialogState state =
-                AppConfigDialogBinder.AppConfigDialogState.fromItem(item);
+        unsavedBadge.setVisibility(
+                item.previewFromGlobalPrefill ? View.VISIBLE : View.GONE
+        );
+        AppConfigDialogBinder.AppConfigDialogState state
+                = AppConfigDialogBinder.AppConfigDialogState.fromItem(item);
+        root.setTag(R.id.land_detail_hook_chain_row, state);
 
         bindViewportEditor(root, item, state);
         bindFontEditor(root, item);
-        WechatTargetFieldSheetBinder.bind(root, item, () -> updateSaveButtonState(root, saveButton));
-        MaterialTextView typefaceValue = root.findViewById(R.id.land_detail_typeface_value);
+        WechatTargetFieldSheetBinder.bind(root, item, ()
+                -> updateSaveButtonState(root, saveButton)
+        );
+        FormInputFocusBinder.bindDismissOnOutsideTouch(
+                root.findViewById(R.id.land_detail_scroll),
+                root,
+                root.findViewById(R.id.land_detail_viewport_input),
+                root.findViewById(R.id.land_detail_font_scale_input),
+                root.findViewById(R.id.dialog_wechat_target_field_input)
+        );
+        MaterialTextView typefaceValue = root.findViewById(
+                R.id.land_detail_typeface_value
+        );
         typefaceValue.setText(formatTypefaceValue(state.selectedTypefaceId));
-        bindEditorRow(root, R.id.land_detail_typeface_row, () -> actions.showTypefaceSelector(item, state, () -> {
-            typefaceValue.setText(formatTypefaceValue(state.selectedTypefaceId));
-            updateSaveButtonState(root, saveButton);
-        }));
-        MaterialTextView hookValue = root.findViewById(R.id.land_detail_hook_chain_value);
-        hookValue.setText(formatHookChainValue(state));
-        bindEditorRow(root, R.id.land_detail_hook_chain_row, () -> actions.showHookDomains(item, state, () -> {
-            hookValue.setText(formatHookChainValue(state));
-            updateSaveButtonState(root, saveButton);
-        }));
+        bindEditorRow(root, R.id.land_detail_typeface_row, ()
+                -> actions.showTypefaceSelector(item, state, () -> {
+                    typefaceValue.setText(
+                            formatTypefaceValue(state.selectedTypefaceId)
+                    );
+                    actions.onDraftStateChanged(state);
+                    updateSaveButtonState(root, saveButton);
+                })
+        );
+        MaterialTextView hookValue = root.findViewById(
+                R.id.land_detail_hook_chain_value
+        );
+        hookValue.setText(formatHookChainValue(item, state));
+        bindEditorRow(root, R.id.land_detail_hook_chain_row, ()
+                -> actions.showHookDomains(item, state, () -> {
+                    hookValue.setText(formatHookChainValue(item, state));
+                    actions.onDraftStateChanged(state);
+                    updateSaveButtonState(root, saveButton);
+                })
+        );
 
         ActionButtonStyle scopeStyle = ActionButtonStyle.capture(scopeButton);
-        ActionButtonStyle dpisStyle = ActionButtonStyle.capture(dpisToggleButton);
+        ActionButtonStyle dpisStyle = ActionButtonStyle.capture(
+                dpisToggleButton
+        );
         refreshScopeButton(scopeButton, state, scopeStyle);
         refreshDpisToggleButton(dpisToggleButton, state, dpisStyle);
         bindAdvancedButton(root, R.id.land_detail_scope_row, () -> {
             clearLandDetailInputFocus(root);
-            actions.toggleScope(item,
+            actions.toggleScope(
+                    item,
                     state.scopeSelected,
                     () -> {
                         state.scopeSelected = true;
@@ -113,223 +164,336 @@ final class LandAppDetailPaneBinder {
                     () -> {
                         state.scopeSelected = false;
                         refreshScopeButton(scopeButton, state, scopeStyle);
-                    });
+                    }
+            );
         });
         bindAdvancedButton(root, R.id.land_detail_dpis_toggle_row, () -> {
-                    clearLandDetailInputFocus(root);
-                    if (state.previewFromGlobalPrefill) {
-                        return;
-                    }
-                    boolean nextEnabled = !state.dpisEnabled;
-                    if (actions.setDpisEnabled(item.packageName, nextEnabled)) {
-                        state.dpisEnabled = nextEnabled;
-                        refreshDpisToggleButton(dpisToggleButton, state, dpisStyle);
-                        statusView.setText(formatStatus(item, systemHooksEnabled));
-                    }
-                });
-        bindAdvancedButton(root,
+            clearLandDetailInputFocus(root);
+            if (state.previewFromGlobalPrefill) {
+                return;
+            }
+            boolean nextEnabled = !state.dpisEnabled;
+            if (actions.setDpisEnabled(item.packageName, nextEnabled)) {
+                state.dpisEnabled = nextEnabled;
+                refreshDpisToggleButton(dpisToggleButton, state, dpisStyle);
+                statusView.setText(formatStatus(item, systemHooksEnabled));
+            }
+        });
+        bindAdvancedButton(
+                root,
                 R.id.land_detail_reset_row,
                 R.string.dialog_disable_button,
-                () -> resetDraft(root, item, state, typefaceValue, hookValue, saveButton));
+                ()
+                -> resetDraft(
+                        root,
+                        item,
+                        state,
+                        typefaceValue,
+                        hookValue,
+                        saveButton
+                )
+        );
         bindAdaptiveAdvancedActions(root);
 
-        bindProcessButton(root, R.id.land_detail_start_button, item, AppConfigDialogBinder.ProcessAction.START);
-        bindProcessButton(root, R.id.land_detail_restart_button, item, AppConfigDialogBinder.ProcessAction.RESTART);
-        bindProcessButton(root, R.id.land_detail_stop_button, item, AppConfigDialogBinder.ProcessAction.STOP);
+        bindProcessButton(
+                root,
+                R.id.land_detail_start_button,
+                item,
+                AppConfigDialogBinder.ProcessAction.START
+        );
+        bindProcessButton(
+                root,
+                R.id.land_detail_restart_button,
+                item,
+                AppConfigDialogBinder.ProcessAction.RESTART
+        );
+        bindProcessButton(
+                root,
+                R.id.land_detail_stop_button,
+                item,
+                AppConfigDialogBinder.ProcessAction.STOP
+        );
         bindSaveButton(root, item, state, saveButton);
         bindAdaptiveActionDock(root, saveButton);
+        setCleanStateSignature(
+                root,
+                item.previewFromGlobalPrefill
+                        ? emptyStateSignature()
+                        : buildStateSignature(root)
+        );
+        updateUnsavedBadge(root);
         updateSaveButtonState(root, saveButton);
     }
 
-    private void bindViewportEditor(View root,
+    private void bindViewportEditor(
+            View root,
             AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state) {
-        TextInputLayout inputLayout = root.findViewById(R.id.land_detail_viewport_input_layout);
-        TextInputEditText input = root.findViewById(R.id.land_detail_viewport_input);
-        AppConfigDialogBinder.ModeToggle toggle = new AppConfigDialogBinder.ModeToggle(
-                root.findViewById(R.id.land_detail_viewport_mode_toggle_button),
-                root.findViewById(R.id.land_detail_viewport_mode_toggle_thumb),
-                root.findViewById(R.id.land_detail_viewport_mode_scale_label),
-                root.findViewById(R.id.land_detail_viewport_mode_width_label));
-        String initialType = AppConfigInputValidation.initialViewportTargetType(item.viewportTargetSpec);
-        AppConfigDialogBinder.bindViewportModeToggle(toggle, initialType, false);
+            AppConfigDialogBinder.AppConfigDialogState state
+    ) {
+        TextInputLayout inputLayout = root.findViewById(
+                R.id.land_detail_viewport_input_layout
+        );
+        TextInputEditText input = root.findViewById(
+                R.id.land_detail_viewport_input
+        );
+        AppConfigDialogBinder.ModeToggle toggle
+                = new AppConfigDialogBinder.ModeToggle(
+                        root.findViewById(R.id.land_detail_viewport_mode_toggle_button),
+                        root.findViewById(R.id.land_detail_viewport_mode_toggle_thumb),
+                        root.findViewById(R.id.land_detail_viewport_mode_scale_label),
+                        root.findViewById(R.id.land_detail_viewport_mode_width_label)
+                );
+        String initialType = AppConfigInputValidation.initialViewportTargetType(
+                item.viewportTargetSpec
+        );
+        AppConfigDialogBinder.bindViewportModeToggle(
+                toggle,
+                initialType,
+                false
+        );
         bindViewportInputHint(inputLayout, initialType);
-        String initialText = AppConfigInputValidation.formatViewportInput(item.viewportTargetSpec);
+        String initialText = AppConfigInputValidation.formatViewportInput(
+                item.viewportTargetSpec
+        );
         input.setText(initialText);
         bindViewportInput(inputLayout, input, toggle, state);
         bindViewportToggle(inputLayout, input, toggle, item, state);
     }
 
     private void bindFontEditor(View root, AppListItem item) {
-        TextInputLayout inputLayout = root.findViewById(R.id.land_detail_font_scale_input_layout);
-        TextInputEditText input = root.findViewById(R.id.land_detail_font_scale_input);
-        AppConfigDialogBinder.ModeToggle toggle = new AppConfigDialogBinder.ModeToggle(
-                root.findViewById(R.id.land_detail_font_mode_toggle_button),
-                root.findViewById(R.id.land_detail_font_mode_toggle_thumb),
-                root.findViewById(R.id.land_detail_font_mode_system_label),
-                root.findViewById(R.id.land_detail_font_mode_compat_label));
+        TextInputLayout inputLayout = root.findViewById(
+                R.id.land_detail_font_scale_input_layout
+        );
+        TextInputEditText input = root.findViewById(
+                R.id.land_detail_font_scale_input
+        );
+        AppConfigDialogBinder.ModeToggle toggle
+                = new AppConfigDialogBinder.ModeToggle(
+                        root.findViewById(R.id.land_detail_font_mode_toggle_button),
+                        root.findViewById(R.id.land_detail_font_mode_toggle_thumb),
+                        root.findViewById(R.id.land_detail_font_mode_system_label),
+                        root.findViewById(R.id.land_detail_font_mode_compat_label)
+                );
         AppConfigDialogBinder.bindFontModeToggle(
-                toggle, AppConfigInputValidation.initialFontMode(item.fontMode), false);
-        String initialText = FontApplyMode.isEnabled(item.fontMode) && item.fontScalePercent != null
-                ? String.valueOf(item.fontScalePercent)
-                : "";
+                toggle,
+                AppConfigInputValidation.initialFontMode(item.fontMode),
+                false
+        );
+        String initialText
+                = FontApplyMode.isEnabled(item.fontMode)
+                && item.fontScalePercent != null
+                        ? String.valueOf(item.fontScalePercent)
+                        : "";
         input.setText(initialText);
         bindFontInput(inputLayout, input, toggle, item);
         bindFontToggle(inputLayout, input, toggle, item);
     }
 
-    private void bindViewportInput(TextInputLayout inputLayout,
+    private void bindViewportInput(
+            TextInputLayout inputLayout,
             TextInputEditText input,
             AppConfigDialogBinder.ModeToggle toggle,
-            AppConfigDialogBinder.AppConfigDialogState state) {
-        input.addTextChangedListener(new TextWatcher() {
+            AppConfigDialogBinder.AppConfigDialogState state
+    ) {
+        input.addTextChangedListener(
+                new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            public void beforeTextChanged(
+                    CharSequence s,
+                    int start,
+                    int count,
+                    int after
+            ) {
             }
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            public void onTextChanged(
+                    CharSequence s,
+                    int start,
+                    int before,
+                    int count
+            ) {
             }
 
             @Override
             public void afterTextChanged(Editable editable) {
                 String raw = editable != null ? editable.toString() : "";
-                String type = AppConfigDialogBinder.resolveViewportMode(toggle);
+                String type = AppConfigDialogBinder.resolveViewportMode(
+                        toggle
+                );
                 state.updateViewportInput(type, raw);
-                if (raw.trim().isEmpty()) {
-                    inputLayout.setError(null);
-                    updateSaveButtonState((View) inputLayout.getRootView(), null);
-                    return;
-                }
-                if (!AppConfigInputValidation.isViewportInputValid(raw, type)) {
-                    inputLayout.setError(activity.getString(R.string.status_save_invalid));
-                    updateSaveButtonState((View) inputLayout.getRootView(), null);
-                    return;
-                }
-                inputLayout.setError(null);
-                updateSaveButtonState((View) inputLayout.getRootView(), null);
+                updateSaveButtonState(
+                        (View) inputLayout.getRootView(),
+                        null
+                );
             }
-        });
+        }
+        );
     }
 
-    private void bindViewportToggle(TextInputLayout inputLayout,
+    private void bindViewportToggle(
+            TextInputLayout inputLayout,
             TextInputEditText input,
             AppConfigDialogBinder.ModeToggle toggle,
             AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state) {
+            AppConfigDialogBinder.AppConfigDialogState state
+    ) {
         View.OnClickListener switcher = clicked -> {
+            FormInputFocusBinder.clearFocusAndHideIme(
+                    (View) inputLayout.getRootView(),
+                    input
+            );
             AppConfigDialogBinder.toggleViewportMode(toggle, input, state);
             String type = AppConfigDialogBinder.resolveViewportMode(toggle);
             bindViewportInputHint(inputLayout, type);
-            String raw = input.getText() != null ? input.getText().toString() : "";
-            if (AppConfigInputValidation.isViewportInputValid(raw, type)) {
-                inputLayout.setError(null);
-            } else {
-                inputLayout.setError(activity.getString(R.string.status_save_invalid));
-            }
             updateSaveButtonState((View) inputLayout.getRootView(), null);
         };
         toggle.container.setOnClickListener(switcher);
-        toggle.emulationLabel.setOnClickListener(clicked -> switchViewportMode(
-                inputLayout, input, toggle, item, state, ViewportTargetType.RELATIVE_SCALE));
-        toggle.replaceLabel.setOnClickListener(clicked -> switchViewportMode(
-                inputLayout, input, toggle, item, state, ViewportTargetType.ABSOLUTE_DP));
+        toggle.emulationLabel.setOnClickListener(clicked
+                -> switchViewportMode(
+                        inputLayout,
+                        input,
+                        toggle,
+                        item,
+                        state,
+                        ViewportTargetType.RELATIVE_SCALE
+                )
+        );
+        toggle.replaceLabel.setOnClickListener(clicked
+                -> switchViewportMode(
+                        inputLayout,
+                        input,
+                        toggle,
+                        item,
+                        state,
+                        ViewportTargetType.ABSOLUTE_DP
+                )
+        );
         TouchFeedbackBinder.bindPressHaptic(toggle.container);
     }
 
-    private void switchViewportMode(TextInputLayout inputLayout,
+    private void switchViewportMode(
+            TextInputLayout inputLayout,
             TextInputEditText input,
             AppConfigDialogBinder.ModeToggle toggle,
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state,
-            String targetType) {
-        AppConfigDialogBinder.switchViewportTargetType(toggle, input, state, targetType, true);
+            String targetType
+    ) {
+        FormInputFocusBinder.clearFocusAndHideIme(
+                (View) inputLayout.getRootView(),
+                input
+        );
+        AppConfigDialogBinder.switchViewportTargetType(
+                toggle,
+                input,
+                state,
+                targetType,
+                true
+        );
         bindViewportInputHint(inputLayout, targetType);
-        String raw = input.getText() != null ? input.getText().toString() : "";
-        if (AppConfigInputValidation.isViewportInputValid(raw, targetType)) {
-            inputLayout.setError(null);
-        } else {
-            inputLayout.setError(activity.getString(R.string.status_save_invalid));
-        }
         updateSaveButtonState((View) inputLayout.getRootView(), null);
     }
 
-    private void bindFontInput(TextInputLayout inputLayout,
+    private void bindFontInput(
+            TextInputLayout inputLayout,
             TextInputEditText input,
             AppConfigDialogBinder.ModeToggle toggle,
-            AppListItem item) {
-        input.addTextChangedListener(new TextWatcher() {
+            AppListItem item
+    ) {
+        input.addTextChangedListener(
+                new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            public void beforeTextChanged(
+                    CharSequence s,
+                    int start,
+                    int count,
+                    int after
+            ) {
             }
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            public void onTextChanged(
+                    CharSequence s,
+                    int start,
+                    int before,
+                    int count
+            ) {
             }
 
             @Override
             public void afterTextChanged(Editable editable) {
-                String raw = editable != null ? editable.toString() : "";
-                if (raw.trim().isEmpty()) {
-                    inputLayout.setError(null);
-                    updateSaveButtonState((View) inputLayout.getRootView(), null);
-                    return;
-                }
-                if (!AppConfigInputValidation.isFontScaleInputValid(raw)) {
-                    inputLayout.setError(activity.getString(R.string.status_save_invalid));
-                    updateSaveButtonState((View) inputLayout.getRootView(), null);
-                    return;
-                }
-                inputLayout.setError(null);
-                updateSaveButtonState((View) inputLayout.getRootView(), null);
+                updateSaveButtonState(
+                        (View) inputLayout.getRootView(),
+                        null
+                );
             }
-        });
+        }
+        );
     }
 
-    private void bindFontToggle(TextInputLayout inputLayout,
+    private void bindFontToggle(
+            TextInputLayout inputLayout,
             TextInputEditText input,
             AppConfigDialogBinder.ModeToggle toggle,
-            AppListItem item) {
+            AppListItem item
+    ) {
         View.OnClickListener switcher = clicked -> {
+            FormInputFocusBinder.clearFocusAndHideIme(
+                    (View) inputLayout.getRootView(),
+                    input
+            );
             AppConfigDialogBinder.toggleFontMode(toggle);
             saveFontModeIfValid(inputLayout, input, toggle, item);
         };
         toggle.container.setOnClickListener(switcher);
         toggle.emulationLabel.setOnClickListener(clicked -> {
-            AppConfigDialogBinder.bindFontModeToggle(toggle, FontApplyMode.SYSTEM_EMULATION, true);
+            FormInputFocusBinder.clearFocusAndHideIme(
+                    (View) inputLayout.getRootView(),
+                    input
+            );
+            AppConfigDialogBinder.bindFontModeToggle(
+                    toggle,
+                    FontApplyMode.SYSTEM_EMULATION,
+                    true
+            );
             saveFontModeIfValid(inputLayout, input, toggle, item);
         });
         toggle.replaceLabel.setOnClickListener(clicked -> {
-            AppConfigDialogBinder.bindFontModeToggle(toggle, FontApplyMode.FIELD_REWRITE, true);
+            FormInputFocusBinder.clearFocusAndHideIme(
+                    (View) inputLayout.getRootView(),
+                    input
+            );
+            AppConfigDialogBinder.bindFontModeToggle(
+                    toggle,
+                    FontApplyMode.FIELD_REWRITE,
+                    true
+            );
             saveFontModeIfValid(inputLayout, input, toggle, item);
         });
         TouchFeedbackBinder.bindPressHaptic(toggle.container);
     }
 
-    private void saveFontModeIfValid(TextInputLayout inputLayout,
+    private void saveFontModeIfValid(
+            TextInputLayout inputLayout,
             TextInputEditText input,
             AppConfigDialogBinder.ModeToggle toggle,
-            AppListItem item) {
-        String raw = input.getText() != null ? input.getText().toString() : "";
-        if (raw.trim().isEmpty()) {
-            inputLayout.setError(null);
-            updateSaveButtonState((View) inputLayout.getRootView(), null);
-            return;
-        }
-        if (!AppConfigInputValidation.isFontScaleInputValid(raw)) {
-            inputLayout.setError(activity.getString(R.string.status_save_invalid));
-            updateSaveButtonState((View) inputLayout.getRootView(), null);
-            return;
-        }
-        inputLayout.setError(null);
+            AppListItem item
+    ) {
         updateSaveButtonState((View) inputLayout.getRootView(), null);
     }
 
-    private void bindViewportInputHint(TextInputLayout inputLayout, String viewportTargetType) {
-        inputLayout.setHint(ViewportTargetType.RELATIVE_SCALE.equals(
-                ViewportTargetType.normalize(viewportTargetType))
-                        ? R.string.dialog_viewport_hint_scale
-                        : R.string.dialog_viewport_hint_absolute);
+    private void bindViewportInputHint(
+            TextInputLayout inputLayout,
+            String viewportTargetType
+    ) {
+        inputLayout.setHint(
+                ViewportTargetType.RELATIVE_SCALE.equals(
+                        ViewportTargetType.normalize(viewportTargetType)
+                )
+                ? R.string.dialog_viewport_hint_scale
+                : R.string.dialog_viewport_hint_absolute
+        );
     }
 
     private Integer parsePercentOrNull(String raw) {
@@ -343,7 +507,12 @@ final class LandAppDetailPaneBinder {
         }
     }
 
-    private void bindAdvancedButton(View root, int buttonId, int textResId, Runnable action) {
+    private void bindAdvancedButton(
+            View root,
+            int buttonId,
+            int textResId,
+            Runnable action
+    ) {
         MaterialButton button = root.findViewById(buttonId);
         button.setText(textResId);
         bindEditorRow(button, action);
@@ -353,53 +522,81 @@ final class LandAppDetailPaneBinder {
         bindEditorRow(root.findViewById(buttonId), action);
     }
 
-    private void refreshScopeButton(MaterialButton scopeButton,
+    private void refreshScopeButton(
+            MaterialButton scopeButton,
             AppConfigDialogBinder.AppConfigDialogState state,
-            ActionButtonStyle style) {
+            ActionButtonStyle style
+    ) {
         if (scopeButton == null || state == null || style == null) {
             return;
         }
         int activeBgColor = MaterialColors.getColor(
-                scopeButton, com.google.android.material.R.attr.colorSecondaryContainer);
+                scopeButton,
+                com.google.android.material.R.attr.colorSecondaryContainer
+        );
         int activeFgColor = MaterialColors.getColor(
-                scopeButton, com.google.android.material.R.attr.colorOnSecondaryContainer);
+                scopeButton,
+                com.google.android.material.R.attr.colorOnSecondaryContainer
+        );
         int scopeTextRes = state.scopeKnown
-                ? (state.scopeSelected ? R.string.scope_remove_button : R.string.scope_add_button)
+                ? (state.scopeSelected
+                        ? R.string.scope_remove_button
+                        : R.string.scope_add_button)
                 : R.string.scope_add_button;
         boolean activeScopeStyle = state.scopeKnown && state.scopeSelected;
         scopeButton.setIcon(null);
         scopeButton.setText(scopeTextRes);
-        scopeButton.setBackgroundTintList(activeScopeStyle
-                ? ColorStateList.valueOf(activeBgColor)
-                : style.defaultBgTint);
-        scopeButton.setTextColor(activeScopeStyle ? activeFgColor : style.defaultTextColor);
-        scopeButton.setStrokeWidth(activeScopeStyle ? 0 : style.defaultStrokeWidth);
+        scopeButton.setBackgroundTintList(
+                activeScopeStyle
+                        ? ColorStateList.valueOf(activeBgColor)
+                        : style.defaultBgTint
+        );
+        scopeButton.setTextColor(
+                activeScopeStyle ? activeFgColor : style.defaultTextColor
+        );
+        scopeButton.setStrokeWidth(
+                activeScopeStyle ? 0 : style.defaultStrokeWidth
+        );
         scopeButton.setContentDescription(activity.getString(scopeTextRes));
         scopeButton.setEnabled(state.scopeKnown);
         scopeButton.setAlpha(state.scopeKnown ? 1f : 0.6f);
     }
 
-    private void refreshDpisToggleButton(MaterialButton dpisToggleButton,
+    private void refreshDpisToggleButton(
+            MaterialButton dpisToggleButton,
             AppConfigDialogBinder.AppConfigDialogState state,
-            ActionButtonStyle style) {
+            ActionButtonStyle style
+    ) {
         if (dpisToggleButton == null || state == null || style == null) {
             return;
         }
         int activeBgColor = MaterialColors.getColor(
-                dpisToggleButton, com.google.android.material.R.attr.colorSecondaryContainer);
+                dpisToggleButton,
+                com.google.android.material.R.attr.colorSecondaryContainer
+        );
         int activeFgColor = MaterialColors.getColor(
-                dpisToggleButton, com.google.android.material.R.attr.colorOnSecondaryContainer);
-        String buttonText = activity.getString(state.dpisEnabled
-                ? R.string.dialog_dpis_disable_button
-                : R.string.dialog_dpis_enable_button);
+                dpisToggleButton,
+                com.google.android.material.R.attr.colorOnSecondaryContainer
+        );
+        String buttonText = activity.getString(
+                state.dpisEnabled
+                        ? R.string.dialog_dpis_disable_button
+                        : R.string.dialog_dpis_enable_button
+        );
         boolean enabledActive = state.dpisEnabled;
         dpisToggleButton.setIcon(null);
         dpisToggleButton.setText(buttonText);
-        dpisToggleButton.setBackgroundTintList(enabledActive
-                ? ColorStateList.valueOf(activeBgColor)
-                : style.defaultBgTint);
-        dpisToggleButton.setTextColor(enabledActive ? activeFgColor : style.defaultTextColor);
-        dpisToggleButton.setStrokeWidth(enabledActive ? 0 : style.defaultStrokeWidth);
+        dpisToggleButton.setBackgroundTintList(
+                enabledActive
+                        ? ColorStateList.valueOf(activeBgColor)
+                        : style.defaultBgTint
+        );
+        dpisToggleButton.setTextColor(
+                enabledActive ? activeFgColor : style.defaultTextColor
+        );
+        dpisToggleButton.setStrokeWidth(
+                enabledActive ? 0 : style.defaultStrokeWidth
+        );
         dpisToggleButton.setContentDescription(buttonText);
         dpisToggleButton.setEnabled(!state.previewFromGlobalPrefill);
         dpisToggleButton.setAlpha(state.previewFromGlobalPrefill ? 0.6f : 1f);
@@ -409,23 +606,30 @@ final class LandAppDetailPaneBinder {
         if (root == null) {
             return;
         }
-        TextInputEditText viewportInput = root.findViewById(R.id.land_detail_viewport_input);
-        TextInputEditText fontInput = root.findViewById(R.id.land_detail_font_scale_input);
-        if (viewportInput != null) {
-            viewportInput.clearFocus();
-        }
-        if (fontInput != null) {
-            fontInput.clearFocus();
-        }
-        root.requestFocus();
+        FormInputFocusBinder.clearFocusAndHideIme(
+                root,
+                root.findViewById(R.id.land_detail_viewport_input),
+                root.findViewById(R.id.land_detail_font_scale_input),
+                root.findViewById(R.id.dialog_wechat_target_field_input)
+        );
     }
 
     private void bindAdaptiveAdvancedActions(View root) {
         if (root == null) {
             return;
         }
-        root.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
-                updateAdvancedActionsLayout(view));
+        root.addOnLayoutChangeListener(
+                (
+                        view,
+                        left,
+                        top,
+                        right,
+                        bottom,
+                        oldLeft,
+                        oldTop,
+                        oldRight,
+                        oldBottom) -> updateAdvancedActionsLayout(view)
+        );
         root.post(() -> updateAdvancedActionsLayout(root));
     }
 
@@ -433,26 +637,48 @@ final class LandAppDetailPaneBinder {
         if (root == null || root.getWidth() <= 0) {
             return;
         }
-        LinearLayout primaryRow = root.findViewById(R.id.land_detail_advanced_primary_row);
-        LinearLayout resetRow = root.findViewById(R.id.land_detail_advanced_reset_row);
-        MaterialButton resetButton = root.findViewById(R.id.land_detail_reset_row);
+        LinearLayout primaryRow = root.findViewById(
+                R.id.land_detail_advanced_primary_row
+        );
+        LinearLayout resetRow = root.findViewById(
+                R.id.land_detail_advanced_reset_row
+        );
+        MaterialButton resetButton = root.findViewById(
+                R.id.land_detail_reset_row
+        );
         if (primaryRow == null || resetRow == null || resetButton == null) {
             return;
         }
-        int buttonMinWidth = activity.getResources().getDimensionPixelSize(
-                R.dimen.land_app_detail_advanced_button_wrap_min_width);
-        int spacing = activity.getResources().getDimensionPixelSize(
-                R.dimen.land_app_detail_action_button_spacing);
-        int contentHorizontalPadding = activity.getResources().getDimensionPixelSize(
-                R.dimen.land_app_detail_padding_horizontal) * 2
-                + activity.getResources().getDimensionPixelSize(R.dimen.land_app_detail_card_padding) * 2;
-        int threeButtonRequiredWidth = buttonMinWidth * 3 + spacing * 2 + contentHorizontalPadding;
+        int buttonMinWidth = activity
+                .getResources()
+                .getDimensionPixelSize(
+                        R.dimen.land_app_detail_advanced_button_wrap_min_width
+                );
+        int spacing = activity
+                .getResources()
+                .getDimensionPixelSize(
+                        R.dimen.land_app_detail_action_button_spacing
+                );
+        int contentHorizontalPadding
+                = activity
+                        .getResources()
+                        .getDimensionPixelSize(
+                                R.dimen.land_app_detail_padding_horizontal
+                        )
+                * 2
+                + activity
+                        .getResources()
+                        .getDimensionPixelSize(R.dimen.land_app_detail_card_padding)
+                * 2;
+        int threeButtonRequiredWidth
+                = buttonMinWidth * 3 + spacing * 2 + contentHorizontalPadding;
         boolean wrapReset = root.getWidth() < threeButtonRequiredWidth;
         if (wrapReset && resetButton.getParent() != resetRow) {
             primaryRow.removeView(resetButton);
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT);
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            );
             resetRow.addView(resetButton, params);
             resetRow.setVisibility(View.VISIBLE);
         } else if (!wrapReset && resetButton.getParent() != primaryRow) {
@@ -460,7 +686,8 @@ final class LandAppDetailPaneBinder {
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     0,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
-                    1f);
+                    1f
+            );
             params.setMarginStart(spacing);
             primaryRow.addView(resetButton, params);
             resetRow.setVisibility(View.GONE);
@@ -481,19 +708,25 @@ final class LandAppDetailPaneBinder {
         TouchFeedbackBinder.bindPressHaptic(row);
     }
 
-    private void bindProcessButton(View root,
+    private void bindProcessButton(
+            View root,
             int buttonId,
             AppListItem item,
-            AppConfigDialogBinder.ProcessAction action) {
+            AppConfigDialogBinder.ProcessAction action
+    ) {
         MaterialButton button = root.findViewById(buttonId);
-        button.setOnClickListener(clicked -> actions.executeProcessAction(item, action));
+        button.setOnClickListener(clicked
+                -> actions.executeProcessAction(item, action)
+        );
         TouchFeedbackBinder.bindPressHaptic(button);
     }
 
-    private void bindSaveButton(View root,
+    private void bindSaveButton(
+            View root,
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state,
-            MaterialButton saveButton) {
+            MaterialButton saveButton
+    ) {
         if (saveButton == null) {
             return;
         }
@@ -501,35 +734,56 @@ final class LandAppDetailPaneBinder {
             if (!updateSaveButtonState(root, saveButton)) {
                 return;
             }
-            TextInputEditText viewportInput = root.findViewById(R.id.land_detail_viewport_input);
-            TextInputEditText fontInput = root.findViewById(R.id.land_detail_font_scale_input);
-            AppConfigDialogBinder.ModeToggle viewportToggle = new AppConfigDialogBinder.ModeToggle(
-                    root.findViewById(R.id.land_detail_viewport_mode_toggle_button),
-                    root.findViewById(R.id.land_detail_viewport_mode_toggle_thumb),
-                    root.findViewById(R.id.land_detail_viewport_mode_scale_label),
-                    root.findViewById(R.id.land_detail_viewport_mode_width_label));
-            AppConfigDialogBinder.ModeToggle fontToggle = new AppConfigDialogBinder.ModeToggle(
-                    root.findViewById(R.id.land_detail_font_mode_toggle_button),
-                    root.findViewById(R.id.land_detail_font_mode_toggle_thumb),
-                    root.findViewById(R.id.land_detail_font_mode_system_label),
-                    root.findViewById(R.id.land_detail_font_mode_compat_label));
-            Integer viewportValue = parsePercentOrNull(textOf(viewportInput));
-            Integer fontPercent = parsePercentOrNull(textOf(fontInput));
+            TextInputEditText viewportInput = root.findViewById(
+                    R.id.land_detail_viewport_input
+            );
+            TextInputEditText fontInput = root.findViewById(
+                    R.id.land_detail_font_scale_input
+            );
+            AppConfigDialogBinder.ModeToggle viewportToggle
+                    = new AppConfigDialogBinder.ModeToggle(
+                            root.findViewById(
+                                    R.id.land_detail_viewport_mode_toggle_button
+                            ),
+                            root.findViewById(
+                                    R.id.land_detail_viewport_mode_toggle_thumb
+                            ),
+                            root.findViewById(
+                                    R.id.land_detail_viewport_mode_scale_label
+                            ),
+                            root.findViewById(
+                                    R.id.land_detail_viewport_mode_width_label
+                            )
+                    );
+            AppConfigDialogBinder.ModeToggle fontToggle
+                    = new AppConfigDialogBinder.ModeToggle(
+                            root.findViewById(R.id.land_detail_font_mode_toggle_button),
+                            root.findViewById(R.id.land_detail_font_mode_toggle_thumb),
+                            root.findViewById(R.id.land_detail_font_mode_system_label),
+                            root.findViewById(R.id.land_detail_font_mode_compat_label)
+                    );
+            Integer viewportValue = parsePercentOrNull(inputTextOf(viewportInput));
+            Integer fontPercent = parsePercentOrNull(inputTextOf(fontInput));
             actions.saveDraft(
                     item,
                     state,
                     viewportValue,
                     AppConfigDialogBinder.resolveViewportMode(viewportToggle),
                     fontPercent,
-                    fontPercent == null ? FontApplyMode.OFF : AppConfigDialogBinder.resolveFontMode(fontToggle),
+                    fontPercent == null
+                            ? FontApplyMode.OFF
+                            : AppConfigDialogBinder.resolveFontMode(fontToggle),
                     state.selectedTypefaceId,
-                    state.previewFontHookDomainsRaw,
+                    state.draftFontHookDomainsRaw,
                     state.viewportApplyMode,
+                    state.viewportApplyModeResetRequested,
+                    state.fontHookDomainsResetRequested,
                     state.viewportScaleInput,
                     state.viewportAbsoluteInput,
                     state.dpisEnabled,
                     root,
-                    saveButton);
+                    saveButton
+            );
         });
         TouchFeedbackBinder.bindPressHaptic(saveButton);
     }
@@ -538,31 +792,65 @@ final class LandAppDetailPaneBinder {
         if (root == null || saveButton == null) {
             return;
         }
-        root.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
-                updateSaveButtonPresentation(view, saveButton));
+        root.addOnLayoutChangeListener(
+                (
+                        view,
+                        left,
+                        top,
+                        right,
+                        bottom,
+                        oldLeft,
+                        oldTop,
+                        oldRight,
+                        oldBottom) -> updateSaveButtonPresentation(view, saveButton)
+        );
         root.post(() -> updateSaveButtonPresentation(root, saveButton));
     }
 
-    private void updateSaveButtonPresentation(View root, MaterialButton saveButton) {
+    private void updateSaveButtonPresentation(
+            View root,
+            MaterialButton saveButton
+    ) {
         int rootWidth = root != null ? root.getWidth() : 0;
         if (rootWidth <= 0 || saveButton == null) {
             return;
         }
-        int dockHorizontalMargins = activity.getResources().getDimensionPixelSize(
-                R.dimen.land_app_detail_dock_margin_horizontal) * 2;
-        int dockPadding = activity.getResources().getDimensionPixelSize(
-                R.dimen.land_app_detail_dock_padding) * 2;
-        int saveExpandedWidth = activity.getResources().getDimensionPixelSize(
-                R.dimen.land_app_detail_dock_save_expanded_min_width);
-        int saveCompactWidth = activity.getResources().getDimensionPixelSize(
-                R.dimen.land_app_detail_dock_button_height);
-        int spacing = activity.getResources().getDimensionPixelSize(
-                R.dimen.land_app_detail_dock_button_spacing);
-        int processButtonWidth = activity.getResources().getDimensionPixelSize(
-                R.dimen.land_app_detail_dock_process_button_min_width) * 3;
-        int processDividerWidth = activity.getResources().getDimensionPixelSize(
-                R.dimen.land_app_detail_dock_process_divider_width) * 2;
-        int expandedRequiredWidth = dockHorizontalMargins
+        int dockHorizontalMargins
+                = activity
+                        .getResources()
+                        .getDimensionPixelSize(
+                                R.dimen.land_app_detail_dock_margin_horizontal
+                        ) * 2;
+        int dockPadding
+                = activity
+                        .getResources()
+                        .getDimensionPixelSize(R.dimen.land_app_detail_dock_padding)
+                * 2;
+        int saveExpandedWidth = activity
+                .getResources()
+                .getDimensionPixelSize(
+                        R.dimen.land_app_detail_dock_save_expanded_min_width
+                );
+        int saveCompactWidth = activity
+                .getResources()
+                .getDimensionPixelSize(R.dimen.land_app_detail_dock_button_height);
+        int spacing = activity
+                .getResources()
+                .getDimensionPixelSize(R.dimen.land_app_detail_dock_button_spacing);
+        int processButtonWidth
+                = activity
+                        .getResources()
+                        .getDimensionPixelSize(
+                                R.dimen.land_app_detail_dock_process_button_min_width
+                        ) * 3;
+        int processDividerWidth
+                = activity
+                        .getResources()
+                        .getDimensionPixelSize(
+                                R.dimen.land_app_detail_dock_process_divider_width
+                        ) * 2;
+        int expandedRequiredWidth
+                = dockHorizontalMargins
                 + dockPadding
                 + saveExpandedWidth
                 + spacing
@@ -578,7 +866,9 @@ final class LandAppDetailPaneBinder {
         saveButton.setMinWidth(targetWidth);
         saveButton.setMinimumWidth(targetWidth);
         saveButton.setIconPadding(0);
-        saveButton.setContentDescription(activity.getString(R.string.status_save_button));
+        saveButton.setContentDescription(
+                activity.getString(R.string.status_save_button)
+        );
         if (compact) {
             saveButton.setText(null);
             saveButton.setIconResource(R.drawable.ic_save_24dp);
@@ -589,83 +879,277 @@ final class LandAppDetailPaneBinder {
         }
     }
 
-    private boolean updateSaveButtonState(View root, MaterialButton saveButton) {
+    private static boolean updateSaveButtonState(
+            View root,
+            MaterialButton saveButton
+    ) {
         if (root == null) {
             return true;
         }
-        MaterialButton resolvedSaveButton = saveButton != null
-                ? saveButton
-                : root.findViewById(R.id.land_detail_save_button);
-        TextInputLayout viewportInputLayout = root.findViewById(R.id.land_detail_viewport_input_layout);
-        TextInputEditText viewportInput = root.findViewById(R.id.land_detail_viewport_input);
-        TextInputLayout fontInputLayout = root.findViewById(R.id.land_detail_font_scale_input_layout);
-        TextInputEditText fontInput = root.findViewById(R.id.land_detail_font_scale_input);
-        if (viewportInputLayout == null || viewportInput == null
-                || fontInputLayout == null || fontInput == null || resolvedSaveButton == null) {
+        MaterialButton resolvedSaveButton
+                = saveButton != null
+                        ? saveButton
+                        : root.findViewById(R.id.land_detail_save_button);
+        TextInputLayout viewportInputLayout = root.findViewById(
+                R.id.land_detail_viewport_input_layout
+        );
+        TextInputEditText viewportInput = root.findViewById(
+                R.id.land_detail_viewport_input
+        );
+        TextInputLayout fontInputLayout = root.findViewById(
+                R.id.land_detail_font_scale_input_layout
+        );
+        TextInputEditText fontInput = root.findViewById(
+                R.id.land_detail_font_scale_input
+        );
+        if (viewportInputLayout == null
+                || viewportInput == null
+                || fontInputLayout == null
+                || fontInput == null
+                || resolvedSaveButton == null) {
             return true;
         }
-        AppConfigDialogBinder.ModeToggle viewportToggle = new AppConfigDialogBinder.ModeToggle(
-                root.findViewById(R.id.land_detail_viewport_mode_toggle_button),
-                root.findViewById(R.id.land_detail_viewport_mode_toggle_thumb),
-                root.findViewById(R.id.land_detail_viewport_mode_scale_label),
-                root.findViewById(R.id.land_detail_viewport_mode_width_label));
-        AppConfigDialogBinder.ModeToggle fontToggle = new AppConfigDialogBinder.ModeToggle(
-                root.findViewById(R.id.land_detail_font_mode_toggle_button),
-                root.findViewById(R.id.land_detail_font_mode_toggle_thumb),
-                root.findViewById(R.id.land_detail_font_mode_system_label),
-                root.findViewById(R.id.land_detail_font_mode_compat_label));
+        AppConfigDialogBinder.ModeToggle viewportToggle
+                = new AppConfigDialogBinder.ModeToggle(
+                        root.findViewById(R.id.land_detail_viewport_mode_toggle_button),
+                        root.findViewById(R.id.land_detail_viewport_mode_toggle_thumb),
+                        root.findViewById(R.id.land_detail_viewport_mode_scale_label),
+                        root.findViewById(R.id.land_detail_viewport_mode_width_label)
+                );
+        AppConfigDialogBinder.ModeToggle fontToggle
+                = new AppConfigDialogBinder.ModeToggle(
+                        root.findViewById(R.id.land_detail_font_mode_toggle_button),
+                        root.findViewById(R.id.land_detail_font_mode_toggle_thumb),
+                        root.findViewById(R.id.land_detail_font_mode_system_label),
+                        root.findViewById(R.id.land_detail_font_mode_compat_label)
+                );
         boolean valid = AppConfigDialogBinder.updateSaveButtonState(
                 viewportInputLayout,
                 viewportInput,
                 viewportToggle,
                 fontInputLayout,
                 fontInput,
-                resolvedSaveButton);
+                resolvedSaveButton
+        );
         valid = valid && WechatTargetFieldSheetBinder.isInputValid(root);
-        resolvedSaveButton.setEnabled(valid);
+        boolean hasChanged = hasUnsavedChanges(root);
+        resolvedSaveButton.setEnabled(hasChanged && valid);
+        updateUnsavedBadge(root);
         return valid;
     }
 
-    private String textOf(TextInputEditText input) {
-        return input != null && input.getText() != null ? input.getText().toString() : "";
+    static void markDraftSaved(View root, MaterialButton saveButton) {
+        if (root == null) {
+            return;
+        }
+        setCleanStateSignature(root, buildStateSignature(root));
+        if (saveButton != null) {
+            saveButton.setEnabled(false);
+        }
+        updateUnsavedBadge(root);
     }
 
-    private void resetDraft(View root,
+    static AppConfigDialogBinder.AppConfigDialogState stateFor(View root) {
+        Object tag = root != null
+                ? root.getTag(R.id.land_detail_hook_chain_row)
+                : null;
+        return tag instanceof AppConfigDialogBinder.AppConfigDialogState
+                ? (AppConfigDialogBinder.AppConfigDialogState) tag
+                : null;
+    }
+
+    static void applyRetainedDraft(
+            Activity activity,
+            View root,
+            AppListItem item,
+            String selectedTypefaceId,
+            String draftFontHookDomainsRaw,
+            String viewportApplyMode,
+            boolean fontHookDomainsResetRequested,
+            boolean viewportApplyModeResetRequested
+    ) {
+        AppConfigDialogBinder.AppConfigDialogState state = stateFor(root);
+        if (activity == null || root == null || state == null) {
+            return;
+        }
+        state.selectedTypefaceId = selectedTypefaceId;
+        state.draftFontHookDomainsRaw = draftFontHookDomainsRaw;
+        state.viewportApplyMode = ViewportApplyMode.normalize(viewportApplyMode);
+        state.fontHookDomainsResetRequested = fontHookDomainsResetRequested;
+        state.viewportApplyModeResetRequested = viewportApplyModeResetRequested;
+
+        MaterialTextView typefaceValue = root.findViewById(
+                R.id.land_detail_typeface_value
+        );
+        if (typefaceValue != null) {
+            typefaceValue.setText(formatTypefaceValue(activity, selectedTypefaceId));
+        }
+        MaterialTextView hookValue = root.findViewById(
+                R.id.land_detail_hook_chain_value
+        );
+        if (hookValue != null) {
+            hookValue.setText(formatHookChainValue(activity, item, state));
+        }
+        updateSaveButtonState(
+                root,
+                root.findViewById(R.id.land_detail_save_button)
+        );
+    }
+
+    private static String inputTextOf(TextInputEditText input) {
+        return input != null && input.getText() != null
+                ? input.getText().toString()
+                : "";
+    }
+
+    private static String labelTextOf(MaterialTextView textView) {
+        return textView != null && textView.getText() != null
+                ? textView.getText().toString()
+                : "";
+    }
+
+    private static boolean hasUnsavedChanges(View root) {
+        String cleanStateSignature = cleanStateSignature(root);
+        return !cleanStateSignature.equals(buildStateSignature(root));
+    }
+
+    private static void updateUnsavedBadge(View root) {
+        MaterialTextView badge = root.findViewById(
+                R.id.land_detail_unsaved_badge
+        );
+        if (badge != null) {
+            badge.setVisibility(
+                    hasUnsavedChanges(root) ? View.VISIBLE : View.GONE
+            );
+        }
+    }
+
+    private static void setCleanStateSignature(View root, String signature) {
+        if (root != null) {
+            root.setTag(
+                    R.id.land_detail_save_button,
+                    signature != null ? signature : ""
+            );
+        }
+    }
+
+    private static String cleanStateSignature(View root) {
+        Object tag = root != null
+                ? root.getTag(R.id.land_detail_save_button)
+                : null;
+        return tag instanceof String ? (String) tag : "";
+    }
+
+    private static String buildStateSignature(View root) {
+        String viewportText = inputTextOf(
+                root.findViewById(R.id.land_detail_viewport_input)
+        );
+        String fontText = inputTextOf(
+                root.findViewById(R.id.land_detail_font_scale_input)
+        );
+        String typefaceText = labelTextOf(
+                root.findViewById(R.id.land_detail_typeface_value)
+        );
+        String hookChainText = labelTextOf(
+                root.findViewById(R.id.land_detail_hook_chain_value)
+        );
+        AppConfigDialogBinder.ModeToggle viewportToggle
+                = new AppConfigDialogBinder.ModeToggle(
+                        root.findViewById(R.id.land_detail_viewport_mode_toggle_button),
+                        root.findViewById(R.id.land_detail_viewport_mode_toggle_thumb),
+                        root.findViewById(R.id.land_detail_viewport_mode_scale_label),
+                        root.findViewById(R.id.land_detail_viewport_mode_width_label)
+                );
+        AppConfigDialogBinder.ModeToggle fontToggle
+                = new AppConfigDialogBinder.ModeToggle(
+                        root.findViewById(R.id.land_detail_font_mode_toggle_button),
+                        root.findViewById(R.id.land_detail_font_mode_toggle_thumb),
+                        root.findViewById(R.id.land_detail_font_mode_system_label),
+                        root.findViewById(R.id.land_detail_font_mode_compat_label)
+                );
+        return String.join(
+                "|",
+                viewportText,
+                AppConfigDialogBinder.resolveViewportMode(viewportToggle),
+                fontText,
+                AppConfigDialogBinder.resolveFontMode(fontToggle),
+                typefaceText,
+                hookChainText
+        );
+    }
+
+    private static String emptyStateSignature() {
+        return String.join(
+                "|",
+                "",
+                ViewportTargetType.RELATIVE_SCALE,
+                "",
+                FontApplyMode.SYSTEM_EMULATION,
+                "",
+                ""
+        );
+    }
+
+    private void resetDraft(
+            View root,
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state,
             MaterialTextView typefaceValue,
             MaterialTextView hookValue,
-            MaterialButton saveButton) {
-        TextInputEditText viewportInput = root.findViewById(R.id.land_detail_viewport_input);
-        TextInputEditText fontInput = root.findViewById(R.id.land_detail_font_scale_input);
-        TextInputLayout viewportInputLayout = root.findViewById(R.id.land_detail_viewport_input_layout);
-        AppConfigDialogBinder.ModeToggle viewportToggle = new AppConfigDialogBinder.ModeToggle(
-                root.findViewById(R.id.land_detail_viewport_mode_toggle_button),
-                root.findViewById(R.id.land_detail_viewport_mode_toggle_thumb),
-                root.findViewById(R.id.land_detail_viewport_mode_scale_label),
-                root.findViewById(R.id.land_detail_viewport_mode_width_label));
-        AppConfigDialogBinder.ModeToggle fontToggle = new AppConfigDialogBinder.ModeToggle(
-                root.findViewById(R.id.land_detail_font_mode_toggle_button),
-                root.findViewById(R.id.land_detail_font_mode_toggle_thumb),
-                root.findViewById(R.id.land_detail_font_mode_system_label),
-                root.findViewById(R.id.land_detail_font_mode_compat_label));
+            MaterialButton saveButton
+    ) {
+        TextInputEditText viewportInput = root.findViewById(
+                R.id.land_detail_viewport_input
+        );
+        TextInputEditText fontInput = root.findViewById(
+                R.id.land_detail_font_scale_input
+        );
+        TextInputLayout viewportInputLayout = root.findViewById(
+                R.id.land_detail_viewport_input_layout
+        );
+        AppConfigDialogBinder.ModeToggle viewportToggle
+                = new AppConfigDialogBinder.ModeToggle(
+                        root.findViewById(R.id.land_detail_viewport_mode_toggle_button),
+                        root.findViewById(R.id.land_detail_viewport_mode_toggle_thumb),
+                        root.findViewById(R.id.land_detail_viewport_mode_scale_label),
+                        root.findViewById(R.id.land_detail_viewport_mode_width_label)
+                );
+        AppConfigDialogBinder.ModeToggle fontToggle
+                = new AppConfigDialogBinder.ModeToggle(
+                        root.findViewById(R.id.land_detail_font_mode_toggle_button),
+                        root.findViewById(R.id.land_detail_font_mode_toggle_thumb),
+                        root.findViewById(R.id.land_detail_font_mode_system_label),
+                        root.findViewById(R.id.land_detail_font_mode_compat_label)
+                );
         viewportInput.setText("");
         fontInput.setText("");
         WechatTargetFieldSheetBinder.clearDraft(root);
         state.selectedTypefaceId = null;
         state.clearViewportInputs();
-        state.clearPreviewOnlyStateForReset();
+        state.clearHookChainStateForReset();
         typefaceValue.setText(formatTypefaceValue(state.selectedTypefaceId));
-        hookValue.setText(formatHookChainValue(state));
+        hookValue.setText(formatHookChainValue(item, state));
         AppConfigDialogBinder.bindViewportModeToggle(
-                viewportToggle, ViewportTargetType.RELATIVE_SCALE, true);
-        bindViewportInputHint(viewportInputLayout, ViewportTargetType.RELATIVE_SCALE);
+                viewportToggle,
+                ViewportTargetType.RELATIVE_SCALE,
+                true
+        );
+        bindViewportInputHint(
+                viewportInputLayout,
+                ViewportTargetType.RELATIVE_SCALE
+        );
         AppConfigDialogBinder.bindFontModeToggle(
-                fontToggle, FontApplyMode.SYSTEM_EMULATION, true);
+                fontToggle,
+                FontApplyMode.SYSTEM_EMULATION,
+                true
+        );
         updateSaveButtonState(root, saveButton);
     }
 
-    private CharSequence formatStatus(AppListItem item, boolean systemHooksEnabled) {
+    private CharSequence formatStatus(
+            AppListItem item,
+            boolean systemHooksEnabled
+    ) {
         String status = AppStatusFormatter.formatCompact(
                 activity.getResources(),
                 item.inScope,
@@ -676,20 +1160,41 @@ final class LandAppDetailPaneBinder {
                 item.fontMode,
                 item.typefaceId,
                 item.dpisEnabled,
-                item.hasAppSpecificConfig());
-        int warnColor = com.google.android.material.color.MaterialColors.getColor(
-                activity.findViewById(android.R.id.content),
-                androidx.appcompat.R.attr.colorError);
+                item.hasAppSpecificConfig()
+        );
+        int warnColor
+                = com.google.android.material.color.MaterialColors.getColor(
+                        activity.findViewById(android.R.id.content),
+                        androidx.appcompat.R.attr.colorError
+                );
         return AppStatusFormatter.applyConfigSegmentsWarnStyle(
                 status,
                 warnColor,
                 AppStatusFormatter.shouldWarnViewportEmulation(
-                        item.viewportTargetSpec, item.viewportMode, systemHooksEnabled, item.dpisEnabled),
+                        item.viewportTargetSpec,
+                        item.viewportMode,
+                        systemHooksEnabled,
+                        item.dpisEnabled
+                ),
                 AppStatusFormatter.shouldWarnFontEmulation(
-                        item.fontScalePercent, item.fontMode, systemHooksEnabled, item.dpisEnabled));
+                        item.fontScalePercent,
+                        item.fontMode,
+                        systemHooksEnabled,
+                        item.dpisEnabled
+                )
+        );
     }
+
     private String formatTypefaceValue(String selectedTypefaceId) {
-        String typefaceId = selectedTypefaceId != null && !selectedTypefaceId.isBlank()
+        return formatTypefaceValue(activity, selectedTypefaceId);
+    }
+
+    private static String formatTypefaceValue(
+            Activity activity,
+            String selectedTypefaceId
+    ) {
+        String typefaceId
+                = selectedTypefaceId != null && !selectedTypefaceId.isBlank()
                 ? selectedTypefaceId
                 : null;
         if (typefaceId == null) {
@@ -700,47 +1205,112 @@ final class LandAppDetailPaneBinder {
                 return entry.displayName;
             }
         }
-        FontLibraryEntry imported = ConfigStoreFactory
-                .createFontLibraryForModuleApp(activity, DpisApplication.getXposedService())
-                .findById(typefaceId);
+        FontLibraryEntry imported
+                = ConfigStoreFactory.createFontLibraryForModuleApp(
+                        activity,
+                        DpisApplication.getXposedService()
+                ).findById(typefaceId);
         if (imported != null) {
             return imported.displayName;
         }
-        return activity.getString(R.string.dialog_typeface_missing_named, typefaceId);
+        return activity.getString(
+                R.string.dialog_typeface_missing_named,
+                typefaceId
+        );
     }
 
-    private String formatHookChainValue(AppConfigDialogBinder.AppConfigDialogState state) {
+    private String formatHookChainValue(
+            AppListItem item,
+            AppConfigDialogBinder.AppConfigDialogState state
+    ) {
+        return formatHookChainValue(activity, item, state);
+    }
+
+    private static String formatHookChainValue(
+            Activity activity,
+            AppListItem item,
+            AppConfigDialogBinder.AppConfigDialogState state
+    ) {
         ArrayList<String> parts = new ArrayList<>();
-        String viewportMode = state != null ? ViewportApplyMode.normalize(state.viewportApplyMode) : ViewportApplyMode.OFF;
+        String viewportMode
+                = state != null
+                        ? ViewportApplyMode.normalize(state.viewportApplyMode)
+                        : ViewportApplyMode.OFF;
         if (ViewportApplyMode.SYSTEM.equals(viewportMode)) {
-            parts.add(activity.getString(R.string.land_detail_hook_chain_viewport_system));
+            parts.add(
+                    activity.getString(
+                            R.string.land_detail_hook_chain_viewport_system
+                    )
+            );
         } else if (ViewportApplyMode.COMPAT.equals(viewportMode)) {
-            parts.add(activity.getString(R.string.land_detail_hook_chain_viewport_compat));
+            parts.add(
+                    activity.getString(
+                            R.string.land_detail_hook_chain_viewport_compat
+                    )
+            );
         }
 
-        HookDomainOverride override = HookDomainOverrideStore.fromRaw(
-                state != null ? state.previewFontHookDomainsRaw : null);
+        HookDomainOverride override = resolveHookDomainOverride(activity, item, state);
         if (override.customPathEnabled) {
-            int selectedCount = FontHookDomainRegistry.orderedCustomizableDisplaySubset(
-                    override.enabledKnownDomains).size();
-            int totalCount = FontHookDomainRegistry.orderedCustomizableDisplayIdsList().size();
-            parts.add(activity.getString(
-                    R.string.land_detail_hook_chain_font_count, selectedCount, totalCount));
+            int selectedCount
+                    = FontHookDomainRegistry.orderedCustomizableDisplaySubset(
+                            override.enabledKnownDomains
+                    ).size();
+            int totalCount
+                    = FontHookDomainRegistry.orderedCustomizableDisplayIdsList().size();
+            parts.add(
+                    activity.getString(
+                            R.string.land_detail_hook_chain_font_count,
+                            selectedCount,
+                            totalCount
+                    )
+            );
         }
         if (parts.isEmpty()) {
             return activity.getString(R.string.land_detail_hook_chain_default);
         }
-        return String.join(activity.getString(R.string.land_detail_hook_chain_separator), parts);
+        return String.join(
+                activity.getString(R.string.land_detail_hook_chain_separator),
+                parts
+        );
+    }
+
+    private static HookDomainOverride resolveHookDomainOverride(
+            Activity activity,
+            AppListItem item,
+            AppConfigDialogBinder.AppConfigDialogState state
+    ) {
+        if (state != null && state.fontHookDomainsResetRequested) {
+            return HookDomainOverride.automatic();
+        }
+        if (state != null
+                && (state.previewFromGlobalPrefill
+                        || state.draftFontHookDomainsRaw != null)) {
+            return HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw);
+        }
+        if (item == null || item.packageName == null || item.packageName.isBlank()) {
+            return HookDomainOverride.automatic();
+        }
+        DpiConfigStore store = DpisApplication.getConfigStore();
+        if (store == null && activity != null) {
+            store = new DpiConfigStore(activity.getSharedPreferences(
+                    DpiConfigStore.GROUP,
+                    android.content.Context.MODE_PRIVATE));
+        }
+        return new HookDomainOverrideStore(store).read(item.packageName);
     }
 
     private static final class ActionButtonStyle {
+
         final ColorStateList defaultBgTint;
         final int defaultStrokeWidth;
         final int defaultTextColor;
 
-        private ActionButtonStyle(ColorStateList defaultBgTint,
+        private ActionButtonStyle(
+                ColorStateList defaultBgTint,
                 int defaultStrokeWidth,
-                int defaultTextColor) {
+                int defaultTextColor
+        ) {
             this.defaultBgTint = defaultBgTint;
             this.defaultStrokeWidth = defaultStrokeWidth;
             this.defaultTextColor = defaultTextColor;
@@ -753,8 +1323,11 @@ final class LandAppDetailPaneBinder {
             return new ActionButtonStyle(
                     button.getBackgroundTintList(),
                     button.getStrokeWidth(),
-                    MaterialColors.getColor(button, androidx.appcompat.R.attr.colorPrimary));
+                    MaterialColors.getColor(
+                            button,
+                            androidx.appcompat.R.attr.colorPrimary
+                    )
+            );
         }
     }
-
 }

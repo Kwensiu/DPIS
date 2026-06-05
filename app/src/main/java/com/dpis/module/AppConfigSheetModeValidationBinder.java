@@ -6,13 +6,13 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 
+import com.google.android.material.textfield.TextInputEditText;
+
 final class AppConfigSheetModeValidationBinder {
     private final AppConfigDialogBinder binder;
-    private final AppConfigDialogBinder.Host host;
 
-    AppConfigSheetModeValidationBinder(AppConfigDialogBinder binder, AppConfigDialogBinder.Host host) {
+    AppConfigSheetModeValidationBinder(AppConfigDialogBinder binder) {
         this.binder = binder;
-        this.host = host;
     }
 
     void bindDialogValidation(View dialogView,
@@ -29,11 +29,28 @@ final class AppConfigSheetModeValidationBinder {
             if (!isDoneAction && !isEnterDown) {
                 return false;
             }
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
+            FormInputFocusBinder.clearFocusAndHideIme(
+                    dialogView,
+                    views.viewportInputView,
+                    views.fontInputView
+            );
             return true;
         };
         views.viewportInputView.setOnEditorActionListener(doneListener);
         views.fontInputView.setOnEditorActionListener(doneListener);
+        TextInputEditText wechatInputView = dialogView.findViewById(
+                R.id.dialog_wechat_target_field_input
+        );
+        if (wechatInputView != null) {
+            wechatInputView.setOnEditorActionListener(doneListener);
+        }
+        FormInputFocusBinder.bindDismissOnOutsideTouch(
+                dialogView.findViewById(R.id.dialog_app_config_scroll),
+                dialogView,
+                views.viewportInputView,
+                views.fontInputView,
+                wechatInputView
+        );
         TextWatcher viewportValidationWatcher = new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -77,7 +94,8 @@ final class AppConfigSheetModeValidationBinder {
             AppConfigDialogBinder.AppConfigDialogActionStyle style,
             boolean systemHooksEnabled) {
         views.viewportModeToggle.container.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
+            FormInputFocusBinder.clearFocusAndHideIme(dialogView,
+                    views.viewportInputView, views.fontInputView);
             AppConfigDialogBinder.toggleViewportMode(
                     views.viewportModeToggle, views.viewportInputView, state);
             binder.bindViewportInputHint(
@@ -87,7 +105,8 @@ final class AppConfigSheetModeValidationBinder {
             binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
         });
         views.viewportModeToggle.emulationLabel.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
+            FormInputFocusBinder.clearFocusAndHideIme(dialogView,
+                    views.viewportInputView, views.fontInputView);
             AppConfigDialogBinder.switchViewportTargetType(
                     views.viewportModeToggle, views.viewportInputView, state,
                     ViewportTargetType.RELATIVE_SCALE, true);
@@ -96,7 +115,8 @@ final class AppConfigSheetModeValidationBinder {
             binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
         });
         views.viewportModeToggle.replaceLabel.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
+            FormInputFocusBinder.clearFocusAndHideIme(dialogView,
+                    views.viewportInputView, views.fontInputView);
             AppConfigDialogBinder.switchViewportTargetType(
                     views.viewportModeToggle, views.viewportInputView, state,
                     ViewportTargetType.ABSOLUTE_DP, true);
@@ -105,18 +125,21 @@ final class AppConfigSheetModeValidationBinder {
             binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
         });
         views.fontModeToggle.container.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
+            FormInputFocusBinder.clearFocusAndHideIme(dialogView,
+                    views.viewportInputView, views.fontInputView);
             AppConfigDialogBinder.toggleFontMode(views.fontModeToggle);
             binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
         });
         views.fontModeToggle.emulationLabel.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
+            FormInputFocusBinder.clearFocusAndHideIme(dialogView,
+                    views.viewportInputView, views.fontInputView);
             AppConfigDialogBinder.bindFontModeToggle(
                     views.fontModeToggle, FontApplyMode.SYSTEM_EMULATION, true);
             binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
         });
         views.fontModeToggle.replaceLabel.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
+            FormInputFocusBinder.clearFocusAndHideIme(dialogView,
+                    views.viewportInputView, views.fontInputView);
             AppConfigDialogBinder.bindFontModeToggle(
                     views.fontModeToggle, FontApplyMode.FIELD_REWRITE, true);
             binder.refreshDialogState(views, state, style, systemHooksEnabled, item);

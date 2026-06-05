@@ -111,6 +111,27 @@ final class WechatTargetFieldSheetBinder {
         }
     }
 
+    static String captureDraft(View dialogView) {
+        TextInputEditText inputView = inputView(dialogView);
+        if (inputView == null || inputView.getText() == null) {
+            return null;
+        }
+        return inputView.getText().toString();
+    }
+
+    static void applyDraft(View dialogView, String rawValue) {
+        if (rawValue == null) {
+            return;
+        }
+        TextInputEditText inputView = inputView(dialogView);
+        TextInputLayout inputLayout = inputLayout(dialogView);
+        if (inputView == null) {
+            return;
+        }
+        inputView.setText(rawValue);
+        updateValidationState(inputLayout, inputView);
+    }
+
     private static Integer readTargetFieldOrNull(View dialogView) {
         TextInputEditText inputView = inputView(dialogView);
         if (inputView == null || inputView.getText() == null) {

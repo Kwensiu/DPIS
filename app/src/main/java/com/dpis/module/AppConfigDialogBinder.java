@@ -38,10 +38,6 @@ final class AppConfigDialogBinder {
     }
 
     interface Host {
-        void clearDialogInputFocus(View fallbackFocusView,
-                TextInputEditText viewportInputView,
-                TextInputEditText fontInputView);
-
         void toggleScope(AppListItem item,
                 boolean currentlyInScope,
                 Runnable onTurnedInScope,
@@ -64,8 +60,7 @@ final class AppConfigDialogBinder {
                 Runnable onStateChanged);
 
         String getFontHookDomainsButtonText(AppListItem item,
-                boolean previewFromGlobalPrefill,
-                String previewFontHookDomainsRaw);
+                AppConfigDialogState state);
 
         void openTypefaceLibrary();
 
@@ -74,15 +69,19 @@ final class AppConfigDialogBinder {
                 TextInputEditText fontScaleInput,
                 String viewportMode,
                 String viewportApplyMode,
+                boolean viewportApplyModeResetRequested,
                 String fontMode,
                 String selectedTypefaceId,
-                String previewFontHookDomainsRaw,
+                String draftFontHookDomainsRaw,
+                boolean fontHookDomainsResetRequested,
                 String viewportScaleInput,
                 String viewportAbsoluteInput);
 
         DpiConfigStore getConfigStore();
 
         void requestAppsLoad();
+
+        void onDraftStateChanged(AppConfigDialogState state);
 
         void showToast(int messageResId);
     }
@@ -103,6 +102,8 @@ final class AppConfigDialogBinder {
     void bind(View dialogView, AppListItem item, boolean systemHooksEnabled) {
         AppConfigDialogViews views = initDialogViews(dialogView);
         AppConfigDialogState state = bindDialogInitialState(item, views);
+        dialogView.setTag(R.id.dialog_save_button, state);
+        dialogView.setTag(R.id.dialog_font_hook_domains_button, views);
         WechatTargetFieldSheetBinder.bind(dialogView, item,
                 () -> updateSaveButtonState(dialogView, views));
         updateSaveButtonState(dialogView, views);
@@ -113,6 +114,66 @@ final class AppConfigDialogBinder {
         refreshDialogState(views, state, style, systemHooksEnabled, item);
         new AppConfigSheetInteractions(this, host)
                 .bind(dialogView, item, views, state, style, systemHooksEnabled);
+    }
+
+    void applyRetainedDraft(
+            View dialogView,
+            AppListItem item,
+            boolean systemHooksEnabled,
+            String selectedTypefaceId,
+            String draftFontHookDomainsRaw,
+            String viewportApplyMode,
+            boolean fontHookDomainsResetRequested,
+            boolean viewportApplyModeResetRequested
+    ) {
+        AppConfigDialogState state = stateFor(dialogView);
+        AppConfigDialogViews views = viewsFor(dialogView);
+        if (state == null || views == null || item == null) {
+            return;
+        }
+        state.selectedTypefaceId = normalizeTypefaceId(selectedTypefaceId);
+        state.draftFontHookDomainsRaw = draftFontHookDomainsRaw;
+        state.viewportApplyMode = ViewportApplyMode.normalize(viewportApplyMode);
+        state.fontHookDomainsResetRequested = fontHookDomainsResetRequested;
+        state.viewportApplyModeResetRequested = viewportApplyModeResetRequested;
+        bindTypefaceSelector(views.typefaceSelectorButton, state.selectedTypefaceId);
+        bindFontHookDomainsButton(
+                views.fontHookDomainsButton,
+                item,
+                state);
+        updateDialogStatus(
+                views.statusView,
+                state.scopeSelected,
+                state.scopeKnown,
+                state.dpisEnabled,
+                views.viewportInputView,
+                views.viewportModeToggle,
+                views.fontInputView,
+                views.fontModeToggle,
+                state.selectedTypefaceId,
+                systemHooksEnabled,
+                item.packageName,
+                state.viewportApplyMode);
+        updateSaveButtonState(dialogView, views);
+        state.refreshUnsavedBadge();
+    }
+
+    static AppConfigDialogState stateFor(View dialogView) {
+        Object tag = dialogView != null
+                ? dialogView.getTag(R.id.dialog_save_button)
+                : null;
+        return tag instanceof AppConfigDialogState
+                ? (AppConfigDialogState) tag
+                : null;
+    }
+
+    private static AppConfigDialogViews viewsFor(View dialogView) {
+        Object tag = dialogView != null
+                ? dialogView.getTag(R.id.dialog_font_hook_domains_button)
+                : null;
+        return tag instanceof AppConfigDialogViews
+                ? (AppConfigDialogViews) tag
+                : null;
     }
 
     private AppConfigDialogViews initDialogViews(View dialogView) {
@@ -172,6 +233,7 @@ final class AppConfigDialogBinder {
                 views.fontInputLayout, views.fontInputView, views.saveButton);
         return new AppConfigDialogState(item.inScope, item.scopeKnown, item.dpisEnabled,
                 item.previewFromGlobalPrefill,
+                item.packageName,
                 item.previewFontHookDomainsRaw,
                 item.viewportMode,
                 selectedTypefaceId,
@@ -216,8 +278,7 @@ final class AppConfigDialogBinder {
         bindFontHookDomainsButton(
                 views.fontHookDomainsButton,
                 item,
-                state.previewFromGlobalPrefill,
-                state.previewFontHookDomainsRaw);
+                state);
         state.refreshUnsavedBadge();
     }
 
@@ -605,15 +666,24 @@ final class AppConfigDialogBinder {
                 viewportInputLayout, com.google.android.material.R.attr.colorOutline);
         int errorStrokeColor = MaterialColors.getColor(
                 viewportInputLayout, androidx.appcompat.R.attr.colorError);
-        viewportInputLayout.setError(null);
-        fontInputLayout.setError(null);
-        viewportInputLayout.setErrorEnabled(false);
-        fontInputLayout.setErrorEnabled(false);
+        bindInputError(viewportInputLayout, viewportValid);
+        bindInputError(fontInputLayout, fontValid);
         viewportInputLayout.setBoxStrokeColor(viewportValid ? defaultStrokeColor : errorStrokeColor);
         fontInputLayout.setBoxStrokeColor(fontValid ? defaultStrokeColor : errorStrokeColor);
         boolean valid = viewportValid && fontValid;
         saveButton.setEnabled(valid);
         return valid;
+    }
+
+    private static void bindInputError(TextInputLayout inputLayout, boolean valid) {
+        if (valid) {
+            inputLayout.setError(null);
+            inputLayout.setErrorEnabled(false);
+            return;
+        }
+        inputLayout.setError(
+                inputLayout.getContext().getString(R.string.status_save_invalid)
+        );
     }
 
     static boolean updateSaveButtonState(View dialogView, AppConfigDialogViews views) {
@@ -935,10 +1005,8 @@ final class AppConfigDialogBinder {
 
     void bindFontHookDomainsButton(MaterialButton button,
             AppListItem item,
-            boolean previewFromGlobalPrefill,
-            String previewFontHookDomainsRaw) {
-        String buttonText = host.getFontHookDomainsButtonText(
-                item, previewFromGlobalPrefill, previewFontHookDomainsRaw);
+            AppConfigDialogState state) {
+        String buttonText = host.getFontHookDomainsButtonText(item, state);
         button.setText(buttonText);
         button.setIcon(null);
         button.setContentDescription(buttonText);
@@ -1027,9 +1095,12 @@ final class AppConfigDialogBinder {
         boolean scopeRequestPending;
         boolean dpisEnabled;
         boolean previewFromGlobalPrefill;
-        String previewFontHookDomainsRaw;
+        String packageName;
+        String draftFontHookDomainsRaw;
         String viewportApplyMode;
         String selectedTypefaceId;
+        boolean fontHookDomainsResetRequested;
+        boolean viewportApplyModeResetRequested;
         String viewportScaleInput = "";
         String viewportAbsoluteInput = "";
         private SheetUnsavedBadgeBinder unsavedBadgeBinder;
@@ -1039,7 +1110,8 @@ final class AppConfigDialogBinder {
                 boolean scopeKnown,
                 boolean dpisEnabled,
                 boolean previewFromGlobalPrefill,
-                String previewFontHookDomainsRaw,
+                String packageName,
+                String draftFontHookDomainsRaw,
                 String viewportApplyMode,
                 String selectedTypefaceId,
                 String initialViewportType,
@@ -1050,7 +1122,8 @@ final class AppConfigDialogBinder {
             this.scopeKnown = scopeKnown;
             this.dpisEnabled = dpisEnabled;
             this.previewFromGlobalPrefill = previewFromGlobalPrefill;
-            this.previewFontHookDomainsRaw = previewFontHookDomainsRaw;
+            this.packageName = packageName;
+            this.draftFontHookDomainsRaw = draftFontHookDomainsRaw;
             this.viewportApplyMode = ViewportApplyMode.normalize(viewportApplyMode);
             this.selectedTypefaceId = selectedTypefaceId;
             this.viewportScaleInput = valueOrEmpty(initialViewportScaleInput);
@@ -1077,6 +1150,7 @@ final class AppConfigDialogBinder {
                     item.scopeKnown,
                     item.dpisEnabled,
                     item.previewFromGlobalPrefill,
+                    item.packageName,
                     item.previewFontHookDomainsRaw,
                     item.viewportMode,
                     item.typefaceId,
@@ -1108,12 +1182,11 @@ final class AppConfigDialogBinder {
             viewportAbsoluteInput = "";
         }
 
-        void clearPreviewOnlyStateForReset() {
-            if (!previewFromGlobalPrefill) {
-                return;
-            }
-            previewFontHookDomainsRaw = null;
+        void clearHookChainStateForReset() {
+            draftFontHookDomainsRaw = null;
             viewportApplyMode = ViewportApplyMode.OFF;
+            fontHookDomainsResetRequested = true;
+            viewportApplyModeResetRequested = true;
         }
 
         void bindUnsavedBadge(SheetUnsavedBadgeBinder binder) {
@@ -1146,7 +1219,9 @@ final class AppConfigDialogBinder {
                     normalizeDraftText(textOf(views.fontInputView)),
                     AppConfigDialogBinder.resolveFontMode(views.fontModeToggle),
                     normalizeDraftText(selectedTypefaceId),
-                    normalizeDraftText(previewFontHookDomainsRaw),
+                    normalizeDraftText(draftFontHookDomainsRaw),
+                    fontHookDomainsResetRequested ? "font-reset" : "font-keep",
+                    viewportApplyModeResetRequested ? "viewport-reset" : "viewport-keep",
                     previewFromGlobalPrefill ? "preview" : "stored");
         }
 

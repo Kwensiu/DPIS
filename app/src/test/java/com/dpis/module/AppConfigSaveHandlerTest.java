@@ -18,6 +18,7 @@ public class AppConfigSaveHandlerTest {
                 store,
                 "com.example.app",
                 ViewportApplyMode.SYSTEM,
+                false,
                 ViewportTargetSpec.relativeScale(900));
 
         assertEquals(ViewportApplyMode.AUTO, resolvedMode);
@@ -31,6 +32,7 @@ public class AppConfigSaveHandlerTest {
                 store,
                 "com.example.app",
                 ViewportApplyMode.SYSTEM,
+                false,
                 ViewportTargetSpec.relativeScale(900));
 
         assertEquals(ViewportApplyMode.SYSTEM, resolvedMode);
@@ -44,6 +46,7 @@ public class AppConfigSaveHandlerTest {
                 store,
                 "com.example.app",
                 ViewportApplyMode.OFF,
+                false,
                 ViewportTargetSpec.relativeScale(900));
 
         assertEquals(ViewportApplyMode.AUTO, resolvedMode);
@@ -57,6 +60,7 @@ public class AppConfigSaveHandlerTest {
                 store,
                 "com.example.app",
                 "unknown-mode",
+                false,
                 ViewportTargetSpec.relativeScale(900));
 
         assertEquals(ViewportApplyMode.AUTO, resolvedMode);
@@ -70,6 +74,7 @@ public class AppConfigSaveHandlerTest {
                 store,
                 "com.example.app",
                 ViewportApplyMode.COMPAT,
+                false,
                 ViewportTargetSpec.relativeScale(900));
 
         assertEquals(ViewportApplyMode.COMPAT, resolvedMode);
@@ -87,7 +92,7 @@ public class AppConfigSaveHandlerTest {
                 "resources_font"));
 
         assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(
-                store, item, "resources_font"));
+                store, item, "resources_font", false));
 
         assertTrue(store.hasRealPackageConfig(item.packageName));
         assertTrue(store.getConfiguredPackages().contains(item.packageName));
@@ -100,7 +105,7 @@ public class AppConfigSaveHandlerTest {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
 
-        assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(store, item, null));
+        assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(store, item, null, false));
 
         assertFalse(store.hasRealPackageConfig(item.packageName));
     }
@@ -117,7 +122,7 @@ public class AppConfigSaveHandlerTest {
                 "resources_font"));
 
         assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(
-                store, item, item.previewFontHookDomainsRaw));
+                store, item, item.previewFontHookDomainsRaw, false));
 
         assertEquals("resources_font", store.getPackageFontHookDomainsRaw(item.packageName));
         assertTrue(store.getConfiguredPackages().contains(item.packageName));
@@ -134,7 +139,7 @@ public class AppConfigSaveHandlerTest {
                 null,
                 "resources_font"));
 
-        assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(store, item, null));
+        assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(store, item, null, false));
 
         assertFalse(store.hasRealPackageConfig(item.packageName));
         assertFalse(store.getConfiguredPackages().contains(item.packageName));
@@ -148,6 +153,7 @@ public class AppConfigSaveHandlerTest {
                         true,
                         true,
                         true,
+                        "com.example.app",
                         "resources_font",
                         ViewportApplyMode.COMPAT,
                         null,
@@ -156,10 +162,12 @@ public class AppConfigSaveHandlerTest {
                         "",
                         "");
 
-        state.clearPreviewOnlyStateForReset();
+        state.clearHookChainStateForReset();
 
-        assertNull(state.previewFontHookDomainsRaw);
+        assertNull(state.draftFontHookDomainsRaw);
         assertEquals(ViewportApplyMode.OFF, state.viewportApplyMode);
+        assertTrue(state.fontHookDomainsResetRequested);
+        assertTrue(state.viewportApplyModeResetRequested);
     }
 
     @Test
@@ -178,6 +186,7 @@ public class AppConfigSaveHandlerTest {
                         true,
                         true,
                         true,
+                        item.packageName,
                         item.previewFontHookDomainsRaw,
                         item.viewportMode,
                         null,
@@ -186,12 +195,40 @@ public class AppConfigSaveHandlerTest {
                         "",
                         "");
 
-        state.clearPreviewOnlyStateForReset();
+        state.clearHookChainStateForReset();
 
         assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(
-                store, item, state.previewFontHookDomainsRaw));
+                store, item, state.draftFontHookDomainsRaw,
+                state.fontHookDomainsResetRequested));
         assertFalse(store.hasRealPackageConfig(item.packageName));
         assertFalse(store.getConfiguredPackages().contains(item.packageName));
+    }
+
+    @Test
+    public void hookDomainResetClearsStoredCustomDomainsOnSave() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        AppListItem item = app("com.example.app");
+        assertTrue(store.setPackageFontHookDomainsRaw(item.packageName, "resources_font"));
+
+        assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(
+                store, item, null, true));
+
+        assertNull(store.getPackageFontHookDomainsRaw(item.packageName));
+    }
+
+    @Test
+    public void viewportApplyModeResetOverridesPersistedModeOnSave() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.COMPAT);
+
+        String resolvedMode = AppConfigSaveHandler.resolveViewportApplyModeForSave(
+                store,
+                "com.example.app",
+                ViewportApplyMode.COMPAT,
+                true,
+                ViewportTargetSpec.relativeScale(900));
+
+        assertEquals(ViewportApplyMode.OFF, resolvedMode);
     }
 
     private static AppListItem app(String packageName) {

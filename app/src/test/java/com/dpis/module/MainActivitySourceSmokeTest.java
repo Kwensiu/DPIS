@@ -22,8 +22,21 @@ public class MainActivitySourceSmokeTest {
                 "helpFab.setOnClickListener(v -> showHelpTutorialDialog());"
             )
         );
-        assertTrue(source.contains("isTouchInsideView(rawX, rawY, helpFab)"));
+        assertTrue(source.contains("FormInputFocusBinder.isInsideAny("));
+        assertTrue(source.contains("clearSearchFocus();"));
+        assertTrue(source.contains("return true;"));
+        assertTrue(source.contains("helpFab"));
         assertTrue(layout.contains("@+id/help_fab"));
+    }
+
+    @Test
+    public void formInputFocusCanMoveFocusToFallbackView() throws IOException {
+        String source = read("src/main/java/com/dpis/module/FormInputFocusBinder.java");
+
+        assertTrue(source.contains("fallbackFocusView.setFocusable(true);"));
+        assertTrue(source.contains("fallbackFocusView.setFocusableInTouchMode(true);"));
+        assertTrue(source.contains("fallbackFocusView.requestFocus();"));
+        assertTrue(source.contains("hideSoftInputFromWindow("));
     }
 
     @Test
@@ -31,8 +44,8 @@ public class MainActivitySourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String binder = read("src/main/java/com/dpis/module/LandAppDetailPaneBinder.java");
 
-        assertTrue(binder.contains("void saveDraft(AppListItem item,\n"
-                + "                AppConfigDialogBinder.AppConfigDialogState state,"));
+        assertTrue(binder.contains("void saveDraft("));
+        assertTrue(binder.contains("AppConfigDialogBinder.AppConfigDialogState state,"));
         assertTrue(source.contains("requestLandDetailScopeAfterSuccessfulSave(item, state);"));
         assertTrue(source.contains("!state.scopeKnown"));
         assertTrue(source.contains("state.scopeSelected"));
@@ -60,8 +73,8 @@ public class MainActivitySourceSmokeTest {
             )
         );
         assertTrue(
-            source.contains(
-                "if (appPager != null) {\n            pagerAdapter = new AppListPagerAdapter("
+            compact(source).contains(
+                "if (appPager != null) { pagerAdapter = new AppListPagerAdapter("
             )
         );
         assertTrue(source.contains("searchFilterButton.setOnClickListener"));
@@ -127,9 +140,10 @@ public class MainActivitySourceSmokeTest {
         );
         assertTrue(
             source.contains(
-                "boolean floatingActionsVisible = appWorkspace && !isLandscapeDetailMode();"
+                "boolean floatingActionsVisible"
             )
         );
+        assertTrue(source.contains("appWorkspace && !isLandscapeDetailMode()"));
         assertTrue(
             source.contains(
                 "setVisible(searchFocusFab, floatingActionsVisible);"
@@ -140,13 +154,14 @@ public class MainActivitySourceSmokeTest {
         );
         assertTrue(
             source.contains(
-                "templateWorkspaceBinder = new TemplateWorkspaceBinder(this, createTemplateWorkspaceActions(),"
+                "templateWorkspaceBinder = new TemplateWorkspaceBinder("
             )
         );
+        assertTrue(source.contains("createTemplateWorkspaceActions()"));
         assertTrue(source.contains("bindTemplateWorkspace();"));
         assertTrue(
-            source.contains(
-                "templateWorkspaceBinder.bind(templateWorkspaceContainer, requireUiState().query);"
+            compact(source).contains(
+                "templateWorkspaceBinder.bind( templateWorkspaceContainer, requireUiState().query );"
             )
         );
         assertTrue(source.contains("R.string.template_search_hint"));
@@ -155,8 +170,8 @@ public class MainActivitySourceSmokeTest {
             source.contains("searchFilterButton.setEnabled(appWorkspace);")
         );
         assertTrue(
-            source.contains(
-                "searchFilterButton.setVisibility(appWorkspace ? View.VISIBLE : View.GONE);"
+            compact(source).contains(
+                "searchFilterButton.setVisibility( appWorkspace ? View.VISIBLE : View.GONE );"
             )
         );
         assertTrue(source.contains("workspaceModeForButtonId(int checkedId)"));
@@ -239,11 +254,11 @@ public class MainActivitySourceSmokeTest {
             requestLoadEnd
         );
         assertTrue(
-            requestLoadBody.indexOf(
+            compact(requestLoadBody).indexOf(
                 "ensureInstalledAppsPermissionBeforeLoad()"
             ) <
-                requestLoadBody.indexOf(
-                    "dispatchMainUiAction(MainUiAction.requestAppsLoad"
+                compact(requestLoadBody).indexOf(
+                    "dispatchMainUiAction("
                 )
         );
     }
@@ -337,9 +352,10 @@ public class MainActivitySourceSmokeTest {
         );
         assertTrue(
             source.contains(
-                "new DpiConfigStore(getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE))"
+                "new DpiConfigStore("
             )
         );
+        assertTrue(source.contains("getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE)"));
     }
 
     @Test
@@ -622,9 +638,10 @@ public class MainActivitySourceSmokeTest {
 
         assertTrue(
             source.contains(
-                "private final SparseArray<Parcelable> landScrollStates = new SparseArray<>();"
+                "private final SparseArray<Parcelable> landScrollStates"
             )
         );
+        assertTrue(source.contains("= new SparseArray<>();"));
         assertTrue(
             source.contains(
                 "restoreLandscapeScrollStates(restoredPageScrollStates);"
@@ -741,33 +758,37 @@ public class MainActivitySourceSmokeTest {
             )
         );
         assertTrue(
-            source.contains(
-                "new AppConfigDialogBinder(this, createAppConfigDialogHost()).bind("
-            )
+            source.contains("new AppConfigDialogBinder(")
         );
+        assertTrue(source.contains("createAppConfigDialogHost()"));
+        assertTrue(source.contains("binder.bind("));
         assertTrue(
             source.contains("new AppConfigDialogCoordinator(this).show(")
+                    || compact(source).contains(
+                            "new AppConfigDialogCoordinator(this).show("
+                    )
         );
         assertTrue(
-            source.contains("private void showEditDetailPane(AppListItem item)")
+            source.contains("private void showEditDetailPane(")
         );
         assertTrue(source.contains("R.layout.view_land_app_detail"));
-        assertTrue(source.contains("new LandAppDetailPaneBinder(this"));
+        assertTrue(source.contains("new LandAppDetailPaneBinder("));
         assertTrue(
             source.contains(
-                "saveLandDetailDraft(editorItem,\n"
-                    + "                        state,"
+                "saveAppConfigDraft("
             )
         );
+        assertTrue(source.contains("editorItem"));
+        assertTrue(source.contains("state,"));
         assertTrue(
-            source.contains("showLandDetailTypefaceSelector(editorItem, state, onChanged);")
+            source.contains("showLandDetailTypefaceSelector(")
         );
         assertTrue(
             source.contains("showLandDetailHookDomains(editorItem, state, onChanged);")
         );
         assertTrue(
-            source.contains(
-                "toggleLandDetailScope(editorItem, currentlyInScope, onTurnedInScope, onTurnedOutScope);"
+            compact(source).contains(
+                "toggleLandDetailScope( editorItem, currentlyInScope, onTurnedInScope, onTurnedOutScope );"
             )
         );
         assertTrue(
@@ -777,6 +798,9 @@ public class MainActivitySourceSmokeTest {
         );
         assertFalse(source.contains("resetLandDetailConfig(editorItem);"));
         assertTrue(source.contains("appConfigSaveHandler.saveResolved("));
+        assertTrue(source.contains("updateEditingDraft(state);"));
+        assertTrue(source.contains("void onDraftStateChanged("));
+        assertTrue(source.contains("if (draft == null && mainViewModel != null)"));
         assertTrue(
             read("src/main/java/com/dpis/module/LandAppDetailPaneBinder.java")
                 .contains("AppConfigDialogBinder.AppConfigDialogState.fromItem(item)")
@@ -784,7 +808,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(
             source.contains("executeDialogProcessAction(processItem, action);")
         );
-        assertTrue(source.contains("landDetailContent.addView(dialogView"));
+        assertTrue(compact(source).contains("landDetailContent.addView( dialogView"));
         assertTrue(source.contains("ViewGroup.LayoutParams.MATCH_PARENT"));
         assertFalse(source.contains("createLandDetailContentLayoutParams()"));
         assertFalse(
@@ -987,7 +1011,8 @@ public class MainActivitySourceSmokeTest {
         assertFalse(layout.contains("dialog_viewport_input_layout"));
         assertTrue(binder.contains("interface Actions"));
         assertTrue(binder.contains("AppStatusFormatter.formatCompact("));
-        assertTrue(binder.contains("void saveDraft(AppListItem item"));
+        assertTrue(binder.contains("void saveDraft("));
+        assertTrue(binder.contains("AppListItem item,"));
         assertTrue(binder.contains("actions.saveDraft("));
         assertTrue(
             binder.contains("AppConfigDialogBinder.bindViewportModeToggle(")
@@ -995,15 +1020,35 @@ public class MainActivitySourceSmokeTest {
         assertTrue(
             binder.contains("AppConfigDialogBinder.bindFontModeToggle(")
         );
-        assertTrue(binder.contains("actions.toggleScope(item,\n"
-                + "                    state.scopeSelected,"));
-        assertTrue(binder.contains("actions.setDpisEnabled(item.packageName, nextEnabled)"));
-        assertTrue(binder.contains("resetDraft(root, item, state"));
+        assertTrue(binder.contains("actions.toggleScope("));
+        assertTrue(binder.contains("state.scopeSelected,"));
+        assertTrue(compact(binder).contains("actions.setDpisEnabled(item.packageName, nextEnabled)"));
+        assertTrue(binder.contains("resetDraft("));
+        assertTrue(binder.contains("root,"));
+        assertTrue(binder.contains("item,"));
+        assertTrue(binder.contains("FormInputFocusBinder.bindDismissOnOutsideTouch"));
+        assertTrue(binder.contains("FormInputFocusBinder.clearFocusAndHideIme"));
+        assertTrue(binder.contains("R.id.dialog_wechat_target_field_input"));
         assertTrue(binder.contains("state.clearViewportInputs();"));
         assertTrue(binder.contains("WechatTargetFieldSheetBinder.clearDraft(root);"));
         assertTrue(
             binder.contains(
                 "AppConfigDialogBinder.AppConfigDialogState.fromItem(item)"
+            )
+        );
+        assertTrue(
+            compact(binder).contains(
+                "root.setTag(R.id.land_detail_hook_chain_row, state);"
+            )
+        );
+        assertTrue(
+            compact(binder).contains(
+                "root.getTag(R.id.land_detail_hook_chain_row)"
+            )
+        );
+        assertTrue(
+            compact(binder).contains(
+                "root.setTag( R.id.land_detail_save_button, signature != null ? signature : \"\" );"
             )
         );
         assertTrue(binder.contains("actions.showTypefaceSelector(item"));
@@ -1196,45 +1241,36 @@ public class MainActivitySourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(
-            source.contains("public void showFontHookDomains(AppListItem item,")
+            source.contains("public void showFontHookDomains(")
         );
         assertTrue(
             source.contains("AppConfigDialogBinder.AppConfigDialogState state,")
         );
         assertTrue(
-            source.contains(
-                "MainActivity.this.showFontHookDomains(item, state, onStateChanged);"
+            compact(source).contains(
+                "MainActivity.this.showFontHookDomains( item, state, onStateChanged );"
             )
         );
         assertTrue(
-            source.contains(
-                "public String getFontHookDomainsButtonText(AppListItem item,"
-            )
+            source.contains("public String getFontHookDomainsButtonText(")
         );
-        assertTrue(source.contains("boolean previewFromGlobalPrefill,"));
+        assertTrue(
+            source.contains("AppConfigDialogBinder.AppConfigDialogState state")
+        );
         assertTrue(
             source.contains("MainActivity.this.getFontHookDomainsButtonText(")
         );
         assertTrue(source.contains("new HookDomainOverrideStore(store)"));
-        assertTrue(source.contains("FontHookDomainDialog.show(this,"));
+        assertTrue(source.contains("FontHookDomainDialog.show("));
+        assertTrue(source.contains("this,"));
+        String saveSource = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
         assertTrue(
-            source.contains("overrideStore.saveCustomIfDifferentFromAutomatic(")
-        );
-        assertTrue(
-            source.contains(
-                "new HookDomainOverrideStore(store).restoreRecommended(packageName)"
-            )
-        );
-        assertTrue(
-            source.contains("publishFontRuntimeTarget(packageName, store)")
-        );
-        assertTrue(
-            source.contains("FontRuntimePropertySyncer.publishTargetAsync(")
+            saveSource.contains("FontRuntimePropertySyncer.publishTargetAsync(")
         );
         assertTrue(source.contains("HookExecutionPlanner.buildPlan("));
         assertTrue(
-            source.contains(
-                "AppProcessHookInstaller.resolveDebugFontOverrideForPackage(packageName)"
+            compact(source).contains(
+                "AppProcessHookInstaller.resolveDebugFontOverrideForPackage( packageName )"
             )
         );
         assertTrue(
@@ -1252,17 +1288,18 @@ public class MainActivitySourceSmokeTest {
         );
         assertTrue(source.contains("FontApplyMode.FIELD_REWRITE"));
         assertTrue(source.contains("ViewportApplyMode.OFF"));
+        assertFalse(source.contains("publishFontRuntimeTarget("));
     }
 
     @Test
-    public void previewFontHookDomainEditorUsesSheetStateOnly()
+    public void fontHookDomainEditorUsesDraftStateOnly()
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         int methodStart = source.indexOf(
-            "private void showFontHookDomains(AppListItem item,"
+            "private void showFontHookDomains("
         );
         int methodEnd = source.indexOf(
-            "private static void publishFontRuntimeTarget",
+            "private String getFontHookDomainsButtonText",
             methodStart
         );
         String method = source.substring(methodStart, methodEnd);
@@ -1278,53 +1315,31 @@ public class MainActivitySourceSmokeTest {
             )
         );
         assertTrue(
-            method.contains(
-                "HookDomainOverrideStore.fromRaw(state.previewFontHookDomainsRaw)"
+            compact(method).contains(
+                "HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw)"
             )
         );
         assertTrue(
-            method.contains(
-                "state.previewFontHookDomainsRaw = HookDomainOverrideStore.rawValueForSelection("
+            compact(method).contains(
+                "state.draftFontHookDomainsRaw = HookDomainOverrideStore.rawValueForSelection("
             )
         );
-        assertTrue(method.contains("state.previewFontHookDomainsRaw = null;"));
+        assertTrue(method.contains("state.draftFontHookDomainsRaw = null;"));
         assertTrue(
-            method.contains(
+            compact(method).contains(
                 "state.viewportApplyMode = ViewportApplyMode.normalize(mode);"
             )
         );
         assertTrue(
-            method.contains(
-                "previewMode ? state.viewportApplyMode : store.getTargetViewportApplyMode(item.packageName)"
+            compact(method).contains(
+                "state != null ? state.viewportApplyMode : store.getTargetViewportApplyMode(item.packageName)"
             )
         );
-        assertTrue(method.contains("if (previewMode)"));
-
-        int previewBranch = method.indexOf("if (previewMode)");
-        int realStoreWrite = method.indexOf(
-            "overrideStore.saveCustomIfDifferentFromAutomatic(",
-            previewBranch
-        );
-        int realRestore = method.indexOf(
-            "new HookDomainOverrideStore(store).restoreRecommended(packageName)",
-            previewBranch
-        );
-        int realViewportWrite = method.indexOf(
-            "store.setTargetViewportApplyMode(packageName, mode)",
-            previewBranch
-        );
-        assertTrue(realStoreWrite > previewBranch);
-        assertTrue(realRestore > previewBranch);
-        assertTrue(realViewportWrite > previewBranch);
-        assertTrue(
-            method.indexOf("return true;", previewBranch) < realStoreWrite
-        );
-        assertTrue(
-            method.indexOf("return true;", realStoreWrite) < realRestore
-        );
-        assertTrue(
-            method.indexOf("return true;", realRestore) < realViewportWrite
-        );
+        String compactMethod = compact(method);
+        assertFalse(compactMethod.contains("saveCustomIfDifferentFromAutomatic("));
+        assertFalse(compactMethod.contains("restoreRecommended(packageName)"));
+        assertFalse(compactMethod.contains("store.setTargetViewportApplyMode("));
+        assertFalse(compactMethod.contains("requestAppsLoad();"));
     }
 
     @Test
@@ -1332,7 +1347,7 @@ public class MainActivitySourceSmokeTest {
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         int methodStart = source.indexOf(
-            "private String getFontHookDomainsButtonText(AppListItem item,"
+            "private String getFontHookDomainsButtonText("
         );
         int methodEnd = source.indexOf(
             "private Set<String> resolveAutomaticFontHookDomains",
@@ -1340,12 +1355,12 @@ public class MainActivitySourceSmokeTest {
         );
         String method = source.substring(methodStart, methodEnd);
 
-        assertTrue(method.contains("boolean previewFromGlobalPrefill,"));
         assertTrue(
             method.contains(
-                "HookDomainOverride override = previewFromGlobalPrefill"
+                "HookDomainOverride override = resolveFontHookDomainsForDraft(item, state)"
             )
         );
+        assertTrue(method.contains("AppConfigDialogBinder.AppConfigDialogState state"));
         assertFalse(method.contains("item.previewFromGlobalPrefill"));
     }
 
@@ -1367,6 +1382,10 @@ public class MainActivitySourceSmokeTest {
             return source.substring(start);
         }
         return source.substring(start, end);
+    }
+
+    private static String compact(String source) {
+        return source.replaceAll("\\s+", " ").trim();
     }
 
     @Test

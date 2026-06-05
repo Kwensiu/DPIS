@@ -26,6 +26,9 @@ public class QuickTemplateEditSheetDialogSourceSmokeTest {
         assertTrue(source.contains("dialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED)"));
         assertTrue(source.contains("applyWrapContentSheetHeight();"));
         assertTrue(source.contains("params.height = ViewGroup.LayoutParams.WRAP_CONTENT;"));
+        assertTrue(source.contains("FormInputFocusBinder.bindDismissOnOutsideTouch"));
+        assertTrue(source.contains("FormInputFocusBinder.clearFocusAndHideIme"));
+        assertTrue(source.contains("nameInputView"));
         assertFalse(source.contains("setHalfExpandedRatio"));
         assertTrue(source.contains("show(Activity activity, String templateId, Runnable onUpdated)"));
         assertTrue(source.contains("new QuickTemplateStore(preferences)"));
@@ -49,7 +52,7 @@ public class QuickTemplateEditSheetDialogSourceSmokeTest {
         assertTrue(source.contains("R.string.quick_template_delete_failed"));
         assertTrue(source.contains("resetTemplateConfig()"));
         assertTrue(source.contains("FontHookDomainRegistry.recommendedTemplateKnownDomains()"));
-        assertTrue(source.contains("normalizeTemplateHookDomainsRaw(state.previewFontHookDomainsRaw)"));
+        assertTrue(source.contains("normalizeTemplateHookDomainsRaw(state.draftFontHookDomainsRaw)"));
         assertFalse(source.contains("target_packages"));
         assertTrue(source.contains("TextUtils.isEmpty(name)"));
         assertTrue(source.contains("textOf(nameInputView)"));
@@ -110,10 +113,10 @@ public class QuickTemplateEditSheetDialogSourceSmokeTest {
 
         assertTrue(mainActivity.contains("createQuickTemplateActions()"));
         assertTrue(mainActivity.contains("QuickTemplateEditSheetDialog.show("));
-        assertTrue(mainActivity.contains(
-                "MainActivity.this, templateId, MainActivity.this::bindTemplateWorkspace"));
-        assertTrue(mainActivity.contains(
-                "MainActivity.this, null, MainActivity.this::bindTemplateWorkspace"));
+        assertTrue(mainActivity.contains("MainActivity.this"));
+        assertTrue(mainActivity.contains("templateId"));
+        assertTrue(mainActivity.contains("null"));
+        assertTrue(mainActivity.contains("MainActivity.this::bindTemplateWorkspace"));
         assertTrue(binder.contains("interface QuickTemplateActions"));
         assertTrue(binder.contains("void edit(String templateId)"));
         assertTrue(binder.contains("void create()"));

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Shared app chrome. -->
     <dimen name="page_back_button_size">36dp</dimen>
@@ -69,9 +69,9 @@
     <dimen name="land_app_detail_advanced_button_height">40dp</dimen>
     <dimen name="land_app_detail_advanced_button_wrap_min_width">112dp</dimen>
     <!-- Floating action dock -->
-    <dimen name="land_app_detail_dock_elevation">8dp</dimen>
-    <dimen name="land_app_detail_dock_corner_radius">28dp</dimen>
-    <dimen name="land_app_detail_dock_padding">12dp</dimen>
+    <dimen name="land_app_detail_dock_elevation">0dp</dimen>
+    <dimen name="land_app_detail_dock_corner_radius">32dp</dimen>
+    <dimen name="land_app_detail_dock_padding">8dp</dimen>
     <dimen name="land_app_detail_dock_margin_bottom">20dp</dimen>
     <dimen name="land_app_detail_dock_margin_horizontal">20dp</dimen>
     <dimen name="land_app_detail_dock_max_width">680dp</dimen>
@@ -80,7 +80,7 @@
     <dimen name="land_app_detail_dock_process_button_min_width">80dp</dimen>
     <dimen name="land_app_detail_dock_button_spacing">12dp</dimen>
     <dimen name="land_app_detail_dock_capsule_corner_radius">24dp</dimen>
-  <dimen name="land_app_detail_dock_process_divider_height">20dp</dimen>
+    <dimen name="land_app_detail_dock_process_divider_height">20dp</dimen>
     <dimen name="land_app_detail_dock_process_divider_width">1dp</dimen>
     <dimen name="main_search_card_height">52dp</dimen>
     <dimen name="main_search_card_corner_radius">24dp</dimen>

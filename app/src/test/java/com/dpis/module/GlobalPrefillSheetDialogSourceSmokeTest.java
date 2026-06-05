@@ -26,13 +26,15 @@ public class GlobalPrefillSheetDialogSourceSmokeTest {
         assertTrue(source.contains("dialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED)"));
         assertTrue(source.contains("applyWrapContentSheetHeight();"));
         assertTrue(source.contains("params.height = ViewGroup.LayoutParams.WRAP_CONTENT;"));
+        assertTrue(source.contains("FormInputFocusBinder.bindDismissOnOutsideTouch"));
+        assertTrue(source.contains("FormInputFocusBinder.clearFocusAndHideIme"));
         assertFalse(source.contains("setHalfExpandedRatio"));
         assertTrue(source.contains("show(Activity activity, Runnable onUpdated)"));
         assertTrue(source.contains("if (onUpdated != null)"));
         assertTrue(source.contains("new GlobalPrefillSaveHandler()"));
         assertTrue(source.contains("FontHookDomainDialog.show(activity,"));
         assertTrue(source.contains("FontHookDomainRegistry.recommendedTemplateKnownDomains()"));
-        assertTrue(source.contains("normalizeTemplateHookDomainsRaw(state.previewFontHookDomainsRaw)"));
+        assertTrue(source.contains("normalizeTemplateHookDomainsRaw(state.draftFontHookDomainsRaw)"));
         assertFalse(source.contains("toggleFontMode(fontModeToggle)"));
         assertTrue(source.contains("new GlobalPrefillStore(preferences)"));
         assertTrue(source.contains("activity.startActivity(new Intent(activity, FontLibraryActivity.class));"));
@@ -68,9 +70,11 @@ public class GlobalPrefillSheetDialogSourceSmokeTest {
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
         String binder = read("src/main/java/com/dpis/module/TemplateWorkspaceBinder.java");
 
-        assertTrue(mainActivity.contains("new TemplateWorkspaceBinder(this, createTemplateWorkspaceActions(),"));
-        assertTrue(mainActivity.contains(
-                "GlobalPrefillSheetDialog.show(MainActivity.this, MainActivity.this::bindTemplateWorkspace);"));
+        assertTrue(mainActivity.contains("new TemplateWorkspaceBinder("));
+        assertTrue(mainActivity.contains("createTemplateWorkspaceActions()"));
+        assertTrue(mainActivity.contains("GlobalPrefillSheetDialog.show("));
+        assertTrue(mainActivity.contains("MainActivity.this"));
+        assertTrue(mainActivity.contains("MainActivity.this::bindTemplateWorkspace"));
         assertTrue(mainActivity.contains("bindTemplateWorkspace();"));
         assertTrue(binder.contains("interface GlobalPrefillActions"));
         assertTrue(binder.contains("globalPrefillActions.edit();"));

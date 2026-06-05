@@ -6,10 +6,12 @@ import android.content.SharedPreferences;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
@@ -49,6 +51,7 @@ final class QuickTemplateEditSheetDialog {
     private QuickTemplateStore quickTemplateStore;
     private AppConfigDialogBinder typefaceBinder;
     private AppConfigDialogBinder.AppConfigDialogState state;
+    private View dialogView;
 
     private String templateId;
     private boolean isNewTemplate;
@@ -84,7 +87,7 @@ final class QuickTemplateEditSheetDialog {
             showToast(R.string.quick_template_missing);
             return;
         }
-        View dialogView = LayoutInflater.from(activity).inflate(
+        dialogView = LayoutInflater.from(activity).inflate(
                 R.layout.dialog_quick_template_edit_sheet, null, false);
         dialog.setContentView(dialogView);
         bindViews(dialogView);
@@ -226,6 +229,7 @@ final class QuickTemplateEditSheetDialog {
                 false,
                 true,
                 false,
+                null,
                 initialHookDomainsRaw,
                 initialViewportApplyMode,
                 initialTypefaceId,
@@ -253,8 +257,10 @@ final class QuickTemplateEditSheetDialog {
         TouchFeedbackBinder.bindPressHaptic(resetButton);
         TouchFeedbackBinder.bindPressHaptic(deleteButton);
         TouchFeedbackBinder.bindPressHaptic(saveButton);
+        bindInputFocusBehavior();
 
         viewportModeToggle.emulationLabel.setOnClickListener(v -> {
+            clearInputFocus();
             AppConfigDialogBinder.switchViewportTargetType(
                     viewportModeToggle, viewportInputView, state,
                     ViewportTargetType.RELATIVE_SCALE, true);
@@ -263,6 +269,7 @@ final class QuickTemplateEditSheetDialog {
             refreshValidationUi();
         });
         viewportModeToggle.replaceLabel.setOnClickListener(v -> {
+            clearInputFocus();
             AppConfigDialogBinder.switchViewportTargetType(
                     viewportModeToggle, viewportInputView, state,
                     ViewportTargetType.ABSOLUTE_DP, true);
@@ -271,23 +278,40 @@ final class QuickTemplateEditSheetDialog {
             refreshValidationUi();
         });
         fontModeToggle.emulationLabel.setOnClickListener(v -> {
+            clearInputFocus();
             AppConfigDialogBinder.bindFontModeToggle(
                     fontModeToggle, FontApplyMode.SYSTEM_EMULATION, true);
             refreshValidationUi();
         });
         fontModeToggle.replaceLabel.setOnClickListener(v -> {
+            clearInputFocus();
             AppConfigDialogBinder.bindFontModeToggle(
                     fontModeToggle, FontApplyMode.FIELD_REWRITE, true);
             refreshValidationUi();
         });
-        typefaceSelectorButton.setOnClickListener(v -> typefaceBinder.showTypefaceSelector(
-                typefaceSelectorButton,
-                state,
-                this::refreshValidationUi));
-        hookDomainsButton.setOnClickListener(v -> showHookDomainsDialog());
-        resetButton.setOnClickListener(v -> resetTemplateConfig());
-        deleteButton.setOnClickListener(v -> confirmDelete());
-        saveButton.setOnClickListener(v -> saveTemplate());
+        typefaceSelectorButton.setOnClickListener(v -> {
+            clearInputFocus();
+            typefaceBinder.showTypefaceSelector(
+                    typefaceSelectorButton,
+                    state,
+                    this::refreshValidationUi);
+        });
+        hookDomainsButton.setOnClickListener(v -> {
+            clearInputFocus();
+            showHookDomainsDialog();
+        });
+        resetButton.setOnClickListener(v -> {
+            clearInputFocus();
+            resetTemplateConfig();
+        });
+        deleteButton.setOnClickListener(v -> {
+            clearInputFocus();
+            confirmDelete();
+        });
+        saveButton.setOnClickListener(v -> {
+            clearInputFocus();
+            saveTemplate();
+        });
 
         TextWatcher watcher = new TextWatcher() {
             @Override
@@ -308,6 +332,42 @@ final class QuickTemplateEditSheetDialog {
         fontInputView.addTextChangedListener(watcher);
     }
 
+    private void bindInputFocusBehavior() {
+        View scroll = dialogView != null
+                ? dialogView.findViewById(R.id.quick_template_edit_scroll)
+                : null;
+        android.widget.TextView.OnEditorActionListener doneListener =
+                (view, actionId, event) -> {
+            if (actionId != EditorInfo.IME_ACTION_DONE
+                    && !(event != null
+                            && event.getAction() == KeyEvent.ACTION_DOWN
+                            && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                return false;
+            }
+            clearInputFocus();
+            return true;
+        };
+        nameInputView.setOnEditorActionListener(doneListener);
+        viewportInputView.setOnEditorActionListener(doneListener);
+        fontInputView.setOnEditorActionListener(doneListener);
+        FormInputFocusBinder.bindDismissOnOutsideTouch(
+                scroll,
+                dialogView,
+                nameInputView,
+                viewportInputView,
+                fontInputView
+        );
+    }
+
+    private void clearInputFocus() {
+        FormInputFocusBinder.clearFocusAndHideIme(
+                dialogView,
+                nameInputView,
+                viewportInputView,
+                fontInputView
+        );
+    }
+
     private void showHookDomainsDialog() {
         FontHookDomainDialog.show(activity,
                 new FontHookDomainDialog.Host() {
@@ -316,7 +376,7 @@ final class QuickTemplateEditSheetDialog {
                             Set<String> selectedKnownDomains,
                             Set<String> automaticKnownDomains,
                             Set<String> unknownDomains) {
-                        state.previewFontHookDomainsRaw = HookDomainOverrideStore.rawValueForSelection(
+                        state.draftFontHookDomainsRaw = HookDomainOverrideStore.rawValueForSelection(
                                 selectedKnownDomains,
                                 automaticKnownDomains,
                                 unknownDomains);
@@ -327,7 +387,7 @@ final class QuickTemplateEditSheetDialog {
 
                     @Override
                     public boolean restoreRecommended(String packageName) {
-                        state.previewFontHookDomainsRaw = null;
+                        state.draftFontHookDomainsRaw = null;
                         refreshHookDomainsButton();
                         refreshValidationUi();
                         return true;
@@ -342,7 +402,7 @@ final class QuickTemplateEditSheetDialog {
                 },
                 PREVIEW_PACKAGE_NAME,
                 FontHookDomainRegistry.recommendedTemplateKnownDomains(),
-                HookDomainOverrideStore.fromRaw(state.previewFontHookDomainsRaw),
+                HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw),
                 state.viewportApplyMode,
                 this::refreshHookDomainsButton);
     }
@@ -352,7 +412,7 @@ final class QuickTemplateEditSheetDialog {
         fontInputView.setText("");
         state.viewportApplyMode = ViewportApplyMode.OFF;
         state.selectedTypefaceId = null;
-        state.previewFontHookDomainsRaw = null;
+        state.draftFontHookDomainsRaw = null;
         state.clearViewportInputs();
         AppConfigDialogBinder.bindViewportModeToggle(
                 viewportModeToggle, ViewportTargetType.RELATIVE_SCALE, false);
@@ -422,7 +482,7 @@ final class QuickTemplateEditSheetDialog {
                         textOf(fontInputView),
                         AppConfigDialogBinder.resolveFontMode(fontModeToggle),
                         state.selectedTypefaceId,
-                        normalizeTemplateHookDomainsRaw(state.previewFontHookDomainsRaw)));
+                        normalizeTemplateHookDomainsRaw(state.draftFontHookDomainsRaw)));
         if (!result.success && result.messageResId == R.string.quick_template_name_duplicate) {
             bindNameErrorState(false, R.string.quick_template_name_duplicate);
         }
@@ -489,11 +549,11 @@ final class QuickTemplateEditSheetDialog {
                 AppConfigDialogBinder.resolveFontMode(fontModeToggle),
                 normalizeText(state != null ? state.selectedTypefaceId : null),
                 normalizeText(normalizeTemplateHookDomainsRaw(
-                        state != null ? state.previewFontHookDomainsRaw : null)));
+                        state != null ? state.draftFontHookDomainsRaw : null)));
     }
 
     private void refreshHookDomainsButton() {
-        HookDomainOverride override = HookDomainOverrideStore.fromRaw(state.previewFontHookDomainsRaw);
+        HookDomainOverride override = HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw);
         if (!override.customPathEnabled || isRecommendedTemplateHookDomains(override)) {
             hookDomainsButton.setText(R.string.dialog_font_hook_domains_title);
             return;
@@ -523,12 +583,6 @@ final class QuickTemplateEditSheetDialog {
 
     private AppConfigDialogBinder.Host createTypefaceHost() {
         return new AppConfigDialogBinder.Host() {
-            @Override
-            public void clearDialogInputFocus(View fallbackFocusView,
-                    TextInputEditText viewportInputView,
-                    TextInputEditText fontInputView) {
-            }
-
             @Override
             public void toggleScope(AppListItem item,
                     boolean currentlyInScope,
@@ -568,8 +622,7 @@ final class QuickTemplateEditSheetDialog {
 
             @Override
             public String getFontHookDomainsButtonText(AppListItem item,
-                    boolean previewFromGlobalPrefill,
-                    String previewFontHookDomainsRaw) {
+                    AppConfigDialogBinder.AppConfigDialogState state) {
                 return activity.getString(R.string.dialog_font_hook_domains_title);
             }
 
@@ -584,9 +637,11 @@ final class QuickTemplateEditSheetDialog {
                     TextInputEditText fontScaleInput,
                     String viewportMode,
                     String viewportApplyMode,
+                    boolean viewportApplyModeResetRequested,
                     String fontMode,
                     String selectedTypefaceId,
                     String previewFontHookDomainsRaw,
+                    boolean fontHookDomainsResetRequested,
                     String viewportScaleInput,
                     String viewportAbsoluteInput) {
                 return new int[0];
@@ -605,6 +660,11 @@ final class QuickTemplateEditSheetDialog {
 
             @Override
             public void requestAppsLoad() {
+            }
+
+            @Override
+            public void onDraftStateChanged(
+                    AppConfigDialogBinder.AppConfigDialogState state) {
             }
         };
     }
