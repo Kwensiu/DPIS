@@ -69,7 +69,6 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     private MaterialSwitch safeModeSwitch;
     private MaterialSwitch globalLogSwitch;
     private MaterialSwitch hideLauncherIconSwitch;
-    private MaterialSwitch predictiveBackSwitch;
     private View primarySwitchCard;
     private View languageEntryRow;
     private View clearCacheEntryRow;
@@ -148,11 +147,6 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
                 R.string.settings_font_library_label,
                 R.string.settings_font_library_hint,
                 v -> startActivity(new Intent(this, FontLibraryActivity.class)));
-        predictiveBackSwitch = bindSwitchRow(
-                R.id.row_predictive_back,
-                R.drawable.ic_arrow_back_24,
-                R.string.settings_predictive_back_label,
-                R.string.settings_predictive_back_hint);
         bindInterfaceScaleRow();
         backupConfigEntryRow = bindEntryRow(
                 R.id.row_config_backup,
@@ -192,7 +186,6 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         safeModeSwitch.setOnCheckedChangeListener(this::onSafeModeChanged);
         globalLogSwitch.setOnCheckedChangeListener(this::onGlobalLogChanged);
         hideLauncherIconSwitch.setOnCheckedChangeListener(this::onHideLauncherIconChanged);
-        predictiveBackSwitch.setOnCheckedChangeListener(this::onPredictiveBackChanged);
         refreshStoreState(true);
     }
 
@@ -790,9 +783,6 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         setCheckedSilently(globalLogSwitch,
                 store.isGlobalLogEnabled(),
                 this::onGlobalLogChanged);
-        setCheckedSilently(predictiveBackSwitch,
-                store.isPredictiveBackEnabled(),
-                this::onPredictiveBackChanged);
         DpisLog.setLoggingEnabled(store.isGlobalLogEnabled());
         setInterfaceScalePercentSilently(store.getInterfaceScalePercent());
 
@@ -822,7 +812,6 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         safeModeSwitch.setEnabled(true);
         globalLogSwitch.setEnabled(true);
         hideLauncherIconSwitch.setEnabled(true);
-        predictiveBackSwitch.setEnabled(true);
         interfaceScaleSlider.setEnabled(true);
         setRowEnabled(fontDebugEntryRow, true);
         setRowEnabled(experimentalSettingsEntryRow, true);
@@ -844,7 +833,6 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         safeModeSwitch.setEnabled(false);
         globalLogSwitch.setEnabled(false);
         hideLauncherIconSwitch.setEnabled(false);
-        predictiveBackSwitch.setEnabled(false);
         interfaceScaleSlider.setEnabled(false);
         setRowEnabled(fontDebugEntryRow, false);
         setRowEnabled(experimentalSettingsEntryRow, false);
@@ -1178,18 +1166,6 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         RuntimeDebugPropertySyncer.publishAsync(
                 isChecked,
                 store.isFontDebugOverlayEnabled());
-    }
-
-    private void onPredictiveBackChanged(CompoundButton buttonView, boolean isChecked) {
-        if (store == null) {
-            return;
-        }
-        if (!store.setPredictiveBackEnabled(isChecked)) {
-            setCheckedSilently(predictiveBackSwitch, !isChecked, this::onPredictiveBackChanged);
-            showToast(R.string.system_settings_save_failed);
-            return;
-        }
-        syncPredictiveBackCallback();
     }
 
     private void onHideLauncherIconChanged(CompoundButton buttonView, boolean isChecked) {

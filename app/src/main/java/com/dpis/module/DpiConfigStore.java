@@ -30,12 +30,10 @@ final class DpiConfigStore {
     static final String KEY_TTC_FONT_IMPORT_ENABLED = "font.ttc_import_enabled";
     static final String KEY_HIDE_LAUNCHER_ICON = "ui.hide_launcher_icon";
     static final String KEY_INTERFACE_SCALE_PERCENT = "ui.interface_scale_percent";
-    static final String KEY_PREDICTIVE_BACK_ENABLED = "ui.predictive_back_enabled";
     static final String KEY_STARTUP_DISCLAIMER_ACCEPTED = "ui.startup_disclaimer_accepted";
     private static final String[] LOCAL_ONLY_MIRROR_KEYS = {
             KEY_HIDE_LAUNCHER_ICON,
             KEY_INTERFACE_SCALE_PERCENT,
-            KEY_PREDICTIVE_BACK_ENABLED,
             KEY_STARTUP_DISCLAIMER_ACCEPTED
     };
     private static final String[] BACKUP_EXCLUDED_PREFIXES = {
@@ -240,15 +238,6 @@ final class DpiConfigStore {
     boolean setInterfaceScalePercent(int percent) {
         return commitLocalOnly(editor -> editor.putInt(
                 KEY_INTERFACE_SCALE_PERCENT, AppUiScaleManager.normalizeScalePercent(percent)));
-    }
-
-    boolean isPredictiveBackEnabled() {
-        return getLocalOnlyBoolean(KEY_PREDICTIVE_BACK_ENABLED,
-                AppPredictiveBackManager.DEFAULT_ENABLED);
-    }
-
-    boolean setPredictiveBackEnabled(boolean enabled) {
-        return commitLocalOnly(editor -> editor.putBoolean(KEY_PREDICTIVE_BACK_ENABLED, enabled));
     }
 
     boolean isStartupDisclaimerAccepted() {

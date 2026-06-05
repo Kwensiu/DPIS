@@ -327,7 +327,6 @@ public class DpisApplicationMigrationTest {
         DpiConfigStore local = new DpiConfigStore(localPrefs);
         assertTrue(local.setStartupDisclaimerAccepted(true));
         assertTrue(local.setInterfaceScalePercent(73));
-        assertTrue(local.setPredictiveBackEnabled(false));
         assertTrue(local.setLauncherIconHidden(true));
 
         FakePrefs remotePrefs = new FakePrefs();
@@ -338,7 +337,6 @@ public class DpisApplicationMigrationTest {
 
         assertTrue(local.isStartupDisclaimerAccepted());
         assertEquals(73, local.getInterfaceScalePercent());
-        assertFalse(local.isPredictiveBackEnabled());
         assertTrue(local.isLauncherIconHidden());
         assertEquals(Integer.valueOf(200), local.getTargetFontScalePercent("com.miui.weather2"));
     }
@@ -352,7 +350,6 @@ public class DpisApplicationMigrationTest {
         remotePrefs.edit()
                 .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
                 .putInt(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT, 73)
-                .putBoolean(DpiConfigStore.KEY_PREDICTIVE_BACK_ENABLED, false)
                 .putBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, true)
                 .commit();
         DpiConfigStore remote = new DpiConfigStore(remotePrefs);
@@ -361,7 +358,6 @@ public class DpisApplicationMigrationTest {
 
         assertFalse(local.isStartupDisclaimerAccepted());
         assertEquals(AppUiScaleManager.DEFAULT_SCALE_PERCENT, local.getInterfaceScalePercent());
-        assertTrue(local.isPredictiveBackEnabled());
         assertFalse(local.isLauncherIconHidden());
     }
 

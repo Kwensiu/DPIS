@@ -262,8 +262,6 @@
     <string name="settings_hyperos_flutter_font_hook_hint">hyperOsNativeFlutterFontEnabled</string>
     <string name="settings_font_library_label">字体库</string>
     <string name="settings_font_library_hint">导入并管理用于按应用替换的字体。</string>
-    <string name="settings_predictive_back_label">预测性返回手势</string>
-    <string name="settings_predictive_back_hint">启用对预测性手势返回的支持</string>
     <string name="settings_interface_scale_label">界面缩放</string>
     <string name="settings_interface_scale_hint">调整 DPIS 自身界面密度。</string>
     <string name="settings_interface_scale_value">%1$d%%</string>

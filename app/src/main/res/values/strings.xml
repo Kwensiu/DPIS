@@ -262,8 +262,6 @@
     <string name="settings_hyperos_flutter_font_hook_hint">hyperOsNativeFlutterFontEnabled</string>
     <string name="settings_font_library_label">Font library</string>
     <string name="settings_font_library_hint">Import and manage fonts for per-app replacement.</string>
-    <string name="settings_predictive_back_label">Predictive back gesture</string>
-    <string name="settings_predictive_back_hint">Enable support for predictive back gestures.</string>
     <string name="settings_interface_scale_label">Interface scale</string>
     <string name="settings_interface_scale_hint">Adjust DPIS screen density.</string>
     <string name="settings_interface_scale_value">%1$d%%</string>

@@ -569,7 +569,6 @@ public class DpiConfigStoreTest {
         remotePrefs.edit()
                 .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
                 .putInt(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT, 73)
-                .putBoolean(DpiConfigStore.KEY_PREDICTIVE_BACK_ENABLED, false)
                 .putBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, true)
                 .putBoolean(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED, true)
                 .commit();
@@ -579,7 +578,6 @@ public class DpiConfigStoreTest {
 
         assertFalse(snapshot.containsKey(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED));
         assertFalse(snapshot.containsKey(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT));
-        assertFalse(snapshot.containsKey(DpiConfigStore.KEY_PREDICTIVE_BACK_ENABLED));
         assertFalse(snapshot.containsKey(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON));
         assertEquals(true, snapshot.get(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED));
     }
@@ -590,7 +588,6 @@ public class DpiConfigStoreTest {
         remotePrefs.edit()
                 .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
                 .putInt(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT, 73)
-                .putBoolean(DpiConfigStore.KEY_PREDICTIVE_BACK_ENABLED, false)
                 .putBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, true)
                 .commit();
         FakePrefs localPrefs = new FakePrefs();
@@ -598,7 +595,6 @@ public class DpiConfigStoreTest {
 
         assertFalse(store.isStartupDisclaimerAccepted());
         assertEquals(AppUiScaleManager.DEFAULT_SCALE_PERCENT, store.getInterfaceScalePercent());
-        assertTrue(store.isPredictiveBackEnabled());
         assertFalse(store.isLauncherIconHidden());
     }
 
@@ -610,16 +606,13 @@ public class DpiConfigStoreTest {
 
         assertTrue(store.setStartupDisclaimerAccepted(true));
         assertTrue(store.setInterfaceScalePercent(73));
-        assertTrue(store.setPredictiveBackEnabled(false));
         assertTrue(store.setLauncherIconHidden(true));
 
         assertFalse(remotePrefs.contains(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED));
         assertFalse(remotePrefs.contains(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT));
-        assertFalse(remotePrefs.contains(DpiConfigStore.KEY_PREDICTIVE_BACK_ENABLED));
         assertFalse(remotePrefs.contains(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON));
         assertTrue(localPrefs.getBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, false));
         assertEquals(73, localPrefs.getInt(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT, 0));
-        assertFalse(localPrefs.getBoolean(DpiConfigStore.KEY_PREDICTIVE_BACK_ENABLED, true));
         assertTrue(localPrefs.getBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, false));
     }
 

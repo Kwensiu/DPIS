@@ -50,10 +50,6 @@
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
 
-                    <include android:id="@+id/row_predictive_back" layout="@layout/item_settings_switch" />
-
-                    <com.google.android.material.divider.MaterialDivider android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="@dimen/settings_divider_margin_horizontal" android:layout_marginEnd="@dimen/settings_divider_margin_horizontal" />
-
                     <include android:id="@+id/row_interface_scale" layout="@layout/item_settings_slider" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

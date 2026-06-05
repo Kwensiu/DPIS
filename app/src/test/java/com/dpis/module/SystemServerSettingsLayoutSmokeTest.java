@@ -281,21 +281,6 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(layout.contains("@dimen/font_debug_dialog_filter_button_corner_radius"));
     }
 
-    @Test
-    public void predictiveBackChangeSyncsCurrentActivityCallback() throws IOException {
-        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
-        String baseSource = read("src/main/java/com/dpis/module/LocalizedActivity.java");
-        String managerSource = read("src/main/java/com/dpis/module/AppPredictiveBackManager.java");
-
-        assertTrue(source.contains("private void onPredictiveBackChanged"));
-        assertTrue(source.contains("store.setPredictiveBackEnabled(isChecked)"));
-        assertTrue(source.contains("syncPredictiveBackCallback();"));
-        assertTrue(baseSource.contains("protected final void syncPredictiveBackCallback()"));
-        assertTrue(managerSource.contains(
-                "ConfigStoreFactory.createForModuleApp(context).isPredictiveBackEnabled()"));
-        assertFalse(managerSource.contains("getSharedPreferences(DpiConfigStore.GROUP"));
-    }
-
     private static String read(String relativePath) throws IOException {
         return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
     }
