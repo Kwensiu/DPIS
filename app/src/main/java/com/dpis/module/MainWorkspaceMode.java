@@ -2,7 +2,10 @@ package com.dpis.module;
 
 enum MainWorkspaceMode {
     APP,
-    TEMPLATE;
+    HOME,
+    TEMPLATE,
+    TOOLS,
+    SETTINGS;
 
     static MainWorkspaceMode fromName(String name) {
         if (name == null) {

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <!-- Shared app chrome. -->
     <dimen name="page_back_button_size">36dp</dimen>
@@ -6,7 +6,6 @@
     <dimen name="floating_actions_margin_end">24dp</dimen>
     <dimen name="floating_actions_search_margin_bottom">40dp</dimen>
     <dimen name="floating_actions_main_workspace_margin_bottom">112dp</dimen>
-    <dimen name="floating_actions_gap">20dp</dimen>
     <dimen name="floating_actions_elevation">6dp</dimen>
     <dimen name="floating_actions_hovered_focused_translation_z">8dp</dimen>
     <dimen name="floating_actions_pressed_translation_z">10dp</dimen>
@@ -15,12 +14,12 @@
     <dimen name="page_toolbar_padding_bottom">8dp</dimen>
     <dimen name="page_back_button_padding">8dp</dimen>
     <dimen name="page_title_spacing_start">12dp</dimen>
-    <dimen name="page_card_corner_radius">28dp</dimen>
+    <dimen name="page_card_corner_radius">24dp</dimen>
     <dimen name="page_card_stroke_width">1dp</dimen>
 
     <!-- Main app screen. -->
     <dimen name="main_toolbar_padding_horizontal">16dp</dimen>
-    <dimen name="main_toolbar_padding_top">16dp</dimen>
+    <dimen name="main_toolbar_padding_top">8dp</dimen>
     <dimen name="main_land_toolbar_padding_top">4dp</dimen>
     <dimen name="main_toolbar_padding_bottom">6dp</dimen>
     <dimen name="main_land_detail_padding">18dp</dimen>
@@ -91,7 +90,7 @@
     <dimen name="main_search_clear_button_padding">6dp</dimen>
     <dimen name="main_search_action_button_size">44dp</dimen>
     <dimen name="main_search_action_button_padding">10dp</dimen>
-    <dimen name="main_search_filter_button_margin_end">4dp</dimen>
+    <dimen name="main_search_filter_button_margin_end">16dp</dimen>
     <dimen name="main_settings_button_spacing_start">10dp</dimen>
     <dimen name="main_settings_button_spacing_end">8dp</dimen>
     <dimen name="main_tabs_spacing_top">2dp</dimen>
@@ -102,6 +101,30 @@
     <dimen name="main_workspace_switch_margin_bottom">16dp</dimen>
     <dimen name="main_workspace_switch_button_height">44dp</dimen>
     <dimen name="main_workspace_navigation_height">80dp</dimen>
+    <dimen name="home_workspace_padding_horizontal">16dp</dimen>
+    <dimen name="home_workspace_padding_top">8dp</dimen>
+    <dimen name="home_workspace_padding_bottom">144dp</dimen>
+    <dimen name="home_workspace_header_icon_size">48dp</dimen>
+    <dimen name="home_workspace_header_icon_padding">12dp</dimen>
+    <dimen name="home_workspace_title_spacing_top">16dp</dimen>
+    <dimen name="home_workspace_text_spacing_top">6dp</dimen>
+    <dimen name="home_workspace_section_spacing_top">22dp</dimen>
+    <dimen name="home_workspace_card_spacing_top">12dp</dimen>
+    <dimen name="home_workspace_card_padding">12dp</dimen>
+    <dimen name="home_workspace_card_corner_radius">12dp</dimen>
+    <dimen name="home_workspace_connected_row_inner_radius">3dp</dimen>
+    <dimen name="home_workspace_connected_row_gap">2dp</dimen>
+    <dimen name="home_workspace_primary_status_min_height">82dp</dimen>
+    <dimen name="home_workspace_primary_status_corner_radius">14dp</dimen>
+    <dimen name="home_workspace_primary_status_padding">16dp</dimen>
+    <dimen name="home_workspace_primary_status_icon_size">30dp</dimen>
+    <dimen name="home_workspace_primary_status_text_spacing_start">14dp</dimen>
+    <dimen name="home_workspace_status_grid_gap">8dp</dimen>
+    <dimen name="home_workspace_status_min_height">66dp</dimen>
+    <dimen name="home_workspace_info_row_min_height">44dp</dimen>
+    <dimen name="home_workspace_info_row_padding_vertical">8dp</dimen>
+    <dimen name="home_feedback_button_size">40dp</dimen>
+    <dimen name="home_feedback_button_padding_horizontal">8dp</dimen>
     <dimen name="template_workspace_padding_horizontal">16dp</dimen>
     <dimen name="template_workspace_padding_top">14dp</dimen>
     <dimen name="template_workspace_padding_bottom">120dp</dimen>
@@ -153,23 +176,23 @@
     <dimen name="template_target_badge_padding_vertical">3dp</dimen>
 
     <!-- Settings rows and settings pages. -->
-    <dimen name="settings_row_min_height">88dp</dimen>
+    <dimen name="settings_row_min_height">76dp</dimen>
     <dimen name="settings_row_padding_horizontal">16dp</dimen>
-    <dimen name="settings_row_padding_vertical">12dp</dimen>
+    <dimen name="settings_row_padding_vertical">10dp</dimen>
     <dimen name="settings_row_icon_size">24dp</dimen>
     <dimen name="settings_row_text_spacing_start">14dp</dimen>
     <dimen name="settings_row_subtitle_spacing_top">2dp</dimen>
     <dimen name="settings_row_trailing_spacing_start">12dp</dimen>
     <dimen name="settings_row_switch_spacing_start">16dp</dimen>
     <dimen name="settings_row_chevron_size">20dp</dimen>
-    <dimen name="settings_slider_row_min_height">112dp</dimen>
+    <dimen name="settings_slider_row_min_height">100dp</dimen>
     <dimen name="settings_slider_margin_start">0dp</dimen>
     <dimen name="settings_slider_spacing_top">8dp</dimen>
     <dimen name="settings_slider_value_chevron_spacing">4dp</dimen>
     <dimen name="settings_content_padding_horizontal">16dp</dimen>
     <dimen name="settings_content_padding_bottom">24dp</dimen>
-    <dimen name="settings_section_spacing_top">24dp</dimen>
-    <dimen name="settings_card_spacing_top">12dp</dimen>
+    <dimen name="settings_section_spacing_top">20dp</dimen>
+    <dimen name="settings_card_spacing_top">8dp</dimen>
     <dimen name="settings_divider_margin_horizontal">16dp</dimen>
 
     <!-- Secondary pages. -->
@@ -328,9 +351,12 @@
     <dimen name="help_tutorial_card_padding">18dp</dimen>
     <dimen name="help_tutorial_card_spacing_top">12dp</dimen>
     <dimen name="help_tutorial_badge_padding_horizontal">10dp</dimen>
-    <dimen name="help_tutorial_badge_padding_vertical">6dp</dimen>
+    <dimen name="help_tutorial_badge_padding_vertical">4dp</dimen>
     <dimen name="help_tutorial_body_spacing_top">12dp</dimen>
     <dimen name="help_tutorial_text_line_spacing">2dp</dimen>
+    <dimen name="help_tutorial_route_row_spacing_top">6dp</dimen>
+    <dimen name="help_tutorial_route_row_padding_horizontal">12dp</dimen>
+    <dimen name="help_tutorial_route_row_padding_vertical">9dp</dimen>
     <dimen name="help_tutorial_confirm_spacing_top">14dp</dimen>
 
     <!-- Font hook domain editor. -->

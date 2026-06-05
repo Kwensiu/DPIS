@@ -438,12 +438,13 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(coordinator.contains("WindowInsetsCompat.Type.ime()"));
         assertTrue(coordinator.contains("setExpandedOffset(targetOffset)"));
         assertTrue(coordinator.contains("restoreImeSheetOffset(behavior, view)"));
-        assertTrue(coordinator.contains("WindowInsetsAnimationCompat.Callback"));
+        assertTrue(coordinator.contains("ValueAnimator.ofFloat(startTranslation, 0f)"));
         assertTrue(coordinator.contains("view.postDelayed(() ->"));
         assertTrue(coordinator.contains("if (!imeVisible)"));
         assertTrue(coordinator.contains("behavior.setFitToContents(false);"));
         assertTrue(coordinator.contains("behavior.setState(BottomSheetBehavior.STATE_EXPANDED);"));
-        assertFalse(coordinator.contains("setTranslationY("));
+        assertFalse(coordinator.contains("WindowInsetsAnimationCompat.Callback"));
+        assertFalse(coordinator.contains("setMaxHeight("));
         assertFalse(coordinator.contains("DPIS-IME"));
         assertFalse(coordinator.contains("android.util.Log"));
         assertTrue(coordinator.contains("applyImeScrollPadding("));
@@ -458,8 +459,9 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertFalse(coordinator.contains("params.bottomMargin = imeBottom;"));
         assertFalse(coordinator.contains("expandedForIme"));
         assertTrue(coordinator.contains("scrollFocusedInputIntoView("));
-        assertTrue(coordinator.contains("if (imeVisible && imeBottom > 0)"));
-        assertTrue(coordinator.contains("scrollView, dialogView, bottomSheet, behavior"));
+        assertTrue(coordinator.contains("if (imeVisible)"));
+        assertTrue(coordinator.contains("scrollFocusedInputAboveKeyboard("));
+        assertTrue(coordinator.contains("focusedBottom + verticalPadding - keyboardTop"));
         assertTrue(coordinator.contains("inputVerticalPadding"));
         assertTrue(coordinator.contains("dialog_app_config_scroll"));
         assertTrue(coordinator.contains("smoothScrollTo("));

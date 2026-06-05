@@ -1,15 +1,16 @@
 package com.dpis.module;
 
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.graphics.Rect;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 
 import androidx.core.widget.NestedScrollView;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsAnimationCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -18,14 +19,17 @@ import com.google.android.material.color.MaterialColors;
 
 final class AppConfigDialogCoordinator {
     private static final long IME_LAYOUT_SETTLE_DELAY_MS = 120L;
+    private static final long IME_SHEET_TRANSLATION_ANIMATION_MS = 220L;
     private final Activity activity;
     private boolean imeOffsetApplied;
     private boolean imeVisible;
-    private boolean imeAnimationRunning;
     private boolean originalFitToContents;
     private int originalExpandedOffset;
     private int originalState;
-    private int originalMaxHeight;
+    private int originalScrollY;
+    private int lastStableScrollY;
+    private boolean originalDraggable;
+    private ValueAnimator imeSheetAnimator;
 
     AppConfigDialogCoordinator(Activity activity) {
         this.activity = activity;
@@ -58,6 +62,8 @@ final class AppConfigDialogCoordinator {
         if (bottomSheet == null) {
             return;
         }
+        cancelImeSheetAnimator();
+        bottomSheet.setTranslationY(0f);
         bindAdvancedWizardHint(dialogView);
         NestedScrollView scrollView = dialogView.findViewById(
                 R.id.dialog_app_config_scroll
@@ -67,6 +73,7 @@ final class AppConfigDialogCoordinator {
                 : 0;
         if (scrollView != null) {
             scrollView.setClipToPadding(false);
+            rememberStableScrollPosition(scrollView);
         }
         int inputVerticalPadding = activity.getResources().getDimensionPixelSize(
                 R.dimen.dialog_app_config_input_row_spacing_top
@@ -80,56 +87,63 @@ final class AppConfigDialogCoordinator {
                     : insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
             applyImeScrollPadding(scrollView, baseScrollPaddingBottom, bottomInset);
             if (keyboardVisible) {
-                captureImeSheetState(behavior);
+                captureImeSheetState(behavior, scrollView);
                 int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
-                dialogView.postDelayed(
-                        () -> {
-                            if (imeVisible && !imeAnimationRunning) {
-                                scrollFocusedInputIntoView(
-                                        scrollView, dialogView, view, behavior,
-                                        imeBottom, inputVerticalPadding);
-                            }
-                        },
-                        IME_LAYOUT_SETTLE_DELAY_MS
-                );
-            } else {
-                imeAnimationRunning = false;
-                view.postDelayed(() -> {
-                    if (!imeVisible) {
-                        restoreImeSheetOffset(behavior, view);
+                if (imeBottom <= 0) {
+                    return insets;
+                }
+                int visualTop = getVisualTop(view);
+                view.post(() -> {
+                    if (imeVisible) {
+                        animateSheetFromVisualTop(view, visualTop);
+                        dialogView.postDelayed(
+                                () -> {
+                                    if (imeVisible) {
+                                        scrollFocusedInputIntoView(
+                                                scrollView, dialogView, view, behavior,
+                                                imeBottom, inputVerticalPadding);
+                                    }
+                                },
+                                IME_LAYOUT_SETTLE_DELAY_MS
+                        );
                     }
-                }, IME_LAYOUT_SETTLE_DELAY_MS);
+                });
+            } else {
+                if (imeOffsetApplied) {
+                    int visualTop = getVisualTop(view);
+                    view.postDelayed(() -> {
+                        if (!imeVisible) {
+                            cancelImeSheetAnimator();
+                            view.setTranslationY(0f);
+                            behavior.setDraggable(false);
+                            view.post(() -> {
+                                boolean shouldAnimateRestore =
+                                        originalState != BottomSheetBehavior.STATE_EXPANDED;
+                                restoreImeSheetOffset(behavior, view);
+                                restoreImeScrollPosition(scrollView);
+                                if (shouldAnimateRestore) {
+                                    view.post(() -> animateSheetFromVisualTop(
+                                            view, visualTop, () ->
+                                                    behavior.setDraggable(originalDraggable)));
+                                } else {
+                                    view.post(() -> behavior.setDraggable(originalDraggable));
+                                }
+                            });
+                        }
+                    }, IME_LAYOUT_SETTLE_DELAY_MS);
+                } else {
+                    rememberStableScrollPosition(scrollView);
+                }
             }
             return insets;
         });
-        ViewCompat.setWindowInsetsAnimationCallback(
-                bottomSheet,
-                new WindowInsetsAnimationCompat.Callback(
-                        WindowInsetsAnimationCompat.Callback
-                                .DISPATCH_MODE_CONTINUE_ON_SUBTREE
-                ) {
-                    @Override
-                    public WindowInsetsCompat onProgress(
-                            WindowInsetsCompat insets,
-                            java.util.List<WindowInsetsAnimationCompat> runningAnimations
-                    ) {
-                        if (imeOffsetApplied && hasImeAnimation(runningAnimations)) {
-                            imeAnimationRunning = true;
-                            BottomSheetBehavior<?> behavior = BottomSheetBehavior.from(
-                                    bottomSheet);
-                            int imeBottom = insets.getInsets(
-                                    WindowInsetsCompat.Type.ime()).bottom;
-                            updateImeMaxHeight(behavior, bottomSheet, imeBottom);
-                            if (imeVisible && imeBottom > 0) {
-                                scrollFocusedInputIntoView(
-                                        scrollView, dialogView, bottomSheet, behavior,
-                                        imeBottom, inputVerticalPadding);
-                            }
-                        }
-                        return insets;
-                    }
-                }
-        );
+    }
+
+    private void cancelImeSheetAnimator() {
+        if (imeSheetAnimator != null) {
+            imeSheetAnimator.cancel();
+            imeSheetAnimator = null;
+        }
     }
 
     private void applyImeScrollPadding(
@@ -184,6 +198,11 @@ final class AppConfigDialogCoordinator {
                 if (remainingDelta > 0) {
                     scrollView.smoothScrollBy(0, remainingDelta);
                 }
+                scrollView.postDelayed(
+                        () -> scrollFocusedInputAboveKeyboard(
+                                scrollView, focused, bottomSheet, imeBottom, verticalPadding),
+                        IME_LAYOUT_SETTLE_DELAY_MS
+                );
                 return;
             }
         }
@@ -197,6 +216,34 @@ final class AppConfigDialogCoordinator {
             targetScrollY = rect.top - verticalPadding;
         }
         scrollView.smoothScrollTo(0, Math.max(0, targetScrollY));
+    }
+
+    private void scrollFocusedInputAboveKeyboard(
+            NestedScrollView scrollView,
+            View focused,
+            View bottomSheet,
+            int imeBottom,
+            int verticalPadding
+    ) {
+        if (scrollView == null
+                || focused == null
+                || bottomSheet == null
+                || !imeVisible
+                || !isDescendantOf(focused, scrollView)
+                || imeBottom <= 0) {
+            return;
+        }
+        View root = bottomSheet.getRootView();
+        int[] rootPos = new int[2];
+        root.getLocationOnScreen(rootPos);
+        int keyboardTop = rootPos[1] + root.getHeight() - imeBottom;
+        int[] focusedPos = new int[2];
+        focused.getLocationOnScreen(focusedPos);
+        int focusedBottom = focusedPos[1] + focused.getHeight();
+        int remainingDelta = focusedBottom + verticalPadding - keyboardTop;
+        if (remainingDelta > 0) {
+            scrollView.smoothScrollBy(0, remainingDelta);
+        }
     }
 
     private int applyImeSheetOffset(
@@ -237,15 +284,37 @@ final class AppConfigDialogCoordinator {
         return sheetShift;
     }
 
-    private void captureImeSheetState(BottomSheetBehavior<?> behavior) {
+    private void captureImeSheetState(
+            BottomSheetBehavior<?> behavior,
+            NestedScrollView scrollView
+    ) {
         if (imeOffsetApplied) {
             return;
         }
         originalFitToContents = behavior.isFitToContents();
         originalExpandedOffset = behavior.getExpandedOffset();
         originalState = behavior.getState();
-        originalMaxHeight = behavior.getMaxHeight();
+        originalScrollY = lastStableScrollY;
+        originalDraggable = behavior.isDraggable();
         imeOffsetApplied = true;
+    }
+
+    private void captureImeSheetState(BottomSheetBehavior<?> behavior) {
+        captureImeSheetState(behavior, null);
+    }
+
+    private void restoreImeScrollPosition(NestedScrollView scrollView) {
+        if (scrollView == null) {
+            return;
+        }
+        scrollView.stopNestedScroll();
+        scrollView.scrollTo(0, Math.max(0, originalScrollY));
+    }
+
+    private void rememberStableScrollPosition(NestedScrollView scrollView) {
+        if (scrollView != null) {
+            lastStableScrollY = scrollView.getScrollY();
+        }
     }
 
     private void restoreImeSheetOffset(BottomSheetBehavior<?> behavior, View bottomSheet) {
@@ -262,42 +331,61 @@ final class AppConfigDialogCoordinator {
         if (behavior.getState() != originalState) {
             behavior.setState(originalState);
         }
-        if (behavior.getMaxHeight() != originalMaxHeight) {
-            behavior.setMaxHeight(originalMaxHeight);
-        }
-        imeAnimationRunning = false;
         if (originalState != BottomSheetBehavior.STATE_EXPANDED) {
             bottomSheet.requestLayout();
         }
     }
 
-    private void updateImeMaxHeight(
-            BottomSheetBehavior<?> behavior,
-            View bottomSheet,
-            int imeBottom
-    ) {
-        View parent = bottomSheet.getParent() instanceof View
-                ? (View) bottomSheet.getParent()
-                : null;
-        if (parent == null) {
-            return;
-        }
-        int maxHeight = Math.max(0, parent.getHeight() - Math.max(0, imeBottom));
-        if (maxHeight > 0 && behavior.getMaxHeight() != maxHeight) {
-            behavior.setMaxHeight(maxHeight);
-            bottomSheet.requestLayout();
-        }
+    private int getVisualTop(View view) {
+        int[] pos = new int[2];
+        view.getLocationOnScreen(pos);
+        return Math.round(pos[1] + view.getTranslationY());
     }
 
-    private boolean hasImeAnimation(
-            java.util.List<WindowInsetsAnimationCompat> runningAnimations
+    private void animateSheetFromVisualTop(View bottomSheet, int visualTop) {
+        animateSheetFromVisualTop(bottomSheet, visualTop, null);
+    }
+
+    private void animateSheetFromVisualTop(
+            View bottomSheet,
+            int visualTop,
+            Runnable endAction
     ) {
-        for (WindowInsetsAnimationCompat animation : runningAnimations) {
-            if ((animation.getTypeMask() & WindowInsetsCompat.Type.ime()) != 0) {
-                return true;
+        int layoutTop = getVisualTop(bottomSheet);
+        float startTranslation = visualTop - layoutTop;
+        if (Math.abs(startTranslation) < 1f) {
+            bottomSheet.setTranslationY(0f);
+            if (endAction != null) {
+                endAction.run();
             }
+            return;
         }
-        return false;
+        if (imeSheetAnimator != null) {
+            imeSheetAnimator.cancel();
+        }
+        bottomSheet.setTranslationY(startTranslation);
+        imeSheetAnimator = ValueAnimator.ofFloat(startTranslation, 0f);
+        imeSheetAnimator.setDuration(IME_SHEET_TRANSLATION_ANIMATION_MS);
+        imeSheetAnimator.setInterpolator(new DecelerateInterpolator());
+        imeSheetAnimator.addUpdateListener(animation ->
+                bottomSheet.setTranslationY((float) animation.getAnimatedValue()));
+        imeSheetAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator animation) {
+                bottomSheet.setTranslationY(0f);
+                if (endAction != null) {
+                    endAction.run();
+                }
+            }
+
+            @Override
+            public void onAnimationCancel(android.animation.Animator animation) {
+                if (endAction != null) {
+                    endAction.run();
+                }
+            }
+        });
+        imeSheetAnimator.start();
     }
 
     private static boolean isDescendantOf(View child, View parent) {

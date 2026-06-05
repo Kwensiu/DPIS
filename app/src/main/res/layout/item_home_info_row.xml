@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_home_info_row_middle"
+    android:minHeight="@dimen/home_workspace_info_row_min_height"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/home_workspace_card_padding"
+    android:paddingTop="@dimen/home_workspace_info_row_padding_vertical"
+    android:paddingEnd="@dimen/home_workspace_card_padding"
+    android:paddingBottom="@dimen/home_workspace_info_row_padding_vertical">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/home_info_row_label"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+        android:textColor="?attr/colorOnSurface"
+        android:textStyle="bold" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/home_info_row_value"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/home_workspace_card_padding"
+        android:layout_weight="1.2"
+        android:gravity="end"
+        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+        android:textColor="?attr/colorOnSurfaceVariant" />
+</LinearLayout>

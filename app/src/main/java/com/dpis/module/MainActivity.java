@@ -29,9 +29,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.Toast;
-import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.viewpager2.widget.ViewPager2;
@@ -135,8 +133,12 @@ public final class MainActivity
     private AppListPagerAdapter pagerAdapter;
     private ViewPager2 appPager;
     private TabLayout filterTabs;
+    private View topContainer;
     private View appWorkspaceDivider;
+    private View homeWorkspaceContainer;
     private View templateWorkspaceContainer;
+    private View toolsWorkspaceContainer;
+    private View settingsWorkspaceContainer;
     private View landListPageView;
     private View landDetailEmptyView;
     private FrameLayout landDetailContent;
@@ -144,12 +146,13 @@ public final class MainActivity
     private AppListPage landCurrentPage = AppListPage.ALL_APPS;
     private final SparseArray<Parcelable> landScrollStates
             = new SparseArray<>();
+    private HomeWorkspaceBinder homeWorkspaceBinder;
     private TemplateWorkspaceBinder templateWorkspaceBinder;
+    private SettingsWorkspaceBinder settingsWorkspaceBinder;
     private NavigationBarView workspaceSwitch;
     private SparseArray<Parcelable> restoredPageScrollStates;
     private EditText searchInput;
     private FloatingActionButton searchFocusFab;
-    private FloatingActionButton helpFab;
     private boolean searchFabHidden;
     private boolean updatingWorkspaceSelection;
     private boolean updatingFilterTabSelection;
@@ -159,6 +162,9 @@ public final class MainActivity
     private boolean installedAppsPermissionRequestInFlight;
     private boolean pendingInstalledAppsLoadAfterPermission;
     private boolean installedAppsPermissionRequestCompleted;
+    private boolean rootAccessProbeInFlight;
+    private RootAccessProbe.Result cachedRootAccessResult
+            = RootAccessProbe.Result.unknown();
     private volatile boolean startupUpdateCheckInProgress;
     private volatile boolean startupUpdateDownloadInProgress;
     private volatile boolean startupUpdateDownloadCancelRequested;
@@ -170,7 +176,6 @@ public final class MainActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_status);
         searchFocusFab = findViewById(R.id.search_focus_fab);
-        helpFab = findViewById(R.id.help_fab);
         applyInsets();
         refreshSystemHookEffectiveEnabled();
 
@@ -197,7 +202,7 @@ public final class MainActivity
                 = (RetainedState) getLastNonConfigurationInstance();
         String initialQuery = "";
         AppListFilterState initialFilterState = appListFilterStateStore.load();
-        MainWorkspaceMode initialWorkspaceMode = MainWorkspaceMode.APP;
+        MainWorkspaceMode initialWorkspaceMode = MainWorkspaceMode.HOME;
         List<AppListItem> initialAppsSnapshot = Collections.emptyList();
         Set<AppListPage> initialRefreshingPages = EnumSet.noneOf(
                 AppListPage.class
@@ -251,10 +256,14 @@ public final class MainActivity
         searchFilterButton = findViewById(R.id.search_filter_button);
         appPager = findViewById(R.id.app_pager);
         filterTabs = findViewById(R.id.filter_tabs);
+        topContainer = findViewById(R.id.top_container);
         appWorkspaceDivider = findViewById(R.id.app_workspace_divider);
+        homeWorkspaceContainer = findViewById(R.id.home_workspace_container);
         templateWorkspaceContainer = findViewById(
                 R.id.template_workspace_container
         );
+        toolsWorkspaceContainer = findViewById(R.id.tools_workspace_container);
+        settingsWorkspaceContainer = findViewById(R.id.settings_workspace_container);
         landListPageView = findViewById(R.id.land_app_list_page);
         landDetailEmptyView = findViewById(R.id.land_detail_empty);
         landDetailContent = findViewById(R.id.land_detail_content);
@@ -263,6 +272,8 @@ public final class MainActivity
                 createTemplateWorkspaceActions(),
                 createQuickTemplateActions()
         );
+        homeWorkspaceBinder = new HomeWorkspaceBinder(this);
+        settingsWorkspaceBinder = new SettingsWorkspaceBinder(this);
         workspaceSwitch = findViewById(R.id.workspace_switch);
         if (appPager != null) {
             pagerAdapter = new AppListPagerAdapter(
@@ -297,8 +308,6 @@ public final class MainActivity
         bindWorkspaceSwitch();
         searchFilterButton.setOnClickListener(v -> showFilterDialog());
         bindFabTouchFeedback(searchFocusFab);
-        bindFabTouchFeedback(helpFab);
-        helpFab.setOnClickListener(v -> showHelpTutorialDialog());
         searchFocusFab.setOnClickListener(v
                 -> focusSearchInputAndShowKeyboard()
         );
@@ -357,12 +366,6 @@ public final class MainActivity
         searchInput.setOnFocusChangeListener((view, hasFocus)
                 -> updateSearchHint()
         );
-
-        View systemSettingsButton = findViewById(R.id.system_settings_button);
-        systemSettingsButton.setOnClickListener(v
-                -> startActivity(new Intent(this, SystemServerSettingsActivity.class))
-        );
-
         renderMainUiState(requireUiState());
         if (retainedState != null && retainedState.editingPackageName != null) {
             mainViewModel.setEditingPackageName(
@@ -401,8 +404,7 @@ public final class MainActivity
                     rawX,
                     rawY,
                     searchInput,
-                    searchFocusFab,
-                    helpFab
+                    searchFocusFab
             )) {
                 clearSearchFocus();
             }
@@ -417,12 +419,30 @@ public final class MainActivity
         refreshVisibleAppListStatuses();
         if (requireUiState().workspaceMode == MainWorkspaceMode.TEMPLATE) {
             bindTemplateWorkspace();
+        } else if (requireUiState().workspaceMode == MainWorkspaceMode.HOME) {
+            bindHomeWorkspace();
+        } else if (requireUiState().workspaceMode == MainWorkspaceMode.SETTINGS) {
+            bindSettingsWorkspace();
+        }
+        if (settingsWorkspaceBinder != null) {
+            settingsWorkspaceBinder.onStart();
         }
         DpisApplication.addServiceStateListener(this, true);
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (settingsWorkspaceBinder != null) {
+            settingsWorkspaceBinder.onResume();
+        }
+    }
+
+    @Override
     protected void onStop() {
+        if (settingsWorkspaceBinder != null) {
+            settingsWorkspaceBinder.onStop();
+        }
         DpisApplication.removeServiceStateListener(this);
         super.onStop();
     }
@@ -441,12 +461,27 @@ public final class MainActivity
         runOnUiThread(() -> {
             refreshSystemHookEffectiveEnabled();
             refreshVisibleAppListStatuses();
+            if (requireUiState().workspaceMode == MainWorkspaceMode.HOME) {
+                bindHomeWorkspace();
+            }
+            if (settingsWorkspaceBinder != null) {
+                settingsWorkspaceBinder.onServiceStateChanged();
+            }
             if (skipNextImmediateServiceReload) {
                 skipNextImmediateServiceReload = false;
                 return;
             }
             requestAppsLoad();
         });
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (settingsWorkspaceBinder != null) {
+            settingsWorkspaceBinder.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
     @Override
@@ -810,110 +845,15 @@ public final class MainActivity
 
     private void applyInsets() {
         View topContainer = findViewById(R.id.top_container);
-        final int baseTopPadding = topContainer.getPaddingTop();
-        ViewCompat.setOnApplyWindowInsetsListener(
-                topContainer,
-                (view, windowInsets) -> {
-                    Insets safeDrawing = windowInsets.getInsets(
-                            WindowInsetsCompat.Type.systemBars()
-                            | WindowInsetsCompat.Type.displayCutout()
-                    );
-                    view.setPadding(
-                            view.getPaddingLeft(),
-                            baseTopPadding + safeDrawing.top,
-                            view.getPaddingRight(),
-                            view.getPaddingBottom()
-                    );
-                    return windowInsets;
-                }
-        );
-        ViewGroup.MarginLayoutParams searchLayoutParams
-                = (ViewGroup.MarginLayoutParams) searchFocusFab.getLayoutParams();
-        ViewGroup.MarginLayoutParams helpLayoutParams
-                = (ViewGroup.MarginLayoutParams) helpFab.getLayoutParams();
-        final int baseSearchBottomMargin = searchLayoutParams.bottomMargin;
-        final int baseSearchEndMargin = searchLayoutParams.getMarginEnd();
-        final int baseHelpEndMargin = helpLayoutParams.getMarginEnd();
-        final int floatingActionsGapPx = getResources().getDimensionPixelSize(
-                R.dimen.floating_actions_gap
-        );
-        ViewCompat.setOnApplyWindowInsetsListener(
-                searchFocusFab,
-                (view, windowInsets) -> {
-                    Insets navigationBars = windowInsets.getInsets(
-                            WindowInsetsCompat.Type.navigationBars()
-                    );
-                    int sideInset = Math.max(
-                            navigationBars.left,
-                            navigationBars.right
-                    );
-                    ViewGroup.MarginLayoutParams searchParams
-                    = (ViewGroup.MarginLayoutParams) searchFocusFab.getLayoutParams();
-                    searchParams.bottomMargin
-                    = baseSearchBottomMargin + navigationBars.bottom;
-                    searchParams.setMarginEnd(baseSearchEndMargin + sideInset);
-                    searchFocusFab.setLayoutParams(searchParams);
-                    ViewGroup.MarginLayoutParams helpParams
-                    = (ViewGroup.MarginLayoutParams) helpFab.getLayoutParams();
-                    int searchFabSizePx = resolveSearchFabSizePx();
-                    helpParams.bottomMargin
-                    = searchParams.bottomMargin
-                    + searchFabSizePx
-                    + floatingActionsGapPx;
-                    helpParams.setMarginEnd(baseHelpEndMargin + sideInset);
-                    helpFab.setLayoutParams(helpParams);
-                    return windowInsets;
-                }
-        );
-        ViewCompat.requestApplyInsets(topContainer);
-        ViewCompat.requestApplyInsets(searchFocusFab);
+        WindowInsetsBinder.applySafeDrawingPadding(topContainer, false, true, false, false);
+        View homeWorkspace = findViewById(R.id.home_workspace_container);
+        WindowInsetsBinder.applySafeDrawingPadding(homeWorkspace, true, true, true, false);
+        WindowInsetsBinder.applyNavigationBarMargins(searchFocusFab);
     }
 
     private void applyLandDetailContentInsets(View detailView) {
         View scrollView = detailView.findViewById(R.id.land_detail_scroll);
-        if (scrollView == null) {
-            return;
-        }
-        final int baseTopPadding = scrollView.getPaddingTop();
-        final int baseBottomPadding = scrollView.getPaddingBottom();
-        ViewCompat.setOnApplyWindowInsetsListener(
-                scrollView,
-                (view, windowInsets) -> {
-                    Insets systemBars = windowInsets.getInsets(
-                            WindowInsetsCompat.Type.systemBars()
-                    );
-                    view.setPadding(
-                            view.getPaddingLeft(),
-                            baseTopPadding + systemBars.top,
-                            view.getPaddingRight(),
-                            baseBottomPadding + systemBars.bottom
-                    );
-                    return windowInsets;
-                }
-        );
-    }
-
-    private int resolveSearchFabSizePx() {
-        if (searchFocusFab == null) {
-            return getResources().getDimensionPixelSize(
-                    com.google.android.material.R.dimen.design_fab_size_normal
-            );
-        }
-        int measuredHeight = searchFocusFab.getMeasuredHeight();
-        if (measuredHeight > 0) {
-            return measuredHeight;
-        }
-        int height = searchFocusFab.getHeight();
-        if (height > 0) {
-            return height;
-        }
-        ViewGroup.LayoutParams layoutParams = searchFocusFab.getLayoutParams();
-        if (layoutParams != null && layoutParams.height > 0) {
-            return layoutParams.height;
-        }
-        return getResources().getDimensionPixelSize(
-                com.google.android.material.R.dimen.design_fab_size_normal
-        );
+        WindowInsetsBinder.applySafeDrawingPadding(scrollView, false, true, false, true);
     }
 
     private void focusSearchInputAndShowKeyboard() {
@@ -942,20 +882,15 @@ public final class MainActivity
     }
 
     private void hideSearchFocusFab() {
-        if (searchFocusFab == null || helpFab == null || searchFabHidden) {
+        if (searchFocusFab == null || searchFabHidden) {
             return;
         }
         searchFabHidden = true;
         searchFocusFab.animate().cancel();
-        helpFab.animate().cancel();
         ViewGroup.MarginLayoutParams searchLayoutParams
                 = (ViewGroup.MarginLayoutParams) searchFocusFab.getLayoutParams();
-        ViewGroup.MarginLayoutParams helpLayoutParams
-                = (ViewGroup.MarginLayoutParams) helpFab.getLayoutParams();
         float searchTargetTranslationY
                 = searchFocusFab.getHeight() + searchLayoutParams.bottomMargin;
-        float helpTargetTranslationY
-                = helpFab.getHeight() + helpLayoutParams.bottomMargin;
         searchFocusFab
                 .animate()
                 .translationY(searchTargetTranslationY)
@@ -964,23 +899,14 @@ public final class MainActivity
                 .setInterpolator(new AccelerateDecelerateInterpolator())
                 .withStartAction(() -> searchFocusFab.setClickable(false))
                 .start();
-        helpFab
-                .animate()
-                .translationY(helpTargetTranslationY)
-                .alpha(0f)
-                .setDuration(SEARCH_FAB_ANIM_DURATION_MS)
-                .setInterpolator(new AccelerateDecelerateInterpolator())
-                .withStartAction(() -> helpFab.setClickable(false))
-                .start();
     }
 
     private void showSearchFocusFab() {
-        if (searchFocusFab == null || helpFab == null || !searchFabHidden) {
+        if (searchFocusFab == null || !searchFabHidden) {
             return;
         }
         searchFabHidden = false;
         searchFocusFab.animate().cancel();
-        helpFab.animate().cancel();
         searchFocusFab
                 .animate()
                 .translationY(0f)
@@ -988,14 +914,6 @@ public final class MainActivity
                 .setDuration(SEARCH_FAB_ANIM_DURATION_MS)
                 .setInterpolator(new AccelerateDecelerateInterpolator())
                 .withStartAction(() -> searchFocusFab.setClickable(true))
-                .start();
-        helpFab
-                .animate()
-                .translationY(0f)
-                .alpha(1f)
-                .setDuration(SEARCH_FAB_ANIM_DURATION_MS)
-                .setInterpolator(new AccelerateDecelerateInterpolator())
-                .withStartAction(() -> helpFab.setClickable(true))
                 .start();
     }
 
@@ -1026,10 +944,6 @@ public final class MainActivity
             return;
         }
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-    }
-
-    private void showHelpTutorialDialog() {
-        HelpTutorialDialog.show(this);
     }
 
     private boolean setDpisEnabled(String packageName, boolean enabled) {
@@ -1165,13 +1079,21 @@ public final class MainActivity
 
     private void applyWorkspaceMode(MainWorkspaceMode workspaceMode) {
         MainWorkspaceMode mode
-                = workspaceMode != null ? workspaceMode : MainWorkspaceMode.APP;
+                = workspaceMode != null ? workspaceMode : MainWorkspaceMode.HOME;
         boolean appWorkspace = mode == MainWorkspaceMode.APP;
+        boolean homeWorkspace = mode == MainWorkspaceMode.HOME;
+        boolean templateWorkspace = mode == MainWorkspaceMode.TEMPLATE;
+        boolean toolsWorkspace = mode == MainWorkspaceMode.TOOLS;
+        boolean settingsWorkspace = mode == MainWorkspaceMode.SETTINGS;
+        setVisible(topContainer, appWorkspace || templateWorkspace);
         setVisible(filterTabs, appWorkspace);
         setVisible(appWorkspaceDivider, appWorkspace);
         setVisible(appPager, appWorkspace);
         setVisible(landListPageView, appWorkspace);
-        setVisible(templateWorkspaceContainer, !appWorkspace);
+        setVisible(homeWorkspaceContainer, homeWorkspace);
+        setVisible(templateWorkspaceContainer, templateWorkspace);
+        setVisible(toolsWorkspaceContainer, toolsWorkspace);
+        setVisible(settingsWorkspaceContainer, settingsWorkspace);
         if (!appWorkspace) {
             setVisible(landDetailEmptyView, true);
             setVisible(landDetailContent, false);
@@ -1182,7 +1104,6 @@ public final class MainActivity
         boolean floatingActionsVisible
                 = appWorkspace && !isLandscapeDetailMode();
         setVisible(searchFocusFab, floatingActionsVisible);
-        setVisible(helpFab, floatingActionsVisible);
         if (searchFilterButton != null) {
             searchFilterButton.setEnabled(appWorkspace);
             searchFilterButton.setVisibility(
@@ -1194,8 +1115,12 @@ public final class MainActivity
             selectWorkspaceItem(workspaceButtonId(mode));
         }
         updateSearchHint(mode);
-        if (!appWorkspace) {
+        if (homeWorkspace) {
+            bindHomeWorkspace();
+        } else if (templateWorkspace) {
             bindTemplateWorkspace();
+        } else if (settingsWorkspace) {
+            bindSettingsWorkspace();
         }
     }
 
@@ -1209,6 +1134,12 @@ public final class MainActivity
                     templateWorkspaceContainer,
                     requireUiState().query
             );
+        }
+    }
+
+    private void bindSettingsWorkspace() {
+        if (settingsWorkspaceBinder != null) {
+            settingsWorkspaceBinder.bind(settingsWorkspaceContainer);
         }
     }
 
@@ -1260,12 +1191,30 @@ public final class MainActivity
         if (workspaceMode == MainWorkspaceMode.TEMPLATE) {
             return R.id.workspace_template_button;
         }
+        if (workspaceMode == MainWorkspaceMode.HOME) {
+            return R.id.workspace_home_button;
+        }
+        if (workspaceMode == MainWorkspaceMode.TOOLS) {
+            return R.id.workspace_tools_button;
+        }
+        if (workspaceMode == MainWorkspaceMode.SETTINGS) {
+            return R.id.workspace_settings_button;
+        }
         return R.id.workspace_app_button;
     }
 
     private static MainWorkspaceMode workspaceModeForButtonId(int checkedId) {
         if (checkedId == R.id.workspace_template_button) {
             return MainWorkspaceMode.TEMPLATE;
+        }
+        if (checkedId == R.id.workspace_home_button) {
+            return MainWorkspaceMode.HOME;
+        }
+        if (checkedId == R.id.workspace_tools_button) {
+            return MainWorkspaceMode.TOOLS;
+        }
+        if (checkedId == R.id.workspace_settings_button) {
+            return MainWorkspaceMode.SETTINGS;
         }
         return MainWorkspaceMode.APP;
     }
@@ -1928,6 +1877,72 @@ public final class MainActivity
                     draft.wechatTargetFieldInput
             );
         }
+    }
+
+    private void bindHomeWorkspace() {
+        if (homeWorkspaceBinder != null) {
+            maybeStartRootAccessProbe();
+            homeWorkspaceBinder.bind(
+                    homeWorkspaceContainer,
+                    createHomeWorkspaceState()
+            );
+        }
+    }
+
+    private HomeWorkspaceBinder.State createHomeWorkspaceState() {
+        DpiConfigStore configStore = getUiConfigStore();
+        java.util.Set<String> configuredPackages = configStore.getConfiguredPackages();
+        return new HomeWorkspaceBinder.State(
+                DpisApplication.getXposedService() != null,
+                isSystemHookEnabledFromStore(),
+                "modern101".equals(BuildConfig.FLAVOR),
+                countDpisEnabledPackages(configStore, configuredPackages),
+                configuredPackages.size(),
+                ConfigStoreFactory.createFontLibraryForModuleApp(
+                        this,
+                        DpisApplication.getXposedService()
+                ).listFonts().size(),
+                new QuickTemplateStore(
+                        getSharedPreferences(
+                                DpiConfigStore.GROUP,
+                                Context.MODE_PRIVATE
+                        )
+                ).readAll().size(),
+                cachedRootAccessResult
+        );
+    }
+
+    private static int countDpisEnabledPackages(DpiConfigStore store,
+            java.util.Set<String> packageNames) {
+        if (store == null || packageNames == null || packageNames.isEmpty()) {
+            return 0;
+        }
+        int count = 0;
+        for (String packageName : packageNames) {
+            if (store.isTargetDpisEnabled(packageName)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private void maybeStartRootAccessProbe() {
+        if (rootAccessProbeInFlight
+                || cachedRootAccessResult.status
+                        != RootAccessProbe.Status.UNKNOWN) {
+            return;
+        }
+        rootAccessProbeInFlight = true;
+        startupUpdateExecutor.execute(() -> {
+            RootAccessProbe.Result result = RootAccessProbe.probe();
+            runOnUiThread(() -> {
+                cachedRootAccessResult = result;
+                rootAccessProbeInFlight = false;
+                if (requireUiState().workspaceMode == MainWorkspaceMode.HOME) {
+                    bindHomeWorkspace();
+                }
+            });
+        });
     }
 
     private void saveAppConfigDraft(

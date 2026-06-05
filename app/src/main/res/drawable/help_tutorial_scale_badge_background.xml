@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/help_tutorial_scale_badge_container" />
+    <corners android:radius="@dimen/home_workspace_card_corner_radius" />
+</shape>

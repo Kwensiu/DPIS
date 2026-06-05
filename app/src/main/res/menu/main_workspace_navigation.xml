@@ -8,4 +8,16 @@
         android:id="@+id/workspace_template_button"
         android:icon="@drawable/ic_template_24"
         android:title="@string/workspace_template" />
+    <item
+        android:id="@+id/workspace_home_button"
+        android:icon="@drawable/ic_home_24"
+        android:title="@string/workspace_home" />
+    <item
+        android:id="@+id/workspace_tools_button"
+        android:icon="@drawable/ic_mop_24"
+        android:title="@string/workspace_tools" />
+    <item
+        android:id="@+id/workspace_settings_button"
+        android:icon="@drawable/ic_settings_24"
+        android:title="@string/workspace_settings" />
 </menu>

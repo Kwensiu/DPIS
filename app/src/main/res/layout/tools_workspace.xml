@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/tools_workspace_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingStart="@dimen/home_workspace_padding_horizontal"
+    android:paddingTop="@dimen/home_workspace_padding_top"
+    android:paddingEnd="@dimen/home_workspace_padding_horizontal"
+    android:paddingBottom="@dimen/home_workspace_padding_bottom"
+    android:visibility="gone">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="@dimen/home_workspace_header_icon_size"
+            android:layout_height="@dimen/home_workspace_header_icon_size"
+            android:padding="@dimen/home_workspace_header_icon_padding"
+            android:src="@drawable/ic_mop_24"
+            app:tint="?attr/colorOnSurfaceVariant" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/home_workspace_title_spacing_top"
+            android:text="@string/tools_workspace_under_construction"
+            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textStyle="bold" />
+    </LinearLayout>
+</FrameLayout>
