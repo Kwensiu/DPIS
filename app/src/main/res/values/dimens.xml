@@ -39,6 +39,7 @@
     <dimen name="land_app_detail_badge_min_height">20dp</dimen>
     <dimen name="land_app_detail_badge_padding_horizontal">8dp</dimen>
     <dimen name="land_app_detail_badge_padding_vertical">2dp</dimen>
+    <dimen name="template_detail_inline_badge_visual_offset_top">1dp</dimen>
     <dimen name="land_app_detail_section_gap">8dp</dimen>
     <dimen name="land_app_detail_card_gap">12dp</dimen>
     <dimen name="land_app_detail_card_padding">16dp</dimen>

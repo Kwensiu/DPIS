@@ -2,42 +2,33 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:clipChildren="false"
-    android:clipToPadding="false">
+    android:layout_height="match_parent">
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/global_prefill_scroll"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingTop="@dimen/main_land_detail_top_padding">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="@dimen/dialog_app_config_padding_horizontal"
-            android:paddingTop="@dimen/dialog_app_config_padding_top"
-            android:paddingEnd="@dimen/dialog_app_config_padding_horizontal"
-            android:paddingBottom="@dimen/template_config_sheet_padding_bottom">
-
-            <FrameLayout
-                android:id="@+id/template_config_sheet_handle_container"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:minHeight="@dimen/sheet_unsaved_badge_min_height">
-
-                <include layout="@layout/view_sheet_unsaved_badge_handle" />
-            </FrameLayout>
+            android:paddingStart="@dimen/land_app_detail_padding_horizontal"
+            android:paddingEnd="@dimen/land_app_detail_padding_horizontal"
+            android:paddingBottom="@dimen/land_app_detail_content_padding_bottom">
 
             <LinearLayout
-                android:id="@+id/template_config_sheet_header"
+                android:id="@+id/template_config_detail_header"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/dialog_app_config_header_spacing_top"
                 android:gravity="center_vertical"
-                android:minHeight="@dimen/dialog_app_config_header_min_height"
-                android:orientation="horizontal">
+                android:minHeight="@dimen/land_app_detail_header_min_height"
+                android:orientation="horizontal"
+                android:paddingTop="@dimen/land_app_detail_header_padding_top"
+                android:paddingBottom="@dimen/land_app_detail_header_padding_bottom">
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -56,7 +47,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/template_workspace_global_prefill_title"
-                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
                             android:textStyle="bold" />
 
                         <com.google.android.material.textview.MaterialTextView
@@ -64,16 +55,16 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center_vertical"
-                            android:layout_marginStart="@dimen/sheet_unsaved_inline_badge_spacing_start"
+                            android:layout_marginStart="@dimen/land_app_detail_badge_spacing_start"
                             android:translationY="@dimen/template_detail_inline_badge_visual_offset_top"
                             android:background="@drawable/bg_sheet_unsaved_badge"
                             android:gravity="center"
                             android:includeFontPadding="false"
-                            android:minHeight="@dimen/sheet_unsaved_inline_badge_min_height"
-                            android:paddingStart="@dimen/sheet_unsaved_inline_badge_padding_horizontal"
-                            android:paddingTop="@dimen/sheet_unsaved_inline_badge_padding_vertical"
-                            android:paddingEnd="@dimen/sheet_unsaved_inline_badge_padding_horizontal"
-                            android:paddingBottom="@dimen/sheet_unsaved_inline_badge_padding_vertical"
+                            android:minHeight="@dimen/land_app_detail_badge_min_height"
+                            android:paddingStart="@dimen/land_app_detail_badge_padding_horizontal"
+                            android:paddingTop="@dimen/land_app_detail_badge_padding_vertical"
+                            android:paddingEnd="@dimen/land_app_detail_badge_padding_horizontal"
+                            android:paddingBottom="@dimen/land_app_detail_badge_padding_vertical"
                             android:text="@string/sheet_unsaved_badge"
                             android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
                             android:textColor="?attr/colorOnPrimaryContainer"
@@ -83,7 +74,7 @@
                     <com.google.android.material.textview.MaterialTextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/dialog_app_config_package_spacing_top"
+                        android:layout_marginTop="@dimen/land_app_detail_package_spacing_top"
                         android:text="@string/template_workspace_global_prefill_subtitle"
                         android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                         android:textColor="?attr/colorOnSurfaceVariant" />

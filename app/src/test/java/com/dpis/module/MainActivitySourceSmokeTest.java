@@ -133,11 +133,9 @@ public class MainActivitySourceSmokeTest {
             source.contains("setVisible(appWorkspaceDivider, appWorkspace);")
         );
         assertTrue(source.contains("setVisible(appPager, appWorkspace);"));
-        assertTrue(
-            source.contains(
-                "setVisible(templateWorkspaceContainer, !appWorkspace);"
-            )
-        );
+        assertTrue(source.contains(
+                "setVisible(templateWorkspaceContainer, templateWorkspace);"
+        ));
         assertTrue(
             source.contains(
                 "boolean floatingActionsVisible"
@@ -197,6 +195,120 @@ public class MainActivitySourceSmokeTest {
         assertTrue(
             !beforeRestoreSnapshot.contains("else if (retainedState != null)")
         );
+    }
+
+    @Test
+    public void landscapeTemplateDetailUsesSeparatePaneAndHomeHidesDetail()
+        throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+        String layout = read("src/main/res/layout-land/activity_status.xml");
+        String globalDetail = read("src/main/res/layout/view_land_global_prefill_detail.xml");
+        String templateDetail = read("src/main/res/layout/view_land_quick_template_detail.xml");
+
+        assertTrue(layout.contains("android:id=\"@+id/land_detail_content\""));
+        assertTrue(layout.contains("android:id=\"@+id/template_detail_content\""));
+        assertTrue(layout.contains("android:id=\"@+id/template_detail_empty\""));
+        assertTrue(layout.contains("android:id=\"@+id/land_detail_divider\""));
+        assertTrue(source.contains("private View landDetailPane;"));
+        assertTrue(source.contains("private View landDetailDivider;"));
+        assertTrue(source.contains("private FrameLayout templateDetailContent;"));
+        assertTrue(source.contains("TemplateDetailSelection"));
+        assertTrue(source.contains("applyLandscapeDetailVisibility(appWorkspace, templateWorkspace);"));
+        assertTrue(source.contains("appWorkspace || templateWorkspace"));
+        assertTrue(source.contains("restoreTemplateDetailPane();"));
+        assertTrue(source.contains("showGlobalPrefillEditor()"));
+        assertTrue(source.contains("showQuickTemplateEditor(String templateId)"));
+        assertTrue(source.contains("GlobalPrefillEditorBinder.bind("));
+        assertTrue(source.contains("QuickTemplateEditorBinder.bind("));
+        assertTrue(source.contains("applyTemplateDetailInsets("));
+        assertFalse(source.contains("GlobalPrefillSheetDialog.bindInto("));
+        assertFalse(source.contains("QuickTemplateEditSheetDialog.bindInto("));
+        assertTrue(source.contains("templateDetailSelection = TemplateDetailSelection.none();"));
+        assertTrue(source.contains("R.layout.view_land_global_prefill_detail"));
+        assertTrue(source.contains("R.layout.view_land_quick_template_detail"));
+        assertFalse(source.contains("? R.layout.dialog_global_prefill_sheet"));
+        assertFalse(source.contains(": R.layout.dialog_quick_template_edit_sheet"));
+        assertTrue(globalDetail.contains("android:layout_height=\"match_parent\""));
+        assertTrue(globalDetail.contains("android:clipToPadding=\"false\""));
+        assertTrue(globalDetail.contains("android:fillViewport=\"true\""));
+        assertTrue(globalDetail.contains("@layout/view_template_config_sheet_fields"));
+        assertTrue(globalDetail.contains("android:baselineAligned=\"false\""));
+        assertTrue(globalDetail.contains("android:layout_gravity=\"center_vertical\""));
+        assertTrue(globalDetail.contains("android:translationY=\"@dimen/template_detail_inline_badge_visual_offset_top\""));
+        assertFalse(globalDetail.contains("@layout/view_sheet_unsaved_badge_handle"));
+        assertFalse(globalDetail.contains("sheet_drag_handle"));
+        assertTrue(templateDetail.contains("android:layout_height=\"match_parent\""));
+        assertTrue(templateDetail.contains("android:clipToPadding=\"false\""));
+        assertTrue(templateDetail.contains("android:fillViewport=\"true\""));
+        assertTrue(templateDetail.contains("@layout/view_template_config_sheet_fields"));
+        assertTrue(templateDetail.contains("android:baselineAligned=\"false\""));
+        assertTrue(templateDetail.contains("android:layout_gravity=\"center_vertical\""));
+        assertTrue(templateDetail.contains("android:translationY=\"@dimen/template_detail_inline_badge_visual_offset_top\""));
+        assertFalse(templateDetail.contains("@layout/view_sheet_unsaved_badge_handle"));
+        assertFalse(templateDetail.contains("sheet_drag_handle"));
+    }
+
+    @Test
+    public void appEditorRestoreIsScopedToAppWorkspace() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(source.contains("restoreAppEditorForCurrentWorkspace();"));
+        assertTrue(source.contains("private void restoreAppEditorForCurrentWorkspace()"));
+        assertTrue(source.contains("requireUiState().workspaceMode != MainWorkspaceMode.APP"));
+        assertTrue(source.contains("showEditBottomSheet(appItem);"));
+        assertTrue(source.contains("showEditDetailPane(appItem);"));
+        assertTrue(source.contains("private BottomSheetDialog activeAppEditorDialog;"));
+        assertTrue(source.contains("activeAppEditorDialog != null && activeAppEditorDialog.isShowing()"));
+        assertTrue(source.contains("if (activeAppEditorDialog != null && activeAppEditorDialog.isShowing())"));
+        assertTrue(source.contains("activeAppEditorDialog = dialog;"));
+    }
+
+    @Test
+    public void landscapeWorkspaceRailDistributesLikeBottomNavigationAndScrollsWhenNeeded()
+            throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+        String landLayout = read("src/main/res/layout-land/activity_status.xml");
+
+        assertTrue(landLayout.contains("com.google.android.material.navigationrail.NavigationRailView"));
+        assertTrue(landLayout.contains("android:id=\"@+id/workspace_switch_scroll\""));
+        assertTrue(landLayout.contains("android:fillViewport=\"true\""));
+        assertTrue(landLayout.contains("app:labelVisibilityMode=\"selected\""));
+        assertTrue(source.contains("bindLandscapeWorkspaceRailItemHeight();"));
+        assertTrue(source.contains("workspaceSwitch instanceof NavigationRailView"));
+        assertTrue(source.contains("View railViewport = (View) workspaceSwitch.getParent();"));
+        assertTrue(source.contains("availableHeight / railView.getMenu().size()"));
+        assertTrue(source.contains("railView.setItemMinimumHeight(itemHeight);"));
+        assertTrue(!source.contains("main_land_workspace_rail_item_min_height"));
+        assertTrue(!source.contains("NavigationRailMenuView"));
+    }
+
+    @Test
+    public void templateEditorDraftMigratesBetweenSheetAndPane() throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+        String globalBinder = read("src/main/java/com/dpis/module/GlobalPrefillEditorBinder.java");
+        String quickBinder = read("src/main/java/com/dpis/module/QuickTemplateEditorBinder.java");
+        String globalSheet = read("src/main/java/com/dpis/module/GlobalPrefillSheetDialog.java");
+        String quickSheet = read("src/main/java/com/dpis/module/QuickTemplateEditSheetDialog.java");
+
+        assertTrue(source.contains("retainedGlobalPrefillDraft"));
+        assertTrue(source.contains("retainedQuickTemplateDraft"));
+        assertTrue(source.contains("captureTemplateEditorDraft();"));
+        assertTrue(source.contains("activeGlobalPrefillEditorBinder.snapshotDraft()"));
+        assertTrue(source.contains("activeQuickTemplateEditorBinder.snapshotDraft()"));
+        assertTrue(source.contains("closeActiveTemplateSheetForMigration();"));
+        assertTrue(source.contains("templateSheetMigrationInProgress"));
+        assertTrue(source.contains("retainedState.globalPrefillDraft"));
+        assertTrue(source.contains("retainedState.quickTemplateDraft"));
+        assertTrue(source.contains("retainedGlobalPrefillDraft"));
+        assertTrue(source.contains("retainedQuickTemplateDraft"));
+        assertTrue(globalBinder.contains("Draft snapshotDraft()"));
+        assertTrue(globalBinder.contains("private void applyDraft(Draft draft)"));
+        assertTrue(quickBinder.contains("Draft snapshotDraft()"));
+        assertTrue(quickBinder.contains("private void applyDraft(Draft draft)"));
+        assertTrue(globalSheet.contains("GlobalPrefillEditorBinder.Draft initialDraft"));
+        assertTrue(globalSheet.contains("GlobalPrefillEditorBinder.Draft snapshotDraft()"));
+        assertTrue(quickSheet.contains("QuickTemplateEditorBinder.Draft initialDraft"));
+        assertTrue(quickSheet.contains("QuickTemplateEditorBinder.Draft snapshotDraft()"));
     }
 
     @Test
@@ -1074,13 +1186,10 @@ public class MainActivitySourceSmokeTest {
         assertTrue(methodEnd > methodStart);
         String methodBody = source.substring(methodStart, methodEnd);
         assertTrue(methodBody.contains("detailView.findViewById(R.id.land_detail_scroll)"));
-        assertTrue(methodBody.contains("WindowInsetsCompat.Type.systemBars()"));
+        assertTrue(methodBody.contains(
+                "WindowInsetsBinder.applySafeDrawingPadding(scrollView, false, true, false, true);"
+        ));
         assertFalse(methodBody.contains("ViewCompat.requestApplyInsets(scrollView);"));
-        assertFalse(
-            methodBody.contains(
-                "WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout()"
-            )
-        );
         assertTrue(source.contains("applyLandDetailContentInsets(dialogView);"));
         assertTrue(source.contains("ViewCompat.requestApplyInsets(scrollView);"));
     }

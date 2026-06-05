@@ -11,16 +11,27 @@
         android:layout_height="match_parent"
         android:orientation="horizontal">
 
-        <com.google.android.material.navigationrail.NavigationRailView
-            android:id="@+id/workspace_switch"
+        <ScrollView
+            android:id="@+id/workspace_switch_scroll"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:background="?attr/colorSurfaceContainer"
-            app:itemIconTint="@color/workspace_navigation_item_color"
-            app:itemTextColor="@color/workspace_navigation_item_color"
-            app:labelVisibilityMode="selected"
-            app:menuGravity="center"
-            app:menu="@menu/main_workspace_navigation" />
+            android:fillViewport="true"
+            android:overScrollMode="ifContentScrolls"
+            android:scrollbars="none">
+
+            <com.google.android.material.navigationrail.NavigationRailView
+                android:id="@+id/workspace_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/colorSurfaceContainer"
+                android:saveEnabled="false"
+                app:itemIconTint="@color/workspace_navigation_item_color"
+                app:itemTextColor="@color/workspace_navigation_item_color"
+                app:labelVisibilityMode="selected"
+                app:menuGravity="center"
+                app:menu="@menu/main_workspace_navigation" />
+        </ScrollView>
 
         <LinearLayout
             android:id="@+id/land_main_panes"
@@ -177,6 +188,7 @@
             </LinearLayout>
 
             <View
+                android:id="@+id/land_detail_divider"
                 android:layout_width="@dimen/main_content_divider_height"
                 android:layout_height="match_parent"
                 android:background="?attr/colorOutlineVariant" />
@@ -192,43 +204,82 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
 
-                <LinearLayout
-                    android:id="@+id/land_detail_empty"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="@dimen/main_land_detail_padding">
-
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:src="@drawable/ic_apps_24"
-                        app:tint="?attr/colorOnSurfaceVariant" />
-
-                    <com.google.android.material.textview.MaterialTextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:text="@string/land_detail_empty_title"
-                        android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
-                        android:textStyle="bold" />
-
-                    <com.google.android.material.textview.MaterialTextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
+                    <LinearLayout
+                        android:id="@+id/land_detail_empty"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:gravity="center"
-                        android:text="@string/land_detail_empty_message"
-                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
-                </LinearLayout>
+                        android:orientation="vertical"
+                        android:padding="@dimen/main_land_detail_padding">
 
-                <FrameLayout
-                    android:id="@+id/land_detail_content"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:visibility="gone" />
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:src="@drawable/ic_apps_24"
+                            app:tint="?attr/colorOnSurfaceVariant" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:text="@string/land_detail_empty_title"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:gravity="center"
+                            android:text="@string/land_detail_empty_message"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
+
+                    <FrameLayout
+                        android:id="@+id/land_detail_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:visibility="gone" />
+
+                    <LinearLayout
+                        android:id="@+id/template_detail_empty"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="@dimen/main_land_detail_padding"
+                        android:visibility="gone">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:src="@drawable/ic_template_24"
+                            app:tint="?attr/colorOnSurfaceVariant" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:text="@string/template_detail_empty_title"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:gravity="center"
+                            android:text="@string/template_detail_empty_message"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
+
+                    <FrameLayout
+                        android:id="@+id/template_detail_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:visibility="gone" />
                 </FrameLayout>
             </FrameLayout>
 

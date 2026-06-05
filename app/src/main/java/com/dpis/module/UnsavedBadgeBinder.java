@@ -4,7 +4,7 @@ import android.view.View;
 
 import java.util.function.BooleanSupplier;
 
-final class SheetUnsavedBadgeBinder {
+final class UnsavedBadgeBinder {
     private final View container;
     private final View dragHandle;
     private final View unsavedBadge;
@@ -12,7 +12,7 @@ final class SheetUnsavedBadgeBinder {
     private final BooleanSupplier hasUnsavedChanges;
     private final boolean showDragHandle;
 
-    private SheetUnsavedBadgeBinder(View container,
+    private UnsavedBadgeBinder(View container,
             View dragHandle,
             View unsavedBadge,
             View inlineBadge,
@@ -26,19 +26,19 @@ final class SheetUnsavedBadgeBinder {
         this.showDragHandle = showDragHandle;
     }
 
-    static SheetUnsavedBadgeBinder bind(View root,
+    static UnsavedBadgeBinder bind(View root,
             BooleanSupplier hasUnsavedChanges) {
         return bind(root, hasUnsavedChanges, true);
     }
 
-    static SheetUnsavedBadgeBinder bind(View root,
+    static UnsavedBadgeBinder bind(View root,
             BooleanSupplier hasUnsavedChanges,
             boolean showDragHandle) {
         if (root == null) {
-            return new SheetUnsavedBadgeBinder(null, null, null, null,
+            return new UnsavedBadgeBinder(null, null, null, null,
                     hasUnsavedChanges, showDragHandle);
         }
-        return new SheetUnsavedBadgeBinder(
+        return new UnsavedBadgeBinder(
                 root.findViewById(R.id.sheet_unsaved_badge_container),
                 root.findViewById(R.id.sheet_drag_handle),
                 root.findViewById(R.id.sheet_unsaved_badge),

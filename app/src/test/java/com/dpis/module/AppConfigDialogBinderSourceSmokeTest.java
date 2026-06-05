@@ -112,7 +112,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertFalse(layout.contains("dialog_preview_status"));
         assertFalse(layout.contains("dialog_global_prefill_preview_status"));
         assertTrue(binderSource.contains("state.captureSavedDraft(views, item != null && item.previewFromGlobalPrefill);"));
-        assertTrue(binderSource.contains("SheetUnsavedBadgeBinder.bind("));
+        assertTrue(binderSource.contains("UnsavedBadgeBinder.bind("));
         assertTrue(binderSource.contains("bindDpisToggleButton(views.dpisToggleButton, state.dpisEnabled"));
         assertTrue(binderSource.contains("dpisToggleButton.setEnabled(!previewFromGlobalPrefill);"));
         assertTrue(binderSource.contains("dpisToggleButton.setAlpha(previewFromGlobalPrefill ? 0.6f : 1f);"));
@@ -183,7 +183,10 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(selectorLayout.contains("@string/dialog_typeface_manage_action"));
         assertTrue(selectorLayout.contains("@string/dialog_typeface_done_action"));
         assertTrue(selectorLayout.contains("@dimen/dialog_surface_padding_horizontal"));
-        assertTrue(selectorLayout.contains("@dimen/dialog_typeface_list_height"));
+        assertTrue(selectorLayout.contains("android:id=\"@+id/typeface_scroll\""));
+        assertTrue(selectorLayout.contains("android:layout_height=\"@dimen/dialog_typeface_list_height\""));
+        assertTrue(source.contains("applyTypefaceDialogListHeight(root);"));
+        assertTrue(source.contains("params.height = Math.min(configuredHeight, maxListHeight);"));
         assertTrue(selectorLayout.contains("@dimen/dialog_typeface_footer_button_height"));
         assertTrue(source.contains("R.dimen.dialog_typeface_option_min_height"));
         assertTrue(source.contains("R.dimen.dialog_typeface_option_padding_horizontal"));

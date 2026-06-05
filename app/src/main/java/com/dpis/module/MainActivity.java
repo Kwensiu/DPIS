@@ -40,6 +40,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.navigation.NavigationBarView;
+import com.google.android.material.navigationrail.NavigationRailView;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
@@ -140,8 +141,14 @@ public final class MainActivity
     private View toolsWorkspaceContainer;
     private View settingsWorkspaceContainer;
     private View landListPageView;
+    private View landDetailPane;
+    private View landDetailDivider;
     private View landDetailEmptyView;
     private FrameLayout landDetailContent;
+    private View templateDetailEmptyView;
+    private FrameLayout templateDetailContent;
+    private TemplateDetailSelection templateDetailSelection
+            = TemplateDetailSelection.none();
     private AppListPagerAdapter.AppListPageController landListController;
     private AppListPage landCurrentPage = AppListPage.ALL_APPS;
     private final SparseArray<Parcelable> landScrollStates
@@ -170,6 +177,14 @@ public final class MainActivity
     private volatile boolean startupUpdateDownloadCancelRequested;
     private View activeEditorRoot;
     private String activeEditorPackageName;
+    private BottomSheetDialog activeAppEditorDialog;
+    private GlobalPrefillSheetDialog activeGlobalPrefillSheetDialog;
+    private QuickTemplateEditSheetDialog activeQuickTemplateEditSheetDialog;
+    private GlobalPrefillEditorBinder activeGlobalPrefillEditorBinder;
+    private QuickTemplateEditorBinder activeQuickTemplateEditorBinder;
+    private GlobalPrefillEditorBinder.Draft retainedGlobalPrefillDraft;
+    private QuickTemplateEditorBinder.Draft retainedQuickTemplateDraft;
+    private boolean templateSheetMigrationInProgress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -211,6 +226,9 @@ public final class MainActivity
             initialQuery = retainedState.query;
             initialFilterState = retainedState.filterState;
             initialWorkspaceMode = retainedState.workspaceMode;
+            templateDetailSelection = retainedState.templateDetailSelection;
+            retainedGlobalPrefillDraft = retainedState.globalPrefillDraft;
+            retainedQuickTemplateDraft = retainedState.quickTemplateDraft;
             restoredPageScrollStates = retainedState.pageScrollStates;
             initialRefreshingPages = decodeRefreshingPages(
                     retainedState.refreshingPagePositions
@@ -265,8 +283,12 @@ public final class MainActivity
         toolsWorkspaceContainer = findViewById(R.id.tools_workspace_container);
         settingsWorkspaceContainer = findViewById(R.id.settings_workspace_container);
         landListPageView = findViewById(R.id.land_app_list_page);
+        landDetailPane = findViewById(R.id.land_detail_pane);
+        landDetailDivider = findViewById(R.id.land_detail_divider);
         landDetailEmptyView = findViewById(R.id.land_detail_empty);
         landDetailContent = findViewById(R.id.land_detail_content);
+        templateDetailEmptyView = findViewById(R.id.template_detail_empty);
+        templateDetailContent = findViewById(R.id.template_detail_content);
         templateWorkspaceBinder = new TemplateWorkspaceBinder(
                 this,
                 createTemplateWorkspaceActions(),
@@ -275,6 +297,8 @@ public final class MainActivity
         homeWorkspaceBinder = new HomeWorkspaceBinder(this);
         settingsWorkspaceBinder = new SettingsWorkspaceBinder(this);
         workspaceSwitch = findViewById(R.id.workspace_switch);
+        workspaceSwitch.setSaveFromParentEnabled(false);
+        bindLandscapeWorkspaceRailItemHeight();
         if (appPager != null) {
             pagerAdapter = new AppListPagerAdapter(
                     this::showEditDialog,
@@ -372,19 +396,9 @@ public final class MainActivity
                     retainedState.editingPackageName
             );
             mainViewModel.setEditingDraft(retainedState.editingDraft);
-            if (!isLandscapeDetailMode()) {
-                for (AppListItem appItem : requireUiState().visibleItems(
-                        landCurrentPage
-                )) {
-                    if (retainedState.editingPackageName.equals(
-                            appItem.packageName
-                    )) {
-                        showEditBottomSheet(appItem);
-                        break;
-                    }
-                }
-            }
+            restoreAppEditorForCurrentWorkspace();
         }
+        restoreTemplateEditorForCurrentConfiguration();
         if (maybeShowModuleRuntimeReloadAdvice()) {
             return;
         }
@@ -560,6 +574,7 @@ public final class MainActivity
         if (draft == null && mainViewModel != null) {
             draft = mainViewModel.getEditingDraft();
         }
+        captureTemplateEditorDraft();
         return new RetainedState(
                 snapshot,
                 state.query,
@@ -571,7 +586,10 @@ public final class MainActivity
                 mainViewModel != null
                         ? mainViewModel.getEditingPackageName()
                         : null,
-                draft
+                draft,
+                templateDetailSelection,
+                retainedGlobalPrefillDraft,
+                retainedQuickTemplateDraft
         );
     }
 
@@ -1042,21 +1060,7 @@ public final class MainActivity
         applyWorkspaceMode(state.workspaceMode);
         applyFilter();
         applyRefreshingStatesToPager();
-        if (isLandscapeDetailMode() && mainViewModel != null) {
-            String editingPackage = mainViewModel.getEditingPackageName();
-            if (editingPackage != null
-                    && landDetailContent != null
-                    && landDetailContent.getChildCount() == 0) {
-                for (AppListItem appItem : state.visibleItems(
-                        landCurrentPage
-                )) {
-                    if (editingPackage.equals(appItem.packageName)) {
-                        showEditDetailPane(appItem);
-                        break;
-                    }
-                }
-            }
-        }
+        restoreAppEditorForCurrentWorkspace();
     }
 
     private void bindWorkspaceSwitch() {
@@ -1077,6 +1081,43 @@ public final class MainActivity
         });
     }
 
+    private void bindLandscapeWorkspaceRailItemHeight() {
+        if (!(workspaceSwitch instanceof NavigationRailView)) {
+            return;
+        }
+        workspaceSwitch.addOnLayoutChangeListener((view, left, top, right, bottom,
+                oldLeft, oldTop, oldRight, oldBottom) ->
+                syncLandscapeWorkspaceRailItemHeight());
+        workspaceSwitch.post(this::syncLandscapeWorkspaceRailItemHeight);
+    }
+
+    private void syncLandscapeWorkspaceRailItemHeight() {
+        if (!(workspaceSwitch instanceof NavigationRailView)
+                || workspaceSwitch.getMenu() == null
+                || workspaceSwitch.getMenu().size() == 0) {
+            return;
+        }
+        NavigationRailView railView = (NavigationRailView) workspaceSwitch;
+        View railViewport = (View) workspaceSwitch.getParent();
+        int railViewportHeight = railViewport != null
+                ? railViewport.getHeight()
+                : workspaceSwitch.getHeight();
+        if (railViewportHeight <= 0) {
+            return;
+        }
+        int availableHeight = Math.max(
+                1,
+                railViewportHeight - railView.getPaddingTop() - railView.getPaddingBottom()
+        );
+        int itemHeight = Math.max(
+                1,
+                availableHeight / railView.getMenu().size()
+        );
+        if (railView.getItemMinimumHeight() != itemHeight) {
+            railView.setItemMinimumHeight(itemHeight);
+        }
+    }
+
     private void applyWorkspaceMode(MainWorkspaceMode workspaceMode) {
         MainWorkspaceMode mode
                 = workspaceMode != null ? workspaceMode : MainWorkspaceMode.HOME;
@@ -1094,13 +1135,7 @@ public final class MainActivity
         setVisible(templateWorkspaceContainer, templateWorkspace);
         setVisible(toolsWorkspaceContainer, toolsWorkspace);
         setVisible(settingsWorkspaceContainer, settingsWorkspace);
-        if (!appWorkspace) {
-            setVisible(landDetailEmptyView, true);
-            setVisible(landDetailContent, false);
-            if (landDetailContent != null) {
-                landDetailContent.removeAllViews();
-            }
-        }
+        applyLandscapeDetailVisibility(appWorkspace, templateWorkspace);
         boolean floatingActionsVisible
                 = appWorkspace && !isLandscapeDetailMode();
         setVisible(searchFocusFab, floatingActionsVisible);
@@ -1119,9 +1154,58 @@ public final class MainActivity
             bindHomeWorkspace();
         } else if (templateWorkspace) {
             bindTemplateWorkspace();
+            restoreTemplateEditorForCurrentConfiguration();
         } else if (settingsWorkspace) {
             bindSettingsWorkspace();
         }
+    }
+
+    private void restoreAppEditorForCurrentWorkspace() {
+        if (mainViewModel == null
+                || requireUiState().workspaceMode != MainWorkspaceMode.APP) {
+            return;
+        }
+        String editingPackage = mainViewModel.getEditingPackageName();
+        if (editingPackage == null || editingPackage.isBlank()) {
+            return;
+        }
+        if (isLandscapeDetailMode()
+                && landDetailContent != null
+                && landDetailContent.getChildCount() > 0) {
+            return;
+        }
+        for (AppListItem appItem : requireUiState().visibleItems(landCurrentPage)) {
+            if (editingPackage.equals(appItem.packageName)) {
+                if (isLandscapeDetailMode()) {
+                    showEditDetailPane(appItem);
+                } else {
+                    showEditBottomSheet(appItem);
+                }
+                break;
+            }
+        }
+    }
+
+    private void applyLandscapeDetailVisibility(
+            boolean appWorkspace,
+            boolean templateWorkspace
+    ) {
+        boolean showDetailPane = isLandscapeDetailMode()
+                && (appWorkspace || templateWorkspace);
+        setVisible(landDetailPane, showDetailPane);
+        setVisible(landDetailDivider, showDetailPane);
+        setVisible(landDetailEmptyView, appWorkspace
+                && landDetailContent != null
+                && landDetailContent.getChildCount() == 0);
+        setVisible(landDetailContent, appWorkspace
+                && landDetailContent != null
+                && landDetailContent.getChildCount() > 0);
+        setVisible(templateDetailEmptyView, templateWorkspace
+                && (templateDetailSelection == null
+                || templateDetailSelection.kind == TemplateDetailKind.NONE));
+        setVisible(templateDetailContent, templateWorkspace
+                && templateDetailSelection != null
+                && templateDetailSelection.kind != TemplateDetailKind.NONE);
     }
 
     private boolean isLandscapeDetailMode() {
@@ -1135,6 +1219,278 @@ public final class MainActivity
                     requireUiState().query
             );
         }
+    }
+
+    private void restoreTemplateDetailPane() {
+        if (!isLandscapeDetailMode()
+                || templateDetailContent == null
+                || templateDetailSelection == null
+                || templateDetailSelection.kind == TemplateDetailKind.NONE) {
+            applyLandscapeDetailVisibility(false, true);
+            return;
+        }
+        if (templateDetailContent.getChildCount() > 0) {
+            applyLandscapeDetailVisibility(false, true);
+            return;
+        }
+        showTemplateDetailPane(templateDetailSelection);
+    }
+
+    private void showGlobalPrefillEditor() {
+        templateDetailSelection = TemplateDetailSelection.globalPrefill();
+        retainedQuickTemplateDraft = null;
+        if (!isLandscapeDetailMode()) {
+            showGlobalPrefillSheet();
+            return;
+        }
+        showTemplateDetailPane(templateDetailSelection);
+    }
+
+    private void showGlobalPrefillSheet() {
+        if (activeGlobalPrefillSheetDialog != null
+                && activeGlobalPrefillSheetDialog.isShowing()) {
+            return;
+        }
+        activeGlobalPrefillSheetDialog = new GlobalPrefillSheetDialog(
+                this,
+                this::onTemplateEditorUpdated,
+                () -> {
+                    if (activeGlobalPrefillSheetDialog != null) {
+                        retainedGlobalPrefillDraft = activeGlobalPrefillSheetDialog.snapshotDraft();
+                    }
+                    activeGlobalPrefillSheetDialog = null;
+                    if (!templateSheetMigrationInProgress) {
+                        clearTemplateDetailSelection();
+                    }
+                },
+                retainedGlobalPrefillDraft
+        );
+        activeGlobalPrefillSheetDialog.show();
+    }
+
+    private void showQuickTemplateSheet(String templateId) {
+        if (activeQuickTemplateEditSheetDialog != null
+                && activeQuickTemplateEditSheetDialog.isShowing()) {
+            return;
+        }
+        activeQuickTemplateEditSheetDialog = new QuickTemplateEditSheetDialog(
+                this,
+                templateId,
+                this::onTemplateEditorUpdated,
+                () -> {
+                    if (activeQuickTemplateEditSheetDialog != null) {
+                        retainedQuickTemplateDraft =
+                                activeQuickTemplateEditSheetDialog.snapshotDraft();
+                    }
+                    activeQuickTemplateEditSheetDialog = null;
+                    if (!templateSheetMigrationInProgress) {
+                        clearTemplateDetailSelection();
+                    }
+                },
+                retainedQuickTemplateDraft
+        );
+        activeQuickTemplateEditSheetDialog.show();
+    }
+
+    private void captureTemplateEditorDraft() {
+        if (activeGlobalPrefillSheetDialog != null) {
+            retainedGlobalPrefillDraft = activeGlobalPrefillSheetDialog.snapshotDraft();
+        }
+        if (activeQuickTemplateEditSheetDialog != null) {
+            retainedQuickTemplateDraft = activeQuickTemplateEditSheetDialog.snapshotDraft();
+        }
+        if (activeGlobalPrefillEditorBinder != null) {
+            retainedGlobalPrefillDraft = activeGlobalPrefillEditorBinder.snapshotDraft();
+        }
+        if (activeQuickTemplateEditorBinder != null) {
+            retainedQuickTemplateDraft = activeQuickTemplateEditorBinder.snapshotDraft();
+        }
+    }
+
+    private void closeActiveTemplateSheetForMigration() {
+        templateSheetMigrationInProgress = true;
+        if (activeGlobalPrefillSheetDialog != null) {
+            retainedGlobalPrefillDraft = activeGlobalPrefillSheetDialog.snapshotDraft();
+            activeGlobalPrefillSheetDialog.dismiss();
+            activeGlobalPrefillSheetDialog = null;
+        }
+        if (activeQuickTemplateEditSheetDialog != null) {
+            retainedQuickTemplateDraft = activeQuickTemplateEditSheetDialog.snapshotDraft();
+            activeQuickTemplateEditSheetDialog.dismiss();
+            activeQuickTemplateEditSheetDialog = null;
+        }
+        templateSheetMigrationInProgress = false;
+    }
+
+    private void showQuickTemplateEditor(String templateId) {
+        templateDetailSelection = TemplateDetailSelection.quickTemplate(templateId);
+        retainedGlobalPrefillDraft = null;
+        if (!isLandscapeDetailMode()) {
+            showQuickTemplateSheet(templateId);
+            return;
+        }
+        showTemplateDetailPane(templateDetailSelection);
+    }
+
+    private void restoreTemplateEditorForCurrentConfiguration() {
+        if (requireUiState().workspaceMode != MainWorkspaceMode.TEMPLATE
+                || templateDetailSelection == null
+                || templateDetailSelection.kind == TemplateDetailKind.NONE) {
+            return;
+        }
+        if (isLandscapeDetailMode()) {
+            closeActiveTemplateSheetForMigration();
+            restoreTemplateDetailPane();
+            return;
+        }
+        TemplateDetailSelection selection = templateDetailSelection;
+        if (selection.kind == TemplateDetailKind.GLOBAL_PREFILL) {
+            showGlobalPrefillSheet();
+            return;
+        }
+        if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE) {
+            showQuickTemplateSheet(selection.templateId);
+        }
+    }
+
+    private void clearTemplateDetailSelection() {
+        templateDetailSelection = TemplateDetailSelection.none();
+        retainedGlobalPrefillDraft = null;
+        retainedQuickTemplateDraft = null;
+        if (templateDetailContent != null) {
+            templateDetailContent.removeAllViews();
+        }
+        activeGlobalPrefillEditorBinder = null;
+        activeQuickTemplateEditorBinder = null;
+    }
+
+    private void showTemplateDetailPane(TemplateDetailSelection selection) {
+        if (templateDetailContent == null || selection == null) {
+            return;
+        }
+        templateDetailSelection = selection;
+        templateDetailContent.removeAllViews();
+        View detailView = inflateTemplateDetailView(selection);
+        boolean bound = bindTemplateDetailView(selection, detailView);
+        if (!bound) {
+            templateDetailSelection = TemplateDetailSelection.none();
+            templateDetailContent.removeAllViews();
+            bindTemplateWorkspace();
+            applyLandscapeDetailVisibility(false, true);
+            return;
+        }
+        templateDetailContent.addView(
+                detailView,
+                new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                )
+        );
+        ViewCompat.requestApplyInsets(detailView);
+        applyLandscapeDetailVisibility(false, true);
+    }
+
+    private View inflateTemplateDetailView(TemplateDetailSelection selection) {
+        int layoutRes = selection.kind == TemplateDetailKind.GLOBAL_PREFILL
+                ? R.layout.view_land_global_prefill_detail
+                : R.layout.view_land_quick_template_detail;
+        return LayoutInflater.from(this).inflate(
+                layoutRes,
+                templateDetailContent,
+                false
+        );
+    }
+
+    private boolean bindTemplateDetailView(
+            TemplateDetailSelection selection,
+            View detailView
+    ) {
+        if (selection.kind == TemplateDetailKind.GLOBAL_PREFILL) {
+            applyTemplateDetailInsets(
+                    detailView,
+                    R.id.global_prefill_scroll
+            );
+            activeGlobalPrefillEditorBinder = GlobalPrefillEditorBinder.bind(
+                    this,
+                    detailView,
+                    this::onTemplateEditorUpdated,
+                    null,
+                    false,
+                    retainedGlobalPrefillDraft
+            );
+            activeQuickTemplateEditorBinder = null;
+            return activeGlobalPrefillEditorBinder != null;
+        }
+        if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE) {
+            applyTemplateDetailInsets(
+                    detailView,
+                    R.id.quick_template_edit_scroll
+            );
+            activeQuickTemplateEditorBinder = QuickTemplateEditorBinder.bind(
+                    this,
+                    detailView,
+                    selection.templateId,
+                    this::onTemplateEditorUpdated,
+                    null,
+                    false,
+                    retainedQuickTemplateDraft
+            );
+            activeGlobalPrefillEditorBinder = null;
+            return activeQuickTemplateEditorBinder != null;
+        }
+        return false;
+    }
+
+    private void applyTemplateDetailInsets(View detailView, int scrollViewId) {
+        View scrollView = detailView != null
+                ? detailView.findViewById(scrollViewId)
+                : null;
+        WindowInsetsBinder.applySafeDrawingPadding(
+                scrollView,
+                false,
+                true,
+                false,
+                true
+        );
+    }
+
+    private void onTemplateEditorUpdated() {
+        bindTemplateWorkspace();
+        if (templateDetailSelection != null
+                && templateDetailSelection.kind == TemplateDetailKind.GLOBAL_PREFILL) {
+            retainedGlobalPrefillDraft = null;
+        } else if (templateDetailSelection != null
+                && templateDetailSelection.kind == TemplateDetailKind.QUICK_TEMPLATE) {
+            retainedQuickTemplateDraft = null;
+        }
+        if (!isLandscapeDetailMode()
+                || requireUiState().workspaceMode != MainWorkspaceMode.TEMPLATE
+                || templateDetailSelection == null
+                || templateDetailSelection.kind == TemplateDetailKind.NONE) {
+            return;
+        }
+        TemplateDetailSelection selection = templateDetailSelection;
+        if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE
+                && selection.templateId == null) {
+            templateDetailSelection = TemplateDetailSelection.none();
+            templateDetailContent.removeAllViews();
+            applyLandscapeDetailVisibility(false, true);
+            return;
+        }
+        if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE
+                && selection.templateId != null
+                && new QuickTemplateStore(
+                        getSharedPreferences(
+                                DpiConfigStore.GROUP,
+                                Context.MODE_PRIVATE
+                        )
+                ).read(selection.templateId) == null) {
+            templateDetailSelection = TemplateDetailSelection.none();
+            templateDetailContent.removeAllViews();
+            applyLandscapeDetailVisibility(false, true);
+            return;
+        }
+        showTemplateDetailPane(selection);
     }
 
     private void bindSettingsWorkspace() {
@@ -1645,6 +2001,9 @@ public final class MainActivity
     }
 
     private void showEditBottomSheet(AppListItem item) {
+        if (activeAppEditorDialog != null && activeAppEditorDialog.isShowing()) {
+            return;
+        }
         DpiConfigStore store = getUiConfigStore();
         TemplateConfigValue globalPrefill = new GlobalPrefillStore(
                 getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE)
@@ -1695,10 +2054,14 @@ public final class MainActivity
         BottomSheetDialog dialog = new AppConfigDialogCoordinator(this).show(
                 dialogView
         );
+        activeAppEditorDialog = dialog;
         dialog.setOnDismissListener(d -> {
             if (activeEditorRoot == dialogView) {
                 activeEditorRoot = null;
                 activeEditorPackageName = null;
+            }
+            if (activeAppEditorDialog == dialog) {
+                activeAppEditorDialog = null;
             }
             if (mainViewModel != null && !isChangingConfigurations()) {
                 mainViewModel.clearEditingPackageName();
@@ -2153,10 +2516,7 @@ public final class MainActivity
         return new TemplateWorkspaceBinder.GlobalPrefillActions() {
             @Override
             public void edit() {
-                GlobalPrefillSheetDialog.show(
-                        MainActivity.this,
-                        MainActivity.this::bindTemplateWorkspace
-                );
+                showGlobalPrefillEditor();
             }
         };
     }
@@ -2170,11 +2530,7 @@ public final class MainActivity
 
             @Override
             public void edit(String templateId) {
-                QuickTemplateEditSheetDialog.show(
-                        MainActivity.this,
-                        templateId,
-                        MainActivity.this::bindTemplateWorkspace
-                );
+                showQuickTemplateEditor(templateId);
             }
 
             @Override
@@ -2192,11 +2548,7 @@ public final class MainActivity
 
             @Override
             public void create() {
-                QuickTemplateEditSheetDialog.show(
-                        MainActivity.this,
-                        null,
-                        MainActivity.this::bindTemplateWorkspace
-                );
+                showQuickTemplateEditor(null);
             }
 
             @Override
@@ -3115,6 +3467,9 @@ public final class MainActivity
         final int[] refreshingPagePositions;
         final String editingPackageName;
         final AppConfigDraft editingDraft;
+        final TemplateDetailSelection templateDetailSelection;
+        final GlobalPrefillEditorBinder.Draft globalPrefillDraft;
+        final QuickTemplateEditorBinder.Draft quickTemplateDraft;
 
         RetainedState(
                 List<AppListItem> appsSnapshot,
@@ -3125,7 +3480,10 @@ public final class MainActivity
                 SparseArray<Parcelable> pageScrollStates,
                 int[] refreshingPagePositions,
                 String editingPackageName,
-                AppConfigDraft editingDraft
+                AppConfigDraft editingDraft,
+                TemplateDetailSelection templateDetailSelection,
+                GlobalPrefillEditorBinder.Draft globalPrefillDraft,
+                QuickTemplateEditorBinder.Draft quickTemplateDraft
         ) {
             this.appsSnapshot = appsSnapshot;
             this.query = query != null ? query : "";
@@ -3144,6 +3502,49 @@ public final class MainActivity
                             : new int[0];
             this.editingPackageName = editingPackageName;
             this.editingDraft = editingDraft;
+            this.templateDetailSelection = templateDetailSelection != null
+                    ? templateDetailSelection
+                    : TemplateDetailSelection.none();
+            this.globalPrefillDraft = globalPrefillDraft;
+            this.quickTemplateDraft = quickTemplateDraft;
+        }
+    }
+
+    private enum TemplateDetailKind {
+        NONE,
+        GLOBAL_PREFILL,
+        QUICK_TEMPLATE
+    }
+
+    private static final class TemplateDetailSelection {
+
+        final TemplateDetailKind kind;
+        final String templateId;
+
+        private TemplateDetailSelection(
+                TemplateDetailKind kind,
+                String templateId
+        ) {
+            this.kind = kind != null ? kind : TemplateDetailKind.NONE;
+            this.templateId = templateId;
+        }
+
+        static TemplateDetailSelection none() {
+            return new TemplateDetailSelection(TemplateDetailKind.NONE, null);
+        }
+
+        static TemplateDetailSelection globalPrefill() {
+            return new TemplateDetailSelection(
+                    TemplateDetailKind.GLOBAL_PREFILL,
+                    null
+            );
+        }
+
+        static TemplateDetailSelection quickTemplate(String templateId) {
+            return new TemplateDetailSelection(
+                    TemplateDetailKind.QUICK_TEMPLATE,
+                    templateId
+            );
         }
     }
 }

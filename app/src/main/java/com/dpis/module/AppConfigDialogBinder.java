@@ -108,7 +108,7 @@ final class AppConfigDialogBinder {
                 () -> updateSaveButtonState(dialogView, views));
         updateSaveButtonState(dialogView, views);
         state.captureSavedDraft(views, item != null && item.previewFromGlobalPrefill);
-        state.bindUnsavedBadge(SheetUnsavedBadgeBinder.bind(
+        state.bindUnsavedBadge(UnsavedBadgeBinder.bind(
                 dialogView, () -> state.hasUnsavedChanges(views), showDragHandle));
         AppConfigDialogActionStyle style = resolveDialogActionStyle(views.scopeButton);
         refreshDialogState(views, state, style, systemHooksEnabled, item);
@@ -359,6 +359,7 @@ final class AppConfigDialogBinder {
             }
         });
         dialogHolder[0].setCanceledOnTouchOutside(true);
+        applyTypefaceDialogListHeight(root);
         dialogHolder[0].show();
         DialogWindowSizer.applyLargeWidth(dialogHolder[0], activity);
         TabLayout.Tab initialTab = tabs.getTabAt(selectedImported ? 1 : 0);
@@ -430,6 +431,32 @@ final class AppConfigDialogBinder {
             options.add(new TypefaceOption(entry.id, resolveFontOptionLabel(entry)));
         }
         return options;
+    }
+
+    private void applyTypefaceDialogListHeight(View root) {
+        View scrollView = root != null
+                ? root.findViewById(R.id.typeface_scroll)
+                : null;
+        if (scrollView == null) {
+            return;
+        }
+        int availableHeight = activity.getResources()
+                .getDisplayMetrics()
+                .heightPixels;
+        int reservedHeight = Math.round(
+                TypedValue.applyDimension(
+                        TypedValue.COMPLEX_UNIT_DIP,
+                        260,
+                        activity.getResources().getDisplayMetrics()
+                )
+        );
+        int configuredHeight = activity.getResources().getDimensionPixelSize(
+                R.dimen.dialog_typeface_list_height
+        );
+        int maxListHeight = Math.max(0, (int) (availableHeight * 0.82f) - reservedHeight);
+        ViewGroup.LayoutParams params = scrollView.getLayoutParams();
+        params.height = Math.min(configuredHeight, maxListHeight);
+        scrollView.setLayoutParams(params);
     }
 
     private void bindTypefaceOptionRows(LinearLayout listView,
@@ -1103,7 +1130,7 @@ final class AppConfigDialogBinder {
         boolean viewportApplyModeResetRequested;
         String viewportScaleInput = "";
         String viewportAbsoluteInput = "";
-        private SheetUnsavedBadgeBinder unsavedBadgeBinder;
+        private UnsavedBadgeBinder unsavedBadgeBinder;
         private String savedDraftSignature = "";
 
         AppConfigDialogState(boolean scopeSelected,
@@ -1189,7 +1216,7 @@ final class AppConfigDialogBinder {
             viewportApplyModeResetRequested = true;
         }
 
-        void bindUnsavedBadge(SheetUnsavedBadgeBinder binder) {
+        void bindUnsavedBadge(UnsavedBadgeBinder binder) {
             unsavedBadgeBinder = binder;
             refreshUnsavedBadge();
         }

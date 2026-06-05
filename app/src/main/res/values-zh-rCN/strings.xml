@@ -37,6 +37,8 @@
     <string name="quick_search_button">快速搜索</string>
     <string name="land_detail_empty_title">选择应用</string>
     <string name="land_detail_empty_message">横屏时会在这里显示应用配置。</string>
+    <string name="template_detail_empty_title">选择模板项</string>
+    <string name="template_detail_empty_message">横屏时会在这里编辑全局预填和模板内容。</string>
     <string name="land_detail_hook_chain_default">默认</string>
     <string name="land_detail_hook_chain_viewport_system">界面[系统]</string>
     <string name="land_detail_hook_chain_viewport_compat">界面[兼容]</string>

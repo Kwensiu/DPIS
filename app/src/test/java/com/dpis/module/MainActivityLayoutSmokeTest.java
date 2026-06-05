@@ -49,6 +49,7 @@ public class MainActivityLayoutSmokeTest {
         assertTrue(layout.contains("com.google.android.material.bottomnavigation.BottomNavigationView"));
         assertTrue(layout.contains("android:layout_height=\"wrap_content\""));
         assertTrue(layout.contains("android:minHeight=\"@dimen/main_workspace_navigation_height\""));
+        assertTrue(layout.contains("android:saveEnabled=\"false\""));
         assertTrue(layout.contains("app:menu=\"@menu/main_workspace_navigation\""));
         assertTrue(layout.contains("app:labelVisibilityMode=\"selected\""));
         assertTrue(layout.contains("android:background=\"?attr/colorSurfaceContainer\""));
@@ -66,6 +67,21 @@ public class MainActivityLayoutSmokeTest {
         assertTrue(strings.contains("template_workspace_quick_templates_title"));
         assertTrue(strings.contains("quick_search_button"));
         assertTrue(Files.exists(Path.of("src/main/res/drawable/ic_tune_24.xml")));
+    }
+
+    @Test
+    public void workspaceSwitchDoesNotRestorePlatformViewStateAcrossOrientation()
+            throws IOException {
+        String portraitLayout = read("src/main/res/layout/activity_status.xml");
+        String landscapeLayout = read("src/main/res/layout-land/activity_status.xml");
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(portraitLayout.contains("android:id=\"@+id/workspace_switch\""));
+        assertTrue(landscapeLayout.contains("android:id=\"@+id/workspace_switch\""));
+        assertTrue(landscapeLayout.contains("android:id=\"@+id/workspace_switch_scroll\""));
+        assertTrue(portraitLayout.contains("android:saveEnabled=\"false\""));
+        assertTrue(landscapeLayout.contains("android:saveEnabled=\"false\""));
+        assertTrue(source.contains("workspaceSwitch.setSaveFromParentEnabled(false);"));
     }
 
     private static String read(String relativePath) throws IOException {
