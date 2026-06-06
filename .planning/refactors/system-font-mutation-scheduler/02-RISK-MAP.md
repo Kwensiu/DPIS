@@ -38,4 +38,3 @@ High.
 - Route docs cannot explain the new scheduling rule in one paragraph.
 - Device logs still show `CONFIG_FONT_SCALE` relaunch after the font route is
   supposed to avoid config-dispatch writes.
-

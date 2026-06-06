@@ -17,12 +17,37 @@ public class FontHookDomainPropertyBridgeTest {
                 FontHookDomainRegistry.ID_PAINT_TEXT_SIZE_FALLBACK,
                 FontHookDomainRegistry.ID_HYPEROS_NATIVE_FLUTTER));
 
-        assertEquals(298, mask);
+        assertEquals(404, mask);
         assertEquals(Set.of(
                         FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT,
                         FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE,
                         FontHookDomainRegistry.ID_PAINT_TEXT_SIZE_FALLBACK,
                         FontHookDomainRegistry.ID_HYPEROS_NATIVE_FLUTTER),
+                FontHookDomainPropertyBridge.decodeMask(mask));
+    }
+
+    @Test
+    public void legacyV2MaskValuesDoNotShiftIntoNewActivityThreadDomain() {
+        HookDomainOverride parsed = FontHookDomainPropertyBridge.parseOverrideValueForTest(
+                "v2:c9d161436703:149");
+
+        assertTrue(parsed.customPathEnabled);
+        assertEquals(Set.of(
+                        FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE,
+                        FontHookDomainRegistry.ID_PAINT_TEXT_SIZE_FALLBACK,
+                        FontHookDomainRegistry.ID_HYPEROS_NATIVE_FLUTTER),
+                parsed.enabledKnownDomains);
+        assertFalse(parsed.enabledKnownDomains.contains(
+                FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT));
+    }
+
+    @Test
+    public void activityThreadFontDomainUsesAppendedMaskBit() {
+        int mask = FontHookDomainPropertyBridge.encodeMask(Set.of(
+                FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT));
+
+        assertEquals(256, mask);
+        assertEquals(Set.of(FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT),
                 FontHookDomainPropertyBridge.decodeMask(mask));
     }
 

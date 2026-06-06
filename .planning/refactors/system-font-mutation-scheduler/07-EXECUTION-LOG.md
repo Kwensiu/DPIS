@@ -38,3 +38,8 @@
   `preEnvironment` and `effectiveEnvironment`; those names describe older
   viewport computation state and changing them now would widen the refactor
   beyond the approved field scheduling boundary.
+- Static review found a hook-domain mask compatibility regression plus minor
+  help-text and EOF issues.
+- Review fix keeps the legacy v2 mask order for the original customizable
+  domains, appends `activity_thread_font` and `system_server_font`, updates
+  custom-hook help text to 10 routes, and removes extra planning EOF blanks.

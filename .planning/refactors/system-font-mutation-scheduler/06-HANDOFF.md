@@ -29,4 +29,3 @@ Wave 1 should not touch:
 
 Viewport and font can share a unified scheduler vocabulary, but `fontScale` must
 not inherit every viewport lifecycle write point by default.
-

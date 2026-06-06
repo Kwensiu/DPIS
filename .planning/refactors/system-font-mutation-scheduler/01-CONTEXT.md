@@ -45,4 +45,3 @@ DPIS should have one unified scheduling vocabulary:
 - A mutation field declares where it may write and what baseline it uses.
 - Viewport and font can share the scheduler, but not necessarily the same
   allowed entries or relaunch risk.
-
