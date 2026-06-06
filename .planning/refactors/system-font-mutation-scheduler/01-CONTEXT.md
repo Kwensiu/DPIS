@@ -45,3 +45,9 @@ DPIS should have one unified scheduling vocabulary:
 - A mutation field declares where it may write and what baseline it uses.
 - Viewport and font can share the scheduler, but not necessarily the same
   allowed entries or relaunch risk.
+- Hook-chain domains express requested capability. The scheduler owns effective
+  execution and fallback, so a risky route being enabled in UI does not imply it
+  may write at every lifecycle entry.
+- Bilibili and Douyin are reproduction evidence for `FONT_SCALE` scheduling.
+  They must not become built-in package recommendations or separate app-specific
+  routes.

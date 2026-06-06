@@ -177,6 +177,10 @@ See `docs/private/` for app-specific investigation notes.
 - Per-app stability guards (e.g., splash filter, Display/WindowMetrics disable,
   WebView supplement skip, Flutter activity scope) are configured per target
   package. Do not change default boundaries without per-target evidence.
+- Treat Bilibili/Douyin flicker findings as evidence for the generic
+  `FONT_SCALE` field policy, not as package-name recommendations. Hook-chain
+  restore default clears the custom override and returns to the current-mode
+  automatic domains; it must not grow a Bilibili/Douyin default list.
 
 ## Update Log
 
@@ -203,3 +207,7 @@ See `docs/private/` for app-specific investigation notes.
   multi-entry behavior but narrows `FONT_SCALE` to launch-time configuration
   mutation. This moves the Bilibili/Douyin relaunch mitigation into DPIS
   scheduling instead of relying on users to know which sub-route to disable.
+- 2026-06-07: documented the semantic boundary between requested hook domains
+  and effective system_server execution. Bilibili/Douyin remain reproduction
+  evidence for package-neutral scheduling; they are not built-in recommended
+  hook-chain targets.

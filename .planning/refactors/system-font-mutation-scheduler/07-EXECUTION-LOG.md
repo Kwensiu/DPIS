@@ -43,3 +43,7 @@
 - Review fix keeps the legacy v2 mask order for the original customizable
   domains, appends `activity_thread_font` and `system_server_font`, updates
   custom-hook help text to 10 routes, and removes extra planning EOF blanks.
+- Added explicit docs and comments for the requested-domain versus effective
+  scheduler boundary. Bilibili/Douyin are recorded as reproduction evidence for
+  generic `FONT_SCALE` scheduling, not as built-in recommended hook-chain
+  targets.

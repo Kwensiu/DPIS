@@ -118,6 +118,9 @@ final class HookExecutionPlanner {
                             FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT,
                             FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT));
         }
+        // Built-in domains are documented compatibility supplements only.
+        // Route risk must be handled by the unified scheduler, not by adding
+        // package-specific defaults for apps that exposed a risky lifecycle.
         Set<String> builtinDomains = FontHookDomainRegistry.orderedKnownSubset(
                 packageBuiltinDomains);
         HookDomainOverride resolvedOverride = hookDomainOverride != null

@@ -43,6 +43,9 @@ final class HookDomainOverrideStore {
         if (configStore == null || packageName == null || packageName.isBlank()) {
             return false;
         }
+        // "Recommended" means no custom override: the UI falls back to the
+        // current mode's automatic domains, then runtime scheduling decides
+        // which requested routes may actually write.
         return configStore.clearPackageFontHookDomainsRaw(packageName);
     }
 

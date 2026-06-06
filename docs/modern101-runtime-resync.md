@@ -208,6 +208,10 @@ superseded.
   `ViewportModePolicy` is a 101-impacting change.
 - For 101 system route, require system_server install evidence plus
   callback/mutation evidence. `hook ready` alone is not enough.
+- Treat Bilibili/Douyin flicker findings as evidence for the generic
+  `FONT_SCALE` field policy, not as package-name recommendations. Hook-chain
+  restore default clears the custom override and returns to the current-mode
+  automatic domains; it must not grow a Bilibili/Douyin default list.
 
 ## Update Log
 
@@ -224,3 +228,7 @@ superseded.
   multi-entry behavior but narrows `FONT_SCALE` to launch-time configuration
   mutation. This moves the Bilibili/Douyin relaunch mitigation into DPIS
   scheduling instead of relying on users to know which sub-route to disable.
+- 2026-06-07: documented the semantic boundary between requested hook domains
+  and effective system_server execution. Bilibili/Douyin remain reproduction
+  evidence for package-neutral scheduling; they are not built-in recommended
+  hook-chain targets.

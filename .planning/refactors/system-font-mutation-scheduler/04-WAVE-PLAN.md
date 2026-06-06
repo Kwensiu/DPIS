@@ -53,6 +53,8 @@ manual warnings.
   is known.
 - Keep `system_server_font` as an explicit domain, but have unified scheduling
   decide whether and where it is allowed to write.
+- Keep the mitigation package-neutral: do not add Bilibili/Douyin recommended
+  chain defaults or separate app-specific routes.
 - Update route docs with the rationale.
 
 Verification:

@@ -505,6 +505,36 @@ public class HookExecutionPlannerTest {
         assertTrue(weatherPlan.domainPlan.hasHyperOsNativeFlutter());
     }
 
+    @Test
+    public void bilibiliAndDouyinUseModeDrivenAutomaticDomainsOnly() {
+        HookExecutionPlan genericPlan = automaticSystemFontPlan("com.example.video");
+        HookExecutionPlan bilibiliPlan = automaticSystemFontPlan("tv.danmaku.bili");
+        HookExecutionPlan douyinPlan = automaticSystemFontPlan("com.ss.android.ugc.aweme");
+
+        assertEquals(genericPlan.hookDomains, bilibiliPlan.hookDomains);
+        assertEquals(genericPlan.hookDomains, douyinPlan.hookDomains);
+        assertEquals("", bilibiliPlan.builtinDomains);
+        assertEquals("", douyinPlan.builtinDomains);
+        assertEquals("auto", bilibiliPlan.hookDomainSource);
+        assertEquals("auto", douyinPlan.hookDomainSource);
+        assertTrue(bilibiliPlan.domainPlan.hasSystemServerFont());
+        assertTrue(douyinPlan.domainPlan.hasSystemServerFont());
+    }
+
+    private static HookExecutionPlan automaticSystemFontPlan(String packageName) {
+        return HookExecutionPlanner.buildPlan(
+                createPolicy(false, true, false),
+                packageName,
+                false,
+                ViewportApplyMode.OFF,
+                true,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                false,
+                HookDomainOverride.automatic(),
+                DebugFontOverride.none());
+    }
+
     private static HookRuntimePolicy createPolicy(boolean safeMode,
                                                   boolean systemHooksEnabled,
                                                   boolean globalLogEnabled) {

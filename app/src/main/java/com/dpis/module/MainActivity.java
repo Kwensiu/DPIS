@@ -3517,6 +3517,9 @@ public final class MainActivity
                 || item.packageName == null || item.packageName.isBlank()) {
             return new LinkedHashSet<>();
         }
+        // Automatic domains describe the current app config and font mode.
+        // They are not a per-package stability recommendation; route risk is
+        // resolved later by HookExecutionPlanner/SystemServerMutationPolicy.
         HookRuntimePolicy policy = HookRuntimePolicy.fromStore(store);
         HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
                 policy,
