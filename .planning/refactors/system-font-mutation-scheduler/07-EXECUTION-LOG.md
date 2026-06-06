@@ -12,3 +12,10 @@
 - Verification passed:
   - `./gradlew :app:testModern101DebugUnitTest --tests com.dpis.module.SystemServerDisplayEnvironmentInstallerMutationPolicyTest`
   - `./gradlew :app:testCompat100DebugUnitTest --tests com.dpis.module.SystemServerDisplayEnvironmentInstallerMutationPolicyTest`
+- Wave 2 started.
+- Added `SystemServerMutationField` and routed viewport/font writes through
+  `SystemServerMutationPolicy.shouldApplyMutationField(...)` while preserving
+  existing field coverage.
+- Wave 2 verification passed:
+  - `./gradlew :app:testModern101DebugUnitTest --tests com.dpis.module.SystemServerDisplayEnvironmentInstallerMutationPolicyTest`
+  - `./gradlew :app:testCompat100DebugUnitTest --tests com.dpis.module.SystemServerDisplayEnvironmentInstallerMutationPolicyTest`

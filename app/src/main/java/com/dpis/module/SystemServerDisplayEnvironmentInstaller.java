@@ -539,10 +539,14 @@ final class SystemServerDisplayEnvironmentInstaller {
         boolean fontChanged = false;
         for (Object arg : args) {
             if (arg instanceof Configuration configuration) {
-                if (environment != null) {
+                if (environment != null
+                        && shouldApplySystemServerMutationField(
+                                "launch-activity-item", SystemServerMutationField.VIEWPORT)) {
                     changed |= applyConfiguration(configuration, environment);
                 }
-                boolean appliedFont = applyFontScale(configuration, config);
+                boolean appliedFont = shouldApplySystemServerMutationField(
+                        "launch-activity-item", SystemServerMutationField.FONT_SCALE)
+                        && applyFontScale(configuration, config);
                 fontChanged |= appliedFont;
                 changed |= appliedFont;
             }
@@ -1134,6 +1138,11 @@ final class SystemServerDisplayEnvironmentInstaller {
         return SystemServerMutationPolicy.shouldApplyPostProceedMutations(entryName);
     }
 
+    private static boolean shouldApplySystemServerMutationField(String entryName,
+                                                               SystemServerMutationField field) {
+        return SystemServerMutationPolicy.shouldApplyMutationField(entryName, field);
+    }
+
     private static boolean shouldLogInterceptEnter(String entryName) {
         return SystemServerHookLogGate.shouldLogInterceptEnter(entryName);
     }
@@ -1362,22 +1371,33 @@ final class SystemServerDisplayEnvironmentInstaller {
         return shouldInstallTarget(entryName, safeModeEnabled);
     }
 
+    static boolean shouldApplySystemServerMutationFieldForTest(
+            String entryName,
+            SystemServerMutationField field) {
+        return shouldApplySystemServerMutationField(entryName, field);
+    }
+
     private static boolean applyEnvironment(String entryName,
                                             Snapshot snapshot,
                                             PerAppDisplayEnvironment environment,
                                             PerAppDisplayConfig config) {
         boolean changed = false;
-        // TODO(system-mutation-scheduler): route each field through an explicit
-        // MutationField policy. VIEWPORT uses a marker-gated baseline model and
-        // can be applied across multiple lifecycle entries; FONT_SCALE currently
-        // shares this method but needs a separate baseline/entry policy because
-        // changing Configuration.fontScale can produce CONFIG_FONT_SCALE relaunches.
+        // TODO(system-mutation-scheduler): narrow FONT_SCALE entries after this
+        // field policy seam has a behavior lock. VIEWPORT uses a marker-gated
+        // baseline model and can be applied across multiple lifecycle entries;
+        // FONT_SCALE still keeps the previous coverage in this wave because
+        // changing CONFIG_FONT_SCALE behavior here would mix refactoring with
+        // the relaunch fix.
         boolean applyViewport = environment != null
+                && shouldApplySystemServerMutationField(
+                        entryName, SystemServerMutationField.VIEWPORT)
                 && shouldApplySystemServerViewportMutation(config);
         if (snapshot.configuration != null && applyViewport) {
             changed |= applyConfiguration(snapshot.configuration, environment);
         }
-        if (snapshot.configuration != null) {
+        if (snapshot.configuration != null
+                && shouldApplySystemServerMutationField(
+                        entryName, SystemServerMutationField.FONT_SCALE)) {
             boolean fontChanged = applyFontScale(snapshot.configuration, config);
             if (fontChanged) {
                 HyperOsFlutterFontBridge.publishTarget(config.packageName, config);

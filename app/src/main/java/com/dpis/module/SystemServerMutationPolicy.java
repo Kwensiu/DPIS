@@ -10,14 +10,14 @@ final class SystemServerMutationPolicy {
     private SystemServerMutationPolicy() {
     }
 
-    // TODO(system-mutation-scheduler): split entry lifecycle policy from
-    // mutation-field policy. Viewport can use multiple lifecycle entries because
-    // it is marker-gated against already-derived configurations; fontScale must
-    // declare its own allowed entries because CONFIG_FONT_SCALE participates in
-    // Activity relaunch decisions.
     static boolean shouldApplyPreProceedMutations(String entryName) {
         return ENTRY_CONFIG_DISPATCH.equals(entryName)
                 || ENTRY_ACTIVITY_START.equals(entryName);
+    }
+
+    static boolean shouldApplyMutationField(String entryName,
+                                            SystemServerMutationField field) {
+        return field != null;
     }
 
     static boolean shouldApplyPostProceedMutations(String entryName) {

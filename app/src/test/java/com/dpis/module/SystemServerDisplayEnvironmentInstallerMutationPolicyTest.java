@@ -190,18 +190,25 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     }
 
     @Test
+    public void fieldPolicyPreservesCurrentViewportAndFontCoverage() {
+        assertCurrentCoverageAllows(SystemServerMutationField.VIEWPORT);
+        assertCurrentCoverageAllows(SystemServerMutationField.FONT_SCALE);
+    }
+
+    @Test
     public void systemServerMutationSchedulerTodoDocumentsFieldSemantics()
             throws IOException {
         String installer = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
         String policy = read("src/main/java/com/dpis/module/SystemServerMutationPolicy.java");
 
         assertTrue(installer.contains("TODO(system-mutation-scheduler)"));
-        assertTrue(installer.contains("MutationField"));
-        assertTrue(installer.contains("VIEWPORT uses a marker-gated baseline model"));
-        assertTrue(installer.contains("FONT_SCALE currently"));
-        assertTrue(installer.contains("CONFIG_FONT_SCALE relaunches"));
-        assertTrue(policy.contains("split entry lifecycle policy from"));
-        assertTrue(policy.contains("mutation-field policy"));
+        assertTrue(installer.contains("SystemServerMutationField.VIEWPORT"));
+        assertTrue(installer.contains("SystemServerMutationField.FONT_SCALE"));
+        assertTrue(installer.contains("VIEWPORT uses a marker-gated"));
+        assertTrue(installer.contains("FONT_SCALE still keeps the previous coverage"));
+        assertTrue(installer.contains("CONFIG_FONT_SCALE"));
+        assertTrue(installer.contains("relaunch"));
+        assertTrue(policy.contains("shouldApplyMutationField"));
     }
 
     @Test
@@ -360,6 +367,21 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
 
     private static String read(String relativePath) throws IOException {
         return SourceSmokeTestPaths.read(relativePath);
+    }
+
+    private static void assertCurrentCoverageAllows(SystemServerMutationField field) {
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest("launch-activity-item", field));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest("config-dispatch", field));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest("activity-start", field));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest("display-content-config", field));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest("display-policy-layout", field));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest("relayout-dispatch", field));
     }
 
     private static final class FakeWindow {
