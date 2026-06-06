@@ -1382,12 +1382,11 @@ final class SystemServerDisplayEnvironmentInstaller {
                                             PerAppDisplayEnvironment environment,
                                             PerAppDisplayConfig config) {
         boolean changed = false;
-        // TODO(system-mutation-scheduler): narrow FONT_SCALE entries after this
-        // field policy seam has a behavior lock. VIEWPORT uses a marker-gated
-        // baseline model and can be applied across multiple lifecycle entries;
-        // FONT_SCALE still keeps the previous coverage in this wave because
-        // changing CONFIG_FONT_SCALE behavior here would mix refactoring with
-        // the relaunch fix.
+        // TODO(system-mutation-scheduler): give each field an explicit baseline
+        // policy. VIEWPORT uses a marker-gated baseline model and can be applied
+        // across multiple lifecycle entries; FONT_SCALE is launch-only here
+        // because changing Configuration.fontScale during later config dispatch
+        // can produce CONFIG_FONT_SCALE relaunches.
         boolean applyViewport = environment != null
                 && shouldApplySystemServerMutationField(
                         entryName, SystemServerMutationField.VIEWPORT)

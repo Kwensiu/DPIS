@@ -19,3 +19,14 @@
 - Wave 2 verification passed:
   - `./gradlew :app:testModern101DebugUnitTest --tests com.dpis.module.SystemServerDisplayEnvironmentInstallerMutationPolicyTest`
   - `./gradlew :app:testCompat100DebugUnitTest --tests com.dpis.module.SystemServerDisplayEnvironmentInstallerMutationPolicyTest`
+- Wave 3 started.
+- Narrowed system_server `FONT_SCALE` mutation to `launch-activity-item` while
+  preserving viewport multi-entry scheduling.
+- Updated modern101 and compat100 route docs to record that the relaunch
+  mitigation now lives in DPIS field scheduling rather than per-app user
+  disablement guidance.
+- Wave 3 verification passed:
+  - `./gradlew :app:testModern101DebugUnitTest --tests com.dpis.module.SystemServerDisplayEnvironmentInstallerMutationPolicyTest`
+  - `./gradlew :app:testCompat100DebugUnitTest --tests com.dpis.module.SystemServerDisplayEnvironmentInstallerMutationPolicyTest`
+  - `./gradlew :app:testModern101DebugUnitTest --tests com.dpis.module.SystemServerDisplayEnvironmentInstallerMutationPolicyTest --tests com.dpis.module.HookExecutionPlannerTest --tests com.dpis.module.HookDomainPlanTest --tests com.dpis.module.FontHookDomainPropertyBridgeTest --tests com.dpis.module.HookDomainOverrideStoreTest --tests com.dpis.module.MainActivitySourceSmokeTest --tests com.dpis.module.AppConfigDialogBinderSourceSmokeTest`
+  - `./gradlew :app:testCompat100DebugUnitTest --tests com.dpis.module.SystemServerDisplayEnvironmentInstallerMutationPolicyTest --tests com.dpis.module.HookExecutionPlannerTest --tests com.dpis.module.HookDomainPlanTest --tests com.dpis.module.FontHookDomainPropertyBridgeTest --tests com.dpis.module.HookDomainOverrideStoreTest --tests com.dpis.module.MainActivitySourceSmokeTest --tests com.dpis.module.AppConfigDialogBinderSourceSmokeTest`

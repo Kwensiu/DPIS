@@ -163,7 +163,8 @@ See `docs/private/` for app-specific investigation notes.
 | 2026-06-02 | compat100 | LaunchActivityItem post-construction object mutation | active | Aligns legacy launch delivery with modern101 |
 | 2026-06-04 | WeChat target-field | Keep app-specific route alongside generic hooks, share target-field runtime property handling, and add the required write-side companion route for versions that need it | active | Public record keeps only the reusable route decision; detailed version-specific evidence lives in `docs/private/wechat-target-field.md` | Do not add or change version-specific WeChat routes without fresh evidence |
 | 2026-06-04 | WeChat 8.0.71 target-field | Replace stale constructor-field route with the verified current route shape | active | Shared route registry decision; detailed evidence lives in `docs/private/wechat-target-field.md` | Do not reintroduce constructor-field route without fresh version-specific evidence |
-| 2026-06-07 | font system emulation | Add `system_server_font` as an explicit hook-chain domain for `Configuration.fontScale` | active | Douyin and Bilibili repros stopped flickering when only system_server font mutation was skipped; app-process font domains still scaled text | Disable this domain per app when `CONFIG_FONT_SCALE` relaunch flicker appears |
+| 2026-06-07 | font system emulation | Add `system_server_font` as an explicit hook-chain domain for `Configuration.fontScale` | active / superseded fallback | Douyin and Bilibili repros stopped flickering when only system_server font mutation was skipped; app-process font domains still scaled text | Kept as manual override and diagnostic domain |
+| 2026-06-07 | font system emulation | Route `FONT_SCALE` through field-level system_server scheduling and allow it only at `launch-activity-item` | active | Unit policy tests cover viewport multi-entry scheduling and font launch-only scheduling | Avoids later config-dispatch writes that can surface as `CONFIG_FONT_SCALE` relaunches |
 
 ## Safety Rules
 
@@ -198,3 +199,7 @@ See `docs/private/` for app-specific investigation notes.
   app-process font domains can still scale text. The route is now represented
   as the explicit `system_server_font` hook-chain domain, so affected apps can
   keep system mode while disabling only this font sub-route.
+- 2026-06-07: field-level system_server mutation scheduling now keeps viewport
+  multi-entry behavior but narrows `FONT_SCALE` to launch-time configuration
+  mutation. This moves the Bilibili/Douyin relaunch mitigation into DPIS
+  scheduling instead of relying on users to know which sub-route to disable.

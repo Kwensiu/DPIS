@@ -190,9 +190,26 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     }
 
     @Test
-    public void fieldPolicyPreservesCurrentViewportAndFontCoverage() {
+    public void fieldPolicyKeepsViewportMultiEntryButNarrowsFontScaleToLaunch() {
         assertCurrentCoverageAllows(SystemServerMutationField.VIEWPORT);
-        assertCurrentCoverageAllows(SystemServerMutationField.FONT_SCALE);
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest(
+                        "launch-activity-item", SystemServerMutationField.FONT_SCALE));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest(
+                        "config-dispatch", SystemServerMutationField.FONT_SCALE));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest(
+                        "activity-start", SystemServerMutationField.FONT_SCALE));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest(
+                        "display-content-config", SystemServerMutationField.FONT_SCALE));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest(
+                        "display-policy-layout", SystemServerMutationField.FONT_SCALE));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest(
+                        "relayout-dispatch", SystemServerMutationField.FONT_SCALE));
     }
 
     @Test
@@ -205,7 +222,7 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
         assertTrue(installer.contains("SystemServerMutationField.VIEWPORT"));
         assertTrue(installer.contains("SystemServerMutationField.FONT_SCALE"));
         assertTrue(installer.contains("VIEWPORT uses a marker-gated"));
-        assertTrue(installer.contains("FONT_SCALE still keeps the previous coverage"));
+        assertTrue(installer.contains("FONT_SCALE is launch-only"));
         assertTrue(installer.contains("CONFIG_FONT_SCALE"));
         assertTrue(installer.contains("relaunch"));
         assertTrue(policy.contains("shouldApplyMutationField"));

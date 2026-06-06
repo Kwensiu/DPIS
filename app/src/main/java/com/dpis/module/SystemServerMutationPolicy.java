@@ -17,7 +17,13 @@ final class SystemServerMutationPolicy {
 
     static boolean shouldApplyMutationField(String entryName,
                                             SystemServerMutationField field) {
-        return field != null;
+        if (field == null) {
+            return false;
+        }
+        return switch (field) {
+            case VIEWPORT -> true;
+            case FONT_SCALE -> ENTRY_LAUNCH_ACTIVITY_ITEM.equals(entryName);
+        };
     }
 
     static boolean shouldApplyPostProceedMutations(String entryName) {
