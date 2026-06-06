@@ -22,6 +22,8 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(activity.contains("EXTRA_TEMPLATE_ID = \"quick_template_targets.template_id\""));
         assertTrue(activity.contains("quickTemplateStore.setSelectedPackages(template.id, selectedPackages)"));
         assertTrue(activity.contains("pruneSelectedPackagesToInstalledApps(selectedPackages, allItems)"));
+        assertTrue(activity.contains("configStore = getHookConfigStore();"));
+        assertTrue(activity.contains("return DpisApplication.getActiveHookConfigStore(this);"));
         assertTrue(activity.contains("configStore.hasRealPackageConfig(applicationInfo.packageName)"));
         assertTrue(activity.contains("getInstalledApplications("));
         assertTrue(adapter.contains("MaterialCheckBox"));

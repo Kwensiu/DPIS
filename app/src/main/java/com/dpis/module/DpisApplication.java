@@ -1,6 +1,7 @@
 package com.dpis.module;
 
 import android.app.Application;
+import android.content.Context;
 import com.google.android.material.color.DynamicColors;
 
 import java.util.LinkedHashMap;
@@ -32,7 +33,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         instance = this;
         DynamicColors.applyToActivitiesIfAvailable(this);
         HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(this);
-        configStore = ConfigStoreFactory.createForModuleApp(this);
+        configStore = ConfigStoreFactory.createLocalModuleConfigStore(this);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
         RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore);
         XposedServiceHelper.registerListener(this);
@@ -41,8 +42,8 @@ public final class DpisApplication extends Application implements XposedServiceH
 
     @Override
     public void onServiceBind(XposedService service) {
-        DpiConfigStore localStore = ConfigStoreFactory.createForModuleApp(this);
-        DpiConfigStore remoteStore = ConfigStoreFactory.createForModuleApp(this, service);
+        DpiConfigStore localStore = ConfigStoreFactory.createLocalModuleConfigStore(this);
+        DpiConfigStore remoteStore = ConfigStoreFactory.createActiveModuleConfigStore(this, service);
         migrateConfig(localStore, remoteStore);
         remoteStore.migrateWechatViewportToTargetFieldIfNeeded();
         // Keep local SharedPreferences as a cold-start mirror before the Xposed
@@ -57,7 +58,7 @@ public final class DpisApplication extends Application implements XposedServiceH
 
     @Override
     public void onServiceDied(XposedService service) {
-        configStore = ConfigStoreFactory.createForModuleApp(this);
+        configStore = ConfigStoreFactory.createLocalModuleConfigStore(this);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
         RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore);
         xposedService = null;
@@ -72,6 +73,20 @@ public final class DpisApplication extends Application implements XposedServiceH
         return xposedService;
     }
 
+    static DpiConfigStore getActiveHookConfigStore(Context context) {
+        DpiConfigStore sharedStore = configStore;
+        if (sharedStore != null) {
+            return sharedStore;
+        }
+        if (context == null) {
+            return null;
+        }
+        XposedService service = xposedService;
+        return service != null
+                ? ConfigStoreFactory.createActiveModuleConfigStore(context, service)
+                : ConfigStoreFactory.createLocalModuleConfigStore(context);
+    }
+
     static void reloadConfigStore() {
         DpisApplication application = instance;
         if (application == null) {
@@ -79,8 +94,8 @@ public final class DpisApplication extends Application implements XposedServiceH
         }
         XposedService service = xposedService;
         DpiConfigStore refreshedStore = service != null
-                ? ConfigStoreFactory.createForModuleApp(application, service)
-                : ConfigStoreFactory.createForModuleApp(application);
+                ? ConfigStoreFactory.createActiveModuleConfigStore(application, service)
+                : ConfigStoreFactory.createLocalModuleConfigStore(application);
         configStore = refreshedStore;
         DpisLog.setLoggingEnabled(refreshedStore.isGlobalLogEnabled());
         RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore);

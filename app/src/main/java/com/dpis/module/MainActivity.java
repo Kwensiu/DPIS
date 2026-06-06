@@ -1004,7 +1004,7 @@ public final class MainActivity
     }
 
     private boolean setDpisEnabled(String packageName, boolean enabled) {
-        DpiConfigStore store = getUiConfigStore();
+        DpiConfigStore store = getHookConfigStore();
         if (store == null) {
             showToast(R.string.status_save_requires_init);
             return false;
@@ -1046,7 +1046,7 @@ public final class MainActivity
         }
         return installedAppCatalogCoordinator.loadInstalledApps(
                 forceInstalledAppCatalogReload,
-                getUiConfigStore(),
+                getHookConfigStore(),
                 scopePackages,
                 scopeKnown
         );
@@ -2292,7 +2292,7 @@ public final class MainActivity
         if (activeAppEditorDialog != null && activeAppEditorDialog.isShowing()) {
             return;
         }
-        DpiConfigStore store = getUiConfigStore();
+        DpiConfigStore store = getHookConfigStore();
         TemplateConfigValue globalPrefill = new GlobalPrefillStore(
                 getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE)
         ).read();
@@ -2363,7 +2363,7 @@ public final class MainActivity
             showEditBottomSheet(item);
             return;
         }
-        DpiConfigStore store = getUiConfigStore();
+        DpiConfigStore store = getHookConfigStore();
         TemplateConfigValue globalPrefill = new GlobalPrefillStore(
                 getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE)
         ).read();
@@ -2541,7 +2541,7 @@ public final class MainActivity
     }
 
     private HomeWorkspaceBinder.State createHomeWorkspaceState() {
-        DpiConfigStore configStore = getUiConfigStore();
+        DpiConfigStore configStore = getHookConfigStore();
         java.util.Set<String> configuredPackages = configStore.getConfiguredPackages();
         return new HomeWorkspaceBinder.State(
                 DpisApplication.getXposedService() != null,
@@ -2549,7 +2549,7 @@ public final class MainActivity
                 "modern101".equals(BuildConfig.FLAVOR),
                 countDpisEnabledPackages(configStore, configuredPackages),
                 configuredPackages.size(),
-                ConfigStoreFactory.createFontLibraryForModuleApp(
+                ConfigStoreFactory.createActiveFontLibraryStore(
                         this,
                         DpisApplication.getXposedService()
                 ).listFonts().size(),
@@ -2645,7 +2645,7 @@ public final class MainActivity
                 || item.packageName.isBlank()) {
             return;
         }
-        DpiConfigStore store = getUiConfigStore();
+        DpiConfigStore store = getHookConfigStore();
         ViewportTargetSpec spec
                 = viewportValue == null
                         ? ViewportTargetSpec.off()
@@ -2737,7 +2737,7 @@ public final class MainActivity
                 viewportScaleInput,
                 viewportAbsoluteInput,
                 isSystemHookEnabledFromStore(),
-                getUiConfigStore(),
+                getHookConfigStore(),
                 this::requestAppsLoad
         );
     }
@@ -2909,12 +2909,7 @@ public final class MainActivity
         }
         QuickTemplateApplyCoordinator coordinator
                 = new QuickTemplateApplyCoordinator(
-                        new DpiConfigStore(
-                                getSharedPreferences(
-                                        DpiConfigStore.GROUP,
-                                        Context.MODE_PRIVATE
-                                )
-                        )
+                        getHookConfigStore()
                 );
         QuickTemplateApplyCoordinator.TargetPackageFilter installedPackageFilter
                 = this::isInstalledTemplateTargetPackage;
@@ -3192,14 +3187,14 @@ public final class MainActivity
                         viewportScaleInput,
                         viewportAbsoluteInput,
                         isSystemHookEnabledFromStore(),
-                        getUiConfigStore(),
+                        getHookConfigStore(),
                         MainActivity.this::requestAppsLoad
                 );
             }
 
             @Override
             public DpiConfigStore getConfigStore() {
-                return MainActivity.this.getUiConfigStore();
+                return MainActivity.this.getHookConfigStore();
             }
 
             @Override
@@ -3231,7 +3226,7 @@ public final class MainActivity
                 || item.packageName.isBlank()) {
             return;
         }
-        DpiConfigStore store = getUiConfigStore();
+        DpiConfigStore store = getHookConfigStore();
         Set<String> automaticKnownDomains = resolveAutomaticFontHookDomains(
                 store,
                 item.packageName
@@ -3339,7 +3334,7 @@ public final class MainActivity
                         || state.draftFontHookDomainsRaw != null)) {
             return HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw);
         }
-        return new HookDomainOverrideStore(getUiConfigStore()).read(
+        return new HookDomainOverrideStore(getHookConfigStore()).read(
                 item != null ? item.packageName : null
         );
     }
@@ -3462,7 +3457,7 @@ public final class MainActivity
         if (item == null || !item.hyperOsNativeProxyCandidate) {
             return false;
         }
-        DpiConfigStore store = getUiConfigStore();
+        DpiConfigStore store = getHookConfigStore();
         return (store.isTargetDpisEnabled(item.packageName)
                 && hasActiveStoredConfig(store, item.packageName));
     }
@@ -3507,18 +3502,12 @@ public final class MainActivity
     private void refreshSystemHookEffectiveEnabled() {
         cachedSystemHookEffectiveEnabled
                 = systemScopeCoordinator.resolveSystemHookEffectiveEnabled(
-                        getUiConfigStore()
+                        getHookConfigStore()
                 );
     }
 
-    private DpiConfigStore getUiConfigStore() {
-        DpiConfigStore sharedStore = DpisApplication.getConfigStore();
-        if (sharedStore != null) {
-            return sharedStore;
-        }
-        return new DpiConfigStore(
-                getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE)
-        );
+    private DpiConfigStore getHookConfigStore() {
+        return DpisApplication.getActiveHookConfigStore(this);
     }
 
     private AppConfigDraft captureAppConfigDraft() {

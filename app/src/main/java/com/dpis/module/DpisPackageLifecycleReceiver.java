@@ -13,7 +13,7 @@ public final class DpisPackageLifecycleReceiver extends BroadcastReceiver {
         HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(context);
         DpiConfigStore store = DpisApplication.getConfigStore();
         if (store == null) {
-            store = ConfigStoreFactory.createForModuleApp(context);
+            store = ConfigStoreFactory.createLocalModuleConfigStore(context);
         }
         // BOOT_COMPLETED and MY_PACKAGE_REPLACED are only best-effort triggers on some ROMs.
         // The coordinator itself is idempotent and can be replayed safely from other entrypoints.

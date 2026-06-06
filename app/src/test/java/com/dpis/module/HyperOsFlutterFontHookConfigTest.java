@@ -69,7 +69,10 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(prefs.contains("FontHookDomainPropertyBridge.readOverride(packageName)"));
         assertTrue(prefs.contains("HyperOsFlutterFontBridge.readTypefaceId(packageName)"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)"));
-        assertTrue(app.contains("DpiConfigStore localStore = ConfigStoreFactory.createForModuleApp(this);"));
+        assertTrue(app.contains("DpiConfigStore localStore = ConfigStoreFactory.createLocalModuleConfigStore(this);"));
+        assertTrue(app.contains("static DpiConfigStore getActiveHookConfigStore(Context context)"));
+        assertTrue(app.contains("if (context == null)"));
+        assertTrue(app.contains("return null;"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(remoteStore)"));
     }
 

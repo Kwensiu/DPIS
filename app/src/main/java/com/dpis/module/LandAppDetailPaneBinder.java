@@ -1206,7 +1206,7 @@ final class LandAppDetailPaneBinder {
             }
         }
         FontLibraryEntry imported
-                = ConfigStoreFactory.createFontLibraryForModuleApp(
+                = ConfigStoreFactory.createActiveFontLibraryStore(
                         activity,
                         DpisApplication.getXposedService()
                 ).findById(typefaceId);
@@ -1291,12 +1291,7 @@ final class LandAppDetailPaneBinder {
         if (item == null || item.packageName == null || item.packageName.isBlank()) {
             return HookDomainOverride.automatic();
         }
-        DpiConfigStore store = DpisApplication.getConfigStore();
-        if (store == null && activity != null) {
-            store = new DpiConfigStore(activity.getSharedPreferences(
-                    DpiConfigStore.GROUP,
-                    android.content.Context.MODE_PRIVATE));
-        }
+        DpiConfigStore store = DpisApplication.getActiveHookConfigStore(activity);
         return new HookDomainOverrideStore(store).read(item.packageName);
     }
 

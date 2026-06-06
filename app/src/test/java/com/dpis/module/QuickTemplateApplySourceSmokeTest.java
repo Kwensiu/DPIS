@@ -24,6 +24,12 @@ public class QuickTemplateApplySourceSmokeTest {
         assertTrue(mainActivity.contains("R.string.quick_template_apply_scope_note"));
         assertTrue(mainActivity.contains("finishQuickTemplateApply("));
         assertTrue(mainActivity.contains("DialogWindowSizer.applyStandardWidth(dialog, this)"));
+        assertTrue(mainActivity.contains(
+                "QuickTemplateApplyCoordinator coordinator\n"
+                        + "                = new QuickTemplateApplyCoordinator(\n"
+                        + "                        getHookConfigStore()\n"
+                        + "                );"));
+        assertTrue(mainActivity.contains("return DpisApplication.getActiveHookConfigStore(this);"));
         assertTrue(mainActivity.contains("this::isInstalledTemplateTargetPackage"));
         assertTrue(mainActivity.contains("getPackageManager().getApplicationInfo("));
         assertTrue(mainActivity.contains("R.string.quick_template_apply_result_success"));

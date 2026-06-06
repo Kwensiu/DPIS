@@ -54,10 +54,10 @@ public final class FontLibraryActivity extends LocalizedActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_font_library);
-        fontLibraryStore = ConfigStoreFactory.createFontLibraryForModuleApp(
+        fontLibraryStore = ConfigStoreFactory.createActiveFontLibraryStore(
                 this, DpisApplication.getXposedService());
         fontLibraryStore.purgeOrphanedFiles();
-        configStore = ConfigStoreFactory.createForModuleApp(
+        configStore = ConfigStoreFactory.createActiveModuleConfigStore(
                 this, DpisApplication.getXposedService());
         listView = findViewById(R.id.font_library_list);
         emptyView = findViewById(R.id.font_library_empty);

@@ -51,7 +51,7 @@ public final class QuickTemplateTargetSelectionActivity extends LocalizedActivit
         setContentView(R.layout.activity_quick_template_targets);
         SharedPreferences preferences = getSharedPreferences(DpiConfigStore.GROUP, MODE_PRIVATE);
         quickTemplateStore = new QuickTemplateStore(preferences);
-        configStore = new DpiConfigStore(preferences);
+        configStore = getHookConfigStore();
         String templateId = getIntent() != null
                 ? getIntent().getStringExtra(EXTRA_TEMPLATE_ID)
                 : null;
@@ -206,6 +206,10 @@ public final class QuickTemplateTargetSelectionActivity extends LocalizedActivit
 
     private void showToast(int messageResId) {
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT).show();
+    }
+
+    private DpiConfigStore getHookConfigStore() {
+        return DpisApplication.getActiveHookConfigStore(this);
     }
 
     private static String textOf(TextInputEditText view) {

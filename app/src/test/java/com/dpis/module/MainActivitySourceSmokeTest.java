@@ -1591,7 +1591,7 @@ public class MainActivitySourceSmokeTest {
             source.contains("shouldPrepareHyperOsNativeProxyForRestart(item)")
         );
         assertTrue(
-            methodBody.contains("DpiConfigStore store = getUiConfigStore();")
+            methodBody.contains("DpiConfigStore store = getHookConfigStore();")
         );
         assertTrue(
             methodBody.contains("store.isTargetDpisEnabled(item.packageName)")

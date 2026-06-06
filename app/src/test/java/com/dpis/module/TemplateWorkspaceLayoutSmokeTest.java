@@ -92,7 +92,7 @@ public class TemplateWorkspaceLayoutSmokeTest {
 
         assertTrue(binder.contains("new GlobalPrefillStore(preferences).read()"));
         assertTrue(binder.contains("new QuickTemplateStore(preferences).readAll()"));
-        assertTrue(binder.contains("ConfigStoreFactory.createFontLibraryForModuleApp"));
+        assertTrue(binder.contains("ConfigStoreFactory.createActiveFontLibraryStore"));
         assertTrue(binder.contains("new TemplateTypefaceResolver("));
         assertTrue(read("src/main/java/com/dpis/module/TemplateTypefaceResolver.java")
                 .contains("fontLibraryStore.resolveFontFile(typefaceId) != null"));

@@ -48,7 +48,7 @@ final class TemplateWorkspaceBinder {
         this.preferences = context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE);
         this.formatter = new TemplateConfigSummaryFormatter(
                 new ResourceSummaryText(context),
-                new TemplateTypefaceResolver(() -> ConfigStoreFactory.createFontLibraryForModuleApp(
+                new TemplateTypefaceResolver(() -> ConfigStoreFactory.createActiveFontLibraryStore(
                         context, DpisApplication.getXposedService())));
         this.summaryChipBinder = new TemplateSummaryChipBinder(context);
         this.quickTemplateListAdapter = new QuickTemplateListAdapter(

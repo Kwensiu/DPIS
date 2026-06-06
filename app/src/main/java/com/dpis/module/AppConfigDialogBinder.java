@@ -641,7 +641,7 @@ final class AppConfigDialogBinder {
     }
 
     private FontLibraryStore createFontLibraryStore() {
-        return ConfigStoreFactory.createFontLibraryForModuleApp(
+        return ConfigStoreFactory.createActiveFontLibraryStore(
                 activity, DpisApplication.getXposedService());
     }
 
