@@ -11,9 +11,6 @@ import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -45,8 +42,8 @@ public class StringResourceParityTest {
 
     @Test
     public void settingsScreenWiresLanguageSelector() throws IOException {
-        String layout = read("src/main/res/layout/activity_system_server_settings.xml");
-        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+        String layout = read("src/main/res/layout/view_system_server_settings_content.xml");
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
         String dialogLayout = read("src/main/res/layout/dialog_language_selection.xml");
         String localeManager = read("src/main/java/com/dpis/module/AppLocaleManager.java");
 
@@ -61,14 +58,14 @@ public class StringResourceParityTest {
         assertTrue(source.contains("AppLocaleManager.setLanguageTag"));
         assertTrue(source.contains("dialog_language_selection"));
         assertTrue(source.contains("updateLanguageEntrySubtitle()"));
-        assertTrue(source.contains("AppLocaleManager.selectedLabelResId(this)"));
+        assertTrue(source.contains("AppLocaleManager.selectedLabelResId(activity)"));
         assertTrue(localeManager.contains("SUPPORTED_LANGUAGES = List.of("));
         assertTrue(localeManager.contains("static List<LanguageOption> supportedLanguages()"));
     }
 
     @Test
     public void languageSwitchDoesNotUseSavedInstanceStateForPersistedSwitches() throws IOException {
-        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
         String localeManager = read("src/main/java/com/dpis/module/AppLocaleManager.java");
 
         assertTrue(!source.contains("STATE_HOOKS_SWITCH_CHECKED"));
@@ -80,7 +77,8 @@ public class StringResourceParityTest {
 
     @Test
     public void localeSwitchUsesWrappedBaseContextAndExplicitRecreate() throws IOException {
-        String settingsSource = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+        String settingsSource = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
+        String settingsBinderSource = read("src/main/java/com/dpis/module/SettingsWorkspaceBinder.java");
         String localizedSource = read("src/main/java/com/dpis/module/LocalizedActivity.java");
         String localeManager = read("src/main/java/com/dpis/module/AppLocaleManager.java");
         String mainSource = read("src/main/java/com/dpis/module/MainActivity.java");
@@ -99,8 +97,9 @@ public class StringResourceParityTest {
         assertTrue(mainSource.contains("extends LocalizedActivity"));
         assertTrue(aboutSource.contains("extends LocalizedActivity"));
         assertTrue(licenseSource.contains("extends LocalizedActivity"));
-        assertTrue(settingsSource.contains("extends LocalizedActivity"));
-        assertTrue(settingsSource.contains("recreate();"));
+        assertTrue(settingsBinderSource.contains("private final LocalizedActivity activity;"));
+        assertTrue(settingsBinderSource.contains("new SystemServerSettingsPageController("));
+        assertTrue(settingsSource.contains("SystemServerSettingsPageController(LocalizedActivity activity"));
         assertTrue(!manifest.contains("AppLocalesMetadataHolderService"));
     }
 
@@ -108,7 +107,7 @@ public class StringResourceParityTest {
             throws IOException, ParserConfigurationException, SAXException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setIgnoringComments(true);
-        try (InputStream input = Files.newInputStream(Path.of(relativePath))) {
+        try (InputStream input = SourceSmokeTestPaths.open(relativePath)) {
             Document document = factory.newDocumentBuilder().parse(input);
             NodeList strings = document.getElementsByTagName("string");
             Set<String> names = new LinkedHashSet<>();
@@ -123,7 +122,7 @@ public class StringResourceParityTest {
             throws IOException, ParserConfigurationException, SAXException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setIgnoringComments(true);
-        try (InputStream input = Files.newInputStream(Path.of(relativePath))) {
+        try (InputStream input = SourceSmokeTestPaths.open(relativePath)) {
             Document document = factory.newDocumentBuilder().parse(input);
             NodeList strings = document.getElementsByTagName("string");
             for (int i = 0; i < strings.getLength(); i++) {
@@ -137,6 +136,6 @@ public class StringResourceParityTest {
     }
 
     private static String read(String relativePath) throws IOException {
-        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
     }
 }

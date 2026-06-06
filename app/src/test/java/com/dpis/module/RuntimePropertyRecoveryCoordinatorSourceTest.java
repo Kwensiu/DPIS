@@ -3,9 +3,6 @@ package com.dpis.module;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import org.junit.Test;
 
@@ -34,7 +31,6 @@ public final class RuntimePropertyRecoveryCoordinatorSourceTest {
     }
 
     private static String readProjectFile(String relativePath) throws IOException {
-        Path path = Path.of(relativePath);
-        return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
     }
 }

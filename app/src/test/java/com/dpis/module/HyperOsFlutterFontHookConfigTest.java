@@ -431,11 +431,6 @@ public class HyperOsFlutterFontHookConfigTest {
     }
 
     private static String readSource(String relativePath) throws Exception {
-        java.nio.file.Path path = java.nio.file.Paths.get(relativePath);
-        if (!java.nio.file.Files.exists(path)) {
-            path = java.nio.file.Paths.get("app", relativePath);
-        }
-        return new String(java.nio.file.Files.readAllBytes(path),
-                java.nio.charset.StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
     }
 }

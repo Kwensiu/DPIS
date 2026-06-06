@@ -2,9 +2,6 @@ package com.dpis.module;
 
 import static org.junit.Assert.assertTrue;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import org.junit.Test;
 
@@ -38,10 +35,6 @@ public class RuntimePropertyConfigPreferencesSourceTest {
     }
 
     private static String read(String relativePath) throws Exception {
-        Path path = Path.of(relativePath);
-        if (!Files.exists(path)) {
-            path = Path.of("app", relativePath);
-        }
-        return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
     }
 }

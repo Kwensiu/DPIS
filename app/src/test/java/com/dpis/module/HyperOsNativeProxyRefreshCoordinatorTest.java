@@ -3,9 +3,6 @@ package com.dpis.module;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.LinkedHashSet;
 
 import org.junit.Test;
@@ -67,6 +64,6 @@ public class HyperOsNativeProxyRefreshCoordinatorTest {
     }
 
     private static String read(String relativePath) throws Exception {
-        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
     }
 }

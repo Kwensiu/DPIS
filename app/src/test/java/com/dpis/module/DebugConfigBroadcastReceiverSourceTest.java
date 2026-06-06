@@ -4,9 +4,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import org.junit.Test;
 
@@ -55,15 +52,12 @@ public class DebugConfigBroadcastReceiverSourceTest {
 
     @Test
     public void debugConfigClassesStayOutOfMainSourceSet() {
-        assertFalse(Files.exists(Path.of(
-                "src", "main", "java", "com", "dpis", "module", "DebugConfigActivity.java")));
-        assertFalse(Files.exists(Path.of(
-                "src", "main", "java", "com", "dpis", "module", "DebugConfigApplier.java")));
-        assertFalse(Files.exists(Path.of(
-                "src", "main", "java", "com", "dpis", "module", "DebugConfigBroadcastReceiver.java")));
+        assertFalse(SourceSmokeTestPaths.exists("src", "main", "java", "com", "dpis", "module", "DebugConfigActivity.java"));
+        assertFalse(SourceSmokeTestPaths.exists("src", "main", "java", "com", "dpis", "module", "DebugConfigApplier.java"));
+        assertFalse(SourceSmokeTestPaths.exists("src", "main", "java", "com", "dpis", "module", "DebugConfigBroadcastReceiver.java"));
     }
 
     private static String read(String relativePath) throws IOException {
-        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
     }
 }

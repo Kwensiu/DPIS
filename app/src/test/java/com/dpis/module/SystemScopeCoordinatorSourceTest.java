@@ -2,9 +2,6 @@ package com.dpis.module;
 
 import static org.junit.Assert.assertTrue;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import org.junit.Test;
 
@@ -37,7 +34,6 @@ public class SystemScopeCoordinatorSourceTest {
     }
 
     private static String read(String relativePath) throws Exception {
-        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8)
-                .replace("\r\n", "\n");
+        return SourceSmokeTestPaths.read(relativePath).replace("\r\n", "\n");
     }
 }

@@ -3,9 +3,6 @@ package com.dpis.module;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import static org.junit.Assert.assertTrue;
 
@@ -29,7 +26,7 @@ public class ConfigBackupCodecSourceSmokeTest {
     public void codecSupportsTypefaceIdStringEntries() throws IOException {
         String codec = read("src/main/java/com/dpis/module/ConfigBackupCodec.java");
         String store = read("src/main/java/com/dpis/module/DpiConfigStore.java");
-        String settings = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+        String settings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
 
         assertTrue(store.contains("\"font.\" + packageName + \".typeface_id\""));
         assertTrue(settings.contains("Map<String, Object> entries = localStore.snapshotBackup();"));
@@ -46,6 +43,6 @@ public class ConfigBackupCodecSourceSmokeTest {
     }
 
     private static String read(String relativePath) throws IOException {
-        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
     }
 }

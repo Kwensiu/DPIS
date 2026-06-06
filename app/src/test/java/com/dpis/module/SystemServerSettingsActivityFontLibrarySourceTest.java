@@ -4,22 +4,19 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import org.junit.Test;
 
 public class SystemServerSettingsActivityFontLibrarySourceTest {
     @Test
     public void settingsActivityWiresFontLibraryEntryToDedicatedPage() throws IOException {
-        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
         String manifest = read("src/main/AndroidManifest.xml");
         String factory = read("src/main/java/com/dpis/module/ConfigStoreFactory.java");
         String store = read("src/main/java/com/dpis/module/FontLibraryStore.java");
 
         assertTrue(source.contains("row_font_library"));
-        assertTrue(source.contains("new Intent(this, FontLibraryActivity.class)"));
+        assertTrue(source.contains("new Intent(activity, FontLibraryActivity.class)"));
         assertFalse(source.contains("showFontLibraryDialog"));
         assertFalse(source.contains("REQUEST_IMPORT_FONT"));
         assertTrue(manifest.contains("android:name=\".FontLibraryActivity\""));
@@ -53,7 +50,7 @@ public class SystemServerSettingsActivityFontLibrarySourceTest {
 
     @Test
     public void settingsLayoutContainsFontLibraryRow() throws IOException {
-        String layout = read("src/main/res/layout/activity_system_server_settings.xml");
+        String layout = read("src/main/res/layout/view_system_server_settings_content.xml");
 
         assertTrue(layout.contains("android:id=\"@+id/row_font_library\""));
     }
@@ -73,6 +70,6 @@ public class SystemServerSettingsActivityFontLibrarySourceTest {
     }
 
     private static String read(String relativePath) throws IOException {
-        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
     }
 }

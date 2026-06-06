@@ -3,43 +3,44 @@ package com.dpis.module;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import org.junit.Test;
 
-public class HelpTutorialDialogLayoutSmokeTest {
+public class ModeHelpLayoutSmokeTest {
     @Test
-    public void helpTutorialDialogLayoutContainsTwoCardsAndConfirmButton() throws IOException {
-        String source = read("src/main/java/com/dpis/module/HelpTutorialDialog.java");
-        String layout = read("src/main/res/layout/dialog_help_tutorial.xml");
+    public void modeHelpLayoutContainsRouteCardsAndToolbar() throws IOException {
+        String source = read("src/main/java/com/dpis/module/ModeHelpActivity.java");
+        String layout = read("src/main/res/layout/activity_mode_help.xml");
         String strings = read("src/main/res/values/strings.xml");
 
-        assertTrue(layout.contains("android:id=\"@+id/help_tutorial_system_card\""));
-        assertTrue(layout.contains("android:id=\"@+id/help_tutorial_compat_card\""));
-        assertTrue(layout.contains("android:id=\"@+id/help_tutorial_confirm_button\""));
-        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialog, activity)"));
+        assertTrue(layout.contains("android:id=\"@+id/mode_help_toolbar\""));
+        assertTrue(layout.contains("android:id=\"@+id/mode_help_back_button\""));
+        assertTrue(layout.contains("@layout/item_mode_help_system"));
+        assertTrue(layout.contains("@layout/item_mode_help_compat"));
+        assertTrue(source.contains("setContentView(R.layout.activity_mode_help)"));
         assertTrue(strings.contains("name=\"help_tutorial_system_badge\""));
         assertTrue(strings.contains("name=\"help_tutorial_compat_badge\""));
         assertTrue(!strings.contains("name=\"help_tutorial_message\""));
     }
 
     @Test
-    public void helpTutorialDialogCardsUseBadgeSummaryAndBulletHierarchy() throws IOException {
-        String layout = read("src/main/res/layout/dialog_help_tutorial.xml");
+    public void modeHelpCardsUseBadgeSummaryAndBulletHierarchy() throws IOException {
+        String system = read("src/main/res/layout/item_mode_help_system.xml");
+        String compat = read("src/main/res/layout/item_mode_help_compat.xml");
         String strings = read("src/main/res/values/strings.xml");
 
-        assertTrue(layout.contains("android:id=\"@+id/help_tutorial_system_badge\""));
-        assertTrue(layout.contains("android:id=\"@+id/help_tutorial_system_summary\""));
-        assertTrue(layout.contains("android:id=\"@+id/help_tutorial_compat_badge\""));
-        assertTrue(layout.contains("android:id=\"@+id/help_tutorial_compat_summary\""));
+        assertTrue(system.contains("@layout/item_mode_help_system_header"));
+        assertTrue(system.contains("@string/help_tutorial_system_summary"));
+        assertTrue(system.contains("@string/help_tutorial_system_points"));
+        assertTrue(compat.contains("@layout/item_mode_help_compat_header"));
+        assertTrue(compat.contains("@string/help_tutorial_compat_summary"));
+        assertTrue(compat.contains("@string/help_tutorial_compat_points"));
         assertTrue(strings.contains("name=\"help_tutorial_system_summary\""));
         assertTrue(strings.contains("name=\"help_tutorial_compat_summary\""));
     }
 
     @Test
-    public void helpTutorialDialogBackgroundsUseThemeColorResourcesForDayNight() throws IOException {
+    public void modeHelpBackgroundsUseThemeColorResourcesForDayNight() throws IOException {
         String systemCard = read("src/main/res/drawable/help_tutorial_system_card_background.xml");
         String compatCard = read("src/main/res/drawable/help_tutorial_compat_card_background.xml");
         String systemBadge = read("src/main/res/drawable/help_tutorial_system_badge_background.xml");
@@ -72,17 +73,18 @@ public class HelpTutorialDialogLayoutSmokeTest {
     }
 
     @Test
-    public void helpTutorialDialogUsesSameTopAndHorizontalInsetsForCardContent() throws IOException {
-        String layout = read("src/main/res/layout/dialog_help_tutorial.xml");
+    public void modeHelpUsesSharedInsetsForCardContent() throws IOException {
+        String layout = read("src/main/res/layout/activity_mode_help.xml");
+        String system = read("src/main/res/layout/item_mode_help_system.xml");
 
-        assertTrue(layout.contains("@dimen/help_tutorial_dialog_padding_top"));
-        assertTrue(layout.contains("@dimen/help_tutorial_dialog_padding_horizontal"));
-        assertTrue(layout.contains("@dimen/help_tutorial_card_padding"));
-        assertTrue(layout.contains("@dimen/help_tutorial_body_spacing_top"));
-        assertTrue(layout.contains("@dimen/help_tutorial_confirm_spacing_top"));
+        assertTrue(layout.contains("@dimen/home_workspace_padding_top"));
+        assertTrue(layout.contains("@dimen/home_workspace_padding_horizontal"));
+        assertTrue(system.contains("@dimen/help_tutorial_card_padding"));
+        assertTrue(system.contains("@dimen/help_tutorial_body_spacing_top"));
+        assertTrue(layout.contains("@dimen/home_workspace_padding_bottom"));
     }
 
     private static String read(String relativePath) throws IOException {
-        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
     }
 }

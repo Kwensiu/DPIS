@@ -3,9 +3,6 @@ package com.dpis.module;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -17,8 +14,7 @@ public class ModuleMainHookInstallerTest {
 
         assertTrue(source.contains("SystemServerMutationPolicy.shouldInstallSystemServerHooks("));
         assertTrue(source.contains("ModulePackagePlan.resolve("));
-        assertFalse(Files.exists(Path.of(
-                "src", "main", "java", "com", "dpis", "module", "ModuleMain.java")));
+        assertFalse(SourceSmokeTestPaths.exists("src", "main", "java", "com", "dpis", "module", "ModuleMain.java"));
     }
 
     @Test
@@ -82,9 +78,8 @@ public class ModuleMainHookInstallerTest {
         assertTrue(moduleMain.contains("\"package-ready\""));
         assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
                 .contains("HyperOsRustProcessHookInstaller.install("));
-        assertFalse(Files.exists(Path.of(
-                "src", "modern101", "resources", "META-INF", "xposed", "native_init.list")));
-        assertFalse(Files.exists(Path.of("src", "main", "assets", "native_init")));
+        assertFalse(SourceSmokeTestPaths.exists("src", "modern101", "resources", "META-INF", "xposed", "native_init.list"));
+        assertFalse(SourceSmokeTestPaths.exists("src", "main", "assets", "native_init"));
         assertTrue(flutterInstaller.contains("System.loadLibrary(\"dpis_native\")"));
         assertTrue(build.contains("externalNativeBuild"));
     }
@@ -198,6 +193,6 @@ public class ModuleMainHookInstallerTest {
     }
 
     private static String read(String relativePath) throws IOException {
-        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
     }
 }
