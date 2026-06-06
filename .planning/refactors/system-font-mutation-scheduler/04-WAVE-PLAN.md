@@ -77,3 +77,7 @@ Goal: make future changes grep-able.
   - `targetFontScale`
 - Avoid broad file splitting unless Wave 2 shows a clean seam.
 
+Outcome: the implementation introduced `SystemServerMutationField` plus
+`FONT_SCALE` / `VIEWPORT` constants as the stable grep path. Existing viewport
+environment variable names were left in place to avoid widening the refactor
+after the field scheduling boundary was established.

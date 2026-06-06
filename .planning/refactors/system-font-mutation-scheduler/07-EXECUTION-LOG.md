@@ -30,3 +30,11 @@
   - `./gradlew :app:testCompat100DebugUnitTest --tests com.dpis.module.SystemServerDisplayEnvironmentInstallerMutationPolicyTest`
   - `./gradlew :app:testModern101DebugUnitTest --tests com.dpis.module.SystemServerDisplayEnvironmentInstallerMutationPolicyTest --tests com.dpis.module.HookExecutionPlannerTest --tests com.dpis.module.HookDomainPlanTest --tests com.dpis.module.FontHookDomainPropertyBridgeTest --tests com.dpis.module.HookDomainOverrideStoreTest --tests com.dpis.module.MainActivitySourceSmokeTest --tests com.dpis.module.AppConfigDialogBinderSourceSmokeTest`
   - `./gradlew :app:testCompat100DebugUnitTest --tests com.dpis.module.SystemServerDisplayEnvironmentInstallerMutationPolicyTest --tests com.dpis.module.HookExecutionPlannerTest --tests com.dpis.module.HookDomainPlanTest --tests com.dpis.module.FontHookDomainPropertyBridgeTest --tests com.dpis.module.HookDomainOverrideStoreTest --tests com.dpis.module.MainActivitySourceSmokeTest --tests com.dpis.module.AppConfigDialogBinderSourceSmokeTest`
+- Wave 4 completed as a naming audit.
+- `SystemServerMutationField`, `FONT_SCALE`, `VIEWPORT`, and
+  `shouldApplyMutationField` now provide the intended grep path for scheduler
+  changes.
+- Deferred broad renames of existing viewport variables such as
+  `preEnvironment` and `effectiveEnvironment`; those names describe older
+  viewport computation state and changing them now would widen the refactor
+  beyond the approved field scheduling boundary.
