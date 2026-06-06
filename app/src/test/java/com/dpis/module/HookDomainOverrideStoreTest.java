@@ -74,7 +74,7 @@ public class HookDomainOverrideStoreTest {
     }
 
     @Test
-    public void saveDropsKnownDomainsThatAreNotCustomizable() {
+    public void saveKeepsActivityThreadFontAsCustomizableDomain() {
         DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
         HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
 
@@ -82,7 +82,7 @@ public class HookDomainOverrideStoreTest {
                 orderedSet("activity_thread_font", "resources_font", "webview_text_zoom"),
                 Set.of()));
 
-        assertEquals("resources_font,webview_text_zoom",
+        assertEquals("resources_font,activity_thread_font,webview_text_zoom",
                 configStore.getPackageFontHookDomainsRaw("com.example.app"));
     }
 

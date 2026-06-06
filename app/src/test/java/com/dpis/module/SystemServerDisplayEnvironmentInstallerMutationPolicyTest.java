@@ -155,6 +155,56 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     }
 
     @Test
+    public void systemServerMutationFieldsAreSelectedIndependently() {
+        PerAppDisplayConfig viewportOnly = new PerAppDisplayConfig(
+                "tv.danmaku.bili",
+                ViewportTargetSpec.absoluteDp(600),
+                ViewportApplyMode.SYSTEM,
+                null,
+                FontApplyMode.OFF,
+                false,
+                HookDomainOverride.automatic());
+        PerAppDisplayConfig fontOnly = new PerAppDisplayConfig(
+                "tv.danmaku.bili",
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                150,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                HookDomainOverride.automatic());
+        PerAppDisplayConfig neither = new PerAppDisplayConfig(
+                "tv.danmaku.bili",
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                null,
+                FontApplyMode.OFF,
+                false,
+                HookDomainOverride.automatic());
+
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerForTest(viewportOnly));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerForTest(fontOnly));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerForTest(neither));
+    }
+
+    @Test
+    public void systemServerMutationSchedulerTodoDocumentsFieldSemantics()
+            throws IOException {
+        String installer = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+        String policy = read("src/main/java/com/dpis/module/SystemServerMutationPolicy.java");
+
+        assertTrue(installer.contains("TODO(system-mutation-scheduler)"));
+        assertTrue(installer.contains("MutationField"));
+        assertTrue(installer.contains("VIEWPORT uses a marker-gated baseline model"));
+        assertTrue(installer.contains("FONT_SCALE currently"));
+        assertTrue(installer.contains("CONFIG_FONT_SCALE relaunches"));
+        assertTrue(policy.contains("split entry lifecycle policy from"));
+        assertTrue(policy.contains("mutation-field policy"));
+    }
+
+    @Test
     public void emitsWhenMessageChangesAndNoThrottle() {
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldEmitLogForTest("a", "b", 1000L, 900L, 0L));
@@ -185,6 +235,127 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
         assertEquals(800L, SystemServerHookLogGate.resolveLogMinIntervalMs("activity-start"));
         assertEquals(800L, SystemServerHookLogGate.resolveLogMinIntervalMs("config-dispatch"));
         assertEquals(400L, SystemServerHookLogGate.resolveLogMinIntervalMs("unknown-entry"));
+    }
+
+    @Test
+    public void debugSystemServerFontDisableIsPackageScoped() {
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .isSystemServerFontDisabledByDebugOverrideForTest(
+                        "com.ss.android.ugc.aweme",
+                        "com.ss.android.ugc.aweme"));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .isSystemServerFontDisabledByDebugOverrideForTest(
+                        "com.ss.android.ugc.aweme",
+                        "*"));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .isSystemServerFontDisabledByDebugOverrideForTest(
+                        "com.ss.android.ugc.aweme",
+                        "tv.danmaku.bili"));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .isSystemServerFontDisabledByDebugOverrideForTest(
+                        "com.ss.android.ugc.aweme",
+                        ""));
+    }
+
+    @Test
+    public void debugSystemServerFontDisableIsDebugOnlyAndLoggedInSource()
+            throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+        String matcher = read("src/main/java/com/dpis/module/DebugPackageOverride.java");
+
+        assertTrue(source.contains("debug.dpis.font.disable_system_server_package"));
+        assertTrue(source.contains("isSystemServerFontDisabledByDebugOverride(config.packageName)"));
+        assertTrue(source.contains("reason=debug-disable-system-server-font"));
+        assertTrue(matcher.contains("if (!BuildConfig.DEBUG || packageName == null"));
+    }
+
+    @Test
+    public void debugSystemServerFontFallbackYieldsOnlyForSystemEmulationRoute() {
+        PerAppDisplayConfig systemModeConfig = new PerAppDisplayConfig(
+                "com.ss.android.ugc.aweme",
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                80,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                HookDomainOverride.automatic());
+        PerAppDisplayConfig compatModeConfig = new PerAppDisplayConfig(
+                "com.ss.android.ugc.aweme",
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                80,
+                FontApplyMode.FIELD_REWRITE,
+                false,
+                HookDomainOverride.automatic());
+
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldYieldSystemServerFontToAppProcessFallbackForTest(
+                        systemModeConfig,
+                        "com.ss.android.ugc.aweme"));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldYieldSystemServerFontToAppProcessFallbackForTest(
+                        compatModeConfig,
+                        "com.ss.android.ugc.aweme"));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldYieldSystemServerFontToAppProcessFallbackForTest(
+                        systemModeConfig,
+                        "tv.danmaku.bili"));
+    }
+
+    @Test
+    public void debugSystemServerFontFallbackIsDebugOnlyAndLoggedInSource()
+            throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+        String matcher = read("src/main/java/com/dpis/module/DebugPackageOverride.java");
+
+        assertTrue(source.contains("debug.dpis.font.system_server_fallback_package"));
+        assertTrue(source.contains("shouldYieldSystemServerFontToAppProcessFallback(config)"));
+        assertTrue(source.contains("reason=debug-system-server-font-fallback-yield"));
+        assertTrue(matcher.contains("if (!BuildConfig.DEBUG || packageName == null"));
+    }
+
+    @Test
+    public void systemServerFontDomainControlsSystemFontScaleMutation() {
+        PerAppDisplayConfig automaticConfig = new PerAppDisplayConfig(
+                "tv.danmaku.bili",
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                150,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                HookDomainOverride.automatic());
+        PerAppDisplayConfig customWithoutSystemServerFont = new PerAppDisplayConfig(
+                "tv.danmaku.bili",
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                150,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                new HookDomainOverride(
+                        true,
+                        Set.of(FontHookDomainRegistry.ID_RESOURCES_FONT,
+                                FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT,
+                                FontHookDomainRegistry.ID_WEBVIEW_TEXT_ZOOM),
+                        Set.of()));
+        PerAppDisplayConfig customWithSystemServerFont = new PerAppDisplayConfig(
+                "tv.danmaku.bili",
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                150,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                new HookDomainOverride(
+                        true,
+                        Set.of(FontHookDomainRegistry.ID_RESOURCES_FONT,
+                                FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT),
+                        Set.of()));
+
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .hasSystemServerFontOverrideForTest(automaticConfig));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .hasSystemServerFontOverrideForTest(customWithoutSystemServerFont));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .hasSystemServerFontOverrideForTest(customWithSystemServerFont));
     }
 
     private static String read(String relativePath) throws IOException {

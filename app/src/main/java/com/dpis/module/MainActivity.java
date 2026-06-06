@@ -3403,10 +3403,7 @@ public final class MainActivity
             return;
         }
         DpiConfigStore store = getHookConfigStore();
-        Set<String> automaticKnownDomains = resolveAutomaticFontHookDomains(
-                store,
-                item.packageName
-        );
+        Set<String> automaticKnownDomains = resolveAutomaticFontHookDomains(store, item);
         boolean previewMode = state != null && state.previewFromGlobalPrefill;
         HookDomainOverride currentOverride = previewMode
                 ? HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw)
@@ -3515,26 +3512,24 @@ public final class MainActivity
         );
     }
 
-    private Set<String> resolveAutomaticFontHookDomains(
-            DpiConfigStore store,
-            String packageName
-    ) {
-        if (store == null || packageName == null || packageName.isBlank()) {
+    private Set<String> resolveAutomaticFontHookDomains(DpiConfigStore store, AppListItem item) {
+        if (store == null || item == null
+                || item.packageName == null || item.packageName.isBlank()) {
             return new LinkedHashSet<>();
         }
         HookRuntimePolicy policy = HookRuntimePolicy.fromStore(store);
         HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
                 policy,
-                packageName,
+                item.packageName,
                 false,
                 ViewportApplyMode.OFF,
-                true,
-                FontApplyMode.FIELD_REWRITE,
+                item.fontScalePercent != null && item.fontScalePercent > 0,
+                item.fontMode,
                 false,
                 false,
                 HookDomainOverride.automatic(),
                 AppProcessHookInstaller.resolveDebugFontOverrideForPackage(
-                        packageName
+                        item.packageName
                 )
         );
         return FontHookDomainRegistry.orderedCustomizableSubset(

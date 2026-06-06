@@ -17,11 +17,22 @@ public class FontHookDomainPropertyBridgeTest {
                 FontHookDomainRegistry.ID_PAINT_TEXT_SIZE_FALLBACK,
                 FontHookDomainRegistry.ID_HYPEROS_NATIVE_FLUTTER));
 
-        assertEquals(148, mask);
+        assertEquals(298, mask);
         assertEquals(Set.of(
+                        FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT,
                         FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE,
                         FontHookDomainRegistry.ID_PAINT_TEXT_SIZE_FALLBACK,
                         FontHookDomainRegistry.ID_HYPEROS_NATIVE_FLUTTER),
+                FontHookDomainPropertyBridge.decodeMask(mask));
+    }
+
+    @Test
+    public void systemServerFontDomainUsesAppendedMaskBit() {
+        int mask = FontHookDomainPropertyBridge.encodeMask(Set.of(
+                FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT));
+
+        assertEquals(512, mask);
+        assertEquals(Set.of(FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT),
                 FontHookDomainPropertyBridge.decodeMask(mask));
     }
 

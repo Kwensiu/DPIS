@@ -163,6 +163,7 @@ See `docs/private/` for app-specific investigation notes.
 | 2026-06-02 | compat100 | LaunchActivityItem post-construction object mutation | active | Aligns legacy launch delivery with modern101 |
 | 2026-06-04 | WeChat target-field | Keep app-specific route alongside generic hooks, share target-field runtime property handling, and add the required write-side companion route for versions that need it | active | Public record keeps only the reusable route decision; detailed version-specific evidence lives in `docs/private/wechat-target-field.md` | Do not add or change version-specific WeChat routes without fresh evidence |
 | 2026-06-04 | WeChat 8.0.71 target-field | Replace stale constructor-field route with the verified current route shape | active | Shared route registry decision; detailed evidence lives in `docs/private/wechat-target-field.md` | Do not reintroduce constructor-field route without fresh version-specific evidence |
+| 2026-06-07 | font system emulation | Add `system_server_font` as an explicit hook-chain domain for `Configuration.fontScale` | active | Douyin and Bilibili repros stopped flickering when only system_server font mutation was skipped; app-process font domains still scaled text | Disable this domain per app when `CONFIG_FONT_SCALE` relaunch flicker appears |
 
 ## Safety Rules
 
@@ -192,3 +193,8 @@ See `docs/private/` for app-specific investigation notes.
   hooks; shared target-field runtime property handling now writes and reads with
   persistent fallback. Compat100 shares the write-side companion route support
   used by versions that need it.
+- 2026-06-07: diagnostic overrides showed that skipping only system_server
+  `Configuration.fontScale` removes Douyin and Bilibili flicker while
+  app-process font domains can still scale text. The route is now represented
+  as the explicit `system_server_font` hook-chain domain, so affected apps can
+  keep system mode while disabling only this font sub-route.

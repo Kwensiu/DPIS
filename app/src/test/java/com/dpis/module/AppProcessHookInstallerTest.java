@@ -411,7 +411,10 @@ public class AppProcessHookInstallerTest {
         assertTrue(source.contains("debug.dpis.font.force_flutter_settings_package"));
         assertTrue(source.contains("debug.dpis.font.flutter_settings_only_package"));
         assertTrue(source.contains("debug.dpis.font.disable_textview_absolute_rewrite_package"));
-        assertTrue(source.contains("if (!BuildConfig.DEBUG || packageName == null"));
+        assertTrue(source.contains("debug.dpis.font.disable_activity_thread_package"));
+        assertTrue(source.contains("DebugPackageOverride.matches("));
+        assertTrue(readSource("src/main/java/com/dpis/module/DebugPackageOverride.java")
+                .contains("if (!BuildConfig.DEBUG || packageName == null"));
         assertTrue(source.contains("DebugFontOverride.of("));
         assertTrue(source.contains("packagePlan.buildExecutionPlan("));
         assertFalse(source.contains("HookExecutionPlanner.buildPlan("));
@@ -420,6 +423,8 @@ public class AppProcessHookInstallerTest {
         assertTrue(planner.contains("shapedDomains.add(FontHookDomainRegistry.ID_FLUTTER_SETTINGS);"));
         assertTrue(planner.contains("if (resolvedDebug.disableTextViewAbsoluteRewrite)"));
         assertTrue(planner.contains("shapedDomains.remove(FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE);"));
+        assertTrue(planner.contains("if (resolvedDebug.disableActivityThreadFont)"));
+        assertTrue(planner.contains("shapedDomains.remove(FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT);"));
         assertTrue(planner.contains("!resolvedDebug.flutterSettingsOnly"));
     }
 

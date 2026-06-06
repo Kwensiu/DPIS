@@ -9,6 +9,8 @@ final class AppProcessHookInstaller {
             "debug.dpis.font.flutter_settings_only_package";
     private static final String PROP_DISABLE_TEXTVIEW_ABSOLUTE_REWRITE_PACKAGE =
             "debug.dpis.font.disable_textview_absolute_rewrite_package";
+    private static final String PROP_DISABLE_ACTIVITY_THREAD_PACKAGE =
+            "debug.dpis.font.disable_activity_thread_package";
 
     private AppProcessHookInstaller() {
     }
@@ -31,6 +33,7 @@ final class AppProcessHookInstaller {
                 + ", debugForceFlutterSettings=" + plan.debugForceFlutterSettings
                 + ", debugFlutterSettingsOnly=" + plan.debugFlutterSettingsOnly
                 + ", debugDisableTextViewAbsoluteRewrite=" + plan.debugDisableTextViewAbsoluteRewrite
+                + ", debugDisableActivityThreadFont=" + plan.debugDisableActivityThreadFont
                 + ", hookDomains=" + plan.hookDomains
                 + ", hookDomainSource=" + plan.hookDomainSource
                 + ", builtinDomains=" + plan.builtinDomains
@@ -74,6 +77,7 @@ final class AppProcessHookInstaller {
                 + ", debugForceFlutterSettings=" + plan.debugForceFlutterSettings
                 + ", debugFlutterSettingsOnly=" + plan.debugFlutterSettingsOnly
                 + ", debugDisableTextViewAbsoluteRewrite=" + plan.debugDisableTextViewAbsoluteRewrite
+                + ", debugDisableActivityThreadFont=" + plan.debugDisableActivityThreadFont
                 + " for " + packageName);
     }
 
@@ -123,41 +127,11 @@ final class AppProcessHookInstaller {
     static boolean isDebugPropertyPackageMatchForTest(String propertyName,
                                                       String packageName,
                                                       String propertyValue) {
-        return isDebugPropertyPackageMatch(propertyName, packageName, () -> propertyValue);
+        return DebugPackageOverride.matchesForTest(propertyName, packageName, propertyValue);
     }
 
     private static boolean isDebugPropertyPackageMatch(String propertyName, String packageName) {
-        return isDebugPropertyPackageMatch(propertyName, packageName,
-                () -> readSystemProperty(propertyName));
-    }
-
-    private static boolean isDebugPropertyPackageMatch(String propertyName,
-                                                       String packageName,
-                                                       PropertyReader reader) {
-        if (!BuildConfig.DEBUG || packageName == null || packageName.isBlank()) {
-            return false;
-        }
-        String value = reader.read();
-        if (value == null) {
-            return false;
-        }
-        String normalized = value.trim();
-        return "*".equals(normalized) || packageName.equals(normalized);
-    }
-
-    private static String readSystemProperty(String key) {
-        try {
-            Class<?> systemProperties = Class.forName("android.os.SystemProperties");
-            return (String) systemProperties
-                    .getMethod("get", String.class, String.class)
-                    .invoke(null, key, "");
-        } catch (ReflectiveOperationException | RuntimeException ignored) {
-            return "";
-        }
-    }
-
-    private interface PropertyReader {
-        String read();
+        return DebugPackageOverride.matches(propertyName, packageName);
     }
 
     static FontHookPlan resolveFontHookPlan(HookRuntimePolicy policy,
@@ -176,10 +150,13 @@ final class AppProcessHookInstaller {
                 || isDebugPropertyPackageMatch(PROP_FORCE_FLUTTER_SETTINGS_PACKAGE, packageName);
         boolean disableTextViewAbsoluteRewrite = isDebugPropertyPackageMatch(
                 PROP_DISABLE_TEXTVIEW_ABSOLUTE_REWRITE_PACKAGE, packageName);
+        boolean disableActivityThreadFont = isDebugPropertyPackageMatch(
+                PROP_DISABLE_ACTIVITY_THREAD_PACKAGE, packageName);
         return DebugFontOverride.of(
                 debugForceFlutterSettings,
                 debugFlutterSettingsOnly,
-                disableTextViewAbsoluteRewrite);
+                disableTextViewAbsoluteRewrite,
+                disableActivityThreadFont);
     }
 
     private static void installFromPlan(XposedInterface xposed,

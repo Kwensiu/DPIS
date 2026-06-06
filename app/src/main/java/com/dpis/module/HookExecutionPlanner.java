@@ -114,7 +114,9 @@ final class HookExecutionPlanner {
         if (emulationEnabled) {
             automaticDomains = mergeDomains(
                     automaticDomains,
-                    Collections.singleton(FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT));
+                    Set.of(
+                            FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT,
+                            FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT));
         }
         Set<String> builtinDomains = FontHookDomainRegistry.orderedKnownSubset(
                 packageBuiltinDomains);
@@ -137,6 +139,9 @@ final class HookExecutionPlanner {
         }
         if (resolvedDebug.disableTextViewAbsoluteRewrite) {
             shapedDomains.remove(FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE);
+        }
+        if (resolvedDebug.disableActivityThreadFont) {
+            shapedDomains.remove(FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT);
         }
         String hookDomainSource = "auto";
         Set<String> finalDomains = shapedDomains;
@@ -216,6 +221,7 @@ final class HookExecutionPlanner {
                 resolvedDebug.forceFlutterSettings,
                 resolvedDebug.flutterSettingsOnly,
                 resolvedDebug.disableTextViewAbsoluteRewrite,
+                resolvedDebug.disableActivityThreadFont,
                 probeHooksRequested,
                 probeInstallMode,
                 hookDomainPlan.enabledDomainsCsv(),
@@ -318,16 +324,24 @@ final class HookExecutionPlanner {
     }
 
     private static String resolveDebugReason(DebugFontOverride debugOverride) {
-        if (debugOverride.forceFlutterSettings && debugOverride.disableTextViewAbsoluteRewrite) {
-            return "force-flutter-settings+disable-textview-absolute";
-        }
+        StringBuilder reason = new StringBuilder();
         if (debugOverride.forceFlutterSettings) {
-            return "force-flutter-settings";
+            reason.append("force-flutter-settings");
         }
         if (debugOverride.disableTextViewAbsoluteRewrite) {
-            return "disable-textview-absolute";
+            appendDebugReason(reason, "disable-textview-absolute");
         }
-        return "none";
+        if (debugOverride.disableActivityThreadFont) {
+            appendDebugReason(reason, "disable-activity-thread-font");
+        }
+        return reason.length() > 0 ? reason.toString() : "none";
+    }
+
+    private static void appendDebugReason(StringBuilder builder, String reason) {
+        if (builder.length() > 0) {
+            builder.append('+');
+        }
+        builder.append(reason);
     }
 
     private static Set<String> toDomainSet(FontHookArbitration.FontDomainPlan domainPlan) {

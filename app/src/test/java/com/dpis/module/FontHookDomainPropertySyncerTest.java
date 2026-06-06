@@ -9,9 +9,9 @@ import org.junit.Test;
 public class FontHookDomainPropertySyncerTest {
     @Test
     public void publishWritesRuntimeAndPersistentMask() {
-        assertEquals("setprop 'debug.dpis.hookdomains.8eeb79b0' 'v2:c9d161436703:25'; "
+        assertEquals("setprop 'debug.dpis.hookdomains.8eeb79b0' 'v2:c9d161436703:49'; "
                         + "setprop 'persist.debug.dpis.hookdomains.8eeb79b0' "
-                        + "'v2:c9d161436703:25'",
+                        + "'v2:c9d161436703:49'",
                 FontHookDomainPropertySyncer.buildPublishCommandForTest(
                         "org.telegram.messenger",
                         Set.of(FontHookDomainRegistry.ID_TEXTVIEW_CURRENT_PX_FALLBACK,

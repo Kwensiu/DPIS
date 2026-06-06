@@ -1,11 +1,13 @@
 package com.dpis.module;
 
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 final class FontHookDomainRegistry {
     static final String ID_RESOURCES_FONT = "resources_font";
+    static final String ID_SYSTEM_SERVER_FONT = "system_server_font";
     static final String ID_ACTIVITY_THREAD_FONT = "activity_thread_font";
     static final String ID_TEXTVIEW_SP_REWRITE = "textview_sp_rewrite";
     static final String ID_TEXTVIEW_ABSOLUTE_REWRITE = "textview_absolute_rewrite";
@@ -20,63 +22,49 @@ final class FontHookDomainRegistry {
     static final String GROUP_WEB = "web";
     static final String GROUP_CROSS_RUNTIME = "cross_runtime";
 
-    private static final List<String> ORDERED_IDS = List.of(
-            ID_RESOURCES_FONT,
-            ID_ACTIVITY_THREAD_FONT,
-            ID_TEXTVIEW_SP_REWRITE,
-            ID_TEXTVIEW_ABSOLUTE_REWRITE,
-            ID_TEXTVIEW_CURRENT_PX_FALLBACK,
-            ID_PAINT_TEXT_SIZE_FALLBACK,
-            ID_WEBVIEW_TEXT_ZOOM,
-            ID_FLUTTER_SETTINGS,
-            ID_HYPEROS_NATIVE_FLUTTER);
+    private static final int NOT_CUSTOMIZABLE = -1;
 
-    private static final List<String> DISPLAY_ORDERED_IDS = List.of(
-            ID_RESOURCES_FONT,
-            ID_TEXTVIEW_SP_REWRITE,
-            ID_TEXTVIEW_ABSOLUTE_REWRITE,
-            ID_TEXTVIEW_CURRENT_PX_FALLBACK,
-            ID_PAINT_TEXT_SIZE_FALLBACK,
-            ID_WEBVIEW_TEXT_ZOOM,
-            ID_FLUTTER_SETTINGS,
-            ID_HYPEROS_NATIVE_FLUTTER,
-            ID_ACTIVITY_THREAD_FONT);
-
-    private static final List<String> CUSTOMIZABLE_ORDERED_IDS = List.of(
-            ID_RESOURCES_FONT,
-            ID_TEXTVIEW_SP_REWRITE,
-            ID_TEXTVIEW_ABSOLUTE_REWRITE,
-            ID_TEXTVIEW_CURRENT_PX_FALLBACK,
-            ID_PAINT_TEXT_SIZE_FALLBACK,
-            ID_WEBVIEW_TEXT_ZOOM,
-            ID_FLUTTER_SETTINGS,
-            ID_HYPEROS_NATIVE_FLUTTER);
-
-    private static final List<String> CUSTOMIZABLE_DISPLAY_ORDERED_IDS = List.of(
-            ID_RESOURCES_FONT,
-            ID_TEXTVIEW_SP_REWRITE,
-            ID_TEXTVIEW_ABSOLUTE_REWRITE,
-            ID_TEXTVIEW_CURRENT_PX_FALLBACK,
-            ID_PAINT_TEXT_SIZE_FALLBACK,
-            ID_WEBVIEW_TEXT_ZOOM,
-            ID_FLUTTER_SETTINGS,
-            ID_HYPEROS_NATIVE_FLUTTER);
-
-    static {
-        requireSameDomainSet(ORDERED_IDS, DISPLAY_ORDERED_IDS, "display order");
-        requireSameDomainSet(CUSTOMIZABLE_ORDERED_IDS, CUSTOMIZABLE_DISPLAY_ORDERED_IDS,
-                "customizable display order");
-    }
+    private static final List<DomainSpec> DOMAIN_SPECS = List.of(
+            new DomainSpec(ID_RESOURCES_FONT, GROUP_RESOURCES,
+                    R.string.dialog_font_hook_domain_resources_font,
+                    0, 0, true),
+            new DomainSpec(ID_SYSTEM_SERVER_FONT, GROUP_RESOURCES,
+                    R.string.dialog_font_hook_domain_system_server_font,
+                    9, 1, true),
+            new DomainSpec(ID_ACTIVITY_THREAD_FONT, GROUP_RESOURCES,
+                    R.string.dialog_font_hook_domain_activity_thread_font,
+                    1, 2, false),
+            new DomainSpec(ID_TEXTVIEW_SP_REWRITE, GROUP_TEXT_VIEW_FALLBACK,
+                    R.string.dialog_font_hook_domain_textview_sp_rewrite,
+                    2, 3, true),
+            new DomainSpec(ID_TEXTVIEW_ABSOLUTE_REWRITE, GROUP_TEXT_VIEW_FALLBACK,
+                    R.string.dialog_font_hook_domain_textview_absolute_rewrite,
+                    3, 4, true),
+            new DomainSpec(ID_TEXTVIEW_CURRENT_PX_FALLBACK, GROUP_TEXT_VIEW_FALLBACK,
+                    R.string.dialog_font_hook_domain_textview_current_px_fallback,
+                    4, 5, true),
+            new DomainSpec(ID_PAINT_TEXT_SIZE_FALLBACK, GROUP_TEXT_VIEW_FALLBACK,
+                    R.string.dialog_font_hook_domain_paint_text_size_fallback,
+                    5, 6, true),
+            new DomainSpec(ID_WEBVIEW_TEXT_ZOOM, GROUP_WEB,
+                    R.string.dialog_font_hook_domain_webview_text_zoom,
+                    6, 7, true),
+            new DomainSpec(ID_FLUTTER_SETTINGS, GROUP_CROSS_RUNTIME,
+                    R.string.dialog_font_hook_domain_flutter_settings,
+                    7, 8, false),
+            new DomainSpec(ID_HYPEROS_NATIVE_FLUTTER, GROUP_CROSS_RUNTIME,
+                    R.string.dialog_font_hook_domain_hyperos_native_flutter,
+                    8, 9, false));
 
     private FontHookDomainRegistry() {
     }
 
     static Set<String> knownDomainIds() {
-        return new LinkedHashSet<>(ORDERED_IDS);
+        return idsSortedByStableOrder(DOMAIN_SPECS);
     }
 
     static boolean isKnown(String domainId) {
-        return domainId != null && ORDERED_IDS.contains(domainId);
+        return specFor(domainId) != null;
     }
 
     static Set<String> orderedKnownSubset(Set<String> domains) {
@@ -84,37 +72,46 @@ final class FontHookDomainRegistry {
             return new LinkedHashSet<>();
         }
         LinkedHashSet<String> ordered = new LinkedHashSet<>();
-        for (String id : ORDERED_IDS) {
-            if (domains.contains(id)) {
-                ordered.add(id);
+        for (DomainSpec spec : DOMAIN_SPECS) {
+            if (domains.contains(spec.id)) {
+                ordered.add(spec.id);
             }
         }
         return ordered;
     }
 
     static List<String> orderedIdsList() {
-        return ORDERED_IDS;
+        return knownDomainIds().stream().toList();
     }
 
     static List<String> orderedDisplayIdsList() {
-        return DISPLAY_ORDERED_IDS;
+        return specsSortedByDisplayOrder(DOMAIN_SPECS).stream()
+                .map(spec -> spec.id)
+                .toList();
     }
 
     static List<String> orderedCustomizableIdsList() {
-        return CUSTOMIZABLE_ORDERED_IDS;
+        return customizableSpecs().stream()
+                .sorted(Comparator.comparingInt(spec -> spec.customizableOrder))
+                .map(spec -> spec.id)
+                .toList();
     }
 
     static List<String> orderedCustomizableDisplayIdsList() {
-        return CUSTOMIZABLE_DISPLAY_ORDERED_IDS;
+        return customizableSpecs().stream()
+                .sorted(Comparator.comparingInt(spec -> spec.displayOrder))
+                .map(spec -> spec.id)
+                .toList();
     }
 
     static Set<String> recommendedTemplateKnownDomains() {
         LinkedHashSet<String> recommended = new LinkedHashSet<>();
-        int count = Math.min(6, CUSTOMIZABLE_DISPLAY_ORDERED_IDS.size());
-        for (int index = 0; index < count; index++) {
-            recommended.add(CUSTOMIZABLE_DISPLAY_ORDERED_IDS.get(index));
+        for (DomainSpec spec : DOMAIN_SPECS) {
+            if (spec.recommended) {
+                recommended.add(spec.id);
+            }
         }
-        return recommended;
+        return orderedCustomizableDisplaySubset(recommended);
     }
 
     static Set<String> orderedCustomizableSubset(Set<String> domains) {
@@ -152,25 +149,70 @@ final class FontHookDomainRegistry {
     }
 
     static String groupFor(String domainId) {
-        return switch (domainId) {
-            case ID_RESOURCES_FONT, ID_ACTIVITY_THREAD_FONT -> GROUP_RESOURCES;
-            case ID_TEXTVIEW_SP_REWRITE, ID_TEXTVIEW_ABSOLUTE_REWRITE,
-                    ID_TEXTVIEW_CURRENT_PX_FALLBACK, ID_PAINT_TEXT_SIZE_FALLBACK ->
-                    GROUP_TEXT_VIEW_FALLBACK;
-            case ID_WEBVIEW_TEXT_ZOOM -> GROUP_WEB;
-            case ID_FLUTTER_SETTINGS, ID_HYPEROS_NATIVE_FLUTTER -> GROUP_CROSS_RUNTIME;
-            default -> "";
-        };
+        DomainSpec spec = specFor(domainId);
+        return spec != null ? spec.group : "";
     }
 
-    private static void requireSameDomainSet(List<String> expected,
-                                             List<String> actual,
-                                             String label) {
-        LinkedHashSet<String> expectedSet = new LinkedHashSet<>(expected);
-        LinkedHashSet<String> actualSet = new LinkedHashSet<>(actual);
-        if (!expectedSet.equals(actualSet)) {
-            throw new IllegalStateException("Font hook domain " + label
-                    + " must contain the same ids as the stable order");
+    static int titleResFor(String domainId) {
+        DomainSpec spec = specFor(domainId);
+        if (spec == null) {
+            throw new IllegalArgumentException("Unknown domain id: " + domainId);
+        }
+        return spec.titleRes;
+    }
+
+    private static List<DomainSpec> customizableSpecs() {
+        return DOMAIN_SPECS.stream()
+                .filter(spec -> spec.customizableOrder != NOT_CUSTOMIZABLE)
+                .toList();
+    }
+
+    private static Set<String> idsSortedByStableOrder(List<DomainSpec> specs) {
+        LinkedHashSet<String> ids = new LinkedHashSet<>();
+        for (DomainSpec spec : specs) {
+            ids.add(spec.id);
+        }
+        return ids;
+    }
+
+    private static List<DomainSpec> specsSortedByDisplayOrder(List<DomainSpec> specs) {
+        return specs.stream()
+                .sorted(Comparator.comparingInt(spec -> spec.displayOrder))
+                .toList();
+    }
+
+    private static DomainSpec specFor(String domainId) {
+        if (domainId == null) {
+            return null;
+        }
+        for (DomainSpec spec : DOMAIN_SPECS) {
+            if (spec.id.equals(domainId)) {
+                return spec;
+            }
+        }
+        return null;
+    }
+
+    private static final class DomainSpec {
+        final String id;
+        final String group;
+        final int titleRes;
+        final int customizableOrder;
+        final int displayOrder;
+        final boolean recommended;
+
+        DomainSpec(String id,
+                   String group,
+                   int titleRes,
+                   int customizableOrder,
+                   int displayOrder,
+                   boolean recommended) {
+            this.id = id;
+            this.group = group;
+            this.titleRes = titleRes;
+            this.customizableOrder = customizableOrder;
+            this.displayOrder = displayOrder;
+            this.recommended = recommended;
         }
     }
 }

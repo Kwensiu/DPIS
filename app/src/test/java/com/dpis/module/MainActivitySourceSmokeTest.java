@@ -1464,7 +1464,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("HookExecutionPlanner.buildPlan("));
         assertTrue(
             compact(source).contains(
-                "AppProcessHookInstaller.resolveDebugFontOverrideForPackage( packageName )"
+                "AppProcessHookInstaller.resolveDebugFontOverrideForPackage( item.packageName )"
             )
         );
         assertTrue(
@@ -1480,7 +1480,8 @@ public class MainActivitySourceSmokeTest {
                 "FontHookDomainRegistry.orderedCustomizableDisplaySubset("
             )
         );
-        assertTrue(source.contains("FontApplyMode.FIELD_REWRITE"));
+        assertTrue(source.contains("item.fontMode"));
+        assertTrue(source.contains("item.fontScalePercent != null && item.fontScalePercent > 0"));
         assertTrue(source.contains("ViewportApplyMode.OFF"));
         assertFalse(source.contains("publishFontRuntimeTarget("));
     }

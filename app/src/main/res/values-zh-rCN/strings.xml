@@ -66,9 +66,9 @@
     <string name="mode_help_viewport_types_title">界面调整模式</string>
     <string name="mode_help_font_features_title">字体相关功能</string>
     <string name="help_tutorial_font_hooks_title">自定义字体 Hook</string>
-    <string name="help_tutorial_font_hooks_badge">8 条路线</string>
+    <string name="help_tutorial_font_hooks_badge">9 条路线</string>
     <string name="help_tutorial_font_hooks_summary">按应用选择字体缩放写入点，用于绕开不同 UI 框架的字体读取差异。</string>
-    <string name="help_tutorial_font_hooks_points">• Resources 字体：改写应用从 Resources 读取到的字体缩放基准。\n• TextView sp 改写：拦截 TextView 的 sp 尺寸写入，适合常规原生控件。\n• TextView 绝对值改写：处理已经换算成 px 的 TextView 字号。\n• TextView 当前 px 兜底：在 TextView 当前像素尺寸上做补偿，覆盖更晚的赋值。\n• Paint 文本大小兜底：从 Paint 层兜底处理自绘文字大小。\n• WebView 文本缩放：调整 WebView 文本缩放比例。\n• Flutter settings：改写 Flutter 引擎读取到的 textScaleFactor。\n• HyperOS 原生 Flutter：补充 HyperOS 原生 Flutter 容器的字体链路。</string>
+    <string name="help_tutorial_font_hooks_points">• Resources 字体：改写应用从 Resources 读取到的字体缩放基准。\n• ActivityThread 字体：在应用绑定与配置分发链路同步字体缩放。\n• TextView sp 改写：拦截 TextView 的 sp 尺寸写入，适合常规原生控件。\n• TextView 绝对值改写：处理已经换算成 px 的 TextView 字号。\n• TextView 当前 px 兜底：在 TextView 当前像素尺寸上做补偿，覆盖更晚的赋值。\n• Paint 文本大小兜底：从 Paint 层兜底处理自绘文字大小。\n• WebView 文本缩放：调整 WebView 文本缩放比例。\n• Flutter settings：改写 Flutter 引擎读取到的 textScaleFactor。\n• HyperOS 原生 Flutter：补充 HyperOS 原生 Flutter 容器的字体链路。</string>
     <string name="help_tutorial_font_hook_resources_title">Resources 字体</string>
     <string name="help_tutorial_font_hook_resources_desc">改写应用从 Resources 读取到的字体缩放基准。</string>
     <string name="help_tutorial_font_hook_textview_sp_title">TextView sp 改写</string>
@@ -256,6 +256,7 @@
     <string name="dialog_font_hook_group_web">网页</string>
     <string name="dialog_font_hook_group_cross_runtime">跨运行时</string>
     <string name="dialog_font_hook_domain_resources_font">Resources 字体</string>
+    <string name="dialog_font_hook_domain_system_server_font">SystemServer 字体</string>
     <string name="dialog_font_hook_domain_activity_thread_font">ActivityThread 字体</string>
     <string name="dialog_font_hook_domain_textview_sp_rewrite">TextView sp 改写</string>
     <string name="dialog_font_hook_domain_textview_absolute_rewrite">TextView 绝对值改写</string>

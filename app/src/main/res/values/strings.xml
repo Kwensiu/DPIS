@@ -66,9 +66,9 @@
     <string name="mode_help_viewport_types_title">Interface adjustment modes</string>
     <string name="mode_help_font_features_title">Font features</string>
     <string name="help_tutorial_font_hooks_title">Custom font hooks</string>
-    <string name="help_tutorial_font_hooks_badge">8 routes</string>
+    <string name="help_tutorial_font_hooks_badge">9 routes</string>
     <string name="help_tutorial_font_hooks_summary">Select per-app font scale write points to handle framework-specific font lookup paths.</string>
-    <string name="help_tutorial_font_hooks_points">• Resources font: rewrites the font scale baseline read from app Resources.\n• TextView sp rewrite: intercepts TextView sp size writes for regular native widgets.\n• TextView absolute rewrite: handles TextView sizes already converted to px.\n• TextView current px fallback: compensates from the current TextView px size after later assignments.\n• Paint text size fallback: catches custom-drawn text at the Paint layer.\n• WebView text zoom: adjusts WebView text zoom.\n• Flutter settings: rewrites the textScaleFactor read by the Flutter engine.\n• HyperOS native Flutter: supplements the font path used by HyperOS native Flutter containers.</string>
+    <string name="help_tutorial_font_hooks_points">• Resources font: rewrites the font scale baseline read from app Resources.\n• ActivityThread font: syncs font scale through app binding and configuration dispatch.\n• TextView sp rewrite: intercepts TextView sp size writes for regular native widgets.\n• TextView absolute rewrite: handles TextView sizes already converted to px.\n• TextView current px fallback: compensates from the current TextView px size after later assignments.\n• Paint text size fallback: catches custom-drawn text at the Paint layer.\n• WebView text zoom: adjusts WebView text zoom.\n• Flutter settings: rewrites the textScaleFactor read by the Flutter engine.\n• HyperOS native Flutter: supplements the font path used by HyperOS native Flutter containers.</string>
     <string name="help_tutorial_font_hook_resources_title">Resources font</string>
     <string name="help_tutorial_font_hook_resources_desc">Rewrites the font scale baseline read from app Resources.</string>
     <string name="help_tutorial_font_hook_textview_sp_title">TextView sp rewrite</string>
@@ -256,6 +256,7 @@
     <string name="dialog_font_hook_group_web">Web</string>
     <string name="dialog_font_hook_group_cross_runtime">Cross runtime</string>
     <string name="dialog_font_hook_domain_resources_font">Resources font</string>
+    <string name="dialog_font_hook_domain_system_server_font">System-server font</string>
     <string name="dialog_font_hook_domain_activity_thread_font">ActivityThread font</string>
     <string name="dialog_font_hook_domain_textview_sp_rewrite">TextView sp rewrite</string>
     <string name="dialog_font_hook_domain_textview_absolute_rewrite">TextView absolute rewrite</string>

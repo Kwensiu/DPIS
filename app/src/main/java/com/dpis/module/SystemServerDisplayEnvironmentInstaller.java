@@ -20,6 +20,10 @@ import java.util.function.Predicate;
 import io.github.libxposed.api.XposedInterface;
 
 final class SystemServerDisplayEnvironmentInstaller {
+    private static final String PROP_DISABLE_SYSTEM_SERVER_FONT_PACKAGE =
+            "debug.dpis.font.disable_system_server_package";
+    private static final String PROP_SYSTEM_SERVER_FONT_FALLBACK_PACKAGE =
+            "debug.dpis.font.system_server_fallback_package";
     private static final int MAX_PACKAGE_RECURSION_DEPTH = 5;
     private static final ReflectionProbeCache REFLECTION_CACHE = new ReflectionProbeCache();
     private static final SystemServerPackageUidResolver PACKAGE_UID_RESOLVER =
@@ -1179,7 +1183,12 @@ final class SystemServerDisplayEnvironmentInstaller {
         return config != null
                 && FontApplyMode.SYSTEM_EMULATION.equals(config.targetFontMode)
                 && config.targetFontScalePercent != null
-                && config.targetFontScalePercent > 0;
+                && config.targetFontScalePercent > 0
+                && isSystemServerFontDomainEnabled(config);
+    }
+
+    static boolean hasSystemServerFontOverrideForTest(PerAppDisplayConfig config) {
+        return hasSystemServerFontOverride(config);
     }
 
     private static void applyDisplayManagerInfoResult(PerAppDisplayConfigSource source,
@@ -1358,6 +1367,11 @@ final class SystemServerDisplayEnvironmentInstaller {
                                             PerAppDisplayEnvironment environment,
                                             PerAppDisplayConfig config) {
         boolean changed = false;
+        // TODO(system-mutation-scheduler): route each field through an explicit
+        // MutationField policy. VIEWPORT uses a marker-gated baseline model and
+        // can be applied across multiple lifecycle entries; FONT_SCALE currently
+        // shares this method but needs a separate baseline/entry policy because
+        // changing Configuration.fontScale can produce CONFIG_FONT_SCALE relaunches.
         boolean applyViewport = environment != null
                 && shouldApplySystemServerViewportMutation(config);
         if (snapshot.configuration != null && applyViewport) {
@@ -1414,12 +1428,73 @@ final class SystemServerDisplayEnvironmentInstaller {
         if (configuration == null || !hasSystemServerFontOverride(config)) {
             return false;
         }
+        if (isSystemServerFontDisabledByDebugOverride(config.packageName)) {
+            DpisLog.i("DPIS_FONT SystemServer config fontScale skipped: package="
+                    + config.packageName + ", reason=debug-disable-system-server-font");
+            return false;
+        }
+        if (shouldYieldSystemServerFontToAppProcessFallback(config)) {
+            DpisLog.i("DPIS_FONT SystemServer config fontScale skipped: package="
+                    + config.packageName + ", reason=debug-system-server-font-fallback-yield");
+            return false;
+        }
         float fontScale = config.targetFontScalePercent / 100.0f;
         if (Math.abs(configuration.fontScale - fontScale) < 0.0001f) {
             return false;
         }
         configuration.fontScale = fontScale;
         return true;
+    }
+
+    static boolean isSystemServerFontDisabledByDebugOverrideForTest(String packageName,
+                                                                    String propertyValue) {
+        return DebugPackageOverride.matchesForTest(
+                PROP_DISABLE_SYSTEM_SERVER_FONT_PACKAGE,
+                packageName,
+                propertyValue);
+    }
+
+    static boolean shouldYieldSystemServerFontToAppProcessFallbackForTest(PerAppDisplayConfig config,
+                                                                         String propertyValue) {
+        return isSystemServerFontFallbackEnabledForPackage(config.packageName, propertyValue)
+                && hasAppProcessSystemFontEmulationRoute(config);
+    }
+
+    private static boolean isSystemServerFontDisabledByDebugOverride(String packageName) {
+        return DebugPackageOverride.matches(PROP_DISABLE_SYSTEM_SERVER_FONT_PACKAGE, packageName);
+    }
+
+    private static boolean shouldYieldSystemServerFontToAppProcessFallback(
+            PerAppDisplayConfig config) {
+        return isSystemServerFontFallbackEnabledForPackage(config.packageName)
+                && hasAppProcessSystemFontEmulationRoute(config);
+    }
+
+    private static boolean isSystemServerFontFallbackEnabledForPackage(String packageName) {
+        return DebugPackageOverride.matches(PROP_SYSTEM_SERVER_FONT_FALLBACK_PACKAGE, packageName);
+    }
+
+    private static boolean isSystemServerFontFallbackEnabledForPackage(String packageName,
+                                                                       String propertyValue) {
+        return DebugPackageOverride.matchesForTest(
+                PROP_SYSTEM_SERVER_FONT_FALLBACK_PACKAGE,
+                packageName,
+                propertyValue);
+    }
+
+    private static boolean hasAppProcessSystemFontEmulationRoute(PerAppDisplayConfig config) {
+        return config != null
+                && FontApplyMode.SYSTEM_EMULATION.equals(config.targetFontMode)
+                && config.targetFontScalePercent != null
+                && config.targetFontScalePercent > 0;
+    }
+
+    private static boolean isSystemServerFontDomainEnabled(PerAppDisplayConfig config) {
+        HookDomainOverride override = config != null ? config.hookDomainOverride : null;
+        return override == null
+                || !override.customPathEnabled
+                || override.enabledKnownDomains.contains(
+                FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT);
     }
 
     private static void reportSystemServerFontConfig(String packageName,

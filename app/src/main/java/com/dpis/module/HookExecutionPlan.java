@@ -19,6 +19,7 @@ final class HookExecutionPlan {
     final boolean debugForceFlutterSettings;
     final boolean debugFlutterSettingsOnly;
     final boolean debugDisableTextViewAbsoluteRewrite;
+    final boolean debugDisableActivityThreadFont;
     final boolean probeHooksRequested;
     final String probeInstallMode;
     final String hookDomains;
@@ -44,6 +45,7 @@ final class HookExecutionPlan {
                       boolean debugForceFlutterSettings,
                       boolean debugFlutterSettingsOnly,
                       boolean debugDisableTextViewAbsoluteRewrite,
+                      boolean debugDisableActivityThreadFont,
                       boolean probeHooksRequested,
                       String probeInstallMode,
                       String hookDomains,
@@ -68,6 +70,7 @@ final class HookExecutionPlan {
         this.debugForceFlutterSettings = debugForceFlutterSettings;
         this.debugFlutterSettingsOnly = debugFlutterSettingsOnly;
         this.debugDisableTextViewAbsoluteRewrite = debugDisableTextViewAbsoluteRewrite;
+        this.debugDisableActivityThreadFont = debugDisableActivityThreadFont;
         this.probeHooksRequested = probeHooksRequested;
         this.probeInstallMode = probeInstallMode;
         this.hookDomains = hookDomains;

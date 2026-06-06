@@ -286,9 +286,10 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("font_hook_domain_risk_medium"));
         assertTrue(source.contains("font_hook_domain_risk_high"));
         assertFalse(source.contains("new LinkedHashSet<>(FontHookDomainRegistry.orderedIdsList())"));
-        assertTrue(source.contains("title.setText(resolveDomainTitleRes(domainId));"));
+        assertTrue(source.contains("title.setText(FontHookDomainRegistry.titleResFor(domainId));"));
         assertTrue(source.contains("title.setText(domainId);"));
         assertFalse(source.contains("title.setText(known ? resolveDomainTitleRes(domainId) : 0);"));
+        assertTrue(zhStrings.contains("dialog_font_hook_domain_system_server_font"));
         assertFalse(source.contains("setPositiveButton"));
         assertFalse(source.contains("setNegativeButton"));
         assertTrue(dialogLayout.contains("@+id/font_hook_domains_known_container"));

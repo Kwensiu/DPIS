@@ -33,6 +33,10 @@ final class HookDomainPlan {
         return enabledDomains.contains(FontHookDomainRegistry.ID_RESOURCES_FONT);
     }
 
+    boolean hasSystemServerFont() {
+        return enabledDomains.contains(FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT);
+    }
+
     boolean hasActivityThreadFont() {
         return enabledDomains.contains(FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT);
     }
