@@ -14,7 +14,7 @@ import com.google.android.material.textview.MaterialTextView;
 
 import java.util.Locale;
 
-final class StartupUpdateDialogCoordinator {
+final class UpdatePromptDialogCoordinator {
     interface Host {
         void showDialogIdleState(MaterialButton primaryButton,
                 MaterialButton cancelButton,
@@ -46,7 +46,7 @@ final class StartupUpdateDialogCoordinator {
     private final Host host;
     private final ReleaseNotesController releaseNotesController;
 
-    StartupUpdateDialogCoordinator(Activity activity,
+    UpdatePromptDialogCoordinator(Activity activity,
             Host host,
             ReleaseNotesController releaseNotesController) {
         this.activity = activity;
@@ -86,7 +86,10 @@ final class StartupUpdateDialogCoordinator {
         String embeddedReleaseNotes = remoteReleaseNotes == null ? "" : remoteReleaseNotes.trim();
         if (!embeddedReleaseNotes.isEmpty()) {
             Locale locale = activity.getResources().getConfiguration().getLocales().get(0);
-            releaseNotesText.setText(ReleaseNotesMarkdownLite.format(embeddedReleaseNotes, locale));
+            releaseNotesText.setText(ReleaseNotesMarkdownRenderer.render(
+                    activity,
+                    embeddedReleaseNotes,
+                    locale));
         } else {
             releaseNotesText.setText(R.string.about_update_release_notes_loading);
         }
@@ -163,7 +166,10 @@ final class StartupUpdateDialogCoordinator {
 
                     @Override
                     public void onBody(String body) {
-                        releaseNotesText.setText(ReleaseNotesMarkdownLite.format(body, locale));
+                        releaseNotesText.setText(ReleaseNotesMarkdownRenderer.render(
+                                activity,
+                                body,
+                                locale));
                     }
 
                     @Override

@@ -9,14 +9,15 @@ import java.nio.file.Path;
 
 import org.junit.Test;
 
-public class StartupUpdateDialogCoordinatorSourceSmokeTest {
+public class UpdatePromptDialogCoordinatorSourceSmokeTest {
     @Test
-    public void coordinatorOwnsStartupDisclaimerAndUpdateDialogComposition() throws IOException {
-        String source = read("src/main/java/com/dpis/module/StartupUpdateDialogCoordinator.java");
+    public void coordinatorOwnsDisclaimerAndManualUpdatePromptComposition() throws IOException {
+        String source = read("src/main/java/com/dpis/module/UpdatePromptDialogCoordinator.java");
         String dialogSource = read("src/main/java/com/dpis/module/UpdateAvailableDialog.java");
 
-        assertTrue(source.contains("final class StartupUpdateDialogCoordinator"));
+        assertTrue(source.contains("final class UpdatePromptDialogCoordinator"));
         assertTrue(source.contains("boolean maybeShowStartupDisclaimerDialog("));
+        assertTrue(source.contains("void showUpdateAvailableDialog("));
         assertTrue(source.contains("new MaterialAlertDialogBuilder(activity)"));
         assertTrue(source.contains("R.layout.dialog_startup_disclaimer"));
         assertTrue(source.contains("setStartupDisclaimerAccepted(true)"));
@@ -38,7 +39,7 @@ public class StartupUpdateDialogCoordinatorSourceSmokeTest {
         assertTrue(source.contains("releaseNotesController.load(targetVersionName"));
         assertTrue(source.contains("dialog.isShowing()"));
         assertTrue(source.contains("R.string.about_update_release_notes_loading"));
-        assertTrue(source.contains("ReleaseNotesMarkdownLite.format(embeddedReleaseNotes, locale)"));
+        assertTrue(source.contains("ReleaseNotesMarkdownRenderer.render("));
         assertTrue(dialogSource.contains("bindReleaseNotesToggle(releaseNotesHost, releaseNotesCard, releaseNotesContainer);"));
         assertTrue(dialogSource.contains("releaseNotesCard.setOnClickListener"));
     }

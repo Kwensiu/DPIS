@@ -124,6 +124,14 @@
     <dimen name="home_workspace_status_min_height">66dp</dimen>
     <dimen name="home_workspace_info_row_min_height">44dp</dimen>
     <dimen name="home_workspace_info_row_padding_vertical">8dp</dimen>
+    <dimen name="home_update_action_card_height">72dp</dimen>
+    <dimen name="home_update_action_card_hidden_offset_top">-32dp</dimen>
+    <dimen name="home_update_action_card_padding_start">8dp</dimen>
+    <dimen name="home_update_action_card_padding_end">16dp</dimen>
+    <dimen name="home_update_action_card_padding_bottom">5dp</dimen>
+    <dimen name="home_update_action_card_button_height">30dp</dimen>
+    <dimen name="home_update_action_card_notes_padding_horizontal">4dp</dimen>
+    <dimen name="home_update_action_card_install_padding_horizontal">12dp</dimen>
     <dimen name="home_feedback_button_size">40dp</dimen>
     <dimen name="home_feedback_button_padding_horizontal">8dp</dimen>
     <dimen name="template_workspace_padding_horizontal">16dp</dimen>

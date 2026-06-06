@@ -32,6 +32,10 @@ public class AboutActivitySourceSmokeTest {
         assertTrue(source.contains("R.string.about_update_action_view_release"));
         assertTrue(source.contains("UpdateDownloadCoordinator.showDialogIdleState("));
         assertTrue(source.contains("updateDownloadCoordinator.startDownload("));
+        assertTrue(source.contains("showManualUpdatePromptDialog(manifest);"));
+        assertTrue(source.contains("showCenteredManualUpdatePromptDialog("));
+        assertTrue(source.contains("ReleaseNotesMarkdownRenderer.render("));
+        assertTrue(!source.contains("ReleaseNotesMarkdownLite.format("));
         assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialog, this)"));
         assertTrue(manifestFetcherSource.contains("final class UpdateManifestFetcher"));
         assertTrue(source.contains("UpdateAvailableDialog.create("));
@@ -52,14 +56,17 @@ public class AboutActivitySourceSmokeTest {
     }
 
     @Test
-    public void aboutActivityDelegatesSignatureVerificationToSharedHandler() throws IOException {
+    public void aboutActivityDoesNotApplyLocalApkSignatureGate() throws IOException {
         String source = read("src/main/java/com/dpis/module/AboutActivity.java");
         String coordinatorSource = read("src/main/java/com/dpis/module/UpdateDownloadCoordinator.java");
+        String packageHandlerSource = read("src/main/java/com/dpis/module/StartupUpdatePackageHandler.java");
 
         assertTrue(!source.contains("extractSigningFingerprints"));
         assertTrue(!source.contains("about_update_download_untrusted"));
-        assertTrue(coordinatorSource.contains("packageHandler.verifyDownloadedApk("));
-        assertTrue(coordinatorSource.contains("StartupUpdatePackageHandler.UntrustedUpdateException"));
+        assertTrue(!coordinatorSource.contains("verifyDownloadedApk("));
+        assertTrue(!coordinatorSource.contains("UntrustedUpdateException"));
+        assertTrue(!packageHandlerSource.contains("verifyDownloadedApk("));
+        assertTrue(!packageHandlerSource.contains("extractSigningFingerprints"));
     }
 
     @Test

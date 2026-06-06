@@ -34,56 +34,139 @@
             android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
             android:textColor="?attr/colorPrimary" />
 
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/home_primary_status_card"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/home_workspace_section_spacing_top"
-            android:minHeight="@dimen/home_workspace_primary_status_min_height"
-            app:cardBackgroundColor="?attr/colorSurfaceContainer"
-            app:cardCornerRadius="@dimen/home_workspace_primary_status_corner_radius"
-            app:strokeColor="?attr/colorOutlineVariant"
-            app:strokeWidth="@dimen/page_card_stroke_width">
-
-            <LinearLayout
+            <com.dpis.module.HomePrimaryStatusClusterLayout
+                android:id="@+id/home_primary_status_cluster"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="@dimen/home_workspace_primary_status_padding">
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/home_workspace_section_spacing_top"
+                android:clipChildren="false"
+            android:orientation="vertical">
 
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/home_primary_status_icon"
-                    android:layout_width="@dimen/home_workspace_primary_status_icon_size"
-                    android:layout_height="@dimen/home_workspace_primary_status_icon_size"
-                    android:src="@drawable/ic_check_24"
-                    app:tint="?attr/colorOnPrimary" />
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/home_primary_status_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="@dimen/home_workspace_primary_status_min_height"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                app:cardCornerRadius="@dimen/home_workspace_primary_status_corner_radius"
+                app:cardElevation="0dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:strokeWidth="@dimen/page_card_stroke_width">
 
                 <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/home_workspace_primary_status_text_spacing_start"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="@dimen/home_workspace_primary_status_padding">
 
-                    <com.google.android.material.textview.MaterialTextView
-                        android:id="@+id/home_primary_status_title"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textStyle="bold" />
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/home_primary_status_icon"
+                        android:layout_width="@dimen/home_workspace_primary_status_icon_size"
+                        android:layout_height="@dimen/home_workspace_primary_status_icon_size"
+                        android:src="@drawable/ic_check_24"
+                        app:tint="?attr/colorOnPrimary" />
 
-                    <com.google.android.material.textview.MaterialTextView
-                        android:id="@+id/home_primary_status_summary"
-                        android:layout_width="match_parent"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/home_workspace_text_spacing_top"
-                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
+                        android:layout_marginStart="@dimen/home_workspace_primary_status_text_spacing_start"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/home_primary_status_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/home_primary_status_summary"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/home_workspace_text_spacing_top"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
                 </LinearLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!--
+                The update action card sits behind the primary status card.
+                Its negative top margin hides the upper part, leaving only the
+                bottom action strip visible while still pushing content below.
+            -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/home_update_action_card"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/home_update_action_card_height"
+                android:layout_marginTop="@dimen/home_update_action_card_hidden_offset_top"
+                android:visibility="gone"
+                app:cardBackgroundColor="@color/home_update_action_card_container"
+                app:cardCornerRadius="@dimen/home_workspace_primary_status_corner_radius"
+                app:cardElevation="0dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:strokeWidth="@dimen/page_card_stroke_width">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="bottom|center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="@dimen/home_update_action_card_padding_start"
+                    android:paddingEnd="@dimen/home_update_action_card_padding_end"
+                    android:paddingBottom="@dimen/home_update_action_card_padding_bottom">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/home_update_action_release_notes_button"
+                        style="@style/Widget.Dpis.HomeUpdateActionCard.NotesButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="@dimen/home_update_action_card_button_height"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:minWidth="0dp"
+                        android:text="@string/home_update_action_release_notes" />
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <FrameLayout
+                        android:id="@+id/home_update_action_install_frame"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <FrameLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="@dimen/home_update_action_card_button_height"
+                            android:layout_gravity="end"
+                            android:background="@drawable/bg_home_update_action_install_button"
+                            android:clipToOutline="true">
+
+                            <View
+                                android:id="@+id/home_update_action_install_progress_fill"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/bg_home_update_action_install_progress"
+                                android:visibility="gone" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/home_update_action_install_button"
+                                style="@style/Widget.Dpis.HomeUpdateActionCard.InstallButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:ellipsize="end"
+                                android:maxLines="1"
+                                android:minWidth="0dp"
+                                android:text="@string/home_update_action_install" />
+                        </FrameLayout>
+                    </FrameLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </com.dpis.module.HomePrimaryStatusClusterLayout>
 
         <GridLayout
             android:layout_width="match_parent"

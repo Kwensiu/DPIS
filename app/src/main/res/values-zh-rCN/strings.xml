@@ -113,6 +113,8 @@
     <string name="home_workspace_status_service_waiting">等待中</string>
     <string name="home_workspace_status_service_disconnected">未连接</string>
     <string name="home_workspace_status_service_disconnected_summary">LSPosed 服务不可用</string>
+    <string name="home_workspace_status_enabled">已启用</string>
+    <string name="home_workspace_status_enable_in_lsposed">请前往 LSPosed 启用模块</string>
     <string name="home_workspace_status_hooks">系统路线</string>
     <string name="home_workspace_status_hooks_enabled">已启用</string>
     <string name="home_workspace_status_hooks_disabled">已关闭</string>
@@ -123,6 +125,15 @@
     <string name="home_workspace_status_configured_apps_value">%1$d/%2$d</string>
     <string name="home_workspace_status_imported_fonts">导入字体</string>
     <string name="home_workspace_status_templates">模板</string>
+    <string name="home_update_checking">正在检查更新</string>
+    <string name="home_update_up_to_date">已是最新版本</string>
+    <string name="home_update_check_failed_retry">检查更新失败，点击重试</string>
+    <string name="home_update_available">检测到新版本：%1$s</string>
+    <string name="home_update_version_unknown">未知版本</string>
+    <string name="home_update_action_release_notes">变更日志</string>
+    <string name="home_update_action_install">更新</string>
+    <string name="home_update_action_downloading">正在下载</string>
+    <string name="home_update_action_install_ready">安装</string>
     <string name="home_workspace_basic_info_title">基本信息</string>
     <string name="home_workspace_info_version">模块版本</string>
     <string name="home_workspace_info_version_value">%1$s (%2$d)</string>
@@ -445,7 +456,6 @@
     <string name="about_update_download_https_required">仅支持 HTTPS 下载更新包</string>
     <string name="about_update_download_failed">下载更新失败，请重试</string>
     <string name="about_update_download_canceled">已取消下载更新</string>
-    <string name="about_update_download_untrusted">更新包签名校验失败，已拦截安装</string>
     <string name="about_update_download_progress_preparing">正在准备下载…</string>
     <string name="about_update_download_progress_with_percent">%1$d%% · %2$s / %3$s</string>
     <string name="about_update_download_progress_without_total">%1$s / 未知大小</string>

@@ -126,7 +126,7 @@ public final class MainActivity
                     UPDATE_CONNECT_TIMEOUT_MS,
                     UPDATE_READ_TIMEOUT_MS
             );
-    private StartupUpdateDialogCoordinator startupUpdateDialogCoordinator;
+    private UpdatePromptDialogCoordinator updatePromptDialogCoordinator;
     private ReleaseNotesController releaseNotesController;
     private AppListFilterStateStore appListFilterStateStore;
 
@@ -172,6 +172,7 @@ public final class MainActivity
     private boolean rootAccessProbeInFlight;
     private RootAccessProbe.Result cachedRootAccessResult
             = RootAccessProbe.Result.unknown();
+    private HomeUpdateUiState homeUpdateUiState = HomeUpdateUiState.UP_TO_DATE;
     private volatile boolean startupUpdateCheckInProgress;
     private volatile boolean startupUpdateDownloadInProgress;
     private volatile boolean startupUpdateDownloadCancelRequested;
@@ -199,7 +200,6 @@ public final class MainActivity
                 createUpdateDownloadHost(),
                 updateCoordinator,
                 startupUpdateDownloadExecutor,
-                startupUpdatePackageHandler,
                 startupUpdateExecutor
         );
         releaseNotesController = new ReleaseNotesController(
@@ -229,6 +229,7 @@ public final class MainActivity
             templateDetailSelection = retainedState.templateDetailSelection;
             retainedGlobalPrefillDraft = retainedState.globalPrefillDraft;
             retainedQuickTemplateDraft = retainedState.quickTemplateDraft;
+            homeUpdateUiState = retainedState.homeUpdateUiState;
             restoredPageScrollStates = retainedState.pageScrollStates;
             initialRefreshingPages = decodeRefreshingPages(
                     retainedState.refreshingPagePositions
@@ -589,7 +590,8 @@ public final class MainActivity
                 draft,
                 templateDetailSelection,
                 retainedGlobalPrefillDraft,
-                retainedQuickTemplateDraft
+                retainedQuickTemplateDraft,
+                homeUpdateUiState
         );
     }
 
@@ -1634,7 +1636,7 @@ public final class MainActivity
     }
 
     private boolean maybeShowStartupDisclaimerDialog() {
-        return startupUpdateDialogCoordinator().maybeShowStartupDisclaimerDialog(
+        return updatePromptDialogCoordinator().maybeShowStartupDisclaimerDialog(
                 new DpiConfigStore(
                         getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE)
                 ),
@@ -1680,16 +1682,8 @@ public final class MainActivity
         startupUpdateCheckCoordinator.maybeCheckForUpdatesOnStartup();
     }
 
-    private void launchStartupUpdateDialog(StartupUpdateManifest manifest) {
-        startupUpdateDialogCoordinator().showUpdateAvailableDialog(
-                BuildConfig.VERSION_NAME,
-                BuildConfig.VERSION_CODE,
-                manifest.versionName,
-                manifest.versionCode,
-                manifest.apkUrl,
-                manifest.releasePage,
-                manifest.releaseNotes
-        );
+    private void retryHomeUpdateCheck() {
+        startupUpdateCheckCoordinator.checkForUpdatesNow();
     }
 
     private void startStartupUpdateDownload(
@@ -1710,6 +1704,138 @@ public final class MainActivity
                 progressView,
                 progressTextView
         );
+    }
+
+    private void startHomeUpdateDownload() {
+        HomeUpdateUiState current = homeUpdateUiState;
+        if (current == null || current.status != HomeUpdateUiState.Status.AVAILABLE) {
+            return;
+        }
+        markPromptedVersion(current.versionCode);
+        updateDownloadCoordinator.startHomeDownload(
+                current.versionName,
+                current.apkUrl,
+                new UpdateDownloadCoordinator.HomeDownloadListener() {
+                    @Override
+                    public void onStarted() {
+                        homeUpdateUiState = current.asDownloading(0);
+                        bindHomeWorkspaceIfVisible();
+                    }
+
+                    @Override
+                    public void onProgress(int progress) {
+                        homeUpdateUiState = current.asDownloading(progress);
+                        bindHomeWorkspaceIfVisible();
+                    }
+
+                    @Override
+                    public void onSucceeded(File targetFile) {
+                        homeUpdateUiState = current.asInstallReady(targetFile);
+                        bindHomeWorkspaceIfVisible();
+                    }
+
+                    @Override
+                    public void onFinished() {
+                        if (homeUpdateUiState.status == HomeUpdateUiState.Status.DOWNLOADING) {
+                            homeUpdateUiState = current.asAvailable();
+                            bindHomeWorkspaceIfVisible();
+                        }
+                    }
+                });
+    }
+
+    private void installHomeDownloadedUpdate() {
+        HomeUpdateUiState current = homeUpdateUiState;
+        if (current == null || current.status != HomeUpdateUiState.Status.INSTALL_READY) {
+            return;
+        }
+        File apkFile = current.downloadedApkPath.isEmpty()
+                ? null
+                : new File(current.downloadedApkPath);
+        if (apkFile == null || !apkFile.exists()) {
+            homeUpdateUiState = current.asAvailable();
+            bindHomeWorkspaceIfVisible();
+            showToast(R.string.about_update_download_failed);
+            return;
+        }
+        startupUpdatePackageHandler.launchPackageInstaller(apkFile);
+    }
+
+    private void showHomeUpdateReleaseNotesDialog() {
+        HomeUpdateUiState current = homeUpdateUiState;
+        if (current == null || !current.showsUpdateActionCard()) {
+            return;
+        }
+        MaxHeightNestedScrollView scrollView = new MaxHeightNestedScrollView(this);
+        scrollView.setMaxHeightFraction(0.62f);
+        MaterialTextView textView = new MaterialTextView(this);
+        textView.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+        textView.setTextColor(MaterialColors.getColor(
+                this,
+                com.google.android.material.R.attr.colorOnSurfaceVariant,
+                getColor(android.R.color.black)));
+        textView.setLineSpacing(
+                getResources().getDimension(R.dimen.dialog_text_line_spacing),
+                1f);
+        int padding = getResources().getDimensionPixelSize(
+                R.dimen.dialog_surface_padding_horizontal);
+        scrollView.setPadding(padding, padding / 2, padding, 0);
+        scrollView.addView(textView, new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        androidx.appcompat.app.AlertDialog dialog =
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.about_update_release_notes_title)
+                        .setView(scrollView)
+                        .setPositiveButton(R.string.about_update_action_cancel_dialog, null)
+                        .create();
+        String embedded = current.releaseNotes;
+        if (!embedded.isEmpty()) {
+            textView.setText(ReleaseNotesMarkdownRenderer.render(
+                    this,
+                    embedded,
+                    getResources().getConfiguration().getLocales().get(0)));
+        } else {
+            textView.setText(R.string.about_update_release_notes_loading);
+        }
+        dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialog, this);
+        if (embedded.isEmpty()) {
+            loadHomeReleaseNotes(textView, dialog, current.versionName);
+        }
+    }
+
+    private void loadHomeReleaseNotes(MaterialTextView textView,
+            androidx.appcompat.app.AlertDialog dialog,
+            String versionName) {
+        releaseNotesController.load(versionName, false,
+                new ReleaseNotesController.Listener() {
+                    @Override
+                    public boolean isAlive() {
+                        return !isFinishing()
+                                && !isDestroyed()
+                                && dialog.isShowing();
+                    }
+
+                    @Override
+                    public void onBody(String body) {
+                        textView.setText(ReleaseNotesMarkdownRenderer.render(
+                                MainActivity.this,
+                                body,
+                                getResources().getConfiguration().getLocales().get(0)));
+                    }
+
+                    @Override
+                    public void onEmptyBody() {
+                        textView.setText(R.string.about_update_release_notes_empty);
+                    }
+
+                    @Override
+                    public void onFailure() {
+                        textView.setText(R.string.about_update_release_notes_failed);
+                    }
+                });
     }
 
     private void cancelActiveUpdateDownload() {
@@ -1738,6 +1864,21 @@ public final class MainActivity
         }
         startupUpdateDownloadInProgress = state.downloadInProgress;
         startupUpdateDownloadCancelRequested = state.downloadCancelRequested;
+    }
+
+    private void applyHomeUpdateState(HomeUpdateUiState state) {
+        if (state == null) {
+            return;
+        }
+        homeUpdateUiState = state;
+        bindHomeWorkspaceIfVisible();
+    }
+
+    private void bindHomeWorkspaceIfVisible() {
+        if (mainViewModel != null
+                && requireUiState().workspaceMode == MainWorkspaceMode.HOME) {
+            bindHomeWorkspace();
+        }
     }
 
     private void markPromptedVersion(int versionCode) {
@@ -1860,27 +2001,42 @@ public final class MainActivity
             }
 
             @Override
-            public void launchStartupUpdateDialog(
-                    StartupUpdateManifest manifest
-            ) {
-                MainActivity.this.launchStartupUpdateDialog(manifest);
+            public void onStartupUpdateCheckStarted() {
+                MainActivity.this.applyHomeUpdateState(HomeUpdateUiState.CHECKING);
+            }
+
+            @Override
+            public void onStartupUpdateAvailable(StartupUpdateManifest manifest) {
+                MainActivity.this.applyHomeUpdateState(
+                        HomeUpdateUiState.available(manifest)
+                );
+            }
+
+            @Override
+            public void onStartupUpdateUpToDate() {
+                MainActivity.this.applyHomeUpdateState(HomeUpdateUiState.UP_TO_DATE);
+            }
+
+            @Override
+            public void onStartupUpdateCheckFailed() {
+                MainActivity.this.applyHomeUpdateState(HomeUpdateUiState.FAILED);
             }
         };
     }
 
-    private StartupUpdateDialogCoordinator startupUpdateDialogCoordinator() {
-        if (startupUpdateDialogCoordinator == null) {
-            startupUpdateDialogCoordinator = new StartupUpdateDialogCoordinator(
+    private UpdatePromptDialogCoordinator updatePromptDialogCoordinator() {
+        if (updatePromptDialogCoordinator == null) {
+            updatePromptDialogCoordinator = new UpdatePromptDialogCoordinator(
                     this,
-                    createStartupUpdateDialogHost(),
+                    createUpdatePromptDialogHost(),
                     releaseNotesController
             );
         }
-        return startupUpdateDialogCoordinator;
+        return updatePromptDialogCoordinator;
     }
 
-    private StartupUpdateDialogCoordinator.Host createStartupUpdateDialogHost() {
-        return new StartupUpdateDialogCoordinator.Host() {
+    private UpdatePromptDialogCoordinator.Host createUpdatePromptDialogHost() {
+        return new UpdatePromptDialogCoordinator.Host() {
             @Override
             public void showDialogIdleState(
                     MaterialButton primaryButton,
@@ -2271,8 +2427,34 @@ public final class MainActivity
                                 Context.MODE_PRIVATE
                         )
                 ).readAll().size(),
-                cachedRootAccessResult
+                cachedRootAccessResult,
+                homeUpdateUiState,
+                createHomeWorkspaceActions()
         );
+    }
+
+    private HomeWorkspaceBinder.Actions createHomeWorkspaceActions() {
+        return new HomeWorkspaceBinder.Actions() {
+            @Override
+            public void retryUpdateCheck() {
+                retryHomeUpdateCheck();
+            }
+
+            @Override
+            public void showReleaseNotes() {
+                showHomeUpdateReleaseNotesDialog();
+            }
+
+            @Override
+            public void startUpdateDownload() {
+                startHomeUpdateDownload();
+            }
+
+            @Override
+            public void installDownloadedUpdate() {
+                installHomeDownloadedUpdate();
+            }
+        };
     }
 
     private static int countDpisEnabledPackages(DpiConfigStore store,
@@ -3470,6 +3652,7 @@ public final class MainActivity
         final TemplateDetailSelection templateDetailSelection;
         final GlobalPrefillEditorBinder.Draft globalPrefillDraft;
         final QuickTemplateEditorBinder.Draft quickTemplateDraft;
+        final HomeUpdateUiState homeUpdateUiState;
 
         RetainedState(
                 List<AppListItem> appsSnapshot,
@@ -3483,7 +3666,8 @@ public final class MainActivity
                 AppConfigDraft editingDraft,
                 TemplateDetailSelection templateDetailSelection,
                 GlobalPrefillEditorBinder.Draft globalPrefillDraft,
-                QuickTemplateEditorBinder.Draft quickTemplateDraft
+                QuickTemplateEditorBinder.Draft quickTemplateDraft,
+                HomeUpdateUiState homeUpdateUiState
         ) {
             this.appsSnapshot = appsSnapshot;
             this.query = query != null ? query : "";
@@ -3507,6 +3691,9 @@ public final class MainActivity
                     : TemplateDetailSelection.none();
             this.globalPrefillDraft = globalPrefillDraft;
             this.quickTemplateDraft = quickTemplateDraft;
+            this.homeUpdateUiState = homeUpdateUiState != null
+                    ? homeUpdateUiState
+                    : HomeUpdateUiState.UP_TO_DATE;
         }
     }
 

@@ -18,6 +18,7 @@ public class UpdateDownloadCoordinatorSourceSmokeTest {
         assertTrue(source.contains("interface Host"));
         assertTrue(source.contains("boolean isActivityAlive()"));
         assertTrue(source.contains("void onDownloadSuccess(File targetFile)"));
+        assertTrue(source.contains("void onSucceeded(File targetFile)"));
         assertTrue(source.contains("void startDownload("));
         assertTrue(source.contains("void cancelActiveDownload()"));
         assertTrue(source.contains("void shutdown()"));
@@ -27,7 +28,9 @@ public class UpdateDownloadCoordinatorSourceSmokeTest {
         assertTrue(source.contains("static void prepareProgressView("));
         assertTrue(source.contains("static void updateProgressView("));
         assertTrue(source.contains("static void updateProgressViewWithoutTotal("));
-        assertTrue(source.contains("packageHandler.verifyDownloadedApk("));
+        assertTrue(!source.contains("verifyDownloadedApk("));
+        assertTrue(!source.contains("UntrustedUpdateException"));
+        assertTrue(!source.contains("about_update_download_untrusted"));
         assertTrue(source.contains("UpdatePackageInstaller.persistDownloadedFile("));
         assertTrue(source.contains("StartupUpdatePackageHandler.safeDeleteFile("));
         assertTrue(source.contains("StartupUpdatePackageHandler.formatBytesStatic("));

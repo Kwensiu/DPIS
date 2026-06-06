@@ -16,17 +16,12 @@ public class MainActivitySourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String layout = read("src/main/res/layout/activity_status.xml");
 
-        assertTrue(source.contains("helpFab = findViewById(R.id.help_fab);"));
-        assertTrue(
-            source.contains(
-                "helpFab.setOnClickListener(v -> showHelpTutorialDialog());"
-            )
-        );
+        assertTrue(source.contains("searchFocusFab = findViewById(R.id.search_focus_fab);"));
         assertTrue(source.contains("FormInputFocusBinder.isInsideAny("));
         assertTrue(source.contains("clearSearchFocus();"));
         assertTrue(source.contains("return true;"));
-        assertTrue(source.contains("helpFab"));
-        assertTrue(layout.contains("@+id/help_fab"));
+        assertTrue(source.contains("searchFocusFab.setOnClickListener"));
+        assertTrue(layout.contains("@+id/search_focus_fab"));
     }
 
     @Test
@@ -78,13 +73,10 @@ public class MainActivitySourceSmokeTest {
             )
         );
         assertTrue(source.contains("searchFilterButton.setOnClickListener"));
-        assertTrue(source.contains("helpFab.setOnClickListener"));
-        assertTrue(source.contains("showHelpTutorialDialog()"));
-        assertTrue(source.contains("HelpTutorialDialog.show(this);"));
+        assertTrue(source.contains("focusSearchInputAndShowKeyboard()"));
         assertTrue(!source.contains("RichTextDialog.show("));
         assertTrue(source.contains("searchFocusFab.setOnClickListener"));
         assertTrue(source.contains("bindFabTouchFeedback(searchFocusFab);"));
-        assertTrue(source.contains("bindFabTouchFeedback(helpFab);"));
         assertTrue(
             source.contains(
                 "private void bindFabTouchFeedback(FloatingActionButton fab)"
@@ -148,7 +140,7 @@ public class MainActivitySourceSmokeTest {
             )
         );
         assertTrue(
-            source.contains("setVisible(helpFab, floatingActionsVisible);")
+            !source.contains("setVisible(helpFab, floatingActionsVisible);")
         );
         assertTrue(
             source.contains(
@@ -459,7 +451,7 @@ public class MainActivitySourceSmokeTest {
         );
         assertTrue(
             source.contains(
-                "startupUpdateDialogCoordinator().maybeShowStartupDisclaimerDialog("
+                "updatePromptDialogCoordinator().maybeShowStartupDisclaimerDialog("
             )
         );
         assertTrue(
@@ -538,12 +530,19 @@ public class MainActivitySourceSmokeTest {
     }
 
     @Test
-    public void startupUpdateCheckShowsPromptOnlyOncePerRemoteVersion()
+    public void startupUpdateCheckPublishesHomeUpdateCardState()
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String coordinatorSource = read(
             "src/main/java/com/dpis/module/StartupUpdateCheckCoordinator.java"
         );
+        String homeBinderSource = read(
+            "src/main/java/com/dpis/module/HomeWorkspaceBinder.java"
+        );
+        String homeUpdateStateSource = read(
+            "src/main/java/com/dpis/module/HomeUpdateUiState.java"
+        );
+        String homeLayout = read("src/main/res/layout/home_workspace.xml");
         String downloadCoordinatorSource = read(
             "src/main/java/com/dpis/module/UpdateDownloadCoordinator.java"
         );
@@ -583,11 +582,84 @@ public class MainActivitySourceSmokeTest {
                 "updateCoordinator.markStartupCheckStarted(state)"
             )
         );
+        assertTrue(coordinatorSource.contains("void maybeCheckForUpdatesOnStartup()"));
+        assertTrue(coordinatorSource.contains("checkForUpdates(true);"));
+        assertTrue(coordinatorSource.contains("void checkForUpdatesNow()"));
         assertTrue(
             coordinatorSource.contains(
-                "updateCoordinator.evaluatePromptDecision("
+                "UpdateCoordinator.isRemoteVersionNewer("
             )
         );
+        assertTrue(coordinatorSource.contains("onStartupUpdateAvailable"));
+        assertTrue(coordinatorSource.contains("onStartupUpdateUpToDate"));
+        assertTrue(coordinatorSource.contains("onStartupUpdateCheckFailed"));
+        assertTrue(!coordinatorSource.contains("launchStartupUpdateDialog"));
+        assertTrue(!source.contains("private void launchStartupUpdateDialog("));
+        assertTrue(source.contains("HomeUpdateUiState.CHECKING"));
+        assertTrue(source.contains("HomeUpdateUiState.available(manifest)"));
+        assertTrue(source.contains("HomeUpdateUiState.UP_TO_DATE"));
+        assertTrue(source.contains("HomeUpdateUiState.FAILED"));
+        assertTrue(homeUpdateStateSource.contains("INSTALL_READY"));
+        assertTrue(homeUpdateStateSource.contains("asInstallReady(File apkFile)"));
+        assertTrue(homeUpdateStateSource.contains("boolean showsUpdateActionCard()"));
+        assertTrue(source.contains("showHomeUpdateReleaseNotesDialog()"));
+        assertTrue(source.contains("startHomeUpdateDownload()"));
+        assertTrue(source.contains("installHomeDownloadedUpdate()"));
+        assertTrue(source.contains("startupUpdateCheckCoordinator.checkForUpdatesNow();"));
+        assertTrue(homeBinderSource.contains("bindUpdateActions("));
+        assertTrue(homeBinderSource.contains("home_update_action_card"));
+        assertTrue(!homeBinderSource.contains("bringToFront();"));
+        assertTrue(homeLayout.contains("com.dpis.module.HomePrimaryStatusClusterLayout"));
+        assertTrue(!homeBinderSource.contains("bindPrimaryStatusShape("));
+        assertTrue(!homeBinderSource.contains("setBottomLeftCornerSize("));
+        assertTrue(homeLayout.contains("android:id=\"@+id/home_primary_status_cluster\""));
+        assertTrue(homeLayout.contains("android:clipChildren=\"false\""));
+        assertTrue(
+            homeLayout.contains(
+                "app:cardCornerRadius=\"@dimen/home_workspace_primary_status_corner_radius\""
+            )
+        );
+        assertTrue(homeLayout.contains("android:id=\"@+id/home_update_action_card\""));
+        assertTrue(homeLayout.contains("app:cardElevation=\"0dp\""));
+        assertTrue(!homeLayout.contains("android:translationZ="));
+        assertTrue(!homeLayout.contains("home_primary_status_foreground_elevation"));
+        assertTrue(homeLayout.contains("android:layout_height=\"@dimen/home_update_action_card_height\""));
+        assertTrue(homeLayout.contains("android:layout_marginTop=\"@dimen/home_update_action_card_hidden_offset_top\""));
+        assertTrue(homeLayout.contains("app:cardBackgroundColor=\"@color/home_update_action_card_container\""));
+        assertTrue(homeLayout.contains("app:strokeColor=\"?attr/colorOutlineVariant\""));
+        assertTrue(homeLayout.contains("android:gravity=\"bottom|center_vertical\""));
+        assertTrue(!homeLayout.contains("android:background=\"@drawable/bg_home_update_drawer\""));
+        assertTrue(!homeLayout.contains("home_update_drawer"));
+        assertTrue(!homeLayout.contains("home_update_card_"));
+        assertTrue(!homeLayout.contains("home_update_foreground_card_elevation"));
+        assertTrue(!homeLayout.contains("android:background=\"?attr/colorOutlineVariant\""));
+        assertTrue(homeLayout.contains("android:layout_height=\"@dimen/home_update_action_card_button_height\""));
+        assertTrue(homeLayout.contains("android:paddingStart=\"@dimen/home_update_action_card_padding_start\""));
+        assertTrue(homeLayout.contains("android:paddingEnd=\"@dimen/home_update_action_card_padding_end\""));
+        assertTrue(homeLayout.contains("android:id=\"@+id/home_update_action_release_notes_button\""));
+        assertTrue(homeLayout.contains("android:id=\"@+id/home_update_action_install_frame\""));
+        assertTrue(homeLayout.contains("android:background=\"@drawable/bg_home_update_action_install_button\""));
+        assertTrue(homeLayout.contains("android:id=\"@+id/home_update_action_install_progress_fill\""));
+        assertTrue(homeLayout.contains("android:background=\"@drawable/bg_home_update_action_install_progress\""));
+        assertTrue(homeLayout.contains("android:id=\"@+id/home_update_action_install_button\""));
+        assertTrue(!homeLayout.contains("android:id=\"@+id/home_update_download_progress\""));
+        assertTrue(homeLayout.contains("style=\"@style/Widget.Dpis.HomeUpdateActionCard.NotesButton\""));
+        assertTrue(homeLayout.contains("style=\"@style/Widget.Dpis.HomeUpdateActionCard.InstallButton\""));
+        assertTrue(homeLayout.contains("android:layout_width=\"wrap_content\""));
+        assertTrue(homeLayout.contains("android:minWidth=\"0dp\""));
+        assertTrue(homeLayout.contains("android:text=\"@string/home_update_action_release_notes\""));
+        assertTrue(homeBinderSource.contains("PrimaryStatusTone.DISABLED"));
+        assertTrue(homeBinderSource.contains("PrimaryStatusTone.ENABLED"));
+        assertTrue(homeBinderSource.contains("PrimaryStatusTone.UPDATE_AVAILABLE"));
+        assertTrue(!homeBinderSource.contains("home_status_checking"));
+        assertTrue(homeBinderSource.contains("state.updateState.showsUpdateActionCard()"));
+        assertTrue(homeBinderSource.contains("installButton.setOnClickListener(downloading"));
+        assertTrue(homeBinderSource.contains("state.actions.installDownloadedUpdate();"));
+        assertTrue(homeBinderSource.contains("R.string.home_update_action_downloading"));
+        assertTrue(homeBinderSource.contains("R.string.home_update_action_install_ready"));
+        assertTrue(!homeBinderSource.contains("installButton.setClickable(false)"));
+        assertTrue(!homeBinderSource.contains("R.id.home_update_download_progress)"));
+        assertTrue(!homeLayout.contains("ic_download_24"));
         assertTrue(
             coordinatorSource.contains(
                 "updateCoordinator.markStartupCheckFinished("
@@ -609,6 +681,8 @@ public class MainActivitySourceSmokeTest {
                 "updateCoordinator.requestDownloadStart("
             )
         );
+        assertTrue(downloadCoordinatorSource.contains("interface HomeDownloadListener"));
+        assertTrue(downloadCoordinatorSource.contains("void startHomeDownload("));
         assertTrue(
             downloadCoordinatorSource.contains(
                 "updateCoordinator.requestDownloadCancel("
@@ -624,25 +698,29 @@ public class MainActivitySourceSmokeTest {
         );
         assertTrue(source.contains("new StartupUpdatePackageHandler(this)"));
         assertTrue(
-            downloadCoordinatorSource.contains(
-                "packageHandler.verifyDownloadedApk("
-            )
+            !downloadCoordinatorSource.contains("verifyDownloadedApk(")
         );
+        assertTrue(
+            !downloadCoordinatorSource.contains("UntrustedUpdateException")
+        );
+        assertTrue(
+            !downloadCoordinatorSource.contains("about_update_download_untrusted")
+        );
+        assertTrue(downloadCoordinatorSource.contains("void onSucceeded(File targetFile)"));
+        assertTrue(source.contains("current.asInstallReady(targetFile)"));
         assertTrue(
             source.contains(
                 "startupUpdatePackageHandler.launchPackageInstaller(targetFile);"
             )
         );
         assertTrue(source.contains("new ReleaseNotesController("));
+        assertTrue(source.contains("ReleaseNotesMarkdownRenderer.render("));
+        assertTrue(!source.contains("ReleaseNotesMarkdownLite.format("));
         assertTrue(
             !source.contains("private void verifyDownloadedApk(File apkFile)")
         );
-        assertTrue(
-            source.contains(
-                "startupUpdateDialogCoordinator().showUpdateAvailableDialog("
-            )
-        );
-        assertTrue(source.contains("manifest.releaseNotes"));
+        assertTrue(!source.contains("updatePromptDialogCoordinator().showUpdateAvailableDialog("));
+        assertTrue(source.contains("current.releaseNotes"));
         assertTrue(source.contains("startStartupUpdateDownload("));
         assertTrue(
             source.contains(
@@ -1180,7 +1258,7 @@ public class MainActivitySourceSmokeTest {
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         int methodStart = source.indexOf("private void applyLandDetailContentInsets");
-        int methodEnd = source.indexOf("private int resolveSearchFabSizePx", methodStart);
+        int methodEnd = source.indexOf("private void focusSearchInputAndShowKeyboard", methodStart);
 
         assertTrue(methodStart >= 0);
         assertTrue(methodEnd > methodStart);

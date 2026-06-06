@@ -11,7 +11,7 @@ import android.view.ViewGroup;
 import androidx.appcompat.widget.AppCompatImageView;
 
 import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.color.MaterialColors;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textview.MaterialTextView;
 
 final class HomeWorkspaceBinder {
@@ -24,6 +24,8 @@ final class HomeWorkspaceBinder {
         final int importedFontCount;
         final int templateCount;
         final RootAccessProbe.Result rootAccess;
+        final HomeUpdateUiState updateState;
+        final Actions actions;
 
         State(boolean serviceConnected,
                 boolean systemHooksEnabled,
@@ -32,7 +34,9 @@ final class HomeWorkspaceBinder {
                 int totalConfiguredAppCount,
                 int importedFontCount,
                 int templateCount,
-                RootAccessProbe.Result rootAccess) {
+                RootAccessProbe.Result rootAccess,
+                HomeUpdateUiState updateState,
+                Actions actions) {
             this.serviceConnected = serviceConnected;
             this.systemHooksEnabled = systemHooksEnabled;
             this.modernFlavor = modernFlavor;
@@ -43,10 +47,65 @@ final class HomeWorkspaceBinder {
             this.rootAccess = rootAccess != null
                     ? rootAccess
                     : RootAccessProbe.Result.unknown();
+            this.updateState = updateState != null
+                    ? updateState
+                    : HomeUpdateUiState.UP_TO_DATE;
+            this.actions = actions != null ? actions : Actions.NO_OP;
         }
     }
 
+    interface Actions {
+        Actions NO_OP = new Actions() {
+            @Override
+            public void retryUpdateCheck() {
+            }
+
+            @Override
+            public void showReleaseNotes() {
+            }
+
+            @Override
+            public void startUpdateDownload() {
+            }
+
+            @Override
+            public void installDownloadedUpdate() {
+            }
+        };
+
+        void retryUpdateCheck();
+
+        void showReleaseNotes();
+
+        void startUpdateDownload();
+
+        void installDownloadedUpdate();
+    }
+
     private final Context context;
+
+    private enum PrimaryStatusTone {
+        DISABLED(
+                R.color.home_status_disabled_container,
+                R.color.home_status_disabled_content
+        ),
+        ENABLED(
+                R.color.home_status_enabled_container,
+                R.color.home_status_enabled_content
+        ),
+        UPDATE_AVAILABLE(
+                R.color.home_status_update_container,
+                R.color.home_status_update_content
+        );
+
+        final int containerColorRes;
+        final int contentColorRes;
+
+        PrimaryStatusTone(int containerColorRes, int contentColorRes) {
+            this.containerColorRes = containerColorRes;
+            this.contentColorRes = contentColorRes;
+        }
+    }
 
     HomeWorkspaceBinder(Context context) {
         this.context = context;
@@ -69,8 +128,9 @@ final class HomeWorkspaceBinder {
         );
         setText(
                 workspaceView.findViewById(R.id.home_primary_status_summary),
-                primaryStatusSummaryRes(state)
+                state.updateState.subtitle(context)
         );
+        bindUpdateActions(workspaceView, state);
         setText(
                 workspaceView.findViewById(R.id.home_configured_apps_value),
                 context.getString(
@@ -144,8 +204,9 @@ final class HomeWorkspaceBinder {
         AppCompatImageView icon = workspaceView.findViewById(
                 R.id.home_primary_status_icon
         );
-        int containerColor = primaryStatusContainerColor(state);
-        int contentColor = primaryStatusContentColor(state);
+        PrimaryStatusTone tone = resolvePrimaryStatusTone(state);
+        int containerColor = context.getColor(tone.containerColorRes);
+        int contentColor = context.getColor(tone.contentColorRes);
         if (card != null) {
             card.setCardBackgroundColor(containerColor);
         }
@@ -164,26 +225,10 @@ final class HomeWorkspaceBinder {
     }
 
     private int primaryStatusTitleRes(State state) {
-        if (state.modernFlavor && !state.serviceConnected) {
-            return R.string.home_workspace_status_service_disconnected;
-        }
         if (!state.systemHooksEnabled) {
-            return R.string.home_workspace_status_hooks_disabled;
+            return R.string.home_workspace_status_enable_in_lsposed;
         }
-        return R.string.home_workspace_status_service_connected;
-    }
-
-    private int primaryStatusSummaryRes(State state) {
-        if (state.modernFlavor && !state.serviceConnected) {
-            return R.string.home_workspace_status_service_disconnected_summary;
-        }
-        if (!state.systemHooksEnabled) {
-            return R.string.home_workspace_status_hooks_disabled_summary;
-        }
-        if (!state.modernFlavor) {
-            return R.string.home_workspace_status_legacy_enabled_summary;
-        }
-        return R.string.home_workspace_status_hooks_enabled;
+        return R.string.home_workspace_status_enabled;
     }
 
     private int primaryStatusIconRes(State state) {
@@ -194,32 +239,136 @@ final class HomeWorkspaceBinder {
         return R.drawable.ic_check_24;
     }
 
-    private int primaryStatusContainerColor(State state) {
-        if (state.modernFlavor && !state.serviceConnected) {
-            return MaterialColors.getColor(
-                    context,
-                    com.google.android.material.R.attr.colorErrorContainer,
-                    context.getColor(R.color.dpis_stop_container)
-            );
+    private PrimaryStatusTone resolvePrimaryStatusTone(State state) {
+        // The primary card color represents module availability plus update availability.
+        // Update-check progress only changes the subtitle, not the card tone.
+        if ((state.modernFlavor && !state.serviceConnected)
+                || !state.systemHooksEnabled) {
+            return PrimaryStatusTone.DISABLED;
         }
-        if (!state.systemHooksEnabled) {
-            return context.getColor(R.color.dpis_warn_container);
+        if (shouldShowUpdateActionCard(state)) {
+            return PrimaryStatusTone.UPDATE_AVAILABLE;
         }
-        return context.getColor(R.color.dpis_success_container);
+        return PrimaryStatusTone.ENABLED;
     }
 
-    private int primaryStatusContentColor(State state) {
-        if (state.modernFlavor && !state.serviceConnected) {
-            return MaterialColors.getColor(
-                    context,
-                    com.google.android.material.R.attr.colorOnErrorContainer,
-                    context.getColor(R.color.dpis_on_stop_container)
-            );
+    private void bindUpdateActions(View workspaceView, State state) {
+        bindRetrySummary(workspaceView, state);
+        bindUpdateActionCard(workspaceView, state);
+        bindReleaseNotesAction(workspaceView, state);
+        bindInstallAction(workspaceView, state);
+    }
+
+    private void bindRetrySummary(View workspaceView, State state) {
+        View summary = workspaceView.findViewById(R.id.home_primary_status_summary);
+        if (summary == null) {
+            return;
         }
-        if (!state.systemHooksEnabled) {
-            return context.getColor(R.color.dpis_on_warn_container);
+        boolean retry = state.updateState.status == HomeUpdateUiState.Status.FAILED;
+        summary.setClickable(retry);
+        summary.setFocusable(retry);
+        summary.setOnClickListener(retry ? v -> state.actions.retryUpdateCheck() : null);
+        if (retry) {
+            TouchFeedbackBinder.bindPressHaptic(summary);
+        } else {
+            summary.setOnTouchListener(null);
         }
-        return context.getColor(R.color.dpis_on_success_container);
+    }
+
+    private void bindUpdateActionCard(View workspaceView, State state) {
+        View actionCard = workspaceView.findViewById(R.id.home_update_action_card);
+        if (actionCard != null) {
+            actionCard.setVisibility(shouldShowUpdateActionCard(state) ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private void bindReleaseNotesAction(View workspaceView, State state) {
+        MaterialButton notesButton = workspaceView.findViewById(
+                R.id.home_update_action_release_notes_button);
+        if (notesButton != null) {
+            TouchFeedbackBinder.bindPressHaptic(notesButton);
+            notesButton.setOnClickListener(v -> state.actions.showReleaseNotes());
+        }
+    }
+
+    private void bindInstallAction(View workspaceView, State state) {
+        MaterialButton installButton = workspaceView.findViewById(
+                R.id.home_update_action_install_button);
+        View installButtonFrame = workspaceView.findViewById(
+                R.id.home_update_action_install_frame);
+        View progressFill = workspaceView.findViewById(
+                R.id.home_update_action_install_progress_fill);
+        boolean downloading = state.updateState.status == HomeUpdateUiState.Status.DOWNLOADING;
+        boolean installReady = state.updateState.status == HomeUpdateUiState.Status.INSTALL_READY;
+        if (installButton != null) {
+            TouchFeedbackBinder.bindPressHaptic(installButton);
+            installButton.setEnabled(!downloading);
+            installButton.setClickable(!downloading);
+            installButton.setFocusable(!downloading);
+            installButton.setText(resolveInstallActionText(state.updateState.status));
+            installButton.setOnClickListener(downloading
+                    ? null
+                    : v -> {
+                        if (installReady) {
+                            state.actions.installDownloadedUpdate();
+                            return;
+                        }
+                        state.actions.startUpdateDownload();
+                    });
+        }
+        if (installButtonFrame != null) {
+            installButtonFrame.setEnabled(!downloading);
+            installButtonFrame.setOnClickListener(null);
+        }
+        if (progressFill != null) {
+            boolean showFill = downloading && state.updateState.downloadProgress > 0;
+            progressFill.setVisibility(showFill ? View.VISIBLE : View.GONE);
+            if (showFill) {
+                View parent = progressFill.getParent() instanceof View
+                        ? (View) progressFill.getParent()
+                        : null;
+                int parentWidth = parent != null ? parent.getWidth() : 0;
+                if (parentWidth > 0) {
+                    bindProgressFillWidth(
+                            progressFill,
+                            parentWidth,
+                            state.updateState.downloadProgress
+                    );
+                } else if (parent != null) {
+                    parent.post(() -> bindProgressFillWidth(
+                            progressFill,
+                            parent.getWidth(),
+                            state.updateState.downloadProgress
+                    ));
+                }
+            }
+        }
+    }
+
+    private static boolean shouldShowUpdateActionCard(State state) {
+        return state.updateState.showsUpdateActionCard();
+    }
+
+    private static int resolveInstallActionText(HomeUpdateUiState.Status status) {
+        return switch (status) {
+            case DOWNLOADING -> R.string.home_update_action_downloading;
+            case INSTALL_READY -> R.string.home_update_action_install_ready;
+            default -> R.string.home_update_action_install;
+        };
+    }
+
+    private static void bindProgressFillWidth(View progressFill,
+            int parentWidth,
+            int progress) {
+        if (progressFill == null || parentWidth <= 0) {
+            return;
+        }
+        int fillWidth = parentWidth * Math.max(0, Math.min(100, progress)) / 100;
+        ViewGroup.LayoutParams params = progressFill.getLayoutParams();
+        if (params != null && params.width != fillWidth) {
+            params.width = fillWidth;
+            progressFill.setLayoutParams(params);
+        }
     }
 
     private void bindInfoRow(View rowView, int labelResId, String value) {
