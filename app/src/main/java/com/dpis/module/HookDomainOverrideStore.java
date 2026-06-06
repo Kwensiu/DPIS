@@ -15,13 +15,7 @@ final class HookDomainOverrideStore {
             return HookDomainOverride.automatic();
         }
         String raw = configStore.getPackageFontHookDomainsRaw(packageName);
-        if (raw == null) {
-            return HookDomainOverride.automatic();
-        }
-        LinkedHashSet<String> known = new LinkedHashSet<>();
-        LinkedHashSet<String> unknown = new LinkedHashSet<>();
-        parseCsv(raw, known, unknown);
-        return new HookDomainOverride(true, known, unknown);
+        return fromRaw(raw);
     }
 
     boolean save(String packageName, Set<String> enabledKnownDomains, Set<String> unknownDomains) {
@@ -38,15 +32,11 @@ final class HookDomainOverrideStore {
                                                Set<String> enabledKnownDomains,
                                                Set<String> automaticKnownDomains,
                                                Set<String> unknownDomains) {
-        LinkedHashSet<String> normalizedSaved = new LinkedHashSet<>(
-                FontHookDomainRegistry.orderedCustomizableSubset(enabledKnownDomains));
-        LinkedHashSet<String> normalizedAuto = new LinkedHashSet<>(
-                FontHookDomainRegistry.orderedCustomizableSubset(automaticKnownDomains));
-        if (normalizedSaved.equals(normalizedAuto)
-                && (unknownDomains == null || unknownDomains.isEmpty())) {
+        String raw = rawValueForSelection(enabledKnownDomains, automaticKnownDomains, unknownDomains);
+        if (raw == null) {
             return restoreRecommended(packageName);
         }
-        return save(packageName, normalizedSaved, unknownDomains);
+        return save(packageName, enabledKnownDomains, unknownDomains);
     }
 
     boolean restoreRecommended(String packageName) {
@@ -54,6 +44,30 @@ final class HookDomainOverrideStore {
             return false;
         }
         return configStore.clearPackageFontHookDomainsRaw(packageName);
+    }
+
+    static HookDomainOverride fromRaw(String raw) {
+        if (raw == null) {
+            return HookDomainOverride.automatic();
+        }
+        LinkedHashSet<String> known = new LinkedHashSet<>();
+        LinkedHashSet<String> unknown = new LinkedHashSet<>();
+        parseCsv(raw, known, unknown);
+        return new HookDomainOverride(true, known, unknown);
+    }
+
+    static String rawValueForSelection(Set<String> enabledKnownDomains,
+            Set<String> automaticKnownDomains,
+            Set<String> unknownDomains) {
+        LinkedHashSet<String> normalizedSaved = new LinkedHashSet<>(
+                FontHookDomainRegistry.orderedCustomizableSubset(enabledKnownDomains));
+        LinkedHashSet<String> normalizedAuto = new LinkedHashSet<>(
+                FontHookDomainRegistry.orderedCustomizableSubset(automaticKnownDomains));
+        if (normalizedSaved.equals(normalizedAuto)
+                && (unknownDomains == null || unknownDomains.isEmpty())) {
+            return null;
+        }
+        return formatCsv(normalizedSaved, unknownDomains);
     }
 
     private static void parseCsv(String raw, Set<String> known, Set<String> unknown) {
@@ -74,7 +88,7 @@ final class HookDomainOverrideStore {
         }
     }
 
-    private static String formatCsv(Set<String> enabledKnownDomains, Set<String> unknownDomains) {
+    static String formatCsv(Set<String> enabledKnownDomains, Set<String> unknownDomains) {
         LinkedHashSet<String> ordered = new LinkedHashSet<>(
                 FontHookDomainRegistry.orderedKnownSubset(enabledKnownDomains));
         if (unknownDomains != null) {

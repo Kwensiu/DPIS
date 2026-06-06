@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Landscape detail pane - wide screen optimizations (>= 720dp width) -->
+    <!-- Keep dock compact on large screens for easier thumb reach -->
+    <dimen name="land_app_detail_dock_margin_horizontal">32dp</dimen>
+    <dimen name="land_app_detail_dock_max_width">600dp</dimen>
+
+    <!-- Increase horizontal padding on wide screens -->
+    <dimen name="land_app_detail_padding_horizontal">32dp</dimen>
+
+    <!-- Slightly larger touch targets on tablets -->
+    <dimen name="land_app_detail_dock_button_height">52dp</dimen>
+</resources>

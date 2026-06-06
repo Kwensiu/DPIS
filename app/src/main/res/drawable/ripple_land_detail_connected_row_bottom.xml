@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/colorControlHighlight">
+    <item android:id="@android:id/mask">
+        <shape>
+            <corners
+                android:topLeftRadius="@dimen/land_app_detail_connected_row_inner_radius"
+                android:topRightRadius="@dimen/land_app_detail_connected_row_inner_radius"
+                android:bottomLeftRadius="@dimen/land_app_detail_card_corner_radius"
+                android:bottomRightRadius="@dimen/land_app_detail_card_corner_radius" />
+            <solid android:color="@android:color/white" />
+        </shape>
+    </item>
+</ripple>

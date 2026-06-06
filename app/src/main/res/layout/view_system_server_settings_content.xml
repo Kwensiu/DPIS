@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1">
+
+    <LinearLayout
+        android:id="@+id/settings_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/settings_content_padding_horizontal"
+        android:paddingEnd="@dimen/settings_content_padding_horizontal"
+        android:paddingBottom="@dimen/settings_content_padding_bottom">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/settings_section_inset_start"
+            android:layout_marginTop="@dimen/settings_section_spacing_top"
+            android:text="@string/system_settings_section_general"
+            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+            android:textStyle="bold" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/settings_primary_switch_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/settings_card_spacing_top"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+            app:cardCornerRadius="@dimen/page_card_corner_radius"
+            app:strokeColor="?attr/colorOutlineVariant"
+            app:strokeWidth="@dimen/page_card_stroke_width">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <include
+                    android:id="@+id/row_system_hooks"
+                    layout="@layout/item_settings_switch" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/settings_divider_margin_horizontal"
+                    android:layout_marginEnd="@dimen/settings_divider_margin_horizontal" />
+
+                <include
+                    android:id="@+id/row_safe_mode"
+                    layout="@layout/item_settings_switch" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/settings_divider_margin_horizontal"
+                    android:layout_marginEnd="@dimen/settings_divider_margin_horizontal" />
+
+                <include
+                    android:id="@+id/row_global_log"
+                    layout="@layout/item_settings_switch" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/settings_divider_margin_horizontal"
+                    android:layout_marginEnd="@dimen/settings_divider_margin_horizontal" />
+
+                <include
+                    android:id="@+id/row_font_debug_overlay"
+                    layout="@layout/item_settings_entry" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/settings_divider_margin_horizontal"
+                    android:layout_marginEnd="@dimen/settings_divider_margin_horizontal" />
+
+                <include
+                    android:id="@+id/row_font_library"
+                    layout="@layout/item_settings_entry" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/settings_divider_margin_horizontal"
+                    android:layout_marginEnd="@dimen/settings_divider_margin_horizontal" />
+
+                <include
+                    android:id="@+id/row_experimental_settings"
+                    layout="@layout/item_settings_entry" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/settings_section_inset_start"
+            android:layout_marginTop="@dimen/settings_section_spacing_top"
+            android:text="@string/settings_section_theme"
+            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+            android:textStyle="bold" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/settings_card_spacing_top"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+            app:cardCornerRadius="@dimen/page_card_corner_radius"
+            app:strokeColor="?attr/colorOutlineVariant"
+            app:strokeWidth="@dimen/page_card_stroke_width">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <include
+                    android:id="@+id/row_interface_scale"
+                    layout="@layout/item_settings_slider" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/settings_section_inset_start"
+            android:layout_marginTop="@dimen/settings_section_spacing_top"
+            android:text="@string/settings_section_other"
+            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+            android:textStyle="bold" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/settings_card_spacing_top"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+            app:cardCornerRadius="@dimen/page_card_corner_radius"
+            app:strokeColor="?attr/colorOutlineVariant"
+            app:strokeWidth="@dimen/page_card_stroke_width">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <include
+                    android:id="@+id/row_about"
+                    layout="@layout/item_settings_entry" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/settings_divider_margin_horizontal"
+                    android:layout_marginEnd="@dimen/settings_divider_margin_horizontal" />
+
+                <include
+                    android:id="@+id/row_config_backup"
+                    layout="@layout/item_settings_entry" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/settings_divider_margin_horizontal"
+                    android:layout_marginEnd="@dimen/settings_divider_margin_horizontal" />
+
+                <include
+                    android:id="@+id/row_language"
+                    layout="@layout/item_settings_entry" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/settings_divider_margin_horizontal"
+                    android:layout_marginEnd="@dimen/settings_divider_margin_horizontal" />
+
+                <include
+                    android:id="@+id/row_clear_cache"
+                    layout="@layout/item_settings_entry" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/settings_divider_margin_horizontal"
+                    android:layout_marginEnd="@dimen/settings_divider_margin_horizontal" />
+
+                <include
+                    android:id="@+id/row_hide_launcher_icon"
+                    layout="@layout/item_settings_switch" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+</ScrollView>

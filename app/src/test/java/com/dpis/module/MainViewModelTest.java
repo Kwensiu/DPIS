@@ -89,6 +89,34 @@ public class MainViewModelTest {
     }
 
     @Test
+    public void workspaceMode_changesWithoutClearingAppSearchFilterOrPagerData() {
+        List<AppListItem> source = List.of(
+                app("Alpha Tool", "com.example.alpha", true, false),
+                app("Beta Tool", "com.example.beta", true, false));
+        MainUiState initial = MainUiState.initial("alpha",
+                new AppListFilterState(false, true, false, false),
+                source,
+                Collections.emptySet());
+        MainViewModel viewModel = new MainViewModel(initial);
+
+        viewModel.dispatch(MainUiAction.workspaceModeChanged(MainWorkspaceMode.TEMPLATE));
+        MainUiState templateState = viewModel.getState();
+
+        assertEquals(MainWorkspaceMode.TEMPLATE, templateState.workspaceMode);
+        assertEquals("alpha", templateState.query);
+        assertTrue(templateState.filterState.injectedOnly);
+        assertEquals(1, templateState.visibleItems(AppListPage.ALL_APPS).size());
+
+        viewModel.dispatch(MainUiAction.workspaceModeChanged(MainWorkspaceMode.APP));
+        MainUiState appState = viewModel.getState();
+
+        assertEquals(MainWorkspaceMode.APP, appState.workspaceMode);
+        assertEquals("alpha", appState.query);
+        assertTrue(appState.filterState.injectedOnly);
+        assertEquals("com.example.alpha", appState.visibleItems(AppListPage.ALL_APPS).get(0).packageName);
+    }
+
+    @Test
     public void pageRefresh_setsRefreshingStateUntilLoadSettles() {
         MainViewModel viewModel = new MainViewModel(emptyState());
 

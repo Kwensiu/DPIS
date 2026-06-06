@@ -14,27 +14,43 @@ public class StartupUpdateCheckCoordinatorTest {
             UpdateCoordinator.DEFAULT_FAILURE_RETRY_INTERVAL_MS;
 
     @Test
-    public void blocksInsideSuccessfulCheckInterval() {
+    public void startupCheckRunsInsideSuccessfulCheckInterval() {
         long lastCheck = 1000L;
         long now = lastCheck + SUCCESS_INTERVAL - 1;
         FakeHost host = hostWithState(lastCheck, false, 0, false);
-        StartupUpdateCheckCoordinator coordinator = buildCoordinator(host, now, null);
+        host.localVersionCode = 2;
+        host.localVersionName = "2.0.0";
+        StartupUpdateManifest remoteManifest = new StartupUpdateManifest("2.0.0", 2, "", "", "");
+        StartupUpdateCheckCoordinator coordinator = buildCoordinator(host, now, remoteManifest);
 
         coordinator.maybeCheckForUpdatesOnStartup();
+        runBackground(host);
 
-        assertEquals(0, host.backgroundExecutionCount);
+        assertEquals(1, host.backgroundExecutionCount);
+        assertEquals(1, host.checkingCount);
+        assertEquals(1, host.upToDateCount);
+        assertFalse(host.state.lastUpdateCheckFailed);
+        assertEquals(now, host.state.lastUpdateCheckTimestampMs);
     }
 
     @Test
-    public void blocksInsideFailureRetryInterval() {
+    public void startupCheckRunsInsideFailureRetryInterval() {
         long lastCheck = 1000L;
         long now = lastCheck + FAILURE_INTERVAL - 1;
         FakeHost host = hostWithState(lastCheck, true, 0, false);
-        StartupUpdateCheckCoordinator coordinator = buildCoordinator(host, now, null);
+        host.localVersionCode = 2;
+        host.localVersionName = "2.0.0";
+        StartupUpdateManifest remoteManifest = new StartupUpdateManifest("2.0.0", 2, "", "", "");
+        StartupUpdateCheckCoordinator coordinator = buildCoordinator(host, now, remoteManifest);
 
         coordinator.maybeCheckForUpdatesOnStartup();
+        runBackground(host);
 
-        assertEquals(0, host.backgroundExecutionCount);
+        assertEquals(1, host.backgroundExecutionCount);
+        assertEquals(1, host.checkingCount);
+        assertEquals(1, host.upToDateCount);
+        assertFalse(host.state.lastUpdateCheckFailed);
+        assertEquals(now, host.state.lastUpdateCheckTimestampMs);
     }
 
     @Test
@@ -48,7 +64,7 @@ public class StartupUpdateCheckCoordinatorTest {
     }
 
     @Test
-    public void allowedSuccess_marksFinishedAndPrompts() {
+    public void allowedSuccess_marksFinishedAndPublishesAvailableUpdate() {
         long now = SUCCESS_INTERVAL + 1;
         FakeHost host = hostWithState(0L, false, 0, false);
         host.localVersionCode = 1;
@@ -62,7 +78,9 @@ public class StartupUpdateCheckCoordinatorTest {
         assertFalse(host.state.startupCheckInProgress);
         assertFalse(host.state.lastUpdateCheckFailed);
         assertEquals(now, host.state.lastUpdateCheckTimestampMs);
-        assertEquals(1, host.dialogLaunchCount);
+        assertEquals(1, host.checkingCount);
+        assertEquals(1, host.availableCount);
+        assertEquals(remoteManifest, host.availableManifest);
     }
 
     @Test
@@ -77,7 +95,8 @@ public class StartupUpdateCheckCoordinatorTest {
         assertFalse(host.state.startupCheckInProgress);
         assertTrue(host.state.lastUpdateCheckFailed);
         assertEquals(now, host.state.lastUpdateCheckTimestampMs);
-        assertEquals(0, host.dialogLaunchCount);
+        assertEquals(1, host.checkingCount);
+        assertEquals(1, host.failedCount);
     }
 
     @Test
@@ -95,7 +114,8 @@ public class StartupUpdateCheckCoordinatorTest {
         assertFalse(host.state.startupCheckInProgress);
         assertFalse(host.state.lastUpdateCheckFailed);
         assertEquals(now, host.state.lastUpdateCheckTimestampMs);
-        assertEquals(0, host.dialogLaunchCount);
+        assertEquals(1, host.checkingCount);
+        assertEquals(1, host.upToDateCount);
     }
 
     @Test
@@ -135,7 +155,11 @@ public class StartupUpdateCheckCoordinatorTest {
     private static final class FakeHost implements StartupUpdateCheckCoordinator.Host {
         UpdateCoordinator.State state;
         int backgroundExecutionCount;
-        int dialogLaunchCount;
+        int checkingCount;
+        int availableCount;
+        int upToDateCount;
+        int failedCount;
+        StartupUpdateManifest availableManifest;
         Runnable lastBackgroundRunnable;
         boolean alive = true;
         int localVersionCode = 1;
@@ -161,8 +185,25 @@ public class StartupUpdateCheckCoordinatorTest {
         @Override public String getLocalVersionName() { return localVersionName; }
 
         @Override
-        public void launchStartupUpdateDialog(StartupUpdateManifest manifest) {
-            dialogLaunchCount++;
+        public void onStartupUpdateCheckStarted() {
+            checkingCount++;
         }
+
+        @Override
+        public void onStartupUpdateAvailable(StartupUpdateManifest manifest) {
+            availableCount++;
+            availableManifest = manifest;
+        }
+
+        @Override
+        public void onStartupUpdateUpToDate() {
+            upToDateCount++;
+        }
+
+        @Override
+        public void onStartupUpdateCheckFailed() {
+            failedCount++;
+        }
+
     }
 }

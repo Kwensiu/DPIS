@@ -2,11 +2,14 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="wrap_content" android:clipChildren="false" android:clipToPadding="false">
 
-    <androidx.core.widget.NestedScrollView android:layout_width="match_parent" android:layout_height="wrap_content" android:fillViewport="true">
+    <androidx.core.widget.NestedScrollView android:id="@+id/dialog_app_config_scroll" android:layout_width="match_parent" android:layout_height="wrap_content" android:fillViewport="true">
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingStart="@dimen/dialog_app_config_padding_horizontal" android:paddingTop="@dimen/dialog_app_config_padding_top" android:paddingEnd="@dimen/dialog_app_config_padding_horizontal" android:paddingBottom="@dimen/dialog_app_config_padding_bottom">
 
-        <View android:id="@+id/dialog_drag_handle" android:layout_width="@dimen/dialog_app_config_drag_handle_width" android:layout_height="@dimen/dialog_app_config_drag_handle_height" android:layout_gravity="center_horizontal" android:background="@drawable/bg_dialog_drag_handle" />
+        <FrameLayout android:id="@+id/sheet_unsaved_badge_container" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:minHeight="@dimen/sheet_unsaved_badge_min_height">
+
+            <include layout="@layout/view_sheet_unsaved_badge_handle" />
+        </FrameLayout>
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dialog_app_config_header_spacing_top" android:gravity="center_vertical" android:minHeight="@dimen/dialog_app_config_header_min_height" android:orientation="horizontal">
 
@@ -18,7 +21,12 @@
 
                 <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_package" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dialog_app_config_package_spacing_top" android:ellipsize="middle" android:maxLines="1" android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
-                <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dialog_app_config_status_spacing_top" android:maxLines="1" android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dialog_app_config_status_spacing_top" android:gravity="center_vertical" android:orientation="horizontal">
+
+                    <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_status" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:ellipsize="end" android:maxLines="1" android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+
+                    <com.google.android.material.textview.MaterialTextView android:id="@+id/sheet_unsaved_inline_badge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="@dimen/sheet_unsaved_inline_badge_spacing_start" android:background="@drawable/bg_sheet_unsaved_badge" android:gravity="center" android:includeFontPadding="false" android:minHeight="@dimen/sheet_unsaved_inline_badge_min_height" android:paddingStart="@dimen/sheet_unsaved_inline_badge_padding_horizontal" android:paddingTop="@dimen/sheet_unsaved_inline_badge_padding_vertical" android:paddingEnd="@dimen/sheet_unsaved_inline_badge_padding_horizontal" android:paddingBottom="@dimen/sheet_unsaved_inline_badge_padding_vertical" android:text="@string/sheet_unsaved_badge" android:textAppearance="@style/TextAppearance.Material3.LabelSmall" android:textColor="?attr/colorOnPrimaryContainer" android:visibility="gone" />
+                </LinearLayout>
 
             </LinearLayout>
         </LinearLayout>
@@ -33,7 +41,7 @@
                 </com.google.android.material.textfield.TextInputLayout>
             </FrameLayout>
 
-            <FrameLayout android:id="@+id/dialog_viewport_mode_toggle_button" android:layout_width="@dimen/dialog_mode_toggle_width" android:layout_height="match_parent" android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start" android:clickable="true" android:focusable="true">
+            <FrameLayout android:id="@+id/dialog_viewport_mode_toggle_button" android:layout_width="@dimen/dialog_mode_toggle_width" android:layout_height="match_parent" android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start" android:clickable="true" android:contentDescription="@string/dialog_viewport_mode_toggle_description" android:focusable="true">
 
                 <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginTop="@dimen/dialog_mode_toggle_content_offset_top" android:background="@drawable/bg_mode_toggle_track">
 
@@ -59,7 +67,7 @@
                 </com.google.android.material.textfield.TextInputLayout>
             </FrameLayout>
 
-            <FrameLayout android:id="@+id/dialog_font_mode_toggle_button" android:layout_width="@dimen/dialog_mode_toggle_width" android:layout_height="match_parent" android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start" android:clickable="true" android:focusable="true">
+            <FrameLayout android:id="@+id/dialog_font_mode_toggle_button" android:layout_width="@dimen/dialog_mode_toggle_width" android:layout_height="match_parent" android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start" android:clickable="true" android:contentDescription="@string/dialog_font_mode_toggle_description" android:focusable="true">
 
                 <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginTop="@dimen/dialog_mode_toggle_content_offset_top" android:background="@drawable/bg_mode_toggle_track">
 

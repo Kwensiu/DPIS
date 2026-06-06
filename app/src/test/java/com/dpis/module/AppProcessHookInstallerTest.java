@@ -3,9 +3,6 @@ package com.dpis.module;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -482,15 +479,10 @@ public class AppProcessHookInstallerTest {
     }
 
     private static String readSource(String relativePath) throws Exception {
-        java.nio.file.Path path = java.nio.file.Paths.get(relativePath);
-        if (!java.nio.file.Files.exists(path)) {
-            path = java.nio.file.Paths.get("app", relativePath);
-        }
-        return new String(java.nio.file.Files.readAllBytes(path),
-                java.nio.charset.StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
     }
 
     private static String read(String relativePath) throws IOException {
-        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
     }
 }

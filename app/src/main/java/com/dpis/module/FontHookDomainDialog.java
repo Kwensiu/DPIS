@@ -129,6 +129,7 @@ final class FontHookDomainDialog {
                 .setView(view)
                 .create();
         dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialog, activity);
     }
 
     private static void bindTabs(TabLayout tabs, View interfacePage, View fontPage) {

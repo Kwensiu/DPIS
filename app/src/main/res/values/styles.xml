@@ -1,36 +1,49 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
 
     <style name="Theme.Dpis" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item
+            name="android:navigationBarColor"
+        >@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
 
-    <style name="Theme.Dpis.Ingest" parent="android:style/Theme.Translucent.NoTitleBar">
+    <style
+        name="Theme.Dpis.Ingest"
+        parent="android:style/Theme.Translucent.NoTitleBar"
+    >
         <item name="android:windowNoDisplay">true</item>
         <item name="android:windowDisablePreview">true</item>
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowAnimationStyle">@null</item>
     </style>
 
-    <style name="Widget.Dpis.TextInputLayout.OutlinedBox.Compact"
-        parent="Widget.Material3.TextInputLayout.OutlinedBox">
+    <style
+        name="Widget.Dpis.TextInputLayout.OutlinedBox.Compact"
+        parent="Widget.Material3.TextInputLayout.OutlinedBox"
+    >
         <item name="boxCollapsedPaddingTop">0dp</item>
     </style>
 
-    <style name="Widget.Dpis.DialogActionButton.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+    <style
+        name="Widget.Dpis.DialogActionButton.Outlined"
+        parent="Widget.Material3.Button.OutlinedButton"
+    >
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
         <item name="cornerRadius">@dimen/dialog_button_corner_radius</item>
     </style>
 
-    <style name="Widget.Dpis.DialogIconButton.Outlined" parent="Widget.Dpis.DialogActionButton.Outlined">
+    <style
+        name="Widget.Dpis.DialogIconButton.Outlined"
+        parent="Widget.Dpis.DialogActionButton.Outlined"
+    >
         <item name="android:minWidth">0dp</item>
         <item name="android:minHeight">0dp</item>
         <item name="minWidth">0dp</item>
         <item name="minHeight">0dp</item>
-        <item name="backgroundTint">?attr/colorSecondaryContainer</item>
+        <item name="backgroundTint">@android:color/transparent</item>
         <item name="android:textColor">?attr/colorOnSecondaryContainer</item>
         <item name="iconTint">?attr/colorOnSecondaryContainer</item>
         <item name="strokeColor">?attr/colorOutlineVariant</item>
@@ -40,43 +53,55 @@
         <item name="android:stateListAnimator">@null</item>
     </style>
 
-    <style name="Widget.Dpis.DialogActionButton.Outlined.Error"
-        parent="Widget.Dpis.DialogActionButton.Outlined">
+    <style
+        name="Widget.Dpis.DialogActionButton.Outlined.Error"
+        parent="Widget.Dpis.DialogActionButton.Outlined"
+    >
         <item name="backgroundTint">@color/dpis_stop_container</item>
         <item name="android:textColor">@color/dpis_on_stop_container</item>
         <item name="strokeColor">@color/dpis_stop_container</item>
     </style>
 
-    <style name="Widget.Dpis.DialogActionButton.Outlined.Warn"
-        parent="Widget.Dpis.DialogActionButton.Outlined">
+    <style
+        name="Widget.Dpis.DialogActionButton.Outlined.Warn"
+        parent="Widget.Dpis.DialogActionButton.Outlined"
+    >
         <item name="backgroundTint">@color/dpis_warn_container</item>
         <item name="android:textColor">@color/dpis_on_warn_container</item>
         <item name="strokeColor">@color/dpis_warn_container</item>
     </style>
 
-    <style name="Widget.Dpis.DialogActionButton.Outlined.WarnOutline"
-        parent="Widget.Dpis.DialogActionButton.Outlined">
+    <style
+        name="Widget.Dpis.DialogActionButton.Outlined.WarnOutline"
+        parent="Widget.Dpis.DialogActionButton.Outlined"
+    >
         <item name="backgroundTint">@android:color/transparent</item>
         <item name="android:textColor">@color/dpis_on_warn_container</item>
         <item name="strokeColor">@color/dpis_warn_container</item>
     </style>
 
-    <style name="Widget.Dpis.DialogActionButton.Outlined.WarnBg"
-        parent="Widget.Dpis.DialogActionButton.Outlined">
+    <style
+        name="Widget.Dpis.DialogActionButton.Outlined.WarnBg"
+        parent="Widget.Dpis.DialogActionButton.Outlined"
+    >
         <item name="strokeColor">#20F0A020</item>
         <item name="backgroundTint">@color/dpis_warn_container</item>
         <item name="android:textColor">@color/dpis_on_warn_container</item>
     </style>
 
-    <style name="Widget.Dpis.DialogActionButton.Outlined.Success"
-        parent="Widget.Dpis.DialogActionButton.Outlined">
+    <style
+        name="Widget.Dpis.DialogActionButton.Outlined.Success"
+        parent="Widget.Dpis.DialogActionButton.Outlined"
+    >
         <item name="backgroundTint">@color/dpis_success_container</item>
         <item name="android:textColor">@color/dpis_on_success_container</item>
         <item name="strokeColor">@color/dpis_success_container</item>
     </style>
 
-    <style name="Widget.Dpis.DialogActionButton.Process"
-        parent="Widget.Dpis.DialogActionButton.Outlined">
+    <style
+        name="Widget.Dpis.DialogActionButton.Process"
+        parent="Widget.Dpis.DialogActionButton.Outlined"
+    >
         <item name="android:minWidth">0dp</item>
         <item name="minWidth">0dp</item>
         <item name="android:paddingStart">4dp</item>
@@ -91,60 +116,268 @@
         <item name="android:letterSpacing">0</item>
     </style>
 
-    <style name="Widget.Dpis.DialogActionButton.Process.Error"
-        parent="Widget.Dpis.DialogActionButton.Process">
+    <style
+        name="Widget.Dpis.DialogActionButton.Process.Error"
+        parent="Widget.Dpis.DialogActionButton.Process"
+    >
         <item name="backgroundTint">@color/dpis_stop_container</item>
         <item name="android:textColor">@color/dpis_on_stop_container</item>
         <item name="strokeColor">@color/dpis_stop_container</item>
     </style>
 
-    <style name="Widget.Dpis.DialogActionButton.Process.Warn"
-        parent="Widget.Dpis.DialogActionButton.Process">
+    <style
+        name="Widget.Dpis.DialogActionButton.Process.Warn"
+        parent="Widget.Dpis.DialogActionButton.Process"
+    >
         <item name="backgroundTint">@color/dpis_warn_container</item>
         <item name="android:textColor">@color/dpis_on_warn_container</item>
         <item name="strokeColor">@color/dpis_warn_container</item>
     </style>
 
-    <style name="Widget.Dpis.DialogActionButton.Process.Success"
-        parent="Widget.Dpis.DialogActionButton.Process">
+    <style
+        name="Widget.Dpis.DialogActionButton.Process.Success"
+        parent="Widget.Dpis.DialogActionButton.Process"
+    >
         <item name="backgroundTint">@color/dpis_success_container</item>
         <item name="android:textColor">@color/dpis_on_success_container</item>
         <item name="strokeColor">@color/dpis_success_container</item>
     </style>
 
-    <style name="Widget.Dpis.DialogActionButton.Filled" parent="Widget.Material3.Button">
+    <style
+        name="Widget.Dpis.DialogActionButton.Filled"
+        parent="Widget.Material3.Button"
+    >
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
         <item name="cornerRadius">@dimen/dialog_button_corner_radius</item>
     </style>
 
-    <style name="Widget.Dpis.DialogActionButton.LanguageOption"
-        parent="Widget.Material3.Button">
-        <item name="android:minHeight">@dimen/dialog_option_button_min_height</item>
+    <style
+        name="Widget.Dpis.HomeUpdateActionCard.NotesButton"
+        parent="Widget.Material3.Button.TextButton"
+    >
+        <item name="android:minWidth">0dp</item>
+        <item name="minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="minHeight">0dp</item>
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
-        <item name="android:paddingStart">@dimen/dialog_option_button_padding_horizontal</item>
-        <item name="android:paddingEnd">@dimen/dialog_option_button_padding_horizontal</item>
+        <item name="android:paddingStart">@dimen/home_update_action_card_notes_padding_horizontal</item>
+        <item name="android:paddingEnd">@dimen/home_update_action_card_notes_padding_horizontal</item>
+        <item name="android:textColor">@color/home_update_action_card_notes_text</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <style
+        name="Widget.Dpis.HomeUpdateActionCard.InstallButton"
+        parent="Widget.Material3.Button"
+    >
+        <item name="android:minWidth">0dp</item>
+        <item name="minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="minHeight">0dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:paddingStart">@dimen/home_update_action_card_install_padding_horizontal</item>
+        <item name="android:paddingEnd">@dimen/home_update_action_card_install_padding_horizontal</item>
+        <item name="backgroundTint">@android:color/transparent</item>
+        <item name="android:textColor">@color/home_update_action_card_install_text</item>
+        <item name="strokeColor">@android:color/transparent</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <style
+        name="Widget.Dpis.TemplateWorkspace.ApplyButton"
+        parent="Widget.Dpis.DialogActionButton.Filled"
+    >
+        <item
+            name="cornerRadius"
+        >@dimen/template_workspace_action_button_height</item>
+        <item
+            name="android:paddingStart"
+        >@dimen/template_workspace_apply_button_padding_horizontal</item>
+        <item
+            name="android:paddingEnd"
+        >@dimen/template_workspace_apply_button_padding_horizontal</item>
+    </style>
+
+    <style
+        name="Widget.Dpis.DialogActionButton.LanguageOption"
+        parent="Widget.Material3.Button"
+    >
+        <item
+            name="android:minHeight"
+        >@dimen/dialog_option_button_min_height</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item
+            name="android:paddingStart"
+        >@dimen/dialog_option_button_padding_horizontal</item>
+        <item
+            name="android:paddingEnd"
+        >@dimen/dialog_option_button_padding_horizontal</item>
         <item name="android:gravity">center_vertical|start</item>
         <item name="android:textAlignment">viewStart</item>
-        <item name="cornerRadius">@dimen/dialog_option_button_corner_radius</item>
+        <item
+            name="cornerRadius"
+        >@dimen/dialog_option_button_corner_radius</item>
         <item name="elevation">0dp</item>
         <item name="android:stateListAnimator">@null</item>
         <item name="rippleColor">?attr/colorControlHighlight</item>
     </style>
 
-    <style name="Widget.Dpis.DialogActionButton.LanguageOption.Default"
-        parent="Widget.Dpis.DialogActionButton.LanguageOption">
+    <style
+        name="Widget.Dpis.DialogActionButton.LanguageOption.Default"
+        parent="Widget.Dpis.DialogActionButton.LanguageOption"
+    >
         <item name="backgroundTint">@android:color/transparent</item>
         <item name="android:textColor">?attr/colorOnSurface</item>
     </style>
 
-    <style name="Widget.Dpis.DialogActionButton.TypefaceOption"
-        parent="Widget.Dpis.DialogActionButton.LanguageOption">
-        <item name="android:minHeight">@dimen/dialog_typeface_option_min_height</item>
-        <item name="android:paddingStart">@dimen/dialog_typeface_option_padding_horizontal</item>
-        <item name="android:paddingEnd">@dimen/dialog_typeface_option_padding_horizontal</item>
-        <item name="cornerRadius">@dimen/dialog_typeface_option_corner_radius</item>
+    <style
+        name="Widget.Dpis.DialogActionButton.TypefaceOption"
+        parent="Widget.Dpis.DialogActionButton.LanguageOption"
+    >
+        <item
+            name="android:minHeight"
+        >@dimen/dialog_typeface_option_min_height</item>
+        <item
+            name="android:paddingStart"
+        >@dimen/dialog_typeface_option_padding_horizontal</item>
+        <item
+            name="android:paddingEnd"
+        >@dimen/dialog_typeface_option_padding_horizontal</item>
+        <item
+            name="cornerRadius"
+        >@dimen/dialog_typeface_option_corner_radius</item>
+    </style>
+
+    <style name="Widget.Dpis.LandDetailRow" parent="@android:style/Widget">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item
+            name="android:minHeight"
+        >@dimen/land_app_detail_list_item_min_height</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item
+            name="android:paddingStart"
+        >@dimen/land_app_detail_list_item_padding_horizontal</item>
+        <item
+            name="android:paddingEnd"
+        >@dimen/land_app_detail_list_item_padding_horizontal</item>
+        <item
+            name="android:paddingTop"
+        >@dimen/land_app_detail_list_item_padding_vertical</item>
+        <item
+            name="android:paddingBottom"
+        >@dimen/land_app_detail_list_item_padding_vertical</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <style
+        name="Widget.Dpis.LandDetailRowLabel"
+        parent="@android:style/Widget.TextView"
+    >
+        <item
+            name="android:layout_width"
+        >@dimen/land_app_detail_list_item_label_width</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item
+            name="android:textAppearance"
+        >@style/TextAppearance.Material3.BodyMedium</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style
+        name="Widget.Dpis.LandDetailRowValue"
+        parent="@android:style/Widget.TextView"
+    >
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:gravity">end</item>
+        <item
+            name="android:textAppearance"
+        >@style/TextAppearance.Material3.BodyMedium</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <style
+        name="Widget.Dpis.LandDetailRowChevron"
+        parent="@android:style/Widget"
+    >
+        <item
+            name="android:layout_width"
+        >@dimen/land_app_detail_chevron_size</item>
+        <item
+            name="android:layout_height"
+        >@dimen/land_app_detail_chevron_size</item>
+        <item
+            name="android:layout_marginStart"
+        >@dimen/land_app_detail_chevron_spacing_start</item>
+        <item name="android:src">@drawable/ic_chevron_right_24</item>
+        <item name="android:tint">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <style name="Widget.Dpis.LandDetailEditor" parent="@android:style/Widget">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item
+            name="android:minHeight"
+        >@dimen/land_app_detail_editor_min_height</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item
+            name="android:paddingStart"
+        >@dimen/land_app_detail_list_item_padding_horizontal</item>
+        <item
+            name="android:paddingEnd"
+        >@dimen/land_app_detail_list_item_padding_horizontal</item>
+        <item
+            name="android:paddingTop"
+        >@dimen/land_app_detail_list_item_padding_vertical</item>
+        <item
+         name="android:paddingBottom"
+        >@dimen/land_app_detail_list_item_padding_vertical</item>
+    </style>
+
+    <style
+        name="Widget.Dpis.LandDetailProcessCapsuleButton"
+        parent="Widget.Material3.Button.TextButton"
+    >
+        <item name="android:minWidth">0dp</item>
+        <item name="minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="minHeight">0dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="backgroundTint">@android:color/transparent</item>
+        <item name="iconTint">@android:color/transparent</item>
+        <item name="strokeColor">@android:color/transparent</item>
+        <item name="rippleColor">?attr/colorControlHighlight</item>
     </style>
 
 </resources>

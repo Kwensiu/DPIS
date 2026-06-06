@@ -26,6 +26,10 @@ abstract class MainUiAction {
         return new MarkPageRefreshing(page);
     }
 
+    static MainUiAction workspaceModeChanged(MainWorkspaceMode workspaceMode) {
+        return new WorkspaceModeChanged(workspaceMode);
+    }
+
     static final class QueryChanged extends MainUiAction {
         final String query;
 
@@ -65,6 +69,14 @@ abstract class MainUiAction {
 
         MarkPageRefreshing(AppListPage page) {
             this.page = page;
+        }
+    }
+
+    static final class WorkspaceModeChanged extends MainUiAction {
+        final MainWorkspaceMode workspaceMode;
+
+        WorkspaceModeChanged(MainWorkspaceMode workspaceMode) {
+            this.workspaceMode = workspaceMode;
         }
     }
 }

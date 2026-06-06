@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/land_root_row"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <ScrollView
+            android:id="@+id/workspace_switch_scroll"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="?attr/colorSurfaceContainer"
+            android:fillViewport="true"
+            android:overScrollMode="ifContentScrolls"
+            android:scrollbars="none">
+
+            <com.google.android.material.navigationrail.NavigationRailView
+                android:id="@+id/workspace_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/colorSurfaceContainer"
+                android:saveEnabled="false"
+                app:itemIconTint="@color/workspace_navigation_item_color"
+                app:itemTextColor="@color/workspace_navigation_item_color"
+                app:labelVisibilityMode="selected"
+                app:menuGravity="center"
+                app:menu="@menu/main_workspace_navigation" />
+        </ScrollView>
+
+        <LinearLayout
+            android:id="@+id/land_main_panes"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/land_list_pane"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <com.google.android.material.appbar.MaterialToolbar
+                    android:id="@+id/top_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentInsetEnd="0dp"
+                    android:contentInsetLeft="0dp"
+                    android:contentInsetRight="0dp"
+                    android:contentInsetStart="0dp"
+                    android:contentInsetStartWithNavigation="0dp"
+                    android:paddingStart="0dp"
+                    android:paddingTop="@dimen/main_land_toolbar_padding_top"
+                    android:paddingEnd="0dp"
+                    android:paddingBottom="@dimen/main_toolbar_padding_bottom">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/main_toolbar_padding_horizontal"
+                        android:layout_marginEnd="@dimen/main_toolbar_padding_horizontal"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="0dp"
+                            android:layout_height="@dimen/main_search_card_height"
+                            android:layout_weight="1"
+                            app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+                            app:cardCornerRadius="@dimen/main_search_card_corner_radius"
+                            app:strokeWidth="@dimen/main_search_card_stroke_width">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <androidx.appcompat.widget.AppCompatImageView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:paddingStart="@dimen/main_search_icon_padding_start"
+                                    android:paddingEnd="@dimen/main_search_icon_padding_end"
+                                    android:src="@drawable/ic_search_24"
+                                    app:tint="?attr/colorOnSurfaceVariant" />
+
+                                <androidx.appcompat.widget.AppCompatEditText
+                                    android:id="@+id/search_input"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:background="@android:color/transparent"
+                                    android:hint="@string/search_hint"
+                                    android:imeOptions="actionDone"
+                                    android:inputType="text"
+                                    android:lineSpacingExtra="0dp"
+                                    android:maxLines="1"
+                                    android:minHeight="0dp"
+                                    android:paddingStart="0dp"
+                                    android:paddingTop="0dp"
+                                    android:paddingEnd="0dp"
+                                    android:paddingBottom="0dp"
+                                    android:singleLine="true"
+                                    android:textColor="?attr/colorOnSurface"
+                                    android:textColorHint="?attr/colorOnSurfaceVariant" />
+
+                                <androidx.appcompat.widget.AppCompatImageButton
+                                    android:id="@+id/search_clear_button"
+                                    android:layout_width="@dimen/main_search_clear_button_size"
+                                    android:layout_height="@dimen/main_search_clear_button_size"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:contentDescription="@string/search_clear"
+                                    android:padding="@dimen/main_search_clear_button_padding"
+                                    android:scaleType="centerInside"
+                                    android:src="@drawable/ic_close_24"
+                                    android:visibility="gone"
+                                    app:tint="?attr/colorOnSurfaceVariant" />
+
+                                <androidx.appcompat.widget.AppCompatImageButton
+                                    android:id="@+id/search_filter_button"
+                                    android:layout_width="@dimen/main_search_action_button_size"
+                                    android:layout_height="@dimen/main_search_action_button_size"
+                                    android:layout_marginEnd="@dimen/main_search_filter_button_margin_end"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:contentDescription="@string/filter_button"
+                                    android:padding="@dimen/main_search_action_button_padding"
+                                    android:scaleType="centerInside"
+                                    android:src="@drawable/ic_tune_24"
+                                    app:tint="?attr/colorOnSurfaceVariant" />
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                    </LinearLayout>
+                </com.google.android.material.appbar.MaterialToolbar>
+
+                <com.google.android.material.tabs.TabLayout
+                    android:id="@+id/filter_tabs"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/main_tabs_spacing_top"
+                    app:tabGravity="fill"
+                    app:tabIndicatorAnimationMode="elastic"
+                    app:tabIndicatorColor="?attr/colorPrimary"
+                    app:tabIndicatorFullWidth="false"
+                    app:tabIndicatorHeight="@dimen/main_tabs_indicator_height"
+                    app:tabInlineLabel="true"
+                    app:tabMaxWidth="0dp"
+                    app:tabMinWidth="0dp"
+                    app:tabMode="fixed"
+                    app:tabRippleColor="?attr/colorControlHighlight" />
+
+                <View
+                    android:id="@+id/app_workspace_divider"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/main_content_divider_height"
+                    android:background="?attr/colorOutlineVariant" />
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1">
+
+                    <include layout="@layout/home_workspace" />
+
+                    <FrameLayout
+                        android:id="@+id/land_app_list_page"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <include layout="@layout/item_app_list_page" />
+                    </FrameLayout>
+
+                    <include layout="@layout/template_workspace" />
+
+                    <include layout="@layout/tools_workspace" />
+
+                    <include layout="@layout/settings_workspace" />
+                </FrameLayout>
+
+            </LinearLayout>
+
+            <View
+                android:id="@+id/land_detail_divider"
+                android:layout_width="@dimen/main_content_divider_height"
+                android:layout_height="match_parent"
+                android:background="?attr/colorOutlineVariant" />
+
+            <FrameLayout
+                android:id="@+id/land_detail_pane"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?attr/colorSurface">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <LinearLayout
+                        android:id="@+id/land_detail_empty"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="@dimen/main_land_detail_padding">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:src="@drawable/ic_apps_24"
+                            app:tint="?attr/colorOnSurfaceVariant" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:text="@string/land_detail_empty_title"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:gravity="center"
+                            android:text="@string/land_detail_empty_message"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
+
+                    <FrameLayout
+                        android:id="@+id/land_detail_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:visibility="gone" />
+
+                    <LinearLayout
+                        android:id="@+id/template_detail_empty"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="@dimen/main_land_detail_padding"
+                        android:visibility="gone">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:src="@drawable/ic_template_24"
+                            app:tint="?attr/colorOnSurfaceVariant" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:text="@string/template_detail_empty_title"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:gravity="center"
+                            android:text="@string/template_detail_empty_message"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
+
+                    <FrameLayout
+                        android:id="@+id/template_detail_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:visibility="gone" />
+                </FrameLayout>
+            </FrameLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/search_focus_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="@dimen/floating_actions_margin_end"
+        android:layout_marginBottom="@dimen/floating_actions_main_workspace_margin_bottom"
+        android:contentDescription="@string/quick_search_button"
+        android:visibility="gone"
+        app:backgroundTint="?attr/colorPrimary"
+        app:elevation="@dimen/floating_actions_elevation"
+        app:hoveredFocusedTranslationZ="@dimen/floating_actions_hovered_focused_translation_z"
+        app:pressedTranslationZ="@dimen/floating_actions_pressed_translation_z"
+        app:rippleColor="@color/dpis_fab_ripple"
+        app:srcCompat="@drawable/ic_search_24"
+        app:tint="?attr/colorOnPrimary" />
+</FrameLayout>

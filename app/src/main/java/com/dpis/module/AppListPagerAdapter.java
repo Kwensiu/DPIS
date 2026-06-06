@@ -50,6 +50,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
     private final OnPageListScrollListener onPageListScrollListener;
     private final OnIconResolveRequestListener onIconResolveRequestListener;
     private final BooleanSupplier systemScopeSelectedSupplier;
+    private boolean swipeRefreshEnabled = true;
 
     AppListPagerAdapter(OnAppClickListener onAppClickListener,
             OnRefreshListener onRefreshListener,
@@ -119,12 +120,20 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
         }
     }
 
+    void setSwipeRefreshEnabled(boolean enabled) {
+        swipeRefreshEnabled = enabled;
+        for (PageHolder holder : activeHolders.values()) {
+            holder.setSwipeRefreshEnabled(enabled);
+        }
+    }
+
     @Override
     public PageHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_app_list_page, parent, false);
         return new PageHolder(view, onAppClickListener, onRefreshListener,
-                onPageListScrollListener, onIconResolveRequestListener, systemScopeSelectedSupplier);
+                onPageListScrollListener, onIconResolveRequestListener,
+                systemScopeSelectedSupplier);
     }
 
     @Override
@@ -141,6 +150,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                 pages.get(page),
                 pageScrollStates.get(page),
                 Boolean.TRUE.equals(refreshingStates.get(page)));
+        holder.setSwipeRefreshEnabled(swipeRefreshEnabled);
         pageScrollStates.remove(page);
     }
 
@@ -160,10 +170,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
     }
 
     static final class PageHolder extends RecyclerView.ViewHolder {
-        private final SwipeRefreshLayout swipeRefreshLayout;
-        private final RecyclerView recyclerView;
-        private final PageListAdapter adapter;
-        private AppListPage boundPage;
+        private final AppListPageController controller;
 
         PageHolder(View itemView,
                 OnAppClickListener onAppClickListener,
@@ -172,9 +179,68 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                 OnIconResolveRequestListener onIconResolveRequestListener,
                 BooleanSupplier systemScopeSelectedSupplier) {
             super(itemView);
-            swipeRefreshLayout = itemView.findViewById(R.id.page_swipe_refresh);
-            recyclerView = itemView.findViewById(R.id.page_list);
-            recyclerView.setLayoutManager(new LinearLayoutManager(itemView.getContext()));
+            controller = new AppListPageController(
+                    itemView.findViewById(R.id.page_swipe_refresh),
+                    itemView.findViewById(R.id.page_list),
+                    onAppClickListener,
+                    onRefreshListener,
+                    onPageListScrollListener,
+                    onIconResolveRequestListener,
+                    systemScopeSelectedSupplier);
+        }
+
+        void bind(AppListPage page,
+                List<AppListItem> items,
+                Parcelable scrollState,
+                boolean refreshing) {
+            controller.bind(page, items, scrollState, refreshing);
+        }
+
+        void submitItems(List<AppListItem> items) {
+            controller.submitItems(items);
+        }
+
+        AppListPage getBoundPage() {
+            return controller.getBoundPage();
+        }
+
+        void setRefreshing(boolean refreshing) {
+            controller.setRefreshing(refreshing);
+        }
+
+        void setSwipeRefreshEnabled(boolean enabled) {
+            controller.setSwipeRefreshEnabled(enabled);
+        }
+
+        void refreshStatuses() {
+            controller.refreshStatuses();
+        }
+
+        Parcelable captureScrollState() {
+            return controller.captureScrollState();
+        }
+
+        void restoreScrollState(Parcelable state) {
+            controller.restoreScrollState(state);
+        }
+    }
+
+    static final class AppListPageController {
+        private final SwipeRefreshLayout swipeRefreshLayout;
+        private final RecyclerView recyclerView;
+        private final PageListAdapter adapter;
+        private AppListPage boundPage;
+
+        AppListPageController(SwipeRefreshLayout swipeRefreshLayout,
+                RecyclerView recyclerView,
+                OnAppClickListener onAppClickListener,
+                OnRefreshListener onRefreshListener,
+                OnPageListScrollListener onPageListScrollListener,
+                OnIconResolveRequestListener onIconResolveRequestListener,
+                BooleanSupplier systemScopeSelectedSupplier) {
+            this.swipeRefreshLayout = swipeRefreshLayout;
+            this.recyclerView = recyclerView;
+            recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
             adapter = new PageListAdapter(
                     onAppClickListener,
                     onIconResolveRequestListener,
@@ -204,10 +270,11 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                 List<AppListItem> items,
                 Parcelable scrollState,
                 boolean refreshing) {
+            boolean pageChanged = boundPage != page;
             boundPage = page;
             adapter.submit(items, this::refreshStatuses);
             setRefreshing(refreshing);
-            if (scrollState != null) {
+            if (pageChanged && scrollState != null) {
                 restoreScrollState(scrollState);
             }
         }
@@ -222,6 +289,10 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
 
         void setRefreshing(boolean refreshing) {
             swipeRefreshLayout.setRefreshing(refreshing);
+        }
+
+        void setSwipeRefreshEnabled(boolean enabled) {
+            swipeRefreshLayout.setEnabled(enabled);
         }
 
         void refreshStatuses() {
@@ -267,6 +338,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             this.onAppClickListener = onAppClickListener;
             this.onIconResolveRequestListener = onIconResolveRequestListener;
             this.systemScopeSelectedSupplier = systemScopeSelectedSupplier;
+            setHasStableIds(true);
         }
 
         private void submit(List<AppListItem> newItems) {
@@ -294,7 +366,15 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
         public RowHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.item_app_entry, parent, false);
-            return new RowHolder(view);
+            RowHolder holder = new RowHolder(view);
+            holder.itemView.setOnClickListener(v -> {
+                int position = holder.getBindingAdapterPosition();
+                if (position == RecyclerView.NO_POSITION) {
+                    return;
+                }
+                onAppClickListener.onAppClicked(getItem(position));
+            });
+            return holder;
         }
 
         @Override
@@ -325,7 +405,20 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             } else {
                 holder.status.setText(compactStatusText);
             }
-            holder.headerClickTarget.setOnClickListener(v -> onAppClickListener.onAppClicked(item));
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return stablePackageId(getItem(position).packageName);
+        }
+
+        private static long stablePackageId(String packageName) {
+            long hash = 1125899906842597L;
+            String value = packageName != null ? packageName : "";
+            for (int i = 0; i < value.length(); i++) {
+                hash = 31L * hash + value.charAt(i);
+            }
+            return hash;
         }
 
         @Override

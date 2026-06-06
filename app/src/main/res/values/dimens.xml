@@ -1,11 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <!-- Shared app chrome. -->
     <dimen name="page_back_button_size">36dp</dimen>
     <dimen name="settings_section_inset_start">20dp</dimen>
     <dimen name="floating_actions_margin_end">24dp</dimen>
     <dimen name="floating_actions_search_margin_bottom">40dp</dimen>
-    <dimen name="floating_actions_gap">20dp</dimen>
+    <dimen name="floating_actions_main_workspace_margin_bottom">112dp</dimen>
     <dimen name="floating_actions_elevation">6dp</dimen>
     <dimen name="floating_actions_hovered_focused_translation_z">8dp</dimen>
     <dimen name="floating_actions_pressed_translation_z">10dp</dimen>
@@ -14,13 +14,74 @@
     <dimen name="page_toolbar_padding_bottom">8dp</dimen>
     <dimen name="page_back_button_padding">8dp</dimen>
     <dimen name="page_title_spacing_start">12dp</dimen>
-    <dimen name="page_card_corner_radius">28dp</dimen>
+    <dimen name="page_card_corner_radius">24dp</dimen>
     <dimen name="page_card_stroke_width">1dp</dimen>
 
     <!-- Main app screen. -->
     <dimen name="main_toolbar_padding_horizontal">16dp</dimen>
-    <dimen name="main_toolbar_padding_top">16dp</dimen>
+    <dimen name="main_toolbar_padding_top">8dp</dimen>
+    <dimen name="main_land_toolbar_padding_top">4dp</dimen>
     <dimen name="main_toolbar_padding_bottom">6dp</dimen>
+    <dimen name="main_land_detail_padding">18dp</dimen>
+    <dimen name="main_land_detail_top_padding">0dp</dimen>
+    <!-- Landscape detail pane - Material 3 spacing -->
+    <dimen name="land_app_detail_padding_horizontal">20dp</dimen>
+    <dimen name="land_app_detail_padding_bottom">24dp</dimen>
+    <dimen name="land_app_detail_content_padding_bottom">96dp</dimen>
+    <dimen name="land_app_detail_header_min_height">64dp</dimen>
+    <dimen name="land_app_detail_header_padding_top">0dp</dimen>
+    <dimen name="land_app_detail_header_padding_bottom">6dp</dimen>
+    <dimen name="land_app_detail_icon_size">56dp</dimen>
+    <dimen name="land_app_detail_icon_spacing_end">16dp</dimen>
+    <dimen name="land_app_detail_package_spacing_top">4dp</dimen>
+    <dimen name="land_app_detail_status_spacing_top">4dp</dimen>
+    <dimen name="land_app_detail_badge_spacing_start">8dp</dimen>
+    <dimen name="land_app_detail_badge_min_height">20dp</dimen>
+    <dimen name="land_app_detail_badge_padding_horizontal">8dp</dimen>
+    <dimen name="land_app_detail_badge_padding_vertical">2dp</dimen>
+    <dimen name="template_detail_inline_badge_visual_offset_top">1dp</dimen>
+    <dimen name="land_app_detail_section_gap">8dp</dimen>
+    <dimen name="land_app_detail_card_gap">12dp</dimen>
+    <dimen name="land_app_detail_card_padding">16dp</dimen>
+    <dimen name="land_app_detail_card_inner_spacing">12dp</dimen>
+    <dimen name="land_app_detail_card_corner_radius">16dp</dimen>
+    <dimen name="land_app_detail_connected_row_inner_radius">4dp</dimen>
+    <dimen name="land_app_detail_connected_row_gap">2dp</dimen>
+    <dimen name="land_app_detail_divider_margin_vertical">12dp</dimen>
+    <dimen name="land_app_detail_divider_height">1dp</dimen>
+    <dimen name="land_app_detail_list_item_min_height">56dp</dimen>
+    <dimen name="land_app_detail_list_item_padding_horizontal">16dp</dimen>
+    <dimen name="land_app_detail_list_item_padding_vertical">8dp</dimen>
+    <dimen name="land_app_detail_list_item_label_width">96dp</dimen>
+    <dimen name="land_app_detail_chevron_size">24dp</dimen>
+    <dimen name="land_app_detail_chevron_spacing_start">8dp</dimen>
+    <dimen name="land_app_detail_row_min_height">56dp</dimen>
+    <dimen name="land_app_detail_row_padding_horizontal">16dp</dimen>
+    <dimen name="land_app_detail_row_padding_vertical">8dp</dimen>
+    <dimen name="land_app_detail_row_label_width">96dp</dimen>
+    <dimen name="land_app_detail_editor_row_spacing">8dp</dimen>
+    <dimen name="land_app_detail_editor_min_height">56dp</dimen>
+    <dimen name="land_app_detail_editor_input_min_width">132dp</dimen>
+    <dimen name="land_app_detail_actions_spacing_top">24dp</dimen>
+    <dimen name="land_app_detail_action_button_height">48dp</dimen>
+    <dimen name="land_app_detail_action_button_spacing">8dp</dimen>
+    <dimen name="land_app_detail_process_button_height">40dp</dimen>
+    <dimen name="land_app_detail_advanced_button_height">40dp</dimen>
+    <dimen name="land_app_detail_advanced_button_wrap_min_width">112dp</dimen>
+    <!-- Floating action dock -->
+    <dimen name="land_app_detail_dock_elevation">0dp</dimen>
+    <dimen name="land_app_detail_dock_corner_radius">32dp</dimen>
+    <dimen name="land_app_detail_dock_padding">8dp</dimen>
+    <dimen name="land_app_detail_dock_margin_bottom">20dp</dimen>
+    <dimen name="land_app_detail_dock_margin_horizontal">20dp</dimen>
+    <dimen name="land_app_detail_dock_max_width">680dp</dimen>
+    <dimen name="land_app_detail_dock_button_height">48dp</dimen>
+    <dimen name="land_app_detail_dock_save_expanded_min_width">120dp</dimen>
+    <dimen name="land_app_detail_dock_process_button_min_width">80dp</dimen>
+    <dimen name="land_app_detail_dock_button_spacing">12dp</dimen>
+    <dimen name="land_app_detail_dock_capsule_corner_radius">24dp</dimen>
+    <dimen name="land_app_detail_dock_process_divider_height">20dp</dimen>
+    <dimen name="land_app_detail_dock_process_divider_width">1dp</dimen>
     <dimen name="main_search_card_height">52dp</dimen>
     <dimen name="main_search_card_corner_radius">24dp</dimen>
     <dimen name="main_search_card_stroke_width">0dp</dimen>
@@ -30,27 +91,117 @@
     <dimen name="main_search_clear_button_padding">6dp</dimen>
     <dimen name="main_search_action_button_size">44dp</dimen>
     <dimen name="main_search_action_button_padding">10dp</dimen>
-    <dimen name="main_search_filter_button_margin_end">4dp</dimen>
+    <dimen name="main_search_filter_button_margin_end">16dp</dimen>
     <dimen name="main_settings_button_spacing_start">10dp</dimen>
     <dimen name="main_settings_button_spacing_end">8dp</dimen>
     <dimen name="main_tabs_spacing_top">2dp</dimen>
     <dimen name="main_tabs_indicator_height">3dp</dimen>
     <dimen name="main_content_divider_height">1dp</dimen>
+    <dimen name="main_workspace_switch_margin_horizontal">16dp</dimen>
+    <dimen name="main_workspace_switch_margin_top">8dp</dimen>
+    <dimen name="main_workspace_switch_margin_bottom">16dp</dimen>
+    <dimen name="main_workspace_switch_button_height">44dp</dimen>
+    <dimen name="main_workspace_navigation_height">80dp</dimen>
+    <dimen name="home_workspace_padding_horizontal">16dp</dimen>
+    <dimen name="home_workspace_padding_top">8dp</dimen>
+    <dimen name="home_workspace_padding_bottom">144dp</dimen>
+    <dimen name="home_workspace_header_icon_size">48dp</dimen>
+    <dimen name="home_workspace_header_icon_padding">12dp</dimen>
+    <dimen name="home_workspace_title_spacing_top">16dp</dimen>
+    <dimen name="home_workspace_text_spacing_top">6dp</dimen>
+    <dimen name="home_workspace_section_spacing_top">22dp</dimen>
+    <dimen name="home_workspace_card_spacing_top">12dp</dimen>
+    <dimen name="home_workspace_card_padding">12dp</dimen>
+    <dimen name="home_workspace_card_corner_radius">12dp</dimen>
+    <dimen name="home_workspace_connected_row_inner_radius">3dp</dimen>
+    <dimen name="home_workspace_connected_row_gap">2dp</dimen>
+    <dimen name="home_workspace_primary_status_min_height">82dp</dimen>
+    <dimen name="home_workspace_primary_status_corner_radius">14dp</dimen>
+    <dimen name="home_workspace_primary_status_padding">16dp</dimen>
+    <dimen name="home_workspace_primary_status_icon_size">30dp</dimen>
+    <dimen name="home_workspace_primary_status_text_spacing_start">14dp</dimen>
+    <dimen name="home_workspace_status_grid_gap">8dp</dimen>
+    <dimen name="home_workspace_status_min_height">66dp</dimen>
+    <dimen name="home_workspace_info_row_min_height">44dp</dimen>
+    <dimen name="home_workspace_info_row_padding_vertical">8dp</dimen>
+    <dimen name="home_update_action_card_height">72dp</dimen>
+    <dimen name="home_update_action_card_hidden_offset_top">-32dp</dimen>
+    <dimen name="home_update_action_card_padding_start">8dp</dimen>
+    <dimen name="home_update_action_card_padding_end">16dp</dimen>
+    <dimen name="home_update_action_card_padding_bottom">5dp</dimen>
+    <dimen name="home_update_action_card_button_height">30dp</dimen>
+    <dimen name="home_update_action_card_notes_padding_horizontal">4dp</dimen>
+    <dimen name="home_update_action_card_install_padding_horizontal">12dp</dimen>
+    <dimen name="home_feedback_button_size">40dp</dimen>
+    <dimen name="home_feedback_button_padding_horizontal">8dp</dimen>
+    <dimen name="template_workspace_padding_horizontal">16dp</dimen>
+    <dimen name="template_workspace_padding_top">14dp</dimen>
+    <dimen name="template_workspace_padding_bottom">120dp</dimen>
+    <dimen name="template_workspace_card_corner_radius">24dp</dimen>
+    <dimen name="template_workspace_card_corner_radius_compact">14dp</dimen>
+    <dimen name="template_workspace_card_padding">18dp</dimen>
+    <dimen name="template_workspace_text_spacing_top">6dp</dimen>
+    <dimen name="template_workspace_chip_group_spacing_top">12dp</dimen>
+    <dimen name="template_workspace_chip_spacing_horizontal">7dp</dimen>
+    <dimen name="template_workspace_chip_spacing_vertical">7dp</dimen>
+    <dimen name="template_workspace_chip_min_height">28dp</dimen>
+    <dimen name="template_workspace_chip_padding_horizontal">10dp</dimen>
+    <dimen name="template_workspace_chip_corner_radius">14dp</dimen>
+    <dimen name="template_workspace_empty_summary_min_height">32dp</dimen>
+    <dimen name="template_workspace_empty_summary_corner_radius">16dp</dimen>
+    <dimen
+        name="template_workspace_empty_summary_padding_horizontal"
+    >12dp</dimen>
+    <dimen name="template_workspace_empty_summary_padding_vertical">6dp</dimen>
+    <dimen name="template_workspace_icon_button_size">38dp</dimen>
+    <dimen name="template_workspace_icon_button_padding">9dp</dimen>
+    <dimen name="template_workspace_actions_spacing_top">14dp</dimen>
+    <dimen name="template_workspace_action_button_height">42dp</dimen>
+    <dimen name="template_workspace_header_action_button_size">36dp</dimen>
+    <dimen name="template_workspace_header_action_button_padding">8dp</dimen>
+    <dimen
+        name="template_workspace_apply_button_padding_horizontal"
+    >22dp</dimen>
+    <dimen name="template_workspace_header_action_button_spacing">8dp</dimen>
+    <dimen name="template_workspace_section_spacing_top">22dp</dimen>
+    <dimen name="template_workspace_section_title_inset_start">12dp</dimen>
+    <dimen name="template_workspace_create_button_inset_end">12dp</dimen>
+    <dimen name="template_workspace_list_spacing_top">10dp</dimen>
+    <dimen name="template_workspace_card_spacing_top">12dp</dimen>
+    <dimen name="template_workspace_empty_spacing_top">8dp</dimen>
+    <dimen name="template_workspace_empty_padding">20dp</dimen>
+    <dimen name="template_workspace_header_spacing_bottom">12dp</dimen>
+    <dimen name="template_workspace_form_card_spacing_top">12dp</dimen>
+    <dimen name="template_target_content_padding_horizontal">16dp</dimen>
+    <dimen name="template_target_search_spacing_top">8dp</dimen>
+    <dimen name="template_target_list_padding_top">12dp</dimen>
+    <dimen name="template_target_list_padding_bottom">24dp</dimen>
+    <dimen name="template_target_save_button_height">44dp</dimen>
+    <dimen name="template_target_save_button_margin_bottom">16dp</dimen>
+    <dimen name="template_target_row_min_height">72dp</dimen>
+    <dimen name="template_target_row_padding_horizontal">4dp</dimen>
+    <dimen name="template_target_row_padding_vertical">10dp</dimen>
+    <dimen name="template_target_badge_padding_horizontal">8dp</dimen>
+    <dimen name="template_target_badge_padding_vertical">3dp</dimen>
 
     <!-- Settings rows and settings pages. -->
-    <dimen name="settings_row_min_height">88dp</dimen>
+    <dimen name="settings_row_min_height">76dp</dimen>
     <dimen name="settings_row_padding_horizontal">16dp</dimen>
-    <dimen name="settings_row_padding_vertical">12dp</dimen>
+    <dimen name="settings_row_padding_vertical">10dp</dimen>
     <dimen name="settings_row_icon_size">24dp</dimen>
     <dimen name="settings_row_text_spacing_start">14dp</dimen>
     <dimen name="settings_row_subtitle_spacing_top">2dp</dimen>
     <dimen name="settings_row_trailing_spacing_start">12dp</dimen>
     <dimen name="settings_row_switch_spacing_start">16dp</dimen>
     <dimen name="settings_row_chevron_size">20dp</dimen>
+    <dimen name="settings_slider_row_min_height">100dp</dimen>
+    <dimen name="settings_slider_margin_start">0dp</dimen>
+    <dimen name="settings_slider_spacing_top">8dp</dimen>
+    <dimen name="settings_slider_value_chevron_spacing">4dp</dimen>
     <dimen name="settings_content_padding_horizontal">16dp</dimen>
     <dimen name="settings_content_padding_bottom">24dp</dimen>
-    <dimen name="settings_section_spacing_top">24dp</dimen>
-    <dimen name="settings_card_spacing_top">12dp</dimen>
+    <dimen name="settings_section_spacing_top">20dp</dimen>
+    <dimen name="settings_card_spacing_top">8dp</dimen>
     <dimen name="settings_divider_margin_horizontal">16dp</dimen>
 
     <!-- Secondary pages. -->
@@ -84,11 +235,21 @@
     <dimen name="dialog_mode_toggle_spacing_start">10dp</dimen>
     <dimen name="dialog_mode_toggle_content_offset_top">6dp</dimen>
     <dimen name="dialog_app_config_padding_horizontal">20dp</dimen>
-    <dimen name="dialog_app_config_padding_top">20dp</dimen>
+    <dimen name="dialog_app_config_padding_top">14dp</dimen>
     <dimen name="dialog_app_config_padding_bottom">24dp</dimen>
+    <dimen name="template_config_sheet_padding_bottom">8dp</dimen>
     <dimen name="dialog_app_config_drag_handle_width">52dp</dimen>
     <dimen name="dialog_app_config_drag_handle_height">5dp</dimen>
-    <dimen name="dialog_app_config_header_spacing_top">16dp</dimen>
+    <dimen name="sheet_unsaved_badge_min_height">28dp</dimen>
+    <dimen name="sheet_unsaved_badge_padding_horizontal">12dp</dimen>
+    <dimen name="sheet_unsaved_badge_padding_vertical">4dp</dimen>
+    <dimen name="sheet_unsaved_inline_badge_spacing_start">8dp</dimen>
+    <dimen name="sheet_unsaved_inline_badge_min_height">22dp</dimen>
+    <dimen name="sheet_unsaved_inline_badge_padding_horizontal">8dp</dimen>
+    <dimen name="sheet_unsaved_inline_badge_padding_vertical">2dp</dimen>
+    <dimen name="sheet_unsaved_badge_corner_radius">14dp</dimen>
+    <dimen name="sheet_unsaved_badge_stroke_width">1dp</dimen>
+    <dimen name="dialog_app_config_header_spacing_top">10dp</dimen>
     <dimen name="dialog_app_config_header_min_height">52dp</dimen>
     <dimen name="dialog_app_config_icon_size">56dp</dimen>
     <dimen name="dialog_app_config_icon_spacing_end">16dp</dimen>
@@ -101,18 +262,25 @@
     <dimen name="dialog_wechat_help_button_size">48dp</dimen>
     <dimen name="dialog_wechat_help_button_padding">12dp</dimen>
     <dimen name="dialog_app_config_selector_spacing_top">12dp</dimen>
-    <dimen name="dialog_app_config_typeface_button_padding_horizontal">16dp</dimen>
-    <dimen name="dialog_app_config_hook_domains_button_padding_horizontal">12dp</dimen>
+    <dimen
+        name="dialog_app_config_typeface_button_padding_horizontal"
+    >16dp</dimen>
+    <dimen
+        name="dialog_app_config_hook_domains_button_padding_horizontal"
+    >12dp</dimen>
     <dimen name="dialog_app_config_process_row_spacing_top">12dp</dimen>
     <dimen name="dialog_app_config_process_button_spacing_start">6dp</dimen>
     <dimen name="dialog_app_config_save_row_spacing_top">12dp</dimen>
     <dimen name="dialog_app_config_save_row_spacing_bottom">16dp</dimen>
+    <dimen name="template_config_sheet_save_row_spacing_bottom">0dp</dimen>
     <dimen name="dialog_app_config_divider_height">1dp</dimen>
     <dimen name="dialog_app_config_divider_spacing_top">12dp</dimen>
     <dimen name="dialog_app_config_advanced_title_spacing_top">8dp</dimen>
     <dimen name="dialog_app_config_advanced_row_spacing_top">8dp</dimen>
     <dimen name="dialog_app_config_disable_button_spacing_top">8dp</dimen>
-    <dimen name="dialog_app_config_disable_button_padding_horizontal">16dp</dimen>
+    <dimen
+        name="dialog_app_config_disable_button_padding_horizontal"
+    >16dp</dimen>
     <dimen name="dialog_app_config_half_expanded_down_offset">1dp</dimen>
     <dimen name="dialog_app_config_wizard_hint_min_height">36dp</dimen>
     <dimen name="dialog_app_config_wizard_hint_padding_start">14dp</dimen>
@@ -136,6 +304,10 @@
     <dimen name="dialog_action_spacing_between">8dp</dimen>
     <dimen name="dialog_footer_spacing_top">12dp</dimen>
     <dimen name="dialog_text_line_spacing">2dp</dimen>
+    <dimen name="dialog_window_margin_horizontal">16dp</dimen>
+    <dimen name="dialog_window_compact_max_width">360dp</dimen>
+    <dimen name="dialog_window_standard_max_width">420dp</dimen>
+    <dimen name="dialog_window_large_max_width">560dp</dimen>
     <dimen name="dialog_status_icon_size">36dp</dimen>
     <dimen name="dialog_status_icon_padding">8dp</dimen>
     <dimen name="dialog_button_corner_radius">18dp</dimen>
@@ -150,6 +322,13 @@
     <dimen name="dialog_typeface_footer_spacing_top">14dp</dimen>
     <dimen name="dialog_typeface_footer_button_height">44dp</dimen>
     <dimen name="dialog_typeface_footer_button_spacing">10dp</dimen>
+    <dimen name="dialog_template_sort_list_height">320dp</dimen>
+    <dimen name="dialog_template_sort_title_inset_start">8dp</dimen>
+    <dimen name="dialog_template_sort_row_spacing">6dp</dimen>
+    <dimen name="dialog_template_sort_row_padding_horizontal">12dp</dimen>
+    <dimen name="dialog_template_sort_row_padding_vertical">10dp</dimen>
+    <dimen name="dialog_template_sort_drag_icon_size">24dp</dimen>
+    <dimen name="dialog_template_sort_drag_icon_spacing_end">8dp</dimen>
 
     <!-- Debug and filter sheets. -->
     <dimen name="font_debug_dialog_surface_padding_horizontal">20dp</dimen>
@@ -181,9 +360,12 @@
     <dimen name="help_tutorial_card_padding">18dp</dimen>
     <dimen name="help_tutorial_card_spacing_top">12dp</dimen>
     <dimen name="help_tutorial_badge_padding_horizontal">10dp</dimen>
-    <dimen name="help_tutorial_badge_padding_vertical">6dp</dimen>
+    <dimen name="help_tutorial_badge_padding_vertical">4dp</dimen>
     <dimen name="help_tutorial_body_spacing_top">12dp</dimen>
     <dimen name="help_tutorial_text_line_spacing">2dp</dimen>
+    <dimen name="help_tutorial_route_row_spacing_top">6dp</dimen>
+    <dimen name="help_tutorial_route_row_padding_horizontal">12dp</dimen>
+    <dimen name="help_tutorial_route_row_padding_vertical">9dp</dimen>
     <dimen name="help_tutorial_confirm_spacing_top">14dp</dimen>
 
     <!-- Font hook domain editor. -->

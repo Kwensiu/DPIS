@@ -8,15 +8,15 @@ import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.view.LayoutInflater;
+import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CompoundButton;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -30,7 +30,10 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.slider.Slider;
 import com.google.android.material.textview.MaterialTextView;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import org.json.JSONException;
 
@@ -51,14 +54,15 @@ import java.util.Map;
 
 import io.github.libxposed.service.XposedService;
 
-public final class SystemServerSettingsActivity extends LocalizedActivity
-        implements DpisApplication.ServiceStateListener {
+final class SystemServerSettingsPageController implements DpisApplication.ServiceStateListener {
     private static final long STATS_REFRESH_INTERVAL_MS = 500L;
     private static final String SYSTEM_SCOPE_MODERN = "system";
     private static final int REQUEST_EXPORT_CONFIG_BACKUP = 1001;
     private static final int REQUEST_IMPORT_CONFIG_BACKUP = 1002;
     private static final long CLEAR_CACHE_MIN_DISABLED_MS = 300L;
 
+    private final LocalizedActivity activity;
+    private final View root;
     private DpiConfigStore store;
     private MaterialSwitch hooksEnabledSwitch;
     private MaterialSwitch safeModeSwitch;
@@ -71,6 +75,11 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     private View experimentalSettingsEntryRow;
     private View fontLibraryEntryRow;
     private View backupConfigEntryRow;
+    private View interfaceScaleRow;
+    private Slider interfaceScaleSlider;
+    private MaterialTextView interfaceScaleValueView;
+    private int lastInterfaceScaleFeedbackPercent = AppUiScaleManager.DEFAULT_SCALE_PERCENT;
+    private boolean suppressInterfaceScaleSliderChange;
     private volatile boolean clearCacheInProgress;
     private SharedPreferences statsPreferences;
     private int selectedMode = FontDebugStatsStore.MODE_CHAIN;
@@ -93,14 +102,13 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         }
     };
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_system_server_settings);
-        applyInsets();
+    SystemServerSettingsPageController(LocalizedActivity activity, View root) {
+        this.activity = activity;
+        this.root = root;
+    }
 
-        ImageButton backButton = findViewById(R.id.settings_back_button);
-        backButton.setOnClickListener(v -> finish());
+    void bind() {
+        applyInsets();
 
         primarySwitchCard = findViewById(R.id.settings_primary_switch_card);
         primarySwitchCard.setVisibility(View.GONE);
@@ -131,13 +139,14 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
                 R.drawable.ic_experiment_24,
                 R.string.settings_experimental_title,
                 R.string.settings_experimental_hint,
-                v -> startActivity(new Intent(this, ExperimentalSettingsActivity.class)));
+                v -> startActivity(new Intent(activity, ExperimentalSettingsActivity.class)));
         fontLibraryEntryRow = bindEntryRow(
                 R.id.row_font_library,
                 R.drawable.ic_upload_file_24,
                 R.string.settings_font_library_label,
                 R.string.settings_font_library_hint,
-                v -> startActivity(new Intent(this, FontLibraryActivity.class)));
+                v -> startActivity(new Intent(activity, FontLibraryActivity.class)));
+        bindInterfaceScaleRow();
         backupConfigEntryRow = bindEntryRow(
                 R.id.row_config_backup,
                 R.drawable.ic_upload_file_24,
@@ -164,14 +173,14 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
                 R.drawable.ic_info_24,
                 R.string.settings_about_label,
                 R.string.settings_about_hint,
-                v -> startActivity(new Intent(this, AboutActivity.class)));
+                v -> startActivity(new Intent(activity, AboutActivity.class)));
         hideLauncherIconSwitch = bindSwitchRow(
                 R.id.row_hide_launcher_icon,
                 R.drawable.ic_hide_image_24,
                 R.string.settings_hide_launcher_icon_label,
                 R.string.settings_hide_launcher_icon_hint);
 
-        statsPreferences = FontDebugStatsStore.getPreferences(this);
+        statsPreferences = FontDebugStatsStore.getPreferences(activity);
         hooksEnabledSwitch.setOnCheckedChangeListener(this::onHooksEnabledChanged);
         safeModeSwitch.setOnCheckedChangeListener(this::onSafeModeChanged);
         globalLogSwitch.setOnCheckedChangeListener(this::onGlobalLogChanged);
@@ -179,16 +188,12 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         refreshStoreState(true);
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
+    void onStart() {
         DpisApplication.addServiceStateListener(this, true);
         statsHandler.post(statsRefreshRunnable);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
+    void onResume() {
         syncHooksSwitchWithScope();
         syncLauncherIconSwitch();
         if (store != null && store.isFontDebugOverlayEnabled() && canDrawOverlays()) {
@@ -196,10 +201,8 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         }
     }
 
-    @Override
-    protected void onStop() {
+    void onStop() {
         DpisApplication.removeServiceStateListener(this);
-        super.onStop();
         statsHandler.removeCallbacks(statsRefreshRunnable);
         dismissFontDebugDialog();
     }
@@ -210,10 +213,8 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     }
 
     @SuppressWarnings("deprecation")
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode != RESULT_OK || data == null || data.getData() == null) {
+    void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode != android.app.Activity.RESULT_OK || data == null || data.getData() == null) {
             return;
         }
         Uri uri = data.getData();
@@ -222,21 +223,107 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             return;
         }
         if (requestCode == REQUEST_IMPORT_CONFIG_BACKUP) {
-            importConfigBackup(uri);
+            showImportBackupConfirmDialog(uri);
             return;
         }
     }
 
     private void applyInsets() {
         View toolbar = findViewById(R.id.settings_toolbar);
+        if (root == null || toolbar == null) {
+            return;
+        }
+        final int baseRootPaddingLeft = root.getPaddingLeft();
+        final int baseRootPaddingRight = root.getPaddingRight();
         final int baseTopPadding = toolbar.getPaddingTop();
-        ViewCompat.setOnApplyWindowInsetsListener(toolbar, (view, insets) -> {
-            Insets statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
-            view.setPadding(view.getPaddingLeft(), baseTopPadding + statusBars.top,
-                    view.getPaddingRight(), view.getPaddingBottom());
+        final int baseToolbarPaddingLeft = toolbar.getPaddingLeft();
+        final int baseToolbarPaddingRight = toolbar.getPaddingRight();
+        ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
+            Insets safeDrawing = insets.getInsets(
+                    WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            view.setPadding(baseRootPaddingLeft + safeDrawing.left, view.getPaddingTop(),
+                    baseRootPaddingRight + safeDrawing.right, view.getPaddingBottom());
+            toolbar.setPadding(baseToolbarPaddingLeft, baseTopPadding + safeDrawing.top,
+                    baseToolbarPaddingRight, toolbar.getPaddingBottom());
             return insets;
         });
-        ViewCompat.requestApplyInsets(toolbar);
+        ViewCompat.requestApplyInsets(root);
+    }
+
+    private <T extends View> T findViewById(int id) {
+        if (id == android.R.id.content) {
+            return activity.findViewById(id);
+        }
+        return root.findViewById(id);
+    }
+
+    private android.content.res.Resources getResources() {
+        return activity.getResources();
+    }
+
+    private String getString(int resId) {
+        return activity.getString(resId);
+    }
+
+    private String getString(int resId, Object... formatArgs) {
+        return activity.getString(resId, formatArgs);
+    }
+
+    private <T> T getSystemService(Class<T> serviceClass) {
+        return activity.getSystemService(serviceClass);
+    }
+
+    private android.content.Context getApplicationContext() {
+        return activity.getApplicationContext();
+    }
+
+    private ContentResolver getContentResolver() {
+        return activity.getContentResolver();
+    }
+
+    private String getPackageName() {
+        return activity.getPackageName();
+    }
+
+    private PackageManager getPackageManager() {
+        return activity.getPackageManager();
+    }
+
+    private void startActivity(Intent intent) {
+        activity.startActivity(intent);
+    }
+
+    @SuppressWarnings("deprecation")
+    private void startActivityForResult(Intent intent, int requestCode) {
+        activity.startActivityForResult(intent, requestCode);
+    }
+
+    private void startService(Intent intent) {
+        activity.startService(intent);
+    }
+
+    private void stopService(Intent intent) {
+        activity.stopService(intent);
+    }
+
+    private void runOnUiThread(Runnable action) {
+        activity.runOnUiThread(action);
+    }
+
+    private boolean isFinishing() {
+        return activity.isFinishing();
+    }
+
+    private boolean isDestroyed() {
+        return activity.isDestroyed();
+    }
+
+    private void recreate() {
+        activity.recreate();
+    }
+
+    private void finishAffinity() {
+        activity.finishAffinity();
     }
 
     private int dp(int value) {
@@ -277,16 +364,178 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         return row;
     }
 
+    private void bindInterfaceScaleRow() {
+        interfaceScaleRow = findViewById(R.id.row_interface_scale);
+        ImageView iconView = interfaceScaleRow.findViewById(R.id.setting_icon);
+        MaterialTextView titleView = interfaceScaleRow.findViewById(R.id.setting_title);
+        MaterialTextView subtitleView = interfaceScaleRow.findViewById(R.id.setting_subtitle);
+        interfaceScaleValueView = interfaceScaleRow.findViewById(R.id.setting_value);
+        interfaceScaleSlider = interfaceScaleRow.findViewById(R.id.setting_slider);
+
+        iconView.setImageResource(R.drawable.ic_fit_width_24);
+        titleView.setText(R.string.settings_interface_scale_label);
+        subtitleView.setText(R.string.settings_interface_scale_hint);
+        interfaceScaleSlider.setValueFrom(AppUiScaleManager.MIN_SCALE_PERCENT);
+        interfaceScaleSlider.setValueTo(AppUiScaleManager.MAX_SCALE_PERCENT);
+        interfaceScaleSlider.setStepSize(10f);
+        interfaceScaleRow.setOnClickListener(v -> showInterfaceScaleDialog());
+        interfaceScaleSlider.addOnChangeListener((slider, value, fromUser) -> {
+            if (fromUser && !suppressInterfaceScaleSliderChange) {
+                int percent = normalizeInterfaceScaleSliderPercent(Math.round(value));
+                updateInterfaceScaleValue(percent);
+                performInterfaceScaleStepFeedback(percent);
+            }
+        });
+        interfaceScaleSlider.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
+            @Override
+            public void onStartTrackingTouch(Slider slider) {
+                int percent = AppUiScaleManager.normalizeScalePercent(Math.round(slider.getValue()));
+                lastInterfaceScaleFeedbackPercent = percent;
+                updateInterfaceScaleValue(percent);
+            }
+
+            @Override
+            public void onStopTrackingTouch(Slider slider) {
+                saveInterfaceScalePercent(Math.round(slider.getValue()));
+            }
+        });
+        setInterfaceScalePercentSilently(AppUiScaleManager.getScalePercent(activity));
+    }
+
+    private void setInterfaceScalePercentSilently(int percent) {
+        if (interfaceScaleSlider == null) {
+            return;
+        }
+        int normalized = AppUiScaleManager.normalizeScalePercent(percent);
+        int sliderPercent = nearestInterfaceScaleSliderPercent(normalized);
+        suppressInterfaceScaleSliderChange = true;
+        interfaceScaleSlider.setValue(sliderPercent);
+        suppressInterfaceScaleSliderChange = false;
+        lastInterfaceScaleFeedbackPercent = sliderPercent;
+        updateInterfaceScaleValue(normalized);
+    }
+
+    private void updateInterfaceScaleValue(int percent) {
+        if (interfaceScaleValueView != null) {
+            interfaceScaleValueView.setText(getString(
+                    R.string.settings_interface_scale_value,
+                    AppUiScaleManager.normalizeScalePercent(percent)));
+        }
+    }
+
+    private void saveInterfaceScalePercent(int percent) {
+        if (store == null) {
+            setInterfaceScalePercentSilently(AppUiScaleManager.getScalePercent(activity));
+            showToast(R.string.system_settings_save_failed);
+            return;
+        }
+        int normalized = AppUiScaleManager.normalizeScalePercent(percent);
+        if (normalized == store.getInterfaceScalePercent()) {
+            setInterfaceScalePercentSilently(normalized);
+            return;
+        }
+        if (!store.setInterfaceScalePercent(normalized)) {
+            setInterfaceScalePercentSilently(store.getInterfaceScalePercent());
+            showToast(R.string.system_settings_save_failed);
+            return;
+        }
+        setInterfaceScalePercentSilently(normalized);
+        recreate();
+    }
+
+    private void showInterfaceScaleDialog() {
+        if (store == null) {
+            showToast(R.string.status_save_requires_init);
+            return;
+        }
+        View dialogView = LayoutInflater.from(activity).inflate(
+                R.layout.dialog_interface_scale, null, false);
+        TextInputLayout inputLayout = dialogView.findViewById(R.id.interface_scale_input_layout);
+        TextInputEditText inputView = dialogView.findViewById(R.id.interface_scale_input);
+        MaterialButton cancelButton = dialogView.findViewById(R.id.interface_scale_cancel_button);
+        MaterialButton saveButton = dialogView.findViewById(R.id.interface_scale_save_button);
+
+        inputView.setText(String.valueOf(store.getInterfaceScalePercent()));
+        inputView.setSelection(inputView.length());
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
+                .setView(dialogView)
+                .create();
+        dialog.setOnShowListener(unused -> {
+            inputView.requestFocus();
+            inputView.postDelayed(() -> {
+                InputMethodManager imm = getSystemService(InputMethodManager.class);
+                if (imm != null) {
+                    imm.showSoftInput(inputView, InputMethodManager.SHOW_IMPLICIT);
+                }
+            }, 120L);
+        });
+        cancelButton.setOnClickListener(v -> dialog.dismiss());
+        saveButton.setOnClickListener(v -> {
+            Integer parsed = parseInterfaceScaleInput(inputView);
+            if (parsed == null
+                    || parsed < AppUiScaleManager.MIN_SCALE_PERCENT
+                    || parsed > AppUiScaleManager.MAX_SCALE_PERCENT) {
+                inputLayout.setError(getString(R.string.settings_interface_scale_input_error));
+                return;
+            }
+            inputLayout.setError(null);
+            dialog.dismiss();
+            saveInterfaceScalePercent(parsed);
+        });
+        inputView.setOnEditorActionListener((view, actionId, event) -> {
+            saveButton.performClick();
+            return true;
+        });
+        dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialog, activity);
+    }
+
+    private Integer parseInterfaceScaleInput(TextInputEditText inputView) {
+        if (inputView == null || inputView.getText() == null) {
+            return null;
+        }
+        String value = inputView.getText().toString().trim();
+        if (value.isEmpty()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    private void performInterfaceScaleStepFeedback(int percent) {
+        if (percent == lastInterfaceScaleFeedbackPercent || interfaceScaleSlider == null) {
+            return;
+        }
+        lastInterfaceScaleFeedbackPercent = percent;
+        interfaceScaleSlider.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+    }
+
+    private int normalizeInterfaceScaleSliderPercent(int percent) {
+        return nearestInterfaceScaleSliderPercent(
+                AppUiScaleManager.normalizeScalePercent(percent));
+    }
+
+    private int nearestInterfaceScaleSliderPercent(int percent) {
+        int normalized = AppUiScaleManager.normalizeScalePercent(percent);
+        int min = AppUiScaleManager.MIN_SCALE_PERCENT;
+        int rounded = Math.round((normalized - min) / 10f) * 10 + min;
+        return AppUiScaleManager.normalizeScalePercent(rounded);
+    }
+
     private void showLanguageDialog(View anchor) {
-        View dialogView = LayoutInflater.from(this).inflate(
+        View dialogView = LayoutInflater.from(activity).inflate(
                 R.layout.dialog_language_selection, null, false);
         ViewGroup optionsContainer = dialogView.findViewById(R.id.language_options_container);
         MaterialButton cancelButton = dialogView.findViewById(R.id.language_dialog_cancel_button);
         List<AppLocaleManager.LanguageOption> languageOptions = AppLocaleManager.supportedLanguages();
         List<MaterialButton> optionButtons = new ArrayList<>(languageOptions.size());
-        String selectedLanguageTag = AppLocaleManager.getLanguageTag(this);
+        String selectedLanguageTag = AppLocaleManager.getLanguageTag(activity);
 
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
                 .setView(dialogView)
                 .create();
         dialog.setCanceledOnTouchOutside(true);
@@ -307,6 +556,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         updateLanguageOptionButtonStyles(optionButtons, selectedIndex);
         cancelButton.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialog, activity);
     }
 
     private void onLanguageOptionSelected(androidx.appcompat.app.AlertDialog dialog,
@@ -317,9 +567,9 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             return;
         }
         updateLanguageOptionButtonStyles(optionButtons, selectedIndex);
-        String previousTag = AppLocaleManager.getLanguageTag(this);
+        String previousTag = AppLocaleManager.getLanguageTag(activity);
         String selectedTag = languageOptions.get(selectedIndex).tag;
-        if (!AppLocaleManager.setLanguageTag(this, selectedTag)) {
+        if (!AppLocaleManager.setLanguageTag(activity, selectedTag)) {
             showToast(R.string.system_settings_save_failed);
             return;
         }
@@ -331,7 +581,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     }
 
     private MaterialButton createLanguageOptionButton(ViewGroup parent, int labelResId) {
-        MaterialButton button = (MaterialButton) LayoutInflater.from(this).inflate(
+        MaterialButton button = (MaterialButton) LayoutInflater.from(activity).inflate(
                 R.layout.item_language_option_button,
                 parent,
                 false);
@@ -345,11 +595,11 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             boolean selected = i == selectedIndex;
             int backgroundColor = selected
                     ? MaterialColors.getColor(
-                            this,
+                            activity,
                             com.google.android.material.R.attr.colorSecondaryContainer, 0)
                     : 0;
             int textColor = MaterialColors.getColor(
-                    this,
+                    activity,
                     selected ? androidx.appcompat.R.attr.colorPrimary
                             : com.google.android.material.R.attr.colorOnSurface,
                     0);
@@ -364,7 +614,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             return;
         }
         MaterialTextView subtitleView = languageEntryRow.findViewById(R.id.setting_subtitle);
-        subtitleView.setText(AppLocaleManager.selectedLabelResId(this));
+        subtitleView.setText(AppLocaleManager.selectedLabelResId(activity));
     }
 
     private void updateCacheEntrySubtitle() {
@@ -449,13 +699,13 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             showToast(R.string.status_save_requires_init);
             return;
         }
-        View dialogView = LayoutInflater.from(this).inflate(
+        View dialogView = LayoutInflater.from(activity).inflate(
                 R.layout.dialog_config_backup, null, false);
         MaterialButton exportButton = dialogView.findViewById(R.id.config_backup_export_button);
         MaterialButton importButton = dialogView.findViewById(R.id.config_backup_import_button);
         MaterialButton closeButton = dialogView.findViewById(R.id.config_backup_close_button);
 
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
                 .setView(dialogView)
                 .create();
         dialog.setCanceledOnTouchOutside(true);
@@ -466,10 +716,11 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         });
         importButton.setOnClickListener(v -> {
             dialog.dismiss();
-            showImportBackupConfirmDialog();
+            launchImportBackupPicker();
         });
         closeButton.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialog, activity);
     }
 
     @SuppressWarnings("deprecation")
@@ -501,23 +752,24 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         }
     }
 
-    private void showImportBackupConfirmDialog() {
-        View dialogView = LayoutInflater.from(this).inflate(
+    private void showImportBackupConfirmDialog(Uri uri) {
+        View dialogView = LayoutInflater.from(activity).inflate(
                 R.layout.dialog_config_backup_confirm, null, false);
         MaterialButton proceedButton = dialogView.findViewById(R.id.config_backup_confirm_proceed_button);
         MaterialButton cancelButton = dialogView.findViewById(R.id.config_backup_confirm_cancel_button);
 
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
                 .setView(dialogView)
                 .create();
         dialog.setCanceledOnTouchOutside(true);
 
         proceedButton.setOnClickListener(v -> {
             dialog.dismiss();
-            launchImportBackupPicker();
+            importConfigBackup(uri);
         });
         cancelButton.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialog, activity);
     }
 
     private void exportConfigBackup(Uri uri) {
@@ -569,10 +821,18 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             }
             int entryCount = entries.size();
             runOnUiThread(() -> {
-                applyRestoredStoreState();
                 showToast(R.string.config_backup_import_success, entryCount);
+                relaunchDpisTask();
             });
         }, "dpis-config-backup-import").start();
+    }
+
+    private void relaunchDpisTask() {
+        DpisApplication.reloadConfigStore();
+        Intent intent = new Intent(activity, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finishAffinity();
     }
 
     private void applyRestoredStoreState() {
@@ -589,6 +849,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
                 store.isGlobalLogEnabled(),
                 this::onGlobalLogChanged);
         DpisLog.setLoggingEnabled(store.isGlobalLogEnabled());
+        setInterfaceScalePercentSilently(store.getInterfaceScalePercent());
 
         applyLauncherIconVisibilityFromStore();
         syncHooksSwitchWithScope();
@@ -596,7 +857,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         if (store.isFontDebugOverlayEnabled() && canDrawOverlays()) {
             startFontDebugOverlayService();
         } else if (!store.isFontDebugOverlayEnabled()) {
-            stopService(new Intent(this, FontDebugOverlayService.class));
+            stopService(new Intent(activity, FontDebugOverlayService.class));
         }
         updateDialogButtons();
         refreshStatsPanel();
@@ -616,10 +877,12 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         safeModeSwitch.setEnabled(true);
         globalLogSwitch.setEnabled(true);
         hideLauncherIconSwitch.setEnabled(true);
+        interfaceScaleSlider.setEnabled(true);
         setRowEnabled(fontDebugEntryRow, true);
         setRowEnabled(experimentalSettingsEntryRow, true);
         setRowEnabled(fontLibraryEntryRow, true);
         setRowEnabled(backupConfigEntryRow, true);
+        setRowEnabled(interfaceScaleRow, true);
         hooksToggleController = new SystemHooksToggleController(
                 store,
                 new ActivitySystemScopeGateway(),
@@ -635,10 +898,12 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         safeModeSwitch.setEnabled(false);
         globalLogSwitch.setEnabled(false);
         hideLauncherIconSwitch.setEnabled(false);
+        interfaceScaleSlider.setEnabled(false);
         setRowEnabled(fontDebugEntryRow, false);
         setRowEnabled(experimentalSettingsEntryRow, false);
         setRowEnabled(fontLibraryEntryRow, false);
         setRowEnabled(backupConfigEntryRow, false);
+        setRowEnabled(interfaceScaleRow, false);
         setRowEnabled(languageEntryRow, false);
         if (showInitToast) {
             showToast(R.string.status_save_requires_init);
@@ -707,7 +972,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         }
         dismissFontDebugDialog();
         ViewGroup root = findViewById(android.R.id.content);
-        View dialogView = LayoutInflater.from(this).inflate(
+        View dialogView = LayoutInflater.from(activity).inflate(
                 R.layout.dialog_font_debug_stats, root, false);
         MaterialButton overlayActionButton = dialogView.findViewById(R.id.dialog_overlay_action);
         MaterialButton modeButton = dialogView.findViewById(R.id.dialog_stats_mode_button);
@@ -737,7 +1002,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             if (requestedEnabled) {
                 startFontDebugOverlayService();
             } else {
-                stopService(new Intent(this, FontDebugOverlayService.class));
+                stopService(new Intent(activity, FontDebugOverlayService.class));
             }
             updateDialogButtons();
         });
@@ -771,7 +1036,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
             showToast(R.string.font_debug_clear_done);
         });
 
-        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        BottomSheetDialog dialog = new BottomSheetDialog(activity);
         dialog.setContentView(dialogView);
         dialog.setOnDismissListener(d -> {
             dialogOverlayActionButton = null;
@@ -923,7 +1188,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     }
 
     private void showDisableSafeModeConfirmationDialog() {
-        View dialogView = LayoutInflater.from(this)
+        View dialogView = LayoutInflater.from(activity)
                 .inflate(R.layout.dialog_process_action_confirm, null, false);
         MaterialTextView titleView = dialogView.findViewById(R.id.process_action_confirm_title);
         MaterialTextView messageView = dialogView.findViewById(R.id.process_action_confirm_message);
@@ -933,7 +1198,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         titleView.setText(R.string.system_safe_mode_disable_confirm_title);
         messageView.setText(R.string.system_safe_mode_disable_confirm_message);
 
-        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+        AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
                 .setView(dialogView)
                 .create();
         proceedButton.setOnClickListener(v -> {
@@ -950,6 +1215,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         dialog.setOnCancelListener(unused -> setCheckedSilently(safeModeSwitch, true,
                 this::onSafeModeChanged));
         dialog.show();
+        DialogWindowSizer.applyStandardWidth(dialog, activity);
     }
 
     private void onGlobalLogChanged(CompoundButton buttonView, boolean isChecked) {
@@ -981,7 +1247,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     }
 
     private void showHideLauncherIconConfirmationDialog() {
-        View dialogView = LayoutInflater.from(this)
+        View dialogView = LayoutInflater.from(activity)
                 .inflate(R.layout.dialog_process_action_confirm, null, false);
         MaterialTextView titleView = dialogView.findViewById(R.id.process_action_confirm_title);
         MaterialTextView messageView = dialogView.findViewById(R.id.process_action_confirm_message);
@@ -991,7 +1257,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         titleView.setText(R.string.settings_hide_launcher_icon_confirm_title);
         messageView.setText(R.string.settings_hide_launcher_icon_confirm_message);
 
-        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+        AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
                 .setView(dialogView)
                 .create();
         proceedButton.setOnClickListener(v -> {
@@ -1009,10 +1275,11 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         dialog.setOnCancelListener(unused -> setCheckedSilently(hideLauncherIconSwitch, false,
                 this::onHideLauncherIconChanged));
         dialog.show();
+        DialogWindowSizer.applyStandardWidth(dialog, activity);
     }
 
     private boolean canDrawOverlays() {
-        return Settings.canDrawOverlays(this);
+        return Settings.canDrawOverlays(activity);
     }
 
     private void requestOverlayPermission() {
@@ -1022,7 +1289,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     }
 
     private void startFontDebugOverlayService() {
-        Intent serviceIntent = new Intent(this, FontDebugOverlayService.class);
+        Intent serviceIntent = new Intent(activity, FontDebugOverlayService.class);
         startService(serviceIntent);
     }
 
@@ -1038,7 +1305,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
         if (isFinishing() || isDestroyed()) {
             return;
         }
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
     }
 
     private static void setRowEnabled(View row, boolean enabled) {
@@ -1128,7 +1395,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
     }
 
     private ComponentName getLauncherAliasComponentName() {
-        return new ComponentName(this, MainActivity.class.getName() + "Launcher");
+        return new ComponentName(activity, MainActivity.class.getName() + "Launcher");
     }
 
     private final class ActivitySystemHooksToggleView implements SystemHooksToggleController.View {
@@ -1138,7 +1405,7 @@ public final class SystemServerSettingsActivity extends LocalizedActivity
                 return;
             }
             setCheckedSilently(hooksEnabledSwitch, state.switchChecked,
-                    SystemServerSettingsActivity.this::onHooksEnabledChanged);
+                    SystemServerSettingsPageController.this::onHooksEnabledChanged);
             hooksEnabledSwitch.setEnabled(state.switchEnabled);
         }
 

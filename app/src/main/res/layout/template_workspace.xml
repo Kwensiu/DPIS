@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/template_workspace_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipToPadding="false"
+    android:fillViewport="true"
+    android:paddingStart="@dimen/template_workspace_padding_horizontal"
+    android:paddingTop="@dimen/template_workspace_padding_top"
+    android:paddingEnd="@dimen/template_workspace_padding_horizontal"
+    android:paddingBottom="@dimen/template_workspace_padding_bottom"
+    android:visibility="gone">
+
+    <LinearLayout
+        android:id="@+id/template_workspace_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/global_prefill_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="?attr/colorSurfaceContainer"
+            app:cardCornerRadius="@dimen/template_workspace_card_corner_radius"
+            app:strokeColor="?attr/colorOutlineVariant"
+            app:strokeWidth="@dimen/page_card_stroke_width">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/template_workspace_card_padding">
+
+                <LinearLayout
+                    android:id="@+id/global_prefill_header"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/global_prefill_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/template_workspace_global_prefill_title"
+                            android:textAppearance="?attr/textAppearanceTitleMedium"
+                            android:textColor="?attr/colorOnSurface" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/global_prefill_subtitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/template_workspace_text_spacing_top"
+                            android:text="@string/template_workspace_global_prefill_subtitle"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.AppCompatImageButton
+                        android:id="@+id/global_prefill_edit_button"
+                        android:layout_width="@dimen/template_workspace_icon_button_size"
+                        android:layout_height="@dimen/template_workspace_icon_button_size"
+                        android:layout_marginStart="@dimen/dialog_action_spacing_between"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/template_workspace_action_edit_global_prefill"
+                        android:padding="@dimen/template_workspace_icon_button_padding"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_chevron_right_24"
+                        app:tint="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/global_prefill_summary_chips"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/template_workspace_chip_group_spacing_top"
+                    app:chipSpacingHorizontal="@dimen/template_workspace_chip_spacing_horizontal"
+                    app:chipSpacingVertical="@dimen/template_workspace_chip_spacing_vertical"
+                    app:singleLine="false"
+                    app:singleSelection="false" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/global_prefill_empty_summary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/template_workspace_chip_group_spacing_top"
+                    android:background="@drawable/bg_template_workspace_empty_summary"
+                    android:gravity="center"
+                    android:minHeight="@dimen/template_workspace_empty_summary_min_height"
+                    android:text="@string/template_workspace_summary_empty"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <LinearLayout
+            android:id="@+id/quick_template_section_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/template_workspace_section_spacing_top"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/quick_template_section_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/template_workspace_section_title_inset_start"
+                android:layout_weight="1"
+                android:text="@string/template_workspace_quick_templates_title"
+                android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                android:textColor="?attr/colorOnSurface"
+                android:textStyle="bold" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/quick_template_sort_button"
+                android:layout_width="@dimen/template_workspace_header_action_button_size"
+                android:layout_height="@dimen/template_workspace_header_action_button_size"
+                android:layout_marginEnd="@dimen/template_workspace_header_action_button_spacing"
+                android:background="@drawable/bg_round_button_surface"
+                android:contentDescription="@string/quick_template_sort_action"
+                android:padding="@dimen/template_workspace_header_action_button_padding"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_sort_24"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/quick_template_create_button"
+                android:layout_width="@dimen/template_workspace_header_action_button_size"
+                android:layout_height="@dimen/template_workspace_header_action_button_size"
+                android:layout_marginEnd="@dimen/template_workspace_create_button_inset_end"
+                android:background="@drawable/bg_template_workspace_add_button"
+                android:contentDescription="@string/quick_template_create_action"
+                android:padding="@dimen/template_workspace_header_action_button_padding"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_add_24"
+                app:tint="?attr/colorOnSurfaceVariant" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/quick_template_list_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/template_workspace_header_spacing_bottom"
+            android:orientation="vertical" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/quick_template_empty_state"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/template_workspace_empty_spacing_top"
+            android:gravity="center"
+            android:padding="@dimen/template_workspace_empty_padding"
+            android:text="@string/template_workspace_quick_templates_empty"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

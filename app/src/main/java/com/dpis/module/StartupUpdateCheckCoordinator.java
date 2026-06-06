@@ -18,7 +18,13 @@ final class StartupUpdateCheckCoordinator {
 
         String getLocalVersionName();
 
-        void launchStartupUpdateDialog(StartupUpdateManifest manifest);
+        void onStartupUpdateCheckStarted();
+
+        void onStartupUpdateAvailable(StartupUpdateManifest manifest);
+
+        void onStartupUpdateUpToDate();
+
+        void onStartupUpdateCheckFailed();
     }
 
     interface Clock {
@@ -60,17 +66,37 @@ final class StartupUpdateCheckCoordinator {
     }
 
     void maybeCheckForUpdatesOnStartup() {
+        checkForUpdates(true);
+    }
+
+    void checkForUpdatesNow() {
+        checkForUpdates(true);
+    }
+
+    private void checkForUpdates(boolean ignoreGate) {
         if (!host.isActivityAlive()) {
             return;
         }
         UpdateCoordinator.State state = host.buildUpdateCoordinatorState();
         UpdateCoordinator.StartupCheckGate gate =
                 updateCoordinator.evaluateStartupCheck(state, clock.currentTimeMillis());
-        if (!gate.shouldStart) {
+        if (gate.reason == UpdateCoordinator.StartupCheckReason.CHECK_IN_PROGRESS) {
+            host.runOnUiThread(host::onStartupUpdateCheckStarted);
+            return;
+        }
+        if (!ignoreGate && !gate.shouldStart) {
+            if (gate.reason == UpdateCoordinator.StartupCheckReason.CHECK_IN_PROGRESS) {
+                host.runOnUiThread(host::onStartupUpdateCheckStarted);
+            } else if (state.lastUpdateCheckFailed) {
+                host.runOnUiThread(host::onStartupUpdateCheckFailed);
+            } else {
+                host.runOnUiThread(host::onStartupUpdateUpToDate);
+            }
             return;
         }
         UpdateCoordinator.State checkingState = updateCoordinator.markStartupCheckStarted(state);
         host.applyStartupCheckState(checkingState);
+        host.runOnUiThread(host::onStartupUpdateCheckStarted);
 
         final String manifestUrl = host.getManifestUrl();
         host.executeBackground(() -> {
@@ -81,17 +107,18 @@ final class StartupUpdateCheckCoordinator {
                         connectTimeoutMs,
                         readTimeoutMs);
                 requestSucceeded = true;
-                UpdateCoordinator.PromptDecision promptDecision = updateCoordinator.evaluatePromptDecision(
-                        host.buildUpdateCoordinatorState(),
+                boolean remoteNewer = UpdateCoordinator.isRemoteVersionNewer(
                         manifest.versionCode,
                         manifest.versionName,
                         host.getLocalVersionCode(),
                         host.getLocalVersionName());
-                if (!promptDecision.shouldPrompt) {
+                if (!remoteNewer) {
+                    host.runOnUiThread(host::onStartupUpdateUpToDate);
                     return;
                 }
-                host.runOnUiThread(() -> host.launchStartupUpdateDialog(manifest));
+                host.runOnUiThread(() -> host.onStartupUpdateAvailable(manifest));
             } catch (Exception ignored) {
+                host.runOnUiThread(host::onStartupUpdateCheckFailed);
                 // Non-fatal: startup update check failures are silently swallowed.
             } finally {
                 UpdateCoordinator.State nextState = updateCoordinator.markStartupCheckFinished(

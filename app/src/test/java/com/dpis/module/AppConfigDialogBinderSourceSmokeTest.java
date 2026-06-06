@@ -4,9 +4,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import org.junit.Test;
 
@@ -20,7 +17,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
         assertTrue(binderSource.contains("new AppConfigSheetInteractions(this, host)"));
         assertTrue(binderSource.contains(".bind(dialogView, item, views, state, style, systemHooksEnabled);"));
-        assertTrue(interactionsSource.contains("new AppConfigSheetModeValidationBinder(binder, host)"));
+        assertTrue(interactionsSource.contains("new AppConfigSheetModeValidationBinder(binder)"));
         assertTrue(interactionsSource.contains("new AppConfigSheetActionBinder(binder, host)"));
         assertTrue(interactionsSource.contains(
                 "modeValidationBinder.bindDialogValidation(dialogView, item, views, state, style, systemHooksEnabled);"));
@@ -43,6 +40,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("ProcessAction.STOP"));
         assertTrue(source.contains("views.disableButton.setOnClickListener"));
         assertTrue(source.contains("views.viewportInputView.setText(\"\")"));
+        assertTrue(source.contains("state.clearHookChainStateForReset();"));
         assertTrue(source.contains("AppConfigDialogBinder.bindViewportModeToggle("));
         assertTrue(source.contains("views.viewportModeToggle, ViewportTargetType.RELATIVE_SCALE, true)"));
         assertTrue(source.contains("AppConfigDialogBinder.bindFontModeToggle("));
@@ -53,6 +51,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("host.saveAppConfig("));
         assertTrue(source.contains("state.viewportScaleInput"));
         assertTrue(source.contains("state.viewportAbsoluteInput"));
+        assertTrue(source.contains("state.draftFontHookDomainsRaw"));
         assertTrue(source.contains("showSaveButtonFeedback(views.saveButton)"));
         assertTrue(source.contains("binder.requestScopeAfterSuccessfulSave("));
         assertTrue(source.contains("dialogView, item, views, state, style, systemHooksEnabled);"));
@@ -76,6 +75,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(binder.contains("MaterialAlertDialogBuilder"));
         assertTrue(binder.contains("R.string.dialog_wechat_target_field_help_title"));
         assertTrue(binder.contains("R.string.dialog_wechat_target_field_help_message"));
+        assertTrue(binder.contains("DialogWindowSizer.applyStandardWidth(dialog, anchor.getContext())"));
         assertTrue(binder.contains("setHelperText(supported ? null"));
         assertTrue(binder.contains("setError(inputLayout.getContext().getString("));
         assertTrue(strings.contains("WeChat independent route 200-1200"));
@@ -85,6 +85,34 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(zhStrings.contains("微信独立链路 200-1200"));
         assertTrue(zhStrings.contains("暂不支持小程序"));
         assertTrue(zhStrings.contains("未适配当前微信版本"));
+    }
+
+    @Test
+    public void wechatTargetFieldSaveDoesNotClearViewportConfig() throws IOException {
+        String binder = read("src/main/java/com/dpis/module/WechatTargetFieldSheetBinder.java");
+        int saveStart = binder.indexOf("private static boolean saveTargetField(");
+        int saveEnd = binder.indexOf("static void clearDraft", saveStart);
+        String saveBlock = binder.substring(saveStart, saveEnd);
+
+        assertTrue(saveBlock.contains("store.setWechatTargetField(packageName, targetField)"));
+        assertFalse(saveBlock.contains("clearTargetViewportWidthDp(packageName)"));
+        assertFalse(saveBlock.contains("setTargetViewportApplyMode(packageName, ViewportApplyMode.OFF)"));
+        assertFalse(saveBlock.contains("ViewportPropertySyncer.clearTargetAsync(packageName)"));
+    }
+
+    @Test
+    public void appConfigSheetUsesUnsavedBadgeInsteadOfPreviewIndicator() throws IOException {
+        String binderSource = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String layout = read("src/main/res/layout/dialog_app_config.xml");
+
+        assertTrue(layout.contains("@layout/view_sheet_unsaved_badge_handle"));
+        assertFalse(layout.contains("dialog_preview_status"));
+        assertFalse(layout.contains("dialog_global_prefill_preview_status"));
+        assertTrue(binderSource.contains("state.captureSavedDraft(views, item != null && item.previewFromGlobalPrefill);"));
+        assertTrue(binderSource.contains("UnsavedBadgeBinder.bind("));
+        assertTrue(binderSource.contains("bindDpisToggleButton(views.dpisToggleButton, state.dpisEnabled"));
+        assertTrue(binderSource.contains("dpisToggleButton.setEnabled(true);"));
+        assertTrue(binderSource.contains("dpisToggleButton.setAlpha(1f);"));
     }
 
     @Test
@@ -131,13 +159,17 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("SystemFontRegistry.listRecommendedFonts()"));
         assertTrue(source.contains("TabLayout"));
         assertTrue(source.contains("R.layout.dialog_typeface_selection"));
+        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialogHolder[0], activity)"));
         assertTrue(source.contains("R.string.dialog_typeface_tab_system"));
         assertTrue(source.contains("R.string.dialog_typeface_tab_imported"));
         assertTrue(source.contains("host.openTypefaceLibrary"));
         assertTrue(selectorLayout.contains("@string/dialog_typeface_manage_action"));
         assertTrue(selectorLayout.contains("@string/dialog_typeface_done_action"));
         assertTrue(selectorLayout.contains("@dimen/dialog_surface_padding_horizontal"));
-        assertTrue(selectorLayout.contains("@dimen/dialog_typeface_list_height"));
+        assertTrue(selectorLayout.contains("android:id=\"@+id/typeface_scroll\""));
+        assertTrue(selectorLayout.contains("android:layout_height=\"@dimen/dialog_typeface_list_height\""));
+        assertTrue(source.contains("applyTypefaceDialogListHeight(root);"));
+        assertTrue(source.contains("params.height = Math.min(configuredHeight, maxListHeight);"));
         assertTrue(selectorLayout.contains("@dimen/dialog_typeface_footer_button_height"));
         assertTrue(source.contains("R.dimen.dialog_typeface_option_min_height"));
         assertTrue(source.contains("R.dimen.dialog_typeface_option_padding_horizontal"));
@@ -208,19 +240,22 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
         assertTrue(layout.contains("android:id=\"@+id/dialog_font_hook_domains_button\""));
         assertTrue(layout.contains("@dimen/dialog_app_config_padding_horizontal"));
-        assertTrue(layout.contains("@dimen/dialog_app_config_drag_handle_width"));
+        assertTrue(layout.contains("@layout/view_sheet_unsaved_badge_handle"));
         assertTrue(layout.contains("@dimen/dialog_app_config_input_corner_radius"));
         assertTrue(layout.contains("@dimen/dialog_app_config_process_button_spacing_start"));
         assertTrue(layout.indexOf("android:id=\"@+id/dialog_font_hook_domains_button\"")
                 < layout.indexOf("android:id=\"@+id/dialog_stop_button\""));
         assertTrue(layout.indexOf("android:id=\"@+id/dialog_font_hook_domains_button\"")
                 < layout.indexOf("@string/dialog_advanced_section_title"));
-        assertTrue(binderSource.contains("void showFontHookDomains(AppListItem item, Runnable onStateChanged);"));
-        assertTrue(binderSource.contains("String getFontHookDomainsButtonText(String packageName);"));
+        assertTrue(binderSource.contains("void showFontHookDomains(AppListItem item,"));
+        assertTrue(binderSource.contains("AppConfigDialogState state,"));
+        assertTrue(binderSource.contains("String getFontHookDomainsButtonText(AppListItem item,"));
+        assertTrue(binderSource.contains("AppConfigDialogState state);"));
         assertTrue(source.contains("views.fontHookDomainsButton.setOnClickListener"));
-        assertTrue(source.contains("host.showFontHookDomains(item,"));
-        assertTrue(binderSource.contains("host.getFontHookDomainsButtonText(packageName)"));
-        assertTrue(source.contains("binder.bindFontHookDomainsButton(views.fontHookDomainsButton, item.packageName)"));
+        assertTrue(source.contains("host.showFontHookDomains(item, state,"));
+        assertTrue(binderSource.contains("host.getFontHookDomainsButtonText(item, state)"));
+        assertTrue(source.contains("host.onDraftStateChanged(state);"));
+        assertTrue(source.contains("state.draftFontHookDomainsRaw"));
     }
 
     @Test
@@ -232,6 +267,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
         assertTrue(source.contains("setTitle(R.string.dialog_font_hook_domains_dialog_title)"));
+        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialog, activity)"));
         assertTrue(source.contains("dialog_hook_chain_tab_interface"));
         assertTrue(source.contains("dialog_hook_chain_tab_font"));
         assertTrue(source.contains("normalizeViewportApplyModeForDisplay(currentViewportApplyMode)"));
@@ -378,7 +414,61 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertFalse(hintLayout.contains("\"14dp\""));
     }
 
+    @Test
+    public void appConfigSheetUsesImeResizeAndScrollsFocusedInput() throws IOException {
+        String coordinator = read("src/main/java/com/dpis/module/AppConfigDialogCoordinator.java");
+        String appConfigLayout = read("src/main/res/layout/dialog_app_config.xml");
 
+        assertTrue(appConfigLayout.contains("@+id/dialog_app_config_scroll"));
+        assertTrue(coordinator.contains("SOFT_INPUT_ADJUST_RESIZE"));
+        assertTrue(coordinator.contains("WindowInsetsCompat.Type.ime()"));
+        assertTrue(coordinator.contains("setExpandedOffset(targetOffset)"));
+        assertTrue(coordinator.contains("restoreImeSheetOffset(behavior, view)"));
+        assertTrue(coordinator.contains("ValueAnimator.ofFloat(startTranslation, 0f)"));
+        assertTrue(coordinator.contains("view.postDelayed(() ->"));
+        assertTrue(coordinator.contains("if (!imeVisible)"));
+        assertTrue(coordinator.contains("behavior.setFitToContents(false);"));
+        assertTrue(coordinator.contains("behavior.setState(BottomSheetBehavior.STATE_EXPANDED);"));
+        assertFalse(coordinator.contains("WindowInsetsAnimationCompat.Callback"));
+        assertFalse(coordinator.contains("setMaxHeight("));
+        assertFalse(coordinator.contains("DPIS-IME"));
+        assertFalse(coordinator.contains("android.util.Log"));
+        assertTrue(coordinator.contains("applyImeScrollPadding("));
+        assertTrue(coordinator.contains("setClipToPadding(false)"));
+        assertTrue(coordinator.contains("baseScrollPaddingBottom"));
+        assertTrue(coordinator.contains("scrollView.setPadding("));
+        assertTrue(coordinator.contains("smoothScrollBy(0, remainingDelta)"));
+        assertFalse(coordinator.contains("applyImeHalfExpandedRatio("));
+        assertFalse(coordinator.contains("restoreHalfExpandedRatio("));
+        assertFalse(coordinator.contains("bottomSheet.getHeight() + imeBottom"));
+        assertFalse(coordinator.contains("behavior.setHalfExpandedRatio(targetRatio);"));
+        assertFalse(coordinator.contains("params.bottomMargin = imeBottom;"));
+        assertFalse(coordinator.contains("expandedForIme"));
+        assertTrue(coordinator.contains("scrollFocusedInputIntoView("));
+        assertTrue(coordinator.contains("if (imeVisible)"));
+        assertTrue(coordinator.contains("scrollFocusedInputAboveKeyboard("));
+        assertTrue(coordinator.contains("focusedBottom + verticalPadding - keyboardTop"));
+        assertTrue(coordinator.contains("inputVerticalPadding"));
+        assertTrue(coordinator.contains("dialog_app_config_scroll"));
+        assertTrue(coordinator.contains("smoothScrollTo("));
+    }
+
+    @Test
+    public void appConfigSheetUsesSharedFormInputFocusBehavior() throws IOException {
+        String interactions = read("src/main/java/com/dpis/module/AppConfigSheetInteractions.java");
+        String validation = read("src/main/java/com/dpis/module/AppConfigSheetModeValidationBinder.java");
+        String actions = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
+        String host = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String focusBinder = read("src/main/java/com/dpis/module/FormInputFocusBinder.java");
+
+        assertTrue(focusBinder.contains("final class FormInputFocusBinder"));
+        assertTrue(interactions.contains("new AppConfigSheetModeValidationBinder(binder)"));
+        assertTrue(validation.contains("FormInputFocusBinder.bindDismissOnOutsideTouch"));
+        assertTrue(validation.contains("R.id.dialog_wechat_target_field_input"));
+        assertTrue(actions.contains("FormInputFocusBinder.clearFocusAndHideIme"));
+        assertTrue(actions.contains("R.id.dialog_wechat_target_field_input"));
+        assertFalse(host.contains("clearDialogInputFocus("));
+    }
 
     @Test
     public void binderDoesNotKeepEmptyHyperOsSectionWrapper() throws IOException {
@@ -421,6 +511,22 @@ public class AppConfigDialogBinderSourceSmokeTest {
     }
 
     @Test
+    public void previewViewportApplyModeUsesMutableSheetStateForStatusAndSave() throws IOException {
+        String binderSource = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String actionSource = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
+        String saveSource = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+
+        assertTrue(binderSource.contains("String viewportApplyMode;"));
+        assertTrue(binderSource.contains("this.viewportApplyMode = ViewportApplyMode.normalize(viewportApplyMode);"));
+        assertTrue(binderSource.contains("state.viewportApplyMode"));
+        assertTrue(actionSource.contains("state.viewportApplyMode"));
+        assertTrue(actionSource.contains("state.viewportApplyModeResetRequested"));
+        assertTrue(saveSource.contains("String currentViewportApplyMode"));
+        assertTrue(saveSource.contains("boolean viewportApplyModeResetRequested"));
+        assertTrue(saveSource.contains("viewportApplyModeResetRequested, viewportTargetSpec"));
+    }
+
+    @Test
     public void savingEmptyFontScaleClearsOnlyFontScaleRuntimeTargets() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
         int clearStart = source.indexOf("if (fontScalePercent == null)");
@@ -429,6 +535,18 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
         assertTrue(clearBlock.contains("FontRuntimePropertySyncer.clearFontScaleTargetAsync(item.packageName)"));
         assertFalse(clearBlock.contains("FontRuntimePropertySyncer.clearTargetAsync(item.packageName)"));
+        assertFalse(clearBlock.contains("FontHookDomainPropertySyncer.clearTargetAsync(item.packageName)"));
+    }
+
+    @Test
+    public void savingPreviewHookDomainsIsIndependentFromFontScaleBranch() throws IOException {
+        String source = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        int persistCall = source.indexOf("persistPreviewOnlyConfig(");
+        int fontScaleBranch = source.indexOf("if (fontScalePercent == null)");
+
+        assertTrue(persistCall > 0);
+        assertTrue(fontScaleBranch > persistCall);
+        assertTrue(source.contains("publishFontHookDomainsAfterSave(item.packageName, store);"));
     }
 
     @Test
@@ -462,7 +580,21 @@ public class AppConfigDialogBinderSourceSmokeTest {
                 "FontRuntimePropertySyncer.publishTypefaceTargetAsync(item.packageName, selectedTypefaceId)"));
     }
 
+    @Test
+    public void appConfigInputErrorsAreRenderedBySharedValidation() throws IOException {
+        String binder = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String landBinder = read("src/main/java/com/dpis/module/LandAppDetailPaneBinder.java");
+        int updateStart = binder.indexOf("static boolean updateSaveButtonState(TextInputLayout");
+        int updateEnd = binder.indexOf("static boolean updateSaveButtonState(View dialogView", updateStart);
+        String updateBlock = binder.substring(updateStart, updateEnd);
+
+        assertTrue(updateBlock.contains("bindInputError(viewportInputLayout, viewportValid);"));
+        assertTrue(updateBlock.contains("bindInputError(fontInputLayout, fontValid);"));
+        assertTrue(updateBlock.contains("R.string.status_save_invalid"));
+        assertFalse(landBinder.contains("R.string.status_save_invalid"));
+    }
+
     private static String read(String relativePath) throws IOException {
-        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
     }
 }

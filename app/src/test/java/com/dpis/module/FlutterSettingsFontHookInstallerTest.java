@@ -208,11 +208,7 @@ public class FlutterSettingsFontHookInstallerTest {
         }
 
         private static String readSource(String relativePath) throws Exception {
-                java.nio.file.Path path = java.nio.file.Path.of(relativePath);
-                if (!java.nio.file.Files.exists(path)) {
-                        path = java.nio.file.Path.of("app", relativePath);
-                }
-                return new String(java.nio.file.Files.readAllBytes(path), StandardCharsets.UTF_8);
+                return SourceSmokeTestPaths.read(relativePath);
         }
 
         private static String defaultInstallBody(String source) {

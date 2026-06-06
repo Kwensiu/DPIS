@@ -18,6 +18,8 @@ final class AppListItem {
     final boolean dpisEnabled;
     final boolean systemApp;
     final boolean hyperOsNativeProxyCandidate;
+    final boolean previewFromGlobalPrefill;
+    final String previewFontHookDomainsRaw;
     final Drawable icon;
 
     AppListItem(String label,
@@ -77,6 +79,30 @@ final class AppListItem {
                 boolean systemApp,
                 boolean hyperOsNativeProxyCandidate,
                 Drawable icon) {
+        this(label, packageName, inScope, scopeKnown, viewportWidthDp, viewportScalePermille,
+                viewportMode, viewportTargetSpec, fontScalePercent, fontMode, typefaceId,
+                appSpecificConfigActive, dpisEnabled, systemApp, hyperOsNativeProxyCandidate,
+                false, null, icon);
+    }
+
+    private AppListItem(String label,
+                String packageName,
+                boolean inScope,
+                boolean scopeKnown,
+                Integer viewportWidthDp,
+                Integer viewportScalePermille,
+                String viewportMode,
+                ViewportTargetSpec viewportTargetSpec,
+                Integer fontScalePercent,
+                String fontMode,
+                String typefaceId,
+                boolean appSpecificConfigActive,
+                boolean dpisEnabled,
+                boolean systemApp,
+                boolean hyperOsNativeProxyCandidate,
+                boolean previewFromGlobalPrefill,
+                String previewFontHookDomainsRaw,
+                Drawable icon) {
         this.label = label;
         this.packageName = packageName;
         this.inScope = inScope;
@@ -100,6 +126,8 @@ final class AppListItem {
         this.dpisEnabled = dpisEnabled;
         this.systemApp = systemApp;
         this.hyperOsNativeProxyCandidate = hyperOsNativeProxyCandidate;
+        this.previewFromGlobalPrefill = previewFromGlobalPrefill;
+        this.previewFontHookDomainsRaw = normalizeNullableString(previewFontHookDomainsRaw);
         this.icon = icon;
     }
 
@@ -125,5 +153,39 @@ final class AppListItem {
 
     boolean hasAppSpecificConfig() {
         return appSpecificConfigActive;
+    }
+
+    AppListItem withGlobalPrefillPreview(TemplateConfigValue prefill) {
+        TemplateConfigValue normalized = prefill != null ? prefill : TemplateConfigValue.EMPTY;
+        return new AppListItem(label,
+                packageName,
+                inScope,
+                scopeKnown,
+                normalized.viewportTargetSpec.isAbsoluteDp()
+                        ? Integer.valueOf(normalized.viewportTargetSpec.absoluteWidthDp())
+                        : viewportWidthDp,
+                normalized.viewportTargetSpec.isRelativeScale()
+                        ? Integer.valueOf(normalized.viewportTargetSpec.scalePermille())
+                        : viewportScalePermille,
+                normalized.viewportApplyMode,
+                normalized.viewportTargetSpec,
+                normalized.fontScalePercent,
+                normalized.fontApplyMode,
+                normalized.typefaceId,
+                appSpecificConfigActive,
+                dpisEnabled,
+                systemApp,
+                hyperOsNativeProxyCandidate,
+                true,
+                normalized.fontHookDomainsRaw,
+                icon);
+    }
+
+    private static String normalizeNullableString(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

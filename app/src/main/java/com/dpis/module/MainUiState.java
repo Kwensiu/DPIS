@@ -10,6 +10,7 @@ import java.util.Set;
 final class MainUiState {
     final String query;
     final AppListFilterState filterState;
+    final MainWorkspaceMode workspaceMode;
     private final List<AppListItem> appsSnapshot;
     private final EnumMap<AppListPage, List<AppListItem>> visibleSections;
     private final EnumSet<AppListPage> refreshingPages;
@@ -17,9 +18,11 @@ final class MainUiState {
     private MainUiState(String query,
                         AppListFilterState filterState,
                         List<AppListItem> appsSnapshot,
-                        Set<AppListPage> refreshingPages) {
+                        Set<AppListPage> refreshingPages,
+                        MainWorkspaceMode workspaceMode) {
         this.query = query != null ? query : "";
         this.filterState = filterState != null ? filterState : AppListFilterState.defaultState();
+        this.workspaceMode = workspaceMode != null ? workspaceMode : MainWorkspaceMode.APP;
         List<AppListItem> safeApps = appsSnapshot != null
                 ? new ArrayList<>(appsSnapshot)
                 : Collections.emptyList();
@@ -34,19 +37,35 @@ final class MainUiState {
                                AppListFilterState filterState,
                                List<AppListItem> appsSnapshot,
                                Set<AppListPage> refreshingPages) {
-        return new MainUiState(query, filterState, appsSnapshot, refreshingPages);
+        return initial(query, filterState, appsSnapshot, refreshingPages, MainWorkspaceMode.APP);
+    }
+
+    static MainUiState initial(String query,
+                               AppListFilterState filterState,
+                               List<AppListItem> appsSnapshot,
+                               Set<AppListPage> refreshingPages,
+                               MainWorkspaceMode workspaceMode) {
+        return new MainUiState(query, filterState, appsSnapshot, refreshingPages, workspaceMode);
     }
 
     MainUiState withQuery(String query) {
-        return new MainUiState(query, filterState, appsSnapshot, refreshingPages);
+        return new MainUiState(query, filterState, appsSnapshot, refreshingPages, workspaceMode);
     }
 
     MainUiState withFilterState(AppListFilterState filterState) {
-        return new MainUiState(query, filterState, appsSnapshot, refreshingPages);
+        return new MainUiState(query, filterState, appsSnapshot, refreshingPages, workspaceMode);
     }
 
     MainUiState withApps(List<AppListItem> appsSnapshot) {
-        return new MainUiState(query, filterState, appsSnapshot, refreshingPages);
+        return new MainUiState(query, filterState, appsSnapshot, refreshingPages, workspaceMode);
+    }
+
+    MainUiState withWorkspaceMode(MainWorkspaceMode workspaceMode) {
+        MainWorkspaceMode nextMode = workspaceMode != null ? workspaceMode : MainWorkspaceMode.APP;
+        if (this.workspaceMode == nextMode) {
+            return this;
+        }
+        return new MainUiState(query, filterState, appsSnapshot, refreshingPages, nextMode);
     }
 
     MainUiState withRefreshingPage(AppListPage page, boolean refreshing) {
@@ -61,14 +80,14 @@ final class MainUiState {
         } else {
             next.remove(page);
         }
-        return new MainUiState(query, filterState, appsSnapshot, next);
+        return new MainUiState(query, filterState, appsSnapshot, next, workspaceMode);
     }
 
     MainUiState clearRefreshingPages() {
         if (refreshingPages.isEmpty()) {
             return this;
         }
-        return new MainUiState(query, filterState, appsSnapshot, Collections.emptySet());
+        return new MainUiState(query, filterState, appsSnapshot, Collections.emptySet(), workspaceMode);
     }
 
     List<AppListItem> appsSnapshot() {

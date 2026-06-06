@@ -5,9 +5,6 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 public class OpenSourceLicenseActivityParsingTest {
     @Test
@@ -54,6 +51,15 @@ public class OpenSourceLicenseActivityParsingTest {
     }
 
     @Test
+    public void licenseDetailDialogUsesMaterialLargeWidth() throws IOException {
+        String source = read("src/main/java/com/dpis/module/OpenSourceLicenseActivity.java");
+
+        assertTrue(source.contains("new MaterialAlertDialogBuilder(this)"));
+        assertTrue(source.contains("androidx.appcompat.app.AlertDialog dialog = builder.create();"));
+        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialog, this);"));
+    }
+
+    @Test
     public void notFoundPathShowsMissingThirdPartyLicenseIndicator() throws IOException {
         String source = read("src/main/java/com/dpis/module/OpenSourceLicenseActivity.java")
                 .replace("\r\n", "\n");
@@ -72,6 +78,6 @@ public class OpenSourceLicenseActivityParsingTest {
     }
 
     private static String read(String relativePath) throws IOException {
-        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
     }
 }

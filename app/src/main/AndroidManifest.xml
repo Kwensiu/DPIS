@@ -37,10 +37,13 @@
             android:resource="@array/xposedscope" />
 
         <activity
-            android:name=".SystemServerSettingsActivity"
+            android:name=".FontLibraryActivity"
             android:exported="false" />
         <activity
-            android:name=".FontLibraryActivity"
+            android:name=".QuickTemplateTargetSelectionActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ModeHelpActivity"
             android:exported="false" />
         <activity
             android:name=".ExperimentalSettingsActivity"

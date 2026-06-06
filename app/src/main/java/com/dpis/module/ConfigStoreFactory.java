@@ -14,11 +14,11 @@ final class ConfigStoreFactory {
     private ConfigStoreFactory() {
     }
 
-    static DpiConfigStore createForModuleApp(Context context) {
+    static DpiConfigStore createLocalModuleConfigStore(Context context) {
         return new DpiConfigStore(context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE));
     }
 
-    static DpiConfigStore createForModuleApp(Context context, XposedService service) {
+    static DpiConfigStore createActiveModuleConfigStore(Context context, XposedService service) {
         SharedPreferences localPreferences =
                 context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE);
         if (service != null) {
@@ -34,14 +34,14 @@ final class ConfigStoreFactory {
         return new DpiConfigStore(localPreferences);
     }
 
-    static FontLibraryStore createFontLibraryForModuleApp(Context context) {
+    static FontLibraryStore createLocalFontLibraryStore(Context context) {
         SharedPreferences preferences =
                 context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE);
         return new FontLibraryStore(preferences, new File(context.getFilesDir(), "fonts"),
                 PUBLIC_FONT_DIRECTORY);
     }
 
-    static FontLibraryStore createFontLibraryForModuleApp(Context context, XposedService service) {
+    static FontLibraryStore createActiveFontLibraryStore(Context context, XposedService service) {
         SharedPreferences localPreferences =
                 context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE);
         SharedPreferences preferences = localPreferences;

@@ -4,6 +4,8 @@ import org.junit.Test;
 
 import java.lang.reflect.Method;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
@@ -283,6 +285,104 @@ public class DpisApplicationMigrationTest {
     }
 
     @Test
+    public void migratesTemplateAndGlobalPrefillConfigBeforeMirror() throws Exception {
+        FakePrefs localPrefs = new FakePrefs();
+        DpiConfigStore local = new DpiConfigStore(localPrefs);
+        TemplateConfigValue globalPrefill = new TemplateConfigValue(
+                ViewportTargetSpec.absoluteDp(411),
+                ViewportApplyMode.AUTO,
+                120,
+                FontApplyMode.SYSTEM_EMULATION,
+                "font_default",
+                "resources_font");
+        assertTrue(new GlobalPrefillStore(localPrefs).write(globalPrefill));
+        QuickTemplateStore localTemplates = new QuickTemplateStore(localPrefs);
+        assertTrue(localTemplates.save(new QuickTemplateStore.QuickTemplate(
+                "template_a",
+                "Compact",
+                1000L,
+                Set.of("com.example.one"),
+                new TemplateConfigValue(
+                        ViewportTargetSpec.relativeScale(1100),
+                        ViewportApplyMode.COMPAT,
+                        115,
+                        FontApplyMode.FIELD_REWRITE,
+                        "font_template",
+                        "textview_sp"))));
+        assertTrue(localTemplates.reorder(List.of("template_a")));
+
+        FakePrefs remotePrefs = new FakePrefs();
+        DpiConfigStore remote = new DpiConfigStore(remotePrefs);
+
+        invokeMigrate(local, remote);
+        invokeMirror(remote, local);
+
+        assertEquals(globalPrefill, new GlobalPrefillStore(remotePrefs).read());
+        QuickTemplateStore.QuickTemplate remoteTemplate =
+                new QuickTemplateStore(remotePrefs).read("template_a");
+        assertTrue(remoteTemplate != null);
+        assertEquals("Compact", remoteTemplate.name);
+        assertEquals(Set.of("com.example.one"), remoteTemplate.selectedPackages);
+        assertEquals("font_template", remoteTemplate.configValue.typefaceId);
+        assertEquals(globalPrefill, new GlobalPrefillStore(localPrefs).read());
+        QuickTemplateStore.QuickTemplate mirroredTemplate =
+                new QuickTemplateStore(localPrefs).read("template_a");
+        assertTrue(mirroredTemplate != null);
+        assertEquals("font_template", mirroredTemplate.configValue.typefaceId);
+    }
+
+    @Test
+    public void migrationDoesNotOverwriteRemoteTemplateAndPrefillConfig() throws Exception {
+        FakePrefs localPrefs = new FakePrefs();
+        DpiConfigStore local = new DpiConfigStore(localPrefs);
+        assertTrue(new GlobalPrefillStore(localPrefs).write(new TemplateConfigValue(
+                ViewportTargetSpec.absoluteDp(411),
+                ViewportApplyMode.AUTO,
+                null,
+                FontApplyMode.OFF,
+                "local_font",
+                null)));
+        assertTrue(new QuickTemplateStore(localPrefs).save(new QuickTemplateStore.QuickTemplate(
+                "template_a",
+                "Local",
+                1000L,
+                Set.of("com.example.local"),
+                TemplateConfigValue.EMPTY)));
+
+        FakePrefs remotePrefs = new FakePrefs();
+        DpiConfigStore remote = new DpiConfigStore(remotePrefs);
+        assertTrue(new GlobalPrefillStore(remotePrefs).write(new TemplateConfigValue(
+                ViewportTargetSpec.absoluteDp(512),
+                ViewportApplyMode.SYSTEM,
+                null,
+                FontApplyMode.OFF,
+                "remote_font",
+                null)));
+        assertTrue(new QuickTemplateStore(remotePrefs).save(new QuickTemplateStore.QuickTemplate(
+                "template_a",
+                "Remote",
+                2000L,
+                Set.of("com.example.remote"),
+                new TemplateConfigValue(
+                        ViewportTargetSpec.off(),
+                        ViewportApplyMode.OFF,
+                        null,
+                        FontApplyMode.OFF,
+                        "remote_template_font",
+                        null))));
+
+        invokeMigrate(local, remote);
+
+        assertEquals("remote_font", new GlobalPrefillStore(remotePrefs).read().typefaceId);
+        QuickTemplateStore.QuickTemplate remoteTemplate =
+                new QuickTemplateStore(remotePrefs).read("template_a");
+        assertTrue(remoteTemplate != null);
+        assertEquals("Remote", remoteTemplate.name);
+        assertEquals(Set.of("com.example.remote"), remoteTemplate.selectedPackages);
+        assertEquals("remote_template_font", remoteTemplate.configValue.typefaceId);
+    }
+
+    @Test
     public void mirrorsRemoteConfigBackToLocalAfterServiceBind() throws Exception {
         FakePrefs localPrefs = new FakePrefs();
         DpiConfigStore local = new DpiConfigStore(localPrefs);
@@ -293,6 +393,7 @@ public class DpisApplicationMigrationTest {
         assertTrue(remote.setHyperOsFlutterFontHookEnabled(true));
         assertTrue(remote.setTargetFontScalePercent("com.miui.weather2", 200));
         assertTrue(remote.setTargetFontApplyMode("com.miui.weather2", FontApplyMode.FIELD_REWRITE));
+        assertTrue(remote.setStartupDisclaimerAccepted(true));
 
         invokeMigrate(local, remote);
         invokeMirror(remote, local);
@@ -301,6 +402,63 @@ public class DpisApplicationMigrationTest {
         assertTrue(local.getConfiguredPackages().contains("com.miui.weather2"));
         assertEquals(Integer.valueOf(200), local.getTargetFontScalePercent("com.miui.weather2"));
         assertEquals(FontApplyMode.FIELD_REWRITE, local.getTargetFontApplyMode("com.miui.weather2"));
+        assertFalse(local.isStartupDisclaimerAccepted());
+    }
+
+    @Test
+    public void mirrorPreservesLocalStartupDisclaimerConsent() throws Exception {
+        FakePrefs localPrefs = new FakePrefs();
+        DpiConfigStore local = new DpiConfigStore(localPrefs);
+        assertTrue(local.setStartupDisclaimerAccepted(true));
+
+        FakePrefs remotePrefs = new FakePrefs();
+        DpiConfigStore remote = new DpiConfigStore(remotePrefs);
+        assertTrue(remote.setTargetFontScalePercent("com.miui.weather2", 200));
+
+        invokeMirror(remote, local);
+
+        assertTrue(local.isStartupDisclaimerAccepted());
+        assertEquals(Integer.valueOf(200), local.getTargetFontScalePercent("com.miui.weather2"));
+    }
+
+    @Test
+    public void mirrorPreservesLocalOnlyUiState() throws Exception {
+        FakePrefs localPrefs = new FakePrefs();
+        DpiConfigStore local = new DpiConfigStore(localPrefs);
+        assertTrue(local.setStartupDisclaimerAccepted(true));
+        assertTrue(local.setInterfaceScalePercent(73));
+        assertTrue(local.setLauncherIconHidden(true));
+
+        FakePrefs remotePrefs = new FakePrefs();
+        DpiConfigStore remote = new DpiConfigStore(remotePrefs);
+        assertTrue(remote.setTargetFontScalePercent("com.miui.weather2", 200));
+
+        invokeMirror(remote, local);
+
+        assertTrue(local.isStartupDisclaimerAccepted());
+        assertEquals(73, local.getInterfaceScalePercent());
+        assertTrue(local.isLauncherIconHidden());
+        assertEquals(Integer.valueOf(200), local.getTargetFontScalePercent("com.miui.weather2"));
+    }
+
+    @Test
+    public void mirrorDoesNotReviveRemoteOnlyUiState() throws Exception {
+        FakePrefs localPrefs = new FakePrefs();
+        DpiConfigStore local = new DpiConfigStore(localPrefs);
+
+        FakePrefs remotePrefs = new FakePrefs();
+        remotePrefs.edit()
+                .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
+                .putInt(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT, 73)
+                .putBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, true)
+                .commit();
+        DpiConfigStore remote = new DpiConfigStore(remotePrefs);
+
+        invokeMirror(remote, local);
+
+        assertFalse(local.isStartupDisclaimerAccepted());
+        assertEquals(AppUiScaleManager.DEFAULT_SCALE_PERCENT, local.getInterfaceScalePercent());
+        assertFalse(local.isLauncherIconHidden());
     }
 
     private static void invokeMigrate(DpiConfigStore from, DpiConfigStore to) throws Exception {

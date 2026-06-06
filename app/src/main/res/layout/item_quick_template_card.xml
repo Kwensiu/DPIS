@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/quick_template_card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardBackgroundColor="?attr/colorSurfaceContainer"
+    app:cardCornerRadius="@dimen/template_workspace_card_corner_radius_compact"
+    app:strokeWidth="@dimen/page_card_stroke_width">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/template_workspace_card_padding">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/quick_template_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:textColor="?attr/colorOnSurface" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/quick_template_summary_chips"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/template_workspace_chip_group_spacing_top"
+            app:chipSpacingHorizontal="@dimen/template_workspace_chip_spacing_horizontal"
+            app:chipSpacingVertical="@dimen/template_workspace_chip_spacing_vertical"
+            app:singleLine="false"
+            app:singleSelection="false" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/quick_template_empty_summary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/template_workspace_chip_group_spacing_top"
+            android:background="@drawable/bg_template_workspace_empty_summary"
+            android:gravity="center"
+            android:minHeight="@dimen/template_workspace_empty_summary_min_height"
+            android:text="@string/template_workspace_summary_empty"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/template_workspace_actions_spacing_top"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/quick_template_select_button"
+                android:layout_width="@dimen/template_workspace_icon_button_size"
+                android:layout_height="@dimen/template_workspace_icon_button_size"
+                android:background="@drawable/bg_round_button_surface"
+                android:contentDescription="@string/template_workspace_action_select_apps"
+                android:padding="@dimen/template_workspace_icon_button_padding"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_checklist_rtl_24"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/quick_template_edit_button"
+                android:layout_width="@dimen/template_workspace_icon_button_size"
+                android:layout_height="@dimen/template_workspace_icon_button_size"
+                android:layout_marginStart="@dimen/dialog_action_spacing_between"
+                android:background="@drawable/bg_round_button_surface"
+                android:contentDescription="@string/template_workspace_action_edit_template"
+                android:padding="@dimen/template_workspace_icon_button_padding"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_edit_24"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/quick_template_apply_button"
+                style="@style/Widget.Dpis.TemplateWorkspace.ApplyButton"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/template_workspace_action_button_height"
+                android:layout_marginStart="@dimen/dialog_action_spacing_between"
+                android:minWidth="0dp"
+                android:text="@string/template_workspace_action_apply" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

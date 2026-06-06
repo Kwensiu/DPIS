@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:includeFontPadding="false"
+        android:text="@string/help_tutorial_scale_title"
+        android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+        android:textColor="?attr/colorOnSurface"
+        android:textStyle="bold" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_mode_help_badge"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:paddingStart="@dimen/help_tutorial_badge_padding_horizontal"
+        android:paddingTop="@dimen/help_tutorial_badge_padding_vertical"
+        android:paddingEnd="@dimen/help_tutorial_badge_padding_horizontal"
+        android:paddingBottom="@dimen/help_tutorial_badge_padding_vertical"
+        android:text="@string/help_tutorial_scale_badge"
+        android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textStyle="bold" />
+</LinearLayout>

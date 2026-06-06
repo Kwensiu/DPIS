@@ -33,7 +33,9 @@ final class WechatTargetFieldSheetBinder {
                 showHelpDialog(v);
             });
         }
-        DpiConfigStore store = DpisApplication.getConfigStore();
+        DpiConfigStore store = DpisApplication.getActiveHookConfigStore(
+                dialogView.getContext()
+        );
         Integer initial = store != null ? store.getWechatTargetField(item.packageName) : null;
         inputView.setText(initial != null ? String.valueOf(initial) : "");
         inputView.addTextChangedListener(new TextWatcher() {
@@ -86,7 +88,7 @@ final class WechatTargetFieldSheetBinder {
         if (!WechatTargetFieldConfig.appliesTo(packageName)) {
             return;
         }
-        DpiConfigStore store = DpisApplication.getConfigStore();
+        DpiConfigStore store = DpisApplication.getActiveHookConfigStore(null);
         Integer targetField = store != null && dpisEnabled
                 ? store.getWechatTargetField(packageName)
                 : null;
@@ -99,9 +101,6 @@ final class WechatTargetFieldSheetBinder {
             return false;
         }
         boolean saved = store.setWechatTargetField(packageName, targetField);
-        saved = store.clearTargetViewportWidthDp(packageName) && saved;
-        saved = store.setTargetViewportApplyMode(packageName, ViewportApplyMode.OFF) && saved;
-        ViewportPropertySyncer.clearTargetAsync(packageName);
         WechatTargetFieldPropertySyncer.publishTargetAsync(
                 packageName, dpisEnabled ? targetField : null);
         return saved;
@@ -112,6 +111,27 @@ final class WechatTargetFieldSheetBinder {
         if (inputView != null) {
             inputView.setText("");
         }
+    }
+
+    static String captureDraft(View dialogView) {
+        TextInputEditText inputView = inputView(dialogView);
+        if (inputView == null || inputView.getText() == null) {
+            return null;
+        }
+        return inputView.getText().toString();
+    }
+
+    static void applyDraft(View dialogView, String rawValue) {
+        if (rawValue == null) {
+            return;
+        }
+        TextInputEditText inputView = inputView(dialogView);
+        TextInputLayout inputLayout = inputLayout(dialogView);
+        if (inputView == null) {
+            return;
+        }
+        inputView.setText(rawValue);
+        updateValidationState(inputLayout, inputView);
     }
 
     private static Integer readTargetFieldOrNull(View dialogView) {
@@ -173,10 +193,12 @@ final class WechatTargetFieldSheetBinder {
         if (anchor == null) {
             return;
         }
-        new MaterialAlertDialogBuilder(anchor.getContext())
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(anchor.getContext())
                 .setTitle(R.string.dialog_wechat_target_field_help_title)
                 .setMessage(R.string.dialog_wechat_target_field_help_message)
                 .setPositiveButton(R.string.dialog_close_button, null)
-                .show();
+                .create();
+        dialog.show();
+        DialogWindowSizer.applyStandardWidth(dialog, anchor.getContext());
     }
 }

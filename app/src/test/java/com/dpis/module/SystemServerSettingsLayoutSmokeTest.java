@@ -1,24 +1,22 @@
 package com.dpis.module;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import org.junit.Test;
 
 public class SystemServerSettingsLayoutSmokeTest {
     @Test
     public void settingsLayoutContainsOtherSectionWithAboutAndHideIconRows() throws IOException {
-        String layout = read("src/main/res/layout/activity_system_server_settings.xml");
+        String layout = read("src/main/res/layout/view_system_server_settings_content.xml");
 
         assertTrue(layout.contains("android:id=\"@+id/row_about\""));
         assertTrue(layout.contains("android:id=\"@+id/row_config_backup\""));
         assertTrue(layout.contains("android:id=\"@+id/row_hide_launcher_icon\""));
         assertTrue(layout.contains("@string/settings_section_other"));
-        assertTrue(layout.contains("@dimen/page_toolbar_padding_horizontal"));
+        assertTrue(layout.contains("@dimen/settings_content_padding_horizontal"));
         assertTrue(layout.contains("@dimen/page_card_corner_radius"));
         assertTrue(layout.contains("@dimen/settings_divider_margin_horizontal"));
     }
@@ -56,7 +54,7 @@ public class SystemServerSettingsLayoutSmokeTest {
 
     @Test
     public void settingsRowsUseSemanticIcons() throws IOException {
-        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
 
         assertTrue(source.contains("R.id.row_experimental_settings"));
         assertTrue(source.contains("ExperimentalSettingsActivity.class"));
@@ -68,7 +66,7 @@ public class SystemServerSettingsLayoutSmokeTest {
 
     @Test
     public void releaseBuildHidesSystemHooksSwitchAndUsesDebugGateForToggle() throws IOException {
-        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
 
         assertTrue(source.contains("applySystemHooksRowVisibility()"));
         assertTrue(source.contains("row.setVisibility(BuildConfig.DEBUG ? View.VISIBLE : View.GONE);"));
@@ -113,7 +111,7 @@ public class SystemServerSettingsLayoutSmokeTest {
 
     @Test
     public void disablingSafeModeRequiresConfirmationAndCanRollbackSwitch() throws IOException {
-        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
         String strings = read("src/main/res/values/strings.xml");
 
         assertTrue(source.contains("showDisableSafeModeConfirmationDialog()"));
@@ -121,6 +119,7 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(source.contains("R.string.system_safe_mode_disable_confirm_message"));
         assertTrue(source.contains("if (!store.setSystemServerSafeModeEnabled(false))"));
         assertTrue(source.contains("setCheckedSilently(safeModeSwitch, true"));
+        assertTrue(source.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"));
         assertTrue(strings.contains("system_safe_mode_disable_confirm_title"));
         assertTrue(strings.contains("system_safe_mode_disable_confirm_message"));
     }
@@ -146,6 +145,18 @@ public class SystemServerSettingsLayoutSmokeTest {
     }
 
     @Test
+    public void settingsDialogsUseSharedWindowSizer() throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
+
+        assertTrue(source.contains("R.layout.dialog_interface_scale"));
+        assertTrue(source.contains("R.layout.dialog_language_selection"));
+        assertTrue(source.contains("R.layout.dialog_config_backup"));
+        assertTrue(source.contains("R.layout.dialog_config_backup_confirm"));
+        assertTrue(occurrences(source, "DialogWindowSizer.applyLargeWidth(dialog, activity)") >= 4);
+        assertTrue(occurrences(source, "DialogWindowSizer.applyStandardWidth(dialog, activity)") >= 2);
+    }
+
+    @Test
     public void appConfigDialogUsesCompactProcessButtonStyles() throws IOException {
         String layout = read("src/main/res/layout/dialog_app_config.xml");
         String styles = read("src/main/res/values/styles.xml");
@@ -168,7 +179,7 @@ public class SystemServerSettingsLayoutSmokeTest {
 
     @Test
     public void settingsActivityRefreshesSwitchesWhenServiceStateChanges() throws IOException {
-        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
         String switchItemLayout = read("src/main/res/layout/item_settings_switch.xml");
         String entryItemLayout = read("src/main/res/layout/item_settings_entry.xml");
 
@@ -190,7 +201,7 @@ public class SystemServerSettingsLayoutSmokeTest {
 
     @Test
     public void launcherIconSyncReadsActualStateWithoutReapplyingComponentToggle() throws IOException {
-        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
 
         assertTrue(source.contains("private void applyLauncherIconVisibilityFromStore()"));
         assertTrue(source.contains("boolean actualHidden = resolveLauncherIconHiddenState("));
@@ -202,7 +213,7 @@ public class SystemServerSettingsLayoutSmokeTest {
 
     @Test
     public void hideLauncherIconConfirmationUsesCustomCenteredDialogLayout() throws IOException {
-        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
 
         assertTrue(source.contains("private void showHideLauncherIconConfirmationDialog()"));
         assertTrue(source.contains("R.layout.dialog_process_action_confirm"));
@@ -210,11 +221,36 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(source.contains("R.id.process_action_confirm_message"));
         assertTrue(source.contains("R.id.process_action_confirm_proceed_button"));
         assertTrue(source.contains("R.id.process_action_confirm_cancel_button"));
-        assertTrue(source.contains("new MaterialAlertDialogBuilder(this)"));
+        assertTrue(source.contains("new MaterialAlertDialogBuilder(activity)"));
         assertTrue(!source.contains("new AlertDialog.Builder(this)"));
         assertTrue(source.contains("if (!persistLauncherIconState(true))"));
         assertTrue(source.contains("setCheckedSilently(hideLauncherIconSwitch, false"));
         assertTrue(source.contains("dialog.setOnCancelListener"));
+        assertTrue(source.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"));
+    }
+
+    @Test
+    public void configBackupImportConfirmsAfterFileSelectionAndHotReloadsDpisConfig() throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
+        String application = read("src/main/java/com/dpis/module/DpisApplication.java");
+
+        assertTrue(source.contains("importButton.setOnClickListener(v -> {"));
+        assertTrue(source.contains("launchImportBackupPicker();"));
+        assertTrue(source.contains("private void showImportBackupConfirmDialog(Uri uri)"));
+        assertTrue(source.contains("showImportBackupConfirmDialog(uri);"));
+        assertTrue(source.contains("importConfigBackup(uri);"));
+        assertTrue(source.contains("relaunchDpisTask();"));
+        assertTrue(source.contains("private void relaunchDpisTask()"));
+        assertTrue(source.contains("DpisApplication.reloadConfigStore();"));
+        assertTrue(source.contains("new Intent(activity, MainActivity.class)"));
+        assertTrue(source.contains("Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK"));
+        assertTrue(source.contains("startActivity(intent);"));
+        assertTrue(source.contains("finishAffinity();"));
+        assertTrue(application.contains("static void reloadConfigStore()"));
+        assertTrue(application.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)"));
+        assertTrue(application.contains("notifyServiceStateChanged();"));
+        assertTrue(!source.contains("android.os.Process.killProcess(android.os.Process.myPid())"));
+        assertTrue(!source.contains("RootCommandRunner.run(\"reboot\")"));
     }
 
     @Test
@@ -228,7 +264,7 @@ public class SystemServerSettingsLayoutSmokeTest {
 
     @Test
     public void settingsDebugSwitchesPublishRuntimeMirrors() throws IOException {
-        String source = read("src/main/java/com/dpis/module/SystemServerSettingsActivity.java");
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
         String layout = read("src/main/res/layout/dialog_font_debug_stats.xml");
 
         assertTrue(source.contains("RuntimeDebugPropertySyncer.publishAsync("));
@@ -243,6 +279,16 @@ public class SystemServerSettingsLayoutSmokeTest {
     }
 
     private static String read(String relativePath) throws IOException {
-        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
+    }
+
+    private static int occurrences(String value, String needle) {
+        int count = 0;
+        int index = 0;
+        while ((index = value.indexOf(needle, index)) >= 0) {
+            count++;
+            index += needle.length();
+        }
+        return count;
     }
 }

@@ -21,9 +21,9 @@ final class AppConfigSheetActionBinder {
         dialogView.setFocusableInTouchMode(true);
         dialogView.setClickable(true);
         dialogView.setOnClickListener(
-                v -> host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView));
+                v -> clearInputFocus(dialogView, views));
         views.scopeButton.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
+            clearInputFocus(dialogView, views);
             host.toggleScope(item, state.scopeSelected,
                     () -> {
                         state.scopeSelected = true;
@@ -35,19 +35,21 @@ final class AppConfigSheetActionBinder {
                     });
         });
         views.startButton.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
+            clearInputFocus(dialogView, views);
             host.executeProcessAction(item, AppConfigDialogBinder.ProcessAction.START);
         });
         views.restartButton.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
+            clearInputFocus(dialogView, views);
             host.executeProcessAction(item, AppConfigDialogBinder.ProcessAction.RESTART);
         });
         views.stopButton.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
+            clearInputFocus(dialogView, views);
             host.executeProcessAction(item, AppConfigDialogBinder.ProcessAction.STOP);
         });
+        // Advanced actions are real per-app state even when DPI/font fields are
+        // only a global-prefill preview; they must not save previewed config.
         views.dpisToggleButton.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
+            clearInputFocus(dialogView, views);
             boolean nextEnabled = !state.dpisEnabled;
             if (host.setDpisEnabled(item.packageName, nextEnabled)) {
                 state.dpisEnabled = nextEnabled;
@@ -56,17 +58,21 @@ final class AppConfigSheetActionBinder {
             }
         });
         views.fontHookDomainsButton.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
-            host.showFontHookDomains(item,
-                    () -> binder.bindFontHookDomainsButton(views.fontHookDomainsButton, item.packageName));
+            clearInputFocus(dialogView, views);
+            host.showFontHookDomains(item, state,
+                    () -> {
+                        binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
+                        host.onDraftStateChanged(state);
+                    });
         });
         views.disableButton.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
+            clearInputFocus(dialogView, views);
             views.viewportInputView.setText("");
             views.fontInputView.setText("");
             WechatTargetFieldSheetBinder.clearDraft(dialogView);
             state.selectedTypefaceId = null;
             state.clearViewportInputs();
+            state.clearHookChainStateForReset();
             binder.bindTypefaceSelector(views.typefaceSelectorButton, state.selectedTypefaceId);
             AppConfigDialogBinder.bindViewportModeToggle(
                     views.viewportModeToggle, ViewportTargetType.RELATIVE_SCALE, true);
@@ -74,9 +80,10 @@ final class AppConfigSheetActionBinder {
                     views.fontModeToggle, FontApplyMode.SYSTEM_EMULATION, true);
             AppConfigDialogBinder.updateSaveButtonState(dialogView, views);
             binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
+            host.onDraftStateChanged(state);
         });
         views.saveButton.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
+            clearInputFocus(dialogView, views);
             if (!WechatTargetFieldSheetBinder.isInputValid(dialogView)) {
                 host.showToast(R.string.status_save_invalid);
                 return;
@@ -86,8 +93,12 @@ final class AppConfigSheetActionBinder {
                     views.viewportInputView,
                     views.fontInputView,
                     AppConfigDialogBinder.resolveViewportMode(views.viewportModeToggle),
+                    state.viewportApplyMode,
+                    state.viewportApplyModeResetRequested,
                     AppConfigDialogBinder.resolveFontMode(views.fontModeToggle),
                     state.selectedTypefaceId,
+                    state.draftFontHookDomainsRaw,
+                    state.fontHookDomainsResetRequested,
                     state.viewportScaleInput,
                     state.viewportAbsoluteInput);
             if (result[0] == 1) {
@@ -101,7 +112,13 @@ final class AppConfigSheetActionBinder {
                 }
             }
             if (result[0] == 1) {
+                state.previewFromGlobalPrefill = false;
+                state.draftFontHookDomainsRaw = null;
+                state.fontHookDomainsResetRequested = false;
+                state.viewportApplyModeResetRequested = false;
+                state.captureSavedDraft(views, false);
                 AppConfigDialogBinder.showSaveButtonFeedback(views.saveButton);
+                binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
                 binder.syncHyperOsNativeProxyAfterSave(item, views, state);
                 binder.requestScopeAfterSuccessfulSave(
                         dialogView, item, views, state, style, systemHooksEnabled);
@@ -119,10 +136,25 @@ final class AppConfigSheetActionBinder {
             AppConfigDialogBinder.AppConfigDialogActionStyle style,
             boolean systemHooksEnabled) {
         views.typefaceSelectorButton.setOnClickListener(v -> {
-            host.clearDialogInputFocus(dialogView, views.viewportInputView, views.fontInputView);
+            clearInputFocus(dialogView, views);
             binder.showTypefaceSelector(views.typefaceSelectorButton, state,
-                    () -> binder.refreshDialogState(
-                            views, state, style, systemHooksEnabled, item));
+                    () -> {
+                        binder.refreshDialogState(
+                                views, state, style, systemHooksEnabled, item);
+                        host.onDraftStateChanged(state);
+                    });
         });
+    }
+
+    private static void clearInputFocus(
+            View dialogView,
+            AppConfigDialogBinder.AppConfigDialogViews views
+    ) {
+        FormInputFocusBinder.clearFocusAndHideIme(
+                dialogView,
+                views.viewportInputView,
+                views.fontInputView,
+                dialogView.findViewById(R.id.dialog_wechat_target_field_input)
+        );
     }
 }

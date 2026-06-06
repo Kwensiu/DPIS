@@ -56,9 +56,7 @@ public final class TypefaceOverrideHookInstallerTest {
 
     @Test
     public void modernInstallerFallsBackToPublishedFontFile() throws Exception {
-        String source = new String(java.nio.file.Files.readAllBytes(
-                java.nio.file.Path.of("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java")),
-                java.nio.charset.StandardCharsets.UTF_8);
+        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java");
 
         assertTrue(source.contains("PublishedFontFileResolver.resolve(typefaceId)"));
         assertTrue(source.contains("SystemFontRegistry.loadTypeface(typefaceId)"));
@@ -68,9 +66,7 @@ public final class TypefaceOverrideHookInstallerTest {
 
     @Test
     public void modernInstallerAcceptsResolvedPlanTypefaceId() throws Exception {
-        String source = new String(java.nio.file.Files.readAllBytes(
-                java.nio.file.Path.of("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java")),
-                java.nio.charset.StandardCharsets.UTF_8);
+        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java");
 
         assertTrue(source.contains("String targetTypefaceId"));
         assertTrue(source.contains("String typefaceId = targetTypefaceId"));
@@ -81,9 +77,7 @@ public final class TypefaceOverrideHookInstallerTest {
 
     @Test
     public void modernInstallerGuardIsScopedToCurrentProcess() throws Exception {
-        String source = new String(java.nio.file.Files.readAllBytes(
-                java.nio.file.Path.of("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java")),
-                java.nio.charset.StandardCharsets.UTF_8);
+        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java");
 
         assertTrue(source.contains("hookInstalledPid"));
         assertTrue(source.contains("Process.myPid()"));
@@ -92,9 +86,7 @@ public final class TypefaceOverrideHookInstallerTest {
 
     @Test
     public void modernInstallerLogsFirstReplacementHits() throws Exception {
-        String source = new String(java.nio.file.Files.readAllBytes(
-                java.nio.file.Path.of("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java")),
-                java.nio.charset.StandardCharsets.UTF_8);
+        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java");
 
         assertTrue(source.contains("replacement hit: package="));
         assertTrue(source.contains("TextView.setTypeface(Typeface)"));
@@ -104,9 +96,7 @@ public final class TypefaceOverrideHookInstallerTest {
 
     @Test
     public void modernInstallerAppliesTypefaceWhenTextViewAttaches() throws Exception {
-        String source = new String(java.nio.file.Files.readAllBytes(
-                java.nio.file.Path.of("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java")),
-                java.nio.charset.StandardCharsets.UTF_8);
+        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java");
 
         assertTrue(source.contains("installTextViewAttachHook("));
         assertTrue(source.contains("getDeclaredMethod(\"onAttachedToWindow\")"));
@@ -117,9 +107,7 @@ public final class TypefaceOverrideHookInstallerTest {
 
     @Test
     public void modernInstallerAppliesTypefaceWhenTextViewDraws() throws Exception {
-        String source = new String(java.nio.file.Files.readAllBytes(
-                java.nio.file.Path.of("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java")),
-                java.nio.charset.StandardCharsets.UTF_8);
+        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java");
 
         assertTrue(source.contains("installTextViewDrawHook("));
         assertTrue(source.contains("getDeclaredMethod(\"onDraw\", Canvas.class)"));

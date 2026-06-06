@@ -108,6 +108,15 @@ final class FontHookDomainRegistry {
         return CUSTOMIZABLE_DISPLAY_ORDERED_IDS;
     }
 
+    static Set<String> recommendedTemplateKnownDomains() {
+        LinkedHashSet<String> recommended = new LinkedHashSet<>();
+        int count = Math.min(6, CUSTOMIZABLE_DISPLAY_ORDERED_IDS.size());
+        for (int index = 0; index < count; index++) {
+            recommended.add(CUSTOMIZABLE_DISPLAY_ORDERED_IDS.get(index));
+        }
+        return recommended;
+    }
+
     static Set<String> orderedCustomizableSubset(Set<String> domains) {
         if (domains == null || domains.isEmpty()) {
             return new LinkedHashSet<>();

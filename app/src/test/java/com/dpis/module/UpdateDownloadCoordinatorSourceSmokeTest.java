@@ -3,9 +3,6 @@ package com.dpis.module;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import org.junit.Test;
 
@@ -18,6 +15,7 @@ public class UpdateDownloadCoordinatorSourceSmokeTest {
         assertTrue(source.contains("interface Host"));
         assertTrue(source.contains("boolean isActivityAlive()"));
         assertTrue(source.contains("void onDownloadSuccess(File targetFile)"));
+        assertTrue(source.contains("void onSucceeded(File targetFile)"));
         assertTrue(source.contains("void startDownload("));
         assertTrue(source.contains("void cancelActiveDownload()"));
         assertTrue(source.contains("void shutdown()"));
@@ -27,7 +25,9 @@ public class UpdateDownloadCoordinatorSourceSmokeTest {
         assertTrue(source.contains("static void prepareProgressView("));
         assertTrue(source.contains("static void updateProgressView("));
         assertTrue(source.contains("static void updateProgressViewWithoutTotal("));
-        assertTrue(source.contains("packageHandler.verifyDownloadedApk("));
+        assertTrue(!source.contains("verifyDownloadedApk("));
+        assertTrue(!source.contains("UntrustedUpdateException"));
+        assertTrue(!source.contains("about_update_download_untrusted"));
         assertTrue(source.contains("UpdatePackageInstaller.persistDownloadedFile("));
         assertTrue(source.contains("StartupUpdatePackageHandler.safeDeleteFile("));
         assertTrue(source.contains("StartupUpdatePackageHandler.formatBytesStatic("));
@@ -62,6 +62,6 @@ public class UpdateDownloadCoordinatorSourceSmokeTest {
     }
 
     private static String read(String relativePath) throws IOException {
-        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
     }
 }

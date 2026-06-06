@@ -67,6 +67,7 @@ final class ProcessActionHandler {
         });
         cancelButton.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
+        DialogWindowSizer.applyStandardWidth(dialog, activity);
     }
 
     private String resolveActionLabel(Action action) {

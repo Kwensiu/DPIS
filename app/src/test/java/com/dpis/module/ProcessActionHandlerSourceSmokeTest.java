@@ -4,9 +4,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import org.junit.Test;
 
@@ -81,6 +78,7 @@ public class ProcessActionHandlerSourceSmokeTest {
         assertTrue(source.contains("process_action_confirm_message"));
         assertTrue(source.contains("process_action_confirm_proceed_button"));
         assertTrue(source.contains("process_action_confirm_cancel_button"));
+        assertTrue(source.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"));
         assertTrue(layout.contains("@dimen/dialog_surface_padding_horizontal"));
         assertTrue(layout.contains("@dimen/dialog_body_spacing"));
         assertTrue(layout.contains("@dimen/dialog_action_spacing_top"));
@@ -99,6 +97,6 @@ public class ProcessActionHandlerSourceSmokeTest {
     }
 
     private static String read(String relativePath) throws IOException {
-        return new String(Files.readAllBytes(Path.of(relativePath)), StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
     }
 }

@@ -53,7 +53,6 @@ public final class AboutActivity extends LocalizedActivity {
                 createUpdateDownloadHost(),
                 updateCoordinator,
                 downloadExecutor,
-                packageHandler,
                 updateExecutor);
         releaseNotesController = new ReleaseNotesController(
                 new ReleaseNotesCacheStore(this),
@@ -216,18 +215,18 @@ public final class AboutActivity extends LocalizedActivity {
             showToast(R.string.about_update_up_to_date);
             return;
         }
-        showUpdateDialog(manifest);
+        showManualUpdatePromptDialog(manifest);
     }
 
-    private void showUpdateDialog(StartupUpdateManifest manifest) {
+    private void showManualUpdatePromptDialog(StartupUpdateManifest manifest) {
         String releasePageUrl = manifest.releasePage.isEmpty()
                 ? getString(R.string.about_releases_url)
                 : manifest.releasePage;
         String downloadUrl = manifest.apkUrl;
-        showCenteredUpdateDialog(manifest, downloadUrl, releasePageUrl);
+        showCenteredManualUpdatePromptDialog(manifest, downloadUrl, releasePageUrl);
     }
 
-    private void showCenteredUpdateDialog(StartupUpdateManifest manifest,
+    private void showCenteredManualUpdatePromptDialog(StartupUpdateManifest manifest,
             String downloadUrl,
             String releasePageUrl) {
         UpdateAvailableDialog.DialogHandle dialogHandle = UpdateAvailableDialog.create(
@@ -253,7 +252,10 @@ public final class AboutActivity extends LocalizedActivity {
         String embeddedReleaseNotes = manifest.releaseNotes == null ? "" : manifest.releaseNotes.trim();
         Locale locale = getResources().getConfiguration().getLocales().get(0);
         if (!embeddedReleaseNotes.isEmpty()) {
-            releaseNotesText.setText(ReleaseNotesMarkdownLite.format(embeddedReleaseNotes, locale));
+            releaseNotesText.setText(ReleaseNotesMarkdownRenderer.render(
+                    this,
+                    embeddedReleaseNotes,
+                    locale));
         } else {
             releaseNotesText.setText(R.string.about_update_release_notes_loading);
         }
@@ -264,6 +266,7 @@ public final class AboutActivity extends LocalizedActivity {
             primaryButton.setText(R.string.about_update_action_view_release);
             primaryButton.setOnClickListener(v -> openUrl(releasePageUrl));
             dialog.show();
+            DialogWindowSizer.applyLargeWidth(dialog, this);
             return;
         }
 
@@ -284,6 +287,7 @@ public final class AboutActivity extends LocalizedActivity {
 
         dialog.setOnDismissListener(unused -> updateDownloadCoordinator.cancelActiveDownload());
         dialog.show();
+        DialogWindowSizer.applyLargeWidth(dialog, this);
     }
 
     private void loadReleaseNotes(MaterialTextView releaseNotesText,
@@ -299,7 +303,10 @@ public final class AboutActivity extends LocalizedActivity {
 
                     @Override
                     public void onBody(String body) {
-                        releaseNotesText.setText(ReleaseNotesMarkdownLite.format(body, locale));
+                        releaseNotesText.setText(ReleaseNotesMarkdownRenderer.render(
+                                AboutActivity.this,
+                                body,
+                                locale));
                     }
 
                     @Override

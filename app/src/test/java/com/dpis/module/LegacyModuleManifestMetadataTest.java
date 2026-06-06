@@ -4,9 +4,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import org.junit.Test;
 
 public final class LegacyModuleManifestMetadataTest {
@@ -47,8 +44,7 @@ public final class LegacyModuleManifestMetadataTest {
         assertTrue(moduleProp.contains("minApiVersion=101"));
         assertTrue(moduleProp.contains("targetApiVersion=101"));
         assertTrue(javaInit.contains("com.dpis.module.ModuleMain"));
-        assertFalse(Files.exists(Path.of(
-                "src", "main", "resources", "META-INF", "xposed", "module.prop")));
+        assertFalse(SourceSmokeTestPaths.exists("src", "main", "resources", "META-INF", "xposed", "module.prop"));
     }
 
     @Test
@@ -56,10 +52,8 @@ public final class LegacyModuleManifestMetadataTest {
         String xposedInit = readProjectFile("src/compat100/assets/xposed_init");
 
         assertTrue(xposedInit.contains("com.dpis.module.Compat100LegacyModuleHook"));
-        assertFalse(Files.exists(Path.of(
-                "src", "compat100", "resources", "META-INF", "xposed", "java_init.list")));
-        assertFalse(Files.exists(Path.of(
-                "src", "compat100", "resources", "META-INF", "xposed", "module.prop")));
+        assertFalse(SourceSmokeTestPaths.exists("src", "compat100", "resources", "META-INF", "xposed", "java_init.list"));
+        assertFalse(SourceSmokeTestPaths.exists("src", "compat100", "resources", "META-INF", "xposed", "module.prop"));
     }
 
     @Test
@@ -69,7 +63,7 @@ public final class LegacyModuleManifestMetadataTest {
         String buildScript = readProjectFile("build.gradle.kts");
 
         assertTrue(nativeInit.contains("libdpis_native.so"));
-        assertFalse(Files.exists(Path.of("src", "main", "assets", "native_init")));
+        assertFalse(SourceSmokeTestPaths.exists("src", "main", "assets", "native_init"));
         assertTrue(buildScript.contains("selector().all()"));
         assertTrue(buildScript.contains("sync${capitalizedName}NativeProxyAsset"));
         assertTrue(buildScript.contains("variant.sources.assets?.addGeneratedSourceDirectory"));
@@ -77,15 +71,14 @@ public final class LegacyModuleManifestMetadataTest {
 
     @Test
     public void modern101DoesNotDeclareNativeInitListForScopedApps() {
-        assertFalse(Files.exists(Path.of(
-                "src", "modern101", "resources", "META-INF", "xposed", "native_init.list")));
+        assertFalse(SourceSmokeTestPaths.exists("src", "modern101", "resources", "META-INF", "xposed", "native_init.list"));
     }
 
     @Test
     public void compat100BuildDoesNotInjectLibxposedApiStubs() throws IOException {
         String buildScript = readProjectFile("build.gradle.kts");
 
-        assertFalse(Files.exists(Path.of("src", "compat100Api100Entry")));
+        assertFalse(SourceSmokeTestPaths.exists("src", "compat100Api100Entry"));
         assertFalse(buildScript.contains("generated.copyRecursively(target, overwrite = true)"));
         assertFalse(buildScript.contains("generated.resolve(\"Compat100ModuleMain.class\").copyTo"));
         assertFalse(buildScript.contains("dexBuilderCompat100Debug"));
@@ -113,9 +106,8 @@ public final class LegacyModuleManifestMetadataTest {
     public void compat100DoesNotExposeConfigProvider() throws IOException {
         String factory = readProjectFile("src/main/java/com/dpis/module/ConfigStoreFactory.java");
 
-        assertFalse(Files.exists(Path.of("src", "compat100", "AndroidManifest.xml")));
-        assertFalse(Files.exists(Path.of(
-                "src", "main", "java", "com", "dpis", "module", "CompatConfigProvider.java")));
+        assertFalse(SourceSmokeTestPaths.exists("src", "compat100", "AndroidManifest.xml"));
+        assertFalse(SourceSmokeTestPaths.exists("src", "main", "java", "com", "dpis", "module", "CompatConfigProvider.java"));
         assertFalse(factory.contains("CompatConfigProviderPreferences"));
         String compatFactory = factory.substring(factory.indexOf("createForCompat100Host"));
         int propertyIndex = compatFactory.indexOf("RuntimePropertyConfigPreferences");
@@ -210,12 +202,10 @@ public final class LegacyModuleManifestMetadataTest {
     }
 
     private static String readProjectFile(String relativePath) throws IOException {
-        Path path = Path.of(relativePath);
-        return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
     }
 
     private static String readProjectRootFile(String relativePath) throws IOException {
-        Path path = Path.of("..", relativePath);
-        return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.readRepositoryRoot(relativePath);
     }
 }

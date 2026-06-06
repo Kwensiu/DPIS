@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="?attr/colorSurfaceContainer" />
+    <corners
+        android:topLeftRadius="@dimen/home_workspace_connected_row_inner_radius"
+        android:topRightRadius="@dimen/home_workspace_connected_row_inner_radius"
+        android:bottomLeftRadius="@dimen/home_workspace_card_corner_radius"
+        android:bottomRightRadius="@dimen/home_workspace_card_corner_radius" />
+</shape>

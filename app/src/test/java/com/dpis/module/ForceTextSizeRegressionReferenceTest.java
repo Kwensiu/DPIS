@@ -2,9 +2,6 @@ package com.dpis.module;
 
 import org.junit.Test;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -164,10 +161,6 @@ public class ForceTextSizeRegressionReferenceTest {
     }
 
     private static String read(String relativePath) throws Exception {
-        Path path = Path.of(relativePath);
-        if (!Files.exists(path)) {
-            path = Path.of("app", relativePath);
-        }
-        return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+        return SourceSmokeTestPaths.read(relativePath);
     }
 }
