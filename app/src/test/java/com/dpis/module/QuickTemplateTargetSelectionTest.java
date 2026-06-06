@@ -17,14 +17,14 @@ public class QuickTemplateTargetSelectionTest {
                 "com.example.installed",
                 "com.example.removed",
                 " com.example.other ");
-        List<QuickTemplateTargetSelectionActivity.TargetAppItem> installed = List.of(
-                new QuickTemplateTargetSelectionActivity.TargetAppItem(
+        List<QuickTemplateTargetsBinder.TargetAppItem> installed = List.of(
+                new QuickTemplateTargetsBinder.TargetAppItem(
                         "Installed", "com.example.installed", false),
-                new QuickTemplateTargetSelectionActivity.TargetAppItem(
+                new QuickTemplateTargetsBinder.TargetAppItem(
                         "Other", "com.example.other", true));
 
         LinkedHashSet<String> pruned =
-                QuickTemplateTargetSelectionActivity.pruneSelectedPackagesToInstalledApps(
+                QuickTemplateTargetsBinder.pruneSelectedPackagesToInstalledApps(
                         selectedPackages, installed);
 
         assertEquals(orderedSet("com.example.installed", "com.example.other"), pruned);
@@ -44,9 +44,9 @@ public class QuickTemplateTargetSelectionTest {
 
         LinkedHashSet<String> selectedPackages = new LinkedHashSet<>(
                 store.read("template_a").selectedPackages);
-        QuickTemplateTargetSelectionActivity.pruneSelectedPackagesToInstalledApps(
+        QuickTemplateTargetsBinder.pruneSelectedPackagesToInstalledApps(
                 selectedPackages,
-                List.of(new QuickTemplateTargetSelectionActivity.TargetAppItem(
+                List.of(new QuickTemplateTargetsBinder.TargetAppItem(
                         "Installed", "com.example.installed", false)));
 
         assertTrue(store.setSelectedPackages("template_a", selectedPackages));
@@ -58,32 +58,32 @@ public class QuickTemplateTargetSelectionTest {
 
     @Test
     public void targetFiltersHideConfiguredAppsOnlyWhenEnabled() {
-        QuickTemplateTargetSelectionActivity.TargetAppItem configured =
-                new QuickTemplateTargetSelectionActivity.TargetAppItem(
+        QuickTemplateTargetsBinder.TargetAppItem configured =
+                new QuickTemplateTargetsBinder.TargetAppItem(
                         "Configured", "com.example.configured", true);
-        QuickTemplateTargetSelectionActivity.TargetAppItem unconfigured =
-                new QuickTemplateTargetSelectionActivity.TargetAppItem(
+        QuickTemplateTargetsBinder.TargetAppItem unconfigured =
+                new QuickTemplateTargetsBinder.TargetAppItem(
                         "Plain", "com.example.plain", false);
 
-        assertTrue(QuickTemplateTargetSelectionActivity.matchesTargetFilters(
+        assertTrue(QuickTemplateTargetsBinder.matchesTargetFilters(
                 configured, "", false, false));
-        assertTrue(QuickTemplateTargetSelectionActivity.matchesTargetFilters(
+        assertTrue(QuickTemplateTargetsBinder.matchesTargetFilters(
                 unconfigured, "", false, false));
-        assertFalse(QuickTemplateTargetSelectionActivity.matchesTargetFilters(
+        assertFalse(QuickTemplateTargetsBinder.matchesTargetFilters(
                 configured, "", false, true));
-        assertTrue(QuickTemplateTargetSelectionActivity.matchesTargetFilters(
+        assertTrue(QuickTemplateTargetsBinder.matchesTargetFilters(
                 unconfigured, "", false, true));
     }
 
     @Test
     public void targetFiltersHideSystemAppsByDefault() {
-        QuickTemplateTargetSelectionActivity.TargetAppItem system =
-                new QuickTemplateTargetSelectionActivity.TargetAppItem(
+        QuickTemplateTargetsBinder.TargetAppItem system =
+                new QuickTemplateTargetsBinder.TargetAppItem(
                         "System", "android", false, true, null);
 
-        assertFalse(QuickTemplateTargetSelectionActivity.matchesTargetFilters(
+        assertFalse(QuickTemplateTargetsBinder.matchesTargetFilters(
                 system, "", false, false));
-        assertTrue(QuickTemplateTargetSelectionActivity.matchesTargetFilters(
+        assertTrue(QuickTemplateTargetsBinder.matchesTargetFilters(
                 system, "", true, false));
     }
 

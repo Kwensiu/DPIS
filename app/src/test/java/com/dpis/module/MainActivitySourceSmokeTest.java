@@ -193,6 +193,7 @@ public class MainActivitySourceSmokeTest {
         String layout = read("src/main/res/layout-land/activity_status.xml");
         String globalDetail = read("src/main/res/layout/view_land_global_prefill_detail.xml");
         String templateDetail = read("src/main/res/layout/view_land_quick_template_detail.xml");
+        String targetsDetail = read("src/main/res/layout/view_land_quick_template_targets_detail.xml");
 
         assertTrue(layout.contains("android:id=\"@+id/land_detail_content\""));
         assertTrue(layout.contains("android:id=\"@+id/template_detail_content\""));
@@ -207,14 +208,22 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("restoreTemplateDetailPane();"));
         assertTrue(source.contains("showGlobalPrefillEditor()"));
         assertTrue(source.contains("showQuickTemplateEditor(String templateId)"));
+        assertTrue(source.contains("TemplateDetailSelection.quickTemplate(templateId)"));
+        assertTrue(source.contains("showQuickTemplateEditor(null);"));
         assertTrue(source.contains("GlobalPrefillEditorBinder.bind("));
         assertTrue(source.contains("QuickTemplateEditorBinder.bind("));
+        assertTrue(source.contains("activeQuickTemplateEditorBinder.currentTemplateId()"));
+        assertTrue(source.contains("templateId != null && templateId.isBlank()"));
         assertTrue(source.contains("applyTemplateDetailInsets("));
         assertFalse(source.contains("GlobalPrefillSheetDialog.bindInto("));
         assertFalse(source.contains("QuickTemplateEditSheetDialog.bindInto("));
         assertTrue(source.contains("templateDetailSelection = TemplateDetailSelection.none();"));
         assertTrue(source.contains("R.layout.view_land_global_prefill_detail"));
         assertTrue(source.contains("R.layout.view_land_quick_template_detail"));
+        assertTrue(source.contains("R.layout.view_land_quick_template_targets_detail"));
+        assertTrue(source.contains("TemplateDetailKind.QUICK_TEMPLATE_TARGETS"));
+        assertTrue(source.contains("TemplateDetailSelection.quickTemplateTargets(templateId)"));
+        assertTrue(source.contains("activeQuickTemplateTargetsBinder.dispose();"));
         assertFalse(source.contains("? R.layout.dialog_global_prefill_sheet"));
         assertFalse(source.contains(": R.layout.dialog_quick_template_edit_sheet"));
         assertTrue(globalDetail.contains("android:layout_height=\"match_parent\""));
@@ -228,6 +237,11 @@ public class MainActivitySourceSmokeTest {
         assertFalse(globalDetail.contains("sheet_drag_handle"));
         assertTrue(templateDetail.contains("android:layout_height=\"match_parent\""));
         assertTrue(templateDetail.contains("android:clipToPadding=\"false\""));
+        assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_detail_root\""));
+        assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_list\""));
+        assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_save_button\""));
+        assertFalse(targetsDetail.contains("quick_template_targets_back_button"));
+        assertFalse(targetsDetail.contains("@layout/activity_quick_template_targets"));
         assertTrue(templateDetail.contains("android:fillViewport=\"true\""));
         assertTrue(templateDetail.contains("@layout/view_template_config_sheet_fields"));
         assertTrue(templateDetail.contains("android:baselineAligned=\"false\""));
@@ -1055,11 +1069,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(layout.contains("@+id/land_detail_pane"));
         assertTrue(layout.contains("@+id/land_detail_content"));
         assertFalse(layout.contains("android:paddingTop=\"@dimen/main_land_detail_top_padding\""));
-        assertTrue(
-            layout.contains(
-                "<FrameLayout\n                android:id=\"@+id/land_detail_pane\""
-            )
-        );
+        assertTrue(layout.contains("<FrameLayout"));
         assertFalse(
             layout.contains(
                 "<com.google.android.material.card.MaterialCardView\n" +

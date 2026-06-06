@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/quick_template_targets_detail_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipToPadding="false"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/land_app_detail_padding_horizontal"
+    android:paddingTop="@dimen/main_land_detail_top_padding"
+    android:paddingEnd="@dimen/land_app_detail_padding_horizontal">
+
+    <LinearLayout
+        android:id="@+id/template_config_detail_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:minHeight="@dimen/land_app_detail_header_min_height"
+        android:orientation="horizontal"
+        android:paddingTop="@dimen/land_app_detail_header_padding_top"
+        android:paddingBottom="@dimen/land_app_detail_header_padding_bottom">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/quick_template_targets_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                android:textStyle="bold" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/quick_template_targets_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/land_app_detail_package_spacing_top"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+        </LinearLayout>
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/quick_template_targets_filter_button"
+            android:layout_width="@dimen/template_workspace_header_action_button_size"
+            android:layout_height="@dimen/template_workspace_header_action_button_size"
+            android:layout_marginStart="@dimen/template_workspace_header_action_button_spacing"
+            android:background="@drawable/bg_template_workspace_add_button"
+            android:contentDescription="@string/filter_button"
+            android:padding="@dimen/template_workspace_header_action_button_padding"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_tune_24"
+            app:tint="?attr/colorOnSurfaceVariant" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/quick_template_targets_save_button"
+            android:layout_width="@dimen/template_workspace_header_action_button_size"
+            android:layout_height="@dimen/template_workspace_header_action_button_size"
+            android:layout_marginStart="@dimen/template_workspace_header_action_button_spacing"
+            android:background="@drawable/bg_template_workspace_add_button"
+            android:contentDescription="@string/status_save_button"
+            android:padding="@dimen/template_workspace_header_action_button_padding"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_save_24dp"
+            app:tint="?attr/colorOnSurfaceVariant" />
+    </LinearLayout>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/quick_template_targets_search_layout"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/main_search_card_height"
+        android:layout_marginTop="@dimen/template_target_search_spacing_top"
+        app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+        app:cardCornerRadius="@dimen/main_search_card_corner_radius"
+        app:strokeWidth="@dimen/main_search_card_stroke_width">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="@dimen/main_search_icon_padding_start"
+                android:paddingEnd="@dimen/main_search_icon_padding_end"
+                android:src="@drawable/ic_search_24"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/quick_template_targets_search_input"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:hint="@string/search_hint"
+                android:imeOptions="actionDone"
+                android:inputType="text"
+                android:lineSpacingExtra="0dp"
+                android:maxLines="1"
+                android:minHeight="0dp"
+                android:paddingStart="0dp"
+                android:paddingTop="0dp"
+                android:paddingEnd="0dp"
+                android:paddingBottom="0dp"
+                android:singleLine="true"
+                android:textColor="?attr/colorOnSurface"
+                android:textColorHint="?attr/colorOnSurfaceVariant" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/quick_template_targets_search_clear_button"
+                android:layout_width="@dimen/main_search_clear_button_size"
+                android:layout_height="@dimen/main_search_clear_button_size"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/search_clear"
+                android:padding="@dimen/main_search_clear_button_padding"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_close_24"
+                android:visibility="gone"
+                app:tint="?attr/colorOnSurfaceVariant" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="@dimen/template_target_list_container_spacing_top"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/quick_template_targets_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingTop="@dimen/template_target_list_padding_top"
+            android:paddingBottom="@dimen/template_target_list_padding_bottom" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/quick_template_targets_empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:padding="@dimen/template_workspace_empty_padding"
+            android:text="@string/quick_template_targets_empty"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="gone" />
+    </FrameLayout>
+</LinearLayout>

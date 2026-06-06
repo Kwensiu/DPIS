@@ -26,7 +26,7 @@ final class QuickTemplateTargetAdapter
         void onIconResolveRequested(String packageName);
     }
 
-    private final ArrayList<QuickTemplateTargetSelectionActivity.TargetAppItem> items =
+    private final ArrayList<QuickTemplateTargetsBinder.TargetAppItem> items =
             new ArrayList<>();
     private final Set<String> selectedPackages;
     private final SelectionListener selectionListener;
@@ -42,7 +42,7 @@ final class QuickTemplateTargetAdapter
         this.iconResolveRequestListener = iconResolveRequestListener;
     }
 
-    void submit(List<QuickTemplateTargetSelectionActivity.TargetAppItem> newItems) {
+    void submit(List<QuickTemplateTargetsBinder.TargetAppItem> newItems) {
         items.clear();
         if (newItems != null) {
             items.addAll(newItems);
@@ -60,7 +60,7 @@ final class QuickTemplateTargetAdapter
 
     @Override
     public void onBindViewHolder(@NonNull TargetHolder holder, int position) {
-        QuickTemplateTargetSelectionActivity.TargetAppItem item = items.get(position);
+        QuickTemplateTargetsBinder.TargetAppItem item = items.get(position);
         holder.label.setText(item.label);
         holder.packageName.setText(item.packageName);
         if (item.icon != null) {

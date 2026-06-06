@@ -245,6 +245,10 @@ final class QuickTemplateEditorBinder {
         );
     }
 
+    String currentTemplateId() {
+        return templateId;
+    }
+
     private void applyDraft(Draft draft) {
         nameInputView.setText(draft.nameInput);
         viewportInputView.setText(draft.viewportInput);
