@@ -91,7 +91,9 @@
     <dimen name="main_search_clear_button_padding">6dp</dimen>
     <dimen name="main_search_action_button_size">44dp</dimen>
     <dimen name="main_search_action_button_padding">10dp</dimen>
-    <dimen name="main_search_filter_button_margin_end">16dp</dimen>
+    <dimen name="main_search_action_icon_padding_start">12dp</dimen>
+    <dimen name="main_search_action_icon_padding_end">16dp</dimen>
+    <dimen name="main_search_action_icon_padding_vertical">14dp</dimen>
     <dimen name="main_settings_button_spacing_start">10dp</dimen>
     <dimen name="main_settings_button_spacing_end">8dp</dimen>
     <dimen name="main_tabs_spacing_top">2dp</dimen>
@@ -174,13 +176,17 @@
     <dimen name="template_workspace_form_card_spacing_top">12dp</dimen>
     <dimen name="template_target_content_padding_horizontal">16dp</dimen>
     <dimen name="template_target_search_spacing_top">8dp</dimen>
+    <dimen name="template_target_list_container_spacing_top">8dp</dimen>
     <dimen name="template_target_list_padding_top">12dp</dimen>
-    <dimen name="template_target_list_padding_bottom">24dp</dimen>
+    <dimen name="template_target_list_padding_bottom">32dp</dimen>
     <dimen name="template_target_save_button_height">44dp</dimen>
+    <dimen name="template_target_save_button_margin_top">12dp</dimen>
     <dimen name="template_target_save_button_margin_bottom">16dp</dimen>
-    <dimen name="template_target_row_min_height">72dp</dimen>
+    <dimen name="template_target_row_min_height">64dp</dimen>
     <dimen name="template_target_row_padding_horizontal">4dp</dimen>
-    <dimen name="template_target_row_padding_vertical">10dp</dimen>
+    <dimen name="template_target_row_padding_vertical">6dp</dimen>
+    <dimen name="template_target_icon_size">40dp</dimen>
+    <dimen name="template_target_icon_spacing_end">12dp</dimen>
     <dimen name="template_target_badge_padding_horizontal">8dp</dimen>
     <dimen name="template_target_badge_padding_vertical">3dp</dimen>
 

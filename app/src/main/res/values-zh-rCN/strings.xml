@@ -299,6 +299,7 @@
     <string name="filter_sheet_title">列表筛选</string>
     <string name="filter_show_system_apps">显示系统应用</string>
     <string name="filter_injected_only">仅显示已注入应用</string>
+    <string name="quick_template_targets_filter_hide_configured">隐藏已配置应用</string>
     <string name="filter_width_only">仅显示已设最小宽度应用</string>
     <string name="filter_font_only">仅显示已设字体应用</string>
     <string name="system_settings_title">设置</string>

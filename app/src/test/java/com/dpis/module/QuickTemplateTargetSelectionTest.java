@@ -56,6 +56,37 @@ public class QuickTemplateTargetSelectionTest {
         assertFalse(prefs.contains(DpiConfigStore.KEY_TARGET_PACKAGES));
     }
 
+    @Test
+    public void targetFiltersHideConfiguredAppsOnlyWhenEnabled() {
+        QuickTemplateTargetSelectionActivity.TargetAppItem configured =
+                new QuickTemplateTargetSelectionActivity.TargetAppItem(
+                        "Configured", "com.example.configured", true);
+        QuickTemplateTargetSelectionActivity.TargetAppItem unconfigured =
+                new QuickTemplateTargetSelectionActivity.TargetAppItem(
+                        "Plain", "com.example.plain", false);
+
+        assertTrue(QuickTemplateTargetSelectionActivity.matchesTargetFilters(
+                configured, "", false, false));
+        assertTrue(QuickTemplateTargetSelectionActivity.matchesTargetFilters(
+                unconfigured, "", false, false));
+        assertFalse(QuickTemplateTargetSelectionActivity.matchesTargetFilters(
+                configured, "", false, true));
+        assertTrue(QuickTemplateTargetSelectionActivity.matchesTargetFilters(
+                unconfigured, "", false, true));
+    }
+
+    @Test
+    public void targetFiltersHideSystemAppsByDefault() {
+        QuickTemplateTargetSelectionActivity.TargetAppItem system =
+                new QuickTemplateTargetSelectionActivity.TargetAppItem(
+                        "System", "android", false, true, null);
+
+        assertFalse(QuickTemplateTargetSelectionActivity.matchesTargetFilters(
+                system, "", false, false));
+        assertTrue(QuickTemplateTargetSelectionActivity.matchesTargetFilters(
+                system, "", true, false));
+    }
+
     private static LinkedHashSet<String> orderedSet(String... values) {
         return new LinkedHashSet<>(Arrays.asList(values));
     }

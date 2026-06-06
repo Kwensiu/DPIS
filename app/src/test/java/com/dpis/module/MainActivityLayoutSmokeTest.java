@@ -34,7 +34,11 @@ public class MainActivityLayoutSmokeTest {
         assertTrue(layout.contains("@dimen/main_toolbar_padding_horizontal"));
         assertTrue(layout.contains("@dimen/main_toolbar_padding_top"));
         assertTrue(layout.contains("@dimen/main_search_card_height"));
-        assertTrue(layout.contains("@dimen/main_search_action_button_size"));
+        assertTrue(layout.contains("@dimen/main_search_icon_padding_start"));
+        assertTrue(layout.contains("@dimen/main_search_icon_padding_end"));
+        assertTrue(layout.contains("@dimen/main_search_action_icon_padding_start"));
+        assertTrue(layout.contains("@dimen/main_search_action_icon_padding_end"));
+        assertTrue(layout.contains("@dimen/main_search_action_icon_padding_vertical"));
         assertTrue(layout.contains("@dimen/main_tabs_indicator_height"));
         assertTrue(layout.contains("android:src=\"@drawable/ic_search_24\""));
         assertTrue(layout.contains("android:src=\"@drawable/ic_tune_24\""));

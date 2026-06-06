@@ -301,6 +301,7 @@
     <string name="filter_injected_only">Injected only</string>
     <string name="filter_width_only">Smallest width configured</string>
     <string name="filter_font_only">Font configured</string>
+    <string name="quick_template_targets_filter_hide_configured">Hide configured apps</string>
     <string name="system_settings_title">Settings</string>
     <string name="system_settings_back">Back</string>
     <string name="system_settings_section_general">General</string>

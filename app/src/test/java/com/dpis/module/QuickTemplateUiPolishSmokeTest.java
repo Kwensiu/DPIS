@@ -27,7 +27,14 @@ public class QuickTemplateUiPolishSmokeTest {
         assertTrue(targetLayout.contains("@string/status_save_button"));
         assertTrue(targetItem.contains("@string/quick_template_targets_configured_badge"));
         assertTrue(targetLayout.contains("@dimen/template_target_content_padding_horizontal"));
+        assertTrue(targetLayout.contains("@dimen/main_search_icon_padding_start"));
+        assertTrue(targetLayout.contains("@dimen/main_search_icon_padding_end"));
+        assertTrue(targetLayout.contains("@dimen/main_search_action_icon_padding_start"));
+        assertTrue(targetLayout.contains("@dimen/main_search_action_icon_padding_end"));
+        assertTrue(targetLayout.contains("@dimen/main_search_action_icon_padding_vertical"));
+        assertTrue(targetLayout.contains("@dimen/template_target_list_container_spacing_top"));
         assertTrue(targetLayout.contains("@dimen/template_target_save_button_height"));
+        assertTrue(targetLayout.contains("@dimen/template_target_save_button_margin_top"));
         assertTrue(targetLayout.contains("@dimen/template_target_save_button_margin_bottom"));
         assertFalse(targetLayout.contains("@dimen/main_workspace_"));
         assertTrue(targetItem.contains("@dimen/template_target_row_min_height"));
@@ -46,7 +53,9 @@ public class QuickTemplateUiPolishSmokeTest {
         assertFalse(editLayout.contains("@dimen/global_prefill_content_padding_"));
         assertFalse(editLayout.contains("@dimen/quick_template_edit_content_padding_"));
         assertTrue(dimens.contains("template_target_content_padding_horizontal"));
+        assertTrue(dimens.contains("template_target_list_container_spacing_top"));
         assertTrue(dimens.contains("template_target_save_button_height"));
+        assertTrue(dimens.contains("template_target_save_button_margin_top"));
         assertTrue(dimens.contains("template_target_save_button_margin_bottom"));
         assertTrue(dimens.contains("template_target_row_padding_vertical"));
         assertTrue(dimens.contains("template_target_badge_padding_horizontal"));

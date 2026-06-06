@@ -66,17 +66,23 @@ final class InstalledAppCatalogCoordinator {
         appIconWarmupExecutor.shutdownNow();
     }
 
-    List<AppListItem> loadInstalledApps(boolean forceInstalledAppCatalogReload,
-            DpiConfigStore store,
-            Set<String> scopePackages,
-            boolean scopeKnown) {
+    List<InstalledAppCatalogItem> loadInstalledAppCatalog(
+            boolean forceInstalledAppCatalogReload) {
         PackageManager packageManager = host.getPackageManager();
         List<InstalledAppCatalogItem> catalog = getInstalledAppCatalog(
                 packageManager,
                 host.getSelfPackageName(),
                 forceInstalledAppCatalogReload);
         maybeScheduleFirstScreenIconWarmup(packageManager, catalog);
+        return catalog;
+    }
 
+    List<AppListItem> loadInstalledApps(boolean forceInstalledAppCatalogReload,
+            DpiConfigStore store,
+            Set<String> scopePackages,
+            boolean scopeKnown) {
+        List<InstalledAppCatalogItem> catalog = loadInstalledAppCatalog(
+                forceInstalledAppCatalogReload);
         List<AppListItem> result = new ArrayList<>(catalog.size());
         for (InstalledAppCatalogItem item : catalog) {
             Integer viewportWidth = store != null
@@ -332,26 +338,5 @@ final class InstalledAppCatalogCoordinator {
         int flags = applicationInfo.flags;
         return (flags & ApplicationInfo.FLAG_SYSTEM) != 0
                 && (flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0;
-    }
-
-
-    private static final class InstalledAppCatalogItem {
-        final String label;
-        final String packageName;
-        final boolean systemApp;
-        final boolean hyperOsNativeProxyCandidate;
-        volatile Drawable icon;
-
-        InstalledAppCatalogItem(String label,
-                String packageName,
-                boolean systemApp,
-                boolean hyperOsNativeProxyCandidate,
-                Drawable icon) {
-            this.label = label;
-            this.packageName = packageName;
-            this.systemApp = systemApp;
-            this.hyperOsNativeProxyCandidate = hyperOsNativeProxyCandidate;
-            this.icon = icon;
-        }
     }
 }

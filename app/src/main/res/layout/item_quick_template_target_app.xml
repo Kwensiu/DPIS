@@ -14,6 +14,26 @@
     android:paddingEnd="@dimen/template_target_row_padding_horizontal"
     android:paddingBottom="@dimen/template_target_row_padding_vertical">
 
+    <FrameLayout
+        android:layout_width="@dimen/template_target_icon_size"
+        android:layout_height="@dimen/template_target_icon_size"
+        android:layout_marginEnd="@dimen/template_target_icon_spacing_end">
+
+        <ImageView
+            android:id="@+id/quick_template_target_icon"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@null"
+            android:scaleType="fitCenter" />
+
+        <View
+            android:id="@+id/quick_template_target_icon_skeleton"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_app_icon_skeleton_mask"
+            android:visibility="gone" />
+    </FrameLayout>
+
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -33,7 +53,7 @@
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textAppearance="?attr/textAppearanceTitleSmall"
                 android:textColor="?attr/colorOnSurface"
                 android:textStyle="bold" />
 
