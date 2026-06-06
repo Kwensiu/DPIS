@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 final class RootAccessProbe {
     enum Status {
@@ -44,6 +45,7 @@ final class RootAccessProbe {
             + "; echo DPIS_KSU_KERNEL_VER_CODE=$KSU_KERNEL_VER_CODE"
             + "; echo DPIS_MAGISK_VER=$MAGISK_VER"
             + "; echo DPIS_MAGISK_VER_CODE=$MAGISK_VER_CODE";
+    private static final long PROBE_TIMEOUT_MS = 3_000L;
 
     private RootAccessProbe() {
     }
@@ -54,8 +56,13 @@ final class RootAccessProbe {
             process = Runtime.getRuntime().exec(
                     new String[] { "su", "-c", PROBE_COMMAND }
             );
+            boolean finished = process.waitFor(PROBE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            if (!finished) {
+                process.destroyForcibly();
+                return Result.unknown();
+            }
             String output = readOutput(process);
-            int code = process.waitFor();
+            int code = process.exitValue();
             if (code != 0 || !output.contains("uid=0")) {
                 return Result.unavailable();
             }

@@ -4,6 +4,7 @@ import android.app.Application;
 import com.google.android.material.color.DynamicColors;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -157,6 +158,88 @@ public final class DpisApplication extends Application implements XposedServiceH
         if (from.hasLauncherIconHidden() && !to.hasLauncherIconHidden()) {
             to.setLauncherIconHidden(from.isLauncherIconHidden());
         }
+        migrateTemplateAndPrefillConfig(from, to);
+    }
+
+    private static void migrateTemplateAndPrefillConfig(DpiConfigStore from, DpiConfigStore to) {
+        // Local edits made before service binding must survive the first remote
+        // mirror, while remote template/prefill values remain authoritative.
+        Map<String, Object> localConfig = from.snapshotBackup();
+        Map<String, Object> remoteConfig = to.snapshotAll();
+        LinkedHashMap<String, Object> missingEntries = new LinkedHashMap<>();
+        mergeTemplateIds(localConfig, remoteConfig, missingEntries);
+        mergeTemplateOrder(localConfig, remoteConfig, missingEntries);
+        for (Map.Entry<String, Object> entry : localConfig.entrySet()) {
+            String key = entry.getKey();
+            if (!isTemplateOrPrefillKey(key)
+                    || QuickTemplateStore.KEY_TEMPLATE_IDS.equals(key)
+                    || QuickTemplateStore.KEY_TEMPLATE_ORDER.equals(key)
+                    || remoteConfig.containsKey(key)) {
+                continue;
+            }
+            missingEntries.put(key, entry.getValue());
+        }
+        if (missingEntries.isEmpty()) {
+            return;
+        }
+        remoteConfig.putAll(missingEntries);
+        to.replaceAll(remoteConfig);
+    }
+
+    private static void mergeTemplateIds(
+            Map<String, Object> localConfig,
+            Map<String, Object> remoteConfig,
+            Map<String, Object> target
+    ) {
+        LinkedHashSet<String> merged = new LinkedHashSet<>();
+        addStringSetValues(merged, remoteConfig.get(QuickTemplateStore.KEY_TEMPLATE_IDS));
+        int remoteSize = merged.size();
+        addStringSetValues(merged, localConfig.get(QuickTemplateStore.KEY_TEMPLATE_IDS));
+        if (merged.size() > remoteSize || !remoteConfig.containsKey(QuickTemplateStore.KEY_TEMPLATE_IDS)) {
+            target.put(QuickTemplateStore.KEY_TEMPLATE_IDS, merged);
+        }
+    }
+
+    private static void mergeTemplateOrder(
+            Map<String, Object> localConfig,
+            Map<String, Object> remoteConfig,
+            Map<String, Object> target
+    ) {
+        LinkedHashSet<String> merged = new LinkedHashSet<>();
+        addTemplateOrderValues(merged, remoteConfig.get(QuickTemplateStore.KEY_TEMPLATE_ORDER));
+        int remoteSize = merged.size();
+        addTemplateOrderValues(merged, localConfig.get(QuickTemplateStore.KEY_TEMPLATE_ORDER));
+        if (merged.size() > remoteSize || !remoteConfig.containsKey(QuickTemplateStore.KEY_TEMPLATE_ORDER)) {
+            target.put(QuickTemplateStore.KEY_TEMPLATE_ORDER, String.join("\n", merged));
+        }
+    }
+
+    private static void addStringSetValues(Set<String> target, Object value) {
+        if (!(value instanceof Set<?> values)) {
+            return;
+        }
+        for (Object item : values) {
+            if (item instanceof String string && !string.isBlank()) {
+                target.add(string);
+            }
+        }
+    }
+
+    private static void addTemplateOrderValues(Set<String> target, Object value) {
+        if (!(value instanceof String order)) {
+            return;
+        }
+        for (String item : order.split("\\n")) {
+            if (!item.isBlank()) {
+                target.add(item.trim());
+            }
+        }
+    }
+
+    private static boolean isTemplateOrPrefillKey(String key) {
+        return key != null
+                && (key.startsWith("default_config.")
+                        || key.startsWith("template."));
     }
 
     private static void migrateWechatTargetField(DpiConfigStore from, DpiConfigStore to) {

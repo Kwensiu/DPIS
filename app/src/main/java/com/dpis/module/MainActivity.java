@@ -81,6 +81,22 @@ public final class MainActivity
             = "state.page_scroll_states";
     private static final String STATE_REFRESHING_PAGES
             = "state.refreshing_pages";
+    private static final String STATE_TEMPLATE_DETAIL_KIND
+            = "state.template_detail.kind";
+    private static final String STATE_TEMPLATE_DETAIL_ID
+            = "state.template_detail.id";
+    private static final String STATE_GLOBAL_PREFILL_DRAFT
+            = "state.global_prefill.draft";
+    private static final String STATE_QUICK_TEMPLATE_DRAFT
+            = "state.quick_template.draft";
+    private static final String STATE_DRAFT_NAME = "name";
+    private static final String STATE_DRAFT_VIEWPORT_INPUT = "viewport_input";
+    private static final String STATE_DRAFT_VIEWPORT_MODE = "viewport_mode";
+    private static final String STATE_DRAFT_VIEWPORT_APPLY_MODE = "viewport_apply_mode";
+    private static final String STATE_DRAFT_FONT_INPUT = "font_input";
+    private static final String STATE_DRAFT_FONT_MODE = "font_mode";
+    private static final String STATE_DRAFT_TYPEFACE_ID = "typeface_id";
+    private static final String STATE_DRAFT_FONT_HOOK_DOMAINS = "font_hook_domains";
     private static final int UPDATE_CONNECT_TIMEOUT_MS = 10_000;
     private static final int UPDATE_READ_TIMEOUT_MS = 10_000;
     private static final int DOWNLOAD_BUFFER_SIZE = 16 * 1024;
@@ -260,6 +276,13 @@ public final class MainActivity
                     );
             initialRefreshingPages = decodeRefreshingPages(
                     savedInstanceState.getIntArray(STATE_REFRESHING_PAGES)
+            );
+            templateDetailSelection = restoreTemplateDetailSelection(savedInstanceState);
+            retainedGlobalPrefillDraft = restoreGlobalPrefillDraft(
+                    savedInstanceState.getBundle(STATE_GLOBAL_PREFILL_DRAFT)
+            );
+            retainedQuickTemplateDraft = restoreQuickTemplateDraft(
+                    savedInstanceState.getBundle(STATE_QUICK_TEMPLATE_DRAFT)
             );
         }
         mainViewModel = new MainViewModel(
@@ -537,6 +560,20 @@ public final class MainActivity
                 STATE_REFRESHING_PAGES,
                 captureRefreshingPagePositions()
         );
+        captureTemplateEditorDraft();
+        saveTemplateDetailSelection(outState, templateDetailSelection);
+        if (retainedGlobalPrefillDraft != null) {
+            outState.putBundle(
+                    STATE_GLOBAL_PREFILL_DRAFT,
+                    saveGlobalPrefillDraft(retainedGlobalPrefillDraft)
+            );
+        }
+        if (retainedQuickTemplateDraft != null) {
+            outState.putBundle(
+                    STATE_QUICK_TEMPLATE_DRAFT,
+                    saveQuickTemplateDraft(retainedQuickTemplateDraft)
+            );
+        }
     }
 
     @Override
@@ -1307,6 +1344,101 @@ public final class MainActivity
         if (activeQuickTemplateEditorBinder != null) {
             retainedQuickTemplateDraft = activeQuickTemplateEditorBinder.snapshotDraft();
         }
+    }
+
+    private static void saveTemplateDetailSelection(
+            Bundle outState,
+            TemplateDetailSelection selection
+    ) {
+        TemplateDetailSelection normalized = selection != null
+                ? selection
+                : TemplateDetailSelection.none();
+        outState.putString(STATE_TEMPLATE_DETAIL_KIND, normalized.kind.name());
+        outState.putString(STATE_TEMPLATE_DETAIL_ID, normalized.templateId);
+    }
+
+    private static TemplateDetailSelection restoreTemplateDetailSelection(
+            Bundle savedInstanceState
+    ) {
+        if (savedInstanceState == null) {
+            return TemplateDetailSelection.none();
+        }
+        TemplateDetailKind kind = TemplateDetailKind.fromName(
+                savedInstanceState.getString(STATE_TEMPLATE_DETAIL_KIND)
+        );
+        if (kind == TemplateDetailKind.GLOBAL_PREFILL) {
+            return TemplateDetailSelection.globalPrefill();
+        }
+        if (kind == TemplateDetailKind.QUICK_TEMPLATE) {
+            return TemplateDetailSelection.quickTemplate(
+                    savedInstanceState.getString(STATE_TEMPLATE_DETAIL_ID)
+            );
+        }
+        return TemplateDetailSelection.none();
+    }
+
+    // Saved-instance recovery must keep unsaved template editor input, not just
+    // reopen the same detail page after process recreation.
+    private static Bundle saveGlobalPrefillDraft(GlobalPrefillEditorBinder.Draft draft) {
+        Bundle bundle = new Bundle();
+        if (draft == null) {
+            return bundle;
+        }
+        bundle.putString(STATE_DRAFT_VIEWPORT_INPUT, draft.viewportInput);
+        bundle.putString(STATE_DRAFT_VIEWPORT_MODE, draft.viewportMode);
+        bundle.putString(STATE_DRAFT_VIEWPORT_APPLY_MODE, draft.viewportApplyMode);
+        bundle.putString(STATE_DRAFT_FONT_INPUT, draft.fontInput);
+        bundle.putString(STATE_DRAFT_FONT_MODE, draft.fontMode);
+        bundle.putString(STATE_DRAFT_TYPEFACE_ID, draft.selectedTypefaceId);
+        bundle.putString(STATE_DRAFT_FONT_HOOK_DOMAINS, draft.draftFontHookDomainsRaw);
+        return bundle;
+    }
+
+    private static GlobalPrefillEditorBinder.Draft restoreGlobalPrefillDraft(Bundle bundle) {
+        if (bundle == null || bundle.isEmpty()) {
+            return null;
+        }
+        return new GlobalPrefillEditorBinder.Draft(
+                bundle.getString(STATE_DRAFT_VIEWPORT_INPUT),
+                bundle.getString(STATE_DRAFT_VIEWPORT_MODE),
+                bundle.getString(STATE_DRAFT_VIEWPORT_APPLY_MODE),
+                bundle.getString(STATE_DRAFT_FONT_INPUT),
+                bundle.getString(STATE_DRAFT_FONT_MODE),
+                bundle.getString(STATE_DRAFT_TYPEFACE_ID),
+                bundle.getString(STATE_DRAFT_FONT_HOOK_DOMAINS)
+        );
+    }
+
+    private static Bundle saveQuickTemplateDraft(QuickTemplateEditorBinder.Draft draft) {
+        Bundle bundle = new Bundle();
+        if (draft == null) {
+            return bundle;
+        }
+        bundle.putString(STATE_DRAFT_NAME, draft.nameInput);
+        bundle.putString(STATE_DRAFT_VIEWPORT_INPUT, draft.viewportInput);
+        bundle.putString(STATE_DRAFT_VIEWPORT_MODE, draft.viewportMode);
+        bundle.putString(STATE_DRAFT_VIEWPORT_APPLY_MODE, draft.viewportApplyMode);
+        bundle.putString(STATE_DRAFT_FONT_INPUT, draft.fontInput);
+        bundle.putString(STATE_DRAFT_FONT_MODE, draft.fontMode);
+        bundle.putString(STATE_DRAFT_TYPEFACE_ID, draft.selectedTypefaceId);
+        bundle.putString(STATE_DRAFT_FONT_HOOK_DOMAINS, draft.draftFontHookDomainsRaw);
+        return bundle;
+    }
+
+    private static QuickTemplateEditorBinder.Draft restoreQuickTemplateDraft(Bundle bundle) {
+        if (bundle == null || bundle.isEmpty()) {
+            return null;
+        }
+        return new QuickTemplateEditorBinder.Draft(
+                bundle.getString(STATE_DRAFT_NAME),
+                bundle.getString(STATE_DRAFT_VIEWPORT_INPUT),
+                bundle.getString(STATE_DRAFT_VIEWPORT_MODE),
+                bundle.getString(STATE_DRAFT_VIEWPORT_APPLY_MODE),
+                bundle.getString(STATE_DRAFT_FONT_INPUT),
+                bundle.getString(STATE_DRAFT_FONT_MODE),
+                bundle.getString(STATE_DRAFT_TYPEFACE_ID),
+                bundle.getString(STATE_DRAFT_FONT_HOOK_DOMAINS)
+        );
     }
 
     private void closeActiveTemplateSheetForMigration() {
@@ -2794,17 +2926,32 @@ public final class MainActivity
             showToast(R.string.quick_template_apply_empty_selection);
             return;
         }
-        String message
-                = plan.overwriteCount > 0
-                        ? getString(
-                                R.string.quick_template_apply_confirm_message_overwrite,
-                                plan.targetCount,
-                                plan.overwriteCount
-                        )
-                        : getString(
+        String message = QuickTemplateApplyConfirmationMessage.format(
+                plan.targetCount,
+                plan.overwriteCount,
+                new QuickTemplateApplyConfirmationMessage.Strings() {
+                    @Override
+                    public String plain(int targetCount) {
+                        return getString(
                                 R.string.quick_template_apply_confirm_message,
-                                plan.targetCount
+                                targetCount
                         );
+                    }
+
+                    @Override
+                    public String overwrite(int targetCount, int overwriteCount) {
+                        return getString(
+                                R.string.quick_template_apply_confirm_message_overwrite,
+                                targetCount,
+                                overwriteCount
+                        );
+                    }
+
+                    @Override
+                    public String scopeNote() {
+                        return getString(R.string.quick_template_apply_scope_note);
+                    }
+                });
         androidx.appcompat.app.AlertDialog dialog
                 = new MaterialAlertDialogBuilder(this)
                         .setTitle(
@@ -3700,7 +3847,18 @@ public final class MainActivity
     private enum TemplateDetailKind {
         NONE,
         GLOBAL_PREFILL,
-        QUICK_TEMPLATE
+        QUICK_TEMPLATE;
+
+        static TemplateDetailKind fromName(String name) {
+            if (name == null) {
+                return NONE;
+            }
+            try {
+                return valueOf(name);
+            } catch (IllegalArgumentException ignored) {
+                return NONE;
+            }
+        }
     }
 
     private static final class TemplateDetailSelection {
@@ -3728,6 +3886,9 @@ public final class MainActivity
         }
 
         static TemplateDetailSelection quickTemplate(String templateId) {
+            if (templateId == null || templateId.isBlank()) {
+                return none();
+            }
             return new TemplateDetailSelection(
                     TemplateDetailKind.QUICK_TEMPLATE,
                     templateId

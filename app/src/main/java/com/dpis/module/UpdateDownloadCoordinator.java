@@ -230,6 +230,8 @@ final class UpdateDownloadCoordinator {
                         }
                     });
 
+            // Product decision: downloaded update files are handed to Android's installer
+            // without an app-side package/signature trust gate.
             UpdatePackageInstaller.persistDownloadedFile(host.getContext(), targetFile);
             host.runOnUiThread(() -> {
                 if (!host.isActivityAlive()) {
@@ -304,6 +306,8 @@ final class UpdateDownloadCoordinator {
                         }
                     });
 
+            // Product decision: downloaded update files are handed to Android's installer
+            // without an app-side package/signature trust gate.
             UpdatePackageInstaller.persistDownloadedFile(host.getContext(), targetFile);
             host.runOnUiThread(() -> {
                 if (host.isActivityAlive()) {

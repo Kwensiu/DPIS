@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
@@ -71,6 +72,32 @@ public class AppConfigPrefillPreviewTest {
         assertEquals("resources_font", result.previewFontHookDomainsRaw);
         assertFalse(store.hasRealPackageConfig(item.packageName));
         assertFalse(store.getConfiguredPackages().contains(item.packageName));
+    }
+
+    @Test
+    public void advancedEnabledStateCanChangeWithoutSavingPrefillConfig() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        AppListItem item = app("com.example.app");
+        TemplateConfigValue prefill = new TemplateConfigValue(
+                ViewportTargetSpec.relativeScale(875),
+                ViewportApplyMode.AUTO,
+                125,
+                FontApplyMode.FIELD_REWRITE,
+                "serif",
+                "resources_font");
+
+        AppListItem preview = AppConfigPrefillPreview.applyIfEligible(item, store, prefill);
+        assertTrue(preview.previewFromGlobalPrefill);
+        assertTrue(store.setTargetDpisEnabled(item.packageName, false));
+
+        assertFalse(store.isTargetDpisEnabled(item.packageName));
+        assertTrue(store.getConfiguredPackages().contains(item.packageName));
+        assertNull(store.getTargetViewportWidthDp(item.packageName));
+        assertEquals(ViewportTargetSpec.off(), store.getTargetViewportSpec(item.packageName));
+        assertNull(store.getTargetFontScalePercent(item.packageName));
+        assertNull(store.getTargetTypefaceId(item.packageName));
+        assertEquals(ViewportApplyMode.OFF, store.getTargetViewportApplyMode(item.packageName));
+        assertEquals(FontApplyMode.OFF, store.getTargetFontApplyMode(item.packageName));
     }
 
     @Test

@@ -209,6 +209,7 @@
     <string name="quick_template_apply_confirm_title">应用模板「%1$s」？</string>
     <string name="quick_template_apply_confirm_message">将应用到 %1$d 个应用。</string>
     <string name="quick_template_apply_confirm_message_overwrite">将应用到 %1$d 个应用，其中 %2$d 个已有配置会被覆盖。</string>
+    <string name="quick_template_apply_scope_note">保存后，DPIS 可能会为尚未加入作用域的目标应用请求 LSPosed 作用域。</string>
     <string name="quick_template_apply_result_success">已应用到 %1$d 个应用</string>
     <string name="quick_template_apply_result_partial">已应用到 %1$d 个应用；失败 %2$d 个</string>
     <string name="quick_template_scope_request_started">已向 LSPosed 请求为 %1$d 个应用加入作用域，请到 LSPosed 确认。</string>

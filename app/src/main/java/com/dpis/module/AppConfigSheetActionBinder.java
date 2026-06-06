@@ -46,11 +46,10 @@ final class AppConfigSheetActionBinder {
             clearInputFocus(dialogView, views);
             host.executeProcessAction(item, AppConfigDialogBinder.ProcessAction.STOP);
         });
+        // Advanced actions are real per-app state even when DPI/font fields are
+        // only a global-prefill preview; they must not save previewed config.
         views.dpisToggleButton.setOnClickListener(v -> {
             clearInputFocus(dialogView, views);
-            if (state.previewFromGlobalPrefill) {
-                return;
-            }
             boolean nextEnabled = !state.dpisEnabled;
             if (host.setDpisEnabled(item.packageName, nextEnabled)) {
                 state.dpisEnabled = nextEnabled;

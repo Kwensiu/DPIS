@@ -111,22 +111,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(binderSource.contains("state.captureSavedDraft(views, item != null && item.previewFromGlobalPrefill);"));
         assertTrue(binderSource.contains("UnsavedBadgeBinder.bind("));
         assertTrue(binderSource.contains("bindDpisToggleButton(views.dpisToggleButton, state.dpisEnabled"));
-        assertTrue(binderSource.contains("dpisToggleButton.setEnabled(!previewFromGlobalPrefill);"));
-        assertTrue(binderSource.contains("dpisToggleButton.setAlpha(previewFromGlobalPrefill ? 0.6f : 1f);"));
-    }
-
-    @Test
-    public void previewDpisToggleReturnsBeforeWritingPackageConfig() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
-        int toggleStart = source.indexOf("views.dpisToggleButton.setOnClickListener");
-        int toggleEnd = source.indexOf("views.fontHookDomainsButton.setOnClickListener", toggleStart);
-        String toggleBlock = source.substring(toggleStart, toggleEnd);
-
-        int previewGuard = toggleBlock.indexOf("if (state.previewFromGlobalPrefill)");
-        int storeWrite = toggleBlock.indexOf("host.setDpisEnabled(item.packageName, nextEnabled)");
-        assertTrue(previewGuard > 0);
-        assertTrue(storeWrite > previewGuard);
-        assertTrue(toggleBlock.indexOf("return;", previewGuard) < storeWrite);
+        assertTrue(binderSource.contains("dpisToggleButton.setEnabled(true);"));
+        assertTrue(binderSource.contains("dpisToggleButton.setAlpha(1f);"));
     }
 
     @Test

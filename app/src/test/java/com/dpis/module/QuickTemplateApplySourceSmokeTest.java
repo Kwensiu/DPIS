@@ -20,7 +20,8 @@ public class QuickTemplateApplySourceSmokeTest {
         assertTrue(mainActivity.contains("applyQuickTemplate(templateId)"));
         assertTrue(mainActivity.contains("R.string.quick_template_apply_confirm_message"));
         assertTrue(mainActivity.contains("R.string.quick_template_apply_confirm_message_overwrite"));
-        assertTrue(mainActivity.contains("plan.overwriteCount > 0"));
+        assertTrue(mainActivity.contains("QuickTemplateApplyConfirmationMessage.format("));
+        assertTrue(mainActivity.contains("R.string.quick_template_apply_scope_note"));
         assertTrue(mainActivity.contains("finishQuickTemplateApply("));
         assertTrue(mainActivity.contains("DialogWindowSizer.applyStandardWidth(dialog, this)"));
         assertTrue(mainActivity.contains("this::isInstalledTemplateTargetPackage"));
