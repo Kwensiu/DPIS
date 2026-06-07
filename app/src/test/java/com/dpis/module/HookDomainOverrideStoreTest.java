@@ -88,6 +88,21 @@ public class HookDomainOverrideStoreTest {
     }
 
     @Test
+    public void readDropsSystemOnlyDomainsFromStaleCustomPath() {
+        DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
+        HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
+        assertTrue(configStore.setPackageFontHookDomainsRaw(
+                "com.example.app",
+                "resources_font,system_server_font,activity_thread_font,webview_text_zoom"));
+
+        HookDomainOverride override = store.read("com.example.app");
+
+        assertTrue(override.customPathEnabled);
+        assertEquals(orderedSet("resources_font", "webview_text_zoom"),
+                override.enabledKnownDomains);
+    }
+
+    @Test
     public void restoreClearsCustomKeyAndUnknownIds() {
         DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
         HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
