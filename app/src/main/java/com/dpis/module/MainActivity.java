@@ -174,6 +174,7 @@ public final class MainActivity
             = new SparseArray<>();
     private HomeWorkspaceBinder homeWorkspaceBinder;
     private TemplateWorkspaceBinder templateWorkspaceBinder;
+    private ToolsWorkspaceBinder toolsWorkspaceBinder;
     private SettingsWorkspaceBinder settingsWorkspaceBinder;
     private NavigationBarView workspaceSwitch;
     private SparseArray<Parcelable> restoredPageScrollStates;
@@ -331,6 +332,7 @@ public final class MainActivity
                 createQuickTemplateActions()
         );
         homeWorkspaceBinder = new HomeWorkspaceBinder(this);
+        toolsWorkspaceBinder = new ToolsWorkspaceBinder(this);
         settingsWorkspaceBinder = new SettingsWorkspaceBinder(this);
         workspaceSwitch = findViewById(R.id.workspace_switch);
         workspaceSwitch.setSaveFromParentEnabled(false);
@@ -471,8 +473,13 @@ public final class MainActivity
             bindTemplateWorkspace();
         } else if (requireUiState().workspaceMode == MainWorkspaceMode.HOME) {
             bindHomeWorkspace();
+        } else if (requireUiState().workspaceMode == MainWorkspaceMode.TOOLS) {
+            bindToolsWorkspace();
         } else if (requireUiState().workspaceMode == MainWorkspaceMode.SETTINGS) {
             bindSettingsWorkspace();
+        }
+        if (toolsWorkspaceBinder != null) {
+            toolsWorkspaceBinder.onStart();
         }
         if (settingsWorkspaceBinder != null) {
             settingsWorkspaceBinder.onStart();
@@ -483,6 +490,9 @@ public final class MainActivity
     @Override
     protected void onResume() {
         super.onResume();
+        if (toolsWorkspaceBinder != null) {
+            toolsWorkspaceBinder.onResume();
+        }
         if (settingsWorkspaceBinder != null) {
             settingsWorkspaceBinder.onResume();
         }
@@ -490,6 +500,9 @@ public final class MainActivity
 
     @Override
     protected void onStop() {
+        if (toolsWorkspaceBinder != null) {
+            toolsWorkspaceBinder.onStop();
+        }
         if (settingsWorkspaceBinder != null) {
             settingsWorkspaceBinder.onStop();
         }
@@ -532,6 +545,9 @@ public final class MainActivity
         super.onActivityResult(requestCode, resultCode, data);
         if (settingsWorkspaceBinder != null) {
             settingsWorkspaceBinder.onActivityResult(requestCode, resultCode, data);
+        }
+        if (toolsWorkspaceBinder != null) {
+            toolsWorkspaceBinder.onActivityResult(requestCode, resultCode, data);
         }
         if (requestCode == REQUEST_QUICK_TEMPLATE_TARGETS) {
             quickTemplateTargetSelectionActivityStarted = false;
@@ -1249,6 +1265,8 @@ public final class MainActivity
         } else if (templateWorkspace) {
             bindTemplateWorkspace();
             restoreTemplateEditorForCurrentConfiguration();
+        } else if (toolsWorkspace) {
+            bindToolsWorkspace();
         } else if (settingsWorkspace) {
             bindSettingsWorkspace();
         }
@@ -1312,6 +1330,12 @@ public final class MainActivity
                     templateWorkspaceContainer,
                     requireUiState().query
             );
+        }
+    }
+
+    private void bindToolsWorkspace() {
+        if (toolsWorkspaceBinder != null) {
+            toolsWorkspaceBinder.bind(toolsWorkspaceContainer);
         }
     }
 

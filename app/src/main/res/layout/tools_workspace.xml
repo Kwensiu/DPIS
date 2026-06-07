@@ -4,33 +4,253 @@
     android:id="@+id/tools_workspace_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingStart="@dimen/home_workspace_padding_horizontal"
-    android:paddingTop="@dimen/home_workspace_padding_top"
-    android:paddingEnd="@dimen/home_workspace_padding_horizontal"
-    android:paddingBottom="@dimen/home_workspace_padding_bottom"
+    android:paddingStart="@dimen/template_workspace_padding_horizontal"
+    android:paddingTop="@dimen/template_workspace_padding_top"
+    android:paddingEnd="@dimen/template_workspace_padding_horizontal"
+    android:paddingBottom="@dimen/template_workspace_padding_bottom"
     android:visibility="gone">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:layout_width="@dimen/home_workspace_header_icon_size"
-            android:layout_height="@dimen/home_workspace_header_icon_size"
-            android:padding="@dimen/home_workspace_header_icon_padding"
-            android:src="@drawable/ic_mop_24"
-            app:tint="?attr/colorOnSurfaceVariant" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/home_workspace_title_spacing_top"
-            android:text="@string/tools_workspace_under_construction"
-            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textStyle="bold" />
-    </LinearLayout>
+            android:orientation="vertical">
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/system_font_scale_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                app:cardCornerRadius="@dimen/template_workspace_card_corner_radius_compact"
+                app:strokeWidth="@dimen/page_card_stroke_width">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/template_workspace_card_padding">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/system_font_scale_title"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/system_font_scale_title"
+                                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                                    android:textColor="?attr/colorOnSurface" />
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/system_font_scale_badge"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="@dimen/template_workspace_chip_spacing_horizontal"
+                                    android:background="@drawable/bg_system_font_scale_badge"
+                                    android:gravity="center"
+                                    android:includeFontPadding="false"
+                                    android:paddingStart="@dimen/help_tutorial_badge_padding_horizontal"
+                                    android:paddingTop="@dimen/help_tutorial_badge_padding_vertical"
+                                    android:paddingEnd="@dimen/help_tutorial_badge_padding_horizontal"
+                                    android:paddingBottom="@dimen/help_tutorial_badge_padding_vertical"
+                                    android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                                    android:textColor="?attr/colorOnSurfaceVariant"
+                                    android:textStyle="bold"
+                                    android:visibility="gone" />
+                            </LinearLayout>
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:id="@+id/system_font_scale_subtitle"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/template_workspace_text_spacing_top"
+                                android:text="@string/system_font_scale_subtitle"
+                                android:textAppearance="?attr/textAppearanceBodyMedium"
+                                android:textColor="?attr/colorOnSurfaceVariant" />
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:id="@+id/system_font_scale_current_value"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/template_workspace_text_spacing_top"
+                                android:textAppearance="?attr/textAppearanceBodySmall"
+                                android:textColor="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
+
+                        <androidx.appcompat.widget.AppCompatImageButton
+                            android:id="@+id/system_font_scale_apply_button"
+                            android:layout_width="@dimen/template_workspace_icon_button_size"
+                            android:layout_height="@dimen/template_workspace_icon_button_size"
+                            android:layout_marginStart="@dimen/dialog_action_spacing_between"
+                            android:background="@drawable/bg_round_button_surface"
+                            android:contentDescription="@string/system_font_scale_apply"
+                            android:padding="@dimen/template_workspace_icon_button_padding"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/ic_save_24dp"
+                            app:tint="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
+
+                    <FrameLayout
+                        android:id="@+id/system_font_scale_operation_group"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/template_workspace_actions_spacing_top"
+                        android:visibility="gone">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:id="@+id/system_font_scale_pending_value"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textStyle="bold" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/template_workspace_actions_spacing_top"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <androidx.appcompat.widget.AppCompatImageButton
+                                    android:id="@+id/system_font_scale_decrement_button"
+                                    android:layout_width="@dimen/template_workspace_icon_button_size"
+                                    android:layout_height="@dimen/template_workspace_icon_button_size"
+                                    android:background="@drawable/bg_round_button_surface"
+                                    android:contentDescription="@string/system_font_scale_decrement"
+                                    android:padding="@dimen/template_workspace_icon_button_padding"
+                                    android:scaleType="centerInside"
+                                    android:src="@drawable/ic_remove_24"
+                                    app:tint="?attr/colorOnSurfaceVariant" />
+
+                                <SeekBar
+                                    android:id="@+id/system_font_scale_seek_bar"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="@dimen/dialog_action_spacing_between"
+                                    android:layout_marginEnd="@dimen/dialog_action_spacing_between"
+                                    android:splitTrack="false" />
+
+                                <androidx.appcompat.widget.AppCompatImageButton
+                                    android:id="@+id/system_font_scale_increment_button"
+                                    android:layout_width="@dimen/template_workspace_icon_button_size"
+                                    android:layout_height="@dimen/template_workspace_icon_button_size"
+                                    android:background="@drawable/bg_round_button_surface"
+                                    android:contentDescription="@string/system_font_scale_increment"
+                                    android:padding="@dimen/template_workspace_icon_button_padding"
+                                    android:scaleType="centerInside"
+                                    android:src="@drawable/ic_add_24"
+                                    app:tint="?attr/colorOnSurfaceVariant" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:id="@+id/system_font_scale_preview"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/template_workspace_actions_spacing_top"
+                                android:background="@drawable/bg_template_workspace_empty_summary"
+                                android:orientation="vertical"
+                                android:padding="@dimen/template_workspace_card_padding">
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/system_font_scale_preview_title"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/system_font_scale_preview_title"
+                                    android:textColor="?attr/colorOnSurface" />
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/system_font_scale_preview_body"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/template_workspace_text_spacing_top"
+                                    android:text="@string/system_font_scale_preview_body"
+                                    android:textColor="?attr/colorOnSurfaceVariant" />
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/template_workspace_text_spacing_top"
+                                    android:text="@string/system_font_scale_preview_hint"
+                                    android:textAppearance="?attr/textAppearanceBodySmall"
+                                    android:textColor="?attr/colorOnSurfaceVariant" />
+                            </LinearLayout>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/system_font_scale_restore_button"
+                                style="@style/Widget.Material3.Button.TextButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="@dimen/template_workspace_action_button_height"
+                                android:layout_gravity="center_horizontal"
+                                android:layout_marginTop="@dimen/template_workspace_actions_spacing_top"
+                                android:minWidth="0dp"
+                                android:text="@string/system_font_scale_restore_default" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/system_font_scale_permission_overlay"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_system_font_scale_overlay"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:padding="@dimen/template_workspace_card_padding"
+                            android:visibility="gone">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/system_font_scale_permission_button"
+                                style="@style/Widget.Material3.Button.TonalButton"
+                                android:layout_width="match_parent"
+                                android:layout_height="@dimen/template_workspace_action_button_height"
+                                android:text="@string/system_font_scale_permission_button" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/system_font_scale_unavailable_overlay"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_system_font_scale_overlay"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:padding="@dimen/template_workspace_card_padding"
+                            android:visibility="gone">
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:text="@string/system_font_scale_unavailable_message"
+                                android:textAppearance="?attr/textAppearanceBodyMedium"
+                                android:textColor="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
+                    </FrameLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+    </ScrollView>
 </FrameLayout>
