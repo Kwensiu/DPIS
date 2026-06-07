@@ -1192,8 +1192,7 @@ final class SystemServerDisplayEnvironmentInstaller {
         return config != null
                 && FontApplyMode.SYSTEM_EMULATION.equals(config.targetFontMode)
                 && config.targetFontScalePercent != null
-                && config.targetFontScalePercent > 0
-                && isSystemServerFontDomainEnabled(config);
+                && config.targetFontScalePercent > 0;
     }
 
     static boolean hasSystemServerFontOverrideForTest(PerAppDisplayConfig config) {
@@ -1506,14 +1505,6 @@ final class SystemServerDisplayEnvironmentInstaller {
                 && FontApplyMode.SYSTEM_EMULATION.equals(config.targetFontMode)
                 && config.targetFontScalePercent != null
                 && config.targetFontScalePercent > 0;
-    }
-
-    private static boolean isSystemServerFontDomainEnabled(PerAppDisplayConfig config) {
-        HookDomainOverride override = config != null ? config.hookDomainOverride : null;
-        return override == null
-                || !override.customPathEnabled
-                || override.enabledKnownDomains.contains(
-                FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT);
     }
 
     private static void reportSystemServerFontConfig(String packageName,

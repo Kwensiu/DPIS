@@ -1249,9 +1249,9 @@ public class MainActivitySourceSmokeTest {
             )
         );
         assertTrue(binder.contains("actions.showTypefaceSelector(item"));
-        assertTrue(binder.contains("actions.showHookDomains(currentFontConfigItem(root, item), state"));
-        assertTrue(binder.contains("private AppListItem currentFontConfigItem(View root, AppListItem item)"));
-        assertTrue(binder.contains("return item.withFontConfig(fontScalePercent, fontMode);"));
+        assertTrue(binder.contains("actions.showHookDomains(item, state"));
+        assertFalse(binder.contains("currentFontConfigItem("));
+        assertFalse(binder.contains("withFontConfig("));
         assertTrue(dimens.contains("land_app_detail_card_padding"));
         assertTrue(dimens.contains("land_app_detail_section_gap"));
         assertTrue(dimens.contains("land_app_detail_card_gap"));
@@ -1463,12 +1463,8 @@ public class MainActivitySourceSmokeTest {
         assertTrue(
             saveSource.contains("FontRuntimePropertySyncer.publishTargetAsync(")
         );
-        assertTrue(source.contains("HookExecutionPlanner.buildPlan("));
-        assertTrue(
-            compact(source).contains(
-                "AppProcessHookInstaller.resolveDebugFontOverrideForPackage( item.packageName )"
-            )
-        );
+        assertTrue(source.contains("FontHookDomainRegistry.recommendedTemplateKnownDomains()"));
+        assertFalse(source.contains("AppProcessHookInstaller.resolveDebugFontOverrideForPackage("));
         assertTrue(
             source.contains("dialog_font_hook_domains_title_with_count")
         );
@@ -1482,9 +1478,7 @@ public class MainActivitySourceSmokeTest {
                 "FontHookDomainRegistry.orderedCustomizableDisplaySubset("
             )
         );
-        assertTrue(source.contains("item.fontMode"));
-        assertTrue(source.contains("item.fontScalePercent != null && item.fontScalePercent > 0"));
-        assertTrue(source.contains("ViewportApplyMode.OFF"));
+        assertFalse(source.contains("item.fontScalePercent != null && item.fontScalePercent > 0"));
         assertFalse(source.contains("publishFontRuntimeTarget("));
     }
 

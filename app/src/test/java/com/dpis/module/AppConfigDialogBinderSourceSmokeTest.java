@@ -252,10 +252,9 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(binderSource.contains("String getFontHookDomainsButtonText(AppListItem item,"));
         assertTrue(binderSource.contains("AppConfigDialogState state);"));
         assertTrue(source.contains("views.fontHookDomainsButton.setOnClickListener"));
-        assertTrue(source.contains("host.showFontHookDomains(currentFontConfigItem(item, views), state,"));
-        assertTrue(source.contains("private static AppListItem currentFontConfigItem("));
-        assertTrue(source.contains("AppConfigInputValidation.parseFontScalePercentOrNull(rawFontScale)"));
-        assertTrue(source.contains("return item.withFontConfig(fontScalePercent, fontMode);"));
+        assertTrue(source.contains("host.showFontHookDomains(item, state,"));
+        assertFalse(source.contains("currentFontConfigItem("));
+        assertFalse(source.contains("withFontConfig("));
         assertTrue(binderSource.contains("host.getFontHookDomainsButtonText(item, state)"));
         assertTrue(source.contains("host.onDraftStateChanged(state);"));
         assertTrue(source.contains("state.draftFontHookDomainsRaw"));

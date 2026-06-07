@@ -40,13 +40,15 @@
   beyond the approved field scheduling boundary.
 - Static review found a hook-domain mask compatibility regression plus minor
   help-text and EOF issues.
-- Review fix keeps the legacy v2 mask order for the original customizable
-  domains, appends `activity_thread_font` and `system_server_font`, updates
-  custom-hook help text to 10 routes, and removes extra planning EOF blanks.
+- Review fix kept the legacy v2 mask order for the original customizable
+  domains and updated custom-hook help text to 10 routes; this was later
+  narrowed so system-mode domains stay internal rather than custom-chain
+  switches.
 - Added explicit docs and comments for the requested-domain versus effective
   scheduler boundary. Bilibili/Douyin are recorded as reproduction evidence for
   generic `FONT_SCALE` scheduling, not as built-in recommended hook-chain
   targets.
-- Fixed the app editor hook-chain dialog input source so restore-default
-  previews use the current draft font scale/mode instead of the stale
-  `AppListItem` snapshot captured when the editor opened.
+- Restored the earlier product boundary: custom font hook domains edit only the
+  compat/field-rewrite chain. `system_server_font` and `activity_thread_font`
+  remain planner/runtime domains and no longer share the custom-chain switch
+  state, CSV, or property mask.

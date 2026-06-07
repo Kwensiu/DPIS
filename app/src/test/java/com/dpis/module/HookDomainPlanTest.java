@@ -45,14 +45,17 @@ public class HookDomainPlanTest {
     }
 
     @Test
-    public void registryDisplaysSystemServerFontNearResourceFontButKeepsMaskBitAppended() {
+    public void registryCustomizableDomainsStayCompatOnly() {
         assertEquals(FontHookDomainRegistry.ID_RESOURCES_FONT,
                 FontHookDomainRegistry.orderedCustomizableDisplayIdsList().get(0));
-        assertEquals(FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT,
-                FontHookDomainRegistry.orderedCustomizableDisplayIdsList().get(1));
-        assertEquals(FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT,
-                FontHookDomainRegistry.orderedCustomizableIdsList().get(
-                        FontHookDomainRegistry.orderedCustomizableIdsList().size() - 1));
+        assertFalse(FontHookDomainRegistry.orderedCustomizableDisplayIdsList().contains(
+                FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT));
+        assertFalse(FontHookDomainRegistry.orderedCustomizableDisplayIdsList().contains(
+                FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT));
+        assertFalse(FontHookDomainRegistry.recommendedTemplateKnownDomains().contains(
+                FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT));
+        assertFalse(FontHookDomainRegistry.recommendedTemplateKnownDomains().contains(
+                FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT));
     }
 
     @Test

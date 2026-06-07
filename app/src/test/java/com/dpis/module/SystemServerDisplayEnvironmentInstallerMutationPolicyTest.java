@@ -339,7 +339,7 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     }
 
     @Test
-    public void systemServerFontDomainControlsSystemFontScaleMutation() {
+    public void systemServerFontMutationIgnoresCompatCustomHookDomains() {
         PerAppDisplayConfig automaticConfig = new PerAppDisplayConfig(
                 "tv.danmaku.bili",
                 ViewportTargetSpec.off(),
@@ -361,25 +361,10 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
                                 FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT,
                                 FontHookDomainRegistry.ID_WEBVIEW_TEXT_ZOOM),
                         Set.of()));
-        PerAppDisplayConfig customWithSystemServerFont = new PerAppDisplayConfig(
-                "tv.danmaku.bili",
-                ViewportTargetSpec.off(),
-                ViewportApplyMode.OFF,
-                150,
-                FontApplyMode.SYSTEM_EMULATION,
-                false,
-                new HookDomainOverride(
-                        true,
-                        Set.of(FontHookDomainRegistry.ID_RESOURCES_FONT,
-                                FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT),
-                        Set.of()));
-
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .hasSystemServerFontOverrideForTest(automaticConfig));
-        assertFalse(SystemServerDisplayEnvironmentInstaller
-                .hasSystemServerFontOverrideForTest(customWithoutSystemServerFont));
         assertTrue(SystemServerDisplayEnvironmentInstaller
-                .hasSystemServerFontOverrideForTest(customWithSystemServerFont));
+                .hasSystemServerFontOverrideForTest(customWithoutSystemServerFont));
     }
 
     private static String read(String relativePath) throws IOException {

@@ -51,8 +51,8 @@ manual warnings.
 - Make `FONT_SCALE` avoid config-dispatch style relaunch-prone writes.
 - Prefer launch-time or app-process fallback for font where system relaunch risk
   is known.
-- Keep `system_server_font` as an explicit domain, but have unified scheduling
-  decide whether and where it is allowed to write.
+- Keep `system_server_font` as an explicit internal scheduler domain, but do
+  not expose it through the compat custom-chain switch group.
 - Keep the mitigation package-neutral: do not add Bilibili/Douyin recommended
   chain defaults or separate app-specific routes.
 - Update route docs with the rationale.

@@ -59,7 +59,7 @@ final class AppConfigSheetActionBinder {
         });
         views.fontHookDomainsButton.setOnClickListener(v -> {
             clearInputFocus(dialogView, views);
-            host.showFontHookDomains(currentFontConfigItem(item, views), state,
+            host.showFontHookDomains(item, state,
                     () -> {
                         binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
                         host.onDraftStateChanged(state);
@@ -127,23 +127,6 @@ final class AppConfigSheetActionBinder {
                 host.showToast(result[1]);
             }
         });
-    }
-
-    private static AppListItem currentFontConfigItem(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogViews views
-    ) {
-        if (item == null || views == null) {
-            return item;
-        }
-        String rawFontScale = views.fontInputView.getText() != null
-                ? views.fontInputView.getText().toString()
-                : "";
-        Integer fontScalePercent = AppConfigInputValidation.parseFontScalePercentOrNull(rawFontScale);
-        String fontMode = fontScalePercent == null
-                ? FontApplyMode.OFF
-                : AppConfigDialogBinder.resolveFontMode(views.fontModeToggle);
-        return item.withFontConfig(fontScalePercent, fontMode);
     }
 
     void bindTypefaceSelectorAction(View dialogView,

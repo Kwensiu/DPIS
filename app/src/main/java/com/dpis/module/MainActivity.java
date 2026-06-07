@@ -3403,7 +3403,7 @@ public final class MainActivity
             return;
         }
         DpiConfigStore store = getHookConfigStore();
-        Set<String> automaticKnownDomains = resolveAutomaticFontHookDomains(store, item);
+        Set<String> automaticKnownDomains = resolveAutomaticFontHookDomains(item);
         boolean previewMode = state != null && state.previewFromGlobalPrefill;
         HookDomainOverride currentOverride = previewMode
                 ? HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw)
@@ -3512,46 +3512,14 @@ public final class MainActivity
         );
     }
 
-    private Set<String> resolveAutomaticFontHookDomains(DpiConfigStore store, AppListItem item) {
-        if (store == null || item == null
-                || item.packageName == null || item.packageName.isBlank()) {
+    private Set<String> resolveAutomaticFontHookDomains(AppListItem item) {
+        if (item == null || item.packageName == null || item.packageName.isBlank()) {
             return new LinkedHashSet<>();
         }
-        // Automatic domains describe the item snapshot supplied by the editor.
-        // The editor must pass its current draft font mode here; this is not a
-        // per-package stability recommendation.
-        HookRuntimePolicy policy = HookRuntimePolicy.fromStore(store);
-        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
-                policy,
-                item.packageName,
-                false,
-                ViewportApplyMode.OFF,
-                item.fontScalePercent != null && item.fontScalePercent > 0,
-                item.fontMode,
-                false,
-                false,
-                HookDomainOverride.automatic(),
-                AppProcessHookInstaller.resolveDebugFontOverrideForPackage(
-                        item.packageName
-                )
-        );
-        return FontHookDomainRegistry.orderedCustomizableSubset(
-                parseKnownDomainCsv(plan.hookDomains)
-        );
-    }
-
-    private static Set<String> parseKnownDomainCsv(String rawDomains) {
-        LinkedHashSet<String> domains = new LinkedHashSet<>();
-        if (rawDomains == null || rawDomains.isBlank()) {
-            return domains;
-        }
-        for (String part : rawDomains.split(",")) {
-            String id = part == null ? "" : part.trim();
-            if (FontHookDomainRegistry.isKnown(id)) {
-                domains.add(id);
-            }
-        }
-        return FontHookDomainRegistry.orderedKnownSubset(domains);
+        // The custom hook-chain editor owns the compat/field-rewrite route.
+        // System-mode font routes are scheduled separately and must not share
+        // this user-editable switch state.
+        return FontHookDomainRegistry.recommendedTemplateKnownDomains();
     }
 
     private void executeHyperOsNativeProxyMount(
