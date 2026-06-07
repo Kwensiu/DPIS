@@ -259,3 +259,6 @@ chain returns only to the compat/field-rewrite recommended template.
 - 2026-06-07: updated the route map to show system font mode explicitly and to
   split the app-process Resources bridge from the Display / WindowMetrics
   supplement that is skipped when viewport resolves to system.
+- 2026-06-07: shared modern101 system_server package selection is now
+  field-aware per entry. This records shared-code behavior for 100/101 review;
+  compat100 still does not install the shared modern system_server entries.

@@ -36,6 +36,7 @@ Viewport mode
   system
     -> libxposed system_server route
     -> SystemServerDisplayEnvironmentInstaller owns system-side viewport mutation
+    -> target selection is field-aware for each system_server entry
     -> app-process Resources bridge remains installed for resource sync/fallback
     -> app-process Display / WindowMetrics supplement is skipped
 
@@ -109,6 +110,11 @@ DPIS modern101 target package
   |           +-- FONT_SCALE
   |                 launch-activity-item only; later config-dispatch writes can
   |                 surface as CONFIG_FONT_SCALE relaunches
+  |
+  |     +-- entry selection:
+  |           |
+  |           +-- font-only configs are selected only for launch-activity-item
+  |           +-- viewport configs remain selected for viewport lifecycle entries
   |
   +-- app-process route
         |
@@ -258,6 +264,7 @@ superseded.
 | 2026-06-04 | WeChat 8.0.71 target-field | Replace stale constructor-field route with the verified current route shape | active | Public record keeps only the reusable route decision; detailed evidence lives in `docs/private/wechat-target-field.md` | Do not reintroduce constructor-field route without fresh version-specific evidence |
 | 2026-06-07 | font system emulation | Add `system_server_font` as an explicit internal domain for `Configuration.fontScale` | active / superseded fallback | Douyin and Bilibili repros stopped flickering when only system_server font mutation was skipped; app-process font domains still scaled text | Kept as planner/runtime diagnostic state, not a compat custom-chain switch |
 | 2026-06-07 | font system emulation | Route `FONT_SCALE` through field-level system_server scheduling and allow it only at `launch-activity-item` | active | Unit policy tests cover viewport multi-entry scheduling and font launch-only scheduling | Avoids later config-dispatch writes that can surface as `CONFIG_FONT_SCALE` relaunches |
+| 2026-06-07 | font system emulation | Make modern101 system_server package selection field-aware per entry | active | Unit policy tests cover font-only launch selection and non-launch skip | Keeps font-only packages out of non-launch hot paths while preserving viewport multi-entry scheduling |
 
 ## Safety Rules
 
@@ -300,3 +307,6 @@ superseded.
   `system_server_font` is launch-only for `FONT_SCALE`, while
   `activity_thread_font`, `resources_font`, and `webview_text_zoom` remain
   internal app-process semantic supplements.
+- 2026-06-07: system_server package selection is now field-aware per entry.
+  Font-only configs are selected for `launch-activity-item`, but skipped for
+  non-launch hot paths such as `config-dispatch` and `display-manager-info`.

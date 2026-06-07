@@ -304,8 +304,8 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     ResolvedPackage resolvedPackage = resolveConfiguredPackage(
                                             thisObject,
                                             args,
-                                            packageName -> selectConfigForSystemServer(
-                                                    source.get(packageName)));
+                                            packageName -> selectConfigForSystemServerEntry(
+                                                    target.entryName, source.get(packageName)));
                                     if (resolvedPackage.packageName == null) {
                                         if (loggingEnabled) {
                                             logPackageResolveMiss(target.entryName, thisObject, args);
@@ -506,7 +506,8 @@ final class SystemServerDisplayEnvironmentInstaller {
         if (packageName == null) {
             return;
         }
-        PerAppDisplayConfig config = selectConfigForSystemServer(source.get(packageName));
+        PerAppDisplayConfig config = selectConfigForSystemServerEntry(
+                "launch-activity-item", source.get(packageName));
         if (config == null) {
             return;
         }
@@ -619,7 +620,8 @@ final class SystemServerDisplayEnvironmentInstaller {
         if (packageName == null || !isLikelyPackageName(packageName)) {
             return;
         }
-        PerAppDisplayConfig config = selectConfigForSystemServer(source.get(packageName));
+        PerAppDisplayConfig config = selectConfigForSystemServerEntry(
+                "launch-activity-item", source.get(packageName));
         if (config == null || !shouldApplySystemServerViewportMutation(config)) {
             return;
         }
@@ -1165,15 +1167,35 @@ final class SystemServerDisplayEnvironmentInstaller {
 
     private static PerAppDisplayConfig selectConfigForSystemServer(
             PerAppDisplayConfig config) {
+        return selectConfigForSystemServerEntry(null, config);
+    }
+
+    private static PerAppDisplayConfig selectConfigForSystemServerEntry(
+            String entryName,
+            PerAppDisplayConfig config) {
         if (config == null) {
             return null;
         }
-        boolean applyViewport = shouldApplySystemServerViewportMutation(config);
-        boolean applyFont = hasSystemServerFontOverride(config);
+        boolean applyViewport = hasSystemServerMutationForEntry(
+                entryName, config, SystemServerMutationField.VIEWPORT);
+        boolean applyFont = hasSystemServerMutationForEntry(
+                entryName, config, SystemServerMutationField.FONT_SCALE);
         if (!applyViewport && !applyFont) {
             return null;
         }
         return config;
+    }
+
+    private static boolean hasSystemServerMutationForEntry(String entryName,
+                                                           PerAppDisplayConfig config,
+                                                           SystemServerMutationField field) {
+        if (entryName != null && !shouldApplySystemServerMutationField(entryName, field)) {
+            return false;
+        }
+        return switch (field) {
+            case VIEWPORT -> shouldApplySystemServerViewportMutation(config);
+            case FONT_SCALE -> hasSystemServerFontOverride(config);
+        };
     }
 
     private static boolean hasSystemServerViewportOverride(PerAppDisplayConfig config) {
@@ -1212,7 +1234,8 @@ final class SystemServerDisplayEnvironmentInstaller {
             logDisplayManagerInfoSkip(entryName, "uid-not-configured", callingUid, null, displayInfo);
             return;
         }
-        PerAppDisplayConfig config = selectConfigForSystemServer(source.get(packageName));
+        PerAppDisplayConfig config = selectConfigForSystemServerEntry(
+                entryName, source.get(packageName));
         if (config == null) {
             logDisplayManagerInfoSkip(entryName, "no-viewport-config", callingUid, packageName, displayInfo);
             return;
@@ -1276,7 +1299,8 @@ final class SystemServerDisplayEnvironmentInstaller {
             if (PACKAGE_UID_RESOLVER.resolve(packageName, callingUid) != callingUid) {
                 continue;
             }
-            if (selectConfigForSystemServer(source.get(packageName)) != null) {
+            if (selectConfigForSystemServerEntry(
+                    "display-manager-info", source.get(packageName)) != null) {
                 return packageName;
             }
             fallbackPackage = packageName;
@@ -1350,6 +1374,11 @@ final class SystemServerDisplayEnvironmentInstaller {
 
     static boolean shouldUseConfigInSystemServerForTest(PerAppDisplayConfig config) {
         return selectConfigForSystemServer(config) != null;
+    }
+
+    static boolean shouldUseConfigInSystemServerEntryForTest(String entryName,
+                                                             PerAppDisplayConfig config) {
+        return selectConfigForSystemServerEntry(entryName, config) != null;
     }
 
     static boolean isAlreadyAppliedRelativeScaleMarkerForTest(Configuration configuration,

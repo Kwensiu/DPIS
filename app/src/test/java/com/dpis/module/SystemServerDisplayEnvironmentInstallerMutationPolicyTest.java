@@ -190,6 +190,53 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     }
 
     @Test
+    public void systemServerConfigSelectionIsFieldAwarePerEntry() {
+        PerAppDisplayConfig viewportOnly = new PerAppDisplayConfig(
+                "com.example.viewport",
+                ViewportTargetSpec.absoluteDp(600),
+                ViewportApplyMode.SYSTEM,
+                null,
+                FontApplyMode.OFF,
+                false,
+                HookDomainOverride.automatic());
+        PerAppDisplayConfig fontOnly = new PerAppDisplayConfig(
+                "com.example.font",
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                150,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                HookDomainOverride.automatic());
+        PerAppDisplayConfig viewportAndFont = new PerAppDisplayConfig(
+                "com.example.both",
+                ViewportTargetSpec.absoluteDp(600),
+                ViewportApplyMode.SYSTEM,
+                150,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                HookDomainOverride.automatic());
+
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerEntryForTest(
+                        "launch-activity-item", fontOnly));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerEntryForTest(
+                        "config-dispatch", fontOnly));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerEntryForTest(
+                        "display-manager-info", fontOnly));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerEntryForTest(
+                        "config-dispatch", viewportOnly));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerEntryForTest(
+                        "display-manager-info", viewportOnly));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerEntryForTest(
+                        "config-dispatch", viewportAndFont));
+    }
+
+    @Test
     public void fieldPolicyKeepsViewportMultiEntryButNarrowsFontScaleToLaunch() {
         assertCurrentCoverageAllows(SystemServerMutationField.VIEWPORT);
         assertTrue(SystemServerDisplayEnvironmentInstaller

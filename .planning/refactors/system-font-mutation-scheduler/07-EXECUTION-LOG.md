@@ -52,3 +52,7 @@
   compat/field-rewrite chain. `system_server_font` and `activity_thread_font`
   remain planner/runtime domains and no longer share the custom-chain switch
   state, CSV, or property mask.
+- Made modern101 system_server package selection field-aware per entry. A
+  font-only config is selected for `launch-activity-item`, where `FONT_SCALE`
+  may write, but skipped for non-launch hot paths such as `config-dispatch` and
+  `display-manager-info`; viewport configs keep their multi-entry scheduling.
