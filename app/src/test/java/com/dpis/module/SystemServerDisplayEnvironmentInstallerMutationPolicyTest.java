@@ -155,6 +155,127 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     }
 
     @Test
+    public void systemServerMutationFieldsAreSelectedIndependently() {
+        PerAppDisplayConfig viewportOnly = new PerAppDisplayConfig(
+                "tv.danmaku.bili",
+                ViewportTargetSpec.absoluteDp(600),
+                ViewportApplyMode.SYSTEM,
+                null,
+                FontApplyMode.OFF,
+                false,
+                HookDomainOverride.automatic());
+        PerAppDisplayConfig fontOnly = new PerAppDisplayConfig(
+                "tv.danmaku.bili",
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                150,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                HookDomainOverride.automatic());
+        PerAppDisplayConfig neither = new PerAppDisplayConfig(
+                "tv.danmaku.bili",
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                null,
+                FontApplyMode.OFF,
+                false,
+                HookDomainOverride.automatic());
+
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerForTest(viewportOnly));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerForTest(fontOnly));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerForTest(neither));
+    }
+
+    @Test
+    public void systemServerConfigSelectionIsFieldAwarePerEntry() {
+        PerAppDisplayConfig viewportOnly = new PerAppDisplayConfig(
+                "com.example.viewport",
+                ViewportTargetSpec.absoluteDp(600),
+                ViewportApplyMode.SYSTEM,
+                null,
+                FontApplyMode.OFF,
+                false,
+                HookDomainOverride.automatic());
+        PerAppDisplayConfig fontOnly = new PerAppDisplayConfig(
+                "com.example.font",
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                150,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                HookDomainOverride.automatic());
+        PerAppDisplayConfig viewportAndFont = new PerAppDisplayConfig(
+                "com.example.both",
+                ViewportTargetSpec.absoluteDp(600),
+                ViewportApplyMode.SYSTEM,
+                150,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                HookDomainOverride.automatic());
+
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerEntryForTest(
+                        "launch-activity-item", fontOnly));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerEntryForTest(
+                        "config-dispatch", fontOnly));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerEntryForTest(
+                        "display-manager-info", fontOnly));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerEntryForTest(
+                        "config-dispatch", viewportOnly));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerEntryForTest(
+                        "display-manager-info", viewportOnly));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldUseConfigInSystemServerEntryForTest(
+                        "config-dispatch", viewportAndFont));
+    }
+
+    @Test
+    public void fieldPolicyKeepsViewportMultiEntryButNarrowsFontScaleToLaunch() {
+        assertCurrentCoverageAllows(SystemServerMutationField.VIEWPORT);
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest(
+                        "launch-activity-item", SystemServerMutationField.FONT_SCALE));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest(
+                        "config-dispatch", SystemServerMutationField.FONT_SCALE));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest(
+                        "activity-start", SystemServerMutationField.FONT_SCALE));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest(
+                        "display-content-config", SystemServerMutationField.FONT_SCALE));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest(
+                        "display-policy-layout", SystemServerMutationField.FONT_SCALE));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest(
+                        "relayout-dispatch", SystemServerMutationField.FONT_SCALE));
+    }
+
+    @Test
+    public void systemServerMutationSchedulerTodoDocumentsFieldSemantics()
+            throws IOException {
+        String installer = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+        String policy = read("src/main/java/com/dpis/module/SystemServerMutationPolicy.java");
+
+        assertTrue(installer.contains("TODO(system-mutation-scheduler)"));
+        assertTrue(installer.contains("SystemServerMutationField.VIEWPORT"));
+        assertTrue(installer.contains("SystemServerMutationField.FONT_SCALE"));
+        assertTrue(installer.contains("VIEWPORT uses a marker-gated"));
+        assertTrue(installer.contains("FONT_SCALE is launch-only"));
+        assertTrue(installer.contains("CONFIG_FONT_SCALE"));
+        assertTrue(installer.contains("relaunch"));
+        assertTrue(policy.contains("shouldApplyMutationField"));
+    }
+
+    @Test
     public void emitsWhenMessageChangesAndNoThrottle() {
         assertTrue(SystemServerDisplayEnvironmentInstaller
                 .shouldEmitLogForTest("a", "b", 1000L, 900L, 0L));
@@ -187,8 +308,129 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
         assertEquals(400L, SystemServerHookLogGate.resolveLogMinIntervalMs("unknown-entry"));
     }
 
+    @Test
+    public void debugSystemServerFontDisableIsPackageScoped() {
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .isSystemServerFontDisabledByDebugOverrideForTest(
+                        "com.ss.android.ugc.aweme",
+                        "com.ss.android.ugc.aweme"));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .isSystemServerFontDisabledByDebugOverrideForTest(
+                        "com.ss.android.ugc.aweme",
+                        "*"));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .isSystemServerFontDisabledByDebugOverrideForTest(
+                        "com.ss.android.ugc.aweme",
+                        "tv.danmaku.bili"));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .isSystemServerFontDisabledByDebugOverrideForTest(
+                        "com.ss.android.ugc.aweme",
+                        ""));
+    }
+
+    @Test
+    public void debugSystemServerFontDisableIsDebugOnlyAndLoggedInSource()
+            throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+        String matcher = read("src/main/java/com/dpis/module/DebugPackageOverride.java");
+
+        assertTrue(source.contains("debug.dpis.font.disable_system_server_package"));
+        assertTrue(source.contains("isSystemServerFontDisabledByDebugOverride(config.packageName)"));
+        assertTrue(source.contains("reason=debug-disable-system-server-font"));
+        assertTrue(matcher.contains("if (!BuildConfig.DEBUG || packageName == null"));
+    }
+
+    @Test
+    public void debugSystemServerFontFallbackYieldsOnlyForSystemEmulationRoute() {
+        PerAppDisplayConfig systemModeConfig = new PerAppDisplayConfig(
+                "com.ss.android.ugc.aweme",
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                80,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                HookDomainOverride.automatic());
+        PerAppDisplayConfig compatModeConfig = new PerAppDisplayConfig(
+                "com.ss.android.ugc.aweme",
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                80,
+                FontApplyMode.FIELD_REWRITE,
+                false,
+                HookDomainOverride.automatic());
+
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldYieldSystemServerFontToAppProcessFallbackForTest(
+                        systemModeConfig,
+                        "com.ss.android.ugc.aweme"));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldYieldSystemServerFontToAppProcessFallbackForTest(
+                        compatModeConfig,
+                        "com.ss.android.ugc.aweme"));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldYieldSystemServerFontToAppProcessFallbackForTest(
+                        systemModeConfig,
+                        "tv.danmaku.bili"));
+    }
+
+    @Test
+    public void debugSystemServerFontFallbackIsDebugOnlyAndLoggedInSource()
+            throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+        String matcher = read("src/main/java/com/dpis/module/DebugPackageOverride.java");
+
+        assertTrue(source.contains("debug.dpis.font.system_server_fallback_package"));
+        assertTrue(source.contains("shouldYieldSystemServerFontToAppProcessFallback(config)"));
+        assertTrue(source.contains("reason=debug-system-server-font-fallback-yield"));
+        assertTrue(matcher.contains("if (!BuildConfig.DEBUG || packageName == null"));
+    }
+
+    @Test
+    public void systemServerFontMutationIgnoresCompatCustomHookDomains() {
+        PerAppDisplayConfig automaticConfig = new PerAppDisplayConfig(
+                "tv.danmaku.bili",
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                150,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                HookDomainOverride.automatic());
+        PerAppDisplayConfig customWithoutSystemServerFont = new PerAppDisplayConfig(
+                "tv.danmaku.bili",
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                150,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                new HookDomainOverride(
+                        true,
+                        Set.of(FontHookDomainRegistry.ID_RESOURCES_FONT,
+                                FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT,
+                                FontHookDomainRegistry.ID_WEBVIEW_TEXT_ZOOM),
+                        Set.of()));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .hasSystemServerFontOverrideForTest(automaticConfig));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .hasSystemServerFontOverrideForTest(customWithoutSystemServerFont));
+    }
+
     private static String read(String relativePath) throws IOException {
         return SourceSmokeTestPaths.read(relativePath);
+    }
+
+    private static void assertCurrentCoverageAllows(SystemServerMutationField field) {
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest("launch-activity-item", field));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest("config-dispatch", field));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest("activity-start", field));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest("display-content-config", field));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest("display-policy-layout", field));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldApplySystemServerMutationFieldForTest("relayout-dispatch", field));
     }
 
     private static final class FakeWindow {

@@ -290,7 +290,7 @@ final class FontHookDomainDialog {
         MaterialTextView title = row.findViewById(R.id.font_hook_domain_title);
         MaterialTextView subtitle = row.findViewById(R.id.font_hook_domain_subtitle);
         if (known) {
-            title.setText(resolveDomainTitleRes(domainId));
+            title.setText(FontHookDomainRegistry.titleResFor(domainId));
         } else {
             title.setText(domainId);
         }
@@ -337,32 +337,10 @@ final class FontHookDomainDialog {
         };
     }
 
-    private static int resolveDomainTitleRes(String domainId) {
-        return switch (domainId) {
-            case FontHookDomainRegistry.ID_RESOURCES_FONT ->
-                    R.string.dialog_font_hook_domain_resources_font;
-            case FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT ->
-                    R.string.dialog_font_hook_domain_activity_thread_font;
-            case FontHookDomainRegistry.ID_TEXTVIEW_SP_REWRITE ->
-                    R.string.dialog_font_hook_domain_textview_sp_rewrite;
-            case FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE ->
-                    R.string.dialog_font_hook_domain_textview_absolute_rewrite;
-            case FontHookDomainRegistry.ID_TEXTVIEW_CURRENT_PX_FALLBACK ->
-                    R.string.dialog_font_hook_domain_textview_current_px_fallback;
-            case FontHookDomainRegistry.ID_PAINT_TEXT_SIZE_FALLBACK ->
-                    R.string.dialog_font_hook_domain_paint_text_size_fallback;
-            case FontHookDomainRegistry.ID_WEBVIEW_TEXT_ZOOM ->
-                    R.string.dialog_font_hook_domain_webview_text_zoom;
-            case FontHookDomainRegistry.ID_FLUTTER_SETTINGS ->
-                    R.string.dialog_font_hook_domain_flutter_settings;
-            case FontHookDomainRegistry.ID_HYPEROS_NATIVE_FLUTTER ->
-                    R.string.dialog_font_hook_domain_hyperos_native_flutter;
-            default -> throw new IllegalArgumentException("Unknown domain id: " + domainId);
-        };
-    }
-
     private static int resolveRiskDotColorRes(String domainId) {
         return switch (domainId) {
+            case FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT ->
+                    R.color.font_hook_domain_risk_medium;
             case FontHookDomainRegistry.ID_TEXTVIEW_SP_REWRITE,
                     FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE ->
                     R.color.font_hook_domain_risk_low;

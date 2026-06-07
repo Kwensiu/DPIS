@@ -253,6 +253,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(binderSource.contains("AppConfigDialogState state);"));
         assertTrue(source.contains("views.fontHookDomainsButton.setOnClickListener"));
         assertTrue(source.contains("host.showFontHookDomains(item, state,"));
+        assertFalse(source.contains("currentFontConfigItem("));
+        assertFalse(source.contains("withFontConfig("));
         assertTrue(binderSource.contains("host.getFontHookDomainsButtonText(item, state)"));
         assertTrue(source.contains("host.onDraftStateChanged(state);"));
         assertTrue(source.contains("state.draftFontHookDomainsRaw"));
@@ -286,9 +288,10 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("font_hook_domain_risk_medium"));
         assertTrue(source.contains("font_hook_domain_risk_high"));
         assertFalse(source.contains("new LinkedHashSet<>(FontHookDomainRegistry.orderedIdsList())"));
-        assertTrue(source.contains("title.setText(resolveDomainTitleRes(domainId));"));
+        assertTrue(source.contains("title.setText(FontHookDomainRegistry.titleResFor(domainId));"));
         assertTrue(source.contains("title.setText(domainId);"));
         assertFalse(source.contains("title.setText(known ? resolveDomainTitleRes(domainId) : 0);"));
+        assertTrue(zhStrings.contains("dialog_font_hook_domain_system_server_font"));
         assertFalse(source.contains("setPositiveButton"));
         assertFalse(source.contains("setNegativeButton"));
         assertTrue(dialogLayout.contains("@+id/font_hook_domains_known_container"));

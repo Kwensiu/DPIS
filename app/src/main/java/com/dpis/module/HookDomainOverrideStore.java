@@ -43,6 +43,8 @@ final class HookDomainOverrideStore {
         if (configStore == null || packageName == null || packageName.isBlank()) {
             return false;
         }
+        // "Recommended" means no custom override for the compat hook-chain
+        // template. System-mode font routes are scheduled separately.
         return configStore.clearPackageFontHookDomainsRaw(packageName);
     }
 
@@ -53,7 +55,9 @@ final class HookDomainOverrideStore {
         LinkedHashSet<String> known = new LinkedHashSet<>();
         LinkedHashSet<String> unknown = new LinkedHashSet<>();
         parseCsv(raw, known, unknown);
-        return new HookDomainOverride(true, known, unknown);
+        return new HookDomainOverride(true,
+                FontHookDomainRegistry.orderedCustomizableSubset(known),
+                unknown);
     }
 
     static String rawValueForSelection(Set<String> enabledKnownDomains,
@@ -90,7 +94,7 @@ final class HookDomainOverrideStore {
 
     static String formatCsv(Set<String> enabledKnownDomains, Set<String> unknownDomains) {
         LinkedHashSet<String> ordered = new LinkedHashSet<>(
-                FontHookDomainRegistry.orderedKnownSubset(enabledKnownDomains));
+                FontHookDomainRegistry.orderedCustomizableSubset(enabledKnownDomains));
         if (unknownDomains != null) {
             for (String unknown : unknownDomains) {
                 String id = unknown == null ? "" : unknown.trim();

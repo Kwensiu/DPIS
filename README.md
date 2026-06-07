@@ -66,6 +66,8 @@ DPIS 是一个基于 LSPosed/Xposed 的 Android 模块，用于按应用独立�
 
 字体 `兼容` 模式会使用推荐的 Hook 链路组合，例如 Resources、TextView、Paint、WebView、Flutter settings 与 HyperOS native Flutter 补充链路。DPIS 会通过调度与来源标记尽量避免重复放大。
 
+`Hook 链路` 中的恢复默认会清除手动覆盖，并回到兼容模式的推荐链路模板；它不是按某个应用包名生成的特殊推荐。系统模式的字体链路由 DPIS 内部调度，不与这份自定义开关共用状态。
+
 如果某个应用出现字体异常，可在目标应用详情页打开 `Hook 链路`，按应用关闭具体链路；修改会在目标应用进程下次启动时生效。
 
 ## 系统层 Hook 与安全模式

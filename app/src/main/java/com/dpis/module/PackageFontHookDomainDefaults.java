@@ -20,6 +20,9 @@ final class PackageFontHookDomainDefaults {
     }
 
     private static Map<String, Set<String>> createDefaults() {
+        // Last-resort compatibility supplements for runtimes with a known
+        // extra domain owner. Do not use this table to hide lifecycle risk in
+        // a target app; scheduler policy owns those fallbacks globally.
         LinkedHashMap<String, Set<String>> table = new LinkedHashMap<>();
         Set<String> hyperOsNativeFlutter = Set.of(FontHookDomainRegistry.ID_HYPEROS_NATIVE_FLUTTER);
         table.put("com.miui.gallery", hyperOsNativeFlutter);

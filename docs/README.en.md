@@ -63,6 +63,8 @@ Font scale accepts `50-300%`. Unconfigured apps use system font mode by default;
 
 Font `Compat` uses the recommended hook-chain set, including Resources, TextView, Paint, WebView, Flutter settings, and HyperOS native Flutter supplement routes. DPIS uses scheduling and provenance guards to reduce repeated scaling.
 
+`Hook chain` restore default clears the manual override and returns to the Compat-mode recommended template. It is not a package-name-specific recommendation. System font routes are scheduled internally by DPIS and do not share this custom switch state.
+
 If a specific app scales incorrectly, open the target app details and use `Hook chain` to disable individual routes. Changes take effect the next time the target app process starts.
 
 ## System-Layer Hook and Safe Mode

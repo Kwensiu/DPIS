@@ -74,16 +74,32 @@ public class HookDomainOverrideStoreTest {
     }
 
     @Test
-    public void saveDropsKnownDomainsThatAreNotCustomizable() {
+    public void saveIgnoresSystemOnlyDomainsForCompatCustomPath() {
         DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
         HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
 
         assertTrue(store.save("com.example.app",
-                orderedSet("activity_thread_font", "resources_font", "webview_text_zoom"),
+                orderedSet("activity_thread_font", "system_server_font",
+                        "resources_font", "webview_text_zoom"),
                 Set.of()));
 
         assertEquals("resources_font,webview_text_zoom",
                 configStore.getPackageFontHookDomainsRaw("com.example.app"));
+    }
+
+    @Test
+    public void readDropsSystemOnlyDomainsFromStaleCustomPath() {
+        DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
+        HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
+        assertTrue(configStore.setPackageFontHookDomainsRaw(
+                "com.example.app",
+                "resources_font,system_server_font,activity_thread_font,webview_text_zoom"));
+
+        HookDomainOverride override = store.read("com.example.app");
+
+        assertTrue(override.customPathEnabled);
+        assertEquals(orderedSet("resources_font", "webview_text_zoom"),
+                override.enabledKnownDomains);
     }
 
     @Test

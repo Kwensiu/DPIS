@@ -20,6 +20,10 @@ import java.util.function.Predicate;
 import io.github.libxposed.api.XposedInterface;
 
 final class SystemServerDisplayEnvironmentInstaller {
+    private static final String PROP_DISABLE_SYSTEM_SERVER_FONT_PACKAGE =
+            "debug.dpis.font.disable_system_server_package";
+    private static final String PROP_SYSTEM_SERVER_FONT_FALLBACK_PACKAGE =
+            "debug.dpis.font.system_server_fallback_package";
     private static final int MAX_PACKAGE_RECURSION_DEPTH = 5;
     private static final ReflectionProbeCache REFLECTION_CACHE = new ReflectionProbeCache();
     private static final SystemServerPackageUidResolver PACKAGE_UID_RESOLVER =
@@ -300,8 +304,8 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     ResolvedPackage resolvedPackage = resolveConfiguredPackage(
                                             thisObject,
                                             args,
-                                            packageName -> selectConfigForSystemServer(
-                                                    source.get(packageName)));
+                                            packageName -> selectConfigForSystemServerEntry(
+                                                    target.entryName, source.get(packageName)));
                                     if (resolvedPackage.packageName == null) {
                                         if (loggingEnabled) {
                                             logPackageResolveMiss(target.entryName, thisObject, args);
@@ -502,7 +506,8 @@ final class SystemServerDisplayEnvironmentInstaller {
         if (packageName == null) {
             return;
         }
-        PerAppDisplayConfig config = selectConfigForSystemServer(source.get(packageName));
+        PerAppDisplayConfig config = selectConfigForSystemServerEntry(
+                "launch-activity-item", source.get(packageName));
         if (config == null) {
             return;
         }
@@ -535,10 +540,14 @@ final class SystemServerDisplayEnvironmentInstaller {
         boolean fontChanged = false;
         for (Object arg : args) {
             if (arg instanceof Configuration configuration) {
-                if (environment != null) {
+                if (environment != null
+                        && shouldApplySystemServerMutationField(
+                                "launch-activity-item", SystemServerMutationField.VIEWPORT)) {
                     changed |= applyConfiguration(configuration, environment);
                 }
-                boolean appliedFont = applyFontScale(configuration, config);
+                boolean appliedFont = shouldApplySystemServerMutationField(
+                        "launch-activity-item", SystemServerMutationField.FONT_SCALE)
+                        && applyFontScale(configuration, config);
                 fontChanged |= appliedFont;
                 changed |= appliedFont;
             }
@@ -611,7 +620,8 @@ final class SystemServerDisplayEnvironmentInstaller {
         if (packageName == null || !isLikelyPackageName(packageName)) {
             return;
         }
-        PerAppDisplayConfig config = selectConfigForSystemServer(source.get(packageName));
+        PerAppDisplayConfig config = selectConfigForSystemServerEntry(
+                "launch-activity-item", source.get(packageName));
         if (config == null || !shouldApplySystemServerViewportMutation(config)) {
             return;
         }
@@ -1130,6 +1140,11 @@ final class SystemServerDisplayEnvironmentInstaller {
         return SystemServerMutationPolicy.shouldApplyPostProceedMutations(entryName);
     }
 
+    private static boolean shouldApplySystemServerMutationField(String entryName,
+                                                               SystemServerMutationField field) {
+        return SystemServerMutationPolicy.shouldApplyMutationField(entryName, field);
+    }
+
     private static boolean shouldLogInterceptEnter(String entryName) {
         return SystemServerHookLogGate.shouldLogInterceptEnter(entryName);
     }
@@ -1152,15 +1167,35 @@ final class SystemServerDisplayEnvironmentInstaller {
 
     private static PerAppDisplayConfig selectConfigForSystemServer(
             PerAppDisplayConfig config) {
+        return selectConfigForSystemServerEntry(null, config);
+    }
+
+    private static PerAppDisplayConfig selectConfigForSystemServerEntry(
+            String entryName,
+            PerAppDisplayConfig config) {
         if (config == null) {
             return null;
         }
-        boolean applyViewport = shouldApplySystemServerViewportMutation(config);
-        boolean applyFont = hasSystemServerFontOverride(config);
+        boolean applyViewport = hasSystemServerMutationForEntry(
+                entryName, config, SystemServerMutationField.VIEWPORT);
+        boolean applyFont = hasSystemServerMutationForEntry(
+                entryName, config, SystemServerMutationField.FONT_SCALE);
         if (!applyViewport && !applyFont) {
             return null;
         }
         return config;
+    }
+
+    private static boolean hasSystemServerMutationForEntry(String entryName,
+                                                           PerAppDisplayConfig config,
+                                                           SystemServerMutationField field) {
+        if (entryName != null && !shouldApplySystemServerMutationField(entryName, field)) {
+            return false;
+        }
+        return switch (field) {
+            case VIEWPORT -> shouldApplySystemServerViewportMutation(config);
+            case FONT_SCALE -> hasSystemServerFontOverride(config);
+        };
     }
 
     private static boolean hasSystemServerViewportOverride(PerAppDisplayConfig config) {
@@ -1182,6 +1217,10 @@ final class SystemServerDisplayEnvironmentInstaller {
                 && config.targetFontScalePercent > 0;
     }
 
+    static boolean hasSystemServerFontOverrideForTest(PerAppDisplayConfig config) {
+        return hasSystemServerFontOverride(config);
+    }
+
     private static void applyDisplayManagerInfoResult(PerAppDisplayConfigSource source,
                                                        String entryName,
                                                        Object displayInfo) {
@@ -1195,7 +1234,8 @@ final class SystemServerDisplayEnvironmentInstaller {
             logDisplayManagerInfoSkip(entryName, "uid-not-configured", callingUid, null, displayInfo);
             return;
         }
-        PerAppDisplayConfig config = selectConfigForSystemServer(source.get(packageName));
+        PerAppDisplayConfig config = selectConfigForSystemServerEntry(
+                entryName, source.get(packageName));
         if (config == null) {
             logDisplayManagerInfoSkip(entryName, "no-viewport-config", callingUid, packageName, displayInfo);
             return;
@@ -1259,7 +1299,8 @@ final class SystemServerDisplayEnvironmentInstaller {
             if (PACKAGE_UID_RESOLVER.resolve(packageName, callingUid) != callingUid) {
                 continue;
             }
-            if (selectConfigForSystemServer(source.get(packageName)) != null) {
+            if (selectConfigForSystemServerEntry(
+                    "display-manager-info", source.get(packageName)) != null) {
                 return packageName;
             }
             fallbackPackage = packageName;
@@ -1335,6 +1376,11 @@ final class SystemServerDisplayEnvironmentInstaller {
         return selectConfigForSystemServer(config) != null;
     }
 
+    static boolean shouldUseConfigInSystemServerEntryForTest(String entryName,
+                                                             PerAppDisplayConfig config) {
+        return selectConfigForSystemServerEntry(entryName, config) != null;
+    }
+
     static boolean isAlreadyAppliedRelativeScaleMarkerForTest(Configuration configuration,
                                                              String scope,
                                                              ViewportRuntimeMarkerBridge.ParseResult marker) {
@@ -1353,17 +1399,32 @@ final class SystemServerDisplayEnvironmentInstaller {
         return shouldInstallTarget(entryName, safeModeEnabled);
     }
 
+    static boolean shouldApplySystemServerMutationFieldForTest(
+            String entryName,
+            SystemServerMutationField field) {
+        return shouldApplySystemServerMutationField(entryName, field);
+    }
+
     private static boolean applyEnvironment(String entryName,
                                             Snapshot snapshot,
                                             PerAppDisplayEnvironment environment,
                                             PerAppDisplayConfig config) {
         boolean changed = false;
+        // TODO(system-mutation-scheduler): give each field an explicit baseline
+        // policy. VIEWPORT uses a marker-gated baseline model and can be applied
+        // across multiple lifecycle entries; FONT_SCALE is launch-only here
+        // because changing Configuration.fontScale during later config dispatch
+        // can produce CONFIG_FONT_SCALE relaunches.
         boolean applyViewport = environment != null
+                && shouldApplySystemServerMutationField(
+                        entryName, SystemServerMutationField.VIEWPORT)
                 && shouldApplySystemServerViewportMutation(config);
         if (snapshot.configuration != null && applyViewport) {
             changed |= applyConfiguration(snapshot.configuration, environment);
         }
-        if (snapshot.configuration != null) {
+        if (snapshot.configuration != null
+                && shouldApplySystemServerMutationField(
+                        entryName, SystemServerMutationField.FONT_SCALE)) {
             boolean fontChanged = applyFontScale(snapshot.configuration, config);
             if (fontChanged) {
                 HyperOsFlutterFontBridge.publishTarget(config.packageName, config);
@@ -1414,12 +1475,65 @@ final class SystemServerDisplayEnvironmentInstaller {
         if (configuration == null || !hasSystemServerFontOverride(config)) {
             return false;
         }
+        if (isSystemServerFontDisabledByDebugOverride(config.packageName)) {
+            DpisLog.i("DPIS_FONT SystemServer config fontScale skipped: package="
+                    + config.packageName + ", reason=debug-disable-system-server-font");
+            return false;
+        }
+        if (shouldYieldSystemServerFontToAppProcessFallback(config)) {
+            DpisLog.i("DPIS_FONT SystemServer config fontScale skipped: package="
+                    + config.packageName + ", reason=debug-system-server-font-fallback-yield");
+            return false;
+        }
         float fontScale = config.targetFontScalePercent / 100.0f;
         if (Math.abs(configuration.fontScale - fontScale) < 0.0001f) {
             return false;
         }
         configuration.fontScale = fontScale;
         return true;
+    }
+
+    static boolean isSystemServerFontDisabledByDebugOverrideForTest(String packageName,
+                                                                    String propertyValue) {
+        return DebugPackageOverride.matchesForTest(
+                PROP_DISABLE_SYSTEM_SERVER_FONT_PACKAGE,
+                packageName,
+                propertyValue);
+    }
+
+    static boolean shouldYieldSystemServerFontToAppProcessFallbackForTest(PerAppDisplayConfig config,
+                                                                         String propertyValue) {
+        return isSystemServerFontFallbackEnabledForPackage(config.packageName, propertyValue)
+                && hasAppProcessSystemFontEmulationRoute(config);
+    }
+
+    private static boolean isSystemServerFontDisabledByDebugOverride(String packageName) {
+        return DebugPackageOverride.matches(PROP_DISABLE_SYSTEM_SERVER_FONT_PACKAGE, packageName);
+    }
+
+    private static boolean shouldYieldSystemServerFontToAppProcessFallback(
+            PerAppDisplayConfig config) {
+        return isSystemServerFontFallbackEnabledForPackage(config.packageName)
+                && hasAppProcessSystemFontEmulationRoute(config);
+    }
+
+    private static boolean isSystemServerFontFallbackEnabledForPackage(String packageName) {
+        return DebugPackageOverride.matches(PROP_SYSTEM_SERVER_FONT_FALLBACK_PACKAGE, packageName);
+    }
+
+    private static boolean isSystemServerFontFallbackEnabledForPackage(String packageName,
+                                                                       String propertyValue) {
+        return DebugPackageOverride.matchesForTest(
+                PROP_SYSTEM_SERVER_FONT_FALLBACK_PACKAGE,
+                packageName,
+                propertyValue);
+    }
+
+    private static boolean hasAppProcessSystemFontEmulationRoute(PerAppDisplayConfig config) {
+        return config != null
+                && FontApplyMode.SYSTEM_EMULATION.equals(config.targetFontMode)
+                && config.targetFontScalePercent != null
+                && config.targetFontScalePercent > 0;
     }
 
     private static void reportSystemServerFontConfig(String packageName,

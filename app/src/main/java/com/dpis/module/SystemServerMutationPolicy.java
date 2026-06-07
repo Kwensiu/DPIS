@@ -15,6 +15,19 @@ final class SystemServerMutationPolicy {
                 || ENTRY_ACTIVITY_START.equals(entryName);
     }
 
+    static boolean shouldApplyMutationField(String entryName,
+                                            SystemServerMutationField field) {
+        if (field == null) {
+            return false;
+        }
+        // Keep this package-neutral. Hook domains express user intent; this
+        // field policy decides where a requested mutation can safely write.
+        return switch (field) {
+            case VIEWPORT -> true;
+            case FONT_SCALE -> ENTRY_LAUNCH_ACTIVITY_ITEM.equals(entryName);
+        };
+    }
+
     static boolean shouldApplyPostProceedMutations(String entryName) {
         return !ENTRY_CONFIG_DISPATCH.equals(entryName);
     }

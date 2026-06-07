@@ -50,6 +50,7 @@ public class HookExecutionPlannerTest {
         assertTrue(plan.flutterSettingsEnabled);
         assertTrue(plan.hyperOsNativeFlutterEnabled);
         assertTrue(plan.domainPlan.hasActivityThreadFont());
+        assertTrue(plan.domainPlan.hasSystemServerFont());
         assertTrue(plan.domainPlan.hasFlutterSettings());
         assertTrue(plan.domainPlan.hasHyperOsNativeFlutter());
     }
@@ -231,6 +232,30 @@ public class HookExecutionPlannerTest {
     }
 
     @Test
+    public void debugDisableActivityThreadKeepsOtherEmulationRoutes() {
+        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
+                createPolicy(false, true, false),
+                false,
+                ViewportApplyMode.OFF,
+                true,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                false,
+                DebugFontOverride.of(false, false, false, true));
+
+        assertEquals(FontMode.EMULATION, plan.fontMode);
+        assertTrue(plan.debugDisableActivityThreadFont);
+        assertTrue(plan.resourcesHooksEnabled);
+        assertFalse(plan.activityThreadFontEnabled);
+        assertTrue(plan.webViewTextZoomEnabled);
+        assertTrue(plan.domainPlan.hasResourcesFont());
+        assertTrue(plan.domainPlan.hasSystemServerFont());
+        assertFalse(plan.domainPlan.hasActivityThreadFont());
+        assertEquals("resources_font,system_server_font,webview_text_zoom", plan.hookDomains);
+        assertEquals("disable-activity-thread-font", plan.reason.debugOverride);
+    }
+
+    @Test
     public void probesDependOnPolicyAndFinalRoutes() {
         HookExecutionPlan probeOnPlan = HookExecutionPlanner.buildPlan(
                 createPolicy(false, true, true),
@@ -368,7 +393,7 @@ public class HookExecutionPlannerTest {
         assertTrue(plan.resourcesHooksEnabled);
         assertTrue(plan.activityThreadFontEnabled);
         assertFalse(plan.textViewHooksEnabled);
-        assertEquals("resources_font,activity_thread_font,webview_text_zoom",
+        assertEquals("resources_font,system_server_font,activity_thread_font,webview_text_zoom",
                 plan.hookDomains);
     }
 
@@ -440,7 +465,8 @@ public class HookExecutionPlannerTest {
         assertTrue(plan.hyperOsNativeFlutterEnabled);
         assertTrue(plan.domainPlan.hasHyperOsNativeFlutter());
         assertFalse(plan.textViewHooksEnabled);
-        assertEquals("resources_font,activity_thread_font,webview_text_zoom,hyperos_native_flutter",
+        assertEquals("resources_font,system_server_font,activity_thread_font,"
+                        + "webview_text_zoom,hyperos_native_flutter",
                 plan.hookDomains);
     }
 
@@ -477,6 +503,36 @@ public class HookExecutionPlannerTest {
         assertEquals("hyperos_native_flutter", weatherPlan.domainPlan.builtinDomainsCsv());
         assertTrue(weatherPlan.hyperOsNativeFlutterEnabled);
         assertTrue(weatherPlan.domainPlan.hasHyperOsNativeFlutter());
+    }
+
+    @Test
+    public void bilibiliAndDouyinUseModeDrivenAutomaticDomainsOnly() {
+        HookExecutionPlan genericPlan = automaticSystemFontPlan("com.example.video");
+        HookExecutionPlan bilibiliPlan = automaticSystemFontPlan("tv.danmaku.bili");
+        HookExecutionPlan douyinPlan = automaticSystemFontPlan("com.ss.android.ugc.aweme");
+
+        assertEquals(genericPlan.hookDomains, bilibiliPlan.hookDomains);
+        assertEquals(genericPlan.hookDomains, douyinPlan.hookDomains);
+        assertEquals("", bilibiliPlan.builtinDomains);
+        assertEquals("", douyinPlan.builtinDomains);
+        assertEquals("auto", bilibiliPlan.hookDomainSource);
+        assertEquals("auto", douyinPlan.hookDomainSource);
+        assertTrue(bilibiliPlan.domainPlan.hasSystemServerFont());
+        assertTrue(douyinPlan.domainPlan.hasSystemServerFont());
+    }
+
+    private static HookExecutionPlan automaticSystemFontPlan(String packageName) {
+        return HookExecutionPlanner.buildPlan(
+                createPolicy(false, true, false),
+                packageName,
+                false,
+                ViewportApplyMode.OFF,
+                true,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                false,
+                HookDomainOverride.automatic(),
+                DebugFontOverride.none());
     }
 
     private static HookRuntimePolicy createPolicy(boolean safeMode,

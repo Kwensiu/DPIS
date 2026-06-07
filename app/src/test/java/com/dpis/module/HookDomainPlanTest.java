@@ -28,16 +28,34 @@ public class HookDomainPlanTest {
         assertFalse(plan.hasFlutterSettings());
         assertFalse(plan.hasHyperOsNativeFlutter());
         assertFalse(plan.hasActivityThreadFont());
+        assertFalse(plan.hasSystemServerFont());
     }
 
     @Test
     public void csvOutputMatchesRegistryOrder() {
         Set<String> domains = new LinkedHashSet<>(Set.of(
                 FontHookDomainRegistry.ID_WEBVIEW_TEXT_ZOOM,
-                FontHookDomainRegistry.ID_RESOURCES_FONT));
+                FontHookDomainRegistry.ID_RESOURCES_FONT,
+                FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT));
         HookDomainPlan plan = new HookDomainPlan(domains, Set.of(), Set.of(), "auto", "test");
 
-        assertEquals("resources_font,webview_text_zoom", plan.enabledDomainsCsv());
+        assertTrue(plan.hasSystemServerFont());
+        assertEquals("resources_font,system_server_font,webview_text_zoom",
+                plan.enabledDomainsCsv());
+    }
+
+    @Test
+    public void registryCustomizableDomainsStayCompatOnly() {
+        assertEquals(FontHookDomainRegistry.ID_RESOURCES_FONT,
+                FontHookDomainRegistry.orderedCustomizableDisplayIdsList().get(0));
+        assertFalse(FontHookDomainRegistry.orderedCustomizableDisplayIdsList().contains(
+                FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT));
+        assertFalse(FontHookDomainRegistry.orderedCustomizableDisplayIdsList().contains(
+                FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT));
+        assertFalse(FontHookDomainRegistry.recommendedTemplateKnownDomains().contains(
+                FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT));
+        assertFalse(FontHookDomainRegistry.recommendedTemplateKnownDomains().contains(
+                FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT));
     }
 
     @Test
