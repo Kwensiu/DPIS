@@ -1,6 +1,6 @@
 # modern101 Runtime Resync
 
-This is the living tracker for the 101-line viewport investigation.
+This is the living tracker for the 101-line viewport/runtime investigation.
 
 ## Living Document Rules
 
@@ -21,8 +21,9 @@ This is the living tracker for the 101-line viewport investigation.
 
 ## Current Question
 
-How does `modern101` route viewport changes through libxposed, and how do we
-keep future 100-line experiments from accidentally changing 101 behavior?
+How does `modern101` route viewport and font runtime changes through libxposed,
+and how do we keep future 100-line experiments from accidentally changing 101
+behavior?
 
 ## Route Map
 
@@ -34,11 +35,25 @@ Viewport mode
 
   system
     -> libxposed system_server route
-    -> SystemServerDisplayEnvironmentInstaller owns system-side mutation
+    -> SystemServerDisplayEnvironmentInstaller owns system-side viewport mutation
+    -> app-process Resources bridge remains installed for resource sync/fallback
+    -> app-process Display / WindowMetrics supplement is skipped
 
   compat
     -> libxposed app-process route
     -> AppProcessHookInstaller owns Resources / Display / WindowMetrics hooks
+
+Font mode
+  system
+    -> internal system_server_font domain
+    -> SystemServerDisplayEnvironmentInstaller writes Configuration.fontScale
+       only at launch-activity-item
+    -> internal app-process semantic supplements:
+       activity_thread_font, resources_font, webview_text_zoom
+
+  compat
+    -> app-process field-rewrite route
+    -> custom hook-chain UI controls this mode only
 ```
 
 ## Full Tree
@@ -84,6 +99,16 @@ DPIS modern101 target package
   |           +-- relayout-dispatch
   |           +-- display-policy-layout
   |           +-- hyperos-rust-process
+  |                 HyperOS native font process environment route
+  |
+  |     +-- mutation fields:
+  |           |
+  |           +-- VIEWPORT
+  |           |     multi-entry system-side lifecycle maintenance
+  |           |
+  |           +-- FONT_SCALE
+  |                 launch-activity-item only; later config-dispatch writes can
+  |                 surface as CONFIG_FONT_SCALE relaunches
   |
   +-- app-process route
         |
@@ -120,10 +145,21 @@ DPIS modern101 target package
                 +-- WindowMetricsHookInstaller
                 |     WindowMetrics.getBounds
                 |
-                +-- font / typeface / Flutter font routes
+                +-- system-font semantic supplements
+                |     ActivityThreadFontHookInstaller
+                |       ActivityThread.handleBindApplication
+                |     ResourcesManagerHookInstaller
+                |     ResourcesImplHookInstaller
+                |     ResourcesReadHookInstaller
+                |     WebViewFontHookInstaller
+                |
+                +-- compat-font field-rewrite routes
+                |     ForceTextSizeHookInstaller
+                |     WebViewFontHookInstaller
+                |
+                +-- optional typeface / cross-runtime font routes
                       FlutterSettingsFontHookInstaller
                       HyperOsFlutterFontHookInstaller
-                      WebViewFontHookInstaller
                       TypefaceOverrideHookInstaller
 ```
 
@@ -155,6 +191,31 @@ requested mode
         +-- system hooks disabled
               |
               +-- EffectiveModeResolver => compat
+```
+
+## Font Mode Tree
+
+```text
+requested font mode
+  |
+  +-- system
+  |     |
+  |     +-- EffectiveModeResolver => system
+  |     +-- system_server_font is an internal scheduler domain
+  |     +-- FONT_SCALE may write only at launch-activity-item
+  |     +-- app-process semantic supplements remain available for fallback
+  |     +-- optional Flutter/HyperOS native supplements remain package/config gated
+  |     +-- custom hook-chain UI state is ignored
+  |
+  +-- compat
+  |     |
+  |     +-- EffectiveModeResolver => compat
+  |     +-- custom hook-chain UI state can select field-rewrite domains
+  |     +-- Resources / TextView / Paint / WebView field routes apply in app process
+  |
+  +-- off
+        |
+        +-- no font route
 ```
 
 ## 101 / 100 Boundary
@@ -235,3 +296,7 @@ superseded.
 - 2026-06-07: restored the product boundary that custom font hook domains edit
   only the compat/field-rewrite chain. System-mode font routes remain internal
   scheduled routes and no longer share the custom-chain switch state.
+- 2026-06-07: updated the route map to show system font mode explicitly:
+  `system_server_font` is launch-only for `FONT_SCALE`, while
+  `activity_thread_font`, `resources_font`, and `webview_text_zoom` remain
+  internal app-process semantic supplements.

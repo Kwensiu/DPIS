@@ -1,6 +1,6 @@
 # compat100 Runtime Resync
 
-This is the living tracker for the 100-line viewport investigation.
+This is the living tracker for the 100-line viewport/runtime investigation.
 
 ## Living Document Rules
 
@@ -30,12 +30,25 @@ Viewport mode
     -> system hooks disabled => compat
 
   system
-    -> system_server route only
-    -> app-process viewport supplement is currently skipped by design
+    -> system_server mutation route
+    -> app-process Resources bridge remains installed for resource sync/fallback
+    -> app-process Display / WindowMetrics supplement is skipped by design
 
   compat
     -> app-process resource/display/window route
     -> intended fallback when system route is unavailable or not chosen
+
+Font mode
+  system
+    -> internal system_server_font domain
+    -> compat100 system_server launch-activity-item writes
+       Configuration.fontScale only
+    -> internal app-process semantic supplements:
+       activity_thread_font, resources_font, webview_text_zoom
+
+  compat
+    -> app-process field-rewrite route
+    -> custom hook-chain UI controls this mode only
 ```
 
 ## Full Tree
@@ -64,10 +77,11 @@ DPIS viewport target package
   |           |     Compat100SystemServerHookInstaller
   |           |       |
   |           |       +-- launch-activity-item
-  |           |       |     status: computes target env; currently applies fontScale only
+  |           |       |     status: applies FONT_SCALE only for system font mode
   |           |       |
   |           |       +-- rust-process
-  |           |       |     status: unrelated to viewport
+  |           |       |     status: HyperOS native font environment route;
+  |           |       |             unrelated to viewport
   |           |       |
   |           |       +-- display-manager-info
   |           |       |     status: active for auto/system absolute viewport
@@ -100,6 +114,15 @@ DPIS viewport target package
   |                 +-- WindowMetrics.getBounds
   |                 |     app-process window supplement
   |                 |
+  |                 +-- ActivityThread.handleBindApplication
+  |                 |     system-font semantic bind-time supplement
+  |                 |
+  |                 +-- Resources / WebView semantic font routes
+  |                 |     resources_font and webview_text_zoom for system font mode
+  |                 |
+  |                 +-- TextView / Paint / WebView field-rewrite routes
+  |                 |     custom hook-chain UI controls these in compat font mode
+  |                 |
   |                 +-- FlutterJNI.setViewportMetrics
   |                 |     status: active for Flutter/mixed shells
   |                 |     aligns Flutter devicePixelRatio to DPIS target density
@@ -112,7 +135,8 @@ DPIS viewport target package
         +-- system
         |     +-- EffectiveModeResolver => system
         |     +-- system_server hooks required
-        |     +-- app-process viewport supplement skipped
+        |     +-- app-process Resources bridge remains installed
+        |     +-- app-process Display / WindowMetrics supplement skipped
         |
         +-- compat
         |     +-- EffectiveModeResolver => compat
@@ -127,7 +151,7 @@ DPIS viewport target package
 
 ## Current Route Decision
 
-The compat100 absolute-width viewport route is a four-layer coverage model:
+The compat100 absolute-width viewport route is this coverage model:
 
 ```text
 compat100 auto/system absolute viewport
@@ -138,9 +162,12 @@ compat100 auto/system absolute viewport
   +-- system_server DisplayManagerInfo
   |     -> keeps Binder-returned DisplayInfo density for the target UID
   |
-  +-- app-process Resources / Display / WindowMetrics supplements
-  |     -> covers Java resource reads, ResourcesKey creation, and app-local
-  |        display metric reads during navigation
+  +-- app-process Resources bridge
+  |     -> covers Java resource reads and ResourcesKey creation during navigation
+  |
+  +-- app-process Display / WindowMetrics supplements
+  |     -> covers app-local display metric reads when resolved mode is compat;
+  |        skipped when resolved mode is system
   |
   +-- app-process FlutterJNI viewport metrics bridge
         -> covers Flutter/mixed shells that consume engine viewport DPR
@@ -150,6 +177,28 @@ Per-app guards (splash startup filter, Display/WindowMetrics disable,
 Flutter activity scope) are configured independently per target package.
 See `docs/private/` for app-specific investigation notes.
 
+## System Font Route Decision
+
+```text
+compat100 system font mode
+  |
+  +-- system_server launch-activity-item
+  |     -> writes Configuration.fontScale only at launch time
+  |
+  +-- app-process ActivityThread bind supplement
+  |     -> rewrites AppBindData.config.fontScale before app bind proceeds
+  |
+  +-- app-process Resources / WebView semantic supplements
+  |     -> preserve fontScale reads and WebView text zoom without TextView field rewrite
+  |
+  +-- optional Flutter/HyperOS native supplements
+        -> remain package/config gated
+```
+
+`system_server_font` and `activity_thread_font` are internal scheduler domains.
+They are not saved in the custom hook-chain override, and restoring the hook
+chain returns only to the compat/field-rewrite recommended template.
+
 ## Experiment Ledger
 
 | Date | Route | Change | Status | Notes |
@@ -158,7 +207,7 @@ See `docs/private/` for app-specific investigation notes.
 | 2026-06-01 | system | ActivityRecord config-dispatch hook | active | Required for apps whose layout depends on Activity-level config |
 | 2026-06-01 | system | DisplayManagerInfo UID-gated hook | active | Required for display metric consumers bypassing app-process Display |
 | 2026-06-01 | compat | ResourcesKey empty override fill | active | Shared helper; preserves viewport in resource key path |
-| 2026-06-01 | compat | App-process viewport supplement skipped for system mode | current design | Design gate, not a bug |
+| 2026-06-01 | compat | App-process Display / WindowMetrics supplement skipped for system mode | current design | Resources bridge still installs; the design gate only applies to display/window supplement hooks |
 | 2026-06-01 | compat100 | FlutterJNI viewport metrics bridge | active, per-app guarded | Covers Flutter/mixed shells; guard scope per target |
 | 2026-06-02 | compat100 | LaunchActivityItem post-construction object mutation | active | Aligns legacy launch delivery with modern101 |
 | 2026-06-04 | WeChat target-field | Keep app-specific route alongside generic hooks, share target-field runtime property handling, and add the required write-side companion route for versions that need it | active | Public record keeps only the reusable route decision; detailed version-specific evidence lives in `docs/private/wechat-target-field.md` | Do not add or change version-specific WeChat routes without fresh evidence |
@@ -214,3 +263,6 @@ See `docs/private/` for app-specific investigation notes.
 - 2026-06-07: restored the product boundary that custom font hook domains edit
   only the compat/field-rewrite chain. System-mode font routes remain internal
   scheduled routes and no longer share the custom-chain switch state.
+- 2026-06-07: updated the route map to show system font mode explicitly and to
+  split the app-process Resources bridge from the Display / WindowMetrics
+  supplement that is skipped when viewport resolves to system.
