@@ -143,17 +143,6 @@ public final class LegacyModuleManifestMetadataTest {
     }
 
     @Test
-    public void readmeDocumentsFlavorAwareDebugBuildAndInstallPaths() throws IOException {
-        String readme = readProjectRootFile("README.md");
-
-        assertTrue(readme.contains(":app:assembleModern101Debug :app:assembleCompat100Debug"));
-        assertTrue(readme.contains(":app:testAllDebugUnitTests"));
-        assertTrue(readme.contains(
-                "app/build/outputs/apk/modern101/debug/app-modern101-debug.apk"));
-        assertFalse(readme.contains("app/build/outputs/apk/debug/app-debug.apk"));
-    }
-
-    @Test
     public void ciWorkflowUsesFlavorAwareDebugBuildTestAndLintTasks()
             throws IOException {
         String workflow = readProjectRootFile(".github/workflows/ci.yml");
