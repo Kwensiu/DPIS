@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 final class FontHookDomainRegistry {
     static final String ID_RESOURCES_FONT = "resources_font";
@@ -81,27 +82,27 @@ final class FontHookDomainRegistry {
     }
 
     static List<String> orderedIdsList() {
-        return knownDomainIds().stream().toList();
+        return knownDomainIds().stream().collect(Collectors.toList());
     }
 
     static List<String> orderedDisplayIdsList() {
         return specsSortedByDisplayOrder(DOMAIN_SPECS).stream()
                 .map(spec -> spec.id)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     static List<String> orderedCustomizableIdsList() {
         return customizableSpecs().stream()
                 .sorted(Comparator.comparingInt(spec -> spec.customizableOrder))
                 .map(spec -> spec.id)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     static List<String> orderedCustomizableDisplayIdsList() {
         return customizableSpecs().stream()
                 .sorted(Comparator.comparingInt(spec -> spec.displayOrder))
                 .map(spec -> spec.id)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     static Set<String> recommendedTemplateKnownDomains() {
@@ -164,7 +165,7 @@ final class FontHookDomainRegistry {
     private static List<DomainSpec> customizableSpecs() {
         return DOMAIN_SPECS.stream()
                 .filter(spec -> spec.customizableOrder != NOT_CUSTOMIZABLE)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     private static Set<String> idsSortedByStableOrder(List<DomainSpec> specs) {
@@ -178,7 +179,7 @@ final class FontHookDomainRegistry {
     private static List<DomainSpec> specsSortedByDisplayOrder(List<DomainSpec> specs) {
         return specs.stream()
                 .sorted(Comparator.comparingInt(spec -> spec.displayOrder))
-                .toList();
+                .collect(Collectors.toList());
     }
 
     private static DomainSpec specFor(String domainId) {
