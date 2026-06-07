@@ -82,14 +82,6 @@ DPIS viewport target package
   |           |       +-- rust-process
   |           |       |     status: HyperOS native font environment route;
   |           |       |             unrelated to viewport
-  |           |       |
-  |           |       +-- display-manager-info
-  |           |       |     status: active for auto/system absolute viewport
-  |           |       |     evidence: UID-gated callback changes DisplayInfo density
-  |           |       |
-  |           |       +-- config-dispatch
-  |           |             status: active for auto/system absolute viewport
-  |           |             evidence: callback changes full/resolved/merged configs
   |           |
   |           +-- app-process route:
   |                 |
@@ -156,12 +148,6 @@ The compat100 absolute-width viewport route is this coverage model:
 ```text
 compat100 auto/system absolute viewport
   |
-  +-- system_server ActivityRecord config-dispatch
-  |     -> keeps reported/current Activity configuration at target values
-  |
-  +-- system_server DisplayManagerInfo
-  |     -> keeps Binder-returned DisplayInfo density for the target UID
-  |
   +-- app-process Resources bridge
   |     -> covers Java resource reads and ResourcesKey creation during navigation
   |
@@ -172,6 +158,12 @@ compat100 auto/system absolute viewport
   +-- app-process FlutterJNI viewport metrics bridge
         -> covers Flutter/mixed shells that consume engine viewport DPR
 ```
+
+compat100 does not currently install the shared modern101
+`SystemServerDisplayEnvironmentInstaller`, so `config-dispatch` and
+`display-manager-info` are not active compat100 system_server routes. The
+compat100 system_server installer keeps only the launch-time Configuration
+route and the HyperOS Rust process environment route.
 
 Per-app guards (splash startup filter, Display/WindowMetrics disable,
 Flutter activity scope) are configured independently per target package.
@@ -204,8 +196,8 @@ chain returns only to the compat/field-rewrite recommended template.
 | Date | Route | Change | Status | Notes |
 | --- | --- | --- | --- | --- |
 | 2026-06-01 | system | Restore launch-activity-item config mutation | rejected | Did not hold final viewport state |
-| 2026-06-01 | system | ActivityRecord config-dispatch hook | active | Required for apps whose layout depends on Activity-level config |
-| 2026-06-01 | system | DisplayManagerInfo UID-gated hook | active | Required for display metric consumers bypassing app-process Display |
+| 2026-06-01 | system | ActivityRecord config-dispatch hook | shared-modern evidence | Required for apps whose layout depends on Activity-level config, but not currently installed by compat100 |
+| 2026-06-01 | system | DisplayManagerInfo UID-gated hook | shared-modern evidence | Required for display metric consumers bypassing app-process Display, but not currently installed by compat100 |
 | 2026-06-01 | compat | ResourcesKey empty override fill | active | Shared helper; preserves viewport in resource key path |
 | 2026-06-01 | compat | App-process Display / WindowMetrics supplement skipped for system mode | current design | Resources bridge still installs; the design gate only applies to display/window supplement hooks |
 | 2026-06-01 | compat100 | FlutterJNI viewport metrics bridge | active, per-app guarded | Covers Flutter/mixed shells; guard scope per target |
@@ -234,9 +226,10 @@ chain returns only to the compat/field-rewrite recommended template.
 ## Update Log
 
 - 2026-06-01: initial tracker created.
-- 2026-06-01: confirmed auto absolute-width route needs ActivityRecord
-  config-dispatch plus DisplayManagerInfo in addition to app-process
-  Resources/Display supplements.
+- 2026-06-01: shared modern route evidence confirmed auto absolute-width route
+  needs ActivityRecord config-dispatch plus DisplayManagerInfo in addition to
+  app-process Resources/Display supplements. compat100 does not currently
+  install these two shared modern system_server entries.
 - 2026-06-01: added FlutterJNI viewport metrics bridge for Flutter/mixed
   shells; ViewRoot probing is inactive diagnostic evidence.
 - 2026-06-02: added LaunchActivityItem post-construction object mutation to
