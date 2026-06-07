@@ -39,4 +39,10 @@ final class ToolsWorkspaceBinder {
             fontScaleToolBinder.refreshFromSystem();
         }
     }
+
+    void onShown() {
+        if (fontScaleToolBinder != null) {
+            fontScaleToolBinder.collapseAndRefreshFromSystem();
+        }
+    }
 }

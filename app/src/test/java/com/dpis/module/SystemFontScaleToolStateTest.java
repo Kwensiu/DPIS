@@ -26,7 +26,7 @@ public class SystemFontScaleToolStateTest {
         SystemFontScaleToolState state = new SystemFontScaleToolState(
                 true,
                 220,
-                199,
+                200,
                 true,
                 false);
 

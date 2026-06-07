@@ -189,6 +189,7 @@ public final class MainActivity
     private boolean installedAppsPermissionRequestInFlight;
     private boolean pendingInstalledAppsLoadAfterPermission;
     private boolean installedAppsPermissionRequestCompleted;
+    private MainWorkspaceMode renderedWorkspaceMode;
     private boolean rootAccessProbeInFlight;
     private RootAccessProbe.Result cachedRootAccessResult
             = RootAccessProbe.Result.unknown();
@@ -1231,6 +1232,9 @@ public final class MainActivity
     private void applyWorkspaceMode(MainWorkspaceMode workspaceMode) {
         MainWorkspaceMode mode
                 = workspaceMode != null ? workspaceMode : MainWorkspaceMode.HOME;
+        boolean enteringToolsWorkspace = mode == MainWorkspaceMode.TOOLS
+                && renderedWorkspaceMode != MainWorkspaceMode.TOOLS;
+        renderedWorkspaceMode = mode;
         boolean appWorkspace = mode == MainWorkspaceMode.APP;
         boolean homeWorkspace = mode == MainWorkspaceMode.HOME;
         boolean templateWorkspace = mode == MainWorkspaceMode.TEMPLATE;
@@ -1266,7 +1270,7 @@ public final class MainActivity
             bindTemplateWorkspace();
             restoreTemplateEditorForCurrentConfiguration();
         } else if (toolsWorkspace) {
-            bindToolsWorkspace();
+            bindToolsWorkspace(enteringToolsWorkspace);
         } else if (settingsWorkspace) {
             bindSettingsWorkspace();
         }
@@ -1334,8 +1338,15 @@ public final class MainActivity
     }
 
     private void bindToolsWorkspace() {
+        bindToolsWorkspace(false);
+    }
+
+    private void bindToolsWorkspace(boolean resetExpandedState) {
         if (toolsWorkspaceBinder != null) {
             toolsWorkspaceBinder.bind(toolsWorkspaceContainer);
+            if (resetExpandedState) {
+                toolsWorkspaceBinder.onShown();
+            }
         }
     }
 

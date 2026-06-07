@@ -2,7 +2,6 @@ package com.dpis.module;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.provider.Settings;
@@ -25,6 +24,7 @@ final class SystemFontScaleToolBinder {
 
     private final LocalizedActivity activity;
     private final View workspaceView;
+    private final SystemFontScaleSettingsGateway settingsGateway;
 
     private MaterialCardView card;
     private View operationGroup;
@@ -45,8 +45,15 @@ final class SystemFontScaleToolBinder {
     private SystemFontScaleToolState state;
 
     SystemFontScaleToolBinder(LocalizedActivity activity, View workspaceView) {
+        this(activity, workspaceView, new SystemFontScaleSettingsGateway());
+    }
+
+    SystemFontScaleToolBinder(LocalizedActivity activity,
+                              View workspaceView,
+                              SystemFontScaleSettingsGateway settingsGateway) {
         this.activity = activity;
         this.workspaceView = workspaceView;
+        this.settingsGateway = settingsGateway;
     }
 
     void bind() {
@@ -79,6 +86,9 @@ final class SystemFontScaleToolBinder {
 
                 @Override
                 public void onStartTrackingTouch(SeekBar seekBar) {
+                    if (state != null) {
+                        setPendingPercent(state.pendingPercent);
+                    }
                 }
 
                 @Override
@@ -130,17 +140,9 @@ final class SystemFontScaleToolBinder {
     }
 
     void refreshFromSystem() {
-        boolean canWrite = Settings.System.canWrite(activity);
-        Integer currentPercent = null;
-        boolean unavailable = false;
-        try {
-            float currentScale = Settings.System.getFloat(
-                    activity.getContentResolver(),
-                    Settings.System.FONT_SCALE);
-            currentPercent = SystemFontScaleToolState.percentFromScale(currentScale);
-        } catch (Settings.SettingNotFoundException | RuntimeException e) {
-            unavailable = true;
-        }
+        boolean canWrite = settingsGateway.canWrite(activity);
+        Integer currentPercent = settingsGateway.readPercent(activity);
+        boolean unavailable = currentPercent == null;
         int pendingPercent = state != null && state.userSelectedPending
                 ? state.pendingPercent
                 : SystemFontScaleToolState.initialPendingPercent(currentPercent);
@@ -151,6 +153,11 @@ final class SystemFontScaleToolBinder {
                 state != null && state.userSelectedPending,
                 unavailable);
         render();
+    }
+
+    void collapseAndRefreshFromSystem() {
+        expanded = false;
+        refreshFromSystem();
     }
 
     private void setPendingPercent(int percent) {
@@ -181,25 +188,36 @@ final class SystemFontScaleToolBinder {
     }
 
     private void writeScale(int percent) {
-        try {
-            Settings.System.putFloat(
-                    activity.getContentResolver(),
-                    Settings.System.FONT_SCALE,
-                    SystemFontScaleToolState.scaleFromPercent(percent));
-            state = new SystemFontScaleToolState(
-                    state.canWrite,
-                    percent,
-                    percent,
-                    false,
-                    false);
-            refreshFromSystem();
-        } catch (RuntimeException e) {
-            Toast.makeText(
-                    activity,
-                    R.string.system_font_scale_write_failed,
-                    Toast.LENGTH_SHORT).show();
-            refreshFromSystem();
-        }
+        SystemFontScaleWriter.write(new SystemFontScaleWriter.Host() {
+            @Override
+            public boolean writePercent(int percent) {
+                return settingsGateway.writePercent(activity, percent);
+            }
+
+            @Override
+            public void onWriteSucceeded(int percent) {
+                state = new SystemFontScaleToolState(
+                        state.canWrite,
+                        percent,
+                        percent,
+                        false,
+                        false);
+                refreshFromSystem();
+            }
+
+            @Override
+            public void onWriteFailed() {
+                showWriteFailed();
+            }
+        }, percent);
+    }
+
+    private void showWriteFailed() {
+        Toast.makeText(
+                activity,
+                R.string.system_font_scale_write_failed,
+                Toast.LENGTH_SHORT).show();
+        refreshFromSystem();
     }
 
     private void openWriteSettingsPermission() {

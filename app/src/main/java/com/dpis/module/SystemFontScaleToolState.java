@@ -93,4 +93,5 @@ final class SystemFontScaleToolState {
     boolean canIncrement() {
         return canWrite && !unavailable && pendingPercent < MAX_PERCENT;
     }
+
 }

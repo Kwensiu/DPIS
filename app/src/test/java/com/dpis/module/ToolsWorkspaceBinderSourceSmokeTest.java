@@ -27,6 +27,7 @@ public class ToolsWorkspaceBinderSourceSmokeTest {
         assertTrue(source.contains("private SystemFontScaleToolBinder fontScaleToolBinder;"));
         assertTrue(source.contains("fontScaleToolBinder = new SystemFontScaleToolBinder(activity, workspaceView);"));
         assertTrue(source.contains("fontScaleToolBinder.refreshFromSystem();"));
+        assertTrue(source.contains("fontScaleToolBinder.collapseAndRefreshFromSystem();"));
     }
 
     private static String read(String relativePath) throws IOException {
