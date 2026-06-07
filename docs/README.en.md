@@ -128,7 +128,9 @@ The standard and legacy builds cannot coexist. They share the same package name,
 - Chinese README: [../README.md](../README.md)
 - Active docs: [README.md](README.md)
 - UI guidelines: [ui-guidelines.md](ui-guidelines.md)
-- Agent collaboration config: [agents/](agents/)
+- Font routing semantics: [font-routing.md](font-routing.md)
+- Java toolchain policy: [java-toolchain-policy.md](java-toolchain-policy.md)
+- Agent collaboration config and runtime route playbooks: [agents/](agents/)
 - Archived docs: [archive/README.md](archive/README.md)
 
 ## License

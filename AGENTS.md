@@ -27,6 +27,14 @@ Use the default Matt Pocock skill label roles unless the repository labels are i
 
 DPIS currently uses a single-context documentation layout. See `docs/agents/domain.md`.
 
+### DPIS runtime route playbook
+
+When a task mentions runtime hooks, LSPosed logs, flicker, relaunch, viewport,
+font scaling, `system_server`, ActivityThread, Resources, Display, WebView, or
+shared route code, use the project-local playbook in
+`docs/agents/skills/dpis-runtime-route-diagnose/SKILL.md`. This is a
+project-local skill bundle and does not modify global agent skills.
+
 ## Build, Test, and Development Commands
 - Build debug APKs (both flavors):
   - `./gradlew :app:assembleModern101Debug :app:assembleCompat100Debug`
@@ -115,11 +123,21 @@ DPIS currently uses a single-context documentation layout. See `docs/agents/doma
   WindowManager, or DisplayManager evidence.
 
 ## Runtime Hook Debugging Discipline
+- Distinguish user-facing UI configuration from internal planner and runtime
+  domains. Custom font hook-chain overrides apply only to compat/field-rewrite
+  font mode; `system_server_font` and `activity_thread_font` are internal
+  scheduler domains, not user-customizable chain switches. See
+  `docs/font-routing.md`.
 - `docs/compat100-runtime-resync.md` and
   `docs/modern101-runtime-resync.md` are the DPIS living route documents for
   viewport/runtime hook routes. Before adding, modifying, or removing any
   viewport/runtime hook route, read the relevant document, and read both when
   touching shared code under `app/src/main/java/com/dpis/module/`.
+- For runtime diagnosis, follow
+  `docs/agents/skills/dpis-runtime-route-diagnose/SKILL.md`:
+  identify the owning layer first, then prove entry, guard, hook install,
+  callback, package resolution, field policy, mutation, and visible effect in
+  order.
 - `docs/private/` contains app-specific investigation notes and must stay
   uncommitted. Public route documents should record reusable conclusions and
   safe reproduction boundaries, not private device paths, tokens, screenshots,
@@ -146,6 +164,9 @@ DPIS currently uses a single-context documentation layout. See `docs/agents/doma
   do not keep executing an outdated hypothesis by inertia.
 - Do not add reproduction-target-specific runtime behavior unless explicitly
   required.
+- Prefer scheduler or field policy fixes over app-specific recommended route
+  lists. Package lists are a late fallback; independent hook routes are later
+  still.
 - Keep temporary high-volume probes debug-only or remove them before release
   cleanup.
 - Font compatibility hook domains are now configured per app through the custom

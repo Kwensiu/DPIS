@@ -12,6 +12,10 @@
   - DPIS 生命文档。compat100 视口链路追踪说明，记录 compat100 特有系统路线和实验。
 - [lsposed-diagnostics.md](./lsposed-diagnostics.md)
   - LSPosed 模块日志诊断说明。记录两个 flavor 通用的 modules_*.log / verbose_*.log 拉取和过滤路径。
+- [font-routing.md](./font-routing.md)
+  - 字体模式、自定义 Hook 链路与内部调度域的语义边界。
+- [java-toolchain-policy.md](./java-toolchain-policy.md)
+  - JDK 运行环境、Java 兼容级别与 Android API 可用性的边界。
 - [font-hook-execution-plan-refactor.md](./font-hook-execution-plan-refactor.md)
   - 字体/视口 hook 执行计划重构说明，记录 planner/orchestrator 边界、debug 覆盖归属和后续迁移顺序。
 - [custom-per-app-font-hook-domain-plan.md](./custom-per-app-font-hook-domain-plan.md)
@@ -25,7 +29,7 @@
 - [ui-guidelines.md](./ui-guidelines.md)
   - DPIS UI 变更约定，记录新增控件、弹窗、spacing/style 资源和测试边界的默认规则。
 - [agents/](./agents/)
-  - Agent 协作配置，记录 issue tracker、triage 标签和领域文档读取规则。
+  - Agent 协作配置，记录 issue tracker、triage 标签、领域文档读取规则和 DPIS runtime 路线排查流程。
 
 ## 历史文档归档入口
 

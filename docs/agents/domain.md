@@ -8,6 +8,13 @@ Agents should read these files first when they need project context:
 
 - `AGENTS.md` for repository workflow, testing, and runtime debugging rules.
 - `CONTEXT.md` for DPIS domain language and route boundaries.
+- `docs/font-routing.md` for font mode, custom hook-chain, and internal
+  scheduler-domain ownership.
+- `docs/java-toolchain-policy.md` for JDK, Java compatibility, and Android API
+  boundaries.
+- `docs/agents/skills/dpis-runtime-route-diagnose/SKILL.md` for the
+  project-local runtime route diagnosis skill bundle, trigger conditions, probe
+  order, and evidence requirements.
 - `docs/compat100-runtime-resync.md` before changing compat100 viewport/runtime
   routes, and whenever shared route code may affect compat100.
 - `docs/modern101-runtime-resync.md` before changing modern101 viewport/runtime
