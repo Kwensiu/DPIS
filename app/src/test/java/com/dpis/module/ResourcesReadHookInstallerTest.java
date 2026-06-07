@@ -92,6 +92,34 @@ public class ResourcesReadHookInstallerTest {
     }
 
     @Test
+    public void windowScopedMetricsDoNotReuseDisplayVirtualPixels() {
+        VirtualDisplayState.set(new VirtualDisplayOverride.Result(540, 1188, 540,
+                320, 1080, 2376));
+        Configuration config = new Configuration();
+        config.densityDpi = 320;
+        config.screenWidthDp = 540;
+        config.screenHeightDp = 960;
+        config.smallestScreenWidthDp = 540;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.densityDpi = 320;
+        metrics.density = 2.0f;
+        metrics.scaledDensity = 2.0f;
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 1920;
+
+        ResourcesReadHookInstaller.applyMetricsOverrideForTest(
+                null, metrics, config, PACKAGE_NAME, true);
+
+        assertEquals(320, metrics.densityDpi);
+        assertEquals(DensityOverride.densityFromDpi(320), metrics.density, 0.0001f);
+        assertEquals(DensityOverride.scaledDensityFrom(320, 1.0f),
+                metrics.scaledDensity, 0.0001f);
+        assertEquals(1080, metrics.widthPixels);
+        assertEquals(1920, metrics.heightPixels);
+    }
+
+    @Test
     public void targetMatchingSmallestWidthDoesNotRewriteWindowConfiguration() {
         Configuration config = new Configuration();
         config.densityDpi = 420;
@@ -136,7 +164,7 @@ public class ResourcesReadHookInstallerTest {
     }
 
     @Test
-    public void relativeScaleConfigurationReadPublishesVirtualDisplayRecordForMetricsReuse() {
+    public void relativeScaleConfigurationReadBorrowsTargetWithoutPublishingRecord() {
         Configuration config = new Configuration();
         config.densityDpi = 420;
         config.screenWidthDp = 400;
@@ -162,6 +190,8 @@ public class ResourcesReadHookInstallerTest {
         ResourcesReadHookInstaller.applyConfigurationOverride(config, PACKAGE_NAME, store,
                 "ResourcesRead(getConfiguration)");
 
+        assertEquals(360, config.screenWidthDp);
+        assertEquals(720, config.screenHeightDp);
         assertEquals(360, config.smallestScreenWidthDp);
         assertEquals(467, config.densityDpi);
         ViewportRuntimeRecord record = VirtualDisplayState.findBySignature(
@@ -174,7 +204,219 @@ public class ResourcesReadHookInstallerTest {
                         467,
                         ViewportSourceSnapshot.SCOPE_DISPLAY));
         assertNotNull(record);
-        assertEquals(ViewportRuntimeRecord.PROVENANCE_APP_PROCESS, record.provenance);
+        assertEquals(ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER, record.provenance);
+    }
+
+    @Test
+    public void relativeScaleConfigurationReadCanDeriveWindowTargetWithoutRecord() {
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 640;
+        config.smallestScreenWidthDp = 360;
+        config.fontScale = 1.0f;
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec(PACKAGE_NAME, ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
+
+        ResourcesReadHookInstaller.applyConfigurationOverride(config, PACKAGE_NAME, store,
+                "ResourcesRead(getConfiguration)");
+
+        assertEquals(540, config.screenWidthDp);
+        assertEquals(960, config.screenHeightDp);
+        assertEquals(540, config.smallestScreenWidthDp);
+        assertEquals(320, config.densityDpi);
+        assertEquals(null, VirtualDisplayState.get());
+    }
+
+    @Test
+    public void relativeScaleWindowConfigurationReadKeepsWindowGeometryForBorrowTarget() {
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        Configuration displaySource = new Configuration();
+        displaySource.densityDpi = 480;
+        displaySource.screenWidthDp = 360;
+        displaySource.screenHeightDp = 792;
+        displaySource.smallestScreenWidthDp = 360;
+        displaySource.fontScale = 1.0f;
+        VirtualDisplayState.publish(
+                PACKAGE_NAME,
+                targetSpec,
+                ViewportSourceSnapshot.fromConfiguration(
+                        ViewportSourceSnapshot.ORIGIN_RESOURCES_MANAGER,
+                        displaySource,
+                        null),
+                new ViewportOverride.Result(540, 1188, 540, 320),
+                null,
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+        Configuration windowConfig = new Configuration();
+        windowConfig.densityDpi = 480;
+        windowConfig.screenWidthDp = 360;
+        windowConfig.screenHeightDp = 640;
+        windowConfig.smallestScreenWidthDp = 360;
+        windowConfig.fontScale = 1.0f;
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec(PACKAGE_NAME, targetSpec);
+        store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
+
+        ResourcesReadHookInstaller.applyConfigurationOverrideForTest(
+                null,
+                windowConfig,
+                PACKAGE_NAME,
+                store,
+                "ResourcesRead(getConfiguration)",
+                true);
+
+        assertEquals(360, windowConfig.screenWidthDp);
+        assertEquals(640, windowConfig.screenHeightDp);
+        assertEquals(360, windowConfig.smallestScreenWidthDp);
+        assertEquals(480, windowConfig.densityDpi);
+    }
+
+    @Test
+    public void relativeScaleMetricsReadCanDeriveTargetDensityWithoutRecord() {
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 640;
+        config.smallestScreenWidthDp = 360;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.densityDpi = 480;
+        metrics.density = 3.0f;
+        metrics.scaledDensity = 3.0f;
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 1920;
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec(PACKAGE_NAME, ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
+
+        ResourcesReadHookInstaller.applyMetricsOverride(null, metrics, config, PACKAGE_NAME, store);
+
+        assertEquals(320, metrics.densityDpi);
+        assertEquals(DensityOverride.densityFromDpi(320), metrics.density, 0.0001f);
+        assertEquals(DensityOverride.scaledDensityFrom(320, 1.0f),
+                metrics.scaledDensity, 0.0001f);
+        assertEquals(1080, metrics.widthPixels);
+        assertEquals(1920, metrics.heightPixels);
+        assertEquals(null, VirtualDisplayState.get());
+    }
+
+    @Test
+    public void relativeScaleWindowMetricsReadDerivesDensityWithoutReusingDisplayPixels() {
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 640;
+        config.smallestScreenWidthDp = 360;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.densityDpi = 480;
+        metrics.density = 3.0f;
+        metrics.scaledDensity = 3.0f;
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 1920;
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec(PACKAGE_NAME, ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
+
+        ResourcesReadHookInstaller.applyMetricsOverrideForTest(
+                null, metrics, config, PACKAGE_NAME, true, store);
+
+        assertEquals(320, metrics.densityDpi);
+        assertEquals(DensityOverride.densityFromDpi(320), metrics.density, 0.0001f);
+        assertEquals(DensityOverride.scaledDensityFrom(320, 1.0f),
+                metrics.scaledDensity, 0.0001f);
+        assertEquals(1080, metrics.widthPixels);
+        assertEquals(1920, metrics.heightPixels);
+        assertEquals(null, VirtualDisplayState.get());
+    }
+
+    @Test
+    public void relativeScaleWindowMetricsReadUsesBorrowedRecordDensityWithoutCompounding() {
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        Configuration displaySource = new Configuration();
+        displaySource.densityDpi = 480;
+        displaySource.screenWidthDp = 360;
+        displaySource.screenHeightDp = 792;
+        displaySource.smallestScreenWidthDp = 360;
+        displaySource.fontScale = 1.0f;
+        VirtualDisplayState.publish(
+                PACKAGE_NAME,
+                targetSpec,
+                ViewportSourceSnapshot.fromConfiguration(
+                        ViewportSourceSnapshot.ORIGIN_RESOURCES_MANAGER,
+                        displaySource,
+                        null),
+                new ViewportOverride.Result(540, 1188, 540, 320),
+                null,
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+        Configuration config = new Configuration();
+        config.densityDpi = 320;
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 640;
+        config.smallestScreenWidthDp = 360;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.densityDpi = 320;
+        metrics.density = 2.0f;
+        metrics.scaledDensity = 2.0f;
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 1920;
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec(PACKAGE_NAME, targetSpec);
+        store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
+
+        ResourcesReadHookInstaller.applyMetricsOverrideForTest(
+                null, metrics, config, PACKAGE_NAME, true, store);
+
+        assertEquals(320, metrics.densityDpi);
+        assertEquals(DensityOverride.densityFromDpi(320), metrics.density, 0.0001f);
+        assertEquals(1080, metrics.widthPixels);
+        assertEquals(1920, metrics.heightPixels);
+    }
+
+    @Test
+    public void relativeScaleMixedTargetSmallestWidthMetricsReadUsesBorrowedDensity() {
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        Configuration displaySource = new Configuration();
+        displaySource.densityDpi = 480;
+        displaySource.screenWidthDp = 360;
+        displaySource.screenHeightDp = 792;
+        displaySource.smallestScreenWidthDp = 360;
+        displaySource.fontScale = 1.0f;
+        VirtualDisplayState.publish(
+                PACKAGE_NAME,
+                targetSpec,
+                ViewportSourceSnapshot.fromConfiguration(
+                        ViewportSourceSnapshot.ORIGIN_RESOURCES_MANAGER,
+                        displaySource,
+                        null),
+                new ViewportOverride.Result(540, 1188, 540, 320),
+                null,
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 640;
+        config.smallestScreenWidthDp = 540;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.densityDpi = 480;
+        metrics.density = 3.0f;
+        metrics.scaledDensity = 3.0f;
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 1920;
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec(PACKAGE_NAME, targetSpec);
+        store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
+
+        ResourcesReadHookInstaller.applyMetricsOverrideForTest(
+                null, metrics, config, PACKAGE_NAME, true, store);
+
+        assertEquals(320, metrics.densityDpi);
+        assertEquals(DensityOverride.densityFromDpi(320), metrics.density, 0.0001f);
+        assertEquals(1080, metrics.widthPixels);
+        assertEquals(1920, metrics.heightPixels);
     }
 
     @Test

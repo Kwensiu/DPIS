@@ -6,6 +6,7 @@ import org.junit.After;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class ResourcesManagerHookInstallerTest {
     private static final String PACKAGE_NAME = "com.example.target";
@@ -176,6 +177,64 @@ public class ResourcesManagerHookInstallerTest {
     }
 
     @Test
+    public void preservesWindowLikeResourcesKeyOverrideWhenDisplayRecordIsTaller() {
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putInt("viewport." + PACKAGE_NAME + ".scale_permille", 1500)
+                .putString("viewport." + PACKAGE_NAME + ".type", ViewportTargetType.RELATIVE_SCALE)
+                .putString("viewport." + PACKAGE_NAME + ".mode", ViewportApplyMode.COMPAT)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        ViewportRuntimeMarkerBridge.MarkerRecord marker =
+                new ViewportRuntimeMarkerBridge.MarkerRecord(
+                        PACKAGE_NAME,
+                        targetSpec.fingerprint(),
+                        "source",
+                        540,
+                        "result",
+                        540,
+                        1188,
+                        540,
+                        320,
+                        ViewportRuntimeRecord.PROVENANCE_APP_PROCESS,
+                        1000L);
+        VirtualDisplayState.importMarker(
+                PACKAGE_NAME,
+                targetSpec,
+                ViewportRuntimeMarkerBridge.ParseResult.hit(marker, 0L));
+        Configuration windowConfig = new Configuration();
+        windowConfig.screenWidthDp = 540;
+        windowConfig.screenHeightDp = 960;
+        windowConfig.smallestScreenWidthDp = 540;
+        windowConfig.densityDpi = 320;
+        windowConfig.fontScale = 1.0f;
+        FakeResourcesKey key = new FakeResourcesKey();
+        key.mOverrideConfiguration.screenWidthDp = 540;
+        key.mOverrideConfiguration.screenHeightDp = 960;
+        key.mOverrideConfiguration.smallestScreenWidthDp = 540;
+        key.mOverrideConfiguration.densityDpi = 320;
+
+        ResourcesManagerHookInstaller.maybeApplyKeyOverride(
+                new FakeResourcesManager(windowConfig), key, store,
+                PACKAGE_NAME, "createResourcesImpl");
+
+        assertEquals(540, key.mOverrideConfiguration.screenWidthDp);
+        assertEquals(960, key.mOverrideConfiguration.screenHeightDp);
+        assertEquals(540, key.mOverrideConfiguration.smallestScreenWidthDp);
+        assertEquals(320, key.mOverrideConfiguration.densityDpi);
+    }
+
+    @Test
+    public void debugResourcesManagerKeyDisablePropertyIsPackageScoped() throws Exception {
+        String source = readSource("src/main/java/com/dpis/module/ResourcesManagerHookInstaller.java");
+
+        assertTrue(source.contains(
+                "debug.dpis.viewport.disable_resources_manager_key_package"));
+        assertTrue(source.contains("DebugPackageOverride.matches("));
+    }
+
+    @Test
     public void targetMatchingSmallestWidthDoesNotRewriteWindowConfiguration() {
         Configuration config = new Configuration();
         config.screenWidthDp = 448;
@@ -261,5 +320,11 @@ public class ResourcesManagerHookInstallerTest {
                 .putInt("viewport." + PACKAGE_NAME + ".width_dp", widthDp)
                 .putString("viewport." + PACKAGE_NAME + ".mode", ViewportApplyMode.COMPAT)
                 .commit();
+    }
+
+    private static String readSource(String relativePath) throws Exception {
+        return new String(
+                java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(relativePath)),
+                java.nio.charset.StandardCharsets.UTF_8);
     }
 }

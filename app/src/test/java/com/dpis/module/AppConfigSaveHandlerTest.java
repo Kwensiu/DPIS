@@ -9,7 +9,7 @@ import static org.junit.Assert.assertTrue;
 
 public class AppConfigSaveHandlerTest {
     @Test
-    public void savePreservesPersistedAutoViewportModeWhenListItemIsStaleSystem() {
+    public void saveUsesCurrentViewportModeOverPersistedAuto() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(900));
         store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.AUTO);
@@ -21,7 +21,23 @@ public class AppConfigSaveHandlerTest {
                 false,
                 ViewportTargetSpec.relativeScale(900));
 
-        assertEquals(ViewportApplyMode.AUTO, resolvedMode);
+        assertEquals(ViewportApplyMode.SYSTEM, resolvedMode);
+    }
+
+    @Test
+    public void saveFallsBackToPersistedViewportModeWhenCurrentModeIsMissing() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(900));
+        store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.COMPAT);
+
+        String resolvedMode = AppConfigSaveHandler.resolveViewportApplyModeForSave(
+                store,
+                "com.example.app",
+                ViewportApplyMode.OFF,
+                false,
+                ViewportTargetSpec.relativeScale(900));
+
+        assertEquals(ViewportApplyMode.COMPAT, resolvedMode);
     }
 
     @Test

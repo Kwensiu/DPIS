@@ -172,14 +172,15 @@ final class AppConfigSaveHandler {
         if (viewportApplyModeResetRequested) {
             return ViewportApplyMode.OFF;
         }
+        String draftMode = ViewportApplyMode.normalize(itemViewportMode);
+        if (ViewportApplyMode.isEnabled(draftMode)) {
+            return draftMode;
+        }
         String persistedMode = store != null
                 ? store.getTargetViewportApplyMode(packageName)
                 : ViewportApplyMode.OFF;
-        if (ViewportApplyMode.isEnabled(persistedMode)) {
-            return persistedMode;
-        }
-        return ViewportApplyMode.isEnabled(itemViewportMode)
-                ? ViewportApplyMode.normalize(itemViewportMode)
+        return ViewportApplyMode.isEnabled(persistedMode)
+                ? persistedMode
                 : ViewportApplyMode.AUTO;
     }
 

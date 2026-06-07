@@ -48,6 +48,9 @@ final class TargetViewportWidthResolver {
         ViewportRuntimeRecord localRecord =
                 VirtualDisplayState.findForSource(packageName, targetSpec, source);
         if (localRecord != null) {
+            if (targetSpec.isRelativeScale() && source.appProcessConsumerScoped()) {
+                return ViewportTargetResolution.fromAppProcessBorrowRecord(localRecord);
+            }
             return ViewportTargetResolution.fromRecord(localRecord, "local-source-record");
         }
         ViewportRuntimeRecord alreadyTargetRecord = VirtualDisplayState.findBySignature(
@@ -55,6 +58,9 @@ final class TargetViewportWidthResolver {
                 targetSpec,
                 VirtualDisplayState.signatureForSmallestWidth(source.smallestWidthDp));
         if (alreadyTargetRecord != null) {
+            if (targetSpec.isRelativeScale() && source.appProcessConsumerScoped()) {
+                return ViewportTargetResolution.fromAppProcessBorrowRecord(alreadyTargetRecord);
+            }
             return ViewportTargetResolution.fromRecord(alreadyTargetRecord, "already-target-record");
         }
         ViewportRuntimeMarkerBridge.ParseResult marker = ViewportRuntimeMarkerBridge.read(
@@ -89,6 +95,22 @@ final class TargetViewportWidthResolver {
                 VirtualDisplayState.findDisplayRecordForTarget(packageName, targetSpec);
         if (displayRecord == null) {
             displayRecord = importedMarkerRecord;
+        }
+        if (targetSpec.isRelativeScale()
+                && source.appProcessConsumerScoped()
+                && displayRecord != null) {
+            return ViewportTargetResolution.fromAppProcessBorrowRecord(displayRecord);
+        }
+        if (targetSpec.isRelativeScale()
+                && source.appProcessConsumerScoped()
+                && compatDerivationAllowed) {
+            int effectiveTarget = Math.max(1,
+                    Math.round((source.smallestWidthDp * targetSpec.scalePermille()) / 1000.0f));
+            return ViewportTargetResolution.resolved(
+                    targetSpec,
+                    effectiveTarget,
+                    source,
+                    ViewportTargetResolution.REASON_APP_PROCESS_RELATIVE_SCALE);
         }
         if (source.windowScoped()) {
             if (displayRecord != null) {

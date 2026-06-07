@@ -265,6 +265,7 @@ superseded.
 | 2026-06-07 | font system emulation | Add `system_server_font` as an explicit internal domain for `Configuration.fontScale` | active / superseded fallback | Douyin and Bilibili repros stopped flickering when only system_server font mutation was skipped; app-process font domains still scaled text | Kept as planner/runtime diagnostic state, not a compat custom-chain switch |
 | 2026-06-07 | font system emulation | Route `FONT_SCALE` through field-level system_server scheduling and allow it only at `launch-activity-item` | active | Unit policy tests cover viewport multi-entry scheduling and font launch-only scheduling | Avoids later config-dispatch writes that can surface as `CONFIG_FONT_SCALE` relaunches |
 | 2026-06-07 | font system emulation | Make modern101 system_server package selection field-aware per entry | active | Unit policy tests cover font-only launch selection and non-launch skip | Keeps font-only packages out of non-launch hot paths while preserving viewport multi-entry scheduling |
+| 2026-06-07 | shared app-process viewport | Preserve small-window geometry for relative-scale app-process borrow targets while applying target density through ResourcesImpl / ResourcesRead metrics | active | Quetta small-window route isolation showed disabling ResourcesImpl stops flicker but loses Chromium scaling; focused unit tests cover window density compensation | Keeps DPIS unified scheduling active without publishing app-process borrow targets or forcing small-window Configuration width/height to the display target |
 
 ## Safety Rules
 
@@ -310,3 +311,16 @@ superseded.
 - 2026-06-07: system_server package selection is now field-aware per entry.
   Font-only configs are selected for `launch-activity-item`, but skipped for
   non-launch hot paths such as `config-dispatch` and `display-manager-info`.
+- 2026-06-07: relative-scale app-process borrow targets now treat small-window
+  geometry as owned by the window manager. `ResourcesImpl` and
+  `ResourcesRead(getDisplayMetrics)` still derive the target density locally,
+  but keep the current window dp size and do not publish display baselines from
+  that borrowed result. This records the Quetta/Chromium small-window finding
+  without adding package-specific behavior.
+- 2026-06-08: Quetta small-window validation exposed a mixed configuration
+  during flexible-window transitions: `widthDp` / `heightDp` still described
+  the small window while `smallestWidthDp` already matched the relative-scale
+  target and `densityDpi` was still the source density. Relative-scale
+  app-process consumers now treat matching local or target records as borrow
+  targets, so the stable record density is reused instead of falling back to
+  the source density.

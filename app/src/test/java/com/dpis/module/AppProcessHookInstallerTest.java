@@ -123,6 +123,41 @@ public class AppProcessHookInstallerTest {
     }
 
     @Test
+    public void viewportOnlyRouteKeepsResourcesImplHook() {
+        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
+                createPolicy(false, false),
+                true,
+                ViewportApplyMode.COMPAT,
+                false,
+                FontApplyMode.OFF,
+                false,
+                false,
+                DebugFontOverride.none());
+
+        assertTrue(plan.viewportEnabled);
+        assertTrue(plan.resourcesHooksEnabled);
+        assertFalse(plan.fontDomainPlan.resourcesFontEnabled);
+        assertTrue(AppProcessHookInstaller.shouldInstallResourcesImplHookForTest(plan));
+    }
+
+    @Test
+    public void resourcesFontRouteKeepsResourcesImplHook() {
+        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
+                createPolicy(false, true),
+                false,
+                ViewportApplyMode.OFF,
+                true,
+                FontApplyMode.FIELD_REWRITE,
+                false,
+                false,
+                DebugFontOverride.none());
+
+        assertTrue(plan.resourcesHooksEnabled);
+        assertTrue(plan.fontDomainPlan.resourcesFontEnabled);
+        assertTrue(AppProcessHookInstaller.shouldInstallResourcesImplHookForTest(plan));
+    }
+
+    @Test
     public void relativeSystemViewportSkipsDisplaySupplementHooks() {
         HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
                 createPolicy(false, true),
@@ -412,6 +447,9 @@ public class AppProcessHookInstallerTest {
         assertTrue(source.contains("debug.dpis.font.flutter_settings_only_package"));
         assertTrue(source.contains("debug.dpis.font.disable_textview_absolute_rewrite_package"));
         assertTrue(source.contains("debug.dpis.font.disable_activity_thread_package"));
+        assertTrue(source.contains("debug.dpis.viewport.disable_display_supplement_package"));
+        assertTrue(source.contains("debug.dpis.viewport.disable_resources_impl_package"));
+        assertTrue(source.contains("debug.dpis.viewport.disable_resources_read_package"));
         assertTrue(source.contains("DebugPackageOverride.matches("));
         assertTrue(readSource("src/main/java/com/dpis/module/DebugPackageOverride.java")
                 .contains("if (!BuildConfig.DEBUG || packageName == null"));

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import android.content.res.Configuration;
+
 final class ViewportResolvedTarget {
     private ViewportResolvedTarget() {
     }
@@ -42,5 +44,47 @@ final class ViewportResolvedTarget {
             return resolution.record.virtualDisplayResult;
         }
         return VirtualDisplayState.getForTarget(targetViewportWidth);
+    }
+
+    static int stableDensityDpi(ViewportTargetResolution resolution,
+                                VirtualDisplayOverride.Result stableTarget) {
+        if (stableTarget != null && stableTarget.densityDpi > 0) {
+            return stableTarget.densityDpi;
+        }
+        if (resolution != null
+                && resolution.record != null
+                && resolution.record.viewportResult != null
+                && resolution.record.viewportResult.densityDpi > 0) {
+            return resolution.record.viewportResult.densityDpi;
+        }
+        return 0;
+    }
+
+    static ViewportOverride.Result appProcessWindowMetricsResult(
+            Configuration config,
+            ViewportTargetResolution resolution,
+            Integer targetViewportWidth,
+            VirtualDisplayOverride.Result stableTarget) {
+        if (config == null
+                || resolution == null
+                || !resolution.isAppProcessBorrowTarget()
+                || targetViewportWidth == null
+                || targetViewportWidth <= 0) {
+            return null;
+        }
+        int densityDpi = stableDensityDpi(resolution, stableTarget);
+        if (densityDpi <= 0) {
+            ViewportOverride.Result displayDerived = ViewportOverride.derive(
+                    config, targetViewportWidth, false, null);
+            densityDpi = displayDerived != null ? displayDerived.densityDpi : 0;
+        }
+        if (densityDpi <= 0) {
+            return null;
+        }
+        return new ViewportOverride.Result(
+                config.screenWidthDp,
+                config.screenHeightDp,
+                config.smallestScreenWidthDp,
+                densityDpi);
     }
 }

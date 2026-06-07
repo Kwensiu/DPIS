@@ -500,6 +500,132 @@ public class ResourcesImplHookInstallerTest {
         assertEquals(2208, secondMetrics.heightPixels);
     }
 
+    @Test
+    public void matchingViewportConfigurationPublishesStableMetricsWithoutRewriting() {
+        String packageName = "com.example.viewport";
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.absoluteDp(540));
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+        Configuration config = new Configuration();
+        config.densityDpi = 320;
+        config.screenWidthDp = 540;
+        config.screenHeightDp = 960;
+        config.smallestScreenWidthDp = 540;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 1920;
+        metrics.densityDpi = 320;
+
+        ResourcesImplHookInstaller.applyDensityOverride(packageName, config, metrics, store);
+
+        assertEquals(540, config.screenWidthDp);
+        assertEquals(960, config.screenHeightDp);
+        assertEquals(540, config.smallestScreenWidthDp);
+        assertEquals(320, config.densityDpi);
+        assertEquals(320, VirtualDisplayState.get().densityDpi);
+        assertEquals(1080, VirtualDisplayState.get().widthPx);
+        assertEquals(1920, VirtualDisplayState.get().heightPx);
+    }
+
+    @Test
+    public void relativeScaleBorrowOnlyResourcesImplDoesNotReplaceDisplayRecord() {
+        String packageName = "com.example.viewport";
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        Configuration displaySource = new Configuration();
+        displaySource.densityDpi = 480;
+        displaySource.screenWidthDp = 360;
+        displaySource.screenHeightDp = 792;
+        displaySource.smallestScreenWidthDp = 360;
+        displaySource.fontScale = 1.0f;
+        ViewportOverride.Result displayResult =
+                new ViewportOverride.Result(540, 1188, 540, 320);
+        VirtualDisplayOverride.Result displayVirtualResult =
+                new VirtualDisplayOverride.Result(540, 1188, 540, 320, 1080, 2376);
+        VirtualDisplayState.publish(
+                packageName,
+                targetSpec,
+                ViewportSourceSnapshot.fromConfiguration(
+                        ViewportSourceSnapshot.ORIGIN_RESOURCES_MANAGER,
+                        displaySource,
+                        null),
+                displayResult,
+                displayVirtualResult,
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setTargetViewportSpec(packageName, targetSpec);
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+        Configuration windowConfig = new Configuration();
+        windowConfig.densityDpi = 480;
+        windowConfig.screenWidthDp = 360;
+        windowConfig.screenHeightDp = 640;
+        windowConfig.smallestScreenWidthDp = 360;
+        windowConfig.fontScale = 1.0f;
+        DisplayMetrics windowMetrics = new DisplayMetrics();
+        windowMetrics.widthPixels = 1080;
+        windowMetrics.heightPixels = 1920;
+        windowMetrics.densityDpi = 480;
+
+        ResourcesImplHookInstaller.applyDensityOverrideForTest(
+                packageName, windowConfig, windowMetrics, store, true);
+
+        assertEquals(360, windowConfig.screenWidthDp);
+        assertEquals(640, windowConfig.screenHeightDp);
+        assertEquals(360, windowConfig.smallestScreenWidthDp);
+        assertEquals(480, windowConfig.densityDpi);
+        assertEquals(320, windowMetrics.densityDpi);
+        assertEquals(1080, windowMetrics.widthPixels);
+        assertEquals(1920, windowMetrics.heightPixels);
+        assertEquals(540, VirtualDisplayState.get().widthDp);
+        assertEquals(1188, VirtualDisplayState.get().heightDp);
+        assertEquals(1080, VirtualDisplayState.get().widthPx);
+        assertEquals(2376, VirtualDisplayState.get().heightPx);
+    }
+
+    @Test
+    public void relativeScaleWindowResourcesImplKeepsWindowDpAndAppliesTargetDensity() {
+        String packageName = "com.example.viewport";
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+        Configuration windowConfig = new Configuration();
+        windowConfig.densityDpi = 480;
+        windowConfig.screenWidthDp = 360;
+        windowConfig.screenHeightDp = 640;
+        windowConfig.smallestScreenWidthDp = 360;
+        windowConfig.fontScale = 1.0f;
+        DisplayMetrics windowMetrics = new DisplayMetrics();
+        windowMetrics.widthPixels = 1080;
+        windowMetrics.heightPixels = 1920;
+        windowMetrics.densityDpi = 480;
+        windowMetrics.density = 3.0f;
+        windowMetrics.scaledDensity = 3.0f;
+
+        ResourcesImplHookInstaller.applyDensityOverrideForTest(
+                packageName, windowConfig, windowMetrics, store, true);
+
+        assertEquals(360, windowConfig.screenWidthDp);
+        assertEquals(640, windowConfig.screenHeightDp);
+        assertEquals(360, windowConfig.smallestScreenWidthDp);
+        assertEquals(480, windowConfig.densityDpi);
+        assertEquals(320, windowMetrics.densityDpi);
+        assertEquals(DensityOverride.densityFromDpi(320), windowMetrics.density, 0.0001f);
+        assertEquals(DensityOverride.scaledDensityFrom(320, 1.0f),
+                windowMetrics.scaledDensity, 0.0001f);
+        assertEquals(1080, windowMetrics.widthPixels);
+        assertEquals(1920, windowMetrics.heightPixels);
+        assertEquals(null, VirtualDisplayState.get());
+
+        ResourcesImplHookInstaller.applyDensityOverrideForTest(
+                packageName, windowConfig, windowMetrics, store, true);
+
+        assertEquals(480, windowConfig.densityDpi);
+        assertEquals(320, windowMetrics.densityDpi);
+    }
+
     private static void putCompatViewport(FakePrefs prefs, String packageName, int widthDp) {
         prefs.edit()
                 .putInt("viewport." + packageName + ".width_dp", widthDp)

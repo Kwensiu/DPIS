@@ -48,6 +48,22 @@ final class ResourcesImplHookInstaller {
 
     static void applyDensityOverride(String packageName, Configuration config, DisplayMetrics metrics,
                                      DpiConfigStore store) {
+        applyDensityOverride(packageName, config, metrics, store, null);
+    }
+
+    static void applyDensityOverrideForTest(String packageName,
+                                            Configuration config,
+                                            DisplayMetrics metrics,
+                                            DpiConfigStore store,
+                                            boolean windowScoped) {
+        applyDensityOverride(packageName, config, metrics, store, windowScoped);
+    }
+
+    private static void applyDensityOverride(String packageName,
+                                             Configuration config,
+                                             DisplayMetrics metrics,
+                                             DpiConfigStore store,
+                                             Boolean windowScopedOverride) {
         if (config == null) {
             logIfChanged(packageName + ":skip", "ResourcesImpl skip: config is null");
             return;
@@ -70,7 +86,9 @@ final class ResourcesImplHookInstaller {
             ViewportRuntimeMarkerProbe.observeAppProcessProbe(
                     packageName, resolution.spec, "ResourcesImpl");
         }
-        boolean windowScoped = ViewportConfigurationScope.isWindowScoped(config);
+        boolean windowScoped = windowScopedOverride != null
+                ? windowScopedOverride
+                : ViewportConfigurationScope.isWindowScoped(config);
         int sourceWidthPx = metrics != null ? metrics.widthPixels : 0;
         int sourceHeightPx = metrics != null ? metrics.heightPixels : 0;
         VirtualDisplayOverride.Result stableTarget =
@@ -102,9 +120,24 @@ final class ResourcesImplHookInstaller {
                 stableTargetForResult != null ? stableTargetForResult : pixelDerivedTarget;
         ViewportOverride.Result resolvedRecordResult =
                 ViewportResolvedTarget.viewportResult(resolution, windowScoped);
+        ViewportOverride.Result windowLikeBorrowResult =
+                resolveWindowLikeBorrowResult(config, resolution, windowScoped);
+        ViewportOverride.Result appProcessWindowMetricsResult =
+                windowScoped
+                        ? ViewportResolvedTarget.appProcessWindowMetricsResult(
+                        config, resolution, targetViewportWidth, stableTarget)
+                        : null;
+        boolean windowLikeBorrow = windowLikeBorrowResult != null;
+        boolean appProcessWindowMetricsOnly = appProcessWindowMetricsResult != null;
         ViewportOverride.Result trustedDisplayResult =
-                ViewportResolvedTarget.viewportResult(trustedDisplayTarget);
-        ViewportOverride.Result result = resolvedRecordResult != null
+                resolution.isAppProcessBorrowTarget()
+                        ? null
+                        : ViewportResolvedTarget.viewportResult(trustedDisplayTarget);
+        ViewportOverride.Result result = windowLikeBorrowResult != null
+                ? windowLikeBorrowResult
+                : appProcessWindowMetricsResult != null
+                ? appProcessWindowMetricsResult
+                : resolvedRecordResult != null
                 ? resolvedRecordResult
                 : trustedDisplayResult != null
                 ? trustedDisplayResult
@@ -128,7 +161,8 @@ final class ResourcesImplHookInstaller {
                 || result.smallestWidthDp != originalSmallestWidthDp
                 || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi);
         boolean applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
-                store, packageName, resolution, needsViewportUpdate);
+                store, packageName, resolution, needsViewportUpdate)
+                && !appProcessWindowMetricsOnly;
         VirtualDisplayOverride.Result sharedResult =
                 trustedDisplayTarget != null
                         ? trustedDisplayTarget
@@ -141,7 +175,10 @@ final class ResourcesImplHookInstaller {
                         sourceHeightPx,
                         result.smallestWidthDp);
         VirtualDisplayOverride.Result publishableSharedResult = windowScoped ? null : sharedResult;
-        if (publishableSharedResult != null) {
+        boolean canPublishFromResourcesImpl = !windowLikeBorrow
+                && !appProcessWindowMetricsOnly
+                && shouldPublishResourcesImplResult(resolution, needsViewportUpdate);
+        if (canPublishFromResourcesImpl && publishableSharedResult != null) {
             boolean canPublishState = VirtualDisplayState.setUnlessDerivedFromTargetConfig(
                     publishableSharedResult, originalSmallestWidthDp, targetViewportWidth);
             if (canPublishState && resolution.spec.isEnabled() && source != null) {
@@ -154,21 +191,43 @@ final class ResourcesImplHookInstaller {
                         ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
             }
         }
-        String viewportMode = ViewportModePolicy.resolve(store, packageName);
-        ViewportDebugReporter.report(
-                store,
-                packageName,
-                viewportMode,
-                originalWidthDp,
-                originalHeightDp,
-                originalDensityDpi,
-                result,
-                publishableSharedResult,
-                applyToConfiguration);
+        if (canPublishFromResourcesImpl) {
+            String viewportMode = ViewportModePolicy.resolve(store, packageName);
+            ViewportDebugReporter.report(
+                    store,
+                    packageName,
+                    viewportMode,
+                    originalWidthDp,
+                    originalHeightDp,
+                    originalDensityDpi,
+                    result,
+                    publishableSharedResult,
+                    applyToConfiguration);
+        }
         if (!needsViewportUpdate) {
             VirtualDisplayOverride.Result stableResult =
                     VirtualDisplayState.getStableTargetResult(
                             originalSmallestWidthDp, targetViewportWidth);
+            if (windowLikeBorrow
+                    && stableResult != null
+                    && stableResult.densityDpi > 0
+                    && metrics != null) {
+                metrics.densityDpi = stableResult.densityDpi;
+                metrics.density = DensityOverride.densityFromDpi(stableResult.densityDpi);
+                metrics.scaledDensity = DensityOverride.scaledDensityFrom(
+                        stableResult.densityDpi, config.fontScale);
+                metrics.widthPixels = stableResult.widthPx;
+                metrics.heightPixels = stableResult.heightPx;
+                logIfChanged(packageName + ":window-like-borrow",
+                        "DPIS_VIEWPORT ResourcesImpl window-like borrow: widthDp="
+                                + config.screenWidthDp
+                                + ", heightDp=" + config.screenHeightDp
+                                + ", smallestWidthDp=" + config.smallestScreenWidthDp
+                                + ", metricsDensityDpi=" + metrics.densityDpi
+                                + ", metricsWidthPx=" + metrics.widthPixels
+                                + ", metricsHeightPx=" + metrics.heightPixels);
+                return;
+            }
             if (result.densityDpi <= 0
                     && stableResult != null && stableResult.densityDpi > 0
                     && config.densityDpi != stableResult.densityDpi) {
@@ -197,12 +256,6 @@ final class ResourcesImplHookInstaller {
                 return;
             }
             FontScaleOverride.applyScaledDensity(metrics, config);
-            logIfChanged(packageName + ":observe",
-                    "DPIS_VIEWPORT ResourcesImpl observe: widthDp=" + originalWidthDp
-                            + ", heightDp=" + originalHeightDp
-                            + ", smallestWidthDp=" + originalSmallestWidthDp
-                            + ", densityDpi=" + originalDensityDpi
-                            + ", fontScale=" + fontScale.original + " -> " + config.fontScale);
             return;
         }
         if (applyToConfiguration) {
@@ -229,6 +282,7 @@ final class ResourcesImplHookInstaller {
                         + ", heightDp " + originalHeightDp + " -> " + result.heightDp
                         + ", smallestWidthDp " + originalSmallestWidthDp + " -> "
                         + result.smallestWidthDp
+                        + ", resolution=" + describeResolution(resolution)
                         + ", densityDpi " + originalDensityDpi + " -> " + result.densityDpi
                         + ", fontScale " + fontScale.original + " -> " + config.fontScale
                         + ", metricsDensityDpi=" + (metrics != null ? metrics.densityDpi : -1)
@@ -241,6 +295,57 @@ final class ResourcesImplHookInstaller {
         if (!message.equals(previous)) {
             DpisLog.i(message);
         }
+    }
+
+    private static boolean shouldPublishResourcesImplResult(ViewportTargetResolution resolution,
+                                                            boolean needsViewportUpdate) {
+        if (resolution == null || resolution.spec == null || !resolution.spec.isEnabled()) {
+            return false;
+        }
+        if (resolution.isAppProcessDisplayBorrowTarget()) {
+            return false;
+        }
+        if (needsViewportUpdate) {
+            return true;
+        }
+        return resolution.spec.isAbsoluteDp();
+    }
+
+    private static ViewportOverride.Result resolveWindowLikeBorrowResult(
+            Configuration config,
+            ViewportTargetResolution resolution,
+            boolean windowScoped) {
+        if (config == null
+                || windowScoped
+                || resolution == null
+                || resolution.record == null
+                || resolution.record.viewportResult == null
+                || resolution.spec == null
+                || !resolution.spec.isRelativeScale()) {
+            return null;
+        }
+        ViewportOverride.Result displayResult = resolution.record.viewportResult;
+        boolean matchesTargetWidth = config.screenWidthDp == displayResult.widthDp
+                && config.smallestScreenWidthDp == displayResult.smallestWidthDp;
+        boolean shorterThanDisplay = config.screenHeightDp > 0
+                && config.screenHeightDp < displayResult.heightDp;
+        if (!matchesTargetWidth || !shorterThanDisplay) {
+            return null;
+        }
+        return new ViewportOverride.Result(
+                config.screenWidthDp,
+                config.screenHeightDp,
+                config.smallestScreenWidthDp,
+                displayResult.densityDpi);
+    }
+
+    private static String describeResolution(ViewportTargetResolution resolution) {
+        if (resolution == null) {
+            return "none";
+        }
+        return "{reason=" + resolution.reason
+                + ",target=" + resolution.effectiveSmallestWidthDp
+                + ",record=" + (resolution.record != null ? "yes" : "no") + "}";
     }
 }
 

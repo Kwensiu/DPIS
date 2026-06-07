@@ -206,6 +206,7 @@ chain returns only to the compat/field-rewrite recommended template.
 | 2026-06-04 | WeChat 8.0.71 target-field | Replace stale constructor-field route with the verified current route shape | active | Shared route registry decision; detailed evidence lives in `docs/private/wechat-target-field.md` | Do not reintroduce constructor-field route without fresh version-specific evidence |
 | 2026-06-07 | font system emulation | Add `system_server_font` as an explicit internal domain for `Configuration.fontScale` | active / superseded fallback | Douyin and Bilibili repros stopped flickering when only system_server font mutation was skipped; app-process font domains still scaled text | Kept as planner/runtime diagnostic state, not a compat custom-chain switch |
 | 2026-06-07 | font system emulation | Route `FONT_SCALE` through field-level system_server scheduling and allow it only at `launch-activity-item` | active | Unit policy tests cover viewport multi-entry scheduling and font launch-only scheduling | Avoids later config-dispatch writes that can surface as `CONFIG_FONT_SCALE` relaunches |
+| 2026-06-07 | shared app-process viewport | Relative-scale app-process borrow targets preserve small-window dp geometry while applying target density in ResourcesImpl / ResourcesRead metrics | active | Shared unit tests cover ResourcesImpl and ResourcesRead window density compensation | This is package-neutral shared behavior; compat100 inherits it through `app/src/main/java` |
 
 ## Safety Rules
 
@@ -262,3 +263,12 @@ chain returns only to the compat/field-rewrite recommended template.
 - 2026-06-07: shared modern101 system_server package selection is now
   field-aware per entry. This records shared-code behavior for 100/101 review;
   compat100 still does not install the shared modern system_server entries.
+- 2026-06-07: shared app-process relative-scale borrow handling now keeps
+  small-window width/height dp owned by the window manager while deriving target
+  density locally for `ResourcesImpl` and `ResourcesRead(getDisplayMetrics)`.
+  This avoids using compat app-process routes to publish display baselines from
+  a borrowed small-window result.
+- 2026-06-08: shared relative-scale app-process consumers now classify matching
+  local or target runtime records as borrow targets. This covers flexible-window
+  mixed configurations where `smallestWidthDp` has reached the target but
+  width/height and density still describe the source window.

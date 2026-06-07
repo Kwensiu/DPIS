@@ -97,6 +97,11 @@ final class ViewportSourceSnapshot {
         return SCOPE_WINDOW.equals(scope);
     }
 
+    boolean appProcessConsumerScoped() {
+        return ORIGIN_RESOURCES_IMPL.equals(origin)
+                || ORIGIN_RESOURCES_READ.equals(origin);
+    }
+
     boolean canPublishFreshRelativeBaseline() {
         return validForTargetResolution()
                 && displayScoped()

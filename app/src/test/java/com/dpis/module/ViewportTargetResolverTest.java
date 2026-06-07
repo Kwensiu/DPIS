@@ -50,7 +50,7 @@ public class ViewportTargetResolverTest {
     }
 
     @Test
-    public void resourcesReadDoesNotCreateFreshRelativeBaseline() {
+    public void resourcesReadDerivesLocalRelativeTargetWithoutPublishingBaseline() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetViewportSpec("com.example", ViewportTargetSpec.relativeScale(1060));
         store.setTargetViewportApplyMode("com.example", ViewportApplyMode.COMPAT);
@@ -65,7 +65,10 @@ public class ViewportTargetResolverTest {
         ViewportTargetResolution result =
                 TargetViewportWidthResolver.resolve(store, "com.example", readSource);
 
-        assertFalse(result.hasTarget());
+        assertTrue(result.hasTarget());
+        assertEquals(ViewportTargetResolution.REASON_APP_PROCESS_RELATIVE_SCALE, result.reason);
+        assertEquals(436, result.effectiveSmallestWidthDp);
+        assertEquals(0, VirtualDisplayState.recordCountForTest());
     }
 
     @Test

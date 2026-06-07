@@ -101,4 +101,99 @@ public class TargetViewportWidthResolverTest {
         assertEquals(500, resolution.effectiveSmallestWidthDp);
         assertEquals(346, resolution.record.viewportResult.densityDpi);
     }
+
+    @Test
+    public void appProcessRelativeScaleDerivesTargetWithoutDisplayRecord() {
+        String packageName = "com.example.viewport";
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.fromConfiguration(
+                ViewportSourceSnapshot.ORIGIN_RESOURCES_READ,
+                configuration(360, 640, 360, 480),
+                null);
+
+        ViewportTargetResolution resolution =
+                TargetViewportWidthResolver.resolve(store, packageName, source);
+
+        assertEquals(ViewportTargetResolution.REASON_APP_PROCESS_RELATIVE_SCALE,
+                resolution.reason);
+        assertEquals(540, resolution.effectiveSmallestWidthDp);
+        assertNull(resolution.record);
+    }
+
+    @Test
+    public void appProcessRelativeScaleBorrowKeepsDisplayRecordForStableDensity() {
+        String packageName = "com.example.viewport";
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        android.content.res.Configuration displayConfig = configuration(360, 792, 360, 480);
+        VirtualDisplayState.publish(
+                packageName,
+                targetSpec,
+                ViewportSourceSnapshot.fromConfiguration(
+                        ViewportSourceSnapshot.ORIGIN_RESOURCES_MANAGER,
+                        displayConfig,
+                        null),
+                new ViewportOverride.Result(540, 1188, 540, 320),
+                null,
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec(packageName, targetSpec);
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.fromConfiguration(
+                ViewportSourceSnapshot.ORIGIN_RESOURCES_READ,
+                configuration(360, 640, 360, 320),
+                null);
+
+        ViewportTargetResolution resolution =
+                TargetViewportWidthResolver.resolve(store, packageName, source);
+
+        assertEquals(ViewportTargetResolution.REASON_APP_PROCESS_BORROW_TARGET,
+                resolution.reason);
+        assertEquals(540, resolution.effectiveSmallestWidthDp);
+        assertNotNull(resolution.record);
+        assertEquals(320, resolution.record.viewportResult.densityDpi);
+    }
+
+    @Test
+    public void appProcessRelativeScaleTreatsMixedTargetSmallestWidthAsBorrowedRecord() {
+        String packageName = "com.example.viewport";
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        VirtualDisplayState.publish(
+                packageName,
+                targetSpec,
+                ViewportSourceSnapshot.fromConfiguration(
+                        ViewportSourceSnapshot.ORIGIN_RESOURCES_MANAGER,
+                        configuration(360, 792, 360, 480),
+                        null),
+                new ViewportOverride.Result(540, 1188, 540, 320),
+                null,
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec(packageName, targetSpec);
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+        ViewportSourceSnapshot mixedWindowSource = ViewportSourceSnapshot.fromConfiguration(
+                ViewportSourceSnapshot.ORIGIN_RESOURCES_READ,
+                configuration(360, 640, 540, 480),
+                null);
+
+        ViewportTargetResolution resolution =
+                TargetViewportWidthResolver.resolve(store, packageName, mixedWindowSource);
+
+        assertEquals(ViewportTargetResolution.REASON_APP_PROCESS_BORROW_TARGET,
+                resolution.reason);
+        assertEquals(540, resolution.effectiveSmallestWidthDp);
+        assertNotNull(resolution.record);
+        assertEquals(320, resolution.record.viewportResult.densityDpi);
+    }
+
+    private static android.content.res.Configuration configuration(
+            int widthDp, int heightDp, int smallestWidthDp, int densityDpi) {
+        android.content.res.Configuration config = new android.content.res.Configuration();
+        config.screenWidthDp = widthDp;
+        config.screenHeightDp = heightDp;
+        config.smallestScreenWidthDp = smallestWidthDp;
+        config.densityDpi = densityDpi;
+        return config;
+    }
 }

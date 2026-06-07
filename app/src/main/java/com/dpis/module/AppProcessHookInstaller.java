@@ -11,6 +11,12 @@ final class AppProcessHookInstaller {
             "debug.dpis.font.disable_textview_absolute_rewrite_package";
     private static final String PROP_DISABLE_ACTIVITY_THREAD_PACKAGE =
             "debug.dpis.font.disable_activity_thread_package";
+    private static final String PROP_DISABLE_VIEWPORT_DISPLAY_SUPPLEMENT_PACKAGE =
+            "debug.dpis.viewport.disable_display_supplement_package";
+    private static final String PROP_DISABLE_VIEWPORT_RESOURCES_IMPL_PACKAGE =
+            "debug.dpis.viewport.disable_resources_impl_package";
+    private static final String PROP_DISABLE_VIEWPORT_RESOURCES_READ_PACKAGE =
+            "debug.dpis.viewport.disable_resources_read_package";
 
     private AppProcessHookInstaller() {
     }
@@ -175,8 +181,20 @@ final class AppProcessHookInstaller {
         }
         if (plan.resourcesHooksEnabled) {
             ResourcesManagerHookInstaller.install(xposed, packageName, store);
-            ResourcesImplHookInstaller.install(xposed, packageName, store);
-            ResourcesReadHookInstaller.install(xposed, packageName, store);
+            if (!shouldInstallResourcesImplHook(plan)) {
+                DpisLog.i("ResourcesImpl hook skipped: package=" + packageName);
+            } else if (isDebugPropertyPackageMatch(
+                    PROP_DISABLE_VIEWPORT_RESOURCES_IMPL_PACKAGE, packageName)) {
+                DpisLog.i("ResourcesImpl hook skipped by debug property for " + packageName);
+            } else {
+                ResourcesImplHookInstaller.install(xposed, packageName, store);
+            }
+            if (isDebugPropertyPackageMatch(
+                    PROP_DISABLE_VIEWPORT_RESOURCES_READ_PACKAGE, packageName)) {
+                DpisLog.i("ResourcesRead hook skipped by debug property for " + packageName);
+            } else {
+                ResourcesReadHookInstaller.install(xposed, packageName, store);
+            }
         }
         if (plan.activityThreadFontEnabled) {
             ActivityThreadFontHookInstaller.install(xposed, packageName, store);
@@ -195,7 +213,8 @@ final class AppProcessHookInstaller {
         if (plan.webViewTextZoomEnabled) {
             WebViewFontHookInstaller.install(xposed, packageName, store);
         }
-        if (shouldInstallAppProcessViewportSupplementHooks(plan, targetViewportSpec)) {
+        if (shouldInstallAppProcessViewportSupplementHooks(plan, targetViewportSpec)
+                && !isViewportDisplaySupplementDisabled(packageName)) {
             WindowMetricsHookInstaller.install(xposed);
             DisplayHookInstaller.install(xposed, packageName, store);
         } else if (plan.viewportEnabled) {
@@ -220,6 +239,10 @@ final class AppProcessHookInstaller {
         return shouldInstallAppProcessViewportSupplementHooks(plan, targetViewportSpec);
     }
 
+    static boolean shouldInstallResourcesImplHookForTest(HookExecutionPlan plan) {
+        return shouldInstallResourcesImplHook(plan);
+    }
+
     private static boolean shouldInstallAppProcessViewportSupplementHooks(
             HookExecutionPlan plan,
             ViewportTargetSpec targetViewportSpec) {
@@ -227,6 +250,16 @@ final class AppProcessHookInstaller {
             return false;
         }
         return !ViewportApplyMode.SYSTEM.equals(plan.resolvedViewportMode);
+    }
+
+    private static boolean shouldInstallResourcesImplHook(HookExecutionPlan plan) {
+        return plan != null
+                && plan.resourcesHooksEnabled;
+    }
+
+    private static boolean isViewportDisplaySupplementDisabled(String packageName) {
+        return isDebugPropertyPackageMatch(
+                PROP_DISABLE_VIEWPORT_DISPLAY_SUPPLEMENT_PACKAGE, packageName);
     }
 
     static void installTypefaceHooks(XposedInterface xposed,

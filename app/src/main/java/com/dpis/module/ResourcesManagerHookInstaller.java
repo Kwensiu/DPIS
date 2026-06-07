@@ -13,6 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.github.libxposed.api.XposedInterface;
 
 final class ResourcesManagerHookInstaller {
+    private static final String PROP_DISABLE_VIEWPORT_RESOURCES_MANAGER_KEY_PACKAGE =
+            "debug.dpis.viewport.disable_resources_manager_key_package";
     private static volatile boolean hookInstalled;
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
 
@@ -143,6 +145,13 @@ final class ResourcesManagerHookInstaller {
         if (!ViewportModePolicy.shouldApplyConfigurationOverride(store, packageName)) {
             return;
         }
+        if (DebugPackageOverride.matches(
+                PROP_DISABLE_VIEWPORT_RESOURCES_MANAGER_KEY_PACKAGE, packageName)) {
+            logIfChanged(packageName + ":ResourcesManagerKey(" + sourceTag + "):debug-skip",
+                    "ResourcesManagerKey(" + sourceTag
+                            + ") skipped by debug property for " + packageName);
+            return;
+        }
         Object override = readField(key, "mOverrideConfiguration");
         if (!(override instanceof Configuration overrideConfig)) {
             return;
@@ -156,6 +165,11 @@ final class ResourcesManagerHookInstaller {
         }
         Configuration targetConfig = new Configuration();
         Configuration sourceConfig = isEffectivelyEmpty(overrideConfig) ? baseConfig : overrideConfig;
+        if (!isEffectivelyEmpty(overrideConfig)
+                && shouldPreserveWindowLikeResourcesKeyOverride(
+                sourceConfig, store, packageName, sourceTag)) {
+            return;
+        }
         copyViewportConfiguration(sourceConfig, targetConfig);
         targetConfig.fontScale = sourceConfig.fontScale;
         applyResourceOverrides(targetConfig, store, packageName,
@@ -212,6 +226,48 @@ final class ResourcesManagerHookInstaller {
         boolean sameDensity = overrideConfig.densityDpi <= 0
                 || overrideConfig.densityDpi == baseConfig.densityDpi;
         return sameBounds && sameDensity;
+    }
+
+    private static boolean shouldPreserveWindowLikeResourcesKeyOverride(Configuration sourceConfig,
+                                                                       DpiConfigStore store,
+                                                                       String packageName,
+                                                                       String sourceTag) {
+        if (sourceConfig == null
+                || sourceConfig.screenWidthDp <= 0
+                || sourceConfig.screenHeightDp <= 0
+                || sourceConfig.smallestScreenWidthDp <= 0
+                || sourceConfig.densityDpi <= 0) {
+            return false;
+        }
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.fromConfiguration(
+                ViewportSourceSnapshot.ORIGIN_RESOURCES_MANAGER, sourceConfig, null);
+        ViewportTargetResolution resolution =
+                TargetViewportWidthResolver.resolve(store, packageName, source);
+        if (resolution == null || resolution.record == null) {
+            return false;
+        }
+        ViewportOverride.Result displayResult =
+                ViewportResolvedTarget.viewportResult(resolution, false);
+        if (displayResult == null
+                || displayResult.widthDp <= 0
+                || displayResult.heightDp <= 0
+                || displayResult.smallestWidthDp <= 0
+                || displayResult.densityDpi <= 0) {
+            return false;
+        }
+        boolean targetWidthAndDensity = sourceConfig.screenWidthDp == displayResult.widthDp
+                && sourceConfig.smallestScreenWidthDp == displayResult.smallestWidthDp
+                && sourceConfig.densityDpi == displayResult.densityDpi;
+        boolean shorterThanDisplayTarget = sourceConfig.screenHeightDp < displayResult.heightDp;
+        if (!targetWidthAndDensity || !shorterThanDisplayTarget) {
+            return false;
+        }
+        String message = "DPIS_VIEWPORT ResourcesManagerKey(" + sourceTag
+                + ") preserve window-like key: package=" + packageName
+                + ", source=" + describeConfiguration(sourceConfig)
+                + ", displayTarget=" + describeViewportResult(displayResult);
+        logIfChanged(packageName + ":" + sourceTag + ":preserve-window-like-key", message);
+        return true;
     }
 
     private static boolean hasViewportOverride(Configuration target, Configuration source) {
