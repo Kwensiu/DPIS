@@ -1249,7 +1249,9 @@ public class MainActivitySourceSmokeTest {
             )
         );
         assertTrue(binder.contains("actions.showTypefaceSelector(item"));
-        assertTrue(binder.contains("actions.showHookDomains(item, state"));
+        assertTrue(binder.contains("actions.showHookDomains(currentFontConfigItem(root, item), state"));
+        assertTrue(binder.contains("private AppListItem currentFontConfigItem(View root, AppListItem item)"));
+        assertTrue(binder.contains("return item.withFontConfig(fontScalePercent, fontMode);"));
         assertTrue(dimens.contains("land_app_detail_card_padding"));
         assertTrue(dimens.contains("land_app_detail_section_gap"));
         assertTrue(dimens.contains("land_app_detail_card_gap"));

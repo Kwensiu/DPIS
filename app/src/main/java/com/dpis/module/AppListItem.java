@@ -155,6 +155,27 @@ final class AppListItem {
         return appSpecificConfigActive;
     }
 
+    AppListItem withFontConfig(Integer fontScalePercent, String fontMode) {
+        return new AppListItem(label,
+                packageName,
+                inScope,
+                scopeKnown,
+                viewportWidthDp,
+                viewportScalePermille,
+                viewportMode,
+                viewportTargetSpec,
+                fontScalePercent,
+                fontScalePercent == null ? FontApplyMode.OFF : fontMode,
+                typefaceId,
+                appSpecificConfigActive,
+                dpisEnabled,
+                systemApp,
+                hyperOsNativeProxyCandidate,
+                previewFromGlobalPrefill,
+                previewFontHookDomainsRaw,
+                icon);
+    }
+
     AppListItem withGlobalPrefillPreview(TemplateConfigValue prefill) {
         TemplateConfigValue normalized = prefill != null ? prefill : TemplateConfigValue.EMPTY;
         return new AppListItem(label,

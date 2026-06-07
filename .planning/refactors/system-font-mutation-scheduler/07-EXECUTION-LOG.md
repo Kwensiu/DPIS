@@ -47,3 +47,6 @@
   scheduler boundary. Bilibili/Douyin are recorded as reproduction evidence for
   generic `FONT_SCALE` scheduling, not as built-in recommended hook-chain
   targets.
+- Fixed the app editor hook-chain dialog input source so restore-default
+  previews use the current draft font scale/mode instead of the stale
+  `AppListItem` snapshot captured when the editor opened.

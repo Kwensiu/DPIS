@@ -139,7 +139,7 @@ final class LandAppDetailPaneBinder {
         );
         hookValue.setText(formatHookChainValue(item, state));
         bindEditorRow(root, R.id.land_detail_hook_chain_row, ()
-                -> actions.showHookDomains(item, state, () -> {
+                -> actions.showHookDomains(currentFontConfigItem(root, item), state, () -> {
                     hookValue.setText(formatHookChainValue(item, state));
                     actions.onDraftStateChanged(state);
                     updateSaveButtonState(root, saveButton);
@@ -719,6 +719,29 @@ final class LandAppDetailPaneBinder {
                 -> actions.executeProcessAction(item, action)
         );
         TouchFeedbackBinder.bindPressHaptic(button);
+    }
+
+    private AppListItem currentFontConfigItem(View root, AppListItem item) {
+        if (root == null || item == null) {
+            return item;
+        }
+        TextInputEditText fontInput = root.findViewById(
+                R.id.land_detail_font_scale_input
+        );
+        AppConfigDialogBinder.ModeToggle fontToggle
+                = new AppConfigDialogBinder.ModeToggle(
+                        root.findViewById(R.id.land_detail_font_mode_toggle_button),
+                        root.findViewById(R.id.land_detail_font_mode_toggle_thumb),
+                        root.findViewById(R.id.land_detail_font_mode_system_label),
+                        root.findViewById(R.id.land_detail_font_mode_compat_label)
+                );
+        Integer fontScalePercent = AppConfigInputValidation.parseFontScalePercentOrNull(
+                inputTextOf(fontInput)
+        );
+        String fontMode = fontScalePercent == null
+                ? FontApplyMode.OFF
+                : AppConfigDialogBinder.resolveFontMode(fontToggle);
+        return item.withFontConfig(fontScalePercent, fontMode);
     }
 
     private void bindSaveButton(
