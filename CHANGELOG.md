@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.12.0](https://github.com/Kwensiu/DPIS/compare/v1.11.1...v1.12.0) (2026-06-07)
+
+
+### Features
+
+* add template workspace and reusable app config templates ([#74](https://github.com/Kwensiu/DPIS/issues/74)) ([2e1abef](https://github.com/Kwensiu/DPIS/commit/2e1abef99b01a77c93487be96ff4c15e9ede830b))
+* add VVeChat target field route ([#75](https://github.com/Kwensiu/DPIS/issues/75)) ([9d0df63](https://github.com/Kwensiu/DPIS/commit/9d0df63f6688f3aa6ea10b9eebe1341755cc226e))
+
+
+### Bug Fixes
+
+* adapt quick template target selection ([081dde4](https://github.com/Kwensiu/DPIS/commit/081dde4c03cb5cbbb84d75bbb0ddc8a75db7ebd9))
+* avoid API 34 Stream toList in font domains ([b37618d](https://github.com/Kwensiu/DPIS/commit/b37618d853ea7034c07bd1f012cb0bd04b14791b))
+* improve quick template target selection ([e9c09ba](https://github.com/Kwensiu/DPIS/commit/e9c09bab7b1bbb48238cf092eca88d2997cc56ec))
+* preserve viewport scaling in browser small windows ([d4ac40b](https://github.com/Kwensiu/DPIS/commit/d4ac40b7506dc8cd39c00b26251e7073ed83ad00))
+* stabilize system font mutation scheduling ([#77](https://github.com/Kwensiu/DPIS/issues/77)) ([3ce71e1](https://github.com/Kwensiu/DPIS/commit/3ce71e1bf828d8ce01d6dd2b54c07e720e3d2026))
+
 ## [1.11.1](https://github.com/Kwensiu/DPIS/compare/v1.11.0...v1.11.1) (2026-05-31)
 
 
