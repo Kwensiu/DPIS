@@ -15,6 +15,8 @@ final class ToolsWorkspaceBinder {
         if (workspaceView == null || fontScaleToolBinder != null) {
             return;
         }
+        View toolsToolbar = workspaceView.findViewById(R.id.tools_toolbar);
+        WindowInsetsBinder.applySafeDrawingPadding(toolsToolbar, false, true, false, false);
         fontScaleToolBinder = new SystemFontScaleToolBinder(activity, workspaceView);
         fontScaleToolBinder.bind();
     }

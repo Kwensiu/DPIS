@@ -7,7 +7,6 @@ import android.net.Uri;
 import android.provider.Settings;
 import android.util.TypedValue;
 import android.view.View;
-import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -15,6 +14,7 @@ import androidx.appcompat.widget.AppCompatImageButton;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.slider.Slider;
 import com.google.android.material.textview.MaterialTextView;
 
 final class SystemFontScaleToolBinder {
@@ -31,17 +31,16 @@ final class SystemFontScaleToolBinder {
     private View permissionOverlay;
     private View unavailableOverlay;
     private MaterialTextView badgeView;
-    private MaterialTextView currentValueView;
     private MaterialTextView pendingValueView;
     private MaterialTextView previewTitleView;
     private MaterialTextView previewBodyView;
     private AppCompatImageButton applyButton;
     private AppCompatImageButton decrementButton;
     private AppCompatImageButton incrementButton;
-    private SeekBar seekBar;
+    private Slider slider;
     private MaterialButton restoreButton;
     private boolean expanded;
-    private boolean updatingSeekBar;
+    private boolean updatingSlider;
     private SystemFontScaleToolState state;
 
     SystemFontScaleToolBinder(LocalizedActivity activity, View workspaceView) {
@@ -62,38 +61,24 @@ final class SystemFontScaleToolBinder {
         permissionOverlay = workspaceView.findViewById(R.id.system_font_scale_permission_overlay);
         unavailableOverlay = workspaceView.findViewById(R.id.system_font_scale_unavailable_overlay);
         badgeView = workspaceView.findViewById(R.id.system_font_scale_badge);
-        currentValueView = workspaceView.findViewById(R.id.system_font_scale_current_value);
         pendingValueView = workspaceView.findViewById(R.id.system_font_scale_pending_value);
         previewTitleView = workspaceView.findViewById(R.id.system_font_scale_preview_title);
         previewBodyView = workspaceView.findViewById(R.id.system_font_scale_preview_body);
         applyButton = workspaceView.findViewById(R.id.system_font_scale_apply_button);
         decrementButton = workspaceView.findViewById(R.id.system_font_scale_decrement_button);
         incrementButton = workspaceView.findViewById(R.id.system_font_scale_increment_button);
-        seekBar = workspaceView.findViewById(R.id.system_font_scale_seek_bar);
+        slider = workspaceView.findViewById(R.id.system_font_scale_slider);
         restoreButton = workspaceView.findViewById(R.id.system_font_scale_restore_button);
 
-        if (seekBar != null) {
-            seekBar.setMax(SystemFontScaleToolState.MAX_PERCENT
-                    - SystemFontScaleToolState.MIN_PERCENT);
-            seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    if (!fromUser || updatingSeekBar || state == null) {
-                        return;
-                    }
-                    setPendingPercent(SystemFontScaleToolState.MIN_PERCENT + progress);
+        if (slider != null) {
+            slider.setValueFrom(SystemFontScaleToolState.MIN_PERCENT);
+            slider.setValueTo(SystemFontScaleToolState.MAX_PERCENT);
+            slider.setStepSize(1f);
+            slider.addOnChangeListener((slider, value, fromUser) -> {
+                if (!fromUser || updatingSlider || state == null) {
+                    return;
                 }
-
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {
-                    if (state != null) {
-                        setPendingPercent(state.pendingPercent);
-                    }
-                }
-
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {
-                }
+                setPendingPercent(Math.round(value));
             });
         }
 
@@ -129,11 +114,9 @@ final class SystemFontScaleToolBinder {
         if (restoreButton != null) {
             restoreButton.setOnClickListener(v -> restoreDefault());
         }
-        View permissionButton = workspaceView.findViewById(
-                R.id.system_font_scale_permission_button);
-        TouchFeedbackBinder.bindPressHaptic(permissionButton);
-        if (permissionButton != null) {
-            permissionButton.setOnClickListener(v -> openWriteSettingsPermission());
+        TouchFeedbackBinder.bindPressHaptic(permissionOverlay);
+        if (permissionOverlay != null) {
+            permissionOverlay.setOnClickListener(v -> openWriteSettingsPermission());
         }
 
         refreshFromSystem();
@@ -184,6 +167,10 @@ final class SystemFontScaleToolBinder {
         if (state == null || !state.canRestore()) {
             return;
         }
+        if (state.shouldRestorePendingOnly()) {
+            setPendingPercent(SystemFontScaleToolState.DEFAULT_PERCENT);
+            return;
+        }
         writeScale(SystemFontScaleToolState.DEFAULT_PERCENT);
     }
 
@@ -231,7 +218,7 @@ final class SystemFontScaleToolBinder {
         if (state == null) {
             return;
         }
-        setVisible(operationGroup, expanded);
+        setVisible(operationGroup, expanded && (state.canWrite || state.unavailable));
         bindBadge();
         bindValues();
         bindControls();
@@ -272,12 +259,6 @@ final class SystemFontScaleToolBinder {
     }
 
     private void bindValues() {
-        if (currentValueView != null) {
-            currentValueView.setText(state.currentPercent != null
-                    ? activity.getString(R.string.system_font_scale_current_value,
-                    state.currentPercent)
-                    : activity.getString(R.string.system_font_scale_current_unavailable));
-        }
         if (pendingValueView != null) {
             pendingValueView.setText(activity.getString(
                     R.string.system_font_scale_pending_value,
@@ -287,11 +268,11 @@ final class SystemFontScaleToolBinder {
 
     private void bindControls() {
         boolean controlsEnabled = state.canWrite && !state.unavailable;
-        if (seekBar != null) {
-            updatingSeekBar = true;
-            seekBar.setProgress(state.pendingPercent - SystemFontScaleToolState.MIN_PERCENT);
-            updatingSeekBar = false;
-            seekBar.setEnabled(controlsEnabled);
+        if (slider != null) {
+            updatingSlider = true;
+            slider.setValue(SystemFontScaleToolState.clampPercent(state.pendingPercent));
+            updatingSlider = false;
+            slider.setEnabled(controlsEnabled);
         }
         bindIconButton(applyButton, state.canApply());
         bindIconButton(decrementButton, controlsEnabled && state.canDecrement());

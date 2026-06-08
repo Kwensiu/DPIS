@@ -1,19 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/tools_workspace_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingStart="@dimen/template_workspace_padding_horizontal"
-    android:paddingTop="@dimen/template_workspace_padding_top"
-    android:paddingEnd="@dimen/template_workspace_padding_horizontal"
-    android:paddingBottom="@dimen/template_workspace_padding_bottom"
+    android:orientation="vertical"
     android:visibility="gone">
+
+    <LinearLayout
+        android:id="@+id/tools_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/page_toolbar_padding_horizontal"
+        android:paddingTop="@dimen/page_toolbar_padding_top"
+        android:paddingEnd="@dimen/page_toolbar_padding_horizontal"
+        android:paddingBottom="@dimen/page_toolbar_padding_bottom">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:includeFontPadding="false"
+            android:text="@string/workspace_tools"
+            android:textAppearance="@style/TextAppearance.Material3.HeadlineLarge"
+            android:textStyle="bold" />
+    </LinearLayout>
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:fillViewport="true"
+        android:paddingStart="@dimen/template_workspace_padding_horizontal"
+        android:paddingEnd="@dimen/template_workspace_padding_horizontal"
+        android:paddingBottom="@dimen/template_workspace_padding_bottom">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -87,13 +107,6 @@
                                 android:textAppearance="?attr/textAppearanceBodyMedium"
                                 android:textColor="?attr/colorOnSurfaceVariant" />
 
-                            <com.google.android.material.textview.MaterialTextView
-                                android:id="@+id/system_font_scale_current_value"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/template_workspace_text_spacing_top"
-                                android:textAppearance="?attr/textAppearanceBodySmall"
-                                android:textColor="?attr/colorOnSurfaceVariant" />
                         </LinearLayout>
 
                         <androidx.appcompat.widget.AppCompatImageButton
@@ -121,20 +134,11 @@
                             android:layout_height="wrap_content"
                             android:orientation="vertical">
 
-                            <com.google.android.material.textview.MaterialTextView
-                                android:id="@+id/system_font_scale_pending_value"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
-                                android:textColor="?attr/colorOnSurface"
-                                android:textStyle="bold" />
-
                             <LinearLayout
-                                android:layout_width="match_parent"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/template_workspace_actions_spacing_top"
-                                android:gravity="center_vertical"
+                                android:layout_gravity="center_horizontal"
+                                android:gravity="center"
                                 android:orientation="horizontal">
 
                                 <androidx.appcompat.widget.AppCompatImageButton
@@ -148,13 +152,17 @@
                                     android:src="@drawable/ic_remove_24"
                                     app:tint="?attr/colorOnSurfaceVariant" />
 
-                                <SeekBar
-                                    android:id="@+id/system_font_scale_seek_bar"
-                                    android:layout_width="0dp"
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/system_font_scale_pending_value"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginStart="@dimen/dialog_action_spacing_between"
                                     android:layout_marginEnd="@dimen/dialog_action_spacing_between"
-                                    android:splitTrack="false" />
+                                    android:gravity="center"
+                                    android:minWidth="@dimen/system_font_scale_value_min_width"
+                                    android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium"
+                                    android:textColor="?attr/colorOnSurface"
+                                    android:textStyle="bold" />
 
                                 <androidx.appcompat.widget.AppCompatImageButton
                                     android:id="@+id/system_font_scale_increment_button"
@@ -167,6 +175,18 @@
                                     android:src="@drawable/ic_add_24"
                                     app:tint="?attr/colorOnSurfaceVariant" />
                             </LinearLayout>
+
+                            <com.google.android.material.slider.Slider
+                                android:id="@+id/system_font_scale_slider"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/template_workspace_actions_spacing_top"
+                                android:stepSize="1"
+                                android:valueFrom="50"
+                                android:valueTo="200"
+                                app:labelBehavior="gone"
+                                app:tickVisible="false"
+                                app:trackStopIndicatorSize="@dimen/system_font_scale_slider_stop_indicator_size" />
 
                             <LinearLayout
                                 android:id="@+id/system_font_scale_preview"
@@ -191,45 +211,18 @@
                                     android:layout_marginTop="@dimen/template_workspace_text_spacing_top"
                                     android:text="@string/system_font_scale_preview_body"
                                     android:textColor="?attr/colorOnSurfaceVariant" />
-
-                                <com.google.android.material.textview.MaterialTextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="@dimen/template_workspace_text_spacing_top"
-                                    android:text="@string/system_font_scale_preview_hint"
-                                    android:textAppearance="?attr/textAppearanceBodySmall"
-                                    android:textColor="?attr/colorOnSurfaceVariant" />
                             </LinearLayout>
 
                             <com.google.android.material.button.MaterialButton
                                 android:id="@+id/system_font_scale_restore_button"
                                 style="@style/Widget.Material3.Button.TextButton"
                                 android:layout_width="wrap_content"
-                                android:layout_height="@dimen/template_workspace_action_button_height"
+                                android:layout_height="wrap_content"
                                 android:layout_gravity="center_horizontal"
                                 android:layout_marginTop="@dimen/template_workspace_actions_spacing_top"
+                                android:minHeight="@dimen/template_workspace_action_button_height"
                                 android:minWidth="0dp"
                                 android:text="@string/system_font_scale_restore_default" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:id="@+id/system_font_scale_permission_overlay"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:background="@drawable/bg_system_font_scale_overlay"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:gravity="center"
-                            android:orientation="vertical"
-                            android:padding="@dimen/template_workspace_card_padding"
-                            android:visibility="gone">
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/system_font_scale_permission_button"
-                                style="@style/Widget.Material3.Button.TonalButton"
-                                android:layout_width="match_parent"
-                                android:layout_height="@dimen/template_workspace_action_button_height"
-                                android:text="@string/system_font_scale_permission_button" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -253,8 +246,31 @@
                                 android:textColor="?attr/colorOnSurfaceVariant" />
                         </LinearLayout>
                     </FrameLayout>
+
+                    <LinearLayout
+                        android:id="@+id/system_font_scale_permission_overlay"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/system_font_scale_permission_panel_height"
+                        android:layout_marginTop="@dimen/template_workspace_actions_spacing_top"
+                        android:background="@drawable/bg_system_font_scale_permission_panel"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/system_font_scale_permission_button"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="@string/system_font_scale_permission_button"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textStyle="bold" />
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
     </ScrollView>
-</FrameLayout>
+</LinearLayout>

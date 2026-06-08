@@ -62,6 +62,53 @@ public class SystemFontScaleToolStateTest {
     }
 
     @Test
+    public void restoreIsAvailableForUnsavedPendingValueEvenWhenCurrentIsDefault() {
+        SystemFontScaleToolState state = new SystemFontScaleToolState(
+                true,
+                100,
+                125,
+                true,
+                false);
+
+        assertTrue(state.canRestore());
+        assertTrue(state.shouldRestorePendingOnly());
+    }
+
+    @Test
+    public void restoreWritesDefaultWheneverCurrentIsNotDefault() {
+        SystemFontScaleToolState pendingDiffers = new SystemFontScaleToolState(
+                true,
+                115,
+                120,
+                true,
+                false);
+        SystemFontScaleToolState pendingIsDefault = new SystemFontScaleToolState(
+                true,
+                115,
+                100,
+                true,
+                false);
+
+        assertTrue(pendingDiffers.canRestore());
+        assertFalse(pendingDiffers.shouldRestorePendingOnly());
+        assertTrue(pendingIsDefault.canRestore());
+        assertFalse(pendingIsDefault.shouldRestorePendingOnly());
+    }
+
+    @Test
+    public void restoreIsDisabledWhenCurrentAndPendingAreBothDefault() {
+        SystemFontScaleToolState state = new SystemFontScaleToolState(
+                true,
+                100,
+                100,
+                false,
+                false);
+
+        assertFalse(state.canRestore());
+        assertFalse(state.shouldRestorePendingOnly());
+    }
+
+    @Test
     public void unavailableOverridesAllValueState() {
         SystemFontScaleToolState state = new SystemFontScaleToolState(
                 true,

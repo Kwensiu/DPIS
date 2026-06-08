@@ -30,6 +30,15 @@ public class ToolsWorkspaceBinderSourceSmokeTest {
         assertTrue(source.contains("fontScaleToolBinder.collapseAndRefreshFromSystem();"));
     }
 
+    @Test
+    public void systemFontScalePermissionPanelOwnsAuthorizationClick() throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemFontScaleToolBinder.java");
+
+        assertTrue(source.contains("TouchFeedbackBinder.bindPressHaptic(permissionOverlay);"));
+        assertTrue(source.contains("permissionOverlay.setOnClickListener(v -> openWriteSettingsPermission());"));
+        assertTrue(source.contains("setVisible(operationGroup, expanded && (state.canWrite || state.unavailable));"));
+    }
+
     private static String read(String relativePath) throws IOException {
         return SourceSmokeTestPaths.read(relativePath);
     }

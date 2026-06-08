@@ -83,7 +83,13 @@ final class SystemFontScaleToolState {
         return canWrite
                 && !unavailable
                 && currentPercent != null
-                && currentPercent != DEFAULT_PERCENT;
+                && (pendingPercent != DEFAULT_PERCENT
+                || currentPercent != DEFAULT_PERCENT);
+    }
+
+    boolean shouldRestorePendingOnly() {
+        return currentPercent == DEFAULT_PERCENT
+                && pendingPercent != DEFAULT_PERCENT;
     }
 
     boolean canDecrement() {

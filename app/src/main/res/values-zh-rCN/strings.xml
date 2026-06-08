@@ -107,9 +107,7 @@
     <string name="tools_workspace_under_construction">正在施工</string>
     <string name="system_font_scale_title">系统字体大小</string>
     <string name="system_font_scale_subtitle">精确调整全局字体大小</string>
-    <string name="system_font_scale_current_value">当前 %1$d%%</string>
     <string name="system_font_scale_pending_value">%1$d%%</string>
-    <string name="system_font_scale_current_unavailable">无法读取当前值</string>
     <string name="system_font_scale_badge_permission_required">需授权</string>
     <string name="system_font_scale_badge_modified">已修改</string>
     <string name="system_font_scale_badge_unavailable">不可用</string>
@@ -121,7 +119,6 @@
     <string name="system_font_scale_unavailable_message">无法读取当前系统字体大小</string>
     <string name="system_font_scale_preview_title">预览标题</string>
     <string name="system_font_scale_preview_body">正文会跟随目标字体大小显示。</string>
-    <string name="system_font_scale_preview_hint">部分应用可能使用自己的字体设置。</string>
     <string name="system_font_scale_restore_default">恢复 100%</string>
     <string name="system_font_scale_write_failed">系统拒绝了字体应用</string>
     <string name="home_workspace_title">DPIS</string>
