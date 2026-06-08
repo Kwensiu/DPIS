@@ -25,6 +25,12 @@ private fun readGradleOrEnv(name: String): String? {
     return if (envValue.isNullOrEmpty()) null else envValue
 }
 
+private fun readGradleOrEnvInt(name: String): Int? {
+    val value = readGradleOrEnv(name) ?: return null
+    return value.toIntOrNull()
+        ?: throw GradleException("$name must be an integer: $value")
+}
+
 private val releaseStoreFilePath = readGradleOrEnv("DPIS_RELEASE_STORE_FILE")
 private val releaseStorePassword = readGradleOrEnv("DPIS_RELEASE_STORE_PASSWORD")
 private val releaseKeyAlias = readGradleOrEnv("DPIS_RELEASE_KEY_ALIAS")
@@ -42,6 +48,13 @@ private val releaseTasksRequested = gradle.startParameter.taskNames.any {
     val taskName = it.substringAfterLast(":")
     taskName == "renameReleaseApk" || taskName.endsWith("Release")
 }
+private val versionNameOverride = readGradleOrEnv("DPIS_VERSION_NAME")
+private val versionCodeOverride = readGradleOrEnvInt("DPIS_VERSION_CODE")
+if ((versionNameOverride == null) != (versionCodeOverride == null)) {
+    throw GradleException("DPIS_VERSION_NAME and DPIS_VERSION_CODE must be set together.")
+}
+private val resolvedVersionName = versionNameOverride ?: appVersionName
+private val resolvedVersionCode = versionCodeOverride ?: semVerToVersionCode(appVersionName)
 
 abstract class RenameReleaseApkTask : DefaultTask() {
     @get:Internal
@@ -103,8 +116,8 @@ android {
         applicationId = "io.github.kwensiu.dpis"
         minSdk = 26
         targetSdk = 36
-        versionName = appVersionName
-        versionCode = semVerToVersionCode(appVersionName)
+        versionName = resolvedVersionName
+        versionCode = resolvedVersionCode
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField(
             "String",
@@ -227,8 +240,8 @@ androidComponents {
     }
 }
 
-val renamedReleaseApkName = "DPIS_${appVersionName}.apk"
-val renamedLegacyApkName = "DPIS_${appVersionName}_legacy.apk"
+val renamedReleaseApkName = "DPIS_${resolvedVersionName}.apk"
+val renamedLegacyApkName = "DPIS_${resolvedVersionName}_legacy.apk"
 
 val renameReleaseApk = tasks.register("renameReleaseApk", RenameReleaseApkTask::class) {
     sourceApk.set(layout.buildDirectory.file("outputs/apk/modern101/release/app-modern101-release.apk"))

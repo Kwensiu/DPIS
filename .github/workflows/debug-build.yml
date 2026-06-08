@@ -1,17 +1,7 @@
-name: debug apk
+name: debug apk build
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - 'app/**'
-      - 'gradle/**'
-      - 'build.gradle.kts'
-      - 'settings.gradle.kts'
-      - 'gradle.properties'
-      - '.github/workflows/debug-apk.yml'
 
 permissions:
   contents: read

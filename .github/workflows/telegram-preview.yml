@@ -1,0 +1,170 @@
+name: Telegram Preview Build
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - 'gradle/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle.properties'
+      - '.github/.release-please-manifest.json'
+      - '.github/workflows/telegram-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          (yes || true) | sdkmanager --licenses > /dev/null
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.1.0" "cmake;3.22.1" "ndk;28.2.13676358"
+
+      - name: Derive preview version
+        id: preview
+        shell: bash
+        run: |
+          BASE_VERSION="$(jq -r '.["."]' .github/.release-please-manifest.json)"
+          if [[ ! "$BASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Base version must be semantic version x.y.z: $BASE_VERSION"
+            exit 1
+          fi
+
+          RUN_NUMBER="${{ github.run_number }}"
+          if (( RUN_NUMBER < 1 || RUN_NUMBER > 9999 )); then
+            echo "GitHub run number must stay in 1..9999 for preview versionCode mapping: $RUN_NUMBER"
+            exit 1
+          fi
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
+          BASE_VERSION_CODE=$((10#$MAJOR * 10000 + 10#$MINOR * 100 + 10#$PATCH))
+          PREVIEW_VERSION_CODE=$((BASE_VERSION_CODE * 10000 + RUN_NUMBER))
+          if (( PREVIEW_VERSION_CODE > 2100000000 )); then
+            echo "Preview versionCode exceeds Android limit: $PREVIEW_VERSION_CODE"
+            exit 1
+          fi
+          SHORT_SHA="${GITHUB_SHA::7}"
+          PREVIEW_VERSION_NAME="${BASE_VERSION}-${RUN_NUMBER}.${SHORT_SHA}"
+
+          echo "version_name=$PREVIEW_VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "version_code=$PREVIEW_VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure gradlew is executable
+        run: chmod +x gradlew
+
+      - name: Validate release signing secrets
+        shell: bash
+        env:
+          DPIS_RELEASE_KEYSTORE_BASE64: ${{ secrets.DPIS_RELEASE_KEYSTORE_BASE64 }}
+          DPIS_RELEASE_STORE_PASSWORD: ${{ secrets.DPIS_RELEASE_STORE_PASSWORD }}
+          DPIS_RELEASE_KEY_ALIAS: ${{ secrets.DPIS_RELEASE_KEY_ALIAS }}
+          DPIS_RELEASE_KEY_PASSWORD: ${{ secrets.DPIS_RELEASE_KEY_PASSWORD }}
+        run: |
+          for key in \
+            DPIS_RELEASE_KEYSTORE_BASE64 \
+            DPIS_RELEASE_STORE_PASSWORD \
+            DPIS_RELEASE_KEY_ALIAS \
+            DPIS_RELEASE_KEY_PASSWORD; do
+            if [[ -z "${!key}" ]]; then
+              echo "Missing required secret: $key"
+              exit 1
+            fi
+          done
+
+      - name: Prepare release keystore
+        shell: bash
+        env:
+          DPIS_RELEASE_KEYSTORE_BASE64: ${{ secrets.DPIS_RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          KEYSTORE_DIR="${GITHUB_WORKSPACE}/.keystore"
+          KEYSTORE_PATH="${KEYSTORE_DIR}/release.jks"
+          mkdir -p "${KEYSTORE_DIR}"
+          echo "${DPIS_RELEASE_KEYSTORE_BASE64}" | base64 --decode > "${KEYSTORE_PATH}"
+
+      - name: Build preview APKs
+        env:
+          DPIS_RELEASE_STORE_FILE: ${{ github.workspace }}/.keystore/release.jks
+          DPIS_RELEASE_STORE_PASSWORD: ${{ secrets.DPIS_RELEASE_STORE_PASSWORD }}
+          DPIS_RELEASE_KEY_ALIAS: ${{ secrets.DPIS_RELEASE_KEY_ALIAS }}
+          DPIS_RELEASE_KEY_PASSWORD: ${{ secrets.DPIS_RELEASE_KEY_PASSWORD }}
+          DPIS_VERSION_NAME: ${{ steps.preview.outputs.version_name }}
+          DPIS_VERSION_CODE: ${{ steps.preview.outputs.version_code }}
+        run: ./gradlew :app:assembleRelease
+
+      - name: Send APKs to Telegram
+        shell: bash
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_CHAT_IDS: ${{ secrets.TELEGRAM_CHAT_IDS }}
+          TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
+          TELEGRAM_PROTECT_CONTENT: ${{ secrets.TELEGRAM_PROTECT_CONTENT }}
+          VERSION_NAME: ${{ steps.preview.outputs.version_name }}
+          VERSION_CODE: ${{ steps.preview.outputs.version_code }}
+          SHORT_SHA: ${{ steps.preview.outputs.short_sha }}
+        run: |
+          if [[ -z "$TELEGRAM_BOT_TOKEN" ]]; then
+            echo "TELEGRAM_BOT_TOKEN is not set"
+            exit 1
+          fi
+
+          CHAT_TARGETS="${TELEGRAM_CHAT_IDS:-$TELEGRAM_CHAT_ID}"
+          if [[ -z "$CHAT_TARGETS" ]]; then
+            echo "TELEGRAM_CHAT_ID or TELEGRAM_CHAT_IDS is required"
+            exit 1
+          fi
+
+          APKS=(
+            "app/build/outputs/apk/modern101/release/DPIS_${VERSION_NAME}.apk"
+            "app/build/outputs/apk/compat100/release/DPIS_${VERSION_NAME}_legacy.apk"
+          )
+          for apk in "${APKS[@]}"; do
+            if [[ ! -f "$apk" ]]; then
+              echo "APK not found: $apk"
+              exit 1
+            fi
+          done
+
+          CAPTION=$'DPIS main preview\nVersion: '"${VERSION_NAME}"$'\nVersionCode: '"${VERSION_CODE}"$'\nCommit: '"${SHORT_SHA}"$'\n'"https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+          IFS=',' read -ra CHAT_IDS <<< "$CHAT_TARGETS"
+          for chat_id in "${CHAT_IDS[@]}"; do
+            chat_id="$(echo "$chat_id" | xargs)"
+            [[ -z "$chat_id" ]] && continue
+            for apk in "${APKS[@]}"; do
+              args=(
+                -F "chat_id=${chat_id}"
+                -F "caption=${CAPTION}"
+                -F "document=@${apk}"
+              )
+              if [[ -n "$TELEGRAM_MESSAGE_THREAD_ID" ]]; then
+                args+=(-F "message_thread_id=${TELEGRAM_MESSAGE_THREAD_ID}")
+              fi
+              if [[ "$TELEGRAM_PROTECT_CONTENT" == "true" ]]; then
+                args+=(-F "protect_content=true")
+              fi
+              curl --fail --show-error --silent \
+                "${args[@]}" \
+                "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument"
+            done
+          done
