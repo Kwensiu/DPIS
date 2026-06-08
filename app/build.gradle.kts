@@ -286,6 +286,7 @@ dependencies {
     compileOnly(libs.libxposed.api)
     compileOnly(libs.legacy.xposed.api)
     implementation(libs.libxposed.service)
+    implementation(libs.dexkit)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.viewpager2)

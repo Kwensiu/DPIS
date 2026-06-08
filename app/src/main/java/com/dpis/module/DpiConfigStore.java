@@ -31,6 +31,9 @@ final class DpiConfigStore {
     static final String KEY_HIDE_LAUNCHER_ICON = "ui.hide_launcher_icon";
     static final String KEY_INTERFACE_SCALE_PERCENT = "ui.interface_scale_percent";
     static final String KEY_STARTUP_DISCLAIMER_ACCEPTED = "ui.startup_disclaimer_accepted";
+    // TODO: Remove after temporary WeChat DPI test builds are no longer upgrade sources.
+    private static final String LEGACY_WECHAT_DPI_KEY = "wechat."
+            + WechatDpiConfig.PACKAGE_NAME + ".wekit_dpi";
     private static final String[] LOCAL_ONLY_MIRROR_KEYS = {
             KEY_HIDE_LAUNCHER_ICON,
             KEY_INTERFACE_SCALE_PERCENT,
@@ -151,19 +154,26 @@ final class DpiConfigStore {
         return normalizeTypefaceId(getString(key, null));
     }
 
-    Integer getWechatTargetField(String packageName) {
-        if (!WechatTargetFieldConfig.appliesTo(packageName)) {
+    Integer getWechatDpi(String packageName) {
+        if (!WechatDpiConfig.appliesTo(packageName)) {
             return null;
         }
-        String key = keyForWechatTargetField(packageName);
+        String key = keyForWechatDpi(packageName);
         if (!contains(key)) {
             return null;
         }
-        return WechatTargetFieldConfig.normalize(getNullableInt(key));
+        return WechatDpiConfig.normalize(getNullableInt(key));
+    }
+
+    Integer getLegacyWechatDpiForMigration() {
+        if (!contains(LEGACY_WECHAT_DPI_KEY)) {
+            return null;
+        }
+        return WechatDpiConfig.normalize(getNullableInt(LEGACY_WECHAT_DPI_KEY));
     }
 
     boolean hasTargetAppSpecificConfig(String packageName) {
-        return getWechatTargetField(packageName) != null;
+        return getWechatDpi(packageName) != null;
     }
 
     String getTargetFontApplyMode(String packageName) {
@@ -478,40 +488,19 @@ final class DpiConfigStore {
                 .putString(keyForTypefaceId(packageName), normalizedTypefaceId));
     }
 
-    boolean setWechatTargetField(String packageName, Integer targetField) {
-        if (!WechatTargetFieldConfig.appliesTo(packageName)) {
+    boolean setWechatDpi(String packageName, Integer dpi) {
+        if (!WechatDpiConfig.appliesTo(packageName)) {
             return true;
         }
-        Integer normalized = WechatTargetFieldConfig.normalize(targetField);
+        Integer normalized = WechatDpiConfig.normalize(dpi);
         if (normalized == null) {
-            return clearWechatTargetField(packageName);
+            return clearWechatDpi(packageName);
         }
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
         packages.add(packageName);
         return commitBoth(editor -> editor
                 .putStringSet(KEY_TARGET_PACKAGES, packages)
-                .putInt(keyForWechatTargetField(packageName), normalized));
-    }
-
-    boolean migrateWechatViewportToTargetFieldIfNeeded() {
-        String packageName = WechatTargetFieldConfig.PACKAGE_NAME;
-        if (getWechatTargetField(packageName) != null) {
-            return true;
-        }
-        Integer legacyViewportWidth = getTargetViewportWidthDp(packageName);
-        Integer targetField = WechatTargetFieldConfig.normalize(legacyViewportWidth);
-        if (targetField == null) {
-            return true;
-        }
-        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
-        packages.add(packageName);
-        return commitBoth(editor -> editor
-                .putStringSet(KEY_TARGET_PACKAGES, packages)
-                .putInt(keyForWechatTargetField(packageName), targetField)
-                .remove(keyForViewportWidth(packageName))
-                .remove(keyForViewportTargetType(packageName))
-                .remove(keyForViewportScalePermille(packageName))
-                .remove(keyForViewportMode(packageName)));
+                .putInt(keyForWechatDpi(packageName), normalized));
     }
 
     boolean setTargetFontApplyMode(String packageName, String mode) {
@@ -551,17 +540,38 @@ final class DpiConfigStore {
                 .remove(keyForTypefaceId(packageName)));
     }
 
-    boolean clearWechatTargetField(String packageName) {
-        if (!WechatTargetFieldConfig.appliesTo(packageName)) {
+    boolean clearWechatDpi(String packageName) {
+        if (!WechatDpiConfig.appliesTo(packageName)) {
             return true;
         }
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
-        if (!hasAnyPackageConfigAfterRemoving(packageName, keyForWechatTargetField(packageName))) {
+        if (!hasAnyPackageConfigAfterRemoving(packageName, keyForWechatDpi(packageName))) {
             packages.remove(packageName);
         }
         return commitBoth(editor -> editor
                 .putStringSet(KEY_TARGET_PACKAGES, packages)
-                .remove(keyForWechatTargetField(packageName)));
+                .remove(keyForWechatDpi(packageName)));
+    }
+
+    boolean migrateLegacyWechatDpi() {
+        Integer legacyDpi = getLegacyWechatDpiForMigration();
+        String officialKey = keyForWechatDpi(WechatDpiConfig.PACKAGE_NAME);
+        if (legacyDpi == null) {
+            if (!contains(LEGACY_WECHAT_DPI_KEY)) {
+                return true;
+            }
+            return commitBoth(editor -> editor.remove(LEGACY_WECHAT_DPI_KEY));
+        }
+        if (contains(officialKey)) {
+            return commitBoth(editor -> editor.remove(LEGACY_WECHAT_DPI_KEY));
+        }
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        packages.add(WechatDpiConfig.PACKAGE_NAME);
+        return commitBoth(editor -> {
+            editor.putStringSet(KEY_TARGET_PACKAGES, packages)
+                    .remove(LEGACY_WECHAT_DPI_KEY);
+            editor.putInt(officialKey, legacyDpi);
+        });
     }
 
     boolean hasPrimaryTargetViewportWidthDp(String packageName) {
@@ -618,7 +628,7 @@ final class DpiConfigStore {
                 .remove(keyForFontMode(packageName))
                 .remove(keyForDpisEnabled(packageName))
                 .remove(keyForFontHookDomains(packageName))
-                .remove(keyForWechatTargetField(packageName)));
+                .remove(keyForWechatDpi(packageName)));
     }
 
     String getPackageFontHookDomainsRaw(String packageName) {
@@ -790,9 +800,9 @@ final class DpiConfigStore {
                 && contains(dpisEnabledKey)) {
             return true;
         }
-        String wechatTargetFieldKey = keyForWechatTargetField(packageName);
-        if (!isRemovedKey(wechatTargetFieldKey, removedKeys)
-                && getWechatTargetField(packageName) != null) {
+        String wechatDpiKey = keyForWechatDpi(packageName);
+        if (!isRemovedKey(wechatDpiKey, removedKeys)
+                && getWechatDpi(packageName) != null) {
             return true;
         }
         String hookDomainsKey = keyForFontHookDomains(packageName);
@@ -1235,7 +1245,7 @@ final class DpiConfigStore {
         return "font." + packageName + ".hook_domains";
     }
 
-    private static String keyForWechatTargetField(String packageName) {
-        return "wechat." + packageName + ".target_field";
+    private static String keyForWechatDpi(String packageName) {
+        return "wechat." + packageName + ".dpi";
     }
 }

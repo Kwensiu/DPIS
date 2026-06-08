@@ -1157,10 +1157,10 @@ public class MainActivitySourceSmokeTest {
         );
         assertTrue(
             layout.indexOf("android:id=\"@+id/land_detail_font_scale_editor\"")
-                < layout.indexOf("android:id=\"@+id/dialog_wechat_target_field_row\"")
+                < layout.indexOf("android:id=\"@+id/dialog_wechat_dpi_row\"")
         );
         assertTrue(
-            layout.indexOf("android:id=\"@+id/dialog_wechat_target_field_row\"")
+            layout.indexOf("android:id=\"@+id/dialog_wechat_dpi_row\"")
                 < layout.indexOf("android:id=\"@+id/land_detail_typeface_row\"")
         );
         assertTrue(
@@ -1225,9 +1225,9 @@ public class MainActivitySourceSmokeTest {
         assertTrue(binder.contains("item,"));
         assertTrue(binder.contains("FormInputFocusBinder.bindDismissOnOutsideTouch"));
         assertTrue(binder.contains("FormInputFocusBinder.clearFocusAndHideIme"));
-        assertTrue(binder.contains("R.id.dialog_wechat_target_field_input"));
+        assertTrue(binder.contains("WechatDpiSheetBinder.inputViewForFocus(root)"));
         assertTrue(binder.contains("state.clearViewportInputs();"));
-        assertTrue(binder.contains("WechatTargetFieldSheetBinder.clearDraft(root);"));
+        assertTrue(binder.contains("WechatDpiSheetBinder.clearDraft(root);"));
         assertTrue(
             binder.contains(
                 "AppConfigDialogBinder.AppConfigDialogState.fromItem(item)"

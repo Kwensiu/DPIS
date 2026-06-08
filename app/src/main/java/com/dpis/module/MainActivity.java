@@ -2551,9 +2551,9 @@ public final class MainActivity
                     draft.fontHookDomainsResetRequested,
                     draft.viewportApplyModeResetRequested
             );
-            WechatTargetFieldSheetBinder.applyDraft(
+            WechatDpiSheetBinder.applyDraft(
                     dialogView,
-                    draft.wechatTargetFieldInput
+                    draft.wechatDpiInput
             );
         }
         activeEditorRoot = dialogView;
@@ -2687,7 +2687,7 @@ public final class MainActivity
                         enabled
                 );
                 if (saved) {
-                    WechatTargetFieldSheetBinder.publishForDpisState(
+                    WechatDpiSheetBinder.publishForDpisState(
                             packageName,
                             enabled
                     );
@@ -2742,9 +2742,9 @@ public final class MainActivity
                     draft.fontHookDomainsResetRequested,
                     draft.viewportApplyModeResetRequested
             );
-            WechatTargetFieldSheetBinder.applyDraft(
+            WechatDpiSheetBinder.applyDraft(
                     dialogView,
-                    draft.wechatTargetFieldInput
+                    draft.wechatDpiInput
             );
         }
     }
@@ -2886,7 +2886,7 @@ public final class MainActivity
                 viewportScaleInput,
                 viewportAbsoluteInput
         );
-        boolean wechatSaved = WechatTargetFieldSheetBinder.save(
+        boolean wechatSaved = WechatDpiSheetBinder.save(
                 root,
                 item.packageName,
                 dpisEnabled,
@@ -3756,7 +3756,7 @@ public final class MainActivity
                 state != null
                         ? state.viewportApplyModeResetRequested
                         : useCurrentState && current.viewportApplyModeResetRequested,
-                WechatTargetFieldSheetBinder.captureDraft(root)
+                WechatDpiSheetBinder.captureDraft(root)
         );
         return draft;
     }
@@ -3780,7 +3780,7 @@ public final class MainActivity
                 state.viewportApplyMode,
                 state.fontHookDomainsResetRequested,
                 state.viewportApplyModeResetRequested,
-                current != null ? current.wechatTargetFieldInput : null
+                current != null ? current.wechatDpiInput : null
         );
         mainViewModel.setEditingDraft(draft);
     }
@@ -3922,7 +3922,7 @@ public final class MainActivity
         final String viewportApplyMode;
         final boolean fontHookDomainsResetRequested;
         final boolean viewportApplyModeResetRequested;
-        final String wechatTargetFieldInput;
+        final String wechatDpiInput;
 
         AppConfigDraft(
                 String packageName,
@@ -3935,7 +3935,7 @@ public final class MainActivity
                 String viewportApplyMode,
                 boolean fontHookDomainsResetRequested,
                 boolean viewportApplyModeResetRequested,
-                String wechatTargetFieldInput
+                String wechatDpiInput
         ) {
             this.packageName = packageName;
             this.viewportInput = viewportInput;
@@ -3947,7 +3947,7 @@ public final class MainActivity
             this.viewportApplyMode = ViewportApplyMode.normalize(viewportApplyMode);
             this.fontHookDomainsResetRequested = fontHookDomainsResetRequested;
             this.viewportApplyModeResetRequested = viewportApplyModeResetRequested;
-            this.wechatTargetFieldInput = wechatTargetFieldInput;
+            this.wechatDpiInput = wechatDpiInput;
         }
     }
 

@@ -53,7 +53,6 @@ final class AppConfigSheetActionBinder {
             boolean nextEnabled = !state.dpisEnabled;
             if (host.setDpisEnabled(item.packageName, nextEnabled)) {
                 state.dpisEnabled = nextEnabled;
-                WechatTargetFieldSheetBinder.publishForDpisState(item.packageName, nextEnabled);
                 binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
             }
         });
@@ -69,7 +68,7 @@ final class AppConfigSheetActionBinder {
             clearInputFocus(dialogView, views);
             views.viewportInputView.setText("");
             views.fontInputView.setText("");
-            WechatTargetFieldSheetBinder.clearDraft(dialogView);
+            WechatDpiSheetBinder.clearDraft(dialogView);
             state.selectedTypefaceId = null;
             state.clearViewportInputs();
             state.clearHookChainStateForReset();
@@ -84,7 +83,7 @@ final class AppConfigSheetActionBinder {
         });
         views.saveButton.setOnClickListener(v -> {
             clearInputFocus(dialogView, views);
-            if (!WechatTargetFieldSheetBinder.isInputValid(dialogView)) {
+            if (!WechatDpiSheetBinder.isInputValid(dialogView)) {
                 host.showToast(R.string.status_save_invalid);
                 return;
             }
@@ -103,7 +102,7 @@ final class AppConfigSheetActionBinder {
                     state.viewportAbsoluteInput);
             if (result[0] == 1) {
                 DpiConfigStore store = host.getConfigStore();
-                if (!WechatTargetFieldSheetBinder.save(
+                if (!WechatDpiSheetBinder.save(
                         dialogView, item.packageName, state.dpisEnabled, store)) {
                     result[0] = 0;
                     result[1] = R.string.status_save_invalid;
@@ -154,7 +153,7 @@ final class AppConfigSheetActionBinder {
                 dialogView,
                 views.viewportInputView,
                 views.fontInputView,
-                dialogView.findViewById(R.id.dialog_wechat_target_field_input)
+                WechatDpiSheetBinder.inputViewForFocus(dialogView)
         );
     }
 }

@@ -1,11 +1,11 @@
 package com.dpis.module;
 
-final class WechatTargetFieldConfig {
+final class WechatDpiConfig {
     static final String PACKAGE_NAME = "com.tencent.mm";
-    static final int MIN_TARGET_FIELD = 200;
-    static final int MAX_TARGET_FIELD = 1200;
+    static final int MIN_DPI = 200;
+    static final int MAX_DPI = 1000;
 
-    private WechatTargetFieldConfig() {
+    private WechatDpiConfig() {
     }
 
     static boolean appliesTo(String packageName) {
@@ -28,7 +28,7 @@ final class WechatTargetFieldConfig {
     }
 
     static Integer normalize(Integer value) {
-        if (value == null || value < MIN_TARGET_FIELD || value > MAX_TARGET_FIELD) {
+        if (value == null || value < MIN_DPI || value > MAX_DPI) {
             return null;
         }
         return value;

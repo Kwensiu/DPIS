@@ -111,7 +111,7 @@ final class LandAppDetailPaneBinder {
 
         bindViewportEditor(root, item, state);
         bindFontEditor(root, item);
-        WechatTargetFieldSheetBinder.bind(root, item, ()
+        WechatDpiSheetBinder.bind(root, item, ()
                 -> updateSaveButtonState(root, saveButton)
         );
         FormInputFocusBinder.bindDismissOnOutsideTouch(
@@ -119,7 +119,7 @@ final class LandAppDetailPaneBinder {
                 root,
                 root.findViewById(R.id.land_detail_viewport_input),
                 root.findViewById(R.id.land_detail_font_scale_input),
-                root.findViewById(R.id.dialog_wechat_target_field_input)
+                WechatDpiSheetBinder.inputViewForFocus(root)
         );
         MaterialTextView typefaceValue = root.findViewById(
                 R.id.land_detail_typeface_value
@@ -610,7 +610,7 @@ final class LandAppDetailPaneBinder {
                 root,
                 root.findViewById(R.id.land_detail_viewport_input),
                 root.findViewById(R.id.land_detail_font_scale_input),
-                root.findViewById(R.id.dialog_wechat_target_field_input)
+                WechatDpiSheetBinder.inputViewForFocus(root)
         );
     }
 
@@ -931,7 +931,7 @@ final class LandAppDetailPaneBinder {
                 fontInput,
                 resolvedSaveButton
         );
-        valid = valid && WechatTargetFieldSheetBinder.isInputValid(root);
+        valid = valid && WechatDpiSheetBinder.isInputValid(root);
         boolean hasChanged = hasUnsavedChanges(root);
         resolvedSaveButton.setEnabled(hasChanged && valid);
         updateUnsavedBadge(root);
@@ -1123,7 +1123,7 @@ final class LandAppDetailPaneBinder {
                 );
         viewportInput.setText("");
         fontInput.setText("");
-        WechatTargetFieldSheetBinder.clearDraft(root);
+        WechatDpiSheetBinder.clearDraft(root);
         state.selectedTypefaceId = null;
         state.clearViewportInputs();
         state.clearHookChainStateForReset();

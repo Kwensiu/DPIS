@@ -15,15 +15,13 @@ final class RuntimePropertyRecoveryCoordinator {
         if (store == null) {
             return;
         }
-        // Keep the runtime mirrors in sync with the persisted store. Boot/package events
-        // are best-effort triggers; the actual source of truth remains the stored config.
-        store.migrateWechatViewportToTargetFieldIfNeeded();
+        // Keep runtime mirrors in sync; persisted config remains the source of truth.
         RuntimeDebugPropertySyncer.publishAsync(
                 store.isGlobalLogEnabled(),
                 store.isFontDebugOverlayEnabled());
         ViewportPropertySyncer.syncConfiguredTargetsAsync(store);
         FontRuntimePropertySyncer.syncConfiguredTargetsAsync(store);
         FontHookDomainPropertySyncer.syncConfiguredTargetsAsync(store);
-        WechatTargetFieldPropertySyncer.syncConfiguredTargetsAsync(store);
+        WechatDpiPropertySyncer.syncConfiguredTargetsAsync(store);
     }
 }

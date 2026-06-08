@@ -34,6 +34,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         DynamicColors.applyToActivitiesIfAvailable(this);
         HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(this);
         configStore = ConfigStoreFactory.createLocalModuleConfigStore(this);
+        configStore.migrateLegacyWechatDpi();
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
         RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore);
         XposedServiceHelper.registerListener(this);
@@ -44,8 +45,9 @@ public final class DpisApplication extends Application implements XposedServiceH
     public void onServiceBind(XposedService service) {
         DpiConfigStore localStore = ConfigStoreFactory.createLocalModuleConfigStore(this);
         DpiConfigStore remoteStore = ConfigStoreFactory.createActiveModuleConfigStore(this, service);
+        localStore.migrateLegacyWechatDpi();
+        remoteStore.migrateLegacyWechatDpi();
         migrateConfig(localStore, remoteStore);
-        remoteStore.migrateWechatViewportToTargetFieldIfNeeded();
         // Keep local SharedPreferences as a cold-start mirror before the Xposed
         // service is rebound. Compat100 app processes cannot load XSharedPreferences.
         mirrorConfig(remoteStore, localStore);
@@ -135,6 +137,10 @@ public final class DpisApplication extends Application implements XposedServiceH
             to.ensureSeedConfig(seedViewportWidthDps);
         }
         for (String packageName : localPackages) {
+            Integer wechatDpi = from.getWechatDpi(packageName);
+            if (wechatDpi != null && to.getWechatDpi(packageName) == null) {
+                to.setWechatDpi(packageName, wechatDpi);
+            }
             Integer fontScalePercent = from.getTargetFontScalePercent(packageName);
             if (fontScalePercent != null && fontScalePercent > 0) {
                 if (!to.hasPrimaryTargetFontScalePercent(packageName)) {
@@ -160,7 +166,6 @@ public final class DpisApplication extends Application implements XposedServiceH
                 }
             }
         }
-        migrateWechatTargetField(from, to);
         if (from.hasSystemServerHooksEnabled() && !to.hasSystemServerHooksEnabled()) {
             to.setSystemServerHooksEnabled(from.isSystemServerHooksEnabled());
         }
@@ -255,24 +260,6 @@ public final class DpisApplication extends Application implements XposedServiceH
         return key != null
                 && (key.startsWith("default_config.")
                         || key.startsWith("template."));
-    }
-
-    private static void migrateWechatTargetField(DpiConfigStore from, DpiConfigStore to) {
-        if (from == null || to == null) {
-            return;
-        }
-        String packageName = WechatTargetFieldConfig.PACKAGE_NAME;
-        Integer targetField = from.getWechatTargetField(packageName);
-        if (targetField == null) {
-            targetField = WechatTargetFieldConfig.normalize(
-                    from.getTargetViewportWidthDp(packageName));
-        }
-        if (targetField == null || to.getWechatTargetField(packageName) != null) {
-            return;
-        }
-        to.setWechatTargetField(packageName, targetField);
-        to.clearTargetViewportWidthDp(packageName);
-        to.setTargetViewportApplyMode(packageName, ViewportApplyMode.OFF);
     }
 
     private static void mirrorConfig(DpiConfigStore from, DpiConfigStore to) {

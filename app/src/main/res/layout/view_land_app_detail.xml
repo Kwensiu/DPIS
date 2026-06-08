@@ -325,9 +325,8 @@
                         </FrameLayout>
                     </LinearLayout>
 
-                    <!-- Wechat Target Field -->
                     <LinearLayout
-                        android:id="@+id/dialog_wechat_target_field_row"
+                        android:id="@+id/dialog_wechat_dpi_row"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/land_app_detail_editor_row_spacing"
@@ -345,11 +344,11 @@
                         >
 
                             <com.google.android.material.textfield.TextInputLayout
-                                android:id="@+id/dialog_wechat_target_field_input_layout"
+                                android:id="@+id/dialog_wechat_dpi_input_layout"
                                 style="@style/Widget.Dpis.TextInputLayout.OutlinedBox.Compact"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:hint="@string/dialog_wechat_target_field_hint"
+                                android:hint="@string/dialog_wechat_dpi_hint"
                                 app:boxCornerRadiusBottomEnd="@dimen/dialog_app_config_input_corner_radius"
                                 app:boxCornerRadiusBottomStart="@dimen/dialog_app_config_input_corner_radius"
                                 app:boxCornerRadiusTopEnd="@dimen/dialog_app_config_input_corner_radius"
@@ -358,7 +357,7 @@
                             >
 
                                 <com.google.android.material.textfield.TextInputEditText
-                                    android:id="@+id/dialog_wechat_target_field_input"
+                                    android:id="@+id/dialog_wechat_dpi_input"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:gravity="center_vertical"
@@ -372,13 +371,13 @@
                         </FrameLayout>
 
                         <com.google.android.material.button.MaterialButton
-                            android:id="@+id/dialog_wechat_target_field_help_button"
+                            android:id="@+id/dialog_wechat_dpi_help_button"
                             style="@style/Widget.Dpis.DialogIconButton.Outlined"
                             android:layout_width="@dimen/dialog_wechat_help_button_size"
                             android:layout_height="@dimen/dialog_wechat_help_button_size"
                             android:layout_gravity="bottom"
                             android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start"
-                            android:contentDescription="@string/dialog_wechat_target_field_help_button"
+                            android:contentDescription="@string/dialog_wechat_dpi_help_button"
                             android:minWidth="0dp"
                             android:minHeight="0dp"
                             android:padding="@dimen/dialog_wechat_help_button_padding"

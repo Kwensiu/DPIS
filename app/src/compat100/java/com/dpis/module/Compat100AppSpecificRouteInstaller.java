@@ -7,14 +7,25 @@ final class Compat100AppSpecificRouteInstaller {
     }
 
     static boolean handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
-        if (lpparam == null || !WechatTargetFieldConfig.appliesTo(lpparam.packageName)) {
+        if (lpparam == null || !WechatDpiConfig.appliesTo(lpparam.packageName)) {
             return false;
         }
-        if (WechatTargetFieldConfig.appliesTo(lpparam.processName)) {
-            WechatTargetFieldCompat100HookInstaller.install(lpparam);
+        if (WechatDpiConfig.appliesTo(lpparam.processName)) {
+            DpisLog.i("compat100 WeChat DPI route enter: package="
+                    + lpparam.packageName + ", process=" + lpparam.processName);
+            try {
+                WechatDpiCompat100HookInstaller.install(lpparam);
+                DpisLog.i("compat100 WeChat DPI route install attempted: package="
+                        + lpparam.packageName + ", process=" + lpparam.processName);
+            } catch (Throwable throwable) {
+                DpisLog.e("compat100 WeChat DPI route install failed: package="
+                        + lpparam.packageName + ", process=" + lpparam.processName + ", "
+                        + throwable.getClass().getName() + ": " + throwable.getMessage(),
+                        throwable);
+            }
         }
         DpisLog.i("compat100 app-specific route installed alongside generic hooks: package="
-                + WechatTargetFieldConfig.PACKAGE_NAME + ", process=" + lpparam.processName);
+                + WechatDpiConfig.PACKAGE_NAME + ", process=" + lpparam.processName);
         return false;
     }
 }

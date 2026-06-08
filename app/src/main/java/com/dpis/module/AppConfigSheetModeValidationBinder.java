@@ -32,24 +32,20 @@ final class AppConfigSheetModeValidationBinder {
             FormInputFocusBinder.clearFocusAndHideIme(
                     dialogView,
                     views.viewportInputView,
-                    views.fontInputView
+                    views.fontInputView,
+                    WechatDpiSheetBinder.inputViewForFocus(dialogView)
             );
             return true;
         };
         views.viewportInputView.setOnEditorActionListener(doneListener);
         views.fontInputView.setOnEditorActionListener(doneListener);
-        TextInputEditText wechatInputView = dialogView.findViewById(
-                R.id.dialog_wechat_target_field_input
-        );
-        if (wechatInputView != null) {
-            wechatInputView.setOnEditorActionListener(doneListener);
-        }
+        WechatDpiSheetBinder.bindDoneAction(doneListener, dialogView);
         FormInputFocusBinder.bindDismissOnOutsideTouch(
                 dialogView.findViewById(R.id.dialog_app_config_scroll),
                 dialogView,
                 views.viewportInputView,
                 views.fontInputView,
-                wechatInputView
+                WechatDpiSheetBinder.inputViewForFocus(dialogView)
         );
         TextWatcher viewportValidationWatcher = new TextWatcher() {
             @Override

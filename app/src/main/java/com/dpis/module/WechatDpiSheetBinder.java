@@ -10,8 +10,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
-final class WechatTargetFieldSheetBinder {
-    private WechatTargetFieldSheetBinder() {
+final class WechatDpiSheetBinder {
+    private WechatDpiSheetBinder() {
     }
 
     static void bind(View dialogView, AppListItem item, Runnable onValidationChanged) {
@@ -21,7 +21,7 @@ final class WechatTargetFieldSheetBinder {
         if (row == null || inputLayout == null || inputView == null) {
             return;
         }
-        if (!WechatTargetFieldConfig.appliesTo(item.packageName)) {
+        if (!WechatDpiConfig.appliesTo(item.packageName)) {
             row.setVisibility(View.GONE);
             return;
         }
@@ -34,9 +34,8 @@ final class WechatTargetFieldSheetBinder {
             });
         }
         DpiConfigStore store = DpisApplication.getActiveHookConfigStore(
-                dialogView.getContext()
-        );
-        Integer initial = store != null ? store.getWechatTargetField(item.packageName) : null;
+                dialogView.getContext());
+        Integer initial = store != null ? store.getWechatDpi(item.packageName) : null;
         inputView.setText(initial != null ? String.valueOf(initial) : "");
         inputView.addTextChangedListener(new TextWatcher() {
             @Override
@@ -63,47 +62,44 @@ final class WechatTargetFieldSheetBinder {
         if (inputView == null || inputView.getText() == null) {
             return true;
         }
-        String raw = inputView.getText().toString();
-        WechatTargetFieldSupport.State support =
-                WechatTargetFieldSupport.current(dialogView.getContext());
-        if (!support.supported) {
-            return raw.isBlank();
+        return WechatDpiConfig.isInputValid(inputView.getText().toString());
+    }
+
+    static void bindDoneAction(android.widget.TextView.OnEditorActionListener listener,
+            View dialogView) {
+        TextInputEditText inputView = inputView(dialogView);
+        if (inputView != null) {
+            inputView.setOnEditorActionListener(listener);
         }
-        return WechatTargetFieldConfig.isInputValid(raw);
+    }
+
+    static TextInputEditText inputViewForFocus(View dialogView) {
+        return inputView(dialogView);
     }
 
     static boolean save(View dialogView, String packageName, boolean dpisEnabled,
             DpiConfigStore store) {
-        if (!WechatTargetFieldConfig.appliesTo(packageName)) {
+        if (!WechatDpiConfig.appliesTo(packageName)) {
             return true;
         }
         if (store == null || !isInputValid(dialogView)) {
             return false;
         }
-        Integer targetField = readTargetFieldOrNull(dialogView);
-        return saveTargetField(packageName, targetField, dpisEnabled, store);
+        Integer dpi = readDpiOrNull(dialogView);
+        boolean saved = store.setWechatDpi(packageName, dpi);
+        if (saved) {
+            WechatDpiPropertySyncer.publishDpiAsync(packageName, dpisEnabled ? dpi : null);
+        }
+        return saved;
     }
 
     static void publishForDpisState(String packageName, boolean dpisEnabled) {
-        if (!WechatTargetFieldConfig.appliesTo(packageName)) {
+        if (!WechatDpiConfig.appliesTo(packageName)) {
             return;
         }
         DpiConfigStore store = DpisApplication.getActiveHookConfigStore(null);
-        Integer targetField = store != null && dpisEnabled
-                ? store.getWechatTargetField(packageName)
-                : null;
-        WechatTargetFieldPropertySyncer.publishTargetAsync(packageName, targetField);
-    }
-
-    private static boolean saveTargetField(String packageName, Integer targetField,
-            boolean dpisEnabled, DpiConfigStore store) {
-        if (store == null) {
-            return false;
-        }
-        boolean saved = store.setWechatTargetField(packageName, targetField);
-        WechatTargetFieldPropertySyncer.publishTargetAsync(
-                packageName, dpisEnabled ? targetField : null);
-        return saved;
+        Integer dpi = store != null && dpisEnabled ? store.getWechatDpi(packageName) : null;
+        WechatDpiPropertySyncer.publishDpiAsync(packageName, dpi);
     }
 
     static void clearDraft(View dialogView) {
@@ -134,12 +130,12 @@ final class WechatTargetFieldSheetBinder {
         updateValidationState(inputLayout, inputView);
     }
 
-    private static Integer readTargetFieldOrNull(View dialogView) {
+    private static Integer readDpiOrNull(View dialogView) {
         TextInputEditText inputView = inputView(dialogView);
         if (inputView == null || inputView.getText() == null) {
             return null;
         }
-        return WechatTargetFieldConfig.parseOrNull(inputView.getText().toString());
+        return WechatDpiConfig.parseOrNull(inputView.getText().toString());
     }
 
     private static void updateValidationState(TextInputLayout inputLayout,
@@ -148,45 +144,30 @@ final class WechatTargetFieldSheetBinder {
             return;
         }
         String raw = inputView.getText() != null ? inputView.getText().toString() : "";
-        WechatTargetFieldSupport.State support =
-                WechatTargetFieldSupport.current(inputLayout.getContext());
-        boolean supported = support.supported;
-        boolean blank = raw.isBlank();
-        boolean valid = supported
-                ? WechatTargetFieldConfig.isInputValid(raw)
-                : blank;
+        boolean valid = WechatDpiConfig.isInputValid(raw);
         int defaultStrokeColor = MaterialColors.getColor(
                 inputLayout, com.google.android.material.R.attr.colorOutline);
         int errorStrokeColor = MaterialColors.getColor(
                 inputLayout, androidx.appcompat.R.attr.colorError);
-        if (!supported && !blank) {
-            inputLayout.setHelperText(null);
-            inputLayout.setError(inputLayout.getContext().getString(
-                    R.string.dialog_wechat_target_field_unsupported));
-            inputLayout.setErrorEnabled(true);
-        } else {
-            inputLayout.setError(null);
-            inputLayout.setErrorEnabled(false);
-            inputLayout.setHelperText(supported ? null : inputLayout.getContext().getString(
-                    R.string.dialog_wechat_target_field_unsupported));
-        }
+        inputLayout.setError(null);
+        inputLayout.setErrorEnabled(false);
         inputLayout.setBoxStrokeColor(valid ? defaultStrokeColor : errorStrokeColor);
     }
 
     private static View row(View dialogView) {
-        return dialogView.findViewById(R.id.dialog_wechat_target_field_row);
+        return dialogView.findViewById(R.id.dialog_wechat_dpi_row);
     }
 
     private static TextInputLayout inputLayout(View dialogView) {
-        return dialogView.findViewById(R.id.dialog_wechat_target_field_input_layout);
+        return dialogView.findViewById(R.id.dialog_wechat_dpi_input_layout);
     }
 
     private static TextInputEditText inputView(View dialogView) {
-        return dialogView.findViewById(R.id.dialog_wechat_target_field_input);
+        return dialogView.findViewById(R.id.dialog_wechat_dpi_input);
     }
 
     private static View helpButton(View dialogView) {
-        return dialogView.findViewById(R.id.dialog_wechat_target_field_help_button);
+        return dialogView.findViewById(R.id.dialog_wechat_dpi_help_button);
     }
 
     private static void showHelpDialog(View anchor) {
@@ -194,11 +175,12 @@ final class WechatTargetFieldSheetBinder {
             return;
         }
         androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(anchor.getContext())
-                .setTitle(R.string.dialog_wechat_target_field_help_title)
-                .setMessage(R.string.dialog_wechat_target_field_help_message)
+                .setTitle(R.string.dialog_wechat_dpi_help_title)
+                .setMessage(R.string.dialog_wechat_dpi_help_message)
                 .setPositiveButton(R.string.dialog_close_button, null)
                 .create();
+        dialog.setOnShowListener(d -> DialogWindowSizer.applyStandardWidth(
+                dialog, anchor.getContext()));
         dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, anchor.getContext());
     }
 }

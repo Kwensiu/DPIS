@@ -125,6 +125,80 @@ public class DpiConfigStoreTest {
     }
 
     @Test
+    public void updatesWechatDpiForConfiguredPackage() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertTrue(store.setWechatDpi("com.tencent.mm", 360));
+
+        assertEquals(Integer.valueOf(360), store.getWechatDpi("com.tencent.mm"));
+        assertTrue(store.hasTargetAppSpecificConfig("com.tencent.mm"));
+        assertTrue(store.getConfiguredPackages().contains("com.tencent.mm"));
+    }
+
+    @Test
+    public void clearsWechatDpiWhenDisabled() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.setWechatDpi("com.tencent.mm", 360));
+
+        assertTrue(store.clearWechatDpi("com.tencent.mm"));
+
+        assertNull(store.getWechatDpi("com.tencent.mm"));
+        assertFalse(store.getConfiguredPackages().contains("com.tencent.mm"));
+    }
+
+    @Test
+    public void migratesLegacyWechatDpiToOfficialKey() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putInt("wechat.com.tencent.mm.wekit_dpi", 360)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertTrue(store.migrateLegacyWechatDpi());
+
+        assertEquals(Integer.valueOf(360), store.getWechatDpi("com.tencent.mm"));
+        assertTrue(store.getConfiguredPackages().contains("com.tencent.mm"));
+        assertFalse(prefs.contains("wechat.com.tencent.mm.wekit_dpi"));
+    }
+
+    @Test
+    public void legacyWechatDpiMigrationDoesNotOverwriteOfficialKey() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putInt("wechat.com.tencent.mm.wekit_dpi", 360)
+                .putInt("wechat.com.tencent.mm.dpi", 600)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertTrue(store.migrateLegacyWechatDpi());
+
+        assertEquals(Integer.valueOf(600), store.getWechatDpi("com.tencent.mm"));
+        assertFalse(prefs.contains("wechat.com.tencent.mm.wekit_dpi"));
+    }
+
+    @Test
+    public void legacyWechatDpiMigrationDoesNotOverwriteMirrorOfficialKey() {
+        FakePrefs primaryPrefs = new FakePrefs();
+        FakePrefs mirrorPrefs = new FakePrefs();
+        primaryPrefs.edit()
+                .putInt("wechat.com.tencent.mm.wekit_dpi", 360)
+                .commit();
+        mirrorPrefs.edit()
+                .putInt("wechat.com.tencent.mm.dpi", 600)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(primaryPrefs, mirrorPrefs);
+
+        assertTrue(store.migrateLegacyWechatDpi());
+
+        assertEquals(Integer.valueOf(600), store.getWechatDpi("com.tencent.mm"));
+        assertFalse(primaryPrefs.contains("wechat.com.tencent.mm.wekit_dpi"));
+        assertFalse(mirrorPrefs.contains("wechat.com.tencent.mm.wekit_dpi"));
+        assertFalse(primaryPrefs.contains("wechat.com.tencent.mm.dpi"));
+    }
+
+    @Test
     public void ttcImportExperimentDefaultsOff() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
 
@@ -890,51 +964,44 @@ public class DpiConfigStoreTest {
     }
 
     @Test
-    public void wechatTargetFieldAddsAndClearsConfiguredPackage() {
+    public void wechatDpiAddsAndClearsConfiguredPackage() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
 
-        assertTrue(store.setWechatTargetField("com.tencent.mm", 600));
-        assertEquals(Integer.valueOf(600), store.getWechatTargetField("com.tencent.mm"));
+        assertTrue(store.setWechatDpi("com.tencent.mm", 600));
+        assertEquals(Integer.valueOf(600), store.getWechatDpi("com.tencent.mm"));
         assertTrue(store.hasTargetAppSpecificConfig("com.tencent.mm"));
         assertTrue(store.getConfiguredPackages().contains("com.tencent.mm"));
 
-        assertTrue(store.clearWechatTargetField("com.tencent.mm"));
-        assertNull(store.getWechatTargetField("com.tencent.mm"));
+        assertTrue(store.clearWechatDpi("com.tencent.mm"));
+        assertNull(store.getWechatDpi("com.tencent.mm"));
         assertFalse(store.hasTargetAppSpecificConfig("com.tencent.mm"));
         assertFalse(store.getConfiguredPackages().contains("com.tencent.mm"));
     }
 
     @Test
-    public void wechatTargetFieldIgnoresUnsupportedPackageAndOutOfRangeValues() {
+    public void wechatDpiIgnoresUnsupportedPackageAndOutOfRangeValues() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
 
-        assertTrue(store.setWechatTargetField("com.example.app", 600));
-        assertNull(store.getWechatTargetField("com.example.app"));
+        assertTrue(store.setWechatDpi("com.example.app", 600));
+        assertNull(store.getWechatDpi("com.example.app"));
         assertFalse(store.getConfiguredPackages().contains("com.example.app"));
 
-        assertTrue(store.setWechatTargetField("com.tencent.mm", 199));
-        assertNull(store.getWechatTargetField("com.tencent.mm"));
+        assertTrue(store.setWechatDpi("com.tencent.mm", 199));
+        assertNull(store.getWechatDpi("com.tencent.mm"));
         assertFalse(store.getConfiguredPackages().contains("com.tencent.mm"));
 
-        assertTrue(store.setWechatTargetField("com.tencent.mm", 200));
-        assertEquals(Integer.valueOf(200), store.getWechatTargetField("com.tencent.mm"));
+        assertTrue(store.setWechatDpi("com.tencent.mm", 200));
+        assertEquals(Integer.valueOf(200), store.getWechatDpi("com.tencent.mm"));
         assertTrue(store.getConfiguredPackages().contains("com.tencent.mm"));
-    }
 
-    @Test
-    public void migratesLegacyWechatViewportWidthToTargetField() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
-        assertTrue(store.setTargetViewportWidthDp("com.tencent.mm", 300));
-        assertTrue(store.setTargetViewportApplyMode("com.tencent.mm", ViewportApplyMode.SYSTEM));
-
-        assertTrue(store.migrateWechatViewportToTargetFieldIfNeeded());
-
-        assertEquals(Integer.valueOf(300), store.getWechatTargetField("com.tencent.mm"));
-        assertNull(store.getTargetViewportWidthDp("com.tencent.mm"));
-        assertEquals(ViewportApplyMode.OFF,
-                store.getTargetViewportApplyMode("com.tencent.mm"));
+        assertTrue(store.setWechatDpi("com.tencent.mm", 1000));
+        assertEquals(Integer.valueOf(1000), store.getWechatDpi("com.tencent.mm"));
         assertTrue(store.getConfiguredPackages().contains("com.tencent.mm"));
+
+        assertTrue(store.setWechatDpi("com.tencent.mm", 1001));
+        assertNull(store.getWechatDpi("com.tencent.mm"));
+        assertFalse(store.getConfiguredPackages().contains("com.tencent.mm"));
     }
 
     @Test
@@ -1054,4 +1121,3 @@ public class DpiConfigStoreTest {
         }
     }
 }
-

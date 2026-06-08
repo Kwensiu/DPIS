@@ -26,28 +26,34 @@ public class ModuleMainHookInstallerTest {
                 "Modern101AppSpecificRouteInstaller.shouldSuppressModuleLoadedGenericHooks("));
         assertFalse(moduleMain.contains("WECHAT_PACKAGE"));
         assertFalse(moduleMain.contains("com.tencent.mm"));
-        assertFalse(moduleMain.contains("WechatTargetFieldModernHookInstaller.install("));
+        assertFalse(moduleMain.contains("WechatDpiModernHookInstaller.install("));
     }
 
     @Test
-    public void modern101AppSpecificRouteInstallerRoutesWechatTargetField() throws IOException {
+    public void modern101AppSpecificRouteInstallerRoutesWechatDpi() throws IOException {
         String router = read(
                 "src/modern101/java/com/dpis/module/Modern101AppSpecificRouteInstaller.java");
         String installer = read(
-                "src/modern101/java/com/dpis/module/WechatTargetFieldModernHookInstaller.java");
+                "src/modern101/java/com/dpis/module/WechatDpiModernHookInstaller.java");
 
-        assertTrue(router.contains("WechatTargetFieldConfig.appliesTo(param.getPackageName())"));
-        assertTrue(router.contains("WechatTargetFieldConfig.appliesTo(processName)"));
-        assertTrue(router.contains("WechatTargetFieldModernHookInstaller.install("));
+        assertTrue(router.contains("WechatDpiConfig.appliesTo(param.getPackageName())"));
+        assertTrue(router.contains("WechatDpiConfig.appliesTo(processName)"));
+        assertTrue(router.contains("WechatDpiModernHookInstaller.install("));
         assertTrue(router.contains("param.getClassLoader()"));
         assertTrue(router.contains("param.getApplicationInfo()"));
         assertTrue(router.contains("alongside generic hooks"));
         assertTrue(installer.contains("ApplicationInfo applicationInfo"));
         assertTrue(installer.contains("resolveWechatVersionCode"));
-        assertTrue(installer.contains("switch (route.kind)"));
-        assertTrue(installer.contains("installSetterHook(xposed, densityManagerClass"));
-        assertTrue(installer.contains("xposed.hook(setter)"));
-        assertTrue(installer.contains("chain.getArgs().set(0, target)"));
+        assertTrue(installer.contains("WechatDpiMethodLocator.locate("));
+        assertTrue(installer.contains("WechatDpiRuntime.apply(metrics, dpi)"));
+        assertTrue(installer.contains("locatorResult.source.logName"));
+        assertFalse(installer.contains("WechatDpiRoutes.forVersionCode(versionCode)"));
+        assertFalse(installer.contains("findDisplayMetricsMethods(densityManagerClass)"));
+        assertTrue(installer.contains("applyWechatDpi(metrics"));
+        assertFalse(installer.contains("resourcesClassName"));
+        assertFalse(installer.contains("installDpiGetterHook("));
+        assertFalse(installer.contains("installDpiSetterHook("));
+        assertFalse(installer.contains("chain.getArgs().set(0"));
     }
 
     @Test

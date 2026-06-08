@@ -260,12 +260,15 @@ superseded.
 | --- | --- | --- | --- | --- | --- |
 | 2026-06-01 | system | `launch-activity-item` system route restored in 101 work | active baseline | commit history contains launch route restoration | Keep separate from compat100 experiments |
 | 2026-06-01 | shared app-process | ResourcesKey empty override fill | active / shared | unit test covers empty override fill | Shared path; check 101 tests when changing |
-| 2026-06-04 | WeChat target-field | Keep app-specific route alongside generic hooks and add the required write-side companion route for versions that need it | active | Public record keeps only the reusable route decision; detailed version-specific evidence lives in `docs/private/wechat-target-field.md` | Do not add or change version-specific WeChat routes without fresh evidence |
-| 2026-06-04 | WeChat 8.0.71 target-field | Replace stale constructor-field route with the verified current route shape | active | Public record keeps only the reusable route decision; detailed evidence lives in `docs/private/wechat-target-field.md` | Do not reintroduce constructor-field route without fresh version-specific evidence |
+| 2026-06-04 | WeChat target-field | Keep app-specific route alongside generic hooks and add the required write-side companion route for versions that need it | superseded | Detailed version-specific evidence lives in `docs/private/wechat-target-field.md` | Replaced by the WeChat DisplayMetrics DPI route; do not reintroduce target-field hooks without fresh evidence |
+| 2026-06-04 | WeChat 8.0.71 target-field | Replace stale constructor-field route with the verified getter/setter route shape | superseded | Detailed evidence lives in `docs/private/wechat-target-field.md` | Kept as locator history only |
 | 2026-06-07 | font system emulation | Add `system_server_font` as an explicit internal domain for `Configuration.fontScale` | active / superseded fallback | Douyin and Bilibili repros stopped flickering when only system_server font mutation was skipped; app-process font domains still scaled text | Kept as planner/runtime diagnostic state, not a compat custom-chain switch |
 | 2026-06-07 | font system emulation | Route `FONT_SCALE` through field-level system_server scheduling and allow it only at `launch-activity-item` | active | Unit policy tests cover viewport multi-entry scheduling and font launch-only scheduling | Avoids later config-dispatch writes that can surface as `CONFIG_FONT_SCALE` relaunches |
 | 2026-06-07 | font system emulation | Make modern101 system_server package selection field-aware per entry | active | Unit policy tests cover font-only launch selection and non-launch skip | Keeps font-only packages out of non-launch hot paths while preserving viewport multi-entry scheduling |
 | 2026-06-07 | shared app-process viewport | Preserve small-window geometry for relative-scale app-process borrow targets while applying target density through ResourcesImpl / ResourcesRead metrics | active | Quetta small-window route isolation showed disabling ResourcesImpl stops flicker but loses Chromium scaling; focused unit tests cover window density compensation | Keeps DPIS unified scheduling active without publishing app-process borrow targets or forcing small-window Configuration width/height to the display target |
+| 2026-06-08 | WeChat DPI | Replace the old target-field route with the WeKit-style DisplayMetrics post-processing route as the official WeChat independent path | active | Runtime check confirmed property publication, hook installation, and mutation callback on `q35.f` for 8.0.71; TabIconView supplement was rejected as disproportionate at DPIS custom values; details in `docs/private/wechat-target-field.md` | DPIS now only mutates returned `DisplayMetrics` |
+| 2026-06-09 | WeChat DPI | Move method discovery to a shared WeKit-style DexKit locator with the static version table as fallback only | active | Unit/source tests cover the DexKit rule, fallback ownership, and shared runtime mutation formula | Locator matches the `MMDensityManager` / `screenResolution_target_field` signature and logs whether `dexkit` or `static-route` installed hooks |
+| 2026-06-09 | WeChat DPI | Add extracted-native-library fallback for DexKit inside the LSPosed module classloader | active | Real-device WeChat 8.0.74 / versionCode 3120 showed `System.loadLibrary("dexkit")` failed in `LspModuleClassLoader`; after fallback, logs reached `hook ready`, `callback hit`, and `applied` on `j65.f#e`, and visual effect was confirmed without uninstalling DPIS | Keep this as a module-loading fix, not a config-reset workaround; 3120 / `j65.f` is also in the static fallback table |
 
 ## Safety Rules
 
@@ -288,6 +291,10 @@ superseded.
 - 2026-06-04: WeChat target-field route no longer suppresses generic app-process
   hooks; target-field runtime property publication now mirrors volatile and
   persistent properties, and hook reads use persistent fallback.
+- 2026-06-08: WeChat target-field hooks were superseded by the official WeChat
+  DPI route. The app-specific route now hooks no-arg `DisplayMetrics` methods
+  on the version-specific WeChat density-manager class and post-processes
+  `density`, `densityDpi`, and `scaledDensity` from the configured DPI.
 - 2026-06-07: diagnostic overrides showed that skipping only system_server
   `Configuration.fontScale` removes Douyin and Bilibili flicker while
   app-process font domains can still scale text. The route is now represented
@@ -324,3 +331,15 @@ superseded.
   app-process consumers now treat matching local or target records as borrow
   targets, so the stable record density is reused instead of falling back to
   the source density.
+- 2026-06-09: WeChat 8.0.74 / versionCode 3120 validation found that LSPosed
+  exposes module native libraries through `base.apk!/lib/...`, while DPIS keeps
+  legacy extracted native packaging for existing HyperOS native proxy behavior.
+  The WeChat DexKit locator now falls back to loading the extracted
+  `/data/app/.../lib/<abi>/libdexkit.so` path parsed from the module
+  classloader. Covered evidence: `hook ready`, `callback hit`, `applied`, and
+  user-confirmed visual effect after overlay install without uninstalling DPIS.
+- 2026-06-09: review follow-up tightened WeChat DPI recovery behavior. Legacy
+  `wekit_dpi` migration no longer overwrites an official value found through a
+  mirror store, 3120 / `j65.f` is recorded as a static fallback, save failures
+  no longer publish runtime properties, and recovery always clears the fixed
+  WeChat property pair when no enabled WeChat DPI value exists.

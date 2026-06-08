@@ -3,14 +3,11 @@ package com.dpis.module;
 import java.lang.reflect.Method;
 import java.util.Locale;
 
-final class WechatTargetFieldPropertyBridge {
+final class WechatDpiPropertyBridge {
+    private static final String PROPERTY_PREFIX = "debug.dpis.wechat.dpi.";
+    private static final String PERSIST_PROPERTY_PREFIX = "persist.debug.dpis.wechat.dpi.";
 
-    private static final String PROPERTY_PREFIX =
-            "debug.dpis.wechat.targetfield.";
-    private static final String PERSIST_PROPERTY_PREFIX =
-            "persist.debug.dpis.wechat.targetfield.";
-
-    private WechatTargetFieldPropertyBridge() {
+    private WechatDpiPropertyBridge() {
     }
 
     static String propertyNameForPackage(String packageName) {
@@ -21,27 +18,29 @@ final class WechatTargetFieldPropertyBridge {
         return PERSIST_PROPERTY_PREFIX + suffixForPackage(packageName);
     }
 
-    static int readTargetField(String packageName) {
+    static int readDpi(String packageName) {
         if (packageName == null || packageName.isBlank()) {
             return 0;
         }
-        String value = readPropertyWithPersistentFallback(
-                propertyNameForPackage(packageName),
-                persistentPropertyNameForPackage(packageName));
-        return parseTargetField(value);
+        String suffix = suffixForPackage(packageName);
+        String value = readFirstProperty(
+                PROPERTY_PREFIX + suffix,
+                PERSIST_PROPERTY_PREFIX + suffix);
+        return parseDpi(value);
     }
 
     private static String suffixForPackage(String packageName) {
         return String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    private static String readPropertyWithPersistentFallback(String propertyName,
-            String persistentPropertyName) {
-        String value = readSystemProperty(propertyName);
-        if (value != null && !value.trim().isEmpty()) {
-            return value;
+    private static String readFirstProperty(String... propertyNames) {
+        for (String propertyName : propertyNames) {
+            String value = readSystemProperty(propertyName);
+            if (value != null && !value.trim().isEmpty()) {
+                return value;
+            }
         }
-        return readSystemProperty(persistentPropertyName);
+        return "";
     }
 
     private static String readSystemProperty(String propertyName) {
@@ -58,13 +57,13 @@ final class WechatTargetFieldPropertyBridge {
         }
     }
 
-    private static int parseTargetField(String value) {
+    private static int parseDpi(String value) {
         try {
             if (value == null || value.trim().isEmpty()) {
                 return 0;
             }
             int parsed = Integer.parseInt(value.trim());
-            return WechatTargetFieldConfig.normalize(parsed) != null ? parsed : 0;
+            return WechatDpiConfig.normalize(parsed) != null ? parsed : 0;
         } catch (NumberFormatException ignored) {
             return 0;
         }

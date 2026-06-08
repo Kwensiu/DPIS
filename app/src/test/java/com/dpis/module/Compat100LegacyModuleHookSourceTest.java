@@ -64,7 +64,7 @@ public class Compat100LegacyModuleHookSourceTest {
         assertFalse(source.contains("com.tencent.mm"));
         assertFalse(source.contains("WECHAT_PACKAGE"));
         assertFalse(source.contains("screenResolution_target_field"));
-        assertFalse(source.contains("WechatTargetFieldRoutes.forVersionCode"));
+        assertFalse(source.contains("WechatDpiRoutes.forVersionCode"));
         assertTrue(source.contains("shouldSuppressSecondaryProcessViewport(lpparam.processName, plan)"));
         assertTrue(source.contains("compat100 legacy secondary process viewport route suppressed"));
         assertTrue(source.contains("!processName.startsWith(plan.packageName + \":\")"));
@@ -118,22 +118,25 @@ public class Compat100LegacyModuleHookSourceTest {
     }
 
     @Test
-    public void compat100AppSpecificRouteInstallerOwnsWechatTargetFieldRoute() throws Exception {
+    public void compat100AppSpecificRouteInstallerOwnsWechatDpiRoute() throws Exception {
         String router = read("src/compat100/java/com/dpis/module/Compat100AppSpecificRouteInstaller.java");
         String installer = read(
-                "src/compat100/java/com/dpis/module/WechatTargetFieldCompat100HookInstaller.java");
+                "src/compat100/java/com/dpis/module/WechatDpiCompat100HookInstaller.java");
 
-        assertTrue(router.contains("WechatTargetFieldConfig.appliesTo(lpparam.packageName)"));
-        assertTrue(router.contains("WechatTargetFieldConfig.appliesTo(lpparam.processName)"));
-        assertTrue(router.contains("WechatTargetFieldCompat100HookInstaller.install(lpparam)"));
+        assertTrue(router.contains("WechatDpiConfig.appliesTo(lpparam.packageName)"));
+        assertTrue(router.contains("WechatDpiConfig.appliesTo(lpparam.processName)"));
+        assertTrue(router.contains("WechatDpiCompat100HookInstaller.install(lpparam)"));
         assertTrue(router.contains("alongside generic hooks"));
-        assertTrue(installer.contains("WechatTargetFieldRoutes.forVersionCode(versionCode)"));
-        assertTrue(installer.contains("switch (route.kind)"));
-        assertTrue(installer.contains("XposedBridge.hookMethod(targetGetter"));
-        assertTrue(installer.contains("installSetterHook(densityManagerClass"));
-        assertTrue(installer.contains("XposedBridge.hookMethod(setter"));
-        assertTrue(installer.contains("param.args[0] = target"));
-        assertTrue(installer.contains("XposedBridge.hookAllConstructors"));
+        assertTrue(installer.contains("WechatDpiMethodLocator.locate("));
+        assertTrue(installer.contains("WechatDpiRuntime.apply(metrics, dpi)"));
+        assertTrue(installer.contains("locatorResult.source.logName"));
+        assertFalse(installer.contains("WechatDpiRoutes.forVersionCode(versionCode)"));
+        assertFalse(installer.contains("findDisplayMetricsMethods(densityManagerClass)"));
+        assertTrue(installer.contains("XposedBridge.hookMethod(metricsMethod"));
+        assertTrue(installer.contains("applyWechatDpi(metrics"));
+        assertFalse(installer.contains("XposedBridge.hookMethod(targetGetter"));
+        assertFalse(installer.contains("installSetterHook("));
+        assertFalse(installer.contains("XposedBridge.hookAllConstructors"));
         assertTrue(installer.contains("afterHookedMethod"));
     }
 

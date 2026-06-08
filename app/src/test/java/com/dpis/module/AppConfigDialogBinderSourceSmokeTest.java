@@ -47,7 +47,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("views.fontModeToggle, FontApplyMode.SYSTEM_EMULATION, true)"));
         assertTrue(source.contains("host.saveAppConfig("));
         assertTrue(source.contains("views.saveButton.setOnClickListener"));
-        assertTrue(source.contains("if (!WechatTargetFieldSheetBinder.isInputValid(dialogView))"));
+        assertTrue(source.contains("if (!WechatDpiSheetBinder.isInputValid(dialogView))"));
         assertTrue(source.contains("host.saveAppConfig("));
         assertTrue(source.contains("state.viewportScaleInput"));
         assertTrue(source.contains("state.viewportAbsoluteInput"));
@@ -60,44 +60,58 @@ public class AppConfigDialogBinderSourceSmokeTest {
     }
 
     @Test
-    public void wechatTargetFieldBlocksUnsupportedNonBlankInput() throws IOException {
-        String binder = read("src/main/java/com/dpis/module/WechatTargetFieldSheetBinder.java");
+    public void wechatDpiUsesSingleOfficialInput() throws IOException {
+        String binder = read("src/main/java/com/dpis/module/WechatDpiSheetBinder.java");
         String strings = read("src/main/res/values/strings.xml");
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
-        assertTrue(binder.contains("WechatTargetFieldSupport.current(dialogView.getContext())"));
-        assertTrue(binder.contains("WechatTargetFieldSupport.current(inputLayout.getContext())"));
-        assertTrue(binder.contains("if (!support.supported)"));
-        assertTrue(binder.contains("return raw.isBlank();"));
-        assertTrue(binder.contains("R.string.dialog_wechat_target_field_unsupported"));
-        assertTrue(binder.contains("dialog_wechat_target_field_help_button"));
+        assertTrue(binder.contains("WechatDpiConfig.appliesTo(item.packageName)"));
         assertTrue(binder.contains("HapticFeedbackConstants.VIRTUAL_KEY"));
         assertTrue(binder.contains("MaterialAlertDialogBuilder"));
-        assertTrue(binder.contains("R.string.dialog_wechat_target_field_help_title"));
-        assertTrue(binder.contains("R.string.dialog_wechat_target_field_help_message"));
-        assertTrue(binder.contains("DialogWindowSizer.applyStandardWidth(dialog, anchor.getContext())"));
-        assertTrue(binder.contains("setHelperText(supported ? null"));
-        assertTrue(binder.contains("setError(inputLayout.getContext().getString("));
-        assertTrue(strings.contains("WeChat independent route 200-1200"));
-        assertTrue(strings.contains("WeChat-specific route"));
+        assertTrue(binder.contains("R.string.dialog_wechat_dpi_help_title"));
+        assertTrue(binder.contains("R.string.dialog_wechat_dpi_help_message"));
+        assertTrue(binder.contains("WechatDpiConfig.isInputValid"));
+        assertTrue(binder.contains("dialog_wechat_dpi_input"));
+        assertTrue(binder.contains("DialogWindowSizer.applyStandardWidth("));
+        assertTrue(binder.contains("anchor.getContext()"));
+        assertTrue(strings.contains("WeChat DPI 200-1000"));
+        assertTrue(strings.contains("WeChat-specific DisplayMetrics route"));
         assertTrue(strings.contains("Mini Programs are not supported yet."));
-        assertTrue(strings.contains("dialog_wechat_target_field_unsupported"));
-        assertTrue(zhStrings.contains("微信独立链路 200-1200"));
+        assertFalse(strings.contains("dialog_wechat_target_field"));
+        assertTrue(zhStrings.contains("微信 DPI 200-1000"));
         assertTrue(zhStrings.contains("暂不支持小程序"));
-        assertTrue(zhStrings.contains("未适配当前微信版本"));
     }
 
     @Test
-    public void wechatTargetFieldSaveDoesNotClearViewportConfig() throws IOException {
-        String binder = read("src/main/java/com/dpis/module/WechatTargetFieldSheetBinder.java");
-        int saveStart = binder.indexOf("private static boolean saveTargetField(");
+    public void wechatDpiSaveDoesNotClearViewportConfig() throws IOException {
+        String binder = read("src/main/java/com/dpis/module/WechatDpiSheetBinder.java");
+        int saveStart = binder.indexOf("static boolean save(");
         int saveEnd = binder.indexOf("static void clearDraft", saveStart);
         String saveBlock = binder.substring(saveStart, saveEnd);
 
-        assertTrue(saveBlock.contains("store.setWechatTargetField(packageName, targetField)"));
+        assertTrue(saveBlock.contains("store.setWechatDpi(packageName, dpi)"));
+        assertTrue(saveBlock.contains("if (saved)"));
+        assertTrue(saveBlock.contains("WechatDpiPropertySyncer.publishDpiAsync(packageName"));
         assertFalse(saveBlock.contains("clearTargetViewportWidthDp(packageName)"));
         assertFalse(saveBlock.contains("setTargetViewportApplyMode(packageName, ViewportApplyMode.OFF)"));
         assertFalse(saveBlock.contains("ViewportPropertySyncer.clearTargetAsync(packageName)"));
+    }
+
+    @Test
+    public void wechatDpiPublishFollowsSavedHostState() throws IOException {
+        String actionBinder = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
+        String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        int toggleStart = actionBinder.indexOf("views.dpisToggleButton.setOnClickListener");
+        int toggleEnd = actionBinder.indexOf("views.fontHookDomainsButton.setOnClickListener", toggleStart);
+        String toggleBlock = actionBinder.substring(toggleStart, toggleEnd);
+        assertFalse(toggleBlock.contains("WechatDpiSheetBinder.publishForDpisState"));
+
+        int hostStart = mainActivity.indexOf("public boolean setDpisEnabled(");
+        int hostEnd = mainActivity.indexOf("@Override", hostStart + 1);
+        String hostBlock = mainActivity.substring(hostStart, hostEnd);
+        assertTrue(hostBlock.contains("if (saved)"));
+        assertTrue(hostBlock.contains("WechatDpiSheetBinder.publishForDpisState("));
     }
 
     @Test
@@ -467,9 +481,9 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(focusBinder.contains("final class FormInputFocusBinder"));
         assertTrue(interactions.contains("new AppConfigSheetModeValidationBinder(binder)"));
         assertTrue(validation.contains("FormInputFocusBinder.bindDismissOnOutsideTouch"));
-        assertTrue(validation.contains("R.id.dialog_wechat_target_field_input"));
+        assertTrue(validation.contains("WechatDpiSheetBinder.inputViewForFocus(dialogView)"));
         assertTrue(actions.contains("FormInputFocusBinder.clearFocusAndHideIme"));
-        assertTrue(actions.contains("R.id.dialog_wechat_target_field_input"));
+        assertTrue(actions.contains("WechatDpiSheetBinder.inputViewForFocus(dialogView)"));
         assertFalse(host.contains("clearDialogInputFocus("));
     }
 

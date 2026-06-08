@@ -104,7 +104,7 @@ final class AppConfigDialogBinder {
         AppConfigDialogState state = bindDialogInitialState(item, views);
         dialogView.setTag(R.id.dialog_save_button, state);
         dialogView.setTag(R.id.dialog_font_hook_domains_button, views);
-        WechatTargetFieldSheetBinder.bind(dialogView, item,
+        WechatDpiSheetBinder.bind(dialogView, item,
                 () -> updateSaveButtonState(dialogView, views));
         updateSaveButtonState(dialogView, views);
         state.captureSavedDraft(views, item != null && item.previewFromGlobalPrefill);
@@ -720,7 +720,7 @@ final class AppConfigDialogBinder {
                 views.fontInputLayout,
                 views.fontInputView,
                 views.saveButton);
-        boolean valid = genericValid && WechatTargetFieldSheetBinder.isInputValid(dialogView);
+        boolean valid = genericValid && WechatDpiSheetBinder.isInputValid(dialogView);
         views.saveButton.setEnabled(valid);
         return valid;
     }
