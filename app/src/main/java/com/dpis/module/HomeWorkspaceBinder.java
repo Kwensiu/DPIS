@@ -71,6 +71,18 @@ final class HomeWorkspaceBinder {
             @Override
             public void installDownloadedUpdate() {
             }
+
+            @Override
+            public void openConfiguredAppsWorkspace() {
+            }
+
+            @Override
+            public void openFontLibrary() {
+            }
+
+            @Override
+            public void openTemplateWorkspace() {
+            }
         };
 
         void retryUpdateCheck();
@@ -80,6 +92,12 @@ final class HomeWorkspaceBinder {
         void startUpdateDownload();
 
         void installDownloadedUpdate();
+
+        void openConfiguredAppsWorkspace();
+
+        void openFontLibrary();
+
+        void openTemplateWorkspace();
     }
 
     private final Context context;
@@ -147,6 +165,7 @@ final class HomeWorkspaceBinder {
                 workspaceView.findViewById(R.id.home_templates_value),
                 Integer.toString(state.templateCount)
         );
+        bindStatusCardActions(workspaceView, state);
         bindInfoRow(
                 workspaceView.findViewById(R.id.home_info_version),
                 R.string.home_workspace_info_version,
@@ -195,6 +214,29 @@ final class HomeWorkspaceBinder {
                 R.drawable.bg_home_info_row_bottom,
                 false
         );
+    }
+
+    private void bindStatusCardActions(View workspaceView, State state) {
+        bindStatusCardAction(
+                workspaceView.findViewById(R.id.home_configured_apps_card),
+                state.actions::openConfiguredAppsWorkspace
+        );
+        bindStatusCardAction(
+                workspaceView.findViewById(R.id.home_imported_fonts_card),
+                state.actions::openFontLibrary
+        );
+        bindStatusCardAction(
+                workspaceView.findViewById(R.id.home_templates_card),
+                state.actions::openTemplateWorkspace
+        );
+    }
+
+    private void bindStatusCardAction(View card, Runnable action) {
+        if (card == null || action == null) {
+            return;
+        }
+        TouchFeedbackBinder.bindPressHaptic(card);
+        card.setOnClickListener(v -> action.run());
     }
 
     private void bindPrimaryStatusVisuals(View workspaceView, State state) {

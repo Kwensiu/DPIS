@@ -176,13 +176,17 @@
             android:useDefaultMargins="false">
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/home_configured_apps_card"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_columnWeight="1"
                 android:layout_marginEnd="@dimen/home_workspace_status_grid_gap"
+                android:clickable="true"
+                android:focusable="true"
                 android:minHeight="@dimen/home_workspace_status_min_height"
                 app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 app:cardCornerRadius="@dimen/home_workspace_card_corner_radius"
+                app:rippleColor="?attr/colorControlHighlight"
                 app:strokeColor="?attr/colorOutlineVariant"
                 app:strokeWidth="@dimen/page_card_stroke_width">
 
@@ -212,14 +216,18 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/home_imported_fonts_card"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_columnWeight="1"
                 android:layout_marginStart="@dimen/home_workspace_status_grid_gap"
                 android:layout_marginEnd="@dimen/home_workspace_status_grid_gap"
+                android:clickable="true"
+                android:focusable="true"
                 android:minHeight="@dimen/home_workspace_status_min_height"
                 app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 app:cardCornerRadius="@dimen/home_workspace_card_corner_radius"
+                app:rippleColor="?attr/colorControlHighlight"
                 app:strokeColor="?attr/colorOutlineVariant"
                 app:strokeWidth="@dimen/page_card_stroke_width">
 
@@ -249,13 +257,17 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/home_templates_card"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_columnWeight="1"
                 android:layout_marginStart="@dimen/home_workspace_status_grid_gap"
+                android:clickable="true"
+                android:focusable="true"
                 android:minHeight="@dimen/home_workspace_status_min_height"
                 app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 app:cardCornerRadius="@dimen/home_workspace_card_corner_radius"
+                app:rippleColor="?attr/colorControlHighlight"
                 app:strokeColor="?attr/colorOutlineVariant"
                 app:strokeWidth="@dimen/page_card_stroke_width">
 

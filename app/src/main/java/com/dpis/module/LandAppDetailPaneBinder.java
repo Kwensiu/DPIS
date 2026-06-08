@@ -103,7 +103,7 @@ final class LandAppDetailPaneBinder {
         packageView.setText(item.packageName);
         statusView.setText(formatStatus(item, systemHooksEnabled));
         unsavedBadge.setVisibility(
-                item.previewFromGlobalPrefill ? View.VISIBLE : View.GONE
+                item.previewFromGlobalPrefill ? View.VISIBLE : View.INVISIBLE
         );
         AppConfigDialogBinder.AppConfigDialogState state
                 = AppConfigDialogBinder.AppConfigDialogState.fromItem(item);
@@ -256,8 +256,8 @@ final class LandAppDetailPaneBinder {
                 item.viewportTargetSpec
         );
         input.setText(initialText);
-        bindViewportInput(inputLayout, input, toggle, state);
-        bindViewportToggle(inputLayout, input, toggle, item, state);
+        bindViewportInput(root, input, toggle, state);
+        bindViewportToggle(root, inputLayout, input, toggle, state);
     }
 
     private void bindFontEditor(View root, AppListItem item) {
@@ -285,12 +285,12 @@ final class LandAppDetailPaneBinder {
                         ? String.valueOf(item.fontScalePercent)
                         : "";
         input.setText(initialText);
-        bindFontInput(inputLayout, input, toggle, item);
-        bindFontToggle(inputLayout, input, toggle, item);
+        bindFontInput(root, input);
+        bindFontToggle(root, inputLayout, input, toggle);
     }
 
     private void bindViewportInput(
-            TextInputLayout inputLayout,
+            View root,
             TextInputEditText input,
             AppConfigDialogBinder.ModeToggle toggle,
             AppConfigDialogBinder.AppConfigDialogState state
@@ -323,7 +323,7 @@ final class LandAppDetailPaneBinder {
                 );
                 state.updateViewportInput(type, raw);
                 updateSaveButtonState(
-                        (View) inputLayout.getRootView(),
+                        root,
                         null
                 );
             }
@@ -332,10 +332,10 @@ final class LandAppDetailPaneBinder {
     }
 
     private void bindViewportToggle(
+            View root,
             TextInputLayout inputLayout,
             TextInputEditText input,
             AppConfigDialogBinder.ModeToggle toggle,
-            AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
         View.OnClickListener switcher = clicked -> {
@@ -346,25 +346,25 @@ final class LandAppDetailPaneBinder {
             AppConfigDialogBinder.toggleViewportMode(toggle, input, state);
             String type = AppConfigDialogBinder.resolveViewportMode(toggle);
             bindViewportInputHint(inputLayout, type);
-            updateSaveButtonState((View) inputLayout.getRootView(), null);
+            updateSaveButtonState(root, null);
         };
         toggle.container.setOnClickListener(switcher);
         toggle.emulationLabel.setOnClickListener(clicked
                 -> switchViewportMode(
+                        root,
                         inputLayout,
                         input,
                         toggle,
-                        item,
                         state,
                         ViewportTargetType.RELATIVE_SCALE
                 )
         );
         toggle.replaceLabel.setOnClickListener(clicked
                 -> switchViewportMode(
+                        root,
                         inputLayout,
                         input,
                         toggle,
-                        item,
                         state,
                         ViewportTargetType.ABSOLUTE_DP
                 )
@@ -373,10 +373,10 @@ final class LandAppDetailPaneBinder {
     }
 
     private void switchViewportMode(
+            View root,
             TextInputLayout inputLayout,
             TextInputEditText input,
             AppConfigDialogBinder.ModeToggle toggle,
-            AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state,
             String targetType
     ) {
@@ -392,14 +392,12 @@ final class LandAppDetailPaneBinder {
                 true
         );
         bindViewportInputHint(inputLayout, targetType);
-        updateSaveButtonState((View) inputLayout.getRootView(), null);
+        updateSaveButtonState(root, null);
     }
 
     private void bindFontInput(
-            TextInputLayout inputLayout,
-            TextInputEditText input,
-            AppConfigDialogBinder.ModeToggle toggle,
-            AppListItem item
+            View root,
+            TextInputEditText input
     ) {
         input.addTextChangedListener(
                 new TextWatcher() {
@@ -424,7 +422,7 @@ final class LandAppDetailPaneBinder {
             @Override
             public void afterTextChanged(Editable editable) {
                 updateSaveButtonState(
-                        (View) inputLayout.getRootView(),
+                        root,
                         null
                 );
             }
@@ -433,10 +431,10 @@ final class LandAppDetailPaneBinder {
     }
 
     private void bindFontToggle(
+            View root,
             TextInputLayout inputLayout,
             TextInputEditText input,
-            AppConfigDialogBinder.ModeToggle toggle,
-            AppListItem item
+            AppConfigDialogBinder.ModeToggle toggle
     ) {
         View.OnClickListener switcher = clicked -> {
             FormInputFocusBinder.clearFocusAndHideIme(
@@ -444,7 +442,7 @@ final class LandAppDetailPaneBinder {
                     input
             );
             AppConfigDialogBinder.toggleFontMode(toggle);
-            saveFontModeIfValid(inputLayout, input, toggle, item);
+            updateSaveButtonState(root, null);
         };
         toggle.container.setOnClickListener(switcher);
         toggle.emulationLabel.setOnClickListener(clicked -> {
@@ -457,7 +455,7 @@ final class LandAppDetailPaneBinder {
                     FontApplyMode.SYSTEM_EMULATION,
                     true
             );
-            saveFontModeIfValid(inputLayout, input, toggle, item);
+            updateSaveButtonState(root, null);
         });
         toggle.replaceLabel.setOnClickListener(clicked -> {
             FormInputFocusBinder.clearFocusAndHideIme(
@@ -469,18 +467,9 @@ final class LandAppDetailPaneBinder {
                     FontApplyMode.FIELD_REWRITE,
                     true
             );
-            saveFontModeIfValid(inputLayout, input, toggle, item);
+            updateSaveButtonState(root, null);
         });
         TouchFeedbackBinder.bindPressHaptic(toggle.container);
-    }
-
-    private void saveFontModeIfValid(
-            TextInputLayout inputLayout,
-            TextInputEditText input,
-            AppConfigDialogBinder.ModeToggle toggle,
-            AppListItem item
-    ) {
-        updateSaveButtonState((View) inputLayout.getRootView(), null);
     }
 
     private void bindViewportInputHint(
@@ -673,11 +662,16 @@ final class LandAppDetailPaneBinder {
         int threeButtonRequiredWidth
                 = buttonMinWidth * 3 + spacing * 2 + contentHorizontalPadding;
         boolean wrapReset = root.getWidth() < threeButtonRequiredWidth;
+        int actionButtonHeight = activity
+                .getResources()
+                .getDimensionPixelSize(
+                        R.dimen.land_app_detail_action_button_height
+                );
         if (wrapReset && resetButton.getParent() != resetRow) {
             primaryRow.removeView(resetButton);
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
+                    actionButtonHeight
             );
             resetRow.addView(resetButton, params);
             resetRow.setVisibility(View.VISIBLE);
@@ -685,7 +679,7 @@ final class LandAppDetailPaneBinder {
             resetRow.removeView(resetButton);
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    actionButtonHeight,
                     1f
             );
             params.setMarginStart(spacing);
@@ -792,6 +786,7 @@ final class LandAppDetailPaneBinder {
         if (root == null || saveButton == null) {
             return;
         }
+        View actionDock = root.findViewById(R.id.land_detail_action_dock);
         root.addOnLayoutChangeListener(
                 (
                         view,
@@ -802,13 +797,16 @@ final class LandAppDetailPaneBinder {
                         oldLeft,
                         oldTop,
                         oldRight,
-                        oldBottom) -> updateSaveButtonPresentation(view, saveButton)
+                        oldBottom) -> updateDockPresentation(
+                                view, actionDock, saveButton)
         );
-        root.post(() -> updateSaveButtonPresentation(root, saveButton));
+        root.post(() -> updateDockPresentation(
+                root, actionDock, saveButton));
     }
 
-    private void updateSaveButtonPresentation(
+    private void updateDockPresentation(
             View root,
+            View actionDock,
             MaterialButton saveButton
     ) {
         int rootWidth = root != null ? root.getWidth() : 0;
@@ -837,34 +835,38 @@ final class LandAppDetailPaneBinder {
         int spacing = activity
                 .getResources()
                 .getDimensionPixelSize(R.dimen.land_app_detail_dock_button_spacing);
-        int processButtonWidth
-                = activity
-                        .getResources()
-                        .getDimensionPixelSize(
-                                R.dimen.land_app_detail_dock_process_button_min_width
-                        ) * 3;
-        int processDividerWidth
-                = activity
-                        .getResources()
-                        .getDimensionPixelSize(
-                                R.dimen.land_app_detail_dock_process_divider_width
-                        ) * 2;
+        int dockMaxWidth = activity
+                .getResources()
+                .getDimensionPixelSize(R.dimen.land_app_detail_dock_max_width);
+        int processGroupMinWidth
+                = activity.getResources().getDimensionPixelSize(
+                        R.dimen.land_app_detail_dock_process_group_min_width
+                );
+        int targetDockWidth = Math.max(
+                0,
+                Math.min(rootWidth - dockHorizontalMargins, dockMaxWidth)
+        );
+        if (actionDock != null) {
+            ViewGroup.LayoutParams dockParams = actionDock.getLayoutParams();
+            if (dockParams != null && dockParams.width != targetDockWidth) {
+                dockParams.width = targetDockWidth;
+                actionDock.setLayoutParams(dockParams);
+            }
+        }
+        int availableDockContentWidth = targetDockWidth - dockPadding;
         int expandedRequiredWidth
-                = dockHorizontalMargins
-                + dockPadding
-                + saveExpandedWidth
+                = saveExpandedWidth
                 + spacing
-                + processButtonWidth
-                + processDividerWidth;
-        boolean compact = rootWidth < expandedRequiredWidth;
-        int targetWidth = compact ? saveCompactWidth : saveExpandedWidth;
+                + processGroupMinWidth;
+        boolean compact = availableDockContentWidth < expandedRequiredWidth;
+        int targetSaveWidth = compact ? saveCompactWidth : saveExpandedWidth;
         ViewGroup.LayoutParams params = saveButton.getLayoutParams();
-        if (params != null && params.width != targetWidth) {
-            params.width = targetWidth;
+        if (params != null && params.width != targetSaveWidth) {
+            params.width = targetSaveWidth;
             saveButton.setLayoutParams(params);
         }
-        saveButton.setMinWidth(targetWidth);
-        saveButton.setMinimumWidth(targetWidth);
+        saveButton.setMinWidth(targetSaveWidth);
+        saveButton.setMinimumWidth(targetSaveWidth);
         saveButton.setIconPadding(0);
         saveButton.setContentDescription(
                 activity.getString(R.string.status_save_button)
@@ -1008,6 +1010,10 @@ final class LandAppDetailPaneBinder {
                 : "";
     }
 
+    private static String normalizeDraftText(String value) {
+        return value != null ? value.trim() : "";
+    }
+
     private static boolean hasUnsavedChanges(View root) {
         String cleanStateSignature = cleanStateSignature(root);
         return !cleanStateSignature.equals(buildStateSignature(root));
@@ -1019,7 +1025,7 @@ final class LandAppDetailPaneBinder {
         );
         if (badge != null) {
             badge.setVisibility(
-                    hasUnsavedChanges(root) ? View.VISIBLE : View.GONE
+                    hasUnsavedChanges(root) ? View.VISIBLE : View.INVISIBLE
             );
         }
     }
@@ -1069,12 +1075,12 @@ final class LandAppDetailPaneBinder {
                 );
         return String.join(
                 "|",
-                viewportText,
+                normalizeDraftText(viewportText),
                 AppConfigDialogBinder.resolveViewportMode(viewportToggle),
-                fontText,
+                normalizeDraftText(fontText),
                 AppConfigDialogBinder.resolveFontMode(fontToggle),
-                typefaceText,
-                hookChainText
+                normalizeDraftText(typefaceText),
+                normalizeDraftText(hookChainText)
         );
     }
 

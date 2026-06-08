@@ -688,28 +688,11 @@ final class AppConfigDialogBinder {
         boolean viewportValid = AppConfigInputValidation.isViewportInputValid(
                 viewportRaw, resolveViewportMode(viewportModeToggle));
         boolean fontValid = AppConfigInputValidation.isFontScaleInputValid(fontRaw);
-        int defaultStrokeColor = MaterialColors.getColor(
-                viewportInputLayout, com.google.android.material.R.attr.colorOutline);
-        int errorStrokeColor = MaterialColors.getColor(
-                viewportInputLayout, androidx.appcompat.R.attr.colorError);
-        bindInputError(viewportInputLayout, viewportValid);
-        bindInputError(fontInputLayout, fontValid);
-        viewportInputLayout.setBoxStrokeColor(viewportValid ? defaultStrokeColor : errorStrokeColor);
-        fontInputLayout.setBoxStrokeColor(fontValid ? defaultStrokeColor : errorStrokeColor);
+        ConfigValueInputErrorBinder.bindFullMessage(viewportInputLayout, viewportValid);
+        ConfigValueInputErrorBinder.bindFullMessage(fontInputLayout, fontValid);
         boolean valid = viewportValid && fontValid;
         saveButton.setEnabled(valid);
         return valid;
-    }
-
-    private static void bindInputError(TextInputLayout inputLayout, boolean valid) {
-        if (valid) {
-            inputLayout.setError(null);
-            inputLayout.setErrorEnabled(false);
-            return;
-        }
-        inputLayout.setError(
-                inputLayout.getContext().getString(R.string.status_save_invalid)
-        );
     }
 
     static boolean updateSaveButtonState(View dialogView, AppConfigDialogViews views) {

@@ -3,18 +3,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/dialog_app_config_input_row_spacing_top"
-        android:baselineAligned="false"
-        android:gravity="center_vertical"
-        android:minHeight="@dimen/dialog_mode_toggle_row_min_height"
-        android:orientation="horizontal">
+        style="@style/Widget.Dpis.ConfigValueModeRow"
+        android:layout_marginTop="@dimen/dialog_app_config_input_row_spacing_top">
 
         <FrameLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
+            style="@style/Widget.Dpis.ConfigValueInputContainer">
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/template_config_viewport_input_layout"
@@ -43,16 +36,14 @@
 
         <FrameLayout
             android:id="@+id/template_config_viewport_mode_toggle_button"
-            android:layout_width="@dimen/dialog_mode_toggle_width"
-            android:layout_height="match_parent"
-            android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start"
+            style="@style/Widget.Dpis.ConfigValueModeToggleContainer"
             android:contentDescription="@string/dialog_viewport_mode_toggle_description"
             android:clickable="false"
             android:focusable="false">
 
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="@dimen/dialog_mode_toggle_track_height"
                 android:layout_marginTop="@dimen/dialog_mode_toggle_content_offset_top"
                 android:background="@drawable/bg_mode_toggle_track">
 
@@ -104,18 +95,11 @@
         android:visibility="gone" />
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/dialog_app_config_input_row_spacing_top"
-        android:baselineAligned="false"
-        android:gravity="center_vertical"
-        android:minHeight="@dimen/dialog_mode_toggle_row_min_height"
-        android:orientation="horizontal">
+        style="@style/Widget.Dpis.ConfigValueModeRow"
+        android:layout_marginTop="@dimen/dialog_app_config_input_row_spacing_top">
 
         <FrameLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
+            style="@style/Widget.Dpis.ConfigValueInputContainer">
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/template_config_font_scale_input_layout"
@@ -144,16 +128,14 @@
 
         <FrameLayout
             android:id="@+id/template_config_font_mode_toggle_button"
-            android:layout_width="@dimen/dialog_mode_toggle_width"
-            android:layout_height="match_parent"
-            android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start"
+            style="@style/Widget.Dpis.ConfigValueModeToggleContainer"
             android:contentDescription="@string/dialog_font_mode_toggle_description"
             android:clickable="false"
             android:focusable="false">
 
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="@dimen/dialog_mode_toggle_track_height"
                 android:layout_marginTop="@dimen/dialog_mode_toggle_content_offset_top"
                 android:background="@drawable/bg_mode_toggle_track">
 

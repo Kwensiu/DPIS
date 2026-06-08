@@ -3,15 +3,16 @@
     android:id="@+id/header_click_target"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
+    android:background="@drawable/bg_app_entry_row"
     android:clickable="true"
     android:focusable="true"
+    android:foreground="@drawable/ripple_app_entry_row"
     android:gravity="center_vertical"
     android:minHeight="52dp"
     android:orientation="horizontal"
-    android:paddingStart="2dp"
+    android:paddingStart="@dimen/land_app_entry_padding_horizontal"
     android:paddingTop="8dp"
-    android:paddingEnd="2dp"
+    android:paddingEnd="@dimen/land_app_entry_padding_horizontal"
     android:paddingBottom="8dp">
 
     <FrameLayout

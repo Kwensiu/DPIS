@@ -13,7 +13,6 @@ import android.widget.Toast;
 import androidx.appcompat.widget.AppCompatImageButton;
 
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.color.MaterialColors;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -414,21 +413,11 @@ final class GlobalPrefillEditorBinder {
                 textOf(viewportInputView),
                 AppConfigDialogBinder.resolveViewportMode(viewportModeToggle));
         boolean fontValid = AppConfigInputValidation.isFontScaleInputValid(textOf(fontInputView));
-        bindInputErrorState(viewportInputLayout, viewportValid);
-        bindInputErrorState(fontInputLayout, fontValid);
+        ConfigValueInputErrorBinder.bindFullMessage(viewportInputLayout, viewportValid);
+        ConfigValueInputErrorBinder.bindFullMessage(fontInputLayout, fontValid);
         saveButton.setEnabled(viewportValid && fontValid);
         refreshUnsavedBadge();
         return viewportValid && fontValid;
-    }
-
-    private static void bindInputErrorState(TextInputLayout inputLayout, boolean valid) {
-        int defaultStrokeColor = MaterialColors.getColor(
-                inputLayout, com.google.android.material.R.attr.colorOutline);
-        int errorStrokeColor = MaterialColors.getColor(
-                inputLayout, androidx.appcompat.R.attr.colorError);
-        inputLayout.setError(null);
-        inputLayout.setErrorEnabled(false);
-        inputLayout.setBoxStrokeColor(valid ? defaultStrokeColor : errorStrokeColor);
     }
 
     private void refreshUnsavedBadge() {

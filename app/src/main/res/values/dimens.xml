@@ -36,6 +36,7 @@
     <dimen name="land_app_detail_package_spacing_top">4dp</dimen>
     <dimen name="land_app_detail_status_spacing_top">4dp</dimen>
     <dimen name="land_app_detail_badge_spacing_start">8dp</dimen>
+    <dimen name="land_app_detail_badge_min_width">56dp</dimen>
     <dimen name="land_app_detail_badge_min_height">20dp</dimen>
     <dimen name="land_app_detail_badge_padding_horizontal">8dp</dimen>
     <dimen name="land_app_detail_badge_padding_vertical">2dp</dimen>
@@ -47,6 +48,8 @@
     <dimen name="land_app_detail_card_corner_radius">16dp</dimen>
     <dimen name="land_app_detail_connected_row_inner_radius">4dp</dimen>
     <dimen name="land_app_detail_connected_row_gap">2dp</dimen>
+    <dimen name="land_app_entry_corner_radius">12dp</dimen>
+    <dimen name="land_app_entry_padding_horizontal">12dp</dimen>
     <dimen name="land_app_detail_divider_margin_vertical">12dp</dimen>
     <dimen name="land_app_detail_divider_height">1dp</dimen>
     <dimen name="land_app_detail_list_item_min_height">56dp</dimen>
@@ -77,6 +80,7 @@
     <dimen name="land_app_detail_dock_max_width">680dp</dimen>
     <dimen name="land_app_detail_dock_button_height">48dp</dimen>
     <dimen name="land_app_detail_dock_save_expanded_min_width">120dp</dimen>
+    <dimen name="land_app_detail_dock_process_group_min_width">288dp</dimen>
     <dimen name="land_app_detail_dock_process_button_min_width">80dp</dimen>
     <dimen name="land_app_detail_dock_button_spacing">12dp</dimen>
     <dimen name="land_app_detail_dock_capsule_corner_radius">24dp</dimen>
@@ -106,7 +110,7 @@
     <dimen name="main_workspace_navigation_height">80dp</dimen>
     <dimen name="home_workspace_padding_horizontal">16dp</dimen>
     <dimen name="home_workspace_padding_top">8dp</dimen>
-    <dimen name="home_workspace_padding_bottom">144dp</dimen>
+    <dimen name="home_workspace_padding_bottom">24dp</dimen>
     <dimen name="home_workspace_header_icon_size">48dp</dimen>
     <dimen name="home_workspace_header_icon_padding">12dp</dimen>
     <dimen name="home_workspace_title_spacing_top">16dp</dimen>
@@ -122,7 +126,7 @@
     <dimen name="home_workspace_primary_status_padding">16dp</dimen>
     <dimen name="home_workspace_primary_status_icon_size">30dp</dimen>
     <dimen name="home_workspace_primary_status_text_spacing_start">14dp</dimen>
-    <dimen name="home_workspace_status_grid_gap">8dp</dimen>
+    <dimen name="home_workspace_status_grid_gap">4dp</dimen>
     <dimen name="home_workspace_status_min_height">66dp</dimen>
     <dimen name="home_workspace_info_row_min_height">44dp</dimen>
     <dimen name="home_workspace_info_row_padding_vertical">8dp</dimen>
@@ -240,6 +244,7 @@
     <!-- App config bottom sheet. -->
     <dimen name="dialog_mode_toggle_row_height">56dp</dimen>
     <dimen name="dialog_mode_toggle_row_min_height">56dp</dimen>
+    <dimen name="dialog_mode_toggle_track_height">48dp</dimen>
     <dimen name="dialog_mode_toggle_width">132dp</dimen>
     <dimen name="dialog_mode_toggle_spacing_start">10dp</dimen>
     <dimen name="dialog_mode_toggle_content_offset_top">6dp</dimen>

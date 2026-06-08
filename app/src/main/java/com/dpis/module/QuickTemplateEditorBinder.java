@@ -15,7 +15,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatImageButton;
 
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -533,8 +532,8 @@ final class QuickTemplateEditorBinder {
                 AppConfigDialogBinder.resolveViewportMode(viewportModeToggle));
         boolean fontValid = AppConfigInputValidation.isFontScaleInputValid(textOf(fontInputView));
         bindNameErrorState(nameValid, R.string.quick_template_name_required);
-        bindInputErrorState(viewportInputLayout, viewportValid);
-        bindInputErrorState(fontInputLayout, fontValid);
+        ConfigValueInputErrorBinder.bindFullMessage(viewportInputLayout, viewportValid);
+        ConfigValueInputErrorBinder.bindFullMessage(fontInputLayout, fontValid);
         saveButton.setEnabled(nameValid && viewportValid && fontValid);
         refreshUnsavedBadge();
         return nameValid && viewportValid && fontValid;
@@ -548,16 +547,6 @@ final class QuickTemplateEditorBinder {
         }
         nameInputLayout.setErrorEnabled(true);
         nameInputLayout.setError(activity.getString(messageResId));
-    }
-
-    private static void bindInputErrorState(TextInputLayout inputLayout, boolean valid) {
-        int defaultStrokeColor = MaterialColors.getColor(
-                inputLayout, com.google.android.material.R.attr.colorOutline);
-        int errorStrokeColor = MaterialColors.getColor(
-                inputLayout, androidx.appcompat.R.attr.colorError);
-        inputLayout.setError(null);
-        inputLayout.setErrorEnabled(false);
-        inputLayout.setBoxStrokeColor(valid ? defaultStrokeColor : errorStrokeColor);
     }
 
     private void refreshUnsavedBadge() {

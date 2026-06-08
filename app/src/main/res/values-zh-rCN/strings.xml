@@ -103,7 +103,6 @@
     <string name="workspace_template">模板</string>
     <string name="workspace_tools">工具</string>
     <string name="workspace_settings">设置</string>
-    <string name="tools_workspace_under_construction">正在施工</string>
     <string name="system_font_scale_title">系统字体大小</string>
     <string name="system_font_scale_subtitle">精确调整全局字体大小</string>
     <string name="system_font_scale_pending_value">%1$d%%</string>

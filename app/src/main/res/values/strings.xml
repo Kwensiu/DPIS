@@ -103,7 +103,6 @@
     <string name="workspace_template">Templates</string>
     <string name="workspace_tools">Tools</string>
     <string name="workspace_settings">Settings</string>
-    <string name="tools_workspace_under_construction">Under construction</string>
     <string name="system_font_scale_title">System font size</string>
     <string name="system_font_scale_subtitle">Fine tune the global font size</string>
     <string name="system_font_scale_pending_value">%1$d%%</string>

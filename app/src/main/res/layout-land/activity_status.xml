@@ -159,12 +159,6 @@
                     app:tabMode="fixed"
                     app:tabRippleColor="?attr/colorControlHighlight" />
 
-                <View
-                    android:id="@+id/app_workspace_divider"
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/main_content_divider_height"
-                    android:background="?attr/colorOutlineVariant" />
-
                 <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dp"

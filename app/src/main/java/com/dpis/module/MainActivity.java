@@ -64,6 +64,11 @@ public final class MainActivity
         implements DpisApplication.ServiceStateListener {
 
     private static final long MODE_TOGGLE_ANIM_DURATION_MS = 200L;
+    private static final long WORKSPACE_TRANSITION_DURATION_MS = 300L;
+    private static final float WORKSPACE_CONTENT_ENTER_START_SCALE = 0.96f;
+    private static final AccelerateDecelerateInterpolator
+            WORKSPACE_CONTENT_ENTER_INTERPOLATOR =
+                    new AccelerateDecelerateInterpolator();
     private static final long SEARCH_FAB_ANIM_DURATION_MS = 180L;
     private static final int SEARCH_FAB_SCROLL_TRIGGER_DY = 8;
     private static final String STATE_CURRENT_QUERY = "state.current_query";
@@ -154,7 +159,6 @@ public final class MainActivity
     private ViewPager2 appPager;
     private TabLayout filterTabs;
     private View topContainer;
-    private View appWorkspaceDivider;
     private View homeWorkspaceContainer;
     private View templateWorkspaceContainer;
     private View toolsWorkspaceContainer;
@@ -313,7 +317,6 @@ public final class MainActivity
         appPager = findViewById(R.id.app_pager);
         filterTabs = findViewById(R.id.filter_tabs);
         topContainer = findViewById(R.id.top_container);
-        appWorkspaceDivider = findViewById(R.id.app_workspace_divider);
         homeWorkspaceContainer = findViewById(R.id.home_workspace_container);
         templateWorkspaceContainer = findViewById(
                 R.id.template_workspace_container
@@ -976,7 +979,7 @@ public final class MainActivity
         View topContainer = findViewById(R.id.top_container);
         WindowInsetsBinder.applySafeDrawingPadding(topContainer, false, true, false, false);
         View homeWorkspace = findViewById(R.id.home_workspace_container);
-        WindowInsetsBinder.applySafeDrawingPadding(homeWorkspace, true, true, true, false);
+        WindowInsetsBinder.applySafeDrawingPadding(homeWorkspace, true, true, true, true);
         WindowInsetsBinder.applyNavigationBarMargins(searchFocusFab);
     }
 
@@ -1234,7 +1237,6 @@ public final class MainActivity
                 = workspaceMode != null ? workspaceMode : MainWorkspaceMode.HOME;
         boolean enteringToolsWorkspace = mode == MainWorkspaceMode.TOOLS
                 && renderedWorkspaceMode != MainWorkspaceMode.TOOLS;
-        renderedWorkspaceMode = mode;
         boolean appWorkspace = mode == MainWorkspaceMode.APP;
         boolean homeWorkspace = mode == MainWorkspaceMode.HOME;
         boolean templateWorkspace = mode == MainWorkspaceMode.TEMPLATE;
@@ -1242,14 +1244,6 @@ public final class MainActivity
         boolean settingsWorkspace = mode == MainWorkspaceMode.SETTINGS;
         setVisible(topContainer, appWorkspace || templateWorkspace);
         setVisible(filterTabs, appWorkspace);
-        setVisible(appWorkspaceDivider, appWorkspace);
-        setVisible(appPager, appWorkspace);
-        setVisible(landListPageView, appWorkspace);
-        setVisible(homeWorkspaceContainer, homeWorkspace);
-        setVisible(templateWorkspaceContainer, templateWorkspace);
-        setVisible(toolsWorkspaceContainer, toolsWorkspace);
-        setVisible(settingsWorkspaceContainer, settingsWorkspace);
-        applyLandscapeDetailVisibility(appWorkspace, templateWorkspace);
         boolean floatingActionsVisible
                 = appWorkspace && !isLandscapeDetailMode();
         setVisible(searchFocusFab, floatingActionsVisible);
@@ -1259,6 +1253,20 @@ public final class MainActivity
                     appWorkspace ? View.VISIBLE : View.GONE
             );
         }
+        boolean animateWorkspace = renderedWorkspaceMode != null
+                && renderedWorkspaceMode != mode;
+        renderedWorkspaceMode = mode;
+        setVisible(appPager, appWorkspace);
+        setVisible(landListPageView, appWorkspace);
+        setVisible(homeWorkspaceContainer, homeWorkspace);
+        setVisible(templateWorkspaceContainer, templateWorkspace);
+        setVisible(toolsWorkspaceContainer, toolsWorkspace);
+        setVisible(settingsWorkspaceContainer, settingsWorkspace);
+        resetHiddenWorkspacePresentation(mode);
+        if (animateWorkspace) {
+            animateVisibleWorkspaceContent(mode);
+        }
+        applyLandscapeDetailVisibility(appWorkspace, templateWorkspace);
         if (workspaceSwitch != null
                 && workspaceSwitch.getSelectedItemId() != workspaceButtonId(mode)) {
             selectWorkspaceItem(workspaceButtonId(mode));
@@ -1894,6 +1902,82 @@ public final class MainActivity
         if (view != null) {
             view.setVisibility(visible ? View.VISIBLE : View.GONE);
         }
+    }
+
+    private void resetHiddenWorkspacePresentation(MainWorkspaceMode visibleMode) {
+        resetWorkspacePresentationUnlessMode(appPager, visibleMode, MainWorkspaceMode.APP);
+        resetWorkspacePresentationUnlessMode(
+                landListPageView, visibleMode, MainWorkspaceMode.APP);
+        resetWorkspacePresentationUnlessMode(
+                homeWorkspaceContainer, visibleMode, MainWorkspaceMode.HOME);
+        resetWorkspacePresentationUnlessMode(
+                templateWorkspaceContainer, visibleMode, MainWorkspaceMode.TEMPLATE);
+        resetWorkspacePresentationUnlessMode(
+                toolsWorkspaceContainer, visibleMode, MainWorkspaceMode.TOOLS);
+        resetWorkspacePresentationUnlessMode(
+                settingsWorkspaceContainer, visibleMode, MainWorkspaceMode.SETTINGS);
+    }
+
+    private static void resetWorkspacePresentationUnlessMode(
+            View view,
+            MainWorkspaceMode visibleMode,
+            MainWorkspaceMode viewMode
+    ) {
+        if (visibleMode != viewMode) {
+            resetWorkspacePresentation(view);
+        }
+    }
+
+    private static void resetWorkspacePresentation(View view) {
+        if (view == null) {
+            return;
+        }
+        view.animate().cancel();
+        view.setAlpha(1f);
+        view.setScaleX(1f);
+        view.setScaleY(1f);
+    }
+
+    private void animateVisibleWorkspaceContent(MainWorkspaceMode mode) {
+        View target = workspaceViewForMode(mode);
+        if (target == null) {
+            return;
+        }
+        target.animate().cancel();
+        target.setAlpha(0f);
+        target.setScaleX(WORKSPACE_CONTENT_ENTER_START_SCALE);
+        target.setScaleY(WORKSPACE_CONTENT_ENTER_START_SCALE);
+        target.animate()
+                .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(WORKSPACE_TRANSITION_DURATION_MS)
+                .setInterpolator(WORKSPACE_CONTENT_ENTER_INTERPOLATOR)
+                .withEndAction(() -> {
+                    target.setAlpha(1f);
+                    target.setScaleX(1f);
+                    target.setScaleY(1f);
+                })
+                .start();
+    }
+
+    private View workspaceViewForMode(MainWorkspaceMode mode) {
+        if (mode == MainWorkspaceMode.APP) {
+            return appPager != null ? appPager : landListPageView;
+        }
+        if (mode == MainWorkspaceMode.HOME) {
+            return homeWorkspaceContainer;
+        }
+        if (mode == MainWorkspaceMode.TEMPLATE) {
+            return templateWorkspaceContainer;
+        }
+        if (mode == MainWorkspaceMode.TOOLS) {
+            return toolsWorkspaceContainer;
+        }
+        if (mode == MainWorkspaceMode.SETTINGS) {
+            return settingsWorkspaceContainer;
+        }
+        return null;
     }
 
     private static int workspaceButtonId(MainWorkspaceMode workspaceMode) {
@@ -2804,6 +2888,26 @@ public final class MainActivity
             @Override
             public void installDownloadedUpdate() {
                 installHomeDownloadedUpdate();
+            }
+
+            @Override
+            public void openConfiguredAppsWorkspace() {
+                setCurrentAppListPage(AppListPage.CONFIGURED_APPS, false);
+                dispatchMainUiAction(
+                        MainUiAction.workspaceModeChanged(MainWorkspaceMode.APP)
+                );
+            }
+
+            @Override
+            public void openFontLibrary() {
+                startActivity(new Intent(MainActivity.this, FontLibraryActivity.class));
+            }
+
+            @Override
+            public void openTemplateWorkspace() {
+                dispatchMainUiAction(
+                        MainUiAction.workspaceModeChanged(MainWorkspaceMode.TEMPLATE)
+                );
             }
         };
     }

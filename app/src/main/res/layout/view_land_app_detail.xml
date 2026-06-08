@@ -78,13 +78,15 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/land_app_detail_status_spacing_top"
                         android:gravity="center_vertical"
+                        android:minHeight="@dimen/land_app_detail_badge_min_height"
                         android:orientation="horizontal"
                     >
 
                         <com.google.android.material.textview.MaterialTextView
                             android:id="@+id/land_detail_status"
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:ellipsize="end"
                             android:maxLines="1"
                             android:textAppearance="@style/TextAppearance.Material3.BodySmall"
@@ -99,7 +101,9 @@
                             android:background="@drawable/bg_sheet_unsaved_badge"
                             android:gravity="center"
                             android:includeFontPadding="false"
+                            android:maxLines="1"
                             android:minHeight="@dimen/land_app_detail_badge_min_height"
+                            android:minWidth="@dimen/land_app_detail_badge_min_width"
                             android:paddingStart="@dimen/land_app_detail_badge_padding_horizontal"
                             android:paddingTop="@dimen/land_app_detail_badge_padding_vertical"
                             android:paddingEnd="@dimen/land_app_detail_badge_padding_horizontal"
@@ -130,18 +134,11 @@
 
                     <!-- Viewport Editor -->
                     <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:baselineAligned="false"
-                        android:gravity="center_vertical"
-                        android:minHeight="@dimen/land_app_detail_editor_min_height"
-                        android:orientation="horizontal"
+                        style="@style/Widget.Dpis.ConfigValueModeRow"
                     >
 
                         <FrameLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
+                            style="@style/Widget.Dpis.ConfigValueInputContainer"
                         >
 
                             <com.google.android.material.textfield.TextInputLayout
@@ -174,9 +171,7 @@
                         <!-- Viewport Mode Toggle -->
                         <FrameLayout
                             android:id="@+id/land_detail_viewport_mode_toggle_button"
-                            android:layout_width="@dimen/dialog_mode_toggle_width"
-                            android:layout_height="match_parent"
-                            android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start"
+                            style="@style/Widget.Dpis.ConfigValueModeToggleContainer"
                             android:clickable="true"
                             android:contentDescription="@string/dialog_viewport_mode_toggle_description"
                             android:focusable="true"
@@ -184,7 +179,7 @@
 
                             <FrameLayout
                                 android:layout_width="match_parent"
-                                android:layout_height="match_parent"
+                                android:layout_height="@dimen/dialog_mode_toggle_track_height"
                                 android:layout_marginTop="@dimen/dialog_mode_toggle_content_offset_top"
                                 android:background="@drawable/bg_mode_toggle_track"
                             >
@@ -228,19 +223,12 @@
 
                     <!-- Font Editor -->
                     <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        style="@style/Widget.Dpis.ConfigValueModeRow"
                         android:layout_marginTop="@dimen/land_app_detail_editor_row_spacing"
-                        android:baselineAligned="false"
-                        android:gravity="center_vertical"
-                        android:minHeight="@dimen/land_app_detail_editor_min_height"
-                        android:orientation="horizontal"
                     >
 
                         <FrameLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
+                            style="@style/Widget.Dpis.ConfigValueInputContainer"
                         >
 
                             <com.google.android.material.textfield.TextInputLayout
@@ -273,9 +261,7 @@
                         <!-- Font Mode Toggle -->
                         <FrameLayout
                             android:id="@+id/land_detail_font_mode_toggle_button"
-                            android:layout_width="@dimen/dialog_mode_toggle_width"
-                            android:layout_height="match_parent"
-                            android:layout_marginStart="@dimen/dialog_mode_toggle_spacing_start"
+                            style="@style/Widget.Dpis.ConfigValueModeToggleContainer"
                             android:clickable="true"
                             android:contentDescription="@string/dialog_font_mode_toggle_description"
                             android:focusable="true"
@@ -283,7 +269,7 @@
 
                             <FrameLayout
                                 android:layout_width="match_parent"
-                                android:layout_height="match_parent"
+                                android:layout_height="@dimen/dialog_mode_toggle_track_height"
                                 android:layout_marginTop="@dimen/dialog_mode_toggle_content_offset_top"
                                 android:background="@drawable/bg_mode_toggle_track"
                             >
@@ -524,6 +510,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/land_app_detail_card_inner_spacing"
+                        android:baselineAligned="false"
+                        android:gravity="center_vertical"
                         android:orientation="horizontal"
                     >
 
@@ -531,8 +519,10 @@
                             android:id="@+id/land_detail_scope_row"
                             style="@style/Widget.Dpis.DialogActionButton.Outlined"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="@dimen/land_app_detail_action_button_height"
                             android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:maxLines="1"
                             android:minWidth="0dp"
                             android:text="@string/scope_add_button"
                         />
@@ -541,9 +531,11 @@
                             android:id="@+id/land_detail_dpis_toggle_row"
                             style="@style/Widget.Dpis.DialogActionButton.Outlined"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="@dimen/land_app_detail_action_button_height"
                             android:layout_marginStart="@dimen/land_app_detail_action_button_spacing"
                             android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:maxLines="1"
                             android:minWidth="0dp"
                             android:text="@string/dialog_dpis_disable_button"
                         />
@@ -552,9 +544,11 @@
                             android:id="@+id/land_detail_reset_row"
                             style="@style/Widget.Dpis.DialogActionButton.Outlined"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="@dimen/land_app_detail_action_button_height"
                             android:layout_marginStart="@dimen/land_app_detail_action_button_spacing"
                             android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:maxLines="1"
                             android:minWidth="0dp"
                             android:text="@string/dialog_disable_button"
                         />
@@ -565,6 +559,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/land_app_detail_action_button_spacing"
+                        android:baselineAligned="false"
+                        android:gravity="center_vertical"
                         android:orientation="horizontal"
                         android:visibility="gone"
                     />
@@ -577,7 +573,7 @@
     <!-- Floating Action Dock -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/land_detail_action_dock"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
         android:layout_marginStart="@dimen/land_app_detail_dock_margin_horizontal"
@@ -590,7 +586,7 @@
     >
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:padding="@dimen/land_app_detail_dock_padding"
@@ -602,7 +598,9 @@
                 style="@style/Widget.Dpis.DialogActionButton.Filled"
                 android:layout_width="wrap_content"
                 android:layout_height="@dimen/land_app_detail_dock_button_height"
+                android:ellipsize="end"
                 android:minWidth="@dimen/land_app_detail_dock_save_expanded_min_width"
+                android:maxLines="1"
                 android:text="@string/status_save_button"
                 app:cornerRadius="@dimen/land_app_detail_dock_capsule_corner_radius"
             />
@@ -614,8 +612,10 @@
 
             <!-- Process Control Capsule Group -->
             <com.google.android.material.card.MaterialCardView
-                android:layout_width="wrap_content"
+                android:id="@+id/land_detail_process_action_group"
+                android:layout_width="0dp"
                 android:layout_height="@dimen/land_app_detail_dock_button_height"
+                android:layout_weight="1"
                 app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 app:cardCornerRadius="@dimen/land_app_detail_dock_capsule_corner_radius"
                 app:cardElevation="0dp"
@@ -624,18 +624,21 @@
             >
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:orientation="horizontal"
                 >
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/land_detail_stop_button"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="wrap_content"
+                        style="@style/Widget.Dpis.LandDetailDockProcessButton"
+                        android:layout_width="0dp"
                         android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
+                        android:maxLines="1"
                         android:minWidth="@dimen/land_app_detail_dock_process_button_min_width"
                         android:text="@string/dialog_stop_button"
                         android:textColor="@color/land_detail_dock_stop_text"
@@ -652,11 +655,14 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/land_detail_restart_button"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="wrap_content"
+                        style="@style/Widget.Dpis.LandDetailDockProcessButton"
+                        android:layout_width="0dp"
                         android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
+                        android:maxLines="1"
                         android:minWidth="@dimen/land_app_detail_dock_process_button_min_width"
                         android:text="@string/dialog_restart_button"
                         android:textColor="@color/land_detail_dock_warn_text"
@@ -673,11 +679,14 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/land_detail_start_button"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="wrap_content"
+                        style="@style/Widget.Dpis.LandDetailDockProcessButton"
+                        android:layout_width="0dp"
                         android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
+                        android:maxLines="1"
                         android:minWidth="@dimen/land_app_detail_dock_process_button_min_width"
                         android:text="@string/dialog_start_button"
                         android:textColor="@color/land_detail_dock_success_text"
