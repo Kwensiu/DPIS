@@ -250,13 +250,15 @@
                     <LinearLayout
                         android:id="@+id/system_font_scale_permission_overlay"
                         android:layout_width="match_parent"
-                        android:layout_height="@dimen/system_font_scale_permission_panel_height"
+                        android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/template_workspace_actions_spacing_top"
                         android:background="@drawable/bg_system_font_scale_permission_panel"
                         android:clickable="true"
                         android:focusable="true"
                         android:gravity="center"
+                        android:minHeight="@dimen/system_font_scale_permission_panel_height"
                         android:orientation="vertical"
+                        android:padding="@dimen/template_workspace_text_spacing_top"
                         android:visibility="gone">
 
                         <com.google.android.material.textview.MaterialTextView

@@ -17,7 +17,7 @@ public class SystemFontScaleToolLayoutSmokeTest {
         assertTrue(layout.contains("android:id=\"@+id/system_font_scale_apply_button\""));
         assertTrue(layout.contains("android:background=\"@drawable/bg_round_button_surface\""));
         assertTrue(layout.contains("android:id=\"@+id/system_font_scale_permission_overlay\""));
-        assertTrue(layout.contains("android:layout_height=\"@dimen/system_font_scale_permission_panel_height\""));
+        assertTrue(layout.contains("android:minHeight=\"@dimen/system_font_scale_permission_panel_height\""));
         assertTrue(layout.contains("android:background=\"@drawable/bg_system_font_scale_permission_panel\""));
         assertTrue(layout.contains("android:clickable=\"true\""));
         assertTrue(layout.contains("android:id=\"@+id/system_font_scale_unavailable_overlay\""));
@@ -36,10 +36,9 @@ public class SystemFontScaleToolLayoutSmokeTest {
         assertTrue(layout.contains("android:id=\"@+id/system_font_scale_restore_button\""));
         assertTrue(layout.contains("android:minHeight=\"@dimen/template_workspace_action_button_height\""));
         assertTrue(!layout.contains(
-                "android:id=\"@+id/system_font_scale_restore_button\"\n"
-                        + "                                style=\"@style/Widget.Material3.Button.TextButton\"\n"
-                        + "                                android:layout_width=\"wrap_content\"\n"
-                        + "                                android:layout_height=\"@dimen/template_workspace_action_button_height\""));
+                "android:layout_height=\"@dimen/template_workspace_action_button_height\""));
+        assertTrue(!layout.contains(
+                "android:layout_height=\"@dimen/system_font_scale_permission_panel_height\""));
         assertTrue(!layout.contains("android:id=\"@+id/system_font_scale_current_value\""));
     }
 
