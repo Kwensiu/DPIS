@@ -27,6 +27,13 @@ Use the default Matt Pocock skill label roles unless the repository labels are i
 
 DPIS currently uses a single-context documentation layout. See `docs/agents/domain.md`.
 
+### CodeGraph
+
+Agents may use CodeGraph for project structure navigation, symbol lookup,
+callers/callees, and impact analysis. Prefer runtime source under `app/src/**`
+for behavioral conclusions; `docs/archive/` may contain historical snapshots
+that can appear in CodeGraph results.
+
 ### DPIS runtime route playbook
 
 When a task mentions runtime hooks, LSPosed logs, flicker, relaunch, viewport,

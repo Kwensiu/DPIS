@@ -26,6 +26,17 @@ Agents should read these files first when they need project context:
 - `docs/README.md` for the active documentation index.
 - `docs/ui-guidelines.md` for UI change rules and resource naming expectations.
 
+## Agent Tooling
+
+Agents may use CodeGraph for structure-aware code navigation, symbol lookup,
+callers/callees, and impact analysis. Treat CodeGraph as a navigation and
+blast-radius aid, then verify behavior against nearby source, tests, and the
+runtime route documents before making conclusions.
+
+When using CodeGraph, prefer current runtime source under `app/src/**`.
+Historical snapshots under `docs/archive/` can be indexed too, so same-named
+classes or methods from archive paths should not be treated as active code.
+
 The two runtime resync documents are living DPIS route documents. Every new
 route exploration, route-detail adjustment, failed attempt, unused path, and
 important runtime finding should be recorded there instead of being discarded.
