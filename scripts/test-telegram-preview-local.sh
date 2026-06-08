@@ -183,27 +183,57 @@ if [[ -z "$CHAT_TARGETS" ]]; then
   exit 1
 fi
 
-CAPTION=$'DPIS local preview test\nVersion: '"${PREVIEW_VERSION_NAME}"$'\nVersionCode: '"${PREVIEW_VERSION_CODE}"$'\nCommit: '"${SHORT_SHA}"
+latest_formal_release_tag() {
+  git for-each-ref --merged "$SHA" \
+    --sort=-creatordate \
+    --format='%(refname:short)' refs/tags \
+    | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+    | head -n 1
+}
+
+COMMIT_SUBJECT="$(git log -1 --format=%s "$SHA" 2>/dev/null || echo "local preview")"
+LAST_RELEASE_TAG="$(latest_formal_release_tag || true)"
+CHANGELOG_COMMITS="$(mktemp)"
+trap 'rm -f "$CHANGELOG_COMMITS"' EXIT
+if [[ -n "$LAST_RELEASE_TAG" ]]; then
+  git log --no-merges --pretty=format:'%h%x09%H%x09%s' "${LAST_RELEASE_TAG}..${SHA}" > "$CHANGELOG_COMMITS"
+  COMPARE_URL="https://github.com/Kwensiu/DPIS/compare/${LAST_RELEASE_TAG}...${SHA}"
+else
+  git log --no-merges --pretty=format:'%h%x09%H%x09%s' -n 10 "$SHA" > "$CHANGELOG_COMMITS"
+  COMPARE_URL="https://github.com/Kwensiu/DPIS/commits/${SHA}"
+fi
+MEDIA_JSON="$(
+  python scripts/telegram-preview-media.py \
+    --title-preset local \
+    --short-sha "$SHORT_SHA" \
+    --commit-url "https://github.com/Kwensiu/DPIS/commit/${SHA}" \
+    --commit-subject "$COMMIT_SUBJECT" \
+    --commits-file "$CHANGELOG_COMMITS" \
+    --repository-url "https://github.com/Kwensiu/DPIS" \
+    --release-tag "${LAST_RELEASE_TAG:-initial commit}" \
+    --compare-url "$COMPARE_URL" \
+    --version-name "$PREVIEW_VERSION_NAME" \
+    --version-code "$PREVIEW_VERSION_CODE"
+)"
 IFS=',' read -ra CHAT_IDS <<< "$CHAT_TARGETS"
 for chat_id in "${CHAT_IDS[@]}"; do
   chat_id="$(echo "$chat_id" | xargs)"
   [[ -z "$chat_id" ]] && continue
-  for apk in "${APKS[@]}"; do
-    args=(
-      -F "chat_id=${chat_id}"
-      -F "caption=${CAPTION}"
-      -F "document=@${apk}"
-    )
-    if [[ -n "${TELEGRAM_MESSAGE_THREAD_ID:-}" ]]; then
-      args+=(-F "message_thread_id=${TELEGRAM_MESSAGE_THREAD_ID}")
-    fi
-    if [[ "${TELEGRAM_PROTECT_CONTENT:-}" == "true" ]]; then
-      args+=(-F "protect_content=true")
-    fi
-    curl --fail --show-error --silent \
-      "${args[@]}" \
-      "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument"
-  done
+  args=(
+    --form-string "chat_id=${chat_id}"
+    --form-string "media=${MEDIA_JSON}"
+    -F "modern_apk=@${APKS[0]}"
+    -F "legacy_apk=@${APKS[1]}"
+  )
+  if [[ -n "${TELEGRAM_MESSAGE_THREAD_ID:-}" ]]; then
+    args+=(--form-string "message_thread_id=${TELEGRAM_MESSAGE_THREAD_ID}")
+  fi
+  if [[ "${TELEGRAM_PROTECT_CONTENT:-}" == "true" ]]; then
+    args+=(--form-string "protect_content=true")
+  fi
+  curl --fail --show-error --silent \
+    "${args[@]}" \
+    "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMediaGroup"
 done
 
 echo "Telegram send complete."
