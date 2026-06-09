@@ -69,7 +69,8 @@ public final class MainActivity
     private static final AccelerateDecelerateInterpolator
             WORKSPACE_CONTENT_ENTER_INTERPOLATOR =
                     new AccelerateDecelerateInterpolator();
-    private static final long SEARCH_FAB_ANIM_DURATION_MS = 180L;
+    private static final long SEARCH_FAB_ANIM_DURATION_MS = 160L;
+    private static final float SEARCH_FAB_HIDDEN_SCALE = 0.92f;
     private static final int SEARCH_FAB_SCROLL_TRIGGER_DY = 8;
     private static final String STATE_CURRENT_QUERY = "state.current_query";
     private static final String STATE_CURRENT_PAGE = "state.current_page";
@@ -1019,17 +1020,21 @@ public final class MainActivity
         }
         searchFabHidden = true;
         searchFocusFab.animate().cancel();
-        ViewGroup.MarginLayoutParams searchLayoutParams
-                = (ViewGroup.MarginLayoutParams) searchFocusFab.getLayoutParams();
-        float searchTargetTranslationY
-                = searchFocusFab.getHeight() + searchLayoutParams.bottomMargin;
+        searchFocusFab.setClickable(false);
         searchFocusFab
                 .animate()
-                .translationY(searchTargetTranslationY)
+                .translationY(getResources().getDimensionPixelSize(
+                        R.dimen.floating_actions_hide_offset_y))
                 .alpha(0f)
+                .scaleX(SEARCH_FAB_HIDDEN_SCALE)
+                .scaleY(SEARCH_FAB_HIDDEN_SCALE)
                 .setDuration(SEARCH_FAB_ANIM_DURATION_MS)
                 .setInterpolator(new AccelerateDecelerateInterpolator())
-                .withStartAction(() -> searchFocusFab.setClickable(false))
+                .withEndAction(() -> {
+                    if (searchFabHidden) {
+                        searchFocusFab.setVisibility(View.INVISIBLE);
+                    }
+                })
                 .start();
     }
 
@@ -1039,14 +1044,31 @@ public final class MainActivity
         }
         searchFabHidden = false;
         searchFocusFab.animate().cancel();
+        searchFocusFab.setVisibility(View.VISIBLE);
+        searchFocusFab.setClickable(true);
         searchFocusFab
                 .animate()
                 .translationY(0f)
                 .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
                 .setDuration(SEARCH_FAB_ANIM_DURATION_MS)
                 .setInterpolator(new AccelerateDecelerateInterpolator())
-                .withStartAction(() -> searchFocusFab.setClickable(true))
                 .start();
+    }
+
+    private void setSearchFocusFabVisible(boolean visible) {
+        if (searchFocusFab == null) {
+            return;
+        }
+        searchFocusFab.animate().cancel();
+        searchFabHidden = false;
+        searchFocusFab.setClickable(visible);
+        searchFocusFab.setAlpha(1f);
+        searchFocusFab.setScaleX(1f);
+        searchFocusFab.setScaleY(1f);
+        searchFocusFab.setTranslationY(0f);
+        searchFocusFab.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
     private void clearSearchFocus() {
@@ -1246,7 +1268,7 @@ public final class MainActivity
         setVisible(filterTabs, appWorkspace);
         boolean floatingActionsVisible
                 = appWorkspace && !isLandscapeDetailMode();
-        setVisible(searchFocusFab, floatingActionsVisible);
+        setSearchFocusFabVisible(floatingActionsVisible);
         if (searchFilterButton != null) {
             searchFilterButton.setEnabled(appWorkspace);
             searchFilterButton.setVisibility(

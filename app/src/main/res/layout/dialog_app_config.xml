@@ -17,13 +17,13 @@
 
             <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
 
-                <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/dialog_title" android:textAppearance="@style/TextAppearance.Material3.TitleMedium" android:textStyle="bold" />
+                <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_title" style="@style/Widget.Dpis.AppIdentityTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/dialog_title" android:textAppearance="@style/TextAppearance.Material3.TitleMedium" android:textStyle="bold" />
 
-                <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_package" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dialog_app_config_package_spacing_top" android:ellipsize="middle" android:maxLines="1" android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+                <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_package" style="@style/Widget.Dpis.AppIdentitySecondaryText" android:layout_width="match_parent" android:layout_height="wrap_content" android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dialog_app_config_status_spacing_top" android:gravity="center_vertical" android:orientation="horizontal">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
 
-                    <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_status" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:ellipsize="end" android:maxLines="1" android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+                    <com.google.android.material.textview.MaterialTextView android:id="@+id/dialog_status" style="@style/Widget.Dpis.AppIdentityStatusText" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
 
                     <com.google.android.material.textview.MaterialTextView android:id="@+id/sheet_unsaved_inline_badge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="@dimen/sheet_unsaved_inline_badge_spacing_start" android:background="@drawable/bg_sheet_unsaved_badge" android:gravity="center" android:includeFontPadding="false" android:minHeight="@dimen/sheet_unsaved_inline_badge_min_height" android:paddingStart="@dimen/sheet_unsaved_inline_badge_padding_horizontal" android:paddingTop="@dimen/sheet_unsaved_inline_badge_padding_vertical" android:paddingEnd="@dimen/sheet_unsaved_inline_badge_padding_horizontal" android:paddingBottom="@dimen/sheet_unsaved_inline_badge_padding_vertical" android:text="@string/sheet_unsaved_badge" android:textAppearance="@style/TextAppearance.Material3.LabelSmall" android:textColor="?attr/colorOnPrimaryContainer" android:visibility="gone" />
                 </LinearLayout>

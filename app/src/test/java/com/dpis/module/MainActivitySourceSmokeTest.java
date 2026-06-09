@@ -86,6 +86,10 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("onPageListScrolled("));
         assertTrue(source.contains("hideSearchFocusFab()"));
         assertTrue(source.contains("showSearchFocusFab()"));
+        assertTrue(source.contains("R.dimen.floating_actions_hide_offset_y"));
+        assertTrue(source.contains(".translationY(getResources().getDimensionPixelSize("));
+        assertFalse(source.contains(".translationY(searchTargetTranslationY)"));
+        assertFalse(source.contains("searchFocusFab.getHeight() +"));
         assertTrue(source.contains("showFilterDialog()"));
         assertTrue(source.contains("new AppListFilterState("));
         assertTrue(source.contains("setOnCheckedChangeListener"));
@@ -133,9 +137,12 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("appWorkspace && !isLandscapeDetailMode()"));
         assertTrue(
             source.contains(
-                "setVisible(searchFocusFab, floatingActionsVisible);"
+                "setSearchFocusFabVisible(floatingActionsVisible);"
             )
         );
+        assertTrue(source.contains("private void setSearchFocusFabVisible(boolean visible)"));
+        assertTrue(source.contains("searchFocusFab.setTranslationY(0f);"));
+        assertTrue(source.contains("searchFabHidden = false;"));
         assertTrue(
             !source.contains("setVisible(helpFab, floatingActionsVisible);")
         );
@@ -233,6 +240,8 @@ public class MainActivitySourceSmokeTest {
         assertTrue(globalDetail.contains("android:baselineAligned=\"false\""));
         assertTrue(globalDetail.contains("android:layout_gravity=\"center_vertical\""));
         assertTrue(globalDetail.contains("android:translationY=\"@dimen/template_detail_inline_badge_visual_offset_top\""));
+        assertTrue(globalDetail.contains("@dimen/land_template_detail_subtitle_spacing_top"));
+        assertFalse(globalDetail.contains("@dimen/land_app_identity_secondary_spacing_top"));
         assertFalse(globalDetail.contains("@layout/view_sheet_unsaved_badge_handle"));
         assertFalse(globalDetail.contains("sheet_drag_handle"));
         assertTrue(templateDetail.contains("android:layout_height=\"match_parent\""));
@@ -240,6 +249,8 @@ public class MainActivitySourceSmokeTest {
         assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_detail_root\""));
         assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_list\""));
         assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_save_button\""));
+        assertTrue(targetsDetail.contains("@dimen/land_template_detail_subtitle_spacing_top"));
+        assertFalse(targetsDetail.contains("@dimen/land_app_identity_secondary_spacing_top"));
         assertFalse(targetsDetail.contains("quick_template_targets_back_button"));
         assertFalse(targetsDetail.contains("@layout/activity_quick_template_targets"));
         assertTrue(templateDetail.contains("android:fillViewport=\"true\""));
@@ -247,6 +258,8 @@ public class MainActivitySourceSmokeTest {
         assertTrue(templateDetail.contains("android:baselineAligned=\"false\""));
         assertTrue(templateDetail.contains("android:layout_gravity=\"center_vertical\""));
         assertTrue(templateDetail.contains("android:translationY=\"@dimen/template_detail_inline_badge_visual_offset_top\""));
+        assertTrue(templateDetail.contains("@dimen/land_template_detail_subtitle_spacing_top"));
+        assertFalse(templateDetail.contains("@dimen/land_app_identity_secondary_spacing_top"));
         assertFalse(templateDetail.contains("@layout/view_sheet_unsaved_badge_handle"));
         assertFalse(templateDetail.contains("sheet_drag_handle"));
     }
@@ -1129,6 +1142,18 @@ public class MainActivitySourceSmokeTest {
         int landStatusStart = layout.indexOf("android:id=\"@+id/land_detail_status\"");
         int landStatusEnd = layout.indexOf("/>", landStatusStart);
         String landStatusBlock = layout.substring(landStatusStart, landStatusEnd);
+        assertTrue(layout.contains("@style/Widget.Dpis.AppIdentityTitle"));
+        assertTrue(layout.contains("@style/Widget.Dpis.LandAppIdentitySecondaryText"));
+        assertTrue(layout.contains("@style/Widget.Dpis.LandAppIdentityStatusText"));
+        assertTrue(layout.contains("@dimen/land_app_identity_secondary_spacing_top"));
+        assertTrue(layout.contains("@dimen/land_app_identity_status_spacing_top"));
+        assertFalse(layout.contains("@dimen/land_template_detail_subtitle_spacing_top"));
+        assertTrue(dimens.contains(
+                "<dimen name=\"land_app_identity_secondary_spacing_top\">0dp</dimen>"
+        ));
+        assertTrue(dimens.contains(
+                "<dimen name=\"land_app_identity_status_spacing_top\">0dp</dimen>"
+        ));
         assertTrue(landStatusBlock.contains("android:layout_width=\"0dp\""));
         assertTrue(landStatusBlock.contains("android:layout_weight=\"1\""));
         assertTrue(layout.contains("android:id=\"@+id/land_detail_unsaved_badge\""));

@@ -11,14 +11,14 @@
     android:minHeight="52dp"
     android:orientation="horizontal"
     android:paddingStart="@dimen/land_app_entry_padding_horizontal"
-    android:paddingTop="8dp"
+    android:paddingTop="@dimen/land_app_entry_padding_vertical"
     android:paddingEnd="@dimen/land_app_entry_padding_horizontal"
-    android:paddingBottom="8dp">
+    android:paddingBottom="@dimen/land_app_entry_padding_vertical">
 
     <FrameLayout
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:layout_marginEnd="16dp">
+        android:layout_width="@dimen/land_app_entry_icon_size"
+        android:layout_height="@dimen/land_app_entry_icon_size"
+        android:layout_marginEnd="@dimen/land_app_entry_icon_spacing_end">
 
         <ImageView
             android:id="@+id/app_icon"
@@ -43,28 +43,24 @@
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/app_label"
+            style="@style/Widget.Dpis.AppIdentityTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="1"
             android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
             android:textStyle="bold" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/app_package"
+            style="@style/Widget.Dpis.AppIdentitySecondaryText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="1dp"
-            android:ellipsize="middle"
-            android:maxLines="1"
             android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/app_status"
+            style="@style/Widget.Dpis.AppIdentityStatusText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="1dp"
-            android:maxLines="1"
             android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
     </LinearLayout>
 

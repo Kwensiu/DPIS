@@ -79,6 +79,10 @@ public class SystemServerSettingsLayoutSmokeTest {
         String source = read("src/main/java/com/dpis/module/ExperimentalSettingsActivity.java");
 
         assertTrue(source.contains("setContentView(R.layout.activity_experimental_settings);"));
+        assertTrue(source.contains("bindToolbar();"));
+        assertTrue(source.contains("R.id.experimental_settings_back_button"));
+        assertTrue(source.contains("backButton.setOnClickListener"));
+        assertTrue(source.contains("finish()"));
         assertTrue(source.contains("applyInsets();"));
         assertTrue(!source.contains("setFlutterFontHookEnabled"));
         assertTrue(!source.contains("setFlutterSettingsFontHookEnabled"));
@@ -93,7 +97,19 @@ public class SystemServerSettingsLayoutSmokeTest {
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
         assertTrue(manifest.contains(".ExperimentalSettingsActivity"));
+        assertTrue(layout.contains("android:id=\"@+id/experimental_settings_toolbar\""));
+        assertTrue(layout.contains("android:id=\"@+id/experimental_settings_back_button\""));
+        assertTrue(layout.contains("android:id=\"@+id/experimental_settings_title\""));
+        assertTrue(layout.contains("android:contentDescription=\"@string/system_settings_back\""));
+        assertTrue(layout.contains("android:text=\"@string/settings_experimental_title\""));
+        assertTrue(layout.contains("android:src=\"@drawable/ic_arrow_back_24\""));
+        assertTrue(layout.contains("@dimen/page_toolbar_padding_horizontal"));
+        assertTrue(layout.contains("@dimen/page_title_spacing_start"));
         assertTrue(layout.contains("android:id=\"@+id/experimental_settings_content\""));
+        assertTrue(layout.contains("android:paddingStart=\"@dimen/experimental_settings_content_padding_horizontal\""));
+        assertTrue(layout.contains("android:paddingTop=\"@dimen/experimental_settings_content_padding_top\""));
+        assertTrue(layout.contains("android:paddingEnd=\"@dimen/experimental_settings_content_padding_horizontal\""));
+        assertTrue(layout.contains("android:paddingBottom=\"@dimen/experimental_settings_content_padding_bottom\""));
         assertTrue(layout.contains("android:id=\"@+id/experimental_ttc_import_row\""));
         assertTrue(layout.contains("com.google.android.material.card.MaterialCardView"));
         assertTrue(layout.contains("app:cardBackgroundColor=\"?attr/colorSurfaceContainerHigh\""));
@@ -101,7 +117,6 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(layout.contains("app:strokeColor=\"?attr/colorOutlineVariant\""));
         assertTrue(layout.contains("app:strokeWidth=\"@dimen/page_card_stroke_width\""));
         assertTrue(layout.contains("item_settings_switch"));
-        assertTrue(!layout.contains("experimental_settings_back_button"));
         assertTrue(!layout.contains("row_flutter_font_hook"));
         assertTrue(!layout.contains("row_flutter_settings_font_hook"));
         assertTrue(!layout.contains("row_hyperos_flutter_font_hook"));
@@ -165,7 +180,13 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(layout.contains("@style/Widget.Dpis.DialogActionButton.Process.Error"));
         assertTrue(layout.contains("@style/Widget.Dpis.DialogActionButton.Process.Warn"));
         assertTrue(layout.contains("@style/Widget.Dpis.DialogActionButton.Process.Success"));
+        assertTrue(layout.contains("@style/Widget.Dpis.AppIdentityTitle"));
+        assertTrue(layout.contains("@style/Widget.Dpis.AppIdentitySecondaryText"));
+        assertTrue(layout.contains("@style/Widget.Dpis.AppIdentityStatusText"));
         assertTrue(styles.contains("name=\"Widget.Dpis.DialogActionButton.Process\""));
+        assertTrue(styles.contains("name=\"Widget.Dpis.AppIdentityTitle\""));
+        assertTrue(styles.contains("name=\"Widget.Dpis.AppIdentitySecondaryText\""));
+        assertTrue(styles.contains("name=\"Widget.Dpis.AppIdentityStatusText\""));
         assertTrue(styles.contains("@dimen/dialog_button_corner_radius"));
         assertTrue(styles.contains("@dimen/dialog_option_button_min_height"));
         assertTrue(styles.contains("@dimen/dialog_option_button_corner_radius"));

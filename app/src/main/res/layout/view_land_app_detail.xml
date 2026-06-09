@@ -54,21 +54,19 @@
 
                     <com.google.android.material.textview.MaterialTextView
                         android:id="@+id/land_detail_title"
+                        style="@style/Widget.Dpis.AppIdentityTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:ellipsize="end"
-                        android:maxLines="1"
                         android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
                         android:textStyle="bold"
                     />
 
                     <com.google.android.material.textview.MaterialTextView
                         android:id="@+id/land_detail_package"
+                        style="@style/Widget.Dpis.LandAppIdentitySecondaryText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/land_app_detail_package_spacing_top"
-                        android:ellipsize="middle"
-                        android:maxLines="1"
+                        android:layout_marginTop="@dimen/land_app_identity_secondary_spacing_top"
                         android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                         android:textColor="?attr/colorOnSurfaceVariant"
                     />
@@ -76,7 +74,7 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/land_app_detail_status_spacing_top"
+                        android:layout_marginTop="@dimen/land_app_identity_status_spacing_top"
                         android:gravity="center_vertical"
                         android:minHeight="@dimen/land_app_detail_badge_min_height"
                         android:orientation="horizontal"
@@ -84,11 +82,10 @@
 
                         <com.google.android.material.textview.MaterialTextView
                             android:id="@+id/land_detail_status"
+                            style="@style/Widget.Dpis.LandAppIdentityStatusText"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:ellipsize="end"
-                            android:maxLines="1"
                             android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                             android:textColor="?attr/colorOnSurfaceVariant"
                         />

@@ -299,6 +299,59 @@
         >@dimen/dialog_typeface_option_corner_radius</item>
     </style>
 
+    <style
+        name="Widget.Dpis.AppIdentityTitle"
+        parent="@android:style/Widget.TextView"
+    >
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:lineSpacingExtra">0dp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style
+        name="Widget.Dpis.AppIdentitySecondaryText"
+        parent="@android:style/Widget.TextView"
+    >
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:ellipsize">middle</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:lineSpacingExtra">0dp</item>
+        <item name="android:maxLines">1</item>
+        <item
+            name="android:paddingTop"
+        >@dimen/app_identity_secondary_text_line_padding_vertical</item>
+        <item
+            name="android:paddingBottom"
+        >@dimen/app_identity_secondary_text_line_padding_vertical</item>
+    </style>
+
+    <style
+        name="Widget.Dpis.AppIdentityStatusText"
+        parent="Widget.Dpis.AppIdentitySecondaryText"
+    >
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style
+        name="Widget.Dpis.LandAppIdentitySecondaryText"
+        parent="Widget.Dpis.AppIdentitySecondaryText"
+    >
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+    </style>
+
+    <style
+        name="Widget.Dpis.LandAppIdentityStatusText"
+        parent="Widget.Dpis.LandAppIdentitySecondaryText"
+    >
+        <item name="android:ellipsize">end</item>
+    </style>
+
     <style name="Widget.Dpis.LandDetailRow" parent="@android:style/Widget">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>

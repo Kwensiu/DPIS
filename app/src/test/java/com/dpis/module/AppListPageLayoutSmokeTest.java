@@ -14,6 +14,7 @@ public class AppListPageLayoutSmokeTest {
         assertTrue(layout.contains("androidx.swiperefreshlayout.widget.SwipeRefreshLayout"));
         assertTrue(layout.contains("android:id=\"@+id/page_swipe_refresh\""));
         assertTrue(layout.contains("android:id=\"@+id/page_list\""));
+        assertTrue(layout.contains("@dimen/app_list_page_padding_horizontal"));
     }
 
     private static String read(String relativePath) throws IOException {

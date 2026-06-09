@@ -39,7 +39,7 @@
                 android:id="@+id/quick_template_targets_subtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/land_app_detail_package_spacing_top"
+                android:layout_marginTop="@dimen/land_template_detail_subtitle_spacing_top"
                 android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                 android:textColor="?attr/colorOnSurfaceVariant" />
         </LinearLayout>

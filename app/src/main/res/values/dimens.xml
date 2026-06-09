@@ -6,6 +6,7 @@
     <dimen name="floating_actions_margin_end">24dp</dimen>
     <dimen name="floating_actions_search_margin_bottom">40dp</dimen>
     <dimen name="floating_actions_main_workspace_margin_bottom">112dp</dimen>
+    <dimen name="floating_actions_hide_offset_y">12dp</dimen>
     <dimen name="floating_actions_elevation">6dp</dimen>
     <dimen name="floating_actions_hovered_focused_translation_z">8dp</dimen>
     <dimen name="floating_actions_pressed_translation_z">10dp</dimen>
@@ -16,6 +17,7 @@
     <dimen name="page_title_spacing_start">12dp</dimen>
     <dimen name="page_card_corner_radius">24dp</dimen>
     <dimen name="page_card_stroke_width">1dp</dimen>
+    <dimen name="dialog_sheet_header_subtitle_spacing_top">1dp</dimen>
 
     <!-- Main app screen. -->
     <dimen name="main_toolbar_padding_horizontal">16dp</dimen>
@@ -33,8 +35,9 @@
     <dimen name="land_app_detail_header_padding_bottom">6dp</dimen>
     <dimen name="land_app_detail_icon_size">56dp</dimen>
     <dimen name="land_app_detail_icon_spacing_end">16dp</dimen>
-    <dimen name="land_app_detail_package_spacing_top">4dp</dimen>
-    <dimen name="land_app_detail_status_spacing_top">4dp</dimen>
+    <dimen name="land_app_identity_secondary_spacing_top">0dp</dimen>
+    <dimen name="land_app_identity_status_spacing_top">0dp</dimen>
+    <dimen name="land_template_detail_subtitle_spacing_top">4dp</dimen>
     <dimen name="land_app_detail_badge_spacing_start">8dp</dimen>
     <dimen name="land_app_detail_badge_min_width">56dp</dimen>
     <dimen name="land_app_detail_badge_min_height">20dp</dimen>
@@ -49,7 +52,12 @@
     <dimen name="land_app_detail_connected_row_inner_radius">4dp</dimen>
     <dimen name="land_app_detail_connected_row_gap">2dp</dimen>
     <dimen name="land_app_entry_corner_radius">12dp</dimen>
-    <dimen name="land_app_entry_padding_horizontal">12dp</dimen>
+    <dimen name="land_app_entry_icon_size">50dp</dimen> 
+    <dimen name="land_app_entry_icon_spacing_end">16dp</dimen>
+    <dimen name="land_app_entry_padding_horizontal">8dp</dimen>
+    <dimen name="land_app_entry_padding_vertical">8dp</dimen>
+    <dimen name="app_list_page_padding_horizontal">8dp</dimen>
+    <dimen name="app_identity_secondary_text_line_padding_vertical">1dp</dimen>
     <dimen name="land_app_detail_divider_margin_vertical">12dp</dimen>
     <dimen name="land_app_detail_divider_height">1dp</dimen>
     <dimen name="land_app_detail_list_item_min_height">56dp</dimen>
@@ -218,7 +226,9 @@
     <dimen name="settings_divider_margin_horizontal">16dp</dimen>
 
     <!-- Secondary pages. -->
-    <dimen name="experimental_settings_content_padding">24dp</dimen>
+    <dimen name="experimental_settings_content_padding_horizontal">16dp</dimen>
+    <dimen name="experimental_settings_content_padding_top">12dp</dimen>
+    <dimen name="experimental_settings_content_padding_bottom">24dp</dimen>
     <dimen name="open_source_license_padding_horizontal">16dp</dimen>
     <dimen name="open_source_license_padding_top">18dp</dimen>
     <dimen name="open_source_license_padding_bottom">24dp</dimen>

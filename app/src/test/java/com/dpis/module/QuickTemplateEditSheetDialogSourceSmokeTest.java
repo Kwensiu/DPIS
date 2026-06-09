@@ -73,6 +73,7 @@ public class QuickTemplateEditSheetDialogSourceSmokeTest {
         assertTrue(layout.contains("@dimen/dialog_app_config_padding_horizontal"));
         assertTrue(layout.contains("android:id=\"@+id/quick_template_edit_subtitle\""));
         assertTrue(layout.contains("@string/quick_template_edit_sheet_subtitle"));
+        assertTrue(layout.contains("@dimen/dialog_sheet_header_subtitle_spacing_top"));
         assertTrue(layout.contains("android:id=\"@+id/quick_template_edit_reset_button\""));
         assertTrue(layout.contains("@drawable/ic_reset_settings_24"));
         assertTrue(layout.contains("android:id=\"@+id/quick_template_edit_delete_button\""));

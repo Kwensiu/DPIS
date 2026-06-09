@@ -4,10 +4,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textview.MaterialTextView;
 
@@ -20,8 +16,14 @@ public final class ExperimentalSettingsActivity extends LocalizedActivity {
         setContentView(R.layout.activity_experimental_settings);
         configStore = ConfigStoreFactory.createActiveModuleConfigStore(
                 this, DpisApplication.getXposedService());
+        bindToolbar();
         bindTtcImportSwitch();
         applyInsets();
+    }
+
+    private void bindToolbar() {
+        View backButton = findViewById(R.id.experimental_settings_back_button);
+        backButton.setOnClickListener(v -> finish());
     }
 
     private void bindTtcImportSwitch() {
@@ -45,18 +47,9 @@ public final class ExperimentalSettingsActivity extends LocalizedActivity {
     }
 
     private void applyInsets() {
+        View toolbar = findViewById(R.id.experimental_settings_toolbar);
+        WindowInsetsBinder.applySafeDrawingPadding(toolbar, false, true, false, false);
         View content = findViewById(R.id.experimental_settings_content);
-        final int baseTopPadding = content.getPaddingTop();
-        final int baseBottomPadding = content.getPaddingBottom();
-        ViewCompat.setOnApplyWindowInsetsListener(content, (view, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            view.setPadding(
-                    view.getPaddingLeft(),
-                    baseTopPadding + systemBars.top,
-                    view.getPaddingRight(),
-                    baseBottomPadding + systemBars.bottom);
-            return insets;
-        });
-        ViewCompat.requestApplyInsets(content);
+        WindowInsetsBinder.applySafeDrawingPadding(content, false, false, false, true);
     }
 }

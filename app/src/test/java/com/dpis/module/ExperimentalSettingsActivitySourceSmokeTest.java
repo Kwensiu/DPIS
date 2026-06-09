@@ -15,11 +15,23 @@ public final class ExperimentalSettingsActivitySourceSmokeTest {
 
         assertTrue(source.contains("isTtcFontImportEnabled()"));
         assertTrue(source.contains("setTtcFontImportEnabled("));
+        assertTrue(source.contains("bindToolbar();"));
+        assertTrue(source.contains("R.id.experimental_settings_back_button"));
+        assertTrue(source.contains("backButton.setOnClickListener"));
+        assertTrue(source.contains("finish()"));
         assertTrue(source.contains("icon.setVisibility(View.GONE);"));
         assertTrue(source.contains("textColumnLayoutParams.setMarginStart(0);"));
+        assertTrue(layout.contains("experimental_settings_toolbar"));
+        assertTrue(layout.contains("experimental_settings_back_button"));
+        assertTrue(layout.contains("experimental_settings_title"));
+        assertTrue(layout.contains("@string/system_settings_back"));
+        assertTrue(layout.contains("@string/settings_experimental_title"));
+        assertTrue(layout.contains("@dimen/page_toolbar_padding_horizontal"));
         assertTrue(layout.contains("experimental_ttc_import_row"));
         assertTrue(layout.contains("com.google.android.material.card.MaterialCardView"));
-        assertTrue(layout.contains("@dimen/experimental_settings_content_padding"));
+        assertTrue(layout.contains("@dimen/experimental_settings_content_padding_horizontal"));
+        assertTrue(layout.contains("@dimen/experimental_settings_content_padding_top"));
+        assertTrue(layout.contains("@dimen/experimental_settings_content_padding_bottom"));
         assertTrue(layout.contains("@dimen/page_card_corner_radius"));
         assertTrue(layout.contains("@dimen/page_card_stroke_width"));
         assertTrue(layout.contains("item_settings_switch"));

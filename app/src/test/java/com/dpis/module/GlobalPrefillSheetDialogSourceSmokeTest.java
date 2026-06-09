@@ -56,6 +56,7 @@ public class GlobalPrefillSheetDialogSourceSmokeTest {
         assertTrue(sharedTemplateFields.contains("@dimen/template_config_sheet_save_row_spacing_bottom"));
         assertTrue(layout.contains("@string/template_workspace_global_prefill_title"));
         assertTrue(layout.contains("@string/template_workspace_global_prefill_subtitle"));
+        assertTrue(layout.contains("@dimen/dialog_sheet_header_subtitle_spacing_top"));
         assertTrue(layout.contains("@layout/view_template_config_sheet_fields"));
         assertFalse(layout.contains("dialog_scope_button"));
         assertFalse(layout.contains("dialog_start_button"));
