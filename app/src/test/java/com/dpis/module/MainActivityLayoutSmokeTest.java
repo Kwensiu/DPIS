@@ -44,8 +44,8 @@ public class MainActivityLayoutSmokeTest {
         assertTrue(layout.contains("android:src=\"@drawable/ic_tune_24\""));
         assertTrue(layout.contains("<include layout=\"@layout/settings_workspace\""));
         assertTrue(layout.contains("android:id=\"@+id/app_pager\""));
-        assertTrue(layout.contains("android:id=\"@+id/app_workspace_divider\""));
         assertTrue(layout.contains("<include layout=\"@layout/template_workspace\""));
+        assertTrue(layout.contains("<include layout=\"@layout/tools_workspace\""));
         assertTrue(layout.contains("android:id=\"@+id/workspace_switch\""));
         assertTrue(layout.contains("com.google.android.material.bottomnavigation.BottomNavigationView"));
         assertTrue(layout.contains("android:layout_height=\"wrap_content\""));
@@ -58,8 +58,10 @@ public class MainActivityLayoutSmokeTest {
         String workspaceMenu = read("src/main/res/menu/main_workspace_navigation.xml");
         assertTrue(workspaceMenu.contains("android:id=\"@+id/workspace_app_button\""));
         assertTrue(workspaceMenu.contains("android:id=\"@+id/workspace_template_button\""));
+        assertTrue(workspaceMenu.contains("android:id=\"@+id/workspace_tools_button\""));
         assertTrue(workspaceMenu.contains("android:icon=\"@drawable/ic_apps_24\""));
         assertTrue(workspaceMenu.contains("android:icon=\"@drawable/ic_template_24\""));
+        assertTrue(workspaceMenu.contains("android:icon=\"@drawable/ic_build_24\""));
         assertTrue(layout.contains("android:visibility=\"gone\""));
         assertTrue(strings.contains("tab_all_apps"));
         assertTrue(strings.contains("workspace_app"));

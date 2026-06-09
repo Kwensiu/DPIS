@@ -118,13 +118,13 @@ public class MainActivitySourceSmokeTest {
             )
         );
         assertTrue(source.contains("setVisible(filterTabs, appWorkspace);"));
-        assertTrue(
-            source.contains("setVisible(appWorkspaceDivider, appWorkspace);")
-        );
         assertTrue(source.contains("setVisible(appPager, appWorkspace);"));
+        assertTrue(source.contains("setVisible(landListPageView, appWorkspace);"));
         assertTrue(source.contains(
                 "setVisible(templateWorkspaceContainer, templateWorkspace);"
         ));
+        assertTrue(source.contains("setVisible(toolsWorkspaceContainer, toolsWorkspace);"));
+        assertTrue(source.contains("setVisible(settingsWorkspaceContainer, settingsWorkspace);"));
         assertTrue(
             source.contains(
                 "boolean floatingActionsVisible"
@@ -1129,8 +1129,14 @@ public class MainActivitySourceSmokeTest {
         int landStatusStart = layout.indexOf("android:id=\"@+id/land_detail_status\"");
         int landStatusEnd = layout.indexOf("/>", landStatusStart);
         String landStatusBlock = layout.substring(landStatusStart, landStatusEnd);
-        assertTrue(landStatusBlock.contains("android:layout_width=\"wrap_content\""));
-        assertFalse(landStatusBlock.contains("android:layout_weight=\"1\""));
+        assertTrue(landStatusBlock.contains("android:layout_width=\"0dp\""));
+        assertTrue(landStatusBlock.contains("android:layout_weight=\"1\""));
+        assertTrue(layout.contains("android:id=\"@+id/land_detail_unsaved_badge\""));
+        int unsavedBadgeStart = layout.indexOf("android:id=\"@+id/land_detail_unsaved_badge\"");
+        int unsavedBadgeEnd = layout.indexOf("/>", unsavedBadgeStart);
+        String unsavedBadgeBlock = layout.substring(unsavedBadgeStart, unsavedBadgeEnd);
+        assertTrue(unsavedBadgeBlock.contains("android:layout_width=\"wrap_content\""));
+        assertFalse(unsavedBadgeBlock.contains("android:layout_weight=\"1\""));
         assertTrue(layout.contains("android:id=\"@+id/land_detail_action_dock\""));
         assertTrue(layout.contains("android:id=\"@+id/land_detail_save_button\""));
         assertTrue(layout.contains("android:id=\"@+id/land_detail_scope_row\""));

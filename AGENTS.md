@@ -76,7 +76,19 @@ project-local skill bundle and does not modify global agent skills.
 - Test location mirrors production package structure.
 - Test naming: `<ClassName>Test.java` and method names describing behavior (e.g., `usesObservedDefaultDensityWhenNoUserValueExists`).
 - Run targeted tests during iteration with a flavor test task, then run full `:app:testAllDebugUnitTests` before submitting.
+- Before creating a real commit, run the full CI-aligned unit test suite:
+  `./gradlew :app:testAllDebugUnitTests`. Do not rely only on targeted tests
+  unless the user explicitly agrees to skip full verification; if skipped,
+  state that clearly in the final response.
 - Prefer behavior tests for parsers, caches, and policy classes. Source smoke tests are acceptable for wiring checks, but should not be the only coverage for business logic.
+- When changing UI structure, resource ids, shared binders/helpers, navigation,
+  or layout ownership, explicitly check and update source/layout smoke tests.
+  In this project the frequent touch points are
+  `MainActivitySourceSmokeTest`, `MainActivityLayoutSmokeTest`,
+  `AppConfigDialogBinderSourceSmokeTest`, and related `*SourceSmokeTest`
+  files. Use `rg` for removed ids/helper names/layouts so tests keep checking
+  the current product semantics instead of preserving stale implementation
+  details.
 
 ## Update Flow Guidelines
 - Do not cache update detection, version decisions, or manifest results.
@@ -189,6 +201,10 @@ project-local skill bundle and does not modify global agent skills.
 - Follow Conventional Commit style observed in history:
   - `feat: ...`, `fix: ...`, `chore: ...`, `docs: ...`
 - Keep commits scoped and atomic (code + related tests/docs together).
+- Before committing, confirm the worktree diff is intentional and full
+  `:app:testAllDebugUnitTests` has passed after the final edits. If any
+  full-test failure remains, do not commit unless the user explicitly accepts
+  the risk for that commit.
 - PRs should include:
   - What changed and why
   - Verification steps/commands executed

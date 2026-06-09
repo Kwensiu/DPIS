@@ -605,9 +605,12 @@ public class AppConfigDialogBinderSourceSmokeTest {
         int updateEnd = binder.indexOf("static boolean updateSaveButtonState(View dialogView", updateStart);
         String updateBlock = binder.substring(updateStart, updateEnd);
 
-        assertTrue(updateBlock.contains("bindInputError(viewportInputLayout, viewportValid);"));
-        assertTrue(updateBlock.contains("bindInputError(fontInputLayout, fontValid);"));
-        assertTrue(updateBlock.contains("R.string.status_save_invalid"));
+        assertTrue(updateBlock.contains(
+                "ConfigValueInputErrorBinder.bindFullMessage(viewportInputLayout, viewportValid);"));
+        assertTrue(updateBlock.contains(
+                "ConfigValueInputErrorBinder.bindFullMessage(fontInputLayout, fontValid);"));
+        assertTrue(read("src/main/java/com/dpis/module/ConfigValueInputErrorBinder.java")
+                .contains("R.string.status_save_invalid"));
         assertFalse(landBinder.contains("R.string.status_save_invalid"));
     }
 
