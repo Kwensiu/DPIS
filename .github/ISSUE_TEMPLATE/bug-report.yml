@@ -105,7 +105,7 @@ body:
         实际发生了什么？如有帮助，请附截图或录屏。
         What happens instead? Include screenshots or screen recordings if they help.
     validations:
-      required: false
+      required: true
 
   - type: textarea
     id: lsposed-logs
