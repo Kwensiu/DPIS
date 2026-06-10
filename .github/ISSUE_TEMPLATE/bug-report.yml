@@ -1,0 +1,131 @@
+name: 问题反馈 / Bug report
+description: 反馈 DPIS 的行为、兼容性或运行时 hook 问题。
+title: "[BUG] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈 DPIS 相关问题！运行时问题最好能说明目标应用、DPIS 配置、route，以及 LSPosed hook/callback 是否触发。
+
+        Thanks for reporting a DPIS issue. Runtime bugs are easiest to fix when the report proves the target app, route, and LSPosed callback boundary.
+
+  - type: input
+    id: dpis-version
+    attributes:
+      label: DPIS 版本 / Version
+      description: |
+        填写版本号、commit 或构建标识。
+        Include the version name or commit/build identifier.
+      placeholder: "1.12.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: dpis-variant
+    attributes:
+      label: APK 类型 / APK variant
+      options:
+        - 标准版 / Standard / modern101
+        - 兼容版 / Legacy / compat100
+        - 两者都有 / Both
+        - 不确定 / Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: android-environment
+    attributes:
+      label: Android 环境 / Android environment
+      description: |
+        Android 版本、ROM/OEM 系统、Root 方式、LSPosed/Xposed 版本。
+        Android version, ROM/OEM skin, root method, and LSPosed/Xposed version.
+      placeholder: "Android 15, HyperOS, Magisk, LSPosed 1.10.x"
+    validations:
+      required: true
+
+  - type: input
+    id: target-app
+    attributes:
+      label: 目标应用 / Target app
+      description: |
+        受影响应用的包名和版本。
+        Package name and app version affected by the issue.
+      placeholder: "com.example.app, version 1.2.3"
+    validations:
+      required: true
+
+  - type: textarea
+    id: dpis-settings
+    attributes:
+      label: 该应用的 DPIS 配置 / DPIS settings for this app
+      description: |
+        包含 viewport、宽度、density、字体缩放、route 选择、自定义 hook-chain 等。
+        Include viewport, width, density, font scaling, route selection, and any custom hook-chain settings.
+      placeholder: |
+        宽度 / Width:
+        Density:
+        字体 / Font:
+        Route:
+        自定义 hook-chain / Custom hook-chain:
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤 / Steps to reproduce
+      description: |
+        尽量从启用 DPIS 或重新启动目标应用开始。
+        Start from enabling DPIS or launching the target app when possible.
+      placeholder: |
+        1. 为 ... 启用 DPIS / Enable DPIS for ...
+        2. 重新启动 ... / Relaunch ...
+        3. 打开 ... / Open ...
+        4. 观察到 ... / Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期行为 / Expected behavior
+      description: |
+        你期望发生什么？
+        What should happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为 / Actual behavior
+      description: |
+        实际发生了什么？如有帮助，请附截图或录屏。
+        What happens instead? Include screenshots or screen recordings if they help.
+    validations:
+      required: true
+
+  - type: textarea
+    id: lsposed-logs
+    attributes:
+      label: LSPosed 模块日志 / LSPosed module logs
+      description: |
+        导出或粘贴 LSPosed 中 DPIS 相关日志行。
+        Export or paste the DPIS-related lines from the LSPosed logs.
+      render: text
+      placeholder: |
+        DPIS / LSPosed 日志行 / log lines:
+    validations:
+      required: false
+
+  - type: textarea
+    id: extra-context
+    attributes:
+      label: 补充信息 / Additional context
+      description: |
+        说明重启、重新启用模块、清除应用数据、重装后是否仍复现。不要包含私人 token 或无关个人数据。
+        Mention whether the issue survives reboot, module re-enable, app data clear, or reinstall. Do not include private tokens or unrelated personal data.
+    validations:
+      required: false

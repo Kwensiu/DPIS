@@ -72,3 +72,14 @@ jobs:
             app/build/test-results/testCompat100DebugUnitTest
             app/build/reports/lint-results-modern101Debug.html
             app/build/reports/lint-results-modern101Debug.xml
+
+      - name: Upload PR debug APKs
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-debug-apks-${{ github.event.pull_request.head.sha }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            app/build/outputs/apk/modern101/debug/*.apk
+            app/build/outputs/apk/compat100/debug/*.apk

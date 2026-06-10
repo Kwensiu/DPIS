@@ -1,0 +1,57 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "ignoreUnstable": true,
+  "packageRules": [
+    {
+      "description": "Group routine non-major dependency updates.",
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "matchPackageNames": [
+        "androidx.appcompat:appcompat",
+        "androidx.recyclerview:recyclerview",
+        "androidx.viewpager2:viewpager2",
+        "androidx.swiperefreshlayout:swiperefreshlayout",
+        "com.google.android.material:material",
+        "io.noties.markwon:core",
+        "androidx.annotation:annotation",
+        "androidx.test.ext:junit",
+        "androidx.test:core",
+        "junit:junit",
+        "com.mikepenz.aboutlibraries.plugin"
+      ],
+      "groupName": "routine non-major dependencies",
+      "groupSlug": "routine-non-major"
+    },
+    {
+      "description": "Keep Xposed and runtime hook dependencies isolated for manual route validation.",
+      "matchPackageNames": [
+        "io.github.libxposed:api",
+        "io.github.libxposed:service",
+        "de.robv.android.xposed:api",
+        "org.luckypray:dexkit",
+        "com.highcapable.yukihookapi:api",
+        "com.highcapable.yukihookapi:ksp-xposed",
+        "com.highcapable.kavaref:kavaref-core",
+        "com.highcapable.kavaref:kavaref-extension"
+      ],
+      "groupName": "runtime hook dependencies",
+      "groupSlug": "runtime-hook-dependencies"
+    },
+    {
+      "description": "Keep Android Gradle Plugin updates separate from library updates.",
+      "matchPackageNames": [
+        "com.android.application"
+      ],
+      "groupName": "android gradle plugin",
+      "groupSlug": "android-gradle-plugin"
+    }
+  ]
+}

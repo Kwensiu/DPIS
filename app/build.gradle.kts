@@ -106,6 +106,9 @@ private fun semVerToVersionCode(version: String): Int {
 }
 
 android {
+    // Keep SDK, Java, packaging, and flavor conventions local while DPIS remains
+    // a single-module app. If more Android modules appear, move these shared
+    // defaults into a small convention plugin instead of duplicating them.
     namespace = "com.dpis.module"
     compileSdk = 36
     buildToolsVersion = "36.1.0"
