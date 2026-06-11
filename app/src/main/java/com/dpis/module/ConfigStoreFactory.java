@@ -34,7 +34,7 @@ final class ConfigStoreFactory {
         return new DpiConfigStore(localPreferences);
     }
 
-    static DpiConfigStore createRemoteModuleConfigStore(XposedService service) {
+    static DpiConfigStore createRuntimeDeliveryModuleConfigStore(XposedService service) {
         if (service == null) {
             return null;
         }

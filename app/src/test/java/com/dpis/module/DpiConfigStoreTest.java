@@ -638,7 +638,7 @@ public class DpiConfigStoreTest {
     }
 
     @Test
-    public void snapshotLocalMirrorExcludesLocalOnlyUiStateAndTemplates() {
+    public void snapshotRuntimeDeliveryExcludesLocalOnlyUiStateAndTemplates() {
         FakePrefs remotePrefs = new FakePrefs();
         remotePrefs.edit()
                 .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
@@ -652,7 +652,7 @@ public class DpiConfigStoreTest {
                 .commit();
         DpiConfigStore store = new DpiConfigStore(remotePrefs);
 
-        Map<String, Object> snapshot = store.snapshotLocalMirror();
+        Map<String, Object> snapshot = store.snapshotRuntimeDelivery();
 
         assertFalse(snapshot.containsKey(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED));
         assertFalse(snapshot.containsKey(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT));
@@ -680,7 +680,7 @@ public class DpiConfigStoreTest {
     }
 
     @Test
-    public void localOnlyUiStateWritesToLocalMirrorWhenRemoteStoreIsPrimary() {
+    public void localOnlyUiStateWritesToExplicitLocalStoreWhenPrimaryIsRuntimeDelivery() {
         FakePrefs remotePrefs = new FakePrefs();
         FakePrefs localPrefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(remotePrefs, localPrefs);

@@ -4,7 +4,6 @@ import android.app.Application;
 import android.content.Context;
 import com.google.android.material.color.DynamicColors;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -43,9 +42,10 @@ public final class DpisApplication extends Application implements XposedServiceH
     @Override
     public void onServiceBind(XposedService service) {
         DpiConfigStore localStore = ConfigStoreFactory.createLocalModuleConfigStore(this);
-        DpiConfigStore remoteStore = ConfigStoreFactory.createRemoteModuleConfigStore(service);
+        DpiConfigStore runtimeDeliveryStore =
+                ConfigStoreFactory.createRuntimeDeliveryModuleConfigStore(service);
         localStore.migrateLegacyWechatDpi();
-        publishRuntimeConfig(localStore, remoteStore);
+        publishRuntimeConfig(localStore, runtimeDeliveryStore);
         configStore = ConfigStoreFactory.createActiveModuleConfigStore(this, service);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
         RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore);
@@ -91,7 +91,8 @@ public final class DpisApplication extends Application implements XposedServiceH
         }
         XposedService service = xposedService;
         DpiConfigStore localStore = ConfigStoreFactory.createLocalModuleConfigStore(application);
-        publishRuntimeConfig(localStore, ConfigStoreFactory.createRemoteModuleConfigStore(service));
+        publishRuntimeConfig(localStore,
+                ConfigStoreFactory.createRuntimeDeliveryModuleConfigStore(service));
         DpiConfigStore refreshedStore = service != null
                 ? ConfigStoreFactory.createActiveModuleConfigStore(application, service)
                 : ConfigStoreFactory.createLocalModuleConfigStore(application);
@@ -118,70 +119,13 @@ public final class DpisApplication extends Application implements XposedServiceH
         }
     }
 
-    private static void migrateConfig(DpiConfigStore from, DpiConfigStore to) {
-        if (from == null || to == null || from == to) {
-            return;
-        }
-        Set<String> localPackages = from.getConfiguredPackages();
-        LinkedHashMap<String, Integer> seedViewportWidthDps = new LinkedHashMap<>();
-        for (String packageName : localPackages) {
-            ViewportTargetSpec viewportTargetSpec = from.getTargetViewportSpec(packageName);
-            if (viewportTargetSpec.isAbsoluteDp()) {
-                seedViewportWidthDps.put(packageName, viewportTargetSpec.absoluteWidthDp());
-            }
-        }
-        if (!seedViewportWidthDps.isEmpty()) {
-            to.ensureSeedConfig(seedViewportWidthDps);
-        }
-        for (String packageName : localPackages) {
-            Integer wechatDpi = from.getWechatDpi(packageName);
-            if (wechatDpi != null && to.getWechatDpi(packageName) == null) {
-                to.setWechatDpi(packageName, wechatDpi);
-            }
-            Integer fontScalePercent = from.getTargetFontScalePercent(packageName);
-            if (fontScalePercent != null && fontScalePercent > 0) {
-                if (!to.hasPrimaryTargetFontScalePercent(packageName)) {
-                    to.setTargetFontScalePercent(packageName, fontScalePercent);
-                }
-            }
-            String viewportMode = from.getTargetViewportApplyMode(packageName);
-            ViewportTargetSpec viewportTargetSpec = from.getTargetViewportSpec(packageName);
-            if (viewportTargetSpec.isEnabled() && !to.getTargetViewportSpec(packageName).isEnabled()) {
-                to.setTargetViewportSpec(packageName, viewportTargetSpec);
-            }
-            if (ViewportApplyMode.isEnabled(viewportMode)
-                    && !to.hasPrimaryTargetViewportApplyMode(packageName)) {
-                to.setTargetViewportApplyMode(packageName, viewportMode);
-            }
-            String fontMode = from.getTargetFontApplyMode(packageName);
-            if (FontApplyMode.isEnabled(fontMode)) {
-                String remoteFontMode = to.hasPrimaryTargetFontApplyMode(packageName)
-                        ? to.getTargetFontApplyMode(packageName)
-                        : FontApplyMode.OFF;
-                if (!fontMode.equals(remoteFontMode)) {
-                    to.setTargetFontApplyMode(packageName, fontMode);
-                }
-            }
-        }
-        if (from.hasSystemServerHooksEnabled() && !to.hasSystemServerHooksEnabled()) {
-            to.setSystemServerHooksEnabled(from.isSystemServerHooksEnabled());
-        }
-        if (from.hasSystemServerSafeModeEnabled() && !to.hasSystemServerSafeModeEnabled()) {
-            to.setSystemServerSafeModeEnabled(from.isSystemServerSafeModeEnabled());
-        }
-        if (from.hasGlobalLogEnabled() && !to.hasGlobalLogEnabled()) {
-            to.setGlobalLogEnabled(from.isGlobalLogEnabled());
-        }
-        if (from.hasLauncherIconHidden() && !to.hasLauncherIconHidden()) {
-            to.setLauncherIconHidden(from.isLauncherIconHidden());
-        }
-    }
-
     private static void publishRuntimeConfig(DpiConfigStore from, DpiConfigStore to) {
         if (from == null || to == null || from == to) {
             return;
         }
-        Map<String, Object> snapshot = from.snapshotLocalMirror();
+        // LSPosed remote preferences are a runtime delivery copy, not a migration
+        // source or backup. Publish only runtime-shared config from the local store.
+        Map<String, Object> snapshot = from.snapshotRuntimeDelivery();
         to.replaceAll(snapshot);
     }
 }
