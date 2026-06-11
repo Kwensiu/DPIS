@@ -266,7 +266,7 @@ public class DpisApplicationMigrationTest {
     }
 
     @Test
-    public void migratesTemplateAndGlobalPrefillConfigBeforeMirror() throws Exception {
+    public void mirrorPreservesLocalTemplateAndGlobalPrefillConfig() throws Exception {
         FakePrefs localPrefs = new FakePrefs();
         DpiConfigStore local = new DpiConfigStore(localPrefs);
         TemplateConfigValue globalPrefill = new TemplateConfigValue(
@@ -294,41 +294,27 @@ public class DpisApplicationMigrationTest {
 
         FakePrefs remotePrefs = new FakePrefs();
         DpiConfigStore remote = new DpiConfigStore(remotePrefs);
+        assertTrue(remote.setTargetFontScalePercent("com.miui.weather2", 200));
 
         invokeMigrate(local, remote);
         invokeMirror(remote, local);
 
-        assertEquals(globalPrefill, new GlobalPrefillStore(remotePrefs).read());
-        QuickTemplateStore.QuickTemplate remoteTemplate =
-                new QuickTemplateStore(remotePrefs).read("template_a");
-        assertTrue(remoteTemplate != null);
-        assertEquals("Compact", remoteTemplate.name);
-        assertEquals(Set.of("com.example.one"), remoteTemplate.selectedPackages);
-        assertEquals("font_template", remoteTemplate.configValue.typefaceId);
+        assertEquals(TemplateConfigValue.EMPTY, new GlobalPrefillStore(remotePrefs).read());
+        assertNull(new QuickTemplateStore(remotePrefs).read("template_a"));
         assertEquals(globalPrefill, new GlobalPrefillStore(localPrefs).read());
         QuickTemplateStore.QuickTemplate mirroredTemplate =
                 new QuickTemplateStore(localPrefs).read("template_a");
         assertTrue(mirroredTemplate != null);
+        assertEquals("Compact", mirroredTemplate.name);
+        assertEquals(Set.of("com.example.one"), mirroredTemplate.selectedPackages);
         assertEquals("font_template", mirroredTemplate.configValue.typefaceId);
+        assertEquals(Integer.valueOf(200), local.getTargetFontScalePercent("com.miui.weather2"));
     }
 
     @Test
-    public void migrationDoesNotOverwriteRemoteTemplateAndPrefillConfig() throws Exception {
+    public void mirrorDoesNotReviveRemoteTemplateAndPrefillConfigAfterLocalDelete() throws Exception {
         FakePrefs localPrefs = new FakePrefs();
         DpiConfigStore local = new DpiConfigStore(localPrefs);
-        assertTrue(new GlobalPrefillStore(localPrefs).write(new TemplateConfigValue(
-                ViewportTargetSpec.absoluteDp(411),
-                ViewportApplyMode.AUTO,
-                null,
-                FontApplyMode.OFF,
-                "local_font",
-                null)));
-        assertTrue(new QuickTemplateStore(localPrefs).save(new QuickTemplateStore.QuickTemplate(
-                "template_a",
-                "Local",
-                1000L,
-                Set.of("com.example.local"),
-                TemplateConfigValue.EMPTY)));
 
         FakePrefs remotePrefs = new FakePrefs();
         DpiConfigStore remote = new DpiConfigStore(remotePrefs);
@@ -351,16 +337,14 @@ public class DpisApplicationMigrationTest {
                         FontApplyMode.OFF,
                         "remote_template_font",
                         null))));
+        assertTrue(remote.setTargetFontScalePercent("com.miui.weather2", 200));
 
         invokeMigrate(local, remote);
+        invokeMirror(remote, local);
 
-        assertEquals("remote_font", new GlobalPrefillStore(remotePrefs).read().typefaceId);
-        QuickTemplateStore.QuickTemplate remoteTemplate =
-                new QuickTemplateStore(remotePrefs).read("template_a");
-        assertTrue(remoteTemplate != null);
-        assertEquals("Remote", remoteTemplate.name);
-        assertEquals(Set.of("com.example.remote"), remoteTemplate.selectedPackages);
-        assertEquals("remote_template_font", remoteTemplate.configValue.typefaceId);
+        assertEquals(TemplateConfigValue.EMPTY, new GlobalPrefillStore(localPrefs).read());
+        assertNull(new QuickTemplateStore(localPrefs).read("template_a"));
+        assertEquals(Integer.valueOf(200), local.getTargetFontScalePercent("com.miui.weather2"));
     }
 
     @Test

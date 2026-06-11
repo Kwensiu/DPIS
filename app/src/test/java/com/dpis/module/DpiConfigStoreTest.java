@@ -638,12 +638,16 @@ public class DpiConfigStoreTest {
     }
 
     @Test
-    public void snapshotLocalMirrorExcludesLocalOnlyUiState() {
+    public void snapshotLocalMirrorExcludesLocalOnlyUiStateAndTemplates() {
         FakePrefs remotePrefs = new FakePrefs();
         remotePrefs.edit()
                 .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
                 .putInt(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT, 73)
                 .putBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, true)
+                .putString("default_config.font.typeface_id", "remote_default_font")
+                .putStringSet(QuickTemplateStore.KEY_TEMPLATE_IDS,
+                        new LinkedHashSet<>(Set.of("template_a")))
+                .putString("template.template_a.name", "Remote")
                 .putBoolean(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED, true)
                 .commit();
         DpiConfigStore store = new DpiConfigStore(remotePrefs);
@@ -653,6 +657,9 @@ public class DpiConfigStoreTest {
         assertFalse(snapshot.containsKey(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED));
         assertFalse(snapshot.containsKey(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT));
         assertFalse(snapshot.containsKey(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON));
+        assertFalse(snapshot.containsKey("default_config.font.typeface_id"));
+        assertFalse(snapshot.containsKey(QuickTemplateStore.KEY_TEMPLATE_IDS));
+        assertFalse(snapshot.containsKey("template.template_a.name"));
         assertEquals(true, snapshot.get(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED));
     }
 

@@ -39,6 +39,10 @@ final class DpiConfigStore {
             KEY_INTERFACE_SCALE_PERCENT,
             KEY_STARTUP_DISCLAIMER_ACCEPTED
     };
+    private static final String[] LOCAL_ONLY_MIRROR_PREFIXES = {
+            "default_config.",
+            "template."
+    };
     private static final String[] BACKUP_EXCLUDED_PREFIXES = {
             "font.library.",
             "font.debug.",
@@ -850,9 +854,7 @@ final class DpiConfigStore {
 
     Map<String, Object> snapshotLocalMirror() {
         LinkedHashMap<String, Object> snapshot = new LinkedHashMap<>(snapshotAll());
-        for (String key : LOCAL_ONLY_MIRROR_KEYS) {
-            snapshot.remove(key);
-        }
+        snapshot.entrySet().removeIf(entry -> isLocalOnlyMirrorKey(entry.getKey()));
         return snapshot;
     }
 
@@ -1096,6 +1098,11 @@ final class DpiConfigStore {
     private static boolean isLocalOnlyMirrorKey(String key) {
         for (String localOnlyKey : LOCAL_ONLY_MIRROR_KEYS) {
             if (localOnlyKey.equals(key)) {
+                return true;
+            }
+        }
+        for (String localOnlyPrefix : LOCAL_ONLY_MIRROR_PREFIXES) {
+            if (key.startsWith(localOnlyPrefix)) {
                 return true;
             }
         }
