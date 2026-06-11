@@ -27,6 +27,7 @@ final class AppConfigSaveHandler {
             }
             return saveResolved(item,
                     viewportTargetSpec,
+                    viewportTargetType,
                     currentViewportApplyMode,
                     viewportApplyModeResetRequested,
                     fontScalePercent,
@@ -46,6 +47,7 @@ final class AppConfigSaveHandler {
 
     int[] saveResolved(AppListItem item,
             ViewportTargetSpec viewportTargetSpec,
+            String viewportTargetType,
             String currentViewportApplyMode,
             boolean viewportApplyModeResetRequested,
             Integer fontScalePercent,
@@ -85,7 +87,11 @@ final class AppConfigSaveHandler {
                     store, item, draftFontHookDomainsRaw, fontHookDomainsResetRequested)
                     && saved;
             if (viewportTargetSpec == null || !viewportTargetSpec.isEnabled()) {
-                saved = store.clearTargetViewportWidthDp(item.packageName) && saved;
+                saved = store.clearTargetViewportValue(item.packageName) && saved;
+                saved = store.setTargetViewportTypeDraft(
+                        item.packageName,
+                        ConfigDraftSaveSemantics.viewportTargetTypeForSave(viewportTargetType))
+                        && saved;
                 saved = store.setTargetViewportApplyMode(item.packageName, ViewportApplyMode.OFF)
                         && saved;
                 ViewportPropertySyncer.clearTargetAsync(item.packageName);
@@ -104,7 +110,9 @@ final class AppConfigSaveHandler {
             }
             if (fontScalePercent == null) {
                 saved = store.clearTargetFontScalePercent(item.packageName) && saved;
-                saved = store.setTargetFontApplyMode(item.packageName, FontApplyMode.OFF) && saved;
+                saved = store.setTargetFontApplyMode(
+                        item.packageName,
+                        ConfigDraftSaveSemantics.fontApplyModeForSave(fontMode)) && saved;
                 FontRuntimePropertySyncer.clearFontScaleTargetAsync(item.packageName);
             } else {
                 saved = store.setTargetFontScalePercent(item.packageName, fontScalePercent) && saved;

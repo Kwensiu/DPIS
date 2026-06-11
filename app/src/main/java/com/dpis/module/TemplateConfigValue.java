@@ -5,6 +5,7 @@ import java.util.Objects;
 final class TemplateConfigValue {
     static final TemplateConfigValue EMPTY = new TemplateConfigValue(
             ViewportTargetSpec.off(),
+            ViewportTargetType.OFF,
             ViewportApplyMode.OFF,
             null,
             FontApplyMode.OFF,
@@ -12,6 +13,7 @@ final class TemplateConfigValue {
             null);
 
     final ViewportTargetSpec viewportTargetSpec;
+    final String viewportTargetType;
     final String viewportApplyMode;
     final Integer fontScalePercent;
     final String fontApplyMode;
@@ -25,9 +27,29 @@ final class TemplateConfigValue {
             String fontApplyMode,
             String typefaceId,
             String fontHookDomainsRaw) {
+        this(viewportTargetSpec,
+                null,
+                viewportApplyMode,
+                fontScalePercent,
+                fontApplyMode,
+                typefaceId,
+                fontHookDomainsRaw);
+    }
+
+    TemplateConfigValue(
+            ViewportTargetSpec viewportTargetSpec,
+            String viewportTargetType,
+            String viewportApplyMode,
+            Integer fontScalePercent,
+            String fontApplyMode,
+            String typefaceId,
+            String fontHookDomainsRaw) {
         this.viewportTargetSpec = viewportTargetSpec != null
                 ? viewportTargetSpec
                 : ViewportTargetSpec.off();
+        this.viewportTargetType = this.viewportTargetSpec.isEnabled()
+                ? this.viewportTargetSpec.type()
+                : ViewportTargetType.normalize(viewportTargetType);
         this.viewportApplyMode = ViewportApplyMode.normalize(viewportApplyMode);
         this.fontScalePercent = normalizeFontScalePercent(fontScalePercent);
         this.fontApplyMode = FontApplyMode.normalize(fontApplyMode);
@@ -37,6 +59,7 @@ final class TemplateConfigValue {
 
     boolean hasAnyValue() {
         return viewportTargetSpec.isEnabled()
+                || !ViewportTargetType.OFF.equals(viewportTargetType)
                 || ViewportApplyMode.isEnabled(viewportApplyMode)
                 || fontScalePercent != null
                 || FontApplyMode.isEnabled(fontApplyMode)
@@ -68,6 +91,7 @@ final class TemplateConfigValue {
             return false;
         }
         return viewportTargetSpec.equals(other.viewportTargetSpec)
+                && viewportTargetType.equals(other.viewportTargetType)
                 && viewportApplyMode.equals(other.viewportApplyMode)
                 && Objects.equals(fontScalePercent, other.fontScalePercent)
                 && fontApplyMode.equals(other.fontApplyMode)
@@ -79,6 +103,7 @@ final class TemplateConfigValue {
     public int hashCode() {
         return Objects.hash(
                 viewportTargetSpec,
+                viewportTargetType,
                 viewportApplyMode,
                 fontScalePercent,
                 fontApplyMode,

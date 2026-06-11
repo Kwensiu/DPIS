@@ -78,6 +78,31 @@ public class QuickTemplateSaveHandlerTest {
     }
 
     @Test
+    public void emptyInputsPreserveModeIntentWithoutRuntimeValues() {
+        QuickTemplateStore store = new QuickTemplateStore(new FakePrefs());
+
+        QuickTemplateSaveHandler.Result result = handler.save(store, new QuickTemplateSaveHandler.Request(
+                "template_modes",
+                "Modes",
+                "",
+                ViewportTargetType.ABSOLUTE_DP,
+                ViewportApplyMode.COMPAT,
+                "",
+                FontApplyMode.FIELD_REWRITE,
+                null,
+                null));
+
+        assertTrue(result.success);
+        QuickTemplateStore.QuickTemplate template = store.read("template_modes");
+        assertNotNull(template);
+        assertFalse(template.configValue.viewportTargetSpec.isEnabled());
+        assertEquals(ViewportTargetType.ABSOLUTE_DP, template.configValue.viewportTargetType);
+        assertEquals(ViewportApplyMode.OFF, template.configValue.viewportApplyMode);
+        assertNull(template.configValue.fontScalePercent);
+        assertEquals(FontApplyMode.FIELD_REWRITE, template.configValue.fontApplyMode);
+    }
+
+    @Test
     public void blankNameBlocksSave() {
         QuickTemplateStore store = new QuickTemplateStore(new FakePrefs());
 

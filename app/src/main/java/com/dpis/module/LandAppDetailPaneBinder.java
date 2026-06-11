@@ -243,9 +243,7 @@ final class LandAppDetailPaneBinder {
                         root.findViewById(R.id.land_detail_viewport_mode_scale_label),
                         root.findViewById(R.id.land_detail_viewport_mode_width_label)
                 );
-        String initialType = AppConfigInputValidation.initialViewportTargetType(
-                item.viewportTargetSpec
-        );
+        String initialType = initialViewportTargetType(item);
         AppConfigDialogBinder.bindViewportModeToggle(
                 toggle,
                 initialType,
@@ -764,9 +762,7 @@ final class LandAppDetailPaneBinder {
                     viewportValue,
                     AppConfigDialogBinder.resolveViewportMode(viewportToggle),
                     fontPercent,
-                    fontPercent == null
-                            ? FontApplyMode.OFF
-                            : AppConfigDialogBinder.resolveFontMode(fontToggle),
+                    AppConfigDialogBinder.resolveFontMode(fontToggle),
                     state.selectedTypefaceId,
                     state.draftFontHookDomainsRaw,
                     state.viewportApplyMode,
@@ -949,6 +945,17 @@ final class LandAppDetailPaneBinder {
             saveButton.setEnabled(false);
         }
         updateUnsavedBadge(root);
+    }
+
+    private static String initialViewportTargetType(AppListItem item) {
+        if (item != null
+                && item.viewportTargetSpec != null
+                && !item.viewportTargetSpec.isEnabled()
+                && !ViewportTargetType.OFF.equals(ViewportTargetType.normalize(item.viewportTargetType))) {
+            return ViewportTargetType.normalize(item.viewportTargetType);
+        }
+        return AppConfigInputValidation.initialViewportTargetType(
+                item != null ? item.viewportTargetSpec : null);
     }
 
     static AppConfigDialogBinder.AppConfigDialogState stateFor(View root) {

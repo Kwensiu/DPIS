@@ -94,6 +94,9 @@ final class InstalledAppCatalogCoordinator {
             ViewportTargetSpec viewportTargetSpec = store != null
                     ? store.getTargetViewportSpec(item.packageName)
                     : ViewportTargetSpec.off();
+            String viewportTargetType = store != null
+                    ? store.getTargetViewportType(item.packageName)
+                    : ViewportTargetType.OFF;
             String viewportMode = store != null
                     ? store.getTargetViewportApplyMode(item.packageName)
                     : ViewportApplyMode.OFF;
@@ -113,7 +116,7 @@ final class InstalledAppCatalogCoordinator {
             Drawable icon = resolveDisplayIcon(item);
             result.add(new AppListItem(item.label, item.packageName,
                     scopePackages.contains(item.packageName), scopeKnown, viewportWidth,
-                    viewportScalePermille, viewportMode,
+                    viewportScalePermille, viewportMode, viewportTargetType,
                     viewportTargetSpec, fontScalePercent, fontMode, typefaceId,
                     appSpecificConfigActive, dpisEnabled, item.systemApp,
                     item.hyperOsNativeProxyCandidate, icon));

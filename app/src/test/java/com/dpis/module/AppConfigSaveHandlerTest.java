@@ -247,6 +247,94 @@ public class AppConfigSaveHandlerTest {
         assertEquals(ViewportApplyMode.OFF, resolvedMode);
     }
 
+    @Test
+    public void savePreservesFontModeWhenFontScaleIsEmpty() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        AppListItem item = app("com.example.app");
+
+        int[] result = new AppConfigSaveHandler().saveResolved(
+                item,
+                ViewportTargetSpec.off(),
+                ViewportTargetType.RELATIVE_SCALE,
+                ViewportApplyMode.OFF,
+                false,
+                null,
+                FontApplyMode.FIELD_REWRITE,
+                null,
+                null,
+                false,
+                "",
+                "",
+                true,
+                store,
+                null);
+
+        assertEquals(1, result[0]);
+        assertNull(store.getTargetFontScalePercent(item.packageName));
+        assertEquals(FontApplyMode.FIELD_REWRITE,
+                store.getTargetFontApplyMode(item.packageName));
+        assertTrue(store.hasRealPackageConfig(item.packageName));
+    }
+
+    @Test
+    public void savePreservesViewportTargetTypeWhenViewportInputIsEmpty() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        AppListItem item = app("com.example.app");
+
+        int[] result = new AppConfigSaveHandler().saveResolved(
+                item,
+                ViewportTargetSpec.off(),
+                ViewportTargetType.ABSOLUTE_DP,
+                ViewportApplyMode.COMPAT,
+                false,
+                null,
+                FontApplyMode.SYSTEM_EMULATION,
+                null,
+                null,
+                false,
+                "",
+                "",
+                true,
+                store,
+                null);
+
+        assertEquals(1, result[0]);
+        assertFalse(store.getTargetViewportSpec(item.packageName).isEnabled());
+        assertEquals(ViewportTargetType.ABSOLUTE_DP,
+                store.getTargetViewportType(item.packageName));
+        assertEquals(ViewportApplyMode.OFF,
+                store.getTargetViewportApplyMode(item.packageName));
+        assertTrue(store.hasRealPackageConfig(item.packageName));
+    }
+
+    @Test
+    public void savePreservesSystemFontModeWhenFontScaleIsEmpty() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        AppListItem item = app("com.example.app");
+
+        int[] result = new AppConfigSaveHandler().saveResolved(
+                item,
+                ViewportTargetSpec.off(),
+                ViewportTargetType.RELATIVE_SCALE,
+                ViewportApplyMode.OFF,
+                false,
+                null,
+                FontApplyMode.SYSTEM_EMULATION,
+                null,
+                null,
+                false,
+                "",
+                "",
+                true,
+                store,
+                null);
+
+        assertEquals(1, result[0]);
+        assertEquals(FontApplyMode.SYSTEM_EMULATION,
+                store.getTargetFontApplyMode(item.packageName));
+        assertTrue(store.hasRealPackageConfig(item.packageName));
+    }
+
     private static AppListItem app(String packageName) {
         return new AppListItem("Example",
                 packageName,

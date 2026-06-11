@@ -10,9 +10,14 @@ import com.google.android.material.textfield.TextInputEditText;
 
 final class AppConfigSheetModeValidationBinder {
     private final AppConfigDialogBinder binder;
+    private final AppConfigDialogBinder.Host host;
 
-    AppConfigSheetModeValidationBinder(AppConfigDialogBinder binder) {
+    AppConfigSheetModeValidationBinder(
+            AppConfigDialogBinder binder,
+            AppConfigDialogBinder.Host host
+    ) {
         this.binder = binder;
+        this.host = host;
     }
 
     void bindDialogValidation(View dialogView,
@@ -58,6 +63,7 @@ final class AppConfigSheetModeValidationBinder {
                         AppConfigDialogBinder.resolveViewportMode(views.viewportModeToggle), s);
                 AppConfigDialogBinder.updateSaveButtonState(dialogView, views);
                 binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
+                host.onDraftStateChanged(state);
             }
 
             @Override
@@ -73,6 +79,7 @@ final class AppConfigSheetModeValidationBinder {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 AppConfigDialogBinder.updateSaveButtonState(dialogView, views);
                 binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
+                host.onDraftStateChanged(state);
             }
 
             @Override
@@ -99,6 +106,7 @@ final class AppConfigSheetModeValidationBinder {
                     AppConfigDialogBinder.resolveViewportMode(views.viewportModeToggle));
             AppConfigDialogBinder.updateSaveButtonState(dialogView, views);
             binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
+            host.onDraftStateChanged(state);
         });
         views.viewportModeToggle.emulationLabel.setOnClickListener(v -> {
             FormInputFocusBinder.clearFocusAndHideIme(dialogView,
@@ -109,6 +117,7 @@ final class AppConfigSheetModeValidationBinder {
             binder.bindViewportInputHint(views.viewportInputLayout, ViewportTargetType.RELATIVE_SCALE);
             AppConfigDialogBinder.updateSaveButtonState(dialogView, views);
             binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
+            host.onDraftStateChanged(state);
         });
         views.viewportModeToggle.replaceLabel.setOnClickListener(v -> {
             FormInputFocusBinder.clearFocusAndHideIme(dialogView,
@@ -119,12 +128,14 @@ final class AppConfigSheetModeValidationBinder {
             binder.bindViewportInputHint(views.viewportInputLayout, ViewportTargetType.ABSOLUTE_DP);
             AppConfigDialogBinder.updateSaveButtonState(dialogView, views);
             binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
+            host.onDraftStateChanged(state);
         });
         views.fontModeToggle.container.setOnClickListener(v -> {
             FormInputFocusBinder.clearFocusAndHideIme(dialogView,
                     views.viewportInputView, views.fontInputView);
             AppConfigDialogBinder.toggleFontMode(views.fontModeToggle);
             binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
+            host.onDraftStateChanged(state);
         });
         views.fontModeToggle.emulationLabel.setOnClickListener(v -> {
             FormInputFocusBinder.clearFocusAndHideIme(dialogView,
@@ -132,6 +143,7 @@ final class AppConfigSheetModeValidationBinder {
             AppConfigDialogBinder.bindFontModeToggle(
                     views.fontModeToggle, FontApplyMode.SYSTEM_EMULATION, true);
             binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
+            host.onDraftStateChanged(state);
         });
         views.fontModeToggle.replaceLabel.setOnClickListener(v -> {
             FormInputFocusBinder.clearFocusAndHideIme(dialogView,
@@ -139,6 +151,7 @@ final class AppConfigSheetModeValidationBinder {
             AppConfigDialogBinder.bindFontModeToggle(
                     views.fontModeToggle, FontApplyMode.FIELD_REWRITE, true);
             binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
+            host.onDraftStateChanged(state);
         });
     }
 }

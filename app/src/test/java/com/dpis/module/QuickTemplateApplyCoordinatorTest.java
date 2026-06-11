@@ -143,6 +143,29 @@ public class QuickTemplateApplyCoordinatorTest {
         assertTrue(plan.fontHookDomains.isEmpty());
     }
 
+    @Test
+    public void runtimePublishPlanIgnoresModeIntentWithoutRuntimeValues() {
+        QuickTemplateApplyCoordinator.RuntimePublishPlan plan =
+                QuickTemplateApplyCoordinator.RuntimePublishPlan.from(
+                        new TemplateConfigValue(
+                                ViewportTargetSpec.off(),
+                                ViewportTargetType.ABSOLUTE_DP,
+                                ViewportApplyMode.COMPAT,
+                                null,
+                                FontApplyMode.FIELD_REWRITE,
+                                null,
+                                null),
+                        HookDomainOverride.automatic(),
+                        false);
+
+        assertFalse(plan.publishViewport);
+        assertEquals(ViewportTargetSpec.off(), plan.viewportTargetSpec);
+        assertEquals(ViewportApplyMode.OFF, plan.viewportApplyMode);
+        assertFalse(plan.publishFontScale);
+        assertNull(plan.fontScalePercent);
+        assertEquals(FontApplyMode.OFF, plan.fontApplyMode);
+    }
+
     private static QuickTemplateStore.QuickTemplate template(
             Set<String> packages,
             TemplateConfigValue value) {

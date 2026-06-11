@@ -36,6 +36,7 @@ final class TemplateConfigPreferences {
 
         return new TemplateConfigValue(
                 viewportTargetSpec,
+                targetType,
                 getString(preferences, prefix + KEY_VIEWPORT_MODE, ViewportApplyMode.OFF),
                 normalizeFontScalePercent(getInt(preferences, prefix + KEY_FONT_SCALE_PERCENT)),
                 getString(preferences, prefix + KEY_FONT_MODE, FontApplyMode.OFF),
@@ -46,8 +47,10 @@ final class TemplateConfigPreferences {
     static void write(SharedPreferences.Editor editor, String prefix, TemplateConfigValue value) {
         clear(editor, prefix);
         TemplateConfigValue normalized = value != null ? value : TemplateConfigValue.EMPTY;
+        if (!ViewportTargetType.OFF.equals(normalized.viewportTargetType)) {
+            editor.putString(prefix + KEY_VIEWPORT_TARGET_TYPE, normalized.viewportTargetType);
+        }
         if (normalized.viewportTargetSpec.isEnabled()) {
-            editor.putString(prefix + KEY_VIEWPORT_TARGET_TYPE, normalized.viewportTargetSpec.type());
             if (normalized.viewportTargetSpec.isRelativeScale()) {
                 editor.putInt(prefix + KEY_VIEWPORT_SCALE_PERMILLE,
                         normalized.viewportTargetSpec.scalePermille());

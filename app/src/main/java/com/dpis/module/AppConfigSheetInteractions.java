@@ -7,7 +7,7 @@ final class AppConfigSheetInteractions {
     private final AppConfigSheetActionBinder actionBinder;
 
     AppConfigSheetInteractions(AppConfigDialogBinder binder, AppConfigDialogBinder.Host host) {
-        this.modeValidationBinder = new AppConfigSheetModeValidationBinder(binder);
+        this.modeValidationBinder = new AppConfigSheetModeValidationBinder(binder, host);
         this.actionBinder = new AppConfigSheetActionBinder(binder, host);
     }
 

@@ -222,7 +222,7 @@ final class AppConfigDialogBinder {
         views.fontInputView.setText(item.fontScalePercent != null
                 ? String.valueOf(item.fontScalePercent)
                 : "");
-        String initialViewportType = initialViewportTargetType(item.viewportTargetSpec);
+        String initialViewportType = initialViewportTargetType(item);
         bindViewportModeToggle(views.viewportModeToggle, initialViewportType, false);
         bindViewportInputHint(views.viewportInputLayout, initialViewportType);
         bindFontModeToggle(views.fontModeToggle, initialFontMode(item.fontMode), false);
@@ -846,8 +846,15 @@ final class AppConfigDialogBinder {
         return ViewportTargetType.RELATIVE_SCALE;
     }
 
-    private static String initialViewportTargetType(ViewportTargetSpec spec) {
-        return AppConfigInputValidation.initialViewportTargetType(spec);
+    private static String initialViewportTargetType(AppListItem item) {
+        if (item != null
+                && item.viewportTargetSpec != null
+                && !item.viewportTargetSpec.isEnabled()
+                && !ViewportTargetType.OFF.equals(ViewportTargetType.normalize(item.viewportTargetType))) {
+            return ViewportTargetType.normalize(item.viewportTargetType);
+        }
+        return AppConfigInputValidation.initialViewportTargetType(
+                item != null ? item.viewportTargetSpec : null);
     }
 
     static void bindFontModeToggle(ModeToggle fontModeToggle,
@@ -1146,7 +1153,7 @@ final class AppConfigDialogBinder {
 
         static AppConfigDialogState fromItem(AppListItem item) {
             String viewportInput = AppConfigInputValidation.formatViewportInput(item.viewportTargetSpec);
-            String viewportTargetType = AppConfigInputValidation.initialViewportTargetType(item.viewportTargetSpec);
+            String viewportTargetType = initialViewportTargetType(item);
             String viewportScaleInput = item.viewportScalePermille != null
                     ? String.valueOf(item.viewportScalePermille / 10)
                     : (item.viewportTargetSpec.isRelativeScale() ? viewportInput : "");

@@ -387,6 +387,28 @@ final class DpiConfigStore {
         });
     }
 
+    boolean setTargetViewportTypeDraft(String packageName, String viewportTargetType) {
+        String normalized = ViewportTargetType.normalize(viewportTargetType);
+        if (ViewportTargetType.OFF.equals(normalized)) {
+            return clearTargetViewportTypeDraft(packageName);
+        }
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        packages.add(packageName);
+        return commitBoth(editor -> editor
+                .putStringSet(KEY_TARGET_PACKAGES, packages)
+                .putString(keyForViewportTargetType(packageName), normalized));
+    }
+
+    boolean clearTargetViewportTypeDraft(String packageName) {
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        if (!hasAnyPackageConfigAfterRemoving(packageName, keyForViewportTargetType(packageName))) {
+            packages.remove(packageName);
+        }
+        return commitBoth(editor -> editor
+                .putStringSet(KEY_TARGET_PACKAGES, packages)
+                .remove(keyForViewportTargetType(packageName)));
+    }
+
     boolean setTargetViewportWidthDraft(String packageName, Integer widthDp) {
         if (packageName == null || packageName.isBlank()) {
             return false;
@@ -456,6 +478,21 @@ final class DpiConfigStore {
                 .putStringSet(KEY_TARGET_PACKAGES, packages)
                 .remove(keyForViewportWidth(packageName))
                 .remove(keyForViewportTargetType(packageName))
+                .remove(keyForViewportScalePermille(packageName))
+                .remove(keyForViewportMode(packageName)));
+    }
+
+    boolean clearTargetViewportValue(String packageName) {
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        if (!hasAnyPackageConfigAfterRemoving(packageName,
+                keyForViewportWidth(packageName),
+                keyForViewportScalePermille(packageName),
+                keyForViewportMode(packageName))) {
+            packages.remove(packageName);
+        }
+        return commitBoth(editor -> editor
+                .putStringSet(KEY_TARGET_PACKAGES, packages)
+                .remove(keyForViewportWidth(packageName))
                 .remove(keyForViewportScalePermille(packageName))
                 .remove(keyForViewportMode(packageName)));
     }

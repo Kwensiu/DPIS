@@ -17,7 +17,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
         assertTrue(binderSource.contains("new AppConfigSheetInteractions(this, host)"));
         assertTrue(binderSource.contains(".bind(dialogView, item, views, state, style, systemHooksEnabled);"));
-        assertTrue(interactionsSource.contains("new AppConfigSheetModeValidationBinder(binder)"));
+        assertTrue(interactionsSource.contains("new AppConfigSheetModeValidationBinder(binder, host)"));
         assertTrue(interactionsSource.contains("new AppConfigSheetActionBinder(binder, host)"));
         assertTrue(interactionsSource.contains(
                 "modeValidationBinder.bindDialogValidation(dialogView, item, views, state, style, systemHooksEnabled);"));
@@ -57,6 +57,20 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("dialogView, item, views, state, style, systemHooksEnabled);"));
         assertTrue(binderSource.contains("host.applyHyperOsNativeProxy(item, onFinished)"));
         assertTrue(binderSource.contains("host.unmountHyperOsNativeProxy(item"));
+    }
+
+    @Test
+    public void sheetModeAndInputChangesRefreshRetainedDraft() throws IOException {
+        String interactionsSource = read("src/main/java/com/dpis/module/AppConfigSheetInteractions.java");
+        String modeValidationSource =
+                read("src/main/java/com/dpis/module/AppConfigSheetModeValidationBinder.java");
+        String mainActivitySource = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(interactionsSource.contains(
+                "new AppConfigSheetModeValidationBinder(binder, host)"));
+        assertTrue(countOccurrences(modeValidationSource, "host.onDraftStateChanged(state);") >= 7);
+        assertTrue(mainActivitySource.contains("AppConfigDraft captured = captureAppConfigDraft();"));
+        assertTrue(mainActivitySource.contains("mainViewModel.setEditingDraft(captured);"));
     }
 
     @Test
@@ -364,13 +378,14 @@ public class AppConfigDialogBinderSourceSmokeTest {
     public void appConfigSheetDefaultsToScaleAndSystemFontMode() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
 
-        assertTrue(source.contains("String initialViewportType = initialViewportTargetType(item.viewportTargetSpec)"));
+        assertTrue(source.contains("String initialViewportType = initialViewportTargetType(item)"));
         assertTrue(source.contains("bindViewportModeToggle(views.viewportModeToggle, initialViewportType, false)"));
         assertTrue(source.contains("bindViewportInputHint(views.viewportInputLayout, initialViewportType)"));
         assertTrue(source.contains("bindFontModeToggle(views.fontModeToggle, initialFontMode(item.fontMode), false)"));
-        assertTrue(source.contains("private static String initialViewportTargetType(ViewportTargetSpec spec)"));
+        assertTrue(source.contains("private static String initialViewportTargetType(AppListItem item)"));
+        assertTrue(source.contains("ViewportTargetType.normalize(item.viewportTargetType)"));
         assertTrue(source.contains("AppConfigInputValidation.initialFontMode(fontMode)"));
-        assertTrue(source.contains("AppConfigInputValidation.initialViewportTargetType(spec)"));
+        assertTrue(source.contains("AppConfigInputValidation.initialViewportTargetType("));
     }
 
     @Test
@@ -479,7 +494,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         String focusBinder = read("src/main/java/com/dpis/module/FormInputFocusBinder.java");
 
         assertTrue(focusBinder.contains("final class FormInputFocusBinder"));
-        assertTrue(interactions.contains("new AppConfigSheetModeValidationBinder(binder)"));
+        assertTrue(interactions.contains("new AppConfigSheetModeValidationBinder(binder, host)"));
         assertTrue(validation.contains("FormInputFocusBinder.bindDismissOnOutsideTouch"));
         assertTrue(validation.contains("WechatDpiSheetBinder.inputViewForFocus(dialogView)"));
         assertTrue(actions.contains("FormInputFocusBinder.clearFocusAndHideIme"));
@@ -551,6 +566,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         String clearBlock = source.substring(clearStart, configuredStart);
 
         assertTrue(clearBlock.contains("FontRuntimePropertySyncer.clearFontScaleTargetAsync(item.packageName)"));
+        assertTrue(clearBlock.contains("ConfigDraftSaveSemantics.fontApplyModeForSave(fontMode)"));
         assertFalse(clearBlock.contains("FontRuntimePropertySyncer.clearTargetAsync(item.packageName)"));
         assertFalse(clearBlock.contains("FontHookDomainPropertySyncer.clearTargetAsync(item.packageName)"));
     }
@@ -616,5 +632,15 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     private static String read(String relativePath) throws IOException {
         return SourceSmokeTestPaths.read(relativePath);
+    }
+
+    private static int countOccurrences(String source, String needle) {
+        int count = 0;
+        int index = 0;
+        while ((index = source.indexOf(needle, index)) >= 0) {
+            count++;
+            index += needle.length();
+        }
+        return count;
     }
 }

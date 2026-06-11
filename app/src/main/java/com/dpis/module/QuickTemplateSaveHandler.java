@@ -54,6 +54,7 @@ final class QuickTemplateSaveHandler {
         String fontApplyMode = normalizeFontApplyMode(request.fontApplyMode, fontScalePercent);
         return new TemplateConfigValue(
                 viewportTargetSpec,
+                ConfigDraftSaveSemantics.viewportTargetTypeForSave(request.viewportTargetType),
                 viewportApplyMode,
                 fontScalePercent,
                 fontApplyMode,
@@ -66,20 +67,11 @@ final class QuickTemplateSaveHandler {
         if (viewportTargetSpec == null || !viewportTargetSpec.isEnabled()) {
             return ViewportApplyMode.OFF;
         }
-        String normalized = ViewportApplyMode.normalize(requestedMode);
-        return ViewportApplyMode.isEnabled(normalized)
-                ? normalized
-                : ViewportApplyMode.AUTO;
+        return ConfigDraftSaveSemantics.viewportApplyModeForSave(requestedMode, viewportTargetSpec);
     }
 
     private static String normalizeFontApplyMode(String requestedMode, Integer fontScalePercent) {
-        if (fontScalePercent == null) {
-            return FontApplyMode.OFF;
-        }
-        String normalized = FontApplyMode.normalize(requestedMode);
-        return FontApplyMode.isEnabled(normalized)
-                ? normalized
-                : FontApplyMode.SYSTEM_EMULATION;
+        return ConfigDraftSaveSemantics.fontApplyModeForSave(requestedMode);
     }
 
     static final class Request {

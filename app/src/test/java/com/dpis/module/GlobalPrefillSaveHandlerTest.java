@@ -99,6 +99,29 @@ public class GlobalPrefillSaveHandlerTest {
         assertEquals(Set.of("com.example.app"), store.getConfiguredPackages());
     }
 
+    @Test
+    public void emptyInputsPreserveModeIntentWithoutRuntimeValues() {
+        FakePrefs prefs = new FakePrefs();
+
+        GlobalPrefillSaveHandler.Result result = new GlobalPrefillSaveHandler().save(
+                new GlobalPrefillStore(prefs),
+                new GlobalPrefillSaveHandler.Request(
+                        "",
+                        ViewportTargetType.ABSOLUTE_DP,
+                        ViewportApplyMode.COMPAT,
+                        "",
+                        FontApplyMode.FIELD_REWRITE,
+                        null,
+                        null));
+
+        assertTrue(result.success);
+        TemplateConfigValue value = new GlobalPrefillStore(prefs).read();
+        assertFalse(value.viewportTargetSpec.isEnabled());
+        assertEquals(ViewportTargetType.ABSOLUTE_DP, value.viewportTargetType);
+        assertEquals(ViewportApplyMode.OFF, value.viewportApplyMode);
+        assertEquals(FontApplyMode.FIELD_REWRITE, value.fontApplyMode);
+    }
+
     private static Map<String, Object> nonDefaultEntries(FakePrefs prefs) {
         Map<String, Object> result = new HashMap<>();
         for (Map.Entry<String, ?> entry : prefs.getAll().entrySet()) {

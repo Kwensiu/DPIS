@@ -8,6 +8,7 @@ final class AppListItem {
     final boolean inScope;
     final boolean scopeKnown;
     final ViewportTargetSpec viewportTargetSpec;
+    final String viewportTargetType;
     final Integer viewportWidthDp;
     final Integer viewportScalePermille;
     final String viewportMode;
@@ -70,6 +71,7 @@ final class AppListItem {
                 Integer viewportWidthDp,
                 Integer viewportScalePermille,
                 String viewportMode,
+                String viewportTargetType,
                 ViewportTargetSpec viewportTargetSpec,
                 Integer fontScalePercent,
                 String fontMode,
@@ -80,7 +82,7 @@ final class AppListItem {
                 boolean hyperOsNativeProxyCandidate,
                 Drawable icon) {
         this(label, packageName, inScope, scopeKnown, viewportWidthDp, viewportScalePermille,
-                viewportMode, viewportTargetSpec, fontScalePercent, fontMode, typefaceId,
+                viewportMode, viewportTargetType, viewportTargetSpec, fontScalePercent, fontMode, typefaceId,
                 appSpecificConfigActive, dpisEnabled, systemApp, hyperOsNativeProxyCandidate,
                 false, null, icon);
     }
@@ -92,6 +94,7 @@ final class AppListItem {
                 Integer viewportWidthDp,
                 Integer viewportScalePermille,
                 String viewportMode,
+                String viewportTargetType,
                 ViewportTargetSpec viewportTargetSpec,
                 Integer fontScalePercent,
                 String fontMode,
@@ -112,6 +115,9 @@ final class AppListItem {
                 : (viewportWidthDp != null
                         ? ViewportTargetSpec.absoluteDp(viewportWidthDp)
                         : ViewportTargetSpec.off());
+        this.viewportTargetType = this.viewportTargetSpec.isEnabled()
+                ? this.viewportTargetSpec.type()
+                : ViewportTargetType.normalize(viewportTargetType);
         this.viewportWidthDp = this.viewportTargetSpec.isAbsoluteDp()
                 ? Integer.valueOf(this.viewportTargetSpec.absoluteWidthDp())
                 : viewportWidthDp;
@@ -147,7 +153,7 @@ final class AppListItem {
                 boolean hyperOsNativeProxyCandidate,
                 Drawable icon) {
         this(label, packageName, inScope, scopeKnown, viewportWidthDp, null, viewportMode,
-                viewportTargetSpec, fontScalePercent, fontMode, typefaceId,
+                null, viewportTargetSpec, fontScalePercent, fontMode, typefaceId,
                 appSpecificConfigActive, dpisEnabled, systemApp, hyperOsNativeProxyCandidate, icon);
     }
 
@@ -168,6 +174,7 @@ final class AppListItem {
                         ? Integer.valueOf(normalized.viewportTargetSpec.scalePermille())
                         : viewportScalePermille,
                 normalized.viewportApplyMode,
+                normalized.viewportTargetType,
                 normalized.viewportTargetSpec,
                 normalized.fontScalePercent,
                 normalized.fontApplyMode,

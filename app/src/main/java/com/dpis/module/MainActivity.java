@@ -3000,9 +3000,10 @@ public final class MainActivity
         int[] result = saveLandDetailResolvedConfig(
                 item,
                 spec,
+                viewportTargetType,
                 viewportApplyMode,
                 fontPercent,
-                fontPercent == null ? FontApplyMode.OFF : fontMode,
+                fontMode,
                 selectedTypefaceId,
                 draftFontHookDomainsRaw,
                 viewportApplyModeResetRequested,
@@ -3057,6 +3058,7 @@ public final class MainActivity
     private int[] saveLandDetailResolvedConfig(
             AppListItem item,
             ViewportTargetSpec viewportTargetSpec,
+            String viewportTargetType,
             String viewportApplyMode,
             Integer fontScalePercent,
             String fontMode,
@@ -3070,6 +3072,7 @@ public final class MainActivity
         return appConfigSaveHandler.saveResolved(
                 item,
                 viewportTargetSpec,
+                viewportTargetType,
                 viewportApplyMode,
                 viewportApplyModeResetRequested,
                 fontScalePercent,
@@ -3887,6 +3890,11 @@ public final class MainActivity
 
     private void updateEditingDraft(AppConfigDialogBinder.AppConfigDialogState state) {
         if (mainViewModel == null || state == null) {
+            return;
+        }
+        AppConfigDraft captured = captureAppConfigDraft();
+        if (captured != null) {
+            mainViewModel.setEditingDraft(captured);
             return;
         }
         AppConfigDraft current = mainViewModel.getEditingDraft();
