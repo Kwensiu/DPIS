@@ -25,7 +25,7 @@ public final class RuntimePropertyRecoveryCoordinatorSourceTest {
         assertTrue(source.contains("store.isFontDebugOverlayEnabled()"));
         assertTrue(source.contains("idempotent"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)"));
-        assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(remoteStore)"));
+        assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)"));
         assertTrue(receiver.contains("best-effort triggers"));
         assertTrue(receiver.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(store)"));
     }

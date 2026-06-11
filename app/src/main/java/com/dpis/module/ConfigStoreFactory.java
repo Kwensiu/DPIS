@@ -25,13 +25,28 @@ final class ConfigStoreFactory {
             try {
                 SharedPreferences remotePreferences = service.getRemotePreferences(DpiConfigStore.GROUP);
                 if (remotePreferences != null) {
-                    return new DpiConfigStore(remotePreferences, localPreferences);
+                    return new DpiConfigStore(localPreferences, remotePreferences, localPreferences);
                 }
             } catch (Throwable ignored) {
                 // Fall through to local storage.
             }
         }
         return new DpiConfigStore(localPreferences);
+    }
+
+    static DpiConfigStore createRuntimeDeliveryModuleConfigStore(XposedService service) {
+        if (service == null) {
+            return null;
+        }
+        try {
+            SharedPreferences remotePreferences = service.getRemotePreferences(DpiConfigStore.GROUP);
+            if (remotePreferences != null) {
+                return new DpiConfigStore(remotePreferences);
+            }
+        } catch (Throwable ignored) {
+            // Remote preferences are unavailable.
+        }
+        return null;
     }
 
     static FontLibraryStore createLocalFontLibraryStore(Context context) {

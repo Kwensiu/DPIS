@@ -34,10 +34,14 @@ final class DpiConfigStore {
     // TODO: Remove after temporary WeChat DPI test builds are no longer upgrade sources.
     private static final String LEGACY_WECHAT_DPI_KEY = "wechat."
             + WechatDpiConfig.PACKAGE_NAME + ".wekit_dpi";
-    private static final String[] LOCAL_ONLY_MIRROR_KEYS = {
+    private static final String[] LOCAL_ONLY_RUNTIME_DELIVERY_KEYS = {
             KEY_HIDE_LAUNCHER_ICON,
             KEY_INTERFACE_SCALE_PERCENT,
             KEY_STARTUP_DISCLAIMER_ACCEPTED
+    };
+    private static final String[] LOCAL_ONLY_RUNTIME_DELIVERY_PREFIXES = {
+            "default_config.",
+            "template."
     };
     private static final String[] BACKUP_EXCLUDED_PREFIXES = {
             "font.library.",
@@ -47,14 +51,23 @@ final class DpiConfigStore {
 
     private final SharedPreferences preferences;
     private final SharedPreferences mirrorPreferences;
+    private final SharedPreferences localOnlyPreferences;
 
     DpiConfigStore(SharedPreferences preferences) {
         this(preferences, null);
     }
 
     DpiConfigStore(SharedPreferences preferences, SharedPreferences mirrorPreferences) {
+        this(preferences, mirrorPreferences, mirrorPreferences != null ? mirrorPreferences : preferences);
+    }
+
+    DpiConfigStore(
+            SharedPreferences preferences,
+            SharedPreferences mirrorPreferences,
+            SharedPreferences localOnlyPreferences) {
         this.preferences = preferences;
         this.mirrorPreferences = mirrorPreferences;
+        this.localOnlyPreferences = localOnlyPreferences != null ? localOnlyPreferences : preferences;
     }
 
     Set<String> getConfiguredPackages() {
@@ -848,17 +861,9 @@ final class DpiConfigStore {
         return snapshot;
     }
 
-    Map<String, Object> snapshotLocalMirror() {
+    Map<String, Object> snapshotRuntimeDelivery() {
         LinkedHashMap<String, Object> snapshot = new LinkedHashMap<>(snapshotAll());
-        for (String key : LOCAL_ONLY_MIRROR_KEYS) {
-            snapshot.remove(key);
-        }
-        return snapshot;
-    }
-
-    Map<String, Object> snapshotLocalOnlyMirrorValues() {
-        LinkedHashMap<String, Object> snapshot = new LinkedHashMap<>();
-        copyLocalOnlyEntries(snapshot, localOnlyPreferences().getAll());
+        snapshot.entrySet().removeIf(entry -> isLocalOnlyRuntimeDeliveryKey(entry.getKey()));
         return snapshot;
     }
 
@@ -1072,30 +1077,17 @@ final class DpiConfigStore {
     }
 
     private SharedPreferences localOnlyPreferences() {
-        return mirrorPreferences != null ? mirrorPreferences : preferences;
+        return localOnlyPreferences;
     }
 
-    private static void copyLocalOnlyEntries(
-            Map<String, Object> target,
-            Map<String, ?> source) {
-        if (source == null) {
-            return;
-        }
-        for (Map.Entry<String, ?> entry : source.entrySet()) {
-            String key = entry.getKey();
-            if (key == null || key.isEmpty() || !isLocalOnlyMirrorKey(key)) {
-                continue;
-            }
-            Object normalized = normalizeValue(entry.getValue());
-            if (normalized != null) {
-                target.put(key, normalized);
-            }
-        }
-    }
-
-    private static boolean isLocalOnlyMirrorKey(String key) {
-        for (String localOnlyKey : LOCAL_ONLY_MIRROR_KEYS) {
+    private static boolean isLocalOnlyRuntimeDeliveryKey(String key) {
+        for (String localOnlyKey : LOCAL_ONLY_RUNTIME_DELIVERY_KEYS) {
             if (localOnlyKey.equals(key)) {
+                return true;
+            }
+        }
+        for (String localOnlyPrefix : LOCAL_ONLY_RUNTIME_DELIVERY_PREFIXES) {
+            if (key.startsWith(localOnlyPrefix)) {
                 return true;
             }
         }

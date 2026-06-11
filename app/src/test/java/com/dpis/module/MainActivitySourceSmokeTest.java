@@ -1418,7 +1418,7 @@ public class MainActivitySourceSmokeTest {
         );
         assertTrue(
             source.contains(
-                "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(remoteStore)"
+                "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)"
             )
         );
         assertTrue(
@@ -1428,7 +1428,7 @@ public class MainActivitySourceSmokeTest {
         );
         assertTrue(
             !source.contains(
-                "HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(this, remoteStore)"
+                "HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(this, runtimeDeliveryStore)"
             )
         );
     }
