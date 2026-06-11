@@ -16,9 +16,7 @@ import com.google.android.material.textview.MaterialTextView;
 
 final class HomeWorkspaceBinder {
     static final class State {
-        final boolean serviceConnected;
-        final boolean systemHooksEnabled;
-        final boolean modernFlavor;
+        final boolean xposedModuleActivated;
         final int enabledConfiguredAppCount;
         final int totalConfiguredAppCount;
         final int importedFontCount;
@@ -27,9 +25,7 @@ final class HomeWorkspaceBinder {
         final HomeUpdateUiState updateState;
         final Actions actions;
 
-        State(boolean serviceConnected,
-                boolean systemHooksEnabled,
-                boolean modernFlavor,
+        State(boolean xposedModuleActivated,
                 int enabledConfiguredAppCount,
                 int totalConfiguredAppCount,
                 int importedFontCount,
@@ -37,9 +33,7 @@ final class HomeWorkspaceBinder {
                 RootAccessProbe.Result rootAccess,
                 HomeUpdateUiState updateState,
                 Actions actions) {
-            this.serviceConnected = serviceConnected;
-            this.systemHooksEnabled = systemHooksEnabled;
-            this.modernFlavor = modernFlavor;
+            this.xposedModuleActivated = xposedModuleActivated;
             this.enabledConfiguredAppCount = Math.max(0, enabledConfiguredAppCount);
             this.totalConfiguredAppCount = Math.max(0, totalConfiguredAppCount);
             this.importedFontCount = Math.max(0, importedFontCount);
@@ -267,15 +261,14 @@ final class HomeWorkspaceBinder {
     }
 
     private int primaryStatusTitleRes(State state) {
-        if (!state.systemHooksEnabled) {
+        if (!state.xposedModuleActivated) {
             return R.string.home_workspace_status_enable_in_lsposed;
         }
         return R.string.home_workspace_status_enabled;
     }
 
     private int primaryStatusIconRes(State state) {
-        if ((state.modernFlavor && !state.serviceConnected)
-                || !state.systemHooksEnabled) {
+        if (isPrimaryStatusDisabled(state)) {
             return R.drawable.ic_error_outline_24;
         }
         return R.drawable.ic_check_24;
@@ -284,14 +277,17 @@ final class HomeWorkspaceBinder {
     private PrimaryStatusTone resolvePrimaryStatusTone(State state) {
         // The primary card color represents module availability plus update availability.
         // Update-check progress only changes the subtitle, not the card tone.
-        if ((state.modernFlavor && !state.serviceConnected)
-                || !state.systemHooksEnabled) {
+        if (isPrimaryStatusDisabled(state)) {
             return PrimaryStatusTone.DISABLED;
         }
         if (shouldShowUpdateActionCard(state)) {
             return PrimaryStatusTone.UPDATE_AVAILABLE;
         }
         return PrimaryStatusTone.ENABLED;
+    }
+
+    private boolean isPrimaryStatusDisabled(State state) {
+        return !state.xposedModuleActivated;
     }
 
     private void bindUpdateActions(View workspaceView, State state) {

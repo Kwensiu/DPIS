@@ -30,6 +30,17 @@ public class ModuleMainHookInstallerTest {
     }
 
     @Test
+    public void modern101ModuleMainMarksSelfProcessForHomeActivation() throws IOException {
+        String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+
+        assertTrue(moduleMain.contains("XposedSelfActivation.markIfSelfPackage("));
+        assertTrue(moduleMain.contains("param.getPackageName()"));
+        assertTrue(moduleMain.contains("param.getClassLoader()"));
+        assertTrue(moduleMain.contains("libxposed-package-ready"));
+        assertFalse(moduleMain.contains("DpisApplication.markXposedSelfLoaded();"));
+    }
+
+    @Test
     public void modern101AppSpecificRouteInstallerRoutesWechatDpi() throws IOException {
         String router = read(
                 "src/modern101/java/com/dpis/module/Modern101AppSpecificRouteInstaller.java");

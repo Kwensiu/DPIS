@@ -43,6 +43,10 @@ public final class ModuleMain extends XposedModule {
     public void onPackageReady(PackageReadyParam param) {
         bridgeLog("onPackageReady enter: process=" + currentProcessName
                 + ", package=" + param.getPackageName());
+        XposedSelfActivation.markIfSelfPackage(
+                param.getPackageName(),
+                param.getClassLoader(),
+                "libxposed-package-ready");
         DpiConfigStore store = getOrCreateConfigStore();
         ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(store);
         HookRuntimePolicy policy = HookRuntimePolicy.fromSnapshot(snapshot);

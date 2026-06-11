@@ -2869,9 +2869,7 @@ public final class MainActivity
         DpiConfigStore configStore = getHookConfigStore();
         java.util.Set<String> configuredPackages = configStore.getConfiguredPackages();
         return new HomeWorkspaceBinder.State(
-                DpisApplication.getXposedService() != null,
-                isSystemHookEnabledFromStore(),
-                "modern101".equals(BuildConfig.FLAVOR),
+                HomeActivationStateResolver.isActivatedForHome(),
                 countDpisEnabledPackages(configStore, configuredPackages),
                 configuredPackages.size(),
                 ConfigStoreFactory.createActiveFontLibraryStore(

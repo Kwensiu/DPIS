@@ -24,6 +24,8 @@ public final class DpisApplication extends Application implements XposedServiceH
     private static volatile DpisApplication instance;
     private static volatile DpiConfigStore configStore;
     private static volatile XposedService xposedService;
+    private static volatile boolean xposedSelfLoaded;
+    public boolean xposedSelfLoadedByLegacyConstructorHook;
 
     @Override
     public void onCreate() {
@@ -68,6 +70,25 @@ public final class DpisApplication extends Application implements XposedServiceH
 
     static XposedService getXposedService() {
         return xposedService;
+    }
+
+    static void markXposedSelfLoaded() {
+        xposedSelfLoaded = true;
+        notifyServiceStateChanged();
+    }
+
+    static boolean isXposedSelfLoaded() {
+        DpisApplication application = instance;
+        return xposedSelfLoaded
+                || (application != null && application.xposedSelfLoadedByLegacyConstructorHook);
+    }
+
+    static void clearXposedSelfLoadedForTest() {
+        xposedSelfLoaded = false;
+        DpisApplication application = instance;
+        if (application != null) {
+            application.xposedSelfLoadedByLegacyConstructorHook = false;
+        }
     }
 
     static DpiConfigStore getActiveHookConfigStore(Context context) {

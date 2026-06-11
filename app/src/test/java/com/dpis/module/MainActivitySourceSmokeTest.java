@@ -563,6 +563,9 @@ public class MainActivitySourceSmokeTest {
         String homeBinderSource = read(
             "src/main/java/com/dpis/module/HomeWorkspaceBinder.java"
         );
+        String homeActivationSource = read(
+            "src/main/java/com/dpis/module/HomeActivationStateResolver.java"
+        );
         String homeUpdateStateSource = read(
             "src/main/java/com/dpis/module/HomeUpdateUiState.java"
         );
@@ -578,6 +581,11 @@ public class MainActivitySourceSmokeTest {
         );
 
         assertTrue(source.contains("maybeCheckForUpdatesOnStartup();"));
+        assertTrue(source.contains("HomeActivationStateResolver.isActivatedForHome()"));
+        assertTrue(homeBinderSource.contains("final boolean xposedModuleActivated;"));
+        assertTrue(homeBinderSource.contains("return !state.xposedModuleActivated;"));
+        assertTrue(homeActivationSource.contains("isModernLibXposedServiceApi(int apiVersion)"));
+        assertTrue(homeActivationSource.contains("DpisApplication.isXposedSelfLoaded()"));
         assertTrue(source.contains("new UpdateCoordinator("));
         assertTrue(source.contains("new StartupUpdateCheckCoordinator("));
         assertTrue(source.contains("StartupUpdateCheckOnce.consume()"));

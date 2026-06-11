@@ -10,7 +10,18 @@ public class Compat100LegacyModuleHookSourceTest {
     @Test
     public void legacyEntryInstallsReplacementHooks() throws Exception {
         String source = read("src/compat100/java/com/dpis/module/Compat100LegacyModuleHook.java");
+        String selfActivation = read(
+                "src/compat100/java/com/dpis/module/LegacyXposedSelfActivation.java");
+        String proguard = SourceSmokeTestPaths.readRepositoryRoot("app/proguard-rules.pro");
 
+        assertTrue(source.contains("runtime semantics here are legacy Xposed"));
+        assertTrue(source.contains("LegacyXposedSelfActivation.markIfSelfPackage("));
+        assertTrue(source.contains("\"legacy-handle-load-package\""));
+        assertTrue(selfActivation.contains("final class LegacyXposedSelfActivation"));
+        assertTrue(selfActivation.contains("XposedSelfActivation.markIfSelfPackage("));
+        assertTrue(selfActivation.contains("xposedSelfLoadedByLegacyConstructorHook"));
+        assertTrue(proguard.contains("static void markXposedSelfLoaded();"));
+        assertTrue(proguard.contains("boolean xposedSelfLoadedByLegacyConstructorHook;"));
         assertTrue(source.contains("installDisplayHooks(packageName, store)"));
         assertTrue(source.contains("installWindowMetricsHook()"));
         assertTrue(source.contains("installFontFieldRewriteHooks(packageName, store)"));

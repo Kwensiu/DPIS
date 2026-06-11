@@ -49,6 +49,12 @@ public final class Compat100LegacyModuleHook implements IXposedHookLoadPackage, 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
         String packageName = lpparam.packageName;
+        // This source set still carries the historical compat100 name, but the
+        // runtime semantics here are legacy Xposed, not a distinct API 100 path.
+        LegacyXposedSelfActivation.markIfSelfPackage(
+                packageName,
+                lpparam.classLoader,
+                "legacy-handle-load-package");
         if (SystemServerProcess.isSystemServer(lpparam.processName, packageName)) {
             DpisLog.setLoggingEnabled(ConfigStoreFactory.createForCompat100Host().isGlobalLogEnabled());
             compatDebugLog("compat100 legacy handleLoadPackage: package=" + packageName
