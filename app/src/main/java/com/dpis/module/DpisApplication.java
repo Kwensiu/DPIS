@@ -43,16 +43,12 @@ public final class DpisApplication extends Application implements XposedServiceH
     @Override
     public void onServiceBind(XposedService service) {
         DpiConfigStore localStore = ConfigStoreFactory.createLocalModuleConfigStore(this);
-        DpiConfigStore remoteStore = ConfigStoreFactory.createActiveModuleConfigStore(this, service);
+        DpiConfigStore remoteStore = ConfigStoreFactory.createRemoteModuleConfigStore(service);
         localStore.migrateLegacyWechatDpi();
-        remoteStore.migrateLegacyWechatDpi();
-        migrateConfig(localStore, remoteStore);
-        // Keep local SharedPreferences as a cold-start mirror before the Xposed
-        // service is rebound. Compat100 app processes cannot load XSharedPreferences.
-        mirrorConfig(remoteStore, localStore);
-        configStore = remoteStore;
-        DpisLog.setLoggingEnabled(remoteStore.isGlobalLogEnabled());
-        RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(remoteStore);
+        publishRuntimeConfig(localStore, remoteStore);
+        configStore = ConfigStoreFactory.createActiveModuleConfigStore(this, service);
+        DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
+        RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore);
         xposedService = service;
         notifyServiceStateChanged();
     }
@@ -94,6 +90,8 @@ public final class DpisApplication extends Application implements XposedServiceH
             return;
         }
         XposedService service = xposedService;
+        DpiConfigStore localStore = ConfigStoreFactory.createLocalModuleConfigStore(application);
+        publishRuntimeConfig(localStore, ConfigStoreFactory.createRemoteModuleConfigStore(service));
         DpiConfigStore refreshedStore = service != null
                 ? ConfigStoreFactory.createActiveModuleConfigStore(application, service)
                 : ConfigStoreFactory.createLocalModuleConfigStore(application);
@@ -179,13 +177,11 @@ public final class DpisApplication extends Application implements XposedServiceH
         }
     }
 
-    private static void mirrorConfig(DpiConfigStore from, DpiConfigStore to) {
+    private static void publishRuntimeConfig(DpiConfigStore from, DpiConfigStore to) {
         if (from == null || to == null || from == to) {
             return;
         }
-        Map<String, Object> localOnlyValues = to.snapshotLocalOnlyMirrorValues();
         Map<String, Object> snapshot = from.snapshotLocalMirror();
-        snapshot.putAll(localOnlyValues);
         to.replaceAll(snapshot);
     }
 }

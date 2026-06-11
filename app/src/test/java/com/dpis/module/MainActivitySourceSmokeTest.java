@@ -1418,7 +1418,7 @@ public class MainActivitySourceSmokeTest {
         );
         assertTrue(
             source.contains(
-                "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(remoteStore)"
+                "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)"
             )
         );
         assertTrue(

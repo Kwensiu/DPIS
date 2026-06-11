@@ -51,14 +51,23 @@ final class DpiConfigStore {
 
     private final SharedPreferences preferences;
     private final SharedPreferences mirrorPreferences;
+    private final SharedPreferences localOnlyPreferences;
 
     DpiConfigStore(SharedPreferences preferences) {
         this(preferences, null);
     }
 
     DpiConfigStore(SharedPreferences preferences, SharedPreferences mirrorPreferences) {
+        this(preferences, mirrorPreferences, mirrorPreferences != null ? mirrorPreferences : preferences);
+    }
+
+    DpiConfigStore(
+            SharedPreferences preferences,
+            SharedPreferences mirrorPreferences,
+            SharedPreferences localOnlyPreferences) {
         this.preferences = preferences;
         this.mirrorPreferences = mirrorPreferences;
+        this.localOnlyPreferences = localOnlyPreferences != null ? localOnlyPreferences : preferences;
     }
 
     Set<String> getConfiguredPackages() {
@@ -1074,7 +1083,7 @@ final class DpiConfigStore {
     }
 
     private SharedPreferences localOnlyPreferences() {
-        return mirrorPreferences != null ? mirrorPreferences : preferences;
+        return localOnlyPreferences;
     }
 
     private static void copyLocalOnlyEntries(

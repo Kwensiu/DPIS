@@ -73,7 +73,7 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(app.contains("static DpiConfigStore getActiveHookConfigStore(Context context)"));
         assertTrue(app.contains("if (context == null)"));
         assertTrue(app.contains("return null;"));
-        assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(remoteStore)"));
+        assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)"));
     }
 
 

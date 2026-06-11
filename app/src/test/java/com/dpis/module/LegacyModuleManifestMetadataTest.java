@@ -187,7 +187,7 @@ public final class LegacyModuleManifestMetadataTest {
         assertTrue(receiver.contains("Intent.ACTION_BOOT_COMPLETED"));
         assertTrue(receiver.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(store)"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)"));
-        assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(remoteStore)"));
+        assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)"));
     }
 
     private static String readProjectFile(String relativePath) throws IOException {

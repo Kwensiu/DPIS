@@ -698,6 +698,46 @@ public class DpiConfigStoreTest {
     }
 
     @Test
+    public void localAuthoritativeStorePrefersLocalValuesAndMirrorsRuntimeWrites() {
+        FakePrefs localPrefs = new FakePrefs();
+        localPrefs.edit()
+                .putBoolean(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED, false)
+                .putInt("font.com.miui.weather2.scale_percent", 120)
+                .commit();
+        FakePrefs remotePrefs = new FakePrefs();
+        remotePrefs.edit()
+                .putBoolean(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED, true)
+                .putInt("font.com.miui.weather2.scale_percent", 150)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(localPrefs, remotePrefs, localPrefs);
+
+        assertFalse(store.isGlobalLogEnabled());
+        assertEquals(Integer.valueOf(120), store.getTargetFontScalePercent("com.miui.weather2"));
+        assertTrue(store.setTargetFontScalePercent("com.miui.weather2", 135));
+
+        assertEquals(135, localPrefs.getInt("font.com.miui.weather2.scale_percent", 0));
+        assertEquals(135, remotePrefs.getInt("font.com.miui.weather2.scale_percent", 0));
+    }
+
+    @Test
+    public void localAuthoritativeStoreWritesLocalOnlyStateToLocalPrimary() {
+        FakePrefs localPrefs = new FakePrefs();
+        FakePrefs remotePrefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(localPrefs, remotePrefs, localPrefs);
+
+        assertTrue(store.setStartupDisclaimerAccepted(true));
+        assertTrue(store.setInterfaceScalePercent(73));
+        assertTrue(store.setLauncherIconHidden(true));
+
+        assertTrue(localPrefs.getBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, false));
+        assertEquals(73, localPrefs.getInt(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT, 0));
+        assertTrue(localPrefs.getBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, false));
+        assertFalse(remotePrefs.contains(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED));
+        assertFalse(remotePrefs.contains(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT));
+        assertFalse(remotePrefs.contains(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON));
+    }
+
+    @Test
     public void snapshotBackupExcludesFontLibraryMetadataButKeepsTypefaceSelection() {
         FakePrefs prefs = new FakePrefs();
         prefs.edit()
