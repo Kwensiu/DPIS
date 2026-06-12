@@ -135,7 +135,7 @@ final class ModulePackagePlan {
         return targetDpisEnabled && (viewportEnabled || fontEnabled || typefaceEnabled);
     }
 
-    boolean shouldInstallCompat100LegacyHooks() {
+    boolean shouldInstallLegacyHooks() {
         return targetDpisEnabled
                 && (viewportEnabled
                 || typefaceEnabled

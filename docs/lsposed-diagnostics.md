@@ -1,7 +1,7 @@
 # LSPosed Diagnostics
 
 This document describes how to pull and filter LSPosed module logs. It applies
-to both `modern101` and `compat100` flavors — both are LSPosed modules and write
+to both `modern` and `legacy` flavors — both are LSPosed modules and write
 to the same log directory.
 
 ## Log Sources

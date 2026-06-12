@@ -33,10 +33,10 @@
 ### Task 3: Preserve Same-Package Secondary Process Support
 
 **Files:**
-- Modify: `app/src/modern101/java/com/dpis/module/ModuleMain.java`
-- Modify: `app/src/compat100/java/com/dpis/module/Compat100LegacyModuleHook.java`
+- Modify: `app/src/modern/java/com/dpis/module/ModuleMain.java`
+- Modify: `app/src/legacy/java/com/dpis/module/LegacyModuleHook.java`
 - Test: `app/src/test/java/com/dpis/module/ModuleMainHookInstallerTest.java`
-- Test: `app/src/test/java/com/dpis/module/Compat100LegacyModuleHookSourceTest.java`
+- Test: `app/src/test/java/com/dpis/module/LegacyModuleHookSourceTest.java`
 
 - [x] Allow `package:process` secondary processes to keep viewport hooks.
 - [x] Continue suppressing non-package-owned secondary process viewport routes.
@@ -47,5 +47,5 @@
 - No code changes.
 
 - [x] Run targeted tests:
-  `./gradlew :app:testModern101DebugUnitTest --tests com.dpis.module.HookExecutionPlannerTest --tests com.dpis.module.TargetViewportWidthResolverTest --tests com.dpis.module.ModuleMainHookInstallerTest --tests com.dpis.module.Compat100LegacyModuleHookSourceTest --tests com.dpis.module.ViewportModePolicyTest`
+  `./gradlew :app:testModernDebugUnitTest --tests com.dpis.module.HookExecutionPlannerTest --tests com.dpis.module.TargetViewportWidthResolverTest --tests com.dpis.module.ModuleMainHookInstallerTest --tests com.dpis.module.LegacyModuleHookSourceTest --tests com.dpis.module.ViewportModePolicyTest`
 - [x] If code compiles and tests pass, build/install only when runtime validation is needed.

@@ -36,7 +36,7 @@ final class UpdateManifestFetcher {
             int versionCode = object.optInt("versionCode", 0);
             String defaultApkUrl = object.optString("apkUrl", "").trim();
             String apkUrl;
-            if ("compat100".equals(BuildConfig.FLAVOR)) {
+            if ("legacy".equals(BuildConfig.FLAVOR)) {
                 // Fallback to apkUrl is intentional: keeps update flow working even if
                 // compatApkUrl is absent, so users still see the release page link.
                 String compatUrl = object.optString("compatApkUrl", "").trim();

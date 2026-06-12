@@ -136,10 +136,10 @@ android {
     }
 
     productFlavors {
-        create("modern101") {
+        create("modern") {
             dimension = "xposedApi"
         }
-        create("compat100") {
+        create("legacy") {
             dimension = "xposedApi"
         }
     }
@@ -247,33 +247,33 @@ val renamedReleaseApkName = "DPIS_${resolvedVersionName}.apk"
 val renamedLegacyApkName = "DPIS_${resolvedVersionName}_legacy.apk"
 
 val renameReleaseApk = tasks.register("renameReleaseApk", RenameReleaseApkTask::class) {
-    sourceApk.set(layout.buildDirectory.file("outputs/apk/modern101/release/app-modern101-release.apk"))
-    targetApk.set(layout.buildDirectory.file("outputs/apk/modern101/release/$renamedReleaseApkName"))
+    sourceApk.set(layout.buildDirectory.file("outputs/apk/modern/release/app-modern-release.apk"))
+    targetApk.set(layout.buildDirectory.file("outputs/apk/modern/release/$renamedReleaseApkName"))
 }
 
 val renameLegacyApk = tasks.register("renameLegacyApk", RenameReleaseApkTask::class) {
-    sourceApk.set(layout.buildDirectory.file("outputs/apk/compat100/release/app-compat100-release.apk"))
-    targetApk.set(layout.buildDirectory.file("outputs/apk/compat100/release/$renamedLegacyApkName"))
+    sourceApk.set(layout.buildDirectory.file("outputs/apk/legacy/release/app-legacy-release.apk"))
+    targetApk.set(layout.buildDirectory.file("outputs/apk/legacy/release/$renamedLegacyApkName"))
 }
 
 tasks.register<Test>("testDebugUnitTest") {
-    val modern101Test = tasks.named<Test>("testModern101DebugUnitTest").get()
-    description = "Compatibility alias for filtered debug unit tests; runs modern101 debug unit tests."
+    val modernTest = tasks.named<Test>("testModernDebugUnitTest").get()
+    description = "Compatibility alias for filtered debug unit tests; runs modern debug unit tests."
     group = "verification"
-    testClassesDirs = modern101Test.testClassesDirs
-    classpath = modern101Test.classpath
-    shouldRunAfter(modern101Test)
+    testClassesDirs = modernTest.testClassesDirs
+    classpath = modernTest.classpath
+    shouldRunAfter(modernTest)
 }
 
 tasks.register("testAllDebugUnitTests") {
-    dependsOn("testModern101DebugUnitTest", "testCompat100DebugUnitTest")
+    dependsOn("testModernDebugUnitTest", "testLegacyDebugUnitTest")
 }
 
 tasks.configureEach {
-    if (name == "assembleModern101Release" || name == "assembleRelease") {
+    if (name == "assembleModernRelease" || name == "assembleRelease") {
         finalizedBy(renameReleaseApk)
     }
-    if (name == "assembleCompat100Release" || name == "assembleRelease") {
+    if (name == "assembleLegacyRelease" || name == "assembleRelease") {
         finalizedBy(renameLegacyApk)
     }
 }
@@ -297,6 +297,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.markwon.core)
     testImplementation(libs.junit4)
+    testRuntimeOnly(libs.legacy.xposed.api)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.core)
 }

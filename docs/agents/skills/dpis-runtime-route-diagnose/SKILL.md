@@ -39,9 +39,9 @@ Read only the documents needed for the touched route:
 
 - Always read `AGENTS.md`.
 - For font routes, read `docs/font-routing.md`.
-- For modern101 routes, read `docs/modern101-runtime-resync.md`.
-- For compat100 routes or shared code that may affect compat100, read
-  `docs/compat100-runtime-resync.md`.
+- For Modern routes, read `docs/modern-runtime-resync.md`.
+- For Legacy routes or shared code that may affect Legacy, read
+  `docs/legacy-runtime-resync.md`.
 - For log collection, read `docs/lsposed-diagnostics.md`.
 - For Java / CI API compatibility questions, read `docs/java-toolchain-policy.md`.
 

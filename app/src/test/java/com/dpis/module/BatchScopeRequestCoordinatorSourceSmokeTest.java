@@ -13,7 +13,7 @@ public class BatchScopeRequestCoordinatorSourceSmokeTest {
         String coordinator = read("src/main/java/com/dpis/module/BatchScopeRequestCoordinator.java");
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
 
-        assertTrue(coordinator.contains("\"modern101\".equals(BuildConfig.FLAVOR)"));
+        assertTrue(coordinator.contains("\"modern\".equals(BuildConfig.FLAVOR)"));
         assertTrue(coordinator.contains("scopeRequester.getScope()"));
         assertTrue(coordinator.contains("scopeRequester.requestScope(requestPackages,"));
         assertFalse(coordinator.contains("Collections.singletonList"));

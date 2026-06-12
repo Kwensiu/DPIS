@@ -15,8 +15,7 @@ runtime issues may already be fixed outside the stable APK.
 
 请尽量包含这些信息 / Include these details:
 
-- DPIS 版本和 APK 类型 / DPIS version and APK variant: standard `modern101` or
-  legacy `compat100`.
+- DPIS 版本和 APK 类型 / DPIS version and APK variant: Modern or Legacy.
 - Android 版本、ROM/OEM 系统、LSPosed 或 Xposed 版本、Root 方式 / Android
   version, ROM/OEM skin, LSPosed or Xposed version, and root method.
 - 目标应用包名和版本 / Target app package name and version.
@@ -56,14 +55,14 @@ DPIS 会优先考虑可复用的 route、policy 或配置能力；包名特化�
 提交前请运行 / Before submitting:
 
 ```bash
-./gradlew :app:assembleModern101Debug :app:assembleCompat100Debug
+./gradlew :app:assembleModernDebug :app:assembleLegacyDebug
 ./gradlew :app:testAllDebugUnitTests
 ```
 
 For narrow iteration, use a real flavor test task such as:
 
 ```bash
-./gradlew :app:testModern101DebugUnitTest --tests com.dpis.module.ModulePackagePlanTest
+./gradlew :app:testModernDebugUnitTest --tests com.dpis.module.ModulePackagePlanTest
 ```
 
 如果修改 UI 结构、资源 id、共享 binder、导航或 layout 归属，请同步检查相关 source/layout smoke tests。常见触点包括
@@ -73,8 +72,8 @@ For narrow iteration, use a real flavor test task such as:
 如果修改 runtime hooks、route scheduling、viewport、font scaling、`system_server`、
 `ActivityThread`、`Resources`、`Display`、WebView 或共享 route 代码，请更新相关 living route document:
 
-- `docs/compat100-runtime-resync.md`
-- `docs/modern101-runtime-resync.md`
+- `docs/legacy-runtime-resync.md`
+- `docs/modern-runtime-resync.md`
 - `docs/font-routing.md`
 
 有价值的失败实验也请记录。将其标记为 inactive、superseded 或 rejected，而不是静默删除证据。

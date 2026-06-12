@@ -107,33 +107,33 @@ final class ConfigStoreFactory {
                 null);
     }
 
-    static FontLibraryStore createFontLibraryForCompat100Host() {
+    static FontLibraryStore createFontLibraryForLegacyHost() {
         return new FontLibraryStore(
                 new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpiConfigStore.GROUP),
                 null);
     }
 
-    static DpiConfigStore createForCompat100Host() {
+    static DpiConfigStore createForLegacyHost() {
         return new DpiConfigStore(
                 new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpiConfigStore.GROUP));
     }
 
-    static DpiConfigStore createForCompat100SystemServerHost() {
+    static DpiConfigStore createForLegacySystemServerHost() {
         // Long-lived system_server refresh is owned by RefreshingConfigSnapshotProvider.
-        return createForCompat100Host();
+        return createForLegacyHost();
     }
 
-    static DpiConfigStore createForCompat100Host(String packageName) {
-        return createForCompat100Host(packageName,
+    static DpiConfigStore createForLegacyHost(String packageName) {
+        return createForLegacyHost(packageName,
                 RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.NONE);
     }
 
-    static DpiConfigStore createForCompat100MainProcessHost(String packageName) {
-        return createForCompat100Host(packageName,
+    static DpiConfigStore createForLegacyMainProcessHost(String packageName) {
+        return createForLegacyHost(packageName,
                 RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ABSOLUTE_TARGETS_ONLY);
     }
 
-    private static DpiConfigStore createForCompat100Host(
+    private static DpiConfigStore createForLegacyHost(
             String packageName,
             RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute autoViewportRuntimeRoute) {
         SharedPreferences xSharedPreferences =
@@ -141,9 +141,10 @@ final class ConfigStoreFactory {
         if (packageName == null || packageName.isBlank()) {
             return new DpiConfigStore(xSharedPreferences);
         }
-        // API100 has no libxposed remote preferences service. Runtime app-process hooks
-        // read the per-package system-property bridge first, with XSharedPreferences kept
-        // only as a startup fallback for older or unsynced configuration.
+        // The Legacy classic-Xposed entrypoint has no libxposed remote preferences
+        // service. Runtime app-process hooks read the per-package system-property
+        // bridge first, with XSharedPreferences kept only as a startup fallback for
+        // older or unsynced configuration.
         return new DpiConfigStore(
                 new RuntimePropertyConfigPreferences(packageName, autoViewportRuntimeRoute),
                 xSharedPreferences);

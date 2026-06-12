@@ -17,7 +17,7 @@ DPIS 是一个基于 LSPosed/Xposed 的 Android 模块，用来按应用单独�
 - 按应用调整字体大小，范围 `50-300%`
 - 支持应用搜索、已配置应用筛选和横屏 / 大屏详情面板
 - 支持全局预填和快捷模板，方便重复套用常用配置
-- 支持标准版和兼容版，覆盖不同 LSPosed/Xposed 环境
+- 提供 Modern 和 Legacy 两类 APK，覆盖不同 LSPosed/Xposed 环境
 
 ## 使用要求
 
@@ -56,12 +56,12 @@ DPIS 是一个基于 LSPosed/Xposed 的 Android 模块，用来按应用单独�
 
 | 版本 | 文件名 | 适用环境 |
 | --- | --- | --- |
-| 标准版 | `DPIS_{version}.apk` | LSPosed（libxposed API 101+） |
-| 兼容版 | `DPIS_{version}_legacy.apk` | 传统 Xposed / 不支持 libxposed API 101 的框架 |
+| Modern / 现代版 | `DPIS_{version}.apk` | LSPosed / libxposed modern API 环境 |
+| Legacy / 传统版 | `DPIS_{version}_legacy.apk` | 传统 Xposed 兼容框架 |
 
-优先使用标准版。只有在标准版无法加载，或你的框架不支持标准版时，再使用兼容版。两个版本包名相同，不能同时安装，交叉安装会互相覆盖。
+优先使用 Modern 版。只有在 Modern 版无法加载，或你的框架不支持 libxposed modern API 时，再使用 Legacy 版。两个版本包名相同，不能同时安装，交叉安装会互相覆盖。
 
-兼容版请始终以主仓库 Releases 为准。LSPosed / Xposed 模块仓库通常只同步标准版 APK。
+Legacy 版请始终以主仓库 Releases 为准。LSPosed / Xposed 模块仓库通常只同步 Modern APK。
 
 ## 文档导航
 

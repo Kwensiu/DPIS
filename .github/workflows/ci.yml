@@ -50,9 +50,9 @@ jobs:
           TEST_FILTER: ${{ github.event.inputs.test_filter }}
         run: |
           if [[ -n "${TEST_FILTER}" ]]; then
-            ./gradlew :app:assembleModern101Debug :app:assembleCompat100Debug :app:testDebugUnitTest --tests "${TEST_FILTER}" :app:lintModern101Debug --stacktrace
+            ./gradlew :app:assembleModernDebug :app:assembleLegacyDebug :app:testDebugUnitTest --tests "${TEST_FILTER}" :app:lintModernDebug --stacktrace
           else
-            ./gradlew :app:assembleModern101Debug :app:assembleCompat100Debug :app:testAllDebugUnitTests :app:lintModern101Debug --stacktrace
+            ./gradlew :app:assembleModernDebug :app:assembleLegacyDebug :app:testAllDebugUnitTests :app:lintModernDebug --stacktrace
           fi
 
       - name: Upload test and lint reports
@@ -63,13 +63,13 @@ jobs:
           if-no-files-found: warn
           path: |
             app/build/reports/tests/testDebugUnitTest
-            app/build/reports/tests/testModern101DebugUnitTest
-            app/build/reports/tests/testCompat100DebugUnitTest
+            app/build/reports/tests/testModernDebugUnitTest
+            app/build/reports/tests/testLegacyDebugUnitTest
             app/build/test-results/testDebugUnitTest
-            app/build/test-results/testModern101DebugUnitTest
-            app/build/test-results/testCompat100DebugUnitTest
-            app/build/reports/lint-results-modern101Debug.html
-            app/build/reports/lint-results-modern101Debug.xml
+            app/build/test-results/testModernDebugUnitTest
+            app/build/test-results/testLegacyDebugUnitTest
+            app/build/reports/lint-results-modernDebug.html
+            app/build/reports/lint-results-modernDebug.xml
 
       - name: Upload PR debug APKs
         if: github.event_name == 'pull_request'
@@ -79,5 +79,5 @@ jobs:
           if-no-files-found: error
           retention-days: 7
           path: |
-            app/build/outputs/apk/modern101/debug/*.apk
-            app/build/outputs/apk/compat100/debug/*.apk
+            app/build/outputs/apk/modern/debug/*.apk
+            app/build/outputs/apk/legacy/debug/*.apk

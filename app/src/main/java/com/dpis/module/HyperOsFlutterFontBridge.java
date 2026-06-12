@@ -8,7 +8,7 @@ final class HyperOsFlutterFontBridge {
     private static final String FORCE_PROPERTY_PREFIX = "debug.dpis.forcefont.";
     private static final String COMPAT_FONT_PROPERTY_PREFIX = "debug.dpis.compatfont.";
     // compatfont.* is non-zero only for system emulation; fontmode.* lets
-    // compat100 interpret forcefont.* as field_rewrite when needed.
+    // legacy interpret forcefont.* as field_rewrite when needed.
     private static final String COMPAT_FONT_MODE_PROPERTY_PREFIX = "debug.dpis.fontmode.";
     private static final String TYPEFACE_PROPERTY_PREFIX = "debug.dpis.typeface.";
     private static final String RUST_BINARY_PROPERTY_PREFIX = "debug.dpis.rustbin.";

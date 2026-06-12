@@ -14,8 +14,8 @@
 
 ## 开发与排障
 
-- [modern101-runtime-resync.md](./modern101-runtime-resync.md)：modern101/libxposed 视口与 runtime 路线记录。
-- [compat100-runtime-resync.md](./compat100-runtime-resync.md)：compat100/legacy Xposed 视口与 runtime 路线记录。
+- [modern-runtime-resync.md](./modern-runtime-resync.md)：Modern/libxposed 视口与 runtime 路线记录。
+- [legacy-runtime-resync.md](./legacy-runtime-resync.md)：Legacy/传统 Xposed 兼容路线记录。
 - [lsposed-diagnostics.md](./lsposed-diagnostics.md)：LSPosed 模块日志拉取、过滤和判断方式。
 - [font-routing.md](./font-routing.md)：字体模式、自定义 Hook 链路和内部调度边界。
 - [java-toolchain-policy.md](./java-toolchain-policy.md)：JDK、Java 兼容级别和 Android API 使用边界。
@@ -39,6 +39,6 @@
 
 ## 维护约定
 
-- 修改视口/runtime hook 路线前，先读对应的 modern101 或 compat100 路线文档；触碰共享代码时两个都读。
+- 修改视口/runtime hook 路线前，先读对应的 Modern 或 Legacy 路线文档；触碰共享代码时两个都读。
 - 新路线探索、失败实验、未采用方案和关键运行证据应记录到对应路线文档。
 - 新文档先判断是否仍然有效；已经过期或只用于历史追踪的内容放入 `docs/archive/`。

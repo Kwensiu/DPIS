@@ -85,8 +85,8 @@ final class HyperOsNativeFontPropertySyncer {
                 continue;
             }
             // forcefont.* is shared by HyperOS native font replacement and
-            // compat100 field-rewrite config. Disabling only the HyperOS
-            // native path must not erase an active compat100 field rewrite.
+            // legacy field-rewrite config. Disabling only the HyperOS
+            // native path must not erase an active legacy field rewrite.
             boolean preserveForceFont = shouldPreserveCompatForceFont(store, packageName);
             if (!preserveForceFont) {
                 HyperOsFlutterFontBridge.clearTarget(packageName);

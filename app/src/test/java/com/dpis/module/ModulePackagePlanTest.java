@@ -43,7 +43,7 @@ public final class ModulePackagePlanTest {
 
         assertTrue(plan.viewportConfigured);
         assertTrue(plan.viewportEnabled);
-        assertTrue(plan.shouldInstallCompat100LegacyHooks());
+        assertTrue(plan.shouldInstallLegacyHooks());
     }
 
     @Test
@@ -57,7 +57,7 @@ public final class ModulePackagePlanTest {
 
         assertTrue(plan.viewportConfigured);
         assertTrue(plan.viewportEnabled);
-        assertTrue(plan.shouldInstallCompat100LegacyHooks());
+        assertTrue(plan.shouldInstallLegacyHooks());
     }
 
     @Test
@@ -165,7 +165,7 @@ public final class ModulePackagePlanTest {
     }
 
     @Test
-    public void compat100LegacyInstallsFontFieldRewriteOnlyPackage() {
+    public void legacyLegacyInstallsFontFieldRewriteOnlyPackage() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 120);
         store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
@@ -173,18 +173,18 @@ public final class ModulePackagePlanTest {
         ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
 
         assertTrue(plan.shouldInstallHooks());
-        assertTrue(plan.shouldInstallCompat100LegacyHooks());
+        assertTrue(plan.shouldInstallLegacyHooks());
     }
 
     @Test
-    public void compat100LegacyInstallsFontSystemEmulationPackage() {
+    public void legacyLegacyInstallsFontSystemEmulationPackage() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 120);
         store.setTargetFontApplyMode("com.example.app", FontApplyMode.SYSTEM_EMULATION);
 
         ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
 
-        assertTrue(plan.shouldInstallCompat100LegacyHooks());
+        assertTrue(plan.shouldInstallLegacyHooks());
     }
 
     @Test
@@ -203,14 +203,14 @@ public final class ModulePackagePlanTest {
     }
 
     @Test
-    public void compat100LegacyInstallsForTypefaceOnlyPackage() {
+    public void legacyLegacyInstallsForTypefaceOnlyPackage() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetTypefaceId("com.example.app", "font_abcd1234");
 
         ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
 
         assertTrue(plan.shouldInstallHooks());
-        assertTrue(plan.shouldInstallCompat100LegacyHooks());
+        assertTrue(plan.shouldInstallLegacyHooks());
     }
 
     @Test

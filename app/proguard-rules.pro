@@ -2,8 +2,8 @@
 -keep class com.dpis.module.ModuleMain
 -keep class com.dpis.module.ModuleMain { *; }
 
--keep class com.dpis.module.Compat100LegacyModuleHook
--keep class com.dpis.module.Compat100LegacyModuleHook { *; }
+-keep class com.dpis.module.LegacyModuleHook
+-keep class com.dpis.module.LegacyModuleHook { *; }
 
 -keepclassmembers class com.dpis.module.DpisApplication {
     static void markXposedSelfLoaded();

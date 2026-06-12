@@ -46,7 +46,7 @@ unless it is explicitly testing legacy compatibility.
 
 ## Runtime Routes
 
-- `docs/modern101-runtime-resync.md` and `docs/compat100-runtime-resync.md`
+- `docs/modern-runtime-resync.md` and `docs/legacy-runtime-resync.md`
   are the DPIS living route documents for viewport/runtime hook routes.
 - `docs/private/` contains app-specific investigation notes (not committed).
 
@@ -80,7 +80,7 @@ and runtime property projection.
 ## Runtime Properties
 
 Runtime properties mirror per-app configuration for cross-process readers and
-compat100 fallback.
+Legacy runtime fallback.
 
 Viewport properties carry target type, active target value, compat config value,
 and apply mode. Relative scale may legitimately have `vp=0` or `vpcfg=0`; check

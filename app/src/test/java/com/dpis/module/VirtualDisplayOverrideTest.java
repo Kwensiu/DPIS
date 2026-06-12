@@ -23,7 +23,7 @@ public class VirtualDisplayOverrideTest {
     public void tearDown() {
         VirtualDisplayState.set(null);
         setTargetPackageName(null);
-        DisplayHookInstaller.setTargetStoreForCompat100(null);
+        DisplayHookInstaller.setTargetStoreForLegacy(null);
         clearCurrentPackageResolver();
     }
 
@@ -162,7 +162,7 @@ public class VirtualDisplayOverrideTest {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         ViewportTargetSpec targetSpec = ViewportTargetSpec.absoluteDp(300);
         store.setTargetViewportSpec("com.max.xiaoheihe", targetSpec);
-        DisplayHookInstaller.setTargetStoreForCompat100(store);
+        DisplayHookInstaller.setTargetStoreForLegacy(store);
         VirtualDisplayState.publish(
                 "com.max.xiaoheihe",
                 targetSpec,

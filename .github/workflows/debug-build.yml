@@ -33,14 +33,14 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build debug APKs
-        run: ./gradlew :app:assembleModern101Debug :app:assembleCompat100Debug
+        run: ./gradlew :app:assembleModernDebug :app:assembleLegacyDebug
 
       - name: Collect debug APKs
         shell: bash
         run: |
           mkdir -p debug-apks
-          cp app/build/outputs/apk/modern101/debug/*.apk debug-apks/
-          cp app/build/outputs/apk/compat100/debug/*.apk debug-apks/
+          cp app/build/outputs/apk/modern/debug/*.apk debug-apks/
+          cp app/build/outputs/apk/legacy/debug/*.apk debug-apks/
           ls -lh debug-apks
 
       - name: Upload debug APK artifacts

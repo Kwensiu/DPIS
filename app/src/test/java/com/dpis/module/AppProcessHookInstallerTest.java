@@ -379,7 +379,7 @@ public class AppProcessHookInstallerTest {
     @Test
     public void typefaceInstallerIsIndependentFromResourcesHookGate() throws IOException {
         String source = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
-        String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+        String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
         assertTrue(source.contains("TypefaceOverrideHookInstaller.install("));
         assertTrue(source.indexOf("installTypefaceHooks(xposed, packageName, store, packagePlan.targetTypefaceId);")

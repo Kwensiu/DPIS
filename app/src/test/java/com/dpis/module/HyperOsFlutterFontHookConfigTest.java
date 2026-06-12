@@ -52,12 +52,12 @@ public class HyperOsFlutterFontHookConfigTest {
     }
 
     @Test
-    public void compat100FactoryUsesPackageSystemPropertiesWithoutExportedProvider() throws Exception {
+    public void legacyFactoryUsesPackageSystemPropertiesWithoutExportedProvider() throws Exception {
         String factory = readSource("src/main/java/com/dpis/module/ConfigStoreFactory.java");
         String prefs = readSource("src/main/java/com/dpis/module/RuntimePropertyConfigPreferences.java");
         String app = readSource("src/main/java/com/dpis/module/DpisApplication.java");
 
-        assertTrue(factory.contains("createForCompat100Host(String packageName)"));
+        assertTrue(factory.contains("createForLegacyHost(String packageName)"));
         assertTrue(factory.contains("new RuntimePropertyConfigPreferences(packageName, autoViewportRuntimeRoute)"));
         assertTrue(factory.contains("AutoViewportRuntimeRoute.ABSOLUTE_TARGETS_ONLY"));
         assertFalse(factory.contains("CompatConfigProviderPreferences"));
@@ -193,7 +193,7 @@ public class HyperOsFlutterFontHookConfigTest {
     public void nativeHookInstallerProbesGenericFlutterLibraryLoads() throws Exception {
         String source = readSource("src/main/java/com/dpis/module/HyperOsFlutterFontHookInstaller.java");
         String nativeSource = readSource("src/main/cpp/dpis_native.cpp");
-        String moduleMain = readSource("src/modern101/java/com/dpis/module/ModuleMain.java");
+        String moduleMain = readSource("src/modern/java/com/dpis/module/ModuleMain.java");
         String appProcessInstaller = readSource("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
 
         assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));

@@ -97,9 +97,9 @@ jobs:
           VERSION_CODE=$((10#$MAJOR * 10000 + 10#$MINOR * 100 + 10#$PATCH))
           REPO="${{ github.repository }}"
           APK_NAME="DPIS_${VERSION}.apk"
-          APK_PATH="app/build/outputs/apk/modern101/release/${APK_NAME}"
+          APK_PATH="app/build/outputs/apk/modern/release/${APK_NAME}"
           if [[ ! -f "$APK_PATH" ]]; then
-            SOURCE_APK_PATH="app/build/outputs/apk/modern101/release/app-modern101-release.apk"
+            SOURCE_APK_PATH="app/build/outputs/apk/modern/release/app-modern-release.apk"
             if [[ ! -f "$SOURCE_APK_PATH" ]]; then
               echo "APK not found: $APK_PATH or $SOURCE_APK_PATH"
               exit 1
@@ -109,9 +109,9 @@ jobs:
           APK_URL="https://github.com/${REPO}/releases/download/${TAG}/${APK_NAME}"
 
           COMPAT_APK_NAME="DPIS_${VERSION}_legacy.apk"
-          COMPAT_APK_PATH="app/build/outputs/apk/compat100/release/${COMPAT_APK_NAME}"
+          COMPAT_APK_PATH="app/build/outputs/apk/legacy/release/${COMPAT_APK_NAME}"
           if [[ ! -f "$COMPAT_APK_PATH" ]]; then
-            COMPAT_SOURCE="app/build/outputs/apk/compat100/release/app-compat100-release.apk"
+            COMPAT_SOURCE="app/build/outputs/apk/legacy/release/app-legacy-release.apk"
             if [[ ! -f "$COMPAT_SOURCE" ]]; then
               echo "Legacy APK not found: $COMPAT_APK_PATH or $COMPAT_SOURCE"
               exit 1

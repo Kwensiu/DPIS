@@ -10,7 +10,7 @@ import static org.junit.Assert.assertTrue;
 public class ModuleMainHookInstallerTest {
     @Test
     public void moduleMainUsesExplicitSystemServerPolicyGuard() throws IOException {
-        String source = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+        String source = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
         assertTrue(source.contains("SystemServerMutationPolicy.shouldInstallSystemServerHooks("));
         assertTrue(source.contains("ModulePackagePlan.resolve("));
@@ -19,19 +19,19 @@ public class ModuleMainHookInstallerTest {
 
     @Test
     public void moduleMainDelegatesAppSpecificRoutes() throws IOException {
-        String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+        String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
-        assertTrue(moduleMain.contains("Modern101AppSpecificRouteInstaller.handlePackageReady("));
+        assertTrue(moduleMain.contains("ModernAppSpecificRouteInstaller.handlePackageReady("));
         assertTrue(moduleMain.contains(
-                "Modern101AppSpecificRouteInstaller.shouldSuppressModuleLoadedGenericHooks("));
+                "ModernAppSpecificRouteInstaller.shouldSuppressModuleLoadedGenericHooks("));
         assertFalse(moduleMain.contains("WECHAT_PACKAGE"));
         assertFalse(moduleMain.contains("com.tencent.mm"));
         assertFalse(moduleMain.contains("WechatDpiModernHookInstaller.install("));
     }
 
     @Test
-    public void modern101ModuleMainMarksSelfProcessForHomeActivation() throws IOException {
-        String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+    public void modernModuleMainMarksSelfProcessForHomeActivation() throws IOException {
+        String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
         assertTrue(moduleMain.contains("XposedSelfActivation.markIfSelfPackage("));
         assertTrue(moduleMain.contains("param.getPackageName()"));
@@ -41,11 +41,11 @@ public class ModuleMainHookInstallerTest {
     }
 
     @Test
-    public void modern101AppSpecificRouteInstallerRoutesWechatDpi() throws IOException {
+    public void modernAppSpecificRouteInstallerRoutesWechatDpi() throws IOException {
         String router = read(
-                "src/modern101/java/com/dpis/module/Modern101AppSpecificRouteInstaller.java");
+                "src/modern/java/com/dpis/module/ModernAppSpecificRouteInstaller.java");
         String installer = read(
-                "src/modern101/java/com/dpis/module/WechatDpiModernHookInstaller.java");
+                "src/modern/java/com/dpis/module/WechatDpiModernHookInstaller.java");
 
         assertTrue(router.contains("WechatDpiConfig.appliesTo(param.getPackageName())"));
         assertTrue(router.contains("WechatDpiConfig.appliesTo(processName)"));
@@ -69,7 +69,7 @@ public class ModuleMainHookInstallerTest {
 
     @Test
     public void moduleMainConfiguresHyperOsFlutterNativeFontHook() throws IOException {
-        String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+        String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
         String build = read("build.gradle.kts");
         String flutterInstaller = read("src/main/java/com/dpis/module/HyperOsFlutterFontHookInstaller.java");
         String appProcessInstaller = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
@@ -95,7 +95,7 @@ public class ModuleMainHookInstallerTest {
         assertTrue(moduleMain.contains("\"package-ready\""));
         assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
                 .contains("HyperOsRustProcessHookInstaller.install("));
-        assertFalse(SourceSmokeTestPaths.exists("src", "modern101", "resources", "META-INF", "xposed", "native_init.list"));
+        assertFalse(SourceSmokeTestPaths.exists("src", "modern", "resources", "META-INF", "xposed", "native_init.list"));
         assertFalse(SourceSmokeTestPaths.exists("src", "main", "assets", "native_init"));
         assertTrue(flutterInstaller.contains("System.loadLibrary(\"dpis_native\")"));
         assertTrue(build.contains("externalNativeBuild"));
@@ -103,7 +103,7 @@ public class ModuleMainHookInstallerTest {
 
     @Test
     public void moduleMainRetriesFlutterHooksWithAppClassLoaderFromPackageReady() throws IOException {
-        String source = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+        String source = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
         assertTrue(source.contains("retryFlutterHooksWithAppClassLoader("));
         assertTrue(source.contains("param.getClassLoader()"));
@@ -118,7 +118,7 @@ public class ModuleMainHookInstallerTest {
 
     @Test
     public void hyperOsNativeFlutterDoesNotBypassAppProcessInstaller() throws IOException {
-        String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+        String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
         String appProcessInstaller = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
 
         assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));
@@ -141,7 +141,7 @@ public class ModuleMainHookInstallerTest {
 
     @Test
     public void issueSpecificDiagnosticsDoNotRemainInRuntimeSources() throws IOException {
-        assertFalse(read("src/modern101/java/com/dpis/module/ModuleMain.java")
+        assertFalse(read("src/modern/java/com/dpis/module/ModuleMain.java")
                 .contains("DPIS_DIAG"));
         assertFalse(read("src/main/java/com/dpis/module/ConfigStoreFactory.java")
                 .contains("DPIS_DIAG"));
@@ -151,7 +151,7 @@ public class ModuleMainHookInstallerTest {
 
     @Test
     public void temporaryProbesAndPackerReferencesDoNotRemainInRuntimeSources() throws IOException {
-        String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+        String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
         String flutterInstaller = read("src/main/java/com/dpis/module/FlutterSettingsFontHookInstaller.java");
 
         // Temporary selftest/probe prefixes must not remain
@@ -183,7 +183,7 @@ public class ModuleMainHookInstallerTest {
 
     @Test
     public void moduleMainUsesPackagePlanHookEligibilityGate() throws IOException {
-        String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+        String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
         assertTrue(moduleMain.contains("if (!packagePlan.shouldInstallHooks())"));
         assertFalse(moduleMain.contains("packagePlan.targetViewportWidthDp == null"
@@ -193,7 +193,7 @@ public class ModuleMainHookInstallerTest {
 
     @Test
     public void moduleMainAllowsPackageOwnedSecondaryProcessesForViewportHooks() throws IOException {
-        String moduleMain = read("src/modern101/java/com/dpis/module/ModuleMain.java");
+        String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
         assertTrue(moduleMain.contains("!processName.startsWith(packagePlan.packageName + \":\")"));
     }

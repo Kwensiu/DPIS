@@ -15,10 +15,10 @@ Agents should read these files first when they need project context:
 - `docs/agents/skills/dpis-runtime-route-diagnose/SKILL.md` for the
   project-local runtime route diagnosis skill bundle, trigger conditions, probe
   order, and evidence requirements.
-- `docs/compat100-runtime-resync.md` before changing compat100 viewport/runtime
-  routes, and whenever shared route code may affect compat100.
-- `docs/modern101-runtime-resync.md` before changing modern101 viewport/runtime
-  routes, and whenever shared route code may affect modern101.
+- `docs/legacy-runtime-resync.md` before changing Legacy viewport/runtime
+  routes, and whenever shared route code may affect Legacy.
+- `docs/modern-runtime-resync.md` before changing Modern viewport/runtime
+  routes, and whenever shared route code may affect Modern.
 - `docs/private/` for app-specific investigation notes (not committed).
 - `docs/lsposed-diagnostics.md` for LSPosed module log pull-and-filter paths
   used when diagnosing hook installation and callback evidence.

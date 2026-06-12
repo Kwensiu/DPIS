@@ -28,7 +28,7 @@ final class BatchScopeRequestCoordinator {
 
     BatchScopeRequestCoordinator(Host host) {
         this(host, fromService(DpisApplication.getXposedService()),
-                "modern101".equals(BuildConfig.FLAVOR));
+                "modern".equals(BuildConfig.FLAVOR));
     }
 
     BatchScopeRequestCoordinator(Host host, ScopeRequester scopeRequester, boolean modernFlavor) {

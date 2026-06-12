@@ -17,7 +17,7 @@ Options:
 Default behavior is a safe local dry-run:
   - calculate VERSION_NAME and VERSION_CODE like telegram-preview.yml
   - run Gradle with DPIS_VERSION_NAME / DPIS_VERSION_CODE
-  - build modern101 + compat100 debug APKs
+  - build Modern + Legacy debug APKs
 
 Release build requires local signing env vars:
   DPIS_RELEASE_STORE_FILE
@@ -147,15 +147,15 @@ if [[ "$BUILD_RELEASE" == true ]]; then
   echo "Building release APKs..."
   ./gradlew :app:assembleRelease
   APKS=(
-    "app/build/outputs/apk/modern101/release/DPIS_${PREVIEW_VERSION_NAME}.apk"
-    "app/build/outputs/apk/compat100/release/DPIS_${PREVIEW_VERSION_NAME}_legacy.apk"
+    "app/build/outputs/apk/modern/release/DPIS_${PREVIEW_VERSION_NAME}.apk"
+    "app/build/outputs/apk/legacy/release/DPIS_${PREVIEW_VERSION_NAME}_legacy.apk"
   )
 else
   echo "Building debug APKs..."
-  ./gradlew :app:assembleModern101Debug :app:assembleCompat100Debug
+  ./gradlew :app:assembleModernDebug :app:assembleLegacyDebug
   APKS=(
-    "app/build/outputs/apk/modern101/debug/app-modern101-debug.apk"
-    "app/build/outputs/apk/compat100/debug/app-compat100-debug.apk"
+    "app/build/outputs/apk/modern/debug/app-modern-debug.apk"
+    "app/build/outputs/apk/legacy/debug/app-legacy-debug.apk"
   )
 fi
 

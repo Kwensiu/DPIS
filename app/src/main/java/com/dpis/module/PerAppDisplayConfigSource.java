@@ -32,11 +32,11 @@ final class PerAppDisplayConfigSource {
         this.packageFallbackProvider = packageFallbackProvider;
     }
 
-    static PerAppDisplayConfigSource withCompat100RuntimePropertyFallback(
+    static PerAppDisplayConfigSource withLegacyRuntimePropertyFallback(
             SnapshotProvider snapshotProvider) {
         return new PerAppDisplayConfigSource(
                 snapshotProvider,
-                PerAppDisplayConfigSource::loadCompat100RuntimePropertyConfig);
+                PerAppDisplayConfigSource::loadLegacyRuntimePropertyConfig);
     }
 
     PerAppDisplayConfig get(String packageName) {
@@ -97,7 +97,7 @@ final class PerAppDisplayConfigSource {
         return packageFallbackProvider.get(packageName);
     }
 
-    private static PackageConfigSnapshot loadCompat100RuntimePropertyConfig(String packageName) {
+    private static PackageConfigSnapshot loadLegacyRuntimePropertyConfig(String packageName) {
         ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(
                 new DpiConfigStore(new RuntimePropertyConfigPreferences(packageName)));
         return snapshot.getPackage(packageName);

@@ -3,9 +3,9 @@
 ## Project Structure & Module Organization
 - Main Android module: `app/` (single-module project; see `settings.gradle.kts`).
 - Production code: `app/src/main/java/com/dpis/module/`.
-- Flavor-specific code: `app/src/modern101/java/` (libxposed API 101) and `app/src/compat100/java/` (legacy Xposed API).
+- Flavor-specific code: `app/src/modern/java/` (libxposed API 101) and `app/src/legacy/java/` (legacy Xposed API).
 - Resources and UI assets: `app/src/main/res/` and `app/src/main/resources/`.
-- Flavor-specific assets: `app/src/compat100/assets/` and `app/src/modern101/resources/`.
+- Flavor-specific assets: `app/src/legacy/assets/` and `app/src/modern/resources/`.
 - Unit tests: `app/src/test/java/com/dpis/module/`.
 - Build outputs/logs are generated under `app/build/` and should not be edited manually.
 - Documentation:
@@ -44,17 +44,17 @@ project-local skill bundle and does not modify global agent skills.
 
 ## Build, Test, and Development Commands
 - Build debug APKs (both flavors):
-  - `./gradlew :app:assembleModern101Debug :app:assembleCompat100Debug`
+  - `./gradlew :app:assembleModernDebug :app:assembleLegacyDebug`
 - Build release APKs (produces `DPIS_{version}.apk` and `DPIS_{version}_legacy.apk`):
   - `./gradlew :app:assembleRelease`
 - Run unit tests:
   - `./gradlew :app:testAllDebugUnitTests`
-  - For filtered tests, use a real flavor test task such as `./gradlew :app:testModern101DebugUnitTest --tests com.dpis.module.ModulePackagePlanTest`.
+  - For filtered tests, use a real flavor test task such as `./gradlew :app:testModernDebugUnitTest --tests com.dpis.module.ModulePackagePlanTest`.
 - Build then install (PowerShell):
-  - `./gradlew :app:assembleModern101Debug; if ($LASTEXITCODE -eq 0) { adb install -r "app/build/outputs/apk/modern101/debug/app-modern101-debug.apk" }`
+  - `./gradlew :app:assembleModernDebug; if ($LASTEXITCODE -eq 0) { adb install -r "app/build/outputs/apk/modern/debug/app-modern-debug.apk" }`
 - Install debug APKs through Gradle when validating LSPosed module updates:
-  - `./gradlew :app:installModern101Debug`
-  - `./gradlew :app:installCompat100Debug`
+  - `./gradlew :app:installModernDebug`
+  - `./gradlew :app:installLegacyDebug`
   - If installing from Android Studio, disable deployment optimization. LSPosed
     may fail to update the module when optimized deployment is used, leaving
     stale module paths or optimized code active after reinstall/reboot.
@@ -147,8 +147,8 @@ project-local skill bundle and does not modify global agent skills.
   font mode; `system_server_font` and `activity_thread_font` are internal
   scheduler domains, not user-customizable chain switches. See
   `docs/font-routing.md`.
-- `docs/compat100-runtime-resync.md` and
-  `docs/modern101-runtime-resync.md` are the DPIS living route documents for
+- `docs/legacy-runtime-resync.md` and
+  `docs/modern-runtime-resync.md` are the DPIS living route documents for
   viewport/runtime hook routes. Before adding, modifying, or removing any
   viewport/runtime hook route, read the relevant document, and read both when
   touching shared code under `app/src/main/java/com/dpis/module/`.

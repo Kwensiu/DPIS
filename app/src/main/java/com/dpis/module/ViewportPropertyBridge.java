@@ -7,7 +7,7 @@ final class ViewportPropertyBridge {
     private static final String PROPERTY_PREFIX = "debug.dpis.vp.";
     private static final String TARGET_TYPE_PROPERTY_PREFIX = "debug.dpis.vptype.";
     private static final String SCALE_PROPERTY_PREFIX = "debug.dpis.vpscale.";
-    // compat100 needs the requested value even for field_rewrite, while vp.* must
+    // legacy needs the requested value even for field_rewrite, while vp.* must
     // stay 0 unless system emulation is active.
     private static final String COMPAT_CONFIG_PROPERTY_PREFIX = "debug.dpis.vpcfg.";
     private static final String COMPAT_MODE_PROPERTY_PREFIX = "debug.dpis.vpmode.";

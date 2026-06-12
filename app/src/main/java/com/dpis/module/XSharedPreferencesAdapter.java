@@ -23,7 +23,7 @@ final class XSharedPreferencesAdapter implements SharedPreferences {
     XSharedPreferencesAdapter(String packageName, String preferenceName, long reloadIntervalMs) {
         preferences = new XSharedPreferences(packageName, preferenceName);
         this.reloadIntervalMs = Math.max(0L, reloadIntervalMs);
-        // XSharedPreferences.reload() can touch disk. Compat100 resource hooks call into
+        // XSharedPreferences.reload() can touch disk. Legacy resource hooks call into
         // DpiConfigStore from Resources hot paths, so app-process fallback stays as a
         // process-start snapshot. Long-lived system_server uses an explicit low-frequency
         // refresh interval instead of per-read reloads.

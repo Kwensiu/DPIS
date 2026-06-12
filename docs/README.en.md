@@ -16,7 +16,7 @@ DPIS is an LSPosed/Xposed-based Android module for per-app interface scale, smal
 - Per-app font scale, from `50-300%`
 - App search, configured-app filtering, and a landscape / large-screen detail panel
 - Global Prefill and Quick Templates for reusing common settings
-- Standard and Legacy builds for different LSPosed/Xposed environments
+- Modern and Legacy builds for different LSPosed/Xposed environments
 
 ## Requirements
 
@@ -55,12 +55,12 @@ When entering a small window, resizing it, or rotating the screen, DPIS tries to
 
 | Variant | File name | Environment |
 | --- | --- | --- |
-| Standard | `DPIS_{version}.apk` | LSPosed (`libxposed API 101+`) |
-| Legacy | `DPIS_{version}_legacy.apk` | Classic Xposed / frameworks without `libxposed API 101` support |
+| Modern | `DPIS_{version}.apk` | LSPosed / libxposed modern API environments |
+| Legacy | `DPIS_{version}_legacy.apk` | Classic Xposed-compatible frameworks |
 
-Prefer the Standard build. Use the Legacy build only when the Standard build cannot load or your framework does not support it. The two variants share the same package name and cannot be installed side by side.
+Prefer the Modern build. Use the Legacy build only when the Modern build cannot load or your framework does not support the libxposed modern API. The two variants share the same package name and cannot be installed side by side.
 
-For the Legacy build, always follow the main repository Releases page. The LSPosed / Xposed module repository usually syncs only the Standard APK.
+For the Legacy build, always follow the main repository Releases page. The LSPosed / Xposed module repository usually syncs only the Modern APK.
 
 ## Documentation
 

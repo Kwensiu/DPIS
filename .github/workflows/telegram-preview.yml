@@ -164,8 +164,8 @@ jobs:
           VERSION_NAME: ${{ steps.preview.outputs.version_name }}
         run: |
           APKS=(
-            "app/build/outputs/apk/modern101/release/DPIS_${VERSION_NAME}.apk"
-            "app/build/outputs/apk/compat100/release/DPIS_${VERSION_NAME}_legacy.apk"
+            "app/build/outputs/apk/modern/release/DPIS_${VERSION_NAME}.apk"
+            "app/build/outputs/apk/legacy/release/DPIS_${VERSION_NAME}_legacy.apk"
           )
           for apk in "${APKS[@]}"; do
             if [[ ! -f "$apk" ]]; then
@@ -188,8 +188,8 @@ jobs:
           name: DPIS-preview-${{ steps.preview.outputs.version_name }}
           if-no-files-found: error
           path: |
-            app/build/outputs/apk/modern101/release/DPIS_${{ steps.preview.outputs.version_name }}.apk
-            app/build/outputs/apk/compat100/release/DPIS_${{ steps.preview.outputs.version_name }}_legacy.apk
+            app/build/outputs/apk/modern/release/DPIS_${{ steps.preview.outputs.version_name }}.apk
+            app/build/outputs/apk/legacy/release/DPIS_${{ steps.preview.outputs.version_name }}_legacy.apk
 
       - name: Send APKs to Telegram
         shell: bash
@@ -217,8 +217,8 @@ jobs:
           fi
 
           APKS=(
-            "app/build/outputs/apk/modern101/release/DPIS_${VERSION_NAME}.apk"
-            "app/build/outputs/apk/compat100/release/DPIS_${VERSION_NAME}_legacy.apk"
+            "app/build/outputs/apk/modern/release/DPIS_${VERSION_NAME}.apk"
+            "app/build/outputs/apk/legacy/release/DPIS_${VERSION_NAME}_legacy.apk"
           )
           for apk in "${APKS[@]}"; do
             if [[ ! -f "$apk" ]]; then

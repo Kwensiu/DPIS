@@ -38,15 +38,15 @@ public class DisplayHookInstallerTest {
     }
 
     @Test
-    public void compat100CanInitializeDisplayTarget() {
-        DisplayHookInstaller.setTargetPackageNameForCompat100("com.max.xiaoheihe");
-        DisplayHookInstaller.setTargetStoreForCompat100(new DpiConfigStore(new FakePrefs()));
+    public void legacyCanInitializeDisplayTarget() {
+        DisplayHookInstaller.setTargetPackageNameForLegacy("com.max.xiaoheihe");
+        DisplayHookInstaller.setTargetStoreForLegacy(new DpiConfigStore(new FakePrefs()));
         setCurrentPackageResolver("com.max.xiaoheihe");
 
         assertEquals(true, DisplayHookInstaller.shouldApplyOverrideForPackage("com.max.xiaoheihe"));
 
-        DisplayHookInstaller.setTargetPackageNameForCompat100(null);
-        DisplayHookInstaller.setTargetStoreForCompat100(null);
+        DisplayHookInstaller.setTargetPackageNameForLegacy(null);
+        DisplayHookInstaller.setTargetStoreForLegacy(null);
         clearCurrentPackageResolver();
     }
 

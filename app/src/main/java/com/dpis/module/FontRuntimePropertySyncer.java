@@ -119,7 +119,7 @@ final class FontRuntimePropertySyncer {
         int systemEmulationValue = enabled
                 && FontApplyMode.SYSTEM_EMULATION.equals(normalizedMode) ? fontScalePercent : 0;
         // forcefont.* is the live override consumed by HyperOS native proxies and by
-        // compat100 field rewrite. It must be written once with the final semantic value.
+        // legacy field rewrite. It must be written once with the final semantic value.
         int forceFontValue = enabled
                 && (FontApplyMode.FIELD_REWRITE.equals(normalizedMode) || hyperOsNativeFontHookEnabled)
                 ? fontScalePercent : 0;

@@ -7,10 +7,10 @@ import org.junit.Test;
 
 public class SystemScopeCoordinatorSourceTest {
     @Test
-    public void compat100EffectiveStateDoesNotRequireLibxposedService() throws Exception {
+    public void legacyEffectiveStateDoesNotRequireLibxposedService() throws Exception {
         String source = read("src/main/java/com/dpis/module/SystemScopeCoordinator.java");
 
-        assertTrue(source.contains("\"compat100\".equals(BuildConfig.FLAVOR)"));
+        assertTrue(source.contains("\"legacy\".equals(BuildConfig.FLAVOR)"));
         assertTrue(source.contains("return desiredEnabled;"));
     }
 

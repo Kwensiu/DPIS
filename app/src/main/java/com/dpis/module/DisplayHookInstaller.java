@@ -44,11 +44,11 @@ final class DisplayHookInstaller {
         }
     }
 
-    static void setTargetPackageNameForCompat100(String packageName) {
+    static void setTargetPackageNameForLegacy(String packageName) {
         targetPackageName = packageName;
     }
 
-    static void setTargetStoreForCompat100(DpiConfigStore store) {
+    static void setTargetStoreForLegacy(DpiConfigStore store) {
         targetStore = store;
     }
 
