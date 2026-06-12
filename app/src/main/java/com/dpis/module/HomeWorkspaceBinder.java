@@ -129,6 +129,7 @@ final class HomeWorkspaceBinder {
         }
         bindStatus(workspaceView, state);
         bindModeHelpEntry(workspaceView);
+        bindDonateEntry(workspaceView);
         bindFeedbackEntry(workspaceView);
     }
 
@@ -459,6 +460,16 @@ final class HomeWorkspaceBinder {
         TouchFeedbackBinder.bindPressHaptic(entry);
         entry.setOnClickListener(v ->
                 context.startActivity(new Intent(context, ModeHelpActivity.class)));
+    }
+
+    private void bindDonateEntry(View workspaceView) {
+        View entry = workspaceView.findViewById(R.id.home_donate_entry);
+        if (entry == null) {
+            return;
+        }
+        TouchFeedbackBinder.bindPressHaptic(entry);
+        entry.setOnClickListener(v ->
+                context.startActivity(DonateActivity.createIntent(context)));
     }
 
     private void bindFeedbackEntry(View workspaceView) {

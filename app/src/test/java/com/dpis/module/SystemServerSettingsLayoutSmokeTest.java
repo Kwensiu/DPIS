@@ -9,13 +9,27 @@ import org.junit.Test;
 
 public class SystemServerSettingsLayoutSmokeTest {
     @Test
-    public void settingsLayoutContainsOtherSectionWithAboutAndHideIconRows() throws IOException {
+    public void settingsLayoutPlacesLanguageInThemeAndAboutRowsAtBottom() throws IOException {
         String layout = read("src/main/res/layout/view_system_server_settings_content.xml");
 
-        assertTrue(layout.contains("android:id=\"@+id/row_about\""));
         assertTrue(layout.contains("android:id=\"@+id/row_config_backup\""));
+        assertTrue(layout.contains("android:id=\"@+id/row_language\""));
+        assertTrue(layout.contains("android:id=\"@+id/row_interface_scale\""));
+        assertTrue(layout.contains("android:id=\"@+id/row_about\""));
+        assertTrue(layout.contains("android:id=\"@+id/row_donate\""));
         assertTrue(layout.contains("android:id=\"@+id/row_hide_launcher_icon\""));
+        assertTrue(layout.indexOf("@string/settings_section_theme")
+                < layout.indexOf("android:id=\"@+id/row_language\""));
+        assertTrue(layout.indexOf("android:id=\"@+id/row_language\"")
+                < layout.indexOf("android:id=\"@+id/row_interface_scale\""));
+        assertTrue(layout.indexOf("@string/settings_section_other")
+                < layout.indexOf("android:id=\"@+id/row_config_backup\""));
+        assertTrue(layout.indexOf("@string/settings_section_about")
+                < layout.indexOf("android:id=\"@+id/row_about\""));
+        assertTrue(layout.indexOf("android:id=\"@+id/row_about\"")
+                < layout.indexOf("android:id=\"@+id/row_donate\""));
         assertTrue(layout.contains("@string/settings_section_other"));
+        assertTrue(layout.contains("@string/settings_section_about"));
         assertTrue(layout.contains("@dimen/settings_content_padding_horizontal"));
         assertTrue(layout.contains("@dimen/page_card_corner_radius"));
         assertTrue(layout.contains("@dimen/settings_divider_margin_horizontal"));
@@ -39,9 +53,11 @@ public class SystemServerSettingsLayoutSmokeTest {
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
         assertTrue(strings.contains("settings_section_other"));
+        assertTrue(strings.contains("settings_section_about"));
         assertTrue(strings.contains("settings_experimental_title"));
         assertTrue(strings.contains("settings_experimental_empty_state"));
         assertTrue(strings.contains("settings_about_label"));
+        assertTrue(strings.contains("settings_donate_label"));
         assertTrue(strings.contains("settings_config_backup_label"));
         assertTrue(strings.contains("config_backup_confirm_import_action"));
         assertTrue(strings.contains("settings_hide_launcher_icon_label"));
@@ -59,6 +75,8 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(source.contains("R.id.row_experimental_settings"));
         assertTrue(source.contains("ExperimentalSettingsActivity.class"));
         assertTrue(source.contains("R.drawable.ic_experiment_24"));
+        assertTrue(source.contains("R.drawable.ic_volunteer_24"));
+        assertTrue(source.contains("DonateActivity.createIntent(activity)"));
         assertTrue(source.contains("R.drawable.ic_upload_file_24"));
         assertTrue(source.contains("R.drawable.ic_language_24"));
         assertTrue(source.contains("R.drawable.ic_hide_image_24"));

@@ -174,6 +174,12 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                 R.string.settings_about_label,
                 R.string.settings_about_hint,
                 v -> startActivity(new Intent(activity, AboutActivity.class)));
+        bindEntryRow(
+                R.id.row_donate,
+                R.drawable.ic_volunteer_24,
+                R.string.settings_donate_label,
+                R.string.settings_donate_hint,
+                v -> startActivity(DonateActivity.createIntent(activity)));
         hideLauncherIconSwitch = bindSwitchRow(
                 R.id.row_hide_launcher_icon,
                 R.drawable.ic_hide_image_24,

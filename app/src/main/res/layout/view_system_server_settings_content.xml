@@ -118,6 +118,16 @@
                 android:orientation="vertical">
 
                 <include
+                    android:id="@+id/row_language"
+                    layout="@layout/item_settings_entry" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/settings_divider_margin_horizontal"
+                    android:layout_marginEnd="@dimen/settings_divider_margin_horizontal" />
+
+                <include
                     android:id="@+id/row_interface_scale"
                     layout="@layout/item_settings_slider" />
             </LinearLayout>
@@ -147,27 +157,7 @@
                 android:orientation="vertical">
 
                 <include
-                    android:id="@+id/row_about"
-                    layout="@layout/item_settings_entry" />
-
-                <com.google.android.material.divider.MaterialDivider
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/settings_divider_margin_horizontal"
-                    android:layout_marginEnd="@dimen/settings_divider_margin_horizontal" />
-
-                <include
                     android:id="@+id/row_config_backup"
-                    layout="@layout/item_settings_entry" />
-
-                <com.google.android.material.divider.MaterialDivider
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/settings_divider_margin_horizontal"
-                    android:layout_marginEnd="@dimen/settings_divider_margin_horizontal" />
-
-                <include
-                    android:id="@+id/row_language"
                     layout="@layout/item_settings_entry" />
 
                 <com.google.android.material.divider.MaterialDivider
@@ -189,6 +179,45 @@
                 <include
                     android:id="@+id/row_hide_launcher_icon"
                     layout="@layout/item_settings_switch" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/settings_section_inset_start"
+            android:layout_marginTop="@dimen/settings_section_spacing_top"
+            android:text="@string/settings_section_about"
+            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+            android:textStyle="bold" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/settings_card_spacing_top"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+            app:cardCornerRadius="@dimen/page_card_corner_radius"
+            app:strokeColor="?attr/colorOutlineVariant"
+            app:strokeWidth="@dimen/page_card_stroke_width">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <include
+                    android:id="@+id/row_about"
+                    layout="@layout/item_settings_entry" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/settings_divider_margin_horizontal"
+                    android:layout_marginEnd="@dimen/settings_divider_margin_horizontal" />
+
+                <include
+                    android:id="@+id/row_donate"
+                    layout="@layout/item_settings_entry" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
