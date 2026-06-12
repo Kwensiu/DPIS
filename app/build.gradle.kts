@@ -15,6 +15,8 @@ plugins {
 }
 
 private val appVersionName = "1.12.1" // x-release-please-version
+private val defaultNdkVersion = "28.2.13676358"
+private val defaultCmakeVersion = "3.22.1"
 
 private fun readGradleOrEnv(name: String): String? {
     val gradleValue = project.findProperty(name)?.toString()?.trim()
@@ -29,6 +31,21 @@ private fun readGradleOrEnvInt(name: String): Int? {
     val value = readGradleOrEnv(name) ?: return null
     return value.toIntOrNull()
         ?: throw GradleException("$name must be an integer: $value")
+}
+
+private fun readNativeToolchainOverride(name: String): String? {
+    val gradleValue = project.findProperty(name)?.toString()?.trim()
+    val envValue = System.getenv(name)?.trim()
+    if (!gradleValue.isNullOrEmpty() && !envValue.isNullOrEmpty() && gradleValue != envValue) {
+        throw GradleException(
+            "$name is set by both Gradle property and environment variable with different values."
+        )
+    }
+    return when {
+        !gradleValue.isNullOrEmpty() -> gradleValue
+        !envValue.isNullOrEmpty() -> envValue
+        else -> null
+    }
 }
 
 private val releaseStoreFilePath = readGradleOrEnv("DPIS_RELEASE_STORE_FILE")
@@ -50,7 +67,10 @@ private val releaseTasksRequested = gradle.startParameter.taskNames.any {
 }
 private val versionNameOverride = readGradleOrEnv("DPIS_VERSION_NAME")
 private val versionCodeOverride = readGradleOrEnvInt("DPIS_VERSION_CODE")
-private val cmakeCompilerLauncher = readGradleOrEnv("DPIS_CMAKE_COMPILER_LAUNCHER")
+private val resolvedNdkVersion = readNativeToolchainOverride("DPIS_NDK_VERSION") ?: defaultNdkVersion
+private val resolvedCmakeVersion = readNativeToolchainOverride("DPIS_CMAKE_VERSION") ?: defaultCmakeVersion
+private val cmakeCompilerLauncher = readNativeToolchainOverride("DPIS_CMAKE_COMPILER_LAUNCHER")
+private val cmakeMakeProgram = readNativeToolchainOverride("DPIS_CMAKE_MAKE_PROGRAM")
 if ((versionNameOverride == null) != (versionCodeOverride == null)) {
     throw GradleException("DPIS_VERSION_NAME and DPIS_VERSION_CODE must be set together.")
 }
@@ -113,6 +133,7 @@ android {
     namespace = "com.dpis.module"
     compileSdk = 36
     buildToolsVersion = "36.1.0"
+    ndkVersion = resolvedNdkVersion
 
     flavorDimensions += "xposedApi"
 
@@ -135,6 +156,9 @@ android {
                 if (cmakeCompilerLauncher != null) {
                     arguments += "-DCMAKE_C_COMPILER_LAUNCHER=$cmakeCompilerLauncher"
                     arguments += "-DCMAKE_CXX_COMPILER_LAUNCHER=$cmakeCompilerLauncher"
+                }
+                if (cmakeMakeProgram != null) {
+                    arguments += "-DCMAKE_MAKE_PROGRAM=$cmakeMakeProgram"
                 }
             }
         }
@@ -205,6 +229,7 @@ android {
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
+            version = resolvedCmakeVersion
         }
     }
 }

@@ -24,7 +24,9 @@ jobs:
       CCACHE_NOHASHDIR: 'true'
       CMAKE_C_COMPILER_LAUNCHER: ccache
       CMAKE_CXX_COMPILER_LAUNCHER: ccache
+      DPIS_CMAKE_VERSION: 3.22.1
       DPIS_CMAKE_COMPILER_LAUNCHER: ccache
+      DPIS_NDK_VERSION: 28.2.13676358
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -43,7 +45,7 @@ jobs:
         shell: bash
         run: |
           (yes || true) | sdkmanager --licenses > /dev/null
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.1.0" "cmake;3.22.1" "ndk;28.2.13676358"
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.1.0" "cmake;${DPIS_CMAKE_VERSION}" "ndk;${DPIS_NDK_VERSION}"
 
       - name: Install native build cache
         shell: bash

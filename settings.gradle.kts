@@ -9,10 +9,27 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
     repositories {
-        google()
+        google {
+            content {
+                includeGroupByRegex("androidx\\..*")
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+            }
+        }
         mavenCentral()
-        maven { url = uri("https://api.xposed.info/") }
-        maven { url = uri("https://maven.aliyun.com/repository/public/") }
+        maven {
+            url = uri("https://api.xposed.info/")
+            content {
+                includeGroup("de.robv.android.xposed")
+            }
+        }
+        maven {
+            url = uri("https://maven.aliyun.com/repository/public/")
+            content {
+                includeGroupByRegex("com\\.highcapable.*")
+                includeGroup("org.luckypray")
+            }
+        }
         mavenLocal {
             content {
                 includeGroup("io.github.libxposed")
