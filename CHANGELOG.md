@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.12.2](https://github.com/Kwensiu/DPIS/compare/v1.12.1...v1.12.2) (2026-06-12)
+
+
+### Bug Fixes
+
+* make local config authoritative for runtime delivery ([8939422](https://github.com/Kwensiu/DPIS/commit/89394224a4137c06f8ec213c3502a26d7b1d0101))
+
+
+### Refactoring
+
+* rename Xposed build tracks to modern and legacy ([d22608a](https://github.com/Kwensiu/DPIS/commit/d22608ae1162ecb3df3aba5e86542d510f57bdbc))
+
 ## [1.12.1](https://github.com/Kwensiu/DPIS/compare/v1.12.0...v1.12.1) (2026-06-12)
 
 
