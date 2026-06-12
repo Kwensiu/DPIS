@@ -50,6 +50,7 @@ private val releaseTasksRequested = gradle.startParameter.taskNames.any {
 }
 private val versionNameOverride = readGradleOrEnv("DPIS_VERSION_NAME")
 private val versionCodeOverride = readGradleOrEnvInt("DPIS_VERSION_CODE")
+private val cmakeCompilerLauncher = readGradleOrEnv("DPIS_CMAKE_COMPILER_LAUNCHER")
 if ((versionNameOverride == null) != (versionCodeOverride == null)) {
     throw GradleException("DPIS_VERSION_NAME and DPIS_VERSION_CODE must be set together.")
 }
@@ -131,6 +132,10 @@ android {
         externalNativeBuild {
             cmake {
                 arguments += "-DANDROID_STL=c++_static"
+                if (cmakeCompilerLauncher != null) {
+                    arguments += "-DCMAKE_C_COMPILER_LAUNCHER=$cmakeCompilerLauncher"
+                    arguments += "-DCMAKE_CXX_COMPILER_LAUNCHER=$cmakeCompilerLauncher"
+                }
             }
         }
     }

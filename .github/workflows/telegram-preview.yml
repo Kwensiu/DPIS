@@ -49,6 +49,14 @@ jobs:
     needs: preview-gate
     if: needs.preview-gate.outputs.should_run == 'true'
     runs-on: ubuntu-latest
+    env:
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_COMPILERCHECK: '%compiler% -dumpmachine; %compiler% -dumpversion'
+      CCACHE_HARDLINK: 'true'
+      CCACHE_NOHASHDIR: 'true'
+      CMAKE_C_COMPILER_LAUNCHER: ccache
+      CMAKE_CXX_COMPILER_LAUNCHER: ccache
+      DPIS_CMAKE_COMPILER_LAUNCHER: ccache
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -70,6 +78,28 @@ jobs:
         run: |
           (yes || true) | sdkmanager --licenses > /dev/null
           sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.1.0" "cmake;3.22.1" "ndk;28.2.13676358"
+
+      - name: Install native build cache
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache
+          ccache -o max_size=1G
+          ccache -o hash_dir=false
+          ccache -o hard_link=true
+          ccache -o compiler_check="$CCACHE_COMPILERCHECK"
+          ccache -z
+
+      - name: Cache native compilation
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/ccache
+            ~/.ccache
+          key: native-ccache-${{ runner.os }}-${{ hashFiles('app/src/main/cpp/**', 'app/build.gradle.kts', 'gradle/libs.versions.toml') }}-${{ github.sha }}
+          restore-keys: |
+            native-ccache-${{ runner.os }}-${{ hashFiles('app/src/main/cpp/**', 'app/build.gradle.kts', 'gradle/libs.versions.toml') }}-
+            native-ccache-${{ runner.os }}-
 
       - name: Derive preview version
         id: preview
@@ -156,7 +186,10 @@ jobs:
           DPIS_RELEASE_KEY_PASSWORD: ${{ secrets.DPIS_RELEASE_KEY_PASSWORD }}
           DPIS_VERSION_NAME: ${{ steps.preview.outputs.version_name }}
           DPIS_VERSION_CODE: ${{ steps.preview.outputs.version_code }}
-        run: ./gradlew :app:assembleRelease
+        shell: bash
+        run: |
+          ./gradlew :app:assembleRelease
+          ccache -s
 
       - name: Summarize APK checksums
         shell: bash

@@ -1,4 +1,4 @@
-name: sync-xposed-repo
+name: Sync Xposed Repo
 
 on:
   workflow_dispatch:

@@ -27,8 +27,8 @@ body:
     attributes:
       label: APK 类型 / APK variant
       options:
-        - 标准版 / Standard / modern101
-        - 兼容版 / Legacy / compat100
+        - 标准版 / Modern
+        - 传统版 / Legacy
         - 两者都有 / Both
         - 不确定 / Not sure
     validations:

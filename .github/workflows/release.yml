@@ -1,4 +1,4 @@
-name: release
+name: Release Build
 
 on:
   release:
@@ -17,6 +17,14 @@ permissions:
 jobs:
   build-and-upload:
     runs-on: ubuntu-latest
+    env:
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_COMPILERCHECK: '%compiler% -dumpmachine; %compiler% -dumpversion'
+      CCACHE_HARDLINK: 'true'
+      CCACHE_NOHASHDIR: 'true'
+      CMAKE_C_COMPILER_LAUNCHER: ccache
+      CMAKE_CXX_COMPILER_LAUNCHER: ccache
+      DPIS_CMAKE_COMPILER_LAUNCHER: ccache
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -36,6 +44,28 @@ jobs:
         run: |
           (yes || true) | sdkmanager --licenses > /dev/null
           sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.1.0" "cmake;3.22.1" "ndk;28.2.13676358"
+
+      - name: Install native build cache
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache
+          ccache -o max_size=1G
+          ccache -o hash_dir=false
+          ccache -o hard_link=true
+          ccache -o compiler_check="$CCACHE_COMPILERCHECK"
+          ccache -z
+
+      - name: Cache native compilation
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/ccache
+            ~/.ccache
+          key: native-ccache-${{ runner.os }}-${{ hashFiles('app/src/main/cpp/**', 'app/build.gradle.kts', 'gradle/libs.versions.toml') }}-${{ github.sha }}
+          restore-keys: |
+            native-ccache-${{ runner.os }}-${{ hashFiles('app/src/main/cpp/**', 'app/build.gradle.kts', 'gradle/libs.versions.toml') }}-
+            native-ccache-${{ runner.os }}-
 
       - name: Ensure gradlew is executable
         run: chmod +x gradlew
@@ -75,7 +105,10 @@ jobs:
           DPIS_RELEASE_STORE_PASSWORD: ${{ secrets.DPIS_RELEASE_STORE_PASSWORD }}
           DPIS_RELEASE_KEY_ALIAS: ${{ secrets.DPIS_RELEASE_KEY_ALIAS }}
           DPIS_RELEASE_KEY_PASSWORD: ${{ secrets.DPIS_RELEASE_KEY_PASSWORD }}
-        run: ./gradlew :app:assembleRelease
+        shell: bash
+        run: |
+          ./gradlew :app:assembleRelease
+          ccache -s
 
       - name: Derive release metadata
         id: meta
@@ -144,6 +177,17 @@ jobs:
           COMPAT_APK_PATH="${{ steps.meta.outputs.compat_apk_path }}"
           COMPAT_SHA256="$(sha256sum "$COMPAT_APK_PATH" | awk '{print $1}')"
           echo "compat_sha256=$COMPAT_SHA256" >> "$GITHUB_OUTPUT"
+
+      - name: Summarize release APK checksums
+        shell: bash
+        run: |
+          {
+            echo "### Release APK checksums"
+            echo "| Package | SHA256 |"
+            echo "|:--|:--|"
+            echo "| ${{ steps.meta.outputs.apk_name }} | \`${{ steps.hash.outputs.sha256 }}\` |"
+            echo "| ${{ steps.meta.outputs.compat_apk_name }} | \`${{ steps.hash.outputs.compat_sha256 }}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Generate update manifest
         shell: bash
