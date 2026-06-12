@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.12.1](https://github.com/Kwensiu/DPIS/compare/v1.12.0...v1.12.1) (2026-06-12)
+
+
+### Features
+
+* add donation page ([0adb479](https://github.com/Kwensiu/DPIS/commit/0adb4796026664b9f2f2cce606ca2c577908ee0f))
+* add independent WeChat DisplayMetrics DPI route ([97cb839](https://github.com/Kwensiu/DPIS/commit/97cb8393847ff6372f960f97cc1545b5ac5da8ed))
+* add system font size tool ([#78](https://github.com/Kwensiu/DPIS/issues/78)) ([5d594b6](https://github.com/Kwensiu/DPIS/commit/5d594b6150e8581e1bf1bbdaf10dc1958521bf6a))
+* polish main workspace navigation and config UI ([97d5e96](https://github.com/Kwensiu/DPIS/commit/97d5e96df61ab6e6ae17dfe7759d26b6db64a753))
+
+
+### Bug Fixes
+
+* preserve draft mode intent without runtime values ([6ff6185](https://github.com/Kwensiu/DPIS/commit/6ff6185a19c8ef160bbc9c6ffae84ac05d970f83))
+* refine app list spacing semantics ([d453f73](https://github.com/Kwensiu/DPIS/commit/d453f73891c6a58a2d94c5f156aad6126881db95))
+* resolve home activation from xposed load state ([162be98](https://github.com/Kwensiu/DPIS/commit/162be987915e9e9e3a5ffc709697d2b3666d224c))
+
+
+### Refactoring
+
+* make app config local authoritative ([#81](https://github.com/Kwensiu/DPIS/issues/81)) ([7d7b33a](https://github.com/Kwensiu/DPIS/commit/7d7b33a11e1d6d4b15a4d63e423d321b0a2d0a3a))
+
 ## [1.12.0](https://github.com/Kwensiu/DPIS/compare/v1.11.1...v1.12.0) (2026-06-07)
 
 
