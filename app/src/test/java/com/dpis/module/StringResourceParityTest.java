@@ -36,6 +36,8 @@ public class StringResourceParityTest {
         assertTrue(defaultStrings.contains("<string name=\"module_description\">Per-app DPI &amp; text size</string>"));
         assertEquals("\u7B80\u4F53\u4E2D\u6587",
                 readStringValue("src/main/res/values/strings.xml", "settings_language_simplified_chinese"));
+        assertEquals("\u0420\u0443\u0441\u0441\u043A\u0438\u0439",
+                readStringValue("src/main/res/values/strings.xml", "settings_language_russian"));
         assertEquals("\u8BED\u8A00",
                 readStringValue("src/main/res/values-zh-rCN/strings.xml", "settings_language_label"));
     }
@@ -52,6 +54,7 @@ public class StringResourceParityTest {
         assertTrue(dialogLayout.contains("@dimen/dialog_surface_padding_horizontal"));
         assertTrue(dialogLayout.contains("@dimen/dialog_action_spacing_top"));
         assertTrue(source.contains("R.id.row_language"));
+        assertTrue(source.contains("bindLanguageRow()"));
         assertTrue(source.contains("showLanguageDialog"));
         assertTrue(source.contains("AppLocaleManager.supportedLanguages()"));
         assertTrue(source.contains("createLanguageOptionButton("));
@@ -59,7 +62,10 @@ public class StringResourceParityTest {
         assertTrue(source.contains("dialog_language_selection"));
         assertTrue(source.contains("updateLanguageEntrySubtitle()"));
         assertTrue(source.contains("AppLocaleManager.selectedLabelResId(activity)"));
+        assertTrue(!source.contains("settings_language_hint"));
         assertTrue(localeManager.contains("SUPPORTED_LANGUAGES = List.of("));
+        assertTrue(localeManager.contains("TAG_RUSSIAN"));
+        assertTrue(localeManager.contains("R.string.settings_language_russian"));
         assertTrue(localeManager.contains("static List<LanguageOption> supportedLanguages()"));
     }
 

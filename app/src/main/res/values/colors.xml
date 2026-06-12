@@ -33,8 +33,6 @@
     <color name="help_tutorial_scale_badge_text">#236B43</color>
     <color name="help_tutorial_width_card_container">#F7F3FF</color>
     <color name="help_tutorial_width_card_stroke">#E4D8FF</color>
-    <color name="help_tutorial_width_badge_container">#E9DEFF</color>
-    <color name="help_tutorial_width_badge_text">#5B3DB2</color>
     <color name="home_update_action_card_container">#F0EFFB</color>
     <color name="home_update_action_card_notes_text">#4C4772</color>
     <color name="home_update_action_card_install_container">#D7E4FF</color>

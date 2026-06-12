@@ -11,13 +11,15 @@ final class AppLocaleManager {
     static final String TAG_FOLLOW_SYSTEM = "";
     static final String TAG_ENGLISH = "en";
     static final String TAG_SIMPLIFIED_CHINESE = "zh-CN";
+    static final String TAG_RUSSIAN = "ru";
 
     private static final String PREFS_NAME = "app_locale";
     private static final String KEY_LANGUAGE_TAG = "language_tag";
     private static final List<LanguageOption> SUPPORTED_LANGUAGES = List.of(
             new LanguageOption(TAG_FOLLOW_SYSTEM, R.string.settings_language_follow_system),
             new LanguageOption(TAG_ENGLISH, R.string.settings_language_english),
-            new LanguageOption(TAG_SIMPLIFIED_CHINESE, R.string.settings_language_simplified_chinese));
+            new LanguageOption(TAG_SIMPLIFIED_CHINESE, R.string.settings_language_simplified_chinese),
+            new LanguageOption(TAG_RUSSIAN, R.string.settings_language_russian));
 
     static final class LanguageOption {
         final String tag;
