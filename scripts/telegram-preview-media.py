@@ -95,7 +95,13 @@ def build_changes_block(args, caption_title):
         candidate_lines = shown_lines + [line]
         remaining = len(lines) - len(candidate_lines)
         block = format_changes_block(changes_title, candidate_lines, remaining, args.compare_url)
-        caption = assemble_caption(caption_title, block, args.version_name, args.version_code)
+        caption = assemble_caption(
+            caption_title,
+            block,
+            args.version_name,
+            args.version_code,
+            args.branch_name,
+        )
         if visible_caption_length(caption) <= CAPTION_LIMIT:
             shown_lines = candidate_lines
             continue
@@ -120,9 +126,20 @@ def format_changes_block(title, lines, remaining, compare_url):
     return f"{title}\n<blockquote>{chr(10).join(block_lines)}</blockquote>"
 
 
-def assemble_caption(title, changes_block, version_name, version_code):
+def branch_notice(branch_name):
+    if not branch_name or branch_name == "main":
+        return ""
+    return (
+        "<b>Branch:</b> "
+        f"<code>{html.escape(branch_name)}</code> "
+        "(non-main preview)\n"
+    )
+
+
+def assemble_caption(title, changes_block, version_name, version_code, branch_name=""):
     return (
         f"<b>{html.escape(title)}</b>\n\n"
+        f"{branch_notice(branch_name)}"
         f"{changes_block}\n\n"
         f"<b>Version:</b> <code>{html.escape(version_name)}</code>\n"
         f"<b>VersionCode:</b> <code>{html.escape(version_code)}</code>"
@@ -132,7 +149,13 @@ def assemble_caption(title, changes_block, version_name, version_code):
 def build_caption(args):
     title = args.title or TITLE_PRESETS[args.title_preset]
     changes_block = build_changes_block(args, title)
-    return assemble_caption(title, changes_block, args.version_name, args.version_code)
+    return assemble_caption(
+        title,
+        changes_block,
+        args.version_name,
+        args.version_code,
+        args.branch_name,
+    )
 
 
 def main():
@@ -150,6 +173,7 @@ def main():
     parser.add_argument("--compare-url")
     parser.add_argument("--version-name", required=True)
     parser.add_argument("--version-code", required=True)
+    parser.add_argument("--branch-name", default="")
     parser.add_argument("--modern-attach", default="modern_apk")
     parser.add_argument("--legacy-attach", default="legacy_apk")
     args = parser.parse_args()

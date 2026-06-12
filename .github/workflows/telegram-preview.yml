@@ -19,7 +19,35 @@ permissions:
   contents: read
 
 jobs:
+  preview-gate:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.gate.outputs.should_run }}
+      reason: ${{ steps.gate.outputs.reason }}
+    steps:
+      - name: Check preview skip marker
+        id: gate
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo "reason=manual dispatch" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          COMMIT_MESSAGES="$(jq -r '.commits[]?.message // empty' "$GITHUB_EVENT_PATH")"
+          if grep -Fq "[skip preview]" <<< "$COMMIT_MESSAGES"; then
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "reason=[skip preview] commit marker" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "should_run=true" >> "$GITHUB_OUTPUT"
+          echo "reason=no skip marker" >> "$GITHUB_OUTPUT"
+
   build-and-send:
+    needs: preview-gate
+    if: needs.preview-gate.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -72,6 +100,21 @@ jobs:
           echo "version_name=$PREVIEW_VERSION_NAME" >> "$GITHUB_OUTPUT"
           echo "version_code=$PREVIEW_VERSION_CODE" >> "$GITHUB_OUTPUT"
           echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Summarize preview target
+        shell: bash
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+        run: |
+          {
+            echo "### Telegram preview"
+            echo "- Ref: \`${REF_NAME}\`"
+            echo "- Gate: ${{ needs.preview-gate.outputs.reason }}"
+            if [[ "$REF_TYPE" == "branch" && "$REF_NAME" != "main" ]]; then
+              echo "- Notice: this preview was built from a non-main branch."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Ensure gradlew is executable
         run: chmod +x gradlew
@@ -126,6 +169,8 @@ jobs:
           VERSION_NAME: ${{ steps.preview.outputs.version_name }}
           VERSION_CODE: ${{ steps.preview.outputs.version_code }}
           SHORT_SHA: ${{ steps.preview.outputs.short_sha }}
+          REF_NAME: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
         run: |
           if [[ -z "$TELEGRAM_BOT_TOKEN" ]]; then
             echo "TELEGRAM_BOT_TOKEN is not set"
@@ -168,6 +213,10 @@ jobs:
             git log --no-merges --pretty=format:'%h%x09%H%x09%s' -n 10 "${{ github.sha }}" > "$CHANGELOG_COMMITS"
             COMPARE_URL="https://github.com/${{ github.repository }}/commits/${{ github.sha }}"
           fi
+          BRANCH_NAME=""
+          if [[ "$REF_TYPE" == "branch" && "$REF_NAME" != "main" ]]; then
+            BRANCH_NAME="$REF_NAME"
+          fi
           MEDIA_JSON="$(
             python scripts/telegram-preview-media.py \
               --title-preset preview \
@@ -179,7 +228,8 @@ jobs:
               --release-tag "${LAST_RELEASE_TAG:-initial commit}" \
               --compare-url "$COMPARE_URL" \
               --version-name "$VERSION_NAME" \
-              --version-code "$VERSION_CODE"
+              --version-code "$VERSION_CODE" \
+              --branch-name "$BRANCH_NAME"
           )"
           IFS=',' read -ra CHAT_IDS <<< "$CHAT_TARGETS"
           for chat_id in "${CHAT_IDS[@]}"; do
