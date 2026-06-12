@@ -158,6 +158,39 @@ jobs:
           DPIS_VERSION_CODE: ${{ steps.preview.outputs.version_code }}
         run: ./gradlew :app:assembleRelease
 
+      - name: Summarize APK checksums
+        shell: bash
+        env:
+          VERSION_NAME: ${{ steps.preview.outputs.version_name }}
+        run: |
+          APKS=(
+            "app/build/outputs/apk/modern101/release/DPIS_${VERSION_NAME}.apk"
+            "app/build/outputs/apk/compat100/release/DPIS_${VERSION_NAME}_legacy.apk"
+          )
+          for apk in "${APKS[@]}"; do
+            if [[ ! -f "$apk" ]]; then
+              echo "APK not found: $apk"
+              exit 1
+            fi
+          done
+
+          {
+            echo "### APK checksums"
+            echo "| Package | SHA256 |"
+            echo "|:--|:--|"
+            echo "| modern | \`$(sha256sum "${APKS[0]}" | awk '{print $1}')\` |"
+            echo "| legacy | \`$(sha256sum "${APKS[1]}" | awk '{print $1}')\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload preview APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: DPIS-preview-${{ steps.preview.outputs.version_name }}
+          if-no-files-found: error
+          path: |
+            app/build/outputs/apk/modern101/release/DPIS_${{ steps.preview.outputs.version_name }}.apk
+            app/build/outputs/apk/compat100/release/DPIS_${{ steps.preview.outputs.version_name }}_legacy.apk
+
       - name: Send APKs to Telegram
         shell: bash
         env:

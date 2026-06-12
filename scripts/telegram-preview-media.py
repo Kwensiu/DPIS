@@ -182,12 +182,12 @@ def main():
         {
             "type": "document",
             "media": f"attach://{args.modern_attach}",
-            "caption": build_caption(args),
-            "parse_mode": "HTML",
         },
         {
             "type": "document",
             "media": f"attach://{args.legacy_attach}",
+            "caption": build_caption(args),
+            "parse_mode": "HTML",
         },
     ]
     print(json.dumps(media, ensure_ascii=True))
