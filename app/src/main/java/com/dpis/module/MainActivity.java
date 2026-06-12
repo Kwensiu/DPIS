@@ -1120,7 +1120,7 @@ public final class MainActivity
                         ? R.string.dialog_dpis_enabled_status
                         : R.string.dialog_dpis_disabled_status
         );
-        requestAppsLoad();
+        onRuntimeConfigSaved();
         return true;
     }
 
@@ -2872,7 +2872,7 @@ public final class MainActivity
                 HomeActivationStateResolver.isActivatedForHome(),
                 countDpisEnabledPackages(configStore, configuredPackages),
                 configuredPackages.size(),
-                ConfigStoreFactory.createActiveFontLibraryStore(
+                ConfigStoreFactory.createLocalUiFontLibraryStore(
                         this,
                         DpisApplication.getXposedService()
                 ).listFonts().size(),
@@ -3084,8 +3084,13 @@ public final class MainActivity
                 viewportAbsoluteInput,
                 isSystemHookEnabledFromStore(),
                 getHookConfigStore(),
-                this::requestAppsLoad
+                this::onRuntimeConfigSaved
         );
+    }
+
+    private void onRuntimeConfigSaved() {
+        RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
+        requestAppsLoad();
     }
 
     private String viewportScaleDraftFor(
@@ -3356,6 +3361,9 @@ public final class MainActivity
                     result.successCount()
             );
         }
+        if (result.successCount() > 0) {
+            onRuntimeConfigSaved();
+        }
         new BatchScopeRequestCoordinator(
                 createBatchScopeRequestHost()
         ).requestMissingScope(result.successfulPackages);
@@ -3526,7 +3534,7 @@ public final class MainActivity
                         viewportAbsoluteInput,
                         isSystemHookEnabledFromStore(),
                         getHookConfigStore(),
-                        MainActivity.this::requestAppsLoad
+                        MainActivity.this::onRuntimeConfigSaved
                 );
             }
 
@@ -3538,6 +3546,11 @@ public final class MainActivity
             @Override
             public void requestAppsLoad() {
                 MainActivity.this.requestAppsLoad();
+            }
+
+            @Override
+            public void onRuntimeConfigSaved() {
+                MainActivity.this.onRuntimeConfigSaved();
             }
 
             @Override

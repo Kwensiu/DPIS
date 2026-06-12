@@ -179,23 +179,18 @@ public class DpiConfigStoreTest {
     }
 
     @Test
-    public void legacyWechatDpiMigrationDoesNotOverwriteMirrorOfficialKey() {
-        FakePrefs primaryPrefs = new FakePrefs();
-        FakePrefs mirrorPrefs = new FakePrefs();
-        primaryPrefs.edit()
+    public void legacyWechatDpiMigrationDoesNotOverwriteLocalOfficialKey() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
                 .putInt("wechat.com.tencent.mm.wekit_dpi", 360)
-                .commit();
-        mirrorPrefs.edit()
                 .putInt("wechat.com.tencent.mm.dpi", 600)
                 .commit();
-        DpiConfigStore store = new DpiConfigStore(primaryPrefs, mirrorPrefs);
+        DpiConfigStore store = new DpiConfigStore(prefs);
 
         assertTrue(store.migrateLegacyWechatDpi());
 
         assertEquals(Integer.valueOf(600), store.getWechatDpi("com.tencent.mm"));
-        assertFalse(primaryPrefs.contains("wechat.com.tencent.mm.wekit_dpi"));
-        assertFalse(mirrorPrefs.contains("wechat.com.tencent.mm.wekit_dpi"));
-        assertFalse(primaryPrefs.contains("wechat.com.tencent.mm.dpi"));
+        assertFalse(prefs.contains("wechat.com.tencent.mm.wekit_dpi"));
     }
 
     @Test
@@ -515,124 +510,75 @@ public class DpiConfigStoreTest {
     }
 
     @Test
-    public void mirrorsWritesToBackupPreferencesWhenConfigured() {
-        FakePrefs remotePrefs = new FakePrefs();
+    public void storeReadsOnlyItsOwnPreferences() {
         FakePrefs localPrefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(remotePrefs, localPrefs);
-
-        assertTrue(store.setTargetFontScalePercent("com.max.xiaoheihe", 150));
-        assertTrue(store.setTargetViewportWidthDp("com.max.xiaoheihe", 360));
-
-        DpiConfigStore localView = new DpiConfigStore(localPrefs);
-        assertEquals(Integer.valueOf(150),
-                localView.getTargetFontScalePercent("com.max.xiaoheihe"));
-        assertEquals(Integer.valueOf(360),
-                localView.getTargetViewportWidthDp("com.max.xiaoheihe"));
-    }
-
-    @Test
-    public void readsFromBackupWhenPrimaryPreferencesMissingValues() {
         FakePrefs remotePrefs = new FakePrefs();
-        FakePrefs localPrefs = new FakePrefs();
-        localPrefs.edit()
+        remotePrefs.edit()
                 .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
                         new LinkedHashSet<>(Set.of("com.max.xiaoheihe")))
                 .putInt("font.com.max.xiaoheihe.scale_percent", 165)
+                .putBoolean(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED, true)
                 .commit();
-        DpiConfigStore store = new DpiConfigStore(remotePrefs, localPrefs);
-
-        assertTrue(store.getConfiguredPackages().contains("com.max.xiaoheihe"));
-        assertEquals(Integer.valueOf(165), store.getTargetFontScalePercent("com.max.xiaoheihe"));
-    }
-
-    @Test
-    public void primaryPackageSetShadowsBackupWhenExplicitlyEmpty() {
-        FakePrefs remotePrefs = new FakePrefs();
-        remotePrefs.edit()
-                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES, new LinkedHashSet<>())
-                .commit();
-        FakePrefs localPrefs = new FakePrefs();
-        localPrefs.edit()
-                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
-                        new LinkedHashSet<>(Set.of("com.max.xiaoheihe")))
-                .commit();
-        DpiConfigStore store = new DpiConfigStore(remotePrefs, localPrefs);
+        DpiConfigStore store = new DpiConfigStore(localPrefs);
 
         assertFalse(store.getConfiguredPackages().contains("com.max.xiaoheihe"));
+        assertNull(store.getTargetFontScalePercent("com.max.xiaoheihe"));
+        assertFalse(store.isGlobalLogEnabled());
     }
 
     @Test
-    public void primaryPackageSetDoesNotUnionStaleBackupPackages() {
-        FakePrefs remotePrefs = new FakePrefs();
-        remotePrefs.edit()
-                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
-                        new LinkedHashSet<>(Set.of("com.example.current")))
-                .commit();
+    public void storeWritesOnlyItsOwnPreferences() {
         FakePrefs localPrefs = new FakePrefs();
-        localPrefs.edit()
-                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
-                        new LinkedHashSet<>(Set.of("com.example.stale")))
-                .commit();
-        DpiConfigStore store = new DpiConfigStore(remotePrefs, localPrefs);
-
-        assertTrue(store.getConfiguredPackages().contains("com.example.current"));
-        assertFalse(store.getConfiguredPackages().contains("com.example.stale"));
-    }
-
-    @Test
-    public void startupDisclaimerAcceptedFallsBackToBackupTrue() {
         FakePrefs remotePrefs = new FakePrefs();
-        remotePrefs.edit()
-                .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, false)
-                .commit();
-        FakePrefs localPrefs = new FakePrefs();
-        localPrefs.edit()
-                .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
-                .commit();
-        DpiConfigStore store = new DpiConfigStore(remotePrefs, localPrefs);
+        DpiConfigStore store = new DpiConfigStore(localPrefs);
 
+        assertTrue(store.setTargetFontScalePercent("com.max.xiaoheihe", 150));
+        assertTrue(store.setTargetViewportWidthDp("com.max.xiaoheihe", 360));
+        assertTrue(store.setStartupDisclaimerAccepted(true));
+        assertTrue(store.setInterfaceScalePercent(73));
+        assertTrue(store.setLauncherIconHidden(true));
+
+        assertEquals(Integer.valueOf(150),
+                store.getTargetFontScalePercent("com.max.xiaoheihe"));
+        assertEquals(Integer.valueOf(360),
+                store.getTargetViewportWidthDp("com.max.xiaoheihe"));
         assertTrue(store.isStartupDisclaimerAccepted());
+        assertEquals(73, store.getInterfaceScalePercent());
+        assertTrue(store.isLauncherIconHidden());
+        assertTrue(remotePrefs.getAll().isEmpty());
     }
 
     @Test
-    public void ensureSeedConfigUsesPrimaryExistenceInsteadOfBackup() {
-        FakePrefs remotePrefs = new FakePrefs();
-        FakePrefs localPrefs = new FakePrefs();
-        localPrefs.edit()
+    public void ensureSeedConfigUsesOnlyCurrentStoreExistence() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
                 .putInt("viewport.com.max.xiaoheihe.width_dp", 300)
                 .commit();
-        DpiConfigStore store = new DpiConfigStore(remotePrefs, localPrefs);
+        DpiConfigStore store = new DpiConfigStore(prefs);
         LinkedHashMap<String, Integer> seed = new LinkedHashMap<>();
         seed.put("com.max.xiaoheihe", DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP);
 
         assertTrue(store.ensureSeedConfig(seed));
 
-        DpiConfigStore remoteOnly = new DpiConfigStore(remotePrefs);
-        assertEquals(Integer.valueOf(DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP),
-                remoteOnly.getTargetViewportWidthDp("com.max.xiaoheihe"));
+        assertEquals(Integer.valueOf(300),
+                store.getTargetViewportWidthDp("com.max.xiaoheihe"));
     }
 
     @Test
-    public void snapshotAllMergesPrimaryAndBackupValues() {
-        FakePrefs remotePrefs = new FakePrefs();
-        remotePrefs.edit()
+    public void snapshotAllUsesOnlyCurrentStoreValues() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
                 .putBoolean(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED, true)
                 .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
                 .putInt("viewport.com.max.xiaoheihe.width_dp", 420)
                 .putString("font.library.entries", "[{\"id\":\"font_abcd1234\"}]")
                 .commit();
-        FakePrefs localPrefs = new FakePrefs();
-        localPrefs.edit()
-                .putBoolean(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED, false)
-                .putInt("font.com.max.xiaoheihe.scale_percent", 135)
-                .commit();
-        DpiConfigStore store = new DpiConfigStore(remotePrefs, localPrefs);
+        DpiConfigStore store = new DpiConfigStore(prefs);
 
         Map<String, Object> snapshot = store.snapshotAll();
 
         assertEquals(true, snapshot.get(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED));
         assertEquals(420, snapshot.get("viewport.com.max.xiaoheihe.width_dp"));
-        assertEquals(135, snapshot.get("font.com.max.xiaoheihe.scale_percent"));
         assertEquals("[{\"id\":\"font_abcd1234\"}]", snapshot.get("font.library.entries"));
         assertEquals(true, snapshot.get(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED));
     }
@@ -661,80 +607,6 @@ public class DpiConfigStoreTest {
         assertFalse(snapshot.containsKey(QuickTemplateStore.KEY_TEMPLATE_IDS));
         assertFalse(snapshot.containsKey("template.template_a.name"));
         assertEquals(true, snapshot.get(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED));
-    }
-
-    @Test
-    public void localOnlyUiStateIgnoresRemoteFallbackWhenLocalMissing() {
-        FakePrefs remotePrefs = new FakePrefs();
-        remotePrefs.edit()
-                .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
-                .putInt(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT, 73)
-                .putBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, true)
-                .commit();
-        FakePrefs localPrefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(remotePrefs, localPrefs);
-
-        assertFalse(store.isStartupDisclaimerAccepted());
-        assertEquals(AppUiScaleManager.DEFAULT_SCALE_PERCENT, store.getInterfaceScalePercent());
-        assertFalse(store.isLauncherIconHidden());
-    }
-
-    @Test
-    public void localOnlyUiStateWritesToExplicitLocalStoreWhenPrimaryIsRuntimeDelivery() {
-        FakePrefs remotePrefs = new FakePrefs();
-        FakePrefs localPrefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(remotePrefs, localPrefs);
-
-        assertTrue(store.setStartupDisclaimerAccepted(true));
-        assertTrue(store.setInterfaceScalePercent(73));
-        assertTrue(store.setLauncherIconHidden(true));
-
-        assertFalse(remotePrefs.contains(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED));
-        assertFalse(remotePrefs.contains(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT));
-        assertFalse(remotePrefs.contains(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON));
-        assertTrue(localPrefs.getBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, false));
-        assertEquals(73, localPrefs.getInt(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT, 0));
-        assertTrue(localPrefs.getBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, false));
-    }
-
-    @Test
-    public void localAuthoritativeStorePrefersLocalValuesAndMirrorsRuntimeWrites() {
-        FakePrefs localPrefs = new FakePrefs();
-        localPrefs.edit()
-                .putBoolean(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED, false)
-                .putInt("font.com.miui.weather2.scale_percent", 120)
-                .commit();
-        FakePrefs remotePrefs = new FakePrefs();
-        remotePrefs.edit()
-                .putBoolean(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED, true)
-                .putInt("font.com.miui.weather2.scale_percent", 150)
-                .commit();
-        DpiConfigStore store = new DpiConfigStore(localPrefs, remotePrefs, localPrefs);
-
-        assertFalse(store.isGlobalLogEnabled());
-        assertEquals(Integer.valueOf(120), store.getTargetFontScalePercent("com.miui.weather2"));
-        assertTrue(store.setTargetFontScalePercent("com.miui.weather2", 135));
-
-        assertEquals(135, localPrefs.getInt("font.com.miui.weather2.scale_percent", 0));
-        assertEquals(135, remotePrefs.getInt("font.com.miui.weather2.scale_percent", 0));
-    }
-
-    @Test
-    public void localAuthoritativeStoreWritesLocalOnlyStateToLocalPrimary() {
-        FakePrefs localPrefs = new FakePrefs();
-        FakePrefs remotePrefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(localPrefs, remotePrefs, localPrefs);
-
-        assertTrue(store.setStartupDisclaimerAccepted(true));
-        assertTrue(store.setInterfaceScalePercent(73));
-        assertTrue(store.setLauncherIconHidden(true));
-
-        assertTrue(localPrefs.getBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, false));
-        assertEquals(73, localPrefs.getInt(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT, 0));
-        assertTrue(localPrefs.getBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, false));
-        assertFalse(remotePrefs.contains(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED));
-        assertFalse(remotePrefs.contains(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT));
-        assertFalse(remotePrefs.contains(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON));
     }
 
     @Test
@@ -959,10 +831,13 @@ public class DpiConfigStoreTest {
     }
 
     @Test
-    public void replaceAllOverwritesPrimaryAndBackupValues() {
-        FakePrefs remotePrefs = new FakePrefs();
-        FakePrefs localPrefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(remotePrefs, localPrefs);
+    public void replaceAllOverwritesCurrentStoreValues() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putBoolean(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED, false)
+                .putInt("font.com.old.scale_percent", 120)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
         LinkedHashMap<String, Object> values = new LinkedHashMap<>();
         values.put(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED, true);
         values.put("viewport.com.max.xiaoheihe.width_dp", 360);
@@ -972,14 +847,13 @@ public class DpiConfigStoreTest {
 
         assertTrue(store.replaceAll(values));
 
-        DpiConfigStore remoteOnly = new DpiConfigStore(remotePrefs);
-        DpiConfigStore localOnly = new DpiConfigStore(localPrefs);
-        assertTrue(remoteOnly.isGlobalLogEnabled());
+        assertTrue(store.isGlobalLogEnabled());
+        assertNull(store.getTargetFontScalePercent("com.old"));
         assertEquals(Integer.valueOf(360),
-                remoteOnly.getTargetViewportWidthDp("com.max.xiaoheihe"));
+                store.getTargetViewportWidthDp("com.max.xiaoheihe"));
         assertEquals(Integer.valueOf(120),
-                localOnly.getTargetFontScalePercent("com.max.xiaoheihe"));
-        assertTrue(localOnly.getConfiguredPackages().contains("com.max.xiaoheihe"));
+                store.getTargetFontScalePercent("com.max.xiaoheihe"));
+        assertTrue(store.getConfiguredPackages().contains("com.max.xiaoheihe"));
     }
 
     @Test

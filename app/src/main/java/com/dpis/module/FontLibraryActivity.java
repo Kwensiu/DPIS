@@ -54,10 +54,10 @@ public final class FontLibraryActivity extends LocalizedActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_font_library);
-        fontLibraryStore = ConfigStoreFactory.createActiveFontLibraryStore(
+        fontLibraryStore = ConfigStoreFactory.createLocalUiFontLibraryStore(
                 this, DpisApplication.getXposedService());
         fontLibraryStore.purgeOrphanedFiles();
-        configStore = ConfigStoreFactory.createActiveModuleConfigStore(
+        configStore = ConfigStoreFactory.createLocalUiModuleConfigStore(
                 this, DpisApplication.getXposedService());
         listView = findViewById(R.id.font_library_list);
         emptyView = findViewById(R.id.font_library_empty);
@@ -450,6 +450,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
                         handleRenameResult(result);
                         return;
                     }
+                    RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
                     parentDialog.dismiss();
                     dialog.dismiss();
                     refreshFontList();
@@ -467,8 +468,11 @@ public final class FontLibraryActivity extends LocalizedActivity {
                 .setPositiveButton(R.string.font_library_delete_action, (unusedDialog, which) -> {
                     FontLibraryStore.DeleteResult result = fontLibraryStore.deleteFont(entry.id, configStore);
                     handleDeleteResult(result);
-                    parentDialog.dismiss();
-                    refreshFontList();
+                    if (result == FontLibraryStore.DeleteResult.DELETED) {
+                        RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
+                        parentDialog.dismiss();
+                        refreshFontList();
+                    }
                 })
                 .create();
         dialog.setOnShowListener(d -> bindDialogButtonHaptics(dialog));
@@ -490,6 +494,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
                     FontLibraryStore.DeleteResult result = forceDeleteFont(entry, references);
                     handleDeleteResult(result);
                     if (result == FontLibraryStore.DeleteResult.DELETED) {
+                        RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
                         parentDialog.dismiss();
                         refreshFontList();
                     }
@@ -545,6 +550,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
                         return;
                     }
                     FontRuntimePropertySyncer.publishTypefaceTargetAsync(reference.packageName, null);
+                    RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
                     refreshFontList();
                     if (parentDialog != null) {
                         parentDialog.dismiss();
@@ -675,6 +681,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
                     return;
                 }
                 showToast(R.string.font_library_import_success, finalImportedEntry.displayName);
+                RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
                 refreshFontList();
             });
         }, "dpis-font-import").start();
@@ -827,6 +834,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
                 }
                 dialog.dismiss();
                 showToast(R.string.font_library_import_count_success, finalImported.size());
+                RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
                 refreshFontList();
             });
         }, "dpis-ttc-font-import").start();

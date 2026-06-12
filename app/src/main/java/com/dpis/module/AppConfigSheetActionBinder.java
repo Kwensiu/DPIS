@@ -107,7 +107,7 @@ final class AppConfigSheetActionBinder {
                     result[0] = 0;
                     result[1] = R.string.status_save_invalid;
                 } else {
-                    host.requestAppsLoad();
+                    host.onRuntimeConfigSaved();
                 }
             }
             if (result[0] == 1) {

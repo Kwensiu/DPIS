@@ -50,24 +50,15 @@ final class DpiConfigStore {
     };
 
     private final SharedPreferences preferences;
-    private final SharedPreferences mirrorPreferences;
-    private final SharedPreferences localOnlyPreferences;
+    private final SharedPreferences fallbackPreferences;
 
     DpiConfigStore(SharedPreferences preferences) {
         this(preferences, null);
     }
 
-    DpiConfigStore(SharedPreferences preferences, SharedPreferences mirrorPreferences) {
-        this(preferences, mirrorPreferences, mirrorPreferences != null ? mirrorPreferences : preferences);
-    }
-
-    DpiConfigStore(
-            SharedPreferences preferences,
-            SharedPreferences mirrorPreferences,
-            SharedPreferences localOnlyPreferences) {
+    DpiConfigStore(SharedPreferences preferences, SharedPreferences fallbackPreferences) {
         this.preferences = preferences;
-        this.mirrorPreferences = mirrorPreferences;
-        this.localOnlyPreferences = localOnlyPreferences != null ? localOnlyPreferences : preferences;
+        this.fallbackPreferences = fallbackPreferences;
     }
 
     Set<String> getConfiguredPackages() {
@@ -79,10 +70,10 @@ final class DpiConfigStore {
             }
             return new LinkedHashSet<>(packages);
         }
-        if (mirrorPreferences != null && mirrorPreferences.contains(KEY_TARGET_PACKAGES)) {
-            Set<String> backupPackages = mirrorPreferences.getStringSet(KEY_TARGET_PACKAGES, Collections.emptySet());
-            if (backupPackages != null) {
-                packages.addAll(backupPackages);
+        if (fallbackPreferences != null && fallbackPreferences.contains(KEY_TARGET_PACKAGES)) {
+            Set<String> fallbackPackages = fallbackPreferences.getStringSet(KEY_TARGET_PACKAGES, Collections.emptySet());
+            if (fallbackPackages != null) {
+                packages.addAll(fallbackPackages);
             }
         }
         return new LinkedHashSet<>(packages);
@@ -891,9 +882,6 @@ final class DpiConfigStore {
 
     Map<String, Object> snapshotAll() {
         LinkedHashMap<String, Object> snapshot = new LinkedHashMap<>();
-        if (mirrorPreferences != null) {
-            copyEntries(snapshot, mirrorPreferences.getAll(), false);
-        }
         copyEntries(snapshot, preferences.getAll(), false);
         return snapshot;
     }
@@ -906,9 +894,6 @@ final class DpiConfigStore {
 
     Map<String, Object> snapshotBackup() {
         LinkedHashMap<String, Object> snapshot = new LinkedHashMap<>();
-        if (mirrorPreferences != null) {
-            copyEntries(snapshot, mirrorPreferences.getAll(), true);
-        }
         copyEntries(snapshot, preferences.getAll(), true);
         return snapshot;
     }
@@ -941,15 +926,7 @@ final class DpiConfigStore {
         if (entries == null) {
             return false;
         }
-        boolean primaryCommitted = replaceBackupEntries(preferences, entries);
-        if (mirrorPreferences == null) {
-            return primaryCommitted;
-        }
-        try {
-            return primaryCommitted && replaceBackupEntries(mirrorPreferences, entries);
-        } catch (UnsupportedOperationException ignored) {
-            return primaryCommitted;
-        }
+        return replaceBackupEntries(preferences, entries);
     }
 
     private static boolean replaceBackupEntries(
@@ -1025,7 +1002,7 @@ final class DpiConfigStore {
 
     private boolean contains(String key) {
         return preferences.contains(key)
-                || (mirrorPreferences != null && mirrorPreferences.contains(key));
+                || (fallbackPreferences != null && fallbackPreferences.contains(key));
     }
 
     private boolean containsInPrimary(String key) {
@@ -1033,7 +1010,7 @@ final class DpiConfigStore {
     }
 
     private boolean containsLocalOnly(String key) {
-        return localOnlyPreferences().contains(key);
+        return preferences.contains(key);
     }
 
     private int getInt(String key, int defaultValue) {
@@ -1042,11 +1019,10 @@ final class DpiConfigStore {
     }
 
     private int getLocalOnlyInt(String key, int defaultValue) {
-        SharedPreferences localPreferences = localOnlyPreferences();
-        if (!localPreferences.contains(key)) {
+        if (!preferences.contains(key)) {
             return defaultValue;
         }
-        Integer value = readPreferenceValue(localPreferences, prefs -> prefs.getInt(key, defaultValue));
+        Integer value = readPreferenceValue(preferences, prefs -> prefs.getInt(key, defaultValue));
         return value != null ? value : defaultValue;
     }
 
@@ -1061,11 +1037,10 @@ final class DpiConfigStore {
     }
 
     private boolean getLocalOnlyBoolean(String key, boolean defaultValue) {
-        SharedPreferences localPreferences = localOnlyPreferences();
-        if (!localPreferences.contains(key)) {
+        if (!preferences.contains(key)) {
             return defaultValue;
         }
-        Boolean value = readPreferenceValue(localPreferences, prefs -> prefs.getBoolean(key, defaultValue));
+        Boolean value = readPreferenceValue(preferences, prefs -> prefs.getBoolean(key, defaultValue));
         return value != null ? value : defaultValue;
     }
 
@@ -1077,8 +1052,8 @@ final class DpiConfigStore {
         if (preferences.contains(key)) {
             return readPreferenceValue(preferences, reader);
         }
-        if (mirrorPreferences != null && mirrorPreferences.contains(key)) {
-            return readPreferenceValue(mirrorPreferences, reader);
+        if (fallbackPreferences != null && fallbackPreferences.contains(key)) {
+            return readPreferenceValue(fallbackPreferences, reader);
         }
         return null;
     }
@@ -1094,28 +1069,15 @@ final class DpiConfigStore {
     private boolean commitBoth(EditorAction action) {
         SharedPreferences.Editor primaryEditor = preferences.edit();
         action.apply(primaryEditor);
-        boolean primaryCommitted = primaryEditor.commit();
-        if (mirrorPreferences == null) {
-            return primaryCommitted;
-        }
-        try {
-            SharedPreferences.Editor mirrorEditor = mirrorPreferences.edit();
-            action.apply(mirrorEditor);
-            return primaryCommitted && mirrorEditor.commit();
-        } catch (UnsupportedOperationException ignored) {
-            return primaryCommitted;
-        }
+        return primaryEditor.commit();
     }
 
     private boolean commitLocalOnly(EditorAction action) {
-        SharedPreferences.Editor editor = localOnlyPreferences().edit();
+        SharedPreferences.Editor editor = preferences.edit();
         action.apply(editor);
         return editor.commit();
     }
 
-    private SharedPreferences localOnlyPreferences() {
-        return localOnlyPreferences;
-    }
 
     private static boolean isLocalOnlyRuntimeDeliveryKey(String key) {
         for (String localOnlyKey : LOCAL_ONLY_RUNTIME_DELIVERY_KEYS) {

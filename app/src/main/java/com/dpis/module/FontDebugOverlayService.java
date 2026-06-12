@@ -70,7 +70,7 @@ public final class FontDebugOverlayService extends Service {
         super.onCreate();
         store = DpisApplication.getConfigStore();
         if (store == null) {
-            store = ConfigStoreFactory.createActiveModuleConfigStore(
+            store = ConfigStoreFactory.createLocalUiModuleConfigStore(
                     this,
                     DpisApplication.getXposedService()
             );

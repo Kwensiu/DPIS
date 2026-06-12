@@ -20,11 +20,21 @@ final class SystemHooksToggleController {
     private final DpiConfigStore store;
     private final ScopeGateway scopeGateway;
     private final View view;
+    private final Runnable onConfigSaved;
 
     SystemHooksToggleController(DpiConfigStore store, ScopeGateway scopeGateway, View view) {
+        this(store, scopeGateway, view, RuntimeConfigDelivery::publishLocalSnapshotAfterSave);
+    }
+
+    SystemHooksToggleController(
+            DpiConfigStore store,
+            ScopeGateway scopeGateway,
+            View view,
+            Runnable onConfigSaved) {
         this.store = store;
         this.scopeGateway = scopeGateway;
         this.view = view;
+        this.onConfigSaved = onConfigSaved;
     }
 
     void syncFromStore() {
@@ -37,6 +47,7 @@ final class SystemHooksToggleController {
             view.showSaveFailed();
             return;
         }
+        onConfigSaved.run();
         if (enabled) {
             maybeShowMissingScopeHint();
         }

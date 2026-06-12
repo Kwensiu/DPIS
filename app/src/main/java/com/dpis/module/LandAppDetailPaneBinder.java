@@ -1219,7 +1219,7 @@ final class LandAppDetailPaneBinder {
             }
         }
         FontLibraryEntry imported
-                = ConfigStoreFactory.createActiveFontLibraryStore(
+                = ConfigStoreFactory.createLocalUiFontLibraryStore(
                         activity,
                         DpisApplication.getXposedService()
                 ).findById(typefaceId);

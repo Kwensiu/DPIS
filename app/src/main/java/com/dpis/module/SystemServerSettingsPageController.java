@@ -1190,7 +1190,9 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         if (!store.setSystemServerSafeModeEnabled(true)) {
             setCheckedSilently(safeModeSwitch, false, this::onSafeModeChanged);
             showToast(R.string.system_settings_save_failed);
+            return;
         }
+        RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
     }
 
     private void showDisableSafeModeConfirmationDialog() {
@@ -1212,7 +1214,9 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             if (!store.setSystemServerSafeModeEnabled(false)) {
                 setCheckedSilently(safeModeSwitch, true, this::onSafeModeChanged);
                 showToast(R.string.system_settings_save_failed);
+                return;
             }
+            RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
         });
         cancelButton.setOnClickListener(v -> {
             dialog.dismiss();
@@ -1237,6 +1241,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         RuntimeDebugPropertySyncer.publishAsync(
                 isChecked,
                 store.isFontDebugOverlayEnabled());
+        RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
     }
 
     private void onHideLauncherIconChanged(CompoundButton buttonView, boolean isChecked) {

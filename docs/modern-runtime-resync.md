@@ -343,3 +343,15 @@ superseded.
   mirror store, 3120 / `j65.f` is recorded as a static fallback, save failures
   no longer publish runtime properties, and recovery always clears the fixed
   WeChat property pair when no enabled WeChat DPI value exists.
+- 2026-06-13: config-source ownership is now local-authoritative for the
+  module app. LSPosed remote preferences remain a runtime delivery copy for
+  hook processes, while `createLocalUiModuleConfigStore` reads only local
+  `dpi_config` and never treats remote values as UI, backup, migration, or
+  app-list input. Runtime-only fallback stores such as system properties plus
+  XSharedPreferences remain explicit hook-side compatibility inputs.
+- 2026-06-13: real config saves now route through a single runtime delivery
+  resync action after successful local persistence. Per-field system property
+  publishers still provide immediate hot-path mirrors, while
+  `RuntimeConfigDelivery.publishLocalSnapshotAfterSave()` republishes the local
+  authoritative snapshot to LSPosed remote preferences for hook-process startup
+  and reconnection.

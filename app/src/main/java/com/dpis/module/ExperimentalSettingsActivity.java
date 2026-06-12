@@ -14,7 +14,7 @@ public final class ExperimentalSettingsActivity extends LocalizedActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_experimental_settings);
-        configStore = ConfigStoreFactory.createActiveModuleConfigStore(
+        configStore = ConfigStoreFactory.createLocalUiModuleConfigStore(
                 this, DpisApplication.getXposedService());
         bindToolbar();
         bindTtcImportSwitch();

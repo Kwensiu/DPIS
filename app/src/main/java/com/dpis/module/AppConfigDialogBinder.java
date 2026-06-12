@@ -81,6 +81,10 @@ final class AppConfigDialogBinder {
 
         void requestAppsLoad();
 
+        default void onRuntimeConfigSaved() {
+            requestAppsLoad();
+        }
+
         void onDraftStateChanged(AppConfigDialogState state);
 
         void showToast(int messageResId);
@@ -641,7 +645,7 @@ final class AppConfigDialogBinder {
     }
 
     private FontLibraryStore createFontLibraryStore() {
-        return ConfigStoreFactory.createActiveFontLibraryStore(
+        return ConfigStoreFactory.createLocalUiFontLibraryStore(
                 activity, DpisApplication.getXposedService());
     }
 

@@ -28,8 +28,9 @@ public class SystemHooksToggleControllerTest {
         DpiConfigStore store = createStore(true);
         FakeScopeGateway gateway = new FakeScopeGateway();
         FakeView view = new FakeView();
+        FakeDelivery delivery = new FakeDelivery();
         SystemHooksToggleController controller = new SystemHooksToggleController(
-                store, gateway, view);
+                store, gateway, view, delivery);
 
         controller.onUserToggle(false);
 
@@ -38,6 +39,7 @@ public class SystemHooksToggleControllerTest {
         assertFalse(store.isSystemServerHooksEnabled());
         assertEquals(0, view.scopeRequiredCount);
         assertEquals(0, view.initRequiredCount);
+        assertEquals(1, delivery.resyncCount);
     }
 
     @Test
@@ -46,8 +48,9 @@ public class SystemHooksToggleControllerTest {
         DpiConfigStore store = new DpiConfigStore(prefs);
         FakeScopeGateway gateway = new FakeScopeGateway();
         FakeView view = new FakeView();
+        FakeDelivery delivery = new FakeDelivery();
         SystemHooksToggleController controller = new SystemHooksToggleController(
-                store, gateway, view);
+                store, gateway, view, delivery);
         prefs.setCommitResult(false);
 
         controller.onUserToggle(false);
@@ -56,6 +59,7 @@ public class SystemHooksToggleControllerTest {
         assertTrue(view.lastState.switchEnabled);
         assertEquals(1, view.saveFailedCount);
         assertTrue(store.isSystemServerHooksEnabled());
+        assertEquals(0, delivery.resyncCount);
     }
 
     @Test
@@ -105,8 +109,9 @@ public class SystemHooksToggleControllerTest {
         DpiConfigStore store = createStore(false);
         FakeScopeGateway gateway = new FakeScopeGateway();
         FakeView view = new FakeView();
+        FakeDelivery delivery = new FakeDelivery();
         SystemHooksToggleController controller = new SystemHooksToggleController(
-                store, gateway, view);
+                store, gateway, view, delivery);
 
         controller.onUserToggle(true);
 
@@ -117,6 +122,7 @@ public class SystemHooksToggleControllerTest {
         assertEquals(0, view.initRequiredCount);
         assertEquals(0, view.scopeRequiredCount);
         assertTrue(store.isSystemServerHooksEnabled());
+        assertEquals(1, delivery.resyncCount);
     }
 
     @Test
@@ -210,6 +216,15 @@ public class SystemHooksToggleControllerTest {
                 throw new RuntimeException("scope unavailable");
             }
             return hasSystemScopeSelected;
+        }
+    }
+
+    private static final class FakeDelivery implements Runnable {
+        int resyncCount;
+
+        @Override
+        public void run() {
+            resyncCount++;
         }
     }
 }

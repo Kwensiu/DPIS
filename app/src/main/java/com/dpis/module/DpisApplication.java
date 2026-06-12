@@ -48,7 +48,7 @@ public final class DpisApplication extends Application implements XposedServiceH
                 ConfigStoreFactory.createRuntimeDeliveryModuleConfigStore(service);
         localStore.migrateLegacyWechatDpi();
         publishRuntimeConfig(localStore, runtimeDeliveryStore);
-        configStore = ConfigStoreFactory.createActiveModuleConfigStore(this, service);
+        configStore = ConfigStoreFactory.createLocalUiModuleConfigStore(this, service);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
         RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore);
         xposedService = service;
@@ -101,7 +101,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         }
         XposedService service = xposedService;
         return service != null
-                ? ConfigStoreFactory.createActiveModuleConfigStore(context, service)
+                ? ConfigStoreFactory.createLocalUiModuleConfigStore(context, service)
                 : ConfigStoreFactory.createLocalModuleConfigStore(context);
     }
 
@@ -115,7 +115,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         publishRuntimeConfig(localStore,
                 ConfigStoreFactory.createRuntimeDeliveryModuleConfigStore(service));
         DpiConfigStore refreshedStore = service != null
-                ? ConfigStoreFactory.createActiveModuleConfigStore(application, service)
+                ? ConfigStoreFactory.createLocalUiModuleConfigStore(application, service)
                 : ConfigStoreFactory.createLocalModuleConfigStore(application);
         configStore = refreshedStore;
         DpisLog.setLoggingEnabled(refreshedStore.isGlobalLogEnabled());

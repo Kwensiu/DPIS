@@ -18,20 +18,8 @@ final class ConfigStoreFactory {
         return new DpiConfigStore(context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE));
     }
 
-    static DpiConfigStore createActiveModuleConfigStore(Context context, XposedService service) {
-        SharedPreferences localPreferences =
-                context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE);
-        if (service != null) {
-            try {
-                SharedPreferences remotePreferences = service.getRemotePreferences(DpiConfigStore.GROUP);
-                if (remotePreferences != null) {
-                    return new DpiConfigStore(localPreferences, remotePreferences, localPreferences);
-                }
-            } catch (Throwable ignored) {
-                // Fall through to local storage.
-            }
-        }
-        return new DpiConfigStore(localPreferences);
+    static DpiConfigStore createLocalUiModuleConfigStore(Context context, XposedService service) {
+        return createLocalModuleConfigStore(context);
     }
 
     static DpiConfigStore createRuntimeDeliveryModuleConfigStore(XposedService service) {
@@ -56,22 +44,8 @@ final class ConfigStoreFactory {
                 PUBLIC_FONT_DIRECTORY);
     }
 
-    static FontLibraryStore createActiveFontLibraryStore(Context context, XposedService service) {
-        SharedPreferences localPreferences =
-                context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE);
-        SharedPreferences preferences = localPreferences;
-        if (service != null) {
-            try {
-                SharedPreferences remotePreferences = service.getRemotePreferences(DpiConfigStore.GROUP);
-                if (remotePreferences != null) {
-                    preferences = remotePreferences;
-                }
-            } catch (Throwable ignored) {
-                preferences = localPreferences;
-            }
-        }
-        return new FontLibraryStore(preferences, new File(context.getFilesDir(), "fonts"),
-                PUBLIC_FONT_DIRECTORY);
+    static FontLibraryStore createLocalUiFontLibraryStore(Context context, XposedService service) {
+        return createLocalFontLibraryStore(context);
     }
 
     static DpiConfigStore createForXposedHost(XposedInterface xposed) {
