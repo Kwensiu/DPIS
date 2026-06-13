@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">DPIS</string>
     <string name="module_description">独立调节应用 DPI 与文本大小</string>
     <string name="dialog_viewport_hint_scale">界面比例 30-300%</string>
     <string name="dialog_viewport_hint_absolute">最小宽度 dp</string>
@@ -40,7 +39,6 @@
     <string name="land_detail_hook_chain_viewport_system">界面[系统]</string>
     <string name="land_detail_hook_chain_viewport_compat">界面[兼容]</string>
     <string name="land_detail_hook_chain_font_count">字体链路[%1$d/%2$d]</string>
-    <string name="land_detail_hook_chain_separator"> · </string>
     <string name="help_tutorial_system_title">系统模式</string>
     <string name="help_tutorial_system_badge">更接近原生</string>
     <string name="help_tutorial_system_summary">通过系统层链路模拟相关参数，显示效果通常更自然。</string>
@@ -62,7 +60,7 @@
     <string name="mode_help_viewport_types_title">界面调整模式</string>
     <string name="mode_help_font_features_title">字体相关功能</string>
     <string name="help_tutorial_font_hooks_title">自定义字体 Hook</string>
-    <string name="help_tutorial_font_hooks_badge">10 条路线</string>
+    <string name="help_tutorial_font_hooks_badge">8 条路线</string>
     <string name="help_tutorial_font_hooks_summary">按应用选择字体缩放写入点，用于绕开不同 UI 框架的字体读取差异。</string>
     <string name="help_tutorial_font_hook_resources_title">Resources 字体</string>
     <string name="help_tutorial_font_hook_resources_desc">改写应用从 Resources 读取到的字体缩放基准。</string>
@@ -87,11 +85,6 @@
     <string name="home_mode_help_entry_summary">查看通用调整、界面调整与字体功能说明。</string>
     <string name="home_feedback_title">问题反馈</string>
     <string name="home_feedback_summary">可前往 GitHub 反馈或加入群组。</string>
-    <string name="home_feedback_github">GitHub</string>
-    <string name="home_feedback_qq">QQ</string>
-    <string name="home_feedback_telegram">TG</string>
-    <string name="home_feedback_qq_url">https://qm.qq.com/q/N8Rr2Kp94a</string>
-    <string name="home_feedback_telegram_url">https://t.me/dpis_channel</string>
     <string name="home_donate_title">打赏作者</string>
     <string name="home_donate_summary">向开发者捐赠以支持开发修复</string>
     <string name="dialog_confirm_button">确认</string>
@@ -102,7 +95,6 @@
     <string name="workspace_settings">设置</string>
     <string name="system_font_scale_title">系统字体大小</string>
     <string name="system_font_scale_subtitle">精确调整全局字体大小</string>
-    <string name="system_font_scale_pending_value">%1$d%%</string>
     <string name="system_font_scale_badge_permission_required">需授权</string>
     <string name="system_font_scale_badge_modified">已修改</string>
     <string name="system_font_scale_badge_unavailable">不可用</string>
@@ -116,12 +108,10 @@
     <string name="system_font_scale_preview_body">正文会跟随目标字体大小显示。</string>
     <string name="system_font_scale_restore_default">恢复 100%</string>
     <string name="system_font_scale_write_failed">系统拒绝了字体应用</string>
-    <string name="home_workspace_title">DPIS</string>
     <string name="home_workspace_subtitle">单应用调整 DPI 与字体大小</string>
     <string name="home_workspace_status_enabled">已启用</string>
     <string name="home_workspace_status_enable_in_lsposed">请前往 LSPosed 启用模块</string>
     <string name="home_workspace_status_configured_apps">已配置应用</string>
-    <string name="home_workspace_status_configured_apps_value">%1$d/%2$d</string>
     <string name="home_workspace_status_imported_fonts">导入字体</string>
     <string name="home_workspace_status_templates">模板</string>
     <string name="home_update_checking">正在检查更新</string>
@@ -129,15 +119,13 @@
     <string name="home_update_check_failed_retry">检查更新失败，点击重试</string>
     <string name="home_update_available">检测到新版本：%1$s</string>
     <string name="home_update_version_unknown">未知版本</string>
-    <string name="home_update_action_release_notes">变更日志</string>
+    <string name="home_update_action_release_notes">更新日志</string>
     <string name="home_update_action_install">更新</string>
     <string name="home_update_action_downloading">正在下载</string>
     <string name="home_update_action_install_ready">安装</string>
     <string name="home_workspace_basic_info_title">基本信息</string>
     <string name="home_workspace_info_version">模块版本</string>
-    <string name="home_workspace_info_version_value">%1$s (%2$d)</string>
     <string name="home_workspace_info_system">系统</string>
-    <string name="home_workspace_info_system_value">%1$s (SDK %2$d)</string>
     <string name="home_workspace_info_root">ROOT 权限</string>
     <string name="home_workspace_info_root_checking">检测中</string>
     <string name="home_workspace_info_root_available">已获取 (%1$s)</string>
@@ -252,7 +240,6 @@
     <string name="dialog_font_hook_domain_textview_current_px_fallback">TextView 当前 px 兜底</string>
     <string name="dialog_font_hook_domain_paint_text_size_fallback">Paint 文本大小兜底</string>
     <string name="dialog_font_hook_domain_webview_text_zoom">WebView 文本缩放</string>
-    <string name="dialog_font_hook_domain_flutter_settings">Flutter settings</string>
     <string name="dialog_font_hook_domain_hyperos_native_flutter">HyperOS 原生 Flutter</string>
     <string name="dialog_hyperos_native_proxy_apply_failed">HyperOS 兼容设置失败，请检查 root 权限后重试。</string>
     <string name="dialog_hyperos_native_proxy_unmount_failed">HyperOS 兼容回滚失败，请检查 root 权限后重试。</string>
@@ -313,8 +300,6 @@
     <string name="font_debug_clear_done">已清除调试数据</string>
     <string name="font_debug_mode_button_chain">仅链路</string>
     <string name="font_debug_mode_button_chain_view">链路+视图</string>
-    <string name="font_debug_window_button_5s">5s</string>
-    <string name="font_debug_window_button_30s">30s</string>
     <string name="font_debug_window_button_all">累计</string>
     <string name="system_settings_save_failed">保存失败，请重试</string>
     <string name="font_debug_last_updated">更新时间：%1$s | 事件总数：%2$d</string>
@@ -334,7 +319,6 @@
     <string name="settings_font_library_hint">导入并管理用于按应用替换的字体</string>
     <string name="settings_interface_scale_label">界面缩放</string>
     <string name="settings_interface_scale_hint">调整 DPIS 自身界面密度</string>
-    <string name="settings_interface_scale_value">%1$d%%</string>
     <string name="settings_interface_scale_dialog_title">界面缩放</string>
     <string name="settings_interface_scale_input_hint">缩放 60-120%</string>
     <string name="settings_interface_scale_input_error">请输入 60 到 120 之间的数字</string>
@@ -344,9 +328,9 @@
     <string name="font_library_import_success">已导入 %1$s</string>
     <string name="font_library_import_count_success">已导入 %1$d 个 face</string>
     <string name="font_library_import_failed">导入字体失败</string>
-    <string name="font_library_ttc_select_title">选择导入 face</string>
+    <string name="font_library_ttc_select_title">选择要导入的字形</string>
     <string name="font_library_ttc_selected_count">已选择 %1$d</string>
-    <string name="font_library_ttc_failed_faces">%1$d 个 face 无法导入</string>
+    <string name="font_library_ttc_failed_faces">%1$d 个字形无法导入</string>
     <string name="font_library_ttc_select_all">全选</string>
     <string name="font_library_ttc_deselect_all">取消全选</string>
     <string name="font_library_delete_action">删除</string>
@@ -371,7 +355,7 @@
     <string name="settings_about_label">关于</string>
     <string name="settings_about_hint">查看版本、源码与反馈渠道</string>
     <string name="settings_donate_label">打赏作者</string>
-    <string name="settings_donate_hint">向开发者捐赠以支持开发修复</string>
+    <string name="settings_donate_hint">向开发者捐赠以支持后续更新</string>
     <string name="settings_config_backup_label">配置备份</string>
     <string name="settings_config_backup_hint">导出或导入 DPIS 配置</string>
     <string name="config_backup_dialog_title">配置备份</string>
@@ -408,14 +392,13 @@
     <string name="about_link_feedback_desc">提交 issue 或查看已知问题</string>
     <string name="donate_title">打赏作者</string>
     <string name="donate_message">感谢支持 DPIS 的持续开发</string>
-    <string name="donate_trust_note">请注意模块安装来源可信，可选备注信息</string>
+    <string name="donate_trust_note">仅信任官方签名版本中的二维码。</string>
     <string name="donate_wechat_title">微信打赏</string>
     <string name="donate_alipay_title">支付宝</string>
     <string name="donate_wechat_qr_description">微信支付打赏二维码</string>
     <string name="donate_alipay_qr_description">支付宝打赏二维码</string>
     <string name="open_source_license">开放源代码许可</string>
     <string name="open_source_license_settings_description">查看本应用所使用的第三方开源库及其许可证信息</string>
-    <string name="open_source_license_project_summary">GPL-3.0-or-later</string>
     <string name="open_source_license_project_detail">DPIS 以 GPL-3.0-or-later 许可发布，源码：%1$s</string>
     <string name="open_source_license_empty">未找到许可证数据</string>
     <string name="open_source_license_load_failed">读取许可证数据失败</string>
@@ -424,7 +407,6 @@
     <string name="open_source_license_version_label">版本：%1$s</string>
     <string name="open_source_license_name_unknown">未知库</string>
     <string name="about_link_open_failed">无法打开链接</string>
-    <string name="about_update_manifest_url">https://github.com/Kwensiu/DPIS/releases/latest/download/update.json</string>
     <string name="about_update_checking">正在检查更新…</string>
     <string name="about_update_check_failed">检查更新失败，请稍后重试</string>
     <string name="about_update_up_to_date">当前已是最新版本</string>
@@ -447,15 +429,9 @@
     <string name="about_update_download_progress_without_total">%1$s / 未知大小</string>
     <string name="about_update_install_failed">无法拉起安装器，请手动安装</string>
     <string name="about_update_install_permission_required">请先允许本应用安装未知来源应用</string>
-    <string name="about_source_url">https://github.com/Kwensiu/DPIS</string>
-    <string name="about_releases_url">https://github.com/Kwensiu/DPIS/releases</string>
-    <string name="about_issues_url">https://github.com/Kwensiu/DPIS/issues</string>
     <string name="settings_language_label">语言</string>
     <string name="settings_language_dialog_title">选择语言</string>
     <string name="settings_language_follow_system">跟随系统</string>
-    <string name="settings_language_english">English</string>
-    <string name="settings_language_simplified_chinese">简体中文</string>
-    <string name="settings_language_russian">Русский</string>
     <string name="app_status_injected">已注入</string>
     <string name="app_status_not_injected">未注入</string>
     <string name="app_status_enabled">已启用</string>
