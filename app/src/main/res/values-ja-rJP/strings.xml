@@ -85,7 +85,7 @@
     <string name="home_feedback_title">Feedback</string>
     <string name="home_feedback_summary">Report on GitHub or join the community groups.</string>
     <string name="home_donate_title">Support the author</string>
-    <string name="home_donate_summary">Open local WeChat Pay and Alipay QR codes.</string>
+    <string name="home_donate_summary">Donate to the developer to support future updates.</string>
     <string name="dialog_confirm_button">Confirm</string>
     <string name="workspace_app">Apps</string>
     <string name="workspace_home">Home</string>
