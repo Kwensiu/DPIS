@@ -60,7 +60,7 @@
     <string name="mode_help_viewport_types_title">Interface adjustment modes</string>
     <string name="mode_help_font_features_title">Font features</string>
     <string name="help_tutorial_font_hooks_title">Custom font hooks</string>
-    <string name="help_tutorial_font_hooks_badge">10 routes</string>
+    <string name="help_tutorial_font_hooks_badge">8 Routes</string>
     <string name="help_tutorial_font_hooks_summary">Select per-app font scale write points to handle framework-specific font lookup paths.</string>
     <string name="help_tutorial_font_hook_resources_title">Resources font</string>
     <string name="help_tutorial_font_hook_resources_desc">Rewrites the font scale baseline read from app Resources.</string>
@@ -167,7 +167,7 @@
     <string name="quick_template_save_success">Template saved</string>
     <string name="quick_template_save_failed">Failed to save template</string>
     <string name="quick_template_delete_title">Delete template?</string>
-    <string name="quick_template_delete_message">Delete \&quot;%1$s\&quot;? This does not affect app configs already written.</string>
+    <string name="quick_template_delete_message">Delete &quot;%1$s&quot;? This does not affect app configs already written.</string>
     <string name="quick_template_delete_success">Template deleted</string>
     <string name="quick_template_delete_failed">Failed to delete template</string>
     <string name="quick_template_create_action">New template</string>
@@ -354,7 +354,7 @@
     <string name="settings_about_label">About</string>
     <string name="settings_about_hint">Version, source code, and feedback.</string>
     <string name="settings_donate_label">Support the author</string>
-    <string name="settings_donate_hint">Donate to the developer to support future updates</string>
+    <string name="settings_donate_hint">Donate to the developer to support future updates.</string>
     <string name="settings_config_backup_label">Config backup</string>
     <string name="settings_config_backup_hint">Export or import configurations.</string>
     <string name="config_backup_dialog_title">Config backup</string>
