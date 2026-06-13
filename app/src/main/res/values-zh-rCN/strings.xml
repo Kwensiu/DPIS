@@ -392,6 +392,9 @@
     <string name="donate_title">打赏作者</string>
     <string name="donate_message">感谢支持 DPIS 的持续开发</string>
     <string name="donate_trust_note">请注意模块安装来源可信，可选备注信息。</string>
+    <string name="donate_supporters_title">支持名单</string>
+    <string name="donate_supporters_summary">再次感谢，祝大家顺利健康、心想事成</string>
+    <string name="donate_supporters_sheet_note">名单会持续更新</string>
     <string name="donate_wechat_title">微信打赏</string>
     <string name="donate_alipay_title">支付宝</string>
     <string name="donate_wechat_qr_description">微信支付打赏二维码</string>

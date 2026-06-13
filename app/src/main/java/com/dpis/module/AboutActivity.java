@@ -10,9 +10,6 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
@@ -101,15 +98,10 @@ public final class AboutActivity extends LocalizedActivity {
     }
 
     private void applyInsets() {
+        View toolbar = findViewById(R.id.about_toolbar);
+        WindowInsetsBinder.applySafeDrawingPadding(toolbar, false, true, false, false);
         View content = findViewById(R.id.about_content);
-        final int baseTopPadding = content.getPaddingTop();
-        ViewCompat.setOnApplyWindowInsetsListener(content, (view, insets) -> {
-            Insets statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
-            view.setPadding(view.getPaddingLeft(), baseTopPadding + statusBars.top,
-                    view.getPaddingRight(), view.getPaddingBottom());
-            return insets;
-        });
-        ViewCompat.requestApplyInsets(content);
+        WindowInsetsBinder.applySafeDrawingPadding(content, false, false, false, true);
     }
 
     private void bindEntryRow(int rowId,

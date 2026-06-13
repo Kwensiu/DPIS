@@ -392,6 +392,9 @@
     <string name="donate_title">Поддержите автора</string>
     <string name="donate_message">Спасибо за поддержку разработки DPIS.</string>
     <string name="donate_trust_note">Доверять следует только QR-кодам из официальной подписанной сборки.</string>
+    <string name="donate_supporters_title">Список поддержавших</string>
+    <string name="donate_supporters_summary">Еще раз спасибо всем. Желаем здоровья и успехов.</string>
+    <string name="donate_supporters_sheet_note">Список будет пополняться</string>
     <string name="donate_wechat_title">WeChat Pay</string>
     <string name="donate_alipay_title">Alipay</string>
     <string name="donate_wechat_qr_description">QR-код для пожертвований WeChat Pay</string>

@@ -86,6 +86,14 @@ DPIS 以 [GPL-3.0-or-later](LICENSE) 许可发布。
 
 ## 引用与致谢
 
+### 翻译
+
+感谢以下人员为项目提供翻译，助力 DPIS 国际化
+
+- 俄语：[@Osean22](https://github.com/Osean22)
+
+### 项目
+
 DPIS 在实现和演进过程中，参考了以下开源项目的思路与实践，感谢这些项目及其贡献者：
 
 - [libxposed/api](https://github.com/libxposed/api)

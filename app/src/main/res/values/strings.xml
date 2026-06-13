@@ -411,6 +411,11 @@
     <string name="donate_title">Support the author</string>
     <string name="donate_message">Thanks for supporting DPIS development.</string>
     <string name="donate_trust_note">Only QR codes in the official signed build should be trusted.</string>
+    <string name="donate_supporters_title">Supporters</string>
+    <string name="donate_supporters_summary">Thank you again. Wishing everyone good health and smooth days.</string>
+    <string name="donate_supporters_sheet_note">This list will keep growing</string>
+    <string name="donate_supporter_nickyoung_name" translatable="false">\@Nick**oung</string>
+    <string name="donate_supporter_nickyoung_amount" translatable="false">10￥</string>
     <string name="donate_wechat_title">WeChat Pay</string>
     <string name="donate_alipay_title">Alipay</string>
     <string name="donate_wechat_qr_description">WeChat Pay donation QR code</string>

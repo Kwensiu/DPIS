@@ -88,11 +88,20 @@ public class AboutActivitySourceSmokeTest {
     @Test
     public void aboutLayoutUsesNamedDimensions() throws IOException {
         String layout = read("src/main/res/layout/activity_about.xml");
+        String source = read("src/main/java/com/dpis/module/AboutActivity.java");
 
+        assertTrue(layout.contains("android:id=\"@+id/about_toolbar\""));
+        assertTrue(layout.contains("android:id=\"@+id/about_scroll\""));
+        assertTrue(layout.contains("android:layout_height=\"0dp\""));
+        assertTrue(layout.contains("android:layout_weight=\"1\""));
+        assertTrue(layout.contains("@dimen/page_toolbar_padding_horizontal"));
         assertTrue(layout.contains("@dimen/about_content_padding_horizontal"));
         assertTrue(layout.contains("@dimen/page_card_corner_radius"));
         assertTrue(layout.contains("@dimen/about_app_card_padding"));
         assertTrue(layout.contains("@dimen/about_divider_margin_horizontal"));
+        assertTrue(source.contains("R.id.about_toolbar"));
+        assertTrue(source.contains("WindowInsetsBinder.applySafeDrawingPadding(toolbar, false, true, false, false);"));
+        assertTrue(source.contains("WindowInsetsBinder.applySafeDrawingPadding(content, false, false, false, true);"));
     }
 
     private static String read(String relativePath) throws IOException {

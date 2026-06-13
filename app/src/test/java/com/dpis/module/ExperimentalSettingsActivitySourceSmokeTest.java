@@ -22,11 +22,15 @@ public final class ExperimentalSettingsActivitySourceSmokeTest {
         assertTrue(source.contains("icon.setVisibility(View.GONE);"));
         assertTrue(source.contains("textColumnLayoutParams.setMarginStart(0);"));
         assertTrue(layout.contains("experimental_settings_toolbar"));
+        assertTrue(layout.contains("android:layout_height=\"0dp\""));
+        assertTrue(layout.contains("android:layout_weight=\"1\""));
         assertTrue(layout.contains("experimental_settings_back_button"));
         assertTrue(layout.contains("experimental_settings_title"));
         assertTrue(layout.contains("@string/system_settings_back"));
         assertTrue(layout.contains("@string/settings_experimental_title"));
         assertTrue(layout.contains("@dimen/page_toolbar_padding_horizontal"));
+        assertTrue(source.contains("WindowInsetsBinder.applySafeDrawingPadding(toolbar, false, true, false, false);"));
+        assertTrue(source.contains("WindowInsetsBinder.applySafeDrawingPadding(content, false, false, false, true);"));
         assertTrue(layout.contains("experimental_ttc_import_row"));
         assertTrue(layout.contains("com.google.android.material.card.MaterialCardView"));
         assertTrue(layout.contains("@dimen/experimental_settings_content_padding_horizontal"));

@@ -58,8 +58,12 @@ public class SystemServerSettingsActivityFontLibrarySourceTest {
     @Test
     public void fontLibraryPageContainsToolbarListAndImportFab() throws IOException {
         String layout = read("src/main/res/layout/activity_font_library.xml");
+        String source = read("src/main/java/com/dpis/module/FontLibraryActivity.java");
 
         assertTrue(layout.contains("@string/font_library_page_title"));
+        assertTrue(layout.contains("font_library_toolbar"));
+        assertTrue(layout.contains("android:layout_height=\"0dp\""));
+        assertTrue(layout.contains("android:layout_weight=\"1\""));
         assertTrue(layout.contains("font_library_back_button"));
         assertTrue(layout.contains("font_library_import_fab"));
         assertTrue(layout.contains("font_library_list"));
@@ -67,6 +71,7 @@ public class SystemServerSettingsActivityFontLibrarySourceTest {
         assertTrue(layout.contains("@dimen/font_library_list_padding_bottom"));
         assertTrue(layout.contains("@dimen/font_library_empty_padding"));
         assertTrue(layout.contains("@dimen/floating_actions_elevation"));
+        assertTrue(source.contains("R.id.font_library_toolbar"));
     }
 
     private static String read(String relativePath) throws IOException {

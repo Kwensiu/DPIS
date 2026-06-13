@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 
 import androidx.appcompat.widget.AppCompatImageView;
 
@@ -15,6 +16,8 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textview.MaterialTextView;
 
 final class HomeWorkspaceBinder {
+    private int statusCardEqualizationGeneration = 0;
+
     static final class State {
         final boolean xposedModuleActivated;
         final int enabledConfiguredAppCount;
@@ -160,6 +163,7 @@ final class HomeWorkspaceBinder {
                 workspaceView.findViewById(R.id.home_templates_value),
                 Integer.toString(state.templateCount)
         );
+        equalizeStatusCardHeights(workspaceView);
         bindStatusCardActions(workspaceView, state);
         bindInfoRow(
                 workspaceView.findViewById(R.id.home_info_version),
@@ -209,6 +213,74 @@ final class HomeWorkspaceBinder {
                 R.drawable.bg_home_info_row_bottom,
                 false
         );
+    }
+
+    private void equalizeStatusCardHeights(View workspaceView) {
+        int generation = ++statusCardEqualizationGeneration;
+        View[] cards = {
+                workspaceView.findViewById(R.id.home_configured_apps_card),
+                workspaceView.findViewById(R.id.home_imported_fonts_card),
+                workspaceView.findViewById(R.id.home_templates_card)
+        };
+        for (View card : cards) {
+            setLayoutHeight(card, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+        ViewTreeObserver observer = workspaceView.getViewTreeObserver();
+        observer.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                ViewTreeObserver currentObserver = workspaceView.getViewTreeObserver();
+                if (currentObserver.isAlive()) {
+                    currentObserver.removeOnPreDrawListener(this);
+                }
+                if (generation != statusCardEqualizationGeneration) {
+                    return true;
+                }
+                applyEqualStatusCardHeight(cards);
+                return true;
+            }
+        });
+        workspaceView.requestLayout();
+    }
+
+    private static void applyEqualStatusCardHeight(View[] cards) {
+        if (cards == null) {
+            return;
+        }
+        int targetHeight = 0;
+        for (View card : cards) {
+            if (card != null) {
+                targetHeight = Math.max(targetHeight, card.getHeight());
+            }
+        }
+        if (targetHeight <= 0) {
+            return;
+        }
+        for (View card : cards) {
+            setLayoutHeight(card, targetHeight);
+        }
+    }
+
+    static int equalStatusCardHeightForTest(int... measuredHeights) {
+        int targetHeight = 0;
+        if (measuredHeights != null) {
+            for (int measuredHeight : measuredHeights) {
+                targetHeight = Math.max(targetHeight, measuredHeight);
+            }
+        }
+        return Math.max(0, targetHeight);
+    }
+
+    private static void setLayoutHeight(View view, int height) {
+        if (view == null) {
+            return;
+        }
+        ViewGroup.LayoutParams params = view.getLayoutParams();
+        if (params == null || params.height == height) {
+            return;
+        }
+        params.height = height;
+        view.setLayoutParams(params);
     }
 
     private void bindStatusCardActions(View workspaceView, State state) {

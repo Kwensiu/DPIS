@@ -261,6 +261,16 @@
     <dimen name="donate_qr_max_height">360dp</dimen>
     <dimen name="donate_qr_padding">12dp</dimen>
     <dimen name="donate_qr_card_gap">12dp</dimen>
+    <dimen name="donate_supporters_summary_spacing_top">4dp</dimen>
+    <dimen name="donate_supporters_chevron_size">24dp</dimen>
+    <dimen name="donate_supporters_chevron_spacing_start">12dp</dimen>
+    <dimen name="donate_supporters_sheet_min_height">280dp</dimen>
+    <dimen name="donate_supporters_sheet_summary_spacing_top">8dp</dimen>
+    <dimen name="donate_supporters_sheet_list_spacing_top">12dp</dimen>
+    <dimen name="donate_supporters_sheet_row_min_height">48dp</dimen>
+    <dimen name="donate_supporters_sheet_row_padding">16dp</dimen>
+    <dimen name="donate_supporters_sheet_note_spacing_top">12dp</dimen>
+    <dimen name="donate_supporters_amount_spacing_start">16dp</dimen>
 
     <!-- App config bottom sheet. -->
     <dimen name="dialog_mode_toggle_row_height">56dp</dimen>

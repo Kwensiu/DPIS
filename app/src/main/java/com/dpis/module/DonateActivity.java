@@ -6,9 +6,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageButton;
 
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 public final class DonateActivity extends LocalizedActivity {
     static Intent createIntent(Context context) {
@@ -23,17 +22,23 @@ public final class DonateActivity extends LocalizedActivity {
 
         ImageButton backButton = findViewById(R.id.donate_back_button);
         backButton.setOnClickListener(v -> finish());
+
+        View supportersCard = findViewById(R.id.donate_supporters_card);
+        supportersCard.setOnClickListener(v -> showSupportersSheet());
     }
 
     private void applyInsets() {
+        View toolbar = findViewById(R.id.donate_toolbar);
+        WindowInsetsBinder.applySafeDrawingPadding(toolbar, false, true, false, false);
         View content = findViewById(R.id.donate_content);
-        final int baseTopPadding = content.getPaddingTop();
-        ViewCompat.setOnApplyWindowInsetsListener(content, (view, insets) -> {
-            Insets statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
-            view.setPadding(view.getPaddingLeft(), baseTopPadding + statusBars.top,
-                    view.getPaddingRight(), view.getPaddingBottom());
-            return insets;
-        });
-        ViewCompat.requestApplyInsets(content);
+        WindowInsetsBinder.applySafeDrawingPadding(content, false, false, false, true);
+    }
+
+    private void showSupportersSheet() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        dialog.setContentView(R.layout.sheet_donate_supporters);
+        dialog.getBehavior().setSkipCollapsed(true);
+        dialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
+        dialog.show();
     }
 }

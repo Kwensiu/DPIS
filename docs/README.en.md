@@ -85,6 +85,14 @@ DPIS is released under [GPL-3.0-or-later](../LICENSE).
 
 ## References and Thanks
 
+### Translation
+
+Thanks to the following people for providing translations for the project, helping DPIS internationalization
+
+- Russian: [@Osean22](https://github.com/Osean22)
+
+### Project
+
 DPIS references ideas and implementation patterns from the following open-source projects:
 
 - [libxposed/api](https://github.com/libxposed/api)
