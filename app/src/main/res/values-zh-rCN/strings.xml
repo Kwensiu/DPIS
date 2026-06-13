@@ -85,7 +85,7 @@
     <string name="home_feedback_title">问题反馈</string>
     <string name="home_feedback_summary">可前往 GitHub 反馈或加入群组。</string>
     <string name="home_donate_title">打赏作者</string>
-    <string name="home_donate_summary">打开本地微信支付和支付宝二维码</string>
+    <string name="home_donate_summary">向开发者捐赠以支持后续更新</string>
     <string name="dialog_confirm_button">确认</string>
     <string name="workspace_app">应用</string>
     <string name="workspace_home">主页</string>

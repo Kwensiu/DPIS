@@ -4,8 +4,16 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.junit.Test;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 public class AppConfigDialogBinderSourceSmokeTest {
     @Test
@@ -257,7 +265,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertFalse(source.contains("bindHyperOsNativeWarning("));
         assertFalse(source.contains("resolveHyperOsNativeWarningText("));
         assertFalse(source.contains("HyperOsNativeProxyStatus.inspect(activity, item.packageName)"));
-        assertFalse(layout.contains("dialog_hyperos_native_warning"));
+        assertFalse(layout.contains("hyperos_native_warning"));
     }
 
     @Test
@@ -510,13 +518,20 @@ public class AppConfigDialogBinderSourceSmokeTest {
     }
 
     @Test
-    public void simplifiedChineseHyperOsProxyMessagesAreLocalized() throws IOException {
+    public void simplifiedChineseHyperOsProxyFailureMessagesAreLocalized()
+            throws IOException, ParserConfigurationException, SAXException {
         String strings = read("src/main/res/values-zh-rCN/strings.xml");
+        String applyFailed = readStringValue(
+                "src/main/res/values-zh-rCN/strings.xml",
+                "dialog_hyperos_native_proxy_apply_failed");
+        String unmountFailed = readStringValue(
+                "src/main/res/values-zh-rCN/strings.xml",
+                "dialog_hyperos_native_proxy_unmount_failed");
 
         assertFalse(strings.contains("HyperOS Native Proxy applied. Restart target app."));
         assertFalse(strings.contains("HyperOS Native Proxy apply failed. Check root and native directory."));
-        assertTrue(strings.contains("HyperOS &#x517C;&#x5BB9;&#x652F;&#x6301;"));
-        assertTrue(strings.contains("&#x8BBE;&#x7F6E;&#x5931;&#x8D25;"));
+        assertTrue(applyFailed.contains("设置失败"));
+        assertTrue(unmountFailed.contains("回滚失败"));
     }
 
     @Test
@@ -632,6 +647,23 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     private static String read(String relativePath) throws IOException {
         return SourceSmokeTestPaths.read(relativePath);
+    }
+
+    private static String readStringValue(String relativePath, String name)
+            throws IOException, ParserConfigurationException, SAXException {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setIgnoringComments(true);
+        try (InputStream input = SourceSmokeTestPaths.open(relativePath)) {
+            Document document = factory.newDocumentBuilder().parse(input);
+            NodeList strings = document.getElementsByTagName("string");
+            for (int i = 0; i < strings.getLength(); i++) {
+                Element string = (Element) strings.item(i);
+                if (name.equals(string.getAttribute("name"))) {
+                    return string.getTextContent();
+                }
+            }
+        }
+        throw new IllegalArgumentException("Missing string resource: " + name);
     }
 
     private static int countOccurrences(String source, String needle) {
