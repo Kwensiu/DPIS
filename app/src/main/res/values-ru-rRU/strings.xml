@@ -85,7 +85,7 @@
     <string name="home_feedback_title">Отзывы</string>
     <string name="home_feedback_summary">Сообщите об этом на GitHub или присоединяйтесь к группам сообщества.</string>
     <string name="home_donate_title">Поддержите автора</string>
-    <string name="home_donate_summary">Пожертвовать разработчику, чтобы поддержать разработку и исправления.</string>
+    <string name="home_donate_summary">Open local WeChat Pay and Alipay QR codes.</string>
     <string name="dialog_confirm_button">Подтвердить</string>
     <string name="workspace_app">Приложения</string>
     <string name="workspace_home">Главная</string>
@@ -424,7 +424,6 @@
     <string name="about_update_download_failed">Не удалось загрузить обновление. Повторите попытку.</string>
     <string name="about_update_download_canceled">Загрузка отменена</string>
     <string name="about_update_download_progress_preparing">Подготовка к загрузке...</string>
-    <string name="about_update_download_progress_with_percent">%1$d%% - %2$s / %3$s</string>
     <string name="about_update_download_progress_without_total">%1$s / неизвестный размер</string>
     <string name="about_update_install_failed">Не удалось запустить программу установки. Установите вручную.</string>
     <string name="about_update_install_permission_required">Разрешить установку неизвестных приложений</string>
