@@ -14,7 +14,7 @@ plugins {
     alias(libs.plugins.aboutlibraries)
 }
 
-private val appVersionName = "1.12.1" // x-release-please-version
+private val appVersionName = "1.12.2" // x-release-please-version
 private val defaultNdkVersion = "28.2.13676358"
 private val defaultCmakeVersion = "3.22.1"
 
