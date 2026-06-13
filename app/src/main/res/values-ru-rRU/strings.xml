@@ -74,7 +74,6 @@
     <string name="help_tutorial_font_hook_paint_desc">Обрабатывает текст, нарисованный пользователем, на слое &quot;Paint&quot;.</string>
     <string name="help_tutorial_font_hook_webview_title">Масштабирование текста в WebView</string>
     <string name="help_tutorial_font_hook_webview_desc">Регулирует масштаб текста в WebView.</string>
-    <string name="help_tutorial_font_hook_flutter_title">Настройки Flutter</string>
     <string name="help_tutorial_font_hook_flutter_desc">Переопределяет значение параметра textScaleFactor, используемое движком Flutter.</string>
     <string name="help_tutorial_font_hook_hyperos_title">Flutter, встроенный в HyperOS</string>
     <string name="help_tutorial_font_hook_hyperos_desc">Дополняет путь к шрифтам, используемый в контейнерах Flutter, встроенных в HyperOS.</string>
@@ -86,7 +85,7 @@
     <string name="home_feedback_title">Отзывы</string>
     <string name="home_feedback_summary">Сообщите об этом на GitHub или присоединяйтесь к группам сообщества.</string>
     <string name="home_donate_title">Поддержите автора</string>
-    <string name="home_donate_summary">Open local WeChat Pay and Alipay QR codes.</string>
+    <string name="home_donate_summary">Пожертвовать разработчику, чтобы поддержать разработку и исправления.</string>
     <string name="dialog_confirm_button">Подтвердить</string>
     <string name="workspace_app">Приложения</string>
     <string name="workspace_home">Главная</string>
@@ -395,8 +394,8 @@
     <string name="donate_trust_note">Доверять следует только QR-кодам из официальной подписанной сборки.</string>
     <string name="donate_wechat_title">WeChat Pay</string>
     <string name="donate_alipay_title">Alipay</string>
-    <string name="donate_wechat_qr_description">WeChat Pay donation QR code</string>
-    <string name="donate_alipay_qr_description">Alipay donation QR code</string>
+    <string name="donate_wechat_qr_description">QR-код для пожертвований WeChat Pay</string>
+    <string name="donate_alipay_qr_description">QR-код для пожертвований Alipay</string>
     <string name="open_source_license">Лицензии с открытым исходным кодом</string>
     <string name="open_source_license_settings_description">Сторонние библиотеки и лицензии</string>
     <string name="open_source_license_project_detail">Программа DPIS распространяется по лицензии GPL версии 3.0 или более поздней. Источник: %1$s</string>
