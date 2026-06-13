@@ -55,7 +55,8 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(strings.contains("settings_section_other"));
         assertTrue(strings.contains("settings_section_about"));
         assertTrue(strings.contains("settings_experimental_title"));
-        assertTrue(strings.contains("settings_experimental_empty_state"));
+        assertTrue(strings.contains("settings_ttc_import_label"));
+        assertTrue(strings.contains("settings_ttc_import_hint"));
         assertTrue(strings.contains("settings_about_label"));
         assertTrue(strings.contains("settings_donate_label"));
         assertTrue(strings.contains("settings_config_backup_label"));

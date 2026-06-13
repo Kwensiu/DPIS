@@ -153,13 +153,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                 R.string.settings_config_backup_label,
                 R.string.settings_config_backup_hint,
                 this::showConfigBackupDialog);
-        languageEntryRow = bindEntryRow(
-                R.id.row_language,
-                R.drawable.ic_language_24,
-                R.string.settings_language_label,
-                R.string.settings_language_hint,
-                this::showLanguageDialog);
-        updateLanguageEntrySubtitle();
+        bindLanguageRow();
         clearCacheEntryRow = bindEntryRow(
                 R.id.row_clear_cache,
                 R.drawable.ic_mop_24,
@@ -368,6 +362,16 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         subtitleView.setText(subtitleRes);
         row.setOnClickListener(clickListener);
         return row;
+    }
+
+    private void bindLanguageRow() {
+        languageEntryRow = findViewById(R.id.row_language);
+        ImageView iconView = languageEntryRow.findViewById(R.id.setting_icon);
+        MaterialTextView titleView = languageEntryRow.findViewById(R.id.setting_title);
+        iconView.setImageResource(R.drawable.ic_language_24);
+        titleView.setText(R.string.settings_language_label);
+        updateLanguageEntrySubtitle();
+        languageEntryRow.setOnClickListener(this::showLanguageDialog);
     }
 
     private void bindInterfaceScaleRow() {
