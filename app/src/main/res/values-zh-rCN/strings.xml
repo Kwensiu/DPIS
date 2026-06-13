@@ -25,7 +25,7 @@
     <string name="dialog_typeface_done_action">完成</string>
     <string name="status_save_button">保存</string>
     <string name="status_save_success_inline">已保存</string>
-    <string name="status_save_requires_init">remote preferences 未初始化，先重新打开模块 App</string>
+    <string name="status_save_requires_init">远端配置未初始化，先重新打开模块 App。</string>
     <string name="status_save_invalid">输入无效</string>
     <string name="search_hint">搜索应用名或包名</string>
     <string name="template_search_hint">搜索模板名</string>
@@ -74,7 +74,6 @@
     <string name="help_tutorial_font_hook_paint_desc">从 Paint 层兜底处理自绘文字大小。</string>
     <string name="help_tutorial_font_hook_webview_title">WebView 文本缩放</string>
     <string name="help_tutorial_font_hook_webview_desc">调整 WebView 文本缩放比例。</string>
-    <string name="help_tutorial_font_hook_flutter_title">Flutter settings</string>
     <string name="help_tutorial_font_hook_flutter_desc">改写 Flutter 引擎读取到的 textScaleFactor。</string>
     <string name="help_tutorial_font_hook_hyperos_title">HyperOS 原生 Flutter</string>
     <string name="help_tutorial_font_hook_hyperos_desc">补充 HyperOS 原生 Flutter 容器的字体链路。</string>
@@ -263,7 +262,7 @@
     <string name="startup_disclaimer_message">本模块基于 Root/LSPosed 环境运行，可能导致系统不稳定、功能异常、数据丢失、设备变砖、无法开机或账号风控等风险。\n\n你应确认已备份重要数据，并自行承担安装、使用、卸载本模块产生的风险与后果。\n\n在法律允许范围内，开发者不对因使用或误用本模块造成的间接损失、数据损失、收益损失承担责任。</string>
     <string name="startup_disclaimer_checkbox_text">我已阅读并同意</string>
     <string name="startup_disclaimer_accept_button">同意并继续</string>
-    <string name="startup_disclaimer_save_failed">保存状态失败，请重试</string>
+    <string name="startup_disclaimer_save_failed">保存状态失败,请重试。</string>
     <string name="dialog_cancel_button">关闭</string>
     <string name="dialog_close_button">关闭</string>
     <string name="filter_sheet_title">列表筛选</string>
@@ -328,9 +327,9 @@
     <string name="font_library_import_success">已导入 %1$s</string>
     <string name="font_library_import_count_success">已导入 %1$d 个 face</string>
     <string name="font_library_import_failed">导入字体失败</string>
-    <string name="font_library_ttc_select_title">选择要导入的字形</string>
+    <string name="font_library_ttc_select_title">选择导入 face</string>
     <string name="font_library_ttc_selected_count">已选择 %1$d</string>
-    <string name="font_library_ttc_failed_faces">%1$d 个字形无法导入</string>
+    <string name="font_library_ttc_failed_faces">%1$d 个 face 无法导入</string>
     <string name="font_library_ttc_select_all">全选</string>
     <string name="font_library_ttc_deselect_all">取消全选</string>
     <string name="font_library_delete_action">删除</string>
