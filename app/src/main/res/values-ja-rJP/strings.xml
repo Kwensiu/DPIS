@@ -74,7 +74,6 @@
     <string name="help_tutorial_font_hook_paint_desc">Catches custom-drawn text at the Paint layer.</string>
     <string name="help_tutorial_font_hook_webview_title">WebView text zoom</string>
     <string name="help_tutorial_font_hook_webview_desc">Adjusts WebView text zoom.</string>
-    <string name="help_tutorial_font_hook_flutter_title">Flutter settings</string>
     <string name="help_tutorial_font_hook_flutter_desc">Rewrites the textScaleFactor read by the Flutter engine.</string>
     <string name="help_tutorial_font_hook_hyperos_title">HyperOS native Flutter</string>
     <string name="help_tutorial_font_hook_hyperos_desc">Supplements the font path used by HyperOS native Flutter containers.</string>
@@ -425,7 +424,6 @@
     <string name="about_update_download_failed">Failed to download update. Try again.</string>
     <string name="about_update_download_canceled">Download canceled</string>
     <string name="about_update_download_progress_preparing">Preparing download...</string>
-    <string name="about_update_download_progress_with_percent">%1$d%% - %2$s / %3$s</string>
     <string name="about_update_download_progress_without_total">%1$s / unknown size</string>
     <string name="about_update_install_failed">Installer failed to open. Install manually.</string>
     <string name="about_update_install_permission_required">Grant permission to install unknown apps</string>
