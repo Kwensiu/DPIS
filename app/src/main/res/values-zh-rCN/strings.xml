@@ -25,7 +25,7 @@
     <string name="dialog_typeface_done_action">完成</string>
     <string name="status_save_button">保存</string>
     <string name="status_save_success_inline">已保存</string>
-    <string name="status_save_requires_init">远端配置未初始化，先重新打开模块 App。</string>
+    <string name="status_save_requires_init">remote preferences 未初始化，先重新打开模块 App</string>
     <string name="status_save_invalid">输入无效</string>
     <string name="search_hint">搜索应用名或包名</string>
     <string name="template_search_hint">搜索模板名</string>
@@ -85,7 +85,7 @@
     <string name="home_feedback_title">问题反馈</string>
     <string name="home_feedback_summary">可前往 GitHub 反馈或加入群组。</string>
     <string name="home_donate_title">打赏作者</string>
-    <string name="home_donate_summary">向开发者捐赠以支持开发修复</string>
+    <string name="home_donate_summary">打开本地微信支付和支付宝二维码</string>
     <string name="dialog_confirm_button">确认</string>
     <string name="workspace_app">应用</string>
     <string name="workspace_home">主页</string>
@@ -262,7 +262,7 @@
     <string name="startup_disclaimer_message">本模块基于 Root/LSPosed 环境运行，可能导致系统不稳定、功能异常、数据丢失、设备变砖、无法开机或账号风控等风险。\n\n你应确认已备份重要数据，并自行承担安装、使用、卸载本模块产生的风险与后果。\n\n在法律允许范围内，开发者不对因使用或误用本模块造成的间接损失、数据损失、收益损失承担责任。</string>
     <string name="startup_disclaimer_checkbox_text">我已阅读并同意</string>
     <string name="startup_disclaimer_accept_button">同意并继续</string>
-    <string name="startup_disclaimer_save_failed">保存状态失败,请重试。</string>
+    <string name="startup_disclaimer_save_failed">记录同意状态失败，请重试</string>
     <string name="dialog_cancel_button">关闭</string>
     <string name="dialog_close_button">关闭</string>
     <string name="filter_sheet_title">列表筛选</string>
@@ -424,7 +424,6 @@
     <string name="about_update_download_failed">下载更新失败，请重试</string>
     <string name="about_update_download_canceled">已取消下载更新</string>
     <string name="about_update_download_progress_preparing">正在准备下载…</string>
-    <string name="about_update_download_progress_with_percent">%1$d%% · %2$s / %3$s</string>
     <string name="about_update_download_progress_without_total">%1$s / 未知大小</string>
     <string name="about_update_install_failed">无法拉起安装器，请手动安装</string>
     <string name="about_update_install_permission_required">请先允许本应用安装未知来源应用</string>
