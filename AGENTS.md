@@ -42,6 +42,14 @@ shared route code, use the project-local playbook in
 `docs/agents/skills/dpis-runtime-route-diagnose/SKILL.md`. This is a
 project-local skill bundle and does not modify global agent skills.
 
+### DPIS localization playbook
+
+When a task mentions translations, localization, l10n, locale resource files,
+language selector entries, `AppLocaleManager`, Crowdin, machine translation,
+or localization review, use the project-local playbook in
+`docs/agents/skills/dpis-localization/SKILL.md`. This is a project-local skill
+bundle and does not modify global agent skills.
+
 ## Build, Test, and Development Commands
 - Build debug APKs (both flavors):
   - `./gradlew :app:assembleModernDebug :app:assembleLegacyDebug`

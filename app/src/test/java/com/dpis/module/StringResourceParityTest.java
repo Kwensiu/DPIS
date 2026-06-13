@@ -19,7 +19,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 public class StringResourceParityTest {
     @Test
-    public void simplifiedChineseStringsExposeOnlyTranslatableNames()
+    public void localizedStringsExposeOnlyTranslatableNames()
             throws IOException, ParserConfigurationException, SAXException {
         Set<String> defaultNames = readStringNames(
                 "src/main/res/values/strings.xml",
@@ -27,12 +27,13 @@ public class StringResourceParityTest {
         Set<String> defaultNonTranslatableNames = readStringNames(
                 "src/main/res/values/strings.xml",
                 false);
-        Set<String> chineseNames = readStringNames("src/main/res/values-zh-rCN/strings.xml");
 
-        assertEquals(defaultNames, chineseNames);
-        for (String name : defaultNonTranslatableNames) {
-            assertTrue(!chineseNames.contains(name));
-        }
+        assertLocalizedStringNames(defaultNames, defaultNonTranslatableNames,
+                "src/main/res/values-zh-rCN/strings.xml");
+        assertLocalizedStringNames(defaultNames, defaultNonTranslatableNames,
+                "src/main/res/values-ja-rJP/strings.xml");
+        assertLocalizedStringNames(defaultNames, defaultNonTranslatableNames,
+                "src/main/res/values-ru-rRU/strings.xml");
     }
 
     @Test
@@ -44,6 +45,8 @@ public class StringResourceParityTest {
         assertTrue(defaultStrings.contains("<string name=\"module_description\">Per-app DPI &amp; text size</string>"));
         assertEquals("\u7B80\u4F53\u4E2D\u6587",
                 readStringValue("src/main/res/values/strings.xml", "settings_language_simplified_chinese"));
+        assertEquals("\u65E5\u672C\u8A9E\uFF08\u672A\u6821\u6B63\uFF09",
+                readStringValue("src/main/res/values/strings.xml", "settings_language_japanese"));
         assertEquals("\u0420\u0443\u0441\u0441\u043A\u0438\u0439",
                 readStringValue("src/main/res/values/strings.xml", "settings_language_russian"));
         assertEquals("\u8BED\u8A00",
@@ -72,6 +75,8 @@ public class StringResourceParityTest {
         assertTrue(source.contains("AppLocaleManager.selectedLabelResId(activity)"));
         assertTrue(!source.contains("settings_language_hint"));
         assertTrue(localeManager.contains("SUPPORTED_LANGUAGES = List.of("));
+        assertTrue(localeManager.contains("TAG_JAPANESE"));
+        assertTrue(localeManager.contains("R.string.settings_language_japanese"));
         assertTrue(localeManager.contains("TAG_RUSSIAN"));
         assertTrue(localeManager.contains("R.string.settings_language_russian"));
         assertTrue(localeManager.contains("static List<LanguageOption> supportedLanguages()"));
@@ -120,6 +125,19 @@ public class StringResourceParityTest {
     private static Set<String> readStringNames(String relativePath)
             throws IOException, ParserConfigurationException, SAXException {
         return readStringNames(relativePath, null);
+    }
+
+    private static void assertLocalizedStringNames(
+            Set<String> defaultNames,
+            Set<String> defaultNonTranslatableNames,
+            String localizedPath)
+            throws IOException, ParserConfigurationException, SAXException {
+        Set<String> localizedNames = readStringNames(localizedPath);
+
+        assertEquals(defaultNames, localizedNames);
+        for (String name : defaultNonTranslatableNames) {
+            assertTrue(!localizedNames.contains(name));
+        }
     }
 
     private static Set<String> readStringNames(String relativePath, Boolean translatable)

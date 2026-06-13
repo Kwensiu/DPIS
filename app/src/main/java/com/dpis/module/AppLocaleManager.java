@@ -11,6 +11,7 @@ final class AppLocaleManager {
     static final String TAG_FOLLOW_SYSTEM = "";
     static final String TAG_ENGLISH = "en";
     static final String TAG_SIMPLIFIED_CHINESE = "zh-CN";
+    static final String TAG_JAPANESE = "ja-JP";
     static final String TAG_RUSSIAN = "ru";
 
     private static final String PREFS_NAME = "app_locale";
@@ -19,6 +20,7 @@ final class AppLocaleManager {
             new LanguageOption(TAG_FOLLOW_SYSTEM, R.string.settings_language_follow_system),
             new LanguageOption(TAG_ENGLISH, R.string.settings_language_english),
             new LanguageOption(TAG_SIMPLIFIED_CHINESE, R.string.settings_language_simplified_chinese),
+            new LanguageOption(TAG_JAPANESE, R.string.settings_language_japanese),
             new LanguageOption(TAG_RUSSIAN, R.string.settings_language_russian));
 
     static final class LanguageOption {

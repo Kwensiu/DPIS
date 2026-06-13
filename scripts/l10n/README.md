@@ -45,21 +45,7 @@ New untranslated keys will appear as commented-out lines in
 `docs/generated/ru-missing-strings.xml`. They will fall back to English until
 someone translates them.
 
-### Scenario 4: Check the result before committing
-
-Run:
-
-```bash
-./gradlew :app:testModern101DebugUnitTest --tests com.dpis.module.StringResourceParityTest
-```
-
-For a quick build check, run:
-
-```bash
-./gradlew :app:assembleModern101Debug
-```
-
-### Scenario 5: Find possibly unused string keys
+### Scenario 4: Find possibly unused string keys
 
 Run:
 
@@ -116,21 +102,7 @@ python scripts/l10n/normalize-android-strings.py ru_string_02.xml \
 新的未翻译 key 会以注释行出现在 `docs/generated/ru-missing-strings.xml`。
 在有人翻译前，它们会自动回退到英文。
 
-### 场景 4：提交前检查
-
-运行：
-
-```bash
-./gradlew :app:testModern101DebugUnitTest --tests com.dpis.module.StringResourceParityTest
-```
-
-如果想快速确认能构建，再运行：
-
-```bash
-./gradlew :app:assembleModern101Debug
-```
-
-### 场景 5：查看疑似已经没用的字符串 key
+### 场景 4：查看疑似已经没用的字符串 key
 
 运行：
 
