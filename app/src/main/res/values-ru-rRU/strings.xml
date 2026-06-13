@@ -85,7 +85,7 @@
     <string name="home_feedback_title">Отзывы</string>
     <string name="home_feedback_summary">Сообщите об этом на GitHub или присоединяйтесь к группам сообщества.</string>
     <string name="home_donate_title">Поддержите автора</string>
-    <string name="home_donate_summary">Пожертвуйте разработчику, чтобы поддержать будущие обновления.</string>
+    <string name="home_donate_summary">Пожертвовать разработчику для поддержки будущих обновлений.</string>
     <string name="dialog_confirm_button">Подтвердить</string>
     <string name="workspace_app">Приложения</string>
     <string name="workspace_home">Главная</string>
