@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">DPIS</string>
     <string name="module_description">Разрешение (DPI) &amp; размер текста для каждого приложения</string>
     <string name="dialog_viewport_hint_scale">Масштаб интерфейса: 30–300 %</string>
     <string name="dialog_viewport_hint_absolute">Мин ширина в dp</string>
@@ -40,7 +39,6 @@
     <string name="land_detail_hook_chain_viewport_system">Интерфейс [Система]</string>
     <string name="land_detail_hook_chain_viewport_compat">Интерфейс [Совместимость]</string>
     <string name="land_detail_hook_chain_font_count">Цепочка шрифтов [%1$d/%2$d]</string>
-    <string name="land_detail_hook_chain_separator">·</string>
     <string name="help_tutorial_system_title">Режим системы</string>
     <string name="help_tutorial_system_badge">Родной</string>
     <string name="help_tutorial_system_summary">Обеспечивает масштабирование с помощью системных хуков для более естественного отображения.</string>
@@ -87,11 +85,6 @@
     <string name="home_mode_help_entry_summary">Ознакомьтесь с общими рекомендациями по настройке, настройке интерфейса и особенностями шрифтов.</string>
     <string name="home_feedback_title">Отзывы</string>
     <string name="home_feedback_summary">Сообщите об этом на GitHub или присоединяйтесь к группам сообщества.</string>
-    <string name="home_feedback_github">GitHub</string>
-    <string name="home_feedback_qq">QQ</string>
-    <string name="home_feedback_telegram">TG</string>
-    <string name="home_feedback_qq_url">https://qm.qq.com/q/N8Rr2Kp94a</string>
-    <string name="home_feedback_telegram_url">https://t.me/dpis_channel</string>
     <string name="home_donate_title">Поддержите автора</string>
     <string name="home_donate_summary">Open local WeChat Pay and Alipay QR codes.</string>
     <string name="dialog_confirm_button">Подтвердить</string>
@@ -102,7 +95,6 @@
     <string name="workspace_settings">Настройки</string>
     <string name="system_font_scale_title">Размер системного шрифта</string>
     <string name="system_font_scale_subtitle">Точная настройка глобального размера шрифта</string>
-    <string name="system_font_scale_pending_value">%1$d%%</string>
     <string name="system_font_scale_badge_permission_required">Требуется разрешение</string>
     <string name="system_font_scale_badge_modified">Модифицированный</string>
     <string name="system_font_scale_badge_unavailable">Недоступный</string>
@@ -116,12 +108,10 @@
     <string name="system_font_scale_preview_body">Основной текст соответствует заданному размеру шрифта.</string>
     <string name="system_font_scale_restore_default">Восстановить 100%</string>
     <string name="system_font_scale_write_failed">Система отклонила изменение шрифта</string>
-    <string name="home_workspace_title">DPIS</string>
     <string name="home_workspace_subtitle">Настройка DPI &amp; размера текста для отдельных приложений</string>
     <string name="home_workspace_status_enabled">Включено</string>
     <string name="home_workspace_status_enable_in_lsposed">Включите модуль в LSPosed</string>
     <string name="home_workspace_status_configured_apps">Настроенные приложения</string>
-    <string name="home_workspace_status_configured_apps_value">%1$d/%2$d</string>
     <string name="home_workspace_status_imported_fonts">Импортированные шрифты</string>
     <string name="home_workspace_status_templates">Шаблоны</string>
     <string name="home_update_checking">Проверка наличия обновлений</string>
@@ -135,9 +125,7 @@
     <string name="home_update_action_install_ready">Установить</string>
     <string name="home_workspace_basic_info_title">Основная информация</string>
     <string name="home_workspace_info_version">Версия модуля</string>
-    <string name="home_workspace_info_version_value">%1$s (%2$d)</string>
     <string name="home_workspace_info_system">Система</string>
-    <string name="home_workspace_info_system_value">%1$s (SDK %2$d)</string>
     <string name="home_workspace_info_root">ROOT</string>
     <string name="home_workspace_info_root_checking">Проверка</string>
     <string name="home_workspace_info_root_available">Выдано (%1$s)</string>
@@ -252,7 +240,6 @@
     <string name="dialog_font_hook_domain_textview_current_px_fallback">Резервный вариант TextView текущий px</string>
     <string name="dialog_font_hook_domain_paint_text_size_fallback">Резервный вариант для размера текста</string>
     <string name="dialog_font_hook_domain_webview_text_zoom">Масштабирование текста в WebView</string>
-    <string name="dialog_font_hook_domain_flutter_settings">Настройки Flutter</string>
     <string name="dialog_font_hook_domain_hyperos_native_flutter">Flutter, встроенный в HyperOS</string>
     <string name="dialog_hyperos_native_proxy_apply_failed">Настройка совместимости с HyperOS завершилась сбоем. Проверьте наличие прав root и повторите попытку.</string>
     <string name="dialog_hyperos_native_proxy_unmount_failed">Ошибка при откате совместимости HyperOS. Проверьте права администратора и повторите попытку.</string>
@@ -313,8 +300,6 @@
     <string name="font_debug_clear_done">Отладочные данные удалены</string>
     <string name="font_debug_mode_button_chain">Только цепь</string>
     <string name="font_debug_mode_button_chain_view">Цепочка + просмотр</string>
-    <string name="font_debug_window_button_5s">5с</string>
-    <string name="font_debug_window_button_30s">30с</string>
     <string name="font_debug_window_button_all">Всего</string>
     <string name="system_settings_save_failed">Сохранение не удалось. Попробуйте ещё раз.</string>
     <string name="font_debug_last_updated">Обновлено: %1$s | События: %2$d</string>
@@ -334,7 +319,6 @@
     <string name="settings_font_library_hint">Импортируйте шрифты и управляйте ими для замены в отдельных приложениях.</string>
     <string name="settings_interface_scale_label">Масштаб интерфейса</string>
     <string name="settings_interface_scale_hint">Отрегулируйте плотность экрана DPIS.</string>
-    <string name="settings_interface_scale_value">%1$d%%</string>
     <string name="settings_interface_scale_dialog_title">Масштаб интерфейса</string>
     <string name="settings_interface_scale_input_hint">Масштаб 60–120 %</string>
     <string name="settings_interface_scale_input_error">Введите число от 60 до 120.</string>
@@ -415,7 +399,6 @@
     <string name="donate_alipay_qr_description">Alipay donation QR code</string>
     <string name="open_source_license">Лицензии с открытым исходным кодом</string>
     <string name="open_source_license_settings_description">Сторонние библиотеки и лицензии</string>
-    <string name="open_source_license_project_summary">GPL версии 3.0 или выше</string>
     <string name="open_source_license_project_detail">Программа DPIS распространяется по лицензии GPL версии 3.0 или более поздней. Источник: %1$s</string>
     <string name="open_source_license_empty">Данные о лицензии не найдены</string>
     <string name="open_source_license_load_failed">Не удалось загрузить данные лицензии</string>
@@ -424,7 +407,6 @@
     <string name="open_source_license_version_label">Версия: %1$s</string>
     <string name="open_source_license_name_unknown">Неизвестная библиотека</string>
     <string name="about_link_open_failed">Не удалось открыть ссылку</string>
-    <string name="about_update_manifest_url">https://github.com/Kwensiu/DPIS/releases/latest/download/update.json</string>
     <string name="about_update_checking">Проверка наличия обновлений...</string>
     <string name="about_update_check_failed">Проверка обновлений завершилась неудачно. Повторите попытку позже.</string>
     <string name="about_update_up_to_date">Уже обновлено</string>
@@ -447,15 +429,9 @@
     <string name="about_update_download_progress_without_total">%1$s / неизвестный размер</string>
     <string name="about_update_install_failed">Не удалось запустить программу установки. Установите вручную.</string>
     <string name="about_update_install_permission_required">Разрешить установку неизвестных приложений</string>
-    <string name="about_source_url">https://github.com/Kwensiu/DPIS</string>
-    <string name="about_releases_url">https://github.com/Kwensiu/DPIS/releases</string>
-    <string name="about_issues_url">https://github.com/Kwensiu/DPIS/issues</string>
     <string name="settings_language_label">Язык</string>
     <string name="settings_language_dialog_title">Выберите язык</string>
     <string name="settings_language_follow_system">Как в системе </string>
-    <string name="settings_language_english">Английский</string>
-    <string name="settings_language_simplified_chinese">Упрощённый китайский</string>
-    <string name="settings_language_russian">Русский</string>
     <string name="app_status_injected">Измененный</string>
     <string name="app_status_not_injected">Не изменен</string>
     <string name="app_status_enabled">Включено</string>
