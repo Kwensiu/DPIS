@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.12.3](https://github.com/Kwensiu/DPIS/compare/v1.12.2...v1.12.3) (2026-06-14)
+
+
+### ci
+
+* update workflows ([ad711de](https://github.com/Kwensiu/DPIS/commit/ad711de8dd545738eb8eff5b3e210bd1c42f6c6f))
+
+
+### Features
+
+* polish donate page and secondary screen headers ([6c9a596](https://github.com/Kwensiu/DPIS/commit/6c9a596dbf2f613cfff6c5237cad78c7cf53ab2e))
+
 ## [1.12.2](https://github.com/Kwensiu/DPIS/compare/v1.12.1...v1.12.2) (2026-06-12)
 
 
