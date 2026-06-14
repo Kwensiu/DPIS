@@ -78,10 +78,6 @@ final class RuntimePropertyConfigPreferences implements SharedPreferences {
             }
             values.put(viewportModeKey(), viewportMode);
         }
-        values.put(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED,
-                RuntimeDebugPropertyBridge.readGlobalLogEnabled());
-        values.put(DpiConfigStore.KEY_FONT_DEBUG_OVERLAY_ENABLED,
-                RuntimeDebugPropertyBridge.readFontDebugOverlayEnabled());
         if (fontScalePercent != null && fontScalePercent > 0) {
             values.put(fontScaleKey(), fontScalePercent);
             values.put(fontModeKey(), FontApplyMode.normalize(fontMode));
@@ -89,7 +85,12 @@ final class RuntimePropertyConfigPreferences implements SharedPreferences {
         if (typefaceId != null && !typefaceId.isBlank()) {
             values.put(typefaceIdKey(), typefaceId);
         }
-        if (!values.isEmpty()) {
+        boolean hasPackageRuntimeConfig = !values.isEmpty();
+        values.put(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED,
+                RuntimeDebugPropertyBridge.readGlobalLogEnabled());
+        values.put(DpiConfigStore.KEY_FONT_DEBUG_OVERLAY_ENABLED,
+                RuntimeDebugPropertyBridge.readFontDebugOverlayEnabled());
+        if (hasPackageRuntimeConfig) {
             HookDomainOverride override = FontHookDomainPropertyBridge.readOverride(packageName);
             if (override.customPathEnabled) {
                 values.put(hookDomainsKey(), String.join(",",

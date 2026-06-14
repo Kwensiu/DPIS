@@ -302,3 +302,7 @@ chain returns only to the compat/field-rewrite recommended template.
   `RuntimeConfigDelivery.publishLocalSnapshotAfterSave()` republishes the local
   authoritative snapshot to LSPosed remote preferences for hook-process startup
   and reconnection.
+- 2026-06-14: shared runtime property fallback no longer lets global debug
+  mirrors mark a package as configured. This keeps boot-time app-process hooks
+  able to fall back to persisted LSPosed delivery when always-running targets
+  start before DPIS has replayed volatile per-package runtime mirrors.

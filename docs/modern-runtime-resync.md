@@ -355,3 +355,9 @@ superseded.
   `RuntimeConfigDelivery.publishLocalSnapshotAfterSave()` republishes the local
   authoritative snapshot to LSPosed remote preferences for hook-process startup
   and reconnection.
+- 2026-06-14: boot-time always-running app processes must not treat global
+  runtime debug mirrors as package configuration. `RuntimePropertyConfigPreferences`
+  now marks `target_packages` only when a package-level viewport, font, or
+  typeface mirror is present, so `ModuleMain` can fall back to
+  LSPosed remote preferences when volatile per-package properties are empty
+  after reboot but before DPIS has replayed runtime mirrors.

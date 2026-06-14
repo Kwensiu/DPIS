@@ -1,6 +1,7 @@
 package com.dpis.module;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import org.junit.Test;
 
@@ -138,6 +139,16 @@ public class LegacyPropertyConfigTest {
                         ViewportApplyMode.AUTO,
                         ViewportTargetSpec.relativeScale(1500),
                         RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET));
+    }
+
+    @Test
+    public void emptyRuntimeMirrorDoesNotMarkPackageConfiguredFromGlobalFlagsOnly() {
+        DpiConfigStore store = new DpiConfigStore(
+                new RuntimePropertyConfigPreferences("com.example.alwaysrunning",
+                        RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET));
+
+        assertFalse(ConfigSnapshotLoader.fromStore(store)
+                .isConfigured("com.example.alwaysrunning"));
     }
 
     private static String expectedViewportCommand(String viewport,
