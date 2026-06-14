@@ -8,6 +8,7 @@ import sys
 CAPTION_LIMIT = 1024
 TITLE_PRESETS = {
     "preview": "DPIS 预览版 | Preview",
+    "release": "DPIS 正式版 | Release",
     "local": "DPIS 本地预览 | Local Preview",
 }
 
@@ -75,6 +76,14 @@ def fallback_commit(args):
 
 
 def build_changes_block(args, caption_title):
+    if args.release_url and not args.commits_file:
+        release_text = html.escape(args.release_tag or args.version_name)
+        release_url = html.escape(args.release_url, quote=True)
+        return (
+            "Release:\n"
+            f'<blockquote><a href="{release_url}">{release_text} on GitHub</a></blockquote>'
+        )
+
     commits = parse_commits(args.commits_file)
     release_text = html.escape(args.release_tag or "latest release")
     changes_title = f"Commits since <code>{release_text}</code>:"
@@ -160,7 +169,7 @@ def build_caption(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Build Telegram media JSON for grouped DPIS preview APKs."
+        description="Build Telegram media JSON for grouped DPIS APKs."
     )
     parser.add_argument("--title")
     parser.add_argument("--title-preset", choices=sorted(TITLE_PRESETS), default="preview")
@@ -170,6 +179,7 @@ def main():
     parser.add_argument("--commits-file")
     parser.add_argument("--repository-url", default="https://github.com/Kwensiu/DPIS")
     parser.add_argument("--release-tag")
+    parser.add_argument("--release-url")
     parser.add_argument("--compare-url")
     parser.add_argument("--version-name", required=True)
     parser.add_argument("--version-code", required=True)

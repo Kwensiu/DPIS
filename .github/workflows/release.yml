@@ -15,8 +15,15 @@ permissions:
   contents: write
 
 jobs:
-  build-and-upload:
+  build-and-package:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      version: ${{ steps.meta.outputs.version }}
+      version_code: ${{ steps.meta.outputs.version_code }}
+      apk_name: ${{ steps.meta.outputs.apk_name }}
+      compat_apk_name: ${{ steps.meta.outputs.compat_apk_name }}
+      release_url: ${{ steps.meta.outputs.release_url }}
     env:
       CCACHE_BASEDIR: ${{ github.workspace }}
       CCACHE_COMPILERCHECK: '%compiler% -dumpmachine; %compiler% -dumpversion'
@@ -111,6 +118,11 @@ jobs:
         run: |
           ./gradlew :app:assembleRelease
           ccache -s
+
+      - name: Clean release keystore
+        if: always()
+        shell: bash
+        run: rm -rf "${GITHUB_WORKSPACE}/.keystore"
 
       - name: Derive release metadata
         id: meta
@@ -210,15 +222,43 @@ jobs:
           EOF
           cat update.json
 
+      - name: Stage release package artifact
+        shell: bash
+        run: |
+          mkdir -p release-package
+          cp "${{ steps.meta.outputs.apk_path }}" "release-package/${{ steps.meta.outputs.apk_name }}"
+          cp "${{ steps.meta.outputs.compat_apk_path }}" "release-package/${{ steps.meta.outputs.compat_apk_name }}"
+          cp update.json release-package/update.json
+
+      - name: Upload release package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-package
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            release-package/*
+
+  upload-release:
+    needs: build-and-package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-package
+          path: release-package
+
       - name: Upload assets to GitHub Release
         shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ steps.meta.outputs.tag }}" \
-            "${{ steps.meta.outputs.apk_path }}" \
-            "${{ steps.meta.outputs.compat_apk_path }}" \
-            update.json \
+          gh release upload "${{ needs.build-and-package.outputs.tag }}" \
+            "release-package/${{ needs.build-and-package.outputs.apk_name }}" \
+            "release-package/${{ needs.build-and-package.outputs.compat_apk_name }}" \
+            release-package/update.json \
+            --repo ${{ github.repository }} \
             --clobber
 
       - name: Fetch release notes
@@ -227,9 +267,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          NOTES=$(gh release view "${{ steps.meta.outputs.tag }}" \
+          NOTES=$(gh release view "${{ needs.build-and-package.outputs.tag }}" \
             --repo ${{ github.repository }} \
-            --json body -q .body 2>/dev/null || echo "Release ${{ steps.meta.outputs.version }}")
+            --json body -q .body 2>/dev/null || echo "Release ${{ needs.build-and-package.outputs.version }}")
           echo "$NOTES" > /tmp/release-notes.md
 
       - name: Publish release to Xposed-Modules-Repo
@@ -242,8 +282,87 @@ jobs:
             exit 0
           fi
 
-          gh release create "${{ steps.meta.outputs.version_code }}-${{ steps.meta.outputs.version }}" \
+          gh release create "${{ needs.build-and-package.outputs.version_code }}-${{ needs.build-and-package.outputs.version }}" \
             --repo Xposed-Modules-Repo/io.github.kwensiu.dpis \
-            --title "${{ steps.meta.outputs.version }}" \
+            --title "${{ needs.build-and-package.outputs.version }}" \
             --notes-file /tmp/release-notes.md \
-            "${{ steps.meta.outputs.apk_path }}"
+            "release-package/${{ needs.build-and-package.outputs.apk_name }}"
+
+  upload-telegram:
+    needs: build-and-package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download release package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-package
+          path: release-package
+
+      - name: Send release APKs to Telegram
+        shell: bash
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_CHAT_IDS: ${{ secrets.TELEGRAM_CHAT_IDS }}
+          TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
+          TELEGRAM_PROTECT_CONTENT: ${{ secrets.TELEGRAM_PROTECT_CONTENT }}
+          TAG: ${{ needs.build-and-package.outputs.tag }}
+          VERSION_NAME: ${{ needs.build-and-package.outputs.version }}
+          VERSION_CODE: ${{ needs.build-and-package.outputs.version_code }}
+          RELEASE_URL: ${{ needs.build-and-package.outputs.release_url }}
+          APK_NAME: ${{ needs.build-and-package.outputs.apk_name }}
+          COMPAT_APK_NAME: ${{ needs.build-and-package.outputs.compat_apk_name }}
+        run: |
+          if [[ -z "$TELEGRAM_BOT_TOKEN" ]]; then
+            echo "TELEGRAM_BOT_TOKEN is not set"
+            exit 1
+          fi
+
+          CHAT_TARGETS="${TELEGRAM_CHAT_IDS:-$TELEGRAM_CHAT_ID}"
+          if [[ -z "$CHAT_TARGETS" ]]; then
+            echo "TELEGRAM_CHAT_ID or TELEGRAM_CHAT_IDS is required"
+            exit 1
+          fi
+
+          APKS=(
+            "release-package/${APK_NAME}"
+            "release-package/${COMPAT_APK_NAME}"
+          )
+          for apk in "${APKS[@]}"; do
+            if [[ ! -f "$apk" ]]; then
+              echo "APK not found: $apk"
+              exit 1
+            fi
+          done
+
+          MEDIA_JSON="$(
+            python scripts/telegram-preview-media.py \
+              --title-preset release \
+              --release-tag "$TAG" \
+              --release-url "$RELEASE_URL" \
+              --version-name "$VERSION_NAME" \
+              --version-code "$VERSION_CODE"
+          )"
+          IFS=',' read -ra CHAT_IDS <<< "$CHAT_TARGETS"
+          for chat_id in "${CHAT_IDS[@]}"; do
+            chat_id="$(echo "$chat_id" | xargs)"
+            [[ -z "$chat_id" ]] && continue
+            args=(
+              --form-string "chat_id=${chat_id}"
+              --form-string "media=${MEDIA_JSON}"
+              -F "modern_apk=@${APKS[0]}"
+              -F "legacy_apk=@${APKS[1]}"
+            )
+            if [[ -n "$TELEGRAM_MESSAGE_THREAD_ID" ]]; then
+              args+=(--form-string "message_thread_id=${TELEGRAM_MESSAGE_THREAD_ID}")
+            fi
+            if [[ "$TELEGRAM_PROTECT_CONTENT" == "true" ]]; then
+              args+=(--form-string "protect_content=true")
+            fi
+            curl --fail --show-error --silent \
+              "${args[@]}" \
+              "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMediaGroup"
+          done

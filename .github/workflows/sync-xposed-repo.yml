@@ -36,7 +36,10 @@ jobs:
           fi
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
           VERSION_CODE=$((10#$MAJOR * 10000 + 10#$MINOR * 100 + 10#$PATCH))
-          APK_FILE="$(ls ./assets/DPIS_${VERSION}.apk 2>/dev/null || ls ./assets/*modern*.apk 2>/dev/null | head -n 1)"
+          APK_FILE="$(find ./assets -maxdepth 1 -type f -name "DPIS_${VERSION}.apk" -print -quit)"
+          if [[ -z "$APK_FILE" ]]; then
+            APK_FILE="$(find ./assets -maxdepth 1 -type f -name "DPIS_*.apk" ! -name "*_legacy.apk" -print -quit)"
+          fi
           if [[ -z "$APK_FILE" ]]; then
             echo "Modern APK not found in assets"
             exit 1
