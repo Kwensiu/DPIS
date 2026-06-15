@@ -81,6 +81,16 @@ final class ResourcesReadHookInstaller {
                         if (!(result instanceof Configuration configuration)) {
                             return result;
                         }
+                        // Skip override work when this getConfiguration call is a
+                        // re-entrant read from our own getDisplayMetrics/getSystem
+                        // hooks. Those paths run their own explicit overrides and
+                        // want the raw system configuration as the event-gate
+                        // observation baseline, so re-applying here is redundant
+                        // (writes are idempotent) and avoids feeding DPIS output
+                        // back in as input on a hot path.
+                        if (Boolean.TRUE.equals(INTERNAL_UPDATE.get())) {
+                            return result;
+                        }
                         Object thisObject = chain.getThisObject();
                         applyConfigurationOverride(
                                 thisObject instanceof Resources ? thisObject : null,
@@ -132,21 +142,36 @@ final class ResourcesReadHookInstaller {
                         if (!(result instanceof Resources resources)) {
                             return result;
                         }
-                        Configuration config = resources.getConfiguration();
-                        applyConfigurationOverride(resources, config, packageName, store,
-                                "ResourcesRead(getSystem)",
-                                null,
-                                viewportReadHandlingEnabled,
-                                configurationFontOverrideEnabled);
-                        DisplayMetrics metrics = resources.getDisplayMetrics();
-                        applyMetricsOverride(
-                                resources,
-                                metrics,
-                                config,
-                                packageName,
-                                store,
-                                viewportReadHandlingEnabled,
-                                metricsTargetFontOverrideEnabled);
+                        // Suppress the getConfiguration/getDisplayMetrics hooks for
+                        // the internal reads below; this method applies both
+                        // overrides explicitly, so without the guard each read would
+                        // re-trigger the other hooks and run override work twice on
+                        // a hot path.
+                        boolean reentrant = Boolean.TRUE.equals(INTERNAL_UPDATE.get());
+                        if (!reentrant) {
+                            INTERNAL_UPDATE.set(Boolean.TRUE);
+                        }
+                        try {
+                            Configuration config = resources.getConfiguration();
+                            applyConfigurationOverride(resources, config, packageName, store,
+                                    "ResourcesRead(getSystem)",
+                                    null,
+                                    viewportReadHandlingEnabled,
+                                    configurationFontOverrideEnabled);
+                            DisplayMetrics metrics = resources.getDisplayMetrics();
+                            applyMetricsOverride(
+                                    resources,
+                                    metrics,
+                                    config,
+                                    packageName,
+                                    store,
+                                    viewportReadHandlingEnabled,
+                                    metricsTargetFontOverrideEnabled);
+                        } finally {
+                            if (!reentrant) {
+                                INTERNAL_UPDATE.set(Boolean.FALSE);
+                            }
+                        }
                         return result;
                     });
 
