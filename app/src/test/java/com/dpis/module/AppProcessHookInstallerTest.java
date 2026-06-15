@@ -136,12 +136,16 @@ public class AppProcessHookInstallerTest {
 
         assertTrue(plan.viewportEnabled);
         assertTrue(plan.resourcesHooksEnabled);
+        assertTrue(plan.resourcesWriteHooksEnabled);
+        assertTrue(plan.resourcesImplHookEnabled);
+        assertTrue(plan.resourcesReadHooksEnabled);
+        assertTrue(plan.resourcesReadViewportHandlingEnabled);
         assertFalse(plan.fontDomainPlan.resourcesFontEnabled);
         assertTrue(AppProcessHookInstaller.shouldInstallResourcesImplHookForTest(plan));
     }
 
     @Test
-    public void resourcesFontRouteKeepsResourcesImplHook() {
+    public void resourcesFontOnlyRouteUsesImplSeedAndReadSideResourcesHooks() {
         HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
                 createPolicy(false, true),
                 false,
@@ -153,8 +157,29 @@ public class AppProcessHookInstallerTest {
                 DebugFontOverride.none());
 
         assertTrue(plan.resourcesHooksEnabled);
+        assertFalse(plan.resourcesWriteHooksEnabled);
+        assertTrue(plan.resourcesImplHookEnabled);
+        assertTrue(plan.resourcesReadHooksEnabled);
+        assertFalse(plan.resourcesReadViewportHandlingEnabled);
         assertTrue(plan.fontDomainPlan.resourcesFontEnabled);
         assertTrue(AppProcessHookInstaller.shouldInstallResourcesImplHookForTest(plan));
+    }
+
+    @Test
+    public void fontEmulationKeepsResourcesReadViewportHandling() {
+        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
+                createPolicy(false, true),
+                false,
+                ViewportApplyMode.OFF,
+                true,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                false,
+                DebugFontOverride.none());
+
+        assertTrue(plan.resourcesWriteHooksEnabled);
+        assertTrue(plan.resourcesReadHooksEnabled);
+        assertTrue(plan.resourcesReadViewportHandlingEnabled);
     }
 
     @Test
@@ -474,6 +499,8 @@ public class AppProcessHookInstallerTest {
 
         assertTrue(source.contains("ComposeFontRuntimeDiagnosticsInstaller.shouldInstall(plan)"));
         assertTrue(source.contains("ComposeFontRuntimeDiagnosticsInstaller.install("));
+        assertTrue(source.contains("ResourcesReadHookInstaller.install("));
+        assertTrue(source.contains("plan.resourcesReadViewportHandlingEnabled"));
         assertTrue(installer.contains("domainPlan.resourcesFontEnabled"));
         assertTrue(installer.contains("store.getTargetFontScalePercent(packageName)"));
         assertTrue(installer.contains("activity.getWindow()"));

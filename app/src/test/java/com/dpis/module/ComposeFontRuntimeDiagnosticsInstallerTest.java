@@ -1,5 +1,6 @@
 package com.dpis.module;
 
+import org.junit.After;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -8,6 +9,11 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class ComposeFontRuntimeDiagnosticsInstallerTest {
+    @After
+    public void tearDown() {
+        ResourcesFontScheduler.clearForTest();
+    }
+
     @Test
     public void missingCurrentApplicationDefersOnlyBeforeCallbacksRegister() {
         assertTrue(ComposeFontRuntimeDiagnosticsInstaller.shouldDeferRegistration(null, false));
@@ -60,5 +66,43 @@ public class ComposeFontRuntimeDiagnosticsInstallerTest {
         store.clearTargetFontScalePercent(packageName);
         assertNull(ComposeFontRuntimeDiagnosticsInstaller.resolveCurrentTargetFactorForTest(
                 store, packageName));
+    }
+
+    @Test
+    public void diagnosticsSkipOnlyAfterResourcesReadConflictTargetSuppression() {
+        String packageName = "com.example.compose";
+        Object resources = new Object();
+
+        assertFalse(ComposeFontRuntimeDiagnosticsInstaller.shouldSkipForTargetSuppression(
+                packageName, 1.4f));
+
+        ResourcesFontScheduler.observeResourcesFontScale(resources, packageName, 1.0f, 1.4f);
+        assertFalse(ComposeFontRuntimeDiagnosticsInstaller.shouldSkipForTargetSuppression(
+                packageName, 1.4f));
+
+        ResourcesFontScheduler.observeResourcesFontScale(resources, packageName, 1.4f, 1.4f);
+        assertTrue(ComposeFontRuntimeDiagnosticsInstaller.shouldSkipForTargetSuppression(
+                packageName, 1.4f));
+    }
+
+    @Test
+    public void diagnosticsContinueForComposeBaseSuppression() {
+        String packageName = "com.example.compose";
+        Object resources = new Object();
+        FontHookArbitration.FontDomainPlan plan =
+                FontHookArbitration.resolveDomainPlan(true, false);
+        ComposeResourcesFontEvidence.Summary evidence = ComposeResourcesFontEvidence.summarize(
+                plan,
+                1.4f,
+                3.0f,
+                4.2f,
+                1.4f,
+                true);
+
+        ResourcesFontScheduler.observe(packageName, "root-a", resources, evidence,
+                1.4f, 1.4f, 1_000L);
+
+        assertFalse(ComposeFontRuntimeDiagnosticsInstaller.shouldSkipForTargetSuppression(
+                packageName, 1.4f));
     }
 }

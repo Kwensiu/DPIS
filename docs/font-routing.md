@@ -67,6 +67,48 @@ DPIS route fixes should prefer this order:
 4. Add a new independent route only when the existing route model cannot safely
    represent the behavior.
 
+## Resources Font Event Gate
+
+The app-process `resources_font` route may see two different runtime meanings
+for the same target factor:
+
+- Compose evidence can show that Resources has already applied the target
+  factor, so Compose-heavy roots should read the base font scale to avoid
+  double scaling.
+- Resources read-path conflict evidence can show the same Resources owner
+  alternating between base and target font scales. Once that event is observed,
+  the read path should stabilize to the target font scale.
+
+Read-path conflict evidence has higher priority than Compose base suppression:
+
+```text
+read-conflict target suppression
+  > compose base suppression
+  > observed-only state
+```
+
+Negative Compose observations may clear Compose base suppression, but must not
+clear an already established read-conflict target suppression for the same
+package and target factor.
+
+For compat / field-rewrite font mode, `resources_font` uses a mixed Resources
+route:
+
+- `ResourcesImpl.updateConfiguration` is installed as a low-frequency metrics
+  seed so `scaledDensity` can be initialized before hot resource reads.
+- `Resources.getConfiguration()` and `Resources.getDisplayMetrics()` remain
+  the read-side fallback and event-gate observation points.
+- When the plan installs `ResourcesRead` only for `resources_font`, the read
+  path skips viewport target resolution, runtime marker reads, and
+  `VirtualDisplayState` reuse. It may still keep `DisplayMetrics.densityDpi` /
+  `density` synchronized with the current configuration before applying the
+  font `scaledDensity`.
+- Compose runtime diagnostics may detach their layout listener after the
+  package/target reaches read-conflict target suppression; at that point the
+  Resources route has already proven the target-stabilization event.
+- `ResourcesManager` write-side hooks stay owned by viewport routes and system
+  font emulation. Compat `resources_font` should not install them by itself.
+
 ## Documentation Rules
 
 - Public route semantics belong here or in the runtime resync documents.

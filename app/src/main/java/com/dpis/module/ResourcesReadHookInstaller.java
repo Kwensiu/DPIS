@@ -12,6 +12,7 @@ import io.github.libxposed.api.XposedInterface;
 
 final class ResourcesReadHookInstaller {
     private static volatile boolean hookInstalled;
+    private static volatile boolean viewportReadHandlingEnabled = true;
     private static final ThreadLocal<Boolean> INTERNAL_UPDATE =
             ThreadLocal.withInitial(() -> Boolean.FALSE);
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
@@ -21,6 +22,14 @@ final class ResourcesReadHookInstaller {
 
     static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
             throws ReflectiveOperationException {
+        install(xposed, packageName, store, true);
+    }
+
+    static void install(XposedInterface xposed,
+                        String packageName,
+                        DpiConfigStore store,
+                        boolean viewportHandlingEnabled)
+            throws ReflectiveOperationException {
         if (hookInstalled) {
             return;
         }
@@ -28,6 +37,7 @@ final class ResourcesReadHookInstaller {
             if (hookInstalled) {
                 return;
             }
+            viewportReadHandlingEnabled = viewportHandlingEnabled;
             ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
             Class<?> resourcesClass = Class.forName("android.content.res.Resources", false, bootClassLoader);
 
@@ -43,7 +53,8 @@ final class ResourcesReadHookInstaller {
                         applyConfigurationOverride(
                                 thisObject instanceof Resources ? thisObject : null,
                                 configuration, packageName, store,
-                                "ResourcesRead(getConfiguration)");
+                                "ResourcesRead(getConfiguration)",
+                                viewportReadHandlingEnabled);
                         return result;
                     });
 
@@ -65,7 +76,13 @@ final class ResourcesReadHookInstaller {
                         INTERNAL_UPDATE.set(Boolean.TRUE);
                         try {
                             Configuration config = resources.getConfiguration();
-                            applyMetricsOverride(resources, metrics, config, packageName, store);
+                            applyMetricsOverride(
+                                    resources,
+                                    metrics,
+                                    config,
+                                    packageName,
+                                    store,
+                                    viewportReadHandlingEnabled);
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
                         }
@@ -82,9 +99,16 @@ final class ResourcesReadHookInstaller {
                         }
                         Configuration config = resources.getConfiguration();
                         applyConfigurationOverride(resources, config, packageName, store,
-                                "ResourcesRead(getSystem)");
+                                "ResourcesRead(getSystem)",
+                                viewportReadHandlingEnabled);
                         DisplayMetrics metrics = resources.getDisplayMetrics();
-                        applyMetricsOverride(resources, metrics, config, packageName, store);
+                        applyMetricsOverride(
+                                resources,
+                                metrics,
+                                config,
+                                packageName,
+                                store,
+                                viewportReadHandlingEnabled);
                         return result;
                     });
 
@@ -115,7 +139,12 @@ final class ResourcesReadHookInstaller {
                                                   String sourceTag,
                                                   boolean windowScoped) {
         applyConfigurationOverride(
-                resourceScope, config, packageName, store, sourceTag, windowScoped);
+                resourceScope,
+                config,
+                packageName,
+                store,
+                sourceTag,
+                Boolean.valueOf(windowScoped));
     }
 
     private static void applyConfigurationOverride(Object resourceScope,
@@ -124,12 +153,71 @@ final class ResourcesReadHookInstaller {
                                                    DpiConfigStore store,
                                                    String sourceTag,
                                                    Boolean windowScopedOverride) {
+        applyConfigurationOverride(
+                resourceScope,
+                config,
+                packageName,
+                store,
+                sourceTag,
+                windowScopedOverride,
+                true);
+    }
+
+    static void applyConfigurationOverrideForTest(Object resourceScope,
+                                                  Configuration config,
+                                                  String packageName,
+                                                  DpiConfigStore store,
+                                                  String sourceTag,
+                                                  boolean windowScoped,
+                                                  boolean viewportHandlingEnabled) {
+        applyConfigurationOverride(
+                resourceScope,
+                config,
+                packageName,
+                store,
+                sourceTag,
+                Boolean.valueOf(windowScoped),
+                viewportHandlingEnabled);
+    }
+
+    private static void applyConfigurationOverride(Object resourceScope,
+                                                   Configuration config,
+                                                   String packageName,
+                                                   DpiConfigStore store,
+                                                   String sourceTag,
+                                                   boolean viewportHandlingEnabled) {
+        applyConfigurationOverride(
+                resourceScope,
+                config,
+                packageName,
+                store,
+                sourceTag,
+                null,
+                viewportHandlingEnabled);
+    }
+
+    private static void applyConfigurationOverride(Object resourceScope,
+                                                   Configuration config,
+                                                   String packageName,
+                                                   DpiConfigStore store,
+                                                   String sourceTag,
+                                                   Boolean windowScopedOverride,
+                                                   boolean viewportHandlingEnabled) {
         if (config == null) {
             return;
         }
         FontScaleOverride.Result fontScale = FontScaleOverride.resolveForResources(resourceScope,
                 store, packageName, config.fontScale);
-        FontScaleOverride.applyToConfiguration(config, fontScale);
+        boolean fontScaleApplied = FontScaleOverride.applyToConfiguration(config, fontScale);
+        if (!viewportHandlingEnabled) {
+            if (fontScaleApplied) {
+                logIfChanged(packageName + ":" + sourceTag + ":font-only",
+                        "DPIS_FONT " + sourceTag + " override: package=" + packageName
+                                + ", fontScale "
+                                + fontScale.original + " -> " + config.fontScale);
+            }
+            return;
+        }
 
         int originalWidthDp = config.screenWidthDp;
         int originalHeightDp = config.screenHeightDp;
@@ -151,7 +239,7 @@ final class ResourcesReadHookInstaller {
                 ? windowScopedOverride
                 : ViewportConfigurationScope.isWindowScoped(config);
         if (windowScoped && resolution.isAppProcessBorrowTarget()) {
-            if (fontScale.changed) {
+            if (fontScaleApplied) {
                 logIfChanged(packageName + ":" + sourceTag + ":window-borrow-font-only",
                         "DPIS_FONT " + sourceTag + " window borrow: package=" + packageName
                                 + ", fontScale "
@@ -171,7 +259,7 @@ final class ResourcesReadHookInstaller {
                 windowScoped,
                 stableTarget);
         if (result == null) {
-            if (fontScale.changed) {
+            if (fontScaleApplied) {
                 logIfChanged(packageName + ":" + sourceTag + ":font-only",
                         "DPIS_FONT " + sourceTag + " override: package=" + packageName
                                 + ", fontScale "
@@ -219,7 +307,7 @@ final class ResourcesReadHookInstaller {
                 && result.heightDp == originalHeightDp
                 && result.smallestWidthDp == originalSmallestWidthDp
                 && (result.densityDpi <= 0 || result.densityDpi == originalDensityDpi)
-                && !fontScale.changed) {
+                && !fontScaleApplied) {
             VirtualDisplayOverride.Result stableResult =
                     VirtualDisplayState.getStableTargetResult(
                             originalSmallestWidthDp, targetViewportWidth);
@@ -277,7 +365,17 @@ final class ResourcesReadHookInstaller {
                                      String packageName,
                                      DpiConfigStore store) {
         applyMetricsOverride(resourceScope, metrics, config, packageName,
-                ViewportConfigurationScope.isWindowScoped(config), store);
+                ViewportConfigurationScope.isWindowScoped(config), store, true);
+    }
+
+    private static void applyMetricsOverride(Object resourceScope,
+                                             DisplayMetrics metrics,
+                                             Configuration config,
+                                             String packageName,
+                                             DpiConfigStore store,
+                                             boolean viewportHandlingEnabled) {
+        applyMetricsOverride(resourceScope, metrics, config, packageName,
+                ViewportConfigurationScope.isWindowScoped(config), store, viewportHandlingEnabled);
     }
 
     static void applyMetricsOverrideForTest(Object resourceScope,
@@ -294,7 +392,24 @@ final class ResourcesReadHookInstaller {
                                             String packageName,
                                             boolean windowScoped,
                                             DpiConfigStore store) {
-        applyMetricsOverride(resourceScope, metrics, config, packageName, windowScoped, store);
+        applyMetricsOverride(resourceScope, metrics, config, packageName, windowScoped, store, true);
+    }
+
+    static void applyMetricsOverrideForTest(Object resourceScope,
+                                            DisplayMetrics metrics,
+                                            Configuration config,
+                                            String packageName,
+                                            boolean windowScoped,
+                                            DpiConfigStore store,
+                                            boolean viewportHandlingEnabled) {
+        applyMetricsOverride(
+                resourceScope,
+                metrics,
+                config,
+                packageName,
+                windowScoped,
+                store,
+                viewportHandlingEnabled);
     }
 
     private static void applyMetricsOverride(Object resourceScope,
@@ -311,37 +426,132 @@ final class ResourcesReadHookInstaller {
                                              String packageName,
                                              boolean windowScoped,
                                              DpiConfigStore store) {
+        applyMetricsOverride(
+                resourceScope,
+                metrics,
+                config,
+                packageName,
+                windowScoped,
+                store,
+                true);
+    }
+
+    private static void applyMetricsOverride(Object resourceScope,
+                                             DisplayMetrics metrics,
+                                             Configuration config,
+                                             String packageName,
+                                             boolean windowScoped,
+                                             DpiConfigStore store,
+                                             boolean viewportHandlingEnabled) {
         if (metrics == null || config == null) {
             return;
         }
         int targetDensityDpi = config.densityDpi > 0 ? config.densityDpi : metrics.densityDpi;
         String densitySource = config.densityDpi > 0 ? "configuration" : "metrics";
+        if (targetDensityDpi <= 0) {
+            return;
+        }
+        int originalDensityDpi = metrics.densityDpi;
+        float originalDensity = metrics.density;
+        float originalScaledDensity = metrics.scaledDensity;
+        int originalWidthPixels = metrics.widthPixels;
+        int originalHeightPixels = metrics.heightPixels;
+        float targetDensity = DensityOverride.densityFromDpi(targetDensityDpi);
+        float targetFontFactor = FontScaleOverride.targetFactorForResources(store, packageName);
+        float observedFontScale = config.fontScale > 0f ? config.fontScale : 1.0f;
+        ResourcesFontScheduler.observeResourcesFontScale(
+                resourceScope,
+                packageName,
+                observedFontScale,
+                targetFontFactor);
+        float fontScale = ResourcesFontScheduler.maybeSuppressMetricsFontScale(
+                resourceScope,
+                packageName,
+                observedFontScale,
+                targetFontFactor);
+        float targetScaledDensity = DensityOverride.scaledDensityFrom(targetDensityDpi, fontScale);
+        boolean metricsChanged = originalDensityDpi != targetDensityDpi
+                || Math.abs(originalDensity - targetDensity) > FontScaleOverride.EPSILON
+                || Math.abs(originalScaledDensity - targetScaledDensity) > FontScaleOverride.EPSILON;
+        if (metricsChanged) {
+            metrics.densityDpi = targetDensityDpi;
+            metrics.density = targetDensity;
+            metrics.scaledDensity = targetScaledDensity;
+        }
+        if (!viewportHandlingEnabled) {
+            logFontMetricsIfChanged(
+                    metricsChanged,
+                    packageName,
+                    densitySource,
+                    config,
+                    originalDensityDpi,
+                    originalDensity,
+                    originalScaledDensity,
+                    originalWidthPixels,
+                    originalHeightPixels,
+                    metrics);
+            return;
+        }
         LocalMetricsViewportResult localViewportResult =
                 resolveLocalMetricsViewportResult(config, packageName, store, windowScoped);
         if (localViewportResult != null && localViewportResult.densityDpi > 0) {
             targetDensityDpi = localViewportResult.densityDpi;
             densitySource = "viewport-target";
         }
-        if (targetDensityDpi <= 0) {
-            return;
-        }
         VirtualDisplayOverride.Result applied = matchingVirtualDisplayState(config, windowScoped);
         if (applied != null && applied.densityDpi > 0) {
             targetDensityDpi = applied.densityDpi;
             densitySource = "virtual-display-state";
         }
-        metrics.densityDpi = targetDensityDpi;
-        metrics.density = DensityOverride.densityFromDpi(targetDensityDpi);
-        float fontScale = ComposeResourcesFontScheduler.maybeSuppressMetricsFontScale(
-                resourceScope,
-                packageName,
-                config.fontScale > 0f ? config.fontScale : 1.0f);
-        metrics.scaledDensity = DensityOverride.scaledDensityFrom(targetDensityDpi, fontScale);
+        targetDensity = DensityOverride.densityFromDpi(targetDensityDpi);
+        targetScaledDensity = DensityOverride.scaledDensityFrom(targetDensityDpi, fontScale);
+        metricsChanged = metricsChanged
+                || originalDensityDpi != targetDensityDpi
+                || Math.abs(originalDensity - targetDensity) > FontScaleOverride.EPSILON
+                || Math.abs(originalScaledDensity - targetScaledDensity) > FontScaleOverride.EPSILON;
+        if (metricsChanged) {
+            metrics.densityDpi = targetDensityDpi;
+            metrics.density = targetDensity;
+            metrics.scaledDensity = targetScaledDensity;
+        }
         if (applied != null) {
-            metrics.widthPixels = applied.widthPx;
-            metrics.heightPixels = applied.heightPx;
+            if (metrics.widthPixels != applied.widthPx || metrics.heightPixels != applied.heightPx) {
+                metrics.widthPixels = applied.widthPx;
+                metrics.heightPixels = applied.heightPx;
+                metricsChanged = true;
+            }
         }
 
+        logMetricsIfChanged(
+                metricsChanged,
+                packageName,
+                densitySource,
+                config,
+                localViewportResult,
+                applied,
+                originalDensityDpi,
+                originalDensity,
+                originalScaledDensity,
+                originalWidthPixels,
+                originalHeightPixels,
+                metrics);
+    }
+
+    private static void logMetricsIfChanged(boolean metricsChanged,
+                                            String packageName,
+                                            String densitySource,
+                                            Configuration config,
+                                            LocalMetricsViewportResult localViewportResult,
+                                            VirtualDisplayOverride.Result applied,
+                                            int originalDensityDpi,
+                                            float originalDensity,
+                                            float originalScaledDensity,
+                                            int originalWidthPixels,
+                                            int originalHeightPixels,
+                                            DisplayMetrics metrics) {
+        if (!metricsChanged) {
+            return;
+        }
         logIfChanged(packageName + ":ResourcesRead(getDisplayMetrics)",
                 "DPIS_VIEWPORT ResourcesRead(getDisplayMetrics) override: package=" + packageName
                         + ", densitySource=" + densitySource
@@ -350,12 +560,39 @@ final class ResourcesReadHookInstaller {
                         + ", config=" + describeConfiguration(config)
                         + ", localTarget=" + describeLocalMetricsResult(localViewportResult)
                         + ", virtualDisplay=" + describeVirtualDisplayResult(applied)
-                        + ", densityDpi="
-                        + targetDensityDpi
-                        + ", density=" + metrics.density
-                        + ", scaledDensity=" + metrics.scaledDensity
-                        + ", widthPx=" + metrics.widthPixels
-                        + ", heightPx=" + metrics.heightPixels);
+                        + ", densityDpi "
+                        + originalDensityDpi + " -> " + metrics.densityDpi
+                        + ", density " + originalDensity + " -> " + metrics.density
+                        + ", scaledDensity " + originalScaledDensity + " -> "
+                        + metrics.scaledDensity
+                        + ", widthPx " + originalWidthPixels + " -> " + metrics.widthPixels
+                        + ", heightPx " + originalHeightPixels + " -> " + metrics.heightPixels);
+    }
+
+    private static void logFontMetricsIfChanged(boolean metricsChanged,
+                                                String packageName,
+                                                String densitySource,
+                                                Configuration config,
+                                                int originalDensityDpi,
+                                                float originalDensity,
+                                                float originalScaledDensity,
+                                                int originalWidthPixels,
+                                                int originalHeightPixels,
+                                                DisplayMetrics metrics) {
+        if (!metricsChanged) {
+            return;
+        }
+        logIfChanged(packageName + ":ResourcesRead(getDisplayMetrics):font-only",
+                "DPIS_FONT ResourcesRead(getDisplayMetrics) override: package=" + packageName
+                        + ", densitySource=" + densitySource
+                        + ", config=" + describeConfiguration(config)
+                        + ", densityDpi "
+                        + originalDensityDpi + " -> " + metrics.densityDpi
+                        + ", density " + originalDensity + " -> " + metrics.density
+                        + ", scaledDensity " + originalScaledDensity + " -> "
+                        + metrics.scaledDensity
+                        + ", widthPx " + originalWidthPixels + " -> " + metrics.widthPixels
+                        + ", heightPx " + originalHeightPixels + " -> " + metrics.heightPixels);
     }
 
     private static VirtualDisplayOverride.Result matchingVirtualDisplayState(Configuration config,

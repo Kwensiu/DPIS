@@ -70,7 +70,7 @@ final class ResourcesImplHookInstaller {
         }
         FontScaleOverride.Result fontScale = FontScaleOverride.resolveForResources(
                 store, packageName, config.fontScale);
-        FontScaleOverride.applyToConfiguration(config, fontScale);
+        boolean fontScaleApplied = FontScaleOverride.applyToConfiguration(config, fontScale);
         int originalWidthDp = config.screenWidthDp;
         int originalHeightDp = config.screenHeightDp;
         int originalSmallestWidthDp = config.smallestScreenWidthDp;
@@ -147,13 +147,18 @@ final class ResourcesImplHookInstaller {
                 windowScoped,
                 stableTarget);
         if (result == null) {
-            FontScaleOverride.applyScaledDensity(metrics, config);
-            logIfChanged(packageName + ":observe",
-                    "DPIS_VIEWPORT ResourcesImpl observe: widthDp=" + originalWidthDp
-                            + ", heightDp=" + originalHeightDp
-                            + ", smallestWidthDp=" + originalSmallestWidthDp
-                            + ", densityDpi=" + originalDensityDpi
-                            + ", fontScale=" + fontScale.original + " -> " + config.fontScale);
+            float originalScaledDensity = metrics != null ? metrics.scaledDensity : -1f;
+            boolean metricsApplied = applyScaledDensityIfChanged(metrics, config);
+            if (fontScaleApplied || metricsApplied) {
+                logIfChanged(packageName + ":observe",
+                        "DPIS_VIEWPORT ResourcesImpl observe: widthDp=" + originalWidthDp
+                                + ", heightDp=" + originalHeightDp
+                                + ", smallestWidthDp=" + originalSmallestWidthDp
+                                + ", densityDpi=" + originalDensityDpi
+                                + ", fontScale=" + fontScale.original + " -> " + config.fontScale
+                                + ", scaledDensity=" + originalScaledDensity + " -> "
+                                + (metrics != null ? metrics.scaledDensity : -1f));
+            }
             return;
         }
         boolean needsViewportUpdate = result.widthDp != originalWidthDp
@@ -255,7 +260,7 @@ final class ResourcesImplHookInstaller {
                                 + (metrics != null ? metrics.heightPixels : -1));
                 return;
             }
-            FontScaleOverride.applyScaledDensity(metrics, config);
+            applyScaledDensityIfChanged(metrics, config);
             return;
         }
         if (applyToConfiguration) {
@@ -295,6 +300,24 @@ final class ResourcesImplHookInstaller {
         if (!message.equals(previous)) {
             DpisLog.i(message);
         }
+    }
+
+    private static boolean applyScaledDensityIfChanged(DisplayMetrics metrics,
+                                                       Configuration config) {
+        if (metrics == null || config == null) {
+            return false;
+        }
+        int baseDensityDpi = metrics.densityDpi > 0 ? metrics.densityDpi : config.densityDpi;
+        if (baseDensityDpi <= 0) {
+            return false;
+        }
+        float targetScaledDensity = DensityOverride.scaledDensityFrom(baseDensityDpi,
+                config.fontScale);
+        if (Math.abs(metrics.scaledDensity - targetScaledDensity) <= FontScaleOverride.EPSILON) {
+            return false;
+        }
+        metrics.scaledDensity = targetScaledDensity;
+        return true;
     }
 
     private static boolean shouldPublishResourcesImplResult(ViewportTargetResolution resolution,

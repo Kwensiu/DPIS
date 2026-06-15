@@ -14,7 +14,7 @@ public class ResourcesManagerHookInstallerTest {
     @After
     public void tearDown() {
         VirtualDisplayState.set(null);
-        ComposeResourcesFontScheduler.clearForTest();
+        ResourcesFontScheduler.clearForTest();
     }
 
     @Test

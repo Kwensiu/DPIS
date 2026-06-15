@@ -164,9 +164,17 @@ final class HookExecutionPlanner {
         FontHookArbitration.FontDomainPlan domainPlan = hookDomainPlan.toFontDomainPlan();
 
         boolean viewportEnabled = viewportEnabledBase;
-        boolean resourcesHooksEnabled = !resolvedDebug.flutterSettingsOnly
-                && (viewportEnabled || emulationEnabled
-                || hookDomainPlan.hasResourcesFont());
+        boolean resourcesWriteHooksEnabled = !resolvedDebug.flutterSettingsOnly
+                && (viewportEnabled || emulationEnabled);
+        boolean resourcesImplHookEnabled = resourcesWriteHooksEnabled
+                || (!resolvedDebug.flutterSettingsOnly && hookDomainPlan.hasResourcesFont());
+        boolean resourcesReadHooksEnabled = !resolvedDebug.flutterSettingsOnly
+                && (resourcesImplHookEnabled || hookDomainPlan.hasResourcesFont());
+        boolean resourcesReadViewportHandlingEnabled = !resolvedDebug.flutterSettingsOnly
+                && (viewportEnabled || emulationEnabled);
+        boolean resourcesHooksEnabled = resourcesWriteHooksEnabled
+                || resourcesImplHookEnabled
+                || resourcesReadHooksEnabled;
         boolean activityThreadFontEnabled = hookDomainPlan.hasActivityThreadFont()
                 && !resolvedDebug.flutterSettingsOnly;
         boolean textViewHooksEnabled = hookDomainPlan.hasTextViewHooks()
@@ -209,6 +217,10 @@ final class HookExecutionPlanner {
                 resolvedFontMode,
                 viewportEnabled,
                 resourcesHooksEnabled,
+                resourcesWriteHooksEnabled,
+                resourcesImplHookEnabled,
+                resourcesReadHooksEnabled,
+                resourcesReadViewportHandlingEnabled,
                 activityThreadFontEnabled,
                 textViewHooksEnabled,
                 webViewTextZoomEnabled,
