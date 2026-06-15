@@ -339,7 +339,17 @@ final class FontHookDomainDialog {
 
     private static int resolveRiskDotColorRes(String domainId) {
         return switch (domainId) {
-            case FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT ->
+            // resources_font is a value-rewrite route (rewrites the
+            // Configuration.fontScale / scaledDensity the app reads), like
+            // system_server_font. It is not the only path that scales visible
+            // text in compat mode -- Paint/TextView draw-rewrite routes cover
+            // standard rendering (including Compose, which draws through
+            // android.graphics.Paint) independently. Its real cost is hot-path
+            // overhead plus double-scaling complexity when combined with the
+            // draw-rewrite routes, so it carries a medium risk dot rather than
+            // the high dot used for the aggressive Paint hook.
+            case FontHookDomainRegistry.ID_RESOURCES_FONT,
+                    FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT ->
                     R.color.font_hook_domain_risk_medium;
             case FontHookDomainRegistry.ID_TEXTVIEW_SP_REWRITE,
                     FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE ->
