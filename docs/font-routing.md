@@ -103,6 +103,14 @@ route:
   `VirtualDisplayState` reuse. It may still keep `DisplayMetrics.densityDpi` /
   `density` synchronized with the current configuration before applying the
   font `scaledDensity`.
+- In system font emulation, `ResourcesRead(getConfiguration)` does not force
+  the target `fontScale` on every read. The target font scale is owned by the
+  system/ActivityThread/Resources write and seed routes; read-side
+  configuration writes remain a compat `resources_font` fallback.
+- In system font emulation, `ResourcesRead(getDisplayMetrics)` may still fill
+  `DisplayMetrics.scaledDensity` from the target font factor. It must not use a
+  lower system `Configuration.fontScale` or Compose base suppression to
+  downgrade metrics that already reached the target.
 - Compose runtime diagnostics may detach their layout listener after the
   package/target reaches read-conflict target suppression; at that point the
   Resources route has already proven the target-stabilization event.

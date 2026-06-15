@@ -172,6 +172,16 @@ final class HookExecutionPlanner {
                 && (resourcesImplHookEnabled || hookDomainPlan.hasResourcesFont());
         boolean resourcesReadViewportHandlingEnabled = !resolvedDebug.flutterSettingsOnly
                 && (viewportEnabled || emulationEnabled);
+        boolean resourcesReadConfigurationFontOverrideEnabled = !resolvedDebug.flutterSettingsOnly
+                && fieldRewriteEnabled
+                && hookDomainPlan.hasResourcesFont();
+        boolean resourcesReadMetricsTargetFontOverrideEnabled = !resolvedDebug.flutterSettingsOnly
+                && emulationEnabled
+                && hookDomainPlan.hasResourcesFont();
+        ResourcesReadHookPolicy resourcesReadPolicy = new ResourcesReadHookPolicy(
+                resourcesReadViewportHandlingEnabled,
+                resourcesReadConfigurationFontOverrideEnabled,
+                resourcesReadMetricsTargetFontOverrideEnabled);
         boolean resourcesHooksEnabled = resourcesWriteHooksEnabled
                 || resourcesImplHookEnabled
                 || resourcesReadHooksEnabled;
@@ -220,7 +230,7 @@ final class HookExecutionPlanner {
                 resourcesWriteHooksEnabled,
                 resourcesImplHookEnabled,
                 resourcesReadHooksEnabled,
-                resourcesReadViewportHandlingEnabled,
+                resourcesReadPolicy,
                 activityThreadFontEnabled,
                 textViewHooksEnabled,
                 webViewTextZoomEnabled,

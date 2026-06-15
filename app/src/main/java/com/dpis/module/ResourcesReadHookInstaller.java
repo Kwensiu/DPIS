@@ -13,6 +13,8 @@ import io.github.libxposed.api.XposedInterface;
 final class ResourcesReadHookInstaller {
     private static volatile boolean hookInstalled;
     private static volatile boolean viewportReadHandlingEnabled = true;
+    private static volatile boolean configurationFontOverrideEnabled = true;
+    private static volatile boolean metricsTargetFontOverrideEnabled;
     private static final ThreadLocal<Boolean> INTERNAL_UPDATE =
             ThreadLocal.withInitial(() -> Boolean.FALSE);
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
@@ -30,6 +32,29 @@ final class ResourcesReadHookInstaller {
                         DpiConfigStore store,
                         boolean viewportHandlingEnabled)
             throws ReflectiveOperationException {
+        install(xposed, packageName, store, new ResourcesReadHookPolicy(
+                viewportHandlingEnabled,
+                true,
+                false));
+    }
+
+    static void install(XposedInterface xposed,
+                        String packageName,
+                        DpiConfigStore store,
+                        boolean viewportHandlingEnabled,
+                        boolean fontConfigurationOverrideEnabled)
+            throws ReflectiveOperationException {
+        install(xposed, packageName, store, new ResourcesReadHookPolicy(
+                viewportHandlingEnabled,
+                fontConfigurationOverrideEnabled,
+                false));
+    }
+
+    static void install(XposedInterface xposed,
+                        String packageName,
+                        DpiConfigStore store,
+                        ResourcesReadHookPolicy policy)
+            throws ReflectiveOperationException {
         if (hookInstalled) {
             return;
         }
@@ -37,7 +62,14 @@ final class ResourcesReadHookInstaller {
             if (hookInstalled) {
                 return;
             }
-            viewportReadHandlingEnabled = viewportHandlingEnabled;
+            ResourcesReadHookPolicy resolvedPolicy = policy != null
+                    ? policy
+                    : ResourcesReadHookPolicy.FULL;
+            viewportReadHandlingEnabled = resolvedPolicy.viewportHandlingEnabled;
+            configurationFontOverrideEnabled =
+                    resolvedPolicy.configurationFontOverrideEnabled;
+            metricsTargetFontOverrideEnabled =
+                    resolvedPolicy.metricsTargetFontOverrideEnabled;
             ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
             Class<?> resourcesClass = Class.forName("android.content.res.Resources", false, bootClassLoader);
 
@@ -54,7 +86,9 @@ final class ResourcesReadHookInstaller {
                                 thisObject instanceof Resources ? thisObject : null,
                                 configuration, packageName, store,
                                 "ResourcesRead(getConfiguration)",
-                                viewportReadHandlingEnabled);
+                                null,
+                                viewportReadHandlingEnabled,
+                                configurationFontOverrideEnabled);
                         return result;
                     });
 
@@ -82,7 +116,8 @@ final class ResourcesReadHookInstaller {
                                     config,
                                     packageName,
                                     store,
-                                    viewportReadHandlingEnabled);
+                                    viewportReadHandlingEnabled,
+                                    ResourcesReadHookInstaller.metricsTargetFontOverrideEnabled);
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
                         }
@@ -100,7 +135,9 @@ final class ResourcesReadHookInstaller {
                         Configuration config = resources.getConfiguration();
                         applyConfigurationOverride(resources, config, packageName, store,
                                 "ResourcesRead(getSystem)",
-                                viewportReadHandlingEnabled);
+                                null,
+                                viewportReadHandlingEnabled,
+                                configurationFontOverrideEnabled);
                         DisplayMetrics metrics = resources.getDisplayMetrics();
                         applyMetricsOverride(
                                 resources,
@@ -108,7 +145,8 @@ final class ResourcesReadHookInstaller {
                                 config,
                                 packageName,
                                 store,
-                                viewportReadHandlingEnabled);
+                                viewportReadHandlingEnabled,
+                                metricsTargetFontOverrideEnabled);
                         return result;
                     });
 
@@ -160,6 +198,7 @@ final class ResourcesReadHookInstaller {
                 store,
                 sourceTag,
                 windowScopedOverride,
+                true,
                 true);
     }
 
@@ -170,6 +209,25 @@ final class ResourcesReadHookInstaller {
                                                   String sourceTag,
                                                   boolean windowScoped,
                                                   boolean viewportHandlingEnabled) {
+        applyConfigurationOverrideForTest(
+                resourceScope,
+                config,
+                packageName,
+                store,
+                sourceTag,
+                windowScoped,
+                viewportHandlingEnabled,
+                true);
+    }
+
+    static void applyConfigurationOverrideForTest(Object resourceScope,
+                                                  Configuration config,
+                                                  String packageName,
+                                                  DpiConfigStore store,
+                                                  String sourceTag,
+                                                  boolean windowScoped,
+                                                  boolean viewportHandlingEnabled,
+                                                  boolean fontConfigurationOverrideEnabled) {
         applyConfigurationOverride(
                 resourceScope,
                 config,
@@ -177,7 +235,8 @@ final class ResourcesReadHookInstaller {
                 store,
                 sourceTag,
                 Boolean.valueOf(windowScoped),
-                viewportHandlingEnabled);
+                viewportHandlingEnabled,
+                fontConfigurationOverrideEnabled);
     }
 
     private static void applyConfigurationOverride(Object resourceScope,
@@ -193,7 +252,8 @@ final class ResourcesReadHookInstaller {
                 store,
                 sourceTag,
                 null,
-                viewportHandlingEnabled);
+                viewportHandlingEnabled,
+                true);
     }
 
     private static void applyConfigurationOverride(Object resourceScope,
@@ -202,13 +262,15 @@ final class ResourcesReadHookInstaller {
                                                    DpiConfigStore store,
                                                    String sourceTag,
                                                    Boolean windowScopedOverride,
-                                                   boolean viewportHandlingEnabled) {
+                                                   boolean viewportHandlingEnabled,
+                                                   boolean fontConfigurationOverrideEnabled) {
         if (config == null) {
             return;
         }
         FontScaleOverride.Result fontScale = FontScaleOverride.resolveForResources(resourceScope,
                 store, packageName, config.fontScale);
-        boolean fontScaleApplied = FontScaleOverride.applyToConfiguration(config, fontScale);
+        boolean fontScaleApplied = fontConfigurationOverrideEnabled
+                && FontScaleOverride.applyToConfiguration(config, fontScale);
         if (!viewportHandlingEnabled) {
             if (fontScaleApplied) {
                 logIfChanged(packageName + ":" + sourceTag + ":font-only",
@@ -365,7 +427,7 @@ final class ResourcesReadHookInstaller {
                                      String packageName,
                                      DpiConfigStore store) {
         applyMetricsOverride(resourceScope, metrics, config, packageName,
-                ViewportConfigurationScope.isWindowScoped(config), store, true);
+                ViewportConfigurationScope.isWindowScoped(config), store, true, false);
     }
 
     private static void applyMetricsOverride(Object resourceScope,
@@ -375,7 +437,20 @@ final class ResourcesReadHookInstaller {
                                              DpiConfigStore store,
                                              boolean viewportHandlingEnabled) {
         applyMetricsOverride(resourceScope, metrics, config, packageName,
-                ViewportConfigurationScope.isWindowScoped(config), store, viewportHandlingEnabled);
+                ViewportConfigurationScope.isWindowScoped(config), store, viewportHandlingEnabled,
+                false);
+    }
+
+    private static void applyMetricsOverride(Object resourceScope,
+                                             DisplayMetrics metrics,
+                                             Configuration config,
+                                             String packageName,
+                                             DpiConfigStore store,
+                                             boolean viewportHandlingEnabled,
+                                             boolean metricsTargetFontOverrideEnabled) {
+        applyMetricsOverride(resourceScope, metrics, config, packageName,
+                ViewportConfigurationScope.isWindowScoped(config), store, viewportHandlingEnabled,
+                metricsTargetFontOverrideEnabled);
     }
 
     static void applyMetricsOverrideForTest(Object resourceScope,
@@ -392,7 +467,15 @@ final class ResourcesReadHookInstaller {
                                             String packageName,
                                             boolean windowScoped,
                                             DpiConfigStore store) {
-        applyMetricsOverride(resourceScope, metrics, config, packageName, windowScoped, store, true);
+        applyMetricsOverride(
+                resourceScope,
+                metrics,
+                config,
+                packageName,
+                windowScoped,
+                store,
+                true,
+                false);
     }
 
     static void applyMetricsOverrideForTest(Object resourceScope,
@@ -409,7 +492,27 @@ final class ResourcesReadHookInstaller {
                 packageName,
                 windowScoped,
                 store,
-                viewportHandlingEnabled);
+                viewportHandlingEnabled,
+                false);
+    }
+
+    static void applyMetricsOverrideForTest(Object resourceScope,
+                                            DisplayMetrics metrics,
+                                            Configuration config,
+                                            String packageName,
+                                            boolean windowScoped,
+                                            DpiConfigStore store,
+                                            boolean viewportHandlingEnabled,
+                                            boolean metricsTargetFontOverrideEnabled) {
+        applyMetricsOverride(
+                resourceScope,
+                metrics,
+                config,
+                packageName,
+                windowScoped,
+                store,
+                viewportHandlingEnabled,
+                metricsTargetFontOverrideEnabled);
     }
 
     private static void applyMetricsOverride(Object resourceScope,
@@ -433,7 +536,8 @@ final class ResourcesReadHookInstaller {
                 packageName,
                 windowScoped,
                 store,
-                true);
+                true,
+                false);
     }
 
     private static void applyMetricsOverride(Object resourceScope,
@@ -442,7 +546,8 @@ final class ResourcesReadHookInstaller {
                                              String packageName,
                                              boolean windowScoped,
                                              DpiConfigStore store,
-                                             boolean viewportHandlingEnabled) {
+                                             boolean viewportHandlingEnabled,
+                                             boolean metricsTargetFontOverrideEnabled) {
         if (metrics == null || config == null) {
             return;
         }
@@ -464,11 +569,12 @@ final class ResourcesReadHookInstaller {
                 packageName,
                 observedFontScale,
                 targetFontFactor);
-        float fontScale = ResourcesFontScheduler.maybeSuppressMetricsFontScale(
+        float fontScale = resolveMetricsFontScale(
                 resourceScope,
                 packageName,
                 observedFontScale,
-                targetFontFactor);
+                targetFontFactor,
+                metricsTargetFontOverrideEnabled);
         float targetScaledDensity = DensityOverride.scaledDensityFrom(targetDensityDpi, fontScale);
         boolean metricsChanged = originalDensityDpi != targetDensityDpi
                 || Math.abs(originalDensity - targetDensity) > FontScaleOverride.EPSILON
@@ -535,6 +641,21 @@ final class ResourcesReadHookInstaller {
                 originalWidthPixels,
                 originalHeightPixels,
                 metrics);
+    }
+
+    private static float resolveMetricsFontScale(Object resourceScope,
+                                                 String packageName,
+                                                 float observedFontScale,
+                                                 float targetFontFactor,
+                                                 boolean metricsTargetFontOverrideEnabled) {
+        if (metricsTargetFontOverrideEnabled && targetFontFactor > 0f) {
+            return targetFontFactor;
+        }
+        return ResourcesFontScheduler.maybeSuppressMetricsFontScale(
+                resourceScope,
+                packageName,
+                observedFontScale,
+                targetFontFactor);
     }
 
     private static void logMetricsIfChanged(boolean metricsChanged,

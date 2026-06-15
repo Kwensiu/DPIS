@@ -523,6 +523,59 @@ public class ResourcesReadHookInstallerTest {
     }
 
     @Test
+    public void systemModeConfigurationReadDoesNotForceTargetFontScale() {
+        Object resources = new Object();
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetFontScalePercent(PACKAGE_NAME, 140);
+        store.setTargetFontApplyMode(PACKAGE_NAME, FontApplyMode.SYSTEM_EMULATION);
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.fontScale = 1.3f;
+
+        ResourcesReadHookInstaller.applyConfigurationOverrideForTest(
+                resources,
+                config,
+                PACKAGE_NAME,
+                store,
+                "ResourcesRead(getConfiguration)",
+                false,
+                true,
+                false);
+
+        assertEquals(1.3f, config.fontScale, 0.0001f);
+    }
+
+    @Test
+    public void systemModeMetricsReadKeepsTargetScaledDensityWithoutConfigurationWrite() {
+        Object resources = new Object();
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetFontScalePercent(PACKAGE_NAME, 140);
+        store.setTargetFontApplyMode(PACKAGE_NAME, FontApplyMode.SYSTEM_EMULATION);
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.fontScale = 1.3f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.densityDpi = 480;
+        metrics.density = 3.0f;
+        metrics.scaledDensity = 4.2f;
+
+        ResourcesReadHookInstaller.applyMetricsOverrideForTest(
+                resources,
+                metrics,
+                config,
+                PACKAGE_NAME,
+                false,
+                store,
+                true,
+                true);
+
+        assertEquals(1.3f, config.fontScale, 0.0001f);
+        assertEquals(480, metrics.densityDpi);
+        assertEquals(3.0f, metrics.density, 0.0001f);
+        assertEquals(4.2f, metrics.scaledDensity, 0.0001f);
+    }
+
+    @Test
     public void configurationDensitySourceUsesEventGatedTargetFontScale() {
         Object resources = new Object();
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());

@@ -7,7 +7,7 @@ final class HookExecutionPlan {
     final boolean resourcesWriteHooksEnabled;
     final boolean resourcesImplHookEnabled;
     final boolean resourcesReadHooksEnabled;
-    final boolean resourcesReadViewportHandlingEnabled;
+    final ResourcesReadHookPolicy resourcesReadPolicy;
     final boolean activityThreadFontEnabled;
     final boolean textViewHooksEnabled;
     final boolean webViewTextZoomEnabled;
@@ -37,7 +37,7 @@ final class HookExecutionPlan {
                       boolean resourcesWriteHooksEnabled,
                       boolean resourcesImplHookEnabled,
                       boolean resourcesReadHooksEnabled,
-                      boolean resourcesReadViewportHandlingEnabled,
+                      ResourcesReadHookPolicy resourcesReadPolicy,
                       boolean activityThreadFontEnabled,
                       boolean textViewHooksEnabled,
                       boolean webViewTextZoomEnabled,
@@ -66,7 +66,9 @@ final class HookExecutionPlan {
         this.resourcesWriteHooksEnabled = resourcesWriteHooksEnabled;
         this.resourcesImplHookEnabled = resourcesImplHookEnabled;
         this.resourcesReadHooksEnabled = resourcesReadHooksEnabled;
-        this.resourcesReadViewportHandlingEnabled = resourcesReadViewportHandlingEnabled;
+        this.resourcesReadPolicy = resourcesReadPolicy != null
+                ? resourcesReadPolicy
+                : ResourcesReadHookPolicy.FULL;
         this.activityThreadFontEnabled = activityThreadFontEnabled;
         this.textViewHooksEnabled = textViewHooksEnabled;
         this.webViewTextZoomEnabled = webViewTextZoomEnabled;

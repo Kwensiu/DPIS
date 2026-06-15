@@ -203,7 +203,7 @@ final class AppProcessHookInstaller {
                         xposed,
                         packageName,
                         store,
-                        plan.resourcesReadViewportHandlingEnabled);
+                        plan.resourcesReadPolicy);
             }
         }
         if (plan.activityThreadFontEnabled) {
