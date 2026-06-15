@@ -12,6 +12,11 @@ final class ResourcesFontScheduler {
 
     private static final Map<Object, State> RESOURCE_STATES =
             Collections.synchronizedMap(new WeakHashMap<>());
+    // Keyed by packageName|round(targetFactor*1000). Suppression is cleared by
+    // event transitions (base<->target observations), not by a time-based TTL:
+    // inside an app process the package is fixed and the target factor rarely
+    // changes, so this map stays small and a stale entry self-corrects on the
+    // next conflicting observation rather than expiring on a timer.
     private static final Map<String, State> PACKAGE_STATES =
             Collections.synchronizedMap(new HashMap<>());
 
@@ -62,6 +67,11 @@ final class ResourcesFontScheduler {
         if (baseFontScale < MIN_BASE_FONT_SCALE || baseFontScale > MAX_BASE_FONT_SCALE) {
             return;
         }
+        State state = State.suppressedToBase(
+                packageName, baseFontScale, targetFactor, observedFontScale);
+        // Keep the check-then-put atomic under one monitor so a concurrent
+        // read-conflict target suppression (observeResourcesFontScale) cannot be
+        // clobbered by this Compose base suppression between the check and the put.
         synchronized (RESOURCE_STATES) {
             State current = RESOURCE_STATES.get(resourceScope);
             if (isTargetSuppression(current, packageName, targetFactor)) {
@@ -72,11 +82,9 @@ final class ResourcesFontScheduler {
                 RESOURCE_STATES.put(resourceScope, packageState);
                 return;
             }
+            RESOURCE_STATES.put(resourceScope, state);
+            PACKAGE_STATES.put(packageStateKey(packageName, targetFactor), state);
         }
-        State state = State.suppressedToBase(
-                packageName, baseFontScale, targetFactor, observedFontScale);
-        RESOURCE_STATES.put(resourceScope, state);
-        PACKAGE_STATES.put(packageStateKey(packageName, targetFactor), state);
     }
 
     static void observeResourcesFontScale(Object resourceScope,
@@ -172,6 +180,11 @@ final class ResourcesFontScheduler {
                                                String packageName,
                                                float currentFontScale,
                                                long nowMs) {
+        // Legacy compatibility overload: callers that still pass a timestamp.
+        // The scheduler no longer expires by time, so nowMs is intentionally
+        // ignored. Delegate to the float-targetFactor overload with factor 0f,
+        // which degrades to a resource-scope lookup that ignores the factor.
+        // New callers should use the (..., float targetFactor) overload instead.
         return maybeSuppressMetricsFontScale(resourceScope, packageName, currentFontScale, 0f);
     }
 
