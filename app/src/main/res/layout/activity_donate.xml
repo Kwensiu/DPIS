@@ -138,78 +138,86 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/donate_qr_card_gap"
+            android:clipToOutline="true"
+            app:cardPreventCornerOverlap="false"
             app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
             app:cardCornerRadius="@dimen/page_card_corner_radius"
             app:strokeColor="?attr/colorOutlineVariant"
             app:strokeWidth="@dimen/page_card_stroke_width">
 
-            <LinearLayout
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:orientation="vertical"
-                android:padding="@dimen/donate_card_padding">
-
-                <com.google.android.material.textview.MaterialTextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/donate_wechat_title"
-                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-                    android:textStyle="bold" />
+                android:layout_height="wrap_content">
 
                 <ImageView
                     android:id="@+id/donate_wechat_qr"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/donate_qr_spacing_top"
                     android:adjustViewBounds="true"
                     android:background="@android:color/white"
                     android:contentDescription="@string/donate_wechat_qr_description"
-                    android:maxWidth="@dimen/donate_qr_max_width"
-                    android:maxHeight="@dimen/donate_qr_max_height"
-                    android:padding="@dimen/donate_qr_padding"
                     android:scaleType="fitCenter"
                     android:src="@drawable/donate_wechat" />
-            </LinearLayout>
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|start"
+                    android:layout_margin="@dimen/donate_qr_title_pill_margin"
+                    android:background="@drawable/bg_donate_qr_title_pill"
+                    android:elevation="@dimen/donate_qr_title_pill_elevation"
+                    android:paddingStart="@dimen/donate_qr_title_pill_padding_horizontal"
+                    android:paddingTop="@dimen/donate_qr_title_pill_padding_vertical"
+                    android:paddingEnd="@dimen/donate_qr_title_pill_padding_horizontal"
+                    android:paddingBottom="@dimen/donate_qr_title_pill_padding_vertical"
+                    android:text="@string/donate_wechat_title"
+                    android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textStyle="bold" />
+            </FrameLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/donate_qr_card_gap"
+            android:clipToOutline="true"
+            app:cardPreventCornerOverlap="false"
             app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
             app:cardCornerRadius="@dimen/page_card_corner_radius"
             app:strokeColor="?attr/colorOutlineVariant"
             app:strokeWidth="@dimen/page_card_stroke_width">
 
-            <LinearLayout
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:orientation="vertical"
-                android:padding="@dimen/donate_card_padding">
-
-                <com.google.android.material.textview.MaterialTextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/donate_alipay_title"
-                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-                    android:textStyle="bold" />
+                android:layout_height="wrap_content">
 
                 <ImageView
                     android:id="@+id/donate_alipay_qr"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/donate_qr_spacing_top"
                     android:adjustViewBounds="true"
                     android:background="@android:color/white"
                     android:contentDescription="@string/donate_alipay_qr_description"
-                    android:maxWidth="@dimen/donate_qr_max_width"
-                    android:maxHeight="@dimen/donate_qr_max_height"
-                    android:padding="@dimen/donate_qr_padding"
                     android:scaleType="fitCenter"
                     android:src="@drawable/donate_alipay" />
-            </LinearLayout>
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|start"
+                    android:layout_margin="@dimen/donate_qr_title_pill_margin"
+                    android:background="@drawable/bg_donate_qr_title_pill"
+                    android:elevation="@dimen/donate_qr_title_pill_elevation"
+                    android:paddingStart="@dimen/donate_qr_title_pill_padding_horizontal"
+                    android:paddingTop="@dimen/donate_qr_title_pill_padding_vertical"
+                    android:paddingEnd="@dimen/donate_qr_title_pill_padding_horizontal"
+                    android:paddingBottom="@dimen/donate_qr_title_pill_padding_vertical"
+                    android:text="@string/donate_alipay_title"
+                    android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textStyle="bold" />
+            </FrameLayout>
         </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
     </ScrollView>

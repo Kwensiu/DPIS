@@ -1,5 +1,6 @@
 package com.dpis.module;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -13,6 +14,7 @@ public class DonateActivitySourceSmokeTest {
         String layout = read("src/main/res/layout/activity_donate.xml");
         String supportersSheet = read("src/main/res/layout/sheet_donate_supporters.xml");
         String strings = read("src/main/res/values/strings.xml");
+        String dimens = read("src/main/res/values/dimens.xml");
         String manifest = read("src/main/AndroidManifest.xml");
         String homeLayout = read("src/main/res/layout/home_workspace.xml");
         String homeEntryLayout = read("src/main/res/layout/view_home_donate.xml");
@@ -58,23 +60,45 @@ public class DonateActivitySourceSmokeTest {
         assertTrue(layout.contains("android:src=\"@drawable/donate_wechat\""));
         assertTrue(layout.contains("android:src=\"@drawable/donate_alipay\""));
         assertTrue(layout.contains("android:adjustViewBounds=\"true\""));
-        assertTrue(layout.contains("android:maxWidth=\"@dimen/donate_qr_max_width\""));
-        assertTrue(layout.contains("android:maxHeight=\"@dimen/donate_qr_max_height\""));
+        assertTrue(layout.contains("android:layout_width=\"match_parent\""));
+        assertTrue(layout.contains("android:layout_gravity=\"top|start\""));
+        assertTrue(layout.contains("@drawable/bg_donate_qr_title_pill"));
+        assertTrue(layout.contains("@dimen/donate_qr_title_pill_margin"));
         assertTrue(layout.contains("@string/donate_trust_note"));
         assertTrue(supportersSheet.contains("@string/donate_supporters_title"));
         assertTrue(supportersSheet.contains("@string/donate_supporters_summary"));
         assertTrue(supportersSheet.contains("@dimen/donate_supporters_sheet_min_height"));
-        assertTrue(supportersSheet.contains("MaterialCardView"));
+        assertEquals(2, countOccurrences(supportersSheet,
+                "<com.google.android.material.card.MaterialCardView"));
+        assertTrue(supportersSheet.contains("@dimen/donate_supporters_sheet_card_spacing_top"));
         assertTrue(supportersSheet.contains("@string/donate_supporter_nickyoung_name"));
         assertTrue(supportersSheet.contains("@string/donate_supporter_nickyoung_amount"));
+        assertTrue(supportersSheet.contains("@string/donate_supporter_tadow_name"));
+        assertTrue(supportersSheet.contains("@string/donate_supporter_tadow_amount"));
         assertTrue(supportersSheet.contains("@string/donate_supporters_sheet_note"));
         assertTrue(strings.contains("name=\"donate_supporter_nickyoung_name\" translatable=\"false\""));
-        assertTrue(strings.contains("\\@Nick**oung"));
+        assertTrue(strings.contains("\\@xyuYoung"));
         assertTrue(strings.contains("name=\"donate_supporter_nickyoung_amount\" translatable=\"false\""));
         assertTrue(strings.contains("10\uFFE5"));
+        assertTrue(strings.contains("name=\"donate_supporter_tadow_name\" translatable=\"false\""));
+        assertTrue(strings.contains("\\@Tadow_"));
+        assertTrue(strings.contains("name=\"donate_supporter_tadow_amount\" translatable=\"false\""));
+        assertTrue(strings.contains("6.66\uFFE5"));
+        assertTrue(dimens.contains("name=\"donate_supporters_sheet_min_height\">344dp"));
+        assertTrue(dimens.contains("name=\"donate_supporters_sheet_card_spacing_top\">8dp"));
     }
 
     private static String read(String relativePath) throws IOException {
         return SourceSmokeTestPaths.read(relativePath);
+    }
+
+    private static int countOccurrences(String text, String needle) {
+        int count = 0;
+        int index = 0;
+        while ((index = text.indexOf(needle, index)) != -1) {
+            count++;
+            index += needle.length();
+        }
+        return count;
     }
 }
