@@ -180,7 +180,11 @@ final class AppProcessHookInstaller {
                     plan.hookDomainSource);
         }
         if (plan.resourcesHooksEnabled) {
-            ResourcesManagerHookInstaller.install(xposed, packageName, store);
+            if (plan.resourcesWriteHooksEnabled) {
+                ResourcesManagerHookInstaller.install(xposed, packageName, store);
+            } else {
+                DpisLog.i("Resources write hooks skipped: package=" + packageName);
+            }
             if (!shouldInstallResourcesImplHook(plan)) {
                 DpisLog.i("ResourcesImpl hook skipped: package=" + packageName);
             } else if (isDebugPropertyPackageMatch(
@@ -189,11 +193,17 @@ final class AppProcessHookInstaller {
             } else {
                 ResourcesImplHookInstaller.install(xposed, packageName, store);
             }
-            if (isDebugPropertyPackageMatch(
+            if (!plan.resourcesReadHooksEnabled) {
+                DpisLog.i("ResourcesRead hook skipped: package=" + packageName);
+            } else if (isDebugPropertyPackageMatch(
                     PROP_DISABLE_VIEWPORT_RESOURCES_READ_PACKAGE, packageName)) {
                 DpisLog.i("ResourcesRead hook skipped by debug property for " + packageName);
             } else {
-                ResourcesReadHookInstaller.install(xposed, packageName, store);
+                ResourcesReadHookInstaller.install(
+                        xposed,
+                        packageName,
+                        store,
+                        plan.resourcesReadPolicy);
             }
         }
         if (plan.activityThreadFontEnabled) {
@@ -254,7 +264,7 @@ final class AppProcessHookInstaller {
 
     private static boolean shouldInstallResourcesImplHook(HookExecutionPlan plan) {
         return plan != null
-                && plan.resourcesHooksEnabled;
+                && (plan.resourcesWriteHooksEnabled || plan.resourcesImplHookEnabled);
     }
 
     private static boolean isViewportDisplaySupplementDisabled(String packageName) {

@@ -34,10 +34,30 @@ final class FontScaleOverride {
                                       DpiConfigStore store,
                                       String packageName,
                                       float currentFontScale) {
-        return ComposeResourcesFontScheduler.maybeSuppressResourcesFont(
+        float targetFactor = targetFactorForResources(store, packageName);
+        ResourcesFontScheduler.observeResourcesFontScale(
+                resourceScope,
+                packageName,
+                currentFontScale > 0f ? currentFontScale : 1.0f,
+                targetFactor);
+        return ResourcesFontScheduler.maybeSuppressResourcesFont(
                 resourceScope,
                 packageName,
                 resolve(store, packageName, currentFontScale));
+    }
+
+    static float targetFactorForResources(DpiConfigStore store, String packageName) {
+        Integer targetPercent = store != null ? store.getTargetFontScalePercent(packageName) : null;
+        if (targetPercent == null || targetPercent <= 0) {
+            return 0f;
+        }
+        String mode = store != null ? store.getTargetFontApplyMode(packageName) : FontApplyMode.OFF;
+        boolean systemHookEnabled = store == null || store.isSystemServerHooksEnabled();
+        String effectiveMode = EffectiveModeResolver.resolveFontMode(mode, systemHookEnabled);
+        if (!FontApplyMode.isEnabled(effectiveMode)) {
+            return 0f;
+        }
+        return targetPercent / 100.0f;
     }
 
     static boolean applyToConfiguration(Configuration config, Result result) {

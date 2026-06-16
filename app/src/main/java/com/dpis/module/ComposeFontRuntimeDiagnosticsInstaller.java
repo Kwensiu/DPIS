@@ -21,6 +21,21 @@ import java.util.concurrent.ConcurrentMap;
 
 import io.github.libxposed.api.XposedInterface;
 
+/**
+ * Observes Compose-heavy roots to feed the resources_font event gate; it does
+ * NOT scale fonts itself. There is no setTextSize / fontScale / scaledDensity
+ * write anywhere in this class -- it only calls {@link ResourcesFontScheduler}
+ * observe / suppression checks so the read path can avoid double scaling.
+ *
+ * Common misconception: because this installer is gated on
+ * {@code resourcesFontEnabled}, resources_font looks like the only route that
+ * scales Compose text. It is not. Compose draws through android.graphics.Paint
+ * (AndroidParagraph -> TextPaint, which does not override setTextSize), so the
+ * Paint/TextView draw-rewrite routes scale Compose text independently of
+ * resources_font. With resources_font OFF in compat mode, Compose still scales
+ * via those routes; resources_font only adds value-rewrite (the
+ * Configuration.fontScale / scaledDensity values an app may read directly).
+ */
 final class ComposeFontRuntimeDiagnosticsInstaller {
     static final long LAYOUT_EVALUATE_THROTTLE_MS = 500L;
     private static final String FONT_LOG_KEY_PREFIX = "font";
@@ -88,6 +103,10 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
         return resolveCurrentTargetFactor(store, packageName);
     }
 
+    static boolean shouldSkipForTargetSuppression(String packageName, float targetFactor) {
+        return ResourcesFontScheduler.isPackageTargetSuppressed(packageName, targetFactor);
+    }
+
     private static void registerCallbacks(Application application,
                                           String packageName,
                                           DpiConfigStore store,
@@ -129,6 +148,10 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
             detachLayoutListener(activity);
             return;
         }
+        if (shouldSkipForTargetSuppression(packageName, targetFactor)) {
+            detachLayoutListener(activity);
+            return;
+        }
         View root = decorRoot(activity);
         if (root == null) {
             return;
@@ -152,7 +175,7 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
                 metrics.scaledDensity,
                 targetFactor,
                 composeHeavy);
-        ComposeResourcesFontScheduler.observe(
+        ResourcesFontScheduler.observe(
                 packageName,
                 scopeKey,
                 resources,
@@ -203,8 +226,13 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
                                              FontHookArbitration.FontDomainPlan domainPlan,
                                              String hookDomains,
                                              String hookDomainSource) {
-        if (resolveCurrentTargetFactor(store, packageName) == null) {
+        Float targetFactor = resolveCurrentTargetFactor(store, packageName);
+        if (targetFactor == null) {
             cleanup(activity);
+            return;
+        }
+        if (shouldSkipForTargetSuppression(packageName, targetFactor)) {
+            detachLayoutListener(activity);
             return;
         }
         View root = decorRoot(activity);

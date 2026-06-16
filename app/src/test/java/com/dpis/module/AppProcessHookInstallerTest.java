@@ -136,12 +136,18 @@ public class AppProcessHookInstallerTest {
 
         assertTrue(plan.viewportEnabled);
         assertTrue(plan.resourcesHooksEnabled);
+        assertTrue(plan.resourcesWriteHooksEnabled);
+        assertTrue(plan.resourcesImplHookEnabled);
+        assertTrue(plan.resourcesReadHooksEnabled);
+        assertTrue(plan.resourcesReadPolicy.viewportHandlingEnabled);
+        assertFalse(plan.resourcesReadPolicy.configurationFontOverrideEnabled);
+        assertFalse(plan.resourcesReadPolicy.metricsTargetFontOverrideEnabled);
         assertFalse(plan.fontDomainPlan.resourcesFontEnabled);
         assertTrue(AppProcessHookInstaller.shouldInstallResourcesImplHookForTest(plan));
     }
 
     @Test
-    public void resourcesFontRouteKeepsResourcesImplHook() {
+    public void resourcesFontOnlyRouteUsesImplSeedAndReadSideResourcesHooks() {
         HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
                 createPolicy(false, true),
                 false,
@@ -153,8 +159,33 @@ public class AppProcessHookInstallerTest {
                 DebugFontOverride.none());
 
         assertTrue(plan.resourcesHooksEnabled);
+        assertFalse(plan.resourcesWriteHooksEnabled);
+        assertTrue(plan.resourcesImplHookEnabled);
+        assertTrue(plan.resourcesReadHooksEnabled);
+        assertFalse(plan.resourcesReadPolicy.viewportHandlingEnabled);
+        assertTrue(plan.resourcesReadPolicy.configurationFontOverrideEnabled);
+        assertFalse(plan.resourcesReadPolicy.metricsTargetFontOverrideEnabled);
         assertTrue(plan.fontDomainPlan.resourcesFontEnabled);
         assertTrue(AppProcessHookInstaller.shouldInstallResourcesImplHookForTest(plan));
+    }
+
+    @Test
+    public void fontEmulationKeepsResourcesReadViewportHandling() {
+        HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
+                createPolicy(false, true),
+                false,
+                ViewportApplyMode.OFF,
+                true,
+                FontApplyMode.SYSTEM_EMULATION,
+                false,
+                false,
+                DebugFontOverride.none());
+
+        assertTrue(plan.resourcesWriteHooksEnabled);
+        assertTrue(plan.resourcesReadHooksEnabled);
+        assertTrue(plan.resourcesReadPolicy.viewportHandlingEnabled);
+        assertFalse(plan.resourcesReadPolicy.configurationFontOverrideEnabled);
+        assertTrue(plan.resourcesReadPolicy.metricsTargetFontOverrideEnabled);
     }
 
     @Test
@@ -474,6 +505,8 @@ public class AppProcessHookInstallerTest {
 
         assertTrue(source.contains("ComposeFontRuntimeDiagnosticsInstaller.shouldInstall(plan)"));
         assertTrue(source.contains("ComposeFontRuntimeDiagnosticsInstaller.install("));
+        assertTrue(source.contains("ResourcesReadHookInstaller.install("));
+        assertTrue(source.contains("plan.resourcesReadPolicy"));
         assertTrue(installer.contains("domainPlan.resourcesFontEnabled"));
         assertTrue(installer.contains("store.getTargetFontScalePercent(packageName)"));
         assertTrue(installer.contains("activity.getWindow()"));

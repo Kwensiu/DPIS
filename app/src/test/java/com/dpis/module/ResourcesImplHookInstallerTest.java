@@ -12,7 +12,7 @@ public class ResourcesImplHookInstallerTest {
     @After
     public void tearDown() {
         VirtualDisplayState.set(null);
-        ComposeResourcesFontScheduler.clearForTest();
+        ResourcesFontScheduler.clearForTest();
     }
 
     @Test

@@ -53,6 +53,36 @@ recommendations.
   font-only configs can enter `launch-activity-item`; viewport configs can
   enter viewport hot paths such as `config-dispatch` and `display-manager-info`.
 
+### Why FONT_SCALE is launch-only (and the runtime tradeoff)
+
+Writing `Configuration.fontScale` during `config-dispatch`
+(`ActivityRecord.updateReportedConfigurationAndSend`, the authoritative path
+that delivers configuration to a running app) can flip the reported
+`CONFIG_FONT_SCALE` bit and trigger an Activity relaunch (window recreation).
+That relaunch is heavier and more visible than the residual cost of leaving the
+config untouched, so system mode deliberately keeps `FONT_SCALE` writes on the
+launch entry only.
+
+The accepted consequence is a runtime split that some apps can observe:
+
+- `launch-activity-item` and `activity_thread_font` set `fontScale` to the
+  target at bind time, but every later `config-dispatch` re-delivers the
+  system's base `fontScale`. `system_server` does not re-assert the target there.
+- The app-process `resources_font` read path then sees the target only on
+  `DisplayMetrics.scaledDensity` (which it may fill), while
+  `Configuration.fontScale` stays at the system base (system mode does not force
+  config on every read; see the Resources Font Event Gate section).
+- Apps that size layout from `DisplayMetrics`/sp scale correctly. Apps that read
+  `Configuration.fontScale` directly may keep recomputing against the base/target
+  mismatch, which shows up as light residual jank rather than a relaunch.
+
+This is an intentional system-mode tradeoff, not a bug: it prioritizes low
+invasiveness and relaunch avoidance over runtime config/metrics consistency.
+The supported exit for an app that needs both values consistent is `compat`
+mode, which unifies `Configuration.fontScale` and `DisplayMetrics` on the
+app-process read path without going through `system_server` `config-dispatch`,
+so it removes the mismatch without provoking a relaunch.
+
 ## App-Specific Evidence
 
 App-specific repros, such as flicker in a video app or social app, are evidence
@@ -66,6 +96,56 @@ DPIS route fixes should prefer this order:
 3. Add a package list only when a reusable policy cannot express the behavior.
 4. Add a new independent route only when the existing route model cannot safely
    represent the behavior.
+
+## Resources Font Event Gate
+
+The app-process `resources_font` route may see two different runtime meanings
+for the same target factor:
+
+- Compose evidence can show that Resources has already applied the target
+  factor, so Compose-heavy roots should read the base font scale to avoid
+  double scaling.
+- Resources read-path conflict evidence can show the same Resources owner
+  alternating between base and target font scales. Once that event is observed,
+  the read path should stabilize to the target font scale.
+
+Read-path conflict evidence has higher priority than Compose base suppression:
+
+```text
+read-conflict target suppression
+  > compose base suppression
+  > observed-only state
+```
+
+Negative Compose observations may clear Compose base suppression, but must not
+clear an already established read-conflict target suppression for the same
+package and target factor.
+
+For compat / field-rewrite font mode, `resources_font` uses a mixed Resources
+route:
+
+- `ResourcesImpl.updateConfiguration` is installed as a low-frequency metrics
+  seed so `scaledDensity` can be initialized before hot resource reads.
+- `Resources.getConfiguration()` and `Resources.getDisplayMetrics()` remain
+  the read-side fallback and event-gate observation points.
+- When the plan installs `ResourcesRead` only for `resources_font`, the read
+  path skips viewport target resolution, runtime marker reads, and
+  `VirtualDisplayState` reuse. It may still keep `DisplayMetrics.densityDpi` /
+  `density` synchronized with the current configuration before applying the
+  font `scaledDensity`.
+- In system font emulation, `ResourcesRead(getConfiguration)` does not force
+  the target `fontScale` on every read. The target font scale is owned by the
+  system/ActivityThread/Resources write and seed routes; read-side
+  configuration writes remain a compat `resources_font` fallback.
+- In system font emulation, `ResourcesRead(getDisplayMetrics)` may still fill
+  `DisplayMetrics.scaledDensity` from the target font factor. It must not use a
+  lower system `Configuration.fontScale` or Compose base suppression to
+  downgrade metrics that already reached the target.
+- Compose runtime diagnostics may detach their layout listener after the
+  package/target reaches read-conflict target suppression; at that point the
+  Resources route has already proven the target-stabilization event.
+- `ResourcesManager` write-side hooks stay owned by viewport routes and system
+  font emulation. Compat `resources_font` should not install them by itself.
 
 ## Documentation Rules
 

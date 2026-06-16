@@ -15,7 +15,7 @@ public class ResourcesReadHookInstallerTest {
     @After
     public void tearDown() {
         VirtualDisplayState.set(null);
-        ComposeResourcesFontScheduler.clearForTest();
+        ResourcesFontScheduler.clearForTest();
     }
 
     @Test
@@ -438,7 +438,7 @@ public class ResourcesReadHookInstallerTest {
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         Object resources = new Object();
-        ComposeResourcesFontScheduler.observe(PACKAGE_NAME, "root-a", resources, evidence,
+        ResourcesFontScheduler.observe(PACKAGE_NAME, "root-a", resources, evidence,
                 1.5f, 1.5f, System.currentTimeMillis());
 
         ResourcesReadHookInstaller.applyConfigurationOverride(resources, config, PACKAGE_NAME, store,
@@ -459,7 +459,7 @@ public class ResourcesReadHookInstallerTest {
                 1.5f,
                 true);
         Object resources = new Object();
-        ComposeResourcesFontScheduler.observe(PACKAGE_NAME, "root-a", resources, evidence,
+        ResourcesFontScheduler.observe(PACKAGE_NAME, "root-a", resources, evidence,
                 1.5f, 1.5f, System.currentTimeMillis());
         Configuration config = new Configuration();
         config.densityDpi = 480;
@@ -472,6 +472,200 @@ public class ResourcesReadHookInstallerTest {
         ResourcesReadHookInstaller.applyMetricsOverride(resources, metrics, config, PACKAGE_NAME);
 
         assertEquals(3.0f, metrics.scaledDensity, 0.0001f);
+    }
+
+    @Test
+    public void metricsResourcesFontConflictUsesEventGate() {
+        Object resources = new Object();
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetFontScalePercent(PACKAGE_NAME, 140);
+        store.setTargetFontApplyMode(PACKAGE_NAME, FontApplyMode.FIELD_REWRITE);
+        Configuration baseConfig = new Configuration();
+        baseConfig.densityDpi = 480;
+        baseConfig.fontScale = 1.0f;
+        DisplayMetrics baseMetrics = new DisplayMetrics();
+        baseMetrics.densityDpi = 480;
+        baseMetrics.density = 3.0f;
+        baseMetrics.scaledDensity = 3.0f;
+        Configuration targetConfig = new Configuration();
+        targetConfig.densityDpi = 480;
+        targetConfig.fontScale = 1.4f;
+        DisplayMetrics targetMetrics = new DisplayMetrics();
+        targetMetrics.densityDpi = 480;
+        targetMetrics.density = 3.0f;
+        targetMetrics.scaledDensity = 4.2f;
+
+        ResourcesReadHookInstaller.applyMetricsOverride(
+                resources, baseMetrics, baseConfig, PACKAGE_NAME, store);
+        ResourcesReadHookInstaller.applyMetricsOverride(
+                resources, targetMetrics, targetConfig, PACKAGE_NAME, store);
+
+        assertEquals(3.0f, baseMetrics.scaledDensity, 0.0001f);
+        assertEquals(4.2f, targetMetrics.scaledDensity, 0.0001f);
+    }
+
+    @Test
+    public void configurationReadUsesEventGatedTargetFontScale() {
+        Object resources = new Object();
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetFontScalePercent(PACKAGE_NAME, 140);
+        store.setTargetFontApplyMode(PACKAGE_NAME, FontApplyMode.FIELD_REWRITE);
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.fontScale = 1.0f;
+
+        ResourcesFontScheduler.observeResourcesFontScale(resources, PACKAGE_NAME, 1.0f, 1.4f);
+        ResourcesFontScheduler.observeResourcesFontScale(resources, PACKAGE_NAME, 1.4f, 1.4f);
+        ResourcesReadHookInstaller.applyConfigurationOverride(resources, config, PACKAGE_NAME, store,
+                "ResourcesRead(getConfiguration)");
+
+        assertEquals(1.4f, config.fontScale, 0.0001f);
+    }
+
+    @Test
+    public void systemModeConfigurationReadDoesNotForceTargetFontScale() {
+        Object resources = new Object();
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetFontScalePercent(PACKAGE_NAME, 140);
+        store.setTargetFontApplyMode(PACKAGE_NAME, FontApplyMode.SYSTEM_EMULATION);
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.fontScale = 1.3f;
+
+        ResourcesReadHookInstaller.applyConfigurationOverrideForTest(
+                resources,
+                config,
+                PACKAGE_NAME,
+                store,
+                "ResourcesRead(getConfiguration)",
+                false,
+                true,
+                false);
+
+        assertEquals(1.3f, config.fontScale, 0.0001f);
+    }
+
+    @Test
+    public void systemModeMetricsReadKeepsTargetScaledDensityWithoutConfigurationWrite() {
+        Object resources = new Object();
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetFontScalePercent(PACKAGE_NAME, 140);
+        store.setTargetFontApplyMode(PACKAGE_NAME, FontApplyMode.SYSTEM_EMULATION);
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.fontScale = 1.3f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.densityDpi = 480;
+        metrics.density = 3.0f;
+        metrics.scaledDensity = 4.2f;
+
+        ResourcesReadHookInstaller.applyMetricsOverrideForTest(
+                resources,
+                metrics,
+                config,
+                PACKAGE_NAME,
+                false,
+                store,
+                true,
+                true);
+
+        assertEquals(1.3f, config.fontScale, 0.0001f);
+        assertEquals(480, metrics.densityDpi);
+        assertEquals(3.0f, metrics.density, 0.0001f);
+        assertEquals(4.2f, metrics.scaledDensity, 0.0001f);
+    }
+
+    @Test
+    public void configurationDensitySourceUsesEventGatedTargetFontScale() {
+        Object resources = new Object();
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetFontScalePercent(PACKAGE_NAME, 140);
+        store.setTargetFontApplyMode(PACKAGE_NAME, FontApplyMode.FIELD_REWRITE);
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.densityDpi = 480;
+        metrics.density = 3.0f;
+        metrics.scaledDensity = 3.0f;
+
+        ResourcesFontScheduler.observeResourcesFontScale(resources, PACKAGE_NAME, 1.0f, 1.4f);
+        ResourcesFontScheduler.observeResourcesFontScale(resources, PACKAGE_NAME, 1.4f, 1.4f);
+        ResourcesReadHookInstaller.applyConfigurationOverride(resources, config, PACKAGE_NAME, store,
+                "ResourcesRead(getConfiguration)");
+        ResourcesReadHookInstaller.applyMetricsOverride(resources, metrics, config, PACKAGE_NAME, store);
+
+        assertEquals(1.4f, config.fontScale, 0.0001f);
+        assertEquals(4.2f, metrics.scaledDensity, 0.0001f);
+    }
+
+    @Test
+    public void fontOnlyConfigurationReadDoesNotApplyViewportTarget() {
+        Object resources = new Object();
+        FakePrefs prefs = new FakePrefs();
+        putCompatViewport(prefs, 800);
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setTargetFontScalePercent(PACKAGE_NAME, 140);
+        store.setTargetFontApplyMode(PACKAGE_NAME, FontApplyMode.FIELD_REWRITE);
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 736;
+        config.smallestScreenWidthDp = 360;
+        config.fontScale = 1.0f;
+
+        ResourcesReadHookInstaller.applyConfigurationOverrideForTest(
+                resources,
+                config,
+                PACKAGE_NAME,
+                store,
+                "ResourcesRead(getConfiguration)",
+                false,
+                false);
+
+        assertEquals(360, config.screenWidthDp);
+        assertEquals(736, config.screenHeightDp);
+        assertEquals(360, config.smallestScreenWidthDp);
+        assertEquals(480, config.densityDpi);
+        assertEquals(1.4f, config.fontScale, 0.0001f);
+        assertEquals(null, VirtualDisplayState.get());
+    }
+
+    @Test
+    public void fontOnlyMetricsReadDoesNotReuseVirtualDisplayState() {
+        Object resources = new Object();
+        VirtualDisplayState.set(new VirtualDisplayOverride.Result(800, 1636, 800,
+                216, 1080, 2209));
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetFontScalePercent(PACKAGE_NAME, 140);
+        store.setTargetFontApplyMode(PACKAGE_NAME, FontApplyMode.FIELD_REWRITE);
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.screenWidthDp = 800;
+        config.screenHeightDp = 1636;
+        config.smallestScreenWidthDp = 800;
+        config.fontScale = 1.4f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.densityDpi = 480;
+        metrics.density = 3.0f;
+        metrics.scaledDensity = 3.0f;
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 2208;
+
+        ResourcesReadHookInstaller.applyMetricsOverrideForTest(
+                resources,
+                metrics,
+                config,
+                PACKAGE_NAME,
+                false,
+                store,
+                false);
+
+        assertEquals(480, metrics.densityDpi);
+        assertEquals(3.0f, metrics.density, 0.0001f);
+        assertEquals(4.2f, metrics.scaledDensity, 0.0001f);
+        assertEquals(1080, metrics.widthPixels);
+        assertEquals(2208, metrics.heightPixels);
     }
 
     private static void putCompatViewport(FakePrefs prefs, int widthDp) {
