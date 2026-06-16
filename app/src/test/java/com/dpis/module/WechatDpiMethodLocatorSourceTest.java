@@ -10,10 +10,12 @@ import org.junit.Test;
 
 public class WechatDpiMethodLocatorSourceTest {
     @Test
-    public void locatorUsesWekitStyleDexKitRuleBeforeStaticFallback() throws Exception {
+    public void locatorUsesStaticRouteBeforeDexKitForKnownVersions() throws Exception {
         String source = SourceSmokeTestPaths.read(
                 "src/main/java/com/dpis/module/WechatDpiMethodLocator.java");
 
+        assertTrue(source.contains("WechatDpiRoutes.forVersionCode(versionCode)"));
+        assertTrue(source.contains("Class.forName(route.className, false, classLoader)"));
         assertTrue(source.contains("DexKitBridge.create(applicationInfo.sourceDir)"));
         assertTrue(source.contains("FindMethod.create()"));
         assertTrue(source.contains("usingEqStrings("));
@@ -25,20 +27,25 @@ public class WechatDpiMethodLocatorSourceTest {
         assertTrue(source.contains(".addInvoke(MethodMatcher.create()"));
         assertTrue(source.contains(".returnType(\"boolean\")"));
         assertTrue(source.contains("methodData.getMethodInstance(classLoader)"));
+        assertTrue(source.contains("densityManagerMethods(method.getDeclaringClass())"));
+        assertTrue(source.contains("parameterTypes[0] == Configuration.class"));
+        assertTrue(source.contains("parameterTypes[1] == DisplayMetrics.class"));
+        assertTrue(source.contains("LOADED_CLASS(\"loaded-class\")"));
+        assertTrue(source.contains("static List<Method> densityManagerMethods("));
+        assertTrue(source.contains("isTargetFieldGetter(method)"));
+        assertTrue(source.contains("isTargetFieldSetter(method)"));
         assertTrue(source.contains("loadDexKitLibrary()"));
         assertTrue(source.contains("System.load(path)"));
         assertTrue(source.contains("\"libdexkit.so\""));
-        assertTrue(source.indexOf("locateByDexKit(classLoader, applicationInfo)")
-                < source.indexOf("locateByStaticRoute(classLoader, versionCode)"));
+        assertTrue(source.indexOf("locateByStaticRoute(classLoader, versionCode)")
+                < source.indexOf("locateByDexKit(classLoader, applicationInfo)"));
     }
 
     @Test
-    public void locatorKeepsStaticRouteAsFallbackOnly() throws Exception {
+    public void locatorKeepsWechatDisplayMetricsRouteOnly() throws Exception {
         String source = SourceSmokeTestPaths.read(
                 "src/main/java/com/dpis/module/WechatDpiMethodLocator.java");
 
-        assertTrue(source.contains("WechatDpiRoutes.forVersionCode(versionCode)"));
-        assertTrue(source.contains("Class.forName(route.className, false, classLoader)"));
         assertFalse(source.contains("resourcesClassName"));
         assertFalse(source.contains("TabIconView"));
         assertFalse(source.contains("installDpiGetterHook("));

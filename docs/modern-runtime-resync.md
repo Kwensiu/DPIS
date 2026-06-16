@@ -70,6 +70,7 @@ DPIS modern target package
   |           |     |
   |           |     +-- record current process
   |           |     +-- initialize host config store
+  |           |     +-- WeChat independent class-loader probe
   |           |     +-- maybeInstallAppProcessFromModuleLoaded
   |           |
   |           +-- onPackageReady
@@ -224,6 +225,37 @@ requested font mode
         +-- no font route
 ```
 
+## WeChat Route Notes
+
+Detailed app-specific runtime evidence lives in
+`docs/private/wechat-dpi-runtime-notes.md`.
+
+- 2026-06-17 active: WeChat independent DPI route keeps a module-loaded
+  `ClassLoader.loadClass(String, boolean)` probe in the WeChat main process and
+  logs package route classloader identities. The independent route also hooks
+  `Application.attach(Context)` and retries installation from the runtime
+  `Context` classloader. Trigger condition is a known density-manager class
+  name from `WechatDpiRoutes`. Runtime evidence showed package-loaded and
+  package-ready can resolve a base APK classloader while WeChat resource reads
+  can use a patched runtime classloader, so the route retries from
+  `Application.attach`.
+- 2026-06-17 active: WeChat bottom-tab icon compensation is deliberately
+  scoped to `com.tencent.mm.ui.TabIconView`, not to a WeChat version range.
+  The route hooks the 4-argument bottom-tab icon init method when that
+  structure exists and writes the non-static float scale field using
+  `dpi * 1.1666666 / 400`, matching the upstream behavior while keeping chat,
+  article, and other DPI effects owned by the density-manager route. The write
+  intentionally happens before the matched init method, following the upstream
+  route where the init path consumes the prepared scale.
+- 2026-06-17 rejected: WeChat module-loaded
+  `BaseDexClassLoader.findClass(String)` probe. It installed successfully but
+  did not produce a density-manager class hit during validation. The route is
+  too broad for production or continued diagnosis.
+- 2026-06-17 active: WeChat target-field setter hook now proceeds exactly once.
+  Reason: the previous interceptor called `chain.proceed()` before checking the
+  setter/getter branches, which could write the original value and then write
+  the configured value again.
+
 ## 101 / 100 Boundary
 
 ```text
@@ -267,8 +299,12 @@ superseded.
 | 2026-06-07 | font system emulation | Make modern system_server package selection field-aware per entry | active | Unit policy tests cover font-only launch selection and non-launch skip | Keeps font-only packages out of non-launch hot paths while preserving viewport multi-entry scheduling |
 | 2026-06-07 | shared app-process viewport | Preserve small-window geometry for relative-scale app-process borrow targets while applying target density through ResourcesImpl / ResourcesRead metrics | active | Quetta small-window route isolation showed disabling ResourcesImpl stops flicker but loses Chromium scaling; focused unit tests cover window density compensation | Keeps DPIS unified scheduling active without publishing app-process borrow targets or forcing small-window Configuration width/height to the display target |
 | 2026-06-08 | WeChat DPI | Replace the old target-field route with the WeKit-style DisplayMetrics post-processing route as the official WeChat independent path | active | Runtime check confirmed property publication, hook installation, and mutation callback on `q35.f` for 8.0.71; TabIconView supplement was rejected as disproportionate at DPIS custom values; details in `docs/private/wechat-target-field.md` | DPIS now only mutates returned `DisplayMetrics` |
-| 2026-06-09 | WeChat DPI | Move method discovery to a shared WeKit-style DexKit locator with the static version table as fallback only | active | Unit/source tests cover the DexKit rule, fallback ownership, and shared runtime mutation formula | Locator matches the `MMDensityManager` / `screenResolution_target_field` signature and logs whether `dexkit` or `static-route` installed hooks |
+| 2026-06-09 | WeChat DPI | Move method discovery to a shared WeKit-style DexKit locator with a static version table | active / adjusted | Unit/source tests cover the DexKit rule, static ownership, and shared runtime mutation formula | Locator matches the `MMDensityManager` / `screenResolution_target_field` signature and logs whether `dexkit` or `static-route` installed hooks |
 | 2026-06-09 | WeChat DPI | Add extracted-native-library fallback for DexKit inside the LSPosed module classloader | active | Real-device WeChat 8.0.74 / versionCode 3120 showed `System.loadLibrary("dexkit")` failed in `LspModuleClassLoader`; after fallback, logs reached `hook ready`, `callback hit`, and `applied` on `j65.f#e`, and visual effect was confirmed without uninstalling DPIS | Keep this as a module-loading fix, not a config-reset workaround; 3120 / `j65.f` is also in the static fallback table |
+| 2026-06-17 | WeChat DPI | Prefer verified static routes before DexKit discovery for known WeChat versions | active | Runtime validation showed the static route installs earlier than DexKit discovery and avoids missing early one-shot metrics reads | Static route keeps known versions on the shortest install path; DexKit remains the automatic adaptation path for unknown versions |
+| 2026-06-17 | WeChat DPI | Test density-manager constructor and static `DisplayMetrics` cache correction | rejected | Decompilation and runtime validation did not prove a stable cache mutation point | Do not keep constructor/cache retry as production behavior without mutation evidence |
+| 2026-06-17 | WeChat DPI | Expand the independent route from getter-only hooks to the `Configuration + DisplayMetrics` mutator inside `MMDensityManager` | active | Full-dex analysis showed WeChat resources can forward configuration updates into the same density-manager class while constructor/cache probes produced no mutation evidence; locator still anchors on `MMDensityManager` / `screenResolution_target_field`, but now returns both metrics getters and the in-class mutator | Keep the route independent and class-local; mutate the same density-manager metrics object instead of adding a separate global Resources hook |
+| 2026-06-17 | WeChat DPI | Move the independent route's first install attempt to package-loaded | active | Runtime validation showed package-loaded is useful for timing but not sufficient by itself | package-ready remains as fallback; hook de-duplication is by density-manager `Class` identity |
 | 2026-06-15 | shared app-process font | Add an event-gated `resources_font` scheduler for Resources read-path font conflicts | active / shared | Bilibili `resources_font`-only repro showed `Configuration.fontScale` alternating between base and target while `getDisplayMetrics` recomputed `scaledDensity`; after the event gate, `scaledDensity=3.0` and `1.4 -> 1.0` disappeared, and read metrics logging dropped sharply after idempotent writes. TapTap system-font repro later showed no config churn after disabling read-side configuration writes, but `getDisplayMetrics` could still downgrade target metrics from `4.2` to `3.9` when the system config stayed at `1.3` | Read-conflict target suppression outranks Compose base suppression; non-Compose observations must not clear an established read-conflict target state. Compat `resources_font` uses `ResourcesImpl` as a low-frequency metrics seed plus `ResourcesRead` fallback; when `ResourcesRead` is installed only for font it skips viewport target resolution and `VirtualDisplayState` reuse while keeping metrics density synchronized with configuration; system font emulation does not let `ResourcesRead(getConfiguration)` force target `fontScale` on every read, but `ResourcesRead(getDisplayMetrics)` may fill `scaledDensity` from the target factor so read-side metrics do not downgrade an already-targeted font scale; Compose diagnostics can detach after the read-conflict target event is established; `ResourcesManager` write-side hooks remain for viewport and system font emulation |
 
 ## Safety Rules

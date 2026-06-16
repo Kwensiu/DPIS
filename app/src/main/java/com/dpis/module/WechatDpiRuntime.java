@@ -3,6 +3,9 @@ package com.dpis.module;
 import android.util.DisplayMetrics;
 
 final class WechatDpiRuntime {
+    private static final float BOTTOM_TAB_ICON_SCALE_NUMERATOR = 1.1666666f;
+    private static final float BOTTOM_TAB_ICON_SCALE_BASE_DPI = 400.0f;
+
     private WechatDpiRuntime() {
     }
 
@@ -17,5 +20,9 @@ final class WechatDpiRuntime {
         metrics.densityDpi = dpi;
         metrics.scaledDensity = DensityOverride.scaledDensityFrom(dpi, fontScale);
         return true;
+    }
+
+    static float bottomTabIconScale(int dpi) {
+        return dpi * BOTTOM_TAB_ICON_SCALE_NUMERATOR / BOTTOM_TAB_ICON_SCALE_BASE_DPI;
     }
 }

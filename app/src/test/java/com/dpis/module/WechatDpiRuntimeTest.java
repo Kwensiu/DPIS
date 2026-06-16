@@ -34,4 +34,10 @@ public class WechatDpiRuntimeTest {
         assertFalse(WechatDpiRuntime.apply(metrics, 0));
         assertFalse(WechatDpiRuntime.apply(null, 400));
     }
+
+    @Test
+    public void computesWechatBottomTabIconScaleCompatibly() {
+        assertEquals(1.1666666f, WechatDpiRuntime.bottomTabIconScale(400), 0.0001f);
+        assertEquals(0.5833333f, WechatDpiRuntime.bottomTabIconScale(200), 0.0001f);
+    }
 }

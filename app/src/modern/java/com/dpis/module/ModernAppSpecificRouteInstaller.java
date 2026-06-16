@@ -1,9 +1,59 @@
 package com.dpis.module;
 
+import android.app.Application;
+import android.content.Context;
+
+import java.lang.reflect.Method;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModule;
 
 final class ModernAppSpecificRouteInstaller {
+    private static final AtomicBoolean WECHAT_MODULE_LOADED_CLASS_HOOK_INSTALLED =
+            new AtomicBoolean(false);
+    private static final AtomicBoolean WECHAT_APPLICATION_ATTACH_HOOK_INSTALLED =
+            new AtomicBoolean(false);
+
     private ModernAppSpecificRouteInstaller() {
+    }
+
+    static void handleModuleLoaded(XposedModule xposed, String processName) {
+        if (xposed == null || !WechatDpiConfig.appliesTo(processName)) {
+            return;
+        }
+        installWechatModuleLoadedClassHook(xposed);
+        installWechatApplicationAttachHook(xposed);
+    }
+
+    static boolean handlePackageLoaded(XposedModule xposed,
+            XposedModule.PackageLoadedParam param,
+            String processName) {
+        if (param == null || !WechatDpiConfig.appliesTo(param.getPackageName())) {
+            return false;
+        }
+        if (WechatDpiConfig.appliesTo(processName)) {
+            DpisLog.i("modern WeChat DPI package-loaded route enter: package="
+                    + param.getPackageName() + ", process=" + processName);
+            try {
+                WechatDpiModernHookInstaller.install(
+                        xposed,
+                        param.getDefaultClassLoader(),
+                        param.getApplicationInfo(),
+                        param.getPackageName());
+                DpisLog.i("modern WeChat DPI package-loaded route install attempted: package="
+                        + param.getPackageName() + ", process=" + processName
+                        + ", defaultClassLoader="
+                        + WechatDpiModernHookInstaller.describeClassLoaderForLog(
+                                param.getDefaultClassLoader()));
+            } catch (Throwable throwable) {
+                DpisLog.e("modern WeChat DPI package-loaded route install failed: package="
+                        + param.getPackageName() + ", process=" + processName + ", "
+                        + throwable.getClass().getName() + ": " + throwable.getMessage(),
+                        throwable);
+            }
+        }
+        return false;
     }
 
     static boolean handlePackageReady(XposedModule xposed,
@@ -22,7 +72,10 @@ final class ModernAppSpecificRouteInstaller {
                         param.getApplicationInfo(),
                         param.getPackageName());
                 DpisLog.i("modern WeChat DPI route install attempted: package="
-                        + param.getPackageName() + ", process=" + processName);
+                        + param.getPackageName() + ", process=" + processName
+                        + ", classLoader="
+                        + WechatDpiModernHookInstaller.describeClassLoaderForLog(
+                                param.getClassLoader()));
             } catch (Throwable throwable) {
                 DpisLog.e("modern WeChat DPI route install failed: package="
                         + param.getPackageName() + ", process=" + processName + ", "
@@ -33,6 +86,82 @@ final class ModernAppSpecificRouteInstaller {
         DpisLog.i("modern app-specific route installed alongside generic hooks: package="
                 + WechatDpiConfig.PACKAGE_NAME + ", process=" + processName);
         return false;
+    }
+
+    private static void installWechatModuleLoadedClassHook(XposedInterface xposed) {
+        if (!WECHAT_MODULE_LOADED_CLASS_HOOK_INSTALLED.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            Method method = ClassLoader.class.getDeclaredMethod(
+                    "loadClass", String.class, boolean.class);
+            xposed.hook(method)
+                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+                    .intercept(chain -> {
+                        Object result = chain.proceed();
+                        maybeInstallWechatFromLoadedClass(xposed, result, "loadClass");
+                        return result;
+                    });
+            DpisLog.i("modern WeChat DPI module-loaded class hook ready: process="
+                    + WechatDpiConfig.PACKAGE_NAME);
+        } catch (Throwable throwable) {
+            WECHAT_MODULE_LOADED_CLASS_HOOK_INSTALLED.set(false);
+            DpisLog.e("modern WeChat DPI module-loaded class hook failed: process="
+                    + WechatDpiConfig.PACKAGE_NAME + ", "
+                    + throwable.getClass().getName() + ": " + throwable.getMessage(),
+                    throwable);
+        }
+    }
+
+    private static void maybeInstallWechatFromLoadedClass(XposedInterface xposed, Object result,
+            String source) {
+        if (!(result instanceof Class<?> loadedClass)
+                || !WechatDpiRoutes.matchesClassName(loadedClass.getName())) {
+            return;
+        }
+        DpisLog.i("modern WeChat DPI module-loaded class hit: source=" + source
+                + ", class=" + loadedClass.getName());
+        WechatDpiModernHookInstaller.installFromLoadedClass(
+                xposed, loadedClass, WechatDpiConfig.PACKAGE_NAME);
+    }
+
+    private static void installWechatApplicationAttachHook(XposedInterface xposed) {
+        if (!WECHAT_APPLICATION_ATTACH_HOOK_INSTALLED.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            Method method = Application.class.getDeclaredMethod("attach", Context.class);
+            xposed.hook(method)
+                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+                    .intercept(chain -> {
+                        Object result = chain.proceed();
+                        Object contextObject = chain.getArgs() != null && !chain.getArgs().isEmpty()
+                                ? chain.getArgs().get(0)
+                                : null;
+                        if (contextObject instanceof Context context) {
+                            ClassLoader classLoader = context.getClassLoader();
+                            DpisLog.i("modern WeChat DPI application-attach route enter: package="
+                                    + WechatDpiConfig.PACKAGE_NAME
+                                    + ", classLoader="
+                                    + WechatDpiModernHookInstaller.describeClassLoaderForLog(
+                                            classLoader));
+                            WechatDpiModernHookInstaller.install(
+                                    xposed,
+                                    classLoader,
+                                    context.getApplicationInfo(),
+                                    context.getPackageName());
+                        }
+                        return result;
+                    });
+            DpisLog.i("modern WeChat DPI application-attach hook ready: process="
+                    + WechatDpiConfig.PACKAGE_NAME);
+        } catch (Throwable throwable) {
+            WECHAT_APPLICATION_ATTACH_HOOK_INSTALLED.set(false);
+            DpisLog.e("modern WeChat DPI application-attach hook failed: process="
+                    + WechatDpiConfig.PACKAGE_NAME + ", "
+                    + throwable.getClass().getName() + ": " + throwable.getMessage(),
+                    throwable);
+        }
     }
 
     static boolean shouldSuppressModuleLoadedGenericHooks(String packageName, String processName) {

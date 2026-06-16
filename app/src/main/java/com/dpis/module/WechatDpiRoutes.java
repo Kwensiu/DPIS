@@ -40,6 +40,18 @@ final class WechatDpiRoutes {
         return routes;
     }
 
+    static boolean matchesClassName(String className) {
+        if (className == null || className.isBlank()) {
+            return false;
+        }
+        for (Route route : ROUTES) {
+            if (className.equals(route.className)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     static final class Route {
         final long versionCode;
         final String versionName;

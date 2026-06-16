@@ -29,6 +29,7 @@ public final class ModuleMain extends XposedModule {
         DpisLog.i(message);
         bridgeLog(message);
         try {
+            ModernAppSpecificRouteInstaller.handleModuleLoaded(this, param.getProcessName());
             maybeInstallAppProcessFromModuleLoaded(configStore, param.getProcessName());
         } catch (Throwable throwable) {
             rawBridgeLog("module-loaded app hook install failed: process=" + param.getProcessName()
@@ -37,6 +38,16 @@ public final class ModuleMain extends XposedModule {
             DpisLog.e("module-loaded app hook install failed: process=" + param.getProcessName(),
                     throwable);
         }
+    }
+
+    @Override
+    public void onPackageLoaded(PackageLoadedParam param) {
+        if (param == null) {
+            return;
+        }
+        bridgeLog("onPackageLoaded enter: process=" + currentProcessName
+                + ", package=" + param.getPackageName());
+        ModernAppSpecificRouteInstaller.handlePackageLoaded(this, param, currentProcessName);
     }
 
     @Override

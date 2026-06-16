@@ -1,6 +1,7 @@
 package com.dpis.module;
 
 import android.content.pm.ApplicationInfo;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.util.DisplayMetrics;
 
@@ -17,7 +18,9 @@ import java.lang.reflect.Modifier;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 final class WechatDpiMethodLocator {
     private WechatDpiMethodLocator() {
@@ -25,13 +28,13 @@ final class WechatDpiMethodLocator {
 
     static Result locate(ClassLoader classLoader, ApplicationInfo applicationInfo,
             long versionCode) {
-        Result dexKitResult = locateByDexKit(classLoader, applicationInfo);
-        if (!dexKitResult.methods.isEmpty()) {
-            return dexKitResult;
-        }
         Result routeResult = locateByStaticRoute(classLoader, versionCode);
         if (!routeResult.methods.isEmpty()) {
             return routeResult;
+        }
+        Result dexKitResult = locateByDexKit(classLoader, applicationInfo);
+        if (!dexKitResult.methods.isEmpty()) {
+            return dexKitResult;
         }
         return dexKitResult.failure != null ? dexKitResult : routeResult;
     }
@@ -67,8 +70,7 @@ final class WechatDpiMethodLocator {
                 for (MethodData methodData : methodDataList) {
                     Method method = methodData.getMethodInstance(classLoader);
                     if (isDisplayMetricsGetter(method)) {
-                        method.setAccessible(true);
-                        methods.add(method);
+                        methods.addAll(densityManagerMethods(method.getDeclaringClass()));
                     }
                 }
             }
@@ -87,14 +89,8 @@ final class WechatDpiMethodLocator {
         }
         try {
             Class<?> densityManagerClass = Class.forName(route.className, false, classLoader);
-            ArrayList<Method> methods = new ArrayList<>();
-            for (Method method : densityManagerClass.getDeclaredMethods()) {
-                if (isDisplayMetricsGetter(method)) {
-                    method.setAccessible(true);
-                    methods.add(method);
-                }
-            }
-            return Result.resolved(Source.STATIC_ROUTE, methods);
+            return Result.resolved(Source.STATIC_ROUTE,
+                    densityManagerMethods(densityManagerClass));
         } catch (Throwable throwable) {
             return Result.failed(Source.STATIC_ROUTE,
                     route.routeKey() + ": " + throwable.getClass().getName()
@@ -106,6 +102,51 @@ final class WechatDpiMethodLocator {
         return method != null
                 && method.getParameterTypes().length == 0
                 && method.getReturnType() == DisplayMetrics.class;
+    }
+
+    private static boolean isDisplayMetricsMutator(Method method) {
+        if (method == null || method.getReturnType() != Void.TYPE) {
+            return false;
+        }
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        return parameterTypes.length == 2
+                && parameterTypes[0] == Configuration.class
+                && parameterTypes[1] == DisplayMetrics.class;
+    }
+
+    private static boolean isTargetFieldGetter(Method method) {
+        return method != null
+                && Modifier.isStatic(method.getModifiers())
+                && method.getParameterTypes().length == 0
+                && method.getReturnType() == Integer.TYPE;
+    }
+
+    private static boolean isTargetFieldSetter(Method method) {
+        if (method == null
+                || !Modifier.isStatic(method.getModifiers())
+                || method.getReturnType() != Void.TYPE) {
+            return false;
+        }
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        return parameterTypes.length == 1
+                && parameterTypes[0] == Integer.TYPE;
+    }
+
+    static List<Method> densityManagerMethods(Class<?> densityManagerClass) {
+        if (densityManagerClass == null) {
+            return Collections.emptyList();
+        }
+        Set<Method> methods = new LinkedHashSet<>();
+        for (Method method : densityManagerClass.getDeclaredMethods()) {
+            if (isDisplayMetricsGetter(method)
+                    || isDisplayMetricsMutator(method)
+                    || isTargetFieldGetter(method)
+                    || isTargetFieldSetter(method)) {
+                method.setAccessible(true);
+                methods.add(method);
+            }
+        }
+        return new ArrayList<>(methods);
     }
 
     private static void loadDexKitLibrary() {
@@ -188,6 +229,7 @@ final class WechatDpiMethodLocator {
     }
 
     enum Source {
+        LOADED_CLASS("loaded-class"),
         DEXKIT("dexkit"),
         STATIC_ROUTE("static-route");
 
@@ -209,7 +251,7 @@ final class WechatDpiMethodLocator {
             this.failure = failure;
         }
 
-        private static Result resolved(Source source, List<Method> methods) {
+        static Result resolved(Source source, List<Method> methods) {
             return new Result(source, new ArrayList<>(methods), null);
         }
 
