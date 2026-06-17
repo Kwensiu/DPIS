@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.13.0](https://github.com/Kwensiu/DPIS/compare/v1.12.3...v1.13.0) (2026-06-17)
+
+
+### Features
+
+* combine template summary chips ([7cf837a](https://github.com/Kwensiu/DPIS/commit/7cf837a323957727da397ac030702e54b48484ee))
+* refine font hook guidance and defaults ([224aae1](https://github.com/Kwensiu/DPIS/commit/224aae14cf5749a2aa6d5864eddeb28a45c8774b))
+* unify font hook domain presentation ([6aa7c06](https://github.com/Kwensiu/DPIS/commit/6aa7c0688c1614bdac2d052e04c180e8bef2f83e))
+
+
+### Bug Fixes
+
+* avoid boot-time runtime mirror false positives ([c2ea712](https://github.com/Kwensiu/DPIS/commit/c2ea71212685793618cbc97e3abccc1301c9a245))
+* clarify font hook domain normalization ([b2fc790](https://github.com/Kwensiu/DPIS/commit/b2fc790451c0e2c44077e714609b03effe65be6e))
+* harden VVeChat DPI runtime route handling ([b10bdeb](https://github.com/Kwensiu/DPIS/commit/b10bdeb1b59fa0d0b9d9ed911ffaa2ac9f963127))
+* install modern system_server hooks during system startup ([c8f73a6](https://github.com/Kwensiu/DPIS/commit/c8f73a6c80a6bc3c9c3bb2b851da1aadca06720d))
+* stabilize system font metrics scaling in resources read path ([#88](https://github.com/Kwensiu/DPIS/issues/88)) ([1574ffa](https://github.com/Kwensiu/DPIS/commit/1574ffa2a71a2441f8b9accce4a0c9fe6d84c230))
+
+
+### UI
+
+* help page adjust ([0f1106f](https://github.com/Kwensiu/DPIS/commit/0f1106f8ad0ebdab1b69fca931c406be842c7f46))
+
 ## [1.12.3](https://github.com/Kwensiu/DPIS/compare/v1.12.2...v1.12.3) (2026-06-14)
 
 
