@@ -147,15 +147,19 @@ public class AppProcessHookInstallerTest {
     }
 
     @Test
-    public void resourcesFontOnlyRouteUsesImplSeedAndReadSideResourcesHooks() {
+    public void customResourcesFontRouteUsesImplSeedAndReadSideResourcesHooks() {
         HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
                 createPolicy(false, true),
+                "com.example.app",
                 false,
                 ViewportApplyMode.OFF,
                 true,
                 FontApplyMode.FIELD_REWRITE,
                 false,
                 false,
+                new HookDomainOverride(true,
+                        java.util.Set.of(FontHookDomainRegistry.ID_RESOURCES_FONT),
+                        java.util.Set.of()),
                 DebugFontOverride.none());
 
         assertTrue(plan.resourcesHooksEnabled);
@@ -244,7 +248,7 @@ public class AppProcessHookInstallerTest {
     }
 
     @Test
-    public void fieldRewriteFontScaleEnablesResourcesFontDomain() {
+    public void fieldRewriteFontScaleUsesCompatDomainsWithoutResourcesFontByDefault() {
         HookRuntimePolicy policy = createPolicy(true);
 
         AppProcessHookInstaller.FontHookPlan fontHookPlan =
@@ -257,8 +261,8 @@ public class AppProcessHookInstallerTest {
 
         assertFalse(fontHookPlan.emulationEnabled);
         assertTrue(fontHookPlan.fieldRewriteEnabled);
-        assertTrue(domainPlan.resourcesFontEnabled);
-        assertTrue(AppProcessHookInstaller.resolveResourcesHooksEnabled(false, fontHookPlan, domainPlan));
+        assertFalse(domainPlan.resourcesFontEnabled);
+        assertFalse(AppProcessHookInstaller.resolveResourcesHooksEnabled(false, fontHookPlan, domainPlan));
     }
 
     @Test
@@ -267,7 +271,7 @@ public class AppProcessHookInstallerTest {
                 AppProcessHookInstaller.resolveFontDomainPlan(
                         new AppProcessHookInstaller.FontHookPlan(false, true));
 
-        assertTrue(domainPlan.resourcesFontEnabled);
+        assertFalse(domainPlan.resourcesFontEnabled);
         assertTrue(domainPlan.webViewTextZoomEnabled);
         assertTrue(domainPlan.textViewHooksEnabled);
         assertTrue(domainPlan.textViewSpRewriteEnabled);
@@ -345,7 +349,7 @@ public class AppProcessHookInstallerTest {
                         new AppProcessHookInstaller.FontHookPlan(false, true),
                         true);
 
-        assertTrue(domainPlan.resourcesFontEnabled);
+        assertFalse(domainPlan.resourcesFontEnabled);
         assertFalse(domainPlan.flutterSettingsEnabled);
         assertTrue(domainPlan.hyperOsNativeFlutterEnabled);
         assertFalse(domainPlan.genericNativeFlutterEnabled);
@@ -380,7 +384,7 @@ public class AppProcessHookInstallerTest {
         assertFalse(emulationPlan.hyperOsNativeFlutterEnabled);
         assertFalse(emulationPlan.genericNativeFlutterEnabled);
 
-        assertTrue(fieldRewritePlan.resourcesFontEnabled);
+        assertFalse(fieldRewritePlan.resourcesFontEnabled);
         assertTrue(fieldRewritePlan.webViewTextZoomEnabled);
         assertTrue(fieldRewritePlan.textViewHooksEnabled);
         assertFalse(fieldRewritePlan.flutterSettingsEnabled);

@@ -1497,6 +1497,8 @@ public class MainActivitySourceSmokeTest {
         );
         assertTrue(source.contains("new HookDomainOverrideStore(store)"));
         assertTrue(source.contains("FontHookDomainDialog.show("));
+        assertTrue(source.contains("isFontHookDomainEditingEnabled()"));
+        assertTrue(source.contains("AppConfigDialogBinder.resolveFontMode(findFontModeToggle(root))"));
         assertTrue(source.contains("this,"));
         String saveSource = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
         assertTrue(

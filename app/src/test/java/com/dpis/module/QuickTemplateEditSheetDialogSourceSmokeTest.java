@@ -57,6 +57,8 @@ public class QuickTemplateEditSheetDialogSourceSmokeTest {
         assertTrue(editorBinder.contains("TextUtils.isEmpty(name)"));
         assertTrue(editorBinder.contains("textOf(nameInputView)"));
         assertTrue(editorBinder.contains("FontHookDomainDialog.show(activity,"));
+        assertTrue(editorBinder.contains("FontApplyMode.FIELD_REWRITE.equals("));
+        assertTrue(editorBinder.contains("AppConfigDialogBinder.resolveFontMode(fontModeToggle)"));
         assertTrue(editorBinder.contains("AppConfigDialogBinder.switchViewportTargetType"));
         assertTrue(editorBinder.contains("AppConfigDialogBinder.resolveViewportMode"));
         assertTrue(editorBinder.contains("AppConfigDialogBinder.resolveFontMode"));

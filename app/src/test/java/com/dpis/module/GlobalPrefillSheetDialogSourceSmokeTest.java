@@ -33,6 +33,8 @@ public class GlobalPrefillSheetDialogSourceSmokeTest {
         assertTrue(editorBinder.contains("if (onUpdated != null)"));
         assertTrue(editorBinder.contains("new GlobalPrefillSaveHandler()"));
         assertTrue(editorBinder.contains("FontHookDomainDialog.show(activity,"));
+        assertTrue(editorBinder.contains("FontApplyMode.FIELD_REWRITE.equals("));
+        assertTrue(editorBinder.contains("AppConfigDialogBinder.resolveFontMode(fontModeToggle)"));
         assertTrue(editorBinder.contains("FontHookDomainRegistry.recommendedTemplateKnownDomains()"));
         assertTrue(editorBinder.contains("normalizeTemplateHookDomainsRaw(state.draftFontHookDomainsRaw)"));
         assertFalse(editorBinder.contains("toggleFontMode(fontModeToggle)"));

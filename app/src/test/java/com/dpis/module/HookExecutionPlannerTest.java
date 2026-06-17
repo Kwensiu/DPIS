@@ -68,18 +68,18 @@ public class HookExecutionPlannerTest {
                 DebugFontOverride.none());
 
         assertEquals(FontMode.FIELD_REWRITE, plan.fontMode);
-        assertTrue(plan.resourcesHooksEnabled);
+        assertFalse(plan.resourcesHooksEnabled);
         assertFalse(plan.activityThreadFontEnabled);
         assertTrue(plan.textViewHooksEnabled);
         assertTrue(plan.webViewTextZoomEnabled);
-        assertTrue(plan.fontDomainPlan.resourcesFontEnabled);
+        assertFalse(plan.fontDomainPlan.resourcesFontEnabled);
         assertTrue(plan.fontDomainPlan.textViewSpRewriteEnabled);
         assertTrue(plan.fontDomainPlan.textViewAbsoluteRewriteEnabled);
-        assertTrue(plan.domainPlan.hasResourcesFont());
+        assertFalse(plan.domainPlan.hasResourcesFont());
         assertTrue(plan.domainPlan.hasTextViewSpRewrite());
         assertTrue(plan.domainPlan.hasTextViewAbsoluteRewrite());
         assertEquals(plan.domainPlan.enabledDomainsCsv(), plan.hookDomains);
-        assertEquals("resources_font,textview_sp_rewrite,textview_absolute_rewrite,"
+        assertEquals("textview_sp_rewrite,textview_absolute_rewrite,"
                         + "textview_current_px_fallback,paint_text_size_fallback,"
                         + "webview_text_zoom",
                 plan.hookDomains);
@@ -216,16 +216,16 @@ public class HookExecutionPlannerTest {
                 DebugFontOverride.of(false, false, true));
 
         assertTrue(plan.debugDisableTextViewAbsoluteRewrite);
-        assertTrue(plan.resourcesHooksEnabled);
+        assertFalse(plan.resourcesHooksEnabled);
         assertTrue(plan.textViewHooksEnabled);
         assertTrue(plan.webViewTextZoomEnabled);
-        assertTrue(plan.fontDomainPlan.resourcesFontEnabled);
+        assertFalse(plan.fontDomainPlan.resourcesFontEnabled);
         assertTrue(plan.fontDomainPlan.textViewHooksEnabled);
         assertTrue(plan.fontDomainPlan.textViewSpRewriteEnabled);
         assertFalse(plan.fontDomainPlan.textViewAbsoluteRewriteEnabled);
         assertTrue(plan.fontDomainPlan.textViewCurrentPxFallbackEnabled);
         assertTrue(plan.fontDomainPlan.paintFallbackEnabled);
-        assertEquals("resources_font,textview_sp_rewrite,textview_current_px_fallback,"
+        assertEquals("textview_sp_rewrite,textview_current_px_fallback,"
                 + "paint_text_size_fallback,webview_text_zoom", plan.hookDomains);
         assertEquals("field-rewrite-domain-plan", plan.fontDomainPlan.reason);
         assertEquals("disable-textview-absolute", plan.reason.debugOverride);

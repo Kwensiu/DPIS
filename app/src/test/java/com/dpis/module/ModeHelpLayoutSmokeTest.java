@@ -11,15 +11,33 @@ public class ModeHelpLayoutSmokeTest {
     public void modeHelpLayoutContainsRouteCardsAndToolbar() throws IOException {
         String source = read("src/main/java/com/dpis/module/ModeHelpActivity.java");
         String layout = read("src/main/res/layout/activity_mode_help.xml");
+        String guideSource = read("src/main/java/com/dpis/module/ModeGuideActivity.java");
+        String guideLayout = read("src/main/res/layout/activity_mode_guide.xml");
+        String manifest = read("src/main/AndroidManifest.xml");
         String strings = read("src/main/res/values/strings.xml");
 
         assertTrue(layout.contains("android:id=\"@+id/mode_help_toolbar\""));
         assertTrue(layout.contains("android:id=\"@+id/mode_help_back_button\""));
-        assertTrue(layout.contains("@layout/item_mode_help_system"));
-        assertTrue(layout.contains("@layout/item_mode_help_compat"));
+        assertTrue(layout.contains("android:id=\"@+id/mode_help_mode_guide_card\""));
+        assertTrue(layout.contains("@string/mode_help_tip_font_lag_question"));
+        assertTrue(layout.contains("@string/mode_help_tip_font_lag_steps"));
+        assertTrue(layout.contains("@string/mode_help_tip_font_lag_reason"));
+        assertTrue(!layout.contains("@string/mode_help_tip_resources_font_title"));
+        assertTrue(layout.contains("@string/mode_help_mode_guide_entry_title"));
+        assertTrue(!layout.contains("@layout/item_mode_help_system"));
+        assertTrue(!layout.contains("@layout/item_mode_help_compat"));
         assertTrue(source.contains("setContentView(R.layout.activity_mode_help)"));
+        assertTrue(source.contains("new Intent(this, ModeGuideActivity.class)"));
+        assertTrue(guideSource.contains("setContentView(R.layout.activity_mode_guide)"));
+        assertTrue(guideLayout.contains("android:id=\"@+id/mode_guide_toolbar\""));
+        assertTrue(guideLayout.contains("android:id=\"@+id/mode_guide_back_button\""));
+        assertTrue(guideLayout.contains("@layout/item_mode_help_system"));
+        assertTrue(guideLayout.contains("@layout/item_mode_help_compat"));
+        assertTrue(manifest.contains("android:name=\".ModeGuideActivity\""));
         assertTrue(strings.contains("name=\"help_tutorial_system_badge\""));
         assertTrue(strings.contains("name=\"help_tutorial_compat_badge\""));
+        assertTrue(strings.contains("name=\"mode_help_tip_font_lag_reason\""));
+        assertTrue(strings.contains("resources_font"));
         assertTrue(!strings.contains("name=\"help_tutorial_message\""));
     }
 
@@ -73,15 +91,29 @@ public class ModeHelpLayoutSmokeTest {
     }
 
     @Test
-    public void modeHelpUsesSharedInsetsForCardContent() throws IOException {
+    public void modeHelpUsesCompactPageSpacingForQuickAdvice() throws IOException {
         String layout = read("src/main/res/layout/activity_mode_help.xml");
+        String guideLayout = read("src/main/res/layout/activity_mode_guide.xml");
         String system = read("src/main/res/layout/item_mode_help_system.xml");
 
-        assertTrue(layout.contains("@dimen/home_workspace_padding_top"));
+        assertTrue(layout.contains("android:id=\"@+id/mode_help_tip_group\""));
+        assertTrue(layout.contains("android:id=\"@+id/mode_help_tip_item_font_lag\""));
+        assertTrue(!layout.contains("android:id=\"@+id/mode_help_tip_card\""));
+        assertTrue(layout.contains("@drawable/bg_mode_help_tip_marker"));
+        assertTrue(layout.contains("android:id=\"@+id/mode_help_mode_guide_card\""));
+        assertTrue(layout.contains("com.google.android.material.card.MaterialCardView"));
+        assertTrue(layout.contains("@dimen/mode_help_toolbar_padding_top"));
+        assertTrue(layout.contains("@dimen/mode_help_content_spacing_top"));
+        assertTrue(layout.contains("@dimen/mode_help_tip_marker_spacing_end"));
+        assertTrue(layout.contains("@dimen/mode_help_card_padding_vertical"));
+        assertTrue(layout.contains("@dimen/mode_help_entry_min_height"));
         assertTrue(layout.contains("@dimen/home_workspace_padding_horizontal"));
+        assertTrue(guideLayout.contains("@dimen/home_workspace_padding_top"));
+        assertTrue(guideLayout.contains("@dimen/home_workspace_padding_horizontal"));
         assertTrue(system.contains("@dimen/help_tutorial_card_padding"));
         assertTrue(system.contains("@dimen/help_tutorial_body_spacing_top"));
         assertTrue(layout.contains("@dimen/home_workspace_padding_bottom"));
+        assertTrue(guideLayout.contains("@dimen/home_workspace_padding_bottom"));
     }
 
     private static String read(String relativePath) throws IOException {

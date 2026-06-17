@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/font_hook_domain_notice_container" />
+    <corners android:radius="@dimen/font_hook_domains_disabled_hint_corner_radius" />
+</shape>

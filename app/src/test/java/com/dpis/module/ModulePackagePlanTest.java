@@ -291,7 +291,7 @@ public final class ModulePackagePlanTest {
         assertTrue(executionPlan.textViewHooksEnabled);
         assertTrue(executionPlan.fontDomainPlan.textViewSpRewriteEnabled);
         assertFalse(executionPlan.fontDomainPlan.textViewAbsoluteRewriteEnabled);
-        assertEquals("resources_font,textview_sp_rewrite,textview_current_px_fallback,"
+        assertEquals("textview_sp_rewrite,textview_current_px_fallback,"
                 + "paint_text_size_fallback,webview_text_zoom", executionPlan.hookDomains);
     }
 }

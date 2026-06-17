@@ -6,7 +6,7 @@
     <string name="dialog_viewport_hint_absolute">Min width dp</string>
     <string name="dialog_viewport_mode_system">Scale</string>
     <string name="dialog_viewport_mode_compat">Min width</string>
-    <string name="dialog_font_scale_hint">Font 50–300%</string>
+    <string name="dialog_font_scale_hint">Font scale 50-300%</string>
     <string name="dialog_font_mode_system">System</string>
     <string name="dialog_font_mode_compat">Compat</string>
     <string name="dialog_wechat_dpi_hint">WeChat DPI 200-1000</string>
@@ -56,8 +56,17 @@
     <string name="help_tutorial_width_title">Width mode</string>
     <string name="help_tutorial_width_summary">Targets a dp width so layouts behave closer to another screen size.</string>
     <string name="help_tutorial_width_points">• Uses a target dp width\n• Better for layout breakpoint changes\n• Large jumps may move controls around</string>
-    <string name="mode_help_title">Mode guide</string>
-    <string name="mode_help_subtitle">General adjustment, interface adjustment, and font features are separate choices.</string>
+    <string name="mode_help_title">Usage help</string>
+    <string name="mode_help_subtitle">Practical tips for smoother per-app display and font adjustments.</string>
+    <string name="mode_help_tips_title">Practical tips</string>
+    <string name="mode_help_tip_font_lag_question">App feels laggy when using font scaling?</string>
+    <string name="mode_help_tip_font_lag_steps">Open the app configuration sheet -> switch font mode to Compat -> tap Hook routes -> select the Font tab -> keep Resources font off -> save and restart the app.</string>
+    <string name="mode_help_tip_font_lag_reason">Based on multiple reports, the resources_font route can slow down complex apps. Compat mode keeps it off by default; system mode keeps it as an internal route.</string>
+    <string name="mode_help_more_title">More details</string>
+    <string name="mode_help_mode_guide_entry_title">Mode guide</string>
+    <string name="mode_help_mode_guide_entry_summary">Read the detailed notes for general adjustment, interface adjustment, and font feature routes.</string>
+    <string name="mode_guide_title">Mode guide</string>
+    <string name="mode_guide_subtitle">General adjustment, interface adjustment, and font features are separate choices.</string>
     <string name="mode_help_font_routes_title">General adjustment modes</string>
     <string name="mode_help_viewport_types_title">Interface adjustment modes</string>
     <string name="mode_help_font_features_title">Font features</string>
@@ -83,8 +92,8 @@
     <string name="help_tutorial_typeface_title">Font style replacement</string>
     <string name="help_tutorial_typeface_summary">Choose imported or system fonts per app, keeping text size tuning separate from typeface replacement.</string>
     <string name="help_tutorial_typeface_points">• Uses imported fonts or system fonts\n• Saved independently from font scale values\n• Some apps may only apply it partially because of bundled fonts or custom renderers</string>
-    <string name="home_mode_help_entry_title">Mode guide</string>
-    <string name="home_mode_help_entry_summary">View general adjustment, interface adjustment, and font feature notes.</string>
+    <string name="home_mode_help_entry_title">Usage help</string>
+    <string name="home_mode_help_entry_summary">View practical tips and detailed mode notes.</string>
     <string name="home_feedback_title">Feedback</string>
     <string name="home_feedback_summary">Report on GitHub or join the community groups.</string>
     <string name="home_feedback_github" translatable="false">GitHub</string>
@@ -241,12 +250,14 @@
     <string name="dialog_viewport_apply_compat">Compat</string>
     <string name="dialog_viewport_apply_compat_subtitle">Use app-process field rewrite.</string>
     <string name="dialog_font_hook_domains_unknown_group">Unknown chain</string>
+    <string name="dialog_font_hook_domains_font_disabled_hint">Switch font scaling to Compat first.</string>
     <string name="dialog_font_hook_domains_restore_button">Restore recommended config</string>
     <string name="dialog_font_hook_group_resources">Resource config</string>
     <string name="dialog_font_hook_group_text_view_fallback">Text view fallbacks</string>
     <string name="dialog_font_hook_group_web">Web</string>
     <string name="dialog_font_hook_group_cross_runtime">Cross runtime</string>
     <string name="dialog_font_hook_domain_resources_font">Resources font</string>
+    <string name="dialog_font_hook_domain_resources_font_warning">Performance issue, disabled by default</string>
     <string name="dialog_font_hook_domain_system_server_font" translatable="false">system_server_font</string>
     <string name="dialog_font_hook_domain_activity_thread_font" translatable="false">activity_thread_font</string>
     <string name="dialog_font_hook_domain_textview_sp_rewrite">TextView sp rewrite</string>

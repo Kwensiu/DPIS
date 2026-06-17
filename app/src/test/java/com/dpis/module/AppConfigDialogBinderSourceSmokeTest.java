@@ -300,6 +300,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
     public void fontHookDomainDialogUsesImmediateEditorLayout() throws IOException {
         String source = read("src/main/java/com/dpis/module/FontHookDomainDialog.java");
         String dialogLayout = read("src/main/res/layout/dialog_font_hook_domains.xml");
+        String disabledHintBackground = read(
+                "src/main/res/drawable/bg_font_hook_domains_disabled_hint.xml");
         String itemLayout = read("src/main/res/layout/item_font_hook_domain.xml");
         String viewportModeLayout = read("src/main/res/layout/item_viewport_apply_mode.xml");
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
@@ -314,6 +316,11 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("MaterialRadioButton radioButton"));
         assertTrue(source.contains("font_hook_domains_interface_page"));
         assertTrue(source.contains("font_hook_domains_font_page"));
+        assertTrue(source.contains("font_hook_domains_font_editable_content"));
+        assertTrue(source.contains("boolean fontDomainsEditable"));
+        assertTrue(source.contains("bindFontEditableContentEnabled("));
+        assertTrue(source.contains("bindSelectedTabPage("));
+        assertTrue(source.contains("setEnabledRecursive("));
         assertTrue(source.contains("host.saveCustom(packageName, selectedKnown, automaticKnown, unknown)"));
         assertTrue(source.contains("host.restoreRecommended(packageName)"));
         assertTrue(source.contains("FontHookDomainRegistry.orderedCustomizableDisplayIdsList()"));
@@ -323,6 +330,9 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("font_hook_domain_risk_low"));
         assertTrue(source.contains("font_hook_domain_risk_medium"));
         assertTrue(source.contains("font_hook_domain_risk_high"));
+        assertTrue(source.contains("font_hook_domain_warning"));
+        assertTrue(source.contains("bindResourcesFontDefaultWarning("));
+        assertTrue(source.contains("ID_RESOURCES_FONT.equals(domainId)"));
         assertFalse(source.contains("new LinkedHashSet<>(FontHookDomainRegistry.orderedIdsList())"));
         assertTrue(source.contains("title.setText(FontHookDomainRegistry.titleResFor(domainId));"));
         assertTrue(source.contains("title.setText(domainId);"));
@@ -336,10 +346,25 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(dialogLayout.contains("app:tabBackground=\"@android:color/transparent\""));
         assertTrue(dialogLayout.contains("@+id/font_hook_domains_interface_page"));
         assertTrue(dialogLayout.contains("@+id/font_hook_domains_font_page"));
+        assertTrue(dialogLayout.contains("@+id/font_hook_domains_font_editable_content"));
+        assertTrue(dialogLayout.contains("@+id/font_hook_domains_font_disabled_hint"));
+        assertTrue(dialogLayout.contains("@string/dialog_font_hook_domains_font_disabled_hint"));
+        assertTrue(dialogLayout.indexOf("@+id/font_hook_domains_font_disabled_hint")
+                < dialogLayout.indexOf("@+id/font_hook_domains_interface_page"));
+        assertTrue(dialogLayout.contains("android:layout_gravity=\"center_horizontal\""));
+        assertTrue(dialogLayout.contains("@drawable/bg_font_hook_domains_disabled_hint"));
+        assertTrue(dialogLayout.contains("@color/font_hook_domain_notice_text"));
+        assertTrue(disabledHintBackground.contains(
+                "@color/font_hook_domain_notice_container"));
+        assertFalse(disabledHintBackground.contains("<stroke"));
         assertTrue(dialogLayout.contains("@dimen/font_hook_domains_dialog_padding_horizontal"));
         assertTrue(dialogLayout.contains("@dimen/font_hook_domains_tabs_spacing_bottom"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_title"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_subtitle"));
+        assertTrue(itemLayout.contains("@+id/font_hook_domain_warning"));
+        assertTrue(itemLayout.contains("@string/dialog_font_hook_domain_resources_font_warning"));
+        assertTrue(itemLayout.contains("@color/font_hook_domain_notice_text"));
+        assertTrue(itemLayout.contains("android:visibility=\"gone\""));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_switch"));
         assertTrue(itemLayout.contains("@dimen/font_hook_domain_row_min_height"));
         assertTrue(itemLayout.contains("@dimen/font_hook_domain_row_padding_vertical"));

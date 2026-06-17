@@ -3645,8 +3645,23 @@ public final class MainActivity
                 state != null
                         ? state.viewportApplyMode
                         : store.getTargetViewportApplyMode(item.packageName),
+                isFontHookDomainEditingEnabled(),
                 onStateChanged
         );
+    }
+
+    private boolean isFontHookDomainEditingEnabled() {
+        View root = activeEditorRoot;
+        if (root == null
+                && landDetailContent != null
+                && landDetailContent.getChildCount() > 0) {
+            root = landDetailContent.getChildAt(0);
+        }
+        if (root == null) {
+            return false;
+        }
+        return FontApplyMode.FIELD_REWRITE.equals(
+                AppConfigDialogBinder.resolveFontMode(findFontModeToggle(root)));
     }
 
     private String getFontHookDomainsButtonText(

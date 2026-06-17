@@ -348,6 +348,9 @@ superseded.
 - 2026-06-07: restored the product boundary that custom font hook domains edit
   only the compat/field-rewrite chain. System-mode font routes remain internal
   scheduled routes and no longer share the custom-chain switch state.
+- 2026-06-17: compat/field-rewrite automatic font domains no longer include
+  `resources_font`; the custom-chain font page can still enable it manually.
+  System-mode `resources_font` remains an internal semantic supplement.
 - 2026-06-07: updated the route map to show system font mode explicitly:
   `system_server_font` is launch-only for `FONT_SCALE`, while
   `activity_thread_font`, `resources_font`, and `webview_text_zoom` remain

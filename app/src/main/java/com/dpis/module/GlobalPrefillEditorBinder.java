@@ -359,6 +359,8 @@ final class GlobalPrefillEditorBinder {
                 FontHookDomainRegistry.recommendedTemplateKnownDomains(),
                 HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw),
                 state.viewportApplyMode,
+                FontApplyMode.FIELD_REWRITE.equals(
+                        AppConfigDialogBinder.resolveFontMode(fontModeToggle)),
                 this::refreshHookDomainsButton);
     }
 

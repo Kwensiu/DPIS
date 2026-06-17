@@ -33,6 +33,17 @@
             android:includeFontPadding="false"
             android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
             android:textColor="?attr/colorOnSurfaceVariant" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/font_hook_domain_warning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/font_hook_domain_warning_spacing_top"
+            android:includeFontPadding="false"
+            android:text="@string/dialog_font_hook_domain_resources_font_warning"
+            android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+            android:textColor="@color/font_hook_domain_notice_text"
+            android:visibility="gone" />
     </LinearLayout>
 
     <com.google.android.material.materialswitch.MaterialSwitch

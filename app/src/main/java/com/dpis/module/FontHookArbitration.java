@@ -104,7 +104,7 @@ final class FontHookArbitration {
         static FontDomainPlan fieldRewriteDomainPlan(boolean flutterSettingsEnabled,
                                                      boolean hyperOsNativeFlutterEnabled) {
             return new FontDomainPlan(
-                    true,
+                    false,
                     true,
                     true,
                     true,

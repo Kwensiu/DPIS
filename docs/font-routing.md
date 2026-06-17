@@ -121,8 +121,11 @@ Negative Compose observations may clear Compose base suppression, but must not
 clear an already established read-conflict target suppression for the same
 package and target factor.
 
-For compat / field-rewrite font mode, `resources_font` uses a mixed Resources
-route:
+In compat / field-rewrite font mode, the automatic domain set does not include
+`resources_font`. Users can still enable it manually from the custom hook-chain
+font page when an app needs read-path `fontScale` / `scaledDensity` values to
+match the target. When enabled in compat mode, `resources_font` uses a mixed
+Resources route:
 
 - `ResourcesImpl.updateConfiguration` is installed as a low-frequency metrics
   seed so `scaledDensity` can be initialized before hot resource reads.

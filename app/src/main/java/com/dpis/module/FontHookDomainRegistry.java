@@ -28,7 +28,7 @@ final class FontHookDomainRegistry {
     private static final List<DomainSpec> DOMAIN_SPECS = List.of(
             new DomainSpec(ID_RESOURCES_FONT, GROUP_RESOURCES,
                     R.string.dialog_font_hook_domain_resources_font,
-                    0, 0, true),
+                    0, 0, false),
             new DomainSpec(ID_SYSTEM_SERVER_FONT, GROUP_RESOURCES,
                     R.string.dialog_font_hook_domain_system_server_font,
                     NOT_CUSTOMIZABLE, 1, false),

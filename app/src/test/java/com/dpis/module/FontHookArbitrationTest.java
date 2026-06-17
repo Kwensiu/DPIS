@@ -7,11 +7,11 @@ import static org.junit.Assert.assertTrue;
 
 public class FontHookArbitrationTest {
     @Test
-    public void fieldRewriteUsesFullRecommendedCompatFallbacks() {
+    public void fieldRewriteUsesRecommendedCompatFallbacksWithoutResourcesFont() {
         FontHookArbitration.FontDomainPlan plan =
                 FontHookArbitration.resolveDomainPlan(true, true);
 
-        assertTrue(plan.resourcesFontEnabled);
+        assertFalse(plan.resourcesFontEnabled);
         assertTrue(plan.webViewTextZoomEnabled);
         assertTrue(plan.textViewHooksEnabled);
         assertTrue(plan.textViewSpRewriteEnabled);
@@ -64,7 +64,7 @@ public class FontHookArbitrationTest {
         FontHookArbitration.FontDomainPlan plan =
                 FontHookArbitration.resolveDomainPlan(true, true, true);
 
-        assertTrue(plan.resourcesFontEnabled);
+        assertFalse(plan.resourcesFontEnabled);
         assertFalse(plan.flutterSettingsEnabled);
         assertTrue(plan.hyperOsNativeFlutterEnabled);
         assertFalse(plan.genericNativeFlutterEnabled);

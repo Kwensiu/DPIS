@@ -45,17 +45,22 @@ final class FontHookDomainDialog {
                      Set<String> automaticKnownDomains,
                      HookDomainOverride currentOverride,
                      String currentViewportApplyMode,
+                     boolean fontDomainsEditable,
                      Runnable onStateChanged) {
         View view = LayoutInflater.from(activity).inflate(
                 R.layout.dialog_font_hook_domains, null, false);
         TabLayout tabs = view.findViewById(R.id.font_hook_domains_tabs);
         View interfacePage = view.findViewById(R.id.font_hook_domains_interface_page);
         View fontPage = view.findViewById(R.id.font_hook_domains_font_page);
+        View fontEditableContent =
+                view.findViewById(R.id.font_hook_domains_font_editable_content);
         LinearLayout knownContainer = view.findViewById(R.id.font_hook_domains_known_container);
         LinearLayout viewportApplyContainer =
                 view.findViewById(R.id.font_hook_domains_viewport_apply_container);
         MaterialTextView unknownTitle = view.findViewById(R.id.font_hook_domains_unknown_title);
         LinearLayout unknownContainer = view.findViewById(R.id.font_hook_domains_unknown_container);
+        MaterialTextView fontDisabledHint =
+                view.findViewById(R.id.font_hook_domains_font_disabled_hint);
         View restoreButton = view.findViewById(R.id.font_hook_domains_restore_button);
 
         LinkedHashSet<String> knownIds = new LinkedHashSet<>(
@@ -73,7 +78,8 @@ final class FontHookDomainDialog {
                 normalizeViewportApplyModeForDisplay(currentViewportApplyMode)
         };
 
-        bindTabs(tabs, interfacePage, fontPage);
+        bindTabs(tabs, interfacePage, fontPage, fontDisabledHint, fontDomainsEditable);
+        bindFontEditableContentEnabled(fontEditableContent, fontDomainsEditable);
         bindViewportApplyRows(activity, viewportApplyContainer, host, packageName,
                 viewportApplyMode);
         Map<String, MaterialSwitch> switches = new LinkedHashMap<>();
@@ -84,6 +90,10 @@ final class FontHookDomainDialog {
             MaterialSwitch switchView = row.findViewById(R.id.font_hook_domain_switch);
             switchView.setChecked(selectedKnown.contains(id));
             switchView.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (!fontDomainsEditable) {
+                    buttonView.setChecked(selectedKnown.contains(id));
+                    return;
+                }
                 if (binding[0]) {
                     return;
                 }
@@ -93,7 +103,11 @@ final class FontHookDomainDialog {
                     onStateChanged.run();
                 }
             });
-            row.setOnClickListener(v -> switchView.toggle());
+            row.setOnClickListener(v -> {
+                if (fontDomainsEditable) {
+                    switchView.toggle();
+                }
+            });
             switches.put(id, switchView);
             LinearLayout groupContainer = groupContainers.get(FontHookDomainRegistry.groupFor(id));
             if (groupContainer != null) {
@@ -104,6 +118,9 @@ final class FontHookDomainDialog {
         bindUnknownRows(activity, unknownTitle, unknownContainer, unknown);
 
         restoreButton.setOnClickListener(v -> {
+            if (!fontDomainsEditable) {
+                return;
+            }
             if (!host.restoreRecommended(packageName)) {
                 return;
             }
@@ -132,15 +149,37 @@ final class FontHookDomainDialog {
         DialogWindowSizer.applyLargeWidth(dialog, activity);
     }
 
-    private static void bindTabs(TabLayout tabs, View interfacePage, View fontPage) {
+    private static void bindFontEditableContentEnabled(View editableContent, boolean enabled) {
+        setEditableSectionEnabled(editableContent, enabled);
+    }
+
+    private static void setEditableSectionEnabled(View view, boolean enabled) {
+        if (view == null) {
+            return;
+        }
+        setEnabledRecursive(view, enabled);
+        view.setAlpha(enabled ? 1f : 0.45f);
+    }
+
+    private static void setEnabledRecursive(View view, boolean enabled) {
+        view.setEnabled(enabled);
+        if (!(view instanceof android.view.ViewGroup group)) {
+            return;
+        }
+        for (int index = 0; index < group.getChildCount(); index++) {
+            setEnabledRecursive(group.getChildAt(index), enabled);
+        }
+    }
+
+    private static void bindTabs(TabLayout tabs, View interfacePage, View fontPage,
+            View disabledHint, boolean fontDomainsEditable) {
         tabs.addTab(tabs.newTab().setText(R.string.dialog_hook_chain_tab_interface));
         tabs.addTab(tabs.newTab().setText(R.string.dialog_hook_chain_tab_font));
         tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                boolean interfaceSelected = tab.getPosition() == 0;
-                interfacePage.setVisibility(interfaceSelected ? View.VISIBLE : View.GONE);
-                fontPage.setVisibility(interfaceSelected ? View.GONE : View.VISIBLE);
+                bindSelectedTabPage(tab.getPosition(), interfacePage, fontPage,
+                        disabledHint, fontDomainsEditable);
             }
 
             @Override
@@ -151,6 +190,18 @@ final class FontHookDomainDialog {
             public void onTabReselected(TabLayout.Tab tab) {
             }
         });
+        bindSelectedTabPage(0, interfacePage, fontPage, disabledHint, fontDomainsEditable);
+    }
+
+    private static void bindSelectedTabPage(int position, View interfacePage, View fontPage,
+            View disabledHint, boolean fontDomainsEditable) {
+        boolean interfaceSelected = position == 0;
+        interfacePage.setVisibility(interfaceSelected ? View.VISIBLE : View.GONE);
+        fontPage.setVisibility(interfaceSelected ? View.GONE : View.VISIBLE);
+        if (disabledHint != null) {
+            disabledHint.setVisibility(!interfaceSelected && !fontDomainsEditable
+                    ? View.VISIBLE : View.GONE);
+        }
     }
 
     private static void bindViewportApplyRows(Activity activity,
@@ -289,6 +340,7 @@ final class FontHookDomainDialog {
                 R.layout.item_font_hook_domain, null, false);
         MaterialTextView title = row.findViewById(R.id.font_hook_domain_title);
         MaterialTextView subtitle = row.findViewById(R.id.font_hook_domain_subtitle);
+        MaterialTextView warning = row.findViewById(R.id.font_hook_domain_warning);
         if (known) {
             title.setText(FontHookDomainRegistry.titleResFor(domainId));
         } else {
@@ -297,7 +349,16 @@ final class FontHookDomainDialog {
         subtitle.setText(known
                 ? createSubtitleText(activity, domainId)
                 : domainId);
+        bindResourcesFontDefaultWarning(warning, known, domainId);
         return row;
+    }
+
+    private static void bindResourcesFontDefaultWarning(
+            MaterialTextView warning,
+            boolean known,
+            String domainId) {
+        boolean visible = known && FontHookDomainRegistry.ID_RESOURCES_FONT.equals(domainId);
+        warning.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
     private static CharSequence createSubtitleText(Activity activity, String domainId) {

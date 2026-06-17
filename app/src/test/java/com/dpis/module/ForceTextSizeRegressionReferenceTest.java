@@ -138,7 +138,7 @@ public class ForceTextSizeRegressionReferenceTest {
         FontHookArbitration.FontDomainPlan plan =
                 FontHookArbitration.resolveDomainPlan(true, true);
 
-        assertTrue(plan.resourcesFontEnabled);
+        assertFalse(plan.resourcesFontEnabled);
         assertTrue(plan.webViewTextZoomEnabled);
         assertTrue(plan.textViewHooksEnabled);
         assertTrue(plan.textViewSpRewriteEnabled);

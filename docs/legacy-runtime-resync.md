@@ -48,6 +48,8 @@ Font mode
 
   compat
     -> app-process field-rewrite route
+    -> automatic defaults exclude resources_font
+    -> resources_font remains manually selectable for read-path value rewrite
     -> custom hook-chain UI controls this mode only
 ```
 
@@ -113,7 +115,8 @@ DPIS viewport target package
   |                 |     resources_font and webview_text_zoom for system font mode
   |                 |
   |                 +-- TextView / Paint / WebView field-rewrite routes
-  |                 |     custom hook-chain UI controls these in compat font mode
+  |                 |     custom hook-chain UI controls these in compat font mode;
+  |                 |     resources_font is manual, not automatic
   |                 |
   |                 +-- FlutterJNI.setViewportMetrics
   |                 |     status: active for Flutter/mixed shells
