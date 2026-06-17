@@ -162,8 +162,10 @@
     <string name="template_workspace_summary_viewport_scale">Interface %1$d.%2$d%%</string>
     <string name="template_workspace_summary_viewport_width">Interface %1$ddp</string>
     <string name="template_workspace_summary_viewport_mode">Interface route: %1$s</string>
+    <string name="template_workspace_summary_viewport">Interface %1$s</string>
     <string name="template_workspace_summary_font_scale">Font %1$d%%</string>
     <string name="template_workspace_summary_font_mode">Font route: %1$s</string>
+    <string name="template_workspace_summary_font">Font %1$s</string>
     <string name="template_workspace_summary_typeface">Font style: %1$s</string>
     <string name="template_workspace_summary_hook_domains">Custom hook chain</string>
     <string name="sheet_unsaved_badge">Unsaved</string>

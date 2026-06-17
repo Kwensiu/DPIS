@@ -181,31 +181,13 @@ final class TemplateWorkspaceBinder {
         }
 
         @Override
-        public String viewportScale(int wholePercent, int decimalPercent) {
-            return context.getString(
-                    R.string.template_workspace_summary_viewport_scale,
-                    wholePercent,
-                    decimalPercent);
+        public String viewportSummary(String detail) {
+            return context.getString(R.string.template_workspace_summary_viewport, detail);
         }
 
         @Override
-        public String viewportWidth(int widthDp) {
-            return context.getString(R.string.template_workspace_summary_viewport_width, widthDp);
-        }
-
-        @Override
-        public String viewportMode(String modeLabel) {
-            return context.getString(R.string.template_workspace_summary_viewport_mode, modeLabel);
-        }
-
-        @Override
-        public String fontScale(int percent) {
-            return context.getString(R.string.template_workspace_summary_font_scale, percent);
-        }
-
-        @Override
-        public String fontMode(String modeLabel) {
-            return context.getString(R.string.template_workspace_summary_font_mode, modeLabel);
+        public String fontSummary(String detail) {
+            return context.getString(R.string.template_workspace_summary_font, detail);
         }
 
         @Override

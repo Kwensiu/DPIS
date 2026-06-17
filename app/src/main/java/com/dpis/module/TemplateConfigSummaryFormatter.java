@@ -8,15 +8,9 @@ final class TemplateConfigSummaryFormatter {
     interface Text {
         String emptySummary();
 
-        String viewportScale(int wholePercent, int decimalPercent);
+        String viewportSummary(String detail);
 
-        String viewportWidth(int widthDp);
-
-        String viewportMode(String modeLabel);
-
-        String fontScale(int percent);
-
-        String fontMode(String modeLabel);
+        String fontSummary(String detail);
 
         String typeface(String displayName);
 
@@ -45,31 +39,49 @@ final class TemplateConfigSummaryFormatter {
         TemplateConfigValue normalized = value != null ? value : TemplateConfigValue.EMPTY;
         ArrayList<String> parts = new ArrayList<>();
         ViewportTargetSpec viewportTargetSpec = normalized.viewportTargetSpec;
+        ArrayList<String> viewportParts = new ArrayList<>();
         if (viewportTargetSpec.isRelativeScale()) {
             int whole = viewportTargetSpec.scalePermille() / 10;
             int decimal = viewportTargetSpec.scalePermille() % 10;
-            parts.add(text.viewportScale(whole, decimal));
+            viewportParts.add(percentText(whole, decimal));
         } else if (viewportTargetSpec.isAbsoluteDp()) {
-            parts.add(text.viewportWidth(viewportTargetSpec.absoluteWidthDp()));
+            viewportParts.add(viewportTargetSpec.absoluteWidthDp() + "dp");
         }
-        if (ViewportApplyMode.SYSTEM.equals(normalized.viewportApplyMode)
-                || ViewportApplyMode.COMPAT.equals(normalized.viewportApplyMode)) {
-            parts.add(text.viewportMode(modeLabel(normalized.viewportApplyMode)));
+        if (!viewportParts.isEmpty() && (ViewportApplyMode.SYSTEM.equals(normalized.viewportApplyMode)
+                || ViewportApplyMode.COMPAT.equals(normalized.viewportApplyMode)
+                || ViewportApplyMode.AUTO.equals(normalized.viewportApplyMode))) {
+            viewportParts.add(modeLabel(normalized.viewportApplyMode));
         }
+        if (!viewportParts.isEmpty()) {
+            parts.add(text.viewportSummary(joinDetails(viewportParts)));
+        }
+
+        ArrayList<String> fontParts = new ArrayList<>();
         if (normalized.fontScalePercent != null) {
-            parts.add(text.fontScale(normalized.fontScalePercent));
+            fontParts.add(normalized.fontScalePercent + "%");
         }
-        if (FontApplyMode.isEnabled(normalized.fontApplyMode)) {
-            parts.add(text.fontMode(modeLabel(normalized.fontApplyMode)));
+        if (!fontParts.isEmpty() && FontApplyMode.isEnabled(normalized.fontApplyMode)) {
+            fontParts.add(modeLabel(normalized.fontApplyMode));
         }
         TypefaceStatus typefaceStatus = resolveTypeface(normalized.typefaceId);
         if (typefaceStatus.resolved()) {
-            parts.add(text.typeface(typefaceStatus.displayName));
+            fontParts.add(typefaceStatus.displayName);
         }
         if (normalized.fontHookDomainsRaw != null) {
-            parts.add(text.hookDomains());
+            fontParts.add(text.hookDomains());
+        }
+        if (!fontParts.isEmpty()) {
+            parts.add(text.fontSummary(joinDetails(fontParts)));
         }
         return new Result(parts, typefaceStatus, text.emptySummary());
+    }
+
+    private String percentText(int wholePercent, int decimalPercent) {
+        return wholePercent + "." + decimalPercent + "%";
+    }
+
+    private String joinDetails(List<String> details) {
+        return String.join(" · ", details);
     }
 
     private TypefaceStatus resolveTypeface(String typefaceId) {

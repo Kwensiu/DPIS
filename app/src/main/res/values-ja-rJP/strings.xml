@@ -149,8 +149,10 @@
     <string name="template_workspace_summary_viewport_scale">インターフェース %1$d.%2$d%%</string>
     <string name="template_workspace_summary_viewport_width">インターフェース %1$ddp</string>
     <string name="template_workspace_summary_viewport_mode">インターフェースルート: %1$s</string>
+    <string name="template_workspace_summary_viewport">インターフェース %1$s</string>
     <string name="template_workspace_summary_font_scale">フォント %1$d%%</string>
     <string name="template_workspace_summary_font_mode">フォントルート: %1$s</string>
+    <string name="template_workspace_summary_font">フォント %1$s</string>
     <string name="template_workspace_summary_typeface">フォントスタイル: %1$s</string>
     <string name="template_workspace_summary_hook_domains">カスタム hook チェーン</string>
     <string name="sheet_unsaved_badge">未保存</string>

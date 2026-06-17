@@ -149,8 +149,10 @@
     <string name="template_workspace_summary_viewport_scale">Интерфейс %1$d.%2$d%%</string>
     <string name="template_workspace_summary_viewport_width">Интерфейс %1$ddp</string>
     <string name="template_workspace_summary_viewport_mode">Маршрут интерфейса: %1$s</string>
+    <string name="template_workspace_summary_viewport">Интерфейс %1$s</string>
     <string name="template_workspace_summary_font_scale">Шрифт %1$d%%</string>
     <string name="template_workspace_summary_font_mode">Маршрут шрифта: %1$s</string>
+    <string name="template_workspace_summary_font">Шрифт %1$s</string>
     <string name="template_workspace_summary_typeface">Стиль шрифта: %1$s</string>
     <string name="template_workspace_summary_hook_domains">Пользовательская цепочка хуков</string>
     <string name="sheet_unsaved_badge">Несохраненные</string>

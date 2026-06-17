@@ -145,12 +145,14 @@
     <string name="template_workspace_global_prefill_subtitle">调整未配置应用的默认填入值</string>
     <string name="template_workspace_quick_templates_title">快捷模板</string>
     <string name="template_workspace_quick_templates_empty">暂无快捷模板。</string>
-    <string name="template_workspace_summary_empty">暂无已配置参数。</string>
+    <string name="template_workspace_summary_empty">暂无已配置参数</string>
     <string name="template_workspace_summary_viewport_scale">界面 %1$d.%2$d%%</string>
     <string name="template_workspace_summary_viewport_width">界面 %1$ddp</string>
     <string name="template_workspace_summary_viewport_mode">界面路线：%1$s</string>
+    <string name="template_workspace_summary_viewport">界面 %1$s</string>
     <string name="template_workspace_summary_font_scale">字体 %1$d%%</string>
     <string name="template_workspace_summary_font_mode">字体路线：%1$s</string>
+    <string name="template_workspace_summary_font">字体 %1$s</string>
     <string name="template_workspace_summary_typeface">字体样式：%1$s</string>
     <string name="template_workspace_summary_hook_domains">自定义 Hook 链路</string>
     <string name="sheet_unsaved_badge">未保存</string>

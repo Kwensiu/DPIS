@@ -22,15 +22,12 @@ public class TemplateConfigSummaryFormatterTest {
         TemplateConfigSummaryFormatter.Result result = formatter.format(value);
 
         assertEquals(
-                "Interface 112.5% · Font 120% · Font route: Compat"
-                        + " · Font style: Demo Font · Custom hook chain",
+                "Interface 112.5% · Auto · Font 120% · Compat · Demo Font · Custom hook chain",
                 result.summary());
-        assertEquals(5, result.summaryParts.size());
-        assertEquals("Interface 112.5%", result.summaryParts.get(0));
-        assertEquals("Font 120%", result.summaryParts.get(1));
-        assertEquals("Font route: Compat", result.summaryParts.get(2));
-        assertEquals("Font style: Demo Font", result.summaryParts.get(3));
-        assertEquals("Custom hook chain", result.summaryParts.get(4));
+        assertEquals(2, result.summaryParts.size());
+        assertEquals("Interface 112.5% · Auto", result.summaryParts.get(0));
+        assertEquals("Font 120% · Compat · Demo Font · Custom hook chain",
+                result.summaryParts.get(1));
         assertFalse(result.typefaceStatus.missing);
     }
 
@@ -48,12 +45,27 @@ public class TemplateConfigSummaryFormatterTest {
 
         TemplateConfigSummaryFormatter.Result result = formatter.format(value);
 
-        assertEquals("Interface 411dp · Interface route: Compat", result.summary());
-        assertEquals(2, result.summaryParts.size());
-        assertEquals("Interface 411dp", result.summaryParts.get(0));
-        assertEquals("Interface route: Compat", result.summaryParts.get(1));
+        assertEquals("Interface 411dp · Compat", result.summary());
+        assertEquals(1, result.summaryParts.size());
+        assertEquals("Interface 411dp · Compat", result.summaryParts.get(0));
         assertTrue(result.typefaceStatus.missing);
         assertEquals("font_missing", result.typefaceStatus.typefaceId);
+    }
+
+    @Test
+    public void routeOnlyValuesDoNotCreateSummaryParts() {
+        TemplateConfigValue value = new TemplateConfigValue(
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.COMPAT,
+                null,
+                FontApplyMode.FIELD_REWRITE,
+                null,
+                null);
+
+        TemplateConfigSummaryFormatter.Result result = newFormatter(id -> null).format(value);
+
+        assertEquals("No values configured.", result.summary());
+        assertTrue(result.summaryParts.isEmpty());
     }
 
     @Test
@@ -97,28 +109,13 @@ public class TemplateConfigSummaryFormatterTest {
         }
 
         @Override
-        public String viewportScale(int wholePercent, int decimalPercent) {
-            return "Interface " + wholePercent + "." + decimalPercent + "%";
+        public String viewportSummary(String detail) {
+            return "Interface " + detail;
         }
 
         @Override
-        public String viewportWidth(int widthDp) {
-            return "Interface " + widthDp + "dp";
-        }
-
-        @Override
-        public String viewportMode(String modeLabel) {
-            return "Interface route: " + modeLabel;
-        }
-
-        @Override
-        public String fontScale(int percent) {
-            return "Font " + percent + "%";
-        }
-
-        @Override
-        public String fontMode(String modeLabel) {
-            return "Font route: " + modeLabel;
+        public String fontSummary(String detail) {
+            return "Font " + detail;
         }
 
         @Override
