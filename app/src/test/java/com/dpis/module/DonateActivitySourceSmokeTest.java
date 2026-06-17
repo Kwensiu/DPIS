@@ -68,23 +68,29 @@ public class DonateActivitySourceSmokeTest {
         assertTrue(supportersSheet.contains("@string/donate_supporters_title"));
         assertTrue(supportersSheet.contains("@string/donate_supporters_summary"));
         assertTrue(supportersSheet.contains("@dimen/donate_supporters_sheet_min_height"));
-        assertEquals(2, countOccurrences(supportersSheet,
+        assertEquals(3, countOccurrences(supportersSheet,
                 "<com.google.android.material.card.MaterialCardView"));
         assertTrue(supportersSheet.contains("@dimen/donate_supporters_sheet_card_spacing_top"));
         assertTrue(supportersSheet.contains("@string/donate_supporter_nickyoung_name"));
         assertTrue(supportersSheet.contains("@string/donate_supporter_nickyoung_amount"));
         assertTrue(supportersSheet.contains("@string/donate_supporter_tadow_name"));
         assertTrue(supportersSheet.contains("@string/donate_supporter_tadow_amount"));
+        assertTrue(supportersSheet.contains("@string/donate_supporter_han_name"));
+        assertTrue(supportersSheet.contains("@string/donate_supporter_han_amount"));
         assertTrue(supportersSheet.contains("@string/donate_supporters_sheet_note"));
         assertTrue(strings.contains("name=\"donate_supporter_nickyoung_name\" translatable=\"false\""));
         assertTrue(strings.contains("\\@xyuYoung"));
         assertTrue(strings.contains("name=\"donate_supporter_nickyoung_amount\" translatable=\"false\""));
-        assertTrue(strings.contains("10\uFFE5"));
+        assertTrue(strings.contains("10.00\uFFE5"));
         assertTrue(strings.contains("name=\"donate_supporter_tadow_name\" translatable=\"false\""));
         assertTrue(strings.contains("\\@Tadow_"));
         assertTrue(strings.contains("name=\"donate_supporter_tadow_amount\" translatable=\"false\""));
         assertTrue(strings.contains("6.66\uFFE5"));
-        assertTrue(dimens.contains("name=\"donate_supporters_sheet_min_height\">344dp"));
+        assertTrue(strings.contains("name=\"donate_supporter_han_name\" translatable=\"false\""));
+        assertTrue(strings.contains("\\@**瀚"));
+        assertTrue(strings.contains("name=\"donate_supporter_han_amount\" translatable=\"false\""));
+        assertTrue(strings.contains("20.00\uFFE5"));
+        assertTrue(dimens.contains("name=\"donate_supporters_sheet_min_height\">400dp"));
         assertTrue(dimens.contains("name=\"donate_supporters_sheet_card_spacing_top\">8dp"));
     }
 

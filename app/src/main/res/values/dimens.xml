@@ -280,7 +280,7 @@
     <dimen name="donate_supporters_summary_spacing_top">4dp</dimen>
     <dimen name="donate_supporters_chevron_size">24dp</dimen>
     <dimen name="donate_supporters_chevron_spacing_start">12dp</dimen>
-    <dimen name="donate_supporters_sheet_min_height">344dp</dimen>
+    <dimen name="donate_supporters_sheet_min_height">400dp</dimen>
     <dimen name="donate_supporters_sheet_summary_spacing_top">8dp</dimen>
     <dimen name="donate_supporters_sheet_list_spacing_top">12dp</dimen>
     <dimen name="donate_supporters_sheet_card_spacing_top">8dp</dimen>
