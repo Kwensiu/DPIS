@@ -13,6 +13,11 @@ public class ModuleMainHookInstallerTest {
         String source = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
         assertTrue(source.contains("SystemServerMutationPolicy.shouldInstallSystemServerHooks("));
+        assertTrue(source.contains("public void onSystemServerStarting(SystemServerStartingParam param)"));
+        assertTrue(source.contains("system_server starting hook install enter"));
+        assertTrue(source.contains("\"system-server-starting\""));
+        assertTrue(source.contains("maybeInstallSystemServerHooks(store, policy, currentProcessName"));
+        assertTrue(source.contains("system_server installer ready: source="));
         assertTrue(source.contains("ModulePackagePlan.resolve("));
         assertFalse(SourceSmokeTestPaths.exists("src", "main", "java", "com", "dpis", "module", "ModuleMain.java"));
     }

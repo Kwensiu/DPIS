@@ -73,9 +73,13 @@ DPIS modern target package
   |           |     +-- WeChat independent class-loader probe
   |           |     +-- maybeInstallAppProcessFromModuleLoaded
   |           |
+  |           +-- onSystemServerStarting
+  |           |     |
+  |           |     +-- maybeInstallSystemServerHooks (official system_server entry)
+  |           |
   |           +-- onPackageReady
   |                 |
-  |                 +-- maybeInstallSystemServerFromPackageReady
+  |                 +-- maybeInstallSystemServerHooks (package-ready fallback)
   |                 +-- installAppProcessHooksIfConfigured
   |                 +-- retryTypefaceHooksWithPackageReady
   |                 +-- retryFlutterHooksWithAppClassLoader
@@ -305,6 +309,7 @@ superseded.
 | 2026-06-17 | WeChat DPI | Test density-manager constructor and static `DisplayMetrics` cache correction | rejected | Decompilation and runtime validation did not prove a stable cache mutation point | Do not keep constructor/cache retry as production behavior without mutation evidence |
 | 2026-06-17 | WeChat DPI | Expand the independent route from getter-only hooks to the `Configuration + DisplayMetrics` mutator inside `MMDensityManager` | active | Full-dex analysis showed WeChat resources can forward configuration updates into the same density-manager class while constructor/cache probes produced no mutation evidence; locator still anchors on `MMDensityManager` / `screenResolution_target_field`, but now returns both metrics getters and the in-class mutator | Keep the route independent and class-local; mutate the same density-manager metrics object instead of adding a separate global Resources hook |
 | 2026-06-17 | WeChat DPI | Move the independent route's first install attempt to package-loaded | active | Runtime validation showed package-loaded is useful for timing but not sufficient by itself | package-ready remains as fallback; hook de-duplication is by density-manager `Class` identity |
+| 2026-06-18 | modern system_server | Move the first system_server installer attempt to libxposed's `onSystemServerStarting` callback | active | LSPosed_20260617_235835 showed preconfigured unrestricted apps launching at boot before DPIS UI, while the system process had only `module-loaded app hook install skipped system process` and no system_server hook/callback evidence | `onPackageReady` remains a de-duplicated fallback; this is a lifecycle timing fix, not an app-specific package recommendation |
 | 2026-06-15 | shared app-process font | Add an event-gated `resources_font` scheduler for Resources read-path font conflicts | active / shared | Bilibili `resources_font`-only repro showed `Configuration.fontScale` alternating between base and target while `getDisplayMetrics` recomputed `scaledDensity`; after the event gate, `scaledDensity=3.0` and `1.4 -> 1.0` disappeared, and read metrics logging dropped sharply after idempotent writes. TapTap system-font repro later showed no config churn after disabling read-side configuration writes, but `getDisplayMetrics` could still downgrade target metrics from `4.2` to `3.9` when the system config stayed at `1.3` | Read-conflict target suppression outranks Compose base suppression; non-Compose observations must not clear an established read-conflict target state. Compat `resources_font` uses `ResourcesImpl` as a low-frequency metrics seed plus `ResourcesRead` fallback; when `ResourcesRead` is installed only for font it skips viewport target resolution and `VirtualDisplayState` reuse while keeping metrics density synchronized with configuration; system font emulation does not let `ResourcesRead(getConfiguration)` force target `fontScale` on every read, but `ResourcesRead(getDisplayMetrics)` may fill `scaledDensity` from the target factor so read-side metrics do not downgrade an already-targeted font scale; Compose diagnostics can detach after the read-conflict target event is established; `ResourcesManager` write-side hooks remain for viewport and system font emulation |
 
 ## Safety Rules

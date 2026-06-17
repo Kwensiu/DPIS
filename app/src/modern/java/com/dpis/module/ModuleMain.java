@@ -41,6 +41,20 @@ public final class ModuleMain extends XposedModule {
     }
 
     @Override
+    public void onSystemServerStarting(SystemServerStartingParam param) {
+        DpiConfigStore store = getOrCreateConfigStore();
+        HookRuntimePolicy policy = HookRuntimePolicy.fromNullableStore(store);
+        String processName = currentProcessName;
+        if (!SystemServerProcess.isSystemServer(processName, "android")) {
+            processName = "system";
+        }
+        rawBridgeLog("system_server starting hook install enter: process=" + processName
+                + ", classLoader=" + describeClassLoader(param));
+        maybeInstallSystemServerHooks(store, policy, processName, "android",
+                "system-server-starting");
+    }
+
+    @Override
     public void onPackageLoaded(PackageLoadedParam param) {
         if (param == null) {
             return;
@@ -65,7 +79,8 @@ public final class ModuleMain extends XposedModule {
         bridgeLog("package ready: process=" + currentProcessName
                 + ", package=" + param.getPackageName());
         SystemServerDisplayDiagnostics.flushPending();
-        maybeInstallSystemServerFromPackageReady(store, policy, param.getPackageName());
+        maybeInstallSystemServerHooks(store, policy, currentProcessName, param.getPackageName(),
+                "package-ready");
         maybeLogFirstPackageReady(param.getPackageName());
         if (ModernAppSpecificRouteInstaller.handlePackageReady(this, param, currentProcessName)) {
             return;
@@ -266,14 +281,23 @@ public final class ModuleMain extends XposedModule {
         return local;
     }
 
-    private void maybeInstallSystemServerFromPackageReady(DpiConfigStore store,
+    private static String describeClassLoader(SystemServerStartingParam param) {
+        if (param == null || param.getClassLoader() == null) {
+            return "null";
+        }
+        return param.getClassLoader().getClass().getName();
+    }
+
+    private void maybeInstallSystemServerHooks(DpiConfigStore store,
             HookRuntimePolicy policy,
-            String packageName) {
+            String processName,
+            String packageName,
+            String source) {
         if (systemServerInstallAttempted) {
             return;
         }
         if (!SystemServerMutationPolicy.shouldInstallSystemServerHooks(
-                currentProcessName,
+                processName,
                 packageName,
                 policy)) {
             return;
@@ -285,13 +309,15 @@ public final class ModuleMain extends XposedModule {
             systemServerInstallAttempted = true;
             try {
                 SystemServerDisplayEnvironmentInstaller.install(this, store);
-                String message = "system_server installer ready: process=" + currentProcessName
+                String message = "system_server installer ready: source=" + source
+                        + ", process=" + processName
                         + ", package=" + packageName;
                 DpisLog.i(message);
-                bridgeLog(message);
+                rawBridgeLog(message);
             } catch (Throwable throwable) {
                 DpisLog.e("system_server installer failed", throwable);
-                bridgeLog("system_server installer failed: " + throwable.getClass().getName()
+                rawBridgeLog("system_server installer failed: source=" + source
+                        + ", error=" + throwable.getClass().getName()
                         + ": " + throwable.getMessage());
             }
         }
