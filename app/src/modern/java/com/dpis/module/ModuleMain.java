@@ -94,11 +94,9 @@ public final class ModuleMain extends XposedModule {
 
     private void maybeInstallAppProcessFromModuleLoaded(DpiConfigStore store, String processName) {
         rawBridgeLog("module-loaded app hook install enter: process=" + processName);
-        DpisLog.i("module-loaded app hook install enter: process=" + processName);
         if (SystemServerProcess.isSystemServer(processName, "")) {
             rawBridgeLog("module-loaded app hook install skipped system process: process="
                     + processName);
-            DpisLog.i("module-loaded app hook install skipped system process: process=" + processName);
             return;
         }
         String packageName = packageNameFromProcessName(processName);
@@ -112,19 +110,12 @@ public final class ModuleMain extends XposedModule {
                         + ", package=" + packageName
                         + ", propertyPackages=" + snapshot.getConfiguredPackages()
                         + ", fallbackPackages=" + fallbackSnapshot.getConfiguredPackages());
-                DpisLog.i("module-loaded app config unavailable: process=" + processName
-                        + ", package=" + packageName
-                        + ", propertyPackages=" + snapshot.getConfiguredPackages()
-                        + ", fallbackPackages=" + fallbackSnapshot.getConfiguredPackages());
                 return;
             }
             runtimeStore = store;
             snapshot = fallbackSnapshot;
             source = "module-loaded-fallback";
             rawBridgeLog("module-loaded app config fallback: process=" + processName
-                    + ", package=" + packageName
-                    + ", packages=" + snapshot.getConfiguredPackages());
-            DpisLog.i("module-loaded app config fallback: process=" + processName
                     + ", package=" + packageName
                     + ", packages=" + snapshot.getConfiguredPackages());
         }
@@ -312,7 +303,6 @@ public final class ModuleMain extends XposedModule {
                 String message = "system_server installer ready: source=" + source
                         + ", process=" + processName
                         + ", package=" + packageName;
-                DpisLog.i(message);
                 rawBridgeLog(message);
             } catch (Throwable throwable) {
                 DpisLog.e("system_server installer failed", throwable);
