@@ -159,7 +159,7 @@ final class AppConfigSaveHandler {
         }
         String normalizedRaw = FontHookDomainPresentation
                 .forRecommendedTemplateRaw(draftFontHookDomainsRaw)
-                .normalizedRawOrNull(draftFontHookDomainsRaw);
+                .normalizedRawOrNull();
         if (normalizedRaw == null) {
             return new HookDomainOverrideStore(store).restoreRecommended(item.packageName);
         }

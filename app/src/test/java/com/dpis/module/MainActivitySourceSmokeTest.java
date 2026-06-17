@@ -1571,7 +1571,7 @@ public class MainActivitySourceSmokeTest {
             "private String getFontHookDomainsButtonText("
         );
         int methodEnd = source.indexOf(
-            "private Set<String> resolveAutomaticFontHookDomains",
+            "private Set<String> recommendedTemplateFontHookDomains",
             methodStart
         );
         String method = source.substring(methodStart, methodEnd);

@@ -451,7 +451,7 @@ final class GlobalPrefillEditorBinder {
     }
 
     private static String normalizeTemplateHookDomainsRaw(String raw) {
-        return FontHookDomainPresentation.forRecommendedTemplateRaw(raw).normalizedRawOrNull(raw);
+        return FontHookDomainPresentation.forRecommendedTemplateRaw(raw).normalizedRawOrNull();
     }
 
     private AppConfigDialogBinder.Host createTypefaceHost() {

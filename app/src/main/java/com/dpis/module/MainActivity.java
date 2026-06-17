@@ -53,7 +53,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -3578,7 +3577,7 @@ public final class MainActivity
             return;
         }
         DpiConfigStore store = getHookConfigStore();
-        Set<String> automaticKnownDomains = resolveAutomaticFontHookDomains(item);
+        Set<String> automaticKnownDomains = recommendedTemplateFontHookDomains();
         boolean previewMode = state != null && state.previewFromGlobalPrefill;
         HookDomainOverride currentOverride = previewMode
                 ? normalizedFontHookDomainsOverride(
@@ -3674,7 +3673,7 @@ public final class MainActivity
     ) {
         return FontHookDomainPresentation.forOverride(
                 resolveFontHookDomainsForDraft(item, state),
-                resolveAutomaticFontHookDomains(item))
+                recommendedTemplateFontHookDomains())
                 .buttonText(this);
     }
 
@@ -3690,12 +3689,12 @@ public final class MainActivity
                         || state.draftFontHookDomainsRaw != null)) {
             return normalizedFontHookDomainsOverride(
                     HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw),
-                    resolveAutomaticFontHookDomains(item));
+                    recommendedTemplateFontHookDomains());
         }
         return normalizedFontHookDomainsOverride(
                 new HookDomainOverrideStore(getHookConfigStore()).read(
                         item != null ? item.packageName : null),
-                resolveAutomaticFontHookDomains(item));
+                recommendedTemplateFontHookDomains());
     }
 
     private HookDomainOverride normalizedFontHookDomainsOverride(
@@ -3706,13 +3705,12 @@ public final class MainActivity
                 automaticKnownDomains);
     }
 
-    private Set<String> resolveAutomaticFontHookDomains(AppListItem item) {
-        if (item == null || item.packageName == null || item.packageName.isBlank()) {
-            return new LinkedHashSet<>();
-        }
+    private Set<String> recommendedTemplateFontHookDomains() {
         // The custom hook-chain editor owns the compat/field-rewrite route.
         // System-mode font routes are scheduled separately and must not share
-        // this user-editable switch state.
+        // this user-editable switch state. This template is intentionally not
+        // package-specific; built-in app routes must not become implicit custom
+        // hook-chain selections.
         return FontHookDomainRegistry.recommendedTemplateKnownDomains();
     }
 

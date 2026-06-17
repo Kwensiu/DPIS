@@ -21,20 +21,34 @@ public class FontHookDomainPresentationTest {
                 FontHookDomainPresentation.forRecommendedTemplateRaw(raw);
 
         assertTrue(presentation.displaysAsAutomatic());
-        assertNull(presentation.normalizedRawOrNull(raw));
+        assertNull(presentation.normalizedRawOrNull());
     }
 
     @Test
     public void unknownDomainsKeepCustomPresentation() {
-        String raw = HookDomainOverrideStore.formatCsv(
-                FontHookDomainRegistry.recommendedTemplateKnownDomains(),
-                orderedSet("removed_domain"));
+        String raw = "removed_domain,"
+                + HookDomainOverrideStore.formatCsv(
+                        FontHookDomainRegistry.recommendedTemplateKnownDomains(),
+                        Set.of());
 
         FontHookDomainPresentation presentation =
                 FontHookDomainPresentation.forRecommendedTemplateRaw(raw);
 
         assertFalse(presentation.displaysAsAutomatic());
-        assertEquals(raw, presentation.normalizedRawOrNull(raw));
+        assertEquals(
+                HookDomainOverrideStore.formatCsv(
+                        FontHookDomainRegistry.recommendedTemplateKnownDomains(),
+                        orderedSet("removed_domain")),
+                presentation.normalizedRawOrNull());
+    }
+
+    @Test
+    public void emptyRawRemainsExplicitCustomOptOut() {
+        FontHookDomainPresentation presentation =
+                FontHookDomainPresentation.forRecommendedTemplateRaw("");
+
+        assertFalse(presentation.displaysAsAutomatic());
+        assertEquals("", presentation.normalizedRawOrNull());
     }
 
     private static LinkedHashSet<String> orderedSet(String... values) {

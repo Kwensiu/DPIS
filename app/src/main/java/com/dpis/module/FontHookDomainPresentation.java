@@ -33,8 +33,13 @@ final class FontHookDomainPresentation {
         return !override.customPathEnabled;
     }
 
-    String normalizedRawOrNull(String raw) {
-        return displaysAsAutomatic() ? null : raw;
+    String normalizedRawOrNull() {
+        if (displaysAsAutomatic()) {
+            return null;
+        }
+        return HookDomainOverrideStore.formatCsv(
+                override.enabledKnownDomains,
+                override.unknownDomains);
     }
 
     String buttonText(Context context) {
