@@ -2,6 +2,8 @@ package com.dpis.module;
 
 import org.junit.Test;
 
+import java.util.Set;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -228,6 +230,21 @@ public class AppConfigSaveHandlerTest {
 
         assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(
                 store, item, null, true));
+
+        assertNull(store.getPackageFontHookDomainsRaw(item.packageName));
+    }
+
+    @Test
+    public void hookDomainSaveClearsRawWhenDraftMatchesRecommendedDomains() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        AppListItem item = app("com.example.app");
+        String recommendedRaw = HookDomainOverrideStore.formatCsv(
+                FontHookDomainRegistry.recommendedTemplateKnownDomains(),
+                Set.of());
+        assertTrue(store.setPackageFontHookDomainsRaw(item.packageName, "resources_font"));
+
+        assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(
+                store, item, recommendedRaw, false));
 
         assertNull(store.getPackageFontHookDomainsRaw(item.packageName));
     }

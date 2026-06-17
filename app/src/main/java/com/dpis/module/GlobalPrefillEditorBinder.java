@@ -445,32 +445,13 @@ final class GlobalPrefillEditorBinder {
     }
 
     private void refreshHookDomainsButton() {
-        HookDomainOverride override = HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw);
-        if (!override.customPathEnabled || isRecommendedTemplateHookDomains(override)) {
-            hookDomainsButton.setText(R.string.dialog_font_hook_domains_title);
-            return;
-        }
-        int selectedCount = FontHookDomainRegistry.orderedCustomizableDisplaySubset(
-                override.enabledKnownDomains).size();
-        int totalCount = FontHookDomainRegistry.orderedCustomizableDisplayIdsList().size();
-        hookDomainsButton.setText(activity.getString(
-                R.string.dialog_font_hook_domains_title_with_count,
-                selectedCount,
-                totalCount));
+        hookDomainsButton.setText(FontHookDomainPresentation
+                .forRecommendedTemplateRaw(state.draftFontHookDomainsRaw)
+                .buttonText(activity));
     }
 
     private static String normalizeTemplateHookDomainsRaw(String raw) {
-        HookDomainOverride override = HookDomainOverrideStore.fromRaw(raw);
-        return isRecommendedTemplateHookDomains(override) ? null : raw;
-    }
-
-    private static boolean isRecommendedTemplateHookDomains(HookDomainOverride override) {
-        return override != null
-                && override.customPathEnabled
-                && override.unknownDomains.isEmpty()
-                && FontHookDomainRegistry.orderedCustomizableDisplaySubset(
-                        override.enabledKnownDomains).equals(
-                                FontHookDomainRegistry.recommendedTemplateKnownDomains());
+        return FontHookDomainPresentation.forRecommendedTemplateRaw(raw).normalizedRawOrNull(raw);
     }
 
     private AppConfigDialogBinder.Host createTypefaceHost() {

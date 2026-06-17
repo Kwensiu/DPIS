@@ -63,15 +63,39 @@ final class HookDomainOverrideStore {
     static String rawValueForSelection(Set<String> enabledKnownDomains,
             Set<String> automaticKnownDomains,
             Set<String> unknownDomains) {
-        LinkedHashSet<String> normalizedSaved = new LinkedHashSet<>(
-                FontHookDomainRegistry.orderedCustomizableSubset(enabledKnownDomains));
-        LinkedHashSet<String> normalizedAuto = new LinkedHashSet<>(
-                FontHookDomainRegistry.orderedCustomizableSubset(automaticKnownDomains));
-        if (normalizedSaved.equals(normalizedAuto)
-                && (unknownDomains == null || unknownDomains.isEmpty())) {
+        LinkedHashSet<String> normalizedSaved = normalizedCustomizableDomains(
+                enabledKnownDomains);
+        if (selectionMatchesAutomatic(normalizedSaved, automaticKnownDomains, unknownDomains)) {
             return null;
         }
         return formatCsv(normalizedSaved, unknownDomains);
+    }
+
+    static HookDomainOverride automaticIfSelectionMatchesAutomatic(
+            HookDomainOverride override,
+            Set<String> automaticKnownDomains) {
+        if (override == null || !override.customPathEnabled) {
+            return override != null ? override : HookDomainOverride.automatic();
+        }
+        if (selectionMatchesAutomatic(
+                override.enabledKnownDomains,
+                automaticKnownDomains,
+                override.unknownDomains)) {
+            return HookDomainOverride.automatic();
+        }
+        return override;
+    }
+
+    private static boolean selectionMatchesAutomatic(Set<String> enabledKnownDomains,
+            Set<String> automaticKnownDomains,
+            Set<String> unknownDomains) {
+        return normalizedCustomizableDomains(enabledKnownDomains).equals(
+                normalizedCustomizableDomains(automaticKnownDomains))
+                && (unknownDomains == null || unknownDomains.isEmpty());
+    }
+
+    private static LinkedHashSet<String> normalizedCustomizableDomains(Set<String> domains) {
+        return new LinkedHashSet<>(FontHookDomainRegistry.orderedCustomizableSubset(domains));
     }
 
     private static void parseCsv(String raw, Set<String> known, Set<String> unknown) {

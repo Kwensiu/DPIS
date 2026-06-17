@@ -157,7 +157,13 @@ final class AppConfigSaveHandler {
         if (draftFontHookDomainsRaw == null) {
             return true;
         }
-        return store.setPackageFontHookDomainsRaw(item.packageName, draftFontHookDomainsRaw);
+        String normalizedRaw = FontHookDomainPresentation
+                .forRecommendedTemplateRaw(draftFontHookDomainsRaw)
+                .normalizedRawOrNull(draftFontHookDomainsRaw);
+        if (normalizedRaw == null) {
+            return new HookDomainOverrideStore(store).restoreRecommended(item.packageName);
+        }
+        return store.setPackageFontHookDomainsRaw(item.packageName, normalizedRaw);
     }
 
     private static void publishFontHookDomainsAfterSave(String packageName, DpiConfigStore store) {

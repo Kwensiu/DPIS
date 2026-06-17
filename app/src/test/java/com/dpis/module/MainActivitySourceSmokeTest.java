@@ -1506,19 +1506,8 @@ public class MainActivitySourceSmokeTest {
         );
         assertTrue(source.contains("FontHookDomainRegistry.recommendedTemplateKnownDomains()"));
         assertFalse(source.contains("AppProcessHookInstaller.resolveDebugFontOverrideForPackage("));
-        assertTrue(
-            source.contains("dialog_font_hook_domains_title_with_count")
-        );
-        assertTrue(
-            source.contains(
-                "FontHookDomainRegistry.orderedCustomizableDisplayIdsList().size()"
-            )
-        );
-        assertTrue(
-            source.contains(
-                "FontHookDomainRegistry.orderedCustomizableDisplaySubset("
-            )
-        );
+        assertTrue(source.contains("FontHookDomainPresentation.forOverride("));
+        assertTrue(source.contains(".buttonText(this);"));
         assertFalse(source.contains("item.fontScalePercent != null && item.fontScalePercent > 0"));
         assertFalse(source.contains("publishFontRuntimeTarget("));
     }
@@ -1587,11 +1576,8 @@ public class MainActivitySourceSmokeTest {
         );
         String method = source.substring(methodStart, methodEnd);
 
-        assertTrue(
-            method.contains(
-                "HookDomainOverride override = resolveFontHookDomainsForDraft(item, state)"
-            )
-        );
+        assertTrue(method.contains("FontHookDomainPresentation.forOverride("));
+        assertTrue(source.contains("FontHookDomainPresentation"));
         assertTrue(method.contains("AppConfigDialogBinder.AppConfigDialogState state"));
         assertFalse(method.contains("item.previewFromGlobalPrefill"));
     }

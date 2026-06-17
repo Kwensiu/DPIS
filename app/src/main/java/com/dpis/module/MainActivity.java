@@ -3581,10 +3581,14 @@ public final class MainActivity
         Set<String> automaticKnownDomains = resolveAutomaticFontHookDomains(item);
         boolean previewMode = state != null && state.previewFromGlobalPrefill;
         HookDomainOverride currentOverride = previewMode
-                ? HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw)
+                ? normalizedFontHookDomainsOverride(
+                        HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw),
+                        automaticKnownDomains)
                 : state != null && state.fontHookDomainsResetRequested
                         ? HookDomainOverride.automatic()
-                        : new HookDomainOverrideStore(store).read(item.packageName);
+                        : normalizedFontHookDomainsOverride(
+                                new HookDomainOverrideStore(store).read(item.packageName),
+                                automaticKnownDomains);
         FontHookDomainDialog.show(
                 this,
                 new FontHookDomainDialog.Host() {
@@ -3668,21 +3672,10 @@ public final class MainActivity
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
-        HookDomainOverride override = resolveFontHookDomainsForDraft(item, state);
-        if (!override.customPathEnabled) {
-            return getString(R.string.dialog_font_hook_domains_title);
-        }
-        int selectedCount
-                = FontHookDomainRegistry.orderedCustomizableDisplaySubset(
-                        override.enabledKnownDomains
-                ).size();
-        int totalCount
-                = FontHookDomainRegistry.orderedCustomizableDisplayIdsList().size();
-        return getString(
-                R.string.dialog_font_hook_domains_title_with_count,
-                selectedCount,
-                totalCount
-        );
+        return FontHookDomainPresentation.forOverride(
+                resolveFontHookDomainsForDraft(item, state),
+                resolveAutomaticFontHookDomains(item))
+                .buttonText(this);
     }
 
     private HookDomainOverride resolveFontHookDomainsForDraft(
@@ -3695,11 +3688,22 @@ public final class MainActivity
         if (state != null
                 && (state.previewFromGlobalPrefill
                         || state.draftFontHookDomainsRaw != null)) {
-            return HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw);
+            return normalizedFontHookDomainsOverride(
+                    HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw),
+                    resolveAutomaticFontHookDomains(item));
         }
-        return new HookDomainOverrideStore(getHookConfigStore()).read(
-                item != null ? item.packageName : null
-        );
+        return normalizedFontHookDomainsOverride(
+                new HookDomainOverrideStore(getHookConfigStore()).read(
+                        item != null ? item.packageName : null),
+                resolveAutomaticFontHookDomains(item));
+    }
+
+    private HookDomainOverride normalizedFontHookDomainsOverride(
+            HookDomainOverride override,
+            Set<String> automaticKnownDomains) {
+        return HookDomainOverrideStore.automaticIfSelectionMatchesAutomatic(
+                override,
+                automaticKnownDomains);
     }
 
     private Set<String> resolveAutomaticFontHookDomains(AppListItem item) {

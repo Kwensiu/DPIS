@@ -1263,19 +1263,15 @@ final class LandAppDetailPaneBinder {
             );
         }
 
-        HookDomainOverride override = resolveHookDomainOverride(activity, item, state);
-        if (override.customPathEnabled) {
-            int selectedCount
-                    = FontHookDomainRegistry.orderedCustomizableDisplaySubset(
-                            override.enabledKnownDomains
-                    ).size();
-            int totalCount
-                    = FontHookDomainRegistry.orderedCustomizableDisplayIdsList().size();
+        FontHookDomainPresentation hookDomains = FontHookDomainPresentation.forOverride(
+                resolveHookDomainOverride(activity, item, state),
+                FontHookDomainRegistry.recommendedTemplateKnownDomains());
+        if (!hookDomains.displaysAsAutomatic()) {
             parts.add(
                     activity.getString(
                             R.string.land_detail_hook_chain_font_count,
-                            selectedCount,
-                            totalCount
+                            hookDomains.selectedDisplayCount(),
+                            hookDomains.totalDisplayCount()
                     )
             );
         }
@@ -1299,13 +1295,17 @@ final class LandAppDetailPaneBinder {
         if (state != null
                 && (state.previewFromGlobalPrefill
                         || state.draftFontHookDomainsRaw != null)) {
-            return HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw);
+            return HookDomainOverrideStore.automaticIfSelectionMatchesAutomatic(
+                    HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw),
+                    FontHookDomainRegistry.recommendedTemplateKnownDomains());
         }
         if (item == null || item.packageName == null || item.packageName.isBlank()) {
             return HookDomainOverride.automatic();
         }
         DpiConfigStore store = DpisApplication.getActiveHookConfigStore(activity);
-        return new HookDomainOverrideStore(store).read(item.packageName);
+        return HookDomainOverrideStore.automaticIfSelectionMatchesAutomatic(
+                new HookDomainOverrideStore(store).read(item.packageName),
+                FontHookDomainRegistry.recommendedTemplateKnownDomains());
     }
 
     private static final class ActionButtonStyle {

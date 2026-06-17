@@ -196,6 +196,37 @@ public class HookDomainOverrideStoreTest {
     }
 
     @Test
+    public void automaticEquivalentCustomOverrideDisplaysAsAutomatic() {
+        HookDomainOverride override = new HookDomainOverride(
+                true,
+                orderedSet("resources_font", "webview_text_zoom"),
+                Set.of());
+
+        HookDomainOverride normalized =
+                HookDomainOverrideStore.automaticIfSelectionMatchesAutomatic(
+                        override,
+                        orderedSet("resources_font", "webview_text_zoom"));
+
+        assertFalse(normalized.customPathEnabled);
+    }
+
+    @Test
+    public void automaticEquivalentCustomOverrideKeepsUnknownDomainsCustom() {
+        HookDomainOverride override = new HookDomainOverride(
+                true,
+                orderedSet("resources_font", "webview_text_zoom"),
+                orderedSet("removed_domain"));
+
+        HookDomainOverride normalized =
+                HookDomainOverrideStore.automaticIfSelectionMatchesAutomatic(
+                        override,
+                        orderedSet("resources_font", "webview_text_zoom"));
+
+        assertTrue(normalized.customPathEnabled);
+        assertEquals(orderedSet("removed_domain"), normalized.unknownDomains);
+    }
+
+    @Test
     public void rawValueForSelectionKeepsPreviewDomainsWithoutWritingStoreState() {
         DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
         HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
