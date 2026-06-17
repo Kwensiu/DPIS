@@ -55,7 +55,6 @@
     <string name="help_tutorial_width_summary">按目标 dp 宽度适配，让布局接近另一种屏幕尺寸。</string>
     <string name="help_tutorial_width_points">• 使用目标 dp 宽度\n• 更适合改变布局断点\n• 跨度过大可能移动控件位置</string>
     <string name="mode_help_title">使用帮助</string>
-    <string name="mode_help_subtitle">面向实际使用场景的调节建议，帮助减少卡顿和异常。</string>
     <string name="mode_help_tips_title">使用贴士</string>
     <string name="mode_help_tip_font_lag_question">使用字体缩放时软件很卡？</string>
     <string name="mode_help_tip_font_lag_steps">打开应用配置弹窗 → 将字体模式切换为“兼容” → 点击“Hook 链路” → 选择“字体”分页 → 保持“Resources 字体”关闭 → 保存后重启软件。</string>

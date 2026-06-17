@@ -55,7 +55,6 @@
     <string name="help_tutorial_width_summary">dp 幅を指定し、別の画面サイズに近いレイアウト動作にします。</string>
     <string name="help_tutorial_width_points">• 目標 dp 幅を使用\n• レイアウトのブレークポイント変更に適しています\n• 大きく変えると操作部品の位置が動く場合があります</string>
     <string name="mode_help_title">ヘルプ</string>
-    <string name="mode_help_subtitle">アプリごとの表示とフォント調整をより滑らかに使うための実用的なヒントです。</string>
     <string name="mode_help_tips_title">実用的なヒント</string>
     <string name="mode_help_tip_font_lag_question">フォント拡大でアプリが重くなりますか？</string>
     <string name="mode_help_tip_font_lag_steps">アプリ設定シートを開く → フォントモードを互換に切り替える → Hook ルートをタップ → フォントタブを選ぶ → Resources フォントをオフのままにする → 保存してアプリを再起動します。</string>

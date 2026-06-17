@@ -13,45 +13,31 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="@dimen/home_workspace_padding_horizontal"
-        android:paddingTop="@dimen/mode_help_toolbar_padding_top"
-        android:paddingEnd="@dimen/home_workspace_padding_horizontal"
-        android:paddingBottom="@dimen/mode_help_toolbar_padding_bottom">
+        android:paddingStart="@dimen/page_toolbar_padding_horizontal"
+        android:paddingTop="@dimen/page_toolbar_padding_top"
+        android:paddingEnd="@dimen/page_toolbar_padding_horizontal"
+        android:paddingBottom="@dimen/page_toolbar_padding_bottom">
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/mode_help_back_button"
-            style="@style/Widget.AppCompat.ImageButton"
-            android:layout_width="@dimen/main_search_action_button_size"
-            android:layout_height="@dimen/main_search_action_button_size"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_width="@dimen/page_back_button_size"
+            android:layout_height="@dimen/page_back_button_size"
+            android:background="@drawable/bg_round_button_surface"
             android:contentDescription="@string/system_settings_back"
-            android:padding="@dimen/main_search_action_button_padding"
+            android:padding="@dimen/page_back_button_padding"
+            android:scaleType="centerInside"
             android:src="@drawable/ic_arrow_back_24"
-            android:tint="?attr/colorOnSurface" />
+            app:tint="?attr/colorOnSurface" />
 
-        <LinearLayout
-            android:layout_width="0dp"
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/mode_help_title_spacing_start"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <com.google.android.material.textview.MaterialTextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/mode_help_title"
-                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-                android:textColor="?attr/colorOnSurface"
-                android:textStyle="bold" />
-
-            <com.google.android.material.textview.MaterialTextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/mode_help_intro_spacing_top"
-                android:text="@string/mode_help_subtitle"
-                android:textAppearance="@style/TextAppearance.Material3.BodySmall"
-                android:textColor="?attr/colorOnSurfaceVariant" />
-        </LinearLayout>
+            android:layout_marginStart="@dimen/page_title_spacing_start"
+            android:includeFontPadding="false"
+            android:text="@string/mode_help_title"
+            android:textAppearance="@style/TextAppearance.Material3.HeadlineLarge"
+            android:textColor="?attr/colorOnSurface"
+            android:textStyle="bold" />
     </LinearLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -65,6 +51,7 @@
         android:paddingBottom="@dimen/home_workspace_padding_bottom">
 
         <LinearLayout
+            android:id="@+id/mode_help_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
@@ -72,6 +59,7 @@
             <com.google.android.material.textview.MaterialTextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/mode_help_content_spacing_top"
                 android:text="@string/mode_help_tips_title"
                 android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
                 android:textColor="?attr/colorOnSurface"
@@ -89,7 +77,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:baselineAligned="false"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:paddingTop="@dimen/mode_help_tip_item_padding_vertical"
+                    android:paddingBottom="@dimen/mode_help_tip_item_padding_vertical">
 
                     <View
                         android:layout_width="@dimen/mode_help_tip_marker_width"

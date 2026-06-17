@@ -57,7 +57,6 @@
     <string name="help_tutorial_width_summary">Targets a dp width so layouts behave closer to another screen size.</string>
     <string name="help_tutorial_width_points">• Uses a target dp width\n• Better for layout breakpoint changes\n• Large jumps may move controls around</string>
     <string name="mode_help_title">Usage help</string>
-    <string name="mode_help_subtitle">Practical tips for smoother per-app display and font adjustments.</string>
     <string name="mode_help_tips_title">Practical tips</string>
     <string name="mode_help_tip_font_lag_question">App feels laggy when using font scaling?</string>
     <string name="mode_help_tip_font_lag_steps">Open the app configuration sheet -> switch font mode to Compat -> tap Hook routes -> select the Font tab -> keep Resources font off -> save and restart the app.</string>
