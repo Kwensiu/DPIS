@@ -43,6 +43,9 @@ public class ProcessActionHandlerSourceSmokeTest {
         assertTrue(source.contains("requiresRoot(action) && !hasRootAccess()"));
         assertTrue(source.contains("rootRequiredMessageResId(action)"));
         assertTrue(source.contains("return action == Action.RESTART || action == Action.STOP;"));
+        assertTrue(source.contains("RootAccessProbe.cachedResult()"));
+        assertTrue(source.contains("RootAccessProbe.probe()"));
+        assertFalse(source.contains("rootAccessCache"));
         assertTrue(strings.contains("dialog_process_restart_requires_root"));
         assertTrue(strings.contains("dialog_process_stop_requires_root"));
     }

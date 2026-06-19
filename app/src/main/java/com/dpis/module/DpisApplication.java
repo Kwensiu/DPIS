@@ -31,6 +31,9 @@ public final class DpisApplication extends Application implements XposedServiceH
     public void onCreate() {
         super.onCreate();
         instance = this;
+        DpisLog.setAppLogSink(new DpisAppLogStore(this));
+        DpisLog.i("app process started");
+        RootAccessProbe.warmUpAsync();
         DynamicColors.applyToActivitiesIfAvailable(this);
         HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(this);
         configStore = ConfigStoreFactory.createLocalModuleConfigStore(this);

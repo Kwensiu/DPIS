@@ -62,6 +62,9 @@
             android:name=".OpenSourceLicenseActivity"
             android:exported="false" />
         <activity
+            android:name=".LogActivity"
+            android:exported="false" />
+        <activity
             android:name=".FontDebugStatsIngestActivity"
             android:excludeFromRecents="true"
             android:exported="false"

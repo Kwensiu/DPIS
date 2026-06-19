@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/log_page_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/log_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/page_toolbar_padding_horizontal"
+        android:paddingTop="@dimen/page_toolbar_padding_top"
+        android:paddingEnd="@dimen/page_toolbar_padding_horizontal"
+        android:paddingBottom="@dimen/page_toolbar_padding_bottom">
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/log_back_button"
+            android:layout_width="@dimen/page_back_button_size"
+            android:layout_height="@dimen/page_back_button_size"
+            android:background="@drawable/bg_round_button_surface"
+            android:contentDescription="@string/system_settings_back"
+            android:padding="@dimen/page_back_button_padding"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_arrow_back_24"
+            app:tint="?attr/colorOnSurface" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/log_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/page_title_spacing_start"
+            android:layout_weight="1"
+            android:includeFontPadding="false"
+            android:text="@string/log_page_title"
+            android:textAppearance="@style/TextAppearance.Material3.HeadlineLarge"
+            android:textStyle="bold" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/log_sort_button"
+            android:layout_width="@dimen/page_back_button_size"
+            android:layout_height="@dimen/page_back_button_size"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/log_action_sort_newest_first"
+            android:padding="@dimen/page_back_button_padding"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_swap_vert_24"
+            app:tint="?attr/colorOnSurfaceVariant" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/log_auto_refresh_button"
+            android:layout_width="@dimen/page_back_button_size"
+            android:layout_height="@dimen/page_back_button_size"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/log_action_pause_auto_refresh"
+            android:padding="@dimen/page_back_button_padding"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_pause_24"
+            app:tint="?attr/colorOnSurfaceVariant" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/log_refresh_button"
+            android:layout_width="@dimen/page_back_button_size"
+            android:layout_height="@dimen/page_back_button_size"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/log_action_refresh"
+            android:padding="@dimen/page_back_button_padding"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_refresh_24"
+            app:tint="?attr/colorOnSurfaceVariant" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/log_page_switch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/log_page_switch_padding_horizontal"
+        android:paddingEnd="@dimen/log_page_switch_padding_horizontal"
+        android:paddingBottom="@dimen/log_page_switch_padding_bottom">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/log_page_dpis_button"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/log_page_switch_button_height"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:maxLines="1"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:text="@string/log_page_dpis"
+            android:textAllCaps="false"
+            app:cornerRadius="@dimen/log_page_switch_button_radius"
+            app:strokeWidth="@dimen/page_card_stroke_width" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/log_page_lsposed_button"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/log_page_switch_button_height"
+            android:layout_marginStart="@dimen/log_page_switch_button_spacing"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:maxLines="1"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:text="@string/log_page_lsposed_related"
+            android:textAllCaps="false"
+            app:cornerRadius="@dimen/log_page_switch_button_radius"
+            app:strokeWidth="@dimen/page_card_stroke_width" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/log_content"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/log_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:overScrollMode="ifContentScrolls"
+            android:scrollbars="vertical" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/log_state_message"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:paddingStart="@dimen/log_page_switch_padding_horizontal"
+            android:paddingEnd="@dimen/log_page_switch_padding_horizontal"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="gone" />
+    </FrameLayout>
+</LinearLayout>

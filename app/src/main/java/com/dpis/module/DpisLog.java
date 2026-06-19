@@ -10,6 +10,11 @@ final class DpisLog {
     private static volatile boolean loggingEnabled = true;
     private static volatile boolean bridgeResolved;
     private static volatile Method bridgeLogMethod;
+    private static volatile AppLogSink appLogSink;
+
+    interface AppLogSink {
+        void record(String level, String message);
+    }
 
     private DpisLog() {
     }
@@ -23,6 +28,7 @@ final class DpisLog {
         } catch (RuntimeException ignored) {
             // Local unit tests may execute without Android logging available.
         }
+        recordAppLog("I", msg);
         bridgeLog(msg);
     }
 
@@ -37,6 +43,9 @@ final class DpisLog {
         }
         String throwableMessage = throwable == null ? null : throwable.getClass().getName()
                 + ": " + throwable.getMessage();
+        recordAppLog("E", throwableMessage == null || throwableMessage.isEmpty()
+                ? msg
+                : msg + " | " + throwableMessage);
         if (throwableMessage == null || throwableMessage.isEmpty()) {
             bridgeLog(msg);
             return;
@@ -54,6 +63,22 @@ final class DpisLog {
 
     static void setLoggingEnabled(boolean enabled) {
         loggingEnabled = enabled;
+    }
+
+    static void setAppLogSink(AppLogSink sink) {
+        appLogSink = sink;
+    }
+
+    private static void recordAppLog(String level, String message) {
+        AppLogSink sink = appLogSink;
+        if (sink == null) {
+            return;
+        }
+        try {
+            sink.record(level, message);
+        } catch (RuntimeException ignored) {
+            // Logging must never affect runtime behavior.
+        }
     }
 
     private static void bridgeLog(String msg) {

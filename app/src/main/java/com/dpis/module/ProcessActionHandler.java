@@ -25,7 +25,6 @@ final class ProcessActionHandler {
     }
 
     private final Activity activity;
-    private Boolean rootAccessCache;
 
     ProcessActionHandler(Activity activity) {
         this.activity = activity;
@@ -169,13 +168,11 @@ final class ProcessActionHandler {
     }
 
     private boolean hasRootAccess() {
-        if (rootAccessCache != null) {
-            return rootAccessCache;
+        RootAccessProbe.Result result = RootAccessProbe.cachedResult();
+        if (result.status == RootAccessProbe.Status.UNKNOWN) {
+            result = RootAccessProbe.probe();
         }
-        ShellResult result = runSuCommand("id");
-        boolean hasRoot = result.code == 0 && result.output.contains("uid=0");
-        rootAccessCache = hasRoot;
-        return hasRoot;
+        return result.status == RootAccessProbe.Status.AVAILABLE;
     }
 
     private ShellResult runSuCommand(String command) {

@@ -108,6 +108,27 @@
     <string name="workspace_template">Templates</string>
     <string name="workspace_tools">Tools</string>
     <string name="workspace_settings">Settings</string>
+    <string name="tools_log_title">Logs</string>
+    <string name="tools_log_subtitle">Browse DPIS diagnostic logs</string>
+    <string name="log_page_title">Logs</string>
+    <string name="log_action_refresh">Refresh logs</string>
+    <string name="log_action_sort_newest_first">Newest first</string>
+    <string name="log_action_sort_oldest_first">Oldest first</string>
+    <string name="log_action_pause_auto_refresh">Pause auto refresh</string>
+    <string name="log_action_start_auto_refresh">Start auto refresh</string>
+    <string name="log_refreshing">Refreshing logs</string>
+    <string name="log_auto_refresh_paused">Auto refresh paused</string>
+    <string name="log_auto_refresh_started">Auto refresh started</string>
+    <string name="log_copied">Log copied</string>
+    <string name="log_source_loading">DPIS</string>
+    <string name="log_loading_message">Reading logs…</string>
+    <string name="log_empty_message">No log lines found.</string>
+    <string name="log_page_empty_message">No logs in this page.</string>
+    <string name="log_page_dpis">DPIS</string>
+    <string name="log_page_lsposed_related">LSPosed</string>
+    <string name="log_unknown_error">unknown error</string>
+    <string name="log_read_failed_message">Unable to read logs: %1$s</string>
+    <string name="log_lsposed_root_required_message">Root access required</string>
     <string name="system_font_scale_title">System font size</string>
     <string name="system_font_scale_subtitle">Fine tune the global font size</string>
     <string name="system_font_scale_pending_value" translatable="false">%1$d%%</string>

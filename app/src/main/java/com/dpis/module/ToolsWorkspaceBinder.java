@@ -17,8 +17,18 @@ final class ToolsWorkspaceBinder {
         }
         View toolsToolbar = workspaceView.findViewById(R.id.tools_toolbar);
         WindowInsetsBinder.applySafeDrawingPadding(toolsToolbar, false, true, false, false);
+        bindLogEntry(workspaceView);
         fontScaleToolBinder = new SystemFontScaleToolBinder(activity, workspaceView);
         fontScaleToolBinder.bind();
+    }
+
+    private void bindLogEntry(View workspaceView) {
+        View logCard = workspaceView.findViewById(R.id.tools_log_card);
+        if (logCard != null) {
+            logCard.setOnClickListener(view ->
+                    activity.startActivity(new Intent(activity, LogActivity.class))
+            );
+        }
     }
 
     void onStart() {

@@ -195,8 +195,6 @@ public final class MainActivity
     private boolean installedAppsPermissionRequestCompleted;
     private MainWorkspaceMode renderedWorkspaceMode;
     private boolean rootAccessProbeInFlight;
-    private RootAccessProbe.Result cachedRootAccessResult
-            = RootAccessProbe.Result.unknown();
     private HomeUpdateUiState homeUpdateUiState = HomeUpdateUiState.UP_TO_DATE;
     private volatile boolean startupUpdateCheckInProgress;
     private volatile boolean startupUpdateDownloadInProgress;
@@ -2881,7 +2879,7 @@ public final class MainActivity
                                 Context.MODE_PRIVATE
                         )
                 ).readAll().size(),
-                cachedRootAccessResult,
+                RootAccessProbe.cachedResult(),
                 homeUpdateUiState,
                 createHomeWorkspaceActions()
         );
@@ -2947,7 +2945,7 @@ public final class MainActivity
 
     private void maybeStartRootAccessProbe() {
         if (rootAccessProbeInFlight
-                || cachedRootAccessResult.status
+                || RootAccessProbe.cachedResult().status
                         != RootAccessProbe.Status.UNKNOWN) {
             return;
         }
@@ -2955,7 +2953,6 @@ public final class MainActivity
         startupUpdateExecutor.execute(() -> {
             RootAccessProbe.Result result = RootAccessProbe.probe();
             runOnUiThread(() -> {
-                cachedRootAccessResult = result;
                 rootAccessProbeInFlight = false;
                 if (requireUiState().workspaceMode == MainWorkspaceMode.HOME) {
                     bindHomeWorkspace();

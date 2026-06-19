@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 final class RootAccessProbe {
     enum Status {
@@ -46,8 +47,28 @@ final class RootAccessProbe {
             + "; echo DPIS_MAGISK_VER=$MAGISK_VER"
             + "; echo DPIS_MAGISK_VER_CODE=$MAGISK_VER_CODE";
     private static final long PROBE_TIMEOUT_MS = 3_000L;
+    private static volatile Result cachedResult = Result.unknown();
+    private static final AtomicBoolean probeInFlight = new AtomicBoolean(false);
 
     private RootAccessProbe() {
+    }
+
+    static Result cachedResult() {
+        return cachedResult;
+    }
+
+    static void warmUpAsync() {
+        if (cachedResult.status != Status.UNKNOWN
+                || !probeInFlight.compareAndSet(false, true)) {
+            return;
+        }
+        new Thread(() -> {
+            try {
+                probe();
+            } finally {
+                probeInFlight.set(false);
+            }
+        }, "dpis-root-access-probe").start();
     }
 
     static Result probe() {
@@ -59,24 +80,29 @@ final class RootAccessProbe {
             boolean finished = process.waitFor(PROBE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
             if (!finished) {
                 process.destroyForcibly();
-                return Result.unknown();
+                return cache(Result.unavailable());
             }
             String output = readOutput(process);
             int code = process.exitValue();
             if (code != 0 || !output.contains("uid=0")) {
-                return Result.unavailable();
+                return cache(Result.unavailable());
             }
-            return Result.available(resolveProvider(output));
+            return cache(Result.available(resolveProvider(output)));
         } catch (IOException ignored) {
-            return Result.unavailable();
+            return cache(Result.unavailable());
         } catch (InterruptedException ignored) {
             Thread.currentThread().interrupt();
-            return Result.unknown();
+            return cachedResult;
         } finally {
             if (process != null) {
                 process.destroy();
             }
         }
+    }
+
+    private static Result cache(Result result) {
+        cachedResult = result != null ? result : Result.unknown();
+        return cachedResult;
     }
 
     private static String readOutput(Process process) throws IOException {

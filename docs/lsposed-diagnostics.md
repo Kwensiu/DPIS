@@ -21,6 +21,15 @@ Primary log files on device:
 
 Both require root to read.
 
+## In-App Log Page
+
+The DPIS log page treats LSPosed logs as an external evidence source. Opening
+the page and automatic refresh read only the DPIS local diagnostic log store.
+When the user manually refreshes the LSPosed page, DPIS reads the complete
+current `modules_*.log` and `verbose_*.log` files, then filters them in the app
+to `io.github.kwensiu.dpis` entries. Rotated historical LSPosed files are not
+read by the normal in-app page.
+
 ## Pull Path
 
 Replace `<local-temp-dir>` with a writable local directory:
