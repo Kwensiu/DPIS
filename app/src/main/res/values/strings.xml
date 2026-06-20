@@ -453,6 +453,10 @@
     <string name="donate_supporter_tadow_amount" translatable="false">6.66￥</string>
     <string name="donate_supporter_han_name" translatable="false">\@**瀚</string>
     <string name="donate_supporter_han_amount" translatable="false">20.00￥</string>
+    <string name="donate_supporter_spine_name" translatable="false">\@脊椎健康者</string>
+    <string name="donate_supporter_spine_amount" translatable="false">7.77￥</string>
+    <string name="donate_supporter_anonymous_name" translatable="false">\@Anonymous(user)</string>
+    <string name="donate_supporter_anonymous_amount" translatable="false">5.00￥</string>
     <string name="donate_wechat_title">WeChat Pay</string>
     <string name="donate_alipay_title">Alipay</string>
     <string name="donate_wechat_qr_description">WeChat Pay donation QR code</string>
