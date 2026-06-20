@@ -1,6 +1,5 @@
 package com.dpis.module;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -25,13 +24,6 @@ final class ConfigBackupCodec {
     private static final String KEY_PACKAGE_CONFIGS = "packageConfigs";
     private static final String KEY_TYPE = "type";
     private static final String KEY_VALUE = "value";
-
-    private static final String TYPE_STRING = "string";
-    private static final String TYPE_STRING_SET = "string_set";
-    private static final String TYPE_INT = "int";
-    private static final String TYPE_LONG = "long";
-    private static final String TYPE_FLOAT = "float";
-    private static final String TYPE_BOOLEAN = "boolean";
     private static final String[] PACKAGE_CONFIG_FIELD_KEYS = {
             "viewport.width_dp",
             "viewport.target_type",
@@ -64,11 +56,13 @@ final class ConfigBackupCodec {
             if (key == null || key.isEmpty()) {
                 continue;
             }
-            JSONObject encoded = encodeValue(entries.get(key));
+            Object value = entries.get(key);
+            if (putPackageConfigEntry(encodedPackageConfigs, key, value)) {
+                continue;
+            }
+            JSONObject encoded = encodeValue(value);
             if (encoded != null) {
-                if (!putEncodedPackageConfigEntry(encodedPackageConfigs, key, encoded)) {
-                    encodedEntries.put(key, encoded);
-                }
+                encodedEntries.put(key, encoded);
             }
         }
         root.put(KEY_ENTRIES, encodedEntries);
@@ -88,13 +82,13 @@ final class ConfigBackupCodec {
             throw new IllegalArgumentException("Unsupported backup schema version: " + schemaVersion);
         }
         LinkedHashMap<String, Object> entries = new LinkedHashMap<>();
-        JSONObject encodedEntries = root.optJSONObject(KEY_ENTRIES);
-        if (encodedEntries != null) {
-            decodeEntrySectionInto(entries, encodedEntries);
-        }
         JSONObject encodedPackageConfigs = root.optJSONObject(KEY_PACKAGE_CONFIGS);
         if (encodedPackageConfigs != null) {
             decodePackageConfigsInto(entries, encodedPackageConfigs);
+        }
+        JSONObject encodedEntries = root.optJSONObject(KEY_ENTRIES);
+        if (encodedEntries != null) {
+            decodeEntrySectionInto(entries, encodedEntries);
         }
         if (encodedEntries == null && encodedPackageConfigs == null) {
             throw new IllegalArgumentException("Missing entries section");
@@ -124,14 +118,14 @@ final class ConfigBackupCodec {
             if (encodedValue == null) {
                 throw new IllegalArgumentException("Invalid entry payload for key: " + key);
             }
-            entries.put(key, decodeValue(encodedValue));
+            entries.put(key, decodeEntryValue(encodedValue));
         }
     }
 
-    private static boolean putEncodedPackageConfigEntry(
+    private static boolean putPackageConfigEntry(
             JSONObject encodedPackageConfigs,
             String key,
-            JSONObject encodedValue) throws JSONException {
+            Object value) throws JSONException {
         String prefix = "package_config.";
         if (!key.startsWith(prefix)) {
             return false;
@@ -150,7 +144,7 @@ final class ConfigBackupCodec {
             packageEntries = new JSONObject();
             encodedPackageConfigs.put(packageName, packageEntries);
         }
-        packageEntries.put(fieldKey, encodedValue);
+        packageEntries.put(fieldKey, value);
         return true;
     }
 
@@ -186,45 +180,38 @@ final class ConfigBackupCodec {
                 if (fieldKey == null || fieldKey.isEmpty()) {
                     continue;
                 }
-                JSONObject encodedValue = packageEntries.optJSONObject(fieldKey);
-                if (encodedValue == null) {
-                    throw new IllegalArgumentException(
-                            "Invalid package config entry for package: " + packageName
-                                    + ", key: " + fieldKey);
-                }
-                entries.put("package_config." + packageName + "." + fieldKey, decodeValue(encodedValue));
+                entries.put("package_config." + packageName + "." + fieldKey, packageEntries.get(fieldKey));
             }
         }
     }
 
-    @SuppressWarnings("unchecked")
     private static JSONObject encodeValue(Object value) throws JSONException {
         if (value == null) {
             return null;
         }
         JSONObject encoded = new JSONObject();
         if (value instanceof String typed) {
-            encoded.put(KEY_TYPE, TYPE_STRING);
+            encoded.put(KEY_TYPE, "string");
             encoded.put(KEY_VALUE, typed);
             return encoded;
         }
         if (value instanceof Integer typed) {
-            encoded.put(KEY_TYPE, TYPE_INT);
+            encoded.put(KEY_TYPE, "int");
             encoded.put(KEY_VALUE, typed);
             return encoded;
         }
         if (value instanceof Long typed) {
-            encoded.put(KEY_TYPE, TYPE_LONG);
+            encoded.put(KEY_TYPE, "long");
             encoded.put(KEY_VALUE, typed);
             return encoded;
         }
         if (value instanceof Float typed) {
-            encoded.put(KEY_TYPE, TYPE_FLOAT);
+            encoded.put(KEY_TYPE, "float");
             encoded.put(KEY_VALUE, typed);
             return encoded;
         }
         if (value instanceof Boolean typed) {
-            encoded.put(KEY_TYPE, TYPE_BOOLEAN);
+            encoded.put(KEY_TYPE, "boolean");
             encoded.put(KEY_VALUE, typed);
             return encoded;
         }
@@ -236,31 +223,27 @@ final class ConfigBackupCodec {
                 }
             }
             Collections.sort(values);
-            JSONArray array = new JSONArray();
-            for (String item : values) {
-                array.put(item);
-            }
-            encoded.put(KEY_TYPE, TYPE_STRING_SET);
-            encoded.put(KEY_VALUE, array);
+            encoded.put(KEY_TYPE, "string_set");
+            encoded.put(KEY_VALUE, values);
             return encoded;
         }
         return null;
     }
 
-    private static Object decodeValue(JSONObject encoded) throws JSONException {
+    private static Object decodeEntryValue(JSONObject encoded) throws JSONException {
         String type = encoded.optString(KEY_TYPE, "");
         return switch (type) {
-            case TYPE_STRING -> encoded.optString(KEY_VALUE, "");
-            case TYPE_INT -> encoded.getInt(KEY_VALUE);
-            case TYPE_LONG -> encoded.getLong(KEY_VALUE);
-            case TYPE_FLOAT -> (float) encoded.getDouble(KEY_VALUE);
-            case TYPE_BOOLEAN -> encoded.getBoolean(KEY_VALUE);
-            case TYPE_STRING_SET -> decodeStringSet(encoded.getJSONArray(KEY_VALUE));
+            case "string" -> encoded.optString(KEY_VALUE, "");
+            case "int" -> encoded.getInt(KEY_VALUE);
+            case "long" -> encoded.getLong(KEY_VALUE);
+            case "float" -> (float) encoded.getDouble(KEY_VALUE);
+            case "boolean" -> encoded.getBoolean(KEY_VALUE);
+            case "string_set" -> decodeStringSet(encoded.getJSONArray(KEY_VALUE));
             default -> throw new IllegalArgumentException("Unsupported backup value type: " + type);
         };
     }
 
-    private static Set<String> decodeStringSet(JSONArray array) throws JSONException {
+    private static Set<String> decodeStringSet(org.json.JSONArray array) throws JSONException {
         LinkedHashSet<String> values = new LinkedHashSet<>();
         for (int i = 0; i < array.length(); i++) {
             values.add(array.getString(i));
