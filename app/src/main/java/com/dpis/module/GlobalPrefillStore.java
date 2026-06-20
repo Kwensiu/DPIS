@@ -12,12 +12,14 @@ final class GlobalPrefillStore {
     }
 
     TemplateConfigValue read() {
-        return TemplateConfigPreferences.read(preferences, PREFIX);
+        return TemplateCustomSemantics.customValue(
+                TemplateConfigPreferences.read(preferences, PREFIX));
     }
 
     boolean write(TemplateConfigValue value) {
         SharedPreferences.Editor editor = preferences.edit();
-        TemplateConfigPreferences.write(editor, PREFIX, value);
+        TemplateConfigPreferences.write(editor, PREFIX,
+                TemplateCustomSemantics.customValue(value));
         return editor.commit();
     }
 

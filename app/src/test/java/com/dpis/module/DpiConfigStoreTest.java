@@ -21,13 +21,106 @@ public class DpiConfigStoreTest {
     public void parsesConfiguredPackageSetFromStoredStrings() {
         FakePrefs prefs = new FakePrefs();
         prefs.edit().putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES, new LinkedHashSet<>(Arrays.asList(
-                "com.max.xiaoheihe", "bin.mt.plus.canary"))).commit();
+                "com.max.xiaoheihe", "bin.mt.plus.canary")))
+                .putInt("viewport.com.max.xiaoheihe.width_dp", 360)
+                .putInt("viewport.bin.mt.plus.canary.width_dp", 420)
+                .commit();
 
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         assertTrue(store.getConfiguredPackages().contains("com.max.xiaoheihe"));
         assertTrue(store.getConfiguredPackages().contains("bin.mt.plus.canary"));
         assertFalse(store.getConfiguredPackages().contains("com.example.other"));
+    }
+
+    @Test
+    public void userVisibleConfigIncludesModeOnlySavedPreference() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
+                        new LinkedHashSet<>(Set.of("org.mozilla.firefox")))
+                .putString("viewport.org.mozilla.firefox.target_type",
+                        ViewportTargetType.ABSOLUTE_DP)
+                .putString("font.org.mozilla.firefox.mode",
+                        FontApplyMode.FIELD_REWRITE)
+                .commit();
+
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertTrue(store.getConfiguredPackages().contains("org.mozilla.firefox"));
+        assertTrue(store.hasUserVisiblePackageConfig("org.mozilla.firefox"));
+    }
+
+    @Test
+    public void clearingLastValueLeavesUserVisibleConfigWhenModePreferenceRemains() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
+                        new LinkedHashSet<>(Set.of("org.mozilla.firefox")))
+                .putInt("viewport.org.mozilla.firefox.scale_permille", 1200)
+                .putString("viewport.org.mozilla.firefox.target_type",
+                        ViewportTargetType.RELATIVE_SCALE)
+                .putString("font.org.mozilla.firefox.mode",
+                        FontApplyMode.FIELD_REWRITE)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertTrue(store.clearTargetViewportValue("org.mozilla.firefox"));
+
+        assertTrue(store.getConfiguredPackages().contains("org.mozilla.firefox"));
+        assertTrue(store.hasUserVisiblePackageConfig("org.mozilla.firefox"));
+    }
+
+    @Test
+    public void configuredPackagesDerivesCandidatesFromSavedPackageState() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putString("font.com.example.modeonly.mode", FontApplyMode.FIELD_REWRITE)
+                .putBoolean("target.com.example.disabled.dpis_enabled", false)
+                .putString("font.com.example.domains.hook_domains", "textview_sp")
+                .commit();
+
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertTrue(store.getConfiguredPackages().contains("com.example.modeonly"));
+        assertTrue(store.getConfiguredPackages().contains("com.example.disabled"));
+        assertTrue(store.getConfiguredPackages().contains("com.example.domains"));
+        assertTrue(store.hasUserVisiblePackageConfig("com.example.modeonly"));
+        assertTrue(store.hasUserVisiblePackageConfig("com.example.disabled"));
+        assertTrue(store.hasUserVisiblePackageConfig("com.example.domains"));
+    }
+
+    @Test
+    public void defaultDpisEnabledValueDoesNotCreateConfiguredPackage() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putBoolean("target.com.example.default.dpis_enabled", true)
+                .commit();
+
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertFalse(store.getConfiguredPackages().contains("com.example.default"));
+        assertFalse(store.hasUserVisiblePackageConfig("com.example.default"));
+    }
+
+    @Test
+    public void defaultPackageDraftValuesDoNotCreateConfiguredPackage() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
+                        new LinkedHashSet<>(Set.of("com.example.default")))
+                .putString("viewport.com.example.default.target_type",
+                        ViewportTargetType.RELATIVE_SCALE)
+                .putString("viewport.com.example.default.mode",
+                        ViewportApplyMode.AUTO)
+                .putString("font.com.example.default.mode",
+                        FontApplyMode.SYSTEM_EMULATION)
+                .commit();
+
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertFalse(store.hasRealPackageConfig("com.example.default"));
+        assertFalse(store.hasUserVisiblePackageConfig("com.example.default"));
     }
 
     @Test
@@ -923,6 +1016,22 @@ public class DpiConfigStoreTest {
         assertTrue(store.setWechatDpi("com.tencent.mm", 1001));
         assertNull(store.getWechatDpi("com.tencent.mm"));
         assertFalse(store.getConfiguredPackages().contains("com.tencent.mm"));
+    }
+
+    @Test
+    public void savedWechatDpiKeyOnlyConfiguresSupportedPackage() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putInt("wechat.com.example.app.dpi", 600)
+                .putInt("wechat.com.tencent.mm.dpi", 600)
+                .commit();
+
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertFalse(store.getConfiguredPackages().contains("com.example.app"));
+        assertFalse(store.hasUserVisiblePackageConfig("com.example.app"));
+        assertTrue(store.getConfiguredPackages().contains("com.tencent.mm"));
+        assertTrue(store.hasUserVisiblePackageConfig("com.tencent.mm"));
     }
 
     @Test

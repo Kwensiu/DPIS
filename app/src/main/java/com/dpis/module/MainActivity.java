@@ -2865,10 +2865,14 @@ public final class MainActivity
     private HomeWorkspaceBinder.State createHomeWorkspaceState() {
         DpiConfigStore configStore = getHookConfigStore();
         java.util.Set<String> configuredPackages = configStore.getConfiguredPackages();
+        int visibleConfiguredAppCount = countUserVisibleConfiguredPackages(
+                configStore,
+                configuredPackages
+        );
         return new HomeWorkspaceBinder.State(
                 HomeActivationStateResolver.isActivatedForHome(),
-                countDpisEnabledPackages(configStore, configuredPackages),
-                configuredPackages.size(),
+                countEnabledUserVisibleConfiguredPackages(configStore, configuredPackages),
+                visibleConfiguredAppCount,
                 ConfigStoreFactory.createLocalUiFontLibraryStore(
                         this,
                         DpisApplication.getXposedService()
@@ -2929,14 +2933,29 @@ public final class MainActivity
         };
     }
 
-    private static int countDpisEnabledPackages(DpiConfigStore store,
+    private static int countEnabledUserVisibleConfiguredPackages(DpiConfigStore store,
             java.util.Set<String> packageNames) {
         if (store == null || packageNames == null || packageNames.isEmpty()) {
             return 0;
         }
         int count = 0;
         for (String packageName : packageNames) {
-            if (store.isTargetDpisEnabled(packageName)) {
+            if (store.hasUserVisiblePackageConfig(packageName)
+                    && store.isTargetDpisEnabled(packageName)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static int countUserVisibleConfiguredPackages(DpiConfigStore store,
+            java.util.Set<String> packageNames) {
+        if (store == null || packageNames == null || packageNames.isEmpty()) {
+            return 0;
+        }
+        int count = 0;
+        for (String packageName : packageNames) {
+            if (store.hasUserVisiblePackageConfig(packageName)) {
                 count++;
             }
         }

@@ -38,6 +38,9 @@ public class GlobalPrefillSaveHandlerTest {
         assertEquals(beforeNonDefault, nonDefaultEntries(prefs));
         assertEquals(new TemplateConfigValue(
                         ViewportTargetSpec.relativeScale(1250),
+                        ViewportTargetType.RELATIVE_SCALE,
+                        1250,
+                        null,
                         ViewportApplyMode.SYSTEM,
                         150,
                         FontApplyMode.FIELD_REWRITE,
@@ -118,8 +121,146 @@ public class GlobalPrefillSaveHandlerTest {
         TemplateConfigValue value = new GlobalPrefillStore(prefs).read();
         assertFalse(value.viewportTargetSpec.isEnabled());
         assertEquals(ViewportTargetType.ABSOLUTE_DP, value.viewportTargetType);
-        assertEquals(ViewportApplyMode.OFF, value.viewportApplyMode);
+        assertEquals(ViewportApplyMode.COMPAT, value.viewportApplyMode);
         assertEquals(FontApplyMode.FIELD_REWRITE, value.fontApplyMode);
+    }
+
+    @Test
+    public void defaultEditorSelectionsDoNotCreateCustomPrefillValues() {
+        FakePrefs prefs = new FakePrefs();
+
+        GlobalPrefillSaveHandler.Result result = new GlobalPrefillSaveHandler().save(
+                new GlobalPrefillStore(prefs),
+                new GlobalPrefillSaveHandler.Request(
+                        "",
+                        ViewportTargetType.RELATIVE_SCALE,
+                        ViewportApplyMode.OFF,
+                        "",
+                        FontApplyMode.SYSTEM_EMULATION,
+                        null,
+                        null));
+
+        assertTrue(result.success);
+        assertEquals(TemplateConfigValue.EMPTY, new GlobalPrefillStore(prefs).read());
+        assertFalse(new GlobalPrefillStore(prefs).read().hasAnyValue());
+    }
+
+    @Test
+    public void autoViewportStrategyDoesNotCreateCustomPrefillValue() {
+        FakePrefs prefs = new FakePrefs();
+
+        GlobalPrefillSaveHandler.Result result = new GlobalPrefillSaveHandler().save(
+                new GlobalPrefillStore(prefs),
+                new GlobalPrefillSaveHandler.Request(
+                        "",
+                        ViewportTargetType.RELATIVE_SCALE,
+                        ViewportApplyMode.AUTO,
+                        "",
+                        FontApplyMode.SYSTEM_EMULATION,
+                        null,
+                        null));
+
+        assertTrue(result.success);
+        assertEquals(TemplateConfigValue.EMPTY, new GlobalPrefillStore(prefs).read());
+    }
+
+
+    @Test
+    public void nonDefaultFontModeWithoutValueStillCreatesCustomPrefillValue() {
+        FakePrefs prefs = new FakePrefs();
+
+        GlobalPrefillSaveHandler.Result result = new GlobalPrefillSaveHandler().save(
+                new GlobalPrefillStore(prefs),
+                new GlobalPrefillSaveHandler.Request(
+                        "",
+                        ViewportTargetType.RELATIVE_SCALE,
+                        ViewportApplyMode.OFF,
+                        "",
+                        FontApplyMode.FIELD_REWRITE,
+                        null,
+                        null));
+
+        assertTrue(result.success);
+        TemplateConfigValue value = new GlobalPrefillStore(prefs).read();
+        assertEquals(ViewportTargetType.OFF, value.viewportTargetType);
+        assertEquals(FontApplyMode.FIELD_REWRITE, value.fontApplyMode);
+        assertTrue(value.hasAnyValue());
+    }
+
+    @Test
+    public void viewportApplyStrategyWithoutValueStillCreatesCustomPrefillValue() {
+        FakePrefs prefs = new FakePrefs();
+
+        GlobalPrefillSaveHandler.Result result = new GlobalPrefillSaveHandler().save(
+                new GlobalPrefillStore(prefs),
+                new GlobalPrefillSaveHandler.Request(
+                        "",
+                        ViewportTargetType.RELATIVE_SCALE,
+                        ViewportApplyMode.SYSTEM,
+                        "",
+                        FontApplyMode.SYSTEM_EMULATION,
+                        null,
+                        null));
+
+        assertTrue(result.success);
+        TemplateConfigValue value = new GlobalPrefillStore(prefs).read();
+        assertFalse(value.viewportTargetSpec.isEnabled());
+        assertEquals(ViewportTargetType.OFF, value.viewportTargetType);
+        assertEquals(ViewportApplyMode.SYSTEM, value.viewportApplyMode);
+        assertEquals(FontApplyMode.OFF, value.fontApplyMode);
+        assertTrue(value.hasAnyValue());
+    }
+
+    @Test
+    public void emptyViewportValueReopensWithSavedTargetType() {
+        FakePrefs prefs = new FakePrefs();
+
+        GlobalPrefillSaveHandler.Result result = new GlobalPrefillSaveHandler().save(
+                new GlobalPrefillStore(prefs),
+                new GlobalPrefillSaveHandler.Request(
+                        "",
+                        ViewportTargetType.ABSOLUTE_DP,
+                        ViewportApplyMode.OFF,
+                        "",
+                        FontApplyMode.OFF,
+                        null,
+                        null));
+
+        assertTrue(result.success);
+        TemplateConfigValue value = new GlobalPrefillStore(prefs).read();
+        assertFalse(value.viewportTargetSpec.isEnabled());
+        assertEquals(ViewportTargetType.ABSOLUTE_DP, value.initialViewportTargetType());
+        assertEquals("", value.initialViewportInput());
+        assertEquals("", value.initialViewportScaleInput());
+        assertEquals("", value.initialViewportAbsoluteInput());
+    }
+
+    @Test
+    public void savePreservesBothViewportDraftValues() {
+        FakePrefs prefs = new FakePrefs();
+
+        GlobalPrefillSaveHandler.Result result = new GlobalPrefillSaveHandler().save(
+                new GlobalPrefillStore(prefs),
+                new GlobalPrefillSaveHandler.Request(
+                        "88",
+                        ViewportTargetType.RELATIVE_SCALE,
+                        ViewportApplyMode.AUTO,
+                        "88",
+                        "411",
+                        "",
+                        FontApplyMode.SYSTEM_EMULATION,
+                        null,
+                        null));
+
+        assertTrue(result.success);
+        TemplateConfigValue value = new GlobalPrefillStore(prefs).read();
+        assertEquals(ViewportTargetSpec.relativeScale(880), value.viewportTargetSpec);
+        assertEquals(Integer.valueOf(880), value.viewportScalePermilleDraft);
+        assertEquals(Integer.valueOf(411), value.viewportWidthDpDraft);
+        assertEquals(ViewportTargetType.RELATIVE_SCALE, value.initialViewportTargetType());
+        assertEquals("88", value.initialViewportInput());
+        assertEquals("88", value.initialViewportScaleInput());
+        assertEquals("411", value.initialViewportAbsoluteInput());
     }
 
     private static Map<String, Object> nonDefaultEntries(FakePrefs prefs) {

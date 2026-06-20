@@ -7,6 +7,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 final class DpiConfigStore {
     private static final int MIN_VIEWPORT_WIDTH_DP = 1;
@@ -48,6 +50,45 @@ final class DpiConfigStore {
             "font.debug.",
             "runtime."
     };
+    private static final PackageConfigKeySpec[] PACKAGE_CONFIG_KEYS = {
+            PackageConfigKeySpec.positiveInteger("viewport.", ".width_dp",
+                    DpiConfigStore::keyForViewportWidth),
+            PackageConfigKeySpec.string("viewport.", ".target_type",
+                    DpiConfigStore::keyForViewportTargetType,
+                    DpiConfigStore::isConfiguredViewportTargetTypeValue),
+            PackageConfigKeySpec.rangedInteger("viewport.", ".scale_permille",
+                    MIN_VIEWPORT_SCALE_PERMILLE, MAX_VIEWPORT_SCALE_PERMILLE,
+                    DpiConfigStore::keyForViewportScalePermille),
+            PackageConfigKeySpec.string("viewport.", ".mode",
+                    DpiConfigStore::keyForViewportMode,
+                    DpiConfigStore::isConfiguredViewportModeValue),
+            PackageConfigKeySpec.rangedInteger("font.", ".scale_percent",
+                    MIN_FONT_SCALE_PERCENT, MAX_FONT_SCALE_PERCENT,
+                    DpiConfigStore::keyForFontScale),
+            PackageConfigKeySpec.string("font.", ".typeface_id",
+                    DpiConfigStore::keyForTypefaceId),
+            PackageConfigKeySpec.string("font.", ".mode",
+                    DpiConfigStore::keyForFontMode,
+                    DpiConfigStore::isConfiguredFontModeValue),
+            PackageConfigKeySpec.string("font.", ".hook_domains",
+                    DpiConfigStore::keyForFontHookDomains),
+            PackageConfigKeySpec.booleanValue("target.", ".dpis_enabled", false,
+                    DpiConfigStore::keyForDpisEnabled),
+            PackageConfigKeySpec.rangedInteger("wechat.", ".dpi",
+                    WechatDpiConfig.MIN_DPI, WechatDpiConfig.MAX_DPI,
+                    DpiConfigStore::keyForWechatDpi,
+                    WechatDpiConfig::appliesTo)
+    };
+    private static final PackageConfigKeyFactory[] PACKAGE_TEMPLATE_CONFIG_KEYS = {
+            DpiConfigStore::keyForViewportWidth,
+            DpiConfigStore::keyForViewportTargetType,
+            DpiConfigStore::keyForViewportScalePermille,
+            DpiConfigStore::keyForViewportMode,
+            DpiConfigStore::keyForFontScale,
+            DpiConfigStore::keyForTypefaceId,
+            DpiConfigStore::keyForFontMode,
+            DpiConfigStore::keyForFontHookDomains
+    };
 
     private final SharedPreferences preferences;
     private final SharedPreferences fallbackPreferences;
@@ -68,13 +109,16 @@ final class DpiConfigStore {
             if (primaryPackages != null) {
                 packages.addAll(primaryPackages);
             }
-            return new LinkedHashSet<>(packages);
         }
         if (fallbackPreferences != null && fallbackPreferences.contains(KEY_TARGET_PACKAGES)) {
             Set<String> fallbackPackages = fallbackPreferences.getStringSet(KEY_TARGET_PACKAGES, Collections.emptySet());
             if (fallbackPackages != null) {
                 packages.addAll(fallbackPackages);
             }
+        }
+        collectPackageNamesFromSavedState(packages, preferences.getAll());
+        if (fallbackPreferences != null) {
+            collectPackageNamesFromSavedState(packages, fallbackPreferences.getAll());
         }
         return new LinkedHashSet<>(packages);
     }
@@ -491,7 +535,7 @@ final class DpiConfigStore {
     boolean setTargetViewportApplyMode(String packageName, String mode) {
         String normalized = ViewportApplyMode.normalize(mode);
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
-        if (!ViewportApplyMode.isEnabled(normalized)) {
+        if (!isConfiguredViewportModeValue(normalized)) {
             if (!hasAnyPackageConfigAfterRemoving(packageName, keyForViewportMode(packageName))) {
                 packages.remove(packageName);
             }
@@ -547,7 +591,7 @@ final class DpiConfigStore {
     boolean setTargetFontApplyMode(String packageName, String mode) {
         String normalized = FontApplyMode.normalize(mode);
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
-        if (FontApplyMode.OFF.equals(normalized)) {
+        if (!isConfiguredFontModeValue(normalized)) {
             if (!hasAnyPackageConfigAfterRemoving(packageName, keyForFontMode(packageName))) {
                 packages.remove(packageName);
             }
@@ -658,18 +702,20 @@ final class DpiConfigStore {
     boolean clearTargetPackageConfig(String packageName) {
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
         packages.remove(packageName);
-        return commitBoth(editor -> editor
-                .putStringSet(KEY_TARGET_PACKAGES, packages)
-                .remove(keyForViewportWidth(packageName))
-                .remove(keyForViewportTargetType(packageName))
-                .remove(keyForViewportScalePermille(packageName))
-                .remove(keyForViewportMode(packageName))
-                .remove(keyForFontScale(packageName))
-                .remove(keyForTypefaceId(packageName))
-                .remove(keyForFontMode(packageName))
-                .remove(keyForDpisEnabled(packageName))
-                .remove(keyForFontHookDomains(packageName))
-                .remove(keyForWechatDpi(packageName)));
+        return commitBoth(editor -> {
+            editor.putStringSet(KEY_TARGET_PACKAGES, packages);
+            removePackageConfigKeys(editor, packageName, PACKAGE_CONFIG_KEYS);
+        });
+    }
+
+    boolean prunePackageIfOnlyDefaultConfigRemains(String packageName) {
+        if (packageName == null || packageName.isBlank()
+                || hasAnyPackageConfigAfterRemoving(packageName)) {
+            return true;
+        }
+        LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
+        packages.remove(packageName);
+        return commitBoth(editor -> editor.putStringSet(KEY_TARGET_PACKAGES, packages));
     }
 
     String getPackageFontHookDomainsRaw(String packageName) {
@@ -711,8 +757,14 @@ final class DpiConfigStore {
         if (packageName == null || packageName.isBlank()) {
             return false;
         }
-        return getConfiguredPackages().contains(packageName)
-                || hasAnyPackageConfigAfterRemoving(packageName);
+        return hasAnyPackageConfigAfterRemoving(packageName);
+    }
+
+    boolean hasUserVisiblePackageConfig(String packageName) {
+        if (packageName == null || packageName.isBlank()) {
+            return false;
+        }
+        return hasAnyPackageConfigAfterRemoving(packageName);
     }
 
     TemplateConfigValue readPackageTemplateConfigValue(String packageName) {
@@ -791,67 +843,37 @@ final class DpiConfigStore {
     }
 
     private static String[] templateConfigKeysForPackage(String packageName) {
-        return new String[] {
-                keyForViewportWidth(packageName),
-                keyForViewportTargetType(packageName),
-                keyForViewportScalePermille(packageName),
-                keyForViewportMode(packageName),
-                keyForFontScale(packageName),
-                keyForTypefaceId(packageName),
-                keyForFontMode(packageName),
-                keyForFontHookDomains(packageName)
-        };
+        return keysForPackage(packageName, PACKAGE_TEMPLATE_CONFIG_KEYS);
     }
 
     private boolean hasAnyPackageConfigAfterRemoving(String packageName, String... removedKeys) {
-        String viewportWidthKey = keyForViewportWidth(packageName);
-        if (!isRemovedKey(viewportWidthKey, removedKeys)
-                && getTargetViewportWidthDp(packageName) != null) {
-            return true;
-        }
-        String viewportTargetTypeKey = keyForViewportTargetType(packageName);
-        String viewportScaleKey = keyForViewportScalePermille(packageName);
-        if ((!isRemovedKey(viewportTargetTypeKey, removedKeys)
-                || !isRemovedKey(viewportScaleKey, removedKeys))
-                && getTargetViewportSpec(packageName).isEnabled()) {
-            return true;
-        }
-        String viewportModeKey = keyForViewportMode(packageName);
-        if (!isRemovedKey(viewportModeKey, removedKeys)
-                && contains(viewportModeKey)) {
-            return true;
-        }
-        String fontScaleKey = keyForFontScale(packageName);
-        if (!isRemovedKey(fontScaleKey, removedKeys)
-                && getTargetFontScalePercent(packageName) != null) {
-            return true;
-        }
-        String typefaceIdKey = keyForTypefaceId(packageName);
-        if (!isRemovedKey(typefaceIdKey, removedKeys)
-                && getTargetTypefaceId(packageName) != null) {
-            return true;
-        }
-        String fontModeKey = keyForFontMode(packageName);
-        if (!isRemovedKey(fontModeKey, removedKeys)
-                && contains(fontModeKey)) {
-            return true;
-        }
-        String dpisEnabledKey = keyForDpisEnabled(packageName);
-        if (!isRemovedKey(dpisEnabledKey, removedKeys)
-                && contains(dpisEnabledKey)) {
-            return true;
-        }
-        String wechatDpiKey = keyForWechatDpi(packageName);
-        if (!isRemovedKey(wechatDpiKey, removedKeys)
-                && getWechatDpi(packageName) != null) {
-            return true;
-        }
-        String hookDomainsKey = keyForFontHookDomains(packageName);
-        if (!isRemovedKey(hookDomainsKey, removedKeys)
-                && contains(hookDomainsKey)) {
-            return true;
+        for (PackageConfigKeySpec spec : PACKAGE_CONFIG_KEYS) {
+            String key = spec.keyForPackage(packageName);
+            if (!isRemovedKey(key, removedKeys) && hasConfiguredValue(spec, packageName, key)) {
+                return true;
+            }
         }
         return false;
+    }
+
+    private boolean hasConfiguredValue(
+            PackageConfigKeySpec spec,
+            String packageName,
+            String key) {
+        if (!spec.appliesTo(packageName) || !contains(key)) {
+            return false;
+        }
+        return spec.isConfiguredValue(readPackageConfigValue(spec, key));
+    }
+
+    private Object readPackageConfigValue(PackageConfigKeySpec spec, String key) {
+        if (spec.expectsInteger()) {
+            return getNullableInt(key);
+        }
+        if (spec.expectsBoolean()) {
+            return readPreferenceValue(key, prefs -> prefs.getBoolean(key, false));
+        }
+        return getString(key, null);
     }
 
     private static boolean isRemovedKey(String key, String... removedKeys) {
@@ -864,6 +886,82 @@ final class DpiConfigStore {
             }
         }
         return false;
+    }
+
+    private static void collectPackageNamesFromSavedState(
+            LinkedHashSet<String> packages,
+            Map<String, ?> values) {
+        if (values == null || values.isEmpty()) {
+            return;
+        }
+        for (String key : values.keySet()) {
+            String packageName = packageNameFromSavedPackageKey(key, values.get(key));
+            if (packageName != null) {
+                packages.add(packageName);
+            }
+        }
+    }
+
+    private static String packageNameFromSavedPackageKey(String key, Object value) {
+        if (key == null || key.isEmpty()) {
+            return null;
+        }
+        for (PackageConfigKeySpec spec : PACKAGE_CONFIG_KEYS) {
+            String packageName = spec.packageNameFromKey(key, value);
+            if (packageName != null) {
+                return packageName;
+            }
+        }
+        return null;
+    }
+
+    private static String packageNameBetween(String key, String prefix, String suffix) {
+        if (!key.startsWith(prefix) || !key.endsWith(suffix)) {
+            return null;
+        }
+        String packageName = key.substring(prefix.length(), key.length() - suffix.length());
+        return packageName.isBlank() ? null : packageName;
+    }
+
+    private static String[] keysForPackage(
+            String packageName,
+            PackageConfigKeyFactory[] keyFactories) {
+        String[] keys = new String[keyFactories.length];
+        for (int index = 0; index < keyFactories.length; index++) {
+            keys[index] = keyFactories[index].keyForPackage(packageName);
+        }
+        return keys;
+    }
+
+    private static boolean isConfiguredViewportTargetTypeValue(Object value) {
+        String normalized = value instanceof String stringValue
+                ? ViewportTargetType.normalize(stringValue)
+                : ViewportTargetType.OFF;
+        return ViewportTargetType.ABSOLUTE_DP.equals(normalized);
+    }
+
+    private static boolean isConfiguredViewportModeValue(Object value) {
+        String normalized = value instanceof String stringValue
+                ? ViewportApplyMode.normalize(stringValue)
+                : ViewportApplyMode.OFF;
+        return ViewportApplyMode.isEnabled(normalized)
+                && !ViewportApplyMode.AUTO.equals(normalized);
+    }
+
+    private static boolean isConfiguredFontModeValue(Object value) {
+        String normalized = value instanceof String stringValue
+                ? FontApplyMode.normalize(stringValue)
+                : FontApplyMode.OFF;
+        return FontApplyMode.FIELD_REWRITE.equals(normalized);
+    }
+
+    private static void removePackageConfigKeys(
+            SharedPreferences.Editor editor,
+            String packageName,
+            PackageConfigKeySpec[] specs) {
+        for (PackageConfigKeySpec spec : specs) {
+            editor.remove(spec.keyForPackage(packageName));
+        }
     }
 
     boolean ensureSeedConfig(Map<String, Integer> seedTargetViewportWidthDps) {
@@ -1099,6 +1197,157 @@ final class DpiConfigStore {
 
     private interface PreferenceReader<T> {
         T read(SharedPreferences preferences);
+    }
+
+    private interface PackageConfigKeyFactory {
+        String keyForPackage(String packageName);
+    }
+
+    private static final class PackageConfigKeySpec {
+        private final String prefix;
+        private final String suffix;
+        private final Integer minIntValue;
+        private final Integer maxIntValue;
+        private final Boolean requiredBooleanValue;
+        private final Function<String, String> keyFactory;
+        private final Predicate<String> packagePredicate;
+        private final Predicate<Object> configuredValuePredicate;
+
+        private PackageConfigKeySpec(
+                String prefix,
+                String suffix,
+                Integer minIntValue,
+                Integer maxIntValue,
+                Boolean requiredBooleanValue,
+                Function<String, String> keyFactory,
+                Predicate<String> packagePredicate,
+                Predicate<Object> configuredValuePredicate) {
+            this.prefix = prefix;
+            this.suffix = suffix;
+            this.minIntValue = minIntValue;
+            this.maxIntValue = maxIntValue;
+            this.requiredBooleanValue = requiredBooleanValue;
+            this.keyFactory = keyFactory;
+            this.packagePredicate = packagePredicate;
+            this.configuredValuePredicate = configuredValuePredicate;
+        }
+
+        static PackageConfigKeySpec any(
+                String prefix,
+                String suffix,
+                Function<String, String> keyFactory) {
+            return new PackageConfigKeySpec(
+                    prefix, suffix, null, null, null, keyFactory, packageName -> true,
+                    value -> value != null);
+        }
+
+        static PackageConfigKeySpec string(
+                String prefix,
+                String suffix,
+                Function<String, String> keyFactory) {
+            return any(prefix, suffix, keyFactory);
+        }
+
+        static PackageConfigKeySpec string(
+                String prefix,
+                String suffix,
+                Function<String, String> keyFactory,
+                Predicate<Object> configuredValuePredicate) {
+            return new PackageConfigKeySpec(
+                    prefix, suffix, null, null, null, keyFactory, packageName -> true,
+                    configuredValuePredicate);
+        }
+
+        static PackageConfigKeySpec positiveInteger(
+                String prefix,
+                String suffix,
+                Function<String, String> keyFactory) {
+            return rangedInteger(prefix, suffix, 1, Integer.MAX_VALUE, keyFactory);
+        }
+
+        static PackageConfigKeySpec rangedInteger(
+                String prefix,
+                String suffix,
+                int minIntValue,
+                int maxIntValue,
+                Function<String, String> keyFactory) {
+            return rangedInteger(prefix, suffix, minIntValue, maxIntValue,
+                    keyFactory, packageName -> true);
+        }
+
+        static PackageConfigKeySpec rangedInteger(
+                String prefix,
+                String suffix,
+                int minIntValue,
+                int maxIntValue,
+                Function<String, String> keyFactory,
+                Predicate<String> packagePredicate) {
+            return new PackageConfigKeySpec(
+                    prefix,
+                    suffix,
+                    minIntValue,
+                    maxIntValue,
+                    null,
+                    keyFactory,
+                    packagePredicate,
+                    value -> true);
+        }
+
+        static PackageConfigKeySpec booleanValue(
+                String prefix,
+                String suffix,
+                boolean configuredValue,
+                Function<String, String> keyFactory) {
+            return new PackageConfigKeySpec(
+                    prefix,
+                    suffix,
+                    null,
+                    null,
+                    configuredValue,
+                    keyFactory,
+                    packageName -> true,
+                    value -> true);
+        }
+
+        String keyForPackage(String packageName) {
+            return keyFactory.apply(packageName);
+        }
+
+        String packageNameFromKey(String key, Object value) {
+            String packageName = packageNameBetween(key, prefix, suffix);
+            return packageName != null && appliesTo(packageName) && isConfiguredValue(value)
+                    ? packageName
+                    : null;
+        }
+
+        boolean appliesTo(String packageName) {
+            return packageName != null && packagePredicate.test(packageName);
+        }
+
+        boolean expectsInteger() {
+            return minIntValue != null && maxIntValue != null;
+        }
+
+        boolean expectsBoolean() {
+            return requiredBooleanValue != null;
+        }
+
+        boolean isConfiguredValue(Object value) {
+            if (requiredBooleanValue != null) {
+                return value instanceof Boolean boolValue
+                        && requiredBooleanValue.equals(boolValue);
+            }
+            if (configuredValuePredicate != null && !configuredValuePredicate.test(value)) {
+                return false;
+            }
+            if (minIntValue == null || maxIntValue == null) {
+                return value != null;
+            }
+            if (!(value instanceof Integer intValue)) {
+                return false;
+            }
+            return intValue >= minIntValue && intValue <= maxIntValue;
+        }
     }
 
     @SuppressWarnings("unchecked")

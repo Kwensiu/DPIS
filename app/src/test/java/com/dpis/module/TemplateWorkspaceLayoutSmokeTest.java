@@ -4,6 +4,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.Test;
 
@@ -22,6 +24,8 @@ public class TemplateWorkspaceLayoutSmokeTest {
         assertTrue(layout.contains("android:id=\"@+id/global_prefill_subtitle\""));
         assertTrue(layout.contains("android:id=\"@+id/global_prefill_summary_chips\""));
         assertTrue(layout.contains("android:id=\"@+id/global_prefill_empty_summary\""));
+        assertDashedEmptySummaryState(
+                elementWithId(layout, "global_prefill_empty_summary"));
         assertTrue(layout.contains("android:id=\"@+id/global_prefill_edit_button\""));
         assertFalse(layout.contains("android:id=\"@+id/global_prefill_reset_button\""));
         assertFalse(layout.contains("global_prefill_apply_button"));
@@ -59,6 +63,8 @@ public class TemplateWorkspaceLayoutSmokeTest {
         assertTrue(card.contains("android:id=\"@+id/quick_template_title\""));
         assertTrue(card.contains("android:id=\"@+id/quick_template_summary_chips\""));
         assertTrue(card.contains("android:id=\"@+id/quick_template_empty_summary\""));
+        assertDashedEmptySummaryState(
+                elementWithId(card, "quick_template_empty_summary"));
         assertFalse(card.contains("android:id=\"@+id/quick_template_updated\""));
         assertFalse(card.contains("android:id=\"@+id/quick_template_missing_font\""));
         assertTrue(card.contains("android:id=\"@+id/quick_template_apply_button\""));
@@ -79,6 +85,7 @@ public class TemplateWorkspaceLayoutSmokeTest {
         assertTrue(read("src/main/res/layout/item_quick_template_sort.xml")
                 .contains("@drawable/ic_drag_indicator_24"));
         assertTrue(strings.contains("<string name=\"template_workspace_action_apply\">Apply</string>"));
+        assertTrue(strings.contains("<string name=\"template_workspace_summary_empty\">No custom values.</string>"));
         assertTrue(strings.contains("<string name=\"template_workspace_action_edit_template\">Edit template</string>"));
         assertTrue(strings.contains("<string name=\"template_workspace_action_select_apps\">Select apps</string>"));
         assertTrue(strings.contains("template_search_hint"));
@@ -118,6 +125,23 @@ public class TemplateWorkspaceLayoutSmokeTest {
         assertTrue(read("src/main/java/com/dpis/module/QuickTemplateSortDialog.java")
                 .contains("DialogWindowSizer.applyLargeWidth(dialog, activity)"));
         assertFalse(adapter.contains("quick_template_updated"));
+    }
+
+    private static void assertDashedEmptySummaryState(String element) {
+        assertTrue(element.contains("@string/template_workspace_summary_empty"));
+        assertTrue(element.contains("android:background=\"@drawable/bg_template_workspace_empty_summary\""));
+        assertTrue(element.contains("android:minHeight=\"@dimen/template_workspace_empty_summary_min_height\""));
+        assertTrue(element.contains("android:gravity=\"center\""));
+    }
+
+    private static String elementWithId(String layout, String id) {
+        Pattern pattern = Pattern.compile(
+                "<com\\.google\\.android\\.material\\.textview\\.MaterialTextView\\s+[^>]*"
+                        + "android:id=\"@\\+id/" + id + "\"[^>]*/>",
+                Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(layout);
+        assertTrue("Missing MaterialTextView #" + id, matcher.find());
+        return matcher.group();
     }
 
     private static String read(String relativePath) throws IOException {

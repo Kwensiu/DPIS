@@ -13,17 +13,110 @@ final class AppStatusFormatter {
     private AppStatusFormatter() {
     }
 
+    static final class StatusInput {
+        final boolean inScope;
+        final boolean scopeKnown;
+        final boolean installed;
+        final ViewportTargetSpec viewportTargetSpec;
+        final String viewportMode;
+        final Integer fontScalePercent;
+        final String fontMode;
+        final String typefaceId;
+        final boolean dpisEnabled;
+        final boolean appSpecificConfigActive;
+        final Integer wechatDpi;
+
+        StatusInput(boolean inScope,
+                boolean scopeKnown,
+                boolean installed,
+                ViewportTargetSpec viewportTargetSpec,
+                String viewportMode,
+                Integer fontScalePercent,
+                String fontMode,
+                String typefaceId,
+                boolean dpisEnabled,
+                boolean appSpecificConfigActive,
+                Integer wechatDpi) {
+            this.inScope = inScope;
+            this.scopeKnown = scopeKnown;
+            this.installed = installed;
+            this.viewportTargetSpec = viewportTargetSpec != null
+                    ? viewportTargetSpec
+                    : ViewportTargetSpec.off();
+            this.viewportMode = viewportMode;
+            this.fontScalePercent = fontScalePercent;
+            this.fontMode = fontMode;
+            this.typefaceId = typefaceId;
+            this.dpisEnabled = dpisEnabled;
+            this.appSpecificConfigActive = appSpecificConfigActive;
+            this.wechatDpi = wechatDpi;
+        }
+
+        StatusInput(boolean inScope,
+                boolean scopeKnown,
+                ViewportTargetSpec viewportTargetSpec,
+                String viewportMode,
+                Integer fontScalePercent,
+                String fontMode,
+                String typefaceId,
+                boolean dpisEnabled) {
+            this(inScope, scopeKnown, true, viewportTargetSpec, viewportMode, fontScalePercent,
+                    fontMode, typefaceId, dpisEnabled, false, null);
+        }
+
+        StatusInput(boolean inScope,
+                ViewportTargetSpec viewportTargetSpec,
+                String viewportMode,
+                Integer fontScalePercent,
+                String fontMode,
+                String typefaceId,
+                boolean dpisEnabled) {
+            this(inScope, true, true, viewportTargetSpec, viewportMode, fontScalePercent,
+                    fontMode, typefaceId, dpisEnabled, false, null);
+        }
+
+        StatusInput(boolean inScope,
+                boolean scopeKnown,
+                Integer viewportWidthDp,
+                String viewportMode,
+                Integer fontScalePercent,
+                String fontMode,
+                String typefaceId,
+                boolean dpisEnabled) {
+            this(inScope, scopeKnown, true,
+                    viewportWidthDp != null
+                            ? ViewportTargetSpec.absoluteDp(viewportWidthDp)
+                            : ViewportTargetSpec.off(),
+                    viewportMode, fontScalePercent, fontMode, typefaceId, dpisEnabled, false,
+                    null);
+        }
+
+        StatusInput(boolean inScope,
+                Integer viewportWidthDp,
+                String viewportMode,
+                Integer fontScalePercent,
+                String fontMode,
+                String typefaceId,
+                boolean dpisEnabled) {
+            this(inScope, true, viewportWidthDp, viewportMode, fontScalePercent, fontMode,
+                    typefaceId, dpisEnabled);
+        }
+    }
+
     static final class Labels {
         final String injected;
         final String notInjected;
         final String enabled;
         final String disabled;
         final String notEnabled;
+        final String notInstalled;
+        final String noValue;
         final String emulation;
         final String replace;
         final String viewportScale;
         final String viewportWidth;
         final String font;
+        final String wechatDpi;
         final Locale locale;
 
         Labels(String injected,
@@ -31,22 +124,28 @@ final class AppStatusFormatter {
                 String enabled,
                 String disabled,
                 String notEnabled,
+                String notInstalled,
+                String noValue,
                 String emulation,
                 String replace,
                 String viewportScale,
                 String viewportWidth,
                 String font,
+                String wechatDpi,
                 Locale locale) {
             this.injected = injected;
             this.notInjected = notInjected;
             this.enabled = enabled;
             this.disabled = disabled;
             this.notEnabled = notEnabled;
+            this.notInstalled = notInstalled;
+            this.noValue = noValue;
             this.emulation = emulation;
             this.replace = replace;
             this.viewportScale = viewportScale;
             this.viewportWidth = viewportWidth;
             this.font = font;
+            this.wechatDpi = wechatDpi;
             this.locale = locale;
         }
     }
@@ -60,141 +159,46 @@ final class AppStatusFormatter {
                 resources.getString(R.string.app_status_enabled),
                 resources.getString(R.string.app_status_disabled),
                 resources.getString(R.string.app_status_not_enabled),
+                resources.getString(R.string.app_status_not_installed),
+                resources.getString(R.string.app_status_no_value),
                 resources.getString(R.string.app_status_mode_system),
                 resources.getString(R.string.app_status_mode_compat),
                 resources.getString(R.string.app_status_viewport_scale),
                 resources.getString(R.string.app_status_viewport_width),
                 resources.getString(R.string.app_status_font_prefix),
+                resources.getString(R.string.app_status_wechat_dpi),
                 locale);
     }
 
-    static String format(Resources resources,
-            boolean inScope,
-            Integer viewportWidthDp,
-            String viewportMode,
-            Integer fontScalePercent,
-            String fontMode,
-            String typefaceId,
-            boolean dpisEnabled) {
-        return format(labelsFrom(resources), inScope, viewportWidthDp, viewportMode,
-                fontScalePercent, fontMode, typefaceId, dpisEnabled);
+    static String format(Resources resources, StatusInput input) {
+        return format(labelsFrom(resources), input);
     }
 
-    static String format(Labels labels,
-            boolean inScope,
-            Integer viewportWidthDp,
-            String viewportMode,
-            Integer fontScalePercent,
-            String fontMode,
-            String typefaceId,
-            boolean dpisEnabled) {
-        return formatInternal(labels, inScope, viewportWidthDp, viewportMode,
-                fontScalePercent, fontMode, typefaceId, dpisEnabled, true, false);
+    static String format(Labels labels, StatusInput input) {
+        StatusInput normalized = normalizeInput(input);
+        return formatInternal(labels, normalized.inScope, normalized.viewportTargetSpec,
+                normalized.viewportMode, normalized.fontScalePercent, normalized.fontMode,
+                normalized.typefaceId, normalized.dpisEnabled, normalized.scopeKnown, false,
+                normalized.appSpecificConfigActive, normalized.installed, normalized.wechatDpi);
     }
 
-    static String format(Labels labels,
-            boolean inScope,
-            boolean scopeKnown,
-            Integer viewportWidthDp,
-            String viewportMode,
-            Integer fontScalePercent,
-            String fontMode,
-            String typefaceId,
-            boolean dpisEnabled) {
-        return formatInternal(labels, inScope, viewportWidthDp, viewportMode,
-                fontScalePercent, fontMode, typefaceId, dpisEnabled, scopeKnown, false);
+    static String formatCompact(Resources resources, StatusInput input) {
+        return formatCompact(labelsFrom(resources), input);
     }
 
-    static String formatCompact(Resources resources,
-            boolean inScope,
-            Integer viewportWidthDp,
-            String viewportMode,
-            Integer fontScalePercent,
-            String fontMode,
-            String typefaceId,
-            boolean dpisEnabled) {
-        return formatCompact(labelsFrom(resources), inScope, viewportWidthDp, viewportMode,
-                fontScalePercent, fontMode, typefaceId, dpisEnabled);
+    static String formatCompact(Labels labels, StatusInput input) {
+        StatusInput normalized = normalizeInput(input);
+        return formatInternal(labels, normalized.inScope, normalized.viewportTargetSpec,
+                normalized.viewportMode, normalized.fontScalePercent, normalized.fontMode,
+                normalized.typefaceId, normalized.dpisEnabled, normalized.scopeKnown, true,
+                normalized.appSpecificConfigActive, normalized.installed, normalized.wechatDpi);
     }
 
-    static String formatCompact(Labels labels,
-            boolean inScope,
-            Integer viewportWidthDp,
-            String viewportMode,
-            Integer fontScalePercent,
-            String fontMode,
-            String typefaceId,
-            boolean dpisEnabled) {
-        return formatInternal(labels, inScope, viewportWidthDp, viewportMode,
-                fontScalePercent, fontMode, typefaceId, dpisEnabled, true, true);
-    }
-
-    static String formatCompact(Resources resources,
-            boolean inScope,
-            boolean scopeKnown,
-            ViewportTargetSpec viewportTargetSpec,
-            String viewportMode,
-            Integer fontScalePercent,
-            String fontMode,
-            String typefaceId,
-            boolean dpisEnabled) {
-        return formatCompact(resources, inScope, scopeKnown, viewportTargetSpec, viewportMode,
-                fontScalePercent, fontMode, typefaceId, dpisEnabled, false);
-    }
-
-    static String formatCompact(Resources resources,
-            boolean inScope,
-            boolean scopeKnown,
-            ViewportTargetSpec viewportTargetSpec,
-            String viewportMode,
-            Integer fontScalePercent,
-            String fontMode,
-            String typefaceId,
-            boolean dpisEnabled,
-            boolean appSpecificConfigActive) {
-        return formatInternal(labelsFrom(resources), inScope, viewportTargetSpec,
-                viewportMode, fontScalePercent, fontMode, typefaceId, dpisEnabled,
-                scopeKnown, true, appSpecificConfigActive);
-    }
-
-    static String formatCompact(Labels labels,
-            boolean inScope,
-            boolean scopeKnown,
-            ViewportTargetSpec viewportTargetSpec,
-            String viewportMode,
-            Integer fontScalePercent,
-            String fontMode,
-            String typefaceId,
-            boolean dpisEnabled) {
-        return formatInternal(labels, inScope, viewportTargetSpec,
-                viewportMode, fontScalePercent, fontMode, typefaceId, dpisEnabled,
-                scopeKnown, true, false);
-    }
-
-    static String formatCompact(Resources resources,
-            boolean inScope,
-            boolean scopeKnown,
-            Integer viewportWidthDp,
-            String viewportMode,
-            Integer fontScalePercent,
-            String fontMode,
-            String typefaceId,
-            boolean dpisEnabled) {
-        return formatCompact(labelsFrom(resources), inScope, scopeKnown, viewportWidthDp,
-                viewportMode, fontScalePercent, fontMode, typefaceId, dpisEnabled);
-    }
-
-    static String formatCompact(Labels labels,
-            boolean inScope,
-            boolean scopeKnown,
-            Integer viewportWidthDp,
-            String viewportMode,
-            Integer fontScalePercent,
-            String fontMode,
-            String typefaceId,
-            boolean dpisEnabled) {
-        return formatInternal(labels, inScope, viewportWidthDp, viewportMode,
-                fontScalePercent, fontMode, typefaceId, dpisEnabled, scopeKnown, true);
+    private static StatusInput normalizeInput(StatusInput input) {
+        return input != null
+                ? input
+                : new StatusInput(false, true, true, ViewportTargetSpec.off(), ViewportApplyMode.OFF,
+                        null, FontApplyMode.OFF, null, true, false, null);
     }
 
     private static String formatInternal(Labels labels,
@@ -222,11 +226,46 @@ final class AppStatusFormatter {
             boolean scopeKnown,
             boolean compact,
             boolean appSpecificConfigActive) {
+        return formatInternal(labels, inScope, viewportTargetSpec, viewportMode,
+                fontScalePercent, fontMode, typefaceId, dpisEnabled, scopeKnown, compact,
+                appSpecificConfigActive, true, null);
+    }
+
+    private static String formatInternal(Labels labels,
+            boolean inScope,
+            ViewportTargetSpec viewportTargetSpec,
+            String viewportMode,
+            Integer fontScalePercent,
+            String fontMode,
+            String typefaceId,
+            boolean dpisEnabled,
+            boolean scopeKnown,
+            boolean compact,
+            boolean appSpecificConfigActive,
+            boolean installed) {
+        return formatInternal(labels, inScope, viewportTargetSpec, viewportMode,
+                fontScalePercent, fontMode, typefaceId, dpisEnabled, scopeKnown, compact,
+                appSpecificConfigActive, installed, null);
+    }
+
+    private static String formatInternal(Labels labels,
+            boolean inScope,
+            ViewportTargetSpec viewportTargetSpec,
+            String viewportMode,
+            Integer fontScalePercent,
+            String fontMode,
+            String typefaceId,
+            boolean dpisEnabled,
+            boolean scopeKnown,
+            boolean compact,
+            boolean appSpecificConfigActive,
+            boolean installed,
+            Integer wechatDpi) {
         Integer viewportWidthDp = viewportTargetSpec != null && viewportTargetSpec.isAbsoluteDp()
                 ? viewportTargetSpec.absoluteWidthDp()
                 : null;
         String scopeText = scopeKnown
-                ? (inScope ? labels.injected : labels.notInjected)
+                ? (installed ? (inScope ? labels.injected : labels.notInjected) : labels.notInstalled)
                 : null;
         if (!dpisEnabled) {
             return joinSegments(scopeText, labels.disabled);
@@ -237,16 +276,31 @@ final class AppStatusFormatter {
                         normalizedViewportMode, compact)
                 : (viewportWidthDp != null
                         ? formatViewport(labels, viewportWidthDp, normalizedViewportMode, compact)
-                        : (appSpecificConfigActive ? labels.enabled : labels.notEnabled));
+                        : (compact ? null
+                                : (appSpecificConfigActive ? labels.enabled : labels.notEnabled)));
         boolean hasCustomTypeface = typefaceId != null && !typefaceId.isBlank();
         String normalizedFontMode = FontApplyMode.normalize(fontMode);
+        String appSpecificText = wechatDpi != null
+                ? formatWechatDpi(labels, wechatDpi)
+                : null;
+        if (compact && viewportWidthDp == null
+                && (viewportTargetSpec == null || !viewportTargetSpec.isRelativeScale())
+                && fontScalePercent == null
+                && !hasCustomTypeface
+                && appSpecificText == null) {
+            return joinSegments(scopeText, labels.noValue);
+        }
         if (!FontApplyMode.isEnabled(normalizedFontMode) || fontScalePercent == null) {
-            return joinSegments(scopeText, widthText,
-                    formatFont(labels, null, normalizedFontMode, compact, hasCustomTypeface));
+            return compact
+                    ? joinSegments(scopeText, widthText, appSpecificText)
+                    : joinSegments(scopeText, widthText,
+                            formatFont(labels, null, normalizedFontMode, compact, hasCustomTypeface),
+                            appSpecificText);
         }
         return joinSegments(scopeText, widthText,
                 formatFont(labels, fontScalePercent, normalizedFontMode, compact,
-                        hasCustomTypeface));
+                        hasCustomTypeface),
+                appSpecificText);
     }
 
     private static String formatInternal(Labels labels,
@@ -268,7 +322,7 @@ final class AppStatusFormatter {
         String normalizedViewportMode = ViewportApplyMode.normalize(viewportMode);
         String widthText = viewportWidthDp != null
                 ? formatViewport(labels, viewportWidthDp, normalizedViewportMode, compact)
-                : labels.notEnabled;
+                : (compact ? null : labels.notEnabled);
         boolean hasCustomTypeface = typefaceId != null && !typefaceId.isBlank();
         String normalizedFontMode = FontApplyMode.normalize(fontMode);
         if (!FontApplyMode.isEnabled(normalizedFontMode) || fontScalePercent == null) {
@@ -323,6 +377,10 @@ final class AppStatusFormatter {
             return value;
         }
         return value + "(" + modeText(labels, fontMode) + ")";
+    }
+
+    private static String formatWechatDpi(Labels labels, int dpi) {
+        return labels.wechatDpi + " " + String.format(labels.locale, "%d", dpi);
     }
 
     private static String modeText(Labels labels, String mode) {

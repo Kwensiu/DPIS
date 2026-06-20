@@ -8,7 +8,7 @@ import static org.junit.Assert.assertTrue;
 public class AppListFilterTest {
     @Test
     public void allAppsTabMatchesBothUserAndSystemApps() {
-        assertTrue(AppListFilter.matches("",
+        assertTrue(matches("",
                 AppListFilter.Tab.ALL_APPS,
                 "Coolapk",
                 "com.coolapk.market",
@@ -18,7 +18,7 @@ public class AppListFilterTest {
                 null,
                 FontApplyMode.OFF,
                 null));
-        assertTrue(AppListFilter.matches("",
+        assertTrue(matches("",
                 AppListFilter.Tab.ALL_APPS,
                 "Android System WebView",
                 "com.google.android.webview",
@@ -31,8 +31,8 @@ public class AppListFilterTest {
     }
 
     @Test
-    public void configuredTabMatchesScopedOrConfiguredApps() {
-        assertTrue(AppListFilter.matches("",
+    public void configuredTabUsesConfiguredFlagOnly() {
+        assertFalse(matches("",
                 AppListFilter.Tab.CONFIGURED_APPS,
                 "Coolapk",
                 "com.coolapk.market",
@@ -42,7 +42,7 @@ public class AppListFilterTest {
                 null,
                 FontApplyMode.OFF,
                 null));
-        assertTrue(AppListFilter.matches("",
+        assertFalse(matches("",
                 AppListFilter.Tab.CONFIGURED_APPS,
                 "Xiaoheihe",
                 "com.max.xiaoheihe",
@@ -52,7 +52,7 @@ public class AppListFilterTest {
                 null,
                 FontApplyMode.OFF,
                 null));
-        assertTrue(AppListFilter.matches("",
+        assertFalse(matches("",
                 AppListFilter.Tab.CONFIGURED_APPS,
                 "Tieba",
                 "com.baidu.tieba",
@@ -62,7 +62,21 @@ public class AppListFilterTest {
                 115,
                 FontApplyMode.SYSTEM_EMULATION,
                 null));
-        assertFalse(AppListFilter.matches("",
+        assertTrue(matches("",
+                AppListFilter.Tab.CONFIGURED_APPS,
+                "Tieba",
+                "com.baidu.tieba",
+                false,
+                false,
+                null,
+                115,
+                FontApplyMode.SYSTEM_EMULATION,
+                null,
+                false,
+                true,
+                true,
+                AppListFilterState.noAdditionalConstraints()));
+        assertFalse(matches("",
                 AppListFilter.Tab.CONFIGURED_APPS,
                 "AdClose",
                 "com.close.hook.ads",
@@ -78,7 +92,7 @@ public class AppListFilterTest {
     public void configuredTabAndFontOnlyFilterIncludeTypefaceOnlyApps() {
         AppListFilterState fontOnlyState = new AppListFilterState(true, false, false, true);
 
-        assertTrue(AppListFilter.matches("",
+        assertFalse(matches("",
                 AppListFilter.Tab.CONFIGURED_APPS,
                 "Reader",
                 "com.example.reader",
@@ -88,7 +102,7 @@ public class AppListFilterTest {
                 null,
                 FontApplyMode.OFF,
                 "font_abcd1234"));
-        assertTrue(AppListFilter.matches("",
+        assertTrue(matches("",
                 AppListFilter.Tab.ALL_APPS,
                 "Reader",
                 "com.example.reader",
@@ -103,7 +117,7 @@ public class AppListFilterTest {
 
     @Test
     public void configuredTabIncludesAppSpecificConfigOnlyApps() {
-        assertTrue(AppListFilter.matches("",
+        assertFalse(matches("",
                 AppListFilter.Tab.CONFIGURED_APPS,
                 "WeChat",
                 "com.tencent.mm",
@@ -115,11 +129,43 @@ public class AppListFilterTest {
                 null,
                 true,
                 AppListFilterState.noAdditionalConstraints()));
+        assertTrue(matches("",
+                AppListFilter.Tab.CONFIGURED_APPS,
+                "WeChat",
+                "com.tencent.mm",
+                false,
+                false,
+                null,
+                null,
+                FontApplyMode.OFF,
+                null,
+                true,
+                true,
+                true,
+                AppListFilterState.noAdditionalConstraints()));
+    }
+
+    @Test
+    public void configuredTabIncludesModeOnlyConfiguredApps() {
+        assertTrue(matches("",
+                AppListFilter.Tab.CONFIGURED_APPS,
+                "Mode Only",
+                "com.example.mode",
+                false,
+                false,
+                null,
+                null,
+                FontApplyMode.SYSTEM_EMULATION,
+                null,
+                false,
+                true,
+                true,
+                AppListFilterState.noAdditionalConstraints()));
     }
 
     @Test
     public void configuredTabStillSupportsQueryFiltering() {
-        assertTrue(AppListFilter.matches("tie",
+        assertTrue(matches("tie",
                 AppListFilter.Tab.CONFIGURED_APPS,
                 "Tieba",
                 "com.baidu.tieba",
@@ -128,8 +174,12 @@ public class AppListFilterTest {
                 null,
                 115,
                 FontApplyMode.SYSTEM_EMULATION,
-                null));
-        assertTrue(AppListFilter.matches("android",
+                null,
+                false,
+                true,
+                true,
+                AppListFilterState.noAdditionalConstraints()));
+        assertTrue(matches("android",
                 AppListFilter.Tab.CONFIGURED_APPS,
                 "Android System WebView",
                 "com.google.android.webview",
@@ -138,8 +188,12 @@ public class AppListFilterTest {
                 null,
                 null,
                 FontApplyMode.OFF,
-                null));
-        assertFalse(AppListFilter.matches("cool",
+                null,
+                false,
+                true,
+                true,
+                AppListFilterState.noAdditionalConstraints()));
+        assertFalse(matches("cool",
                 AppListFilter.Tab.CONFIGURED_APPS,
                 "Android System WebView",
                 "com.google.android.webview",
@@ -148,14 +202,18 @@ public class AppListFilterTest {
                 null,
                 null,
                 FontApplyMode.OFF,
-                null));
+                null,
+                false,
+                true,
+                true,
+                AppListFilterState.noAdditionalConstraints()));
     }
 
     @Test
     public void advancedFiltersCanHideSystemAppsAndRequireInjectedWidthConfig() {
         AppListFilterState state = new AppListFilterState(false, true, true, false);
 
-        assertTrue(AppListFilter.matches("",
+        assertTrue(matches("",
                 AppListFilter.Tab.ALL_APPS,
                 "Coolapk",
                 "com.coolapk.market",
@@ -166,7 +224,7 @@ public class AppListFilterTest {
                 FontApplyMode.OFF,
                 null,
                 state));
-        assertFalse(AppListFilter.matches("",
+        assertFalse(matches("",
                 AppListFilter.Tab.ALL_APPS,
                 "Android System WebView",
                 "com.google.android.webview",
@@ -177,7 +235,7 @@ public class AppListFilterTest {
                 FontApplyMode.OFF,
                 null,
                 state));
-        assertFalse(AppListFilter.matches("",
+        assertFalse(matches("",
                 AppListFilter.Tab.ALL_APPS,
                 "Coolapk",
                 "com.coolapk.market",
@@ -188,7 +246,7 @@ public class AppListFilterTest {
                 FontApplyMode.OFF,
                 null,
                 state));
-        assertFalse(AppListFilter.matches("",
+        assertFalse(matches("",
                 AppListFilter.Tab.ALL_APPS,
                 "Coolapk",
                 "com.coolapk.market",
@@ -205,7 +263,7 @@ public class AppListFilterTest {
     public void advancedFiltersCanRequireEnabledFontConfig() {
         AppListFilterState state = new AppListFilterState(true, false, false, true);
 
-        assertTrue(AppListFilter.matches("",
+        assertTrue(matches("",
                 AppListFilter.Tab.ALL_APPS,
                 "Tieba",
                 "com.baidu.tieba",
@@ -216,7 +274,7 @@ public class AppListFilterTest {
                 FontApplyMode.SYSTEM_EMULATION,
                 null,
                 state));
-        assertFalse(AppListFilter.matches("",
+        assertFalse(matches("",
                 AppListFilter.Tab.ALL_APPS,
                 "Tieba",
                 "com.baidu.tieba",
@@ -227,7 +285,7 @@ public class AppListFilterTest {
                 FontApplyMode.OFF,
                 null,
                 state));
-        assertFalse(AppListFilter.matches("",
+        assertFalse(matches("",
                 AppListFilter.Tab.ALL_APPS,
                 "Tieba",
                 "com.baidu.tieba",
@@ -248,5 +306,72 @@ public class AppListFilterTest {
         assertFalse(state.injectedOnly);
         assertFalse(state.widthConfiguredOnly);
         assertFalse(state.fontConfiguredOnly);
+    }
+
+    private static boolean matches(String query,
+            AppListFilter.Tab tab,
+            String label,
+            String packageName,
+            boolean systemApp,
+            boolean inScope,
+            Integer viewportWidthDp,
+            Integer fontScalePercent,
+            String fontMode,
+            String typefaceId) {
+        return matches(query, tab, label, packageName, systemApp, inScope,
+                viewportWidthDp, fontScalePercent, fontMode, typefaceId,
+                false, false, true, AppListFilterState.noAdditionalConstraints());
+    }
+
+    private static boolean matches(String query,
+            AppListFilter.Tab tab,
+            String label,
+            String packageName,
+            boolean systemApp,
+            boolean inScope,
+            Integer viewportWidthDp,
+            Integer fontScalePercent,
+            String fontMode,
+            String typefaceId,
+            AppListFilterState state) {
+        return matches(query, tab, label, packageName, systemApp, inScope,
+                viewportWidthDp, fontScalePercent, fontMode, typefaceId,
+                false, false, true, state);
+    }
+
+    private static boolean matches(String query,
+            AppListFilter.Tab tab,
+            String label,
+            String packageName,
+            boolean systemApp,
+            boolean inScope,
+            Integer viewportWidthDp,
+            Integer fontScalePercent,
+            String fontMode,
+            String typefaceId,
+            boolean appSpecificConfigActive,
+            AppListFilterState state) {
+        return matches(query, tab, label, packageName, systemApp, inScope,
+                viewportWidthDp, fontScalePercent, fontMode, typefaceId,
+                appSpecificConfigActive, false, true, state);
+    }
+
+    private static boolean matches(String query,
+            AppListFilter.Tab tab,
+            String label,
+            String packageName,
+            boolean systemApp,
+            boolean inScope,
+            Integer viewportWidthDp,
+            Integer fontScalePercent,
+            String fontMode,
+            String typefaceId,
+            boolean appSpecificConfigActive,
+            boolean configured,
+            boolean installed,
+            AppListFilterState state) {
+        return AppListFilter.matches(query, tab, label, packageName, systemApp, inScope,
+                viewportWidthDp, fontScalePercent, fontMode, typefaceId,
+                appSpecificConfigActive, configured, installed, state);
     }
 }

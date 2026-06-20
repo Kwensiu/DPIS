@@ -9,6 +9,9 @@ final class TemplateConfigPreferences {
     private static final String KEY_VIEWPORT_TARGET_TYPE = "viewport.target_type";
     private static final String KEY_VIEWPORT_WIDTH_DP = "viewport.width_dp";
     private static final String KEY_VIEWPORT_SCALE_PERMILLE = "viewport.scale_permille";
+    private static final String KEY_VIEWPORT_WIDTH_DRAFT_DP = "viewport.width_draft_dp";
+    private static final String KEY_VIEWPORT_SCALE_DRAFT_PERMILLE =
+            "viewport.scale_draft_permille";
     private static final String KEY_VIEWPORT_MODE = "viewport.mode";
     private static final String KEY_FONT_SCALE_PERCENT = "font.scale_percent";
     private static final String KEY_FONT_MODE = "font.mode";
@@ -37,6 +40,10 @@ final class TemplateConfigPreferences {
         return new TemplateConfigValue(
                 viewportTargetSpec,
                 targetType,
+                normalizeViewportScalePermille(
+                        getInt(preferences, prefix + KEY_VIEWPORT_SCALE_DRAFT_PERMILLE)),
+                normalizeViewportWidthDp(
+                        getInt(preferences, prefix + KEY_VIEWPORT_WIDTH_DRAFT_DP)),
                 getString(preferences, prefix + KEY_VIEWPORT_MODE, ViewportApplyMode.OFF),
                 normalizeFontScalePercent(getInt(preferences, prefix + KEY_FONT_SCALE_PERCENT)),
                 getString(preferences, prefix + KEY_FONT_MODE, FontApplyMode.OFF),
@@ -59,6 +66,14 @@ final class TemplateConfigPreferences {
                         normalized.viewportTargetSpec.absoluteWidthDp());
             }
         }
+        if (normalized.viewportScalePermilleDraft != null) {
+            editor.putInt(prefix + KEY_VIEWPORT_SCALE_DRAFT_PERMILLE,
+                    normalized.viewportScalePermilleDraft);
+        }
+        if (normalized.viewportWidthDpDraft != null) {
+            editor.putInt(prefix + KEY_VIEWPORT_WIDTH_DRAFT_DP,
+                    normalized.viewportWidthDpDraft);
+        }
         if (ViewportApplyMode.isEnabled(normalized.viewportApplyMode)) {
             editor.putString(prefix + KEY_VIEWPORT_MODE, normalized.viewportApplyMode);
         }
@@ -80,6 +95,8 @@ final class TemplateConfigPreferences {
         editor.remove(prefix + KEY_VIEWPORT_TARGET_TYPE)
                 .remove(prefix + KEY_VIEWPORT_WIDTH_DP)
                 .remove(prefix + KEY_VIEWPORT_SCALE_PERMILLE)
+                .remove(prefix + KEY_VIEWPORT_WIDTH_DRAFT_DP)
+                .remove(prefix + KEY_VIEWPORT_SCALE_DRAFT_PERMILLE)
                 .remove(prefix + KEY_VIEWPORT_MODE)
                 .remove(prefix + KEY_FONT_SCALE_PERCENT)
                 .remove(prefix + KEY_FONT_MODE)
@@ -116,5 +133,21 @@ final class TemplateConfigPreferences {
             return null;
         }
         return percent;
+    }
+
+    private static Integer normalizeViewportScalePermille(Integer scalePermille) {
+        if (scalePermille == null
+                || scalePermille < ViewportTargetSpec.MIN_SCALE_PERMILLE
+                || scalePermille > ViewportTargetSpec.MAX_SCALE_PERMILLE) {
+            return null;
+        }
+        return scalePermille;
+    }
+
+    private static Integer normalizeViewportWidthDp(Integer widthDp) {
+        if (widthDp == null || widthDp <= 0) {
+            return null;
+        }
+        return widthDp;
     }
 }

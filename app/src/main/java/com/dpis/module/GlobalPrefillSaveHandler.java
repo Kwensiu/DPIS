@@ -14,19 +14,14 @@ final class GlobalPrefillSaveHandler {
             return Result.failure(R.string.status_save_invalid);
         }
 
-        ViewportTargetSpec viewportTargetSpec = AppConfigInputValidation.parseViewportTargetSpec(
-                request.viewportInput, request.viewportTargetType);
-        Integer fontScalePercent = AppConfigInputValidation.parseFontScalePercentOrNull(
-                request.fontScaleInput);
-        String viewportApplyMode = normalizeViewportApplyMode(
-                request.viewportApplyMode, viewportTargetSpec);
-        String fontApplyMode = normalizeFontApplyMode(request.fontApplyMode, fontScalePercent);
-        TemplateConfigValue value = new TemplateConfigValue(
-                viewportTargetSpec,
-                ConfigDraftSaveSemantics.viewportTargetTypeForSave(request.viewportTargetType),
-                viewportApplyMode,
-                fontScalePercent,
-                fontApplyMode,
+        TemplateConfigValue value = TemplateCustomSemantics.fromEditorDraft(
+                request.viewportInput,
+                request.viewportTargetType,
+                request.viewportApplyMode,
+                request.viewportScaleInput,
+                request.viewportAbsoluteInput,
+                request.fontScaleInput,
+                request.fontApplyMode,
                 request.selectedTypefaceId,
                 request.fontHookDomainsRaw);
         return store.write(value)
@@ -34,22 +29,12 @@ final class GlobalPrefillSaveHandler {
                 : Result.failure(R.string.global_prefill_save_failed);
     }
 
-    private static String normalizeViewportApplyMode(
-            String requestedMode, ViewportTargetSpec viewportTargetSpec) {
-        if (viewportTargetSpec == null || !viewportTargetSpec.isEnabled()) {
-            return ViewportApplyMode.OFF;
-        }
-        return ConfigDraftSaveSemantics.viewportApplyModeForSave(requestedMode, viewportTargetSpec);
-    }
-
-    private static String normalizeFontApplyMode(String requestedMode, Integer fontScalePercent) {
-        return ConfigDraftSaveSemantics.fontApplyModeForSave(requestedMode);
-    }
-
     static final class Request {
         final String viewportInput;
         final String viewportTargetType;
         final String viewportApplyMode;
+        final String viewportScaleInput;
+        final String viewportAbsoluteInput;
         final String fontScaleInput;
         final String fontApplyMode;
         final String selectedTypefaceId;
@@ -62,9 +47,30 @@ final class GlobalPrefillSaveHandler {
                 String fontApplyMode,
                 String selectedTypefaceId,
                 String fontHookDomainsRaw) {
+            this(viewportInput, viewportTargetType, viewportApplyMode,
+                    TemplateCustomSemantics.draftInputForTargetType(
+                            viewportInput, viewportTargetType, ViewportTargetType.RELATIVE_SCALE),
+                    TemplateCustomSemantics.draftInputForTargetType(
+                            viewportInput, viewportTargetType, ViewportTargetType.ABSOLUTE_DP),
+                    fontScaleInput, fontApplyMode, selectedTypefaceId, fontHookDomainsRaw);
+        }
+
+        Request(String viewportInput,
+                String viewportTargetType,
+                String viewportApplyMode,
+                String viewportScaleInput,
+                String viewportAbsoluteInput,
+                String fontScaleInput,
+                String fontApplyMode,
+                String selectedTypefaceId,
+                String fontHookDomainsRaw) {
             this.viewportInput = viewportInput != null ? viewportInput.trim() : "";
             this.viewportTargetType = ViewportTargetType.normalize(viewportTargetType);
             this.viewportApplyMode = viewportApplyMode;
+            this.viewportScaleInput = viewportScaleInput != null ? viewportScaleInput.trim() : "";
+            this.viewportAbsoluteInput = viewportAbsoluteInput != null
+                    ? viewportAbsoluteInput.trim()
+                    : "";
             this.fontScaleInput = fontScaleInput != null ? fontScaleInput.trim() : "";
             this.fontApplyMode = fontApplyMode;
             this.selectedTypefaceId = selectedTypefaceId;

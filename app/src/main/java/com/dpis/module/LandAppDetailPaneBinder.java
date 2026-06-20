@@ -1165,15 +1165,18 @@ final class LandAppDetailPaneBinder {
     ) {
         String status = AppStatusFormatter.formatCompact(
                 activity.getResources(),
-                item.inScope,
-                item.scopeKnown,
-                item.viewportTargetSpec,
-                item.viewportMode,
-                item.fontScalePercent,
-                item.fontMode,
-                item.typefaceId,
-                item.dpisEnabled,
-                item.hasAppSpecificConfig()
+                new AppStatusFormatter.StatusInput(
+                        item.inScope,
+                        item.scopeKnown,
+                        item.installed,
+                        item.viewportTargetSpec,
+                        item.viewportMode,
+                        item.fontScalePercent,
+                        item.fontMode,
+                        item.typefaceId,
+                        item.dpisEnabled,
+                        item.hasAppSpecificConfig(),
+                        item.wechatDpi)
         );
         int warnColor
                 = com.google.android.material.color.MaterialColors.getColor(

@@ -16,7 +16,10 @@ final class AppListItem {
     final String fontMode;
     final String typefaceId;
     final boolean appSpecificConfigActive;
+    final Integer wechatDpi;
     final boolean dpisEnabled;
+    final boolean configured;
+    final boolean installed;
     final boolean systemApp;
     final boolean hyperOsNativeProxyCandidate;
     final boolean previewFromGlobalPrefill;
@@ -83,7 +86,8 @@ final class AppListItem {
                 Drawable icon) {
         this(label, packageName, inScope, scopeKnown, viewportWidthDp, viewportScalePermille,
                 viewportMode, viewportTargetType, viewportTargetSpec, fontScalePercent, fontMode, typefaceId,
-                appSpecificConfigActive, dpisEnabled, systemApp, hyperOsNativeProxyCandidate,
+                appSpecificConfigActive, null, dpisEnabled, false, true,
+                systemApp, hyperOsNativeProxyCandidate,
                 false, null, icon);
     }
 
@@ -100,7 +104,10 @@ final class AppListItem {
                 String fontMode,
                 String typefaceId,
                 boolean appSpecificConfigActive,
+                Integer wechatDpi,
                 boolean dpisEnabled,
+                boolean configured,
+                boolean installed,
                 boolean systemApp,
                 boolean hyperOsNativeProxyCandidate,
                 boolean previewFromGlobalPrefill,
@@ -129,7 +136,10 @@ final class AppListItem {
         this.fontMode = FontApplyMode.normalize(fontMode);
         this.typefaceId = typefaceId;
         this.appSpecificConfigActive = appSpecificConfigActive;
+        this.wechatDpi = wechatDpi;
         this.dpisEnabled = dpisEnabled;
+        this.configured = configured;
+        this.installed = installed;
         this.systemApp = systemApp;
         this.hyperOsNativeProxyCandidate = hyperOsNativeProxyCandidate;
         this.previewFromGlobalPrefill = previewFromGlobalPrefill;
@@ -157,6 +167,57 @@ final class AppListItem {
                 appSpecificConfigActive, dpisEnabled, systemApp, hyperOsNativeProxyCandidate, icon);
     }
 
+    AppListItem(String label,
+                String packageName,
+                boolean inScope,
+                boolean scopeKnown,
+                Integer viewportWidthDp,
+                Integer viewportScalePermille,
+                String viewportMode,
+                String viewportTargetType,
+                ViewportTargetSpec viewportTargetSpec,
+                Integer fontScalePercent,
+                String fontMode,
+                String typefaceId,
+                boolean appSpecificConfigActive,
+                boolean dpisEnabled,
+                boolean configured,
+                boolean installed,
+                boolean systemApp,
+                boolean hyperOsNativeProxyCandidate,
+                Drawable icon) {
+        this(label, packageName, inScope, scopeKnown, viewportWidthDp, viewportScalePermille,
+                viewportMode, viewportTargetType, viewportTargetSpec, fontScalePercent, fontMode,
+                typefaceId, appSpecificConfigActive, null, dpisEnabled, configured, installed,
+                systemApp, hyperOsNativeProxyCandidate, false, null, icon);
+    }
+
+    AppListItem(String label,
+                String packageName,
+                boolean inScope,
+                boolean scopeKnown,
+                Integer viewportWidthDp,
+                Integer viewportScalePermille,
+                String viewportMode,
+                String viewportTargetType,
+                ViewportTargetSpec viewportTargetSpec,
+                Integer fontScalePercent,
+                String fontMode,
+                String typefaceId,
+                boolean appSpecificConfigActive,
+                Integer wechatDpi,
+                boolean dpisEnabled,
+                boolean configured,
+                boolean installed,
+                boolean systemApp,
+                boolean hyperOsNativeProxyCandidate,
+                Drawable icon) {
+        this(label, packageName, inScope, scopeKnown, viewportWidthDp, viewportScalePermille,
+                viewportMode, viewportTargetType, viewportTargetSpec, fontScalePercent, fontMode,
+                typefaceId, appSpecificConfigActive, wechatDpi, dpisEnabled, configured, installed,
+                systemApp, hyperOsNativeProxyCandidate, false, null, icon);
+    }
+
     boolean hasAppSpecificConfig() {
         return appSpecificConfigActive;
     }
@@ -180,7 +241,10 @@ final class AppListItem {
                 normalized.fontApplyMode,
                 normalized.typefaceId,
                 appSpecificConfigActive,
+                wechatDpi,
                 dpisEnabled,
+                configured,
+                installed,
                 systemApp,
                 hyperOsNativeProxyCandidate,
                 true,

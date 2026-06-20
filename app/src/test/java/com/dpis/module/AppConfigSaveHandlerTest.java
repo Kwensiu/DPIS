@@ -325,7 +325,7 @@ public class AppConfigSaveHandlerTest {
     }
 
     @Test
-    public void savePreservesSystemFontModeWhenFontScaleIsEmpty() {
+    public void saveClearsDefaultSystemFontModeWhenFontScaleIsEmpty() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
 
@@ -347,9 +347,142 @@ public class AppConfigSaveHandlerTest {
                 null);
 
         assertEquals(1, result[0]);
-        assertEquals(FontApplyMode.SYSTEM_EMULATION,
+        assertEquals(FontApplyMode.OFF,
                 store.getTargetFontApplyMode(item.packageName));
+        assertFalse(store.hasRealPackageConfig(item.packageName));
+        assertFalse(store.getConfiguredPackages().contains(item.packageName));
+    }
+
+    @Test
+    public void savePrunesFullyDefaultPackageConfigAfterReset() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        AppListItem item = app("com.example.app");
+        assertTrue(store.setTargetViewportTypeDraft(
+                item.packageName, ViewportTargetType.RELATIVE_SCALE));
+        assertTrue(store.setTargetFontApplyMode(
+                item.packageName, FontApplyMode.SYSTEM_EMULATION));
+
+        int[] result = new AppConfigSaveHandler().saveResolved(
+                item,
+                ViewportTargetSpec.off(),
+                ViewportTargetType.RELATIVE_SCALE,
+                ViewportApplyMode.OFF,
+                true,
+                null,
+                FontApplyMode.SYSTEM_EMULATION,
+                null,
+                null,
+                true,
+                "",
+                "",
+                true,
+                store,
+                null);
+
+        assertEquals(1, result[0]);
+        assertFalse(store.hasRealPackageConfig(item.packageName));
+        assertFalse(store.hasUserVisiblePackageConfig(item.packageName));
+        assertFalse(store.getConfiguredPackages().contains(item.packageName));
+    }
+
+    @Test
+    public void unchangedGlobalPrefillPreviewSaveDoesNotCreatePackageConfig() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+                ViewportTargetSpec.relativeScale(875),
+                ViewportApplyMode.AUTO,
+                125,
+                FontApplyMode.FIELD_REWRITE,
+                "serif",
+                "resources_font"));
+
+        int[] result = new AppConfigSaveHandler().saveResolved(
+                item,
+                ViewportTargetSpec.relativeScale(875),
+                ViewportTargetType.RELATIVE_SCALE,
+                ViewportApplyMode.AUTO,
+                false,
+                125,
+                FontApplyMode.FIELD_REWRITE,
+                "serif",
+                "resources_font",
+                false,
+                "87",
+                "",
+                true,
+                store,
+                null);
+
+        assertEquals(1, result[0]);
+        assertFalse(store.hasRealPackageConfig(item.packageName));
+        assertFalse(store.getConfiguredPackages().contains(item.packageName));
+    }
+
+    @Test
+    public void resetGlobalPrefillPreviewThenSaveDoesNotCreatePackageConfig() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+                ViewportTargetSpec.relativeScale(875),
+                ViewportApplyMode.AUTO,
+                125,
+                FontApplyMode.FIELD_REWRITE,
+                "serif",
+                "resources_font"));
+
+        int[] result = new AppConfigSaveHandler().saveResolved(
+                item,
+                ViewportTargetSpec.off(),
+                ViewportTargetType.RELATIVE_SCALE,
+                ViewportApplyMode.OFF,
+                true,
+                null,
+                FontApplyMode.SYSTEM_EMULATION,
+                null,
+                null,
+                true,
+                "",
+                "",
+                true,
+                store,
+                null);
+
+        assertEquals(1, result[0]);
+        assertFalse(store.hasRealPackageConfig(item.packageName));
+        assertFalse(store.getConfiguredPackages().contains(item.packageName));
+    }
+
+    @Test
+    public void changedGlobalPrefillPreviewSaveCreatesPackageConfig() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+                ViewportTargetSpec.relativeScale(875),
+                ViewportApplyMode.AUTO,
+                125,
+                FontApplyMode.FIELD_REWRITE,
+                "serif",
+                "resources_font"));
+
+        int[] result = new AppConfigSaveHandler().saveResolved(
+                item,
+                ViewportTargetSpec.relativeScale(900),
+                ViewportTargetType.RELATIVE_SCALE,
+                ViewportApplyMode.AUTO,
+                false,
+                125,
+                FontApplyMode.FIELD_REWRITE,
+                "serif",
+                "resources_font",
+                false,
+                "90",
+                "",
+                true,
+                store,
+                null);
+
+        assertEquals(1, result[0]);
         assertTrue(store.hasRealPackageConfig(item.packageName));
+        assertEquals(ViewportTargetSpec.relativeScale(900),
+                store.getTargetViewportSpec(item.packageName));
     }
 
     private static AppListItem app(String packageName) {

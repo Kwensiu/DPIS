@@ -16,11 +16,14 @@ public class AppStatusFormatterTest {
             "Enabled",
             "Disabled",
             "Not enabled",
+            "Not installed",
+            "No value",
             "System",
             "Compat",
             "Interface",
             "Interface",
             "Font",
+            "WeChat DPI",
             Locale.US);
 
     private final AppStatusFormatter.Labels chineseLabels = new AppStatusFormatter.Labels(
@@ -29,18 +32,21 @@ public class AppStatusFormatterTest {
             "\u5DF2\u542F\u7528",
             "\u5DF2\u7981\u7528",
             "\u672A\u542F\u7528",
+            "\u672A\u5B89\u88C5",
+            "\u7A7A\u6570\u503C",
             "\u7CFB\u7EDF",
             "\u517C\u5BB9",
             "\u754C\u9762",
             "\u754C\u9762",
             "\u5B57\u4F53",
+            "\u5FAE\u4FE1 DPI",
             Locale.CHINA);
 
     @Test
     public void formatsOutOfScopeDisabledStateWithLabels() {
         assertEquals("Not injected | Not enabled",
                 AppStatusFormatter.format(englishLabels,
-                        false, null, null, null, FontApplyMode.OFF, null, true));
+                        input(false, null, null, null, FontApplyMode.OFF, null, true)));
     }
 
     @Test
@@ -48,13 +54,8 @@ public class AppStatusFormatterTest {
         assertEquals("Injected | Interface 320dp(System) | Font[C] 115%(System)",
                 AppStatusFormatter.format(
                         englishLabels,
-                        true,
-                        320,
-                        ViewportApplyMode.SYSTEM_EMULATION,
-                        115,
-                        FontApplyMode.SYSTEM_EMULATION,
-                        "font_roboto",
-                        true));
+                        input(true, 320, ViewportApplyMode.SYSTEM_EMULATION, 115,
+                                FontApplyMode.SYSTEM_EMULATION, "font_roboto", true)));
     }
 
     @Test
@@ -62,13 +63,8 @@ public class AppStatusFormatterTest {
         assertEquals("\u672A\u6CE8\u5165 | \u672A\u542F\u7528 | \u5B57\u4F53[C] 110%(\u517C\u5BB9)",
                 AppStatusFormatter.format(
                         chineseLabels,
-                        false,
-                        null,
-                        ViewportApplyMode.OFF,
-                        110,
-                        FontApplyMode.FIELD_REWRITE,
-                        "font_noto",
-                        true));
+                        input(false, null, ViewportApplyMode.OFF, 110,
+                                FontApplyMode.FIELD_REWRITE, "font_noto", true)));
     }
 
     @Test
@@ -76,13 +72,8 @@ public class AppStatusFormatterTest {
         assertEquals("Injected | Disabled",
                 AppStatusFormatter.format(
                         englishLabels,
-                        true,
-                        360,
-                        ViewportApplyMode.SYSTEM_EMULATION,
-                        120,
-                        FontApplyMode.SYSTEM_EMULATION,
-                        "font_roboto",
-                        false));
+                        input(true, 360, ViewportApplyMode.SYSTEM_EMULATION, 120,
+                                FontApplyMode.SYSTEM_EMULATION, "font_roboto", false)));
     }
 
     @Test
@@ -90,13 +81,8 @@ public class AppStatusFormatterTest {
         assertEquals("Injected | Interface 320dp | Font[C] 115%",
                 AppStatusFormatter.formatCompact(
                         englishLabels,
-                        true,
-                        320,
-                        ViewportApplyMode.SYSTEM_EMULATION,
-                        115,
-                        FontApplyMode.SYSTEM_EMULATION,
-                        "font_roboto",
-                        true));
+                        input(true, 320, ViewportApplyMode.SYSTEM_EMULATION, 115,
+                                FontApplyMode.SYSTEM_EMULATION, "font_roboto", true)));
     }
 
     @Test
@@ -104,14 +90,8 @@ public class AppStatusFormatterTest {
         assertEquals("Interface 320dp",
                 AppStatusFormatter.formatCompact(
                         englishLabels,
-                        false,
-                        false,
-                        320,
-                        ViewportApplyMode.FIELD_REWRITE,
-                        null,
-                        FontApplyMode.OFF,
-                        null,
-                        true));
+                        input(false, false, 320, ViewportApplyMode.FIELD_REWRITE, null,
+                                FontApplyMode.OFF, null, true)));
     }
 
     @Test
@@ -209,29 +189,69 @@ public class AppStatusFormatterTest {
         assertEquals("Injected | Interface 106% | Font 115%",
                 AppStatusFormatter.formatCompact(
                         englishLabels,
-                        true,
-                        true,
-                        ViewportTargetSpec.relativeScale(1060),
-                        ViewportApplyMode.AUTO,
-                        115,
-                        FontApplyMode.SYSTEM_EMULATION,
-                        null,
-                        true));
+                        input(true, true, ViewportTargetSpec.relativeScale(1060),
+                                ViewportApplyMode.AUTO, 115, FontApplyMode.SYSTEM_EMULATION,
+                                null, true)));
     }
 
     @Test
-    public void formatsCustomTypefaceWithoutFontScaleAsSingleFontSegment() {
-        assertEquals("Injected | Interface 100% | Font[C]",
+    public void compactHidesCustomTypefaceWithoutFontScaleWhenViewportHasValue() {
+        assertEquals("Injected | Interface 100%",
                 AppStatusFormatter.formatCompact(
                         englishLabels,
-                        true,
-                        true,
-                        ViewportTargetSpec.relativeScale(1000),
-                        ViewportApplyMode.AUTO,
-                        null,
-                        FontApplyMode.OFF,
-                        "font_roboto",
-                        true));
+                        input(true, true, ViewportTargetSpec.relativeScale(1000),
+                                ViewportApplyMode.AUTO, null, FontApplyMode.OFF,
+                                "font_roboto", true)));
+    }
+
+    @Test
+    public void compactInstalledConfiguredWithoutNumericValueShowsNoValue() {
+        assertEquals("Injected | No value",
+                AppStatusFormatter.formatCompact(
+                        englishLabels,
+                        input(true, true, true, ViewportTargetSpec.off(),
+                                ViewportApplyMode.SYSTEM_EMULATION, null,
+                                FontApplyMode.SYSTEM_EMULATION, null, true, false, null)));
+    }
+
+    @Test
+    public void compactUninstalledConfiguredWithoutNumericValueShowsNotInstalledNoValue() {
+        assertEquals("\u672A\u5B89\u88C5 | \u7A7A\u6570\u503C",
+                AppStatusFormatter.formatCompact(
+                        chineseLabels,
+                        input(false, true, false, ViewportTargetSpec.off(),
+                                ViewportApplyMode.SYSTEM_EMULATION, null,
+                                FontApplyMode.SYSTEM_EMULATION, null, true, false, null)));
+    }
+
+    @Test
+    public void compactWechatDpiOnlyShowsAppSpecificValue() {
+        assertEquals("\u5DF2\u6CE8\u5165 | \u5FAE\u4FE1 DPI 440",
+                AppStatusFormatter.formatCompact(
+                        chineseLabels,
+                        input(true, true, true, ViewportTargetSpec.off(),
+                                ViewportApplyMode.OFF, null, FontApplyMode.OFF,
+                                null, true, true, 440)));
+    }
+
+    @Test
+    public void compactHidesModeOnlyFontWhenViewportHasValue() {
+        assertEquals("Injected | Interface 360dp",
+                AppStatusFormatter.formatCompact(
+                        englishLabels,
+                        input(true, true, ViewportTargetSpec.absoluteDp(360),
+                                ViewportApplyMode.AUTO, null, FontApplyMode.SYSTEM_EMULATION,
+                                null, true)));
+    }
+
+    @Test
+    public void compactHidesModeOnlyViewportWhenFontHasValue() {
+        assertEquals("Injected | Font 115%",
+                AppStatusFormatter.formatCompact(
+                        englishLabels,
+                        input(true, true, (ViewportTargetSpec) null,
+                                ViewportApplyMode.SYSTEM_EMULATION, 115,
+                                FontApplyMode.SYSTEM_EMULATION, null, true)));
     }
 
     private static int[] resolveExpectedRange(String fullText, String segmentText) {
@@ -239,5 +259,56 @@ public class AppStatusFormatterTest {
         assertTrue(expectedStart >= 0);
         int expectedEnd = expectedStart + segmentText.length();
         return new int[] { expectedStart, expectedEnd };
+    }
+
+    private static AppStatusFormatter.StatusInput input(boolean inScope,
+            Integer viewportWidthDp,
+            String viewportMode,
+            Integer fontScalePercent,
+            String fontMode,
+            String typefaceId,
+            boolean dpisEnabled) {
+        return new AppStatusFormatter.StatusInput(inScope, viewportWidthDp, viewportMode,
+                fontScalePercent, fontMode, typefaceId, dpisEnabled);
+    }
+
+    private static AppStatusFormatter.StatusInput input(boolean inScope,
+            boolean scopeKnown,
+            Integer viewportWidthDp,
+            String viewportMode,
+            Integer fontScalePercent,
+            String fontMode,
+            String typefaceId,
+            boolean dpisEnabled) {
+        return new AppStatusFormatter.StatusInput(inScope, scopeKnown, viewportWidthDp,
+                viewportMode, fontScalePercent, fontMode, typefaceId, dpisEnabled);
+    }
+
+    private static AppStatusFormatter.StatusInput input(boolean inScope,
+            boolean scopeKnown,
+            ViewportTargetSpec viewportTargetSpec,
+            String viewportMode,
+            Integer fontScalePercent,
+            String fontMode,
+            String typefaceId,
+            boolean dpisEnabled) {
+        return new AppStatusFormatter.StatusInput(inScope, scopeKnown, viewportTargetSpec,
+                viewportMode, fontScalePercent, fontMode, typefaceId, dpisEnabled);
+    }
+
+    private static AppStatusFormatter.StatusInput input(boolean inScope,
+            boolean scopeKnown,
+            boolean installed,
+            ViewportTargetSpec viewportTargetSpec,
+            String viewportMode,
+            Integer fontScalePercent,
+            String fontMode,
+            String typefaceId,
+            boolean dpisEnabled,
+            boolean appSpecificConfigActive,
+            Integer wechatDpi) {
+        return new AppStatusFormatter.StatusInput(inScope, scopeKnown, installed,
+                viewportTargetSpec, viewportMode, fontScalePercent, fontMode, typefaceId,
+                dpisEnabled, appSpecificConfigActive, wechatDpi);
     }
 }

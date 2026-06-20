@@ -740,9 +740,16 @@ final class AppConfigDialogBinder {
                 ? ViewportApplyMode.normalize(currentViewportApplyMode)
                 : ViewportApplyMode.OFF;
         String dialogStatusText = AppStatusFormatter.formatCompact(
-                activity.getResources(), inScope, scopeKnown, viewportTargetSpec,
-                viewportApplyMode,
-                fontScalePercent, fontMode, selectedTypefaceId, dpisEnabled);
+                activity.getResources(),
+                new AppStatusFormatter.StatusInput(
+                        inScope,
+                        scopeKnown,
+                        viewportTargetSpec,
+                        viewportApplyMode,
+                        fontScalePercent,
+                        fontMode,
+                        selectedTypefaceId,
+                        dpisEnabled));
         boolean warnViewport = scopeKnown && AppStatusFormatter.shouldWarnViewportEmulation(
                 viewportTargetSpec, viewportApplyMode, systemHooksEnabled, dpisEnabled);
         boolean warnFont = scopeKnown && AppStatusFormatter.shouldWarnFontEmulation(

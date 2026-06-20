@@ -165,7 +165,7 @@
     <string name="template_workspace_global_prefill_subtitle">未設定アプリの既定値を調整</string>
     <string name="template_workspace_quick_templates_title">クイックテンプレート</string>
     <string name="template_workspace_quick_templates_empty">クイックテンプレートはまだありません。</string>
-    <string name="template_workspace_summary_empty">設定済みの値はありません。</string>
+    <string name="template_workspace_summary_empty">カスタム値はありません。</string>
     <string name="template_workspace_summary_viewport_scale">インターフェース %1$d.%2$d%%</string>
     <string name="template_workspace_summary_viewport_width">インターフェース %1$ddp</string>
     <string name="template_workspace_summary_viewport_mode">インターフェースルート: %1$s</string>
@@ -471,9 +471,12 @@
     <string name="app_status_enabled">有効</string>
     <string name="app_status_disabled">無効</string>
     <string name="app_status_not_enabled">未有効</string>
+    <string name="app_status_not_installed">未インストール</string>
+    <string name="app_status_no_value">空の値</string>
     <string name="app_status_mode_system">System</string>
     <string name="app_status_mode_compat">Compat</string>
     <string name="app_status_viewport_scale">インターフェース</string>
     <string name="app_status_viewport_width">インターフェース</string>
     <string name="app_status_font_prefix">フォント</string>
+    <string name="app_status_wechat_dpi">WeChat DPI</string>
 </resources>

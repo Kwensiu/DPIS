@@ -15,9 +15,16 @@ public class AppListVisibleSectionsTest {
                 true,
                 true,
                 null,
+                null,
                 ViewportApplyMode.OFF,
+                ViewportTargetType.OFF,
+                ViewportTargetSpec.off(),
                 null,
                 FontApplyMode.OFF,
+                null,
+                false,
+                true,
+                true,
                 true,
                 false,
                 false,
@@ -45,5 +52,90 @@ public class AppListVisibleSectionsTest {
         assertEquals("123云盘", configuredItems.get(0).label);
         assertEquals(1, searchedItems.size());
         assertEquals("com.google.android.webview", searchedItems.get(0).packageName);
+    }
+
+    @Test
+    public void configuredButUninstalledAppearsOnlyInConfiguredApps() {
+        AppListItem configuredUninstalled = new AppListItem(
+                "com.example.removed",
+                "com.example.removed",
+                false,
+                true,
+                null,
+                null,
+                ViewportApplyMode.SYSTEM_EMULATION,
+                ViewportTargetType.OFF,
+                ViewportTargetSpec.off(),
+                null,
+                FontApplyMode.SYSTEM_EMULATION,
+                null,
+                false,
+                true,
+                true,
+                false,
+                false,
+                false,
+                null);
+
+        List<AppListItem> configuredItems = AppListVisibleSections.filter(
+                List.of(configuredUninstalled), "", AppListPage.CONFIGURED_APPS);
+        List<AppListItem> allAppsItems = AppListVisibleSections.filter(
+                List.of(configuredUninstalled), "", AppListPage.ALL_APPS);
+
+        assertEquals(1, configuredItems.size());
+        assertEquals("com.example.removed", configuredItems.get(0).packageName);
+        assertEquals(0, allAppsItems.size());
+    }
+
+    @Test
+    public void configuredTabUsesSameConfiguredFlagAsCountSource() {
+        AppListItem modeOnly = new AppListItem(
+                "Mode Only",
+                "com.example.mode",
+                false,
+                true,
+                null,
+                null,
+                ViewportApplyMode.SYSTEM_EMULATION,
+                ViewportTargetType.OFF,
+                ViewportTargetSpec.off(),
+                null,
+                FontApplyMode.OFF,
+                null,
+                false,
+                true,
+                true,
+                true,
+                false,
+                false,
+                null);
+        AppListItem plain = new AppListItem(
+                "Plain",
+                "com.example.plain",
+                false,
+                true,
+                null,
+                null,
+                ViewportApplyMode.OFF,
+                ViewportTargetType.OFF,
+                ViewportTargetSpec.off(),
+                null,
+                FontApplyMode.OFF,
+                null,
+                false,
+                true,
+                false,
+                true,
+                false,
+                false,
+                null);
+
+        List<AppListItem> items = List.of(modeOnly, plain);
+        long configuredCount = items.stream().filter(item -> item.configured).count();
+        List<AppListItem> configuredItems = AppListVisibleSections.filter(
+                items, "", AppListPage.CONFIGURED_APPS);
+
+        assertEquals(configuredCount, configuredItems.size());
+        assertEquals("com.example.mode", configuredItems.get(0).packageName);
     }
 }

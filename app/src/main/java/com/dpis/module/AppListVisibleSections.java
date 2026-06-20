@@ -28,6 +28,8 @@ final class AppListVisibleSections {
                     item.fontMode,
                     item.typefaceId,
                     item.hasAppSpecificConfig(),
+                    item.configured,
+                    item.installed,
                     state)) {
                 visible.add(item);
             }

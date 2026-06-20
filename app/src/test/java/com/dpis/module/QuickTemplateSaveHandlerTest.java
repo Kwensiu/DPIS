@@ -97,9 +97,102 @@ public class QuickTemplateSaveHandlerTest {
         assertNotNull(template);
         assertFalse(template.configValue.viewportTargetSpec.isEnabled());
         assertEquals(ViewportTargetType.ABSOLUTE_DP, template.configValue.viewportTargetType);
-        assertEquals(ViewportApplyMode.OFF, template.configValue.viewportApplyMode);
+        assertEquals(ViewportApplyMode.COMPAT, template.configValue.viewportApplyMode);
         assertNull(template.configValue.fontScalePercent);
         assertEquals(FontApplyMode.FIELD_REWRITE, template.configValue.fontApplyMode);
+    }
+
+    @Test
+    public void viewportApplyStrategyWithoutValueStillCreatesCustomTemplateValue() {
+        QuickTemplateStore store = new QuickTemplateStore(new FakePrefs());
+
+        QuickTemplateSaveHandler.Result result = handler.save(store, new QuickTemplateSaveHandler.Request(
+                "template_viewport_strategy",
+                "Viewport strategy",
+                "",
+                ViewportTargetType.RELATIVE_SCALE,
+                ViewportApplyMode.SYSTEM,
+                "",
+                FontApplyMode.SYSTEM_EMULATION,
+                null,
+                null));
+
+        assertTrue(result.success);
+        QuickTemplateStore.QuickTemplate template = store.read("template_viewport_strategy");
+        assertNotNull(template);
+        assertFalse(template.configValue.viewportTargetSpec.isEnabled());
+        assertEquals(ViewportTargetType.OFF, template.configValue.viewportTargetType);
+        assertEquals(ViewportApplyMode.SYSTEM, template.configValue.viewportApplyMode);
+        assertEquals(FontApplyMode.OFF, template.configValue.fontApplyMode);
+        assertTrue(template.configValue.hasAnyValue());
+    }
+
+    @Test
+    public void defaultEditorSelectionsDoNotCreateCustomTemplateValues() {
+        QuickTemplateStore store = new QuickTemplateStore(new FakePrefs());
+
+        QuickTemplateSaveHandler.Result result = handler.save(store, new QuickTemplateSaveHandler.Request(
+                "template_default",
+                "Default",
+                "",
+                ViewportTargetType.RELATIVE_SCALE,
+                ViewportApplyMode.OFF,
+                "",
+                FontApplyMode.SYSTEM_EMULATION,
+                null,
+                null));
+
+        assertTrue(result.success);
+        QuickTemplateStore.QuickTemplate template = store.read("template_default");
+        assertNotNull(template);
+        assertEquals(TemplateConfigValue.EMPTY, template.configValue);
+        assertFalse(template.configValue.hasAnyValue());
+    }
+
+    @Test
+    public void autoViewportStrategyDoesNotCreateCustomTemplateValue() {
+        QuickTemplateStore store = new QuickTemplateStore(new FakePrefs());
+
+        QuickTemplateSaveHandler.Result result = handler.save(store, new QuickTemplateSaveHandler.Request(
+                "template_auto",
+                "Auto",
+                "",
+                ViewportTargetType.RELATIVE_SCALE,
+                ViewportApplyMode.AUTO,
+                "",
+                FontApplyMode.SYSTEM_EMULATION,
+                null,
+                null));
+
+        assertTrue(result.success);
+        QuickTemplateStore.QuickTemplate template = store.read("template_auto");
+        assertNotNull(template);
+        assertEquals(TemplateConfigValue.EMPTY, template.configValue);
+    }
+
+    @Test
+    public void savePreservesBothViewportDraftValues() {
+        QuickTemplateStore store = new QuickTemplateStore(new FakePrefs());
+
+        QuickTemplateSaveHandler.Result result = handler.save(store, new QuickTemplateSaveHandler.Request(
+                "template_drafts",
+                "Drafts",
+                "411",
+                ViewportTargetType.ABSOLUTE_DP,
+                ViewportApplyMode.COMPAT,
+                "88",
+                "411",
+                "",
+                FontApplyMode.SYSTEM_EMULATION,
+                null,
+                null));
+
+        assertTrue(result.success);
+        QuickTemplateStore.QuickTemplate template = store.read("template_drafts");
+        assertNotNull(template);
+        assertEquals(ViewportTargetSpec.absoluteDp(411), template.configValue.viewportTargetSpec);
+        assertEquals(Integer.valueOf(880), template.configValue.viewportScalePermilleDraft);
+        assertEquals(Integer.valueOf(411), template.configValue.viewportWidthDpDraft);
     }
 
     @Test

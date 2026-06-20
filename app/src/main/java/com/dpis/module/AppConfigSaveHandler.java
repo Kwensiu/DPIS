@@ -64,6 +64,20 @@ final class AppConfigSaveHandler {
             return new int[] { 1, R.string.status_save_requires_init };
         }
         try {
+            if (isUnchangedGlobalPrefillPreview(item,
+                    viewportTargetSpec,
+                    currentViewportApplyMode,
+                    fontScalePercent,
+                    fontMode,
+                    selectedTypefaceId,
+                    draftFontHookDomainsRaw,
+                    fontHookDomainsResetRequested)) {
+                boolean cleared = store.clearTargetPackageConfig(item.packageName);
+                if (cleared && onChanged != null) {
+                    onChanged.run();
+                }
+                return new int[] { 1, 0 };
+            }
             String viewportApplyMode = resolveViewportApplyModeForSave(
                     store, item.packageName, currentViewportApplyMode,
                     viewportApplyModeResetRequested, viewportTargetSpec);
@@ -132,6 +146,7 @@ final class AppConfigSaveHandler {
                 FontRuntimePropertySyncer.publishTypefaceTargetAsync(item.packageName, selectedTypefaceId);
             }
             publishFontHookDomainsAfterSave(item.packageName, store);
+            saved = store.prunePackageIfOnlyDefaultConfigRemains(item.packageName) && saved;
             if (saved && onChanged != null) {
                 onChanged.run();
             }
@@ -164,6 +179,59 @@ final class AppConfigSaveHandler {
             return new HookDomainOverrideStore(store).restoreRecommended(item.packageName);
         }
         return store.setPackageFontHookDomainsRaw(item.packageName, normalizedRaw);
+    }
+
+    static boolean isUnchangedGlobalPrefillPreview(AppListItem item,
+            ViewportTargetSpec viewportTargetSpec,
+            String viewportApplyMode,
+            Integer fontScalePercent,
+            String fontMode,
+            String selectedTypefaceId,
+            String draftFontHookDomainsRaw,
+            boolean fontHookDomainsResetRequested) {
+        if (item == null || !item.previewFromGlobalPrefill) {
+            return false;
+        }
+        if (isResetPreviewDraft(viewportTargetSpec, fontScalePercent,
+                selectedTypefaceId, draftFontHookDomainsRaw, fontHookDomainsResetRequested)) {
+            return true;
+        }
+        ViewportTargetSpec normalizedSpec = viewportTargetSpec != null
+                ? viewportTargetSpec
+                : ViewportTargetSpec.off();
+        TemplateConfigValue current = new TemplateConfigValue(
+                normalizedSpec,
+                ViewportTargetType.normalize(item.viewportTargetType),
+                normalizedSpec.isEnabled()
+                        ? ViewportApplyMode.normalize(viewportApplyMode)
+                        : ViewportApplyMode.OFF,
+                fontScalePercent,
+                ConfigDraftSaveSemantics.fontApplyModeForSave(fontMode),
+                selectedTypefaceId,
+                draftFontHookDomainsRaw);
+        TemplateConfigValue preview = new TemplateConfigValue(
+                item.viewportTargetSpec,
+                item.viewportTargetType,
+                item.viewportTargetSpec.isEnabled()
+                        ? item.viewportMode
+                        : ViewportApplyMode.OFF,
+                item.fontScalePercent,
+                item.fontMode,
+                item.typefaceId,
+                item.previewFontHookDomainsRaw);
+        return current.equals(preview);
+    }
+
+    private static boolean isResetPreviewDraft(ViewportTargetSpec viewportTargetSpec,
+            Integer fontScalePercent,
+            String selectedTypefaceId,
+            String draftFontHookDomainsRaw,
+            boolean fontHookDomainsResetRequested) {
+        return fontHookDomainsResetRequested
+                && (viewportTargetSpec == null || !viewportTargetSpec.isEnabled())
+                && fontScalePercent == null
+                && normalizeNullableString(selectedTypefaceId) == null
+                && normalizeNullableString(draftFontHookDomainsRaw) == null;
     }
 
     private static void publishFontHookDomainsAfterSave(String packageName, DpiConfigStore store) {
@@ -290,5 +358,13 @@ final class AppConfigSaveHandler {
             throw new NumberFormatException("invalid font scale");
         }
         return value;
+    }
+
+    private static String normalizeNullableString(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

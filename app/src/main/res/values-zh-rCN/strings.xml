@@ -165,7 +165,7 @@
     <string name="template_workspace_global_prefill_subtitle">调整未配置应用的默认填入值</string>
     <string name="template_workspace_quick_templates_title">快捷模板</string>
     <string name="template_workspace_quick_templates_empty">暂无快捷模板。</string>
-    <string name="template_workspace_summary_empty">暂无已配置参数</string>
+    <string name="template_workspace_summary_empty">暂无自定义参数</string>
     <string name="template_workspace_summary_viewport_scale">界面 %1$d.%2$d%%</string>
     <string name="template_workspace_summary_viewport_width">界面 %1$ddp</string>
     <string name="template_workspace_summary_viewport_mode">界面路线：%1$s</string>
@@ -471,9 +471,12 @@
     <string name="app_status_enabled">已启用</string>
     <string name="app_status_disabled">已禁用</string>
     <string name="app_status_not_enabled">未启用</string>
+    <string name="app_status_not_installed">未安装</string>
+    <string name="app_status_no_value">空数值</string>
     <string name="app_status_mode_system">系统</string>
     <string name="app_status_mode_compat">兼容</string>
     <string name="app_status_viewport_scale">界面</string>
     <string name="app_status_viewport_width">界面</string>
     <string name="app_status_font_prefix">字体</string>
+    <string name="app_status_wechat_dpi">微信 DPI</string>
 </resources>

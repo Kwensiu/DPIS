@@ -74,7 +74,8 @@ final class QuickTemplateStore {
                 name.trim(),
                 updatedAt,
                 getSelectedPackages(normalizedId),
-                TemplateConfigPreferences.read(preferences, prefix + "config."));
+                TemplateCustomSemantics.customValue(
+                        TemplateConfigPreferences.read(preferences, prefix + "config.")));
     }
 
     boolean hasDuplicateName(String name, String excludedId) {
@@ -114,7 +115,8 @@ final class QuickTemplateStore {
                 .putStringSet(prefix + "selected_packages",
                         sanitizeStringSet(template.selectedPackages));
         editor.putString(KEY_TEMPLATE_ORDER, orderAfterSave(existingTemplate, normalizedId));
-        TemplateConfigPreferences.write(editor, prefix + "config.", template.configValue);
+        TemplateConfigPreferences.write(editor, prefix + "config.",
+                TemplateCustomSemantics.customValue(template.configValue));
         return editor.commit();
     }
 

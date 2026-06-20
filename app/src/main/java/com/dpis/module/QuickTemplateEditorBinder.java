@@ -186,17 +186,10 @@ final class QuickTemplateEditorBinder {
                 : TemplateConfigValue.EMPTY;
         String storedName = originalTemplate != null ? originalTemplate.name : "";
         String initialName = storedName;
-        String storedViewportInput = AppConfigInputValidation.formatViewportInput(
-                value.viewportTargetSpec);
-        String initialViewportType = AppConfigInputValidation.initialViewportTargetType(
-                value.viewportTargetSpec);
-        String initialViewportInput = storedViewportInput;
-        String initialViewportScaleInput = value.viewportTargetSpec.isRelativeScale()
-                ? storedViewportInput
-                : "";
-        String initialViewportAbsoluteInput = value.viewportTargetSpec.isAbsoluteDp()
-                ? storedViewportInput
-                : "";
+        String initialViewportType = value.initialViewportTargetType();
+        String initialViewportInput = value.initialViewportInput();
+        String initialViewportScaleInput = value.initialViewportScaleInput();
+        String initialViewportAbsoluteInput = value.initialViewportAbsoluteInput();
         String initialViewportApplyMode = value.viewportApplyMode;
         String initialFontInput = value.fontScalePercent != null
                 ? String.valueOf(value.fontScalePercent)
@@ -498,6 +491,9 @@ final class QuickTemplateEditorBinder {
             showToast(R.string.status_save_invalid);
             return;
         }
+        state.updateViewportInput(
+                AppConfigDialogBinder.resolveViewportMode(viewportModeToggle),
+                textOf(viewportInputView));
         QuickTemplateSaveHandler.Result result = saveHandler.save(quickTemplateStore,
                 new QuickTemplateSaveHandler.Request(
                         templateId,
@@ -505,6 +501,8 @@ final class QuickTemplateEditorBinder {
                         textOf(viewportInputView),
                         AppConfigDialogBinder.resolveViewportMode(viewportModeToggle),
                         state.viewportApplyMode,
+                        state.viewportScaleInput,
+                        state.viewportAbsoluteInput,
                         textOf(fontInputView),
                         AppConfigDialogBinder.resolveFontMode(fontModeToggle),
                         state.selectedTypefaceId,

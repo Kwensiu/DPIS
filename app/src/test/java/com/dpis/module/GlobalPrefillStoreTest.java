@@ -16,6 +16,9 @@ public class GlobalPrefillStoreTest {
         GlobalPrefillStore store = new GlobalPrefillStore(prefs);
         TemplateConfigValue value = new TemplateConfigValue(
                 ViewportTargetSpec.relativeScale(1250),
+                ViewportTargetType.RELATIVE_SCALE,
+                1250,
+                411,
                 ViewportApplyMode.AUTO,
                 135,
                 FontApplyMode.FIELD_REWRITE,
@@ -77,5 +80,52 @@ public class GlobalPrefillStoreTest {
 
         assertFalse(prefs.contains(DpiConfigStore.KEY_TARGET_PACKAGES));
         assertEquals(Set.of(), new DpiConfigStore(prefs).getConfiguredPackages());
+    }
+
+    @Test
+    public void legacyDefaultEditorSelectionsReadAsEmptyPrefill() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putString("default_config.viewport.target_type", ViewportTargetType.RELATIVE_SCALE)
+                .putString("default_config.font.mode", FontApplyMode.SYSTEM_EMULATION)
+                .commit();
+
+        TemplateConfigValue value = new GlobalPrefillStore(prefs).read();
+
+        assertEquals(TemplateConfigValue.EMPTY, value);
+        assertFalse(value.hasAnyValue());
+    }
+
+    @Test
+    public void legacyViewportApplyModeWithoutValueReadsAsCustomPrefill() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putString("default_config.viewport.target_type", ViewportTargetType.RELATIVE_SCALE)
+                .putString("default_config.viewport.mode", ViewportApplyMode.SYSTEM)
+                .putString("default_config.font.mode", FontApplyMode.SYSTEM_EMULATION)
+                .commit();
+
+        TemplateConfigValue value = new GlobalPrefillStore(prefs).read();
+
+        assertEquals(ViewportTargetType.OFF, value.viewportTargetType);
+        assertEquals(ViewportApplyMode.SYSTEM, value.viewportApplyMode);
+        assertEquals(FontApplyMode.OFF, value.fontApplyMode);
+        assertTrue(value.hasAnyValue());
+    }
+
+    @Test
+    public void nonDefaultEmptySelectionsStillReadAsCustomPrefill() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putString("default_config.viewport.target_type", ViewportTargetType.ABSOLUTE_DP)
+                .putString("default_config.font.mode", FontApplyMode.FIELD_REWRITE)
+                .commit();
+
+        TemplateConfigValue value = new GlobalPrefillStore(prefs).read();
+
+        assertFalse(value.viewportTargetSpec.isEnabled());
+        assertEquals(ViewportTargetType.ABSOLUTE_DP, value.viewportTargetType);
+        assertEquals(FontApplyMode.FIELD_REWRITE, value.fontApplyMode);
+        assertTrue(value.hasAnyValue());
     }
 }

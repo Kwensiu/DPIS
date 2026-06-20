@@ -186,8 +186,23 @@ final class TemplateWorkspaceBinder {
         }
 
         @Override
+        public String viewportTargetTypeScale() {
+            return context.getString(R.string.dialog_viewport_mode_system);
+        }
+
+        @Override
+        public String viewportTargetTypeWidth() {
+            return context.getString(R.string.dialog_viewport_mode_compat);
+        }
+
+        @Override
         public String fontSummary(String detail) {
             return context.getString(R.string.template_workspace_summary_font, detail);
+        }
+
+        @Override
+        public String noValue() {
+            return context.getString(R.string.app_status_no_value);
         }
 
         @Override

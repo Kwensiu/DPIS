@@ -178,7 +178,7 @@
     <string name="template_workspace_global_prefill_subtitle">Adjust default values for unconfigured apps</string>
     <string name="template_workspace_quick_templates_title">Quick templates</string>
     <string name="template_workspace_quick_templates_empty">No quick templates yet.</string>
-    <string name="template_workspace_summary_empty">No values configured.</string>
+    <string name="template_workspace_summary_empty">No custom values.</string>
     <string name="template_workspace_summary_viewport_scale">Interface %1$d.%2$d%%</string>
     <string name="template_workspace_summary_viewport_width">Interface %1$ddp</string>
     <string name="template_workspace_summary_viewport_mode">Interface route: %1$s</string>
@@ -506,9 +506,12 @@
     <string name="app_status_enabled">Enabled</string>
     <string name="app_status_disabled">Disabled</string>
     <string name="app_status_not_enabled">Not enabled</string>
+    <string name="app_status_not_installed">Not installed</string>
+    <string name="app_status_no_value">No value</string>
     <string name="app_status_mode_system">System</string>
     <string name="app_status_mode_compat">Compat</string>
     <string name="app_status_viewport_scale">Interface</string>
     <string name="app_status_viewport_width">Interface</string>
     <string name="app_status_font_prefix">Font</string>
+    <string name="app_status_wechat_dpi">WeChat DPI</string>
 </resources>

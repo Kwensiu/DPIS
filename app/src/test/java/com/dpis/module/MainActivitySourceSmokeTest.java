@@ -1247,6 +1247,7 @@ public class MainActivitySourceSmokeTest {
         assertFalse(layout.contains("dialog_viewport_input_layout"));
         assertTrue(binder.contains("interface Actions"));
         assertTrue(binder.contains("AppStatusFormatter.formatCompact("));
+        assertTrue(binder.contains("new AppStatusFormatter.StatusInput("));
         assertTrue(binder.contains("void saveDraft("));
         assertTrue(binder.contains("AppListItem item,"));
         assertTrue(binder.contains("actions.saveDraft("));

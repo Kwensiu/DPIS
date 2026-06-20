@@ -165,7 +165,7 @@
     <string name="template_workspace_global_prefill_subtitle">Настройка значений по умолчанию для неконфигурированных приложений</string>
     <string name="template_workspace_quick_templates_title">Быстрые шаблоны</string>
     <string name="template_workspace_quick_templates_empty">Пока что быстрых шаблонов нет.</string>
-    <string name="template_workspace_summary_empty">Значения не настроены.</string>
+    <string name="template_workspace_summary_empty">Пользовательские значения отсутствуют.</string>
     <string name="template_workspace_summary_viewport_scale">Интерфейс %1$d.%2$d%%</string>
     <string name="template_workspace_summary_viewport_width">Интерфейс %1$ddp</string>
     <string name="template_workspace_summary_viewport_mode">Маршрут интерфейса: %1$s</string>
@@ -471,9 +471,12 @@
     <string name="app_status_enabled">Включено</string>
     <string name="app_status_disabled">Откл</string>
     <string name="app_status_not_enabled">Не включено</string>
+    <string name="app_status_not_installed">Не установлено</string>
+    <string name="app_status_no_value">Нет значения</string>
     <string name="app_status_mode_system">Система</string>
     <string name="app_status_mode_compat">Совместимый</string>
     <string name="app_status_viewport_scale">Интерфейс</string>
     <string name="app_status_viewport_width">Интерфейс</string>
     <string name="app_status_font_prefix">Шрифт</string>
+    <string name="app_status_wechat_dpi">WeChat DPI</string>
 </resources>

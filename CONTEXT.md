@@ -110,6 +110,104 @@ UI labels may intentionally hide internal route names. For example, app-list
 status uses one `Interface` segment for both relative scale and fixed width, with
 the value showing `%` or `dp`.
 
+## Template And Prefill Summaries
+
+Global prefill and quick templates summarize saved custom defaults. Editor
+defaults must not be shown explicitly unless a rule below says they are part of
+a saved custom value.
+
+- Empty defaults show only the empty state text.
+- Saved numeric values always show, even when the value is close to a platform
+  default.
+- Default target type `relative_scale`, default viewport strategy `auto`, and
+  default font route `system_emulation` do not show by themselves.
+- Fixed-width target type is custom. Fixed-width empty values show
+  `Interface No value · Min width` / `界面 空数值 · 宽度`.
+- Explicit viewport `system` or `compat` strategy is custom and may show with or
+  without a numeric viewport value. `auto` does not add `Auto` to a summary.
+- Explicit font `field_rewrite` route is custom and may show with or without a
+  numeric font value. `system_emulation` does not show by itself.
+- Independent capabilities such as custom hook-chain state and typeface
+  selection should appear as their own summary chip/part instead of being folded
+  into default mode text.
+
+## Package Config State
+
+`configured` is overloaded and must not be used as a single canonical concept
+for package state.
+
+When discussing package state, qualify which meaning is intended. At minimum,
+separate user-visible configuration from other stored package state such as
+draft-only values, runtime-target state, or preserved package-local preferences.
+
+`User-visible configured package` is the package state represented by the home
+workspace configured-apps card and by the Configured Apps list. These two UI
+surfaces must use the same inclusion rule.
+
+A package is user-visible configured when it has any saved user-preserved
+package-level state. This includes numeric viewport or font values, mode-only
+state, target-type-only state, hook-domain-only state, app-specific config such
+as WeChat DPI, explicit per-package `dpisEnabled=false` overrides, and saved
+configuration for apps that are no longer installed.
+
+Draft-only state is transient app-config-sheet state. It is not a user-visible
+configured package unless the user saves it as package-level state.
+
+Long-term package configuration storage should converge on one package-aggregated
+source of truth. Package UI, backup/restore, runtime snapshots, and counting
+rules should read from that aggregated package model rather than from scattered
+per-key indexes.
+
+The aggregated package model should be keyed by package name, not stored as an
+ordered package array. DPIS is per-app configuration; package name is the
+natural identity and lookup key.
+
+`target_packages` is legacy migration evidence only. New package storage should
+not keep writing `target_packages` as a live index or source of truth.
+
+Legacy migration should preserve contradictory or incomplete old per-key state
+as explicit package-local residual or draft-only state instead of silently
+dropping it. Preserved residual state is evidence for cleanup and diagnostics;
+it must not automatically become a runtime target.
+
+Mode-only, target-type-only, and hook-domain-only package state are
+user-preserved package preferences, not residual state. This includes viewport
+target type only, viewport apply mode only, font mode only, and hook-domain-only
+package state.
+
+Configured-app list status should show concrete effective values when present.
+If a package is configured only by mode or target-type preferences and has no
+displayable viewport, font, typeface, hook-domain, app-specific, or disabled
+value, show the configured/injected scope state plus an empty-value status.
+When one dimension has an effective value and another dimension only has a
+mode preference, show the effective value and omit the no-value mode-only
+dimension from the compact status text.
+Use `已注入 | 空数值` / `Injected | No value` for configured installed entries
+with no displayable numeric value.
+
+Configured packages that are not currently installed should still appear in the
+Configured Apps list. They should be visually distinguished from installed apps
+with an unavailable/uninstalled state, remain fully editable, and remain
+clearable. They should not appear in the All Apps list.
+For configured but uninstalled packages, prefer expressing the uninstalled
+state directly in the compact status text instead of adding a separate badge:
+`未安装 | 空数值` / `Not installed | No value` when there is no displayable
+numeric value.
+
+The package-aggregated model may store minimal display metadata such as the
+last known app label so uninstalled configured packages remain understandable.
+Current install state should still be derived from the package manager when
+available, not treated as a cached storage fact.
+
+Optional package-specific config blocks should only exist when the package has
+that config. For example, WeChat DPI belongs in an optional app-specific block;
+packages without app-specific settings should not store or show an empty
+app-specific section.
+
+The package-aggregated model should be sparse: store only blocks and values
+that are present for a package. Do not create fixed empty viewport, font,
+hook-domain, app-specific, or metadata blocks for every package.
+
 ## Debugging Checklist
 
 Before changing route logic:

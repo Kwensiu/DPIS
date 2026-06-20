@@ -385,10 +385,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             holder.packageName.setText(item.packageName);
             bindIcon(holder, item);
             String compactStatusText = AppStatusFormatter.formatCompact(
-                    holder.status.getResources(), item.inScope, item.scopeKnown,
-                    item.viewportTargetSpec, item.viewportMode,
-                    item.fontScalePercent, item.fontMode, item.typefaceId, item.dpisEnabled,
-                    item.hasAppSpecificConfig());
+                    holder.status.getResources(), statusInput(item));
             boolean warnViewport = item.scopeKnown && AppStatusFormatter.shouldWarnViewportEmulation(
                     item.viewportTargetSpec, item.viewportMode,
                     systemScopeSelectedSupplier.getAsBoolean(),
@@ -421,6 +418,21 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             return hash;
         }
 
+        private static AppStatusFormatter.StatusInput statusInput(AppListItem item) {
+            return new AppStatusFormatter.StatusInput(
+                    item.inScope,
+                    item.scopeKnown,
+                    item.installed,
+                    item.viewportTargetSpec,
+                    item.viewportMode,
+                    item.fontScalePercent,
+                    item.fontMode,
+                    item.typefaceId,
+                    item.dpisEnabled,
+                    item.hasAppSpecificConfig(),
+                    item.wechatDpi);
+        }
+
         @Override
         public void onBindViewHolder(@NonNull RowHolder holder,
                 int position,
@@ -428,10 +440,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             if (!payloads.isEmpty()) {
                 AppListItem item = getItem(position);
                 String compactStatusText = AppStatusFormatter.formatCompact(
-                        holder.status.getResources(), item.inScope, item.scopeKnown,
-                        item.viewportTargetSpec, item.viewportMode,
-                        item.fontScalePercent, item.fontMode, item.typefaceId, item.dpisEnabled,
-                        item.hasAppSpecificConfig());
+                        holder.status.getResources(), statusInput(item));
                 boolean warnViewport = item.scopeKnown && AppStatusFormatter.shouldWarnViewportEmulation(
                         item.viewportTargetSpec, item.viewportMode,
                         systemScopeSelectedSupplier.getAsBoolean(),

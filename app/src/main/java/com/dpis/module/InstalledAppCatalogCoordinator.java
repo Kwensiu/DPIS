@@ -85,43 +85,72 @@ final class InstalledAppCatalogCoordinator {
                 forceInstalledAppCatalogReload);
         List<AppListItem> result = new ArrayList<>(catalog.size());
         for (InstalledAppCatalogItem item : catalog) {
-            Integer viewportWidth = store != null
-                    ? store.getTargetViewportWidthDp(item.packageName)
-                    : null;
-            Integer viewportScalePermille = store != null
-                    ? store.getTargetViewportScalePermille(item.packageName)
-                    : null;
-            ViewportTargetSpec viewportTargetSpec = store != null
-                    ? store.getTargetViewportSpec(item.packageName)
-                    : ViewportTargetSpec.off();
-            String viewportTargetType = store != null
-                    ? store.getTargetViewportType(item.packageName)
-                    : ViewportTargetType.OFF;
-            String viewportMode = store != null
-                    ? store.getTargetViewportApplyMode(item.packageName)
-                    : ViewportApplyMode.OFF;
-            Integer fontScalePercent = store != null
-                    ? store.getTargetFontScalePercent(item.packageName)
-                    : null;
-            String fontMode = store != null
-                    ? store.getTargetFontApplyMode(item.packageName)
-                    : FontApplyMode.OFF;
-            String typefaceId = store != null
-                    ? store.getTargetTypefaceId(item.packageName)
-                    : null;
-            boolean appSpecificConfigActive = store != null
-                    && store.hasTargetAppSpecificConfig(item.packageName);
-            boolean dpisEnabled = store == null
-                    || store.isTargetDpisEnabled(item.packageName);
             Drawable icon = resolveDisplayIcon(item);
-            result.add(new AppListItem(item.label, item.packageName,
-                    scopePackages.contains(item.packageName), scopeKnown, viewportWidth,
-                    viewportScalePermille, viewportMode, viewportTargetType,
-                    viewportTargetSpec, fontScalePercent, fontMode, typefaceId,
-                    appSpecificConfigActive, dpisEnabled, item.systemApp,
-                    item.hyperOsNativeProxyCandidate, icon));
+            result.add(createAppListItem(store, scopePackages, scopeKnown,
+                    item.label, item.packageName, item.systemApp,
+                    item.hyperOsNativeProxyCandidate, true, icon));
+        }
+        if (store != null) {
+            Set<String> installedPackages = new HashSet<>();
+            for (InstalledAppCatalogItem item : catalog) {
+                installedPackages.add(item.packageName);
+            }
+            for (String packageName : store.getConfiguredPackages()) {
+                if (installedPackages.contains(packageName)
+                        || !store.hasUserVisiblePackageConfig(packageName)) {
+                    continue;
+                }
+                result.add(createAppListItem(store, scopePackages, scopeKnown,
+                        packageName, packageName, false, false, false, null));
+            }
         }
         return result;
+    }
+
+    private static AppListItem createAppListItem(DpiConfigStore store,
+            Set<String> scopePackages,
+            boolean scopeKnown,
+            String label,
+            String packageName,
+            boolean systemApp,
+            boolean hyperOsNativeProxyCandidate,
+            boolean installed,
+            Drawable icon) {
+        Integer viewportWidth = store != null
+                ? store.getTargetViewportWidthDp(packageName)
+                : null;
+        Integer viewportScalePermille = store != null
+                ? store.getTargetViewportScalePermille(packageName)
+                : null;
+        ViewportTargetSpec viewportTargetSpec = store != null
+                ? store.getTargetViewportSpec(packageName)
+                : ViewportTargetSpec.off();
+        String viewportTargetType = store != null
+                ? store.getTargetViewportType(packageName)
+                : ViewportTargetType.OFF;
+        String viewportMode = store != null
+                ? store.getTargetViewportApplyMode(packageName)
+                : ViewportApplyMode.OFF;
+        Integer fontScalePercent = store != null
+                ? store.getTargetFontScalePercent(packageName)
+                : null;
+        String fontMode = store != null
+                ? store.getTargetFontApplyMode(packageName)
+                : FontApplyMode.OFF;
+        String typefaceId = store != null
+                ? store.getTargetTypefaceId(packageName)
+                : null;
+        boolean appSpecificConfigActive = store != null
+                && store.hasTargetAppSpecificConfig(packageName);
+        Integer wechatDpi = store != null ? store.getWechatDpi(packageName) : null;
+        boolean dpisEnabled = store == null || store.isTargetDpisEnabled(packageName);
+        boolean configured = store != null && store.hasUserVisiblePackageConfig(packageName);
+        return new AppListItem(label, packageName,
+                scopePackages.contains(packageName), scopeKnown, viewportWidth,
+                viewportScalePermille, viewportMode, viewportTargetType,
+                viewportTargetSpec, fontScalePercent, fontMode, typefaceId,
+                appSpecificConfigActive, wechatDpi, dpisEnabled, configured, installed,
+                systemApp, hyperOsNativeProxyCandidate, icon);
     }
 
     void onIconLoadRequested(String packageName) {

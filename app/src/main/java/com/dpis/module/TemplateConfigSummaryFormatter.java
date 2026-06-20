@@ -10,7 +10,13 @@ final class TemplateConfigSummaryFormatter {
 
         String viewportSummary(String detail);
 
+        String viewportTargetTypeScale();
+
+        String viewportTargetTypeWidth();
+
         String fontSummary(String detail);
+
+        String noValue();
 
         String typeface(String displayName);
 
@@ -36,7 +42,7 @@ final class TemplateConfigSummaryFormatter {
     }
 
     Result format(TemplateConfigValue value) {
-        TemplateConfigValue normalized = value != null ? value : TemplateConfigValue.EMPTY;
+        TemplateConfigValue normalized = TemplateCustomSemantics.customValue(value);
         ArrayList<String> parts = new ArrayList<>();
         ViewportTargetSpec viewportTargetSpec = normalized.viewportTargetSpec;
         ArrayList<String> viewportParts = new ArrayList<>();
@@ -47,9 +53,22 @@ final class TemplateConfigSummaryFormatter {
         } else if (viewportTargetSpec.isAbsoluteDp()) {
             viewportParts.add(viewportTargetSpec.absoluteWidthDp() + "dp");
         }
-        if (!viewportParts.isEmpty() && (ViewportApplyMode.SYSTEM.equals(normalized.viewportApplyMode)
-                || ViewportApplyMode.COMPAT.equals(normalized.viewportApplyMode)
-                || ViewportApplyMode.AUTO.equals(normalized.viewportApplyMode))) {
+        boolean viewportModeConfigured =
+                TemplateCustomSemantics.isCustomViewportApplyMode(normalized.viewportApplyMode);
+        boolean viewportDraftConfigured =
+                !ViewportTargetType.OFF.equals(normalized.viewportTargetType)
+                        || normalized.viewportScalePermilleDraft != null
+                        || normalized.viewportWidthDpDraft != null;
+        if (viewportParts.isEmpty() && (viewportModeConfigured || viewportDraftConfigured)) {
+            viewportParts.add(text.noValue());
+        }
+        if (!viewportParts.isEmpty() && !viewportTargetSpec.isEnabled()) {
+            String targetTypeLabel = viewportTargetTypeLabel(normalized.viewportTargetType);
+            if (!targetTypeLabel.isEmpty()) {
+                viewportParts.add(targetTypeLabel);
+            }
+        }
+        if (!viewportParts.isEmpty() && viewportModeConfigured) {
             viewportParts.add(modeLabel(normalized.viewportApplyMode));
         }
         if (!viewportParts.isEmpty()) {
@@ -60,18 +79,22 @@ final class TemplateConfigSummaryFormatter {
         if (normalized.fontScalePercent != null) {
             fontParts.add(normalized.fontScalePercent + "%");
         }
-        if (!fontParts.isEmpty() && FontApplyMode.isEnabled(normalized.fontApplyMode)) {
+        boolean fontModeConfigured = FontApplyMode.isEnabled(normalized.fontApplyMode);
+        if (fontParts.isEmpty() && fontModeConfigured) {
+            fontParts.add(text.noValue());
+        }
+        if (!fontParts.isEmpty() && fontModeConfigured) {
             fontParts.add(modeLabel(normalized.fontApplyMode));
         }
         TypefaceStatus typefaceStatus = resolveTypeface(normalized.typefaceId);
         if (typefaceStatus.resolved()) {
             fontParts.add(typefaceStatus.displayName);
         }
-        if (normalized.fontHookDomainsRaw != null) {
-            fontParts.add(text.hookDomains());
-        }
         if (!fontParts.isEmpty()) {
             parts.add(text.fontSummary(joinDetails(fontParts)));
+        }
+        if (normalized.fontHookDomainsRaw != null) {
+            parts.add(text.hookDomains());
         }
         return new Result(parts, typefaceStatus, text.emptySummary());
     }
@@ -93,6 +116,17 @@ final class TemplateConfigSummaryFormatter {
         }
         TypefaceStatus status = typefaceResolver.resolve(typefaceId);
         return status != null ? status : TypefaceStatus.missing(typefaceId);
+    }
+
+    private String viewportTargetTypeLabel(String targetType) {
+        String normalized = ViewportTargetType.normalize(targetType);
+        if (ViewportTargetType.ABSOLUTE_DP.equals(normalized)) {
+            return text.viewportTargetTypeWidth();
+        }
+        if (ViewportTargetType.RELATIVE_SCALE.equals(normalized)) {
+            return text.viewportTargetTypeScale();
+        }
+        return "";
     }
 
     private String modeLabel(String mode) {

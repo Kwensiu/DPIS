@@ -40,6 +40,26 @@ public class QuickTemplateStoreTest {
     }
 
     @Test
+    public void legacyDefaultEditorSelectionsReadAsEmptyTemplateConfig() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putStringSet(QuickTemplateStore.KEY_TEMPLATE_IDS, Set.of("template_a"))
+                .putString("template.template_a.name", "Default")
+                .putLong("template.template_a.updated_at", 1000L)
+                .putString("template.template_a.config.viewport.target_type",
+                        ViewportTargetType.RELATIVE_SCALE)
+                .putString("template.template_a.config.font.mode",
+                        FontApplyMode.SYSTEM_EMULATION)
+                .commit();
+        QuickTemplateStore store = new QuickTemplateStore(prefs);
+
+        QuickTemplateStore.QuickTemplate template = store.read("template_a");
+
+        assertEquals(TemplateConfigValue.EMPTY, template.configValue);
+        assertFalse(template.configValue.hasAnyValue());
+    }
+
+    @Test
     public void selectedPackagesCanChangeWithoutChangingTemplateIdOrConfig() {
         FakePrefs prefs = new FakePrefs();
         QuickTemplateStore store = new QuickTemplateStore(prefs);

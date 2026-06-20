@@ -20,38 +20,10 @@ final class AppListFilter {
                            Integer viewportWidthDp,
                            Integer fontScalePercent,
                            String fontMode,
-                           String typefaceId) {
-        return matches(query, tab, label, packageName, systemApp, inScope,
-                viewportWidthDp, fontScalePercent, fontMode, typefaceId,
-                false, AppListFilterState.noAdditionalConstraints());
-    }
-
-    static boolean matches(String query,
-                           Tab tab,
-                           String label,
-                           String packageName,
-                           boolean systemApp,
-                           boolean inScope,
-                           Integer viewportWidthDp,
-                           Integer fontScalePercent,
-                           String fontMode,
-                           String typefaceId,
-                           AppListFilterState state) {
-        return matches(query, tab, label, packageName, systemApp, inScope,
-                viewportWidthDp, fontScalePercent, fontMode, typefaceId, false, state);
-    }
-
-    static boolean matches(String query,
-                           Tab tab,
-                           String label,
-                           String packageName,
-                           boolean systemApp,
-                           boolean inScope,
-                           Integer viewportWidthDp,
-                           Integer fontScalePercent,
-                           String fontMode,
                            String typefaceId,
                            boolean appSpecificConfigActive,
+                           boolean configured,
+                           boolean installed,
                            AppListFilterState state) {
         String normalizedQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
         if (!normalizedQuery.isEmpty()) {
@@ -67,9 +39,8 @@ final class AppListFilter {
         boolean typefaceConfigured = typefaceId != null && !typefaceId.isBlank();
         boolean anyFontConfigured = fontConfigured || typefaceConfigured;
         boolean matchesTab = switch (tab) {
-            case ALL_APPS -> true;
-            case CONFIGURED_APPS -> inScope || viewportWidthDp != null
-                    || anyFontConfigured || appSpecificConfigActive;
+            case ALL_APPS -> installed;
+            case CONFIGURED_APPS -> configured;
         };
         if (!matchesTab) {
             return false;
@@ -89,4 +60,5 @@ final class AppListFilter {
         }
         return !effectiveState.fontConfiguredOnly || anyFontConfigured;
     }
+
 }

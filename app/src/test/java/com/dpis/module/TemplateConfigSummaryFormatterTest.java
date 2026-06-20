@@ -22,12 +22,13 @@ public class TemplateConfigSummaryFormatterTest {
         TemplateConfigSummaryFormatter.Result result = formatter.format(value);
 
         assertEquals(
-                "Interface 112.5% · Auto · Font 120% · Compat · Demo Font · Custom hook chain",
+                "Interface 112.5% · Font 120% · Compat · Demo Font · Custom hook chain",
                 result.summary());
-        assertEquals(2, result.summaryParts.size());
-        assertEquals("Interface 112.5% · Auto", result.summaryParts.get(0));
-        assertEquals("Font 120% · Compat · Demo Font · Custom hook chain",
+        assertEquals(3, result.summaryParts.size());
+        assertEquals("Interface 112.5%", result.summaryParts.get(0));
+        assertEquals("Font 120% · Compat · Demo Font",
                 result.summaryParts.get(1));
+        assertEquals("Custom hook chain", result.summaryParts.get(2));
         assertFalse(result.typefaceStatus.missing);
     }
 
@@ -53,9 +54,10 @@ public class TemplateConfigSummaryFormatterTest {
     }
 
     @Test
-    public void routeOnlyValuesDoNotCreateSummaryParts() {
+    public void modeOnlyValuesShowNoValueSummaryParts() {
         TemplateConfigValue value = new TemplateConfigValue(
                 ViewportTargetSpec.off(),
+                ViewportTargetType.ABSOLUTE_DP,
                 ViewportApplyMode.COMPAT,
                 null,
                 FontApplyMode.FIELD_REWRITE,
@@ -64,8 +66,42 @@ public class TemplateConfigSummaryFormatterTest {
 
         TemplateConfigSummaryFormatter.Result result = newFormatter(id -> null).format(value);
 
-        assertEquals("No values configured.", result.summary());
-        assertTrue(result.summaryParts.isEmpty());
+        assertEquals("Interface No value · Width · Compat · Font No value · Compat",
+                result.summary());
+        assertEquals(2, result.summaryParts.size());
+    }
+
+    @Test
+    public void viewportApplyModeOnlyShowsConfiguredStrategy() {
+        TemplateConfigValue value = new TemplateConfigValue(
+                ViewportTargetSpec.off(),
+                ViewportTargetType.OFF,
+                ViewportApplyMode.SYSTEM,
+                null,
+                FontApplyMode.OFF,
+                null,
+                null);
+
+        TemplateConfigSummaryFormatter.Result result = newFormatter(id -> null).format(value);
+
+        assertEquals("Interface No value · System", result.summary());
+        assertEquals(1, result.summaryParts.size());
+    }
+
+    @Test
+    public void autoViewportApplyModeDoesNotShowAsCustomSummary() {
+        TemplateConfigValue value = new TemplateConfigValue(
+                ViewportTargetSpec.relativeScale(1000),
+                ViewportApplyMode.AUTO,
+                null,
+                FontApplyMode.OFF,
+                null,
+                null);
+
+        TemplateConfigSummaryFormatter.Result result = newFormatter(id -> null).format(value);
+
+        assertEquals("Interface 100.0%", result.summary());
+        assertEquals(1, result.summaryParts.size());
     }
 
     @Test
@@ -73,9 +109,29 @@ public class TemplateConfigSummaryFormatterTest {
         TemplateConfigSummaryFormatter.Result result = newFormatter(id -> null)
                 .format(TemplateConfigValue.EMPTY);
 
-        assertEquals("No values configured.", result.summary());
+        assertEquals("No custom values.", result.summary());
         assertTrue(result.summaryParts.isEmpty());
         assertFalse(result.typefaceStatus.missing);
+    }
+
+    @Test
+    public void customSemanticsDropsDefaultModesBeforeSummary() {
+        TemplateConfigValue rawValue = new TemplateConfigValue(
+                ViewportTargetSpec.off(),
+                ViewportTargetType.RELATIVE_SCALE,
+                ViewportApplyMode.AUTO,
+                null,
+                FontApplyMode.SYSTEM_EMULATION,
+                null,
+                null);
+
+        TemplateConfigValue customValue = TemplateCustomSemantics.customValue(rawValue);
+        TemplateConfigSummaryFormatter.Result result = newFormatter(id -> null)
+                .format(rawValue);
+
+        assertFalse(customValue.hasAnyValue());
+        assertEquals("No custom values.", result.summary());
+        assertTrue(result.summaryParts.isEmpty());
     }
 
     @Test
@@ -91,7 +147,7 @@ public class TemplateConfigSummaryFormatterTest {
         TemplateConfigSummaryFormatter.Result result = newFormatter(id ->
                 TemplateConfigSummaryFormatter.TypefaceStatus.missing(id)).format(value);
 
-        assertEquals("No values configured.", result.summary());
+        assertEquals("No custom values.", result.summary());
         assertTrue(result.summaryParts.isEmpty());
         assertTrue(result.typefaceStatus.missing);
         assertEquals("font_missing", result.typefaceStatus.typefaceId);
@@ -105,7 +161,7 @@ public class TemplateConfigSummaryFormatterTest {
     private static final class TestText implements TemplateConfigSummaryFormatter.Text {
         @Override
         public String emptySummary() {
-            return "No values configured.";
+            return "No custom values.";
         }
 
         @Override
@@ -114,8 +170,23 @@ public class TemplateConfigSummaryFormatterTest {
         }
 
         @Override
+        public String viewportTargetTypeScale() {
+            return "Scale";
+        }
+
+        @Override
+        public String viewportTargetTypeWidth() {
+            return "Width";
+        }
+
+        @Override
         public String fontSummary(String detail) {
             return "Font " + detail;
+        }
+
+        @Override
+        public String noValue() {
+            return "No value";
         }
 
         @Override
