@@ -56,7 +56,7 @@ final class QuickTemplateTargetsBinder {
     private final Host host;
     private final QuickTemplateStore quickTemplateStore;
     private final SharedPreferences filterPreferences;
-    private final DpiConfigStore configStore;
+    private final PackageConfigRepository packageConfigRepository;
     private final ExecutorService appLoadExecutor = Executors.newSingleThreadExecutor();
     private final ArrayList<TargetAppItem> allTargetItems = new ArrayList<>();
     private final LinkedHashSet<String> selectedPackages = new LinkedHashSet<>();
@@ -82,7 +82,8 @@ final class QuickTemplateTargetsBinder {
         this.quickTemplateStore = new QuickTemplateStore(preferences);
         this.filterPreferences = activity.getSharedPreferences(
                 FILTER_PREFS_NAME, Activity.MODE_PRIVATE);
-        this.configStore = DpisApplication.getActiveHookConfigStore(activity);
+        this.packageConfigRepository = new PackageConfigRepository(
+                DpisApplication.getActiveHookConfigStore(activity));
         this.filterShowSystemApps = filterPreferences.getBoolean(
                 KEY_FILTER_SHOW_SYSTEM_APPS, false);
         this.filterHideConfiguredApps = filterPreferences.getBoolean(
@@ -187,7 +188,7 @@ final class QuickTemplateTargetsBinder {
             loaded.add(new TargetAppItem(
                     item.label,
                     item.packageName,
-                    configStore.hasRealPackageConfig(item.packageName),
+                    packageConfigRepository.hasRealPackageConfig(item.packageName),
                     item.systemApp,
                     item.icon));
         }

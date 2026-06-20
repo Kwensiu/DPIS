@@ -39,8 +39,10 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(targetsBinder.contains("quickTemplateStore.setSelectedPackages(template.id, selectedPackages)"));
         assertTrue(targetsBinder.contains("pruneSelectedPackagesToInstalledApps(selectedPackages, allTargetItems)"));
         assertTrue(targetsBinder.contains("DpisApplication.getActiveHookConfigStore(activity)"));
+        assertTrue(targetsBinder.contains("new PackageConfigRepository("));
         assertTrue(targetsBinder.contains("installedAppCatalogCoordinator.loadInstalledAppCatalog(false)"));
-        assertTrue(targetsBinder.contains("configStore.hasRealPackageConfig(item.packageName)"));
+        assertTrue(targetsBinder.contains(
+                "packageConfigRepository.hasRealPackageConfig(item.packageName)"));
         assertTrue(targetsBinder.contains("FILTER_PREFS_NAME = \"quick_template_target_filters\""));
         assertTrue(targetsBinder.contains("KEY_FILTER_SHOW_SYSTEM_APPS"));
         assertTrue(targetsBinder.contains("KEY_FILTER_HIDE_CONFIGURED_APPS"));
