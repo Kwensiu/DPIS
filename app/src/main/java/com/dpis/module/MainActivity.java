@@ -1,10 +1,12 @@
 package com.dpis.module;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -49,6 +51,9 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textview.MaterialTextView;
 import io.github.libxposed.service.XposedService;
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -115,6 +120,7 @@ public final class MainActivity
             = "com.android.permission.GET_INSTALLED_APPS";
     private static final int REQUEST_XIAOMI_GET_INSTALLED_APPS = 10022;
     private static final int REQUEST_QUICK_TEMPLATE_TARGETS = 10023;
+    private static final int REQUEST_SAVE_FEEDBACK_DIAGNOSTIC = 10024;
 
     private final UpdateCoordinator updateCoordinator = new UpdateCoordinator();
     private final StartupUpdateDownloadExecutor startupUpdateDownloadExecutor
@@ -130,6 +136,8 @@ public final class MainActivity
             = new ProcessActionHandler(this);
     private final AppConfigSaveHandler appConfigSaveHandler
             = new AppConfigSaveHandler();
+    private final FeedbackDiagnosticCoordinator feedbackDiagnosticCoordinator
+            = new FeedbackDiagnosticCoordinator(createFeedbackDiagnosticHost());
     private final StartupUpdatePackageHandler startupUpdatePackageHandler
             = new StartupUpdatePackageHandler(this);
     private final ExecutorService startupUpdateExecutor
@@ -207,6 +215,7 @@ public final class MainActivity
     private GlobalPrefillEditorBinder activeGlobalPrefillEditorBinder;
     private QuickTemplateEditorBinder activeQuickTemplateEditorBinder;
     private QuickTemplateTargetsBinder activeQuickTemplateTargetsBinder;
+    private FeedbackDiagnosticCoordinator.Result pendingFeedbackDiagnosticResult;
     private GlobalPrefillEditorBinder.Draft retainedGlobalPrefillDraft;
     private QuickTemplateEditorBinder.Draft retainedQuickTemplateDraft;
     private boolean templateSheetMigrationInProgress;
@@ -492,6 +501,7 @@ public final class MainActivity
     @Override
     protected void onResume() {
         super.onResume();
+        maybeShowPendingFeedbackDiagnosticResult();
         if (toolsWorkspaceBinder != null) {
             toolsWorkspaceBinder.onResume();
         }
@@ -514,6 +524,7 @@ public final class MainActivity
 
     @Override
     protected void onDestroy() {
+        feedbackDiagnosticCoordinator.cancel();
         if (updateDownloadCoordinator != null) {
             updateDownloadCoordinator.shutdown();
         }
@@ -560,6 +571,13 @@ public final class MainActivity
             )) {
                 clearTemplateDetailSelection();
             }
+            return;
+        }
+        if (requestCode == REQUEST_SAVE_FEEDBACK_DIAGNOSTIC
+                && resultCode == RESULT_OK
+                && data != null
+                && data.getData() != null) {
+            saveFeedbackDiagnosticSummary(data.getData());
         }
     }
 
@@ -3519,6 +3537,14 @@ public final class MainActivity
             }
 
             @Override
+            public void startFeedbackDiagnostic(
+                    AppListItem item,
+                    AppConfigDialogBinder.AppConfigDialogState state
+            ) {
+                MainActivity.this.startFeedbackDiagnostic(item, state);
+            }
+
+            @Override
             public int[] saveAppConfig(
                     AppListItem item,
                     TextInputEditText viewportInput,
@@ -3580,6 +3606,179 @@ public final class MainActivity
                 MainActivity.this.showToast(messageResId);
             }
         };
+    }
+
+    private FeedbackDiagnosticCoordinator.Host createFeedbackDiagnosticHost() {
+        return new FeedbackDiagnosticCoordinator.Host() {
+            @Override
+            public boolean launchTargetApp(String packageName) {
+                if (packageName == null || packageName.isBlank()) {
+                    return false;
+                }
+                Intent launchIntent = getPackageManager().getLaunchIntentForPackage(packageName);
+                if (launchIntent == null) {
+                    return false;
+                }
+                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                try {
+                    startActivity(launchIntent);
+                    return true;
+                } catch (ActivityNotFoundException exception) {
+                    return false;
+                }
+            }
+
+            @Override
+            public void bringDpisToFront() {
+                Intent intent = new Intent(MainActivity.this, MainActivity.class)
+                        .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                        .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+            }
+
+            @Override
+            public RootAccessProbe.Result rootAccess() {
+                return RootAccessProbe.cachedResult();
+            }
+
+            @Override
+            public boolean systemHooksEnabled() {
+                return isSystemHookEnabledFromStore();
+            }
+
+            @Override
+            public long currentTimeMillis() {
+                return System.currentTimeMillis();
+            }
+
+            @Override
+            public void onFeedbackDiagnosticFinished(
+                    FeedbackDiagnosticCoordinator.Result result
+            ) {
+                pendingFeedbackDiagnosticResult = result;
+                maybeShowPendingFeedbackDiagnosticResult();
+            }
+        };
+    }
+
+    private void startFeedbackDiagnostic(
+            AppListItem item,
+            AppConfigDialogBinder.AppConfigDialogState state
+    ) {
+        if (item == null) {
+            return;
+        }
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.feedback_diagnostic_action)
+                .setMessage(getString(
+                        R.string.feedback_diagnostic_confirm_message,
+                        item.label
+                ))
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.dialog_confirm_button, (dialog, which) -> {
+                    if (activeAppEditorDialog != null) {
+                        activeAppEditorDialog.dismiss();
+                    }
+                    boolean started = feedbackDiagnosticCoordinator.start(
+                            FeedbackDiagnosticCoordinator.Request.from(item, state)
+                    );
+                    showToast(started
+                            ? R.string.feedback_diagnostic_started
+                            : R.string.feedback_diagnostic_unavailable);
+                })
+                .show();
+    }
+
+    private void maybeShowPendingFeedbackDiagnosticResult() {
+        FeedbackDiagnosticCoordinator.Result result = pendingFeedbackDiagnosticResult;
+        if (result == null) {
+            return;
+        }
+        pendingFeedbackDiagnosticResult = null;
+        new FeedbackDiagnosticResultSheet(this, new FeedbackDiagnosticResultSheet.Host() {
+            @Override
+            public void shareFeedbackDiagnostic(
+                    FeedbackDiagnosticCoordinator.Result result
+            ) {
+                MainActivity.this.shareFeedbackDiagnostic(result);
+            }
+
+            @Override
+            public void saveFeedbackDiagnostic(
+                    FeedbackDiagnosticCoordinator.Result result
+            ) {
+                MainActivity.this.launchSaveFeedbackDiagnosticPicker(result);
+            }
+        }).show(result);
+    }
+
+    @SuppressWarnings("deprecation")
+    private void launchSaveFeedbackDiagnosticPicker(
+            FeedbackDiagnosticCoordinator.Result result
+    ) {
+        if (result == null) {
+            return;
+        }
+        pendingFeedbackDiagnosticResult = result;
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("text/plain")
+                .putExtra(
+                        Intent.EXTRA_TITLE,
+                        "dpis-feedback-diagnostic-" + result.request.packageName + ".txt"
+                );
+        try {
+            startActivityForResult(intent, REQUEST_SAVE_FEEDBACK_DIAGNOSTIC);
+        } catch (ActivityNotFoundException error) {
+            pendingFeedbackDiagnosticResult = null;
+            Toast.makeText(
+                    this,
+                    R.string.feedback_diagnostic_save_failed,
+                    Toast.LENGTH_SHORT
+            ).show();
+        }
+    }
+
+    private void saveFeedbackDiagnosticSummary(Uri uri) {
+        FeedbackDiagnosticCoordinator.Result result = pendingFeedbackDiagnosticResult;
+        pendingFeedbackDiagnosticResult = null;
+        if (uri == null || result == null) {
+            Toast.makeText(this, R.string.feedback_diagnostic_save_failed, Toast.LENGTH_SHORT)
+                    .show();
+            return;
+        }
+        try (OutputStream outputStream = getContentResolver().openOutputStream(uri, "wt")) {
+            if (outputStream == null) {
+                throw new IOException("Unable to open summary output");
+            }
+            outputStream.write(result.summary.getBytes(StandardCharsets.UTF_8));
+            Toast.makeText(this, R.string.feedback_diagnostic_save_success, Toast.LENGTH_SHORT)
+                    .show();
+        } catch (IOException error) {
+            Toast.makeText(this, R.string.feedback_diagnostic_save_failed, Toast.LENGTH_SHORT)
+                    .show();
+        }
+    }
+
+    private void shareFeedbackDiagnostic(FeedbackDiagnosticCoordinator.Result result) {
+        if (result == null) {
+            return;
+        }
+        Intent intent = new Intent(Intent.ACTION_SEND)
+                .setType("text/plain")
+                .putExtra(Intent.EXTRA_TEXT, result.summary);
+        try {
+            startActivity(Intent.createChooser(
+                    intent,
+                    getString(R.string.feedback_diagnostic_share_action)
+            ));
+        } catch (ActivityNotFoundException error) {
+            Toast.makeText(
+                    this,
+                    R.string.feedback_diagnostic_share_failed,
+                    Toast.LENGTH_SHORT
+            ).show();
+        }
     }
 
     private void showFontHookDomains(

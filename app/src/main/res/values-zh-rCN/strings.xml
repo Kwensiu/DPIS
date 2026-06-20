@@ -95,6 +95,16 @@
     <string name="home_donate_title">打赏作者</string>
     <string name="home_donate_summary">向开发者捐赠以支持后续更新</string>
     <string name="dialog_confirm_button">确认</string>
+    <string name="feedback_diagnostic_action">反馈诊断</string>
+    <string name="feedback_diagnostic_confirm_message">将启动 %1$s，并采集约 10 秒的 DPIS 诊断信息。请在此期间到应用内复现问题。</string>
+    <string name="feedback_diagnostic_started">诊断采集已开始</string>
+    <string name="feedback_diagnostic_unavailable">无法启动诊断采集</string>
+    <string name="feedback_diagnostic_result_title">%1$s 的诊断结果</string>
+    <string name="feedback_diagnostic_share_action">分享诊断</string>
+    <string name="feedback_diagnostic_save_action">保存诊断</string>
+    <string name="feedback_diagnostic_save_success">诊断摘要已保存</string>
+    <string name="feedback_diagnostic_save_failed">保存诊断摘要失败</string>
+    <string name="feedback_diagnostic_share_failed">没有可用于分享诊断摘要的应用</string>
     <string name="workspace_app">应用</string>
     <string name="workspace_home">主页</string>
     <string name="workspace_template">模板</string>

@@ -95,6 +95,16 @@
     <string name="home_donate_title">作者を支援</string>
     <string name="home_donate_summary">今後の更新を支援するため、開発者に寄付します。</string>
     <string name="dialog_confirm_button">確認</string>
+    <string name="feedback_diagnostic_action">フィードバック診断</string>
+    <string name="feedback_diagnostic_confirm_message">%1$s を起動し、約 10 秒間 DPIS 診断情報を収集します。その間にアプリ内で問題を再現してください。</string>
+    <string name="feedback_diagnostic_started">診断セッションを開始しました</string>
+    <string name="feedback_diagnostic_unavailable">診断セッションを開始できません</string>
+    <string name="feedback_diagnostic_result_title">%1$s の診断結果</string>
+    <string name="feedback_diagnostic_share_action">診断を共有</string>
+    <string name="feedback_diagnostic_save_action">診断を保存</string>
+    <string name="feedback_diagnostic_save_success">診断サマリーを保存しました</string>
+    <string name="feedback_diagnostic_save_failed">診断サマリーの保存に失敗しました</string>
+    <string name="feedback_diagnostic_share_failed">診断サマリーを共有できるアプリがありません</string>
     <string name="workspace_app">アプリ</string>
     <string name="workspace_home">ホーム</string>
     <string name="workspace_template">テンプレート</string>

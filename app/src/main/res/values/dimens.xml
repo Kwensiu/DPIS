@@ -368,6 +368,9 @@
     <dimen name="dialog_app_config_wizard_hint_close_button_size">28dp</dimen>
     <dimen name="dialog_app_config_wizard_hint_close_button_spacing">8dp</dimen>
     <dimen name="dialog_app_config_wizard_hint_close_button_padding">7dp</dimen>
+    <dimen name="dialog_feedback_diagnostic_button_size">40dp</dimen>
+    <dimen name="dialog_feedback_diagnostic_button_padding">8dp</dimen>
+    <dimen name="dialog_feedback_diagnostic_button_corner_radius">20dp</dimen>
     <dimen name="dialog_app_config_wizard_hint_arrow_width">14dp</dimen>
     <dimen name="dialog_app_config_wizard_hint_arrow_height">7dp</dimen>
 

@@ -103,6 +103,16 @@
     <string name="home_donate_title">Support the author</string>
     <string name="home_donate_summary">Donate to the developer to support future updates.</string>
     <string name="dialog_confirm_button">Confirm</string>
+    <string name="feedback_diagnostic_action">Feedback diagnostic</string>
+    <string name="feedback_diagnostic_confirm_message">Launch %1$s and collect a short DPIS diagnostic session for about 10 seconds. Reproduce the issue in the app during that window.</string>
+    <string name="feedback_diagnostic_started">Diagnostic session started</string>
+    <string name="feedback_diagnostic_unavailable">Unable to start diagnostic session</string>
+    <string name="feedback_diagnostic_result_title">Diagnostic result: %1$s</string>
+    <string name="feedback_diagnostic_share_action">Share diagnostic</string>
+    <string name="feedback_diagnostic_save_action">Save diagnostic</string>
+    <string name="feedback_diagnostic_save_success">Diagnostic summary saved</string>
+    <string name="feedback_diagnostic_save_failed">Failed to save diagnostic summary</string>
+    <string name="feedback_diagnostic_share_failed">No app available to share the diagnostic summary</string>
     <string name="workspace_app">Apps</string>
     <string name="workspace_home">Home</string>
     <string name="workspace_template">Templates</string>

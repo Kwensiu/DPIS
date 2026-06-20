@@ -77,6 +77,7 @@ bundle and does not modify global agent skills.
   - Methods/fields: `camelCase`
   - Constants: `UPPER_SNAKE_CASE`
 - Keep class responsibilities focused; prefer small helper classes over monolithic installers.
+- Do not keep growing `MainActivity` with new feature workflows. New session flows, exporters, diagnostics, coordinators, or feature-specific state machines should live in focused classes under `app/src/main/java/com/dpis/module/`; `MainActivity` should remain an entry/assembly surface that wires UI events to those helpers.
 - Do not introduce unnecessary abstractions; follow KISS/YAGNI.
 
 ## Testing Guidelines
