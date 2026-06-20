@@ -11,7 +11,12 @@ public class ConfigBackupCodecSourceSmokeTest {
     public void codecDefinesSchemaAndSupportedValueTypes() throws IOException {
         String source = read("src/main/java/com/dpis/module/ConfigBackupCodec.java");
 
-        assertTrue(source.contains("SCHEMA_VERSION = 1"));
+        assertTrue(source.contains("SCHEMA_VERSION = 2"));
+        assertTrue(source.contains("KEY_PACKAGE_CONFIGS"));
+        assertTrue(source.contains("decodeSchemaV1"));
+        assertTrue(source.contains("packageConfigs"));
+        assertTrue(source.contains("package_config."));
+        assertTrue(source.contains("packageConfigFieldKeyFromRemainder"));
         assertTrue(source.contains("TYPE_STRING_SET"));
         assertTrue(source.contains("TYPE_INT"));
         assertTrue(source.contains("TYPE_LONG"));
@@ -31,6 +36,8 @@ public class ConfigBackupCodecSourceSmokeTest {
         assertTrue(store.contains("\"font.\" + packageName + \".typeface_id\""));
         assertTrue(settings.contains("Map<String, Object> entries = localStore.snapshotBackup();"));
         assertTrue(settings.contains("String payload = ConfigBackupCodec.encode(entries);"));
+        assertTrue(codec.contains("putEncodedPackageConfigEntry"));
+        assertTrue(codec.contains("decodePackageConfigsInto"));
         assertTrue(codec.contains("encoded.put(KEY_TYPE, TYPE_STRING);"));
         assertTrue(codec.contains("case TYPE_STRING -> encoded.optString(KEY_VALUE, \"\")"));
         assertTrue(codec.contains("TYPE_STRING"));

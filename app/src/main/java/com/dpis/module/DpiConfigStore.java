@@ -1616,6 +1616,7 @@ final class DpiConfigStore {
     private static boolean isBackupConfigKey(String key) {
         return key != null
                 && !isBackupExcludedKey(key)
+                && !KEY_TARGET_PACKAGES.equals(key)
                 && !isLegacyPackageConfigKey(key);
     }
 

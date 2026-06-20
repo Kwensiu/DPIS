@@ -1121,6 +1121,7 @@ public class DpiConfigStoreTest {
 
         Map<String, Object> snapshot = store.snapshotBackup();
 
+        assertFalse(snapshot.containsKey(DpiConfigStore.KEY_TARGET_PACKAGES));
         assertFalse(snapshot.containsKey("font.com.max.xiaoheihe.typeface_id"));
         assertEquals("font_abcd1234",
                 snapshot.get("package_config.com.max.xiaoheihe.font.typeface_id"));
@@ -1165,6 +1166,7 @@ public class DpiConfigStoreTest {
 
         assertEquals("missing_font_id", all.get("default_config.font.typeface_id"));
         assertEquals("Compact", all.get("template.template_a.name"));
+        assertFalse(backup.containsKey(DpiConfigStore.KEY_TARGET_PACKAGES));
         assertEquals("missing_font_id", backup.get("default_config.font.typeface_id"));
         assertEquals(411, backup.get("default_config.viewport.width_dp"));
         assertEquals(ViewportApplyMode.AUTO, backup.get("default_config.viewport.mode"));

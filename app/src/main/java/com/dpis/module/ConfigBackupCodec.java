@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 final class ConfigBackupCodec {
-    private static final int SCHEMA_VERSION = 1;
+    private static final int SCHEMA_VERSION = 2;
 
     private static final String KEY_SCHEMA_VERSION = "schemaVersion";
     private static final String KEY_CREATED_AT_EPOCH_MS = "createdAtEpochMs";
@@ -22,6 +22,7 @@ final class ConfigBackupCodec {
     private static final String KEY_APP_VERSION_CODE = "appVersionCode";
     private static final String KEY_APP_VERSION_NAME = "appVersionName";
     private static final String KEY_ENTRIES = "entries";
+    private static final String KEY_PACKAGE_CONFIGS = "packageConfigs";
     private static final String KEY_TYPE = "type";
     private static final String KEY_VALUE = "value";
 
@@ -31,6 +32,18 @@ final class ConfigBackupCodec {
     private static final String TYPE_LONG = "long";
     private static final String TYPE_FLOAT = "float";
     private static final String TYPE_BOOLEAN = "boolean";
+    private static final String[] PACKAGE_CONFIG_FIELD_KEYS = {
+            "viewport.width_dp",
+            "viewport.target_type",
+            "viewport.scale_permille",
+            "viewport.mode",
+            "font.scale_percent",
+            "font.typeface_id",
+            "font.mode",
+            "font.hook_domains",
+            "target.dpis_enabled",
+            "app.wechat_dpi"
+    };
 
     private ConfigBackupCodec() {
     }
@@ -44,6 +57,7 @@ final class ConfigBackupCodec {
         root.put(KEY_APP_VERSION_NAME, BuildConfig.VERSION_NAME);
 
         JSONObject encodedEntries = new JSONObject();
+        JSONObject encodedPackageConfigs = new JSONObject();
         List<String> keys = new ArrayList<>(entries.keySet());
         Collections.sort(keys);
         for (String key : keys) {
@@ -52,24 +66,54 @@ final class ConfigBackupCodec {
             }
             JSONObject encoded = encodeValue(entries.get(key));
             if (encoded != null) {
-                encodedEntries.put(key, encoded);
+                if (!putEncodedPackageConfigEntry(encodedPackageConfigs, key, encoded)) {
+                    encodedEntries.put(key, encoded);
+                }
             }
         }
         root.put(KEY_ENTRIES, encodedEntries);
+        if (encodedPackageConfigs.length() > 0) {
+            root.put(KEY_PACKAGE_CONFIGS, encodedPackageConfigs);
+        }
         return root.toString(2);
     }
 
     static Map<String, Object> decode(String rawJson) throws JSONException {
         JSONObject root = new JSONObject(rawJson);
         int schemaVersion = root.optInt(KEY_SCHEMA_VERSION, -1);
+        if (schemaVersion == 1) {
+            return decodeSchemaV1(root);
+        }
         if (schemaVersion != SCHEMA_VERSION) {
             throw new IllegalArgumentException("Unsupported backup schema version: " + schemaVersion);
         }
+        LinkedHashMap<String, Object> entries = new LinkedHashMap<>();
+        JSONObject encodedEntries = root.optJSONObject(KEY_ENTRIES);
+        if (encodedEntries != null) {
+            decodeEntrySectionInto(entries, encodedEntries);
+        }
+        JSONObject encodedPackageConfigs = root.optJSONObject(KEY_PACKAGE_CONFIGS);
+        if (encodedPackageConfigs != null) {
+            decodePackageConfigsInto(entries, encodedPackageConfigs);
+        }
+        if (encodedEntries == null && encodedPackageConfigs == null) {
+            throw new IllegalArgumentException("Missing entries section");
+        }
+        return entries;
+    }
+
+    private static Map<String, Object> decodeSchemaV1(JSONObject root) throws JSONException {
         JSONObject encodedEntries = root.optJSONObject(KEY_ENTRIES);
         if (encodedEntries == null) {
             throw new IllegalArgumentException("Missing entries section");
         }
         LinkedHashMap<String, Object> entries = new LinkedHashMap<>();
+        decodeEntrySectionInto(entries, encodedEntries);
+        return entries;
+    }
+
+    private static void decodeEntrySectionInto(Map<String, Object> entries, JSONObject encodedEntries)
+            throws JSONException {
         Iterator<String> keys = encodedEntries.keys();
         while (keys.hasNext()) {
             String key = keys.next();
@@ -82,7 +126,75 @@ final class ConfigBackupCodec {
             }
             entries.put(key, decodeValue(encodedValue));
         }
-        return entries;
+    }
+
+    private static boolean putEncodedPackageConfigEntry(
+            JSONObject encodedPackageConfigs,
+            String key,
+            JSONObject encodedValue) throws JSONException {
+        String prefix = "package_config.";
+        if (!key.startsWith(prefix)) {
+            return false;
+        }
+        String remainder = key.substring(prefix.length());
+        String fieldKey = packageConfigFieldKeyFromRemainder(remainder);
+        if (fieldKey == null) {
+            return false;
+        }
+        String packageName = remainder.substring(0, remainder.length() - fieldKey.length() - 1);
+        if (packageName.isEmpty() || fieldKey.isEmpty()) {
+            return false;
+        }
+        JSONObject packageEntries = encodedPackageConfigs.optJSONObject(packageName);
+        if (packageEntries == null) {
+            packageEntries = new JSONObject();
+            encodedPackageConfigs.put(packageName, packageEntries);
+        }
+        packageEntries.put(fieldKey, encodedValue);
+        return true;
+    }
+
+    private static String packageConfigFieldKeyFromRemainder(String remainder) {
+        if (remainder == null || remainder.isEmpty()) {
+            return null;
+        }
+        for (String fieldKey : PACKAGE_CONFIG_FIELD_KEYS) {
+            if (remainder.endsWith("." + fieldKey)) {
+                return fieldKey;
+            }
+        }
+        return null;
+    }
+
+    private static void decodePackageConfigsInto(
+            Map<String, Object> entries,
+            JSONObject encodedPackageConfigs) throws JSONException {
+        Iterator<String> packageNames = encodedPackageConfigs.keys();
+        while (packageNames.hasNext()) {
+            String packageName = packageNames.next();
+            if (packageName == null || packageName.isEmpty()) {
+                continue;
+            }
+            JSONObject packageEntries = encodedPackageConfigs.optJSONObject(packageName);
+            if (packageEntries == null) {
+                throw new IllegalArgumentException(
+                        "Invalid package config payload for package: " + packageName);
+            }
+            Iterator<String> fieldKeys = packageEntries.keys();
+            while (fieldKeys.hasNext()) {
+                String fieldKey = fieldKeys.next();
+                if (fieldKey == null || fieldKey.isEmpty()) {
+                    continue;
+                }
+                JSONObject encodedValue = packageEntries.optJSONObject(fieldKey);
+                if (encodedValue == null) {
+                    throw new IllegalArgumentException(
+                            "Invalid package config entry for package: " + packageName
+                                    + ", key: " + fieldKey);
+                }
+                entries.put("package_config." + packageName + "." + fieldKey, decodeValue(encodedValue));
+            }
+        }
     }
 
     @SuppressWarnings("unchecked")
