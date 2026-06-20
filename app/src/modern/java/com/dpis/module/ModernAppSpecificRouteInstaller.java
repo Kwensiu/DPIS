@@ -1,5 +1,6 @@
 package com.dpis.module;
 
+import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.Context;
 
@@ -26,6 +27,7 @@ final class ModernAppSpecificRouteInstaller {
         installWechatApplicationAttachHook(xposed);
     }
 
+    @SuppressLint("NewApi")
     static boolean handlePackageLoaded(XposedModule xposed,
             XposedModule.PackageLoadedParam param,
             String processName) {

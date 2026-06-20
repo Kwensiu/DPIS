@@ -799,10 +799,9 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                 success = false;
             }
             boolean finalSuccess = success;
-            int entryCount = entries.size();
             runOnUiThread(() -> {
                 if (finalSuccess) {
-                    showToast(R.string.config_backup_export_success, entryCount);
+                    showToast(R.string.config_backup_export_success);
                     return;
                 }
                 showToast(R.string.config_backup_export_failed);
@@ -829,9 +828,8 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                 runOnUiThread(() -> showToast(R.string.config_backup_import_failed));
                 return;
             }
-            int entryCount = entries.size();
             runOnUiThread(() -> {
-                showToast(R.string.config_backup_import_success, entryCount);
+                showToast(R.string.config_backup_import_success);
                 relaunchDpisTask();
             });
         }, "dpis-config-backup-import").start();

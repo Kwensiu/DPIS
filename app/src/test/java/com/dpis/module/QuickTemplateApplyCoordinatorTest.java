@@ -102,6 +102,39 @@ public class QuickTemplateApplyCoordinatorTest {
     }
 
     @Test
+    public void storeBackedApplyUsesPackageTemplateAdapterOnly() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        assertTrue(store.writePackageConfig("com.tencent.mm", new PackageConfigValue(
+                ViewportTargetSpec.relativeScale(1200),
+                ViewportTargetType.RELATIVE_SCALE,
+                ViewportApplyMode.SYSTEM,
+                130,
+                FontApplyMode.FIELD_REWRITE,
+                "source_font",
+                "resources_font",
+                false,
+                600)));
+        QuickTemplateApplyCoordinator coordinator = new QuickTemplateApplyCoordinator(
+                store);
+
+        QuickTemplateApplyCoordinator.Result result = coordinator.apply(template(
+                orderedSet("com.example.target"),
+                store.readPackageTemplateConfigValue("com.tencent.mm")));
+
+        assertEquals(1, result.successCount());
+        assertEquals(Integer.valueOf(130),
+                store.getTargetFontScalePercent("com.example.target"));
+        assertEquals("source_font", store.getTargetTypefaceId("com.example.target"));
+        assertTrue(store.isTargetDpisEnabled("com.example.target"));
+        assertNull(store.getWechatDpi("com.example.target"));
+        assertFalse(prefs.contains("target.com.example.target.dpis_enabled"));
+        assertFalse(prefs.contains("package_config.com.example.target.target.dpis_enabled"));
+        assertFalse(prefs.contains("wechat.com.example.target.dpi"));
+        assertFalse(prefs.contains("package_config.com.example.target.app.wechat_dpi"));
+    }
+
+    @Test
     public void runtimePublishPlanMirrorsSingleAppSaveForEnabledTemplateValues() {
         QuickTemplateApplyCoordinator.RuntimePublishPlan plan =
                 QuickTemplateApplyCoordinator.RuntimePublishPlan.from(

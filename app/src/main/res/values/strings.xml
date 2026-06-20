@@ -415,9 +415,9 @@
     <string name="config_backup_import_confirm_title">Import backup</string>
     <string name="config_backup_import_confirm_message">Import overwrites current config. Continue?</string>
     <string name="config_backup_confirm_import_action">Import</string>
-    <string name="config_backup_export_success">Exported %1$d config entries</string>
+    <string name="config_backup_export_success">Backup exported</string>
     <string name="config_backup_export_failed">Failed to export backup. Try again.</string>
-    <string name="config_backup_import_success">Imported %1$d config entries</string>
+    <string name="config_backup_import_success">Backup imported</string>
     <string name="config_backup_import_failed">Failed to import backup. Try again.</string>
     <string name="config_backup_import_invalid">Backup file is invalid or unsupported</string>
     <string name="config_backup_picker_failed">Unable to open file picker</string>

@@ -26,6 +26,10 @@ public final class RuntimePropertyRecoveryCoordinatorSourceTest {
         assertTrue(source.contains("idempotent"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)"));
+        assertTrue(app.contains("migrateLocalConfigStore(configStore)"));
+        assertTrue(app.contains("migrateLocalConfigStore(localStore)"));
+        assertTrue(app.contains("store.migrateLegacyWechatDpi()"));
+        assertTrue(app.contains("store.migrateLegacyPackageConfigToAggregated()"));
         assertTrue(receiver.contains("best-effort triggers"));
         assertTrue(receiver.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(store)"));
     }

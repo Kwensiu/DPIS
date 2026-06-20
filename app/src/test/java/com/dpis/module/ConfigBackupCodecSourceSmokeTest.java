@@ -11,12 +11,20 @@ public class ConfigBackupCodecSourceSmokeTest {
     public void codecDefinesSchemaAndSupportedValueTypes() throws IOException {
         String source = read("src/main/java/com/dpis/module/ConfigBackupCodec.java");
 
-        assertTrue(source.contains("SCHEMA_VERSION = 1"));
-        assertTrue(source.contains("TYPE_STRING_SET"));
-        assertTrue(source.contains("TYPE_INT"));
-        assertTrue(source.contains("TYPE_LONG"));
-        assertTrue(source.contains("TYPE_FLOAT"));
-        assertTrue(source.contains("TYPE_BOOLEAN"));
+        assertTrue(source.contains("SCHEMA_VERSION = 3"));
+        assertTrue(source.contains("KEY_PACKAGE_CONFIGS"));
+        assertTrue(source.contains("KEY_RESOLUTION_CONFIGS"));
+        assertTrue(source.contains("KEY_GLOBAL"));
+        assertTrue(source.contains("KEY_DEFAULT_PREFILL"));
+        assertTrue(source.contains("KEY_TEMPLATES"));
+        assertTrue(source.contains("decodeSchemaV1"));
+        assertTrue(source.contains("decodeSchemaV2"));
+        assertTrue(source.contains("packageConfigs"));
+        assertTrue(source.contains("defaultPrefill"));
+        assertTrue(source.contains("package_config."));
+        assertTrue(source.contains("packageConfigFieldKeyFromRemainder"));
+        assertTrue(source.contains("KEY_TYPE"));
+        assertTrue(source.contains("KEY_VALUE"));
         assertTrue(source.contains("switch (type)"));
         assertTrue(source.contains("Unsupported backup schema version"));
         assertTrue(source.contains("Unsupported backup value type"));
@@ -31,9 +39,13 @@ public class ConfigBackupCodecSourceSmokeTest {
         assertTrue(store.contains("\"font.\" + packageName + \".typeface_id\""));
         assertTrue(settings.contains("Map<String, Object> entries = localStore.snapshotBackup();"));
         assertTrue(settings.contains("String payload = ConfigBackupCodec.encode(entries);"));
-        assertTrue(codec.contains("encoded.put(KEY_TYPE, TYPE_STRING);"));
-        assertTrue(codec.contains("case TYPE_STRING -> encoded.optString(KEY_VALUE, \"\")"));
-        assertTrue(codec.contains("TYPE_STRING"));
+        assertTrue(codec.contains("putPackageConfigEntry"));
+        assertTrue(codec.contains("putPackageOwnedConfigEntry"));
+        assertTrue(codec.contains("putDefaultPrefillEntry"));
+        assertTrue(codec.contains("putTemplateEntry"));
+        assertTrue(codec.contains("decodePackageConfigsInto"));
+        assertTrue(codec.contains("decodePackageOwnedConfigsInto"));
+        assertTrue(codec.contains("decodeTemplatesInto"));
         assertTrue(settings.contains("ConfigBackupCodec.decode(payload)"));
         assertTrue(settings.contains("localStore.replaceBackup(entries)"));
         assertTrue(store.contains("BACKUP_EXCLUDED_PREFIXES"));

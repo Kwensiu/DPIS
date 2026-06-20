@@ -37,7 +37,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         DynamicColors.applyToActivitiesIfAvailable(this);
         HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(this);
         configStore = ConfigStoreFactory.createLocalModuleConfigStore(this);
-        configStore.migrateLegacyWechatDpi();
+        migrateLocalConfigStore(configStore);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
         RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore);
         XposedServiceHelper.registerListener(this);
@@ -49,7 +49,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         DpiConfigStore localStore = ConfigStoreFactory.createLocalModuleConfigStore(this);
         DpiConfigStore runtimeDeliveryStore =
                 ConfigStoreFactory.createRuntimeDeliveryModuleConfigStore(service);
-        localStore.migrateLegacyWechatDpi();
+        migrateLocalConfigStore(localStore);
         publishRuntimeConfig(localStore, runtimeDeliveryStore);
         configStore = ConfigStoreFactory.createLocalUiModuleConfigStore(this, service);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
@@ -115,6 +115,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         }
         XposedService service = xposedService;
         DpiConfigStore localStore = ConfigStoreFactory.createLocalModuleConfigStore(application);
+        migrateLocalConfigStore(localStore);
         publishRuntimeConfig(localStore,
                 ConfigStoreFactory.createRuntimeDeliveryModuleConfigStore(service));
         DpiConfigStore refreshedStore = service != null
@@ -141,6 +142,14 @@ public final class DpisApplication extends Application implements XposedServiceH
         for (ServiceStateListener listener : SERVICE_STATE_LISTENERS) {
             listener.onServiceStateChanged();
         }
+    }
+
+    private static void migrateLocalConfigStore(DpiConfigStore store) {
+        if (store == null) {
+            return;
+        }
+        store.migrateLegacyWechatDpi();
+        store.migrateLegacyPackageConfigToAggregated();
     }
 
     private static void publishRuntimeConfig(DpiConfigStore from, DpiConfigStore to) {

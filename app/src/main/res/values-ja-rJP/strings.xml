@@ -396,9 +396,9 @@
     <string name="config_backup_import_confirm_title">バックアップをインポート</string>
     <string name="config_backup_import_confirm_message">インポートすると現在の設定が上書きされます。続行しますか?</string>
     <string name="config_backup_confirm_import_action">インポート</string>
-    <string name="config_backup_export_success">%1$d 件の設定項目をエクスポートしました</string>
+    <string name="config_backup_export_success">バックアップをエクスポートしました</string>
     <string name="config_backup_export_failed">バックアップのエクスポートに失敗しました。再試行してください。</string>
-    <string name="config_backup_import_success">%1$d 件の設定項目をインポートしました</string>
+    <string name="config_backup_import_success">バックアップをインポートしました</string>
     <string name="config_backup_import_failed">バックアップのインポートに失敗しました。再試行してください。</string>
     <string name="config_backup_import_invalid">バックアップファイルが無効、またはサポートされていません</string>
     <string name="config_backup_picker_failed">ファイルピッカーを開けません</string>
