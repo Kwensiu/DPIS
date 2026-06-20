@@ -396,9 +396,9 @@
     <string name="config_backup_import_confirm_title">Импорт резервной копии</string>
     <string name="config_backup_import_confirm_message">Импорт приведет к перезаписи текущей конфигурации. Продолжить?</string>
     <string name="config_backup_confirm_import_action">Импорт</string>
-    <string name="config_backup_export_success">Экспортировано %1$d записей конфигурации</string>
+    <string name="config_backup_export_success">Резервная копия экспортирована</string>
     <string name="config_backup_export_failed">Не удалось экспортировать резервную копию. Попробуйте ещё раз.</string>
-    <string name="config_backup_import_success">Импортировано %1$d записей конфигурации</string>
+    <string name="config_backup_import_success">Резервная копия импортирована</string>
     <string name="config_backup_import_failed">Не удалось импортировать резервную копию. Попробуйте ещё раз.</string>
     <string name="config_backup_import_invalid">Файл резервной копии недействителен или не поддерживается</string>
     <string name="config_backup_picker_failed">Не удается открыть окно выбора файлов</string>
