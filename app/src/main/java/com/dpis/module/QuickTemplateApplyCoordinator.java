@@ -157,20 +157,20 @@ final class QuickTemplateApplyCoordinator {
     }
 
     private static final class StoreConfigWriter implements ConfigWriter {
-        private final DpiConfigStore store;
+        private final PackageConfigRepository packageConfigRepository;
 
         StoreConfigWriter(DpiConfigStore store) {
-            this.store = store;
+            this.packageConfigRepository = new PackageConfigRepository(store);
         }
 
         @Override
         public boolean hasRealPackageConfig(String packageName) {
-            return store != null && store.hasRealPackageConfig(packageName);
+            return packageConfigRepository.hasRealPackageConfig(packageName);
         }
 
         @Override
         public boolean writePackageTemplateConfigValue(String packageName, TemplateConfigValue value) {
-            return store != null && store.writePackageTemplateConfigValue(packageName, value);
+            return packageConfigRepository.writePackageTemplateConfigValue(packageName, value);
         }
     }
 
