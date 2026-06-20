@@ -799,6 +799,33 @@ final class DpiConfigStore {
         });
     }
 
+    boolean migrateLegacyPackageConfigToAggregated() {
+        LinkedHashSet<String> packages = collectLegacyPackageConfigNames(preferences.getAll());
+        if (packages.isEmpty()) {
+            return true;
+        }
+        return commitBoth(editor -> {
+            for (String packageName : packages) {
+                for (int index = 0; index < PACKAGE_CONFIG_KEYS.length; index++) {
+                    PackageConfigKeySpec legacySpec = PACKAGE_CONFIG_KEYS[index];
+                    PackageConfigKeySpec packageSpec = PACKAGE_AGGREGATED_CONFIG_KEYS[index];
+                    String legacyKey = legacySpec.keyForPackage(packageName);
+                    String packageKey = packageSpec.keyForPackage(packageName);
+                    Object legacyValue = readPrimaryPackageConfigValue(legacySpec, legacyKey);
+                    Object normalizedValue = normalizeLegacyPackageConfigValue(
+                            legacyKey,
+                            legacyValue);
+                    if (legacySpec.appliesTo(packageName)
+                            && normalizedValue != null
+                            && !preferences.contains(packageKey)) {
+                        putTypedValue(editor, packageKey, normalizedValue);
+                    }
+                }
+                removePackageConfigKeys(editor, packageName, PACKAGE_CONFIG_KEYS);
+            }
+        });
+    }
+
     boolean hasPrimaryTargetViewportWidthDp(String packageName) {
         return containsInPrimary(keyForViewportWidth(packageName));
     }
@@ -1314,6 +1341,19 @@ final class DpiConfigStore {
         return getString(key, null);
     }
 
+    private Object readPrimaryPackageConfigValue(PackageConfigKeySpec spec, String key) {
+        if (!preferences.contains(key)) {
+            return null;
+        }
+        if (spec.expectsInteger()) {
+            return readPreferenceValue(preferences, prefs -> prefs.getInt(key, 0));
+        }
+        if (spec.expectsBoolean()) {
+            return readPreferenceValue(preferences, prefs -> prefs.getBoolean(key, false));
+        }
+        return readPreferenceValue(preferences, prefs -> prefs.getString(key, null));
+    }
+
     private static boolean isRemovedKey(String key, String... removedKeys) {
         if (removedKeys == null) {
             return false;
@@ -1338,6 +1378,70 @@ final class DpiConfigStore {
                 packages.add(packageName);
             }
         }
+    }
+
+    private static LinkedHashSet<String> collectLegacyPackageConfigNames(Map<String, ?> values) {
+        LinkedHashSet<String> packages = new LinkedHashSet<>();
+        if (values == null || values.isEmpty()) {
+            return packages;
+        }
+        for (String key : values.keySet()) {
+            for (PackageConfigKeySpec spec : PACKAGE_CONFIG_KEYS) {
+                String packageName = spec.packageNameFromStorageKey(key, false);
+                if (packageName != null) {
+                    packages.add(packageName);
+                }
+            }
+        }
+        return packages;
+    }
+
+    private static Object normalizeLegacyPackageConfigValue(String key, Object value) {
+        if (key == null || value == null) {
+            return null;
+        }
+        if (key.startsWith("viewport.") && key.endsWith(".width_dp")) {
+            return value instanceof Integer intValue ? normalizeViewportWidth(intValue) : null;
+        }
+        if (key.startsWith("viewport.") && key.endsWith(".target_type")) {
+            String normalized = value instanceof String stringValue
+                    ? ViewportTargetType.normalize(stringValue)
+                    : ViewportTargetType.OFF;
+            return ViewportTargetType.OFF.equals(normalized) ? null : normalized;
+        }
+        if (key.startsWith("viewport.") && key.endsWith(".scale_permille")) {
+            return value instanceof Integer intValue
+                    ? normalizeViewportScalePermille(intValue)
+                    : null;
+        }
+        if (key.startsWith("viewport.") && key.endsWith(".mode")) {
+            String normalized = value instanceof String stringValue
+                    ? ViewportApplyMode.normalize(stringValue)
+                    : ViewportApplyMode.OFF;
+            return isConfiguredViewportModeValue(normalized) ? normalized : null;
+        }
+        if (key.startsWith("font.") && key.endsWith(".scale_percent")) {
+            return value instanceof Integer intValue ? normalizeFontScalePercent(intValue) : null;
+        }
+        if (key.startsWith("font.") && key.endsWith(".typeface_id")) {
+            return value instanceof String stringValue ? normalizeTypefaceId(stringValue) : null;
+        }
+        if (key.startsWith("font.") && key.endsWith(".mode")) {
+            String normalized = value instanceof String stringValue
+                    ? FontApplyMode.normalize(stringValue)
+                    : FontApplyMode.OFF;
+            return isConfiguredFontModeValue(normalized) ? normalized : null;
+        }
+        if (key.startsWith("font.") && key.endsWith(".hook_domains")) {
+            return value instanceof String stringValue ? normalizeNonEmptyString(stringValue) : null;
+        }
+        if (key.startsWith("target.") && key.endsWith(".dpis_enabled")) {
+            return Boolean.FALSE.equals(value) ? Boolean.FALSE : null;
+        }
+        if (key.startsWith("wechat.") && key.endsWith(".dpi")) {
+            return value instanceof Integer intValue ? WechatDpiConfig.normalize(intValue) : null;
+        }
+        return null;
     }
 
     private static String packageNameFromSavedPackageKey(String key, Object value) {
@@ -1468,7 +1572,8 @@ final class DpiConfigStore {
         if (entries == null) {
             return false;
         }
-        return replaceBackupEntries(preferences, entries);
+        return replaceBackupEntries(preferences, entries)
+                && migrateLegacyPackageConfigToAggregated();
     }
 
     private static boolean replaceBackupEntries(
@@ -1509,7 +1614,21 @@ final class DpiConfigStore {
     }
 
     private static boolean isBackupConfigKey(String key) {
-        return key != null && !isBackupExcludedKey(key);
+        return key != null
+                && !isBackupExcludedKey(key)
+                && !isLegacyPackageConfigKey(key);
+    }
+
+    private static boolean isLegacyPackageConfigKey(String key) {
+        if (key == null) {
+            return false;
+        }
+        for (PackageConfigKeySpec spec : PACKAGE_CONFIG_KEYS) {
+            if (spec.packageNameFromStorageKey(key, false) != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean isBackupExcludedKey(String key) {
@@ -1793,6 +1912,14 @@ final class DpiConfigStore {
             return packageName != null && packagePredicate.test(packageName);
         }
 
+        String packageNameFromStorageKey(String key, boolean requireApplicablePackage) {
+            String packageName = packageNameBetween(key, prefix, suffix);
+            if (packageName == null) {
+                return null;
+            }
+            return !requireApplicablePackage || appliesTo(packageName) ? packageName : null;
+        }
+
         boolean expectsInteger() {
             return minIntValue != null && maxIntValue != null;
         }
@@ -1908,14 +2035,18 @@ final class DpiConfigStore {
     }
 
     private static String normalizeTypefaceId(String typefaceId) {
-        if (typefaceId == null) {
+        return normalizeNonEmptyString(typefaceId);
+    }
+
+    private static String normalizeNonEmptyString(String value) {
+        if (value == null) {
             return null;
         }
-        String normalizedTypefaceId = typefaceId.trim();
-        if (normalizedTypefaceId.isEmpty()) {
+        String normalizedValue = value.trim();
+        if (normalizedValue.isEmpty()) {
             return null;
         }
-        return normalizedTypefaceId;
+        return normalizedValue;
     }
 
     private static String keyForViewportWidth(String packageName) {

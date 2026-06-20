@@ -1110,6 +1110,8 @@ public class DpiConfigStoreTest {
                 .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
                         new LinkedHashSet<>(Set.of("com.max.xiaoheihe")))
                 .putString("font.com.max.xiaoheihe.typeface_id", "font_abcd1234")
+                .putString("package_config.com.max.xiaoheihe.font.typeface_id",
+                        "font_abcd1234")
                 .putString("font.library.entries", "[{\"id\":\"font_abcd1234\"}]")
                 .putBoolean("font.debug.overlay_enabled", true)
                 .putString("runtime.log.ring", "debug log")
@@ -1119,7 +1121,9 @@ public class DpiConfigStoreTest {
 
         Map<String, Object> snapshot = store.snapshotBackup();
 
-        assertEquals("font_abcd1234", snapshot.get("font.com.max.xiaoheihe.typeface_id"));
+        assertFalse(snapshot.containsKey("font.com.max.xiaoheihe.typeface_id"));
+        assertEquals("font_abcd1234",
+                snapshot.get("package_config.com.max.xiaoheihe.font.typeface_id"));
         assertFalse(snapshot.containsKey("font.library.entries"));
         assertFalse(snapshot.containsKey("font.debug.overlay_enabled"));
         assertFalse(snapshot.containsKey("runtime.log.ring"));
@@ -1261,6 +1265,62 @@ public class DpiConfigStoreTest {
         assertEquals("local_done", prefs.getString("font.library.migration_state", null));
         assertTrue(prefs.getBoolean("font.debug.overlay_enabled", false));
         assertEquals("local debug log", prefs.getString("runtime.log.ring", null));
+    }
+
+    @Test
+    public void replaceBackupMigratesLegacyPackageConfigAndDeletesLegacyKeys() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        LinkedHashMap<String, Object> values = new LinkedHashMap<>();
+        values.put(DpiConfigStore.KEY_TARGET_PACKAGES,
+                new LinkedHashSet<>(Set.of("com.tencent.mm")));
+        values.put("viewport.com.tencent.mm.target_type", ViewportTargetType.RELATIVE_SCALE);
+        values.put("viewport.com.tencent.mm.scale_permille", 1250);
+        values.put("font.com.tencent.mm.hook_domains", " resources_font,textview_sp ");
+        values.put("target.com.tencent.mm.dpis_enabled", false);
+        values.put("wechat.com.tencent.mm.dpi", 600);
+
+        assertTrue(store.replaceBackup(values));
+
+        assertEquals(ViewportTargetSpec.relativeScale(1250),
+                store.readPackageConfig("com.tencent.mm").viewportTargetSpec);
+        assertEquals("resources_font,textview_sp",
+                store.readPackageConfig("com.tencent.mm").fontHookDomainsRaw);
+        assertFalse(store.isTargetDpisEnabled("com.tencent.mm"));
+        assertEquals(Integer.valueOf(600), store.getWechatDpi("com.tencent.mm"));
+        assertEquals(ViewportTargetType.RELATIVE_SCALE,
+                prefs.getString("package_config.com.tencent.mm.viewport.target_type", null));
+        assertEquals("resources_font,textview_sp",
+                prefs.getString("package_config.com.tencent.mm.font.hook_domains", null));
+        assertFalse(prefs.contains("viewport.com.tencent.mm.target_type"));
+        assertFalse(prefs.contains("viewport.com.tencent.mm.scale_permille"));
+        assertFalse(prefs.contains("font.com.tencent.mm.hook_domains"));
+        assertFalse(prefs.contains("target.com.tencent.mm.dpis_enabled"));
+        assertFalse(prefs.contains("wechat.com.tencent.mm.dpi"));
+    }
+
+    @Test
+    public void replaceBackupKeepsAggregatedPackageConfigWhenLegacyBackupConflicts() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        LinkedHashMap<String, Object> values = new LinkedHashMap<>();
+        values.put("viewport.com.example.app.target_type", ViewportTargetType.ABSOLUTE_DP);
+        values.put("viewport.com.example.app.width_dp", 411);
+        values.put("package_config.com.example.app.viewport.target_type",
+                ViewportTargetType.RELATIVE_SCALE);
+        values.put("package_config.com.example.app.viewport.scale_permille", 900);
+
+        assertTrue(store.replaceBackup(values));
+
+        assertEquals(ViewportTargetSpec.relativeScale(900),
+                store.readPackageConfig("com.example.app").viewportTargetSpec);
+        assertFalse(prefs.contains("viewport.com.example.app.target_type"));
+        assertFalse(prefs.contains("viewport.com.example.app.width_dp"));
+        assertEquals(ViewportTargetType.RELATIVE_SCALE,
+                prefs.getString("package_config.com.example.app.viewport.target_type", null));
+        assertEquals(Integer.valueOf(900),
+                Integer.valueOf(prefs.getInt(
+                        "package_config.com.example.app.viewport.scale_permille", 0)));
     }
 
     @Test
@@ -1555,6 +1615,105 @@ public class DpiConfigStoreTest {
                 "resources_font,textview_sp",
                 false,
                 600), value);
+    }
+
+    @Test
+    public void migrateLegacyPackageConfigToAggregatedCopiesLegacyOnlyAndDeletesLegacyKeys() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
+                        new LinkedHashSet<>(Set.of("com.tencent.mm")))
+                .putString("viewport.com.tencent.mm.target_type",
+                        ViewportTargetType.RELATIVE_SCALE)
+                .putInt("viewport.com.tencent.mm.scale_permille", 1250)
+                .putString("viewport.com.tencent.mm.mode",
+                        ViewportApplyMode.SYSTEM)
+                .putInt("font.com.tencent.mm.scale_percent", 140)
+                .putString("font.com.tencent.mm.mode",
+                        FontApplyMode.FIELD_REWRITE)
+                .putString("font.com.tencent.mm.typeface_id", "test_font")
+                .putString("font.com.tencent.mm.hook_domains", "resources_font")
+                .putBoolean("target.com.tencent.mm.dpis_enabled", false)
+                .putInt("wechat.com.tencent.mm.dpi", 600)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertTrue(store.migrateLegacyPackageConfigToAggregated());
+
+        assertEquals(new PackageConfigValue(
+                ViewportTargetSpec.relativeScale(1250),
+                ViewportTargetType.RELATIVE_SCALE,
+                ViewportApplyMode.SYSTEM,
+                140,
+                FontApplyMode.FIELD_REWRITE,
+                "test_font",
+                "resources_font",
+                false,
+                600), store.readPackageConfig("com.tencent.mm"));
+        assertEquals(ViewportTargetType.RELATIVE_SCALE,
+                prefs.getString("package_config.com.tencent.mm.viewport.target_type", null));
+        assertEquals(Integer.valueOf(1250),
+                Integer.valueOf(prefs.getInt(
+                        "package_config.com.tencent.mm.viewport.scale_permille", 0)));
+        assertEquals(Integer.valueOf(140),
+                Integer.valueOf(prefs.getInt(
+                        "package_config.com.tencent.mm.font.scale_percent", 0)));
+        assertFalse(prefs.getBoolean(
+                "package_config.com.tencent.mm.target.dpis_enabled", true));
+        assertEquals(Integer.valueOf(600),
+                Integer.valueOf(prefs.getInt(
+                        "package_config.com.tencent.mm.app.wechat_dpi", 0)));
+        assertFalse(prefs.contains("viewport.com.tencent.mm.target_type"));
+        assertFalse(prefs.contains("viewport.com.tencent.mm.scale_permille"));
+        assertFalse(prefs.contains("font.com.tencent.mm.scale_percent"));
+        assertFalse(prefs.contains("font.com.tencent.mm.typeface_id"));
+        assertFalse(prefs.contains("target.com.tencent.mm.dpis_enabled"));
+        assertFalse(prefs.contains("wechat.com.tencent.mm.dpi"));
+    }
+
+    @Test
+    public void migrateLegacyPackageConfigToAggregatedKeepsAggregatedValueOnConflict() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putString("viewport.com.example.app.target_type",
+                        ViewportTargetType.ABSOLUTE_DP)
+                .putInt("viewport.com.example.app.width_dp", 411)
+                .putInt("font.com.example.app.scale_percent", 130)
+                .putString("package_config.com.example.app.viewport.target_type",
+                        ViewportTargetType.RELATIVE_SCALE)
+                .putInt("package_config.com.example.app.viewport.scale_permille", 900)
+                .putInt("package_config.com.example.app.font.scale_percent", 150)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertTrue(store.migrateLegacyPackageConfigToAggregated());
+
+        assertEquals(ViewportTargetSpec.relativeScale(900),
+                store.readPackageConfig("com.example.app").viewportTargetSpec);
+        assertEquals(Integer.valueOf(150),
+                store.readPackageConfig("com.example.app").fontScalePercent);
+        assertFalse(prefs.contains("viewport.com.example.app.target_type"));
+        assertFalse(prefs.contains("viewport.com.example.app.width_dp"));
+        assertFalse(prefs.contains("font.com.example.app.scale_percent"));
+    }
+
+    @Test
+    public void migrateLegacyPackageConfigToAggregatedIgnoresInvalidWechatAndTargetPackagesOnly() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
+                        new LinkedHashSet<>(Set.of("com.example.target_only")))
+                .putInt("wechat.com.example.app.dpi", 600)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertTrue(store.migrateLegacyPackageConfigToAggregated());
+
+        assertFalse(prefs.contains("package_config.com.example.app.app.wechat_dpi"));
+        assertFalse(store.hasUserVisiblePackageConfig("com.example.app"));
+        assertFalse(store.hasUserVisiblePackageConfig("com.example.target_only"));
+        assertEquals(PackageConfigValue.EMPTY, store.readPackageConfig("com.example.target_only"));
+        assertFalse(prefs.contains("wechat.com.example.app.dpi"));
     }
 
     @Test
