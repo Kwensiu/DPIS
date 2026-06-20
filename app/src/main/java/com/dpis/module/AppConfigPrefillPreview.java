@@ -7,10 +7,22 @@ final class AppConfigPrefillPreview {
     static AppListItem applyIfEligible(AppListItem item,
             DpiConfigStore store,
             TemplateConfigValue globalPrefill) {
-        if (item == null || store == null || globalPrefill == null || !globalPrefill.hasAnyValue()) {
+        if (store == null) {
             return item;
         }
-        if (store.hasRealPackageConfig(item.packageName)) {
+        return applyIfEligible(item, new PackageConfigRepository(store), globalPrefill);
+    }
+
+    private static AppListItem applyIfEligible(AppListItem item,
+            PackageConfigRepository packageConfigRepository,
+            TemplateConfigValue globalPrefill) {
+        if (item == null
+                || packageConfigRepository == null
+                || globalPrefill == null
+                || !globalPrefill.hasAnyValue()) {
+            return item;
+        }
+        if (packageConfigRepository.hasRealPackageConfig(item.packageName)) {
             return item;
         }
         return item.withGlobalPrefillPreview(globalPrefill);
