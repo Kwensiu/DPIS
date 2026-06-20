@@ -50,4 +50,61 @@ public final class LogActivitySourceSmokeTest {
         assertTrue(source.contains("rootAccess.status != RootAccessProbe.Status.AVAILABLE"));
         assertTrue(source.contains("LsposedLogReader.readLsposedDpisCurrent()"));
     }
+
+    @Test
+    public void autoRefreshReadsLsposedOnlyWhenLsposedPageIsSelected() throws IOException {
+        String source = SourceSmokeTestPaths.read(
+                "src/main/java/com/dpis/module/LogActivity.java");
+        int autoRefreshStart = source.indexOf("private final Runnable autoRefreshRunnable");
+        int autoRefreshEnd = source.indexOf("private RecyclerView logList;");
+        String autoRefreshBlock = source.substring(autoRefreshStart, autoRefreshEnd);
+
+        assertTrue(autoRefreshBlock.contains(
+                "boolean refreshLsposed = selectedPage == Page.LSPOSED_RELATED;"));
+        assertTrue(autoRefreshBlock.contains("loadLogs(false, refreshLsposed, false);"));
+        assertFalse(autoRefreshBlock.contains("loadLogs(false, false, false);"));
+    }
+
+    @Test
+    public void logExportUsesSystemFilePickerForDiagnosticZip() throws IOException {
+        String source = SourceSmokeTestPaths.read(
+                "src/main/java/com/dpis/module/LogActivity.java");
+        String layout = SourceSmokeTestPaths.read(
+                "src/main/res/layout/activity_log.xml");
+        String providerPaths = SourceSmokeTestPaths.read(
+                "src/main/res/xml/file_provider_paths.xml");
+
+        assertTrue(layout.contains("@+id/log_export_button"));
+        assertTrue(layout.contains("@string/log_action_export"));
+        assertTrue(providerPaths.contains("<cache-path"));
+        assertTrue(source.contains("R.string.log_action_save_logs"));
+        assertTrue(source.contains("R.string.log_action_share_logs"));
+        assertTrue(source.contains("Intent.ACTION_CREATE_DOCUMENT"));
+        assertTrue(source.contains("Intent.ACTION_SEND"));
+        assertTrue(source.contains("FileProvider.getUriForFile"));
+        assertTrue(source.contains("SHARED_LOG_DIRECTORY_NAME"));
+        assertTrue(source.contains("REQUEST_EXPORT_LOGS"));
+        assertTrue(source.contains("LOG_PACKAGE_MIME_TYPE = \"application/zip\""));
+        assertTrue(source.contains(".setType(LOG_PACKAGE_MIME_TYPE)"));
+        assertTrue(source.contains("dpis-logs-%1$tY%1$tm%1$td-%1$tH%1$tM%1$tS.zip"));
+        assertTrue(source.contains("new DpisAppLogStore(this).readRecentEntries();"));
+        assertTrue(source.contains("readLsposedLogsWhenRootAvailable(true)"));
+        assertTrue(source.contains("result.needsRootAccess()"));
+        assertTrue(source.contains("ROOT_REQUIRED_STATUS = \"root required\""));
+        assertTrue(source.contains("builder.append(\"status: \").append(status).append('\\n');"));
+        assertTrue(source.contains("ZipOutputStream"));
+        assertTrue(source.contains("DPIS_LOG_ENTRY_NAME = \"dpis-log.txt\""));
+        assertTrue(source.contains("LSPOSED_LOG_ENTRY_NAME = \"lsposed-log.txt\""));
+        assertTrue(source.contains("writeZipEntry(zip, DPIS_LOG_ENTRY_NAME, exportPackage.dpisLog);"));
+        assertTrue(source.contains("writeZipEntry(zip, LSPOSED_LOG_ENTRY_NAME, exportPackage.lsposedLog);"));
+        assertTrue(source.contains("builder.append(\"# DPIS\").append('\\n');"));
+        assertTrue(source.contains("EMPTY_EXPORT_MESSAGE = \"No log lines found.\""));
+        assertTrue(source.contains("? LSPOSED_EXPORT_SOURCE"));
+        assertTrue(source.contains(": DPIS_EXPORT_SOURCE"));
+        assertFalse(source.contains("R.string.log_export_file_title"));
+        assertFalse(source.contains("R.string.log_action_save_zip"));
+        assertFalse(source.contains("R.string.log_action_share_zip"));
+        assertFalse(source.contains("getString(R.string.log_lsposed_root_required_message) + \"\\n\""));
+        assertFalse(source.contains("append(\"\\n\\n\")"));
+    }
 }

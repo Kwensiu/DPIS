@@ -1,9 +1,14 @@
 package com.dpis.module;
 
+import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -11,9 +16,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -21,6 +28,11 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.textview.MaterialTextView;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -32,12 +44,25 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public final class LogActivity extends LocalizedActivity {
     private static final long AUTO_REFRESH_INTERVAL_MS = 5_000L;
     private static final long SCROLL_IDLE_DELAY_MS = 180L;
     private static final int UI_ENTRY_WINDOW_LIMIT = 1_000;
     private static final int EXPANDED_MESSAGE_MAX_LINES = 40;
+    private static final int REQUEST_EXPORT_LOGS = 1101;
+    private static final int MENU_SAVE_LOGS = 1;
+    private static final int MENU_SHARE_LOGS = 2;
+    private static final String SHARED_LOG_DIRECTORY_NAME = "shared_logs";
+    private static final String LOG_PACKAGE_MIME_TYPE = "application/zip";
+    private static final String DPIS_LOG_ENTRY_NAME = "dpis-log.txt";
+    private static final String LSPOSED_LOG_ENTRY_NAME = "lsposed-log.txt";
+    private static final String DPIS_EXPORT_SOURCE = "DPIS";
+    private static final String LSPOSED_EXPORT_SOURCE = "LSPosed";
+    private static final String ROOT_REQUIRED_STATUS = "root required";
+    private static final String EMPTY_EXPORT_MESSAGE = "No log lines found.";
     private final ExecutorService logExecutor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final Set<String> expandedEntryKeys = new HashSet<>();
@@ -48,7 +73,8 @@ public final class LogActivity extends LocalizedActivity {
             if (destroyed || !resumed || !autoRefreshEnabled) {
                 return;
             }
-            loadLogs(false, false, false);
+            boolean refreshLsposed = selectedPage == Page.LSPOSED_RELATED;
+            loadLogs(false, refreshLsposed, false);
             mainHandler.postDelayed(this, AUTO_REFRESH_INTERVAL_MS);
         }
     };
@@ -129,6 +155,7 @@ public final class LogActivity extends LocalizedActivity {
                 Toast.makeText(this, R.string.log_auto_refresh_paused, Toast.LENGTH_SHORT).show();
             }
         });
+        findViewById(R.id.log_export_button).setOnClickListener(this::showLogExportActions);
         findViewById(R.id.log_refresh_button).setOnClickListener(view -> {
             boolean refreshLsposed = selectedPage == Page.LSPOSED_RELATED;
             loadLogs(false, refreshLsposed, refreshLsposed);
@@ -289,6 +316,186 @@ public final class LogActivity extends LocalizedActivity {
                 }
             });
         });
+    }
+
+    @SuppressWarnings("deprecation")
+    private void showLogExportActions(View anchor) {
+        PopupMenu menu = new PopupMenu(this, anchor);
+        menu.getMenu().add(0, MENU_SAVE_LOGS, 0, R.string.log_action_save_logs);
+        menu.getMenu().add(0, MENU_SHARE_LOGS, 1, R.string.log_action_share_logs);
+        menu.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == MENU_SAVE_LOGS) {
+                launchExportLogPicker();
+                return true;
+            }
+            if (item.getItemId() == MENU_SHARE_LOGS) {
+                shareLogs();
+                return true;
+            }
+            return false;
+        });
+        menu.show();
+    }
+
+    @SuppressWarnings("deprecation")
+    private void launchExportLogPicker() {
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType(LOG_PACKAGE_MIME_TYPE)
+                .putExtra(Intent.EXTRA_TITLE, buildLogExportFileName());
+        try {
+            startActivityForResult(intent, REQUEST_EXPORT_LOGS);
+        } catch (ActivityNotFoundException error) {
+            Toast.makeText(this, R.string.log_export_picker_failed, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQUEST_EXPORT_LOGS) {
+            return;
+        }
+        if (resultCode != Activity.RESULT_OK || data == null || data.getData() == null) {
+            return;
+        }
+        exportLogs(data.getData());
+    }
+
+    private void exportLogs(Uri uri) {
+        if (uri == null) {
+            Toast.makeText(this, R.string.log_export_failed, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Toast.makeText(this, R.string.log_exporting, Toast.LENGTH_SHORT).show();
+        logExecutor.execute(() -> {
+            boolean success;
+            try {
+                writeLogZip(uri, buildExportPackage());
+                success = true;
+            } catch (IOException | RuntimeException exception) {
+                success = false;
+            }
+            boolean finalSuccess = success;
+            mainHandler.post(() -> {
+                if (destroyed) {
+                    return;
+                }
+                Toast.makeText(
+                        this,
+                        finalSuccess ? R.string.log_export_success : R.string.log_export_failed,
+                        Toast.LENGTH_SHORT
+                ).show();
+            });
+        });
+    }
+
+    private void shareLogs() {
+        Toast.makeText(this, R.string.log_exporting, Toast.LENGTH_SHORT).show();
+        logExecutor.execute(() -> {
+            Uri uri = null;
+            boolean success = false;
+            try {
+                File file = writeSharedLogZip(buildExportPackage());
+                uri = FileProvider.getUriForFile(
+                        this,
+                        getPackageName() + ".fileprovider",
+                        file
+                );
+                success = true;
+            } catch (IOException | RuntimeException exception) {
+                success = false;
+            }
+            Uri finalUri = uri;
+            boolean finalSuccess = success;
+            mainHandler.post(() -> {
+                if (destroyed) {
+                    return;
+                }
+                if (!finalSuccess || finalUri == null) {
+                    Toast.makeText(this, R.string.log_export_failed, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                launchLogShareSheet(finalUri);
+            });
+        });
+    }
+
+    private ExportPackage buildExportPackage() {
+        String exportedAt = currentDisplayTime();
+        List<DpisLogEntry> dpisLogEntries = new DpisAppLogStore(this).readRecentEntries();
+        LogReadResult result = readLsposedLogsWhenRootAvailable(true);
+        if (result.needsRootAccess()) {
+            return new ExportPackage(
+                    formatExportPayload(Page.DPIS, dpisLogEntries, exportedAt),
+                    formatExportPayload(
+                            Page.LSPOSED_RELATED,
+                            new ArrayList<>(),
+                            exportedAt,
+                            ROOT_REQUIRED_STATUS
+                    )
+            );
+        }
+        List<DpisLogEntry> lsposedLogEntries;
+        if (result.code != 0 || result.output.isBlank()) {
+            lsposedLogEntries = new ArrayList<>();
+        } else {
+            lsposedLogEntries = DpisLogParser.parseLsposedDpis(result.output);
+        }
+        return new ExportPackage(
+                formatExportPayload(Page.DPIS, dpisLogEntries, exportedAt),
+                formatExportPayload(Page.LSPOSED_RELATED, lsposedLogEntries, exportedAt)
+        );
+    }
+
+    private void writeLogZip(Uri uri, ExportPackage exportPackage) throws IOException {
+        ContentResolver resolver = getContentResolver();
+        try (OutputStream output = resolver.openOutputStream(uri, "wt")) {
+            if (output == null) {
+                throw new IOException("Unable to open log export output stream");
+            }
+            writeLogZip(output, exportPackage);
+        }
+    }
+
+    private File writeSharedLogZip(ExportPackage exportPackage) throws IOException {
+        File directory = new File(getCacheDir(), SHARED_LOG_DIRECTORY_NAME);
+        if (!directory.isDirectory() && !directory.mkdirs()) {
+            throw new IOException("Unable to create shared log directory");
+        }
+        File file = new File(directory, buildLogExportFileName());
+        try (OutputStream output = new FileOutputStream(file, false)) {
+            writeLogZip(output, exportPackage);
+        }
+        return file;
+    }
+
+    private static void writeLogZip(OutputStream output, ExportPackage exportPackage)
+            throws IOException {
+        try (ZipOutputStream zip = new ZipOutputStream(output)) {
+            writeZipEntry(zip, DPIS_LOG_ENTRY_NAME, exportPackage.dpisLog);
+            writeZipEntry(zip, LSPOSED_LOG_ENTRY_NAME, exportPackage.lsposedLog);
+        }
+    }
+
+    private void launchLogShareSheet(Uri uri) {
+        Intent intent = new Intent(Intent.ACTION_SEND)
+                .setType(LOG_PACKAGE_MIME_TYPE)
+                .putExtra(Intent.EXTRA_STREAM, uri)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try {
+            startActivity(Intent.createChooser(intent, getString(R.string.log_action_share_logs)));
+        } catch (ActivityNotFoundException error) {
+            Toast.makeText(this, R.string.log_share_failed, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private static void writeZipEntry(ZipOutputStream zip, String name, String content)
+            throws IOException {
+        zip.putNextEntry(new ZipEntry(name));
+        zip.write((content != null ? content : "").getBytes(StandardCharsets.UTF_8));
+        zip.closeEntry();
     }
 
     private boolean mergeLoadedEntries(
@@ -470,6 +677,73 @@ public final class LogActivity extends LocalizedActivity {
             );
         }
         return LsposedLogReader.readLsposedDpisCurrent();
+    }
+
+    private String buildLogExportFileName() {
+        return String.format(
+                Locale.US,
+                "dpis-logs-%1$tY%1$tm%1$td-%1$tH%1$tM%1$tS.zip",
+                new Date());
+    }
+
+    private static String formatExportPayload(
+            Page exportPage,
+            List<DpisLogEntry> entries,
+            String exportedAt) {
+        return formatExportPayload(exportPage, entries, exportedAt, "");
+    }
+
+    private static String formatExportPayload(
+            Page exportPage,
+            List<DpisLogEntry> entries,
+            String exportedAt,
+            String status) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("# DPIS").append('\n');
+        builder.append("source: ")
+                .append(exportPage == Page.LSPOSED_RELATED
+                        ? LSPOSED_EXPORT_SOURCE
+                        : DPIS_EXPORT_SOURCE)
+                .append('\n');
+        builder.append("exportedAt: ")
+                .append(exportedAt)
+                .append('\n');
+        builder.append("entries: ")
+                .append(entries != null ? entries.size() : 0)
+                .append('\n');
+        if (status != null && !status.isBlank()) {
+            builder.append("status: ").append(status).append('\n');
+        }
+        if (entries == null || entries.isEmpty()) {
+            builder.append(EMPTY_EXPORT_MESSAGE).append('\n');
+            return builder.toString();
+        }
+        for (DpisLogEntry entry : entries) {
+            appendExportEntry(builder, entry);
+        }
+        return builder.toString();
+    }
+
+    private static void appendExportEntry(StringBuilder builder, DpisLogEntry entry) {
+        if (entry == null) {
+            return;
+        }
+        builder.append('[')
+                .append(entry.timestamp)
+                .append("] ")
+                .append(entry.level)
+                .append('/')
+                .append(displayTag(entry));
+        if (!entry.process.isBlank()) {
+            builder.append(" (").append(entry.process).append(')');
+        }
+        if (!entry.modulePackage.isBlank()) {
+            builder.append(" [").append(entry.modulePackage).append(']');
+        }
+        if (!entry.message.isBlank()) {
+            builder.append(' ').append(entry.message);
+        }
+        builder.append('\n');
     }
 
     private static LogReadResult compactReadResult(LogReadResult result) {
@@ -740,6 +1014,16 @@ public final class LogActivity extends LocalizedActivity {
     private static final class EntryHolder extends RecyclerView.ViewHolder {
         EntryHolder(@NonNull View itemView) {
             super(itemView);
+        }
+    }
+
+    private static final class ExportPackage {
+        final String dpisLog;
+        final String lsposedLog;
+
+        ExportPackage(String dpisLog, String lsposedLog) {
+            this.dpisLog = dpisLog != null ? dpisLog : "";
+            this.lsposedLog = lsposedLog != null ? lsposedLog : "";
         }
     }
 
