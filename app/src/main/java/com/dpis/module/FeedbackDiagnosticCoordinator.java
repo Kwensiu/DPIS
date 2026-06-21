@@ -272,6 +272,10 @@ final class FeedbackDiagnosticCoordinator {
         FeedbackDiagnosticRuntimeEvents.start(request.packageName, request);
         recordTimelineEvent("session started");
         recordTimelineEvent("app config resolved");
+        DpisLog.i("feedback diagnostic session started: package="
+                + request.packageName
+                + ", versionName="
+                + valueOrEmpty(request.versionName));
         runningTargetLaunchStarted = true;
         lastObservedForegroundPackage = request.packageName;
         host.onFeedbackDiagnosticStarted();
@@ -350,6 +354,10 @@ final class FeedbackDiagnosticCoordinator {
         long durationMs = Math.max(0L, finishedAt - startedAt);
         RootAccessProbe.Result rootAccess = host.rootAccess();
         boolean systemHooksEnabled = host.systemHooksEnabled();
+        DpisLog.i("feedback diagnostic session finished: package="
+                + request.packageName
+                + ", durationMs="
+                + durationMs);
         Result result = new Result(
                 request,
                 startedAt,

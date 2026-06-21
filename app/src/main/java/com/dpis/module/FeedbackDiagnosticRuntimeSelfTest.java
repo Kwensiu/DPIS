@@ -51,9 +51,7 @@ final class FeedbackDiagnosticRuntimeSelfTest {
             return false;
         }
         return timelineEvents.stream().anyMatch(event ->
-                event.contains("source=runtime-hotpath")
-                        && event.contains("stage=probe")
-                        && event.contains("routeName=process_entry"));
+                event.contains("source=runtime-hotpath"));
     }
 
     static final class Status {

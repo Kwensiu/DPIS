@@ -21,6 +21,7 @@ final class FeedbackDiagnosticExportBuilder {
     static final String MIME_TYPE = "application/zip";
 
     private static final int RECENT_DPIS_LOG_FALLBACK_LIMIT = 100;
+    private static final long RECENT_DPIS_LOG_FALLBACK_WINDOW_MS = 5L * 60L * 1_000L;
     private static final String UNKNOWN = "unknown";
 
     interface RawLogReader {
@@ -347,9 +348,7 @@ final class FeedbackDiagnosticExportBuilder {
             if (event.contains("source=runtime-transport")) {
                 transportCount++;
             }
-            if (event.contains("source=runtime-hotpath")
-                    && event.contains("stage=probe")
-                    && event.contains("routeName=process_entry")) {
+            if (FeedbackDiagnosticRuntimeSelfTest.hasHotPathProbe(List.of(event))) {
                 hotPathProbeFound = true;
             }
         }
@@ -375,8 +374,9 @@ final class FeedbackDiagnosticExportBuilder {
         if ((entries == null || entries.isEmpty())
                 && allEntries != null
                 && !allEntries.isEmpty()) {
-            List<DpisLogEntry> recentEntries = newestEntries(
+            List<DpisLogEntry> recentEntries = recentEntriesNearWindow(
                     allEntries,
+                    window,
                     RECENT_DPIS_LOG_FALLBACK_LIMIT
             );
             return formatDpisEntries(
@@ -386,6 +386,7 @@ final class FeedbackDiagnosticExportBuilder {
                     "scope: recent-fallback\n"
                             + "reason: no DPIS app log entries matched the diagnostic window\n"
                             + "limit: " + RECENT_DPIS_LOG_FALLBACK_LIMIT
+                            + "\nmaxDistanceMs: " + RECENT_DPIS_LOG_FALLBACK_WINDOW_MS
             );
         }
         return formatDpisEntries(
@@ -458,6 +459,31 @@ final class FeedbackDiagnosticExportBuilder {
             return new ArrayList<>(entries);
         }
         return new ArrayList<>(entries.subList(entries.size() - limit, entries.size()));
+    }
+
+    private static List<DpisLogEntry> recentEntriesNearWindow(
+            List<DpisLogEntry> entries,
+            FeedbackDiagnosticSessionWindow window,
+            int limit
+    ) {
+        if (entries == null || entries.isEmpty()) {
+            return List.of();
+        }
+        if (window == null) {
+            return newestEntries(entries, limit);
+        }
+        long fallbackStart = Math.max(0L, window.startMillis - RECENT_DPIS_LOG_FALLBACK_WINDOW_MS);
+        long fallbackEnd = window.endMillis + RECENT_DPIS_LOG_FALLBACK_WINDOW_MS;
+        List<DpisLogEntry> nearby = new ArrayList<>();
+        for (DpisLogEntry entry : entries) {
+            if (entry == null || entry.timestampMillis <= 0L) {
+                continue;
+            }
+            if (entry.timestampMillis >= fallbackStart && entry.timestampMillis <= fallbackEnd) {
+                nearby.add(entry);
+            }
+        }
+        return newestEntries(nearby, limit);
     }
 
     private static FeedbackDiagnosticSessionWindow windowFor(

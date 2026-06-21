@@ -96,7 +96,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
         assertTrue(diagnostic.contains("peakSecond: "));
         assertTrue(diagnostic.contains(" events)"));
         assertTrue(diagnostic.contains("[runtime-anomalies]\nnone observed"));
-        assertTrue(diagnostic.contains("lsposedHotpathProbe: missing in lsposed window"));
+        assertTrue(diagnostic.contains("lsposedHotpathProbe: found"));
         assertTrue(diagnostic.contains("source=lsposed-log"));
         assertTrue(diagnostic.contains("see dpis-log.txt"));
         assertTrue(diagnostic.contains("see lsposed-log.txt"));
@@ -155,7 +155,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
         List<DpisLogEntry> entries = new java.util.ArrayList<>();
         for (int i = 0; i < 105; i++) {
             entries.add(new DpisLogEntry(
-                    millis("2023-11-15 06:10:00.000") + i,
+                    millis("2023-11-15 06:14:00.000") + i,
                     "11-14 22:13:" + String.format(java.util.Locale.US, "%02d", i % 60),
                     "I",
                     "DPIS",
@@ -177,11 +177,52 @@ public final class FeedbackDiagnosticExportBuilderTest {
         assertTrue(dpisLog.contains("scope: recent-fallback"));
         assertTrue(dpisLog.contains("reason: no DPIS app log entries matched the diagnostic window"));
         assertTrue(dpisLog.contains("limit: 100"));
+        assertTrue(dpisLog.contains("maxDistanceMs: 300000"));
         assertTrue(dpisLog.contains("entries: 100"));
         assertFalse(dpisLog.contains("entry-000"));
         assertFalse(dpisLog.contains("entry-004"));
         assertTrue(dpisLog.contains("entry-005"));
         assertTrue(dpisLog.contains("entry-104"));
+    }
+
+    @Test
+    public void dpisLogFallbackIgnoresEntriesFarOutsideSession() throws IOException {
+        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+                () -> List.of(
+                        new DpisLogEntry(
+                                millis("2023-11-15 05:00:00.000"),
+                                "11-14 21:00:00",
+                                "I",
+                                "DPIS",
+                                "io.github.kwensiu.dpis",
+                                "io.github.kwensiu.dpis",
+                                "DPIS",
+                                "far-before",
+                                false
+                        ),
+                        new DpisLogEntry(
+                                millis("2023-11-15 08:00:00.000"),
+                                "11-15 00:00:00",
+                                "I",
+                                "DPIS",
+                                "io.github.kwensiu.dpis",
+                                "io.github.kwensiu.dpis",
+                                "DPIS",
+                                "far-after",
+                                false
+                        )
+                ),
+                () -> new LogReadResult(0, "test-source", "", "")
+        );
+
+        Map<String, String> zipEntries = unzip(builder.buildZip(result()));
+        String dpisLog = zipEntries.get("dpis-log.txt");
+
+        assertTrue(dpisLog.contains("scope: recent-fallback"));
+        assertTrue(dpisLog.contains("entries: 0"));
+        assertTrue(dpisLog.contains("No DPIS app log entries available."));
+        assertFalse(dpisLog.contains("far-before"));
+        assertFalse(dpisLog.contains("far-after"));
     }
 
     @Test
@@ -265,6 +306,28 @@ public final class FeedbackDiagnosticExportBuilderTest {
     }
 
     @Test
+    public void runtimeSelfTestReportsFoundForWechatHotpath() {
+        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+                List::of,
+                () -> new LogReadResult(
+                        0,
+                        "test-source",
+                        "[ 2023-11-15T06:13:20.100     1000:  1234:  5678 I/LSPosedFramework ] "
+                                + "(com.tencent.mm)[io.github.kwensiu.dpis,DPIS,id,0,1] "
+                                + "DPIS DPIS_DIAG_HOTPATH route=wechat_dpi stage=mutation_applied "
+                                + "routeName=displaymetrics package=com.tencent.mm "
+                                + "detail=targetDpi=390",
+                        ""
+                )
+        );
+
+        String text = builder.buildDiagnosticText(wechatResult(List.of(), 390));
+
+        assertTrue(text.contains("[runtime-self-test]"));
+        assertTrue(text.contains("lsposedHotpathProbe: found"));
+    }
+
+    @Test
     public void fileNameUsesZipExtension() {
         FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
                 List::of,
@@ -320,6 +383,39 @@ public final class FeedbackDiagnosticExportBuilderTest {
                 FontApplyMode.FIELD_REWRITE,
                 "font-id",
                 "system_server_font",
+                wechatDpi
+        );
+        return new FeedbackDiagnosticCoordinator.Result(
+                request,
+                SESSION_START_MILLIS,
+                SESSION_END_MILLIS,
+                10_000L,
+                true,
+                RootAccessProbe.Result.available("Magisk"),
+                true,
+                "summary",
+                timelineEvents
+        );
+    }
+
+    private static FeedbackDiagnosticCoordinator.Result wechatResult(
+            List<String> timelineEvents,
+            Integer wechatDpi
+    ) {
+        FeedbackDiagnosticCoordinator.Request request = new FeedbackDiagnosticCoordinator.Request(
+                "com.tencent.mm",
+                "微信",
+                "8.0.74",
+                true,
+                true,
+                true,
+                false,
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                null,
+                FontApplyMode.OFF,
+                null,
+                null,
                 wechatDpi
         );
         return new FeedbackDiagnosticCoordinator.Result(
