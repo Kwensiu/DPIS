@@ -6,4 +6,4 @@ add_library(dpis_native SHARED dpis_native.cpp)
 
 target_compile_features(dpis_native PRIVATE cxx_std_20)
 target_compile_options(dpis_native PRIVATE -Wall -Wextra -Werror)
-target_link_libraries(dpis_native log dl)
+target_link_libraries(dpis_native c++_static log dl)
