@@ -1507,7 +1507,8 @@ public class MainActivitySourceSmokeTest {
         assertTrue(
             source.contains("MainActivity.this.getFontHookDomainsButtonText(")
         );
-        assertTrue(source.contains("new HookDomainOverrideStore(store)"));
+        assertTrue(source.contains("resolveFontHookDomainsForDraft(item, state)"));
+        assertTrue(source.contains("new HookDomainOverrideStore(getHookConfigStore()).read("));
         assertTrue(source.contains("FontHookDomainDialog.show("));
         assertTrue(source.contains("isFontHookDomainEditingEnabled()"));
         assertTrue(source.contains("AppConfigDialogBinder.resolveFontMode(findFontModeToggle(root))"));
@@ -1538,18 +1539,8 @@ public class MainActivitySourceSmokeTest {
         String method = source.substring(methodStart, methodEnd);
 
         assertTrue(
-            method.contains(
-                "boolean previewMode = state != null && state.previewFromGlobalPrefill"
-            )
-        );
-        assertFalse(
-            method.contains(
-                "boolean previewMode = item.previewFromGlobalPrefill"
-            )
-        );
-        assertTrue(
             compact(method).contains(
-                "HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw)"
+                "HookDomainOverride currentOverride = resolveFontHookDomainsForDraft(item, state);"
             )
         );
         assertTrue(

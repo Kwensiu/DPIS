@@ -4143,16 +4143,7 @@ public final class MainActivity
         }
         DpiConfigStore store = getHookConfigStore();
         Set<String> automaticKnownDomains = recommendedTemplateFontHookDomains();
-        boolean previewMode = state != null && state.previewFromGlobalPrefill;
-        HookDomainOverride currentOverride = previewMode
-                ? normalizedFontHookDomainsOverride(
-                        HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw),
-                        automaticKnownDomains)
-                : state != null && state.fontHookDomainsResetRequested
-                        ? HookDomainOverride.automatic()
-                        : normalizedFontHookDomainsOverride(
-                                new HookDomainOverrideStore(store).read(item.packageName),
-                                automaticKnownDomains);
+        HookDomainOverride currentOverride = resolveFontHookDomainsForDraft(item, state);
         FontHookDomainDialog.show(
                 this,
                 new FontHookDomainDialog.Host() {
