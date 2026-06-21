@@ -181,7 +181,7 @@
     <string name="home_workspace_status_enabled">Enabled</string>
     <string name="home_workspace_status_enable_in_lsposed">Enable the module in LSPosed</string>
     <string name="home_workspace_status_configured_apps">Configured apps</string>
-    <string name="home_workspace_status_configured_apps_value" translatable="false">%1$d/%2$d</string>
+    <string name="home_workspace_status_configured_apps_value" translatable="false">%1$d</string>
     <string name="home_workspace_status_imported_fonts">Imported fonts</string>
     <string name="home_workspace_status_templates">Templates</string>
     <string name="home_update_checking">Checking for updates</string>

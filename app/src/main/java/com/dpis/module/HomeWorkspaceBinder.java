@@ -20,8 +20,7 @@ final class HomeWorkspaceBinder {
 
     static final class State {
         final boolean xposedModuleActivated;
-        final int enabledConfiguredAppCount;
-        final int totalConfiguredAppCount;
+        final int configuredAppCount;
         final int importedFontCount;
         final int templateCount;
         final RootAccessProbe.Result rootAccess;
@@ -29,16 +28,14 @@ final class HomeWorkspaceBinder {
         final Actions actions;
 
         State(boolean xposedModuleActivated,
-                int enabledConfiguredAppCount,
-                int totalConfiguredAppCount,
+                int configuredAppCount,
                 int importedFontCount,
                 int templateCount,
                 RootAccessProbe.Result rootAccess,
                 HomeUpdateUiState updateState,
                 Actions actions) {
             this.xposedModuleActivated = xposedModuleActivated;
-            this.enabledConfiguredAppCount = Math.max(0, enabledConfiguredAppCount);
-            this.totalConfiguredAppCount = Math.max(0, totalConfiguredAppCount);
+            this.configuredAppCount = Math.max(0, configuredAppCount);
             this.importedFontCount = Math.max(0, importedFontCount);
             this.templateCount = Math.max(0, templateCount);
             this.rootAccess = rootAccess != null
@@ -151,8 +148,7 @@ final class HomeWorkspaceBinder {
                 workspaceView.findViewById(R.id.home_configured_apps_value),
                 context.getString(
                         R.string.home_workspace_status_configured_apps_value,
-                        state.enabledConfiguredAppCount,
-                        state.totalConfiguredAppCount
+                        state.configuredAppCount
                 )
         );
         setText(

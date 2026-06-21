@@ -2913,7 +2913,6 @@ public final class MainActivity
         );
         return new HomeWorkspaceBinder.State(
                 HomeActivationStateResolver.isActivatedForHome(),
-                countEnabledUserVisibleConfiguredPackages(configStore, configuredPackages),
                 visibleConfiguredAppCount,
                 ConfigStoreFactory.createLocalUiFontLibraryStore(
                         this,
@@ -2973,21 +2972,6 @@ public final class MainActivity
                 );
             }
         };
-    }
-
-    private static int countEnabledUserVisibleConfiguredPackages(DpiConfigStore store,
-            java.util.Set<String> packageNames) {
-        if (store == null || packageNames == null || packageNames.isEmpty()) {
-            return 0;
-        }
-        int count = 0;
-        for (String packageName : packageNames) {
-            if (store.hasUserVisiblePackageConfig(packageName)
-                    && store.isTargetDpisEnabled(packageName)) {
-                count++;
-            }
-        }
-        return count;
     }
 
     private static int countUserVisibleConfiguredPackages(DpiConfigStore store,
