@@ -423,6 +423,16 @@ final class ResourcesManagerHookInstaller {
             ViewportOverride.apply(config, result);
         }
         String modeLabel = applyToConfiguration ? "config" : "metrics";
+        String detail = "source=" + sourceTag
+                + ", mode=" + modeLabel
+                + ", scope=" + (windowScoped ? "window" : "display")
+                + ", targetViewportWidthDp=" + describeNullable(targetViewportWidth)
+                + ", widthDp=" + originalWidthDp + "->" + result.widthDp
+                + ", heightDp=" + originalHeightDp + "->" + result.heightDp
+                + ", smallestWidthDp=" + originalSmallestWidthDp + "->"
+                + result.smallestWidthDp
+                + ", densityDpi=" + originalDensityDpi + "->" + result.densityDpi
+                + ", fontScale=" + fontScale.original + "->" + config.fontScale;
         String message = "DPIS_VIEWPORT " + sourceTag + " (" + modeLabel
                 + ") override: package=" + packageName
                 + ", targetViewportWidthDp=" + describeNullable(targetViewportWidth)
@@ -437,14 +447,22 @@ final class ResourcesManagerHookInstaller {
                 + ", densityDpi " + originalDensityDpi + " -> "
                 + result.densityDpi
                 + ", fontScale " + fontScale.original + " -> " + config.fontScale;
-        logIfChanged(packageName + ":" + sourceTag, message);
+        if (logIfChanged(packageName + ":" + sourceTag, message)) {
+            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                    packageName,
+                    "viewport",
+                    "resources_manager_config_override",
+                    detail);
+        }
     }
 
-    private static void logIfChanged(String key, String message) {
+    private static boolean logIfChanged(String key, String message) {
         String previous = LAST_MESSAGES.put(key, message);
         if (!message.equals(previous)) {
             DpisLog.i(message);
+            return true;
         }
+        return false;
     }
 
     private static Object readField(Object target, String fieldName) {

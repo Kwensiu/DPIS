@@ -402,7 +402,13 @@ final class ResourcesReadHookInstaller {
                     && stableResult != null && stableResult.densityDpi > 0
                     && config.densityDpi != stableResult.densityDpi) {
                 config.densityDpi = stableResult.densityDpi;
-                logIfChanged(packageName + ":" + sourceTag + ":stable-target",
+                String detail = "source=" + sourceTag
+                        + ", widthDp=" + config.screenWidthDp
+                        + ", heightDp=" + config.screenHeightDp
+                        + ", smallestWidthDp=" + config.smallestScreenWidthDp
+                        + ", densityDpi=" + originalDensityDpi + "->" + config.densityDpi
+                        + ", fontScale=" + fontScale.original + "->" + config.fontScale;
+                if (logIfChanged(packageName + ":" + sourceTag + ":stable-target",
                         "DPIS_VIEWPORT " + sourceTag + " stable target: package=" + packageName
                                 + ", targetViewportWidthDp=" + describeNullable(targetViewportWidth)
                                 + ", widthDp="
@@ -412,11 +418,27 @@ final class ResourcesReadHookInstaller {
                                 + ", densityDpi " + originalDensityDpi
                                 + " -> " + config.densityDpi
                                 + ", fontScale " + fontScale.original
-                                + " -> " + config.fontScale);
+                                + " -> " + config.fontScale)) {
+                    FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                            packageName,
+                            "viewport",
+                            "resources_read_configuration_stable_target",
+                            detail);
+                }
             }
             return;
         }
-        logIfChanged(packageName + ":" + sourceTag,
+        String detail = "source=" + sourceTag
+                + ", mode=" + (applyToConfiguration ? "config" : "metrics")
+                + ", scope=" + (windowScoped ? "window" : "display")
+                + ", targetViewportWidthDp=" + describeNullable(targetViewportWidth)
+                + ", widthDp=" + originalWidthDp + "->" + config.screenWidthDp
+                + ", heightDp=" + originalHeightDp + "->" + config.screenHeightDp
+                + ", smallestWidthDp=" + originalSmallestWidthDp + "->"
+                + config.smallestScreenWidthDp
+                + ", densityDpi=" + originalDensityDpi + "->" + config.densityDpi
+                + ", fontScale=" + fontScale.original + "->" + config.fontScale;
+        if (logIfChanged(packageName + ":" + sourceTag,
                 "DPIS_VIEWPORT " + sourceTag + " override: package=" + packageName
                         + ", targetViewportWidthDp=" + describeNullable(targetViewportWidth)
                         + ", scope=" + (windowScoped ? "window" : "display")
@@ -430,7 +452,13 @@ final class ResourcesReadHookInstaller {
                         + ", smallestWidthDp " + originalSmallestWidthDp + " -> "
                         + config.smallestScreenWidthDp
                         + ", densityDpi " + originalDensityDpi + " -> " + config.densityDpi
-                        + ", fontScale " + fontScale.original + " -> " + config.fontScale);
+                        + ", fontScale " + fontScale.original + " -> " + config.fontScale)) {
+            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                    packageName,
+                    "viewport",
+                    "resources_read_configuration_override",
+                    detail);
+        }
     }
 
     static void applyMetricsOverride(DisplayMetrics metrics,
@@ -698,7 +726,14 @@ final class ResourcesReadHookInstaller {
         if (!metricsChanged) {
             return;
         }
-        logIfChanged(packageName + ":ResourcesRead(getDisplayMetrics)",
+        String detail = "source=ResourcesRead(getDisplayMetrics)"
+                + ", densitySource=" + densitySource
+                + ", densityDpi=" + originalDensityDpi + "->" + metrics.densityDpi
+                + ", density=" + originalDensity + "->" + metrics.density
+                + ", scaledDensity=" + originalScaledDensity + "->" + metrics.scaledDensity
+                + ", widthPx=" + originalWidthPixels + "->" + metrics.widthPixels
+                + ", heightPx=" + originalHeightPixels + "->" + metrics.heightPixels;
+        if (logIfChanged(packageName + ":ResourcesRead(getDisplayMetrics)",
                 "DPIS_VIEWPORT ResourcesRead(getDisplayMetrics) override: package=" + packageName
                         + ", densitySource=" + densitySource
                         + ", resolution=" + describeResolution(
@@ -712,7 +747,13 @@ final class ResourcesReadHookInstaller {
                         + ", scaledDensity " + originalScaledDensity + " -> "
                         + metrics.scaledDensity
                         + ", widthPx " + originalWidthPixels + " -> " + metrics.widthPixels
-                        + ", heightPx " + originalHeightPixels + " -> " + metrics.heightPixels);
+                        + ", heightPx " + originalHeightPixels + " -> " + metrics.heightPixels)) {
+            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                    packageName,
+                    "viewport",
+                    "resources_read_display_metrics_override",
+                    detail);
+        }
     }
 
     private static void logFontMetricsIfChanged(boolean metricsChanged,
@@ -794,11 +835,13 @@ final class ResourcesReadHookInstaller {
         return result != null ? new LocalMetricsViewportResult(resolution, result) : null;
     }
 
-    private static void logIfChanged(String key, String message) {
+    private static boolean logIfChanged(String key, String message) {
         String previous = LAST_MESSAGES.put(key, message);
         if (!message.equals(previous)) {
             DpisLog.i(message);
+            return true;
         }
+        return false;
     }
 
     private static String describeConfiguration(Configuration config) {

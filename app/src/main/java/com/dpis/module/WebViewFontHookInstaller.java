@@ -49,11 +49,28 @@ final class WebViewFontHookInstaller {
                         if (Boolean.TRUE.equals(INTERNAL_UPDATE.get())) {
                             return result;
                         }
+                        String detail = "textZoom=" + targetZoom
+                                + ", settings=" + settings.getClass().getName();
+                        FeedbackDiagnosticRuntimeHotPathEvents.begin(
+                                packageName,
+                                "webview_text_zoom",
+                                detail
+                        );
                         INTERNAL_UPDATE.set(Boolean.TRUE);
                         try {
                             settings.setTextZoom(targetZoom);
+                            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                                    packageName,
+                                    "webview_text_zoom",
+                                    detail
+                            );
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
+                            FeedbackDiagnosticRuntimeHotPathEvents.end(
+                                    packageName,
+                                    "webview_text_zoom",
+                                    detail
+                            );
                         }
                         logIfChanged(buildFontLogKey(packageName, "webview-getsettings"),
                                 "DPIS_FONT WebView getSettings override: textZoom=" + targetZoom);
@@ -92,13 +109,31 @@ final class WebViewFontHookInstaller {
                         if (!(thisObject instanceof WebSettings settings)) {
                             return result;
                         }
+                        int incomingZoom = (Integer) chain.getArg(0);
+                        String detail = "in=" + incomingZoom
+                                + ", out=" + targetZoom
+                                + ", settings=" + settings.getClass().getName();
+                        FeedbackDiagnosticRuntimeHotPathEvents.begin(
+                                packageName,
+                                "webview_text_zoom",
+                                detail
+                        );
                         INTERNAL_UPDATE.set(Boolean.TRUE);
                         try {
                             settings.setTextZoom(targetZoom);
+                            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                                    packageName,
+                                    "webview_text_zoom",
+                                    detail
+                            );
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
+                            FeedbackDiagnosticRuntimeHotPathEvents.end(
+                                    packageName,
+                                    "webview_text_zoom",
+                                    detail
+                            );
                         }
-                        int incomingZoom = (Integer) chain.getArg(0);
                         if (incomingZoom != targetZoom) {
                             logIfChanged(buildFontLogKey(packageName, "websettings-settextzoom"),
                                     "DPIS_FONT WebSettings setTextZoom override: in="
@@ -135,11 +170,28 @@ final class WebViewFontHookInstaller {
                             return result;
                         }
                         Method setTextZoom = x5WebSettingsClass.getMethod("setTextZoom", int.class);
+                        String detail = "textZoom=" + targetZoom
+                                + ", settings=" + result.getClass().getName();
+                        FeedbackDiagnosticRuntimeHotPathEvents.begin(
+                                packageName,
+                                "x5_webview_text_zoom",
+                                detail
+                        );
                         INTERNAL_UPDATE.set(Boolean.TRUE);
                         try {
                             setTextZoom.invoke(result, targetZoom);
+                            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                                    packageName,
+                                    "x5_webview_text_zoom",
+                                    detail
+                            );
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
+                            FeedbackDiagnosticRuntimeHotPathEvents.end(
+                                    packageName,
+                                    "x5_webview_text_zoom",
+                                    detail
+                            );
                         }
                         logIfChanged(buildFontLogKey(packageName, "x5-webview-getsettings"),
                                 "DPIS_FONT X5 WebView getSettings override: textZoom=" + targetZoom);
@@ -162,13 +214,31 @@ final class WebViewFontHookInstaller {
                             return result;
                         }
                         Method setTextZoom = x5WebSettingsClass.getMethod("setTextZoom", int.class);
+                        int incomingZoom = (Integer) chain.getArg(0);
+                        String detail = "in=" + incomingZoom
+                                + ", out=" + targetZoom
+                                + ", settings=" + thisObject.getClass().getName();
+                        FeedbackDiagnosticRuntimeHotPathEvents.begin(
+                                packageName,
+                                "x5_webview_text_zoom",
+                                detail
+                        );
                         INTERNAL_UPDATE.set(Boolean.TRUE);
                         try {
                             setTextZoom.invoke(thisObject, targetZoom);
+                            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                                    packageName,
+                                    "x5_webview_text_zoom",
+                                    detail
+                            );
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
+                            FeedbackDiagnosticRuntimeHotPathEvents.end(
+                                    packageName,
+                                    "x5_webview_text_zoom",
+                                    detail
+                            );
                         }
-                        int incomingZoom = (Integer) chain.getArg(0);
                         if (incomingZoom != targetZoom) {
                             logIfChanged(buildFontLogKey(packageName, "x5-websettings-settextzoom"),
                                     "DPIS_FONT X5 WebSettings setTextZoom override: in="

@@ -551,6 +551,18 @@
                         />
                     </LinearLayout>
 
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/land_detail_feedback_diagnostic_row"
+                        style="@style/Widget.Dpis.DialogActionButton.Outlined"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/land_app_detail_action_button_height"
+                        android:layout_marginTop="@dimen/land_app_detail_action_button_spacing"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:minWidth="0dp"
+                        android:text="@string/feedback_diagnostic_record_action"
+                    />
+
                     <LinearLayout
                         android:id="@+id/land_detail_advanced_reset_row"
                         android:layout_width="match_parent"

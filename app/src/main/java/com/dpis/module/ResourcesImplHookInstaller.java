@@ -150,14 +150,28 @@ final class ResourcesImplHookInstaller {
             float originalScaledDensity = metrics != null ? metrics.scaledDensity : -1f;
             boolean metricsApplied = applyScaledDensityIfChanged(metrics, config);
             if (fontScaleApplied || metricsApplied) {
-                logIfChanged(packageName + ":observe",
+                String detail = "source=ResourcesImpl"
+                        + ", widthDp=" + originalWidthDp
+                        + ", heightDp=" + originalHeightDp
+                        + ", smallestWidthDp=" + originalSmallestWidthDp
+                        + ", densityDpi=" + originalDensityDpi
+                        + ", fontScale=" + fontScale.original + "->" + config.fontScale
+                        + ", scaledDensity=" + originalScaledDensity + "->"
+                        + (metrics != null ? metrics.scaledDensity : -1f);
+                if (logIfChanged(packageName + ":observe",
                         "DPIS_VIEWPORT ResourcesImpl observe: widthDp=" + originalWidthDp
                                 + ", heightDp=" + originalHeightDp
                                 + ", smallestWidthDp=" + originalSmallestWidthDp
                                 + ", densityDpi=" + originalDensityDpi
                                 + ", fontScale=" + fontScale.original + " -> " + config.fontScale
                                 + ", scaledDensity=" + originalScaledDensity + " -> "
-                                + (metrics != null ? metrics.scaledDensity : -1f));
+                                + (metrics != null ? metrics.scaledDensity : -1f))) {
+                    FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                            packageName,
+                            "viewport",
+                            "resources_impl_observe",
+                            detail);
+                }
             }
             return;
         }
@@ -223,14 +237,27 @@ final class ResourcesImplHookInstaller {
                         stableResult.densityDpi, config.fontScale);
                 metrics.widthPixels = stableResult.widthPx;
                 metrics.heightPixels = stableResult.heightPx;
-                logIfChanged(packageName + ":window-like-borrow",
+                String detail = "source=ResourcesImpl"
+                        + ", widthDp=" + config.screenWidthDp
+                        + ", heightDp=" + config.screenHeightDp
+                        + ", smallestWidthDp=" + config.smallestScreenWidthDp
+                        + ", metricsDensityDpi=" + metrics.densityDpi
+                        + ", metricsWidthPx=" + metrics.widthPixels
+                        + ", metricsHeightPx=" + metrics.heightPixels;
+                if (logIfChanged(packageName + ":window-like-borrow",
                         "DPIS_VIEWPORT ResourcesImpl window-like borrow: widthDp="
                                 + config.screenWidthDp
                                 + ", heightDp=" + config.screenHeightDp
                                 + ", smallestWidthDp=" + config.smallestScreenWidthDp
                                 + ", metricsDensityDpi=" + metrics.densityDpi
                                 + ", metricsWidthPx=" + metrics.widthPixels
-                                + ", metricsHeightPx=" + metrics.heightPixels);
+                                + ", metricsHeightPx=" + metrics.heightPixels)) {
+                    FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                            packageName,
+                            "viewport",
+                            "resources_impl_window_like_borrow",
+                            detail);
+                }
                 return;
             }
             if (result.densityDpi <= 0
@@ -245,7 +272,15 @@ final class ResourcesImplHookInstaller {
                     metrics.widthPixels = stableResult.widthPx;
                     metrics.heightPixels = stableResult.heightPx;
                 }
-                logIfChanged(packageName + ":stable-target",
+                String detail = "source=ResourcesImpl"
+                        + ", widthDp=" + config.screenWidthDp
+                        + ", heightDp=" + config.screenHeightDp
+                        + ", smallestWidthDp=" + config.smallestScreenWidthDp
+                        + ", densityDpi=" + originalDensityDpi + "->" + config.densityDpi
+                        + ", metricsDensityDpi=" + (metrics != null ? metrics.densityDpi : -1)
+                        + ", metricsWidthPx=" + (metrics != null ? metrics.widthPixels : -1)
+                        + ", metricsHeightPx=" + (metrics != null ? metrics.heightPixels : -1);
+                if (logIfChanged(packageName + ":stable-target",
                         "DPIS_VIEWPORT ResourcesImpl stable target: widthDp="
                                 + config.screenWidthDp
                                 + ", heightDp=" + config.screenHeightDp
@@ -257,7 +292,13 @@ final class ResourcesImplHookInstaller {
                                 + ", metricsWidthPx="
                                 + (metrics != null ? metrics.widthPixels : -1)
                                 + ", metricsHeightPx="
-                                + (metrics != null ? metrics.heightPixels : -1));
+                                + (metrics != null ? metrics.heightPixels : -1))) {
+                    FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                            packageName,
+                            "viewport",
+                            "resources_impl_stable_target",
+                            detail);
+                }
                 return;
             }
             applyScaledDensityIfChanged(metrics, config);
@@ -279,7 +320,18 @@ final class ResourcesImplHookInstaller {
             }
         }
         String modeLabel = applyToConfiguration ? "config" : "metrics";
-        logIfChanged(packageName + ":override",
+        String detail = "source=ResourcesImpl"
+                + ", mode=" + modeLabel
+                + ", scope=" + (windowScoped ? "window" : "display")
+                + ", widthDp=" + originalWidthDp + "->" + result.widthDp
+                + ", heightDp=" + originalHeightDp + "->" + result.heightDp
+                + ", smallestWidthDp=" + originalSmallestWidthDp + "->" + result.smallestWidthDp
+                + ", densityDpi=" + originalDensityDpi + "->" + result.densityDpi
+                + ", fontScale=" + fontScale.original + "->" + config.fontScale
+                + ", metricsDensityDpi=" + (metrics != null ? metrics.densityDpi : -1)
+                + ", metricsWidthPx=" + (metrics != null ? metrics.widthPixels : -1)
+                + ", metricsHeightPx=" + (metrics != null ? metrics.heightPixels : -1);
+        if (logIfChanged(packageName + ":override",
                 "DPIS_VIEWPORT ResourcesImpl (" + modeLabel + ") override: scope="
                         + (windowScoped ? "window" : "display")
                         + ", widthDp "
@@ -292,14 +344,22 @@ final class ResourcesImplHookInstaller {
                         + ", fontScale " + fontScale.original + " -> " + config.fontScale
                         + ", metricsDensityDpi=" + (metrics != null ? metrics.densityDpi : -1)
                         + ", metricsWidthPx=" + (metrics != null ? metrics.widthPixels : -1)
-                        + ", metricsHeightPx=" + (metrics != null ? metrics.heightPixels : -1));
+                        + ", metricsHeightPx=" + (metrics != null ? metrics.heightPixels : -1))) {
+            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                    packageName,
+                    "viewport",
+                    "resources_impl_override",
+                    detail);
+        }
     }
 
-    private static void logIfChanged(String key, String message) {
+    private static boolean logIfChanged(String key, String message) {
         String previous = LAST_MESSAGES.put(key, message);
         if (!message.equals(previous)) {
             DpisLog.i(message);
+            return true;
         }
+        return false;
     }
 
     private static boolean applyScaledDensityIfChanged(DisplayMetrics metrics,

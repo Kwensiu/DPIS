@@ -1,7 +1,6 @@
 package com.dpis.module;
 
 import android.app.Activity;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,10 +12,6 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textview.MaterialTextView;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
 final class ProcessActionHandler {
     enum Action {
         START,
@@ -25,9 +20,11 @@ final class ProcessActionHandler {
     }
 
     private final Activity activity;
+    private final RootAppProcessLauncher rootLauncher;
 
     ProcessActionHandler(Activity activity) {
         this.activity = activity;
+        this.rootLauncher = new RootAppProcessLauncher(activity);
     }
 
     void execute(AppListItem item, Action action) {
@@ -80,24 +77,24 @@ final class ProcessActionHandler {
     private void runProcessAction(String packageName, String appLabel, Action action) {
         String actionLabel = resolveActionLabel(action);
         new Thread(() -> {
-            ShellResult result;
+            RootAppProcessLauncher.ShellResult result;
             if (action == Action.START) {
-                result = rootStartPackage(packageName);
+                result = rootLauncher.start(packageName);
                 if (result.code != 0) {
                     result = startPackage(packageName);
                 }
             } else if (action == Action.STOP) {
-                result = runSuCommand("am force-stop " + packageName);
+                result = rootLauncher.forceStop(packageName);
             } else {
-                result = runSuCommand("am force-stop " + packageName);
+                result = rootLauncher.forceStop(packageName);
                 if (result.code == 0) {
-                    result = rootStartPackage(packageName);
+                    result = rootLauncher.start(packageName);
                     if (result.code != 0) {
                         result = startPackage(packageName);
                     }
                 }
             }
-            ShellResult finalResult = result;
+            RootAppProcessLauncher.ShellResult finalResult = result;
             activity.runOnUiThread(() -> {
                 if (!isActivityAlive()) {
                     return;
@@ -124,29 +121,14 @@ final class ProcessActionHandler {
                 : R.string.dialog_process_restart_requires_root;
     }
 
-    private ShellResult rootStartPackage(String packageName) {
-        if (!isSafePackageName(packageName)) {
-            return new ShellResult(-1, "root start unavailable");
-        }
-        ComponentName launchComponent = resolveLaunchComponent(packageName);
-        if (launchComponent == null) {
-            return new ShellResult(-1, "launcher activity not found");
-        }
-        return runSuCommand("am start --user current"
-                + " -a android.intent.action.MAIN"
-                + " -c android.intent.category.LAUNCHER"
-                + " -n " + shellQuote(launchComponent.flattenToShortString()));
-    }
-
-    private String shellQuote(String value) {
-        return "'" + value.replace("'", "'\\''") + "'";
-    }
-
-    private ShellResult startPackage(String packageName) {
+    private RootAppProcessLauncher.ShellResult startPackage(String packageName) {
         Intent launchIntent = activity.getPackageManager()
                 .getLaunchIntentForPackage(packageName);
         if (launchIntent == null) {
-            return new ShellResult(-1, "launcher activity not found");
+            return new RootAppProcessLauncher.ShellResult(
+                    -1,
+                    "launcher activity not found"
+            );
         }
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         activity.runOnUiThread(() -> {
@@ -154,17 +136,7 @@ final class ProcessActionHandler {
                 activity.startActivity(launchIntent);
             }
         });
-        return new ShellResult(0, "");
-    }
-
-    private ComponentName resolveLaunchComponent(String packageName) {
-        Intent launchIntent = activity.getPackageManager()
-                .getLaunchIntentForPackage(packageName);
-        return launchIntent != null ? launchIntent.getComponent() : null;
-    }
-
-    private boolean isSafePackageName(String packageName) {
-        return packageName != null && packageName.matches("[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+");
+        return new RootAppProcessLauncher.ShellResult(0, "");
     }
 
     private boolean hasRootAccess() {
@@ -173,47 +145,6 @@ final class ProcessActionHandler {
             result = RootAccessProbe.probe();
         }
         return result.status == RootAccessProbe.Status.AVAILABLE;
-    }
-
-    private ShellResult runSuCommand(String command) {
-        Process process = null;
-        try {
-            process = Runtime.getRuntime().exec(new String[] { "su", "-c", command });
-            StringBuilder output = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(process.getInputStream()));
-                    BufferedReader errReader = new BufferedReader(
-                            new InputStreamReader(process.getErrorStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if (output.length() > 0) {
-                        output.append('\n');
-                    }
-                    output.append(line);
-                }
-                while ((line = errReader.readLine()) != null) {
-                    if (output.length() > 0) {
-                        output.append('\n');
-                    }
-                    output.append(line);
-                }
-            }
-            int code = process.waitFor();
-            return new ShellResult(code, output.toString());
-        } catch (IOException | InterruptedException exception) {
-            if (exception instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
-            }
-            return new ShellResult(
-                    -1,
-                    exception.getMessage() != null
-                            ? exception.getMessage()
-                            : exception.getClass().getSimpleName());
-        } finally {
-            if (process != null) {
-                process.destroy();
-            }
-        }
     }
 
     private void showToast(int messageResId, Object... formatArgs) {
@@ -230,13 +161,4 @@ final class ProcessActionHandler {
         return !activity.isFinishing() && !activity.isDestroyed();
     }
 
-    private static final class ShellResult {
-        final int code;
-        final String output;
-
-        ShellResult(int code, String output) {
-            this.code = code;
-            this.output = output;
-        }
-    }
 }

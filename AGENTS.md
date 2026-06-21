@@ -25,7 +25,11 @@ Use the default Matt Pocock skill label roles unless the repository labels are i
 
 ### Domain docs
 
-DPIS currently uses a single-context documentation layout. See `docs/agents/domain.md`.
+DPIS currently uses a single-context documentation layout. See
+`docs/agents/domain.md`.
+Read `CONTEXT.md` for DPIS domain language, product semantics, and file-role
+boundaries before changing package state rules, runtime-route meaning, app-list
+status semantics, log page behavior, or feedback diagnostic packaging.
 
 ### CodeGraph
 
@@ -33,6 +37,23 @@ Agents may use CodeGraph for project structure navigation, symbol lookup,
 callers/callees, and impact analysis. Prefer runtime source under `app/src/**`
 for behavioral conclusions; `docs/archive/` may contain historical snapshots
 that can appear in CodeGraph results.
+Prefer CodeGraph when:
+- a change crosses multiple shared classes and plain text search does not make
+  ownership or call paths obvious;
+- you need callers/callees or interface implementation relationships for impact
+  analysis before editing;
+- a setting, store value, or shared model may affect multiple UI and runtime
+  paths and you need to enumerate the real dependency surface;
+- historical docs or archived code make `rg` results noisy and you need to
+  anchor conclusions to the active runtime source.
+
+### Sub-agent usage
+
+When delegating to sub-agents, prefer reusing the existing sub-agent for the
+same task type or feature theme. Do not create a fresh sub-agent for every
+small follow-up on the same topic. Start a new sub-agent only when the previous
+one is overloaded, the task domain has clearly changed, or shared context would
+pollute the result.
 
 ### DPIS runtime route playbook
 
@@ -77,6 +98,7 @@ bundle and does not modify global agent skills.
   - Methods/fields: `camelCase`
   - Constants: `UPPER_SNAKE_CASE`
 - Keep class responsibilities focused; prefer small helper classes over monolithic installers.
+- Do not keep growing `MainActivity` with new feature workflows. New session flows, exporters, diagnostics, coordinators, or feature-specific state machines should live in focused classes under `app/src/main/java/com/dpis/module/`; `MainActivity` should remain an entry/assembly surface that wires UI events to those helpers.
 - Do not introduce unnecessary abstractions; follow KISS/YAGNI.
 
 ## Testing Guidelines
@@ -109,6 +131,14 @@ bundle and does not modify global agent skills.
 - Name ids, strings, and binding methods with `debug_only`.
 - Group debug-only rows with their own dividers so release layouts keep static separators.
 - Before release-related commits, explicitly decide whether to remove or keep debug-only entries.
+
+## Log Page & Feedback Diagnostics
+- Read `CONTEXT.md` before changing log page behavior, feedback diagnostic flow,
+  or the roles of `diagnostic.txt`, `dpis-log.txt`, and `lsposed-log.txt`.
+- When changing diagnostic package structure, log parsing, export file names, or
+  result sheet file cards, update `FeedbackDiagnosticExportBuilderTest` and the
+  related source/layout smoke tests so they assert the current diagnostic
+  semantics.
 
 ## Runtime Debug Automation
 - Autofish may be used as an auxiliary Android automation channel for real-device
@@ -150,11 +180,8 @@ bundle and does not modify global agent skills.
   WindowManager, or DisplayManager evidence.
 
 ## Runtime Hook Debugging Discipline
-- Distinguish user-facing UI configuration from internal planner and runtime
-  domains. Custom font hook-chain overrides apply only to compat/field-rewrite
-  font mode; `system_server_font` and `activity_thread_font` are internal
-  scheduler domains, not user-customizable chain switches. See
-  `docs/font-routing.md`.
+- Read `CONTEXT.md` before changing runtime-route meaning, evidence rules, or
+  route-effectiveness criteria.
 - `docs/legacy-runtime-resync.md` and
   `docs/modern-runtime-resync.md` are the DPIS living route documents for
   viewport/runtime hook routes. Before adding, modifying, or removing any
@@ -165,17 +192,8 @@ bundle and does not modify global agent skills.
   identify the owning layer first, then prove entry, guard, hook install,
   callback, package resolution, field policy, mutation, and visible effect in
   order.
-- `docs/private/` contains app-specific investigation notes and must stay
-  uncommitted. Public route documents should record reusable conclusions and
-  safe reproduction boundaries, not private device paths, tokens, screenshots,
-  or app-specific raw logs.
 - Record every new route exploration, route detail adjustment, abandoned
-  attempt, and runtime finding in the relevant living route document. Treat
-  failed experiments as valuable evidence: do not delete them unless they are
-  demonstrably duplicated or misleading; mark them as inactive, superseded, or
-  rejected with a short reason.
-- Treat `hook ready` as installation evidence only. Require a callback,
-  mutation, counter, or visible result before calling a route effective.
+  attempt, and runtime finding in the relevant living route document.
 - For LSPosed diagnostics (both flavors), use `/data/adb/lspd/log/modules_*.log`
   and `verbose_*.log` as the primary source when proving module entry or
   hook execution. `logcat` is useful for cross-checking forwarded
@@ -189,17 +207,8 @@ bundle and does not modify global agent skills.
   process entry point.
 - If evidence changes the working theory, update the plan before continuing;
   do not keep executing an outdated hypothesis by inertia.
-- Do not add reproduction-target-specific runtime behavior unless explicitly
-  required.
-- Prefer scheduler or field policy fixes over app-specific recommended route
-  lists. Package lists are a late fallback; independent hook routes are later
-  still.
 - Keep temporary high-volume probes debug-only or remove them before release
   cleanup.
-- Font compatibility hook domains are now configured per app through the custom
-  chain editor. Do not reintroduce the old global Flutter/HyperOS experimental
-  switches into app-process font hook planning; if a supplement route is needed,
-  model it as a domain or a documented built-in package default.
 
 ## Gradle Task Detection
 - Build scripts must not infer release tasks by scanning arbitrary Gradle arguments such as `--tests`.

@@ -46,6 +46,12 @@ final class AppConfigSheetActionBinder {
             clearInputFocus(dialogView, views);
             host.executeProcessAction(item, AppConfigDialogBinder.ProcessAction.STOP);
         });
+        if (views.feedbackDiagnosticButton != null) {
+            views.feedbackDiagnosticButton.setOnClickListener(v -> {
+                clearInputFocus(dialogView, views);
+                host.startFeedbackDiagnostic(item, state);
+            });
+        }
         // Advanced actions are real per-app state even when DPI/font fields are
         // only a global-prefill preview; they must not save previewed config.
         views.dpisToggleButton.setOnClickListener(v -> {

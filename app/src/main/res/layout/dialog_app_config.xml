@@ -132,5 +132,7 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
+    <com.google.android.material.button.MaterialButton android:id="@+id/dialog_feedback_diagnostic_button" style="@style/Widget.Dpis.DialogIconButton.Outlined" android:layout_width="@dimen/dialog_feedback_diagnostic_button_size" android:layout_height="@dimen/dialog_feedback_diagnostic_button_size" android:layout_gravity="top|end" android:layout_marginTop="@dimen/dialog_feedback_diagnostic_button_margin_top" android:layout_marginEnd="@dimen/dialog_app_config_padding_horizontal" android:contentDescription="@string/feedback_diagnostic_action" android:minWidth="0dp" android:minHeight="0dp" android:padding="@dimen/dialog_feedback_diagnostic_button_padding" app:cornerRadius="@dimen/dialog_feedback_diagnostic_button_corner_radius" app:icon="@drawable/ic_bug_report_24" app:iconGravity="textStart" app:iconPadding="0dp" />
+
     <include android:id="@+id/dialog_advanced_wizard_hint_container" layout="@layout/view_app_config_wizard_hint" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="top|center_horizontal" android:layout_marginTop="@dimen/dialog_app_config_wizard_hint_overlay_margin_top" android:elevation="@dimen/dialog_app_config_wizard_hint_overlay_elevation" android:visibility="gone" />
 </FrameLayout>

@@ -97,6 +97,7 @@ public final class LogActivity extends LocalizedActivity {
     private boolean pendingRender;
     private boolean scrollToLatestAfterNextRender;
     private boolean destroyed;
+    private boolean waitingForDiagnosticLogEnable;
 
     private enum Page {
         DPIS,
@@ -132,7 +133,18 @@ public final class LogActivity extends LocalizedActivity {
         lsposedPageButton = findViewById(R.id.log_page_lsposed_button);
         bindActions();
         bindPageSwitch();
-        loadLogs(true, false, false);
+        waitingForDiagnosticLogEnable = !DiagnosticLogGate.ensureEnabled(
+                this,
+                () -> {
+                    waitingForDiagnosticLogEnable = false;
+                    loadLogs(true, false, false);
+                    startAutoRefresh();
+                },
+                this::finish
+        );
+        if (!waitingForDiagnosticLogEnable) {
+            loadLogs(true, false, false);
+        }
     }
 
     private void bindActions() {
@@ -451,7 +463,7 @@ public final class LogActivity extends LocalizedActivity {
 
     private void writeLogZip(Uri uri, ExportPackage exportPackage) throws IOException {
         ContentResolver resolver = getContentResolver();
-        try (OutputStream output = resolver.openOutputStream(uri, "wt")) {
+        try (OutputStream output = resolver.openOutputStream(uri)) {
             if (output == null) {
                 throw new IOException("Unable to open log export output stream");
             }
@@ -959,7 +971,7 @@ public final class LogActivity extends LocalizedActivity {
 
     private void startAutoRefresh() {
         stopAutoRefresh();
-        if (!resumed || !autoRefreshEnabled || destroyed) {
+        if (!resumed || !autoRefreshEnabled || destroyed || waitingForDiagnosticLogEnable) {
             return;
         }
         mainHandler.postDelayed(autoRefreshRunnable, AUTO_REFRESH_INTERVAL_MS);

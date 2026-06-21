@@ -1,5 +1,6 @@
 package com.dpis.module;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -10,10 +11,14 @@ public class SystemFontScaleToolLayoutSmokeTest {
     @Test
     public void toolsWorkspaceContainsSystemFontScaleToolSurface() throws IOException {
         String layout = read("src/main/res/layout/tools_workspace.xml");
+        int fontCardIndex = layout.indexOf("android:id=\"@+id/system_font_scale_card\"");
+        int logCardIndex = layout.indexOf("android:id=\"@+id/tools_log_card\"");
 
         assertTrue(layout.contains("android:id=\"@+id/tools_toolbar\""));
         assertTrue(layout.contains("android:text=\"@string/workspace_tools\""));
         assertTrue(layout.contains("android:id=\"@+id/system_font_scale_card\""));
+        assertTrue(layout.contains("android:id=\"@+id/tools_log_card\""));
+        assertTrue(fontCardIndex >= 0 && logCardIndex > fontCardIndex);
         assertTrue(layout.contains("android:id=\"@+id/system_font_scale_apply_button\""));
         assertTrue(layout.contains("android:background=\"@drawable/bg_round_button_surface\""));
         assertTrue(layout.contains("android:id=\"@+id/system_font_scale_permission_overlay\""));
@@ -35,6 +40,7 @@ public class SystemFontScaleToolLayoutSmokeTest {
         assertTrue(layout.contains("android:id=\"@+id/system_font_scale_preview_body\""));
         assertTrue(layout.contains("android:id=\"@+id/system_font_scale_restore_button\""));
         assertTrue(layout.contains("android:minHeight=\"@dimen/template_workspace_action_button_height\""));
+        assertFalse(layout.contains("@drawable/ic_notes_24"));
         assertTrue(!layout.contains(
                 "android:layout_height=\"@dimen/template_workspace_action_button_height\""));
         assertTrue(!layout.contains(
@@ -53,6 +59,8 @@ public class SystemFontScaleToolLayoutSmokeTest {
                 "View toolsToolbar = workspaceView.findViewById(R.id.tools_toolbar);"));
         assertTrue(source.contains(
                 "WindowInsetsBinder.applySafeDrawingPadding(toolsToolbar, false, true, false, false);"));
+        assertTrue(source.contains("DiagnosticLogGate.ensureEnabled("));
+        assertTrue(source.contains("new Intent(activity, LogActivity.class)"));
         assertTrue(settingsController.contains("View toolbar = findViewById(R.id.settings_toolbar);"));
         assertTrue(settingsController.contains("baseTopPadding + safeDrawing.top"));
     }

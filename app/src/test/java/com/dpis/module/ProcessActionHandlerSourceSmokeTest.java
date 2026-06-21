@@ -11,28 +11,29 @@ public class ProcessActionHandlerSourceSmokeTest {
     @Test
     public void processActionsDoNotUseMonkeyToLaunchApps() throws IOException {
         String source = read("src/main/java/com/dpis/module/ProcessActionHandler.java");
+        String rootLauncher = read("src/main/java/com/dpis/module/RootAppProcessLauncher.java");
 
         assertFalse(source.contains("monkey -p"));
-        assertTrue(source.contains("rootStartPackage(packageName)"));
-        assertTrue(source.contains("am start --user current"));
-        assertTrue(source.contains("-a android.intent.action.MAIN"));
-        assertTrue(source.contains("-c android.intent.category.LAUNCHER"));
-        assertTrue(source.contains("flattenToShortString()"));
-        assertTrue(source.contains("shellQuote("));
+        assertTrue(source.contains("new RootAppProcessLauncher(activity)"));
+        assertTrue(source.contains("rootLauncher.start(packageName)"));
+        assertTrue(rootLauncher.contains("am start --user current"));
+        assertTrue(rootLauncher.contains("-a android.intent.action.MAIN"));
+        assertTrue(rootLauncher.contains("-c android.intent.category.LAUNCHER"));
+        assertTrue(rootLauncher.contains("flattenToShortString()"));
+        assertTrue(rootLauncher.contains("shellQuote("));
         assertTrue(source.contains("getLaunchIntentForPackage(packageName)"));
         assertTrue(source.contains("startActivity(launchIntent)"));
     }
 
     @Test
-    public void rootStartDoesNotProbeOrCacheRootBeforeFallback() throws IOException {
+    public void sharedRootLauncherDoesNotProbeOrCacheRootBeforeFallback() throws IOException {
         String source = read("src/main/java/com/dpis/module/ProcessActionHandler.java");
-        String rootStartPackage = source.substring(
-                source.indexOf("private ShellResult rootStartPackage"),
-                source.indexOf("private ShellResult startPackage"));
+        String rootLauncher = read("src/main/java/com/dpis/module/RootAppProcessLauncher.java");
 
-        assertFalse(rootStartPackage.contains("hasRootAccess()"));
-        assertFalse(rootStartPackage.contains("rootAccessCache"));
-        assertTrue(rootStartPackage.contains("runSuCommand("));
+        assertFalse(source.contains("rootAccessCache"));
+        assertTrue(source.contains("rootLauncher.start(packageName)"));
+        assertFalse(rootLauncher.contains("hasRootAccess()"));
+        assertFalse(rootLauncher.contains("rootAccessCache"));
     }
 
     @Test

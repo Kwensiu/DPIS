@@ -5,8 +5,8 @@ import android.util.DisplayMetrics;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 import io.github.libxposed.api.XposedInterface;
 
@@ -17,6 +17,8 @@ final class DisplayHookInstaller {
     private static volatile Method currentPackageNameMethod;
     private static volatile boolean currentPackageNameUnavailable;
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
+    private static final RuntimeHotPathEvidenceSampler HOTPATH_SAMPLER =
+            new RuntimeHotPathEvidenceSampler();
 
     private DisplayHookInstaller() {
     }
@@ -40,7 +42,7 @@ final class DisplayHookInstaller {
             hookPointMethod(xposed, displayClass, "getSize");
             hookPointMethod(xposed, displayClass, "getRealSize");
             hookInstalled = true;
-            DpisLog.i("Display hook ready");
+            DpisLog.i("Display hook ready, " + RuntimeDiagnosticLogFingerprint.field());
         }
     }
 
@@ -102,13 +104,34 @@ final class DisplayHookInstaller {
         if (metrics == null) {
             return;
         }
-        if (!shouldApplyOverrideForPackage(targetPackageName)) {
+        String routeName = "display_metrics_override";
+        String currentPackageName = resolveCurrentPackageName();
+        recordViewportProbeAtMostEvery(
+                routeName,
+                "source=" + sourceTag
+                        + ", " + RuntimeDiagnosticLogFingerprint.field()
+                        + ", callback=Display." + sourceTag);
+        if (!shouldApplyOverrideForPackage(targetPackageName, currentPackageName)) {
+            recordViewportSkipAtMostEvery(
+                    routeName,
+                    "source=" + sourceTag
+                            + ", reason=package_mismatch_or_unresolved"
+                            + ", targetPackage=" + safeValue(targetPackageName)
+                            + ", currentPackage=" + safeValue(currentPackageName));
             return;
         }
         VirtualDisplayOverride.Result override = resolvePackageScopedOverride();
         if (override == null) {
+            recordViewportSkipAtMostEvery(
+                    routeName,
+                    "source=" + sourceTag + ", reason=no_package_scoped_override");
             return;
         }
+        int originalDensityDpi = metrics.densityDpi;
+        float originalDensity = metrics.density;
+        float originalScaledDensity = metrics.scaledDensity;
+        int originalWidthPixels = metrics.widthPixels;
+        int originalHeightPixels = metrics.heightPixels;
         float fontScale = metrics.density > 0f ? (metrics.scaledDensity / metrics.density) : 1.0f;
         if (fontScale <= 0f) {
             fontScale = 1.0f;
@@ -118,38 +141,113 @@ final class DisplayHookInstaller {
         metrics.scaledDensity = metrics.density * fontScale;
         metrics.widthPixels = override.widthPx;
         metrics.heightPixels = override.heightPx;
+        boolean changed = originalDensityDpi != metrics.densityDpi
+                || Float.compare(originalDensity, metrics.density) != 0
+                || Float.compare(originalScaledDensity, metrics.scaledDensity) != 0
+                || originalWidthPixels != metrics.widthPixels
+                || originalHeightPixels != metrics.heightPixels;
+        if (!changed) {
+            recordViewportSkipAtMostEvery(
+                    routeName,
+                    "source=" + sourceTag + ", reason=stable_target"
+                            + ", widthPx=" + metrics.widthPixels
+                            + ", heightPx=" + metrics.heightPixels
+                            + ", densityDpi=" + metrics.densityDpi);
+            return;
+        }
         String message = "Display override(" + sourceTag + "): widthPx=" + metrics.widthPixels
                 + ", heightPx=" + metrics.heightPixels
                 + ", densityDpi=" + metrics.densityDpi;
-        logIfChanged("metrics:" + sourceTag, message);
+        if (logIfChanged("metrics:" + sourceTag, message)) {
+            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                    targetPackageName,
+                    "viewport",
+                    routeName,
+                    "source=" + sourceTag
+                            + ", widthPx=" + originalWidthPixels + "->" + metrics.widthPixels
+                            + ", heightPx=" + originalHeightPixels + "->" + metrics.heightPixels
+                            + ", densityDpi=" + originalDensityDpi + "->" + metrics.densityDpi
+                            + ", density=" + originalDensity + "->" + metrics.density
+                            + ", scaledDensity=" + originalScaledDensity + "->"
+                            + metrics.scaledDensity);
+        }
     }
 
     static void applyPoint(Point point, String sourceTag) {
         if (point == null) {
             return;
         }
-        if (!shouldApplyOverrideForPackage(targetPackageName)) {
+        String routeName = "display_size_override";
+        String currentPackageName = resolveCurrentPackageName();
+        recordViewportProbeAtMostEvery(
+                routeName,
+                "source=" + sourceTag
+                        + ", " + RuntimeDiagnosticLogFingerprint.field()
+                        + ", callback=Display." + sourceTag);
+        if (!shouldApplyOverrideForPackage(targetPackageName, currentPackageName)) {
+            recordViewportSkipAtMostEvery(
+                    routeName,
+                    "source=" + sourceTag
+                            + ", reason=package_mismatch_or_unresolved"
+                            + ", targetPackage=" + safeValue(targetPackageName)
+                            + ", currentPackage=" + safeValue(currentPackageName));
             return;
         }
         VirtualDisplayOverride.Result override = resolvePackageScopedOverride();
         if (override == null) {
+            recordViewportSkipAtMostEvery(
+                    routeName,
+                    "source=" + sourceTag + ", reason=no_package_scoped_override");
             return;
         }
+        int originalX = point.x;
+        int originalY = point.y;
         point.x = override.widthPx;
         point.y = override.heightPx;
+        if (originalX == point.x && originalY == point.y) {
+            recordViewportSkipAtMostEvery(
+                    routeName,
+                    "source=" + sourceTag + ", reason=stable_target"
+                            + ", size=" + point.x + "x" + point.y);
+            return;
+        }
         String message = "Display override(" + sourceTag + "): size=" + point.x + "x" + point.y;
-        logIfChanged("point:" + sourceTag, message);
+        if (logIfChanged("point:" + sourceTag, message)) {
+            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                    targetPackageName,
+                    "viewport",
+                    routeName,
+                    "source=" + sourceTag
+                            + ", widthPx=" + originalX + "->" + point.x
+                            + ", heightPx=" + originalY + "->" + point.y);
+        }
     }
 
     static void applyDisplayInfo(Object displayInfo, String sourceTag) {
         if (displayInfo == null) {
             return;
         }
-        if (!shouldApplyOverrideForPackage(targetPackageName)) {
+        String routeName = "display_info_override";
+        String currentPackageName = resolveCurrentPackageName();
+        recordViewportProbeAtMostEvery(
+                routeName,
+                "source=" + sourceTag
+                        + ", " + RuntimeDiagnosticLogFingerprint.field()
+                        + ", callback=Display." + sourceTag);
+        if (!shouldApplyOverrideForPackage(targetPackageName, currentPackageName)) {
+            recordViewportSkipAtMostEvery(
+                    routeName,
+                    "source=" + sourceTag
+                            + ", reason=package_mismatch_or_unresolved"
+                            + ", targetPackage=" + safeValue(targetPackageName)
+                            + ", currentPackage=" + safeValue(currentPackageName));
             return;
         }
         VirtualDisplayOverride.Result override = resolvePackageScopedOverride();
         if (override == null) {
+            recordViewportSkipAtMostEvery(
+                    routeName,
+                    "source=" + sourceTag + ", reason=no_package_scoped_override");
             return;
         }
         boolean changed = false;
@@ -163,11 +261,25 @@ final class DisplayHookInstaller {
         changed |= writeIntField(displayInfo, "largestNominalAppWidth", override.widthPx);
         changed |= writeIntField(displayInfo, "largestNominalAppHeight", override.heightPx);
         if (!changed) {
+            recordViewportSkipAtMostEvery(
+                    routeName,
+                    "source=" + sourceTag + ", reason=stable_target"
+                            + ", logical=" + override.widthPx + "x" + override.heightPx
+                            + ", densityDpi=" + override.densityDpi);
             return;
         }
         String message = "Display override(" + sourceTag + "): logical=" + override.widthPx + "x"
                 + override.heightPx + ", densityDpi=" + override.densityDpi;
-        logIfChanged("displayInfo:" + sourceTag, message);
+        if (logIfChanged("displayInfo:" + sourceTag, message)) {
+            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                    targetPackageName,
+                    "viewport",
+                    routeName,
+                    "source=" + sourceTag
+                            + ", logicalWidth=" + override.widthPx
+                            + ", logicalHeight=" + override.heightPx
+                            + ", densityDpi=" + override.densityDpi);
+        }
     }
 
     static boolean shouldApplyOverrideForPackage(String packageName) {
@@ -222,11 +334,55 @@ final class DisplayHookInstaller {
         }
     }
 
-    private static void logIfChanged(String key, String message) {
+    private static boolean logIfChanged(String key, String message) {
         String previous = LAST_MESSAGES.put(key, message);
         if (!message.equals(previous)) {
             DpisLog.i(message);
+            return true;
         }
+        return false;
+    }
+
+    static void resetHotPathSamplerForTest() {
+        HOTPATH_SAMPLER.resetForTest();
+    }
+
+    private static void recordViewportProbeAtMostEvery(String routeName, String detail) {
+        RuntimeHotPathEvidenceSampler.Sample sample =
+                HOTPATH_SAMPLER.sample("probe:" + routeName + "|" + detail, detail);
+        if (sample.emit) {
+            String sampledDetail = sample.detail;
+            DpisLog.i(
+                "DPIS_VIEWPORT Display callback: package=" + safeValue(targetPackageName)
+                        + ", route=" + routeName
+                        + ", " + sampledDetail);
+            FeedbackDiagnosticRuntimeHotPathEvents.probe(
+                    targetPackageName,
+                    "viewport",
+                    routeName,
+                    sampledDetail);
+        }
+    }
+
+    private static void recordViewportSkipAtMostEvery(String routeName, String detail) {
+        RuntimeHotPathEvidenceSampler.Sample sample =
+                HOTPATH_SAMPLER.sample("skip:" + routeName + "|" + detail, detail);
+        if (sample.emit) {
+            String sampledDetail = sample.detail;
+            DpisLog.i(
+                "DPIS_VIEWPORT Display skip: package=" + safeValue(targetPackageName)
+                        + ", route=" + routeName
+                        + ", " + sampledDetail);
+            FeedbackDiagnosticRuntimeHotPathEvents.skipped(
+                    targetPackageName,
+                    "viewport",
+                    routeName,
+                    sampledDetail);
+        }
+    }
+
+    private static String safeValue(String value) {
+        return value == null || value.isBlank() ? "unknown" : value;
     }
 
     private static String resolveCurrentPackageName() {

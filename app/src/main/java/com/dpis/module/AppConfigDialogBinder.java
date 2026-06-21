@@ -64,6 +64,12 @@ final class AppConfigDialogBinder {
 
         void openTypefaceLibrary();
 
+        default void startFeedbackDiagnostic(
+                AppListItem item,
+                AppConfigDialogState state
+        ) {
+        }
+
         int[] saveAppConfig(AppListItem item,
                 TextInputEditText viewportInput,
                 TextInputEditText fontScaleInput,
@@ -208,7 +214,8 @@ final class AppConfigDialogBinder {
                 dialogView.findViewById(R.id.dialog_dpis_toggle_button),
                 dialogView.findViewById(R.id.dialog_font_hook_domains_button),
                 dialogView.findViewById(R.id.dialog_disable_button),
-                dialogView.findViewById(R.id.dialog_save_button));
+                dialogView.findViewById(R.id.dialog_save_button),
+                dialogView.findViewById(R.id.dialog_feedback_diagnostic_button));
     }
 
     private AppConfigDialogState bindDialogInitialState(AppListItem item, AppConfigDialogViews views) {
@@ -1073,6 +1080,7 @@ final class AppConfigDialogBinder {
         final MaterialButton fontHookDomainsButton;
         final MaterialButton disableButton;
         final MaterialButton saveButton;
+        final MaterialButton feedbackDiagnosticButton;
 
         AppConfigDialogViews(android.widget.ImageView iconView,
                 MaterialTextView titleView,
@@ -1092,7 +1100,8 @@ final class AppConfigDialogBinder {
                 MaterialButton dpisToggleButton,
                 MaterialButton fontHookDomainsButton,
                 MaterialButton disableButton,
-                MaterialButton saveButton) {
+                MaterialButton saveButton,
+                MaterialButton feedbackDiagnosticButton) {
             this.iconView = iconView;
             this.titleView = titleView;
             this.packageView = packageView;
@@ -1112,6 +1121,7 @@ final class AppConfigDialogBinder {
             this.fontHookDomainsButton = fontHookDomainsButton;
             this.disableButton = disableButton;
             this.saveButton = saveButton;
+            this.feedbackDiagnosticButton = feedbackDiagnosticButton;
         }
     }
 

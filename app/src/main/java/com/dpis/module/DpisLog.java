@@ -29,6 +29,8 @@ final class DpisLog {
             // Local unit tests may execute without Android logging available.
         }
         recordAppLog("I", msg);
+        FeedbackDiagnosticRuntimeEvents.recordDpisLog("I", msg);
+        FeedbackDiagnosticRuntimeTransport.record("runtime", "dpis_log", "", msg);
         bridgeLog(msg);
     }
 
@@ -46,6 +48,20 @@ final class DpisLog {
         recordAppLog("E", throwableMessage == null || throwableMessage.isEmpty()
                 ? msg
                 : msg + " | " + throwableMessage);
+        FeedbackDiagnosticRuntimeEvents.recordDpisLog(
+                "E",
+                throwableMessage == null || throwableMessage.isEmpty()
+                        ? msg
+                        : msg + " | " + throwableMessage
+        );
+        FeedbackDiagnosticRuntimeTransport.record(
+                "runtime",
+                "dpis_log",
+                "",
+                throwableMessage == null || throwableMessage.isEmpty()
+                        ? msg
+                        : msg + " | " + throwableMessage
+        );
         if (throwableMessage == null || throwableMessage.isEmpty()) {
             bridgeLog(msg);
             return;

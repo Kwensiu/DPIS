@@ -41,68 +41,9 @@
             android:orientation="vertical">
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/tools_log_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                app:cardCornerRadius="@dimen/template_workspace_card_corner_radius_compact"
-                app:strokeWidth="@dimen/page_card_stroke_width">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:minHeight="@dimen/tools_entry_card_min_height"
-                    android:orientation="horizontal"
-                    android:padding="@dimen/template_workspace_card_padding">
-
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:layout_width="@dimen/tools_entry_icon_size"
-                        android:layout_height="@dimen/tools_entry_icon_size"
-                        android:padding="@dimen/tools_entry_icon_padding"
-                        android:src="@drawable/ic_notes_24"
-                        app:tint="?attr/colorOnSurfaceVariant" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/tools_entry_text_spacing_start"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/tools_log_title"
-                            android:textAppearance="?attr/textAppearanceTitleMedium"
-                            android:textColor="?attr/colorOnSurface" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/template_workspace_text_spacing_top"
-                            android:text="@string/tools_log_subtitle"
-                            android:textAppearance="?attr/textAppearanceBodyMedium"
-                            android:textColor="?attr/colorOnSurfaceVariant" />
-                    </LinearLayout>
-
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:layout_width="@dimen/template_workspace_icon_button_size"
-                        android:layout_height="@dimen/template_workspace_icon_button_size"
-                        android:padding="@dimen/template_workspace_icon_button_padding"
-                        android:src="@drawable/ic_chevron_right_24"
-                        app:tint="?attr/colorOnSurfaceVariant" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/system_font_scale_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/template_workspace_card_spacing_top"
                 app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 app:cardCornerRadius="@dimen/template_workspace_card_corner_radius_compact"
                 app:strokeWidth="@dimen/page_card_stroke_width">
@@ -330,6 +271,57 @@
                             android:textColor="?attr/colorOnSurface"
                             android:textStyle="bold" />
                     </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/tools_log_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/template_workspace_card_spacing_top"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                app:cardCornerRadius="@dimen/template_workspace_card_corner_radius_compact"
+                app:strokeWidth="@dimen/page_card_stroke_width">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:minHeight="@dimen/tools_entry_card_min_height"
+                    android:orientation="horizontal"
+                    android:padding="@dimen/template_workspace_card_padding">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/tools_log_title"
+                            android:textAppearance="?attr/textAppearanceTitleMedium"
+                            android:textColor="?attr/colorOnSurface" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/template_workspace_text_spacing_top"
+                            android:text="@string/tools_log_subtitle"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:layout_width="@dimen/template_workspace_icon_button_size"
+                        android:layout_height="@dimen/template_workspace_icon_button_size"
+                        android:padding="@dimen/template_workspace_icon_button_padding"
+                        android:src="@drawable/ic_chevron_right_24"
+                        app:tint="?attr/colorOnSurfaceVariant" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>

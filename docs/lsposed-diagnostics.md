@@ -30,6 +30,21 @@ current `modules_*.log` and `verbose_*.log` files, then filters them in the app
 to `io.github.kwensiu.dpis` entries. Rotated historical LSPosed files are not
 read by the normal in-app page.
 
+## Feedback Diagnostics
+
+Feedback diagnostic exports keep raw LSPosed evidence in `lsposed-log.txt`.
+During export DPIS also parses DPIS-related LSPosed lines whose timestamps fall
+inside the diagnostic session window and writes only structured timeline events
+to `diagnostic.txt` with `source=lsposed-log`. Lines whose timestamps cannot be
+parsed remain in `lsposed-log.txt` but are not promoted into the structured
+timeline.
+
+When diagnostic capture is active, selected runtime hook boundaries may also
+emit `DPIS_DIAG_HOTPATH route=<...> stage=<...> routeName=<...>` lines into the
+same LSPosed window. These are still auxiliary evidence, but they let the
+exported timeline show specific callback/skip/apply points for hot runtime
+routes without relying on post-hoc text classification alone.
+
 ## Pull Path
 
 Replace `<local-temp-dir>` with a writable local directory:

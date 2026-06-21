@@ -1233,6 +1233,16 @@ public class MainActivitySourceSmokeTest {
             layout.contains("android:id=\"@+id/land_detail_reset_row\"")
         );
         assertTrue(
+            layout.contains(
+                "android:id=\"@+id/land_detail_feedback_diagnostic_row\""
+            )
+        );
+        assertTrue(
+            layout.contains(
+                "android:text=\"@string/feedback_diagnostic_record_action\""
+            )
+        );
+        assertTrue(
             layout.contains("android:id=\"@+id/land_detail_start_button\"")
         );
         assertTrue(
@@ -1258,6 +1268,7 @@ public class MainActivitySourceSmokeTest {
             binder.contains("AppConfigDialogBinder.bindFontModeToggle(")
         );
         assertTrue(binder.contains("actions.toggleScope("));
+        assertTrue(binder.contains("actions.startFeedbackDiagnostic(item, state);"));
         assertTrue(binder.contains("state.scopeSelected,"));
         assertTrue(compact(binder).contains("actions.setDpisEnabled(item.packageName, nextEnabled)"));
         assertTrue(binder.contains("resetDraft("));

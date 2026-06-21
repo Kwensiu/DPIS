@@ -99,6 +99,9 @@ Font scale, typeface replacement, and hook domains are distinct concerns.
 
 Do not fold typeface replacement into font scale mode. Do not reintroduce old
 global Flutter/HyperOS font switches; per-app hook domains own that decision.
+Custom font hook-chain overrides apply only to compat/field-rewrite font mode.
+`system_server_font` and `activity_thread_font` are internal scheduler domains,
+not user-customizable chain switches. See `docs/font-routing.md`.
 
 ## App Config Sheet
 
@@ -109,6 +112,41 @@ be cleared by saving the other mode.
 UI labels may intentionally hide internal route names. For example, app-list
 status uses one `Interface` segment for both relative scale and fixed width, with
 the value showing `%` or `dp`.
+
+## Log Page And Feedback Diagnostics
+
+The log page and feedback diagnostic flow are user-facing support tools, not
+temporary debug-only surfaces. They exist to collect enough DPIS-specific
+evidence for support without asking users to export unrelated LSPosed logs.
+
+Global log output is the feature gate for both the log page and feedback
+diagnostics. If log output is disabled, the UI should offer an enable path
+instead of silently producing empty diagnostics.
+
+Feedback diagnostics start by restarting the target app. The user reproduces the
+issue, returns to DPIS, and DPIS ends collection immediately. Packaging should
+happen at that return point, before the result sheet appears. Save and share
+actions should use the already-built package bytes instead of rebuilding.
+
+Diagnostic package file roles are distinct:
+
+- `diagnostic.txt` is the DPIS semantic analysis entry point. It should include
+  the manifest, app config, diagnostic plan, runtime summary, runtime density,
+  runtime anomalies, the complete `runtime-timeline`, runtime self-test status,
+  and raw-log file references.
+- `dpis-log.txt` is DPIS app-process log storage from `DpisAppLogStore`. Prefer
+  entries from the diagnostic window. If none match but recent DPIS app logs
+  exist, use a small, clearly labeled recent fallback instead of exporting days
+  of history.
+- `lsposed-log.txt` is raw LSPosed evidence from `modules_*.log` and
+  `verbose_*.log`. It is for parser and hook-evidence cross-checking, not the
+  primary user-facing summary.
+
+High-frequency runtime events are not noise by default. For jank, crash, and
+hook-loop analysis, the complete runtime flow is evidence for what DPIS actually
+did. Add summary, density, and anomaly sections before the full flow; do not
+replace the full timeline with summaries unless the timeline becomes too large
+to handle safely.
 
 ## Template And Prefill Summaries
 
@@ -220,6 +258,22 @@ Before changing route logic:
 - Treat `hook ready` as installation evidence only; require an apply log,
   callback, mutation, process metric, or visible result before calling a route
   effective.
+
+Runtime evidence rules:
+
+- For LSPosed diagnostics, `/data/adb/lspd/log/modules_*.log` and
+  `verbose_*.log` are the primary evidence for module entry and hook execution.
+  Plain `logcat` can cross-check forwarded `LSPosedFramework` lines, but absence
+  in plain `logcat` is not a reliable negative signal.
+- `docs/private/` may contain app-specific investigation notes, but public route
+  documents should record reusable conclusions and safe reproduction boundaries,
+  not private device paths, tokens, screenshots, or app-specific raw logs.
+- Failed route experiments are evidence. Do not delete them unless they are
+  duplicated or misleading; mark them inactive, superseded, or rejected with the
+  evidence that changed the conclusion.
+- Do not add reproduction-target-specific runtime behavior unless a general
+  route, scheduler, or field-policy fix has been ruled out. Package lists are a
+  late fallback; independent hook routes are later still.
 
 When a system-route app does not respond:
 

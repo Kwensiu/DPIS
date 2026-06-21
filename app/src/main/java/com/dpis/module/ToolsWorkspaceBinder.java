@@ -25,9 +25,17 @@ final class ToolsWorkspaceBinder {
     private void bindLogEntry(View workspaceView) {
         View logCard = workspaceView.findViewById(R.id.tools_log_card);
         if (logCard != null) {
-            logCard.setOnClickListener(view ->
-                    activity.startActivity(new Intent(activity, LogActivity.class))
-            );
+            logCard.setOnClickListener(view -> openLogsWhenDiagnosticLogsEnabled());
+        }
+    }
+
+    private void openLogsWhenDiagnosticLogsEnabled() {
+        if (DiagnosticLogGate.ensureEnabled(
+                activity,
+                () -> activity.startActivity(new Intent(activity, LogActivity.class)),
+                null
+        )) {
+            activity.startActivity(new Intent(activity, LogActivity.class));
         }
     }
 
