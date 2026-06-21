@@ -64,6 +64,11 @@ final class LandAppDetailPaneBinder {
                 AppConfigDialogBinder.ProcessAction action
         );
 
+        void startFeedbackDiagnostic(
+                AppListItem item,
+                AppConfigDialogBinder.AppConfigDialogState state
+        );
+
         void onDraftStateChanged(AppConfigDialogBinder.AppConfigDialogState state);
 
     }
@@ -193,6 +198,10 @@ final class LandAppDetailPaneBinder {
                         saveButton
                 )
         );
+        bindAdvancedButton(root, R.id.land_detail_feedback_diagnostic_row, () -> {
+            clearLandDetailInputFocus(root);
+            actions.startFeedbackDiagnostic(item, state);
+        });
         bindAdaptiveAdvancedActions(root);
 
         bindProcessButton(

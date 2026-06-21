@@ -13,13 +13,20 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         String binder = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
         String actions = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
         String layout = read("src/main/res/layout/dialog_app_config.xml");
+        String dimens = read("src/main/res/values/dimens.xml");
 
         assertTrue(layout.contains("dialog_feedback_diagnostic_button"));
         assertTrue(layout.contains("@string/feedback_diagnostic_action"));
         assertTrue(layout.contains("@drawable/ic_bug_report_24"));
+        assertTrue(layout.contains(
+                "android:layout_marginTop=\"@dimen/dialog_feedback_diagnostic_button_margin_top\""));
         assertTrue(binder.contains("startFeedbackDiagnostic("));
         assertTrue(binder.contains("feedbackDiagnosticButton"));
         assertTrue(actions.contains("host.startFeedbackDiagnostic(item, state);"));
+        assertTrue(dimens.contains(
+                "<dimen name=\"dialog_feedback_diagnostic_button_size\">32dp</dimen>"));
+        assertTrue(dimens.contains(
+                "<dimen name=\"dialog_feedback_diagnostic_button_margin_top\">12dp</dimen>"));
     }
 
     @Test

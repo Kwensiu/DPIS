@@ -96,6 +96,7 @@
     <string name="home_donate_summary">今後の更新を支援するため、開発者に寄付します。</string>
     <string name="dialog_confirm_button">確認</string>
     <string name="feedback_diagnostic_action">フィードバック診断</string>
+    <string name="feedback_diagnostic_record_action">フィードバック診断を記録</string>
     <string name="feedback_diagnostic_confirm_message">%1$s を再起動します。\n問題を再現した後、DPIS に戻って診断パッケージを取得してください。\nログは個人情報を収集しません。</string>
     <string name="feedback_diagnostic_started">診断セッションを開始しました</string>
     <string name="feedback_diagnostic_unavailable">診断セッションを開始できません</string>

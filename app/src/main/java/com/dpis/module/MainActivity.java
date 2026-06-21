@@ -2842,6 +2842,14 @@ public final class MainActivity
             }
 
             @Override
+            public void startFeedbackDiagnostic(
+                    AppListItem editorItem,
+                    AppConfigDialogBinder.AppConfigDialogState state
+            ) {
+                MainActivity.this.startFeedbackDiagnostic(editorItem, state);
+            }
+
+            @Override
             public void onDraftStateChanged(
                     AppConfigDialogBinder.AppConfigDialogState state
             ) {
