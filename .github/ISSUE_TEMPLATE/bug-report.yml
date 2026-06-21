@@ -7,9 +7,24 @@ body:
   - type: markdown
     attributes:
       value: |
-        感谢反馈 DPIS 相关问题！运行时问题最好能说明目标应用、DPIS 配置、route，以及 LSPosed hook/callback 是否触发。
+        感谢反馈 DPIS 相关问题！如果是运行时 hook、目标应用兼容性、字体/viewport 未生效、闪退或卡顿问题，请优先在 DPIS 中导出“反馈诊断”并随 issue 上传。
 
-        Thanks for reporting a DPIS issue. Runtime bugs are easiest to fix when the report proves the target app, route, and LSPosed callback boundary.
+        反馈诊断会比手工整理配置和日志更可靠，也不包含个人隐私信息。纯 UI、文案、发布或无法复现的问题可以不上传，但请说明原因。
+
+        Thanks for reporting a DPIS issue. For runtime hooks, target-app compatibility, font/viewport not applying, crashes, or jank, please export a feedback diagnostic package from DPIS and upload it with this issue. It is more reliable than manually copying settings/logs and does not include personal private data. UI/text/release issues or non-reproducible issues may skip it; please explain why.
+
+  - type: textarea
+    id: feedback-diagnostic
+    attributes:
+      label: 反馈诊断包 / Feedback diagnostic package
+      description: |
+        运行时或兼容性问题请拖拽上传 DPIS 导出的反馈诊断 zip。若未上传，请简单说明原因。
+        For runtime or compatibility issues, upload the feedback diagnostic zip exported by DPIS. If you do not upload one, briefly explain why.
+      placeholder: |
+        请在这里拖入 .zip 文件，或说明未上传原因
+        Drag the exported .zip here, or explain why it is not attached
+    validations:
+      required: false
 
   - type: input
     id: dpis-version
@@ -57,20 +72,18 @@ body:
       required: true
 
   - type: textarea
-    id: dpis-settings
+    id: key-settings
     attributes:
-      label: 该应用的 DPIS 配置 / DPIS settings for this app
+      label: 关键配置补充 / Key DPIS details
       description: |
-        包含 viewport、宽度、density、字体缩放、route 选择、自定义 hook-chain 等。
-        Include viewport, width, density, font scaling, route selection, and any custom hook-chain settings.
+        只补充诊断包里不容易看出的关键点，例如是否用了自定义 hook-chain、特殊开关、草稿未保存状态等。
+        Only add details that may not be obvious from the diagnostic package, such as custom hook-chain choices, special toggles, or unsaved draft state.
       placeholder: |
-        宽度 / Width:
-        Density:
-        字体 / Font:
-        Route:
         自定义 hook-chain / Custom hook-chain:
+        特殊开关 / Special toggles:
+        其他补充 / Other notes:
     validations:
-      required: true
+      required: false
 
   - type: textarea
     id: steps
@@ -88,35 +101,25 @@ body:
       required: true
 
   - type: textarea
-    id: expected
-    attributes:
-      label: 预期行为 / Expected behavior
-      description: |
-        你期望发生什么？
-        What should happen?
-    validations:
-      required: true
-
-  - type: textarea
     id: actual
     attributes:
       label: 实际行为 / Actual behavior
       description: |
-        实际发生了什么？如有帮助，请附截图或录屏。
-        What happens instead? Include screenshots or screen recordings if they help.
+        实际发生了什么？如果和预期不一致，请直接在这里说明差异。如有帮助，请附截图或录屏。
+        What happens? If it differs from what you expected, describe the difference here. Include screenshots or screen recordings if they help.
     validations:
       required: true
 
   - type: textarea
-    id: lsposed-logs
+    id: extra-logs
     attributes:
-      label: LSPosed 模块日志 / LSPosed module logs
+      label: 额外日志或材料 / Extra logs or materials
       description: |
-        导出或粘贴 LSPosed 中 DPIS 相关日志行。
-        Export or paste the DPIS-related lines from the LSPosed logs.
+        仅在反馈诊断不足以说明问题时再补充，例如额外的 LSPosed 日志、截图或录屏说明。
+        Only add this when the feedback diagnostic package is not enough, for example extra LSPosed log lines, screenshots, or recording notes.
       render: text
       placeholder: |
-        DPIS / LSPosed 日志行 / log lines:
+        额外日志 / Extra logs:
     validations:
       required: false
 
