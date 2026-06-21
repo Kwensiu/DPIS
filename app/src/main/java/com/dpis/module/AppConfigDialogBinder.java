@@ -1255,10 +1255,7 @@ final class AppConfigDialogBinder {
                     normalizeDraftText(textOf(views.fontInputView)),
                     AppConfigDialogBinder.resolveFontMode(views.fontModeToggle),
                     normalizeDraftText(selectedTypefaceId),
-                    normalizeDraftText(draftFontHookDomainsRaw),
-                    fontHookDomainsResetRequested ? "font-reset" : "font-keep",
-                    viewportApplyModeResetRequested ? "viewport-reset" : "viewport-keep",
-                    previewFromGlobalPrefill ? "preview" : "stored");
+                    normalizeDraftText(normalizedHookDomainsRaw()));
         }
 
         private String emptyDraftSignature() {
@@ -1269,8 +1266,16 @@ final class AppConfigDialogBinder {
                     "",
                     FontApplyMode.SYSTEM_EMULATION,
                     "",
-                    "",
-                    "stored");
+                    "");
+        }
+
+        private String normalizedHookDomainsRaw() {
+            if (fontHookDomainsResetRequested) {
+                return null;
+            }
+            return FontHookDomainPresentation
+                    .forRecommendedTemplateRaw(draftFontHookDomainsRaw)
+                    .normalizedRawOrNull();
         }
 
         private static String valueOrEmpty(String value) {

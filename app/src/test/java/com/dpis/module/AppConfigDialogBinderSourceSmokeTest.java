@@ -146,6 +146,11 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertFalse(layout.contains("dialog_global_prefill_preview_status"));
         assertTrue(binderSource.contains("state.captureSavedDraft(views, item != null && item.previewFromGlobalPrefill);"));
         assertTrue(binderSource.contains("UnsavedBadgeBinder.bind("));
+        assertTrue(binderSource.contains("normalizeDraftText(normalizedHookDomainsRaw())"));
+        assertTrue(binderSource.contains(".forRecommendedTemplateRaw(draftFontHookDomainsRaw)"));
+        assertFalse(binderSource.contains("fontHookDomainsResetRequested ? \"font-reset\""));
+        assertFalse(binderSource.contains("viewportApplyModeResetRequested ? \"viewport-reset\""));
+        assertFalse(binderSource.contains("previewFromGlobalPrefill ? \"preview\" : \"stored\""));
         assertTrue(binderSource.contains("bindDpisToggleButton(views.dpisToggleButton, state.dpisEnabled"));
         assertTrue(binderSource.contains("dpisToggleButton.setEnabled(true);"));
         assertTrue(binderSource.contains("dpisToggleButton.setAlpha(1f);"));
