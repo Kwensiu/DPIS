@@ -53,6 +53,30 @@ Font mode
     -> custom hook-chain UI controls this mode only
 ```
 
+## Feedback Diagnostic Runtime Timeline
+
+Status: active first pass.
+
+Feedback diagnostic sessions merge selected centralized `DpisLog` messages,
+LSPosed lines parsed inside the diagnostic time window, and an experimental
+append-only runtime transport into `diagnostic.txt`. Legacy routes are observed
+through the same centralized logging boundary rather than new per-hook behavior.
+Raw LSPosed evidence remains in `lsposed-log.txt`; structured parsed events are
+marked `source=lsposed-log`.
+
+The transport path is intentionally small: root prepares a marker and event file
+under `/data/local/tmp/dpis-feedback-diagnostic`, then hook processes attempt to
+append events when the marker is readable. Android sandbox or SELinux failures
+are silent in hooks and exported as `source=runtime-transport` notes. This is a
+first-pass feasibility probe, not a replacement for LSPosed diagnostics.
+
+Runtime hotpath fallback currently covers the shared font field-rewrite paths
+that also serve Legacy app-process hooks: TextAppearance, TextView `setTextSize`
+SP/absolute rewrites, TextView current-px attach/setText reinforcement,
+TextView span rewrite, Paint/TextPaint fallback, Android WebView textZoom, and
+X5 WebView textZoom. The events are diagnostic-only and gated by the active
+feedback-diagnostic marker.
+
 ## Full Tree
 
 ```text
@@ -233,6 +257,24 @@ chain returns only to the compat/field-rewrite recommended template.
 
 ## Update Log
 
+- 2026-06-21: shared feedback diagnostic LSPosed timeline semantics now keep
+  same-timestamp runtime events in stage order (`begin`, `applied`/`skipped`,
+  `end`), and explicit `DPIS_VIEWPORT*` evidence no longer misclassifies to the
+  generic font route when the message also mentions `fontScale`. Shared
+  diagnostic runtime hotpath evidence now covers selected compat
+  viewport/resources boundaries including runtime marker observation,
+  `ResourcesManager` override, `ResourcesImpl` observe/override/stable target,
+  and `ResourcesRead` configuration/display-metrics overrides.
+- 2026-06-21: shared app-process viewport diagnostics now include first-hit plus
+  counted-sample `DisplayHookInstaller` and `WindowMetricsHookInstaller`
+  runtime-hotpath evidence. Repeated callback evidence carries `hitCount` and
+  `suppressedCount`, aimed at rapid-scrolling repros where callback hit versus
+  skipped supplement behavior needs to be separated before drawing conclusions.
+- 2026-06-21: shared diagnostic log behavior now carries
+  `diagnosticLogFingerprint=diag-log-2026-06-21-counted-hotpath-v1` in the app
+  hook plan and Display/WindowMetrics supplement readiness/probe evidence. Bump
+  `RuntimeDiagnosticLogFingerprint.VALUE` whenever runtime diagnostic log
+  semantics change.
 - 2026-06-01: initial tracker created.
 - 2026-06-01: shared modern route evidence confirmed auto absolute-width route
   needs ActivityRecord config-dispatch plus DisplayManagerInfo in addition to

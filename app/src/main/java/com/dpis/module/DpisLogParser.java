@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 final class DpisLogParser {
     private static final String DPIS_MODULE_PACKAGE = "io.github.kwensiu.dpis";
     private static final Pattern LSPOSED_TIMESTAMP_PATTERN = Pattern.compile(
-            "^\\[\\s*\\d{4}-(\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})\\.\\d+.*"
+            "^\\[\\s*\\d{4}-(\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})(\\.\\d+)?\\s+.*"
     );
 
     private DpisLogParser() {
@@ -145,7 +145,8 @@ final class DpisLogParser {
     private static String extractTime(String line) {
         Matcher matcher = LSPOSED_TIMESTAMP_PATTERN.matcher(line);
         if (matcher.matches()) {
-            return matcher.group(1).replace('T', ' ');
+            String fraction = matcher.group(2) != null ? matcher.group(2) : "";
+            return matcher.group(1).replace('T', ' ') + fraction;
         }
         if (line.matches("^\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}.*")) {
             return line.substring(0, 14);

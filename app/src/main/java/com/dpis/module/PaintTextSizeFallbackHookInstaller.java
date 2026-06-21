@@ -57,11 +57,38 @@ final class PaintTextSizeFallbackHookInstaller {
                         float incoming = (Float) chain.getArg(0);
                         PaintProvenanceTracker.invalidateIfDrifted(paint, paint.getTextSize());
                         if (PaintProvenanceTracker.isKnownApplied(paint, incoming, factor)) {
+                            FeedbackDiagnosticRuntimeHotPathEvents.skipped(
+                                    packageName,
+                                    "paint_fallback",
+                                    "reason=known_applied, paint=" + paint.getClass().getName()
+                                            + ", factor=" + factor
+                                            + ", percent=" + targetPercent
+                            );
                             return chain.proceed();
                         }
                         float adjusted = PaintProvenanceTracker.resolveScaled(paint, incoming, factor);
+                        String detail = "paint=" + paint.getClass().getName()
+                                + ", in=" + incoming
+                                + ", out=" + adjusted
+                                + ", factor=" + factor
+                                + ", percent=" + targetPercent;
+                        FeedbackDiagnosticRuntimeHotPathEvents.begin(
+                                packageName,
+                                "paint_fallback",
+                                detail
+                        );
                         Object result = chain.proceed();
                         if (Math.abs(adjusted - incoming) < SIZE_EPSILON_PX) {
+                            FeedbackDiagnosticRuntimeHotPathEvents.skipped(
+                                    packageName,
+                                    "paint_fallback",
+                                    "reason=epsilon, " + detail
+                            );
+                            FeedbackDiagnosticRuntimeHotPathEvents.end(
+                                    packageName,
+                                    "paint_fallback",
+                                    detail
+                            );
                             return result;
                         }
                         INTERNAL_UPDATE.set(Boolean.TRUE);
@@ -71,6 +98,16 @@ final class PaintTextSizeFallbackHookInstaller {
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
                         }
+                        FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                                packageName,
+                                "paint_fallback",
+                                detail
+                        );
+                        FeedbackDiagnosticRuntimeHotPathEvents.end(
+                                packageName,
+                                "paint_fallback",
+                                detail
+                        );
                         logIfChanged(buildFontLogKey(packageName, "paint-fallback"),
                                 "DPIS_FONT Paint fallback override: in=" + incoming
                                         + ", out=" + adjusted

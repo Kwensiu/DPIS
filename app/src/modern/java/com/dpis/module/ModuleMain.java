@@ -196,6 +196,12 @@ public final class ModuleMain extends XposedModule {
                 + ", targetTypefaceId=" + packagePlan.targetTypefaceId
                 + ", flutterSettingsFont=" + packagePlan.flutterSettingsFontEnabled
                 + ", hyperOsNativeFlutterFont=" + packagePlan.hyperOsNativeFlutterFontEnabled);
+        FeedbackDiagnosticRuntimeHotPathEvents.probe(
+                packageName,
+                "process_entry",
+                "process-entry source=" + source
+                        + ", process=" + currentProcessName
+        );
         appProcessInstallAttempted = true;
         try {
             AppProcessHookInstaller.install(this, store, policy, packagePlan);

@@ -21,6 +21,7 @@ final class FeedbackDiagnosticSummaryBuilder {
         builder.append("source: feedback-diagnostic-summary").append('\n');
         builder.append("package: ").append(request.packageName).append('\n');
         builder.append("label: ").append(valueOrUnknown(request.label)).append('\n');
+        builder.append("versionName: ").append(valueOrUnknown(request.versionName)).append('\n');
         builder.append("startedAt: ").append(formatTime(startedAtMillis)).append('\n');
         builder.append("finishedAt: ").append(formatTime(finishedAtMillis)).append('\n');
         builder.append("durationMs: ").append(durationMs).append('\n');
@@ -38,7 +39,10 @@ final class FeedbackDiagnosticSummaryBuilder {
         builder.append("font: ").append(formatFont(request)).append('\n');
         builder.append("notes: ")
                 .append(targetLaunchStarted
-                        ? "First version captures configuration context only. Runtime event capture is TODO."
+                        ? "Diagnostic package includes diagnostic.txt, dpis-log.txt, "
+                                + "and lsposed-log.txt. Runtime evidence is collected from "
+                                + "DPIS app events, runtime transport, and the LSPosed log window "
+                                + "when available."
                         : "Target app launch failed or was unavailable.")
                 .append('\n');
         return builder.toString();

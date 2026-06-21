@@ -98,7 +98,15 @@ final class ViewportRuntimeMarkerProbe {
                 RuntimeClock.crossProcessMarkerMillis());
         if (result.hit) {
             ViewportRuntimeMarkerBridge.MarkerRecord record = result.record;
-            logAtMostEvery("app-hit|" + packageName + "|" + sourceTag
+            String detail = "source=" + sourceTag
+                    + ", result=hit"
+                    + ", ageMs=" + result.ageMillis
+                    + ", targetFp=" + record.targetFingerprint
+                    + ", sourceSig=" + record.sourceSignature
+                    + ", resultSig=" + record.resultSignature
+                    + ", effectiveSwDp=" + record.effectiveSmallestWidthDp
+                    + ", provenance=" + record.provenance;
+            if (logAtMostEvery("app-hit|" + packageName + "|" + sourceTag
                             + "|" + record.targetFingerprint + "|" + record.resultSignature,
                     "DPIS_VIEWPORT_MARKER app observe: source=" + sourceTag
                     + ", package=" + packageName
@@ -108,28 +116,46 @@ final class ViewportRuntimeMarkerProbe {
                     + ", sourceSig=" + record.sourceSignature
                     + ", resultSig=" + record.resultSignature
                     + ", effectiveSwDp=" + record.effectiveSmallestWidthDp
-                    + ", provenance=" + record.provenance);
+                    + ", provenance=" + record.provenance)) {
+                FeedbackDiagnosticRuntimeHotPathEvents.probe(
+                        packageName,
+                        "viewport",
+                        "viewport_marker_app_observe",
+                        detail);
+            }
             return;
         }
-        logAtMostEvery("app-miss|" + packageName + "|" + sourceTag
+        String detail = "source=" + sourceTag
+                + ", result=miss"
+                + ", reason=" + result.reason
+                + ", expectedTargetFp=" + expectedTargetFingerprint
+                + ", property=" + ViewportRuntimeMarkerBridge.propertyNameForPackage(packageName);
+        if (logAtMostEvery("app-miss|" + packageName + "|" + sourceTag
                         + "|" + expectedTargetFingerprint + "|" + result.reason,
                 "DPIS_VIEWPORT_MARKER app observe: source=" + sourceTag
                 + ", package=" + packageName
                 + ", result=miss"
                 + ", reason=" + result.reason
                 + ", expectedTargetFp=" + expectedTargetFingerprint
-                + ", property=" + ViewportRuntimeMarkerBridge.propertyNameForPackage(packageName));
+                + ", property=" + ViewportRuntimeMarkerBridge.propertyNameForPackage(packageName))) {
+            FeedbackDiagnosticRuntimeHotPathEvents.probe(
+                    packageName,
+                    "viewport",
+                    "viewport_marker_app_observe",
+                    detail);
+        }
     }
 
-    private static void logAtMostEvery(String key, String message) {
+    private static boolean logAtMostEvery(String key, String message) {
         long now = RuntimeClock.elapsedRealtimeMillis();
         if (!LAST_LOG_MILLIS.containsKey(key) && LAST_LOG_MILLIS.size() >= MAX_LOG_KEYS) {
             LAST_LOG_MILLIS.clear();
         }
         Long previous = LAST_LOG_MILLIS.put(key, now);
         if (previous != null && now - previous < LOG_MIN_INTERVAL_MILLIS) {
-            return;
+            return false;
         }
         DpisLog.i(message);
+        return true;
     }
 }

@@ -49,6 +49,10 @@ public final class LogActivitySourceSmokeTest {
         assertTrue(source.contains("readLsposedLogsWhenRootAvailable(boolean refreshRootAccess)"));
         assertTrue(source.contains("rootAccess.status != RootAccessProbe.Status.AVAILABLE"));
         assertTrue(source.contains("LsposedLogReader.readLsposedDpisCurrent()"));
+        assertTrue(source.contains("DiagnosticLogGate.ensureEnabled("));
+        assertTrue(source.contains("this::finish"));
+        assertTrue(source.contains("waitingForDiagnosticLogEnable"));
+        assertTrue(source.contains("|| waitingForDiagnosticLogEnable"));
     }
 
     @Test
@@ -71,6 +75,8 @@ public final class LogActivitySourceSmokeTest {
                 "src/main/java/com/dpis/module/LogActivity.java");
         String layout = SourceSmokeTestPaths.read(
                 "src/main/res/layout/activity_log.xml");
+        String strings = SourceSmokeTestPaths.read(
+                "src/main/res/values/strings.xml");
         String providerPaths = SourceSmokeTestPaths.read(
                 "src/main/res/xml/file_provider_paths.xml");
 
@@ -97,10 +103,13 @@ public final class LogActivitySourceSmokeTest {
         assertTrue(source.contains("LSPOSED_LOG_ENTRY_NAME = \"lsposed-log.txt\""));
         assertTrue(source.contains("writeZipEntry(zip, DPIS_LOG_ENTRY_NAME, exportPackage.dpisLog);"));
         assertTrue(source.contains("writeZipEntry(zip, LSPOSED_LOG_ENTRY_NAME, exportPackage.lsposedLog);"));
+        assertTrue(source.contains("resolver.openOutputStream(uri)"));
+        assertFalse(source.contains("resolver.openOutputStream(uri, \"wt\")"));
         assertTrue(source.contains("builder.append(\"# DPIS\").append('\\n');"));
         assertTrue(source.contains("EMPTY_EXPORT_MESSAGE = \"No log lines found.\""));
         assertTrue(source.contains("? LSPOSED_EXPORT_SOURCE"));
         assertTrue(source.contains(": DPIS_EXPORT_SOURCE"));
+        assertTrue(strings.contains("Browse current DPIS and LSPosed logs"));
         assertFalse(source.contains("R.string.log_export_file_title"));
         assertFalse(source.contains("R.string.log_action_save_zip"));
         assertFalse(source.contains("R.string.log_action_share_zip"));

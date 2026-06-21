@@ -9,8 +9,10 @@ import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class VirtualDisplayOverrideTest {
     @Before
@@ -21,6 +23,9 @@ public class VirtualDisplayOverrideTest {
 
     @After
     public void tearDown() {
+        FeedbackDiagnosticRuntimeEvents.cancel();
+        FeedbackDiagnosticRuntimeHotPathEvents.resetForTest();
+        DisplayHookInstaller.resetHotPathSamplerForTest();
         VirtualDisplayState.set(null);
         setTargetPackageName(null);
         DisplayHookInstaller.setTargetStoreForLegacy(null);
@@ -53,6 +58,47 @@ public class VirtualDisplayOverrideTest {
         assertEquals(1080, metrics.widthPixels);
         assertEquals(2208, metrics.heightPixels);
         assertEquals(576, metrics.densityDpi);
+    }
+
+    @Test
+    public void displayMetricsOverrideRecordsViewportHotpathEvidence() {
+        publishTargetRecord();
+        FeedbackDiagnosticRuntimeEvents.start("com.max.xiaoheihe", request());
+        DisplayHookInstaller.resetHotPathSamplerForTest();
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 2208;
+        metrics.densityDpi = 480;
+
+        DisplayHookInstaller.applyDisplayMetrics(metrics, "diagnostic-test");
+
+        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        assertTrue(events.stream().anyMatch(event ->
+                event.contains("route=viewport")
+                        && event.contains("stage=applied")
+                        && event.contains("display_metrics_override")));
+    }
+
+    @Test
+    public void displayMetricsProbeEvidenceIncludesCountedSamples() {
+        FeedbackDiagnosticRuntimeEvents.start("com.max.xiaoheihe", request());
+        DisplayHookInstaller.resetHotPathSamplerForTest();
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 2208;
+        metrics.densityDpi = 480;
+
+        for (int i = 0; i < 50; i++) {
+            DisplayHookInstaller.applyDisplayMetrics(metrics, "diagnostic-count-test");
+        }
+
+        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        assertTrue(events.stream().anyMatch(event ->
+                event.contains("route=viewport")
+                        && event.contains("stage=probe")
+                        && event.contains("display_metrics_override")
+                        && event.contains("hitCount=50")
+                        && event.contains("suppressedCount=48")));
     }
 
     @Test
@@ -170,5 +216,23 @@ public class VirtualDisplayOverrideTest {
                 new ViewportOverride.Result(300, 613, 300, 576),
                 new VirtualDisplayOverride.Result(300, 613, 300, 576, 1080, 2208),
                 ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+    }
+
+    private static FeedbackDiagnosticCoordinator.Request request() {
+        return new FeedbackDiagnosticCoordinator.Request(
+                "com.max.xiaoheihe",
+                "Xiaoheihe",
+                "1.2.3",
+                true,
+                true,
+                true,
+                false,
+                ViewportTargetSpec.absoluteDp(300),
+                ViewportApplyMode.COMPAT,
+                100,
+                FontApplyMode.OFF,
+                null,
+                null
+        );
     }
 }

@@ -34,6 +34,14 @@ callers/callees, and impact analysis. Prefer runtime source under `app/src/**`
 for behavioral conclusions; `docs/archive/` may contain historical snapshots
 that can appear in CodeGraph results.
 
+### Sub-agent usage
+
+When delegating to sub-agents, prefer reusing the existing sub-agent for the
+same task type or feature theme. Do not create a fresh sub-agent for every
+small follow-up on the same topic. Start a new sub-agent only when the previous
+one is overloaded, the task domain has clearly changed, or shared context would
+pollute the result.
+
 ### DPIS runtime route playbook
 
 When a task mentions runtime hooks, LSPosed logs, flicker, relaunch, viewport,

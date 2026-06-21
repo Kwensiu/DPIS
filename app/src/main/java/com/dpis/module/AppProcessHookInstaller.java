@@ -29,6 +29,7 @@ final class AppProcessHookInstaller {
         DebugFontOverride debugOverride = resolveDebugFontOverrideForPackage(packageName);
         HookExecutionPlan plan = packagePlan.buildExecutionPlan(policy, debugOverride);
         DpisLog.i("DPIS_FONT app hook plan: package=" + packageName
+                + ", " + RuntimeDiagnosticLogFingerprint.field()
                 + ", fontScaleActive=" + packagePlan.fontScaleActive
                 + ", fontMode=" + packagePlan.targetFontMode
                 + ", resolvedFontMode=" + plan.resolvedFontMode
@@ -225,7 +226,7 @@ final class AppProcessHookInstaller {
         }
         if (shouldInstallAppProcessViewportSupplementHooks(plan, targetViewportSpec)
                 && !isViewportDisplaySupplementDisabled(packageName)) {
-            WindowMetricsHookInstaller.install(xposed);
+            WindowMetricsHookInstaller.install(xposed, packageName);
             DisplayHookInstaller.install(xposed, packageName, store);
         } else if (plan.viewportEnabled) {
             DpisLog.i("viewport app-process supplement hooks skipped: package="
