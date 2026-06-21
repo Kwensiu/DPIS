@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.13.1](https://github.com/Kwensiu/DPIS/compare/v1.13.0...v1.13.1) (2026-06-21)
+
+
+### Features
+
+* add DPIS diagnostic log viewer ([0da5de7](https://github.com/Kwensiu/DPIS/commit/0da5de792077aab4bc36ed31df8aed348adfe784))
+* add log export sharing ([9030d14](https://github.com/Kwensiu/DPIS/commit/9030d149e16804adf922a96b2724f22eb43475eb))
+* expand feedback diagnostics for WeChat hook routes ([1b22831](https://github.com/Kwensiu/DPIS/commit/1b22831ded96e31512a0447731d79e5951ad38cc))
+* feedback diagnostic function ([#92](https://github.com/Kwensiu/DPIS/issues/92)) ([6eeaff5](https://github.com/Kwensiu/DPIS/commit/6eeaff5cb94f59073b811a17cd6045b38d316bd8))
+
+
+### Bug Fixes
+
+* clarify per-app configuration semantics ([815e206](https://github.com/Kwensiu/DPIS/commit/815e2062c5a95fdafb1f111ca1a186b697df6975))
+* explicitly link c++_static for native library ([05c0016](https://github.com/Kwensiu/DPIS/commit/05c001669042c9b3cd01f801148b12073d389346))
+* normalize app config dirty state by final draft semantics ([39a597d](https://github.com/Kwensiu/DPIS/commit/39a597d99174f42b00b3c3a0a65966d42a71f9d8))
+* restore draft hook-chain state in editor ([4e2b438](https://github.com/Kwensiu/DPIS/commit/4e2b438646a194fe4421874ff194800211f746ef))
+* tighten feedback diagnostic log windowing ([ea014c2](https://github.com/Kwensiu/DPIS/commit/ea014c2d9683b3301dc0b5c0ae4fa79698efe35d))
+
+
+### Refactoring
+
+* package config aggregation ([#91](https://github.com/Kwensiu/DPIS/issues/91)) ([18d58c6](https://github.com/Kwensiu/DPIS/commit/18d58c66845b043cbb3987281d6682341f9b4a49))
+* simplify configured apps home status card ([a713359](https://github.com/Kwensiu/DPIS/commit/a713359bf9ab18a331ec085e37f67a68d770e700))
+
 ## [1.13.0](https://github.com/Kwensiu/DPIS/compare/v1.12.3...v1.13.0) (2026-06-17)
 
 
