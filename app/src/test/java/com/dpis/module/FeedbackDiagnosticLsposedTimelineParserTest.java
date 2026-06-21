@@ -272,6 +272,61 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
     }
 
     @Test
+    public void wechatDpiHookReadyIsClassifiedAsWechatRoute() {
+        String raw = "[ 2023-11-15T06:13:20.100     1000:  1234:  5678 I/LSPosedFramework ] "
+                + "(com.tencent.mm)[io.github.kwensiu.dpis,DPIS,id,0,1] "
+                + "modern WeChat DPI hook ready: j65.f#e, installed=1, locator=static-route";
+
+        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+                raw,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
+                wechatRequest(600)
+        );
+
+        assertEquals(1, events.size());
+        assertTrue(events.get(0).contains("route=wechat_dpi"));
+        assertTrue(events.get(0).contains("stage=hook_ready"));
+    }
+
+    @Test
+    public void wechatDpiCallbackIsUnexpectedWhenRouteNotConfigured() {
+        String raw = "[ 2023-11-15T06:13:20.100     1000:  1234:  5678 I/LSPosedFramework ] "
+                + "(com.tencent.mm)[io.github.kwensiu.dpis,DPIS,id,0,1] "
+                + "modern WeChat DPI callback hit: method=j65.f#e, configuredDpi=0";
+
+        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+                raw,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
+                wechatRequest(null)
+        );
+
+        assertEquals(1, events.size());
+        assertTrue(events.get(0).contains("route=wechat_dpi"));
+        assertTrue(events.get(0).contains("stage=unexpected_route_hit"));
+    }
+
+    @Test
+    public void wechatDpiAppliedIsExpectedWhenRouteConfigured() {
+        String raw = "[ 2023-11-15T06:13:20.100     1000:  1234:  5678 I/LSPosedFramework ] "
+                + "(com.tencent.mm)[io.github.kwensiu.dpis,DPIS,id,0,1] "
+                + "legacy WeChat DPI applied: method=j65.f#e, targetDpi=600, densityDpi 480 -> 600";
+
+        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+                raw,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
+                wechatRequest(600)
+        );
+
+        assertEquals(1, events.size());
+        assertTrue(events.get(0).contains("route=wechat_dpi"));
+        assertTrue(events.get(0).contains("stage=mutation_applied"));
+        assertFalse(events.get(0).contains("unexpected_route_hit"));
+    }
+
+    @Test
     public void viewportOverrideWithFontFieldsStaysOnViewportRoute() {
         String raw = "[ 2023-11-15T06:13:20.100     1000:  1234:  5678 I/LSPosedFramework ] "
                 + "(com.example.app)[io.github.kwensiu.dpis,DPIS,id,0,1] "
@@ -337,7 +392,27 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 120,
                 FontApplyMode.FIELD_REWRITE,
                 null,
+                null,
                 null
+        );
+    }
+
+    private static FeedbackDiagnosticCoordinator.Request wechatRequest(Integer wechatDpi) {
+        return new FeedbackDiagnosticCoordinator.Request(
+                "com.tencent.mm",
+                "WeChat",
+                "8.0.74",
+                true,
+                true,
+                true,
+                false,
+                ViewportTargetSpec.off(),
+                ViewportApplyMode.OFF,
+                null,
+                FontApplyMode.OFF,
+                null,
+                null,
+                wechatDpi
         );
     }
 

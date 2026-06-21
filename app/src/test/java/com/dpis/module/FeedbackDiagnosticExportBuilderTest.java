@@ -201,6 +201,21 @@ public final class FeedbackDiagnosticExportBuilderTest {
     }
 
     @Test
+    public void wechatDpiConfigAddsAppSpecificDiagnosticPlan() {
+        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+                List::of,
+                () -> new LogReadResult(0, "test-source", "", "")
+        );
+
+        String text = builder.buildDiagnosticText(result(List.of(), 600));
+
+        assertTrue(section(text, "[app-config]", "[diagnostic-plan]")
+                .contains("appSpecific: wechatDpi=600"));
+        assertTrue(section(text, "[diagnostic-plan]", "[runtime-summary]")
+                .contains("wechatDpiRoute: selected (targetDpi=600)"));
+    }
+
+    @Test
     public void runtimeAnalysisKeepsFullTimelineAndFlagsWarnings() {
         FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
                 List::of,
@@ -280,10 +295,17 @@ public final class FeedbackDiagnosticExportBuilderTest {
     }
 
     private static FeedbackDiagnosticCoordinator.Result result() {
-        return result(List.of("11-14 22:13:20.000 session started"));
+        return result(List.of("11-14 22:13:20.000 session started"), null);
     }
 
     private static FeedbackDiagnosticCoordinator.Result result(List<String> timelineEvents) {
+        return result(timelineEvents, null);
+    }
+
+    private static FeedbackDiagnosticCoordinator.Result result(
+            List<String> timelineEvents,
+            Integer wechatDpi
+    ) {
         FeedbackDiagnosticCoordinator.Request request = new FeedbackDiagnosticCoordinator.Request(
                 "com.example.app",
                 "Example",
@@ -297,7 +319,8 @@ public final class FeedbackDiagnosticExportBuilderTest {
                 120,
                 FontApplyMode.FIELD_REWRITE,
                 "font-id",
-                "system_server_font"
+                "system_server_font",
+                wechatDpi
         );
         return new FeedbackDiagnosticCoordinator.Result(
                 request,

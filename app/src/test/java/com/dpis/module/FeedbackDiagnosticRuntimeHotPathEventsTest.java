@@ -117,6 +117,7 @@ public final class FeedbackDiagnosticRuntimeHotPathEventsTest {
                 120,
                 FontApplyMode.FIELD_REWRITE,
                 null,
+                null,
                 null
         );
     }

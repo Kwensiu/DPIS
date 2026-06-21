@@ -77,23 +77,49 @@ final class WechatDpiModernHookInstaller {
         } catch (ClassNotFoundException throwable) {
             DpisLog.i("modern WeChat DPI bottom tab icon hook skipped: class not found"
                     + ", classLoader=" + describeClassLoaderForLog(classLoader));
+            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "bottom_tab_icon",
+                    "skipped",
+                    "reason=class_not_found, classLoader=" + describeClassLoaderForLog(classLoader));
             return;
         } catch (Throwable throwable) {
             DpisLog.e("modern WeChat DPI bottom tab icon hook failed while resolving class: "
                     + throwable.getClass().getName() + ": " + throwable.getMessage(),
                     throwable);
+            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "bottom_tab_icon",
+                    "skipped",
+                    "resolveFailed=true, error=" + throwable.getClass().getSimpleName());
             return;
         }
         Method initMethod = findBottomTabIconInitMethod(bottomTabIconViewClass);
         if (initMethod == null) {
             DpisLog.i("modern WeChat DPI bottom tab icon hook skipped: init method not found"
                     + ", classLoader=" + describeClassLoaderForLog(classLoader));
+            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "bottom_tab_icon",
+                    "skipped",
+                    "reason=init_method_not_found, classLoader="
+                            + describeClassLoaderForLog(classLoader));
             return;
         }
         Field scaleField = findBottomTabIconScaleField(bottomTabIconViewClass);
         if (scaleField == null) {
             DpisLog.i("modern WeChat DPI bottom tab icon hook skipped: scale field not found"
                     + ", classLoader=" + describeClassLoaderForLog(classLoader));
+            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "bottom_tab_icon",
+                    "skipped",
+                    "reason=scale_field_not_found, classLoader="
+                            + describeClassLoaderForLog(classLoader));
             return;
         }
         synchronized (HOOK_LOCK) {
@@ -114,6 +140,15 @@ final class WechatDpiModernHookInstaller {
                                     + ", configuredDpi="
                                     + WechatDpiPropertyBridge.readDpi(
                                             WechatDpiConfig.PACKAGE_NAME));
+                            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                                    WechatDpiConfig.PACKAGE_NAME,
+                                    "wechat_dpi",
+                                    "bottom_tab_icon",
+                                    "route_callback_entered",
+                                    "method=" + methodName(initMethod)
+                                            + ", configuredDpi="
+                                            + WechatDpiPropertyBridge.readDpi(
+                                                    WechatDpiConfig.PACKAGE_NAME));
                         }
                         Integer configuredDpi = configuredWechatDpiOrNull();
                         if (view != null && configuredDpi != null) {
@@ -126,6 +161,14 @@ final class WechatDpiModernHookInstaller {
                                                 + scaleField.getName()
                                                 + ", targetDpi=" + configuredDpi
                                                 + ", scale " + oldScale + " -> " + targetScale);
+                                FeedbackDiagnosticRuntimeHotPathEvents.event(
+                                        WechatDpiConfig.PACKAGE_NAME,
+                                        "wechat_dpi",
+                                        "bottom_tab_icon",
+                                        "mutation_applied",
+                                        "field=" + scaleField.getName()
+                                                + ", targetDpi=" + configuredDpi
+                                                + ", scale=" + oldScale + "->" + targetScale);
                             }
                         }
                         return chain.proceed();
@@ -134,11 +177,24 @@ final class WechatDpiModernHookInstaller {
                     + methodName(initMethod)
                     + ", field=" + scaleField.getName()
                     + ", classLoader=" + describeClassLoaderForLog(classLoader));
+            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "bottom_tab_icon",
+                    "hook_ready",
+                    "method=" + methodName(initMethod)
+                            + ", field=" + scaleField.getName());
         } catch (Throwable throwable) {
             unmarkBottomTabIconClass(bottomTabIconViewClass);
             DpisLog.e("modern WeChat DPI bottom tab icon hook failed: "
                     + throwable.getClass().getName() + ": " + throwable.getMessage(),
                     throwable);
+            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "bottom_tab_icon",
+                    "skipped",
+                    "hookFailed=true, error=" + throwable.getClass().getSimpleName());
         }
     }
 
@@ -181,6 +237,13 @@ final class WechatDpiModernHookInstaller {
                     + result.source.logName + ", versionCode=" + versionCode
                     + ", classLoader=" + describeClassLoaderForLog(classLoader)
                     + ", reason=" + result.failure);
+            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                    packageName,
+                    "wechat_dpi",
+                    "displaymetrics",
+                    "skipped",
+                    "locator=" + result.source.logName + ", versionCode=" + versionCode
+                            + ", reason=" + result.failure);
             return false;
         }
         return installWechatDpiHook(xposed, result, versionCode);
@@ -199,6 +262,13 @@ final class WechatDpiModernHookInstaller {
                     + methodNames(metricsMethods)
                     + ", locator=" + locatorResult.source.logName
                     + ", versionCode=" + versionCode);
+            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "displaymetrics",
+                    "skipped",
+                    "reason=already_installed, locator=" + locatorResult.source.logName
+                            + ", versionCode=" + versionCode);
             return true;
         }
         int installed = 0;
@@ -218,6 +288,15 @@ final class WechatDpiModernHookInstaller {
                                         + ", configuredDpi="
                                         + WechatDpiPropertyBridge.readDpi(
                                                 WechatDpiConfig.PACKAGE_NAME));
+                                FeedbackDiagnosticRuntimeHotPathEvents.event(
+                                        WechatDpiConfig.PACKAGE_NAME,
+                                        "wechat_dpi",
+                                        "displaymetrics",
+                                        "route_callback_entered",
+                                        "method=" + methodName(metricsMethod)
+                                                + ", configuredDpi="
+                                                + WechatDpiPropertyBridge.readDpi(
+                                                        WechatDpiConfig.PACKAGE_NAME));
                             }
                             if (isTargetFieldGetter(metricsMethod)) {
                                 if (configuredDpi != null) {
@@ -251,6 +330,13 @@ final class WechatDpiModernHookInstaller {
                     + ", configuredDpi="
                     + WechatDpiPropertyBridge.readDpi(
                             WechatDpiConfig.PACKAGE_NAME));
+            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "displaymetrics",
+                    "hook_ready",
+                    "installed=" + installed + ", locator=" + locatorResult.source.logName
+                            + ", versionCode=" + versionCode);
             return installed > 0;
         } catch (Throwable throwable) {
             unmarkHookedClasses(densityManagerClasses);
@@ -258,6 +344,13 @@ final class WechatDpiModernHookInstaller {
                     + methodNames(metricsMethods)
                     + ", versionCode=" + versionCode + ", "
                     + throwable.getClass().getName() + ": " + throwable.getMessage(), throwable);
+            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "displaymetrics",
+                    "skipped",
+                    "hookFailed=true, versionCode=" + versionCode
+                            + ", error=" + throwable.getClass().getSimpleName());
         }
         return false;
     }
@@ -393,14 +486,25 @@ final class WechatDpiModernHookInstaller {
         float oldScaledDensity = metrics.scaledDensity;
         if (applyWechatDpiToMetrics(metrics)
                 && WECHAT_DPI_MUTATION_LOGGED.compareAndSet(false, true)) {
+            int targetDpi = WechatDpiPropertyBridge.readDpi(
+                    WechatDpiConfig.PACKAGE_NAME);
             DpisLog.i("modern WeChat DPI applied: method=" + methodName
                     + ", targetDpi="
-                    + WechatDpiPropertyBridge.readDpi(
-                            WechatDpiConfig.PACKAGE_NAME)
+                    + targetDpi
                     + ", densityDpi " + oldDensityDpi + " -> " + metrics.densityDpi
                     + ", density " + oldDensity + " -> " + metrics.density
                     + ", scaledDensity " + oldScaledDensity + " -> "
                     + metrics.scaledDensity);
+            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "displaymetrics",
+                    "mutation_applied",
+                    "method=" + methodName + ", targetDpi=" + targetDpi
+                            + ", densityDpi=" + oldDensityDpi + "->" + metrics.densityDpi
+                            + ", density=" + oldDensity + "->" + metrics.density
+                            + ", scaledDensity=" + oldScaledDensity + "->"
+                            + metrics.scaledDensity);
         }
     }
 

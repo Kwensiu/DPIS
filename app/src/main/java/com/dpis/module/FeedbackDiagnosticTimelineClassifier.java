@@ -59,6 +59,9 @@ final class FeedbackDiagnosticTimelineClassifier {
         if (isConfigRoute(lower)) {
             return Route.CONFIG;
         }
+        if (lower.contains("wechat dpi")) {
+            return Route.WECHAT_DPI;
+        }
         if (lower.contains("dpis_viewport")
                 || lower.contains("dpis_viewport_marker")) {
             return Route.VIEWPORT;
@@ -105,6 +108,7 @@ final class FeedbackDiagnosticTimelineClassifier {
             return route == Route.FONT
                     || route == Route.VIEWPORT
                     || route == Route.TYPEFACE
+                    || route == Route.WECHAT_DPI
                     || route == Route.SYSTEM_SERVER
                     || route == Route.APP_PROCESS
                     || route == Route.CONFIG;
@@ -136,6 +140,11 @@ final class FeedbackDiagnosticTimelineClassifier {
         }
         if (route == Route.TYPEFACE) {
             return !context.typefaceExpected && stage == Stage.MUTATION_APPLIED;
+        }
+        if (route == Route.WECHAT_DPI) {
+            return !context.wechatDpiExpected
+                    && (stage == Stage.ROUTE_CALLBACK_ENTERED
+                    || stage == Stage.MUTATION_APPLIED);
         }
         return false;
     }
@@ -245,17 +254,20 @@ final class FeedbackDiagnosticTimelineClassifier {
         final boolean viewportExpected;
         final boolean fontExpected;
         final boolean typefaceExpected;
+        final boolean wechatDpiExpected;
 
         Context(
                 boolean appEnabled,
                 boolean viewportExpected,
                 boolean fontExpected,
-                boolean typefaceExpected
+                boolean typefaceExpected,
+                boolean wechatDpiExpected
         ) {
             this.appEnabled = appEnabled;
             this.viewportExpected = viewportExpected;
             this.fontExpected = fontExpected;
             this.typefaceExpected = typefaceExpected;
+            this.wechatDpiExpected = wechatDpiExpected;
         }
 
         static Context from(FeedbackDiagnosticCoordinator.Request request) {
@@ -264,7 +276,8 @@ final class FeedbackDiagnosticTimelineClassifier {
                     appEnabled,
                     appEnabled && request != null && request.viewportTargetSpec.isEnabled(),
                     appEnabled && request != null && request.fontScalePercent != null,
-                    appEnabled && request != null && request.typefaceId != null
+                    appEnabled && request != null && request.typefaceId != null,
+                    appEnabled && request != null && request.wechatDpi != null
             );
         }
     }
@@ -290,6 +303,7 @@ final class FeedbackDiagnosticTimelineClassifier {
         VIEWPORT("viewport"),
         FONT("font"),
         TYPEFACE("typeface"),
+        WECHAT_DPI("wechat_dpi"),
         SYSTEM_SERVER("system_server"),
         APP_PROCESS("app_process");
 

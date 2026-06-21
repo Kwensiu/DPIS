@@ -263,6 +263,14 @@ requested font mode
 Detailed app-specific runtime evidence lives in
 `docs/private/wechat-dpi-runtime-notes.md`.
 
+- 2026-06-22 active: WeChat independent DPI participates in feedback
+  diagnostics as `route=wechat_dpi` for WeChat targets. A saved WeChat DPI config
+  makes callback and mutation evidence expected; without that config, callback
+  or mutation hits are unexpected route activity. The modern route emits
+  structured diagnostic evidence for package-loaded, package-ready,
+  module-loaded class, application-attach, DisplayMetrics, and bottom-tab icon
+  hook stages so diagnostic packages can distinguish hook ready, callback,
+  applied mutation, and skipped locator paths.
 - 2026-06-17 active: WeChat independent DPI route keeps a module-loaded
   `ClassLoader.loadClass(String, boolean)` probe in the WeChat main process and
   logs package route classloader identities. The independent route also hooks

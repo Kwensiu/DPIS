@@ -177,7 +177,7 @@ final class AppConfigDialogBinder {
                 : null;
     }
 
-    private static AppConfigDialogViews viewsFor(View dialogView) {
+    static AppConfigDialogViews viewsFor(View dialogView) {
         Object tag = dialogView != null
                 ? dialogView.getTag(R.id.dialog_font_hook_domains_button)
                 : null;

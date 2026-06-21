@@ -119,6 +119,13 @@ The log page and feedback diagnostic flow are user-facing support tools, not
 temporary debug-only surfaces. They exist to collect enough DPIS-specific
 evidence for support without asking users to export unrelated LSPosed logs.
 
+App-specific runtime routes are first-class diagnostic evidence for their target
+apps. For example, WeChat DPI belongs to `route=wechat_dpi`; diagnostics should
+expose hook install evidence, callback evidence, mutation evidence, and skipped
+or failed locator evidence for WeChat. A configured WeChat DPI target makes
+callback and mutation evidence expected; without that config, callback or
+mutation hits are treated as unexpected route activity.
+
 Global log output is the feature gate for both the log page and feedback
 diagnostics. If log output is disabled, the UI should offer an enable path
 instead of silently producing empty diagnostics.

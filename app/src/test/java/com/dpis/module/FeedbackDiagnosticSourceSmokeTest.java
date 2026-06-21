@@ -160,6 +160,14 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         String paintFallback = read(
                 "src/main/java/com/dpis/module/PaintTextSizeFallbackHookInstaller.java");
         String webViewFont = read("src/main/java/com/dpis/module/WebViewFontHookInstaller.java");
+        String modernWechat = read(
+                "src/modern/java/com/dpis/module/WechatDpiModernHookInstaller.java");
+        String modernAppSpecific = read(
+                "src/modern/java/com/dpis/module/ModernAppSpecificRouteInstaller.java");
+        String legacyWechat = read(
+                "src/legacy/java/com/dpis/module/WechatDpiLegacyHookInstaller.java");
+        String legacyAppSpecific = read(
+                "src/legacy/java/com/dpis/module/LegacyAppSpecificRouteInstaller.java");
 
         assertTrue(main.contains("REQUEST_SAVE_FEEDBACK_DIAGNOSTIC"));
         assertTrue(main.contains("Intent.ACTION_CREATE_DOCUMENT"));
@@ -204,6 +212,15 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(paintFallback.contains("\"paint_fallback\""));
         assertTrue(webViewFont.contains("\"webview_text_zoom\""));
         assertTrue(webViewFont.contains("\"x5_webview_text_zoom\""));
+        assertTrue(exportBuilder.contains("wechatDpiRoute: selected"));
+        assertTrue(modernWechat.contains("\"wechat_dpi\""));
+        assertTrue(modernWechat.contains("\"displaymetrics\""));
+        assertTrue(modernWechat.contains("\"bottom_tab_icon\""));
+        assertTrue(modernAppSpecific.contains("\"wechat_dpi\""));
+        assertTrue(modernAppSpecific.contains("\"application_attach\""));
+        assertTrue(modernAppSpecific.contains("\"module_loaded_class\""));
+        assertTrue(legacyWechat.contains("\"wechat_dpi\""));
+        assertTrue(legacyAppSpecific.contains("\"legacy_load_package\""));
         assertTrue(resultSheet.contains("new BottomSheetDialog(activity)"));
         assertTrue(resultSheet.contains("bindEntry("));
         assertTrue(resultSheet.contains("feedback_diagnostic_result_entry_meta"));

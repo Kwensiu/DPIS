@@ -46,6 +46,16 @@ final class FeedbackDiagnosticRuntimeHotPathEvents {
         record(packageName, categoryRoute, routeName, "probe", detail);
     }
 
+    static void event(
+            String packageName,
+            String categoryRoute,
+            String routeName,
+            String stage,
+            String detail
+    ) {
+        record(packageName, categoryRoute, routeName, stage, detail);
+    }
+
     static void end(String packageName, String route, String detail) {
         end(packageName, ROUTE_FONT, route, detail);
     }

@@ -213,6 +213,7 @@ public final class FeedbackDiagnosticRuntimeEventsTest {
                 fontEnabled ? 120 : null,
                 fontEnabled ? FontApplyMode.FIELD_REWRITE : FontApplyMode.OFF,
                 null,
+                null,
                 null
         );
     }

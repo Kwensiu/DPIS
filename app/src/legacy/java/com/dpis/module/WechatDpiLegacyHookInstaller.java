@@ -17,6 +17,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 final class WechatDpiLegacyHookInstaller {
     private static final AtomicBoolean HOOKED = new AtomicBoolean(false);
+    private static final AtomicBoolean WECHAT_DPI_CALLBACK_LOGGED = new AtomicBoolean(false);
     private static final AtomicBoolean WECHAT_DPI_MUTATION_LOGGED = new AtomicBoolean(false);
 
     private WechatDpiLegacyHookInstaller() {
@@ -42,6 +43,13 @@ final class WechatDpiLegacyHookInstaller {
             DpisLog.i("legacy WeChat DPI hook skipped: locator="
                     + result.source.logName + ", versionCode=" + versionCode
                     + ", reason=" + result.failure);
+            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "displaymetrics",
+                    "skipped",
+                    "locator=" + result.source.logName + ", versionCode=" + versionCode
+                            + ", reason=" + result.failure);
             return false;
         }
         return installWechatDpiHook(result, versionCode);
@@ -60,6 +68,17 @@ final class WechatDpiLegacyHookInstaller {
                 XposedBridge.hookMethod(metricsMethod, new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
+                        if (WECHAT_DPI_CALLBACK_LOGGED.compareAndSet(false, true)) {
+                            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                                    WechatDpiConfig.PACKAGE_NAME,
+                                    "wechat_dpi",
+                                    "displaymetrics",
+                                    "route_callback_entered",
+                                    "method=" + methodName(metricsMethod)
+                                            + ", configuredDpi="
+                                            + WechatDpiPropertyBridge.readDpi(
+                                                    WechatDpiConfig.PACKAGE_NAME));
+                        }
                         if (param.getResult() instanceof DisplayMetrics metrics) {
                             applyWechatDpi(metrics,
                                     methodName(metricsMethod));
@@ -72,12 +91,26 @@ final class WechatDpiLegacyHookInstaller {
                     + methodNames(metricsMethods)
                     + ", installed=" + installed + ", locator="
                     + locatorResult.source.logName + ", versionCode=" + versionCode);
+            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "displaymetrics",
+                    "hook_ready",
+                    "installed=" + installed + ", locator=" + locatorResult.source.logName
+                            + ", versionCode=" + versionCode);
             return installed > 0;
         } catch (Throwable throwable) {
             DpisLog.e("legacy WeChat DPI hook failed: "
                     + methodNames(metricsMethods)
                     + ", versionCode=" + versionCode + ", "
                     + throwable.getClass().getName() + ": " + throwable.getMessage(), throwable);
+            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "displaymetrics",
+                    "skipped",
+                    "hookFailed=true, versionCode=" + versionCode
+                            + ", error=" + throwable.getClass().getSimpleName());
         }
         return false;
     }
@@ -114,6 +147,16 @@ final class WechatDpiLegacyHookInstaller {
                     + ", density " + oldDensity + " -> " + metrics.density
                     + ", scaledDensity " + oldScaledDensity + " -> "
                     + metrics.scaledDensity);
+            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "displaymetrics",
+                    "mutation_applied",
+                    "method=" + methodName + ", targetDpi=" + dpi
+                            + ", densityDpi=" + oldDensityDpi + "->" + metrics.densityDpi
+                            + ", density=" + oldDensity + "->" + metrics.density
+                            + ", scaledDensity=" + oldScaledDensity + "->"
+                            + metrics.scaledDensity);
         }
     }
 

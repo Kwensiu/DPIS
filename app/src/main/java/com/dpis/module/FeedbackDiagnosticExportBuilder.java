@@ -200,7 +200,13 @@ final class FeedbackDiagnosticExportBuilder {
                 .append('\n');
         builder.append("fontHookDomains: ")
                 .append(valueOrDefault(request.fontHookDomainsRaw, "default"))
-                .append("\n\n");
+                .append('\n');
+        if (request.wechatDpi != null) {
+            builder.append("appSpecific: wechatDpi=")
+                    .append(request.wechatDpi)
+                    .append('\n');
+        }
+        builder.append('\n');
     }
 
     private void appendDiagnosticPlan(
@@ -231,6 +237,11 @@ final class FeedbackDiagnosticExportBuilder {
         builder.append("hookDomains: ")
                 .append(request.fontHookDomainsRaw == null ? "default" : "custom")
                 .append('\n');
+        if (request.wechatDpi != null) {
+            builder.append("wechatDpiRoute: selected (targetDpi=")
+                    .append(request.wechatDpi)
+                    .append(")\n");
+        }
         builder.append("note: runtime events mirror active DPIS log events in this process; ")
                 .append("runtime transport and LSPosed window parsing are experimental, ")
                 .append("so missing events should be cross-checked with lsposed-log.txt.\n\n");

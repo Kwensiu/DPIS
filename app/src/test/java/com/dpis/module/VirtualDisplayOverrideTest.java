@@ -232,6 +232,7 @@ public class VirtualDisplayOverrideTest {
                 100,
                 FontApplyMode.OFF,
                 null,
+                null,
                 null
         );
     }

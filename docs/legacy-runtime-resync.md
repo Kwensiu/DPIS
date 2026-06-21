@@ -77,6 +77,13 @@ TextView span rewrite, Paint/TextPaint fallback, Android WebView textZoom, and
 X5 WebView textZoom. The events are diagnostic-only and gated by the active
 feedback-diagnostic marker.
 
+As of 2026-06-22, the Legacy WeChat DPI route participates in feedback
+diagnostics as `route=wechat_dpi` for WeChat targets. A saved WeChat DPI config
+makes callback and mutation evidence expected; without that config, callback or
+mutation hits are unexpected route activity. The legacy load-package route and
+DisplayMetrics hook emit structured evidence for route entry, install attempt,
+hook ready, callback, applied mutation, and skipped or failed locator paths.
+
 ## Full Tree
 
 ```text

@@ -103,9 +103,10 @@
     <string name="home_donate_title">Support the author</string>
     <string name="home_donate_summary">Donate to the developer to support future updates.</string>
     <string name="dialog_confirm_button">Confirm</string>
+    <string name="feedback_diagnostic_save_and_start_button">Save and start</string>
     <string name="feedback_diagnostic_action">Feedback diagnostic</string>
     <string name="feedback_diagnostic_record_action">Record feedback diagnostic</string>
-    <string name="feedback_diagnostic_confirm_message">Restart %1$s.\nReturn to DPIS after reproducing the issue to get the diagnostic package.\nLogs do not collect personal privacy.</string>
+    <string name="feedback_diagnostic_confirm_message">Save and restart %1$s.\nReturn to DPIS after reproducing the issue to get the diagnostic package.\nLogs do not collect personal privacy.</string>
     <string name="feedback_diagnostic_started">Diagnostic session started</string>
     <string name="feedback_diagnostic_unavailable">Unable to start diagnostic session</string>
     <string name="feedback_diagnostic_root_required">Root access required</string>

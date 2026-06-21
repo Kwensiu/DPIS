@@ -3040,10 +3040,48 @@ public final class MainActivity
             View root,
             MaterialButton saveButton
     ) {
+        saveAppConfigDraftInternal(
+                item,
+                state,
+                viewportValue,
+                viewportTargetType,
+                fontPercent,
+                fontMode,
+                selectedTypefaceId,
+                draftFontHookDomainsRaw,
+                viewportApplyMode,
+                viewportApplyModeResetRequested,
+                fontHookDomainsResetRequested,
+                viewportScaleInput,
+                viewportAbsoluteInput,
+                dpisEnabled,
+                root,
+                saveButton
+        );
+    }
+
+    private boolean saveAppConfigDraftInternal(
+            AppListItem item,
+            AppConfigDialogBinder.AppConfigDialogState state,
+            Integer viewportValue,
+            String viewportTargetType,
+            Integer fontPercent,
+            String fontMode,
+            String selectedTypefaceId,
+            String draftFontHookDomainsRaw,
+            String viewportApplyMode,
+            boolean viewportApplyModeResetRequested,
+            boolean fontHookDomainsResetRequested,
+            String viewportScaleInput,
+            String viewportAbsoluteInput,
+            boolean dpisEnabled,
+            View root,
+            MaterialButton saveButton
+    ) {
         if (item == null
                 || item.packageName == null
                 || item.packageName.isBlank()) {
-            return;
+            return false;
         }
         DpiConfigStore store = getHookConfigStore();
         ViewportTargetSpec spec
@@ -3079,11 +3117,12 @@ public final class MainActivity
         }
         if (result[0] != 1 || !wechatSaved) {
             showToast(R.string.system_settings_save_failed);
-            return;
+            return false;
         }
         AppConfigDialogBinder.showSaveButtonFeedback(saveButton);
         LandAppDetailPaneBinder.markDraftSaved(root, saveButton);
         requestLandDetailScopeAfterSuccessfulSave(item, state);
+        return true;
     }
 
     private void requestLandDetailScopeAfterSuccessfulSave(
@@ -3717,10 +3756,14 @@ public final class MainActivity
                         item.label
                 ))
                 .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.dialog_confirm_button, (dialog, which) -> {
+                .setPositiveButton(R.string.feedback_diagnostic_save_and_start_button, (dialog, which) -> {
+                    AppListItem diagnosticItem = saveCurrentEditorConfigForDiagnostic(item, state);
+                    if (diagnosticItem == null) {
+                        return;
+                    }
                     boolean started = feedbackDiagnosticCoordinator.start(
                             FeedbackDiagnosticCoordinator.Request.from(
-                                    item,
+                                    diagnosticItem,
                                     state,
                                     resolvePackageVersionName(item.packageName)
                             )
@@ -3730,6 +3773,139 @@ public final class MainActivity
                     }
                 })
                 .show();
+    }
+
+    private AppListItem saveCurrentEditorConfigForDiagnostic(
+            AppListItem item,
+            AppConfigDialogBinder.AppConfigDialogState state
+    ) {
+        if (item == null) {
+            return null;
+        }
+        View root = activeEditorRoot;
+        if (root == null || !item.packageName.equals(activeEditorPackageName)) {
+            return item;
+        }
+        if (AppConfigDialogBinder.viewsFor(root) != null) {
+            return saveDialogConfigForDiagnostic(item, root);
+        }
+        if (LandAppDetailPaneBinder.stateFor(root) != null) {
+            return saveLandDetailConfigForDiagnostic(item, state, root);
+        }
+        return item;
+    }
+
+    private AppListItem saveDialogConfigForDiagnostic(AppListItem item, View root) {
+        AppConfigDialogBinder.AppConfigDialogViews views
+                = AppConfigDialogBinder.viewsFor(root);
+        AppConfigDialogBinder.AppConfigDialogState state
+                = AppConfigDialogBinder.stateFor(root);
+        if (views == null || state == null) {
+            return item;
+        }
+        if (!AppConfigDialogBinder.updateSaveButtonState(root, views)) {
+            showToast(R.string.status_save_invalid);
+            return null;
+        }
+        int[] result = createAppConfigDialogHost().saveAppConfig(
+                item,
+                views.viewportInputView,
+                views.fontInputView,
+                AppConfigDialogBinder.resolveViewportMode(views.viewportModeToggle),
+                state.viewportApplyMode,
+                state.viewportApplyModeResetRequested,
+                AppConfigDialogBinder.resolveFontMode(views.fontModeToggle),
+                state.selectedTypefaceId,
+                state.draftFontHookDomainsRaw,
+                state.fontHookDomainsResetRequested,
+                state.viewportScaleInput,
+                state.viewportAbsoluteInput
+        );
+        if (result[0] == 1) {
+            DpiConfigStore store = getHookConfigStore();
+            if (!WechatDpiSheetBinder.save(root, item.packageName, state.dpisEnabled, store)) {
+                result[0] = 0;
+                result[1] = R.string.status_save_invalid;
+            } else {
+                onRuntimeConfigSaved();
+            }
+        }
+        if (result[1] != 0) {
+            showToast(result[1]);
+        }
+        if (result[0] != 1) {
+            return null;
+        }
+        state.previewFromGlobalPrefill = false;
+        state.draftFontHookDomainsRaw = null;
+        state.fontHookDomainsResetRequested = false;
+        state.viewportApplyModeResetRequested = false;
+        state.captureSavedDraft(views, false);
+        return item.withWechatDpi(readPersistedWechatDpiForDiagnostic(item.packageName));
+    }
+
+    private AppListItem saveLandDetailConfigForDiagnostic(
+            AppListItem item,
+            AppConfigDialogBinder.AppConfigDialogState state,
+            View root
+    ) {
+        if (!WechatDpiSheetBinder.isInputValid(root)) {
+            showToast(R.string.status_save_invalid);
+            return null;
+        }
+        TextInputEditText viewportInput = findEditorInput(
+                root,
+                R.id.land_detail_viewport_input,
+                R.id.dialog_viewport_input
+        );
+        TextInputEditText fontInput = findEditorInput(
+                root,
+                R.id.land_detail_font_scale_input,
+                R.id.dialog_font_scale_input
+        );
+        boolean saved = saveAppConfigDraftInternal(
+                item,
+                state,
+                parseEditorPercentOrNull(viewportInput),
+                AppConfigDialogBinder.resolveViewportMode(findViewportModeToggle(root)),
+                parseEditorPercentOrNull(fontInput),
+                AppConfigDialogBinder.resolveFontMode(findFontModeToggle(root)),
+                state != null ? state.selectedTypefaceId : null,
+                state != null ? state.draftFontHookDomainsRaw : null,
+                state != null ? state.viewportApplyMode : ViewportApplyMode.OFF,
+                state != null && state.viewportApplyModeResetRequested,
+                state != null && state.fontHookDomainsResetRequested,
+                state != null ? state.viewportScaleInput : "",
+                state != null ? state.viewportAbsoluteInput : "",
+                state != null && state.dpisEnabled,
+                root,
+                root.findViewById(R.id.land_detail_save_button)
+        );
+        return saved ? item.withWechatDpi(readPersistedWechatDpiForDiagnostic(item.packageName))
+                : null;
+    }
+
+    private Integer readPersistedWechatDpiForDiagnostic(String packageName) {
+        if (!WechatDpiConfig.appliesTo(packageName)) {
+            return null;
+        }
+        DpiConfigStore store = getHookConfigStore();
+        return store != null ? store.getWechatDpi(packageName) : null;
+    }
+
+    private static Integer parseEditorPercentOrNull(TextInputEditText input) {
+        if (input == null || input.getText() == null) {
+            return null;
+        }
+        String raw = input.getText().toString().trim();
+        if (raw.isEmpty()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(raw);
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 
     private void maybeShowPendingFeedbackDiagnosticResult() {

@@ -252,6 +252,36 @@ final class AppListItem {
                 icon);
     }
 
+    AppListItem withWechatDpi(Integer updatedWechatDpi) {
+        if (java.util.Objects.equals(wechatDpi, updatedWechatDpi)) {
+            return this;
+        }
+        return new AppListItem(
+                label,
+                packageName,
+                inScope,
+                scopeKnown,
+                viewportWidthDp,
+                viewportScalePermille,
+                viewportMode,
+                viewportTargetType,
+                viewportTargetSpec,
+                fontScalePercent,
+                fontMode,
+                typefaceId,
+                appSpecificConfigActive,
+                updatedWechatDpi,
+                dpisEnabled,
+                configured,
+                installed,
+                systemApp,
+                hyperOsNativeProxyCandidate,
+                previewFromGlobalPrefill,
+                previewFontHookDomainsRaw,
+                icon
+        );
+    }
+
     private static String normalizeNullableString(String value) {
         if (value == null) {
             return null;

@@ -47,6 +47,7 @@ final class FeedbackDiagnosticCoordinator {
         final String fontApplyMode;
         final String typefaceId;
         final String fontHookDomainsRaw;
+        final Integer wechatDpi;
 
         Request(
                 String packageName,
@@ -61,7 +62,8 @@ final class FeedbackDiagnosticCoordinator {
                 Integer fontScalePercent,
                 String fontApplyMode,
                 String typefaceId,
-                String fontHookDomainsRaw
+                String fontHookDomainsRaw,
+                Integer wechatDpi
         ) {
             this.packageName = valueOrEmpty(packageName);
             this.label = valueOrEmpty(label);
@@ -78,6 +80,7 @@ final class FeedbackDiagnosticCoordinator {
             this.fontApplyMode = FontApplyMode.normalize(fontApplyMode);
             this.typefaceId = normalizeNullableString(typefaceId);
             this.fontHookDomainsRaw = normalizeNullableString(fontHookDomainsRaw);
+            this.wechatDpi = wechatDpi;
         }
 
         static Request from(
@@ -108,7 +111,8 @@ final class FeedbackDiagnosticCoordinator {
                     item.fontScalePercent,
                     item.fontMode,
                     useState ? state.selectedTypefaceId : item.typefaceId,
-                    useState ? state.draftFontHookDomainsRaw : item.previewFontHookDomainsRaw
+                    useState ? state.draftFontHookDomainsRaw : item.previewFontHookDomainsRaw,
+                    item.wechatDpi
             );
         }
 

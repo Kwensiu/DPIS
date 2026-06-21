@@ -95,9 +95,10 @@
     <string name="home_donate_title">打赏作者</string>
     <string name="home_donate_summary">向开发者捐赠以支持后续更新</string>
     <string name="dialog_confirm_button">确认</string>
+    <string name="feedback_diagnostic_save_and_start_button">保存并开始</string>
     <string name="feedback_diagnostic_action">反馈诊断</string>
     <string name="feedback_diagnostic_record_action">录制反馈诊断</string>
-    <string name="feedback_diagnostic_confirm_message">将重启 %1$s\n请在复现问题后返回 DPIS 获取诊断包\n日志不会收集个人隐私</string>
+    <string name="feedback_diagnostic_confirm_message">将保存并重启 %1$s\n请在复现问题后返回 DPIS 获取诊断包\n日志不会收集个人隐私</string>
     <string name="feedback_diagnostic_started">诊断采集已开始</string>
     <string name="feedback_diagnostic_unavailable">无法启动诊断采集</string>
     <string name="feedback_diagnostic_root_required">需要 root 权限</string>
