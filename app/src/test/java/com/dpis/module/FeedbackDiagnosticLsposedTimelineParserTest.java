@@ -4,11 +4,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.Test;
 
 public final class FeedbackDiagnosticLsposedTimelineParserTest {
+    private static final long WINDOW_START_MILLIS = millis("2023-11-15 06:13:19.000");
+    private static final long WINDOW_END_MILLIS = millis("2023-11-15 06:13:29.000");
+
     @Test
     public void parsesTargetEventsInsideDiagnosticWindow() {
         String raw = ""
@@ -24,8 +30,8 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
 
         List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
                 raw,
-                1_700_000_000_000L,
-                1_700_000_010_000L,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
                 request(true, true, true)
         );
 
@@ -43,8 +49,8 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
 
         List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
                 raw,
-                1_700_000_000_000L,
-                1_700_000_010_000L,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
                 request(true, true, false)
         );
 
@@ -61,8 +67,8 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
 
         List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
                 raw,
-                1_700_000_000_000L,
-                1_700_000_010_000L,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
                 request(true, true, false)
         );
 
@@ -80,8 +86,8 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
 
         List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
                 raw,
-                1_700_000_000_000L,
-                1_700_000_010_000L,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
                 request(true, true, true)
         );
 
@@ -99,8 +105,8 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
 
         List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
                 raw,
-                1_700_000_000_000L,
-                1_700_000_010_000L,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
                 request(true, true, true)
         );
 
@@ -117,8 +123,8 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
 
         List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
                 raw,
-                1_700_000_000_000L,
-                1_700_000_010_000L,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
                 request(true, true, false)
         );
 
@@ -139,8 +145,8 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
 
         List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
                 raw,
-                1_700_000_000_000L,
-                1_700_000_010_000L,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
                 request(true, true, true)
         );
 
@@ -157,8 +163,8 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
 
         List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
                 raw,
-                1_700_000_000_000L,
-                1_700_000_010_000L,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
                 request(true, true, true)
         );
 
@@ -176,8 +182,8 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
 
         List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
                 raw,
-                1_700_000_000_000L,
-                1_700_000_010_000L,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
                 request(true, true, true)
         );
 
@@ -194,8 +200,8 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
 
         List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
                 raw,
-                1_700_000_000_000L,
-                1_700_000_010_000L,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
                 request(true, true, true)
         );
 
@@ -212,8 +218,8 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
 
         List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
                 raw,
-                1_700_000_000_000L,
-                1_700_000_010_000L,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
                 request(true, true, true)
         );
 
@@ -233,8 +239,8 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
 
         List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
                 raw,
-                1_700_000_000_000L,
-                1_700_000_010_000L,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
                 request(true, true, true)
         );
 
@@ -254,8 +260,8 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
 
         List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
                 raw,
-                1_700_000_000_000L,
-                1_700_000_010_000L,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
                 request(true, true, true)
         );
 
@@ -274,8 +280,8 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
 
         List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
                 raw,
-                1_700_000_000_000L,
-                1_700_000_010_000L,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
                 request(true, true, true)
         );
 
@@ -302,8 +308,8 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
 
         List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
                 raw,
-                1_700_000_000_000L,
-                1_700_000_010_000L,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
                 request(true, true, true)
         );
 
@@ -333,5 +339,15 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 null,
                 null
         );
+    }
+
+    private static long millis(String value) {
+        try {
+            return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
+                    .parse(value)
+                    .getTime();
+        } catch (ParseException exception) {
+            throw new AssertionError(exception);
+        }
     }
 }

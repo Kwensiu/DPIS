@@ -8,8 +8,11 @@ import static org.junit.Assert.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -17,12 +20,15 @@ import java.util.zip.ZipInputStream;
 import org.junit.Test;
 
 public final class FeedbackDiagnosticExportBuilderTest {
+    private static final long SESSION_START_MILLIS = millis("2023-11-15 06:13:20.000");
+    private static final long SESSION_END_MILLIS = millis("2023-11-15 06:13:30.000");
+
     @Test
     public void zipContainsDiagnosticAndSeparateLogEntries() throws IOException {
         FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
                 () -> List.of(
                         new DpisLogEntry(
-                                1_700_000_000_100L,
+                                millis("2023-11-15 06:13:20.100"),
                                 "11-14 22:13:20",
                                 "I",
                                 "DPIS",
@@ -33,7 +39,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
                                 false
                         ),
                         new DpisLogEntry(
-                                1_700_000_100_000L,
+                                millis("2023-11-15 06:15:00.000"),
                                 "11-14 22:15:00",
                                 "I",
                                 "DPIS",
@@ -111,7 +117,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
         FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
                 () -> List.of(
                         new DpisLogEntry(
-                                1_700_000_005_000L,
+                                millis("2023-11-15 06:13:25.000"),
                                 "11-14 22:13:25",
                                 "I",
                                 "DPIS",
@@ -122,7 +128,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
                                 false
                         ),
                         new DpisLogEntry(
-                                1_700_000_100_000L,
+                                millis("2023-11-15 06:15:00.000"),
                                 "11-14 22:15:00",
                                 "I",
                                 "DPIS",
@@ -149,7 +155,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
         List<DpisLogEntry> entries = new java.util.ArrayList<>();
         for (int i = 0; i < 105; i++) {
             entries.add(new DpisLogEntry(
-                    1_699_999_800_000L + i,
+                    millis("2023-11-15 06:10:00.000") + i,
                     "11-14 22:13:" + String.format(java.util.Locale.US, "%02d", i % 60),
                     "I",
                     "DPIS",
@@ -295,8 +301,8 @@ public final class FeedbackDiagnosticExportBuilderTest {
         );
         return new FeedbackDiagnosticCoordinator.Result(
                 request,
-                1_700_000_000_000L,
-                1_700_000_010_000L,
+                SESSION_START_MILLIS,
+                SESSION_END_MILLIS,
                 10_000L,
                 true,
                 RootAccessProbe.Result.available("Magisk"),
@@ -328,5 +334,15 @@ public final class FeedbackDiagnosticExportBuilderTest {
             }
         }
         return entries;
+    }
+
+    private static long millis(String value) {
+        try {
+            return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
+                    .parse(value)
+                    .getTime();
+        } catch (ParseException exception) {
+            throw new AssertionError(exception);
+        }
     }
 }
