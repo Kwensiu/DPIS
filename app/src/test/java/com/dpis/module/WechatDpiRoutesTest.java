@@ -15,7 +15,7 @@ import static org.junit.Assert.assertTrue;
 public class WechatDpiRoutesTest {
     @Test
     public void resolvesExactVersionCodeRoutes() {
-        assertRoute(3120L, "8.0.74", "j65.f", 5);
+        assertRoute(3120L, "8.0.74", "j65.f", 2);
         assertRoute(3100L, "8.0.72", "w45.f");
         assertRoute(3080L, "8.0.71", "q35.f");
         assertRoute(3060L, "8.0.70", "d25.f");
@@ -34,15 +34,7 @@ public class WechatDpiRoutesTest {
         assertEquals("e", route.densityMethodTargets[1].methodName);
         assertEquals(WechatDpiRoutes.MethodTarget.Kind.DISPLAY_METRICS_GETTER,
                 route.densityMethodTargets[1].kind);
-        assertEquals("g", route.densityMethodTargets[2].methodName);
-        assertEquals(WechatDpiRoutes.MethodTarget.Kind.TARGET_FIELD_GETTER,
-                route.densityMethodTargets[2].kind);
-        assertEquals("k", route.densityMethodTargets[3].methodName);
-        assertEquals(WechatDpiRoutes.MethodTarget.Kind.TARGET_FIELD_SETTER,
-                route.densityMethodTargets[3].kind);
-        assertEquals("l", route.densityMethodTargets[4].methodName);
-        assertEquals(WechatDpiRoutes.MethodTarget.Kind.DISPLAY_METRICS_MUTATOR,
-                route.densityMethodTargets[4].kind);
+        assertEquals(2, route.densityMethodTargets.length);
         assertTrue(route.bottomTabIconScaleEnabled);
     }
 

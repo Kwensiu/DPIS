@@ -19,12 +19,9 @@ public class WechatDpiMethodLocatorBehaviorTest {
                 getClass().getClassLoader(), null, 3120L);
 
         assertEquals(WechatDpiMethodLocator.Source.STATIC_ROUTE, result.source);
-        assertEquals(5, result.methods.size());
+        assertEquals(2, result.methods.size());
         assertEquals("d", result.methods.get(0).getName());
         assertEquals("e", result.methods.get(1).getName());
-        assertEquals("g", result.methods.get(2).getName());
-        assertEquals("k", result.methods.get(3).getName());
-        assertEquals("l", result.methods.get(4).getName());
     }
 
     @Test

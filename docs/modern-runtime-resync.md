@@ -273,6 +273,13 @@ Detailed app-specific runtime evidence lives in
   removed after user reports of crashes/jank in newer builds, but a narrower
   application-attach retry was restored after 8.0.74 validation proved WeChat
   can move the live density-manager class to Tinker `DelegateLastClassLoader`.
+- 2026-06-22 debug-only crash triage: modern debug builds temporarily ran a
+  WeChat bisection route for user crash isolation. For 8.0.74 / versionCode
+  3120, the confirmed stable independent route keeps static DisplayMetrics
+  getters `j65.f#d` and `j65.f#e`, keeps the narrow
+  `Application.attach(Context)` classloader retry, and keeps bottom-tab icon
+  compensation on. The older static-table target-field / mutator roles
+  `g/k/l` remain only as commented historical reference and are not active.
 - 2026-06-17 superseded: WeChat independent DPI route tested a module-loaded
   `ClassLoader.loadClass(String, boolean)` probe in the WeChat main process and
   an `Application.attach(Context)` retry from the runtime `Context` classloader.

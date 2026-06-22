@@ -45,6 +45,8 @@ public class WechatDpiMethodLocatorSourceTest {
     public void locatorKeepsWechatDisplayMetricsRouteOnly() throws Exception {
         String source = SourceSmokeTestPaths.read(
                 "src/main/java/com/dpis/module/WechatDpiMethodLocator.java");
+        String routes = SourceSmokeTestPaths.read(
+                "src/main/java/com/dpis/module/WechatDpiRoutes.java");
 
         assertFalse(source.contains("resourcesClassName"));
         assertFalse(source.contains("TabIconView"));
@@ -52,6 +54,11 @@ public class WechatDpiMethodLocatorSourceTest {
         assertFalse(source.contains("installDpiSetterHook("));
         assertFalse(source.contains("WechatDpiRouteMode"));
         assertFalse(source.contains("LOADED_CLASS(\"loaded-class\")"));
+        assertFalse(routes.contains("BuildConfig.DEBUG"));
+        assertTrue(routes.contains("return routeWithBottomTabIconScale(3120L, \"8.0.74\", \"j65.f\","));
+        assertTrue(routes.contains("MethodTarget.displayMetricsGetter(\"d\")"));
+        assertTrue(routes.contains("MethodTarget.displayMetricsGetter(\"e\")"));
+        assertTrue(routes.contains("Historical 8.0.74 route shape kept for reference only"));
     }
 
     @Test

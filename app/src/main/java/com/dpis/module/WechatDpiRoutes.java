@@ -5,12 +5,7 @@ import java.util.List;
 
 final class WechatDpiRoutes {
     private static final Route[] ROUTES = {
-            routeWithBottomTabIconScale(3120L, "8.0.74", "j65.f",
-                    MethodTarget.displayMetricsGetter("d"),
-                    MethodTarget.displayMetricsGetter("e"),
-                    MethodTarget.targetFieldGetter("g"),
-                    MethodTarget.targetFieldSetter("k"),
-                    MethodTarget.displayMetricsMutator("l")),
+            wechat8074Route(),
             route(3100L, "8.0.72", "w45.f"),
             route(3080L, "8.0.71", "q35.f"),
             route(3060L, "8.0.70", "d25.f"),
@@ -55,6 +50,16 @@ final class WechatDpiRoutes {
             }
         }
         return false;
+    }
+
+    private static Route wechat8074Route() {
+        return routeWithBottomTabIconScale(3120L, "8.0.74", "j65.f",
+                MethodTarget.displayMetricsGetter("d"),
+                MethodTarget.displayMetricsGetter("e"));
+        // Historical 8.0.74 route shape kept for reference only:
+        // MethodTarget.targetFieldGetter("g")
+        // MethodTarget.targetFieldSetter("k")
+        // MethodTarget.displayMetricsMutator("l")
     }
 
     private static Route route(long versionCode, String versionName, String className,
