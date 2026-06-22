@@ -175,6 +175,7 @@ final class FeedbackDiagnosticTimelineClassifier {
     private static boolean isConfigResolved(String lower) {
         return lower.contains("target app matched")
                 || lower.contains("hook plan")
+                || lower.contains("route plan")
                 || lower.contains("hooks installed")
                 || lower.contains("app hook plan")
                 || lower.contains("resolved")

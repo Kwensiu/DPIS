@@ -216,8 +216,15 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(modernWechat.contains("\"wechat_dpi\""));
         assertTrue(modernWechat.contains("\"displaymetrics\""));
         assertTrue(modernWechat.contains("\"bottom_tab_icon\""));
+        assertTrue(modernWechat.contains("modern WeChat DPI route plan: "));
+        assertTrue(modernWechat.contains("retiredTargets="));
+        assertTrue(modernWechat.contains("retiredActive=false"));
+        assertTrue(modernWechat.contains("firstCallbackMethod="));
+        assertTrue(modernWechat.contains("appliedMethod="));
         assertTrue(modernAppSpecific.contains("\"wechat_dpi\""));
         assertTrue(modernAppSpecific.contains("\"application_attach\""));
+        assertTrue(modernAppSpecific.contains("application-attach retry result"));
+        assertTrue(modernAppSpecific.contains("retryInstallAttempted=true, installed="));
         assertFalse(modernAppSpecific.contains("\"module_loaded_class\""));
         assertTrue(legacyWechat.contains("\"wechat_dpi\""));
         assertTrue(legacyAppSpecific.contains("\"legacy_load_package\""));

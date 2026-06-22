@@ -290,10 +290,31 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
     }
 
     @Test
+    public void wechatDpiRoutePlanIsClassifiedAsWechatConfigResolved() {
+        String raw = "[ 2023-11-15T06:13:20.100     1000:  1234:  5678 I/LSPosedFramework ] "
+                + "(com.tencent.mm)[io.github.kwensiu.dpis,DPIS,id,0,1] "
+                + "modern WeChat DPI route plan: versionCode=3120, locator=static-route, "
+                + "class=j65.f, metricsTargets=d,e, bottomTab=true, retiredTargets=g,k,l, "
+                + "retiredActive=false";
+
+        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+                raw,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
+                wechatRequest(600)
+        );
+
+        assertEquals(1, events.size());
+        assertTrue(events.get(0).contains("route=wechat_dpi"));
+        assertTrue(events.get(0).contains("stage=config_resolved"));
+    }
+
+    @Test
     public void wechatDpiCallbackIsUnexpectedWhenRouteNotConfigured() {
         String raw = "[ 2023-11-15T06:13:20.100     1000:  1234:  5678 I/LSPosedFramework ] "
                 + "(com.tencent.mm)[io.github.kwensiu.dpis,DPIS,id,0,1] "
-                + "modern WeChat DPI callback hit: method=j65.f#e, configuredDpi=0";
+                + "modern WeChat DPI callback hit: method=j65.f#e, firstCallbackMethod=e, "
+                + "configuredDpi=0";
 
         List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
                 raw,
@@ -311,7 +332,8 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
     public void wechatDpiAppliedIsExpectedWhenRouteConfigured() {
         String raw = "[ 2023-11-15T06:13:20.100     1000:  1234:  5678 I/LSPosedFramework ] "
                 + "(com.tencent.mm)[io.github.kwensiu.dpis,DPIS,id,0,1] "
-                + "legacy WeChat DPI applied: method=j65.f#e, targetDpi=600, densityDpi 480 -> 600";
+                + "modern WeChat DPI applied: method=j65.f#e, appliedMethod=e, targetDpi=600, "
+                + "densityDpi 480 -> 600";
 
         List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
                 raw,

@@ -280,6 +280,12 @@ Detailed app-specific runtime evidence lives in
   `Application.attach(Context)` classloader retry, and keeps bottom-tab icon
   compensation on. The older static-table target-field / mutator roles
   `g/k/l` remain only as commented historical reference and are not active.
+- 2026-06-23 active: feedback diagnostics for the 8.0.74 route now also emit
+  the selected route plan (`versionCode`, locator source, `d/e` metrics
+  targets, bottom-tab enabled state, and retired `g/k/l` status), the
+  `Application.attach(Context)` retry install result, the first callback method
+  short name, and the applied method short name. These details stay on the
+  feedback-diagnostic hot path only; they do not widen normal always-on probes.
 - 2026-06-17 superseded: WeChat independent DPI route tested a module-loaded
   `ClassLoader.loadClass(String, boolean)` probe in the WeChat main process and
   an `Application.attach(Context)` retry from the runtime `Context` classloader.

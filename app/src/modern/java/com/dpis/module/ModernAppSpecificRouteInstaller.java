@@ -39,13 +39,14 @@ final class ModernAppSpecificRouteInstaller {
                     "route_callback_entered",
                     "source=package_ready, process=" + processName);
             try {
-                WechatDpiModernHookInstaller.install(
+                boolean installed = WechatDpiModernHookInstaller.install(
                         xposed,
                         param.getClassLoader(),
                         param.getApplicationInfo(),
                         param.getPackageName());
                 DpisLog.i("modern WeChat DPI route install attempted: package="
                         + param.getPackageName() + ", process=" + processName
+                        + ", installed=" + installed
                         + ", classLoader="
                         + WechatDpiModernHookInstaller.describeClassLoaderForLog(
                                 param.getClassLoader()));
@@ -53,8 +54,9 @@ final class ModernAppSpecificRouteInstaller {
                         param.getPackageName(),
                         "wechat_dpi",
                         "package_ready",
-                        "mutation_candidate",
-                        "installAttempted=true, process=" + processName);
+                        installed ? "mutation_candidate" : "skipped",
+                        "installAttempted=true, installed=" + installed
+                                + ", process=" + processName);
             } catch (Throwable throwable) {
                 DpisLog.e("modern WeChat DPI route install failed: package="
                         + param.getPackageName() + ", process=" + processName + ", "
@@ -103,11 +105,26 @@ final class ModernAppSpecificRouteInstaller {
                                     "classLoader="
                                             + WechatDpiModernHookInstaller.describeClassLoaderForLog(
                                                     classLoader));
-                            WechatDpiModernHookInstaller.install(
+                            boolean installed = WechatDpiModernHookInstaller.install(
                                     xposed,
                                     classLoader,
                                     context.getApplicationInfo(),
                                     context.getPackageName());
+                            DpisLog.i("modern WeChat DPI application-attach retry result: package="
+                                    + context.getPackageName()
+                                    + ", installed=" + installed
+                                    + ", classLoader="
+                                    + WechatDpiModernHookInstaller.describeClassLoaderForLog(
+                                            classLoader));
+                            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                                    context.getPackageName(),
+                                    "wechat_dpi",
+                                    "application_attach",
+                                    installed ? "mutation_candidate" : "skipped",
+                                    "retryInstallAttempted=true, installed=" + installed
+                                            + ", classLoader="
+                                            + WechatDpiModernHookInstaller.describeClassLoaderForLog(
+                                                    classLoader));
                         }
                         return result;
                     });

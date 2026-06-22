@@ -37,14 +37,14 @@ final class WechatDpiModernHookInstaller {
     private WechatDpiModernHookInstaller() {
     }
 
-    static void install(XposedInterface xposed, ClassLoader classLoader,
+    static boolean install(XposedInterface xposed, ClassLoader classLoader,
             ApplicationInfo applicationInfo, String packageName) {
         if (!WechatDpiConfig.appliesTo(packageName)
                 || xposed == null
                 || classLoader == null) {
-            return;
+            return false;
         }
-        installRoute(xposed, classLoader, applicationInfo, packageName);
+        return installRoute(xposed, classLoader, applicationInfo, packageName);
     }
 
     private static boolean installRoute(XposedInterface xposed, ClassLoader classLoader,
@@ -53,6 +53,7 @@ final class WechatDpiModernHookInstaller {
         WechatDpiRoutes.Route staticRoute = WechatDpiRoutes.forVersionCode(versionCode);
         WechatDpiMethodLocator.Result locatorResult = WechatDpiMethodLocator.locate(
                 classLoader, applicationInfo, versionCode);
+        logRoutePlan(packageName, staticRoute, locatorResult, versionCode);
         if (staticRoute != null
                 && staticRoute.bottomTabIconScaleEnabled
                 && !locatorResult.methods.isEmpty()) {
@@ -222,17 +223,7 @@ final class WechatDpiModernHookInstaller {
                         .intercept(chain -> {
                             if (isTargetFieldGetter(hookMethod)) {
                                 Object result = chain.proceed();
-                                if (WECHAT_DPI_CALLBACK_LOGGED.compareAndSet(false, true)) {
-                                    DpisLog.i("modern WeChat DPI callback hit: method="
-                                            + methodName(hookMethod)
-                                            + ", result="
-                                            + (result != null
-                                                    ? result.getClass().getName()
-                                                    : "null")
-                                            + ", configuredDpi="
-                                            + WechatDpiPropertyBridge.readDpi(
-                                                    WechatDpiConfig.PACKAGE_NAME));
-                                }
+                                logWechatDpiCallback(hookMethod, result);
                                 Integer configuredDpi = configuredWechatDpiOrNull();
                                 return configuredDpi != null ? configuredDpi : result;
                             }
@@ -241,42 +232,11 @@ final class WechatDpiModernHookInstaller {
                                 Object result = configuredDpi != null
                                         ? chain.proceed(new Object[] {configuredDpi})
                                         : chain.proceed();
-                                if (WECHAT_DPI_CALLBACK_LOGGED.compareAndSet(false, true)) {
-                                    DpisLog.i("modern WeChat DPI callback hit: method="
-                                            + methodName(hookMethod)
-                                            + ", result="
-                                            + (result != null
-                                                    ? result.getClass().getName()
-                                                    : "null")
-                                            + ", configuredDpi="
-                                            + WechatDpiPropertyBridge.readDpi(
-                                                    WechatDpiConfig.PACKAGE_NAME));
-                                }
+                                logWechatDpiCallback(hookMethod, result);
                                 return result;
                             }
                             Object result = chain.proceed();
-                            if (WECHAT_DPI_CALLBACK_LOGGED.compareAndSet(false, true)) {
-                                DpisLog.i("modern WeChat DPI callback hit: method="
-                                        + methodName(hookMethod)
-                                        + ", result="
-                                        + (result != null ? result.getClass().getName() : "null")
-                                        + ", configuredDpi="
-                                        + WechatDpiPropertyBridge.readDpi(
-                                                WechatDpiConfig.PACKAGE_NAME));
-                                FeedbackDiagnosticRuntimeHotPathEvents.event(
-                                        WechatDpiConfig.PACKAGE_NAME,
-                                        "wechat_dpi",
-                                        "displaymetrics",
-                                        "route_callback_entered",
-                                        "method=" + methodName(hookMethod)
-                                                + ", result="
-                                                + (result != null
-                                                        ? result.getClass().getName()
-                                                        : "null")
-                                                + ", configuredDpi="
-                                                + WechatDpiPropertyBridge.readDpi(
-                                                        WechatDpiConfig.PACKAGE_NAME));
-                            }
+                            logWechatDpiCallback(hookMethod, result);
                             if (result instanceof DisplayMetrics metrics) {
                                 applyWechatDpi(metrics,
                                         methodName(hookMethod));
@@ -340,6 +300,48 @@ final class WechatDpiModernHookInstaller {
         }
     }
 
+    private static void logRoutePlan(String packageName,
+                                     WechatDpiRoutes.Route staticRoute,
+                                     WechatDpiMethodLocator.Result locatorResult,
+                                     long versionCode) {
+        String detail = "versionCode=" + versionCode
+                + ", locator=" + locatorResult.source.logName
+                + ", class=" + (staticRoute != null ? staticRoute.className : "unknown")
+                + ", metricsTargets=" + routeTargetNames(staticRoute)
+                + ", bottomTab=" + (staticRoute != null && staticRoute.bottomTabIconScaleEnabled)
+                + ", retiredTargets=" + retiredTargets(versionCode)
+                + ", retiredActive=false";
+        DpisLog.i("modern WeChat DPI route plan: " + detail);
+        FeedbackDiagnosticRuntimeHotPathEvents.event(
+                packageName,
+                "wechat_dpi",
+                "displaymetrics",
+                "config_resolved",
+                detail);
+    }
+
+    private static void logWechatDpiCallback(Method hookMethod, Object result) {
+        if (!WECHAT_DPI_CALLBACK_LOGGED.compareAndSet(false, true)) {
+            return;
+        }
+        String methodName = methodName(hookMethod);
+        String resultName = result != null ? result.getClass().getName() : "null";
+        int configuredDpi = WechatDpiPropertyBridge.readDpi(WechatDpiConfig.PACKAGE_NAME);
+        DpisLog.i("modern WeChat DPI callback hit: method=" + methodName
+                + ", firstCallbackMethod=" + shortMethodName(hookMethod)
+                + ", result=" + resultName
+                + ", configuredDpi=" + configuredDpi);
+        FeedbackDiagnosticRuntimeHotPathEvents.event(
+                WechatDpiConfig.PACKAGE_NAME,
+                "wechat_dpi",
+                "displaymetrics",
+                "route_callback_entered",
+                "method=" + methodName
+                        + ", firstCallbackMethod=" + shortMethodName(hookMethod)
+                        + ", result=" + resultName
+                        + ", configuredDpi=" + configuredDpi);
+    }
+
     static String describeClassLoaderForLog(ClassLoader classLoader) {
         if (classLoader == null) {
             return "bootstrap";
@@ -378,6 +380,31 @@ final class WechatDpiModernHookInstaller {
 
     private static String methodName(Method method) {
         return method.getDeclaringClass().getName() + "#" + method.getName();
+    }
+
+    private static String shortMethodName(Method method) {
+        return method != null ? method.getName() : "unknown";
+    }
+
+    private static String routeTargetNames(WechatDpiRoutes.Route route) {
+        if (route == null || route.densityMethodTargets.length == 0) {
+            return "unknown";
+        }
+        StringBuilder builder = new StringBuilder();
+        for (WechatDpiRoutes.MethodTarget target : route.densityMethodTargets) {
+            if (target == null || target.methodName == null || target.methodName.isBlank()) {
+                continue;
+            }
+            if (builder.length() > 0) {
+                builder.append(',');
+            }
+            builder.append(target.methodName);
+        }
+        return builder.length() > 0 ? builder.toString() : "unknown";
+    }
+
+    private static String retiredTargets(long versionCode) {
+        return versionCode == 3120L ? "g,k,l" : "none";
     }
 
     private static boolean isDisplayMetricsMutator(Method method) {
@@ -432,7 +459,9 @@ final class WechatDpiModernHookInstaller {
                 && WECHAT_DPI_MUTATION_LOGGED.compareAndSet(false, true)) {
             int targetDpi = WechatDpiPropertyBridge.readDpi(
                     WechatDpiConfig.PACKAGE_NAME);
+            String appliedMethod = shortMethodName(methodName);
             DpisLog.i("modern WeChat DPI applied: method=" + methodName
+                    + ", appliedMethod=" + appliedMethod
                     + ", targetDpi="
                     + targetDpi
                     + ", densityDpi " + oldDensityDpi + " -> " + metrics.densityDpi
@@ -445,6 +474,7 @@ final class WechatDpiModernHookInstaller {
                     "displaymetrics",
                     "mutation_applied",
                     "method=" + methodName + ", targetDpi=" + targetDpi
+                            + ", appliedMethod=" + appliedMethod
                             + ", densityDpi=" + oldDensityDpi + "->" + metrics.densityDpi
                             + ", density=" + oldDensity + "->" + metrics.density
                             + ", scaledDensity=" + oldScaledDensity + "->"
@@ -456,6 +486,16 @@ final class WechatDpiModernHookInstaller {
         int dpi = WechatDpiPropertyBridge.readDpi(
                 WechatDpiConfig.PACKAGE_NAME);
         return dpi > 0 && WechatDpiRuntime.apply(metrics, dpi);
+    }
+
+    private static String shortMethodName(String methodName) {
+        if (methodName == null || methodName.isBlank()) {
+            return "unknown";
+        }
+        int separator = methodName.lastIndexOf('#');
+        return separator >= 0 && separator + 1 < methodName.length()
+                ? methodName.substring(separator + 1)
+                : methodName;
     }
 
     private static long resolveWechatVersionCode(ApplicationInfo applicationInfo,
