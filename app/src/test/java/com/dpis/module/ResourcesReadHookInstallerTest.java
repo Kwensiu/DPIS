@@ -4,18 +4,56 @@ import android.content.res.Configuration;
 import android.util.DisplayMetrics;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class ResourcesReadHookInstallerTest {
     private static final String PACKAGE_NAME = "com.example.target";
 
+    @Before
+    public void setUp() {
+        ResourcesReadHookInstaller.resetHotPathSamplerForTest();
+    }
+
     @After
     public void tearDown() {
+        FeedbackDiagnosticRuntimeEvents.cancel();
+        FeedbackDiagnosticRuntimeHotPathEvents.resetForTest();
+        ResourcesReadHookInstaller.resetHotPathSamplerForTest();
         VirtualDisplayState.set(null);
         ResourcesFontScheduler.clearForTest();
+    }
+
+    @Test
+    public void stableMetricsReadRecordsFeedbackDiagnosticSkip() {
+        FeedbackDiagnosticRuntimeEvents.start(PACKAGE_NAME, request());
+        Configuration config = new Configuration();
+        config.densityDpi = 480;
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 736;
+        config.smallestScreenWidthDp = 360;
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.densityDpi = 480;
+        metrics.density = 3.0f;
+        metrics.scaledDensity = 3.0f;
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 2208;
+
+        ResourcesReadHookInstaller.applyMetricsOverride(metrics, config, PACKAGE_NAME);
+
+        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        assertTrue(events.toString(), events.stream().anyMatch(event ->
+                event.contains("route=viewport")
+                        && event.contains("stage=skipped")
+                        && event.contains("resources_read_display_metrics_override")
+                        && event.contains("stable_metrics")));
     }
 
     @Test
@@ -673,5 +711,23 @@ public class ResourcesReadHookInstallerTest {
                 .putInt("viewport." + PACKAGE_NAME + ".width_dp", widthDp)
                 .putString("viewport." + PACKAGE_NAME + ".mode", ViewportApplyMode.COMPAT)
                 .commit();
+    }
+
+    private static FeedbackDiagnosticCoordinator.Request request() {
+        return new FeedbackDiagnosticCoordinator.Request(
+                PACKAGE_NAME,
+                "Target",
+                "1",
+                true,
+                true,
+                true,
+                false,
+                ViewportTargetSpec.relativeScale(900),
+                ViewportApplyMode.COMPAT,
+                null,
+                FontApplyMode.OFF,
+                null,
+                null,
+                null);
     }
 }

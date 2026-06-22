@@ -317,7 +317,8 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     if (config == null) {
                                         if (loggingEnabled) {
                                             logConfigMiss(target.entryName, packageName,
-                                                    resolvedPackage.candidatePackagesSummary);
+                                                    resolvedPackage.candidatePackagesSummary,
+                                                    currentConfiguredPackages.size());
                                         }
                                         return chain.proceed();
                                     }
@@ -795,9 +796,12 @@ final class SystemServerDisplayEnvironmentInstaller {
 
     private static void logConfigMiss(String entryName,
                                       String packageName,
-                                      String candidatePackages) {
+                                      String candidatePackages,
+                                      int configuredPackageCount) {
+        String sourceState = "configuredPackages=" + configuredPackageCount
+                + ", configNull=true";
         String message = SystemServerDisplayDiagnostics.buildConfigMissLog(
-                entryName, packageName, candidatePackages);
+                entryName, packageName, candidatePackages, sourceState);
         // Candidate list may fluctuate frequently; key by entry+package for stable sampling.
         String key = "cfg-miss|" + entryName + "|" + packageName;
         logIfChanged(key, message, resolveLogMinIntervalMs(entryName));

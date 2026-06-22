@@ -133,6 +133,19 @@ public class SystemServerDisplayDiagnosticsTest {
         String message = SystemServerDisplayDiagnostics.buildConfigMissLog(
                 "activity-start",
                 "com.android.launcher",
+                "com.max.xiaoheihe",
+                "configuredPackages=3, configNull=true");
+
+        assertEquals(
+                "system_server config miss: entry=activity-start, package=com.android.launcher, targetCandidates=com.max.xiaoheihe, sourceState=configuredPackages=3, configNull=true",
+                message);
+    }
+
+    @Test
+    public void formatsConfigMissLogWithoutSourceState() {
+        String message = SystemServerDisplayDiagnostics.buildConfigMissLog(
+                "activity-start",
+                "com.android.launcher",
                 "com.max.xiaoheihe");
 
         assertEquals(

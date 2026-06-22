@@ -113,9 +113,18 @@ final class SystemServerDisplayDiagnostics {
     static String buildConfigMissLog(String entryName,
                                      String packageName,
                                      String targetPackageCandidates) {
+        return buildConfigMissLog(entryName, packageName, targetPackageCandidates, "");
+    }
+
+    static String buildConfigMissLog(String entryName,
+                                     String packageName,
+                                     String targetPackageCandidates,
+                                     String sourceState) {
+        String state = safeSummary(sourceState);
         return "system_server config miss: entry=" + safeSummary(entryName)
                 + ", package=" + safeSummary(packageName)
-                + ", targetCandidates=" + safeSummary(targetPackageCandidates);
+                + ", targetCandidates=" + safeSummary(targetPackageCandidates)
+                + ("unavailable".equals(state) ? "" : ", sourceState=" + state);
     }
 
     static String buildConfigFallbackLog(String entryName,

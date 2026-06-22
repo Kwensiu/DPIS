@@ -2,8 +2,11 @@ package com.dpis.module;
 
 import android.content.res.Configuration;
 
+import org.junit.Before;
 import org.junit.After;
 import org.junit.Test;
+
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -11,10 +14,32 @@ import static org.junit.Assert.assertTrue;
 public class ResourcesManagerHookInstallerTest {
     private static final String PACKAGE_NAME = "com.example.target";
 
+    @Before
+    public void setUp() {
+        ResourcesManagerHookInstaller.resetHotPathSamplerForTest();
+    }
+
     @After
     public void tearDown() {
+        FeedbackDiagnosticRuntimeEvents.cancel();
+        FeedbackDiagnosticRuntimeHotPathEvents.resetForTest();
         VirtualDisplayState.set(null);
         ResourcesFontScheduler.clearForTest();
+    }
+
+    @Test
+    public void nullConfigurationRecordsFeedbackDiagnosticSkip() {
+        FeedbackDiagnosticRuntimeEvents.start(PACKAGE_NAME, request());
+
+        ResourcesManagerHookInstaller.applyResourceOverrides(
+                null, new DpiConfigStore(new FakePrefs()), PACKAGE_NAME, "ResourcesManager");
+
+        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        assertTrue(events.stream().anyMatch(event ->
+                event.contains("route=viewport")
+                        && event.contains("stage=skipped")
+                        && event.contains("resources_manager_config_override")
+                        && event.contains("null_configuration")));
     }
 
     @Test
@@ -320,6 +345,24 @@ public class ResourcesManagerHookInstallerTest {
                 .putInt("viewport." + PACKAGE_NAME + ".width_dp", widthDp)
                 .putString("viewport." + PACKAGE_NAME + ".mode", ViewportApplyMode.COMPAT)
                 .commit();
+    }
+
+    private static FeedbackDiagnosticCoordinator.Request request() {
+        return new FeedbackDiagnosticCoordinator.Request(
+                PACKAGE_NAME,
+                "Target",
+                "1",
+                true,
+                true,
+                true,
+                false,
+                ViewportTargetSpec.relativeScale(900),
+                ViewportApplyMode.COMPAT,
+                null,
+                FontApplyMode.OFF,
+                null,
+                null,
+                null);
     }
 
     private static String readSource(String relativePath) throws Exception {

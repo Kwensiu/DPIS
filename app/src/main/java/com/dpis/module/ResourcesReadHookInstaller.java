@@ -18,6 +18,8 @@ final class ResourcesReadHookInstaller {
     private static final ThreadLocal<Boolean> INTERNAL_UPDATE =
             ThreadLocal.withInitial(() -> Boolean.FALSE);
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
+    private static final RuntimeHotPathEvidenceSampler HOTPATH_SAMPLER =
+            new RuntimeHotPathEvidenceSampler();
 
     private ResourcesReadHookInstaller() {
     }
@@ -602,11 +604,15 @@ final class ResourcesReadHookInstaller {
                                              boolean viewportHandlingEnabled,
                                              boolean metricsTargetFontOverrideEnabled) {
         if (metrics == null || config == null) {
+            recordMetricsSkip(packageName, "null_input",
+                    "source=ResourcesRead(getDisplayMetrics), reason=null_input");
             return;
         }
         int targetDensityDpi = config.densityDpi > 0 ? config.densityDpi : metrics.densityDpi;
         String densitySource = config.densityDpi > 0 ? "configuration" : "metrics";
         if (targetDensityDpi <= 0) {
+            recordMetricsSkip(packageName, "invalid_target_density",
+                    "source=ResourcesRead(getDisplayMetrics), reason=invalid_target_density");
             return;
         }
         int originalDensityDpi = metrics.densityDpi;
@@ -649,6 +655,11 @@ final class ResourcesReadHookInstaller {
                     originalWidthPixels,
                     originalHeightPixels,
                     metrics);
+            if (!metricsChanged) {
+                recordMetricsSkip(packageName,
+                        "stable_metrics",
+                        "source=ResourcesRead(getDisplayMetrics), reason=stable_metrics");
+            }
             return;
         }
         LocalMetricsViewportResult localViewportResult =
@@ -679,6 +690,11 @@ final class ResourcesReadHookInstaller {
                 metrics.heightPixels = applied.heightPx;
                 metricsChanged = true;
             }
+        }
+        if (!metricsChanged) {
+            recordMetricsSkip(packageName,
+                    "stable_metrics",
+                    "source=ResourcesRead(getDisplayMetrics), reason=stable_metrics");
         }
 
         logMetricsIfChanged(
@@ -754,6 +770,22 @@ final class ResourcesReadHookInstaller {
                     "resources_read_display_metrics_override",
                     detail);
         }
+    }
+
+    private static void recordMetricsSkip(String packageName, String reason, String detail) {
+        RuntimeHotPathEvidenceSampler.Sample sample =
+                HOTPATH_SAMPLER.sample("skip|metrics|" + packageName + "|" + reason, detail);
+        if (sample.emit) {
+            FeedbackDiagnosticRuntimeHotPathEvents.skipped(
+                    packageName,
+                    "viewport",
+                    "resources_read_display_metrics_override",
+                    sample.detail);
+        }
+    }
+
+    static void resetHotPathSamplerForTest() {
+        HOTPATH_SAMPLER.resetForTest();
     }
 
     private static void logFontMetricsIfChanged(boolean metricsChanged,

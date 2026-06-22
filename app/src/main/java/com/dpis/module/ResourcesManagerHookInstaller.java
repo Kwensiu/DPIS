@@ -17,6 +17,8 @@ final class ResourcesManagerHookInstaller {
             "debug.dpis.viewport.disable_resources_manager_key_package";
     private static volatile boolean hookInstalled;
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
+    private static final RuntimeHotPathEvidenceSampler HOTPATH_SAMPLER =
+            new RuntimeHotPathEvidenceSampler();
 
     private ResourcesManagerHookInstaller() {
     }
@@ -140,9 +142,17 @@ final class ResourcesManagerHookInstaller {
                                       String packageName,
                                       String sourceTag) {
         if (resourcesManager == null || key == null) {
+            recordViewportSkip(packageName, "resources_manager_key_override",
+                    "missing_resources_manager_or_key",
+                    "source=ResourcesManagerKey(" + sourceTag
+                            + "), reason=missing_resources_manager_or_key");
             return;
         }
         if (!ViewportModePolicy.shouldApplyConfigurationOverride(store, packageName)) {
+            recordViewportSkip(packageName, "resources_manager_key_override",
+                    "configuration_override_disabled",
+                    "source=ResourcesManagerKey(" + sourceTag
+                            + "), reason=configuration_override_disabled");
             return;
         }
         if (DebugPackageOverride.matches(
@@ -154,13 +164,25 @@ final class ResourcesManagerHookInstaller {
         }
         Object override = readField(key, "mOverrideConfiguration");
         if (!(override instanceof Configuration overrideConfig)) {
+            recordViewportSkip(packageName, "resources_manager_key_override",
+                    "missing_override_configuration",
+                    "source=ResourcesManagerKey(" + sourceTag
+                            + "), reason=missing_override_configuration");
             return;
         }
         Configuration baseConfig = readResourcesManagerConfiguration(resourcesManager);
         if (baseConfig == null) {
+            recordViewportSkip(packageName, "resources_manager_key_override",
+                    "missing_base_configuration",
+                    "source=ResourcesManagerKey(" + sourceTag
+                            + "), reason=missing_base_configuration");
             return;
         }
         if (!shouldReplaceResourcesKeyOverride(overrideConfig, baseConfig)) {
+            recordViewportSkip(packageName, "resources_manager_key_override",
+                    "preserve_existing_override",
+                    "source=ResourcesManagerKey(" + sourceTag
+                            + "), reason=preserve_existing_override");
             return;
         }
         Configuration targetConfig = new Configuration();
@@ -168,6 +190,10 @@ final class ResourcesManagerHookInstaller {
         if (!isEffectivelyEmpty(overrideConfig)
                 && shouldPreserveWindowLikeResourcesKeyOverride(
                 sourceConfig, store, packageName, sourceTag)) {
+            recordViewportSkip(packageName, "resources_manager_key_override",
+                    "preserve_window_like_override",
+                    "source=ResourcesManagerKey(" + sourceTag
+                            + "), reason=preserve_window_like_override");
             return;
         }
         copyViewportConfiguration(sourceConfig, targetConfig);
@@ -175,6 +201,10 @@ final class ResourcesManagerHookInstaller {
         applyResourceOverrides(targetConfig, store, packageName,
                 "ResourcesManagerKey(" + sourceTag + ")");
         if (!hasViewportOverride(targetConfig, sourceConfig)) {
+            recordViewportSkip(packageName, "resources_manager_key_override",
+                    "no_viewport_delta_after_resolution",
+                    "source=ResourcesManagerKey(" + sourceTag
+                            + "), reason=no_viewport_delta_after_resolution");
             return;
         }
         copyViewportConfiguration(targetConfig, overrideConfig);
@@ -312,6 +342,9 @@ final class ResourcesManagerHookInstaller {
     static void applyResourceOverrides(Configuration config, DpiConfigStore store,
                                        String packageName, String sourceTag) {
         if (config == null) {
+            recordViewportSkip(packageName, "resources_manager_config_override",
+                    "null_configuration",
+                    "source=" + sourceTag + ", reason=null_configuration");
             return;
         }
         FontScaleOverride.Result fontScale = FontScaleOverride.resolveForResources(
@@ -327,6 +360,10 @@ final class ResourcesManagerHookInstaller {
                         + packageName + ", fontScale "
                         + fontScale.original + " -> " + config.fontScale;
                 logIfChanged(packageName + ":" + sourceTag + ":font-only", fontMessage);
+            } else {
+                recordViewportSkip(packageName, "resources_manager_config_override",
+                        "empty_viewport_configuration",
+                        "source=" + sourceTag + ", reason=empty_viewport_configuration");
             }
             return;
         }
@@ -359,6 +396,13 @@ final class ResourcesManagerHookInstaller {
                         + packageName + ", fontScale "
                         + fontScale.original + " -> " + config.fontScale;
                 logIfChanged(packageName + ":" + sourceTag + ":font-only", fontMessage);
+            } else {
+                recordViewportSkip(packageName, "resources_manager_config_override",
+                        "no_viewport_result",
+                        "source=" + sourceTag
+                                + ", reason=no_viewport_result"
+                                + ", targetViewportWidthDp="
+                                + describeNullable(targetViewportWidth));
             }
             return;
         }
@@ -397,10 +441,12 @@ final class ResourcesManagerHookInstaller {
             VirtualDisplayOverride.Result stableResult =
                     VirtualDisplayState.getStableTargetResult(
                             originalSmallestWidthDp, targetViewportWidth);
+            boolean stableTargetApplied = false;
             if (result.densityDpi <= 0
                     && stableResult != null && stableResult.densityDpi > 0
                     && config.densityDpi != stableResult.densityDpi) {
                 config.densityDpi = stableResult.densityDpi;
+                stableTargetApplied = true;
                 String message = "DPIS_VIEWPORT " + sourceTag
                         + " stable target: package=" + packageName
                         + ", targetViewportWidthDp=" + describeNullable(targetViewportWidth)
@@ -416,6 +462,14 @@ final class ResourcesManagerHookInstaller {
                         + ", fontScale " + fontScale.original
                         + " -> " + config.fontScale;
                 logIfChanged(packageName + ":" + sourceTag + ":stable-target", message);
+            }
+            if (!stableTargetApplied) {
+                recordViewportSkip(packageName, "resources_manager_config_override",
+                        "stable_configuration",
+                        "source=" + sourceTag
+                                + ", reason=stable_configuration"
+                                + ", targetViewportWidthDp="
+                                + describeNullable(targetViewportWidth));
             }
             return;
         }
@@ -463,6 +517,26 @@ final class ResourcesManagerHookInstaller {
             return true;
         }
         return false;
+    }
+
+    private static void recordViewportSkip(String packageName,
+                                           String routeName,
+                                           String reason,
+                                           String detail) {
+        RuntimeHotPathEvidenceSampler.Sample sample =
+                HOTPATH_SAMPLER.sample("skip|" + packageName + "|" + routeName + "|" + reason,
+                        detail);
+        if (sample.emit) {
+            FeedbackDiagnosticRuntimeHotPathEvents.skipped(
+                    packageName,
+                    "viewport",
+                    routeName,
+                    sample.detail);
+        }
+    }
+
+    static void resetHotPathSamplerForTest() {
+        HOTPATH_SAMPLER.resetForTest();
     }
 
     private static Object readField(Object target, String fieldName) {
