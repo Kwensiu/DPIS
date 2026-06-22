@@ -25,6 +25,19 @@ public class PaintProvenanceTrackerTest {
     }
 
     @Test
+    public void unknownPaintWriteScalesWithoutTextViewProvenance() {
+        Object paint = new Object();
+
+        float adjusted = PaintProvenanceTracker.resolveScaled(paint, 18f, 2.0f);
+
+        PaintProvenanceTracker.Entry entry = PaintProvenanceTracker.snapshotForTest(paint);
+        assertNotNull(entry);
+        assertEquals(36f, adjusted, 0.0001f);
+        assertEquals(18f, entry.basePx, 0.0001f);
+        assertFalse(PaintProvenanceTracker.isKnownApplied(paint, 36f, 2.0f));
+    }
+
+    @Test
     public void invalidatesKnownAppliedWhenFactorChanges() {
         Object paint = new Object();
 
@@ -115,5 +128,50 @@ public class PaintProvenanceTrackerTest {
         assertNotNull(entry);
         assertEquals(44f, adjusted, 0.0001f);
         assertEquals(22f, entry.basePx, 0.0001f);
+    }
+
+    @Test
+    public void paintFallbackDecisionWritesUnknownPaintWhenIndependent() {
+        Object paint = new Object();
+
+        ForceTextSizeHookInstaller.PaintFallbackDecision decision =
+                ForceTextSizeHookInstaller.resolvePaintFallbackDecisionForTest(
+                        paint, 18f, 18f, 2.0f, false);
+
+        assertEquals(ForceTextSizeHookInstaller.PaintFallbackAction.WRITE, decision.action);
+        assertEquals(36f, decision.adjustedPx, 0.0001f);
+    }
+
+    @Test
+    public void paintFallbackDecisionOnlyObservesWhenStrongerDomainOwnsWrite() {
+        Object paint = new Object();
+
+        ForceTextSizeHookInstaller.PaintFallbackDecision decision =
+                ForceTextSizeHookInstaller.resolvePaintFallbackDecisionForTest(
+                        paint, 18f, 18f, 2.0f, true);
+
+        PaintProvenanceTracker.Entry entry = PaintProvenanceTracker.snapshotForTest(paint);
+        assertNotNull(entry);
+        assertEquals(ForceTextSizeHookInstaller.PaintFallbackAction.OBSERVE, decision.action);
+        assertEquals(18f, decision.adjustedPx, 0.0001f);
+        assertEquals(18f, entry.basePx, 0.0001f);
+        assertNull(entry.lastAppliedPx);
+    }
+
+    @Test
+    public void paintFallbackDecisionSkipsKnownAppliedPaint() {
+        Object paint = new Object();
+
+        ForceTextSizeHookInstaller.PaintFallbackDecision first =
+                ForceTextSizeHookInstaller.resolvePaintFallbackDecisionForTest(
+                        paint, 18f, 18f, 2.0f, false);
+        PaintProvenanceTracker.recordApplied(paint, first.adjustedPx, 2.0f);
+
+        ForceTextSizeHookInstaller.PaintFallbackDecision second =
+                ForceTextSizeHookInstaller.resolvePaintFallbackDecisionForTest(
+                        paint, 36f, 36f, 2.0f, false);
+
+        assertEquals(ForceTextSizeHookInstaller.PaintFallbackAction.SKIP, second.action);
+        assertEquals(36f, second.adjustedPx, 0.0001f);
     }
 }

@@ -127,10 +127,48 @@ public class ForceTextSizeRegressionReferenceTest {
         assertTrue(source.contains("TextViewFontProvenanceTracker.recordResourcesHandled"));
         assertTrue(source.contains("TextViewFontProvenanceTracker.Source.TEXTVIEW_CURRENT_PX_FALLBACK"));
         assertTrue(source.contains("hasStrongerProvenanceForCurrentPxFallback"));
+        assertTrue(source.contains("resolvePaintFallbackDecision("));
+        assertTrue(source.contains("chain.proceed(new Object[] {decision.adjustedPx})"));
+        assertTrue(source.contains("summarizePaintFallbackStack("));
+        assertTrue(source.contains("\", caller=\" + callerSummary"));
+        assertFalse(source.contains("paint.setTextSize(adjusted)"));
+        assertFalse(source.contains("textPaint.setTextSize(adjusted)"));
         assertFalse(source.contains("isPxTextHandledByResources"));
         assertFalse(source.contains("isCurrentPxHandledByResources"));
         assertTrue(source.indexOf("installTextViewAttachHook(")
                 < source.indexOf("installPaintTextSizeHooks("));
+    }
+
+    @Test
+    public void paintFallbackUsesArgumentReplacementInsteadOfPostWrite() throws Exception {
+        String source = read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java");
+        String paintHook = source.substring(
+                source.indexOf("Method paintSetTextSize"),
+                source.indexOf("try {", source.indexOf("Method textPaintSetTextSize")));
+        String textPaintHook = source.substring(
+                source.indexOf("Method textPaintSetTextSize"),
+                source.indexOf("} catch (Throwable t)", source.indexOf("Method textPaintSetTextSize")));
+
+        assertTrue(paintHook.contains("chain.proceed(new Object[] {decision.adjustedPx})"));
+        assertTrue(textPaintHook.contains("chain.proceed(new Object[] {decision.adjustedPx})"));
+        assertFalse(paintHook.contains("paint.setTextSize(adjusted)"));
+        assertFalse(textPaintHook.contains("textPaint.setTextSize(adjusted)"));
+    }
+
+    @Test
+    public void strongTextViewProvenanceStillSuppressesCurrentPxFallback() {
+        Object textView = new Object();
+
+        TextViewFontProvenanceTracker.recordApplied(
+                textView,
+                18f,
+                36f,
+                2.0f,
+                TextViewFontProvenanceTracker.Source.TEXTVIEW_SP_REWRITE,
+                TextViewFontProvenanceTracker.UnitKind.SP);
+
+        assertTrue(TextViewFontProvenanceTracker.hasStrongerProvenanceForCurrentPxFallback(
+                textView, 2.0f));
     }
 
     @Test

@@ -390,40 +390,37 @@ final class ForceTextSizeHookInstaller {
                         return chain.proceed();
                     }
                     float incoming = (Float) chain.getArg(0);
-                    PaintProvenanceTracker.invalidateIfDrifted(paint, paint.getTextSize());
-                    if (isInsideTextViewSetTextSize() || isPaintSizeOwnedByTextLayout()) {
-                        PaintProvenanceTracker.resolveScaled(paint, incoming, factor);
+                    PaintFallbackContext context = paintFallbackContext();
+                    PaintFallbackDecision decision = resolvePaintFallbackDecision(
+                            paint,
+                            incoming,
+                            paint.getTextSize(),
+                            factor,
+                            context);
+                    if (decision.action != PaintFallbackAction.WRITE) {
                         return chain.proceed();
-                    }
-                    if (PaintProvenanceTracker.isKnownApplied(paint, incoming, factor)) {
-                        return chain.proceed();
-                    }
-                    float adjusted = PaintProvenanceTracker.resolveScaled(paint, incoming, factor);
-                    Object result = chain.proceed();
-                    if (Math.abs(adjusted - incoming) < SIZE_EPSILON_PX) {
-                        return result;
                     }
                     String detail = "paint=" + paint.getClass().getName()
                             + ", in=" + incoming
-                            + ", out=" + adjusted
+                            + ", out=" + decision.adjustedPx
                             + ", factor=" + factor
-                            + ", percent=" + targetPercent;
+                            + ", percent=" + targetPercent
+                            + context.detailSuffix();
                     FeedbackDiagnosticRuntimeHotPathEvents.begin(
                             packageName,
                             "paint_text_size_fallback",
                             detail
                     );
-                    INTERNAL_UPDATE.set(Boolean.TRUE);
+                    Object result;
                     try {
-                        paint.setTextSize(adjusted);
-                        PaintProvenanceTracker.recordApplied(paint, adjusted, factor);
+                        result = chain.proceed(new Object[] {decision.adjustedPx});
+                        PaintProvenanceTracker.recordApplied(paint, decision.adjustedPx, factor);
                         FeedbackDiagnosticRuntimeHotPathEvents.applied(
                                 packageName,
                                 "paint_text_size_fallback",
                                 detail
                         );
                     } finally {
-                        INTERNAL_UPDATE.set(Boolean.FALSE);
                         FeedbackDiagnosticRuntimeHotPathEvents.end(
                                 packageName,
                                 "paint_text_size_fallback",
@@ -433,7 +430,7 @@ final class ForceTextSizeHookInstaller {
                     if (verboseFontLogsEnabled && DpisLog.isLoggingEnabled()) {
                         logSampled(buildHotFontLogKey(packageName, "paint-size"),
                                 "DPIS_FONT Paint.setTextSize override: in=" + incoming
-                                        + ", out=" + adjusted
+                                        + ", out=" + decision.adjustedPx
                                         + ", factor=" + factor
                                         + ", percent=" + targetPercent,
                                 HOT_LOG_INTERVAL);
@@ -464,40 +461,37 @@ final class ForceTextSizeHookInstaller {
                             return chain.proceed();
                         }
                         float incoming = (Float) chain.getArg(0);
-                        PaintProvenanceTracker.invalidateIfDrifted(textPaint, textPaint.getTextSize());
-                        if (isInsideTextViewSetTextSize() || isPaintSizeOwnedByTextLayout()) {
-                            PaintProvenanceTracker.resolveScaled(textPaint, incoming, factor);
+                        PaintFallbackContext context = paintFallbackContext();
+                        PaintFallbackDecision decision = resolvePaintFallbackDecision(
+                                textPaint,
+                                incoming,
+                                textPaint.getTextSize(),
+                                factor,
+                                context);
+                        if (decision.action != PaintFallbackAction.WRITE) {
                             return chain.proceed();
-                        }
-                        if (PaintProvenanceTracker.isKnownApplied(textPaint, incoming, factor)) {
-                            return chain.proceed();
-                        }
-                        float adjusted = PaintProvenanceTracker.resolveScaled(textPaint, incoming, factor);
-                        Object result = chain.proceed();
-                        if (Math.abs(adjusted - incoming) < SIZE_EPSILON_PX) {
-                            return result;
                         }
                         String detail = "paint=" + textPaint.getClass().getName()
                                 + ", in=" + incoming
-                                + ", out=" + adjusted
+                                + ", out=" + decision.adjustedPx
                                 + ", factor=" + factor
-                                + ", percent=" + targetPercent;
+                                + ", percent=" + targetPercent
+                                + context.detailSuffix();
                         FeedbackDiagnosticRuntimeHotPathEvents.begin(
                                 packageName,
                                 "textpaint_text_size_fallback",
                                 detail
                         );
-                        INTERNAL_UPDATE.set(Boolean.TRUE);
+                        Object result;
                         try {
-                            textPaint.setTextSize(adjusted);
-                            PaintProvenanceTracker.recordApplied(textPaint, adjusted, factor);
+                            result = chain.proceed(new Object[] {decision.adjustedPx});
+                            PaintProvenanceTracker.recordApplied(textPaint, decision.adjustedPx, factor);
                             FeedbackDiagnosticRuntimeHotPathEvents.applied(
                                     packageName,
                                     "textpaint_text_size_fallback",
                                     detail
                             );
                         } finally {
-                            INTERNAL_UPDATE.set(Boolean.FALSE);
                             FeedbackDiagnosticRuntimeHotPathEvents.end(
                                     packageName,
                                     "textpaint_text_size_fallback",
@@ -507,7 +501,7 @@ final class ForceTextSizeHookInstaller {
                         if (verboseFontLogsEnabled && DpisLog.isLoggingEnabled()) {
                             logSampled(buildHotFontLogKey(packageName, "textpaint-size"),
                                     "DPIS_FONT TextPaint.setTextSize override: in=" + incoming
-                                            + ", out=" + adjusted
+                                            + ", out=" + decision.adjustedPx
                                             + ", factor=" + factor
                                             + ", percent=" + targetPercent,
                                     HOT_LOG_INTERVAL);
@@ -524,6 +518,76 @@ final class ForceTextSizeHookInstaller {
                     "DPIS_FONT TextPaint.setTextSize hook skipped: "
                             + t.getClass().getSimpleName());
         }
+    }
+
+    private static PaintFallbackDecision resolvePaintFallbackDecision(Object paint,
+                                                                      float incomingPx,
+                                                                      float currentPx,
+                                                                      float factor) {
+        return resolvePaintFallbackDecision(
+                paint,
+                incomingPx,
+                currentPx,
+                factor,
+                paintFallbackContext());
+    }
+
+    private static PaintFallbackDecision resolvePaintFallbackDecision(Object paint,
+                                                                      float incomingPx,
+                                                                      float currentPx,
+                                                                      float factor,
+                                                                      PaintFallbackContext context) {
+        return resolvePaintFallbackDecision(
+                paint,
+                incomingPx,
+                currentPx,
+                factor,
+                context.strongerDomainOwns);
+    }
+
+    private static PaintFallbackDecision resolvePaintFallbackDecision(Object paint,
+                                                                      float incomingPx,
+                                                                      float currentPx,
+                                                                      float factor,
+                                                                      boolean strongerDomainOwns) {
+        PaintProvenanceTracker.Resolution resolution = PaintProvenanceTracker.resolveFallback(
+                paint,
+                incomingPx,
+                currentPx,
+                factor,
+                strongerDomainOwns);
+        if (resolution.action == PaintProvenanceTracker.Action.WRITE) {
+            return PaintFallbackDecision.write(resolution.adjustedPx);
+        }
+        if (resolution.action == PaintProvenanceTracker.Action.SKIP) {
+            return PaintFallbackDecision.skip(resolution.adjustedPx);
+        }
+        return PaintFallbackDecision.observe(resolution.adjustedPx);
+    }
+
+    static PaintFallbackDecision resolvePaintFallbackDecisionForTest(Object paint,
+                                                                     float incomingPx,
+                                                                     float currentPx,
+                                                                     float factor,
+                                                                     boolean strongerDomainOwns) {
+        return resolvePaintFallbackDecision(
+                paint,
+                incomingPx,
+                currentPx,
+                factor,
+                strongerDomainOwns);
+    }
+
+    private static PaintFallbackContext paintFallbackContext() {
+        if (isInsideTextViewSetTextSize()) {
+            return new PaintFallbackContext(true, "");
+        }
+        StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+        boolean strongerDomainOwns = isPaintSizeOwnedByTextLayout(trace);
+        String caller = FeedbackDiagnosticRuntimeTransport.isCaptureActive()
+                ? summarizePaintFallbackStack(trace)
+                : "";
+        return new PaintFallbackContext(strongerDomainOwns, caller);
     }
 
     private static void installTextViewAttachHook(XposedInterface xposed,
@@ -1244,7 +1308,10 @@ final class ForceTextSizeHookInstaller {
     }
 
     private static boolean isPaintSizeOwnedByTextLayout() {
-        StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+        return isPaintSizeOwnedByTextLayout(Thread.currentThread().getStackTrace());
+    }
+
+    private static boolean isPaintSizeOwnedByTextLayout(StackTraceElement[] trace) {
         if (trace == null) {
             return false;
         }
@@ -1268,6 +1335,42 @@ final class ForceTextSizeHookInstaller {
             }
         }
         return fromSpan && fromTextLayout;
+    }
+
+    private static String summarizePaintFallbackStack(StackTraceElement[] trace) {
+        if (trace == null) {
+            return "";
+        }
+        StringBuilder builder = new StringBuilder();
+        int added = 0;
+        for (StackTraceElement element : trace) {
+            if (element == null) {
+                continue;
+            }
+            String className = element.getClassName();
+            if (className == null
+                    || className.startsWith("java.lang.Thread")
+                    || className.startsWith("de.robv.android.xposed")
+                    || className.startsWith("io.github.libxposed")
+                    || className.startsWith("com.dpis.module.ForceTextSizeHookInstaller")
+                    || "android.graphics.Paint".equals(className)
+                    || "android.text.TextPaint".equals(className)) {
+                continue;
+            }
+            if (builder.length() > 0) {
+                builder.append(" <- ");
+            }
+            builder.append(className)
+                    .append("#")
+                    .append(element.getMethodName())
+                    .append(":")
+                    .append(element.getLineNumber());
+            added++;
+            if (added >= MAX_STACK_FRAMES) {
+                break;
+            }
+        }
+        return builder.toString();
     }
 
     static boolean shouldForceTextUnitForTest(int unit,
@@ -1297,6 +1400,48 @@ final class ForceTextSizeHookInstaller {
     private static boolean shouldRewriteDefaultSpTextSize(
             FontHookArbitration.FontDomainPlan domainPlan) {
         return domainPlan == null || domainPlan.textViewSpRewriteEnabled;
+    }
+
+    enum PaintFallbackAction {
+        WRITE,
+        SKIP,
+        OBSERVE
+    }
+
+    static final class PaintFallbackDecision {
+        final PaintFallbackAction action;
+        final float adjustedPx;
+
+        private PaintFallbackDecision(PaintFallbackAction action, float adjustedPx) {
+            this.action = action;
+            this.adjustedPx = adjustedPx;
+        }
+
+        static PaintFallbackDecision write(float adjustedPx) {
+            return new PaintFallbackDecision(PaintFallbackAction.WRITE, adjustedPx);
+        }
+
+        static PaintFallbackDecision skip(float incomingPx) {
+            return new PaintFallbackDecision(PaintFallbackAction.SKIP, incomingPx);
+        }
+
+        static PaintFallbackDecision observe(float incomingPx) {
+            return new PaintFallbackDecision(PaintFallbackAction.OBSERVE, incomingPx);
+        }
+    }
+
+    private static final class PaintFallbackContext {
+        final boolean strongerDomainOwns;
+        final String callerSummary;
+
+        PaintFallbackContext(boolean strongerDomainOwns, String callerSummary) {
+            this.strongerDomainOwns = strongerDomainOwns;
+            this.callerSummary = callerSummary != null ? callerSummary : "";
+        }
+
+        String detailSuffix() {
+            return callerSummary.isEmpty() ? "" : ", caller=" + callerSummary;
+        }
     }
 
     private static boolean isSpTextHandledByResources(TextView textView,

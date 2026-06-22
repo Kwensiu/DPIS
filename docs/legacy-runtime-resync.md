@@ -318,6 +318,13 @@ chain returns only to the compat/field-rewrite recommended template.
 - 2026-06-07: restored the product boundary that custom font hook domains edit
   only the compat/field-rewrite chain. System-mode font routes remain internal
   scheduled routes and no longer share the custom-chain switch state.
+- 2026-06-22: shared Paint/TextPaint field-rewrite fallback now uses libxposed
+  argument replacement instead of a post-call `setTextSize` rewrite. It remains
+  independently selectable, but observes TextView/layout owned writes and keeps
+  Paint provenance as the fallback write authority. Paint fallback provenance is
+  resolved in one tracker pass per write. Active diagnostics include Paint
+  fallback caller summaries so shared Legacy/Modern field-rewrite evidence can
+  distinguish self-drawn fallback use from stronger TextView/layout candidates.
 - 2026-06-07: updated the route map to show system font mode explicitly and to
   split the app-process Resources bridge from the Display / WindowMetrics
   supplement that is skipped when viewport resolves to system.

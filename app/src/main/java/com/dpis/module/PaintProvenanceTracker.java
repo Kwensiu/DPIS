@@ -32,41 +32,39 @@ final class PaintProvenanceTracker {
         }
     }
 
+    static Resolution resolveFallback(Object paint,
+                                      float incomingPx,
+                                      float currentPx,
+                                      float factor,
+                                      boolean strongerDomainOwns) {
+        if (paint == null || incomingPx <= 0f || !isScaleFactorActive(factor)) {
+            return Resolution.observe(incomingPx);
+        }
+        Entry entry = getOrCreateEntry(paint);
+        synchronized (entry) {
+            entry.invalidateIfDrifted(currentPx);
+            if (strongerDomainOwns) {
+                entry.resolveScaledLocked(incomingPx, factor);
+                return Resolution.observe(incomingPx);
+            }
+            if (entry.isKnownAppliedLocked(incomingPx, factor)) {
+                return Resolution.skip(incomingPx);
+            }
+            float adjustedPx = entry.resolveScaledLocked(incomingPx, factor);
+            if (FontFieldRewriteMath.approximatelyEqual(adjustedPx, incomingPx)) {
+                return Resolution.observe(incomingPx);
+            }
+            return Resolution.write(adjustedPx);
+        }
+    }
+
     static float resolveScaled(Object paint, float incomingPx, float factor) {
         if (paint == null || incomingPx <= 0f || !isScaleFactorActive(factor)) {
             return incomingPx;
         }
         Entry entry = getOrCreateEntry(paint);
         synchronized (entry) {
-            for (int i = 0; i < MAX_SLOTS; i++) {
-                Float lastAppliedPx = entry.lastAppliedPxBySlot[i];
-                Float factorAtApply = entry.factorAtApplyBySlot[i];
-                if (FontFieldRewriteMath.isKnownAppliedPaintSize(
-                        incomingPx, factor, lastAppliedPx, factorAtApply)) {
-                    entry.promoteSlot(i);
-                    entry.lastTouchNanos = System.nanoTime();
-                    return incomingPx;
-                }
-            }
-
-            for (int i = 0; i < MAX_SLOTS; i++) {
-                if (entry.matchesKnownScaledSize(i, incomingPx, factor)) {
-                    entry.promoteSlot(i);
-                    entry.lastTouchNanos = System.nanoTime();
-                    return incomingPx;
-                }
-            }
-
-            int slot = entry.findBaseSlot(incomingPx);
-            if (slot < 0) {
-                slot = entry.findReusableSlot();
-                entry.basePxBySlot[slot] = incomingPx;
-                entry.lastAppliedPxBySlot[slot] = null;
-                entry.factorAtApplyBySlot[slot] = null;
-            }
-            entry.promoteSlot(slot);
-            entry.lastTouchNanos = System.nanoTime();
-            return entry.basePxBySlot[0] * factor;
+            return entry.resolveScaledLocked(incomingPx, factor);
         }
     }
 
@@ -92,17 +90,7 @@ final class PaintProvenanceTracker {
             return;
         }
         synchronized (entry) {
-            for (int i = 0; i < MAX_SLOTS; i++) {
-                Float lastAppliedPx = entry.lastAppliedPxBySlot[i];
-                if (lastAppliedPx != null
-                        && lastAppliedPx > 0f
-                        && !FontFieldRewriteMath.approximatelyEqual(currentPx, lastAppliedPx)) {
-                    entry.lastAppliedPxBySlot[i] = null;
-                    entry.factorAtApplyBySlot[i] = null;
-                }
-            }
-            entry.syncPrimaryFields();
-            entry.lastTouchNanos = System.nanoTime();
+            entry.invalidateIfDrifted(currentPx);
         }
     }
 
@@ -197,6 +185,60 @@ final class PaintProvenanceTracker {
                     && FontFieldRewriteMath.approximatelyEqual(incomingPx, basePx * factor);
         }
 
+        private boolean isKnownAppliedLocked(float incomingPx, float factor) {
+            for (int i = 0; i < MAX_SLOTS; i++) {
+                if (FontFieldRewriteMath.isKnownAppliedPaintSize(
+                        incomingPx,
+                        factor,
+                        lastAppliedPxBySlot[i],
+                        factorAtApplyBySlot[i])) {
+                    promoteSlot(i);
+                    lastTouchNanos = System.nanoTime();
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private float resolveScaledLocked(float incomingPx, float factor) {
+            if (isKnownAppliedLocked(incomingPx, factor)) {
+                return incomingPx;
+            }
+
+            for (int i = 0; i < MAX_SLOTS; i++) {
+                if (matchesKnownScaledSize(i, incomingPx, factor)) {
+                    promoteSlot(i);
+                    lastTouchNanos = System.nanoTime();
+                    return incomingPx;
+                }
+            }
+
+            int slot = findBaseSlot(incomingPx);
+            if (slot < 0) {
+                slot = findReusableSlot();
+                basePxBySlot[slot] = incomingPx;
+                lastAppliedPxBySlot[slot] = null;
+                factorAtApplyBySlot[slot] = null;
+            }
+            promoteSlot(slot);
+            lastTouchNanos = System.nanoTime();
+            return basePxBySlot[0] * factor;
+        }
+
+        private void invalidateIfDrifted(float currentPx) {
+            for (int i = 0; i < MAX_SLOTS; i++) {
+                Float lastAppliedPx = lastAppliedPxBySlot[i];
+                if (lastAppliedPx != null
+                        && lastAppliedPx > 0f
+                        && !FontFieldRewriteMath.approximatelyEqual(currentPx, lastAppliedPx)) {
+                    lastAppliedPxBySlot[i] = null;
+                    factorAtApplyBySlot[i] = null;
+                }
+            }
+            syncPrimaryFields();
+            lastTouchNanos = System.nanoTime();
+        }
+
         private void promoteSlot(int slot) {
             if (slot <= 0) {
                 syncPrimaryFields();
@@ -220,6 +262,34 @@ final class PaintProvenanceTracker {
             basePx = basePxBySlot[0];
             lastAppliedPx = lastAppliedPxBySlot[0];
             factorAtApply = factorAtApplyBySlot[0];
+        }
+    }
+
+    enum Action {
+        WRITE,
+        SKIP,
+        OBSERVE
+    }
+
+    static final class Resolution {
+        final Action action;
+        final float adjustedPx;
+
+        private Resolution(Action action, float adjustedPx) {
+            this.action = action;
+            this.adjustedPx = adjustedPx;
+        }
+
+        static Resolution write(float adjustedPx) {
+            return new Resolution(Action.WRITE, adjustedPx);
+        }
+
+        static Resolution skip(float incomingPx) {
+            return new Resolution(Action.SKIP, incomingPx);
+        }
+
+        static Resolution observe(float incomingPx) {
+            return new Resolution(Action.OBSERVE, incomingPx);
         }
     }
 }

@@ -412,6 +412,15 @@ superseded.
 - 2026-06-17: compat/field-rewrite automatic font domains no longer include
   `resources_font`; the custom-chain font page can still enable it manually.
   System-mode `resources_font` remains an internal semantic supplement.
+- 2026-06-22: Paint/TextPaint field-rewrite fallback now uses the libxposed
+  argument-replacement path instead of a post-call `setTextSize` rewrite. The
+  route remains an independent custom-chain domain, but observes TextView/layout
+  owned writes and relies on Paint provenance before applying fallback writes.
+  The Paint provenance fallback decision is resolved in one tracker pass to
+  avoid repeated hotpath drift/known-applied/scale lookups for each Paint write.
+  Active diagnostics include a Paint fallback caller summary so repeated Paint
+  writes can be classified as self-drawn fallback evidence or as candidates for
+  stronger TextView/layout ownership.
 - 2026-06-07: updated the route map to show system font mode explicitly:
   `system_server_font` is launch-only for `FONT_SCALE`, while
   `activity_thread_font`, `resources_font`, and `webview_text_zoom` remain
