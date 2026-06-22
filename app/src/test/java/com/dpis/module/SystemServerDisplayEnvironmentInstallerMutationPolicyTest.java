@@ -13,34 +13,24 @@ import static org.junit.Assert.assertEquals;
 public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     @Test
     public void preProceedEnabledForConfigDispatchAndActivityStartOnly() {
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldApplyPreProceedMutationsForTest("config-dispatch"));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldApplyPreProceedMutationsForTest("activity-start"));
-        assertFalse(SystemServerDisplayEnvironmentInstaller
-                .shouldApplyPreProceedMutationsForTest("display-policy-layout"));
+        assertTrue(SystemServerMutationPolicy.shouldApplyPreProceedMutations("config-dispatch"));
+        assertTrue(SystemServerMutationPolicy.shouldApplyPreProceedMutations("activity-start"));
+        assertFalse(SystemServerMutationPolicy.shouldApplyPreProceedMutations("display-policy-layout"));
     }
 
     @Test
     public void postProceedDisabledForConfigDispatchOnly() {
-        assertFalse(SystemServerDisplayEnvironmentInstaller
-                .shouldApplyPostProceedMutationsForTest("config-dispatch"));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldApplyPostProceedMutationsForTest("activity-start"));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldApplyPostProceedMutationsForTest("display-content-config"));
+        assertFalse(SystemServerMutationPolicy.shouldApplyPostProceedMutations("config-dispatch"));
+        assertTrue(SystemServerMutationPolicy.shouldApplyPostProceedMutations("activity-start"));
+        assertTrue(SystemServerMutationPolicy.shouldApplyPostProceedMutations("display-content-config"));
     }
 
     @Test
     public void interceptEnterLoggingDisabledForHotEntries() {
-        assertFalse(SystemServerDisplayEnvironmentInstaller
-                .shouldLogInterceptEnterForTest("display-policy-layout"));
-        assertFalse(SystemServerDisplayEnvironmentInstaller
-                .shouldLogInterceptEnterForTest("relayout-dispatch"));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldLogInterceptEnterForTest("activity-start"));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldLogInterceptEnterForTest("config-dispatch"));
+        assertFalse(SystemServerHookLogGate.shouldLogInterceptEnter("display-policy-layout"));
+        assertFalse(SystemServerHookLogGate.shouldLogInterceptEnter("relayout-dispatch"));
+        assertTrue(SystemServerHookLogGate.shouldLogInterceptEnter("activity-start"));
+        assertTrue(SystemServerHookLogGate.shouldLogInterceptEnter("config-dispatch"));
     }
 
     @Test
@@ -67,42 +57,26 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
 
     @Test
     public void safeModeInstallsCoreTargets() {
-        assertFalse(SystemServerDisplayEnvironmentInstaller
-                .shouldInstallTargetForTest("display-policy-layout", true));
-        assertFalse(SystemServerDisplayEnvironmentInstaller
-                .shouldInstallTargetForTest("relayout-dispatch", true));
-        assertFalse(SystemServerDisplayEnvironmentInstaller
-                .shouldInstallTargetForTest("display-content-config", true));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldInstallTargetForTest("activity-start", true));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldInstallTargetForTest("config-dispatch", true));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldInstallTargetForTest("launch-activity-item", true));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldInstallTargetForTest("display-manager-info", true));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldInstallTargetForTest("hyperos-rust-process", true));
+        assertFalse(SystemServerMutationPolicy.shouldInstallTarget("display-policy-layout", true));
+        assertFalse(SystemServerMutationPolicy.shouldInstallTarget("relayout-dispatch", true));
+        assertFalse(SystemServerMutationPolicy.shouldInstallTarget("display-content-config", true));
+        assertTrue(SystemServerMutationPolicy.shouldInstallTarget("activity-start", true));
+        assertTrue(SystemServerMutationPolicy.shouldInstallTarget("config-dispatch", true));
+        assertTrue(SystemServerMutationPolicy.shouldInstallTarget("launch-activity-item", true));
+        assertTrue(SystemServerMutationPolicy.shouldInstallTarget("display-manager-info", true));
+        assertTrue(SystemServerMutationPolicy.shouldInstallTarget("hyperos-rust-process", true));
     }
 
     @Test
     public void fullModeInstallsAllTargets() {
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldInstallTargetForTest("display-policy-layout", false));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldInstallTargetForTest("relayout-dispatch", false));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldInstallTargetForTest("display-content-config", false));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldInstallTargetForTest("activity-start", false));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldInstallTargetForTest("config-dispatch", false));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldInstallTargetForTest("launch-activity-item", false));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldInstallTargetForTest("display-manager-info", false));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldInstallTargetForTest("hyperos-rust-process", false));
+        assertTrue(SystemServerMutationPolicy.shouldInstallTarget("display-policy-layout", false));
+        assertTrue(SystemServerMutationPolicy.shouldInstallTarget("relayout-dispatch", false));
+        assertTrue(SystemServerMutationPolicy.shouldInstallTarget("display-content-config", false));
+        assertTrue(SystemServerMutationPolicy.shouldInstallTarget("activity-start", false));
+        assertTrue(SystemServerMutationPolicy.shouldInstallTarget("config-dispatch", false));
+        assertTrue(SystemServerMutationPolicy.shouldInstallTarget("launch-activity-item", false));
+        assertTrue(SystemServerMutationPolicy.shouldInstallTarget("display-manager-info", false));
+        assertTrue(SystemServerMutationPolicy.shouldInstallTarget("hyperos-rust-process", false));
     }
 
     @Test
@@ -112,13 +86,13 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
         int launchHookIndex = source.indexOf("if (installLaunchActivityItemHook(xposed, source))");
         assertTrue(launchHookIndex > 0);
         String launchContext = source.substring(Math.max(0, launchHookIndex - 260), launchHookIndex);
-        assertTrue(launchContext.contains("shouldInstallTarget("));
+        assertTrue(launchContext.contains("SystemServerMutationPolicy.shouldInstallTarget("));
         assertTrue(launchContext.contains("launch-activity-item"));
 
         int rustHookIndex = source.indexOf("if (HyperOsRustProcessHookInstaller.install(xposed, source))");
         assertTrue(rustHookIndex > 0);
         String rustContext = source.substring(Math.max(0, rustHookIndex - 260), rustHookIndex);
-        assertTrue(rustContext.contains("shouldInstallTarget("));
+        assertTrue(rustContext.contains("SystemServerMutationPolicy.shouldInstallTarget("));
         assertTrue(rustContext.contains("hyperos-rust-process"));
     }
 
@@ -143,13 +117,13 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     public void relativeScaleUsesMarkerGatedExplicitSystemServerViewportMutation()
             throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
-        assertTrue(source.contains("private static boolean shouldApplySystemServerViewportMutation"));
+        assertTrue(source.contains("private static boolean hasSystemServerViewportOverride"));
         assertTrue(source.contains("if (ViewportApplyMode.SYSTEM.equals(mode))"));
         assertTrue(source.contains("ViewportApplyMode.AUTO.equals(mode)"));
         assertTrue(source.contains("&& !config.targetViewportSpec.isRelativeScale()"));
         assertTrue(source.contains("boolean applyViewport = environment != null"));
-        assertTrue(source.contains("shouldApplySystemServerViewportMutation(config);"));
-        assertTrue(source.contains("if (!shouldApplySystemServerViewportMutation(config))"));
+        assertTrue(source.contains("hasSystemServerViewportOverride(config);"));
+        assertTrue(source.contains("if (!hasSystemServerViewportOverride(config))"));
         assertTrue(source.contains("resolveMarkerGatedEnvironment("));
         assertTrue(source.contains("config.targetViewportSpec.isRelativeScale()"));
     }
@@ -239,23 +213,17 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     @Test
     public void fieldPolicyKeepsViewportMultiEntryButNarrowsFontScaleToLaunch() {
         assertCurrentCoverageAllows(SystemServerMutationField.VIEWPORT);
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldApplySystemServerMutationFieldForTest(
+        assertTrue(SystemServerMutationPolicy.shouldApplyMutationField(
                         "launch-activity-item", SystemServerMutationField.FONT_SCALE));
-        assertFalse(SystemServerDisplayEnvironmentInstaller
-                .shouldApplySystemServerMutationFieldForTest(
+        assertFalse(SystemServerMutationPolicy.shouldApplyMutationField(
                         "config-dispatch", SystemServerMutationField.FONT_SCALE));
-        assertFalse(SystemServerDisplayEnvironmentInstaller
-                .shouldApplySystemServerMutationFieldForTest(
+        assertFalse(SystemServerMutationPolicy.shouldApplyMutationField(
                         "activity-start", SystemServerMutationField.FONT_SCALE));
-        assertFalse(SystemServerDisplayEnvironmentInstaller
-                .shouldApplySystemServerMutationFieldForTest(
+        assertFalse(SystemServerMutationPolicy.shouldApplyMutationField(
                         "display-content-config", SystemServerMutationField.FONT_SCALE));
-        assertFalse(SystemServerDisplayEnvironmentInstaller
-                .shouldApplySystemServerMutationFieldForTest(
+        assertFalse(SystemServerMutationPolicy.shouldApplyMutationField(
                         "display-policy-layout", SystemServerMutationField.FONT_SCALE));
-        assertFalse(SystemServerDisplayEnvironmentInstaller
-                .shouldApplySystemServerMutationFieldForTest(
+        assertFalse(SystemServerMutationPolicy.shouldApplyMutationField(
                         "relayout-dispatch", SystemServerMutationField.FONT_SCALE));
     }
 
@@ -419,18 +387,12 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     }
 
     private static void assertCurrentCoverageAllows(SystemServerMutationField field) {
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldApplySystemServerMutationFieldForTest("launch-activity-item", field));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldApplySystemServerMutationFieldForTest("config-dispatch", field));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldApplySystemServerMutationFieldForTest("activity-start", field));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldApplySystemServerMutationFieldForTest("display-content-config", field));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldApplySystemServerMutationFieldForTest("display-policy-layout", field));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldApplySystemServerMutationFieldForTest("relayout-dispatch", field));
+        assertTrue(SystemServerMutationPolicy.shouldApplyMutationField("launch-activity-item", field));
+        assertTrue(SystemServerMutationPolicy.shouldApplyMutationField("config-dispatch", field));
+        assertTrue(SystemServerMutationPolicy.shouldApplyMutationField("activity-start", field));
+        assertTrue(SystemServerMutationPolicy.shouldApplyMutationField("display-content-config", field));
+        assertTrue(SystemServerMutationPolicy.shouldApplyMutationField("display-policy-layout", field));
+        assertTrue(SystemServerMutationPolicy.shouldApplyMutationField("relayout-dispatch", field));
     }
 
     private static final class FakeWindow {

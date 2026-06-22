@@ -186,16 +186,16 @@ final class SystemServerDisplayEnvironmentInstaller {
                 Set<String> configuredPackages = source.getConfiguredPackages();
                 int installedCount = 0;
                 int missingCount = 0;
-                if (shouldInstallTarget("launch-activity-item",
-                        policy.systemServerSafeModeEnabled)) {
+                if (SystemServerMutationPolicy.shouldInstallTarget(
+                        "launch-activity-item", policy.systemServerSafeModeEnabled)) {
                     if (installLaunchActivityItemHook(xposed, source)) {
                         installedCount++;
                     } else {
                         missingCount++;
                     }
                 }
-                if (shouldInstallTarget("hyperos-rust-process",
-                        policy.systemServerSafeModeEnabled)) {
+                if (SystemServerMutationPolicy.shouldInstallTarget(
+                        "hyperos-rust-process", policy.systemServerSafeModeEnabled)) {
                     if (HyperOsRustProcessHookInstaller.install(xposed, source)) {
                         installedCount++;
                     } else {
@@ -283,7 +283,7 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     if (!source.isSystemServerHooksEnabled()) {
                                         return chain.proceed();
                                     }
-                                    if ("display-manager-info".equals(target.entryName)) {
+                                    if (SystemServerEntryRoute.isDisplayManagerInfo(target.entryName)) {
                                         Object displayManagerResult = chain.proceed();
                                         applyDisplayManagerInfoResult(
                                                 source, target.entryName, displayManagerResult);
@@ -298,7 +298,9 @@ final class SystemServerDisplayEnvironmentInstaller {
                                             currentConfiguredPackages)) {
                                         return chain.proceed();
                                     }
-                                    if (loggingEnabled && shouldLogInterceptEnter(target.entryName)) {
+                                    if (loggingEnabled
+                                            && SystemServerHookLogGate.shouldLogInterceptEnter(
+                                                    target.entryName)) {
                                         logInterceptEnter(target.entryName, thisObject, args);
                                     }
                                     ResolvedPackage resolvedPackage = resolveConfiguredPackage(
@@ -331,7 +333,8 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     Snapshot before = captureSnapshot(thisObject, args);
                                     PerAppDisplayEnvironment preEnvironment = resolveTargetEnvironment(
                                             packageName, before, before, config);
-                                    if (shouldApplyPreProceedMutations(target.entryName)) {
+                                    if (SystemServerMutationPolicy.shouldApplyPreProceedMutations(
+                                            target.entryName)) {
                                         PerAppDisplayEnvironment applyEnvironment =
                                                 resolveMarkerGatedEnvironment(
                                                         target.entryName,
@@ -356,7 +359,7 @@ final class SystemServerDisplayEnvironmentInstaller {
                                             packageName, before, after, config);
                                     PerAppDisplayEnvironment effectiveEnvironment = chooseEffectiveEnvironment(
                                             preEnvironment, environment);
-                                    if ("config-dispatch".equals(target.entryName)) {
+                                    if (SystemServerEntryRoute.isConfigDispatch(target.entryName)) {
                                         applyConfigDispatchObject(
                                                 target.entryName, thisObject, effectiveEnvironment);
                                     }
@@ -375,7 +378,8 @@ final class SystemServerDisplayEnvironmentInstaller {
                                                             after.configuration, after.frame));
                                         }
                                     }
-                                    if (shouldApplyPostProceedMutations(target.entryName)) {
+                                    if (SystemServerMutationPolicy.shouldApplyPostProceedMutations(
+                                            target.entryName)) {
                                         String beforeApplySummary = loggingEnabled
                                                 ? SystemServerDisplayDiagnostics.describeState(
                                                 after.configuration, after.frame)
@@ -517,7 +521,7 @@ final class SystemServerDisplayEnvironmentInstaller {
             return;
         }
         PerAppDisplayEnvironment environment = null;
-        if (shouldApplySystemServerViewportMutation(config)) {
+        if (hasSystemServerViewportOverride(config)) {
             int widthPx = resolveWidthPx(baseConfiguration, null);
             int heightPx = resolveHeightPx(baseConfiguration, null);
             environment = resolveAlreadyAppliedRelativeScaleEnvironment(
@@ -542,11 +546,11 @@ final class SystemServerDisplayEnvironmentInstaller {
         for (Object arg : args) {
             if (arg instanceof Configuration configuration) {
                 if (environment != null
-                        && shouldApplySystemServerMutationField(
+                        && SystemServerMutationPolicy.shouldApplyMutationField(
                                 "launch-activity-item", SystemServerMutationField.VIEWPORT)) {
                     changed |= applyConfiguration(configuration, environment);
                 }
-                boolean appliedFont = shouldApplySystemServerMutationField(
+                boolean appliedFont = SystemServerMutationPolicy.shouldApplyMutationField(
                         "launch-activity-item", SystemServerMutationField.FONT_SCALE)
                         && applyFontScale(configuration, config);
                 fontChanged |= appliedFont;
@@ -623,7 +627,7 @@ final class SystemServerDisplayEnvironmentInstaller {
         }
         PerAppDisplayConfig config = selectConfigForSystemServerEntry(
                 "launch-activity-item", source.get(packageName));
-        if (config == null || !shouldApplySystemServerViewportMutation(config)) {
+        if (config == null || !hasSystemServerViewportOverride(config)) {
             return;
         }
         Configuration baseConfiguration = readLaunchActivityConfiguration(launchActivityItem);
@@ -709,7 +713,7 @@ final class SystemServerDisplayEnvironmentInstaller {
     private static boolean applyConfigDispatchObject(String entryName,
                                                      Object target,
                                                      PerAppDisplayEnvironment environment) {
-        if (!"config-dispatch".equals(entryName) || target == null || environment == null) {
+        if (!SystemServerEntryRoute.isConfigDispatch(entryName) || target == null || environment == null) {
             return false;
         }
         boolean changed = false;
@@ -1019,7 +1023,7 @@ final class SystemServerDisplayEnvironmentInstaller {
                                                                      Snapshot before,
                                                                      Snapshot after,
                                                                      PerAppDisplayConfig config) {
-        if (config == null || !shouldApplySystemServerViewportMutation(config)) {
+        if (config == null || !hasSystemServerViewportOverride(config)) {
             return null;
         }
         Configuration configuration = after.configuration != null
@@ -1136,31 +1140,6 @@ final class SystemServerDisplayEnvironmentInstaller {
                 RuntimeClock.crossProcessMarkerMillis());
     }
 
-    private static boolean shouldApplyPreProceedMutations(String entryName) {
-        return SystemServerMutationPolicy.shouldApplyPreProceedMutations(entryName);
-    }
-
-    private static boolean shouldApplyPostProceedMutations(String entryName) {
-        return SystemServerMutationPolicy.shouldApplyPostProceedMutations(entryName);
-    }
-
-    private static boolean shouldApplySystemServerMutationField(String entryName,
-                                                               SystemServerMutationField field) {
-        return SystemServerMutationPolicy.shouldApplyMutationField(entryName, field);
-    }
-
-    private static boolean shouldLogInterceptEnter(String entryName) {
-        return SystemServerHookLogGate.shouldLogInterceptEnter(entryName);
-    }
-
-    private static boolean shouldInstallTarget(String entryName, boolean safeModeEnabled) {
-        return SystemServerMutationPolicy.shouldInstallTarget(entryName, safeModeEnabled);
-    }
-
-    private static boolean isHotEntry(String entryName) {
-        return SystemServerHookLogGate.isHotEntry(entryName);
-    }
-
     private static boolean shouldInspectHotEntry(String entryName,
                                                  Object self,
                                                  List<Object> args,
@@ -1193,11 +1172,12 @@ final class SystemServerDisplayEnvironmentInstaller {
     private static boolean hasSystemServerMutationForEntry(String entryName,
                                                            PerAppDisplayConfig config,
                                                            SystemServerMutationField field) {
-        if (entryName != null && !shouldApplySystemServerMutationField(entryName, field)) {
+        if (entryName != null
+                && !SystemServerMutationPolicy.shouldApplyMutationField(entryName, field)) {
             return false;
         }
         return switch (field) {
-            case VIEWPORT -> shouldApplySystemServerViewportMutation(config);
+            case VIEWPORT -> hasSystemServerViewportOverride(config);
             case FONT_SCALE -> hasSystemServerFontOverride(config);
         };
     }
@@ -1244,7 +1224,7 @@ final class SystemServerDisplayEnvironmentInstaller {
             logDisplayManagerInfoSkip(entryName, "no-viewport-config", callingUid, packageName, displayInfo);
             return;
         }
-        if (!shouldApplySystemServerViewportMutation(config)) {
+        if (!hasSystemServerViewportOverride(config)) {
             logDisplayManagerInfoSkip(entryName, "no-viewport-mutation", callingUid, packageName, displayInfo);
             return;
         }
@@ -1351,23 +1331,11 @@ final class SystemServerDisplayEnvironmentInstaller {
         return postEnvironment != null ? postEnvironment : preEnvironment;
     }
 
-    static boolean shouldApplyPreProceedMutationsForTest(String entryName) {
-        return shouldApplyPreProceedMutations(entryName);
-    }
-
-    static boolean shouldApplyPostProceedMutationsForTest(String entryName) {
-        return shouldApplyPostProceedMutations(entryName);
-    }
-
     static String selectEnvironmentSourceForTest(boolean hasPre, boolean hasPost) {
         if (hasPost) {
             return "post";
         }
         return hasPre ? "pre" : "none";
-    }
-
-    static boolean shouldLogInterceptEnterForTest(String entryName) {
-        return shouldLogInterceptEnter(entryName);
     }
 
     static boolean shouldInspectHotEntryForTest(String entryName,
@@ -1399,16 +1367,6 @@ final class SystemServerDisplayEnvironmentInstaller {
         return shouldEmitLog(previousMessage, currentMessage, nowMs, lastLogMs, minIntervalMs);
     }
 
-    static boolean shouldInstallTargetForTest(String entryName, boolean safeModeEnabled) {
-        return shouldInstallTarget(entryName, safeModeEnabled);
-    }
-
-    static boolean shouldApplySystemServerMutationFieldForTest(
-            String entryName,
-            SystemServerMutationField field) {
-        return shouldApplySystemServerMutationField(entryName, field);
-    }
-
     private static boolean applyEnvironment(String entryName,
                                             Snapshot snapshot,
                                             PerAppDisplayEnvironment environment,
@@ -1420,14 +1378,14 @@ final class SystemServerDisplayEnvironmentInstaller {
         // because changing Configuration.fontScale during later config dispatch
         // can produce CONFIG_FONT_SCALE relaunches.
         boolean applyViewport = environment != null
-                && shouldApplySystemServerMutationField(
+                && SystemServerMutationPolicy.shouldApplyMutationField(
                         entryName, SystemServerMutationField.VIEWPORT)
-                && shouldApplySystemServerViewportMutation(config);
+                && hasSystemServerViewportOverride(config);
         if (snapshot.configuration != null && applyViewport) {
             changed |= applyConfiguration(snapshot.configuration, environment);
         }
         if (snapshot.configuration != null
-                && shouldApplySystemServerMutationField(
+                && SystemServerMutationPolicy.shouldApplyMutationField(
                         entryName, SystemServerMutationField.FONT_SCALE)) {
             boolean fontChanged = applyFontScale(snapshot.configuration, config);
             if (fontChanged) {
@@ -1444,17 +1402,13 @@ final class SystemServerDisplayEnvironmentInstaller {
         return changed;
     }
 
-    private static boolean shouldApplySystemServerViewportMutation(PerAppDisplayConfig config) {
-        return hasSystemServerViewportOverride(config);
-    }
-
     private static boolean shouldApplyFrame(String entryName) {
-        return "relayout-dispatch".equals(entryName)
-                || "display-policy-layout".equals(entryName);
+        return SystemServerEntryRoute.isRelayoutDispatch(entryName)
+                || SystemServerEntryRoute.isDisplayPolicyLayout(entryName);
     }
 
     private static boolean shouldApplyDisplayInfo(String entryName) {
-        return "display-content-config".equals(entryName);
+        return SystemServerEntryRoute.isDisplayContentConfig(entryName);
     }
 
     private static boolean applyConfiguration(Configuration configuration,

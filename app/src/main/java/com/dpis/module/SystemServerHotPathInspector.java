@@ -11,7 +11,7 @@ final class SystemServerHotPathInspector {
                                          Object self,
                                          List<Object> args,
                                          Set<String> configuredPackages) {
-        if (!SystemServerHookLogGate.isHotEntry(entryName)) {
+        if (!SystemServerEntryRoute.isHotEntry(entryName)) {
             return true;
         }
         if (configuredPackages == null || configuredPackages.isEmpty()) {

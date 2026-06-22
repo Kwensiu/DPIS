@@ -30,12 +30,10 @@ final class SystemServerHookLogGate {
     }
 
     static long resolveLogMinIntervalMs(String entryName) {
-        if (isHotEntry(entryName)) {
+        if (SystemServerEntryRoute.isHotEntry(entryName)) {
             return HOT_ENTRY_LOG_MIN_INTERVAL_MS;
         }
-        if ("activity-start".equals(entryName)
-                || "config-dispatch".equals(entryName)
-                || "display-content-config".equals(entryName)) {
+        if (SystemServerEntryRoute.isCoreLogEntry(entryName)) {
             return CORE_ENTRY_LOG_MIN_INTERVAL_MS;
         }
         return DEFAULT_LOG_MIN_INTERVAL_MS;
@@ -59,13 +57,7 @@ final class SystemServerHookLogGate {
     }
 
     static boolean shouldLogInterceptEnter(String entryName) {
-        return !"display-policy-layout".equals(entryName)
-                && !"relayout-dispatch".equals(entryName);
-    }
-
-    static boolean isHotEntry(String entryName) {
-        return "display-policy-layout".equals(entryName)
-                || "relayout-dispatch".equals(entryName);
+        return !SystemServerEntryRoute.isHotEntry(entryName);
     }
 
     private static void trimCachesIfNeeded() {
