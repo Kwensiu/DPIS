@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 final class WechatDpiMethodLocator {
     private WechatDpiMethodLocator() {
@@ -90,7 +89,7 @@ final class WechatDpiMethodLocator {
         try {
             Class<?> densityManagerClass = Class.forName(route.className, false, classLoader);
             return Result.resolved(Source.STATIC_ROUTE,
-                    densityManagerMethods(densityManagerClass));
+                    staticRouteMethods(densityManagerClass, route));
         } catch (Throwable throwable) {
             return Result.failed(Source.STATIC_ROUTE,
                     route.routeKey() + ": " + throwable.getClass().getName()
@@ -102,6 +101,57 @@ final class WechatDpiMethodLocator {
         return method != null
                 && method.getParameterTypes().length == 0
                 && method.getReturnType() == DisplayMetrics.class;
+    }
+
+    static List<Method> densityManagerMethods(Class<?> densityManagerClass) {
+        if (densityManagerClass == null) {
+            return Collections.emptyList();
+        }
+        ArrayList<Method> methods = new ArrayList<>();
+        for (Method method : densityManagerClass.getDeclaredMethods()) {
+            if (isDisplayMetricsGetter(method)) {
+                method.setAccessible(true);
+                methods.add(method);
+            }
+        }
+        return methods;
+    }
+
+    private static List<Method> staticRouteMethods(Class<?> densityManagerClass,
+            WechatDpiRoutes.Route route) {
+        if (densityManagerClass == null) {
+            return Collections.emptyList();
+        }
+        if (route == null || !route.hasDensityMethodTargets()) {
+            return densityManagerMethods(densityManagerClass);
+        }
+        LinkedHashSet<Method> methods = new LinkedHashSet<>();
+        for (WechatDpiRoutes.MethodTarget target : route.densityMethodTargets) {
+            if (target == null || target.methodName == null || target.methodName.isBlank()) {
+                continue;
+            }
+            for (Method method : densityManagerClass.getDeclaredMethods()) {
+                if (target.methodName.equals(method.getName())
+                        && matchesStaticMethodTarget(method, target.kind)) {
+                    method.setAccessible(true);
+                    methods.add(method);
+                }
+            }
+        }
+        return new ArrayList<>(methods);
+    }
+
+    private static boolean matchesStaticMethodTarget(Method method,
+            WechatDpiRoutes.MethodTarget.Kind kind) {
+        if (kind == null) {
+            return false;
+        }
+        return switch (kind) {
+            case DISPLAY_METRICS_GETTER -> isDisplayMetricsGetter(method);
+            case DISPLAY_METRICS_MUTATOR -> isDisplayMetricsMutator(method);
+            case TARGET_FIELD_GETTER -> isTargetFieldGetter(method);
+            case TARGET_FIELD_SETTER -> isTargetFieldSetter(method);
+        };
     }
 
     private static boolean isDisplayMetricsMutator(Method method) {
@@ -130,23 +180,6 @@ final class WechatDpiMethodLocator {
         Class<?>[] parameterTypes = method.getParameterTypes();
         return parameterTypes.length == 1
                 && parameterTypes[0] == Integer.TYPE;
-    }
-
-    static List<Method> densityManagerMethods(Class<?> densityManagerClass) {
-        if (densityManagerClass == null) {
-            return Collections.emptyList();
-        }
-        Set<Method> methods = new LinkedHashSet<>();
-        for (Method method : densityManagerClass.getDeclaredMethods()) {
-            if (isDisplayMetricsGetter(method)
-                    || isDisplayMetricsMutator(method)
-                    || isTargetFieldGetter(method)
-                    || isTargetFieldSetter(method)) {
-                method.setAccessible(true);
-                methods.add(method);
-            }
-        }
-        return new ArrayList<>(methods);
     }
 
     private static void loadDexKitLibrary() {
@@ -229,7 +262,6 @@ final class WechatDpiMethodLocator {
     }
 
     enum Source {
-        LOADED_CLASS("loaded-class"),
         DEXKIT("dexkit"),
         STATIC_ROUTE("static-route");
 

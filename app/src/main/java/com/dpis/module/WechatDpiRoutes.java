@@ -5,12 +5,17 @@ import java.util.List;
 
 final class WechatDpiRoutes {
     private static final Route[] ROUTES = {
-            new Route(3120L, "8.0.74", "j65.f"),
-            new Route(3100L, "8.0.72", "w45.f"),
-            new Route(3080L, "8.0.71", "q35.f"),
-            new Route(3060L, "8.0.70", "d25.f"),
-            new Route(3040L, "8.0.69", "az4.f"),
-            new Route(2460L, "8.0.42", "hy3.d")
+            routeWithBottomTabIconScale(3120L, "8.0.74", "j65.f",
+                    MethodTarget.displayMetricsGetter("d"),
+                    MethodTarget.displayMetricsGetter("e"),
+                    MethodTarget.targetFieldGetter("g"),
+                    MethodTarget.targetFieldSetter("k"),
+                    MethodTarget.displayMetricsMutator("l")),
+            route(3100L, "8.0.72", "w45.f"),
+            route(3080L, "8.0.71", "q35.f"),
+            route(3060L, "8.0.70", "d25.f"),
+            route(3040L, "8.0.69", "az4.f"),
+            route(2460L, "8.0.42", "hy3.d")
     };
 
     private WechatDpiRoutes() {
@@ -52,19 +57,74 @@ final class WechatDpiRoutes {
         return false;
     }
 
+    private static Route route(long versionCode, String versionName, String className,
+            MethodTarget... densityMethodTargets) {
+        return new Route(versionCode, versionName, className, false, densityMethodTargets);
+    }
+
+    private static Route routeWithBottomTabIconScale(long versionCode, String versionName,
+            String className, MethodTarget... densityMethodTargets) {
+        return new Route(versionCode, versionName, className, true, densityMethodTargets);
+    }
+
     static final class Route {
         final long versionCode;
         final String versionName;
         final String className;
+        final boolean bottomTabIconScaleEnabled;
+        final MethodTarget[] densityMethodTargets;
 
-        private Route(long versionCode, String versionName, String className) {
+        private Route(long versionCode, String versionName, String className,
+                boolean bottomTabIconScaleEnabled,
+                MethodTarget... densityMethodTargets) {
             this.versionCode = versionCode;
             this.versionName = versionName;
             this.className = className;
+            this.bottomTabIconScaleEnabled = bottomTabIconScaleEnabled;
+            this.densityMethodTargets = densityMethodTargets != null
+                    ? densityMethodTargets.clone()
+                    : new MethodTarget[0];
         }
 
         String routeKey() {
             return className;
+        }
+
+        boolean hasDensityMethodTargets() {
+            return densityMethodTargets.length > 0;
+        }
+    }
+
+    static final class MethodTarget {
+        final String methodName;
+        final Kind kind;
+
+        private MethodTarget(String methodName, Kind kind) {
+            this.methodName = methodName;
+            this.kind = kind;
+        }
+
+        static MethodTarget displayMetricsGetter(String methodName) {
+            return new MethodTarget(methodName, Kind.DISPLAY_METRICS_GETTER);
+        }
+
+        static MethodTarget displayMetricsMutator(String methodName) {
+            return new MethodTarget(methodName, Kind.DISPLAY_METRICS_MUTATOR);
+        }
+
+        static MethodTarget targetFieldGetter(String methodName) {
+            return new MethodTarget(methodName, Kind.TARGET_FIELD_GETTER);
+        }
+
+        static MethodTarget targetFieldSetter(String methodName) {
+            return new MethodTarget(methodName, Kind.TARGET_FIELD_SETTER);
+        }
+
+        enum Kind {
+            DISPLAY_METRICS_GETTER,
+            DISPLAY_METRICS_MUTATOR,
+            TARGET_FIELD_GETTER,
+            TARGET_FIELD_SETTER
         }
     }
 }

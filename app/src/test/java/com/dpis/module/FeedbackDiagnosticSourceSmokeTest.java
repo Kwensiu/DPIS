@@ -218,7 +218,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(modernWechat.contains("\"bottom_tab_icon\""));
         assertTrue(modernAppSpecific.contains("\"wechat_dpi\""));
         assertTrue(modernAppSpecific.contains("\"application_attach\""));
-        assertTrue(modernAppSpecific.contains("\"module_loaded_class\""));
+        assertFalse(modernAppSpecific.contains("\"module_loaded_class\""));
         assertTrue(legacyWechat.contains("\"wechat_dpi\""));
         assertTrue(legacyAppSpecific.contains("\"legacy_load_package\""));
         assertTrue(resultSheet.contains("new BottomSheetDialog(activity)"));

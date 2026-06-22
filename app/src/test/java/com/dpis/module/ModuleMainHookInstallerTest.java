@@ -26,9 +26,6 @@ public class ModuleMainHookInstallerTest {
     public void moduleMainDelegatesAppSpecificRoutes() throws IOException {
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
-        assertTrue(moduleMain.contains("public void onPackageLoaded(PackageLoadedParam param)"));
-        assertTrue(moduleMain.contains("ModernAppSpecificRouteInstaller.handleModuleLoaded("));
-        assertTrue(moduleMain.contains("ModernAppSpecificRouteInstaller.handlePackageLoaded("));
         assertTrue(moduleMain.contains("ModernAppSpecificRouteInstaller.handlePackageReady("));
         assertTrue(moduleMain.contains(
                 "ModernAppSpecificRouteInstaller.shouldSuppressModuleLoadedGenericHooks("));
@@ -55,20 +52,18 @@ public class ModuleMainHookInstallerTest {
         String installer = read(
                 "src/modern/java/com/dpis/module/WechatDpiModernHookInstaller.java");
 
-        assertTrue(router.contains("handlePackageLoaded("));
+        assertFalse(router.contains("handlePackageLoaded("));
         assertTrue(router.contains("handleModuleLoaded("));
-        assertTrue(router.contains("ClassLoader.class.getDeclaredMethod("));
-        assertTrue(router.contains("\"loadClass\", String.class, boolean.class"));
+        assertFalse(router.contains("WechatDpiRouteMode.useV1123CompatRoute()"));
+        assertFalse(router.contains("ClassLoader.class.getDeclaredMethod("));
+        assertFalse(router.contains("\"loadClass\", String.class, boolean.class"));
         assertTrue(router.contains("Application.class.getDeclaredMethod(\"attach\", Context.class)"));
         assertTrue(router.contains("application-attach route enter"));
         assertTrue(router.contains("application-attach hook ready"));
-        assertFalse(router.contains("Class.forName(\"dalvik.system.BaseDexClassLoader\""));
-        assertFalse(router.contains("getDeclaredMethod(\"findClass\", String.class)"));
-        assertFalse(router.contains("module-loaded find-class hook ready"));
-        assertTrue(router.contains("WechatDpiRoutes.matchesClassName(loadedClass.getName())"));
-        assertTrue(router.contains("maybeInstallWechatFromLoadedClass("));
-        assertTrue(router.contains("WechatDpiModernHookInstaller.installFromLoadedClass("));
-        assertTrue(router.contains("param.getDefaultClassLoader()"));
+        assertTrue(router.contains("\"application_attach\""));
+        assertFalse(router.contains("WechatDpiRoutes.matchesClassName(loadedClass.getName())"));
+        assertFalse(router.contains("WechatDpiModernHookInstaller.installFromLoadedClass("));
+        assertFalse(router.contains("param.getDefaultClassLoader()"));
         assertTrue(router.contains("WechatDpiConfig.appliesTo(param.getPackageName())"));
         assertTrue(router.contains("WechatDpiConfig.appliesTo(processName)"));
         assertTrue(router.contains("WechatDpiModernHookInstaller.install("));
@@ -77,29 +72,29 @@ public class ModuleMainHookInstallerTest {
         assertTrue(router.contains("describeClassLoaderForLog("));
         assertTrue(router.contains("alongside generic hooks"));
         assertTrue(installer.contains("ApplicationInfo applicationInfo"));
-        assertTrue(installer.contains("installFromLoadedClass("));
-        assertTrue(installer.contains("WechatDpiMethodLocator.Source.LOADED_CLASS"));
-        assertTrue(installer.contains("WechatDpiMethodLocator.densityManagerMethods("));
+        assertFalse(installer.contains("installFromLoadedClass("));
+        assertFalse(installer.contains("WechatDpiRouteMode.useV1123CompatRoute()"));
+        assertFalse(installer.contains("WechatDpiMethodLocator.Source.LOADED_CLASS"));
+        assertFalse(installer.contains("WechatDpiMethodLocator.densityManagerMethods("));
         assertTrue(installer.contains("installBottomTabIconScaleHook("));
         assertTrue(installer.contains("WECHAT_BOTTOM_TAB_ICON_VIEW_CLASS"));
+        assertTrue(installer.contains("\"bottom_tab_icon\""));
         assertTrue(installer.contains("findBottomTabIconInitMethod("));
         assertTrue(installer.contains("findBottomTabIconScaleField("));
         assertTrue(installer.contains("WechatDpiRuntime.bottomTabIconScale("));
         assertTrue(installer.contains("bottom tab icon hook skipped: class not found"));
-        assertTrue(installer.contains("unmarkBottomTabIconClass("));
         assertTrue(installer.contains("resolveWechatVersionCode"));
         assertTrue(installer.contains("WechatDpiMethodLocator.locate("));
         assertTrue(installer.contains("WechatDpiRuntime.apply(metrics, dpi)"));
         assertTrue(installer.contains("configuredDpi="));
-        assertTrue(installer.contains("declaringClassLoaders="));
         assertTrue(installer.contains("describeClassLoaderForLog("));
         assertTrue(installer.contains("locatorResult.source.logName"));
-        assertTrue(installer.contains("isDisplayMetricsMutator(metricsMethod)"));
+        assertTrue(installer.contains("isDisplayMetricsMutator(hookMethod)"));
         assertTrue(installer.contains("displayMetricsArgument(chain.getArgs())"));
-        assertTrue(installer.contains("isTargetFieldGetter(metricsMethod)"));
-        assertTrue(installer.contains("isTargetFieldSetter(metricsMethod)"));
-        assertTrue(installer.contains("return chain.proceed();"));
-        assertTrue(installer.contains("chain.proceed(new Object[] {configuredDpi})"));
+        assertTrue(installer.contains("isTargetFieldGetter(hookMethod)"));
+        assertTrue(installer.contains("isTargetFieldSetter(hookMethod)"));
+        assertTrue(installer.contains("Object result = chain.proceed();"));
+        assertTrue(installer.contains("return result;"));
         assertFalse(installer.contains("findDisplayMetricsMethods(densityManagerClass)"));
         assertTrue(installer.contains("applyWechatDpi(metrics"));
         assertFalse(installer.contains("resourcesClassName"));

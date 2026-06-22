@@ -55,16 +55,6 @@ public final class ModuleMain extends XposedModule {
     }
 
     @Override
-    public void onPackageLoaded(PackageLoadedParam param) {
-        if (param == null) {
-            return;
-        }
-        bridgeLog("onPackageLoaded enter: process=" + currentProcessName
-                + ", package=" + param.getPackageName());
-        ModernAppSpecificRouteInstaller.handlePackageLoaded(this, param, currentProcessName);
-    }
-
-    @Override
     public void onPackageReady(PackageReadyParam param) {
         bridgeLog("onPackageReady enter: process=" + currentProcessName
                 + ", package=" + param.getPackageName());

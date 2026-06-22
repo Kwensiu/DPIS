@@ -99,7 +99,6 @@ DPIS modern target package
   |           |     |
   |           |     +-- record current process
   |           |     +-- initialize host config store
-  |           |     +-- WeChat independent class-loader probe
   |           |     +-- maybeInstallAppProcessFromModuleLoaded
   |           |
   |           +-- onSystemServerStarting
@@ -267,22 +266,24 @@ Detailed app-specific runtime evidence lives in
   diagnostics as `route=wechat_dpi` for WeChat targets. A saved WeChat DPI config
   makes callback and mutation evidence expected; without that config, callback
   or mutation hits are unexpected route activity. The modern route emits
-  structured diagnostic evidence for package-loaded, package-ready,
-  module-loaded class, application-attach, DisplayMetrics, and bottom-tab icon
-  hook stages so diagnostic packages can distinguish hook ready, callback,
-  applied mutation, and skipped locator paths.
-- 2026-06-17 active: WeChat independent DPI route keeps a module-loaded
+  structured diagnostic evidence for package-ready, application-attach retry,
+  DisplayMetrics hook, and bottom-tab icon hook stages so diagnostic packages
+  can distinguish hook ready, callback, applied mutation, and skipped locator
+  paths. Package-loaded and broad module-loaded class-loader probes remain
+  removed after user reports of crashes/jank in newer builds, but a narrower
+  application-attach retry was restored after 8.0.74 validation proved WeChat
+  can move the live density-manager class to Tinker `DelegateLastClassLoader`.
+- 2026-06-17 superseded: WeChat independent DPI route tested a module-loaded
   `ClassLoader.loadClass(String, boolean)` probe in the WeChat main process and
-  logs package route classloader identities. The independent route also hooks
-  `Application.attach(Context)` and retries installation from the runtime
-  `Context` classloader. Trigger condition is a known density-manager class
-  name from `WechatDpiRoutes`. Runtime evidence showed package-loaded and
-  package-ready can resolve a base APK classloader while WeChat resource reads
-  can use a patched runtime classloader, so the route retries from
-  `Application.attach`.
-- 2026-06-17 active: WeChat bottom-tab icon compensation is deliberately
-  scoped to `com.tencent.mm.ui.TabIconView`, not to a WeChat version range.
-  The route hooks the 4-argument bottom-tab icon init method when that
+  an `Application.attach(Context)` retry from the runtime `Context` classloader.
+  The broad `ClassLoader.loadClass` probe was removed on 2026-06-22 as the
+  highest-risk startup-time expansion. The `Application.attach(Context)` retry
+  was later restored as a narrow WeChat-only classloader retry after 8.0.74
+  validation showed the live density-manager class can come from Tinker
+  `DelegateLastClassLoader`.
+- 2026-06-17 superseded: WeChat bottom-tab icon compensation was scoped to
+  `com.tencent.mm.ui.TabIconView`, not to a WeChat version range. The route
+  hooked the 4-argument bottom-tab icon init method when that
   structure exists and writes the non-static float scale field using
   `dpi * 1.1666666 / 400`, matching the upstream behavior while keeping chat,
   article, and other DPI effects owned by the density-manager route. The write
@@ -339,13 +340,14 @@ superseded.
 | 2026-06-07 | font system emulation | Route `FONT_SCALE` through field-level system_server scheduling and allow it only at `launch-activity-item` | active | Unit policy tests cover viewport multi-entry scheduling and font launch-only scheduling | Avoids later config-dispatch writes that can surface as `CONFIG_FONT_SCALE` relaunches |
 | 2026-06-07 | font system emulation | Make modern system_server package selection field-aware per entry | active | Unit policy tests cover font-only launch selection and non-launch skip | Keeps font-only packages out of non-launch hot paths while preserving viewport multi-entry scheduling |
 | 2026-06-07 | shared app-process viewport | Preserve small-window geometry for relative-scale app-process borrow targets while applying target density through ResourcesImpl / ResourcesRead metrics | active | Quetta small-window route isolation showed disabling ResourcesImpl stops flicker but loses Chromium scaling; focused unit tests cover window density compensation | Keeps DPIS unified scheduling active without publishing app-process borrow targets or forcing small-window Configuration width/height to the display target |
-| 2026-06-08 | WeChat DPI | Replace the old target-field route with the WeKit-style DisplayMetrics post-processing route as the official WeChat independent path | active | Runtime check confirmed property publication, hook installation, and mutation callback on `q35.f` for 8.0.71; TabIconView supplement was rejected as disproportionate at DPIS custom values; details in `docs/private/wechat-target-field.md` | DPIS now only mutates returned `DisplayMetrics` |
+| 2026-06-08 | WeChat DPI | Replace the old target-field route with the WeKit-style DisplayMetrics post-processing route as the official WeChat independent path | active / adjusted | Runtime check confirmed property publication, hook installation, and mutation callback on `q35.f` for 8.0.71; later 8.0.74 validation required restoring version-scoped target-field/mutator roles and bottom-tab support through the static method table | DPIS primarily mutates returned `DisplayMetrics`; selected versions may also enable table-owned target-field, mutator, and bottom-tab supplements |
 | 2026-06-09 | WeChat DPI | Move method discovery to a shared WeKit-style DexKit locator with a static version table | active / adjusted | Unit/source tests cover the DexKit rule, static ownership, and shared runtime mutation formula | Locator matches the `MMDensityManager` / `screenResolution_target_field` signature and logs whether `dexkit` or `static-route` installed hooks |
 | 2026-06-09 | WeChat DPI | Add extracted-native-library fallback for DexKit inside the LSPosed module classloader | active | Real-device WeChat 8.0.74 / versionCode 3120 showed `System.loadLibrary("dexkit")` failed in `LspModuleClassLoader`; after fallback, logs reached `hook ready`, `callback hit`, and `applied` on `j65.f#e`, and visual effect was confirmed without uninstalling DPIS | Keep this as a module-loading fix, not a config-reset workaround; 3120 / `j65.f` is also in the static fallback table |
 | 2026-06-17 | WeChat DPI | Prefer verified static routes before DexKit discovery for known WeChat versions | active | Runtime validation showed the static route installs earlier than DexKit discovery and avoids missing early one-shot metrics reads | Static route keeps known versions on the shortest install path; DexKit remains the automatic adaptation path for unknown versions |
 | 2026-06-17 | WeChat DPI | Test density-manager constructor and static `DisplayMetrics` cache correction | rejected | Decompilation and runtime validation did not prove a stable cache mutation point | Do not keep constructor/cache retry as production behavior without mutation evidence |
-| 2026-06-17 | WeChat DPI | Expand the independent route from getter-only hooks to the `Configuration + DisplayMetrics` mutator inside `MMDensityManager` | active | Full-dex analysis showed WeChat resources can forward configuration updates into the same density-manager class while constructor/cache probes produced no mutation evidence; locator still anchors on `MMDensityManager` / `screenResolution_target_field`, but now returns both metrics getters and the in-class mutator | Keep the route independent and class-local; mutate the same density-manager metrics object instead of adding a separate global Resources hook |
-| 2026-06-17 | WeChat DPI | Move the independent route's first install attempt to package-loaded | active | Runtime validation showed package-loaded is useful for timing but not sufficient by itself | package-ready remains as fallback; hook de-duplication is by density-manager `Class` identity |
+| 2026-06-17 | WeChat DPI | Expand the independent route from getter-only hooks to the `Configuration + DisplayMetrics` mutator inside `MMDensityManager` | superseded / narrowed | Full-dex analysis showed WeChat resources can forward configuration updates into the same density-manager class while constructor/cache probes produced no mutation evidence | Broad locator-driven expansion was removed 2026-06-22 after crash/jank reports; exact mutator or target-field roles may only return as verified static-table entries for a specific version |
+| 2026-06-17 | WeChat DPI | Move the independent route's first install attempt to package-loaded | superseded | Runtime validation showed package-loaded is useful for timing but not sufficient by itself | Package-loaded and module-loaded class probes remain removed; package-ready is the main app-specific entry, with only a narrow `Application.attach(Context)` retry for WeChat runtime classloader recovery |
+| 2026-06-22 | WeChat DPI | Remove high-risk new route expansion, then reintroduce only the runtime pieces proven necessary on 8.0.74 | active / adjusted | User reports indicated newer builds could crash/jank while v1.12.3 behavior was best; later device validation showed 8.0.74 needs `package-ready` plus `Application.attach` retry to reach Tinker `DelegateLastClassLoader`, and versionCode 3120 uses static method roles `d/e/g/k/l` with bottom-tab enabled | Keep static route preferred for known versions, DexKit as fallback for unknown versions, and express version-specific extras through the static table instead of broad route expansion |
 | 2026-06-18 | modern system_server | Move the first system_server installer attempt to libxposed's `onSystemServerStarting` callback | active | LSPosed_20260617_235835 showed preconfigured unrestricted apps launching at boot before DPIS UI, while the system process had only `module-loaded app hook install skipped system process` and no system_server hook/callback evidence | `onPackageReady` remains a de-duplicated fallback; this is a lifecycle timing fix, not an app-specific package recommendation |
 | 2026-06-15 | shared app-process font | Add an event-gated `resources_font` scheduler for Resources read-path font conflicts | active / shared | Bilibili `resources_font`-only repro showed `Configuration.fontScale` alternating between base and target while `getDisplayMetrics` recomputed `scaledDensity`; after the event gate, `scaledDensity=3.0` and `1.4 -> 1.0` disappeared, and read metrics logging dropped sharply after idempotent writes. TapTap system-font repro later showed no config churn after disabling read-side configuration writes, but `getDisplayMetrics` could still downgrade target metrics from `4.2` to `3.9` when the system config stayed at `1.3` | Read-conflict target suppression outranks Compose base suppression; non-Compose observations must not clear an established read-conflict target state. Compat `resources_font` uses `ResourcesImpl` as a low-frequency metrics seed plus `ResourcesRead` fallback; when `ResourcesRead` is installed only for font it skips viewport target resolution and `VirtualDisplayState` reuse while keeping metrics density synchronized with configuration; system font emulation does not let `ResourcesRead(getConfiguration)` force target `fontScale` on every read, but `ResourcesRead(getDisplayMetrics)` may fill `scaledDensity` from the target factor so read-side metrics do not downgrade an already-targeted font scale; Compose diagnostics can detach after the read-conflict target event is established; `ResourcesManager` write-side hooks remain for viewport and system font emulation |
 

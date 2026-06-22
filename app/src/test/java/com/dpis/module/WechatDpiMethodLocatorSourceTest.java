@@ -16,6 +16,10 @@ public class WechatDpiMethodLocatorSourceTest {
 
         assertTrue(source.contains("WechatDpiRoutes.forVersionCode(versionCode)"));
         assertTrue(source.contains("Class.forName(route.className, false, classLoader)"));
+        assertTrue(source.contains("staticRouteMethods(densityManagerClass, route)"));
+        assertTrue(source.contains("route.hasDensityMethodTargets()"));
+        assertTrue(source.contains("route.densityMethodTargets"));
+        assertTrue(source.contains("matchesStaticMethodTarget(method, target.kind)"));
         assertTrue(source.contains("DexKitBridge.create(applicationInfo.sourceDir)"));
         assertTrue(source.contains("FindMethod.create()"));
         assertTrue(source.contains("usingEqStrings("));
@@ -28,12 +32,8 @@ public class WechatDpiMethodLocatorSourceTest {
         assertTrue(source.contains(".returnType(\"boolean\")"));
         assertTrue(source.contains("methodData.getMethodInstance(classLoader)"));
         assertTrue(source.contains("densityManagerMethods(method.getDeclaringClass())"));
-        assertTrue(source.contains("parameterTypes[0] == Configuration.class"));
-        assertTrue(source.contains("parameterTypes[1] == DisplayMetrics.class"));
-        assertTrue(source.contains("LOADED_CLASS(\"loaded-class\")"));
         assertTrue(source.contains("static List<Method> densityManagerMethods("));
-        assertTrue(source.contains("isTargetFieldGetter(method)"));
-        assertTrue(source.contains("isTargetFieldSetter(method)"));
+        assertTrue(source.contains("if (isDisplayMetricsGetter(method))"));
         assertTrue(source.contains("loadDexKitLibrary()"));
         assertTrue(source.contains("System.load(path)"));
         assertTrue(source.contains("\"libdexkit.so\""));
@@ -50,6 +50,8 @@ public class WechatDpiMethodLocatorSourceTest {
         assertFalse(source.contains("TabIconView"));
         assertFalse(source.contains("installDpiGetterHook("));
         assertFalse(source.contains("installDpiSetterHook("));
+        assertFalse(source.contains("WechatDpiRouteMode"));
+        assertFalse(source.contains("LOADED_CLASS(\"loaded-class\")"));
     }
 
     @Test
