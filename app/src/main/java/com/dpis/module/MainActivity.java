@@ -1158,26 +1158,31 @@ public final class MainActivity
     private List<AppListItem> loadInstalledApps(
             boolean forceInstalledAppCatalogReload
     ) {
-        Set<String> scopePackages = new HashSet<>();
-        boolean scopeKnown = false;
-        XposedService service = DpisApplication.getXposedService();
-        if (service != null) {
-            try {
-                List<String> scope = service.getScope();
-                if (scope != null) {
-                    scopePackages.addAll(scope);
-                    scopeKnown = true;
-                }
-            } catch (RuntimeException ignored) {
-                scopePackages.clear();
-            }
-        }
+        ScopeState scopeState = loadScopeState();
         return installedAppCatalogCoordinator.loadInstalledApps(
                 forceInstalledAppCatalogReload,
                 getHookConfigStore(),
-                scopePackages,
-                scopeKnown
+                scopeState.packages,
+                scopeState.known
         );
+    }
+
+    private ScopeState loadScopeState() {
+        Set<String> scopePackages = new HashSet<>();
+        XposedService service = DpisApplication.getXposedService();
+        if (service == null) {
+            return new ScopeState(scopePackages, false);
+        }
+        try {
+            List<String> scope = service.getScope();
+            if (scope != null) {
+                scopePackages.addAll(scope);
+                return new ScopeState(scopePackages, true);
+            }
+        } catch (RuntimeException ignored) {
+            scopePackages.clear();
+        }
+        return new ScopeState(scopePackages, false);
     }
 
     private void applyFilter() {
@@ -2906,10 +2911,9 @@ public final class MainActivity
 
     private HomeWorkspaceBinder.State createHomeWorkspaceState() {
         DpiConfigStore configStore = getHookConfigStore();
-        java.util.Set<String> configuredPackages = configStore.getConfiguredPackages();
         int visibleConfiguredAppCount = countUserVisibleConfiguredPackages(
                 configStore,
-                configuredPackages
+                loadScopeState()
         );
         return new HomeWorkspaceBinder.State(
                 HomeActivationStateResolver.isActivatedForHome(),
@@ -2974,18 +2978,39 @@ public final class MainActivity
         };
     }
 
-    private static int countUserVisibleConfiguredPackages(DpiConfigStore store,
-            java.util.Set<String> packageNames) {
-        if (store == null || packageNames == null || packageNames.isEmpty()) {
-            return 0;
+    static int countUserVisibleConfiguredPackages(DpiConfigStore store,
+            ScopeState scopeState) {
+        Set<String> packageNames = new HashSet<>();
+        if (store != null) {
+            packageNames.addAll(store.getConfiguredPackages());
+        }
+        ScopeState safeScopeState = scopeState != null
+                ? scopeState
+                : new ScopeState(Collections.emptySet(), false);
+        if (safeScopeState.known) {
+            packageNames.addAll(safeScopeState.packages);
         }
         int count = 0;
         for (String packageName : packageNames) {
-            if (store.hasUserVisiblePackageConfig(packageName)) {
+            if (InstalledAppCatalogCoordinator.isUserVisibleConfiguredPackage(
+                    store,
+                    packageName,
+                    safeScopeState.known,
+                    safeScopeState.packages.contains(packageName))) {
                 count++;
             }
         }
         return count;
+    }
+
+    static final class ScopeState {
+        final Set<String> packages;
+        final boolean known;
+
+        ScopeState(Set<String> packages, boolean known) {
+            this.packages = packages != null ? packages : Collections.emptySet();
+            this.known = known;
+        }
     }
 
     private void maybeStartRootAccessProbe() {

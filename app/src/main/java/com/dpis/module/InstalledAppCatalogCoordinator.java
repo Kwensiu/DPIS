@@ -144,13 +144,26 @@ final class InstalledAppCatalogCoordinator {
                 && store.hasTargetAppSpecificConfig(packageName);
         Integer wechatDpi = store != null ? store.getWechatDpi(packageName) : null;
         boolean dpisEnabled = store == null || store.isTargetDpisEnabled(packageName);
-        boolean configured = store != null && store.hasUserVisiblePackageConfig(packageName);
+        boolean inScope = scopePackages != null && scopePackages.contains(packageName);
+        boolean configured = isUserVisibleConfiguredPackage(
+                store,
+                packageName,
+                scopeKnown,
+                inScope);
         return new AppListItem(label, packageName,
-                scopePackages.contains(packageName), scopeKnown, viewportWidth,
+                inScope, scopeKnown, viewportWidth,
                 viewportScalePermille, viewportMode, viewportTargetType,
                 viewportTargetSpec, fontScalePercent, fontMode, typefaceId,
                 appSpecificConfigActive, wechatDpi, dpisEnabled, configured, installed,
                 systemApp, hyperOsNativeProxyCandidate, icon);
+    }
+
+    static boolean isUserVisibleConfiguredPackage(DpiConfigStore store,
+            String packageName,
+            boolean scopeKnown,
+            boolean inScope) {
+        return (scopeKnown && inScope)
+                || (store != null && store.hasUserVisiblePackageConfig(packageName));
     }
 
     void onIconLoadRequested(String packageName) {

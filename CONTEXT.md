@@ -194,6 +194,11 @@ package-level state. This includes numeric viewport or font values, mode-only
 state, target-type-only state, hook-domain-only state, app-specific config such
 as WeChat DPI, explicit per-package `dpisEnabled=false` overrides, and saved
 configuration for apps that are no longer installed.
+Installed packages in the known active LSPosed scope are also user-visible
+configured for the home configured-apps card and Configured Apps list, even
+when they have no saved package-level values. Unknown scope state, such as
+Legacy builds without a scope service, must not be inferred as injected. This
+is UI state only; it must not create stored package config by itself.
 
 Draft-only state is transient app-config-sheet state. It is not a user-visible
 configured package unless the user saves it as package-level state.
