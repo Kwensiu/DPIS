@@ -93,62 +93,14 @@ final class SystemServerDisplayEnvironmentInstaller {
     private static final String[] FRAME_NESTED_FIELD_NAMES = new String[]{
             "frames", "windowFrames", "clientWindowFrames", "outFrames", "result"
     };
-    private static final HookTarget[] HOOK_TARGETS = new HookTarget[]{
-            new HookTarget("config-dispatch",
-                    new String[]{
-                            "com.android.server.wm.ActivityRecord"
-                    },
-                    new String[]{
-                            "updateReportedConfigurationAndSend"
-                    }),
-            new HookTarget("activity-start",
-                    new String[]{
-                            "com.android.server.wm.ActivityStarter",
-                            "com.android.server.am.ActivityStarter"
-                    },
-                    new String[]{
-                            "execute",
-                            "startActivityMayWait"
-                    }),
-            new HookTarget("relayout-dispatch",
-                    new String[]{
-                            "com.android.server.wm.WindowManagerService"
-                    },
-                    new String[]{
-                            "relayoutWindow"
-                    }),
-            new HookTarget("display-policy-layout",
-                    new String[]{
-                            "com.android.server.wm.DisplayPolicy"
-                    },
-                    new String[]{
-                            "layoutWindowLw"
-                    }),
-            new HookTarget("display-content-config",
-                    new String[]{
-                            "com.android.server.wm.DisplayContent"
-                    },
-                    new String[]{
-                            "computeScreenConfiguration",
-                            "updateDisplayAndOrientation",
-                            "getDisplayInfo"
-                    }),
-            new HookTarget("display-manager-info",
-                    new String[]{
-                            "com.android.server.display.DisplayManagerService$BinderService",
-                            "com.android.server.display.DisplayManagerService"
-                    },
-                    new String[]{
-                            "getDisplayInfo",
-                            "getDisplayInfoInternal"
-                    })
-    };
     private static volatile int installedPid = -1;
 
     private SystemServerDisplayEnvironmentInstaller() {
     }
 
-    static void install(XposedInterface xposed, DpiConfigStore store) {
+    static void install(XposedInterface xposed,
+                        DpiConfigStore store,
+                        ModernApiCapabilities apiCapabilities) {
         if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             SystemServerDisplayDiagnostics.recordPending("system_server install skipped: reason=already-installed-fast-path");
             DpisLog.i(SystemServerDisplayDiagnostics.buildInstallSkipLog("already-installed-fast-path"));
@@ -193,7 +145,11 @@ final class SystemServerDisplayEnvironmentInstaller {
                 int missingCount = 0;
                 if (SystemServerMutationPolicy.shouldInstallTarget(
                         "launch-activity-item", policy.systemServerSafeModeEnabled)) {
-                    if (installLaunchActivityItemHook(xposed, source)) {
+                    if (installLaunchActivityItemHook(
+                            xposed,
+                            source,
+                            SystemServerHookCatalog.LAUNCH_ACTIVITY_ITEM,
+                            apiCapabilities)) {
                         installedCount++;
                     } else {
                         missingCount++;
@@ -207,12 +163,17 @@ final class SystemServerDisplayEnvironmentInstaller {
                         missingCount++;
                     }
                 }
-                for (HookTarget target : HOOK_TARGETS) {
+                for (SystemServerHookSpec hookSpec : SystemServerHookCatalog.methodHookSpecs()) {
                     if (!SystemServerMutationPolicy.shouldInstallTarget(
-                            target.entryName, policy.systemServerSafeModeEnabled)) {
+                            hookSpec.entryName, policy.systemServerSafeModeEnabled)) {
                         continue;
                     }
-                    if (installTargetHooks(xposed, source, target, configuredPackages)) {
+                    if (installTargetHooks(
+                            xposed,
+                            source,
+                            hookSpec,
+                            configuredPackages,
+                            apiCapabilities)) {
                         installedCount++;
                     } else {
                         missingCount++;
@@ -268,22 +229,25 @@ final class SystemServerDisplayEnvironmentInstaller {
 
     private static boolean installTargetHooks(XposedInterface xposed,
                                               PerAppDisplayConfigSource source,
-                                              HookTarget target,
-                                              Set<String> configuredPackages) {
+                                              SystemServerHookSpec hookSpec,
+                                              Set<String> configuredPackages,
+                                              ModernApiCapabilities apiCapabilities) {
         boolean hooked = false;
         for (ClassLoader classLoader : resolveCandidateClassLoaders()) {
-            for (String className : target.classNames) {
+            for (String className : hookSpec.classNames) {
                 Class<?> clazz = resolveClass(className, classLoader);
                 if (clazz == null) {
                     continue;
                 }
                 for (Method method : clazz.getDeclaredMethods()) {
-                    if (!matchesAnyMethodName(method, target.methodNames)
+                    if (!matchesAnyMethodName(method, hookSpec.methodNames)
                             || Modifier.isAbstract(method.getModifiers())) {
                         continue;
                     }
-                    xposed.hook(method)
-                            .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+                    apiCapabilities.applyStableHookId(
+                                    xposed.hook(method)
+                                            .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                                    hookSpec.hookIdFor(method))
                             .intercept(chain -> {
                                 Object result = null;
                                 boolean proceedAttempted = false;
@@ -294,16 +258,16 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     if (!source.isSystemServerHooksEnabled()) {
                                         return chain.proceed();
                                     }
-                                    if (SystemServerEntryRoute.isDisplayManagerInfo(target.entryName)) {
+                                    if (SystemServerEntryRoute.isDisplayManagerInfo(hookSpec.entryName)) {
                                         Object displayManagerResult = chain.proceed();
                                         applyDisplayManagerInfoResult(
-                                                source, target.entryName, displayManagerResult);
+                                                source, hookSpec.entryName, displayManagerResult);
                                         return displayManagerResult;
                                     }
                                     boolean loggingEnabled = DpisLog.isLoggingEnabled();
                                     Set<String> currentConfiguredPackages = source.getConfiguredPackages();
                                     if (!shouldInspectHotEntry(
-                                            target.entryName,
+                                            hookSpec.entryName,
                                             thisObject,
                                             args,
                                             currentConfiguredPackages)) {
@@ -311,17 +275,17 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     }
                                     if (loggingEnabled
                                             && SystemServerHookLogGate.shouldLogInterceptEnter(
-                                                    target.entryName)) {
-                                        logInterceptEnter(target.entryName, thisObject, args);
+                                                    hookSpec.entryName)) {
+                                        logInterceptEnter(hookSpec.entryName, thisObject, args);
                                     }
                                     ResolvedPackage resolvedPackage = resolveConfiguredPackage(
                                             thisObject,
                                             args,
                                             packageName -> selectConfigForSystemServerEntry(
-                                                    target.entryName, source.get(packageName)));
+                                                    hookSpec.entryName, source.get(packageName)));
                                     if (resolvedPackage.packageName == null) {
                                         if (loggingEnabled) {
-                                            logPackageResolveMiss(target.entryName, thisObject, args);
+                                            logPackageResolveMiss(hookSpec.entryName, thisObject, args);
                                         }
                                         return chain.proceed();
                                     }
@@ -329,14 +293,14 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     PerAppDisplayConfig config = resolvedPackage.config;
                                     if (config == null) {
                                         if (loggingEnabled) {
-                                            logConfigMiss(target.entryName, packageName,
+                                            logConfigMiss(hookSpec.entryName, packageName,
                                                     resolvedPackage.candidatePackagesSummary,
                                                     currentConfiguredPackages.size());
                                         }
                                         return chain.proceed();
                                     }
                                     if (loggingEnabled && resolvedPackage.fallbackFromPackage != null) {
-                                        logConfigFallback(target.entryName,
+                                        logConfigFallback(hookSpec.entryName,
                                                 resolvedPackage.fallbackFromPackage,
                                                 packageName,
                                                 resolvedPackage.candidatePackagesSummary);
@@ -345,21 +309,21 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     PerAppDisplayEnvironment preEnvironment = resolveTargetEnvironment(
                                             packageName, before, before, config);
                                     if (SystemServerMutationPolicy.shouldApplyPreProceedMutations(
-                                            target.entryName)) {
+                                            hookSpec.entryName)) {
                                         PerAppDisplayEnvironment applyEnvironment =
                                                 resolveMarkerGatedEnvironment(
-                                                        target.entryName,
+                                                        hookSpec.entryName,
                                                         packageName,
                                                         before,
                                                         preEnvironment,
                                                         config);
                                         boolean changed = applyEnvironment(
-                                                target.entryName, before, applyEnvironment, config);
+                                                hookSpec.entryName, before, applyEnvironment, config);
                                         changed |= applyConfigDispatchObject(
-                                                target.entryName, thisObject, applyEnvironment);
+                                                hookSpec.entryName, thisObject, applyEnvironment);
                                         if (changed) {
                                             logViewportMarkerProbe(
-                                                    target.entryName, packageName, before, applyEnvironment, config);
+                                                    hookSpec.entryName, packageName, before, applyEnvironment, config);
                                         }
                                     }
                                     proceedAttempted = true;
@@ -370,18 +334,18 @@ final class SystemServerDisplayEnvironmentInstaller {
                                             packageName, before, after, config);
                                     PerAppDisplayEnvironment effectiveEnvironment = chooseEffectiveEnvironment(
                                             preEnvironment, environment);
-                                    if (SystemServerEntryRoute.isConfigDispatch(target.entryName)) {
+                                    if (SystemServerEntryRoute.isConfigDispatch(hookSpec.entryName)) {
                                         applyConfigDispatchObject(
-                                                target.entryName, thisObject, effectiveEnvironment);
+                                                hookSpec.entryName, thisObject, effectiveEnvironment);
                                     }
                                     if (loggingEnabled) {
-                                        logTargetComputation(target.entryName, packageName,
+                                        logTargetComputation(hookSpec.entryName, packageName,
                                                 preEnvironment, environment, effectiveEnvironment);
                                     }
                                     Snapshot mutated = after;
                                     if (effectiveEnvironment == null) {
                                         if (loggingEnabled) {
-                                            logEnvironmentNull(target.entryName,
+                                            logEnvironmentNull(hookSpec.entryName,
                                                     packageName,
                                                     SystemServerDisplayDiagnostics.describeState(
                                                             before.configuration, before.frame),
@@ -390,38 +354,38 @@ final class SystemServerDisplayEnvironmentInstaller {
                                         }
                                     }
                                     if (SystemServerMutationPolicy.shouldApplyPostProceedMutations(
-                                            target.entryName)) {
+                                            hookSpec.entryName)) {
                                         String beforeApplySummary = loggingEnabled
                                                 ? SystemServerDisplayDiagnostics.describeState(
                                                 after.configuration, after.frame)
                                                 : null;
                                         PerAppDisplayEnvironment applyEnvironment =
                                                 resolveMarkerGatedEnvironment(
-                                                        target.entryName,
+                                                        hookSpec.entryName,
                                                         packageName,
                                                         after,
                                                         effectiveEnvironment,
                                                         config);
-                                        if (applyEnvironment(target.entryName, after, applyEnvironment, config)) {
+                                        if (applyEnvironment(hookSpec.entryName, after, applyEnvironment, config)) {
                                             logViewportMarkerProbe(
-                                                    target.entryName, packageName, after, applyEnvironment, config);
+                                                    hookSpec.entryName, packageName, after, applyEnvironment, config);
                                             if (loggingEnabled) {
                                                 String afterApplySummary = SystemServerDisplayDiagnostics.describeState(
                                                         mutated.configuration, mutated.frame);
                                                 String message = SystemServerDisplayDiagnostics.buildApplyLog(
-                                                        target.entryName,
+                                                        hookSpec.entryName,
                                                         packageName,
                                                         beforeApplySummary,
                                                         afterApplySummary);
-                                                String key = "apply|" + target.entryName + "|" + packageName;
+                                                String key = "apply|" + hookSpec.entryName + "|" + packageName;
                                                 logIfChanged(
                                                         key,
                                                         message,
-                                                        resolveLogMinIntervalMs(target.entryName));
+                                                        resolveLogMinIntervalMs(hookSpec.entryName));
                                             }
                                         } else {
                                             if (loggingEnabled) {
-                                                logApplySkipped(target.entryName, packageName, beforeApplySummary);
+                                                logApplySkipped(hookSpec.entryName, packageName, beforeApplySummary);
                                             }
                                         }
                                     }
@@ -434,15 +398,15 @@ final class SystemServerDisplayEnvironmentInstaller {
                                                 effectiveEnvironment,
                                                 after.frame != null ? after.frame : before.frame,
                                                 config);
-                                        logProbe(target.entryName, packageName, originalSummary,
+                                        logProbe(hookSpec.entryName, packageName, originalSummary,
                                                 targetSummary, actualSummary);
-                                        logDisplayInfoProbe(target.entryName, packageName,
+                                        logDisplayInfoProbe(hookSpec.entryName, packageName,
                                                 mutated.displayInfo, mutated.frame, mutated.configuration);
                                     }
                                     return result;
                                 } catch (Throwable throwable) {
                                     DpisLog.e(SystemServerDisplayDiagnostics.buildInterceptErrorLog(
-                                            target.entryName, throwable), throwable);
+                                            hookSpec.entryName, throwable), throwable);
                                     if (proceeded) {
                                         return result;
                                     }
@@ -465,30 +429,34 @@ final class SystemServerDisplayEnvironmentInstaller {
         if (hooked) {
             SystemServerDisplayDiagnostics.recordPending(
                     SystemServerDisplayDiagnostics.buildHookReadyLog(
-                            target.entryName, target.describeClassNames(), target.describeMethodNames()));
+                            hookSpec.entryName, hookSpec.describeClassNames(), hookSpec.describeMethodNames()));
             DpisLog.i(SystemServerDisplayDiagnostics.buildHookReadyLog(
-                    target.entryName, target.describeClassNames(), target.describeMethodNames()));
+                    hookSpec.entryName, hookSpec.describeClassNames(), hookSpec.describeMethodNames()));
             return true;
         }
         SystemServerDisplayDiagnostics.recordPending(
                 SystemServerDisplayDiagnostics.buildHookMissingLog(
-                        target.entryName, target.describeClassNames(), target.describeMethodNames()));
+                        hookSpec.entryName, hookSpec.describeClassNames(), hookSpec.describeMethodNames()));
         DpisLog.i(SystemServerDisplayDiagnostics.buildHookMissingLog(
-                target.entryName, target.describeClassNames(), target.describeMethodNames()));
+                hookSpec.entryName, hookSpec.describeClassNames(), hookSpec.describeMethodNames()));
         return false;
     }
 
     private static boolean installLaunchActivityItemHook(XposedInterface xposed,
-                                                         PerAppDisplayConfigSource source) {
-        Class<?> clazz = resolveClass("android.app.servertransaction.LaunchActivityItem", null);
+                                                         PerAppDisplayConfigSource source,
+                                                         SystemServerHookSpec hookSpec,
+                                                         ModernApiCapabilities apiCapabilities) {
+        Class<?> clazz = resolveClass(hookSpec.classNames[0], null);
         if (clazz == null) {
             DpisLog.i("system_server hook missing: entry=launch-activity-item, class=LaunchActivityItem");
             return false;
         }
         boolean hooked = false;
         for (Constructor<?> constructor : clazz.getDeclaredConstructors()) {
-            xposed.hook(constructor)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(constructor)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            hookSpec.hookIdFor(constructor))
                     .intercept(chain -> {
                         Object result;
                         try {
@@ -1926,26 +1894,6 @@ final class SystemServerDisplayEnvironmentInstaller {
             return false;
         }
         return Character.isLowerCase(trimmed.charAt(0));
-    }
-
-    private static final class HookTarget {
-        final String entryName;
-        final String[] classNames;
-        final String[] methodNames;
-
-        HookTarget(String entryName, String[] classNames, String[] methodNames) {
-            this.entryName = entryName;
-            this.classNames = classNames;
-            this.methodNames = methodNames;
-        }
-
-        String describeClassNames() {
-            return String.join("|", classNames);
-        }
-
-        String describeMethodNames() {
-            return String.join("|", methodNames);
-        }
     }
 
     private static final class Snapshot {

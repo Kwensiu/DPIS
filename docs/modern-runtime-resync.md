@@ -31,6 +31,14 @@ The Modern codebase stays single-track. API 102 does not get a separate business
 tree; it adds lifecycle and hook-management capabilities on top of the existing
 101 runtime routes.
 
+Naming rule:
+
+- user-facing terminology stays `modern`;
+- internal capability boundaries may be named by concrete libxposed API
+  versions such as `101`, `102`, and later `103`/`104`;
+- shared routing, planner, and runtime semantics should not be renamed to
+  `modern101` / `modern102` because they still describe one Modern route tree.
+
 Planned shape:
 
 - keep the current shared app-process and system_server routing model;
@@ -72,6 +80,17 @@ Practical boundary:
 - 101 remains the baseline compatibility line for the shared route code;
 - 102 is used to simplify lifecycle cleanup and hot-reload replay in Modern;
 - Legacy stays on its own 100 surface and is not part of the 102 migration.
+- version-specific capability code should stay explicit (`101`, `102`) rather
+  than introducing vague tiers like `baseline` / `enhanced`.
+
+Current structure note:
+
+- `system_server` hook entry definitions now live in a dedicated catalog so the
+  shared installer no longer owns raw entry arrays inline;
+- 102 may assign stable hook ids for those entries as future maintenance
+  anchors, but `system_server` still does not advertise replay/hot-reload
+  support until install ownership is narrowed beyond the current process-scoped
+  one-shot gate.
 
 ## Route Map
 
@@ -448,6 +467,11 @@ superseded.
   and treating `replaceHook()` as a possible path only for hooks that already
   have a known executable owner. This is a lifecycle addition, not a new
   viewport or font semantics route.
+- 2026-06-24: shared Modern hook code now routes version-specific hook
+  capabilities through explicit `101` / `102` capability helpers instead of
+  hardcoding `setId(...)` directly in every installer. The external product
+  name remains `modern`; the version split is an internal code capability
+  boundary.
 - 2026-06-21: feedback diagnostic LSPosed timeline now preserves semantic
   stage ordering for same-timestamp runtime events (`begin` before
   `applied`/`skipped`, then `end`), and explicit `DPIS_VIEWPORT*` messages no

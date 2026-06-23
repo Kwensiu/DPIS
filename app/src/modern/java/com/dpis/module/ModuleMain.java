@@ -6,6 +6,7 @@ import io.github.libxposed.api.XposedModuleInterface;
 public final class ModuleMain extends XposedModule {
     private static final String BRIDGE_LOG_PREFIX = "DPIS ";
     private volatile DpiConfigStore configStore;
+    private volatile ModernApiCapabilities modernApiCapabilities;
     private volatile boolean moduleLoadedObserved;
     private volatile boolean systemServerInstallAttempted;
     private volatile boolean firstPackageReadyLogged;
@@ -243,7 +244,8 @@ public final class ModuleMain extends XposedModule {
         );
         appProcessInstallAttempted = true;
         try {
-            AppProcessHookInstaller.install(this, store, policy, packagePlan);
+            AppProcessHookInstaller.install(
+                    this, store, policy, packagePlan, getModernApiCapabilities());
         } catch (Throwable throwable) {
             appProcessInstallAttempted = false;
             DpisLog.e("failed to install app process hooks", throwable);
@@ -317,6 +319,15 @@ public final class ModuleMain extends XposedModule {
         return local;
     }
 
+    private ModernApiCapabilities getModernApiCapabilities() {
+        ModernApiCapabilities local = modernApiCapabilities;
+        if (local == null) {
+            local = ModernApiCapabilitiesResolver.fromXposed(this);
+            modernApiCapabilities = local;
+        }
+        return local;
+    }
+
     private static String describeClassLoader(SystemServerStartingParam param) {
         if (param == null || param.getClassLoader() == null) {
             return "null";
@@ -344,7 +355,8 @@ public final class ModuleMain extends XposedModule {
             }
             systemServerInstallAttempted = true;
             try {
-                SystemServerDisplayEnvironmentInstaller.install(this, store);
+                SystemServerDisplayEnvironmentInstaller.install(
+                        this, store, getModernApiCapabilities());
                 String message = "system_server installer ready: source=" + source
                         + ", process=" + processName
                         + ", package=" + packageName;

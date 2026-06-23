@@ -35,7 +35,10 @@ final class ResourcesManagerHookInstaller {
         hookInstalled = false;
     }
 
-    static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
+    static void install(XposedInterface xposed,
+                        String packageName,
+                        DpiConfigStore store,
+                        ModernApiCapabilities apiCapabilities)
             throws ReflectiveOperationException {
         if (hookInstalled) {
             return;
@@ -51,9 +54,10 @@ final class ResourcesManagerHookInstaller {
                     "android.content.res.CompatibilityInfo", false, bootClassLoader);
             Method applyConfigurationMethod = resourcesManagerClass.getDeclaredMethod(
                     "applyConfigurationToResources", Configuration.class, compatibilityInfoClass);
-            xposed.hook(applyConfigurationMethod)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
-                    .setId(HOOK_ID_APPLY_CONFIGURATION)
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(applyConfigurationMethod)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            HOOK_ID_APPLY_CONFIGURATION)
                     .intercept(chain -> {
                         Configuration config = (Configuration) chain.getArg(0);
                         applyResourceOverrides(config, store, packageName, "ResourcesManager");
@@ -62,9 +66,10 @@ final class ResourcesManagerHookInstaller {
 
             Method updateResourcesForActivityMethod = resolveUpdateResourcesForActivityMethod(
                     resourcesManagerClass, bootClassLoader);
-            xposed.hook(updateResourcesForActivityMethod)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
-                    .setId(HOOK_ID_UPDATE_RESOURCES_FOR_ACTIVITY)
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(updateResourcesForActivityMethod)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            HOOK_ID_UPDATE_RESOURCES_FOR_ACTIVITY)
                     .intercept(chain -> {
                         Configuration overrideConfig = (Configuration) chain.getArg(1);
                         applyResourceOverrides(overrideConfig, store, packageName,
@@ -73,9 +78,9 @@ final class ResourcesManagerHookInstaller {
                     });
 
             int createHookCount = installResourceCreationHooks(
-                    xposed, resourcesManagerClass, packageName, store);
+                    xposed, resourcesManagerClass, packageName, store, apiCapabilities);
             int keyHookCount = installResourcesKeyHooks(
-                    xposed, resourcesManagerClass, packageName, store);
+                    xposed, resourcesManagerClass, packageName, store, apiCapabilities);
             hookInstalled = true;
             DpisLog.i("ResourcesManager hook ready (createHooks=" + createHookCount
                     + ", keyHooks=" + keyHookCount + ")");
@@ -96,7 +101,8 @@ final class ResourcesManagerHookInstaller {
     private static int installResourceCreationHooks(XposedInterface xposed,
                                                     Class<?> resourcesManagerClass,
                                                     String packageName,
-                                                    DpiConfigStore store) {
+                                                    DpiConfigStore store,
+                                                    ModernApiCapabilities apiCapabilities) {
         int hookedCount = 0;
         Set<Method> hookedMethods = new HashSet<>();
         for (Method method : resourcesManagerClass.getDeclaredMethods()) {
@@ -111,9 +117,10 @@ final class ResourcesManagerHookInstaller {
             if (!hookedMethods.add(method)) {
                 continue;
             }
-            xposed.hook(method)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
-                    .setId(HOOK_ID_RESOURCE_CREATION_PREFIX + "#" + method.toGenericString())
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(method)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            HOOK_ID_RESOURCE_CREATION_PREFIX + "#" + method.toGenericString())
                     .intercept(chain -> {
                         Configuration config = (Configuration) chain.getArg(configArgIndex);
                         applyResourceOverrides(config, store, packageName,
@@ -128,7 +135,8 @@ final class ResourcesManagerHookInstaller {
     private static int installResourcesKeyHooks(XposedInterface xposed,
                                                 Class<?> resourcesManagerClass,
                                                 String packageName,
-                                                DpiConfigStore store) {
+                                                DpiConfigStore store,
+                                                ModernApiCapabilities apiCapabilities) {
         int hookedCount = 0;
         Set<Method> hookedMethods = new HashSet<>();
         for (Method method : resourcesManagerClass.getDeclaredMethods()) {
@@ -138,9 +146,10 @@ final class ResourcesManagerHookInstaller {
                     || !hookedMethods.add(method)) {
                 continue;
             }
-            xposed.hook(method)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
-                    .setId(HOOK_ID_RESOURCES_KEY_PREFIX + "#" + method.toGenericString())
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(method)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            HOOK_ID_RESOURCES_KEY_PREFIX + "#" + method.toGenericString())
                     .intercept(chain -> {
                         Object key = chain.getArg(0);
                         maybeApplyKeyOverride(

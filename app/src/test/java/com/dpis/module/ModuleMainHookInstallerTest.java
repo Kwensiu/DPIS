@@ -159,38 +159,51 @@ public class ModuleMainHookInstallerTest {
         String appProcessInstaller = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
 
         assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));
-        assertTrue(moduleMain.contains(
-                "AppProcessHookInstaller.install(this, store, policy, packagePlan)"));
+        assertTrue(moduleMain.contains("AppProcessHookInstaller.install("));
+        assertTrue(moduleMain.contains("getModernApiCapabilities()"));
         assertTrue(appProcessInstaller.contains("HyperOsFlutterFontHookInstaller.install("));
         assertTrue(appProcessInstaller.contains("resolveFontDomainPlan("));
         assertTrue(appProcessInstaller.contains("hyperOsNativeFlutterEnabled"));
     }
 
     @Test
-    public void modernHotReloadKeepsStableIdsAndDropsLegacyOnlyHooks() throws IOException {
+    public void modernHotReloadUsesVersionedModernApiCapabilities() throws IOException {
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
         String resourcesRead = read("src/main/java/com/dpis/module/ResourcesReadHookInstaller.java");
         String resourcesImpl = read("src/main/java/com/dpis/module/ResourcesImplHookInstaller.java");
         String resourcesManager = read("src/main/java/com/dpis/module/ResourcesManagerHookInstaller.java");
+        String capabilities = read("src/main/java/com/dpis/module/ModernApiCapabilities.java");
+        String api101 = read("src/main/java/com/dpis/module/ModernApi101Capabilities.java");
+        String api102 = read("src/main/java/com/dpis/module/ModernApi102Capabilities.java");
+        String resolver = read("src/main/java/com/dpis/module/ModernApiCapabilitiesResolver.java");
 
         assertTrue(moduleMain.contains("onHotReloaded(XposedModuleInterface.HotReloadedParam param)"));
         assertTrue(moduleMain.contains("ResourcesManagerHookInstaller.resetForHotReload();"));
         assertTrue(moduleMain.contains("ResourcesImplHookInstaller.resetForHotReload();"));
         assertTrue(moduleMain.contains("ResourcesReadHookInstaller.resetForHotReload();"));
         assertFalse(moduleMain.contains("ModernHookRegistry"));
-        assertFalse(resourcesRead.contains("hookRegistry.register("));
-        assertFalse(resourcesImpl.contains("hookRegistry.register("));
-        assertFalse(resourcesManager.contains("hookRegistry.register("));
-        assertTrue(resourcesRead.contains(".setId(\"resources_read_get_configuration\")"));
-        assertTrue(resourcesRead.contains(".setId(\"resources_read_get_display_metrics\")"));
-        assertTrue(resourcesRead.contains(".setId(\"resources_read_get_system\")"));
-        assertTrue(resourcesImpl.contains(".setId(\"resources_impl_update_configuration\")"));
-        assertTrue(resourcesManager.contains(".setId(HOOK_ID_APPLY_CONFIGURATION)"));
-        assertTrue(resourcesManager.contains(".setId(HOOK_ID_UPDATE_RESOURCES_FOR_ACTIVITY)"));
-        assertTrue(resourcesManager.contains(".setId(HOOK_ID_RESOURCE_CREATION_PREFIX + \"#\""));
-        assertTrue(resourcesManager.contains(".setId(HOOK_ID_RESOURCES_KEY_PREFIX + \"#\""));
+        assertTrue(moduleMain.contains("private volatile ModernApiCapabilities modernApiCapabilities;"));
+        assertTrue(moduleMain.contains("private ModernApiCapabilities getModernApiCapabilities()"));
+        assertTrue(moduleMain.contains("ModernApiCapabilitiesResolver.fromXposed(this)"));
+        assertTrue(capabilities.contains("interface ModernApiCapabilities"));
+        assertTrue(capabilities.contains("supportsStableHookIds()"));
+        assertTrue(capabilities.contains("supportsHotReloadCallbacks()"));
+        assertTrue(capabilities.contains("applyStableHookId"));
+        assertTrue(api101.contains("final class ModernApi101Capabilities"));
+        assertTrue(api101.contains("return false;"));
+        assertTrue(api102.contains("final class ModernApi102Capabilities"));
+        assertTrue(api102.contains("XposedInterface.HookBuilder.class.getMethod(\"setId\", String.class)"));
+        assertTrue(resolver.contains("static final int API_101 = 101;"));
+        assertTrue(resolver.contains("static final int API_102 = 102;"));
+        assertTrue(resourcesRead.contains("apiCapabilities.applyStableHookId("));
+        assertTrue(resourcesImpl.contains("apiCapabilities.applyStableHookId("));
+        assertTrue(resourcesManager.contains("apiCapabilities.applyStableHookId("));
         assertFalse(moduleMain.contains("maybeInstallSystemServerHooks(store, policy, currentProcessName, \"android\",\n                    \"hot-reload\")"));
         assertTrue(moduleMain.contains("system_server hot reload skipped: replay not supported"));
+        assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
+                .contains("apiCapabilities.applyStableHookId("));
+        assertTrue(read("src/main/java/com/dpis/module/SystemServerHookCatalog.java")
+                .contains("system_server_launch_activity_item"));
     }
 
     @Test

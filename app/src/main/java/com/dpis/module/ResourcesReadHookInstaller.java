@@ -41,7 +41,7 @@ final class ResourcesReadHookInstaller {
         install(xposed, packageName, store, new ResourcesReadHookPolicy(
                 viewportHandlingEnabled,
                 true,
-                false));
+                false), ModernApiCapabilitiesResolver.fromXposed(xposed));
     }
 
     static void install(XposedInterface xposed,
@@ -53,13 +53,14 @@ final class ResourcesReadHookInstaller {
         install(xposed, packageName, store, new ResourcesReadHookPolicy(
                 viewportHandlingEnabled,
                 fontConfigurationOverrideEnabled,
-                false));
+                false), ModernApiCapabilitiesResolver.fromXposed(xposed));
     }
 
     static void install(XposedInterface xposed,
                         String packageName,
                         DpiConfigStore store,
-                        ResourcesReadHookPolicy policy)
+                        ResourcesReadHookPolicy policy,
+                        ModernApiCapabilities apiCapabilities)
             throws ReflectiveOperationException {
         if (hookInstalled) {
             return;
@@ -80,9 +81,10 @@ final class ResourcesReadHookInstaller {
             Class<?> resourcesClass = Class.forName("android.content.res.Resources", false, bootClassLoader);
 
             Method getConfigurationMethod = resourcesClass.getDeclaredMethod("getConfiguration");
-            XposedInterface.HookHandle configurationHandle = xposed.hook(getConfigurationMethod)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
-                    .setId("resources_read_get_configuration")
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(getConfigurationMethod)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            "resources_read_get_configuration")
                     .intercept(chain -> {
                         Object result = chain.proceed();
                         if (!(result instanceof Configuration configuration)) {
@@ -109,9 +111,10 @@ final class ResourcesReadHookInstaller {
                         return result;
                     });
             Method getDisplayMetricsMethod = resourcesClass.getDeclaredMethod("getDisplayMetrics");
-            XposedInterface.HookHandle displayMetricsHandle = xposed.hook(getDisplayMetricsMethod)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
-                    .setId("resources_read_get_display_metrics")
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(getDisplayMetricsMethod)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            "resources_read_get_display_metrics")
                     .intercept(chain -> {
                         Object result = chain.proceed();
                         if (!(result instanceof DisplayMetrics metrics)) {
@@ -141,9 +144,10 @@ final class ResourcesReadHookInstaller {
                         return result;
                     });
             Method getSystemMethod = resourcesClass.getDeclaredMethod("getSystem");
-            XposedInterface.HookHandle systemHandle = xposed.hook(getSystemMethod)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
-                    .setId("resources_read_get_system")
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(getSystemMethod)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            "resources_read_get_system")
                     .intercept(chain -> {
                         Object result = chain.proceed();
                         if (!(result instanceof Resources resources)) {

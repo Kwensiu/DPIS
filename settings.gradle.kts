@@ -44,4 +44,6 @@ dependencyResolutionManagement {
 rootProject.name = "DPIS"
 
 include(":app")
-includeBuild("refs/libxposed-api")
+if (file("refs/libxposed-api").exists()) {
+    includeBuild("refs/libxposed-api")
+}
