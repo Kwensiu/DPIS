@@ -116,6 +116,39 @@ final class FeedbackDiagnosticCoordinator {
             );
         }
 
+        static Request fromPersisted(
+                AppListItem item,
+                AppConfigDialogBinder.AppConfigDialogState state,
+                String versionName,
+                DpiConfigStore store
+        ) {
+            String statePackageName = state != null ? valueOrEmpty(state.packageName) : "";
+            String packageName = !statePackageName.isBlank()
+                    ? statePackageName
+                    : (item != null ? item.packageName : "");
+            if (store == null || packageName.isBlank() || item == null) {
+                return from(item, state, versionName);
+            }
+            // Diagnostic plan text should describe the just-persisted package config.
+            // The app-list row is only a pre-save snapshot and can lag behind the editor.
+            return new Request(
+                    packageName,
+                    item.label,
+                    versionName,
+                    state != null ? state.scopeKnown : item.scopeKnown,
+                    state != null ? state.scopeSelected : item.inScope,
+                    store.isTargetDpisEnabled(packageName),
+                    false,
+                    store.getTargetViewportSpec(packageName),
+                    store.getTargetViewportApplyMode(packageName),
+                    store.getTargetFontScalePercent(packageName),
+                    store.getTargetFontApplyMode(packageName),
+                    store.getTargetTypefaceId(packageName),
+                    store.getTargetFontHookDomainsRaw(packageName),
+                    store.getWechatDpi(packageName)
+            );
+        }
+
         boolean isValid() {
             return !packageName.isBlank();
         }

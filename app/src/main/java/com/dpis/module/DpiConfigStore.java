@@ -287,6 +287,20 @@ final class DpiConfigStore {
         return normalizeTypefaceId(getPackageString(key, packageKey, null));
     }
 
+    String getTargetFontHookDomainsRaw(String packageName) {
+        String key = keyForFontHookDomains(packageName);
+        String packageKey = keyForPackageFontHookDomains(packageName);
+        if (!containsPackageValue(key, packageKey)) {
+            return null;
+        }
+        String value = getPackageString(key, packageKey, null);
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
     Integer getWechatDpi(String packageName) {
         if (!WechatDpiConfig.appliesTo(packageName)) {
             return null;

@@ -3801,10 +3801,11 @@ public final class MainActivity
                         return;
                     }
                     boolean started = feedbackDiagnosticCoordinator.start(
-                            FeedbackDiagnosticCoordinator.Request.from(
+                            FeedbackDiagnosticCoordinator.Request.fromPersisted(
                                     diagnosticItem,
                                     state,
-                                    resolvePackageVersionName(item.packageName)
+                                    resolvePackageVersionName(item.packageName),
+                                    getHookConfigStore()
                             )
                     );
                     if (!started) {
@@ -3868,11 +3869,21 @@ public final class MainActivity
         if (!result.success) {
             return null;
         }
+        // Keep feedback diagnostic on the same save aftermath as the sheet save button.
+        // Otherwise this side path can persist config but skip scope/proxy preparation.
         state.previewFromGlobalPrefill = false;
         state.draftFontHookDomainsRaw = null;
         state.fontHookDomainsResetRequested = false;
         state.viewportApplyModeResetRequested = false;
         state.captureSavedDraft(views, false);
+        AppConfigDialogBinder.showSaveButtonFeedback(views.saveButton);
+        AppConfigDialogBinder binder = new AppConfigDialogBinder(this, createAppConfigDialogHost());
+        boolean systemHooksEnabled = isSystemHookEnabledFromStore();
+        AppConfigDialogBinder.AppConfigDialogActionStyle style
+                = AppConfigDialogBinder.captureDialogActionStyle(views.scopeButton);
+        binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
+        binder.syncHyperOsNativeProxyAfterSave(item, views, state);
+        binder.requestScopeAfterSuccessfulSave(root, item, views, state, style, systemHooksEnabled);
         return item.withWechatDpi(readPersistedWechatDpiForDiagnostic(item.packageName));
     }
 
