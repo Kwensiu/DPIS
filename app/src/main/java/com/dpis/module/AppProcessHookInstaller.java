@@ -218,7 +218,12 @@ final class AppProcessHookInstaller {
                     xposed, packageName, store, apiCapabilities);
         }
         if (plan.textViewHooksEnabled) {
-            ForceTextSizeHookInstaller.install(xposed, packageName, store, plan.fontDomainPlan);
+            ForceTextSizeHookInstaller.install(
+                    xposed,
+                    packageName,
+                    store,
+                    plan.fontDomainPlan,
+                    apiCapabilities);
         }
         if (plan.flutterSettingsEnabled) {
             DpisLog.i("DPIS_FONT installing Flutter settings font hooks for " + packageName);

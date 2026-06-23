@@ -204,6 +204,14 @@ public class ModuleMainHookInstallerTest {
                 .contains("HOOK_ID_WEBVIEW_GET_SETTINGS"));
         assertTrue(read("src/main/java/com/dpis/module/WebViewFontHookInstaller.java")
                 .contains("HOOK_ID_WEBSETTINGS_SET_TEXT_ZOOM"));
+        assertTrue(read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java")
+                .contains("HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_WITH_UNIT"));
+        assertTrue(read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java")
+                .contains("HOOK_ID_PAINT_SET_TEXT_SIZE"));
+        assertTrue(read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java")
+                .contains("bridgeMutationAppliedIfChanged("));
+        assertTrue(read("src/main/java/com/dpis/module/AppProcessHookInstaller.java")
+                .contains("plan.fontDomainPlan,\n                    apiCapabilities"));
         assertTrue(read("src/main/java/com/dpis/module/DisplayHookInstaller.java")
                 .contains("HOOK_ID_DISPLAY_GET_DISPLAY_INFO"));
         assertTrue(read("src/main/java/com/dpis/module/WindowMetricsHookInstaller.java")
@@ -286,6 +294,7 @@ public class ModuleMainHookInstallerTest {
 
         assertTrue(docs.contains("System-server replay"));
         assertTrue(docs.contains("hot-reload surface"));
+        assertTrue(docs.contains("ForceTextSize hook ready"));
         assertTrue(docs.contains("dynamic resource-creation / `createResourcesImpl` overload hooks derive ids"));
         assertTrue(script.contains("[string] $Device"));
         assertTrue(script.contains("ls -t /data/adb/lspd/log/modules_*.log"));

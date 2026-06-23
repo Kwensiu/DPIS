@@ -153,6 +153,12 @@ reinforcement, TextView span rewrite, Paint/TextPaint fallback, Android WebView
 textZoom, and X5 WebView textZoom. These events are intended to prove callback
 and mutation timing; they are not a user-visible summary layer.
 
+As of 2026-06-24, `ForceTextSizeHookInstaller` also emits LSPosed bridge-window
+evidence for API 102-friendly field-rewrite hooks. Runtime diagnostics can now
+look for `DPIS_FONT ForceTextSize hook ready` plus first-hit
+`... override applied` bridge lines to distinguish install success from actual
+rewrite callbacks.
+
 ## Full Tree
 
 ```text

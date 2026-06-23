@@ -1,3 +1,5 @@
+include(":app")
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -42,8 +44,3 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "DPIS"
-
-include(":app")
-if (file("refs/libxposed-api").exists()) {
-    includeBuild("refs/libxposed-api")
-}
