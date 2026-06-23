@@ -12,7 +12,7 @@ import io.github.libxposed.api.XposedInterface;
 
 final class WebViewFontHookInstaller {
     private static final String FONT_LOG_KEY_PREFIX = "font";
-    private static volatile boolean hookInstalled;
+    private static volatile int installedPid = -1;
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
     private static final ThreadLocal<Boolean> INTERNAL_UPDATE =
             ThreadLocal.withInitial(() -> Boolean.FALSE);
@@ -22,11 +22,11 @@ final class WebViewFontHookInstaller {
 
     static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
             throws ReflectiveOperationException {
-        if (hookInstalled) {
+        if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
         }
         synchronized (WebViewFontHookInstaller.class) {
-            if (hookInstalled) {
+            if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
                 return;
             }
             FontScaleOverride.Result fontScale = FontScaleOverride.resolve(store, packageName, 1.0f);
@@ -80,8 +80,13 @@ final class WebViewFontHookInstaller {
             installAndroidWebSettingsHook(xposed, packageName, targetZoom, bootClassLoader);
 
             installX5Hooks(xposed, packageName, targetZoom);
-            hookInstalled = true;
+            installedPid = ProcessScopedInstallGate.currentPid();
             DpisLog.i("WebView font hook ready");
+            FeedbackDiagnosticRuntimeEvents.recordHotReload(
+                    packageName,
+                    "font",
+                    "installed",
+                    "webview font hook ready: textZoom=" + targetZoom);
         }
     }
 

@@ -143,7 +143,7 @@ final class SystemServerDisplayEnvironmentInstaller {
                             "getDisplayInfoInternal"
                     })
     };
-    private static volatile boolean installed;
+    private static volatile int installedPid = -1;
 
     private SystemServerDisplayEnvironmentInstaller() {
     }
@@ -155,21 +155,21 @@ final class SystemServerDisplayEnvironmentInstaller {
     static void install(XposedInterface xposed,
                         DpiConfigStore store,
                         ModernHookRegistry hookRegistry) {
-        if (installed) {
+        if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             SystemServerDisplayDiagnostics.recordPending("system_server install skipped: reason=already-installed-fast-path");
             DpisLog.i(SystemServerDisplayDiagnostics.buildInstallSkipLog("already-installed-fast-path"));
             return;
         }
         synchronized (SystemServerDisplayEnvironmentInstaller.class) {
-            if (installed) {
+            if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
                 SystemServerDisplayDiagnostics.recordPending("system_server install skipped: reason=already-installed-synchronized");
                 DpisLog.i(SystemServerDisplayDiagnostics.buildInstallSkipLog("already-installed-synchronized"));
                 return;
             }
             SystemServerDisplayDiagnostics.recordPending(
-                    SystemServerDisplayDiagnostics.buildInstallEnterLog(store == null, installed));
+                    SystemServerDisplayDiagnostics.buildInstallEnterLog(store == null, installedPid != -1));
             DpisLog.i(SystemServerDisplayDiagnostics.buildInstallEnterLog(
-                    store == null, installed));
+                    store == null, installedPid != -1));
             try {
                 SystemServerDisplayDiagnostics.recordPending(
                         SystemServerDisplayDiagnostics.buildBootstrapLog());
@@ -179,9 +179,14 @@ final class SystemServerDisplayEnvironmentInstaller {
                     SystemServerDisplayDiagnostics.recordPending(
                             SystemServerDisplayDiagnostics.buildGateDisabledLog(
                                     false, policy.systemServerSafeModeEnabled));
-                    DpisLog.i(SystemServerDisplayDiagnostics.buildGateDisabledLog(
+                DpisLog.i(SystemServerDisplayDiagnostics.buildGateDisabledLog(
                             false, policy.systemServerSafeModeEnabled));
-                    installed = true;
+                    FeedbackDiagnosticRuntimeEvents.recordHotReload(
+                            null,
+                            "system_server",
+                            "skipped",
+                            "system_server install skipped: gate disabled");
+                    installedPid = ProcessScopedInstallGate.currentPid();
                     return;
                 }
                 PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(
@@ -224,7 +229,13 @@ final class SystemServerDisplayEnvironmentInstaller {
                                 installedCount, missingCount));
                 DpisLog.i(SystemServerDisplayDiagnostics.buildInstallSummaryLog(
                         installedCount, missingCount));
-                installed = true;
+                FeedbackDiagnosticRuntimeEvents.recordHotReload(
+                        null,
+                        "system_server",
+                        "installed",
+                        "system_server install summary: installed=" + installedCount
+                                + ", missing=" + missingCount);
+                installedPid = ProcessScopedInstallGate.currentPid();
             } catch (Throwable throwable) {
                 SystemServerDisplayDiagnostics.recordPending(
                         "system_server install failed: throwable=" + throwable.getClass().getName());

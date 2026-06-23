@@ -11,7 +11,7 @@ import io.github.libxposed.api.XposedInterface;
 
 final class ActivityThreadFontHookInstaller {
     private static final String FONT_LOG_KEY_PREFIX = "font";
-    private static volatile boolean hookInstalled;
+    private static volatile int installedPid = -1;
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
 
     private ActivityThreadFontHookInstaller() {
@@ -19,11 +19,11 @@ final class ActivityThreadFontHookInstaller {
 
     static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
             throws ReflectiveOperationException {
-        if (hookInstalled) {
+        if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
         }
         synchronized (ActivityThreadFontHookInstaller.class) {
-            if (hookInstalled) {
+            if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
                 return;
             }
             ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
@@ -37,7 +37,7 @@ final class ActivityThreadFontHookInstaller {
                         applyFontScaleToBindData(bindData, packageName, store);
                         return chain.proceed();
                     });
-            hookInstalled = true;
+            installedPid = ProcessScopedInstallGate.currentPid();
             DpisLog.i("ActivityThread font hook ready");
         }
     }

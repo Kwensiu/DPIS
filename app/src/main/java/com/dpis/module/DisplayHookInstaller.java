@@ -11,7 +11,7 @@ import java.util.Map;
 import io.github.libxposed.api.XposedInterface;
 
 final class DisplayHookInstaller {
-    private static volatile boolean hookInstalled;
+    private static volatile int installedPid = -1;
     private static volatile String targetPackageName;
     private static volatile DpiConfigStore targetStore;
     private static volatile Method currentPackageNameMethod;
@@ -25,11 +25,11 @@ final class DisplayHookInstaller {
 
     static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
             throws ReflectiveOperationException {
-        if (hookInstalled) {
+        if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
         }
         synchronized (DisplayHookInstaller.class) {
-            if (hookInstalled) {
+            if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
                 return;
             }
             targetPackageName = packageName;
@@ -41,7 +41,7 @@ final class DisplayHookInstaller {
             hookDisplayInfoMethod(xposed, displayClass, bootClassLoader);
             hookPointMethod(xposed, displayClass, "getSize");
             hookPointMethod(xposed, displayClass, "getRealSize");
-            hookInstalled = true;
+            installedPid = ProcessScopedInstallGate.currentPid();
             DpisLog.i("Display hook ready, " + RuntimeDiagnosticLogFingerprint.field());
         }
     }

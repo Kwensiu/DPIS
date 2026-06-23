@@ -8,7 +8,7 @@ import io.github.libxposed.api.XposedInterface;
 
 final class WindowMetricsHookInstaller {
     private static final String ROUTE_NAME = "window_metrics_bounds_override";
-    private static volatile boolean hookInstalled;
+    private static volatile int installedPid = -1;
     private static final RuntimeHotPathEvidenceSampler HOTPATH_SAMPLER =
             new RuntimeHotPathEvidenceSampler();
 
@@ -16,11 +16,11 @@ final class WindowMetricsHookInstaller {
     }
 
     static void install(XposedInterface xposed, String packageName) throws ReflectiveOperationException {
-        if (hookInstalled) {
+        if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
         }
         synchronized (WindowMetricsHookInstaller.class) {
-            if (hookInstalled) {
+            if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
                 return;
             }
             ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
@@ -75,7 +75,7 @@ final class WindowMetricsHookInstaller {
                         }
                         return newRect;
             });
-            hookInstalled = true;
+            installedPid = ProcessScopedInstallGate.currentPid();
             DpisLog.i("WindowMetrics hook ready, " + RuntimeDiagnosticLogFingerprint.field());
         }
     }

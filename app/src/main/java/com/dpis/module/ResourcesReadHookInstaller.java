@@ -196,6 +196,11 @@ final class ResourcesReadHookInstaller {
 
             hookInstalled = true;
             DpisLog.i("Resources read hook ready");
+            FeedbackDiagnosticRuntimeEvents.recordHotReload(
+                    packageName,
+                    "resources",
+                    "installed",
+                    "resources read hook ready");
         }
     }
 

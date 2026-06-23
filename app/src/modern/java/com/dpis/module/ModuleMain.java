@@ -88,6 +88,13 @@ public final class ModuleMain extends XposedModule {
 
     @Override
     public boolean onHotReloading(XposedModuleInterface.HotReloadingParam param) {
+        log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX
+                + "hot reload begin: process=" + currentProcessName);
+        FeedbackDiagnosticRuntimeEvents.recordHotReload(
+                currentProcessName,
+                "runtime",
+                "begin",
+                "hot reload begin: process=" + currentProcessName);
         param.setSavedInstanceState(currentProcessName);
         return true;
     }
@@ -107,11 +114,29 @@ public final class ModuleMain extends XposedModule {
         DpiConfigStore store = getOrCreateConfigStore();
         HookRuntimePolicy policy = HookRuntimePolicy.fromNullableStore(store);
         try {
+            log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX
+                    + "hot reload replay: process=" + currentProcessName
+                    + ", systemServerAttempted=" + !systemServerInstallAttempted
+                    + ", appAttempted=" + !appProcessInstallAttempted);
+            FeedbackDiagnosticRuntimeEvents.recordHotReload(
+                    currentProcessName,
+                    "runtime",
+                    "replay",
+                    "hot reload replay: process=" + currentProcessName
+                            + ", systemServerAttempted=" + !systemServerInstallAttempted
+                            + ", appAttempted=" + !appProcessInstallAttempted);
             maybeInstallSystemServerHooks(store, policy, currentProcessName, "android",
                     "hot-reload");
             maybeInstallAppProcessFromModuleLoaded(store, currentProcessName);
         } finally {
             unhookLegacyHotReloadHandles(param.getOldHookHandles(), registry);
+            log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX
+                    + "hot reload end: process=" + currentProcessName);
+            FeedbackDiagnosticRuntimeEvents.recordHotReload(
+                    currentProcessName,
+                    "runtime",
+                    "end",
+                    "hot reload end: process=" + currentProcessName);
         }
     }
 

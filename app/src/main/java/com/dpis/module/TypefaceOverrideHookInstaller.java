@@ -3,7 +3,6 @@ package com.dpis.module;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Typeface;
-import android.os.Process;
 import android.view.View;
 import android.widget.TextView;
 
@@ -18,8 +17,7 @@ final class TypefaceOverrideHookInstaller {
     private static final String LOG_PREFIX = "DPIS_FONT_STYLE ";
     // Process-level hook matching existing app-process installers; ModulePackagePlan decides
     // whether it is loaded for the current package.
-    private static volatile boolean hookInstalled;
-    private static volatile int hookInstalledPid = -1;
+    private static volatile int installedPid = -1;
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
     private static final ThreadLocal<Boolean> INTERNAL_UPDATE =
             ThreadLocal.withInitial(() -> Boolean.FALSE);
@@ -32,11 +30,11 @@ final class TypefaceOverrideHookInstaller {
                         String targetTypefaceId,
                         DpiConfigStore store,
                         FontLibraryStore fontLibraryStore) throws ReflectiveOperationException {
-        if (isHookInstalledForCurrentProcess()) {
+        if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
         }
         synchronized (TypefaceOverrideHookInstaller.class) {
-            if (isHookInstalledForCurrentProcess()) {
+            if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
                 return;
             }
             Typeface baseTypeface = loadTargetTypeface(
@@ -112,14 +110,14 @@ final class TypefaceOverrideHookInstaller {
                     });
             installTextViewAttachHook(xposed, textViewClass, baseTypeface, packageName);
             installTextViewDrawHook(xposed, textViewClass, baseTypeface, packageName);
-            hookInstalled = true;
-            hookInstalledPid = Process.myPid();
+            installedPid = ProcessScopedInstallGate.currentPid();
             DpisLog.i(LOG_PREFIX + "hook ready for " + packageName);
+            FeedbackDiagnosticRuntimeEvents.recordHotReload(
+                    packageName,
+                    "typeface",
+                    "installed",
+                    "typeface hook ready: id=" + targetTypefaceId);
         }
-    }
-
-    private static boolean isHookInstalledForCurrentProcess() {
-        return hookInstalled && hookInstalledPid == Process.myPid();
     }
 
     private static Typeface loadTargetTypeface(String packageName,

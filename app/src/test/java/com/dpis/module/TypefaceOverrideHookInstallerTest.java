@@ -79,9 +79,9 @@ public final class TypefaceOverrideHookInstallerTest {
     public void modernInstallerGuardIsScopedToCurrentProcess() throws Exception {
         String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java");
 
-        assertTrue(source.contains("hookInstalledPid"));
-        assertTrue(source.contains("Process.myPid()"));
-        assertTrue(source.contains("isHookInstalledForCurrentProcess()"));
+        assertTrue(source.contains("installedPid"));
+        assertTrue(source.contains("ProcessScopedInstallGate.isInstalledForCurrentProcess"));
+        assertTrue(source.contains("ProcessScopedInstallGate.currentPid()"));
     }
 
     @Test

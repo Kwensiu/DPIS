@@ -55,6 +55,17 @@ Hot reload implementation notes:
 - start with the hot paths that already have stable ownership boundaries:
   `ModuleMain`, `AppProcessHookInstaller`, and the system_server installer
   entry, then expand only when a real reload path is needed.
+- verify hot reload with LSPosed bridge logs first. A successful module-side
+  reload should show `DPIS hot reload begin`, `DPIS hot reload replay`, and
+  `DPIS hot reload end` in `modules_*.log` or `verbose_*.log`. Feedback
+  diagnostics are useful as supporting context only, because reinstall-driven
+  reload can end the diagnostic session before packaging.
+- if LSPosed reports `Auto hot reload failed ... status=3, message=null` and
+  there is no `DPIS hot reload begin`, the reload did not reach the new replay
+  path. The common first-update case is that the already-running target process
+  still holds an older DPIS generation whose default `onHotReloading()` rejects
+  reload. Restart the target process once after installing the 102-capable
+  build, then use the next install/update to validate the hot-reload path.
 
 Practical boundary:
 
@@ -420,6 +431,10 @@ superseded.
 
 ## Update Log
 
+- 2026-06-23: hot reload validation now treats LSPosed bridge logs as the
+  primary evidence source. `ModuleMain` emits `hot reload begin/replay/end`
+  through the libxposed log channel so a future reinstall can distinguish
+  framework-level reload failure from module replay failure.
 - 2026-06-23: Modern runtime now plans for API 102 hot reload by keeping 101
   as the baseline route, adding a small hook registry for stable handle
   identities, and treating `replaceHook()` as the preferred path only for hooks

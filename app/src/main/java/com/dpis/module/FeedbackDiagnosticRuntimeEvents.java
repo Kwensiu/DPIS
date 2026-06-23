@@ -57,6 +57,19 @@ final class FeedbackDiagnosticRuntimeEvents {
         session.recordStructured(route, stage, level, message);
     }
 
+    static void recordHotReload(
+            String packageName,
+            String route,
+            String stage,
+            String message
+    ) {
+        Session session = activeSession;
+        if (session == null || !session.matchesTarget(packageName)) {
+            return;
+        }
+        session.recordStructured(route, "hot_reload_" + valueOrDefault(stage, "event"), "I", message);
+    }
+
     private static final class Session {
         private final String targetPackage;
         private final FeedbackDiagnosticTimelineClassifier.Context classifierContext;

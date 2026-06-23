@@ -16,18 +16,18 @@ import io.github.libxposed.api.XposedInterface;
 final class WindowSessionProbeHookInstaller {
     private static final int MAX_LOGS = 12;
     private static final AtomicInteger LOG_COUNT = new AtomicInteger();
-    private static volatile boolean hookInstalled;
+    private static volatile int installedPid = -1;
     private static volatile String lastLog;
 
     private WindowSessionProbeHookInstaller() {
     }
 
     static void install(XposedInterface xposed) throws ReflectiveOperationException {
-        if (hookInstalled) {
+        if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
         }
         synchronized (WindowSessionProbeHookInstaller.class) {
-            if (hookInstalled) {
+            if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
                 return;
             }
             ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
@@ -35,7 +35,7 @@ final class WindowSessionProbeHookInstaller {
                 hookNamedMethods(xposed, clazz, "relayout");
                 hookNamedMethods(xposed, clazz, "relayoutAsync");
             }
-            hookInstalled = true;
+            installedPid = ProcessScopedInstallGate.currentPid();
             DpisLog.i("WindowSession probe hook ready");
         }
     }

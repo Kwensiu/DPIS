@@ -25,7 +25,7 @@ final class ForceTextSizeHookInstaller {
             "com.max.xiaoheihe.module.expression.widget.ExpressionTextView";
     private static final String FONT_LOG_KEY_PREFIX = "font";
     private static final String FONT_HOT_LOG_KEY_PREFIX = "font-hot";
-    private static volatile boolean hookInstalled;
+    private static volatile int installedPid = -1;
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
     private static final Map<String, Integer> HOT_LOG_COUNTS = new ConcurrentHashMap<>();
     private static final Map<String, Integer> CALLER_SAMPLE_COUNTS = new ConcurrentHashMap<>();
@@ -65,11 +65,11 @@ final class ForceTextSizeHookInstaller {
                         DpiConfigStore store,
                         FontHookArbitration.FontDomainPlan domainPlan)
             throws ReflectiveOperationException {
-        if (hookInstalled) {
+        if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
         }
         synchronized (ForceTextSizeHookInstaller.class) {
-            if (hookInstalled) {
+            if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
                 return;
             }
             FontScaleOverride.Result fontScale = FontScaleOverride.resolve(store, packageName, 1.0f);
@@ -364,7 +364,7 @@ final class ForceTextSizeHookInstaller {
                 installExpressionTextSetTextHook(
                         xposed, textViewClass, factor, targetPercent, packageName, domainPlan);
             }
-            hookInstalled = true;
+            installedPid = ProcessScopedInstallGate.currentPid();
             DpisLog.i("ForceTextSize hook ready"
                     + ", paintFallback=" + (domainPlan == null
                             || domainPlan.paintFallbackEnabled));
