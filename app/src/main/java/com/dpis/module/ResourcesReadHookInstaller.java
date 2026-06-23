@@ -41,7 +41,7 @@ final class ResourcesReadHookInstaller {
         install(xposed, packageName, store, new ResourcesReadHookPolicy(
                 viewportHandlingEnabled,
                 true,
-                false), null);
+                false));
     }
 
     static void install(XposedInterface xposed,
@@ -53,14 +53,13 @@ final class ResourcesReadHookInstaller {
         install(xposed, packageName, store, new ResourcesReadHookPolicy(
                 viewportHandlingEnabled,
                 fontConfigurationOverrideEnabled,
-                false), null);
+                false));
     }
 
     static void install(XposedInterface xposed,
                         String packageName,
                         DpiConfigStore store,
-                        ResourcesReadHookPolicy policy,
-                        ModernHookRegistry hookRegistry)
+                        ResourcesReadHookPolicy policy)
             throws ReflectiveOperationException {
         if (hookInstalled) {
             return;
@@ -109,10 +108,6 @@ final class ResourcesReadHookInstaller {
                                 configurationFontOverrideEnabled);
                         return result;
                     });
-            if (hookRegistry != null) {
-                hookRegistry.register("resources_read_get_configuration", configurationHandle);
-            }
-
             Method getDisplayMetricsMethod = resourcesClass.getDeclaredMethod("getDisplayMetrics");
             XposedInterface.HookHandle displayMetricsHandle = xposed.hook(getDisplayMetricsMethod)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
@@ -145,10 +140,6 @@ final class ResourcesReadHookInstaller {
                         }
                         return result;
                     });
-            if (hookRegistry != null) {
-                hookRegistry.register("resources_read_get_display_metrics", displayMetricsHandle);
-            }
-
             Method getSystemMethod = resourcesClass.getDeclaredMethod("getSystem");
             XposedInterface.HookHandle systemHandle = xposed.hook(getSystemMethod)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
@@ -190,10 +181,6 @@ final class ResourcesReadHookInstaller {
                         }
                         return result;
                     });
-            if (hookRegistry != null) {
-                hookRegistry.register("resources_read_get_system", systemHandle);
-            }
-
             hookInstalled = true;
             DpisLog.i("Resources read hook ready");
             FeedbackDiagnosticRuntimeEvents.recordHotReload(

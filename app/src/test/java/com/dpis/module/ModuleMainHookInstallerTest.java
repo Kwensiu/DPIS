@@ -160,7 +160,7 @@ public class ModuleMainHookInstallerTest {
 
         assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));
         assertTrue(moduleMain.contains(
-                "AppProcessHookInstaller.install(this, store, policy, packagePlan, getOrCreateHookRegistry())"));
+                "AppProcessHookInstaller.install(this, store, policy, packagePlan)"));
         assertTrue(appProcessInstaller.contains("HyperOsFlutterFontHookInstaller.install("));
         assertTrue(appProcessInstaller.contains("resolveFontDomainPlan("));
         assertTrue(appProcessInstaller.contains("hyperOsNativeFlutterEnabled"));
@@ -177,23 +177,20 @@ public class ModuleMainHookInstallerTest {
         assertTrue(moduleMain.contains("ResourcesManagerHookInstaller.resetForHotReload();"));
         assertTrue(moduleMain.contains("ResourcesImplHookInstaller.resetForHotReload();"));
         assertTrue(moduleMain.contains("ResourcesReadHookInstaller.resetForHotReload();"));
-        assertTrue(moduleMain.contains("registry.clear();"));
-        assertTrue(moduleMain.contains("unhookLegacyHotReloadHandles("));
-        assertTrue(moduleMain.contains("unhookLegacyHotReloadHandles(param.getOldHookHandles(), registry)"));
-        assertTrue(resourcesRead.contains("hookRegistry.register(\"resources_read_get_configuration\""));
-        assertTrue(resourcesRead.contains("hookRegistry.register(\"resources_read_get_display_metrics\""));
-        assertTrue(resourcesRead.contains("hookRegistry.register(\"resources_read_get_system\""));
-        assertTrue(resourcesImpl.contains("hookRegistry.register(\"resources_impl_update_configuration\""));
-        assertTrue(resourcesManager.contains(
-                "hookRegistry.register(\"resources_manager_apply_configuration_to_resources\""));
-        assertTrue(resourcesManager.contains(
-                "hookRegistry.register(\"resources_manager_update_resources_for_activity\""));
+        assertFalse(moduleMain.contains("ModernHookRegistry"));
+        assertFalse(resourcesRead.contains("hookRegistry.register("));
+        assertFalse(resourcesImpl.contains("hookRegistry.register("));
+        assertFalse(resourcesManager.contains("hookRegistry.register("));
         assertTrue(resourcesRead.contains(".setId(\"resources_read_get_configuration\")"));
         assertTrue(resourcesRead.contains(".setId(\"resources_read_get_display_metrics\")"));
         assertTrue(resourcesRead.contains(".setId(\"resources_read_get_system\")"));
         assertTrue(resourcesImpl.contains(".setId(\"resources_impl_update_configuration\")"));
-        assertTrue(resourcesManager.contains(".setId(\"resources_manager_apply_configuration_to_resources\")"));
-        assertTrue(resourcesManager.contains(".setId(\"resources_manager_update_resources_for_activity\")"));
+        assertTrue(resourcesManager.contains(".setId(HOOK_ID_APPLY_CONFIGURATION)"));
+        assertTrue(resourcesManager.contains(".setId(HOOK_ID_UPDATE_RESOURCES_FOR_ACTIVITY)"));
+        assertTrue(resourcesManager.contains(".setId(HOOK_ID_RESOURCE_CREATION_PREFIX + \"#\""));
+        assertTrue(resourcesManager.contains(".setId(HOOK_ID_RESOURCES_KEY_PREFIX + \"#\""));
+        assertFalse(moduleMain.contains("maybeInstallSystemServerHooks(store, policy, currentProcessName, \"android\",\n                    \"hot-reload\")"));
+        assertTrue(moduleMain.contains("system_server hot reload skipped: replay not supported"));
     }
 
     @Test
@@ -260,6 +257,20 @@ public class ModuleMainHookInstallerTest {
     }
 
     @Test
+    public void modernRuntimeHotReloadDocsAndScriptMatchCurrentBoundary() throws IOException {
+        String docs = readRepositoryRoot("docs/modern-runtime-resync.md");
+        String script = readRepositoryRoot("scripts/pull-lsposed-logs.ps1");
+
+        assertTrue(docs.contains("System-server replay"));
+        assertTrue(docs.contains("hot-reload surface"));
+        assertTrue(docs.contains("dynamic resource-creation / `createResourcesImpl` overload hooks derive ids"));
+        assertTrue(script.contains("[string] $Device"));
+        assertTrue(script.contains("ls -t /data/adb/lspd/log/modules_*.log"));
+        assertTrue(script.contains("verbose_*.log"));
+        assertFalse(script.contains("192.168.5.130:5555"));
+    }
+
+    @Test
     public void moduleMainAllowsPackageOwnedSecondaryProcessesForViewportHooks() throws IOException {
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
@@ -279,5 +290,9 @@ public class ModuleMainHookInstallerTest {
 
     private static String read(String relativePath) throws IOException {
         return SourceSmokeTestPaths.read(relativePath);
+    }
+
+    private static String readRepositoryRoot(String relativePath) throws IOException {
+        return SourceSmokeTestPaths.readRepositoryRoot(relativePath);
     }
 }

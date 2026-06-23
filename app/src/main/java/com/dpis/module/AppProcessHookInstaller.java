@@ -24,8 +24,7 @@ final class AppProcessHookInstaller {
     static void install(XposedInterface xposed,
                         DpiConfigStore store,
                         HookRuntimePolicy policy,
-                        ModulePackagePlan packagePlan,
-                        ModernHookRegistry hookRegistry) throws Throwable {
+                        ModulePackagePlan packagePlan) throws Throwable {
         String packageName = packagePlan.packageName;
         DebugFontOverride debugOverride = resolveDebugFontOverrideForPackage(packageName);
         HookExecutionPlan plan = packagePlan.buildExecutionPlan(policy, debugOverride);
@@ -57,8 +56,7 @@ final class AppProcessHookInstaller {
                     packagePlan.targetViewportMode,
                     policy == null || policy.systemServerHooksEnabled);
         }
-        installFromPlan(xposed, packageName, store, plan, packagePlan.targetViewportSpec,
-                hookRegistry);
+        installFromPlan(xposed, packageName, store, plan, packagePlan.targetViewportSpec);
         if (plan.probeHooksRequested) {
             DpisLog.i("hooks installed (full): viewportEnabled=" + plan.viewportEnabled
                     + ", viewportMode=" + packagePlan.targetViewportMode
@@ -172,8 +170,7 @@ final class AppProcessHookInstaller {
                                         String packageName,
                                         DpiConfigStore store,
                                         HookExecutionPlan plan,
-                                        ViewportTargetSpec targetViewportSpec,
-                                        ModernHookRegistry hookRegistry) throws Throwable {
+                                        ViewportTargetSpec targetViewportSpec) throws Throwable {
         if (ComposeFontRuntimeDiagnosticsInstaller.shouldInstall(plan)) {
             ComposeFontRuntimeDiagnosticsInstaller.install(
                     xposed,
@@ -185,7 +182,7 @@ final class AppProcessHookInstaller {
         }
         if (plan.resourcesHooksEnabled) {
             if (plan.resourcesWriteHooksEnabled) {
-                ResourcesManagerHookInstaller.install(xposed, packageName, store, hookRegistry);
+                ResourcesManagerHookInstaller.install(xposed, packageName, store);
             } else {
                 DpisLog.i("Resources write hooks skipped: package=" + packageName);
             }
@@ -195,7 +192,7 @@ final class AppProcessHookInstaller {
                     PROP_DISABLE_VIEWPORT_RESOURCES_IMPL_PACKAGE, packageName)) {
                 DpisLog.i("ResourcesImpl hook skipped by debug property for " + packageName);
             } else {
-                ResourcesImplHookInstaller.install(xposed, packageName, store, hookRegistry);
+                ResourcesImplHookInstaller.install(xposed, packageName, store);
             }
             if (!plan.resourcesReadHooksEnabled) {
                 DpisLog.i("ResourcesRead hook skipped: package=" + packageName);
@@ -207,8 +204,7 @@ final class AppProcessHookInstaller {
                         xposed,
                         packageName,
                         store,
-                        plan.resourcesReadPolicy,
-                        hookRegistry);
+                        plan.resourcesReadPolicy);
             }
         }
         if (plan.activityThreadFontEnabled) {

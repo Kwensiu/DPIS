@@ -44,14 +44,12 @@ Planned shape:
 
 Hot reload implementation notes:
 
-- use a small registry that remembers handles by executable and logical id;
 - when a hook can be given a stable id, assign it once at install time instead
   of adding a second replacement path later;
 - for stable app-process resource hooks, let API 102 rebuild the hook with the
-  same executable and id so the framework replaces it atomically; keep the old
-  handle only for legacy or id-less hooks that still need an explicit unhook;
-- when a hook is not yet registry-backed, let the default 102 behavior unhook
-  the old generation and reinstall from the new one;
+  same executable and id so the framework replaces it atomically;
+- when a hook is not yet id-stable, keep it on the restart-required path until
+  the route has a proven reload owner;
 - start with the hot paths that already have stable ownership boundaries:
   `ModuleMain`, `AppProcessHookInstaller`, and the system_server installer
   entry, then expand only when a real reload path is needed.
@@ -59,7 +57,9 @@ Hot reload implementation notes:
   reload should show `DPIS hot reload begin`, `DPIS hot reload replay`, and
   `DPIS hot reload end` in `modules_*.log` or `verbose_*.log`. Feedback
   diagnostics are useful as supporting context only, because reinstall-driven
-  reload can end the diagnostic session before packaging.
+  reload can end the diagnostic session before packaging. System-server replay
+  is not part of the current 102 hot-reload surface and still depends on the
+  next normal install path.
 - if LSPosed reports `Auto hot reload failed ... status=3, message=null` and
   there is no `DPIS hot reload begin`, the reload did not reach the new replay
   path. The common first-update case is that the already-running target process
@@ -435,11 +435,19 @@ superseded.
   primary evidence source. `ModuleMain` emits `hot reload begin/replay/end`
   through the libxposed log channel so a future reinstall can distinguish
   framework-level reload failure from module replay failure.
+- 2026-06-23: removed the unused Modern hook handle registry. API 102 hook
+  identity is represented by `setId(...)`; API 101 compatibility remains the
+  existing install-and-restart path and does not share this hot-reload surface.
+- 2026-06-23: completed the first API 102 hook-id pass for app-process
+  resources hooks. `ResourcesManager` fixed hooks now use stable ids, and the
+  dynamic resource-creation / `createResourcesImpl` overload hooks derive ids
+  from their method signatures so hot reload can replace them instead of
+  stacking id-less duplicates.
 - 2026-06-23: Modern runtime now plans for API 102 hot reload by keeping 101
-  as the baseline route, adding a small hook registry for stable handle
-  identities, and treating `replaceHook()` as the preferred path only for hooks
-  that already have a known executable owner. This is a lifecycle addition, not
-  a new viewport or font semantics route.
+  as the baseline route, assigning stable IDs to replaceable resource hooks,
+  and treating `replaceHook()` as a possible path only for hooks that already
+  have a known executable owner. This is a lifecycle addition, not a new
+  viewport or font semantics route.
 - 2026-06-21: feedback diagnostic LSPosed timeline now preserves semantic
   stage ordering for same-timestamp runtime events (`begin` before
   `applied`/`skipped`, then `end`), and explicit `DPIS_VIEWPORT*` messages no

@@ -1,8 +1,5 @@
 package com.dpis.module;
 
-import java.util.List;
-
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModule;
 import io.github.libxposed.api.XposedModuleInterface;
 
@@ -13,7 +10,6 @@ public final class ModuleMain extends XposedModule {
     private volatile boolean systemServerInstallAttempted;
     private volatile boolean firstPackageReadyLogged;
     private volatile boolean appProcessInstallAttempted;
-    private volatile ModernHookRegistry hookRegistry;
     private volatile String currentProcessName = "unknown";
 
     @Override
@@ -103,11 +99,8 @@ public final class ModuleMain extends XposedModule {
     public void onHotReloaded(XposedModuleInterface.HotReloadedParam param) {
         Object savedState = param.getSavedInstanceState();
         currentProcessName = savedState instanceof String value ? value : currentProcessName;
-        systemServerInstallAttempted = false;
         firstPackageReadyLogged = false;
         appProcessInstallAttempted = false;
-        ModernHookRegistry registry = getOrCreateHookRegistry();
-        registry.clear();
         ResourcesManagerHookInstaller.resetForHotReload();
         ResourcesImplHookInstaller.resetForHotReload();
         ResourcesReadHookInstaller.resetForHotReload();
@@ -125,11 +118,9 @@ public final class ModuleMain extends XposedModule {
                     "hot reload replay: process=" + currentProcessName
                             + ", systemServerAttempted=" + !systemServerInstallAttempted
                             + ", appAttempted=" + !appProcessInstallAttempted);
-            maybeInstallSystemServerHooks(store, policy, currentProcessName, "android",
-                    "hot-reload");
+            DpisLog.i("system_server hot reload skipped: replay not supported");
             maybeInstallAppProcessFromModuleLoaded(store, currentProcessName);
         } finally {
-            unhookLegacyHotReloadHandles(param.getOldHookHandles(), registry);
             log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX
                     + "hot reload end: process=" + currentProcessName);
             FeedbackDiagnosticRuntimeEvents.recordHotReload(
@@ -252,7 +243,7 @@ public final class ModuleMain extends XposedModule {
         );
         appProcessInstallAttempted = true;
         try {
-            AppProcessHookInstaller.install(this, store, policy, packagePlan, getOrCreateHookRegistry());
+            AppProcessHookInstaller.install(this, store, policy, packagePlan);
         } catch (Throwable throwable) {
             appProcessInstallAttempted = false;
             DpisLog.e("failed to install app process hooks", throwable);
@@ -316,20 +307,6 @@ public final class ModuleMain extends XposedModule {
                 packagePlan.targetTypefaceId);
     }
 
-    ModernHookRegistry getOrCreateHookRegistry() {
-        ModernHookRegistry registry = hookRegistry;
-        if (registry == null) {
-            synchronized (this) {
-                registry = hookRegistry;
-                if (registry == null) {
-                    registry = new ModernHookRegistry();
-                    hookRegistry = registry;
-                }
-            }
-        }
-        return registry;
-    }
-
     private DpiConfigStore getOrCreateConfigStore() {
         DpiConfigStore local = configStore;
         if (local == null) {
@@ -367,7 +344,7 @@ public final class ModuleMain extends XposedModule {
             }
             systemServerInstallAttempted = true;
             try {
-                SystemServerDisplayEnvironmentInstaller.install(this, store, getOrCreateHookRegistry());
+                SystemServerDisplayEnvironmentInstaller.install(this, store);
                 String message = "system_server installer ready: source=" + source
                         + ", process=" + processName
                         + ", package=" + packageName;
@@ -400,17 +377,5 @@ public final class ModuleMain extends XposedModule {
 
     private static void rawBridgeLog(String message) {
         android.util.Log.i("DPIS", BRIDGE_LOG_PREFIX + message);
-    }
-
-    private static void unhookLegacyHotReloadHandles(List<XposedInterface.HookHandle> oldHandles,
-                                                     ModernHookRegistry registry) {
-        // Hot reload currently only rebuilds the id-stable resource hooks.
-        // Retaining the remaining old-generation handles avoids silently
-        // dropping package-ready / classloader-dependent paths that the new
-        // generation cannot reconstruct from hot reload state alone yet.
-        // Those hooks remain in place until the process restarts.
-        if (oldHandles == null) {
-            return;
-        }
     }
 }
