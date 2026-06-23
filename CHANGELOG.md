@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.14.0](https://github.com/Kwensiu/DPIS/compare/v1.13.1...v1.14.0) (2026-06-23)
+
+
+### Bug Fixes
+
+* count known injected apps as configured ([a7877e6](https://github.com/Kwensiu/DPIS/commit/a7877e690e49330fa92cb05d9358e88fbaac77c9))
+* enrich WeChat DPI feedback diagnostics ([c907428](https://github.com/Kwensiu/DPIS/commit/c9074285596d04227163b09e253bd1c95c527ac0))
+* simplify WeChat 8.0.74 route and retire g/k/l path ([45a62ea](https://github.com/Kwensiu/DPIS/commit/45a62eae091928508ed5595260036693db1dcb9e))
+* stabilize WeChat DPI static route semantics ([d353dfb](https://github.com/Kwensiu/DPIS/commit/d353dfb4279240d96aa0bc06ba0da6129bfac56f))
+* streamline Paint font fallback dispatch ([17a462b](https://github.com/Kwensiu/DPIS/commit/17a462bd0278cd0dfa1f35a7dd58327ee9c9c1fd))
+* tighten feedback diagnostic skip sampling ([2e26c0a](https://github.com/Kwensiu/DPIS/commit/2e26c0a7b0efccb3417fa9deb7a28aca2e27623e))
+
 ## [1.13.1](https://github.com/Kwensiu/DPIS/compare/v1.13.0...v1.13.1) (2026-06-21)
 
 
