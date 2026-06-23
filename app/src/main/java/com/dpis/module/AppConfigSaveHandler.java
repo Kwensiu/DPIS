@@ -147,6 +147,9 @@ final class AppConfigSaveHandler {
             }
             publishFontHookDomainsAfterSave(item.packageName, store);
             saved = store.prunePackageIfOnlyDefaultConfigRemains(item.packageName) && saved;
+            if (!saved) {
+                return new int[] { 0, R.string.system_settings_save_failed };
+            }
             if (saved && onChanged != null) {
                 onChanged.run();
             }

@@ -485,6 +485,36 @@ public class AppConfigSaveHandlerTest {
                 store.getTargetViewportSpec(item.packageName));
     }
 
+    @Test
+    public void saveReportsFailureWhenStoreCommitFails() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        prefs.setCommitResult(false);
+        boolean[] changed = {false};
+
+        int[] result = new AppConfigSaveHandler().saveResolved(
+                app("com.example.app"),
+                ViewportTargetSpec.relativeScale(900),
+                ViewportTargetType.RELATIVE_SCALE,
+                ViewportApplyMode.AUTO,
+                false,
+                125,
+                FontApplyMode.FIELD_REWRITE,
+                null,
+                null,
+                false,
+                "90",
+                "",
+                true,
+                store,
+                () -> changed[0] = true);
+
+        assertEquals(0, result[0]);
+        assertEquals(R.string.system_settings_save_failed, result[1]);
+        assertFalse(changed[0]);
+        assertFalse(store.hasRealPackageConfig("com.example.app"));
+    }
+
     private static AppListItem app(String packageName) {
         return new AppListItem("Example",
                 packageName,
