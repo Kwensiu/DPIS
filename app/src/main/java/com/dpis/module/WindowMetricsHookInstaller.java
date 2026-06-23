@@ -8,6 +8,7 @@ import io.github.libxposed.api.XposedInterface;
 
 final class WindowMetricsHookInstaller {
     private static final String ROUTE_NAME = "window_metrics_bounds_override";
+    private static final String HOOK_ID_WINDOW_METRICS_GET_BOUNDS = "window_metrics_get_bounds";
     private static volatile int installedPid = -1;
     private static final RuntimeHotPathEvidenceSampler HOTPATH_SAMPLER =
             new RuntimeHotPathEvidenceSampler();
@@ -27,8 +28,11 @@ final class WindowMetricsHookInstaller {
             Class<?> windowMetricsClass = Class.forName(
                     "android.view.WindowMetrics", false, bootClassLoader);
             Method getBoundsMethod = windowMetricsClass.getDeclaredMethod("getBounds");
-            xposed.hook(getBoundsMethod)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            // 102 can replace this hook in place; 101 just ignores the hint.
+            ModernApiCapabilitiesResolver.fromXposed(xposed).applyStableHookId(
+                            xposed.hook(getBoundsMethod)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            HOOK_ID_WINDOW_METRICS_GET_BOUNDS)
                     .intercept(chain -> {
                         Object result = chain.proceed();
                         if (!(result instanceof Rect rect)) {

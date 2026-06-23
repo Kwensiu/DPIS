@@ -198,6 +198,16 @@ public class ModuleMainHookInstallerTest {
         assertTrue(resourcesRead.contains("apiCapabilities.applyStableHookId("));
         assertTrue(resourcesImpl.contains("apiCapabilities.applyStableHookId("));
         assertTrue(resourcesManager.contains("apiCapabilities.applyStableHookId("));
+        assertTrue(read("src/main/java/com/dpis/module/ActivityThreadFontHookInstaller.java")
+                .contains("HOOK_ID_HANDLE_BIND_APPLICATION"));
+        assertTrue(read("src/main/java/com/dpis/module/WebViewFontHookInstaller.java")
+                .contains("HOOK_ID_WEBVIEW_GET_SETTINGS"));
+        assertTrue(read("src/main/java/com/dpis/module/WebViewFontHookInstaller.java")
+                .contains("HOOK_ID_WEBSETTINGS_SET_TEXT_ZOOM"));
+        assertTrue(read("src/main/java/com/dpis/module/DisplayHookInstaller.java")
+                .contains("HOOK_ID_DISPLAY_GET_DISPLAY_INFO"));
+        assertTrue(read("src/main/java/com/dpis/module/WindowMetricsHookInstaller.java")
+                .contains("HOOK_ID_WINDOW_METRICS_GET_BOUNDS"));
         assertFalse(moduleMain.contains("maybeInstallSystemServerHooks(store, policy, currentProcessName, \"android\",\n                    \"hot-reload\")"));
         assertTrue(moduleMain.contains("system_server hot reload skipped: replay not supported"));
         assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")

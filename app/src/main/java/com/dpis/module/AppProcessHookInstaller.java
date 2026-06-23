@@ -214,7 +214,8 @@ final class AppProcessHookInstaller {
             }
         }
         if (plan.activityThreadFontEnabled) {
-            ActivityThreadFontHookInstaller.install(xposed, packageName, store);
+            ActivityThreadFontHookInstaller.install(
+                    xposed, packageName, store, apiCapabilities);
         }
         if (plan.textViewHooksEnabled) {
             ForceTextSizeHookInstaller.install(xposed, packageName, store, plan.fontDomainPlan);
@@ -228,10 +229,12 @@ final class AppProcessHookInstaller {
             HyperOsFlutterFontHookInstaller.install(xposed, packageName, store);
         }
         if (plan.webViewTextZoomEnabled) {
-            WebViewFontHookInstaller.install(xposed, packageName, store);
+            WebViewFontHookInstaller.install(
+                    xposed, packageName, store, apiCapabilities);
         }
         if (shouldInstallAppProcessViewportSupplementHooks(plan, targetViewportSpec)
                 && !isViewportDisplaySupplementDisabled(packageName)) {
+            // Keep 102 replaceable anchors for the small viewport supplement hooks.
             WindowMetricsHookInstaller.install(xposed, packageName);
             DisplayHookInstaller.install(xposed, packageName, store);
         } else if (plan.viewportEnabled) {
