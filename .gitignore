@@ -35,3 +35,6 @@ Thumbs.db
 
 # Private investigation notes (not committed)
 docs/private/
+
+# local reference repos/files
+refs/
