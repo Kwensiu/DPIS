@@ -3,7 +3,7 @@ package com.dpis.module;
 import com.google.android.material.textfield.TextInputEditText;
 
 final class AppConfigSaveHandler {
-    int[] save(AppListItem item,
+    Result save(AppListItem item,
             TextInputEditText viewportInput,
             TextInputEditText fontScaleInput,
             String viewportTargetType,
@@ -23,7 +23,7 @@ final class AppConfigSaveHandler {
                     viewportInput, viewportTargetType);
             Integer fontScalePercent = parseFontScalePercentOrNull(fontScaleInput);
             if (store == null) {
-                return new int[] { 1, R.string.status_save_requires_init };
+                return Result.failure(R.string.status_save_requires_init);
             }
             return saveResolved(item,
                     viewportTargetSpec,
@@ -41,11 +41,11 @@ final class AppConfigSaveHandler {
                     store,
                     onChanged);
         } catch (NumberFormatException exception) {
-            return new int[] { 0, R.string.status_save_invalid };
+            return Result.failure(R.string.status_save_invalid);
         }
     }
 
-    int[] saveResolved(AppListItem item,
+    Result saveResolved(AppListItem item,
             ViewportTargetSpec viewportTargetSpec,
             String viewportTargetType,
             String currentViewportApplyMode,
@@ -61,7 +61,7 @@ final class AppConfigSaveHandler {
             DpiConfigStore store,
             Runnable onChanged) {
         if (store == null) {
-            return new int[] { 1, R.string.status_save_requires_init };
+            return Result.failure(R.string.status_save_requires_init);
         }
         try {
             PackageConfigValue originalPackageConfig = store.readPackageConfig(item.packageName);
@@ -77,7 +77,7 @@ final class AppConfigSaveHandler {
                 if (cleared && onChanged != null) {
                     onChanged.run();
                 }
-                return new int[] { 1, 0 };
+                return Result.success(0);
             }
             String viewportApplyMode = resolveViewportApplyModeForSave(
                     store, item.packageName, currentViewportApplyMode,
@@ -149,7 +149,7 @@ final class AppConfigSaveHandler {
             publishFontHookDomainsAfterSave(item.packageName, store);
             saved = store.prunePackageIfOnlyDefaultConfigRemains(item.packageName) && saved;
             if (!saved) {
-                return new int[] { 0, R.string.system_settings_save_failed };
+                return Result.failure(R.string.system_settings_save_failed);
             }
             PackageConfigValue expectedPackageConfig = expectedPackageConfigAfterSave(
                     viewportTargetSpec,
@@ -165,7 +165,7 @@ final class AppConfigSaveHandler {
                     store,
                     item.packageName,
                     expectedPackageConfig)) {
-                return new int[] { 0, R.string.system_settings_save_failed };
+                return Result.failure(R.string.system_settings_save_failed);
             }
             if (saved && onChanged != null) {
                 onChanged.run();
@@ -173,9 +173,27 @@ final class AppConfigSaveHandler {
             if (saved && emulationRequestedWithoutSystemScope) {
                 hint = R.string.system_mode_requires_system_scope_hint;
             }
-            return new int[] { 1, hint };
+            return Result.success(hint);
         } catch (NumberFormatException exception) {
-            return new int[] { 0, R.string.status_save_invalid };
+            return Result.failure(R.string.status_save_invalid);
+        }
+    }
+
+    static final class Result {
+        final boolean success;
+        final int messageResId;
+
+        private Result(boolean success, int messageResId) {
+            this.success = success;
+            this.messageResId = messageResId;
+        }
+
+        static Result success(int messageResId) {
+            return new Result(true, messageResId);
+        }
+
+        static Result failure(int messageResId) {
+            return new Result(false, messageResId);
         }
     }
 

@@ -3101,7 +3101,7 @@ public final class MainActivity
                         )
                         ? ViewportTargetSpec.absoluteDp(viewportValue)
                         : ViewportTargetSpec.relativeScale(viewportValue * 10));
-        int[] result = saveLandDetailResolvedConfig(
+        AppConfigSaveHandler.Result result = saveLandDetailResolvedConfig(
                 item,
                 spec,
                 viewportTargetType,
@@ -3115,17 +3115,17 @@ public final class MainActivity
                 viewportScaleInput,
                 viewportAbsoluteInput
         );
-        boolean wechatSaved = WechatDpiSheetBinder.save(
+        result = finalizeAppConfigSaveWithWechatDpi(
+                result,
                 root,
                 item.packageName,
                 dpisEnabled,
                 store
         );
-        if (result[1] != 0) {
-            showToast(result[1]);
+        if (result.messageResId != 0) {
+            showToast(result.messageResId);
         }
-        if (result[0] != 1 || !wechatSaved) {
-            showToast(R.string.system_settings_save_failed);
+        if (!result.success) {
             return false;
         }
         AppConfigDialogBinder.showSaveButtonFeedback(saveButton);
@@ -3160,7 +3160,7 @@ public final class MainActivity
         state.scopeRequestPending = false;
     }
 
-    private int[] saveLandDetailResolvedConfig(
+    private AppConfigSaveHandler.Result saveLandDetailResolvedConfig(
             AppListItem item,
             ViewportTargetSpec viewportTargetSpec,
             String viewportTargetType,
@@ -3189,8 +3189,30 @@ public final class MainActivity
                 viewportAbsoluteInput,
                 isSystemHookEnabledFromStore(),
                 getHookConfigStore(),
-                this::onRuntimeConfigSaved
+                null
         );
+    }
+
+    private AppConfigSaveHandler.Result finalizeAppConfigSaveWithWechatDpi(
+            AppConfigSaveHandler.Result saveResult,
+            View configRoot,
+            String packageName,
+            boolean dpisEnabled,
+            DpiConfigStore store) {
+        if (saveResult == null) {
+            return AppConfigSaveHandler.Result.failure(R.string.system_settings_save_failed);
+        }
+        if (!saveResult.success) {
+            return saveResult;
+        }
+        if (!WechatDpiSheetBinder.save(configRoot, packageName, dpisEnabled, store)) {
+            return AppConfigSaveHandler.Result.failure(
+                    WechatDpiSheetBinder.isInputValid(configRoot)
+                            ? R.string.system_settings_save_failed
+                            : R.string.status_save_invalid);
+        }
+        onRuntimeConfigSaved();
+        return saveResult;
     }
 
     private void onRuntimeConfigSaved() {
@@ -3617,8 +3639,10 @@ public final class MainActivity
             }
 
             @Override
-            public int[] saveAppConfig(
+            public AppConfigSaveHandler.Result saveAppConfig(
+                    View dialogView,
                     AppListItem item,
+                    boolean dpisEnabled,
                     TextInputEditText viewportInput,
                     TextInputEditText fontScaleInput,
                     String viewportMode,
@@ -3632,7 +3656,7 @@ public final class MainActivity
                     String viewportAbsoluteInput
             ) {
                 refreshSystemHookEffectiveEnabled();
-                return appConfigSaveHandler.save(
+                AppConfigSaveHandler.Result result = appConfigSaveHandler.save(
                         item,
                         viewportInput,
                         fontScaleInput,
@@ -3647,8 +3671,14 @@ public final class MainActivity
                         viewportAbsoluteInput,
                         isSystemHookEnabledFromStore(),
                         getHookConfigStore(),
-                        MainActivity.this::onRuntimeConfigSaved
+                        null
                 );
+                return finalizeAppConfigSaveWithWechatDpi(
+                        result,
+                        dialogView,
+                        item.packageName,
+                        dpisEnabled,
+                        getHookConfigStore());
             }
 
             @Override
@@ -3816,8 +3846,10 @@ public final class MainActivity
             showToast(R.string.status_save_invalid);
             return null;
         }
-        int[] result = createAppConfigDialogHost().saveAppConfig(
+        AppConfigSaveHandler.Result result = createAppConfigDialogHost().saveAppConfig(
+                root,
                 item,
+                state.dpisEnabled,
                 views.viewportInputView,
                 views.fontInputView,
                 AppConfigDialogBinder.resolveViewportMode(views.viewportModeToggle),
@@ -3830,19 +3862,10 @@ public final class MainActivity
                 state.viewportScaleInput,
                 state.viewportAbsoluteInput
         );
-        if (result[0] == 1) {
-            DpiConfigStore store = getHookConfigStore();
-            if (!WechatDpiSheetBinder.save(root, item.packageName, state.dpisEnabled, store)) {
-                result[0] = 0;
-                result[1] = R.string.status_save_invalid;
-            } else {
-                onRuntimeConfigSaved();
-            }
+        if (result.messageResId != 0) {
+            showToast(result.messageResId);
         }
-        if (result[1] != 0) {
-            showToast(result[1]);
-        }
-        if (result[0] != 1) {
+        if (!result.success) {
             return null;
         }
         state.previewFromGlobalPrefill = false;

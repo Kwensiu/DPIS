@@ -70,7 +70,9 @@ final class AppConfigDialogBinder {
         ) {
         }
 
-        int[] saveAppConfig(AppListItem item,
+        AppConfigSaveHandler.Result saveAppConfig(View dialogView,
+                AppListItem item,
+                boolean dpisEnabled,
                 TextInputEditText viewportInput,
                 TextInputEditText fontScaleInput,
                 String viewportMode,

@@ -503,7 +503,9 @@ final class GlobalPrefillEditorBinder {
             }
 
             @Override
-            public int[] saveAppConfig(AppListItem item,
+            public AppConfigSaveHandler.Result saveAppConfig(View dialogView,
+                    AppListItem item,
+                    boolean dpisEnabled,
                     TextInputEditText viewportInput,
                     TextInputEditText fontScaleInput,
                     String viewportMode,
@@ -515,7 +517,7 @@ final class GlobalPrefillEditorBinder {
                     boolean fontHookDomainsResetRequested,
                     String viewportScaleInput,
                     String viewportAbsoluteInput) {
-                return new int[0];
+                return AppConfigSaveHandler.Result.failure(0);
             }
 
             @Override
