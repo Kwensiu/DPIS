@@ -1,7 +1,10 @@
 package com.dpis.module;
 
-import de.robv.android.xposed.XposedBridge;
+import java.util.List;
+
+import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModule;
+import io.github.libxposed.api.XposedModuleInterface;
 
 public final class ModuleMain extends XposedModule {
     private static final String BRIDGE_LOG_PREFIX = "DPIS ";
@@ -10,6 +13,7 @@ public final class ModuleMain extends XposedModule {
     private volatile boolean systemServerInstallAttempted;
     private volatile boolean firstPackageReadyLogged;
     private volatile boolean appProcessInstallAttempted;
+    private volatile ModernHookRegistry hookRegistry;
     private volatile String currentProcessName = "unknown";
 
     @Override
@@ -27,7 +31,7 @@ public final class ModuleMain extends XposedModule {
         SystemServerDisplayDiagnostics.recordPending(
                 message);
         DpisLog.i(message);
-        bridgeLog(message);
+        log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX + message);
         try {
             ModernAppSpecificRouteInstaller.handleModuleLoaded(this, param.getProcessName());
             maybeInstallAppProcessFromModuleLoaded(configStore, param.getProcessName());
@@ -56,7 +60,7 @@ public final class ModuleMain extends XposedModule {
 
     @Override
     public void onPackageReady(PackageReadyParam param) {
-        bridgeLog("onPackageReady enter: process=" + currentProcessName
+        log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX + "onPackageReady enter: process=" + currentProcessName
                 + ", package=" + param.getPackageName());
         XposedSelfActivation.markIfSelfPackage(
                 param.getPackageName(),
@@ -66,7 +70,7 @@ public final class ModuleMain extends XposedModule {
         ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(store);
         HookRuntimePolicy policy = HookRuntimePolicy.fromSnapshot(snapshot);
         DpisLog.setLoggingEnabled(policy.globalLogEnabled);
-        bridgeLog("package ready: process=" + currentProcessName
+        log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX + "package ready: process=" + currentProcessName
                 + ", package=" + param.getPackageName());
         SystemServerDisplayDiagnostics.flushPending();
         maybeInstallSystemServerHooks(store, policy, currentProcessName, param.getPackageName(),
@@ -80,6 +84,35 @@ public final class ModuleMain extends XposedModule {
         retryTypefaceHooksWithPackageReady(store, snapshot, param.getPackageName());
         retryFlutterHooksWithAppClassLoader(store, snapshot, param.getClassLoader(),
                 param.getPackageName());
+    }
+
+    @Override
+    public boolean onHotReloading(XposedModuleInterface.HotReloadingParam param) {
+        param.setSavedInstanceState(currentProcessName);
+        return true;
+    }
+
+    @Override
+    public void onHotReloaded(XposedModuleInterface.HotReloadedParam param) {
+        Object savedState = param.getSavedInstanceState();
+        currentProcessName = savedState instanceof String value ? value : currentProcessName;
+        systemServerInstallAttempted = false;
+        firstPackageReadyLogged = false;
+        appProcessInstallAttempted = false;
+        ModernHookRegistry registry = getOrCreateHookRegistry();
+        registry.clear();
+        ResourcesManagerHookInstaller.resetForHotReload();
+        ResourcesImplHookInstaller.resetForHotReload();
+        ResourcesReadHookInstaller.resetForHotReload();
+        DpiConfigStore store = getOrCreateConfigStore();
+        HookRuntimePolicy policy = HookRuntimePolicy.fromNullableStore(store);
+        try {
+            maybeInstallSystemServerHooks(store, policy, currentProcessName, "android",
+                    "hot-reload");
+            maybeInstallAppProcessFromModuleLoaded(store, currentProcessName);
+        } finally {
+            unhookLegacyHotReloadHandles(param.getOldHookHandles(), registry);
+        }
     }
 
     private void maybeInstallAppProcessFromModuleLoaded(DpiConfigStore store, String processName) {
@@ -194,7 +227,7 @@ public final class ModuleMain extends XposedModule {
         );
         appProcessInstallAttempted = true;
         try {
-            AppProcessHookInstaller.install(this, store, policy, packagePlan);
+            AppProcessHookInstaller.install(this, store, policy, packagePlan, getOrCreateHookRegistry());
         } catch (Throwable throwable) {
             appProcessInstallAttempted = false;
             DpisLog.e("failed to install app process hooks", throwable);
@@ -233,7 +266,7 @@ public final class ModuleMain extends XposedModule {
         if (!executionPlan.flutterSettingsEnabled) {
             return;
         }
-        bridgeLog("flutter-retry proceeding: package=" + packageName
+        log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX + "flutter-retry proceeding: package=" + packageName
                 + ", classLoader=" + classLoader.getClass().getName()
                 + ", fontPercent=" + packagePlan.targetFontScalePercent
                 + ", fontMode=" + packagePlan.targetFontMode);
@@ -256,6 +289,20 @@ public final class ModuleMain extends XposedModule {
                 packagePlan.packageName,
                 store,
                 packagePlan.targetTypefaceId);
+    }
+
+    ModernHookRegistry getOrCreateHookRegistry() {
+        ModernHookRegistry registry = hookRegistry;
+        if (registry == null) {
+            synchronized (this) {
+                registry = hookRegistry;
+                if (registry == null) {
+                    registry = new ModernHookRegistry();
+                    hookRegistry = registry;
+                }
+            }
+        }
+        return registry;
     }
 
     private DpiConfigStore getOrCreateConfigStore() {
@@ -295,7 +342,7 @@ public final class ModuleMain extends XposedModule {
             }
             systemServerInstallAttempted = true;
             try {
-                SystemServerDisplayEnvironmentInstaller.install(this, store);
+                SystemServerDisplayEnvironmentInstaller.install(this, store, getOrCreateHookRegistry());
                 String message = "system_server installer ready: source=" + source
                         + ", process=" + processName
                         + ", package=" + packageName;
@@ -326,18 +373,19 @@ public final class ModuleMain extends XposedModule {
         }
     }
 
-    private static void bridgeLog(String message) {
-        if (!DpisLog.isLoggingEnabled()) {
-            return;
-        }
-        rawBridgeLog(message);
+    private static void rawBridgeLog(String message) {
+        android.util.Log.i("DPIS", BRIDGE_LOG_PREFIX + message);
     }
 
-    private static void rawBridgeLog(String message) {
-        try {
-            XposedBridge.log(BRIDGE_LOG_PREFIX + message);
-        } catch (Throwable ignored) {
-            // Keep module behavior unchanged even if XposedBridge logging is unavailable.
+    private static void unhookLegacyHotReloadHandles(List<XposedInterface.HookHandle> oldHandles,
+                                                     ModernHookRegistry registry) {
+        // Hot reload currently only rebuilds the id-stable resource hooks.
+        // Retaining the remaining old-generation handles avoids silently
+        // dropping package-ready / classloader-dependent paths that the new
+        // generation cannot reconstruct from hot reload state alone yet.
+        // Those hooks remain in place until the process restarts.
+        if (oldHandles == null) {
+            return;
         }
     }
 }

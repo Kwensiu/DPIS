@@ -25,6 +25,43 @@ How does the Modern APK route viewport and font runtime changes through
 libxposed, and how do we keep future Legacy experiments from accidentally
 changing Modern behavior?
 
+## 102 Coexistence Plan
+
+The Modern codebase stays single-track. API 102 does not get a separate business
+tree; it adds lifecycle and hook-management capabilities on top of the existing
+101 runtime routes.
+
+Planned shape:
+
+- keep the current shared app-process and system_server routing model;
+- add `onHotReloading()` / `onHotReloaded()` in the Modern entry only;
+- treat `replaceHook()` and hook ids as the preferred 102-level maintenance
+  path for hooks that already have stable identities;
+- keep 101 behavior as the default install path and fall back to full reinstall
+  when a hook is not yet id-stable;
+- avoid splitting installer logic into `101` and `102` copies unless a route
+  proves it needs different runtime behavior.
+
+Hot reload implementation notes:
+
+- use a small registry that remembers handles by executable and logical id;
+- when a hook can be given a stable id, assign it once at install time instead
+  of adding a second replacement path later;
+- for stable app-process resource hooks, let API 102 rebuild the hook with the
+  same executable and id so the framework replaces it atomically; keep the old
+  handle only for legacy or id-less hooks that still need an explicit unhook;
+- when a hook is not yet registry-backed, let the default 102 behavior unhook
+  the old generation and reinstall from the new one;
+- start with the hot paths that already have stable ownership boundaries:
+  `ModuleMain`, `AppProcessHookInstaller`, and the system_server installer
+  entry, then expand only when a real reload path is needed.
+
+Practical boundary:
+
+- 101 remains the baseline compatibility line for the shared route code;
+- 102 is used to simplify lifecycle cleanup and hot-reload replay in Modern;
+- Legacy stays on its own 100 surface and is not part of the 102 migration.
+
 ## Route Map
 
 ```text
@@ -319,6 +356,8 @@ Detailed app-specific runtime evidence lives in
   +-- app/src/modern/java/com/dpis/module/ModuleMain.java
   +-- libxposed XposedModule lifecycle
   +-- SystemServerDisplayEnvironmentInstaller installation through XposedInterface
+  +-- 102 hot-reload callbacks are only enabled when the Modern entry is running
+      on an API 102-capable framework
 
 100-only
   |
@@ -381,6 +420,11 @@ superseded.
 
 ## Update Log
 
+- 2026-06-23: Modern runtime now plans for API 102 hot reload by keeping 101
+  as the baseline route, adding a small hook registry for stable handle
+  identities, and treating `replaceHook()` as the preferred path only for hooks
+  that already have a known executable owner. This is a lifecycle addition, not
+  a new viewport or font semantics route.
 - 2026-06-21: feedback diagnostic LSPosed timeline now preserves semantic
   stage ordering for same-timestamp runtime events (`begin` before
   `applied`/`skipped`, then `end`), and explicit `DPIS_VIEWPORT*` messages no

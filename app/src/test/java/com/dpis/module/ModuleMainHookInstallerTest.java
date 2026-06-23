@@ -159,10 +159,41 @@ public class ModuleMainHookInstallerTest {
         String appProcessInstaller = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
 
         assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));
-        assertTrue(moduleMain.contains("AppProcessHookInstaller.install(this, store, policy, packagePlan)"));
+        assertTrue(moduleMain.contains(
+                "AppProcessHookInstaller.install(this, store, policy, packagePlan, getOrCreateHookRegistry())"));
         assertTrue(appProcessInstaller.contains("HyperOsFlutterFontHookInstaller.install("));
         assertTrue(appProcessInstaller.contains("resolveFontDomainPlan("));
         assertTrue(appProcessInstaller.contains("hyperOsNativeFlutterEnabled"));
+    }
+
+    @Test
+    public void modernHotReloadKeepsStableIdsAndDropsLegacyOnlyHooks() throws IOException {
+        String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
+        String resourcesRead = read("src/main/java/com/dpis/module/ResourcesReadHookInstaller.java");
+        String resourcesImpl = read("src/main/java/com/dpis/module/ResourcesImplHookInstaller.java");
+        String resourcesManager = read("src/main/java/com/dpis/module/ResourcesManagerHookInstaller.java");
+
+        assertTrue(moduleMain.contains("onHotReloaded(XposedModuleInterface.HotReloadedParam param)"));
+        assertTrue(moduleMain.contains("ResourcesManagerHookInstaller.resetForHotReload();"));
+        assertTrue(moduleMain.contains("ResourcesImplHookInstaller.resetForHotReload();"));
+        assertTrue(moduleMain.contains("ResourcesReadHookInstaller.resetForHotReload();"));
+        assertTrue(moduleMain.contains("registry.clear();"));
+        assertTrue(moduleMain.contains("unhookLegacyHotReloadHandles("));
+        assertTrue(moduleMain.contains("unhookLegacyHotReloadHandles(param.getOldHookHandles(), registry)"));
+        assertTrue(resourcesRead.contains("hookRegistry.register(\"resources_read_get_configuration\""));
+        assertTrue(resourcesRead.contains("hookRegistry.register(\"resources_read_get_display_metrics\""));
+        assertTrue(resourcesRead.contains("hookRegistry.register(\"resources_read_get_system\""));
+        assertTrue(resourcesImpl.contains("hookRegistry.register(\"resources_impl_update_configuration\""));
+        assertTrue(resourcesManager.contains(
+                "hookRegistry.register(\"resources_manager_apply_configuration_to_resources\""));
+        assertTrue(resourcesManager.contains(
+                "hookRegistry.register(\"resources_manager_update_resources_for_activity\""));
+        assertTrue(resourcesRead.contains(".setId(\"resources_read_get_configuration\")"));
+        assertTrue(resourcesRead.contains(".setId(\"resources_read_get_display_metrics\")"));
+        assertTrue(resourcesRead.contains(".setId(\"resources_read_get_system\")"));
+        assertTrue(resourcesImpl.contains(".setId(\"resources_impl_update_configuration\")"));
+        assertTrue(resourcesManager.contains(".setId(\"resources_manager_apply_configuration_to_resources\")"));
+        assertTrue(resourcesManager.contains(".setId(\"resources_manager_update_resources_for_activity\")"));
     }
 
     @Test

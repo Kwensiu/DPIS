@@ -23,7 +23,19 @@ final class ResourcesManagerHookInstaller {
     private ResourcesManagerHookInstaller() {
     }
 
+    static void resetForHotReload() {
+        hookInstalled = false;
+    }
+
     static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
+            throws ReflectiveOperationException {
+        install(xposed, packageName, store, null);
+    }
+
+    static void install(XposedInterface xposed,
+                        String packageName,
+                        DpiConfigStore store,
+                        ModernHookRegistry hookRegistry)
             throws ReflectiveOperationException {
         if (hookInstalled) {
             return;
@@ -39,24 +51,34 @@ final class ResourcesManagerHookInstaller {
                     "android.content.res.CompatibilityInfo", false, bootClassLoader);
             Method applyConfigurationMethod = resourcesManagerClass.getDeclaredMethod(
                     "applyConfigurationToResources", Configuration.class, compatibilityInfoClass);
-            xposed.hook(applyConfigurationMethod)
+            XposedInterface.HookHandle applyConfigurationHandle = xposed.hook(applyConfigurationMethod)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+                    .setId("resources_manager_apply_configuration_to_resources")
                     .intercept(chain -> {
                         Configuration config = (Configuration) chain.getArg(0);
                         applyResourceOverrides(config, store, packageName, "ResourcesManager");
                         return chain.proceed();
                     });
+            if (hookRegistry != null) {
+                hookRegistry.register("resources_manager_apply_configuration_to_resources",
+                        applyConfigurationHandle);
+            }
 
             Method updateResourcesForActivityMethod = resolveUpdateResourcesForActivityMethod(
                     resourcesManagerClass, bootClassLoader);
-            xposed.hook(updateResourcesForActivityMethod)
+            XposedInterface.HookHandle updateResourcesHandle = xposed.hook(updateResourcesForActivityMethod)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+                    .setId("resources_manager_update_resources_for_activity")
                     .intercept(chain -> {
                         Configuration overrideConfig = (Configuration) chain.getArg(1);
                         applyResourceOverrides(overrideConfig, store, packageName,
                                 "ResourcesManagerActivity");
                         return chain.proceed();
                     });
+            if (hookRegistry != null) {
+                hookRegistry.register("resources_manager_update_resources_for_activity",
+                        updateResourcesHandle);
+            }
 
             int createHookCount = installResourceCreationHooks(
                     xposed, resourcesManagerClass, packageName, store);

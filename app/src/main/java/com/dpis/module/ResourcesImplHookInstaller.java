@@ -16,7 +16,19 @@ final class ResourcesImplHookInstaller {
     private ResourcesImplHookInstaller() {
     }
 
+    static void resetForHotReload() {
+        hookInstalled = false;
+    }
+
     static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
+            throws ReflectiveOperationException {
+        install(xposed, packageName, store, null);
+    }
+
+    static void install(XposedInterface xposed,
+                        String packageName,
+                        DpiConfigStore store,
+                        ModernHookRegistry hookRegistry)
             throws ReflectiveOperationException {
         if (hookInstalled) {
             return;
@@ -33,14 +45,18 @@ final class ResourcesImplHookInstaller {
             Method method = resourcesImplClass.getDeclaredMethod(
                     "updateConfiguration", Configuration.class, DisplayMetrics.class,
                     compatibilityInfoClass);
-            xposed.hook(method)
+            XposedInterface.HookBuilder builder = xposed.hook(method)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
-                    .intercept(chain -> {
+                    .setId("resources_impl_update_configuration");
+            XposedInterface.HookHandle handle = builder.intercept(chain -> {
                         Configuration config = (Configuration) chain.getArg(0);
                         DisplayMetrics metrics = (DisplayMetrics) chain.getArg(1);
                         applyDensityOverride(packageName, config, metrics, store);
                         return chain.proceed();
                     });
+            if (hookRegistry != null) {
+                hookRegistry.register("resources_impl_update_configuration", handle);
+            }
             hookInstalled = true;
             DpisLog.i("ResourcesImpl hook ready");
         }

@@ -149,6 +149,12 @@ final class SystemServerDisplayEnvironmentInstaller {
     }
 
     static void install(XposedInterface xposed, DpiConfigStore store) {
+        install(xposed, store, null);
+    }
+
+    static void install(XposedInterface xposed,
+                        DpiConfigStore store,
+                        ModernHookRegistry hookRegistry) {
         if (installed) {
             SystemServerDisplayDiagnostics.recordPending("system_server install skipped: reason=already-installed-fast-path");
             DpisLog.i(SystemServerDisplayDiagnostics.buildInstallSkipLog("already-installed-fast-path"));

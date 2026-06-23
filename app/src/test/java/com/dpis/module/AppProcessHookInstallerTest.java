@@ -418,8 +418,8 @@ public class AppProcessHookInstallerTest {
 
         assertTrue(source.contains("TypefaceOverrideHookInstaller.install("));
         assertTrue(source.indexOf("installTypefaceHooks(xposed, packageName, store, packagePlan.targetTypefaceId);")
-                < source.indexOf("installFromPlan(xposed, packageName, store, plan,"
-                + " packagePlan.targetViewportSpec);"));
+                < source.indexOf("installFromPlan(xposed, packageName, store, plan,"));
+        assertTrue(source.contains("packagePlan.targetViewportSpec,\n                hookRegistry)"));
         assertTrue(moduleMain.contains("packagePlan.targetTypefaceId"));
         assertTrue(moduleMain.contains("retryTypefaceHooksWithPackageReady"));
         assertTrue(moduleMain.contains("AppProcessHookInstaller.installTypefaceHooks("));

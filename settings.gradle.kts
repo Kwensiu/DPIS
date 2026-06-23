@@ -44,3 +44,4 @@ dependencyResolutionManagement {
 rootProject.name = "DPIS"
 
 include(":app")
+includeBuild("refs/libxposed-api")
