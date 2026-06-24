@@ -274,8 +274,7 @@ final class HookExecutionPlanner {
         }
         String requested = ViewportApplyMode.normalize(requestedViewportMode);
         return ViewportApplyMode.COMPAT.equals(resolvedViewportMode)
-                || ViewportApplyMode.SYSTEM.equals(resolvedViewportMode)
-                || ViewportApplyMode.AUTO.equals(requested);
+                || ViewportApplyMode.SYSTEM.equals(resolvedViewportMode);
     }
 
     static FontMode resolveFontMode(HookRuntimePolicy policy,

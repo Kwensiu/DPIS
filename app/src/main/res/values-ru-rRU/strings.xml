@@ -284,7 +284,7 @@
     <string name="dialog_hook_chain_tab_font">Шрифт</string>
     <string name="dialog_viewport_apply_strategy_title">Стратегия применения шкалы интерфейса</string>
     <string name="dialog_viewport_apply_auto">Авто</string>
-    <string name="dialog_viewport_apply_auto_subtitle">Предпочтительный маршрут системы, при необходимости переключаться без уведомления.</string>
+    <string name="dialog_viewport_apply_auto_subtitle">Использовать системный маршрут, когда он доступен.</string>
     <string name="dialog_viewport_apply_system">Система</string>
     <string name="dialog_viewport_apply_system_subtitle">Используйте только маршрут «system-server».</string>
     <string name="dialog_viewport_apply_compat">Совместимый</string>

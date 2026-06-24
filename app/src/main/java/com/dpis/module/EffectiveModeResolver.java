@@ -7,7 +7,9 @@ final class EffectiveModeResolver {
     static String resolveViewportMode(String requestedMode, boolean systemHooksEnabled) {
         String normalized = ViewportApplyMode.normalize(requestedMode);
         if (ViewportApplyMode.AUTO.equals(normalized)) {
-            return systemHooksEnabled ? ViewportApplyMode.SYSTEM : ViewportApplyMode.COMPAT;
+            // Auto is system-first only. Compat must be selected explicitly or
+            // reached by guarded runtime evidence, not by a missing system route.
+            return systemHooksEnabled ? ViewportApplyMode.SYSTEM : ViewportApplyMode.OFF;
         }
         if (ViewportApplyMode.SYSTEM_EMULATION.equals(normalized) && !systemHooksEnabled) {
             return ViewportApplyMode.OFF;

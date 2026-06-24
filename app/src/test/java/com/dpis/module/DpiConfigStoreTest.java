@@ -4,6 +4,9 @@ import android.content.SharedPreferences;
 
 import org.junit.Test;
 
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -1961,6 +1964,114 @@ public class DpiConfigStoreTest {
         assertNull(store.getTargetTypefaceId("com.tencent.mm"));
         assertTrue(prefs.contains("wechat.com.tencent.mm.dpi"));
         assertTrue(prefs.contains("package_config.com.tencent.mm.app.wechat_dpi"));
+    }
+
+    @Test
+    public void mirroredLegacySharedPrefsXmlContainsCommittedPackageConfig()
+            throws Exception {
+        File mirror = Files.createTempFile("dpis-mirror", ".xml").toFile();
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs, mirror);
+
+        assertTrue(store.setTargetViewportSpec(
+                "com.azure.authenticator",
+                ViewportTargetSpec.relativeScale(1500)));
+        assertTrue(store.setTargetFontScalePercent("com.azure.authenticator", 150));
+
+        String xml = new String(Files.readAllBytes(mirror.toPath()), StandardCharsets.UTF_8);
+        assertTrue(xml.contains("package_config.com.azure.authenticator.viewport.target_type"));
+        assertTrue(xml.contains("package_config.com.azure.authenticator.viewport.scale_permille"));
+        assertTrue(xml.contains("package_config.com.azure.authenticator.font.scale_percent"));
+        assertTrue(xml.contains("<string>com.azure.authenticator</string>"));
+    }
+
+    @Test
+    public void mirroredLegacySharedPrefsXmlEscapesStringsAndSets()
+            throws Exception {
+        File mirror = Files.createTempFile("dpis-mirror", ".xml").toFile();
+        LinkedHashMap<String, Object> entries = new LinkedHashMap<>();
+        entries.put("name\"key", "value<&>");
+        entries.put("packages", new LinkedHashSet<>(Arrays.asList("a&b", "c<d")));
+
+        DpiConfigStore.writeSharedPreferencesXmlForTest(entries, mirror);
+
+        String xml = new String(Files.readAllBytes(mirror.toPath()), StandardCharsets.UTF_8);
+        assertTrue(xml.contains("name=\"name&quot;key\""));
+        assertTrue(xml.contains(">value&lt;&amp;&gt;</string>"));
+        assertTrue(xml.contains("<string>a&amp;b</string>"));
+        assertTrue(xml.contains("<string>c&lt;d</string>"));
+    }
+
+    @Test
+    public void sharedPreferencesXmlRoundTripsForLegacyImport()
+            throws Exception {
+        File mirror = Files.createTempFile("dpis-mirror", ".xml").toFile();
+        LinkedHashMap<String, Object> entries = new LinkedHashMap<>();
+        entries.put(DpiConfigStore.KEY_TARGET_PACKAGES,
+                new LinkedHashSet<>(Arrays.asList("com.example.one", "com.example.two")));
+        entries.put("package_config.com.example.one.viewport.target_type", "relative_scale");
+        entries.put("package_config.com.example.one.viewport.scale_permille", 1500);
+        entries.put("package_config.com.example.two.font.scale_percent", 120);
+        entries.put("package_config.com.example.two.target.dpis_enabled", false);
+
+        DpiConfigStore.writeSharedPreferencesXmlForTest(entries, mirror);
+        Map<String, Object> imported = DpiConfigStore.readSharedPreferencesXmlForTest(mirror);
+
+        assertEquals(entries.get(DpiConfigStore.KEY_TARGET_PACKAGES),
+                imported.get(DpiConfigStore.KEY_TARGET_PACKAGES));
+        assertEquals("relative_scale",
+                imported.get("package_config.com.example.one.viewport.target_type"));
+        assertEquals(1500,
+                imported.get("package_config.com.example.one.viewport.scale_permille"));
+        assertEquals(120,
+                imported.get("package_config.com.example.two.font.scale_percent"));
+        assertEquals(false,
+                imported.get("package_config.com.example.two.target.dpis_enabled"));
+    }
+
+    @Test
+    public void importSharedPreferencesXmlReplacesPrimaryStore()
+            throws Exception {
+        File mirror = Files.createTempFile("dpis-mirror", ".xml").toFile();
+        LinkedHashMap<String, Object> entries = new LinkedHashMap<>();
+        entries.put(DpiConfigStore.KEY_TARGET_PACKAGES,
+                new LinkedHashSet<>(Arrays.asList("com.example.one", "com.example.two")));
+        entries.put("package_config.com.example.one.viewport.target_type", "relative_scale");
+        entries.put("package_config.com.example.one.viewport.scale_permille", 1500);
+        DpiConfigStore.writeSharedPreferencesXmlForTest(entries, mirror);
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs(), mirror);
+
+        assertTrue(store.importSharedPreferencesXml(mirror));
+
+        assertTrue(store.getConfiguredPackages().contains("com.example.one"));
+        assertEquals(ViewportTargetSpec.relativeScale(1500),
+                store.getTargetViewportSpec("com.example.one"));
+    }
+
+    @Test
+    public void hasAnyUserVisiblePackageConfigIgnoresNonPackageResidualKeys() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putBoolean("global_log_enabled", true)
+                .putString("runtime.last_route", "modern")
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertFalse(store.hasAnyUserVisiblePackageConfig());
+    }
+
+    @Test
+    public void hasAnyUserVisiblePackageConfigDetectsRealPackageConfig() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
+                        new LinkedHashSet<>(Arrays.asList("com.example.app")))
+                .putString("package_config.com.example.app.viewport.target_type", "relative_scale")
+                .putInt("package_config.com.example.app.viewport.scale_permille", 1500)
+                .commit();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertTrue(store.hasAnyUserVisiblePackageConfig());
     }
 
     private static final class ThrowingIntReadPrefs implements SharedPreferences {

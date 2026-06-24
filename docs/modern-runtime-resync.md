@@ -130,7 +130,7 @@ Current structure note:
 Viewport mode
   auto
     -> system hooks enabled  => system
-    -> system hooks disabled => compat
+    -> system hooks disabled => off
 
   system
     -> libxposed system_server route

@@ -297,7 +297,7 @@
     <string name="dialog_hook_chain_tab_font">Font</string>
     <string name="dialog_viewport_apply_strategy_title">Interface scale apply strategy</string>
     <string name="dialog_viewport_apply_auto">Auto</string>
-    <string name="dialog_viewport_apply_auto_subtitle">Prefer system route, fall back silently.</string>
+    <string name="dialog_viewport_apply_auto_subtitle">Use system route when available.</string>
     <string name="dialog_viewport_apply_system">System</string>
     <string name="dialog_viewport_apply_system_subtitle">Use system-server route only.</string>
     <string name="dialog_viewport_apply_compat">Compat</string>

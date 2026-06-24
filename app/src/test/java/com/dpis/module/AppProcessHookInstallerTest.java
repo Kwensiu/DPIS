@@ -105,7 +105,7 @@ public class AppProcessHookInstallerTest {
     }
 
     @Test
-    public void compatViewportKeepsDisplaySupplementHooks() {
+    public void autoViewportDoesNotInstallDisplaySupplementHooksWhenSystemUnavailable() {
         HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
                 createPolicy(false, false),
                 true,
@@ -116,8 +116,8 @@ public class AppProcessHookInstallerTest {
                 false,
                 DebugFontOverride.none());
 
-        assertTrue(plan.viewportEnabled);
-        assertTrue(AppProcessHookInstaller.shouldInstallAppProcessViewportSupplementHooksForTest(
+        assertFalse(plan.viewportEnabled);
+        assertFalse(AppProcessHookInstaller.shouldInstallAppProcessViewportSupplementHooksForTest(
                 plan,
                 ViewportTargetSpec.absoluteDp(300)));
     }
