@@ -79,6 +79,26 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
     }
 
     @Test
+    public void hotReloadFrameworkWarningIsClassifiedAsSkipped() {
+        String raw = "[ 2023-11-15T06:13:20.100     1000:  1234:  5678 W/LSPosedService ] "
+                + "Auto hot reload failed for io.github.kwensiu.dpis in "
+                + "com.example.app/1234: status=3, message=null";
+
+        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+                raw,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
+                request(true, true, true)
+        );
+
+        assertEquals(1, events.size());
+        assertTrue(events.get(0).contains("route=hot_reload"));
+        assertTrue(events.get(0).contains("stage=skipped"));
+        assertTrue(events.get(0).contains("level=W"));
+        assertTrue(events.get(0).contains("status=3"));
+    }
+
+    @Test
     public void hookReadyIsNotClassifiedAsMutationApplied() {
         String raw = "[ 2023-11-15T06:13:20.100     1000:  1234:  5678 I/LSPosedFramework ] "
                 + "(com.example.app)[io.github.kwensiu.dpis,DPIS,id,0,1] "

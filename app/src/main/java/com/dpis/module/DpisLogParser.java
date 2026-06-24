@@ -12,8 +12,12 @@ import java.util.regex.Pattern;
 
 final class DpisLogParser {
     private static final String DPIS_MODULE_PACKAGE = "io.github.kwensiu.dpis";
+    private static final String LSPOSED_HOT_RELOAD_PREFIX = "Auto hot reload ";
     private static final Pattern LSPOSED_TIMESTAMP_PATTERN = Pattern.compile(
             "^\\[\\s*\\d{4}-(\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})(\\.\\d+)?\\s+.*"
+    );
+    private static final Pattern GENERIC_LSPOSED_PATTERN = Pattern.compile(
+            "^\\[\\s*\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?\\s+.*\\s([VDIWEF])/([^\\]\\s]+)\\s*]\\s*(.*)$"
     );
 
     private DpisLogParser() {
@@ -75,7 +79,14 @@ final class DpisLogParser {
     }
 
     private static boolean isRelevantToDpis(ParsedLine line) {
-        return DPIS_MODULE_PACKAGE.equals(line.modulePackage);
+        return DPIS_MODULE_PACKAGE.equals(line.modulePackage)
+                || isDpisHotReloadFrameworkWarning(line.message);
+    }
+
+    private static boolean isDpisHotReloadFrameworkWarning(String message) {
+        return message != null
+                && message.contains(DPIS_MODULE_PACKAGE)
+                && message.contains(LSPOSED_HOT_RELOAD_PREFIX);
     }
 
     private static ParsedLine parseLine(String line, String inheritedTimestamp) {
@@ -88,6 +99,11 @@ final class DpisLogParser {
         }
         String timestamp = extractTime(trimmed);
         ParsedLine parsedLine = parseLsposedMetadata(trimmed);
+        if (parsedLine != null) {
+            parsedLine.timestamp = timestamp != null ? timestamp : inheritedTimestamp;
+            return parsedLine;
+        }
+        parsedLine = parseGenericLsposedLine(trimmed);
         if (parsedLine != null) {
             parsedLine.timestamp = timestamp != null ? timestamp : inheritedTimestamp;
             return parsedLine;
@@ -130,6 +146,22 @@ final class DpisLogParser {
         String tag = metadata.length > 1 ? metadata[1] : "";
         String message = line.substring(metadataEnd + 1).trim();
         return new ParsedLine("", level, process, modulePackage, tag, message, line);
+    }
+
+    private static ParsedLine parseGenericLsposedLine(String line) {
+        Matcher matcher = GENERIC_LSPOSED_PATTERN.matcher(line);
+        if (!matcher.matches()) {
+            return null;
+        }
+        return new ParsedLine(
+                "",
+                matcher.group(1),
+                "",
+                "",
+                matcher.group(2),
+                matcher.group(3).trim(),
+                line
+        );
     }
 
     private static String stripKnownPrefixes(String line) {

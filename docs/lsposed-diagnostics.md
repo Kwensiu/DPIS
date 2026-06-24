@@ -27,8 +27,10 @@ The DPIS log page treats LSPosed logs as an external evidence source. Opening
 the page and automatic refresh read only the DPIS local diagnostic log store.
 When the user manually refreshes the LSPosed page, DPIS reads the complete
 current `modules_*.log` and `verbose_*.log` files, then filters them in the app
-to `io.github.kwensiu.dpis` entries. Rotated historical LSPosed files are not
-read by the normal in-app page.
+to `io.github.kwensiu.dpis` entries. DPIS also keeps LSPosedService hot-reload
+warnings that explicitly mention `io.github.kwensiu.dpis`, because those lines
+are framework outcomes rather than module-emitted entries. Rotated historical
+LSPosed files are not read by the normal in-app page.
 
 ## Feedback Diagnostics
 
@@ -37,7 +39,8 @@ During export DPIS also parses DPIS-related LSPosed lines whose timestamps fall
 inside the diagnostic session window and writes only structured timeline events
 to `diagnostic.txt` with `source=lsposed-log`. Lines whose timestamps cannot be
 parsed remain in `lsposed-log.txt` but are not promoted into the structured
-timeline.
+timeline. LSPosedService hot-reload warning lines are promoted as
+`route=hot_reload stage=skipped` when they match the diagnostic target window.
 
 When diagnostic capture is active, selected runtime hook boundaries may also
 emit `DPIS_DIAG_HOTPATH route=<...> stage=<...> routeName=<...>` lines into the

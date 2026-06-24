@@ -31,6 +31,9 @@ final class FeedbackDiagnosticTimelineClassifier {
     }
 
     private static Stage stageFor(String lower) {
+        if (lower.contains("auto hot reload failed")) {
+            return Stage.SKIPPED;
+        }
         if (lower.contains("repeated_write")) {
             return Stage.REPEATED_WRITE;
         }
@@ -56,6 +59,9 @@ final class FeedbackDiagnosticTimelineClassifier {
     }
 
     private static Route routeFor(String lower) {
+        if (lower.contains("hot reload")) {
+            return Route.HOT_RELOAD;
+        }
         if (isConfigRoute(lower)) {
             return Route.CONFIG;
         }
@@ -110,6 +116,7 @@ final class FeedbackDiagnosticTimelineClassifier {
                     || route == Route.TYPEFACE
                     || route == Route.WECHAT_DPI
                     || route == Route.SYSTEM_SERVER
+                    || route == Route.HOT_RELOAD
                     || route == Route.APP_PROCESS
                     || route == Route.CONFIG;
         }
@@ -306,6 +313,7 @@ final class FeedbackDiagnosticTimelineClassifier {
         TYPEFACE("typeface"),
         WECHAT_DPI("wechat_dpi"),
         SYSTEM_SERVER("system_server"),
+        HOT_RELOAD("hot_reload"),
         APP_PROCESS("app_process");
 
         final String value;

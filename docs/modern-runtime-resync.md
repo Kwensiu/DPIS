@@ -460,6 +460,10 @@ superseded.
   primary evidence source. `ModuleMain` emits `hot reload begin/replay/end`
   through the libxposed log channel so a future reinstall can distinguish
   framework-level reload failure from module replay failure.
+- 2026-06-24: feedback diagnostics and the in-app LSPosed log page now retain
+  LSPosedService hot-reload warnings that explicitly mention DPIS. These lines
+  are framework outcomes, not module-emitted hook evidence, and are classified
+  separately as `route=hot_reload stage=skipped`.
 - 2026-06-23: removed the unused Modern hook handle registry. API 102 hook
   identity is represented by `setId(...)`; API 101 compatibility remains the
   existing install-and-restart path and does not share this hot-reload surface.

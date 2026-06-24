@@ -19,13 +19,17 @@ final class LsposedLogReader {
         LogReadResult moduleFile = runSu(
                 SOURCE_MODULE_FILE,
                 "for file in /data/adb/lspd/log/modules_*.log; do "
-                        + "[ -e \"$file\" ] && grep -a -h '[(][^)]*)\\[io\\.github\\.kwensiu\\.dpis,' \"$file\"; "
+                        + "[ -e \"$file\" ] && grep -a -E -h "
+                        + "'[(][^)]*)\\[io\\.github\\.kwensiu\\.dpis,|"
+                        + "Auto hot reload .*io\\.github\\.kwensiu\\.dpis' \"$file\"; "
                         + "done; true"
         );
         LogReadResult verboseFile = runSu(
                 SOURCE_VERBOSE_FILE,
                 "for file in /data/adb/lspd/log/verbose_*.log; do "
-                        + "[ -e \"$file\" ] && grep -a -h '[(][^)]*)\\[io\\.github\\.kwensiu\\.dpis,' \"$file\"; "
+                        + "[ -e \"$file\" ] && grep -a -E -h "
+                        + "'[(][^)]*)\\[io\\.github\\.kwensiu\\.dpis,|"
+                        + "Auto hot reload .*io\\.github\\.kwensiu\\.dpis' \"$file\"; "
                         + "done; true"
         );
         String combinedOutput = combine(moduleFile.output, verboseFile.output);
