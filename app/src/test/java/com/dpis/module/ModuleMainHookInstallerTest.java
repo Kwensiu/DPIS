@@ -214,6 +214,11 @@ public class ModuleMainHookInstallerTest {
                 .contains("HOOK_ID_PAINT_SET_TEXT_SIZE"));
         assertTrue(read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java")
                 .contains("bridgeMutationAppliedIfChanged("));
+        String typefaceInstaller = read("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java");
+        assertTrue(typefaceInstaller.contains("HOOK_ID_TEXTVIEW_SET_TYPEFACE"));
+        assertTrue(typefaceInstaller.contains("HOOK_ID_PAINT_SET_TYPEFACE"));
+        assertTrue(typefaceInstaller.contains("apiCapabilities.applyStableHookId("));
+        assertTrue(typefaceInstaller.contains("bridgeOverrideAppliedIfChanged("));
         assertTrue(read("src/main/java/com/dpis/module/AppProcessHookInstaller.java")
                 .contains("plan.fontDomainPlan,\n                    apiCapabilities"));
         assertTrue(read("src/main/java/com/dpis/module/DisplayHookInstaller.java")

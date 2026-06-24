@@ -501,6 +501,10 @@ superseded.
   hardcoding `setId(...)` directly in every installer. The external product
   name remains `modern`; the version split is an internal code capability
   boundary.
+- 2026-06-24: typeface replacement joined the API 102 stable-id pass. Its
+  TextView/Paint hooks now have concrete ids and first-hit bridge evidence, so
+  hot-reload validation can distinguish hook install from actual typeface
+  replacement without creating a separate 102-only typeface route.
 - 2026-06-21: feedback diagnostic LSPosed timeline now preserves semantic
   stage ordering for same-timestamp runtime events (`begin` before
   `applied`/`skipped`, then `end`), and explicit `DPIS_VIEWPORT*` messages no

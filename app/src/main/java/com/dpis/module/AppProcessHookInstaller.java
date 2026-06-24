@@ -299,7 +299,8 @@ final class AppProcessHookInstaller {
                     packageName,
                     targetTypefaceId,
                     store,
-                    ConfigStoreFactory.createFontLibraryForXposedHost(xposed));
+                    ConfigStoreFactory.createFontLibraryForXposedHost(xposed),
+                    ModernApiCapabilitiesResolver.fromXposed(xposed));
         } catch (Throwable throwable) {
             DpisLog.e("failed to install typeface hooks: package=" + packageName, throwable);
         }

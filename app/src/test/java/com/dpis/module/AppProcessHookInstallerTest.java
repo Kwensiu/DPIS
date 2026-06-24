@@ -417,6 +417,7 @@ public class AppProcessHookInstallerTest {
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
         assertTrue(source.contains("TypefaceOverrideHookInstaller.install("));
+        assertTrue(source.contains("ModernApiCapabilitiesResolver.fromXposed(xposed)"));
         assertTrue(source.contains("installFromPlan("));
         assertTrue(source.contains("ModernApiCapabilities apiCapabilities"));
         assertTrue(source.indexOf("installTypefaceHooks(xposed, packageName, store, packagePlan.targetTypefaceId);")
