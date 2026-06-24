@@ -224,10 +224,14 @@ public class ModuleMainHookInstallerTest {
                 .contains("handlePackageReadyReplay("));
         assertTrue(read("src/modern/java/com/dpis/module/ModernAppSpecificRouteInstaller.java")
                 .contains("\"hot_reload_package_ready\""));
-        assertFalse(moduleMain.contains("maybeInstallSystemServerHooks(store, policy, currentProcessName, \"android\",\n                    \"hot-reload\")"));
-        assertTrue(moduleMain.contains("system_server hot reload skipped: replay not supported"));
+        assertTrue(moduleMain.contains("replaySystemServerAfterHotReload(store, currentProcessName);"));
+        assertTrue(moduleMain.contains("system_server hot reload replay enter"));
+        assertTrue(moduleMain.contains("SystemServerDisplayEnvironmentInstaller.resetForHotReload();"));
+        assertTrue(moduleMain.contains("\"hot-reload\""));
         assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
                 .contains("apiCapabilities.applyStableHookId("));
+        assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
+                .contains("static void resetForHotReload()"));
         assertTrue(read("src/main/java/com/dpis/module/SystemServerHookCatalog.java")
                 .contains("system_server_launch_activity_item"));
     }

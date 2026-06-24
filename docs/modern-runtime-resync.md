@@ -85,8 +85,14 @@ Hot reload implementation notes:
   carries the last package-ready package/classloader/applicationInfo through
   `setSavedInstanceState(...)` and, after generic module-loaded replay, retries
   the package-ready supplement routes that need the app classloader: WeChat DPI,
-  typeface replacement, and Flutter settings. This is intentionally app-process
-  only; system_server remains on the normal install path.
+  typeface replacement, and Flutter settings. This supplement replay is
+  intentionally app-process only; system_server uses the narrower replay path
+  below.
+- system_server replay is narrower and more valuable than broad app-process
+  replay. On API 102 hot reload, only the system process clears the
+  system_server install gate and re-enters the existing system_server installer
+  with stable hook ids. App processes continue to use best-effort replay and may
+  still need a target app restart when frozen or cached runtime objects remain.
 
 Practical boundary:
 

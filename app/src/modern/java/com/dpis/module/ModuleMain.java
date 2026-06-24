@@ -138,7 +138,7 @@ public final class ModuleMain extends XposedModule {
                     "hot reload replay: process=" + currentProcessName
                             + ", systemServerAttempted=" + !systemServerInstallAttempted
                             + ", appAttempted=" + !appProcessInstallAttempted);
-            DpisLog.i("system_server hot reload skipped: replay not supported");
+            replaySystemServerAfterHotReload(store, currentProcessName);
             maybeInstallAppProcessFromModuleLoaded(store, currentProcessName);
             replayPackageReadySupplementsAfterHotReload(
                     store,
@@ -154,6 +154,23 @@ public final class ModuleMain extends XposedModule {
                     "end",
                     "hot reload end: process=" + currentProcessName);
         }
+    }
+
+    private void replaySystemServerAfterHotReload(DpiConfigStore store, String processName) {
+        if (!SystemServerProcess.isSystemServer(processName, "")) {
+            DpisLog.i("system_server hot reload skipped: process=" + processName);
+            return;
+        }
+        bridgeHotReloadLog("system_server hot reload replay enter: process=" + processName);
+        SystemServerDisplayEnvironmentInstaller.resetForHotReload();
+        systemServerInstallAttempted = false;
+        HookRuntimePolicy policy = HookRuntimePolicy.fromNullableStore(store);
+        maybeInstallSystemServerHooks(
+                store,
+                policy,
+                processName,
+                "android",
+                "hot-reload");
     }
 
     private void rememberPackageReady(String packageName, ClassLoader classLoader,
@@ -445,11 +462,20 @@ public final class ModuleMain extends XposedModule {
                         + ", process=" + processName
                         + ", package=" + packageName;
                 rawBridgeLog(message);
+                if ("hot-reload".equals(source)) {
+                    bridgeHotReloadLog("system_server hot reload replay ready: process="
+                            + processName + ", package=" + packageName);
+                }
             } catch (Throwable throwable) {
                 DpisLog.e("system_server installer failed", throwable);
                 rawBridgeLog("system_server installer failed: source=" + source
                         + ", error=" + throwable.getClass().getName()
                         + ": " + throwable.getMessage());
+                if ("hot-reload".equals(source)) {
+                    bridgeHotReloadLog("system_server hot reload replay failed: process="
+                            + processName + ", error=" + throwable.getClass().getName()
+                            + ": " + throwable.getMessage());
+                }
             }
         }
     }

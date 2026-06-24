@@ -98,6 +98,12 @@ final class SystemServerDisplayEnvironmentInstaller {
     private SystemServerDisplayEnvironmentInstaller() {
     }
 
+    static void resetForHotReload() {
+        synchronized (SystemServerDisplayEnvironmentInstaller.class) {
+            installedPid = -1;
+        }
+    }
+
     static void install(XposedInterface xposed,
                         DpiConfigStore store,
                         ModernApiCapabilities apiCapabilities) {
