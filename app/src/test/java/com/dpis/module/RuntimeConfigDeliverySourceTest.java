@@ -22,7 +22,10 @@ public class RuntimeConfigDeliverySourceTest {
         assertTrue(mainActivity.contains("private void onRuntimeConfigSaved()"));
         assertTrue(mainActivity.contains("RuntimeConfigDelivery.publishLocalSnapshotAfterSave();"));
         assertTrue(mainActivity.contains("private AppConfigSaveHandler.Result finalizeAppConfigSaveWithWechatDpi("));
-        assertTrue(mainActivity.contains("return finalizeAppConfigSaveWithWechatDpi("));
+        assertTrue(mainActivity.contains("private AppConfigSaveHandler.Result finalizeAppConfigSaveWithRuntimeSync("));
+        assertTrue(mainActivity.contains("return finalizeAppConfigSaveWithRuntimeSync("));
+        assertTrue(mainActivity.contains("ViewportPropertySyncer.syncConfiguredTargetsAsync(store);"));
+        assertTrue(mainActivity.contains("FontRuntimePropertySyncer.syncConfiguredTargetsAsync(store);"));
         assertTrue(appConfigHost.contains("public void onRuntimeConfigSaved()"));
         assertTrue(appConfigHost.contains("MainActivity.this.onRuntimeConfigSaved();"));
         assertTrue(sheetActions.contains("AppConfigSaveHandler.Result result = host.saveAppConfig("));

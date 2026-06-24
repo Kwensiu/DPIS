@@ -122,22 +122,20 @@ public final class ModuleMain extends XposedModule {
                 replayState.applicationInfo);
         firstPackageReadyLogged = false;
         appProcessInstallAttempted = false;
-        ResourcesManagerHookInstaller.resetForHotReload();
-        ResourcesImplHookInstaller.resetForHotReload();
-        ResourcesReadHookInstaller.resetForHotReload();
+        AppProcessHotReloadResetter.resetAll();
         DpiConfigStore store = getOrCreateConfigStore();
         try {
             log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX
                     + "hot reload replay: process=" + currentProcessName
-                    + ", systemServerAttempted=" + !systemServerInstallAttempted
-                    + ", appAttempted=" + !appProcessInstallAttempted);
+                    + ", systemServerAttempted=" + systemServerInstallAttempted
+                    + ", appAttempted=" + appProcessInstallAttempted);
             FeedbackDiagnosticRuntimeEvents.recordHotReload(
                     currentProcessName,
                     "runtime",
                     "replay",
                     "hot reload replay: process=" + currentProcessName
-                            + ", systemServerAttempted=" + !systemServerInstallAttempted
-                            + ", appAttempted=" + !appProcessInstallAttempted);
+                            + ", systemServerAttempted=" + systemServerInstallAttempted
+                            + ", appAttempted=" + appProcessInstallAttempted);
             replaySystemServerAfterHotReload(store, currentProcessName);
             maybeInstallAppProcessFromModuleLoaded(store, currentProcessName);
             replayPackageReadySupplementsAfterHotReload(

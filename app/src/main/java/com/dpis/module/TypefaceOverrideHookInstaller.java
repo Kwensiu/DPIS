@@ -36,6 +36,10 @@ final class TypefaceOverrideHookInstaller {
     private TypefaceOverrideHookInstaller() {
     }
 
+    static void resetForHotReload() {
+        installedPid = -1;
+    }
+
     static void install(XposedInterface xposed,
                         String packageName,
                         String targetTypefaceId,

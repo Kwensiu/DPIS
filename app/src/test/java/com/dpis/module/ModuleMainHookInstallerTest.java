@@ -182,9 +182,7 @@ public class ModuleMainHookInstallerTest {
         assertTrue(moduleMain.contains("restoreHotReloadState(savedState)"));
         assertTrue(moduleMain.contains("replayPackageReadySupplementsAfterHotReload("));
         assertTrue(moduleMain.contains("package-ready hot reload replay enter"));
-        assertTrue(moduleMain.contains("ResourcesManagerHookInstaller.resetForHotReload();"));
-        assertTrue(moduleMain.contains("ResourcesImplHookInstaller.resetForHotReload();"));
-        assertTrue(moduleMain.contains("ResourcesReadHookInstaller.resetForHotReload();"));
+        assertTrue(moduleMain.contains("AppProcessHotReloadResetter.resetAll();"));
         assertFalse(moduleMain.contains("ModernHookRegistry"));
         assertTrue(moduleMain.contains("private volatile ModernApiCapabilities modernApiCapabilities;"));
         assertTrue(moduleMain.contains("private ModernApiCapabilities getModernApiCapabilities()"));
@@ -237,6 +235,8 @@ public class ModuleMainHookInstallerTest {
                 .contains("apiCapabilities.applyStableHookId("));
         assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
                 .contains("static void resetForHotReload()"));
+        assertTrue(read("src/main/java/com/dpis/module/AppProcessHotReloadResetter.java")
+                .contains("static void resetAll()"));
         assertTrue(read("src/main/java/com/dpis/module/SystemServerHookCatalog.java")
                 .contains("system_server_launch_activity_item"));
     }

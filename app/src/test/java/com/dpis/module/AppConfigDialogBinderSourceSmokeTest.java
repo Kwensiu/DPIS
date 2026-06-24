@@ -576,15 +576,15 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void savingViewportConfigPublishesRuntimeViewportTarget() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        String saveSource = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        String mainSource = read("src/main/java/com/dpis/module/MainActivity.java");
 
-        assertTrue(source.contains("ViewportApplyMode.SYSTEM.equals"));
-        assertTrue(source.contains("ViewportPropertySyncer.publishTargetAsync("));
-        assertTrue(source.contains("item.packageName, viewportTargetSpec, viewportApplyMode"));
-        assertTrue(source.contains("ViewportPropertySyncer.clearTargetAsync(item.packageName)"));
-        assertTrue(source.contains("ViewportDraftValue.invalid()"));
-        assertFalse(source.contains("INVALID_DRAFT"));
-        assertFalse(source.contains("Integer.MIN_VALUE"));
+        assertTrue(saveSource.contains("ViewportApplyMode.SYSTEM.equals"));
+        assertTrue(mainSource.contains("ViewportPropertySyncer.syncConfiguredTargetsAsync(store);"));
+        assertTrue(mainSource.contains("finalizeAppConfigSaveWithRuntimeSync("));
+        assertTrue(saveSource.contains("ViewportDraftValue.invalid()"));
+        assertFalse(saveSource.contains("INVALID_DRAFT"));
+        assertFalse(saveSource.contains("Integer.MIN_VALUE"));
     }
 
     @Test
@@ -610,8 +610,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
         int configuredStart = source.indexOf("} else {", clearStart);
         String clearBlock = source.substring(clearStart, configuredStart);
 
-        assertTrue(clearBlock.contains("FontRuntimePropertySyncer.clearFontScaleTargetAsync(item.packageName)"));
         assertTrue(clearBlock.contains("ConfigDraftSaveSemantics.fontApplyModeForSave(fontMode)"));
+        assertFalse(clearBlock.contains("FontRuntimePropertySyncer.clearFontScaleTargetAsync(item.packageName)"));
         assertFalse(clearBlock.contains("FontRuntimePropertySyncer.clearTargetAsync(item.packageName)"));
         assertFalse(clearBlock.contains("FontHookDomainPropertySyncer.clearTargetAsync(item.packageName)"));
     }
@@ -640,22 +640,22 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void savingFontConfigPublishesUnifiedFontRuntimeTarget() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        String saveSource = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        String mainSource = read("src/main/java/com/dpis/module/MainActivity.java");
 
-        assertTrue(source.contains("FontRuntimePropertySyncer.publishTargetAsync("));
-        assertTrue(source.contains("item.packageName, fontScalePercent"));
-        assertTrue(source.contains("fontMode,"));
-        assertTrue(source.contains("FontHookDomainDecision.isHyperOsNativeFlutterEnabled("));
-        assertTrue(source.contains("FontApplyMode.SYSTEM_EMULATION.equals"));
+        assertTrue(mainSource.contains("FontRuntimePropertySyncer.syncConfiguredTargetsAsync(store);"));
+        assertTrue(mainSource.contains("finalizeAppConfigSaveWithRuntimeSync("));
+        assertFalse(saveSource.contains("FontRuntimePropertySyncer.publishTargetAsync("));
+        assertTrue(saveSource.contains("FontApplyMode.SYSTEM_EMULATION.equals"));
     }
 
     @Test
     public void savingTypefaceConfigPublishesRuntimeTypefaceTarget() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        String saveSource = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        String mainSource = read("src/main/java/com/dpis/module/MainActivity.java");
 
-        assertTrue(source.contains("FontRuntimePropertySyncer.publishTypefaceTargetAsync(item.packageName, null)"));
-        assertTrue(source.contains(
-                "FontRuntimePropertySyncer.publishTypefaceTargetAsync(item.packageName, selectedTypefaceId)"));
+        assertTrue(mainSource.contains("FontRuntimePropertySyncer.syncConfiguredTargetsAsync(store);"));
+        assertFalse(saveSource.contains("FontRuntimePropertySyncer.publishTypefaceTargetAsync("));
     }
 
     @Test

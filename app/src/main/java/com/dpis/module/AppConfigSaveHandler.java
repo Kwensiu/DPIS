@@ -109,7 +109,6 @@ final class AppConfigSaveHandler {
                         && saved;
                 saved = store.setTargetViewportApplyMode(item.packageName, ViewportApplyMode.OFF)
                         && saved;
-                ViewportPropertySyncer.clearTargetAsync(item.packageName);
             } else {
                 saved = store.setTargetViewportSpec(item.packageName, viewportTargetSpec) && saved;
                 saved = saveInactiveViewportDraft(
@@ -120,31 +119,20 @@ final class AppConfigSaveHandler {
                         viewportAbsoluteInput) && saved;
                 saved = store.setTargetViewportApplyMode(item.packageName, viewportApplyMode)
                         && saved;
-                ViewportPropertySyncer.publishTargetAsync(
-                        item.packageName, viewportTargetSpec, viewportApplyMode);
             }
             if (fontScalePercent == null) {
                 saved = store.clearTargetFontScalePercent(item.packageName) && saved;
                 saved = store.setTargetFontApplyMode(
                         item.packageName,
                         ConfigDraftSaveSemantics.fontApplyModeForSave(fontMode)) && saved;
-                FontRuntimePropertySyncer.clearFontScaleTargetAsync(item.packageName);
             } else {
                 saved = store.setTargetFontScalePercent(item.packageName, fontScalePercent) && saved;
                 saved = store.setTargetFontApplyMode(item.packageName, fontMode) && saved;
-                FontRuntimePropertySyncer.publishTargetAsync(
-                        item.packageName,
-                        fontScalePercent,
-                        fontMode,
-                        FontHookDomainDecision.isHyperOsNativeFlutterEnabled(
-                                store, item.packageName));
             }
             if (selectedTypefaceId == null || selectedTypefaceId.isBlank()) {
                 saved = store.clearTargetTypefaceId(item.packageName) && saved;
-                FontRuntimePropertySyncer.publishTypefaceTargetAsync(item.packageName, null);
             } else {
                 saved = store.setTargetTypefaceId(item.packageName, selectedTypefaceId) && saved;
-                FontRuntimePropertySyncer.publishTypefaceTargetAsync(item.packageName, selectedTypefaceId);
             }
             publishFontHookDomainsAfterSave(item.packageName, store);
             saved = store.prunePackageIfOnlyDefaultConfigRemains(item.packageName) && saved;

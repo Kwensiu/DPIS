@@ -72,6 +72,10 @@ final class ForceTextSizeHookInstaller {
     private ForceTextSizeHookInstaller() {
     }
 
+    static void resetForHotReload() {
+        installedPid = -1;
+    }
+
     static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
             throws ReflectiveOperationException {
         install(xposed, packageName, store,

@@ -3115,7 +3115,7 @@ public final class MainActivity
                 viewportScaleInput,
                 viewportAbsoluteInput
         );
-        result = finalizeAppConfigSaveWithWechatDpi(
+        result = finalizeAppConfigSaveWithRuntimeSync(
                 result,
                 root,
                 item.packageName,
@@ -3213,6 +3213,26 @@ public final class MainActivity
         }
         onRuntimeConfigSaved();
         return saveResult;
+    }
+
+    private AppConfigSaveHandler.Result finalizeAppConfigSaveWithRuntimeSync(
+            AppConfigSaveHandler.Result saveResult,
+            View configRoot,
+            String packageName,
+            boolean dpisEnabled,
+            DpiConfigStore store) {
+        AppConfigSaveHandler.Result result = finalizeAppConfigSaveWithWechatDpi(
+                saveResult,
+                configRoot,
+                packageName,
+                dpisEnabled,
+                store);
+        if (result == null || !result.success) {
+            return result;
+        }
+        ViewportPropertySyncer.syncConfiguredTargetsAsync(store);
+        FontRuntimePropertySyncer.syncConfiguredTargetsAsync(store);
+        return result;
     }
 
     private void onRuntimeConfigSaved() {
@@ -3673,7 +3693,7 @@ public final class MainActivity
                         getHookConfigStore(),
                         null
                 );
-                return finalizeAppConfigSaveWithWechatDpi(
+                return finalizeAppConfigSaveWithRuntimeSync(
                         result,
                         dialogView,
                         item.packageName,

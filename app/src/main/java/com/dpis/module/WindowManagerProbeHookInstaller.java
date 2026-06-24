@@ -16,6 +16,10 @@ final class WindowManagerProbeHookInstaller {
     private WindowManagerProbeHookInstaller() {
     }
 
+    static void resetForHotReload() {
+        installedPid = -1;
+    }
+
     static void install(XposedInterface xposed, String packageName) throws ReflectiveOperationException {
         if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;

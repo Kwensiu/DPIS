@@ -23,6 +23,10 @@ final class PaintTextSizeFallbackHookInstaller {
     private PaintTextSizeFallbackHookInstaller() {
     }
 
+    static void resetForHotReload() {
+        installedPid = -1;
+    }
+
     static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
             throws ReflectiveOperationException {
         if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {

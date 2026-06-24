@@ -1515,8 +1515,9 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("this,"));
         String saveSource = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
         assertTrue(
-            saveSource.contains("FontRuntimePropertySyncer.publishTargetAsync(")
+            !saveSource.contains("FontRuntimePropertySyncer.publishTargetAsync(")
         );
+        assertTrue(source.contains("FontRuntimePropertySyncer.syncConfiguredTargetsAsync(store);"));
         assertTrue(source.contains("FontHookDomainRegistry.recommendedTemplateKnownDomains()"));
         assertFalse(source.contains("AppProcessHookInstaller.resolveDebugFontOverrideForPackage("));
         assertTrue(source.contains("FontHookDomainPresentation.forOverride("));
