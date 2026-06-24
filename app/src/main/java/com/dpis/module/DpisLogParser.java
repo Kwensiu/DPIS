@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -60,6 +61,12 @@ final class DpisLogParser {
         } catch (IOException exception) {
             throw new IllegalStateException(exception);
         }
+        entries.sort(Comparator
+                .comparingLong((DpisLogEntry entry) -> entry.timestampMillis)
+                .thenComparing(entry -> entry.timestamp)
+                .thenComparing(entry -> entry.process)
+                .thenComparing(entry -> entry.tag)
+                .thenComparing(entry -> entry.message));
         return entries;
     }
 
@@ -68,8 +75,10 @@ final class DpisLogParser {
             return null;
         }
         return new DpisLogEntry(
+                sortableTimestampMillis(line.timestamp),
                 line.timestamp,
                 line.level,
+                "LSPosed",
                 line.process,
                 line.modulePackage,
                 line.tag,
@@ -187,6 +196,27 @@ final class DpisLogParser {
             return line.substring(5, 19);
         }
         return null;
+    }
+
+    private static long sortableTimestampMillis(String timestamp) {
+        if (timestamp == null || timestamp.isBlank()) {
+            return 0L;
+        }
+        String digits = timestamp.replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) {
+            return 0L;
+        }
+        if (digits.length() > 17) {
+            digits = digits.substring(0, 17);
+        }
+        while (digits.length() < 17) {
+            digits += "0";
+        }
+        try {
+            return Long.parseLong(digits);
+        } catch (NumberFormatException exception) {
+            return 0L;
+        }
     }
 
     private static String extractFallbackTag(String body) {

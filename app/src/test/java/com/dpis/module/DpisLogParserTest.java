@@ -77,6 +77,25 @@ public final class DpisLogParserTest {
     }
 
     @Test
+    public void sortsLsposedEntriesByActualTimestampInsteadOfSourceChunkOrder() {
+        String raw = String.join("\n",
+                "[ 2026-06-24T15:02:32.960     1000:  3316:  3316 I/LSPosedFramework ] "
+                        + "(system)[io.github.kwensiu.dpis,DPIS,id,0,1] "
+                        + "DPIS system_server hot reload replay enter: process=system",
+                "[ 2026-06-24T13:05:41.218     1000:  1841:  1841 W/LSPosedService ] "
+                        + "Auto hot reload failed for io.github.kwensiu.dpis in "
+                        + "bin.mt.plus.canary/31210: status=3, message=null");
+
+        List<DpisLogEntry> entries = DpisLogParser.parseLsposedDpis(raw);
+
+        assertEquals(2, entries.size());
+        assertEquals("06-24 13:05:41.218", entries.get(0).timestamp);
+        assertEquals("LSPosedService", entries.get(0).tag);
+        assertEquals("system", entries.get(1).process);
+        assertTrue(entries.get(1).message.contains("system_server hot reload replay enter"));
+    }
+
+    @Test
     public void dropsNonHotReloadFrameworkLinesEvenWhenTheyReferenceDpis() {
         String raw = "[ 2026-06-24T04:44:47.000     1000:  1841:  1841 W/LSPosedService ] "
                 + "Some unrelated framework line for io.github.kwensiu.dpis";
