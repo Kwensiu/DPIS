@@ -129,6 +129,13 @@ final class FeedbackDiagnosticCoordinator {
             if (store == null || packageName.isBlank() || item == null) {
                 return from(item, state, versionName);
             }
+            ViewportTargetSpec persistedViewportSpec = store.getTargetViewportSpec(packageName);
+            String persistedViewportMode = store.getTargetViewportApplyMode(packageName);
+            Integer persistedFontScale = store.getTargetFontScalePercent(packageName);
+            String persistedFontMode = store.getTargetFontApplyMode(packageName);
+            String persistedTypefaceId = store.getTargetTypefaceId(packageName);
+            String persistedHookDomains = store.getTargetFontHookDomainsRaw(packageName);
+            Integer persistedWechatDpi = store.getWechatDpi(packageName);
             // Diagnostic plan text should describe the just-persisted package config.
             // The app-list row is only a pre-save snapshot and can lag behind the editor.
             return new Request(
@@ -139,13 +146,13 @@ final class FeedbackDiagnosticCoordinator {
                     state != null ? state.scopeSelected : item.inScope,
                     store.isTargetDpisEnabled(packageName),
                     false,
-                    store.getTargetViewportSpec(packageName),
-                    store.getTargetViewportApplyMode(packageName),
-                    store.getTargetFontScalePercent(packageName),
-                    store.getTargetFontApplyMode(packageName),
-                    store.getTargetTypefaceId(packageName),
-                    store.getTargetFontHookDomainsRaw(packageName),
-                    store.getWechatDpi(packageName)
+                    persistedViewportSpec,
+                    persistedViewportMode,
+                    persistedFontScale,
+                    persistedFontMode,
+                    persistedTypefaceId,
+                    persistedHookDomains,
+                    persistedWechatDpi
             );
         }
 

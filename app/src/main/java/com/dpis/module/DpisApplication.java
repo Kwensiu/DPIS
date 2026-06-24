@@ -50,7 +50,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         DpiConfigStore runtimeDeliveryStore =
                 ConfigStoreFactory.createRuntimeDeliveryModuleConfigStore(service);
         migrateLocalConfigStore(localStore);
-        publishRuntimeConfig(localStore, runtimeDeliveryStore);
+        migrateLocalConfigStore(runtimeDeliveryStore);
         configStore = ConfigStoreFactory.createLocalUiModuleConfigStore(this, service);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
         RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore);
@@ -116,8 +116,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         XposedService service = xposedService;
         DpiConfigStore localStore = ConfigStoreFactory.createLocalModuleConfigStore(application);
         migrateLocalConfigStore(localStore);
-        publishRuntimeConfig(localStore,
-                ConfigStoreFactory.createRuntimeDeliveryModuleConfigStore(service));
+        migrateLocalConfigStore(ConfigStoreFactory.createRuntimeDeliveryModuleConfigStore(service));
         DpiConfigStore refreshedStore = service != null
                 ? ConfigStoreFactory.createLocalUiModuleConfigStore(application, service)
                 : ConfigStoreFactory.createLocalModuleConfigStore(application);
