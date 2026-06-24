@@ -473,7 +473,44 @@ final class ResourcesReadHookInstaller {
                     "viewport",
                     "resources_read_configuration_override",
                     detail);
+            maybeLogLegacyAutoFallbackSuccess(
+                    store,
+                    packageName,
+                    sourceTag,
+                    originalWidthDp,
+                    originalHeightDp,
+                    originalSmallestWidthDp,
+                    originalDensityDpi,
+                    config);
         }
+    }
+
+    private static void maybeLogLegacyAutoFallbackSuccess(DpiConfigStore store,
+                                                          String packageName,
+                                                          String sourceTag,
+                                                          int originalWidthDp,
+                                                          int originalHeightDp,
+                                                          int originalSmallestWidthDp,
+                                                          int originalDensityDpi,
+                                                          Configuration config) {
+        if (store == null
+                || packageName == null
+                || packageName.isBlank()
+                || sourceTag == null
+                || !sourceTag.startsWith("LegacyResourcesRead(")
+                || !ViewportApplyMode.AUTO.equals(
+                        ViewportApplyMode.normalize(store.getTargetViewportApplyMode(packageName)))
+                || !store.isSystemServerHooksEnabled()) {
+            return;
+        }
+        logIfChanged(packageName + ":" + sourceTag + ":legacy-auto-fallback",
+                "DPIS_VIEWPORT legacy auto fallback success: package=" + packageName
+                        + ", source=" + sourceTag
+                        + ", widthDp " + originalWidthDp + " -> " + config.screenWidthDp
+                        + ", heightDp " + originalHeightDp + " -> " + config.screenHeightDp
+                        + ", smallestWidthDp " + originalSmallestWidthDp + " -> "
+                        + config.smallestScreenWidthDp
+                        + ", densityDpi " + originalDensityDpi + " -> " + config.densityDpi);
     }
 
     static void applyMetricsOverride(DisplayMetrics metrics,

@@ -126,7 +126,11 @@ final class SystemServerDisplayEnvironmentInstaller {
                 SystemServerDisplayDiagnostics.recordPending(
                         SystemServerDisplayDiagnostics.buildBootstrapLog());
                 DpisLog.i(SystemServerDisplayDiagnostics.buildBootstrapLog());
-                HookRuntimePolicy policy = HookRuntimePolicy.fromNullableStore(store);
+                boolean systemHooksEffectiveEnabled =
+                        SystemScopeCoordinator.resolveSystemHookEffectiveEnabled(store);
+                HookRuntimePolicy policy = HookRuntimePolicy.fromEffectiveSystemHookState(
+                        store,
+                        systemHooksEffectiveEnabled);
                 if (!policy.systemServerHooksEnabled) {
                     SystemServerDisplayDiagnostics.recordPending(
                             SystemServerDisplayDiagnostics.buildGateDisabledLog(

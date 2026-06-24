@@ -97,6 +97,14 @@ public class LegacyModuleHookSourceTest {
         assertTrue(systemServerSource.contains(
                 "PerAppDisplayConfigSource.withLegacyRuntimePropertyFallback"));
         assertTrue(systemServerSource.contains("createForLegacySystemServerHost"));
+        assertTrue(systemServerSource.contains(
+                "legacy system_server install enter: hooksEnabled="));
+        assertTrue(systemServerSource.contains(
+                "legacy system_server launch-activity-item skipped: reason=hooks-disabled"));
+        assertTrue(systemServerSource.contains(
+                "legacy system_server launch-activity-item skipped: reason=package-unresolved"));
+        assertTrue(systemServerSource.contains(
+                "legacy system_server launch-activity-item skipped: package="));
         assertTrue(systemServerSource.contains("applyLaunchActivityItemArgs(source, param.args)"));
         assertTrue(systemServerSource.contains("PerAppDisplayOverrideCalculator.calculate"));
         assertTrue(systemServerSource.contains("config.targetViewportSpec"));
@@ -107,6 +115,10 @@ public class LegacyModuleHookSourceTest {
         assertTrue(systemServerSource.contains("ViewportOverride.apply"));
         assertTrue(systemServerSource.contains("FontApplyMode.SYSTEM_EMULATION"));
         assertTrue(systemServerSource.contains("LegacyRustProcessHookInstaller.install(source)"));
+        assertTrue(systemServerSource.contains("findPackageNameRecursive(arg, 0)"));
+        assertTrue(systemServerSource.contains("getPackageName"));
+        assertTrue(systemServerSource.contains("getIntent"));
+        assertTrue(systemServerSource.contains("extractPackageFromText(String.valueOf(target))"));
         int launchApplyIndex = systemServerSource.indexOf("static void applyLaunchActivityItemArgs");
         int afterLaunchApplyIndex = systemServerSource.indexOf(
                 "private static String findActivityInfoPackage", launchApplyIndex);
@@ -126,6 +138,11 @@ public class LegacyModuleHookSourceTest {
         assertTrue(rustSource.indexOf("return null;")
                 < rustSource.indexOf("Object existingValue = args.get(ARG_ENVIRONMENTS);"));
         assertTrue(!rustSource.contains("HyperOsFlutterFontBridge.clearTarget(packageName);"));
+
+        String resourcesReadSource = read("src/main/java/com/dpis/module/ResourcesReadHookInstaller.java");
+        assertTrue(resourcesReadSource.contains("DPIS_VIEWPORT legacy auto fallback success: package="));
+        assertTrue(resourcesReadSource.contains("sourceTag.startsWith(\"LegacyResourcesRead(\")"));
+        assertTrue(resourcesReadSource.contains("ViewportApplyMode.AUTO.equals("));
     }
 
     @Test

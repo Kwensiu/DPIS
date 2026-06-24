@@ -49,7 +49,9 @@ public final class ModuleMain extends XposedModule {
     @Override
     public void onSystemServerStarting(SystemServerStartingParam param) {
         DpiConfigStore store = getOrCreateConfigStore();
-        HookRuntimePolicy policy = HookRuntimePolicy.fromNullableStore(store);
+        HookRuntimePolicy policy = HookRuntimePolicy.fromEffectiveSystemHookState(
+                store,
+                SystemScopeCoordinator.resolveSystemHookEffectiveEnabled(store));
         String processName = currentProcessName;
         if (!SystemServerProcess.isSystemServer(processName, "android")) {
             processName = "system";
@@ -72,7 +74,9 @@ public final class ModuleMain extends XposedModule {
                 param.getApplicationInfo());
         DpiConfigStore store = getOrCreateConfigStore();
         ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(store);
-        HookRuntimePolicy policy = HookRuntimePolicy.fromSnapshot(snapshot);
+        HookRuntimePolicy policy = HookRuntimePolicy.fromEffectiveSystemHookState(
+                store,
+                SystemScopeCoordinator.resolveSystemHookEffectiveEnabled(store));
         DpisLog.setLoggingEnabled(policy.globalLogEnabled);
         log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX + "package ready: process=" + currentProcessName
                 + ", package=" + param.getPackageName());
@@ -162,7 +166,9 @@ public final class ModuleMain extends XposedModule {
         bridgeHotReloadLog("system_server hot reload replay enter: process=" + processName);
         SystemServerDisplayEnvironmentInstaller.resetForHotReload();
         systemServerInstallAttempted = false;
-        HookRuntimePolicy policy = HookRuntimePolicy.fromNullableStore(store);
+        HookRuntimePolicy policy = HookRuntimePolicy.fromEffectiveSystemHookState(
+                store,
+                SystemScopeCoordinator.resolveSystemHookEffectiveEnabled(store));
         maybeInstallSystemServerHooks(
                 store,
                 policy,
@@ -258,7 +264,9 @@ public final class ModuleMain extends XposedModule {
                     + ", package=" + packageName
                     + ", packages=" + snapshot.getConfiguredPackages());
         }
-        HookRuntimePolicy policy = HookRuntimePolicy.fromSnapshot(snapshot);
+        HookRuntimePolicy policy = HookRuntimePolicy.fromEffectiveSystemHookState(
+                store,
+                SystemScopeCoordinator.resolveSystemHookEffectiveEnabled(store));
         DpisLog.setLoggingEnabled(policy.globalLogEnabled);
         if (ModernAppSpecificRouteInstaller.shouldSuppressModuleLoadedGenericHooks(
                 packageName, processName)) {
