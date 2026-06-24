@@ -31,6 +31,17 @@ The Modern codebase stays single-track. API 102 does not get a separate business
 tree; it adds lifecycle and hook-management capabilities on top of the existing
 101 runtime routes.
 
+Artifact/runtime rule:
+
+- the shipped Modern artifact declares API 102 because LSPosed only allows one
+  advertised modern API version per artifact;
+- that declaration does not mean "102-only runtime behavior";
+- on a 101-capable LSPosed framework, DPIS still runs the same Modern route tree
+  and degrades to the 101 capability set;
+- on a 102-capable LSPosed framework, DPIS keeps the same route tree but also
+  enables stable hook ids, hot-reload callbacks, and related 102 maintenance
+  features.
+
 Naming rule:
 
 - user-facing terminology stays `modern`;
@@ -45,8 +56,8 @@ Planned shape:
 - add `onHotReloading()` / `onHotReloaded()` in the Modern entry only;
 - treat `replaceHook()` and hook ids as the preferred 102-level maintenance
   path for hooks that already have stable identities;
-- keep 101 behavior as the default install path and fall back to full reinstall
-  when a hook is not yet id-stable;
+- keep 101-compatible install behavior as the default runtime path and fall back
+  to full reinstall when a hook is not yet id-stable;
 - avoid splitting installer logic into `101` and `102` copies unless a route
   proves it needs different runtime behavior.
 
@@ -96,8 +107,10 @@ Hot reload implementation notes:
 
 Practical boundary:
 
-- 101 remains the baseline compatibility line for the shared route code;
-- 102 is used to simplify lifecycle cleanup and hot-reload replay in Modern;
+- the Modern artifact advertises 102, but shared route semantics still use the
+  101 capability set as the runtime fallback baseline;
+- 102 is used to simplify lifecycle cleanup and hot-reload replay when the host
+  framework actually exposes 102 features;
 - Legacy stays on its own 100 surface and is not part of the 102 migration.
 - version-specific capability code should stay explicit (`101`, `102`) rather
   than introducing vague tiers like `baseline` / `enhanced`.

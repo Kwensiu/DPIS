@@ -10,6 +10,9 @@ final class ModernApiCapabilitiesResolver {
     }
 
     static ModernApiCapabilities fromXposed(XposedInterface xposed) {
+        // The published Modern artifact declares 102 because LSPosed only lets us
+        // advertise one modern API surface. Runtime behavior still degrades to the
+        // 101 capability set when the host framework does not expose 102 features.
         int apiVersion = xposed != null ? xposed.getApiVersion() : API_101;
         return apiVersion >= API_102
                 ? ModernApi102Capabilities.INSTANCE

@@ -197,6 +197,9 @@ public class ModuleMainHookInstallerTest {
         assertTrue(api102.contains("XposedInterface.HookBuilder.class.getMethod(\"setId\", String.class)"));
         assertTrue(resolver.contains("static final int API_101 = 101;"));
         assertTrue(resolver.contains("static final int API_102 = 102;"));
+        assertTrue(resolver.contains("The published Modern artifact declares 102"));
+        assertTrue(resolver.contains("Runtime behavior still degrades"));
+        assertTrue(resolver.contains("101 capability set when the host framework does not expose 102 features"));
         assertTrue(resourcesRead.contains("apiCapabilities.applyStableHookId("));
         assertTrue(resourcesImpl.contains("apiCapabilities.applyStableHookId("));
         assertTrue(resourcesManager.contains("apiCapabilities.applyStableHookId("));
@@ -311,6 +314,9 @@ public class ModuleMainHookInstallerTest {
 
         assertTrue(docs.contains("System-server replay"));
         assertTrue(docs.contains("hot-reload surface"));
+        assertTrue(docs.contains("the shipped Modern artifact declares API 102"));
+        assertTrue(docs.contains("that declaration does not mean \"102-only runtime behavior\""));
+        assertTrue(docs.contains("degrades to the 101 capability set"));
         assertTrue(docs.contains("ForceTextSize hook ready"));
         assertTrue(docs.contains("dynamic resource-creation / `createResourcesImpl` overload hooks derive ids"));
         assertTrue(script.contains("[string] $Device"));
