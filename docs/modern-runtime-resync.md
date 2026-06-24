@@ -74,6 +74,19 @@ Hot reload implementation notes:
   still holds an older DPIS generation whose default `onHotReloading()` rejects
   reload. Restart the target process once after installing the 102-capable
   build, then use the next install/update to validate the hot-reload path.
+- LSPosed's notification progress may lag behind the install moment for target
+  processes that are stopped, stale, or not immediately schedulable. In the
+  2026-06-24 device export, old `Auto hot reload failed` lines clustered around
+  04:34-04:44, while later user-launched/active processes produced fresh
+  `DPIS hot reload begin -> replay -> end` evidence at 12:20 and 12:35. Treat
+  those later bridge logs as the replay truth for that process instead of
+  treating the notification progress as a DPIS save/config failure.
+- API 102 still does not replay package-ready callbacks automatically. DPIS
+  carries the last package-ready package/classloader/applicationInfo through
+  `setSavedInstanceState(...)` and, after generic module-loaded replay, retries
+  the package-ready supplement routes that need the app classloader: WeChat DPI,
+  typeface replacement, and Flutter settings. This is intentionally app-process
+  only; system_server remains on the normal install path.
 
 Practical boundary:
 

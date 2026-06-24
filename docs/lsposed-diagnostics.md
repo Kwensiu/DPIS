@@ -107,6 +107,13 @@ window. Treat it as framework/process-lifetime evidence first: confirm the
 current PID with `adb shell pidof <package>`, relaunch the target, and validate
 again from fresh LSPosed logs before blaming DPIS hook replay.
 
+LSPosed notification progress can update later than the module install moment.
+The practical test is process-local: if a target app is launched or becomes
+active after install and then its current bridge log shows
+`DPIS hot reload begin -> replay -> end`, that process reached DPIS's 102 replay
+path even if an older log file still contains earlier `Auto hot reload failed`
+entries. Do not mix old failure windows with the current process evidence.
+
 Feedback diagnostics can include hot-reload-related events when the diagnostic
 session survives long enough, but reinstall-driven reload can end or disrupt
 the diagnostic packaging window. Do not use a missing feedback-diagnostic entry

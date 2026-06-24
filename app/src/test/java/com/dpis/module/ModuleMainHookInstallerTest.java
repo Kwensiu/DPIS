@@ -178,6 +178,10 @@ public class ModuleMainHookInstallerTest {
         String resolver = read("src/main/java/com/dpis/module/ModernApiCapabilitiesResolver.java");
 
         assertTrue(moduleMain.contains("onHotReloaded(XposedModuleInterface.HotReloadedParam param)"));
+        assertTrue(moduleMain.contains("lastPackageReadyPackageName"));
+        assertTrue(moduleMain.contains("restoreHotReloadState(savedState)"));
+        assertTrue(moduleMain.contains("replayPackageReadySupplementsAfterHotReload("));
+        assertTrue(moduleMain.contains("package-ready hot reload replay enter"));
         assertTrue(moduleMain.contains("ResourcesManagerHookInstaller.resetForHotReload();"));
         assertTrue(moduleMain.contains("ResourcesImplHookInstaller.resetForHotReload();"));
         assertTrue(moduleMain.contains("ResourcesReadHookInstaller.resetForHotReload();"));
@@ -216,6 +220,10 @@ public class ModuleMainHookInstallerTest {
                 .contains("HOOK_ID_DISPLAY_GET_DISPLAY_INFO"));
         assertTrue(read("src/main/java/com/dpis/module/WindowMetricsHookInstaller.java")
                 .contains("HOOK_ID_WINDOW_METRICS_GET_BOUNDS"));
+        assertTrue(read("src/modern/java/com/dpis/module/ModernAppSpecificRouteInstaller.java")
+                .contains("handlePackageReadyReplay("));
+        assertTrue(read("src/modern/java/com/dpis/module/ModernAppSpecificRouteInstaller.java")
+                .contains("\"hot_reload_package_ready\""));
         assertFalse(moduleMain.contains("maybeInstallSystemServerHooks(store, policy, currentProcessName, \"android\",\n                    \"hot-reload\")"));
         assertTrue(moduleMain.contains("system_server hot reload skipped: replay not supported"));
         assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
