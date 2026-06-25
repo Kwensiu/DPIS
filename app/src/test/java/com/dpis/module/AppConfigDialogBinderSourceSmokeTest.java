@@ -142,6 +142,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
         String layout = read("src/main/res/layout/dialog_app_config.xml");
 
         assertTrue(layout.contains("@layout/view_sheet_unsaved_badge_handle"));
+        assertTrue(layout.contains("android:id=\"@+id/dialog_viewport_input\""));
+        assertTrue(layout.contains("android:inputType=\"numberDecimal\""));
         assertFalse(layout.contains("dialog_preview_status"));
         assertFalse(layout.contains("dialog_global_prefill_preview_status"));
         assertTrue(binderSource.contains("state.captureSavedDraft(views, item != null && item.previewFromGlobalPrefill);"));
@@ -580,7 +582,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
         String mainSource = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(saveSource.contains("ViewportApplyMode.SYSTEM.equals"));
-        assertTrue(mainSource.contains("ViewportPropertySyncer.syncConfiguredTargetsAsync(store);"));
+        assertTrue(mainSource.contains("scheduleRuntimePropertiesForTargetLaunch(packageName);"));
+        assertTrue(mainSource.contains("ViewportPropertySyncer.syncTarget(packageName, store);"));
         assertTrue(mainSource.contains("finalizeAppConfigSaveWithRuntimeSync("));
         assertTrue(saveSource.contains("ViewportDraftValue.invalid()"));
         assertFalse(saveSource.contains("INVALID_DRAFT"));
@@ -643,7 +646,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
         String saveSource = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
         String mainSource = read("src/main/java/com/dpis/module/MainActivity.java");
 
-        assertTrue(mainSource.contains("FontRuntimePropertySyncer.syncConfiguredTargetsAsync(store);"));
+        assertTrue(mainSource.contains("scheduleRuntimePropertiesForTargetLaunch(packageName);"));
+        assertTrue(mainSource.contains("FontRuntimePropertySyncer.syncTarget(packageName, store);"));
         assertTrue(mainSource.contains("finalizeAppConfigSaveWithRuntimeSync("));
         assertFalse(saveSource.contains("FontRuntimePropertySyncer.publishTargetAsync("));
         assertTrue(saveSource.contains("FontApplyMode.SYSTEM_EMULATION.equals"));
@@ -654,7 +658,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
         String saveSource = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
         String mainSource = read("src/main/java/com/dpis/module/MainActivity.java");
 
-        assertTrue(mainSource.contains("FontRuntimePropertySyncer.syncConfiguredTargetsAsync(store);"));
+        assertTrue(mainSource.contains("scheduleRuntimePropertiesForTargetLaunch(packageName);"));
+        assertTrue(mainSource.contains("FontRuntimePropertySyncer.syncTarget(packageName, store);"));
         assertFalse(saveSource.contains("FontRuntimePropertySyncer.publishTypefaceTargetAsync("));
     }
 

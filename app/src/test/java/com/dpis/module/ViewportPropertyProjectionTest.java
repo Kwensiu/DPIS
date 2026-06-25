@@ -15,7 +15,7 @@ public class ViewportPropertyProjectionTest {
                 ViewportPropertyProjection.encode(spec, ViewportApplyMode.SYSTEM);
         ViewportPropertyProjection.Decoded decoded = ViewportPropertyProjection.decode(
                 encoded.systemEmulationValue, encoded.targetType,
-                encoded.scalePermille, encoded.compatConfigValue, encoded.compatMode);
+                encoded.scaleMilliPercent, encoded.compatConfigValue, encoded.compatMode);
 
         assertTrue(decoded.targetSpec.isAbsoluteDp());
         assertEquals(500, decoded.targetSpec.absoluteWidthDp());
@@ -29,7 +29,7 @@ public class ViewportPropertyProjectionTest {
                 ViewportPropertyProjection.encode(spec, ViewportApplyMode.COMPAT);
         ViewportPropertyProjection.Decoded decoded = ViewportPropertyProjection.decode(
                 encoded.systemEmulationValue, encoded.targetType,
-                encoded.scalePermille, encoded.compatConfigValue, encoded.compatMode);
+                encoded.scaleMilliPercent, encoded.compatConfigValue, encoded.compatMode);
 
         assertTrue(decoded.targetSpec.isAbsoluteDp());
         assertEquals(360, decoded.targetSpec.absoluteWidthDp());
@@ -38,19 +38,19 @@ public class ViewportPropertyProjectionTest {
 
     @Test
     public void roundTrip_relativeScale() {
-        ViewportTargetSpec spec = ViewportTargetSpec.relativeScale(750);
+        ViewportTargetSpec spec = ViewportTargetSpec.relativeScale(75000);
         ViewportPropertyProjection.Encoded encoded =
                 ViewportPropertyProjection.encode(spec, ViewportApplyMode.SYSTEM);
         ViewportPropertyProjection.Decoded decoded = ViewportPropertyProjection.decode(
                 encoded.systemEmulationValue, encoded.targetType,
-                encoded.scalePermille, encoded.compatConfigValue, encoded.compatMode);
+                encoded.scaleMilliPercent, encoded.compatConfigValue, encoded.compatMode);
 
         assertTrue(decoded.targetSpec.isRelativeScale());
-        assertEquals(750, decoded.targetSpec.scalePermille());
+        assertEquals(75000, decoded.targetSpec.scaleMilliPercent());
         assertEquals(ViewportApplyMode.SYSTEM, decoded.mode);
         assertEquals(0, encoded.systemEmulationValue);
         assertEquals(ViewportTargetType.RELATIVE_SCALE, encoded.targetType);
-        assertEquals(750, encoded.scalePermille);
+        assertEquals(75000, encoded.scaleMilliPercent);
         assertEquals(0, encoded.compatConfigValue);
         assertEquals(ViewportApplyMode.SYSTEM, encoded.compatMode);
     }
@@ -61,7 +61,7 @@ public class ViewportPropertyProjectionTest {
                 ViewportPropertyProjection.encode(ViewportTargetSpec.off(), ViewportApplyMode.OFF);
         ViewportPropertyProjection.Decoded decoded = ViewportPropertyProjection.decode(
                 encoded.systemEmulationValue, encoded.targetType,
-                encoded.scalePermille, encoded.compatConfigValue, encoded.compatMode);
+                encoded.scaleMilliPercent, encoded.compatConfigValue, encoded.compatMode);
 
         assertFalse(decoded.targetSpec.isEnabled());
         assertEquals(ViewportApplyMode.OFF, decoded.mode);

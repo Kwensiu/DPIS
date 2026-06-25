@@ -67,7 +67,7 @@ public class AppListPagerAdapterSourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/AppListPagerAdapter.java");
 
         assertTrue(source.contains(
-                "Objects.equals(oldItem.viewportScalePermille, newItem.viewportScalePermille)"));
+                "Objects.equals(oldItem.viewportScaleMilliPercent, newItem.viewportScaleMilliPercent)"));
     }
 
     private static String read(String relativePath) throws IOException {

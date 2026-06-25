@@ -57,9 +57,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -136,7 +138,7 @@ public final class MainActivity
     private UpdateStateStore updateStateStore;
     private UpdateDownloadCoordinator updateDownloadCoordinator;
     private final ProcessActionHandler processActionHandler
-            = new ProcessActionHandler(this);
+            = new ProcessActionHandler(this, this::syncRuntimePropertiesForTargetLaunch);
     private final AppConfigSaveHandler appConfigSaveHandler
             = new AppConfigSaveHandler();
     private final FeedbackDiagnosticCoordinator feedbackDiagnosticCoordinator
@@ -227,6 +229,7 @@ public final class MainActivity
     private FeedbackDiagnosticCoordinator.Result pendingFeedbackDiagnosticResult;
     private FeedbackDiagnosticExportBuilder.DiagnosticPackage pendingFeedbackDiagnosticPackage;
     private androidx.appcompat.app.AlertDialog activeFeedbackDiagnosticPackagingDialog;
+    private final Map<String, Integer> pendingRuntimePropertyGenerations = new HashMap<>();
     private boolean mainActivityResumed;
     private GlobalPrefillEditorBinder.Draft retainedGlobalPrefillDraft;
     private QuickTemplateEditorBinder.Draft retainedQuickTemplateDraft;
@@ -3093,14 +3096,14 @@ public final class MainActivity
             return false;
         }
         DpiConfigStore store = getHookConfigStore();
-        ViewportTargetSpec spec
-                = viewportValue == null
-                        ? ViewportTargetSpec.off()
-                        : (ViewportTargetType.ABSOLUTE_DP.equals(
-                                ViewportTargetType.normalize(viewportTargetType)
-                        )
-                        ? ViewportTargetSpec.absoluteDp(viewportValue)
-                        : ViewportTargetSpec.relativeScale(viewportValue * 10));
+        String normalizedViewportTargetType = ViewportTargetType.normalize(viewportTargetType);
+        String rawViewportInput = ViewportTargetType.ABSOLUTE_DP.equals(normalizedViewportTargetType)
+                ? viewportAbsoluteInput
+                : viewportScaleInput;
+        ViewportTargetSpec spec = AppConfigInputValidation.parseViewportTargetSpec(
+                rawViewportInput,
+                normalizedViewportTargetType
+        );
         AppConfigSaveHandler.Result result = saveLandDetailResolvedConfig(
                 item,
                 spec,
@@ -3230,8 +3233,7 @@ public final class MainActivity
         if (result == null || !result.success) {
             return result;
         }
-        ViewportPropertySyncer.syncConfiguredTargetsAsync(store);
-        FontRuntimePropertySyncer.syncConfiguredTargetsAsync(store);
+        scheduleRuntimePropertiesForTargetLaunch(packageName);
         return result;
     }
 
@@ -3240,15 +3242,54 @@ public final class MainActivity
         requestAppsLoad();
     }
 
+    private void scheduleRuntimePropertiesForTargetLaunch(String packageName) {
+        if (packageName == null || packageName.isBlank()) {
+            return;
+        }
+        int generation;
+        synchronized (pendingRuntimePropertyGenerations) {
+            generation = pendingRuntimePropertyGenerations.getOrDefault(packageName, 0) + 1;
+            pendingRuntimePropertyGenerations.put(packageName, generation);
+        }
+        Thread syncThread = new Thread(
+                () -> syncRuntimePropertiesForTargetLaunch(packageName, generation),
+                "dpis-runtime-property-target-sync");
+        syncThread.setDaemon(true);
+        syncThread.start();
+    }
+
+    private void syncRuntimePropertiesForTargetLaunch(String packageName) {
+        Integer generation;
+        synchronized (pendingRuntimePropertyGenerations) {
+            generation = pendingRuntimePropertyGenerations.get(packageName);
+        }
+        if (generation == null) {
+            return;
+        }
+        syncRuntimePropertiesForTargetLaunch(packageName, generation);
+    }
+
+    private void syncRuntimePropertiesForTargetLaunch(String packageName, int generation) {
+        DpiConfigStore store = getHookConfigStore();
+        ViewportPropertySyncer.syncTarget(packageName, store);
+        FontRuntimePropertySyncer.syncTarget(packageName, store);
+        synchronized (pendingRuntimePropertyGenerations) {
+            Integer currentGeneration = pendingRuntimePropertyGenerations.get(packageName);
+            if (currentGeneration != null && currentGeneration == generation) {
+                pendingRuntimePropertyGenerations.remove(packageName);
+            }
+        }
+    }
+
     private String viewportScaleDraftFor(
             AppListItem item,
             ViewportTargetSpec activeSpec
     ) {
         if (activeSpec != null && activeSpec.isRelativeScale()) {
-            return String.valueOf(activeSpec.scalePermille() / 10);
+            return AppConfigInputValidation.formatScaleMilliPercentInput(activeSpec.scaleMilliPercent());
         }
-        if (item.viewportScalePermille != null) {
-            return String.valueOf(item.viewportScalePermille / 10);
+        if (item.viewportScaleMilliPercent != null) {
+            return AppConfigInputValidation.formatScaleMilliPercentInput(item.viewportScaleMilliPercent);
         }
         return "";
     }
@@ -3734,6 +3775,7 @@ public final class MainActivity
         return new FeedbackDiagnosticCoordinator.Host() {
             @Override
             public boolean restartTargetAppForDiagnostic(String packageName) {
+                syncRuntimePropertiesForTargetLaunch(packageName);
                 boolean launched = feedbackDiagnosticAppLauncher
                         .restartForDiagnostic(packageName);
                 if (launched && activeAppEditorDialog != null) {

@@ -42,29 +42,32 @@ final class ViewportPropertySyncer {
         if (store == null) {
             return;
         }
-        LinkedHashSet<String> packages = new LinkedHashSet<>(store.getConfiguredPackages());
-        if (packages.isEmpty()) {
-            return;
-        }
-        Thread syncThread = new Thread(() -> {
-            StringBuilder command = new StringBuilder();
-            for (String packageName : packages) {
-                ViewportTargetSpec targetSpec = store.getTargetViewportSpec(packageName);
-                String mode = store.getTargetViewportApplyMode(packageName);
-                if (command.length() > 0) {
-                    command.append("; ");
-                }
-                command.append(buildCompatConfigCommand(
-                        packageName,
-                        store.isTargetDpisEnabled(packageName) ? targetSpec : ViewportTargetSpec.off(),
-                        mode));
-            }
-            if (command.length() > 0) {
-                runRootCommand(command.toString());
-            }
-        }, "DPIS-viewport-property-syncer");
+        Thread syncThread = new Thread(() -> syncConfiguredTargets(store),
+                "DPIS-viewport-property-syncer");
         syncThread.setDaemon(true);
         syncThread.start();
+    }
+
+    static void syncConfiguredTargets(DpiConfigStore store) {
+        if (store == null) {
+            return;
+        }
+        String command = buildConfiguredTargetsCommand(store);
+        if (!command.isEmpty()) {
+            runRootCommand(command);
+        }
+    }
+
+    static void syncTarget(String packageName, DpiConfigStore store) {
+        if (packageName == null || packageName.isBlank() || store == null) {
+            return;
+        }
+        ViewportTargetSpec targetSpec = store.getTargetViewportSpec(packageName);
+        String mode = store.getTargetViewportApplyMode(packageName);
+        runRootCommand(buildCompatConfigCommand(
+                packageName,
+                store.isTargetDpisEnabled(packageName) ? targetSpec : ViewportTargetSpec.off(),
+                mode));
     }
 
     static String buildSetCommandForTest(String property, int widthDp) {
@@ -100,7 +103,7 @@ final class ViewportPropertySyncer {
                 + "; " + buildSetCommandPair(
                         ViewportPropertyBridge.scalePropertyNameForPackage(packageName),
                         ViewportPropertyBridge.persistentScalePropertyNameForPackage(packageName),
-                        enc.scalePermille)
+                        enc.scaleMilliPercent)
                 + "; " + buildSetCommandPair(
                         ViewportPropertyBridge.compatConfigPropertyNameForPackage(packageName),
                         ViewportPropertyBridge.persistentCompatConfigPropertyNameForPackage(packageName),
@@ -109,6 +112,26 @@ final class ViewportPropertySyncer {
                         ViewportPropertyBridge.compatModePropertyNameForPackage(packageName),
                         ViewportPropertyBridge.persistentCompatModePropertyNameForPackage(packageName),
                         enc.compatMode);
+    }
+
+    private static String buildConfiguredTargetsCommand(DpiConfigStore store) {
+        LinkedHashSet<String> packages = new LinkedHashSet<>(store.getConfiguredPackages());
+        if (packages.isEmpty()) {
+            return "";
+        }
+        StringBuilder command = new StringBuilder();
+        for (String packageName : packages) {
+            ViewportTargetSpec targetSpec = store.getTargetViewportSpec(packageName);
+            String mode = store.getTargetViewportApplyMode(packageName);
+            if (command.length() > 0) {
+                command.append("; ");
+            }
+            command.append(buildCompatConfigCommand(
+                    packageName,
+                    store.isTargetDpisEnabled(packageName) ? targetSpec : ViewportTargetSpec.off(),
+                    mode));
+        }
+        return command.toString();
     }
 
     private static String buildClearCommand(String packageName) {

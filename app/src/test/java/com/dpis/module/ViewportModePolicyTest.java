@@ -54,7 +54,7 @@ public class ViewportModePolicyTest {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
         store.setSystemServerHooksEnabled(true);
-        store.setTargetViewportSpec("com.example.target", ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportSpec("com.example.target", ViewportTargetSpec.relativeScale(150000));
         store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.AUTO);
 
         String mode = ViewportModePolicy.resolve(store, "com.example.target");
@@ -67,7 +67,7 @@ public class ViewportModePolicyTest {
     public void autoAppliesGuardedConfigurationFallbackWhenSystemRouteStillNeedsViewportUpdate() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
-        ViewportTargetSpec spec = ViewportTargetSpec.relativeScale(1500);
+        ViewportTargetSpec spec = ViewportTargetSpec.relativeScale(150000);
         store.setSystemServerHooksEnabled(true);
         store.setTargetViewportSpec("com.example.target", spec);
         store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.AUTO);
@@ -97,7 +97,7 @@ public class ViewportModePolicyTest {
     public void autoDoesNotApplyGuardedConfigurationFallbackWhenConfigurationAlreadyMatches() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
-        ViewportTargetSpec spec = ViewportTargetSpec.relativeScale(1500);
+        ViewportTargetSpec spec = ViewportTargetSpec.relativeScale(150000);
         store.setSystemServerHooksEnabled(true);
         store.setTargetViewportSpec("com.example.target", spec);
         store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.AUTO);

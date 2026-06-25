@@ -106,7 +106,7 @@ public class TargetViewportWidthResolverTest {
     public void appProcessRelativeScaleDerivesTargetWithoutDisplayRecord() {
         String packageName = "com.example.viewport";
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
-        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(150000));
         store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
         ViewportSourceSnapshot source = ViewportSourceSnapshot.fromConfiguration(
                 ViewportSourceSnapshot.ORIGIN_RESOURCES_READ,
@@ -123,9 +123,29 @@ public class TargetViewportWidthResolverTest {
     }
 
     @Test
+    public void appProcessRelativeScaleKeepsMilliPercentPrecisionWhenDerivingTarget() {
+        String packageName = "com.example.viewport";
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(83333));
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.fromConfiguration(
+                ViewportSourceSnapshot.ORIGIN_RESOURCES_READ,
+                configuration(480, 900, 480, 480),
+                null);
+
+        ViewportTargetResolution resolution =
+                TargetViewportWidthResolver.resolve(store, packageName, source);
+
+        assertEquals(ViewportTargetResolution.REASON_APP_PROCESS_RELATIVE_SCALE,
+                resolution.reason);
+        assertEquals(400, resolution.effectiveSmallestWidthDp);
+        assertNull(resolution.record);
+    }
+
+    @Test
     public void appProcessRelativeScaleBorrowKeepsDisplayRecordForStableDensity() {
         String packageName = "com.example.viewport";
-        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(150000);
         android.content.res.Configuration displayConfig = configuration(360, 792, 360, 480);
         VirtualDisplayState.publish(
                 packageName,
@@ -158,7 +178,7 @@ public class TargetViewportWidthResolverTest {
     @Test
     public void appProcessRelativeScaleTreatsMixedTargetSmallestWidthAsBorrowedRecord() {
         String packageName = "com.example.viewport";
-        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(150000);
         VirtualDisplayState.publish(
                 packageName,
                 targetSpec,
@@ -197,3 +217,4 @@ public class TargetViewportWidthResolverTest {
         return config;
     }
 }
+

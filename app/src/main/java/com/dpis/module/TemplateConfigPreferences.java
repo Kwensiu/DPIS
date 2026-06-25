@@ -9,9 +9,12 @@ final class TemplateConfigPreferences {
     private static final String KEY_VIEWPORT_TARGET_TYPE = "viewport.target_type";
     private static final String KEY_VIEWPORT_WIDTH_DP = "viewport.width_dp";
     private static final String KEY_VIEWPORT_SCALE_PERMILLE = "viewport.scale_permille";
+    private static final String KEY_VIEWPORT_SCALE_MILLI_PERCENT = "viewport.scale_milli_percent";
     private static final String KEY_VIEWPORT_WIDTH_DRAFT_DP = "viewport.width_draft_dp";
     private static final String KEY_VIEWPORT_SCALE_DRAFT_PERMILLE =
             "viewport.scale_draft_permille";
+    private static final String KEY_VIEWPORT_SCALE_DRAFT_MILLI_PERCENT =
+            "viewport.scale_draft_milli_percent";
     private static final String KEY_VIEWPORT_MODE = "viewport.mode";
     private static final String KEY_FONT_SCALE_PERCENT = "font.scale_percent";
     private static final String KEY_FONT_MODE = "font.mode";
@@ -26,9 +29,15 @@ final class TemplateConfigPreferences {
                 getString(preferences, prefix + KEY_VIEWPORT_TARGET_TYPE, ViewportTargetType.OFF));
         ViewportTargetSpec viewportTargetSpec = ViewportTargetSpec.off();
         if (ViewportTargetType.RELATIVE_SCALE.equals(targetType)) {
-            Integer scalePermille = getInt(preferences, prefix + KEY_VIEWPORT_SCALE_PERMILLE);
-            viewportTargetSpec = scalePermille != null
-                    ? ViewportTargetSpec.relativeScale(scalePermille)
+            Integer scaleMilliPercent = getInt(preferences, prefix + KEY_VIEWPORT_SCALE_MILLI_PERCENT);
+            if (scaleMilliPercent == null) {
+                // Legacy fallback
+                Integer scalePermille = getInt(preferences, prefix + KEY_VIEWPORT_SCALE_PERMILLE);
+                scaleMilliPercent = scalePermille != null
+                        ? AppConfigInputValidation.fromLegacyScalePermille(scalePermille) : null;
+            }
+            viewportTargetSpec = scaleMilliPercent != null
+                    ? ViewportTargetSpec.relativeScale(scaleMilliPercent)
                     : ViewportTargetSpec.off();
         } else if (ViewportTargetType.ABSOLUTE_DP.equals(targetType)) {
             Integer widthDp = getInt(preferences, prefix + KEY_VIEWPORT_WIDTH_DP);
@@ -40,8 +49,8 @@ final class TemplateConfigPreferences {
         return new TemplateConfigValue(
                 viewportTargetSpec,
                 targetType,
-                normalizeViewportScalePermille(
-                        getInt(preferences, prefix + KEY_VIEWPORT_SCALE_DRAFT_PERMILLE)),
+                normalizeViewportScaleMilliPercent(
+                        readScaleMilliPercentDraft(preferences, prefix)),
                 normalizeViewportWidthDp(
                         getInt(preferences, prefix + KEY_VIEWPORT_WIDTH_DRAFT_DP)),
                 getString(preferences, prefix + KEY_VIEWPORT_MODE, ViewportApplyMode.OFF),
@@ -59,16 +68,23 @@ final class TemplateConfigPreferences {
         }
         if (normalized.viewportTargetSpec.isEnabled()) {
             if (normalized.viewportTargetSpec.isRelativeScale()) {
+                int scaleMilliPercent = normalized.viewportTargetSpec.scaleMilliPercent();
+                editor.putInt(prefix + KEY_VIEWPORT_SCALE_MILLI_PERCENT, scaleMilliPercent);
+                // Double-write legacy for downgrade compatibility
                 editor.putInt(prefix + KEY_VIEWPORT_SCALE_PERMILLE,
-                        normalized.viewportTargetSpec.scalePermille());
+                        AppConfigInputValidation.toLegacyScalePermille(scaleMilliPercent));
             } else {
                 editor.putInt(prefix + KEY_VIEWPORT_WIDTH_DP,
                         normalized.viewportTargetSpec.absoluteWidthDp());
             }
         }
-        if (normalized.viewportScalePermilleDraft != null) {
+        if (normalized.viewportScaleMilliPercentDraft != null) {
+            editor.putInt(prefix + KEY_VIEWPORT_SCALE_DRAFT_MILLI_PERCENT,
+                    normalized.viewportScaleMilliPercentDraft);
+            // Double-write legacy for downgrade compatibility
             editor.putInt(prefix + KEY_VIEWPORT_SCALE_DRAFT_PERMILLE,
-                    normalized.viewportScalePermilleDraft);
+                    AppConfigInputValidation.toLegacyScalePermille(
+                            normalized.viewportScaleMilliPercentDraft));
         }
         if (normalized.viewportWidthDpDraft != null) {
             editor.putInt(prefix + KEY_VIEWPORT_WIDTH_DRAFT_DP,
@@ -95,8 +111,10 @@ final class TemplateConfigPreferences {
         editor.remove(prefix + KEY_VIEWPORT_TARGET_TYPE)
                 .remove(prefix + KEY_VIEWPORT_WIDTH_DP)
                 .remove(prefix + KEY_VIEWPORT_SCALE_PERMILLE)
+                .remove(prefix + KEY_VIEWPORT_SCALE_MILLI_PERCENT)
                 .remove(prefix + KEY_VIEWPORT_WIDTH_DRAFT_DP)
                 .remove(prefix + KEY_VIEWPORT_SCALE_DRAFT_PERMILLE)
+                .remove(prefix + KEY_VIEWPORT_SCALE_DRAFT_MILLI_PERCENT)
                 .remove(prefix + KEY_VIEWPORT_MODE)
                 .remove(prefix + KEY_FONT_SCALE_PERCENT)
                 .remove(prefix + KEY_FONT_MODE)
@@ -135,13 +153,23 @@ final class TemplateConfigPreferences {
         return percent;
     }
 
-    private static Integer normalizeViewportScalePermille(Integer scalePermille) {
-        if (scalePermille == null
-                || scalePermille < ViewportTargetSpec.MIN_SCALE_PERMILLE
-                || scalePermille > ViewportTargetSpec.MAX_SCALE_PERMILLE) {
+    private static Integer readScaleMilliPercentDraft(SharedPreferences preferences, String prefix) {
+        Integer value = getInt(preferences, prefix + KEY_VIEWPORT_SCALE_DRAFT_MILLI_PERCENT);
+        if (value != null) {
+            return value;
+        }
+        // Legacy fallback
+        Integer legacyValue = getInt(preferences, prefix + KEY_VIEWPORT_SCALE_DRAFT_PERMILLE);
+        return legacyValue != null ? AppConfigInputValidation.fromLegacyScalePermille(legacyValue) : null;
+    }
+
+    private static Integer normalizeViewportScaleMilliPercent(Integer scaleMilliPercent) {
+        if (scaleMilliPercent == null
+                || scaleMilliPercent < ViewportTargetSpec.MIN_SCALE_MILLI_PERCENT
+                || scaleMilliPercent > ViewportTargetSpec.MAX_SCALE_MILLI_PERCENT) {
             return null;
         }
-        return scalePermille;
+        return scaleMilliPercent;
     }
 
     private static Integer normalizeViewportWidthDp(Integer widthDp) {

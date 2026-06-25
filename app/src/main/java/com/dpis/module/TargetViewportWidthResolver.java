@@ -105,7 +105,7 @@ final class TargetViewportWidthResolver {
                 && source.appProcessConsumerScoped()
                 && compatDerivationAllowed) {
             int effectiveTarget = Math.max(1,
-                    Math.round((source.smallestWidthDp * targetSpec.scalePermille()) / 1000.0f));
+                    Math.round((source.smallestWidthDp * targetSpec.scaleMilliPercent()) / 100000.0f));
             return ViewportTargetResolution.resolved(
                     targetSpec,
                     effectiveTarget,
@@ -133,7 +133,7 @@ final class TargetViewportWidthResolver {
             return ViewportTargetResolution.none("source-not-fresh-baseline");
         }
         int effectiveTarget = Math.max(1,
-                Math.round((source.smallestWidthDp * targetSpec.scalePermille()) / 1000.0f));
+                Math.round((source.smallestWidthDp * targetSpec.scaleMilliPercent()) / 100000.0f));
         return ViewportTargetResolution.resolved(
                 targetSpec, effectiveTarget, source, "relative-scale");
     }

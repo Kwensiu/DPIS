@@ -47,7 +47,7 @@ final class PerAppDisplayOverrideCalculator {
             return null;
         }
         int effectiveTarget = targetSpec.isRelativeScale()
-                ? Math.max(1, Math.round(sourceSmallest * targetSpec.scalePermille() / 1000.0f))
+                ? Math.max(1, Math.round(sourceSmallest * targetSpec.scaleMilliPercent() / 100000.0f))
                 : targetSpec.absoluteWidthDp();
         return calculate(configuration, widthPx, heightPx, effectiveTarget);
     }

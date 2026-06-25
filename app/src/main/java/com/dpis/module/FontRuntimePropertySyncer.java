@@ -58,37 +58,27 @@ final class FontRuntimePropertySyncer {
         if (store == null) {
             return;
         }
-        LinkedHashSet<String> packages = new LinkedHashSet<>(store.getConfiguredPackages());
-        if (packages.isEmpty()) {
-            return;
-        }
-        Thread syncThread = new Thread(() -> {
-            StringBuilder command = new StringBuilder();
-            for (String packageName : packages) {
-                Integer fontScalePercent = store.getTargetFontScalePercent(packageName);
-                String mode = store.getTargetFontApplyMode(packageName);
-                String typefaceId = store.isTargetDpisEnabled(packageName)
-                        ? store.getTargetTypefaceId(packageName)
-                        : null;
-                int value = store.isTargetDpisEnabled(packageName)
-                        && fontScalePercent != null
-                        && fontScalePercent > 0
-                        ? fontScalePercent
-                        : 0;
-                appendCommand(command, buildTargetCommand(
-                        packageName,
-                        value,
-                        mode,
-                        FontHookDomainDecision.isHyperOsNativeFlutterEnabled(
-                                store, packageName)));
-                appendCommand(command, buildTypefaceCommand(packageName, typefaceId));
-            }
-            if (command.length() > 0) {
-                runRootCommand(command.toString());
-            }
-        }, "DPIS-font-runtime-property-syncer");
+        Thread syncThread = new Thread(() -> syncConfiguredTargets(store),
+                "DPIS-font-runtime-property-syncer");
         syncThread.setDaemon(true);
         syncThread.start();
+    }
+
+    static void syncConfiguredTargets(DpiConfigStore store) {
+        if (store == null) {
+            return;
+        }
+        String command = buildConfiguredTargetsCommand(store);
+        if (!command.isEmpty()) {
+            runRootCommand(command);
+        }
+    }
+
+    static void syncTarget(String packageName, DpiConfigStore store) {
+        if (packageName == null || packageName.isBlank() || store == null) {
+            return;
+        }
+        runRootCommand(buildTargetCommands(packageName, store));
     }
 
     static String buildTargetCommandForTest(String packageName,
@@ -160,6 +150,40 @@ final class FontRuntimePropertySyncer {
                 + "; " + buildSetCommand(
                         HyperOsFlutterFontBridge.persistentTypefacePropertyNameForPackage(packageName),
                         value);
+    }
+
+    private static String buildConfiguredTargetsCommand(DpiConfigStore store) {
+        LinkedHashSet<String> packages = new LinkedHashSet<>(store.getConfiguredPackages());
+        if (packages.isEmpty()) {
+            return "";
+        }
+        StringBuilder command = new StringBuilder();
+        for (String packageName : packages) {
+            appendCommand(command, buildTargetCommands(packageName, store));
+        }
+        return command.toString();
+    }
+
+    private static String buildTargetCommands(String packageName, DpiConfigStore store) {
+        Integer fontScalePercent = store.getTargetFontScalePercent(packageName);
+        String mode = store.getTargetFontApplyMode(packageName);
+        String typefaceId = store.isTargetDpisEnabled(packageName)
+                ? store.getTargetTypefaceId(packageName)
+                : null;
+        int value = store.isTargetDpisEnabled(packageName)
+                && fontScalePercent != null
+                && fontScalePercent > 0
+                ? fontScalePercent
+                : 0;
+        StringBuilder command = new StringBuilder();
+        appendCommand(command, buildTargetCommand(
+                packageName,
+                value,
+                mode,
+                FontHookDomainDecision.isHyperOsNativeFlutterEnabled(
+                        store, packageName)));
+        appendCommand(command, buildTypefaceCommand(packageName, typefaceId));
+        return command.toString();
     }
 
     private static void appendCommand(StringBuilder command, String fragment) {

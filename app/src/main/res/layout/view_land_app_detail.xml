@@ -157,7 +157,7 @@
                                     android:layout_height="wrap_content"
                                     android:gravity="center_vertical"
                                     android:imeOptions="actionDone"
-                                    android:inputType="number"
+                                    android:inputType="numberDecimal"
                                     android:minHeight="0dp"
                                     android:paddingTop="@dimen/dialog_app_config_input_padding_top"
                                     android:paddingBottom="@dimen/dialog_app_config_input_padding_bottom"

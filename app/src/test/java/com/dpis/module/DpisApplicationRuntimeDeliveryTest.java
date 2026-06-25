@@ -32,7 +32,7 @@ public class DpisApplicationRuntimeDeliveryTest {
                 1000L,
                 Set.of("com.example.one"),
                 new TemplateConfigValue(
-                        ViewportTargetSpec.relativeScale(1100),
+                        ViewportTargetSpec.relativeScale(110000),
                         ViewportApplyMode.COMPAT,
                         115,
                         FontApplyMode.FIELD_REWRITE,
@@ -204,3 +204,4 @@ public class DpisApplicationRuntimeDeliveryTest {
         method.invoke(null, from, to);
     }
 }
+

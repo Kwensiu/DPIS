@@ -226,8 +226,8 @@ final class AppConfigDialogBinder {
         views.packageView.setText(item.packageName);
         String initialViewportInput = formatViewportInput(item.viewportTargetSpec);
         views.viewportInputView.setText(initialViewportInput);
-        String initialViewportScaleInput = item.viewportScalePermille != null
-                ? String.valueOf(item.viewportScalePermille / 10)
+        String initialViewportScaleInput = item.viewportScaleMilliPercent != null
+                ? AppConfigInputValidation.formatScaleMilliPercentInput(item.viewportScaleMilliPercent)
                 : (item.viewportTargetSpec.isRelativeScale() ? initialViewportInput : "");
         String initialViewportAbsoluteInput = item.viewportWidthDp != null
                 ? String.valueOf(item.viewportWidthDp)
@@ -1177,8 +1177,8 @@ final class AppConfigDialogBinder {
         static AppConfigDialogState fromItem(AppListItem item) {
             String viewportInput = AppConfigInputValidation.formatViewportInput(item.viewportTargetSpec);
             String viewportTargetType = initialViewportTargetType(item);
-            String viewportScaleInput = item.viewportScalePermille != null
-                    ? String.valueOf(item.viewportScalePermille / 10)
+            String viewportScaleInput = item.viewportScaleMilliPercent != null
+                    ? AppConfigInputValidation.formatScaleMilliPercentInput(item.viewportScaleMilliPercent)
                     : (item.viewportTargetSpec.isRelativeScale() ? viewportInput : "");
             String viewportAbsoluteInput = item.viewportWidthDp != null
                     ? String.valueOf(item.viewportWidthDp)

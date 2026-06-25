@@ -15,7 +15,7 @@ public class GlobalPrefillStoreTest {
         FakePrefs prefs = new FakePrefs();
         GlobalPrefillStore store = new GlobalPrefillStore(prefs);
         TemplateConfigValue value = new TemplateConfigValue(
-                ViewportTargetSpec.relativeScale(1250),
+                ViewportTargetSpec.relativeScale(125000),
                 ViewportTargetType.RELATIVE_SCALE,
                 1250,
                 411,
@@ -129,3 +129,4 @@ public class GlobalPrefillStoreTest {
         assertTrue(value.hasAnyValue());
     }
 }
+

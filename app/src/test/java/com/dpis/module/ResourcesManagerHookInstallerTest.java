@@ -66,7 +66,7 @@ public class ResourcesManagerHookInstallerTest {
     @Test
     public void relativeScaleDoesNotApplyTwiceAfterConfigurationOnlyHookPublishesRecord() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
-        store.setTargetViewportSpec(PACKAGE_NAME, ViewportTargetSpec.relativeScale(900));
+        store.setTargetViewportSpec(PACKAGE_NAME, ViewportTargetSpec.relativeScale(90000));
         store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
         Configuration initial = new Configuration();
         initial.screenWidthDp = 362;
@@ -203,10 +203,10 @@ public class ResourcesManagerHookInstallerTest {
 
     @Test
     public void preservesWindowLikeResourcesKeyOverrideWhenDisplayRecordIsTaller() {
-        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(150000);
         FakePrefs prefs = new FakePrefs();
         prefs.edit()
-                .putInt("viewport." + PACKAGE_NAME + ".scale_permille", 1500)
+                .putInt("viewport." + PACKAGE_NAME + ".scale_milli_percent", 150000)
                 .putString("viewport." + PACKAGE_NAME + ".type", ViewportTargetType.RELATIVE_SCALE)
                 .putString("viewport." + PACKAGE_NAME + ".mode", ViewportApplyMode.COMPAT)
                 .commit();
@@ -356,7 +356,7 @@ public class ResourcesManagerHookInstallerTest {
                 true,
                 true,
                 false,
-                ViewportTargetSpec.relativeScale(900),
+                ViewportTargetSpec.relativeScale(90000),
                 ViewportApplyMode.COMPAT,
                 null,
                 FontApplyMode.OFF,
@@ -371,3 +371,4 @@ public class ResourcesManagerHookInstallerTest {
                 java.nio.charset.StandardCharsets.UTF_8);
     }
 }
+

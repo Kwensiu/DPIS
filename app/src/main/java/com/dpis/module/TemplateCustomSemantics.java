@@ -16,14 +16,14 @@ final class TemplateCustomSemantics {
             String fontHookDomainsRaw) {
         ViewportTargetSpec viewportTargetSpec = AppConfigInputValidation.parseViewportTargetSpec(
                 viewportInput, viewportTargetType);
-        Integer viewportScalePermilleDraft = parseViewportScalePermilleDraft(viewportScaleInput);
+        Integer viewportScaleMilliPercentDraft = parseViewportScaleMilliPercentDraft(viewportScaleInput);
         Integer viewportWidthDpDraft = parseViewportWidthDraft(viewportAbsoluteInput);
         Integer fontScalePercent = AppConfigInputValidation.parseFontScalePercentOrNull(
                 fontScaleInput);
         return customValue(new TemplateConfigValue(
                 viewportTargetSpec,
                 viewportTargetType,
-                viewportScalePermilleDraft,
+                viewportScaleMilliPercentDraft,
                 viewportWidthDpDraft,
                 ViewportApplyMode.normalize(viewportApplyMode),
                 fontScalePercent,
@@ -39,9 +39,9 @@ final class TemplateCustomSemantics {
                 viewportTargetTypeForCustomValue(
                         normalized.viewportTargetType,
                         normalized.viewportTargetSpec,
-                        normalized.viewportScalePermilleDraft,
+                        normalized.viewportScaleMilliPercentDraft,
                         normalized.viewportWidthDpDraft),
-                normalized.viewportScalePermilleDraft,
+                normalized.viewportScaleMilliPercentDraft,
                 normalized.viewportWidthDpDraft,
                 normalized.viewportApplyMode,
                 normalized.fontScalePercent,
@@ -57,7 +57,7 @@ final class TemplateCustomSemantics {
         TemplateConfigValue normalized = value != null ? value : TemplateConfigValue.EMPTY;
         return normalized.viewportTargetSpec.isEnabled()
                 || !ViewportTargetType.OFF.equals(normalized.viewportTargetType)
-                || normalized.viewportScalePermilleDraft != null
+                || normalized.viewportScaleMilliPercentDraft != null
                 || normalized.viewportWidthDpDraft != null
                 || isCustomViewportApplyMode(normalized.viewportApplyMode)
                 || normalized.fontScalePercent != null
@@ -84,14 +84,14 @@ final class TemplateCustomSemantics {
     private static String viewportTargetTypeForCustomValue(
             String viewportTargetType,
             ViewportTargetSpec viewportTargetSpec,
-            Integer viewportScalePermilleDraft,
+            Integer viewportScaleMilliPercentDraft,
             Integer viewportWidthDpDraft) {
         if (viewportTargetSpec != null && viewportTargetSpec.isEnabled()) {
             return viewportTargetSpec.type();
         }
         String normalized = ViewportTargetType.normalize(viewportTargetType);
         if (ViewportTargetType.ABSOLUTE_DP.equals(normalized)
-                || viewportScalePermilleDraft != null
+                || viewportScaleMilliPercentDraft != null
                 || viewportWidthDpDraft != null) {
             return normalized;
         }
@@ -112,18 +112,12 @@ final class TemplateCustomSemantics {
                 : FontApplyMode.OFF;
     }
 
-    private static Integer parseViewportScalePermilleDraft(String rawInput) {
+    private static Integer parseViewportScaleMilliPercentDraft(String rawInput) {
         String raw = rawInput != null ? rawInput.trim() : "";
         if (raw.isEmpty()) {
             return null;
         }
-        Integer value = AppConfigInputValidation.parsePositiveIntOrNull(raw);
-        if (value == null
-                || value < ViewportTargetSpec.MIN_SCALE_PERCENT
-                || value > ViewportTargetSpec.MAX_SCALE_PERCENT) {
-            return null;
-        }
-        return value * 10;
+        return AppConfigInputValidation.parseViewportScaleMilliPercentOrNull(raw);
     }
 
     private static Integer parseViewportWidthDraft(String rawInput) {

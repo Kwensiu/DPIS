@@ -106,7 +106,7 @@ public class QuickTemplateApplyCoordinatorTest {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
         assertTrue(store.writePackageConfig("com.tencent.mm", new PackageConfigValue(
-                ViewportTargetSpec.relativeScale(1200),
+                ViewportTargetSpec.relativeScale(120000),
                 ViewportTargetType.RELATIVE_SCALE,
                 ViewportApplyMode.SYSTEM,
                 130,
@@ -251,3 +251,4 @@ public class QuickTemplateApplyCoordinatorTest {
         }
     }
 }
+

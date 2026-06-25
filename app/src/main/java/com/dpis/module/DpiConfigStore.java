@@ -25,6 +25,9 @@ import org.w3c.dom.NodeList;
 
 final class DpiConfigStore {
     private static final int MIN_VIEWPORT_WIDTH_DP = 1;
+    private static final int MIN_VIEWPORT_SCALE_MILLI_PERCENT = ViewportTargetSpec.MIN_SCALE_MILLI_PERCENT;
+    private static final int MAX_VIEWPORT_SCALE_MILLI_PERCENT = ViewportTargetSpec.MAX_SCALE_MILLI_PERCENT;
+    // Legacy constants for backward compatibility
     private static final int MIN_VIEWPORT_SCALE_PERMILLE = ViewportTargetSpec.MIN_SCALE_PERMILLE;
     private static final int MAX_VIEWPORT_SCALE_PERMILLE = ViewportTargetSpec.MAX_SCALE_PERMILLE;
     private static final int MIN_FONT_SCALE_PERCENT = 50;
@@ -72,6 +75,9 @@ final class DpiConfigStore {
             PackageConfigKeySpec.rangedInteger("viewport.", ".scale_permille",
                     MIN_VIEWPORT_SCALE_PERMILLE, MAX_VIEWPORT_SCALE_PERMILLE,
                     DpiConfigStore::keyForViewportScalePermille),
+            PackageConfigKeySpec.rangedInteger("viewport.", ".scale_milli_percent",
+                    MIN_VIEWPORT_SCALE_MILLI_PERCENT, MAX_VIEWPORT_SCALE_MILLI_PERCENT,
+                    DpiConfigStore::keyForViewportScaleMilliPercent),
             PackageConfigKeySpec.string("viewport.", ".mode",
                     DpiConfigStore::keyForViewportMode,
                     DpiConfigStore::isConfiguredViewportModeValue),
@@ -101,6 +107,9 @@ final class DpiConfigStore {
             PackageConfigKeySpec.rangedInteger("package_config.", ".viewport.scale_permille",
                     MIN_VIEWPORT_SCALE_PERMILLE, MAX_VIEWPORT_SCALE_PERMILLE,
                     DpiConfigStore::keyForPackageViewportScalePermille),
+            PackageConfigKeySpec.rangedInteger("package_config.", ".viewport.scale_milli_percent",
+                    MIN_VIEWPORT_SCALE_MILLI_PERCENT, MAX_VIEWPORT_SCALE_MILLI_PERCENT,
+                    DpiConfigStore::keyForPackageViewportScaleMilliPercent),
             PackageConfigKeySpec.string("package_config.", ".viewport.mode",
                     DpiConfigStore::keyForPackageViewportMode,
                     DpiConfigStore::isConfiguredViewportModeValue),
@@ -125,6 +134,7 @@ final class DpiConfigStore {
             DpiConfigStore::keyForViewportWidth,
             DpiConfigStore::keyForViewportTargetType,
             DpiConfigStore::keyForViewportScalePermille,
+            DpiConfigStore::keyForViewportScaleMilliPercent,
             DpiConfigStore::keyForViewportMode,
             DpiConfigStore::keyForFontScale,
             DpiConfigStore::keyForTypefaceId,
@@ -135,6 +145,7 @@ final class DpiConfigStore {
             DpiConfigStore::keyForViewportWidth,
             DpiConfigStore::keyForViewportTargetType,
             DpiConfigStore::keyForViewportScalePermille,
+            DpiConfigStore::keyForViewportScaleMilliPercent,
             DpiConfigStore::keyForViewportMode,
             DpiConfigStore::keyForFontScale,
             DpiConfigStore::keyForTypefaceId,
@@ -143,6 +154,7 @@ final class DpiConfigStore {
             DpiConfigStore::keyForPackageViewportWidth,
             DpiConfigStore::keyForPackageViewportTargetType,
             DpiConfigStore::keyForPackageViewportScalePermille,
+            DpiConfigStore::keyForPackageViewportScaleMilliPercent,
             DpiConfigStore::keyForPackageViewportMode,
             DpiConfigStore::keyForPackageFontScale,
             DpiConfigStore::keyForPackageTypefaceId,
@@ -153,6 +165,7 @@ final class DpiConfigStore {
             DpiConfigStore::keyForPackageViewportWidth,
             DpiConfigStore::keyForPackageViewportTargetType,
             DpiConfigStore::keyForPackageViewportScalePermille,
+            DpiConfigStore::keyForPackageViewportScaleMilliPercent,
             DpiConfigStore::keyForPackageViewportMode,
             DpiConfigStore::keyForPackageFontScale,
             DpiConfigStore::keyForPackageTypefaceId,
@@ -163,10 +176,12 @@ final class DpiConfigStore {
             DpiConfigStore::keyForViewportWidth,
             DpiConfigStore::keyForViewportTargetType,
             DpiConfigStore::keyForViewportScalePermille,
+            DpiConfigStore::keyForViewportScaleMilliPercent,
             DpiConfigStore::keyForViewportMode,
             DpiConfigStore::keyForPackageViewportWidth,
             DpiConfigStore::keyForPackageViewportTargetType,
             DpiConfigStore::keyForPackageViewportScalePermille,
+            DpiConfigStore::keyForPackageViewportScaleMilliPercent,
             DpiConfigStore::keyForPackageViewportMode
     };
 
@@ -235,13 +250,21 @@ final class DpiConfigStore {
         return normalizeViewportWidth(widthDp);
     }
 
-    Integer getTargetViewportScalePermille(String packageName) {
-        String key = keyForViewportScalePermille(packageName);
-        String packageKey = keyForPackageViewportScalePermille(packageName);
-        if (!containsPackageValue(key, packageKey)) {
-            return null;
+    Integer getTargetViewportScaleMilliPercent(String packageName) {
+        String key = keyForViewportScaleMilliPercent(packageName);
+        String packageKey = keyForPackageViewportScaleMilliPercent(packageName);
+        if (containsPackageValue(key, packageKey)) {
+            return normalizeViewportScaleMilliPercent(getPackageNullableInt(key, packageKey));
         }
-        return normalizeViewportScalePermille(getPackageNullableInt(key, packageKey));
+        // Legacy fallback: read scale_permille and convert
+        String legacyKey = keyForViewportScalePermille(packageName);
+        String legacyPackageKey = keyForPackageViewportScalePermille(packageName);
+        if (containsPackageValue(legacyKey, legacyPackageKey)) {
+            Integer legacyValue = normalizeViewportScalePermille(
+                    getPackageNullableInt(legacyKey, legacyPackageKey));
+            return legacyValue != null ? AppConfigInputValidation.fromLegacyScalePermille(legacyValue) : null;
+        }
+        return null;
     }
 
     String getTargetViewportType(String packageName) {
@@ -266,9 +289,9 @@ final class DpiConfigStore {
                         ViewportTargetType.OFF))
                 : ViewportTargetType.OFF;
         if (ViewportTargetType.RELATIVE_SCALE.equals(type)) {
-            Integer scalePermille = getTargetViewportScalePermille(packageName);
-            return scalePermille != null
-                    ? ViewportTargetSpec.relativeScale(scalePermille)
+            Integer scaleMilliPercent = getTargetViewportScaleMilliPercent(packageName);
+            return scaleMilliPercent != null
+                    ? ViewportTargetSpec.relativeScale(scaleMilliPercent)
                     : ViewportTargetSpec.off();
         }
         if (ViewportTargetType.ABSOLUTE_DP.equals(type)) {
@@ -562,10 +585,17 @@ final class DpiConfigStore {
             editor.putString(keyForViewportTargetType(packageName), normalized.type());
             editor.putString(keyForPackageViewportTargetType(packageName), normalized.type());
             if (normalized.isRelativeScale()) {
-                editor.putInt(keyForViewportScalePermille(packageName), normalized.scalePermille());
+                int scaleMilliPercent = normalized.scaleMilliPercent();
+                editor.putInt(keyForViewportScaleMilliPercent(packageName), scaleMilliPercent);
+                editor.putInt(
+                        keyForPackageViewportScaleMilliPercent(packageName),
+                        scaleMilliPercent);
+                // Double-write legacy for downgrade compatibility
+                int legacyPermille = AppConfigInputValidation.toLegacyScalePermille(scaleMilliPercent);
+                editor.putInt(keyForViewportScalePermille(packageName), legacyPermille);
                 editor.putInt(
                         keyForPackageViewportScalePermille(packageName),
-                        normalized.scalePermille());
+                        legacyPermille);
                 return;
             }
             editor.putInt(keyForViewportWidth(packageName), normalized.absoluteWidthDp());
@@ -630,35 +660,47 @@ final class DpiConfigStore {
                 .putInt(packageWidthKey, normalizedWidthDp));
     }
 
-    boolean setTargetViewportScalePermilleDraft(String packageName, Integer scalePermille) {
+    boolean setTargetViewportScaleMilliPercentDraft(String packageName, Integer scaleMilliPercent) {
         if (packageName == null || packageName.isBlank()) {
             return false;
         }
-        if (scalePermille != null && scalePermille <= 0) {
+        if (scaleMilliPercent != null && scaleMilliPercent <= 0) {
             return true;
         }
-        String scaleKey = keyForViewportScalePermille(packageName);
-        String packageScaleKey = keyForPackageViewportScalePermille(packageName);
-        if (scalePermille == null) {
+        String scaleKey = keyForViewportScaleMilliPercent(packageName);
+        String packageScaleKey = keyForPackageViewportScaleMilliPercent(packageName);
+        String legacyScaleKey = keyForViewportScalePermille(packageName);
+        String legacyPackageScaleKey = keyForPackageViewportScalePermille(packageName);
+        if (scaleMilliPercent == null) {
             LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
-            if (!hasAnyPackageConfigAfterRemoving(packageName, scaleKey, packageScaleKey)) {
+            if (!hasAnyPackageConfigAfterRemoving(
+                    packageName,
+                    scaleKey,
+                    packageScaleKey,
+                    legacyScaleKey,
+                    legacyPackageScaleKey)) {
                 packages.remove(packageName);
             }
             return commitBoth(editor -> editor
                     .putStringSet(KEY_TARGET_PACKAGES, packages)
                     .remove(scaleKey)
-                    .remove(packageScaleKey));
+                    .remove(packageScaleKey)
+                    .remove(legacyScaleKey)
+                    .remove(legacyPackageScaleKey));
         }
-        Integer normalizedScalePermille = normalizeViewportScalePermille(scalePermille);
-        if (normalizedScalePermille == null) {
+        Integer normalizedScaleMilliPercent = normalizeViewportScaleMilliPercent(scaleMilliPercent);
+        if (normalizedScaleMilliPercent == null) {
             return true;
         }
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
         packages.add(packageName);
+        int legacyPermille = AppConfigInputValidation.toLegacyScalePermille(normalizedScaleMilliPercent);
         return commitBoth(editor -> editor
                 .putStringSet(KEY_TARGET_PACKAGES, packages)
-                .putInt(scaleKey, normalizedScalePermille)
-                .putInt(packageScaleKey, normalizedScalePermille));
+                .putInt(scaleKey, normalizedScaleMilliPercent)
+                .putInt(packageScaleKey, normalizedScaleMilliPercent)
+                .putInt(legacyScaleKey, legacyPermille)
+                .putInt(legacyPackageScaleKey, legacyPermille));
     }
 
     boolean clearTargetViewportWidthDp(String packageName) {
@@ -672,10 +714,12 @@ final class DpiConfigStore {
                 .remove(keyForViewportWidth(packageName))
                 .remove(keyForViewportTargetType(packageName))
                 .remove(keyForViewportScalePermille(packageName))
+                .remove(keyForViewportScaleMilliPercent(packageName))
                 .remove(keyForViewportMode(packageName))
                 .remove(keyForPackageViewportWidth(packageName))
                 .remove(keyForPackageViewportTargetType(packageName))
                 .remove(keyForPackageViewportScalePermille(packageName))
+                .remove(keyForPackageViewportScaleMilliPercent(packageName))
                 .remove(keyForPackageViewportMode(packageName)));
     }
 
@@ -684,9 +728,11 @@ final class DpiConfigStore {
         if (!hasAnyPackageConfigAfterRemoving(packageName,
                 keyForViewportWidth(packageName),
                 keyForViewportScalePermille(packageName),
+                keyForViewportScaleMilliPercent(packageName),
                 keyForViewportMode(packageName),
                 keyForPackageViewportWidth(packageName),
                 keyForPackageViewportScalePermille(packageName),
+                keyForPackageViewportScaleMilliPercent(packageName),
                 keyForPackageViewportMode(packageName))) {
             packages.remove(packageName);
         }
@@ -694,9 +740,11 @@ final class DpiConfigStore {
                 .putStringSet(KEY_TARGET_PACKAGES, packages)
                 .remove(keyForViewportWidth(packageName))
                 .remove(keyForViewportScalePermille(packageName))
+                .remove(keyForViewportScaleMilliPercent(packageName))
                 .remove(keyForViewportMode(packageName))
                 .remove(keyForPackageViewportWidth(packageName))
                 .remove(keyForPackageViewportScalePermille(packageName))
+                .remove(keyForPackageViewportScaleMilliPercent(packageName))
                 .remove(keyForPackageViewportMode(packageName)));
     }
 
@@ -1066,11 +1114,19 @@ final class DpiConfigStore {
                         ViewportTargetType.OFF))
                 : ViewportTargetType.OFF;
         if (ViewportTargetType.RELATIVE_SCALE.equals(type)) {
-            Integer scalePermille = normalizeViewportScalePermille(getPackageNullableInt(
-                    keyForViewportScalePermille(packageName),
-                    keyForPackageViewportScalePermille(packageName)));
-            return scalePermille != null
-                    ? ViewportTargetSpec.relativeScale(scalePermille)
+            Integer scaleMilliPercent = normalizeViewportScaleMilliPercent(getPackageNullableInt(
+                    keyForViewportScaleMilliPercent(packageName),
+                    keyForPackageViewportScaleMilliPercent(packageName)));
+            if (scaleMilliPercent == null) {
+                // Legacy fallback
+                Integer legacyPermille = normalizeViewportScalePermille(getPackageNullableInt(
+                        keyForViewportScalePermille(packageName),
+                        keyForPackageViewportScalePermille(packageName)));
+                scaleMilliPercent = legacyPermille != null
+                        ? AppConfigInputValidation.fromLegacyScalePermille(legacyPermille) : null;
+            }
+            return scaleMilliPercent != null
+                    ? ViewportTargetSpec.relativeScale(scaleMilliPercent)
                     : ViewportTargetSpec.off();
         }
         if (ViewportTargetType.ABSOLUTE_DP.equals(type)) {
@@ -1112,12 +1168,20 @@ final class DpiConfigStore {
                         keyForPackageViewportTargetType(packageName),
                         normalized.viewportTargetSpec.type());
                 if (normalized.viewportTargetSpec.isRelativeScale()) {
+                    int scaleMilliPercent = normalized.viewportTargetSpec.scaleMilliPercent();
+                    editor.putInt(
+                            keyForViewportScaleMilliPercent(packageName),
+                            scaleMilliPercent);
+                    editor.putInt(
+                            keyForPackageViewportScaleMilliPercent(packageName),
+                            scaleMilliPercent);
+                    int legacyPermille = AppConfigInputValidation.toLegacyScalePermille(scaleMilliPercent);
                     editor.putInt(
                             keyForViewportScalePermille(packageName),
-                            normalized.viewportTargetSpec.scalePermille());
+                            legacyPermille);
                     editor.putInt(
                             keyForPackageViewportScalePermille(packageName),
-                            normalized.viewportTargetSpec.scalePermille());
+                            legacyPermille);
                 } else {
                     editor.putInt(
                             keyForViewportWidth(packageName),
@@ -1212,12 +1276,20 @@ final class DpiConfigStore {
                         keyForPackageViewportTargetType(packageName),
                         copyableConfig.viewportTargetSpec.type());
                 if (copyableConfig.viewportTargetSpec.isRelativeScale()) {
+                    int scaleMilliPercent = copyableConfig.viewportTargetSpec.scaleMilliPercent();
+                    editor.putInt(
+                            keyForViewportScaleMilliPercent(packageName),
+                            scaleMilliPercent);
+                    editor.putInt(
+                            keyForPackageViewportScaleMilliPercent(packageName),
+                            scaleMilliPercent);
+                    int legacyPermille = AppConfigInputValidation.toLegacyScalePermille(scaleMilliPercent);
                     editor.putInt(
                             keyForViewportScalePermille(packageName),
-                            copyableConfig.viewportTargetSpec.scalePermille());
+                            legacyPermille);
                     editor.putInt(
                             keyForPackageViewportScalePermille(packageName),
-                            copyableConfig.viewportTargetSpec.scalePermille());
+                            legacyPermille);
                 } else {
                     editor.putInt(
                             keyForViewportWidth(packageName),
@@ -1317,8 +1389,10 @@ final class DpiConfigStore {
             String packageName) {
         editor.remove(keyForViewportWidth(packageName))
                 .remove(keyForViewportScalePermille(packageName))
+                .remove(keyForViewportScaleMilliPercent(packageName))
                 .remove(keyForPackageViewportWidth(packageName))
-                .remove(keyForPackageViewportScalePermille(packageName));
+                .remove(keyForPackageViewportScalePermille(packageName))
+                .remove(keyForPackageViewportScaleMilliPercent(packageName));
     }
 
     private static String[] templateConfigKeysForPackage(String packageName) {
@@ -1461,6 +1535,11 @@ final class DpiConfigStore {
         if (key.startsWith("viewport.") && key.endsWith(".scale_permille")) {
             return value instanceof Integer intValue
                     ? normalizeViewportScalePermille(intValue)
+                    : null;
+        }
+        if (key.startsWith("viewport.") && key.endsWith(".scale_milli_percent")) {
+            return value instanceof Integer intValue
+                    ? normalizeViewportScaleMilliPercent(intValue)
                     : null;
         }
         if (key.startsWith("viewport.") && key.endsWith(".mode")) {
@@ -2293,6 +2372,15 @@ final class DpiConfigStore {
         return widthDp;
     }
 
+    private static Integer normalizeViewportScaleMilliPercent(Integer scaleMilliPercent) {
+        if (scaleMilliPercent == null
+                || scaleMilliPercent < MIN_VIEWPORT_SCALE_MILLI_PERCENT
+                || scaleMilliPercent > MAX_VIEWPORT_SCALE_MILLI_PERCENT) {
+            return null;
+        }
+        return scaleMilliPercent;
+    }
+
     private static Integer normalizeViewportScalePermille(Integer scalePermille) {
         if (scalePermille == null
                 || scalePermille < MIN_VIEWPORT_SCALE_PERMILLE
@@ -2346,8 +2434,16 @@ final class DpiConfigStore {
         return "viewport." + packageName + ".scale_permille";
     }
 
+    private static String keyForViewportScaleMilliPercent(String packageName) {
+        return "viewport." + packageName + ".scale_milli_percent";
+    }
+
     private static String keyForPackageViewportScalePermille(String packageName) {
         return "package_config." + packageName + ".viewport.scale_permille";
+    }
+
+    private static String keyForPackageViewportScaleMilliPercent(String packageName) {
+        return "package_config." + packageName + ".viewport.scale_milli_percent";
     }
 
     private static String keyForViewportMode(String packageName) {

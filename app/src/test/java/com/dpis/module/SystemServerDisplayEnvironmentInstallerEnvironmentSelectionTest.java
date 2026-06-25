@@ -65,7 +65,7 @@ public class SystemServerDisplayEnvironmentInstallerEnvironmentSelectionTest {
         );
         PerAppDisplayConfig relativeViewport = new PerAppDisplayConfig(
                 "com.example.target",
-                ViewportTargetSpec.relativeScale(1500),
+                ViewportTargetSpec.relativeScale(150000),
                 ViewportApplyMode.AUTO,
                 null,
                 FontApplyMode.OFF,
@@ -74,7 +74,7 @@ public class SystemServerDisplayEnvironmentInstallerEnvironmentSelectionTest {
         );
         PerAppDisplayConfig explicitSystemRelativeViewport = new PerAppDisplayConfig(
                 "com.example.target",
-                ViewportTargetSpec.relativeScale(1500),
+                ViewportTargetSpec.relativeScale(150000),
                 ViewportApplyMode.SYSTEM,
                 null,
                 FontApplyMode.OFF,
@@ -83,7 +83,7 @@ public class SystemServerDisplayEnvironmentInstallerEnvironmentSelectionTest {
         );
         PerAppDisplayConfig relativeViewportWithFont = new PerAppDisplayConfig(
                 "com.example.target",
-                ViewportTargetSpec.relativeScale(1500),
+                ViewportTargetSpec.relativeScale(150000),
                 ViewportApplyMode.AUTO,
                 120,
                 FontApplyMode.SYSTEM_EMULATION,
@@ -119,7 +119,7 @@ public class SystemServerDisplayEnvironmentInstallerEnvironmentSelectionTest {
         ViewportRuntimeMarkerBridge.MarkerRecord record =
                 ViewportRuntimeMarkerBridge.createRecord(
                         "com.tencent.mm",
-                        ViewportTargetSpec.relativeScale(1500),
+                        ViewportTargetSpec.relativeScale(150000),
                         1215,
                         ViewportSourceSnapshot.systemDisplayInfo(
                                 810,
@@ -149,7 +149,7 @@ public class SystemServerDisplayEnvironmentInstallerEnvironmentSelectionTest {
         ViewportRuntimeMarkerBridge.MarkerRecord record =
                 ViewportRuntimeMarkerBridge.createRecord(
                         "com.tencent.mm",
-                        ViewportTargetSpec.relativeScale(1500),
+                        ViewportTargetSpec.relativeScale(150000),
                         1215,
                         ViewportSourceSnapshot.systemDisplayInfo(
                                 810,
@@ -169,3 +169,4 @@ public class SystemServerDisplayEnvironmentInstallerEnvironmentSelectionTest {
                         ViewportRuntimeMarkerBridge.ParseResult.hit(record, 10L)));
     }
 }
+

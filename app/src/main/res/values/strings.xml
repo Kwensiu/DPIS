@@ -12,7 +12,11 @@
     <string name="dialog_wechat_dpi_hint">WeChat DPI 200-1000</string>
     <string name="dialog_wechat_dpi_help_button">WeChat DPI help</string>
     <string name="dialog_wechat_dpi_help_title">WeChat DPI</string>
-    <string name="dialog_wechat_dpi_help_message">Uses a WeChat-specific DisplayMetrics route to tune WeChat UI density. This path is independent from the generic DPI and viewport chains.\n\nRange: 200-1000\n\nMini Programs are not supported yet.</string>
+    <string name="dialog_wechat_dpi_help_message">Uses a WeChat-specific DisplayMetrics route to tune WeChat UI density. This path is independent from the generic DPI and viewport chains.
+
+Range: 200-1000
+
+Mini Programs are not supported yet.</string>
     <string name="dialog_typeface_label">Font file</string>
     <string name="dialog_typeface_selector_value">Font style: %1$s</string>
     <string name="dialog_typeface_dialog_title">Choose font</string>
@@ -210,7 +214,7 @@
     <string name="template_workspace_quick_templates_title">Quick templates</string>
     <string name="template_workspace_quick_templates_empty">No quick templates yet.</string>
     <string name="template_workspace_summary_empty">No custom values.</string>
-    <string name="template_workspace_summary_viewport_scale">Interface %1$d.%2$d%%</string>
+    <string name="template_workspace_summary_viewport_scale">Interface %1$s%%</string>
     <string name="template_workspace_summary_viewport_width">Interface %1$ddp</string>
     <string name="template_workspace_summary_viewport_mode">Interface route: %1$s</string>
     <string name="template_workspace_summary_viewport">Interface %1$s</string>
@@ -339,7 +343,11 @@
     <string name="dialog_dpis_enabled_status">Enabled</string>
     <string name="dialog_dpis_disabled_status">Disabled</string>
     <string name="startup_disclaimer_title">Risk Notice and Disclaimer</string>
-    <string name="startup_disclaimer_message">This module runs in a Root/LSPosed environment and may cause system instability, data loss, boot loops, or account bans.\n\nPlease back up your data. You assume all risks associated with using this module.\n\nThe developer is not responsible for any damage or loss caused by this module.</string>
+    <string name="startup_disclaimer_message">This module runs in a Root/LSPosed environment and may cause system instability, data loss, boot loops, or account bans.
+
+Please back up your data. You assume all risks associated with using this module.
+
+The developer is not responsible for any damage or loss caused by this module.</string>
     <string name="startup_disclaimer_checkbox_text">I have read and agree</string>
     <string name="startup_disclaimer_accept_button">Agree and continue</string>
     <string name="startup_disclaimer_save_failed">Failed to save consent.</string>

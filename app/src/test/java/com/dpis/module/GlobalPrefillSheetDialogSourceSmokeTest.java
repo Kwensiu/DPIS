@@ -49,6 +49,8 @@ public class GlobalPrefillSheetDialogSourceSmokeTest {
         assertTrue(layout.contains("@dimen/sheet_unsaved_badge_min_height"));
         assertTrue(layout.contains("@dimen/dialog_app_config_padding_horizontal"));
         assertTrue(sharedTemplateFields.contains("android:id=\"@+id/template_config_viewport_input_layout\""));
+        assertTrue(sharedTemplateFields.contains("android:id=\"@+id/template_config_viewport_input\""));
+        assertTrue(sharedTemplateFields.contains("android:inputType=\"numberDecimal\""));
         assertTrue(sharedTemplateFields.contains("android:id=\"@+id/template_config_font_scale_input_layout\""));
         assertTrue(sharedTemplateFields.contains("android:id=\"@+id/template_config_typeface_selector_button\""));
         assertTrue(sharedTemplateFields.contains("android:id=\"@+id/template_config_font_hook_domains_button\""));

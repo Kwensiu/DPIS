@@ -11,7 +11,11 @@
     <string name="dialog_wechat_dpi_hint">WeChat DPI 200-1000</string>
     <string name="dialog_wechat_dpi_help_button">WeChat DPI ヘルプ</string>
     <string name="dialog_wechat_dpi_help_title">WeChat DPI</string>
-    <string name="dialog_wechat_dpi_help_message">WeChat 専用の DisplayMetrics ルートを使って WeChat UI の密度を調整します。この経路は汎用 DPI チェーンおよび viewport チェーンとは独立しています。\n\n範囲: 200-1000\n\nMini Programs はまだサポートされていません。</string>
+    <string name="dialog_wechat_dpi_help_message">WeChat 専用の DisplayMetrics ルートを使って WeChat UI の密度を調整します。この経路は汎用 DPI チェーンおよび viewport チェーンとは独立しています。
+
+範囲: 200-1000
+
+Mini Programs はまだサポートされていません。</string>
     <string name="dialog_typeface_label">フォントファイル</string>
     <string name="dialog_typeface_selector_value">フォントスタイル: %1$s</string>
     <string name="dialog_typeface_dialog_title">フォントを選択</string>
@@ -197,7 +201,7 @@
     <string name="template_workspace_quick_templates_title">クイックテンプレート</string>
     <string name="template_workspace_quick_templates_empty">クイックテンプレートはまだありません。</string>
     <string name="template_workspace_summary_empty">カスタム値はありません。</string>
-    <string name="template_workspace_summary_viewport_scale">インターフェース %1$d.%2$d%%</string>
+    <string name="template_workspace_summary_viewport_scale">インターフェース %1$s%%</string>
     <string name="template_workspace_summary_viewport_width">インターフェース %1$ddp</string>
     <string name="template_workspace_summary_viewport_mode">インターフェースルート: %1$s</string>
     <string name="template_workspace_summary_viewport">インターフェース %1$s</string>
@@ -323,7 +327,11 @@
     <string name="dialog_dpis_enabled_status">有効</string>
     <string name="dialog_dpis_disabled_status">無効</string>
     <string name="startup_disclaimer_title">リスク通知と免責事項</string>
-    <string name="startup_disclaimer_message">このモジュールは Root/LSPosed 環境で動作し、システムの不安定化、データ損失、ブートループ、アカウント停止を引き起こす可能性があります。\n\nデータをバックアップしてください。このモジュールの使用に伴うすべてのリスクは利用者が負います。\n\nこのモジュールによって生じた損害や損失について、開発者は責任を負いません。</string>
+    <string name="startup_disclaimer_message">このモジュールは Root/LSPosed 環境で動作し、システムの不安定化、データ損失、ブートループ、アカウント停止を引き起こす可能性があります。
+
+データをバックアップしてください。このモジュールの使用に伴うすべてのリスクは利用者が負います。
+
+このモジュールによって生じた損害や損失について、開発者は責任を負いません。</string>
     <string name="startup_disclaimer_checkbox_text">読み、同意しました</string>
     <string name="startup_disclaimer_accept_button">同意して続行</string>
     <string name="startup_disclaimer_save_failed">同意状態の保存に失敗しました。</string>

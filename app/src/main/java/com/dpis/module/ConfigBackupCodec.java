@@ -34,6 +34,7 @@ final class ConfigBackupCodec {
             "viewport.width_dp",
             "viewport.target_type",
             "viewport.scale_permille",
+            "viewport.scale_milli_percent",
             "viewport.mode",
             "font.scale_percent",
             "font.typeface_id",

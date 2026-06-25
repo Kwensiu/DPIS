@@ -420,11 +420,11 @@ final class AppConfigSaveHandler {
                     packageName, draft.value);
         }
         if (activeSpec.isAbsoluteDp()) {
-            ViewportDraftValue draft = parseViewportScalePermilleDraft(viewportScaleInput);
+            ViewportDraftValue draft = parseViewportScaleMilliPercentDraft(viewportScaleInput);
             if (!draft.valid) {
                 return true;
             }
-            return store.setTargetViewportScalePermilleDraft(
+            return store.setTargetViewportScaleMilliPercentDraft(
                     packageName, draft.value);
         }
         return true;
@@ -439,18 +439,13 @@ final class AppConfigSaveHandler {
         return value != null ? ViewportDraftValue.valid(value) : ViewportDraftValue.invalid();
     }
 
-    private static ViewportDraftValue parseViewportScalePermilleDraft(String rawInput) {
+    private static ViewportDraftValue parseViewportScaleMilliPercentDraft(String rawInput) {
         String raw = rawInput != null ? rawInput.trim() : "";
         if (raw.isEmpty()) {
             return ViewportDraftValue.valid(null);
         }
-        Integer value = AppConfigInputValidation.parsePositiveIntOrNull(raw);
-        if (value == null
-                || value < ViewportTargetSpec.MIN_SCALE_PERCENT
-                || value > ViewportTargetSpec.MAX_SCALE_PERCENT) {
-            return ViewportDraftValue.invalid();
-        }
-        return ViewportDraftValue.valid(value * 10);
+        Integer value = AppConfigInputValidation.parseViewportScaleMilliPercentOrNull(raw);
+        return value != null ? ViewportDraftValue.valid(value) : ViewportDraftValue.invalid();
     }
 
     private static final class ViewportDraftValue {

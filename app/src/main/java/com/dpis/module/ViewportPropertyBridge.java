@@ -85,11 +85,11 @@ final class ViewportPropertyBridge {
                 persistentTargetTypePropertyNameForPackage(packageName));
         Integer widthDp = readTargetWidthDp(packageName);
         Integer compatConfigWidthDp = readCompatConfigWidthDp(packageName);
-        Integer scalePermille = readOverrideValue(
+        Integer scaleMilliPercent = readOverrideValue(
                 scalePropertyNameForPackage(packageName),
                 persistentScalePropertyNameForPackage(packageName));
         ViewportPropertyProjection.Decoded decoded = ViewportPropertyProjection.decode(
-                widthDp, type, scalePermille, compatConfigWidthDp, null);
+                widthDp, type, scaleMilliPercent, compatConfigWidthDp, null);
         return decoded.targetSpec;
     }
 

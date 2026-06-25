@@ -26,7 +26,7 @@ public class AppConfigPrefillPreviewTest {
         AppListItem item = app("com.example.app");
         store.setTargetFontScalePercent(item.packageName, 110);
         TemplateConfigValue prefill = new TemplateConfigValue(
-                ViewportTargetSpec.relativeScale(850),
+                ViewportTargetSpec.relativeScale(85000),
                 ViewportApplyMode.AUTO,
                 125,
                 FontApplyMode.FIELD_REWRITE,
@@ -64,7 +64,7 @@ public class AppConfigPrefillPreviewTest {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
         TemplateConfigValue prefill = new TemplateConfigValue(
-                ViewportTargetSpec.relativeScale(875),
+                ViewportTargetSpec.relativeScale(87500),
                 ViewportApplyMode.AUTO,
                 125,
                 FontApplyMode.FIELD_REWRITE,
@@ -74,8 +74,8 @@ public class AppConfigPrefillPreviewTest {
         AppListItem result = AppConfigPrefillPreview.applyIfEligible(item, store, prefill);
 
         assertTrue(result.previewFromGlobalPrefill);
-        assertEquals(ViewportTargetSpec.relativeScale(875), result.viewportTargetSpec);
-        assertEquals(Integer.valueOf(875), result.viewportScalePermille);
+        assertEquals(ViewportTargetSpec.relativeScale(87500), result.viewportTargetSpec);
+        assertEquals(Integer.valueOf(87500), result.viewportScaleMilliPercent);
         assertEquals(ViewportApplyMode.AUTO, result.viewportMode);
         assertEquals(Integer.valueOf(125), result.fontScalePercent);
         assertEquals(FontApplyMode.FIELD_REWRITE, result.fontMode);
@@ -90,7 +90,7 @@ public class AppConfigPrefillPreviewTest {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
         TemplateConfigValue prefill = new TemplateConfigValue(
-                ViewportTargetSpec.relativeScale(875),
+                ViewportTargetSpec.relativeScale(87500),
                 ViewportApplyMode.AUTO,
                 125,
                 FontApplyMode.FIELD_REWRITE,

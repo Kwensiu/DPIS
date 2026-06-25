@@ -47,9 +47,8 @@ final class TemplateConfigSummaryFormatter {
         ViewportTargetSpec viewportTargetSpec = normalized.viewportTargetSpec;
         ArrayList<String> viewportParts = new ArrayList<>();
         if (viewportTargetSpec.isRelativeScale()) {
-            int whole = viewportTargetSpec.scalePermille() / 10;
-            int decimal = viewportTargetSpec.scalePermille() % 10;
-            viewportParts.add(percentText(whole, decimal));
+            viewportParts.add(AppConfigInputValidation.formatScaleMilliPercent(
+                    viewportTargetSpec.scaleMilliPercent()));
         } else if (viewportTargetSpec.isAbsoluteDp()) {
             viewportParts.add(viewportTargetSpec.absoluteWidthDp() + "dp");
         }
@@ -57,7 +56,7 @@ final class TemplateConfigSummaryFormatter {
                 TemplateCustomSemantics.isCustomViewportApplyMode(normalized.viewportApplyMode);
         boolean viewportDraftConfigured =
                 !ViewportTargetType.OFF.equals(normalized.viewportTargetType)
-                        || normalized.viewportScalePermilleDraft != null
+                        || normalized.viewportScaleMilliPercentDraft != null
                         || normalized.viewportWidthDpDraft != null;
         if (viewportParts.isEmpty() && (viewportModeConfigured || viewportDraftConfigured)) {
             viewportParts.add(text.noValue());
@@ -97,10 +96,6 @@ final class TemplateConfigSummaryFormatter {
             parts.add(text.hookDomains());
         }
         return new Result(parts, typefaceStatus, text.emptySummary());
-    }
-
-    private String percentText(int wholePercent, int decimalPercent) {
-        return wholePercent + "." + decimalPercent + "%";
     }
 
     private String joinDetails(List<String> details) {

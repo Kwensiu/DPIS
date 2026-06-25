@@ -71,7 +71,7 @@ final class RuntimePropertyConfigPreferences implements SharedPreferences {
         if (viewportTargetSpec.isEnabled() && ViewportApplyMode.isEnabled(viewportMode)) {
             values.put(viewportTargetTypeKey(), viewportTargetSpec.type());
             if (viewportTargetSpec.isRelativeScale()) {
-                values.put(viewportScalePermilleKey(), viewportTargetSpec.scalePermille());
+                values.put(viewportScaleMilliPercentKey(), viewportTargetSpec.scaleMilliPercent());
             }
             if (widthDp != null && widthDp > 0) {
                 values.put(viewportWidthKey(), widthDp);
@@ -240,8 +240,8 @@ final class RuntimePropertyConfigPreferences implements SharedPreferences {
         return "viewport." + packageName + ".target_type";
     }
 
-    private String viewportScalePermilleKey() {
-        return "viewport." + packageName + ".scale_permille";
+    private String viewportScaleMilliPercentKey() {
+        return "viewport." + packageName + ".scale_milli_percent";
     }
 
     private String viewportModeKey() {

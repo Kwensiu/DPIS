@@ -64,7 +64,7 @@ public class QuickTemplateStoreTest {
         FakePrefs prefs = new FakePrefs();
         QuickTemplateStore store = new QuickTemplateStore(prefs);
         TemplateConfigValue configValue = new TemplateConfigValue(
-                ViewportTargetSpec.relativeScale(900),
+                ViewportTargetSpec.relativeScale(90000),
                 ViewportApplyMode.AUTO,
                 null,
                 FontApplyMode.OFF,
@@ -204,7 +204,7 @@ public class QuickTemplateStoreTest {
                 .putString("template.template_a.updated_at", "not_a_long")
                 .putString("template.template_a.config.viewport.target_type",
                         ViewportTargetType.RELATIVE_SCALE)
-                .putString("template.template_a.config.viewport.scale_permille", "not_an_int")
+                .putString("template.template_a.config.viewport.scale_milli_percent", "not_an_int")
                 .putInt("template.template_a.config.font.scale_percent", 40)
                 .putString("template.template_a.config.font.typeface_id", "missing_font_id")
                 .commit();
@@ -251,3 +251,4 @@ public class QuickTemplateStoreTest {
         assertFalse(store.hasDuplicateName("Other", null));
     }
 }
+

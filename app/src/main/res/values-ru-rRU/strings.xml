@@ -11,7 +11,11 @@
     <string name="dialog_wechat_dpi_hint">WeChat DPI 200-1000</string>
     <string name="dialog_wechat_dpi_help_button">Справка по DPI в WeChat</string>
     <string name="dialog_wechat_dpi_help_title">WeChat DPI</string>
-    <string name="dialog_wechat_dpi_help_message">Uses a WeChat-specific DisplayMetrics route to tune WeChat UI density. This path is independent from the generic DPI and viewport chains.\n\nRange: 200-1000\n\nMini Programs are not supported yet.</string>
+    <string name="dialog_wechat_dpi_help_message">Uses a WeChat-specific DisplayMetrics route to tune WeChat UI density. This path is independent from the generic DPI and viewport chains.
+
+Range: 200-1000
+
+Mini Programs are not supported yet.</string>
     <string name="dialog_typeface_label">Файл шрифта</string>
     <string name="dialog_typeface_selector_value">Стиль шрифта: %1$s</string>
     <string name="dialog_typeface_dialog_title">Выберите шрифт</string>
@@ -197,7 +201,7 @@
     <string name="template_workspace_quick_templates_title">Быстрые шаблоны</string>
     <string name="template_workspace_quick_templates_empty">Пока что быстрых шаблонов нет.</string>
     <string name="template_workspace_summary_empty">Пользовательские значения отсутствуют.</string>
-    <string name="template_workspace_summary_viewport_scale">Интерфейс %1$d.%2$d%%</string>
+    <string name="template_workspace_summary_viewport_scale">Интерфейс %1$s%%</string>
     <string name="template_workspace_summary_viewport_width">Интерфейс %1$ddp</string>
     <string name="template_workspace_summary_viewport_mode">Маршрут интерфейса: %1$s</string>
     <string name="template_workspace_summary_viewport">Интерфейс %1$s</string>
@@ -323,7 +327,11 @@
     <string name="dialog_dpis_enabled_status">Включено</string>
     <string name="dialog_dpis_disabled_status">Отключено</string>
     <string name="startup_disclaimer_title">Предупреждение о рисках и отказ от ответственности</string>
-    <string name="startup_disclaimer_message">Данный модуль работает в среде Root/LSPosed и может привести к нестабильной работе системы, потере данных, зацикливанию при загрузке или блокировке учетной записи.\n\nПожалуйста, создайте резервную копию ваших данных. Вы принимаете на себя все риски, связанные с использованием данного модуля.\n\nРазработчик не несет ответственности за любой ущерб или убытки, вызванные работой данного модуля.</string>
+    <string name="startup_disclaimer_message">Данный модуль работает в среде Root/LSPosed и может привести к нестабильной работе системы, потере данных, зацикливанию при загрузке или блокировке учетной записи.
+
+Пожалуйста, создайте резервную копию ваших данных. Вы принимаете на себя все риски, связанные с использованием данного модуля.
+
+Разработчик не несет ответственности за любой ущерб или убытки, вызванные работой данного модуля.</string>
     <string name="startup_disclaimer_checkbox_text">Я ознакомился с условиями и согласен с ними</string>
     <string name="startup_disclaimer_accept_button">Согласен, продолжить</string>
     <string name="startup_disclaimer_save_failed">Не удалось сохранить согласие.</string>

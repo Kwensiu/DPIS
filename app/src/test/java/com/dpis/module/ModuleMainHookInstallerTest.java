@@ -220,8 +220,10 @@ public class ModuleMainHookInstallerTest {
         assertTrue(typefaceInstaller.contains("HOOK_ID_PAINT_SET_TYPEFACE"));
         assertTrue(typefaceInstaller.contains("apiCapabilities.applyStableHookId("));
         assertTrue(typefaceInstaller.contains("bridgeOverrideAppliedIfChanged("));
-        assertTrue(read("src/main/java/com/dpis/module/AppProcessHookInstaller.java")
-                .contains("plan.fontDomainPlan,\n                    apiCapabilities"));
+        String appProcessInstaller = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+        assertTrue(appProcessInstaller.contains("ForceTextSizeHookInstaller.install("));
+        assertTrue(appProcessInstaller.contains("plan.fontDomainPlan,"));
+        assertTrue(appProcessInstaller.contains("apiCapabilities);"));
         assertTrue(read("src/main/java/com/dpis/module/DisplayHookInstaller.java")
                 .contains("HOOK_ID_DISPLAY_GET_DISPLAY_INFO"));
         assertTrue(read("src/main/java/com/dpis/module/WindowMetricsHookInstaller.java")

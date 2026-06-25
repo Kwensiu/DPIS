@@ -60,7 +60,7 @@ public class DpiConfigStoreTest {
         prefs.edit()
                 .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
                         new LinkedHashSet<>(Set.of("org.mozilla.firefox")))
-                .putInt("viewport.org.mozilla.firefox.scale_permille", 1200)
+                .putInt("viewport.org.mozilla.firefox.scale_milli_percent", 120000)
                 .putString("viewport.org.mozilla.firefox.target_type",
                         ViewportTargetType.RELATIVE_SCALE)
                 .putString("font.org.mozilla.firefox.mode",
@@ -215,7 +215,7 @@ public class DpiConfigStoreTest {
         prefs.edit()
                 .putString("package_config.com.example.app.viewport.target_type",
                         ViewportTargetType.RELATIVE_SCALE)
-                .putInt("package_config.com.example.app.viewport.scale_permille", 1250)
+                .putInt("package_config.com.example.app.viewport.scale_milli_percent", 125000)
                 .putString("package_config.com.example.app.viewport.mode",
                         ViewportApplyMode.SYSTEM)
                 .commit();
@@ -223,9 +223,9 @@ public class DpiConfigStoreTest {
 
         assertEquals(ViewportTargetType.RELATIVE_SCALE,
                 store.getTargetViewportType("com.example.app"));
-        assertEquals(Integer.valueOf(1250),
-                store.getTargetViewportScalePermille("com.example.app"));
-        assertEquals(ViewportTargetSpec.relativeScale(1250),
+        assertEquals(Integer.valueOf(125000),
+                store.getTargetViewportScaleMilliPercent("com.example.app"));
+        assertEquals(ViewportTargetSpec.relativeScale(125000),
                 store.getTargetViewportSpec("com.example.app"));
         assertEquals(ViewportApplyMode.SYSTEM,
                 store.getTargetViewportApplyMode("com.example.app"));
@@ -237,12 +237,19 @@ public class DpiConfigStoreTest {
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         assertTrue(store.setTargetViewportSpec(
-                "com.example.app", ViewportTargetSpec.relativeScale(1250)));
+                "com.example.app", ViewportTargetSpec.relativeScale(125000)));
 
         assertEquals(ViewportTargetType.RELATIVE_SCALE,
                 prefs.getString("viewport.com.example.app.target_type", null));
         assertEquals(ViewportTargetType.RELATIVE_SCALE,
                 prefs.getString("package_config.com.example.app.viewport.target_type", null));
+        assertEquals(Integer.valueOf(125000),
+                Integer.valueOf(prefs.getInt(
+                        "viewport.com.example.app.scale_milli_percent", 0)));
+        assertEquals(Integer.valueOf(125000),
+                Integer.valueOf(prefs.getInt(
+                        "package_config.com.example.app.viewport.scale_milli_percent", 0)));
+        // Legacy double-write
         assertEquals(Integer.valueOf(1250),
                 Integer.valueOf(prefs.getInt(
                         "viewport.com.example.app.scale_permille", 0)));
@@ -260,7 +267,7 @@ public class DpiConfigStoreTest {
         assertTrue(store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.SYSTEM));
 
         assertTrue(store.setTargetViewportSpec(
-                "com.example.app", ViewportTargetSpec.relativeScale(1250)));
+                "com.example.app", ViewportTargetSpec.relativeScale(125000)));
 
         assertEquals(ViewportApplyMode.SYSTEM,
                 prefs.getString("viewport.com.example.app.mode", null));
@@ -291,18 +298,20 @@ public class DpiConfigStoreTest {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
         assertTrue(store.setTargetViewportSpec(
-                "com.example.app", ViewportTargetSpec.relativeScale(1250)));
+                "com.example.app", ViewportTargetSpec.relativeScale(125000)));
         assertTrue(store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.SYSTEM));
 
         assertTrue(store.clearTargetViewportWidthDp("com.example.app"));
 
-        assertNull(store.getTargetViewportScalePermille("com.example.app"));
+        assertNull(store.getTargetViewportScaleMilliPercent("com.example.app"));
         assertEquals(ViewportTargetType.OFF, store.getTargetViewportType("com.example.app"));
         assertEquals(ViewportApplyMode.OFF, store.getTargetViewportApplyMode("com.example.app"));
         assertFalse(prefs.contains("viewport.com.example.app.target_type"));
+        assertFalse(prefs.contains("viewport.com.example.app.scale_milli_percent"));
         assertFalse(prefs.contains("viewport.com.example.app.scale_permille"));
         assertFalse(prefs.contains("viewport.com.example.app.mode"));
         assertFalse(prefs.contains("package_config.com.example.app.viewport.target_type"));
+        assertFalse(prefs.contains("package_config.com.example.app.viewport.scale_milli_percent"));
         assertFalse(prefs.contains("package_config.com.example.app.viewport.scale_permille"));
         assertFalse(prefs.contains("package_config.com.example.app.viewport.mode"));
         assertFalse(store.getConfiguredPackages().contains("com.example.app"));
@@ -1150,7 +1159,7 @@ public class DpiConfigStoreTest {
                 1000L,
                 Set.of("com.example.app"),
                 new TemplateConfigValue(
-                        ViewportTargetSpec.relativeScale(1100),
+                        ViewportTargetSpec.relativeScale(110000),
                         ViewportApplyMode.COMPAT,
                         115,
                         FontApplyMode.SYSTEM_EMULATION,
@@ -1287,7 +1296,7 @@ public class DpiConfigStoreTest {
 
         assertTrue(store.replaceBackup(values));
 
-        assertEquals(ViewportTargetSpec.relativeScale(1250),
+        assertEquals(ViewportTargetSpec.relativeScale(125000),
                 store.readPackageConfig("com.tencent.mm").viewportTargetSpec);
         assertEquals("resources_font,textview_sp",
                 store.readPackageConfig("com.tencent.mm").fontHookDomainsRaw);
@@ -1317,7 +1326,7 @@ public class DpiConfigStoreTest {
 
         assertTrue(store.replaceBackup(values));
 
-        assertEquals(ViewportTargetSpec.relativeScale(900),
+        assertEquals(ViewportTargetSpec.relativeScale(90000),
                 store.readPackageConfig("com.example.app").viewportTargetSpec);
         assertFalse(prefs.contains("viewport.com.example.app.target_type"));
         assertFalse(prefs.contains("viewport.com.example.app.width_dp"));
@@ -1378,7 +1387,7 @@ public class DpiConfigStoreTest {
         assertEquals(1000L, template.updatedAt);
         assertEquals(new LinkedHashSet<>(Set.of("com.example.app")),
                 template.selectedPackages);
-        assertEquals(ViewportTargetSpec.relativeScale(1100),
+        assertEquals(ViewportTargetSpec.relativeScale(110000),
                 template.configValue.viewportTargetSpec);
         assertEquals(ViewportApplyMode.COMPAT, template.configValue.viewportApplyMode);
         assertEquals(Integer.valueOf(115), template.configValue.fontScalePercent);
@@ -1422,11 +1431,29 @@ public class DpiConfigStoreTest {
         assertTrue(store.setTargetViewportSpec(
                 "com.example.app", ViewportTargetSpec.absoluteDp(480)));
 
-        assertTrue(store.setTargetViewportScalePermilleDraft("com.example.app", 1250));
+        assertTrue(store.setTargetViewportScaleMilliPercentDraft("com.example.app", 125000));
 
         assertTrue(store.getTargetViewportSpec("com.example.app").isAbsoluteDp());
         assertEquals(Integer.valueOf(480), store.getTargetViewportWidthDp("com.example.app"));
-        assertEquals(Integer.valueOf(1250), store.getTargetViewportScalePermille("com.example.app"));
+        assertEquals(Integer.valueOf(125000),
+                store.getTargetViewportScaleMilliPercent("com.example.app"));
+    }
+
+    @Test
+    public void clearingViewportScaleDraftRemovesConfiguredPackageWhenLegacyMirrorWasOnlyValue() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+
+        assertTrue(store.setTargetViewportScaleMilliPercentDraft("com.example.app", 125000));
+        assertTrue(store.getConfiguredPackages().contains("com.example.app"));
+
+        assertTrue(store.setTargetViewportScaleMilliPercentDraft("com.example.app", null));
+
+        assertFalse(store.getConfiguredPackages().contains("com.example.app"));
+        assertFalse(prefs.contains("viewport.com.example.app.scale_milli_percent"));
+        assertFalse(prefs.contains("package_config.com.example.app.viewport.scale_milli_percent"));
+        assertFalse(prefs.contains("viewport.com.example.app.scale_permille"));
+        assertFalse(prefs.contains("package_config.com.example.app.viewport.scale_permille"));
     }
 
     @Test
@@ -1434,12 +1461,13 @@ public class DpiConfigStoreTest {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
         assertTrue(store.setTargetViewportSpec(
-                "com.example.app", ViewportTargetSpec.relativeScale(1250)));
+                "com.example.app", ViewportTargetSpec.relativeScale(125000)));
 
         assertTrue(store.setTargetViewportWidthDraft("com.example.app", 480));
 
         assertTrue(store.getTargetViewportSpec("com.example.app").isRelativeScale());
-        assertEquals(Integer.valueOf(1250), store.getTargetViewportScalePermille("com.example.app"));
+        assertEquals(Integer.valueOf(125000),
+                store.getTargetViewportScaleMilliPercent("com.example.app"));
         assertEquals(Integer.valueOf(480), store.getTargetViewportWidthDp("com.example.app"));
     }
 
@@ -1515,7 +1543,7 @@ public class DpiConfigStoreTest {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
         TemplateConfigValue value = new TemplateConfigValue(
-                ViewportTargetSpec.relativeScale(1100),
+                ViewportTargetSpec.relativeScale(110000),
                 ViewportApplyMode.AUTO,
                 140,
                 FontApplyMode.FIELD_REWRITE,
@@ -1535,7 +1563,7 @@ public class DpiConfigStoreTest {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
         assertTrue(store.writePackageConfig("com.tencent.mm", new PackageConfigValue(
-                ViewportTargetSpec.relativeScale(1200),
+                ViewportTargetSpec.relativeScale(120000),
                 ViewportTargetType.RELATIVE_SCALE,
                 ViewportApplyMode.SYSTEM,
                 130,
@@ -1574,7 +1602,7 @@ public class DpiConfigStoreTest {
                 600)));
 
         assertTrue(store.writePackageTemplateConfigValue("com.tencent.mm", new TemplateConfigValue(
-                ViewportTargetSpec.relativeScale(1150),
+                ViewportTargetSpec.relativeScale(115000),
                 ViewportApplyMode.AUTO,
                 125,
                 FontApplyMode.FIELD_REWRITE,
@@ -1611,7 +1639,7 @@ public class DpiConfigStoreTest {
         PackageConfigValue value = store.readPackageConfig("com.tencent.mm");
 
         assertEquals(new PackageConfigValue(
-                ViewportTargetSpec.relativeScale(1250),
+                ViewportTargetSpec.relativeScale(125000),
                 ViewportTargetType.RELATIVE_SCALE,
                 ViewportApplyMode.SYSTEM,
                 140,
@@ -1646,7 +1674,7 @@ public class DpiConfigStoreTest {
         assertTrue(store.migrateLegacyPackageConfigToAggregated());
 
         assertEquals(new PackageConfigValue(
-                ViewportTargetSpec.relativeScale(1250),
+                ViewportTargetSpec.relativeScale(125000),
                 ViewportTargetType.RELATIVE_SCALE,
                 ViewportApplyMode.SYSTEM,
                 140,
@@ -1693,7 +1721,7 @@ public class DpiConfigStoreTest {
 
         assertTrue(store.migrateLegacyPackageConfigToAggregated());
 
-        assertEquals(ViewportTargetSpec.relativeScale(900),
+        assertEquals(ViewportTargetSpec.relativeScale(90000),
                 store.readPackageConfig("com.example.app").viewportTargetSpec);
         assertEquals(Integer.valueOf(150),
                 store.readPackageConfig("com.example.app").fontScalePercent);
@@ -1744,7 +1772,7 @@ public class DpiConfigStoreTest {
         PackageConfigValue value = store.readPackageConfig("com.tencent.mm");
 
         assertEquals(new PackageConfigValue(
-                ViewportTargetSpec.relativeScale(1250),
+                ViewportTargetSpec.relativeScale(125000),
                 ViewportTargetType.RELATIVE_SCALE,
                 ViewportApplyMode.SYSTEM,
                 140,
@@ -1849,7 +1877,7 @@ public class DpiConfigStoreTest {
         DpiConfigStore store = new DpiConfigStore(prefs);
 
         assertTrue(store.writePackageConfig("com.tencent.mm", new PackageConfigValue(
-                ViewportTargetSpec.relativeScale(1300),
+                ViewportTargetSpec.relativeScale(130000),
                 ViewportTargetType.RELATIVE_SCALE,
                 ViewportApplyMode.SYSTEM,
                 145,
@@ -1975,7 +2003,7 @@ public class DpiConfigStoreTest {
 
         assertTrue(store.setTargetViewportSpec(
                 "com.azure.authenticator",
-                ViewportTargetSpec.relativeScale(1500)));
+                ViewportTargetSpec.relativeScale(150000)));
         assertTrue(store.setTargetFontScalePercent("com.azure.authenticator", 150));
 
         String xml = new String(Files.readAllBytes(mirror.toPath()), StandardCharsets.UTF_8);
@@ -2044,7 +2072,7 @@ public class DpiConfigStoreTest {
         assertTrue(store.importSharedPreferencesXml(mirror));
 
         assertTrue(store.getConfiguredPackages().contains("com.example.one"));
-        assertEquals(ViewportTargetSpec.relativeScale(1500),
+        assertEquals(ViewportTargetSpec.relativeScale(150000),
                 store.getTargetViewportSpec("com.example.one"));
     }
 
@@ -2143,3 +2171,4 @@ public class DpiConfigStoreTest {
         }
     }
 }
+

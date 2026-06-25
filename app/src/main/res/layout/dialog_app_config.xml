@@ -37,7 +37,7 @@
 
                 <com.google.android.material.textfield.TextInputLayout android:id="@+id/dialog_viewport_input_layout" style="@style/Widget.Dpis.TextInputLayout.OutlinedBox.Compact" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/dialog_viewport_hint_scale" app:endIconMode="clear_text" app:boxCornerRadiusBottomEnd="@dimen/dialog_app_config_input_corner_radius" app:boxCornerRadiusBottomStart="@dimen/dialog_app_config_input_corner_radius" app:boxCornerRadiusTopEnd="@dimen/dialog_app_config_input_corner_radius" app:boxCornerRadiusTopStart="@dimen/dialog_app_config_input_corner_radius">
 
-                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/dialog_viewport_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:imeOptions="actionDone" android:inputType="number" android:minHeight="0dp" android:paddingTop="@dimen/dialog_app_config_input_padding_top" android:paddingBottom="@dimen/dialog_app_config_input_padding_bottom" />
+                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/dialog_viewport_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:imeOptions="actionDone" android:inputType="numberDecimal" android:minHeight="0dp" android:paddingTop="@dimen/dialog_app_config_input_padding_top" android:paddingBottom="@dimen/dialog_app_config_input_padding_bottom" />
                 </com.google.android.material.textfield.TextInputLayout>
             </FrameLayout>
 

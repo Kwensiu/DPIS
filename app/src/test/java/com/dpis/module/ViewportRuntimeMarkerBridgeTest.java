@@ -175,7 +175,7 @@ public class ViewportRuntimeMarkerBridgeTest {
 
     @Test
     public void publishCanBeReadFromProcessLocalFallbackWhenSystemPropertyUnavailable() {
-        ViewportTargetSpec spec = ViewportTargetSpec.relativeScale(1500);
+        ViewportTargetSpec spec = ViewportTargetSpec.relativeScale(150000);
         ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
                 360, 792, 360, 480, 1080, 2376);
         ViewportOverride.Result result = new ViewportOverride.Result(
@@ -220,3 +220,4 @@ public class ViewportRuntimeMarkerBridgeTest {
                 elapsedRealtimeMillis);
     }
 }
+

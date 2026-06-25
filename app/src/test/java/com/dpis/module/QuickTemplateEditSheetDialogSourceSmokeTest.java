@@ -84,6 +84,8 @@ public class QuickTemplateEditSheetDialogSourceSmokeTest {
         assertTrue(layout.contains("android:id=\"@+id/quick_template_edit_name_layout\""));
         assertTrue(layout.contains("android:id=\"@+id/quick_template_edit_name_input\""));
         assertTrue(sharedTemplateFields.contains("android:id=\"@+id/template_config_viewport_input_layout\""));
+        assertTrue(sharedTemplateFields.contains("android:id=\"@+id/template_config_viewport_input\""));
+        assertTrue(sharedTemplateFields.contains("android:inputType=\"numberDecimal\""));
         assertTrue(sharedTemplateFields.contains("android:id=\"@+id/template_config_viewport_apply_mode_button\""));
         assertTrue(sharedTemplateFields.contains("android:id=\"@+id/template_config_font_scale_input_layout\""));
         assertTrue(sharedTemplateFields.contains("android:id=\"@+id/template_config_typeface_selector_button\""));

@@ -458,7 +458,7 @@ public class ResourcesImplHookInstallerTest {
         String packageName = "com.example.viewport";
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
-        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(1200));
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(120000));
         store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
 
         Configuration firstConfig = new Configuration();
@@ -532,7 +532,7 @@ public class ResourcesImplHookInstallerTest {
     @Test
     public void relativeScaleBorrowOnlyResourcesImplDoesNotReplaceDisplayRecord() {
         String packageName = "com.example.viewport";
-        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(150000);
         Configuration displaySource = new Configuration();
         displaySource.densityDpi = 480;
         displaySource.screenWidthDp = 360;
@@ -589,7 +589,7 @@ public class ResourcesImplHookInstallerTest {
         String packageName = "com.example.viewport";
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
-        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(150000));
         store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
         Configuration windowConfig = new Configuration();
         windowConfig.densityDpi = 480;
@@ -633,3 +633,4 @@ public class ResourcesImplHookInstallerTest {
                 .commit();
     }
 }
+

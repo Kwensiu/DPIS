@@ -13,7 +13,7 @@ public class AppConfigSaveHandlerTest {
     @Test
     public void saveUsesCurrentViewportModeOverPersistedAuto() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
-        store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(900));
+        store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(90000));
         store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.AUTO);
 
         String resolvedMode = AppConfigSaveHandler.resolveViewportApplyModeForSave(
@@ -21,7 +21,7 @@ public class AppConfigSaveHandlerTest {
                 "com.example.app",
                 ViewportApplyMode.SYSTEM,
                 false,
-                ViewportTargetSpec.relativeScale(900));
+                ViewportTargetSpec.relativeScale(90000));
 
         assertEquals(ViewportApplyMode.SYSTEM, resolvedMode);
     }
@@ -29,7 +29,7 @@ public class AppConfigSaveHandlerTest {
     @Test
     public void saveFallsBackToPersistedViewportModeWhenCurrentModeIsMissing() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
-        store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(900));
+        store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(90000));
         store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.COMPAT);
 
         String resolvedMode = AppConfigSaveHandler.resolveViewportApplyModeForSave(
@@ -37,7 +37,7 @@ public class AppConfigSaveHandlerTest {
                 "com.example.app",
                 ViewportApplyMode.OFF,
                 false,
-                ViewportTargetSpec.relativeScale(900));
+                ViewportTargetSpec.relativeScale(90000));
 
         assertEquals(ViewportApplyMode.COMPAT, resolvedMode);
     }
@@ -51,7 +51,7 @@ public class AppConfigSaveHandlerTest {
                 "com.example.app",
                 ViewportApplyMode.SYSTEM,
                 false,
-                ViewportTargetSpec.relativeScale(900));
+                ViewportTargetSpec.relativeScale(90000));
 
         assertEquals(ViewportApplyMode.SYSTEM, resolvedMode);
     }
@@ -65,7 +65,7 @@ public class AppConfigSaveHandlerTest {
                 "com.example.app",
                 ViewportApplyMode.OFF,
                 false,
-                ViewportTargetSpec.relativeScale(900));
+                ViewportTargetSpec.relativeScale(90000));
 
         assertEquals(ViewportApplyMode.AUTO, resolvedMode);
     }
@@ -79,7 +79,7 @@ public class AppConfigSaveHandlerTest {
                 "com.example.app",
                 "unknown-mode",
                 false,
-                ViewportTargetSpec.relativeScale(900));
+                ViewportTargetSpec.relativeScale(90000));
 
         assertEquals(ViewportApplyMode.AUTO, resolvedMode);
     }
@@ -93,7 +93,7 @@ public class AppConfigSaveHandlerTest {
                 "com.example.app",
                 ViewportApplyMode.COMPAT,
                 false,
-                ViewportTargetSpec.relativeScale(900));
+                ViewportTargetSpec.relativeScale(90000));
 
         assertEquals(ViewportApplyMode.COMPAT, resolvedMode);
     }
@@ -259,7 +259,7 @@ public class AppConfigSaveHandlerTest {
                 "com.example.app",
                 ViewportApplyMode.COMPAT,
                 true,
-                ViewportTargetSpec.relativeScale(900));
+                ViewportTargetSpec.relativeScale(90000));
 
         assertEquals(ViewportApplyMode.OFF, resolvedMode);
     }
@@ -389,7 +389,7 @@ public class AppConfigSaveHandlerTest {
     public void unchangedGlobalPrefillPreviewSaveDoesNotCreatePackageConfig() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
-                ViewportTargetSpec.relativeScale(875),
+                ViewportTargetSpec.relativeScale(87500),
                 ViewportApplyMode.AUTO,
                 125,
                 FontApplyMode.FIELD_REWRITE,
@@ -398,7 +398,7 @@ public class AppConfigSaveHandlerTest {
 
         AppConfigSaveHandler.Result result = new AppConfigSaveHandler().saveResolved(
                 item,
-                ViewportTargetSpec.relativeScale(875),
+                ViewportTargetSpec.relativeScale(87500),
                 ViewportTargetType.RELATIVE_SCALE,
                 ViewportApplyMode.AUTO,
                 false,
@@ -422,7 +422,7 @@ public class AppConfigSaveHandlerTest {
     public void resetGlobalPrefillPreviewThenSaveDoesNotCreatePackageConfig() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
-                ViewportTargetSpec.relativeScale(875),
+                ViewportTargetSpec.relativeScale(87500),
                 ViewportApplyMode.AUTO,
                 125,
                 FontApplyMode.FIELD_REWRITE,
@@ -455,7 +455,7 @@ public class AppConfigSaveHandlerTest {
     public void changedGlobalPrefillPreviewSaveCreatesPackageConfig() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
-                ViewportTargetSpec.relativeScale(875),
+                ViewportTargetSpec.relativeScale(87500),
                 ViewportApplyMode.AUTO,
                 125,
                 FontApplyMode.FIELD_REWRITE,
@@ -464,7 +464,7 @@ public class AppConfigSaveHandlerTest {
 
         AppConfigSaveHandler.Result result = new AppConfigSaveHandler().saveResolved(
                 item,
-                ViewportTargetSpec.relativeScale(900),
+                ViewportTargetSpec.relativeScale(90000),
                 ViewportTargetType.RELATIVE_SCALE,
                 ViewportApplyMode.AUTO,
                 false,
@@ -481,7 +481,7 @@ public class AppConfigSaveHandlerTest {
 
         assertTrue(result.success);
         assertTrue(store.hasRealPackageConfig(item.packageName));
-        assertEquals(ViewportTargetSpec.relativeScale(900),
+        assertEquals(ViewportTargetSpec.relativeScale(90000),
                 store.getTargetViewportSpec(item.packageName));
     }
 
@@ -494,7 +494,7 @@ public class AppConfigSaveHandlerTest {
 
         AppConfigSaveHandler.Result result = new AppConfigSaveHandler().saveResolved(
                 app("com.example.app"),
-                ViewportTargetSpec.relativeScale(900),
+                ViewportTargetSpec.relativeScale(90000),
                 ViewportTargetType.RELATIVE_SCALE,
                 ViewportApplyMode.AUTO,
                 false,

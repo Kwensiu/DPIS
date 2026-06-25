@@ -8,12 +8,12 @@ import org.junit.Test;
 
 public class ViewportTargetSpecTest {
     @Test
-    public void relativeScaleUsesPermilleFingerprint() {
-        ViewportTargetSpec spec = ViewportTargetSpec.relativeScale(1060);
+    public void relativeScaleUsesMilliPercentFingerprint() {
+        ViewportTargetSpec spec = ViewportTargetSpec.relativeScale(106000);
 
         assertTrue(spec.isRelativeScale());
-        assertEquals(1060, spec.scalePermille());
-        assertEquals("rtg", spec.fingerprint());
+        assertEquals(106000, spec.scaleMilliPercent());
+        assertEquals("r29sg", spec.fingerprint());
     }
 
     @Test
@@ -27,13 +27,13 @@ public class ViewportTargetSpecTest {
 
     @Test
     public void rejectsOutOfRangeRelativeScale() {
-        assertFalse(ViewportTargetSpec.relativeScale(299).isEnabled());
-        assertFalse(ViewportTargetSpec.relativeScale(3001).isEnabled());
+        assertFalse(ViewportTargetSpec.relativeScale(29900).isEnabled());
+        assertFalse(ViewportTargetSpec.relativeScale(300001).isEnabled());
     }
 
     @Test
     public void acceptsUpdatedRelativeScaleRange() {
-        assertTrue(ViewportTargetSpec.relativeScale(300).isEnabled());
-        assertTrue(ViewportTargetSpec.relativeScale(3000).isEnabled());
+        assertTrue(ViewportTargetSpec.relativeScale(30000).isEnabled());
+        assertTrue(ViewportTargetSpec.relativeScale(300000).isEnabled());
     }
 }

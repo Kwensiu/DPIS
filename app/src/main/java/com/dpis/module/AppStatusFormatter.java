@@ -272,7 +272,7 @@ final class AppStatusFormatter {
         }
         String normalizedViewportMode = ViewportApplyMode.normalize(viewportMode);
         String widthText = viewportTargetSpec != null && viewportTargetSpec.isRelativeScale()
-                ? formatViewportScale(labels, viewportTargetSpec.scalePermille(),
+                ? formatViewportScale(labels, viewportTargetSpec.scaleMilliPercent(),
                         normalizedViewportMode, compact)
                 : (viewportWidthDp != null
                         ? formatViewport(labels, viewportWidthDp, normalizedViewportMode, compact)
@@ -348,12 +348,12 @@ final class AppStatusFormatter {
     }
 
     private static String formatViewportScale(Labels labels,
-            int scalePermille,
+            int scaleMilliPercent,
             String viewportMode,
             boolean compact) {
         String value = labels.viewportScale
                 + " "
-                + String.format(labels.locale, "%d%%", scalePermille / 10);
+                + AppConfigInputValidation.formatScaleMilliPercent(scaleMilliPercent);
         if (compact) {
             return value;
         }

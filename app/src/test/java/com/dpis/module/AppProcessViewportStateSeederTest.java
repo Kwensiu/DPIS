@@ -46,7 +46,7 @@ public class AppProcessViewportStateSeederTest {
 
         ViewportRuntimeRecord record = AppProcessViewportStateSeeder.seedAbsoluteTarget(
                 PACKAGE_NAME,
-                ViewportTargetSpec.relativeScale(1200),
+                ViewportTargetSpec.relativeScale(120000),
                 ViewportApplyMode.SYSTEM,
                 true,
                 config,
@@ -55,3 +55,4 @@ public class AppProcessViewportStateSeederTest {
         assertNull(record);
     }
 }
+

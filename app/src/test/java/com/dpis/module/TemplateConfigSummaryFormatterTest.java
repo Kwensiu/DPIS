@@ -12,7 +12,7 @@ public class TemplateConfigSummaryFormatterTest {
         TemplateConfigSummaryFormatter formatter = newFormatter(id ->
                 TemplateConfigSummaryFormatter.TypefaceStatus.resolved(id, "Demo Font"));
         TemplateConfigValue value = new TemplateConfigValue(
-                ViewportTargetSpec.relativeScale(1125),
+                ViewportTargetSpec.relativeScale(112500),
                 ViewportApplyMode.AUTO,
                 120,
                 FontApplyMode.FIELD_REWRITE,
@@ -91,7 +91,7 @@ public class TemplateConfigSummaryFormatterTest {
     @Test
     public void autoViewportApplyModeDoesNotShowAsCustomSummary() {
         TemplateConfigValue value = new TemplateConfigValue(
-                ViewportTargetSpec.relativeScale(1000),
+                ViewportTargetSpec.relativeScale(100000),
                 ViewportApplyMode.AUTO,
                 null,
                 FontApplyMode.OFF,
@@ -100,7 +100,7 @@ public class TemplateConfigSummaryFormatterTest {
 
         TemplateConfigSummaryFormatter.Result result = newFormatter(id -> null).format(value);
 
-        assertEquals("Interface 100.0%", result.summary());
+        assertEquals("Interface 100%", result.summary());
         assertEquals(1, result.summaryParts.size());
     }
 
@@ -215,3 +215,4 @@ public class TemplateConfigSummaryFormatterTest {
         }
     }
 }
+

@@ -11,7 +11,11 @@
     <string name="dialog_wechat_dpi_hint">微信 DPI 200-1000</string>
     <string name="dialog_wechat_dpi_help_button">微信 DPI 说明</string>
     <string name="dialog_wechat_dpi_help_title">微信 DPI</string>
-    <string name="dialog_wechat_dpi_help_message">使用微信专用 DisplayMetrics 路线调整微信界面密度，独立于通用 DPI 与视口链路。\n\n调整范围：200-1000\n\n暂不支持小程序。</string>
+    <string name="dialog_wechat_dpi_help_message">使用微信专用 DisplayMetrics 路线调整微信界面密度，独立于通用 DPI 与视口链路。
+
+调整范围：200-1000
+
+暂不支持小程序。</string>
     <string name="dialog_typeface_label">字体文件</string>
     <string name="dialog_typeface_selector_value">字体样式: %1$s</string>
     <string name="dialog_typeface_dialog_title">字体选择</string>
@@ -197,7 +201,7 @@
     <string name="template_workspace_quick_templates_title">快捷模板</string>
     <string name="template_workspace_quick_templates_empty">暂无快捷模板。</string>
     <string name="template_workspace_summary_empty">暂无自定义参数</string>
-    <string name="template_workspace_summary_viewport_scale">界面 %1$d.%2$d%%</string>
+    <string name="template_workspace_summary_viewport_scale">界面 %1$s%%</string>
     <string name="template_workspace_summary_viewport_width">界面 %1$ddp</string>
     <string name="template_workspace_summary_viewport_mode">界面路线：%1$s</string>
     <string name="template_workspace_summary_viewport">界面 %1$s</string>
@@ -323,7 +327,11 @@
     <string name="dialog_dpis_enabled_status">已启用</string>
     <string name="dialog_dpis_disabled_status">已禁用</string>
     <string name="startup_disclaimer_title">风险提示与免责声明</string>
-    <string name="startup_disclaimer_message">本模块基于 Root/LSPosed 环境运行，可能导致系统不稳定、功能异常、数据丢失、设备变砖、无法开机或账号风控等风险。\n\n你应确认已备份重要数据，并自行承担安装、使用、卸载本模块产生的风险与后果。\n\n在法律允许范围内，开发者不对因使用或误用本模块造成的间接损失、数据损失、收益损失承担责任。</string>
+    <string name="startup_disclaimer_message">本模块基于 Root/LSPosed 环境运行，可能导致系统不稳定、功能异常、数据丢失、设备变砖、无法开机或账号风控等风险。
+
+你应确认已备份重要数据，并自行承担安装、使用、卸载本模块产生的风险与后果。
+
+在法律允许范围内，开发者不对因使用或误用本模块造成的间接损失、数据损失、收益损失承担责任。</string>
     <string name="startup_disclaimer_checkbox_text">我已阅读并同意</string>
     <string name="startup_disclaimer_accept_button">同意并继续</string>
     <string name="startup_disclaimer_save_failed">记录同意状态失败，请重试</string>

@@ -189,7 +189,7 @@ public class AppStatusFormatterTest {
         assertEquals("Injected | Interface 106% | Font 115%",
                 AppStatusFormatter.formatCompact(
                         englishLabels,
-                        input(true, true, ViewportTargetSpec.relativeScale(1060),
+                        input(true, true, ViewportTargetSpec.relativeScale(106000),
                                 ViewportApplyMode.AUTO, 115, FontApplyMode.SYSTEM_EMULATION,
                                 null, true)));
     }
@@ -199,7 +199,7 @@ public class AppStatusFormatterTest {
         assertEquals("Injected | Interface 100%",
                 AppStatusFormatter.formatCompact(
                         englishLabels,
-                        input(true, true, ViewportTargetSpec.relativeScale(1000),
+                        input(true, true, ViewportTargetSpec.relativeScale(100000),
                                 ViewportApplyMode.AUTO, null, FontApplyMode.OFF,
                                 "font_roboto", true)));
     }
@@ -312,3 +312,4 @@ public class AppStatusFormatterTest {
                 dpisEnabled, appSpecificConfigActive, wechatDpi);
     }
 }
+

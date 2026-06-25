@@ -25,9 +25,9 @@ public class LegacyPropertyConfigTest {
     @Test
     public void viewportRelativeScalePublishesScaleWithoutWidthOnlyValues() {
         String command = ViewportPropertySyncer.buildCompatConfigCommandForTest(
-                "com.max.xiaoheihe", ViewportTargetSpec.relativeScale(1250), ViewportApplyMode.SYSTEM);
+                "com.max.xiaoheihe", ViewportTargetSpec.relativeScale(125000), ViewportApplyMode.SYSTEM);
 
-        assertEquals(expectedViewportCommand("0", "relative_scale", "1250", "0", "system"), command);
+        assertEquals(expectedViewportCommand("0", "relative_scale", "125000", "0", "system"), command);
     }
 
     @Test
@@ -123,7 +123,7 @@ public class LegacyPropertyConfigTest {
         assertEquals(ViewportApplyMode.AUTO,
                 RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
                         ViewportApplyMode.AUTO,
-                        ViewportTargetSpec.relativeScale(1500),
+                        ViewportTargetSpec.relativeScale(150000),
                         RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ABSOLUTE_TARGETS_ONLY));
         assertEquals(ViewportApplyMode.AUTO,
                 RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
@@ -137,7 +137,7 @@ public class LegacyPropertyConfigTest {
         assertEquals(ViewportApplyMode.COMPAT,
                 RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
                         ViewportApplyMode.AUTO,
-                        ViewportTargetSpec.relativeScale(1500),
+                        ViewportTargetSpec.relativeScale(150000),
                         RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET));
     }
 

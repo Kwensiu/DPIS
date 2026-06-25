@@ -37,9 +37,9 @@ public class GlobalPrefillSaveHandlerTest {
         assertTrue(result.success);
         assertEquals(beforeNonDefault, nonDefaultEntries(prefs));
         assertEquals(new TemplateConfigValue(
-                        ViewportTargetSpec.relativeScale(1250),
+                        ViewportTargetSpec.relativeScale(125000),
                         ViewportTargetType.RELATIVE_SCALE,
-                        1250,
+                        125000,
                         null,
                         ViewportApplyMode.SYSTEM,
                         150,
@@ -254,8 +254,8 @@ public class GlobalPrefillSaveHandlerTest {
 
         assertTrue(result.success);
         TemplateConfigValue value = new GlobalPrefillStore(prefs).read();
-        assertEquals(ViewportTargetSpec.relativeScale(880), value.viewportTargetSpec);
-        assertEquals(Integer.valueOf(880), value.viewportScalePermilleDraft);
+        assertEquals(ViewportTargetSpec.relativeScale(88000), value.viewportTargetSpec);
+        assertEquals(Integer.valueOf(88000), value.viewportScaleMilliPercentDraft);
         assertEquals(Integer.valueOf(411), value.viewportWidthDpDraft);
         assertEquals(ViewportTargetType.RELATIVE_SCALE, value.initialViewportTargetType());
         assertEquals("88", value.initialViewportInput());

@@ -14,7 +14,7 @@ final class TemplateConfigValue {
 
     final ViewportTargetSpec viewportTargetSpec;
     final String viewportTargetType;
-    final Integer viewportScalePermilleDraft;
+    final Integer viewportScaleMilliPercentDraft;
     final Integer viewportWidthDpDraft;
     final String viewportApplyMode;
     final Integer fontScalePercent;
@@ -62,7 +62,7 @@ final class TemplateConfigValue {
     TemplateConfigValue(
             ViewportTargetSpec viewportTargetSpec,
             String viewportTargetType,
-            Integer viewportScalePermilleDraft,
+            Integer viewportScaleMilliPercentDraft,
             Integer viewportWidthDpDraft,
             String viewportApplyMode,
             Integer fontScalePercent,
@@ -75,8 +75,8 @@ final class TemplateConfigValue {
         this.viewportTargetType = this.viewportTargetSpec.isEnabled()
                 ? this.viewportTargetSpec.type()
                 : ViewportTargetType.normalize(viewportTargetType);
-        this.viewportScalePermilleDraft = normalizeViewportScalePermille(
-                viewportScalePermilleDraft);
+        this.viewportScaleMilliPercentDraft = normalizeViewportScaleMilliPercent(
+                viewportScaleMilliPercentDraft);
         this.viewportWidthDpDraft = normalizeViewportWidthDp(viewportWidthDpDraft);
         this.viewportApplyMode = ViewportApplyMode.normalize(viewportApplyMode);
         this.fontScalePercent = normalizeFontScalePercent(fontScalePercent);
@@ -88,7 +88,7 @@ final class TemplateConfigValue {
     boolean hasAnyValue() {
         return viewportTargetSpec.isEnabled()
                 || !ViewportTargetType.OFF.equals(viewportTargetType)
-                || viewportScalePermilleDraft != null
+                || viewportScaleMilliPercentDraft != null
                 || viewportWidthDpDraft != null
                 || ViewportApplyMode.isEnabled(viewportApplyMode)
                 || fontScalePercent != null
@@ -116,8 +116,8 @@ final class TemplateConfigValue {
             return String.valueOf(viewportWidthDpDraft);
         }
         if (ViewportTargetType.RELATIVE_SCALE.equals(initialViewportTargetType())
-                && viewportScalePermilleDraft != null) {
-            return String.valueOf(viewportScalePermilleDraft / 10);
+                && viewportScaleMilliPercentDraft != null) {
+            return AppConfigInputValidation.formatScaleMilliPercentInput(viewportScaleMilliPercentDraft);
         }
         return "";
     }
@@ -126,8 +126,8 @@ final class TemplateConfigValue {
         if (viewportTargetSpec.isRelativeScale()) {
             return AppConfigInputValidation.formatViewportInput(viewportTargetSpec);
         }
-        return viewportScalePermilleDraft != null
-                ? String.valueOf(viewportScalePermilleDraft / 10)
+        return viewportScaleMilliPercentDraft != null
+                ? AppConfigInputValidation.formatScaleMilliPercentInput(viewportScaleMilliPercentDraft)
                 : "";
     }
 
@@ -155,13 +155,13 @@ final class TemplateConfigValue {
         return percent;
     }
 
-    private static Integer normalizeViewportScalePermille(Integer scalePermille) {
-        if (scalePermille == null
-                || scalePermille < ViewportTargetSpec.MIN_SCALE_PERMILLE
-                || scalePermille > ViewportTargetSpec.MAX_SCALE_PERMILLE) {
+    private static Integer normalizeViewportScaleMilliPercent(Integer scaleMilliPercent) {
+        if (scaleMilliPercent == null
+                || scaleMilliPercent < ViewportTargetSpec.MIN_SCALE_MILLI_PERCENT
+                || scaleMilliPercent > ViewportTargetSpec.MAX_SCALE_MILLI_PERCENT) {
             return null;
         }
-        return scalePermille;
+        return scaleMilliPercent;
     }
 
     private static Integer normalizeViewportWidthDp(Integer widthDp) {
@@ -181,7 +181,7 @@ final class TemplateConfigValue {
         }
         return viewportTargetSpec.equals(other.viewportTargetSpec)
                 && viewportTargetType.equals(other.viewportTargetType)
-                && Objects.equals(viewportScalePermilleDraft, other.viewportScalePermilleDraft)
+                && Objects.equals(viewportScaleMilliPercentDraft, other.viewportScaleMilliPercentDraft)
                 && Objects.equals(viewportWidthDpDraft, other.viewportWidthDpDraft)
                 && viewportApplyMode.equals(other.viewportApplyMode)
                 && Objects.equals(fontScalePercent, other.fontScalePercent)
@@ -195,7 +195,7 @@ final class TemplateConfigValue {
         return Objects.hash(
                 viewportTargetSpec,
                 viewportTargetType,
-                viewportScalePermilleDraft,
+                viewportScaleMilliPercentDraft,
                 viewportWidthDpDraft,
                 viewportApplyMode,
                 fontScalePercent,

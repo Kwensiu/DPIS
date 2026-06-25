@@ -21,10 +21,16 @@ final class ProcessActionHandler {
 
     private final Activity activity;
     private final RootAppProcessLauncher rootLauncher;
+    private final BeforeTargetLaunch beforeTargetLaunch;
 
     ProcessActionHandler(Activity activity) {
+        this(activity, null);
+    }
+
+    ProcessActionHandler(Activity activity, BeforeTargetLaunch beforeTargetLaunch) {
         this.activity = activity;
         this.rootLauncher = new RootAppProcessLauncher(activity);
+        this.beforeTargetLaunch = beforeTargetLaunch;
     }
 
     void execute(AppListItem item, Action action) {
@@ -79,6 +85,7 @@ final class ProcessActionHandler {
         new Thread(() -> {
             RootAppProcessLauncher.ShellResult result;
             if (action == Action.START) {
+                syncBeforeTargetLaunch(packageName);
                 result = rootLauncher.start(packageName);
                 if (result.code != 0) {
                     result = startPackage(packageName);
@@ -88,6 +95,7 @@ final class ProcessActionHandler {
             } else {
                 result = rootLauncher.forceStop(packageName);
                 if (result.code == 0) {
+                    syncBeforeTargetLaunch(packageName);
                     result = rootLauncher.start(packageName);
                     if (result.code != 0) {
                         result = startPackage(packageName);
@@ -109,6 +117,16 @@ final class ProcessActionHandler {
                 showToast(R.string.dialog_process_action_failed, actionLabel, appLabel, reason);
             });
         }, "dpis-process-action").start();
+    }
+
+    private void syncBeforeTargetLaunch(String packageName) {
+        if (beforeTargetLaunch != null) {
+            beforeTargetLaunch.run(packageName);
+        }
+    }
+
+    interface BeforeTargetLaunch {
+        void run(String packageName);
     }
 
     private boolean requiresRoot(Action action) {

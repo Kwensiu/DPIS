@@ -72,7 +72,7 @@ public class QuickTemplateSaveHandlerTest {
         assertTrue(result.success);
         QuickTemplateStore.QuickTemplate template = store.read("template_a");
         assertEquals("New", template.name);
-        assertEquals(ViewportTargetSpec.relativeScale(900), template.configValue.viewportTargetSpec);
+        assertEquals(ViewportTargetSpec.relativeScale(90000), template.configValue.viewportTargetSpec);
         assertEquals(new LinkedHashSet<>(Set.of("com.example.one", "com.example.two")),
                 template.selectedPackages);
     }
@@ -191,7 +191,7 @@ public class QuickTemplateSaveHandlerTest {
         QuickTemplateStore.QuickTemplate template = store.read("template_drafts");
         assertNotNull(template);
         assertEquals(ViewportTargetSpec.absoluteDp(411), template.configValue.viewportTargetSpec);
-        assertEquals(Integer.valueOf(880), template.configValue.viewportScalePermilleDraft);
+        assertEquals(Integer.valueOf(88000), template.configValue.viewportScaleMilliPercentDraft);
         assertEquals(Integer.valueOf(411), template.configValue.viewportWidthDpDraft);
     }
 

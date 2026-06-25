@@ -79,7 +79,7 @@ public class VirtualDisplayStateTest {
     @Test
     public void recordCacheEvictsOldEntriesWithoutClearingFreshEntries() {
         for (int index = 0; index < 20; index++) {
-            ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(800 + index);
+            ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale((800 + index) * 100);
             ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
                     400 + index,
                     800 + index,
@@ -102,7 +102,7 @@ public class VirtualDisplayStateTest {
                     ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
         }
 
-        ViewportTargetSpec latestTarget = ViewportTargetSpec.relativeScale(819);
+        ViewportTargetSpec latestTarget = ViewportTargetSpec.relativeScale(81900);
         ViewportSourceSnapshot latestSource = ViewportSourceSnapshot.systemDisplayInfo(
                 419,
                 819,
@@ -118,7 +118,7 @@ public class VirtualDisplayStateTest {
 
     @Test
     public void importedMarkerCanBeFoundByEffectiveSmallestWidth() {
-        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1200);
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(120000);
         ViewportRuntimeMarkerBridge.MarkerRecord marker =
                 new ViewportRuntimeMarkerBridge.MarkerRecord(
                         "package",
@@ -144,7 +144,7 @@ public class VirtualDisplayStateTest {
 
     @Test
     public void importedCompleteMarkerPreservesSystemServerResultDensity() {
-        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(150000);
         ViewportRuntimeMarkerBridge.MarkerRecord marker =
                 new ViewportRuntimeMarkerBridge.MarkerRecord(
                         "package",
@@ -177,7 +177,7 @@ public class VirtualDisplayStateTest {
     public void importedCompleteMarkerRefreshesMatchingVirtualDisplayDensity() {
         VirtualDisplayState.set(new VirtualDisplayOverride.Result(
                 540, 1104, 540, 288, 1080, 2208));
-        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(150000);
         ViewportRuntimeMarkerBridge.MarkerRecord marker =
                 new ViewportRuntimeMarkerBridge.MarkerRecord(
                         "package",
@@ -205,3 +205,4 @@ public class VirtualDisplayStateTest {
         assertEquals(2208, VirtualDisplayState.get().heightPx);
     }
 }
+

@@ -209,7 +209,7 @@ public class ResourcesReadHookInstallerTest {
         config.screenHeightDp = 800;
         config.smallestScreenWidthDp = 400;
         config.fontScale = 1.0f;
-        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(900);
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(90000);
         ViewportSourceSnapshot source = ViewportSourceSnapshot.fromConfiguration(
                 ViewportSourceSnapshot.ORIGIN_SYSTEM_CONFIGURATION,
                 config,
@@ -254,7 +254,7 @@ public class ResourcesReadHookInstallerTest {
         config.smallestScreenWidthDp = 360;
         config.fontScale = 1.0f;
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
-        store.setTargetViewportSpec(PACKAGE_NAME, ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportSpec(PACKAGE_NAME, ViewportTargetSpec.relativeScale(150000));
         store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
 
         ResourcesReadHookInstaller.applyConfigurationOverride(config, PACKAGE_NAME, store,
@@ -269,7 +269,7 @@ public class ResourcesReadHookInstallerTest {
 
     @Test
     public void relativeScaleWindowConfigurationReadKeepsWindowGeometryForBorrowTarget() {
-        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(150000);
         Configuration displaySource = new Configuration();
         displaySource.densityDpi = 480;
         displaySource.screenWidthDp = 360;
@@ -325,7 +325,7 @@ public class ResourcesReadHookInstallerTest {
         metrics.widthPixels = 1080;
         metrics.heightPixels = 1920;
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
-        store.setTargetViewportSpec(PACKAGE_NAME, ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportSpec(PACKAGE_NAME, ViewportTargetSpec.relativeScale(150000));
         store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
 
         ResourcesReadHookInstaller.applyMetricsOverride(null, metrics, config, PACKAGE_NAME, store);
@@ -354,7 +354,7 @@ public class ResourcesReadHookInstallerTest {
         metrics.widthPixels = 1080;
         metrics.heightPixels = 1920;
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
-        store.setTargetViewportSpec(PACKAGE_NAME, ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportSpec(PACKAGE_NAME, ViewportTargetSpec.relativeScale(150000));
         store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
 
         ResourcesReadHookInstaller.applyMetricsOverrideForTest(
@@ -371,7 +371,7 @@ public class ResourcesReadHookInstallerTest {
 
     @Test
     public void relativeScaleWindowMetricsReadUsesBorrowedRecordDensityWithoutCompounding() {
-        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(150000);
         Configuration displaySource = new Configuration();
         displaySource.densityDpi = 480;
         displaySource.screenWidthDp = 360;
@@ -415,7 +415,7 @@ public class ResourcesReadHookInstallerTest {
 
     @Test
     public void relativeScaleMixedTargetSmallestWidthMetricsReadUsesBorrowedDensity() {
-        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(150000);
         Configuration displaySource = new Configuration();
         displaySource.densityDpi = 480;
         displaySource.screenWidthDp = 360;
@@ -722,7 +722,7 @@ public class ResourcesReadHookInstallerTest {
                 true,
                 true,
                 false,
-                ViewportTargetSpec.relativeScale(900),
+                ViewportTargetSpec.relativeScale(90000),
                 ViewportApplyMode.COMPAT,
                 null,
                 FontApplyMode.OFF,
@@ -731,3 +731,4 @@ public class ResourcesReadHookInstallerTest {
                 null);
     }
 }
+

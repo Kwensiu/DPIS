@@ -40,7 +40,7 @@ public final class FeedbackDiagnosticCoordinatorRequestTest {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
         String packageName = "com.tencent.mm";
-        assertTrue(store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(900)));
+        assertTrue(store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(90000)));
         assertTrue(store.setTargetViewportApplyMode(packageName, ViewportApplyMode.SYSTEM));
         assertTrue(store.setTargetFontScalePercent(packageName, 125));
         assertTrue(store.setTargetFontApplyMode(packageName, FontApplyMode.FIELD_REWRITE));
@@ -59,7 +59,7 @@ public final class FeedbackDiagnosticCoordinatorRequestTest {
 
         assertTrue(request.dpisEnabled);
         assertFalse(request.previewFromGlobalPrefill);
-        assertEquals(ViewportTargetSpec.relativeScale(900), request.viewportTargetSpec);
+        assertEquals(ViewportTargetSpec.relativeScale(90000), request.viewportTargetSpec);
         assertEquals(ViewportApplyMode.SYSTEM, request.viewportApplyMode);
         assertEquals(Integer.valueOf(125), request.fontScalePercent);
         assertEquals(FontApplyMode.FIELD_REWRITE, request.fontApplyMode);

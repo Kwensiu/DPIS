@@ -54,7 +54,7 @@ public class DisplayHookInstallerTest {
     public void skipsGlobalDisplayStateWithoutPackageScopedRecord() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
-        store.setTargetViewportSpec("com.tencent.mm", ViewportTargetSpec.relativeScale(1500));
+        store.setTargetViewportSpec("com.tencent.mm", ViewportTargetSpec.relativeScale(150000));
         VirtualDisplayState.set(new VirtualDisplayOverride.Result(900, 1800, 900,
                 240, 1080, 2160));
 
@@ -68,7 +68,7 @@ public class DisplayHookInstallerTest {
     public void usesPackageScopedDisplayRecordForCurrentTarget() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
-        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(1500);
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(150000);
         store.setTargetViewportSpec("com.tencent.mm", targetSpec);
         ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
                 360, 736, 360, 480, 1080, 2208);
@@ -123,3 +123,4 @@ public class DisplayHookInstallerTest {
         }
     }
 }
+

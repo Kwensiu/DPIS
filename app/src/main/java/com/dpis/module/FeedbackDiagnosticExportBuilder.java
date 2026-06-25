@@ -582,7 +582,7 @@ final class FeedbackDiagnosticExportBuilder {
         ViewportTargetSpec spec = request.viewportTargetSpec;
         String target;
         if (spec.isRelativeScale()) {
-            target = "scale=" + spec.scalePermille() / 10 + "%";
+            target = "scale=" + AppConfigInputValidation.formatScaleMilliPercent(spec.scaleMilliPercent());
         } else if (spec.isAbsoluteDp()) {
             target = "widthDp=" + spec.absoluteWidthDp();
         } else {

@@ -119,8 +119,8 @@ final class InstalledAppCatalogCoordinator {
         Integer viewportWidth = store != null
                 ? store.getTargetViewportWidthDp(packageName)
                 : null;
-        Integer viewportScalePermille = store != null
-                ? store.getTargetViewportScalePermille(packageName)
+        Integer viewportScaleMilliPercent = store != null
+                ? store.getTargetViewportScaleMilliPercent(packageName)
                 : null;
         ViewportTargetSpec viewportTargetSpec = store != null
                 ? store.getTargetViewportSpec(packageName)
@@ -152,7 +152,7 @@ final class InstalledAppCatalogCoordinator {
                 inScope);
         return new AppListItem(label, packageName,
                 inScope, scopeKnown, viewportWidth,
-                viewportScalePermille, viewportMode, viewportTargetType,
+                viewportScaleMilliPercent, viewportMode, viewportTargetType,
                 viewportTargetSpec, fontScalePercent, fontMode, typefaceId,
                 appSpecificConfigActive, wechatDpi, dpisEnabled, configured, installed,
                 systemApp, hyperOsNativeProxyCandidate, icon);

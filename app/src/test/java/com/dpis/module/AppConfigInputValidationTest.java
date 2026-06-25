@@ -53,7 +53,7 @@ public class AppConfigInputValidationTest {
         ViewportTargetSpec spec = AppConfigInputValidation.parseViewportTargetSpec(
                 "75", ViewportTargetType.RELATIVE_SCALE);
         assertTrue(spec.isRelativeScale());
-        assertEquals(750, spec.scalePermille());
+        assertEquals(75000, spec.scaleMilliPercent());
     }
 
     @Test
@@ -77,7 +77,7 @@ public class AppConfigInputValidationTest {
         assertEquals("400", AppConfigInputValidation.formatViewportInput(
                 ViewportTargetSpec.absoluteDp(400)));
         assertEquals("75", AppConfigInputValidation.formatViewportInput(
-                ViewportTargetSpec.relativeScale(750)));
+                ViewportTargetSpec.relativeScale(75000)));
         assertEquals("", AppConfigInputValidation.formatViewportInput(ViewportTargetSpec.off()));
     }
 
@@ -116,7 +116,7 @@ public class AppConfigInputValidationTest {
     @Test
     public void initialViewportTargetType_relativeScaleDefault() {
         assertEquals(ViewportTargetType.RELATIVE_SCALE,
-                AppConfigInputValidation.initialViewportTargetType(ViewportTargetSpec.relativeScale(750)));
+                AppConfigInputValidation.initialViewportTargetType(ViewportTargetSpec.relativeScale(75000)));
         assertEquals(ViewportTargetType.RELATIVE_SCALE,
                 AppConfigInputValidation.initialViewportTargetType(null));
     }

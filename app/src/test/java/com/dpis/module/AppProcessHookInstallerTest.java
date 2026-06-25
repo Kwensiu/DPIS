@@ -207,7 +207,7 @@ public class AppProcessHookInstallerTest {
         assertTrue(plan.viewportEnabled);
         assertFalse(AppProcessHookInstaller.shouldInstallAppProcessViewportSupplementHooksForTest(
                 plan,
-                ViewportTargetSpec.relativeScale(1200)));
+                ViewportTargetSpec.relativeScale(120000)));
     }
 
     @Test

@@ -1176,6 +1176,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(
             layout.contains("android:id=\"@+id/land_detail_viewport_input\"")
         );
+        assertTrue(layout.contains("android:inputType=\"numberDecimal\""));
         assertTrue(
             layout.contains(
                 "android:id=\"@+id/land_detail_viewport_mode_toggle_button\""
@@ -1337,7 +1338,8 @@ public class MainActivitySourceSmokeTest {
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
-        assertTrue(source.contains("new ProcessActionHandler(this)"));
+        assertTrue(source.contains(
+                "new ProcessActionHandler(this, this::syncRuntimePropertiesForTargetLaunch)"));
         assertTrue(source.contains("new AppConfigSaveHandler()"));
         assertTrue(
             source.contains("processActionHandler.execute(item, mappedAction);")
@@ -1517,7 +1519,8 @@ public class MainActivitySourceSmokeTest {
         assertTrue(
             !saveSource.contains("FontRuntimePropertySyncer.publishTargetAsync(")
         );
-        assertTrue(source.contains("FontRuntimePropertySyncer.syncConfiguredTargetsAsync(store);"));
+        assertTrue(source.contains("scheduleRuntimePropertiesForTargetLaunch(packageName);"));
+        assertTrue(source.contains("FontRuntimePropertySyncer.syncTarget(packageName, store);"));
         assertTrue(source.contains("FontHookDomainRegistry.recommendedTemplateKnownDomains()"));
         assertFalse(source.contains("AppProcessHookInstaller.resolveDebugFontOverrideForPackage("));
         assertTrue(source.contains("FontHookDomainPresentation.forOverride("));
@@ -1625,6 +1628,8 @@ public class MainActivitySourceSmokeTest {
         assertTrue(
             source.contains("executeDialogProcessActionAfterHyperOsProxyReady")
         );
+        assertTrue(source.contains("AppConfigInputValidation.parseViewportTargetSpec("));
+        assertFalse(source.contains("ViewportTargetSpec.relativeScale(viewportValue * 10)"));
         assertTrue(
             source.contains("shouldPrepareHyperOsNativeProxyForRestart(item)")
         );
