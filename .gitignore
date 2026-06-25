@@ -13,6 +13,7 @@ captures/
 Thumbs.db
 
 # Local scratch / external comparison trees
+/.qoder/
 /.codegraph/
 /.tmp/
 /tmp/
