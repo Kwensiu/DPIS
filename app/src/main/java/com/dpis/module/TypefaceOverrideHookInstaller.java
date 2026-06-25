@@ -3,7 +3,6 @@ package com.dpis.module;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Typeface;
-import android.os.Process;
 import android.view.View;
 import android.widget.TextView;
 
@@ -15,11 +14,21 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.github.libxposed.api.XposedInterface;
 
 final class TypefaceOverrideHookInstaller {
+    private static final String BRIDGE_LOG_PREFIX = "DPIS ";
     private static final String LOG_PREFIX = "DPIS_FONT_STYLE ";
+    private static final String HOOK_ID_TEXTVIEW_SET_TYPEFACE =
+            "typeface_textview_set_typeface";
+    private static final String HOOK_ID_TEXTVIEW_SET_TYPEFACE_WITH_STYLE =
+            "typeface_textview_set_typeface_with_style";
+    private static final String HOOK_ID_PAINT_SET_TYPEFACE =
+            "typeface_paint_set_typeface";
+    private static final String HOOK_ID_TEXTVIEW_ON_ATTACHED_TO_WINDOW =
+            "typeface_textview_on_attached_to_window";
+    private static final String HOOK_ID_TEXTVIEW_ON_DRAW =
+            "typeface_textview_on_draw";
     // Process-level hook matching existing app-process installers; ModulePackagePlan decides
     // whether it is loaded for the current package.
-    private static volatile boolean hookInstalled;
-    private static volatile int hookInstalledPid = -1;
+    private static volatile int installedPid = -1;
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
     private static final ThreadLocal<Boolean> INTERNAL_UPDATE =
             ThreadLocal.withInitial(() -> Boolean.FALSE);
@@ -27,16 +36,21 @@ final class TypefaceOverrideHookInstaller {
     private TypefaceOverrideHookInstaller() {
     }
 
+    static void resetForHotReload() {
+        installedPid = -1;
+    }
+
     static void install(XposedInterface xposed,
                         String packageName,
                         String targetTypefaceId,
                         DpiConfigStore store,
-                        FontLibraryStore fontLibraryStore) throws ReflectiveOperationException {
-        if (isHookInstalledForCurrentProcess()) {
+                        FontLibraryStore fontLibraryStore,
+                        ModernApiCapabilities apiCapabilities) throws ReflectiveOperationException {
+        if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
         }
         synchronized (TypefaceOverrideHookInstaller.class) {
-            if (isHookInstalledForCurrentProcess()) {
+            if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
                 return;
             }
             Typeface baseTypeface = loadTargetTypeface(
@@ -47,8 +61,10 @@ final class TypefaceOverrideHookInstaller {
             ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
             Class<?> textViewClass = Class.forName("android.widget.TextView", false, bootClassLoader);
             Method setTypeface = textViewClass.getDeclaredMethod("setTypeface", Typeface.class);
-            xposed.hook(setTypeface)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(setTypeface)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            HOOK_ID_TEXTVIEW_SET_TYPEFACE)
                     .intercept(chain -> {
                         if (Boolean.TRUE.equals(INTERNAL_UPDATE.get())) {
                             return chain.proceed();
@@ -63,14 +79,18 @@ final class TypefaceOverrideHookInstaller {
                         if (thisObject instanceof TextView textView) {
                             applyTextViewTypeface(textView, replacement, null);
                             logReplacementHit(packageName, "TextView.setTypeface(Typeface)");
+                            bridgeOverrideAppliedIfChanged(
+                                    xposed, packageName, HOOK_ID_TEXTVIEW_SET_TYPEFACE);
                         }
                         return result;
                     });
 
             Method setTypefaceWithStyle =
                     textViewClass.getDeclaredMethod("setTypeface", Typeface.class, int.class);
-            xposed.hook(setTypefaceWithStyle)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(setTypefaceWithStyle)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            HOOK_ID_TEXTVIEW_SET_TYPEFACE_WITH_STYLE)
                     .intercept(chain -> {
                         if (Boolean.TRUE.equals(INTERNAL_UPDATE.get())) {
                             return chain.proceed();
@@ -86,13 +106,17 @@ final class TypefaceOverrideHookInstaller {
                         if (thisObject instanceof TextView textView) {
                             applyTextViewTypeface(textView, replacement, style);
                             logReplacementHit(packageName, "TextView.setTypeface(Typeface,int)");
+                            bridgeOverrideAppliedIfChanged(
+                                    xposed, packageName, HOOK_ID_TEXTVIEW_SET_TYPEFACE_WITH_STYLE);
                         }
                         return result;
                     });
 
             Method paintSetTypeface = Paint.class.getDeclaredMethod("setTypeface", Typeface.class);
-            xposed.hook(paintSetTypeface)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(paintSetTypeface)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            HOOK_ID_PAINT_SET_TYPEFACE)
                     .intercept(chain -> {
                         if (Boolean.TRUE.equals(INTERNAL_UPDATE.get())) {
                             return chain.proceed();
@@ -107,19 +131,34 @@ final class TypefaceOverrideHookInstaller {
                         if (thisObject instanceof Paint paint) {
                             applyPaintTypeface(paint, replacement);
                             logReplacementHit(packageName, "Paint.setTypeface");
+                            bridgeOverrideAppliedIfChanged(
+                                    xposed, packageName, HOOK_ID_PAINT_SET_TYPEFACE);
                         }
                         return result;
                     });
-            installTextViewAttachHook(xposed, textViewClass, baseTypeface, packageName);
-            installTextViewDrawHook(xposed, textViewClass, baseTypeface, packageName);
-            hookInstalled = true;
-            hookInstalledPid = Process.myPid();
-            DpisLog.i(LOG_PREFIX + "hook ready for " + packageName);
+            installTextViewAttachHook(
+                    xposed, textViewClass, baseTypeface, packageName, apiCapabilities);
+            installTextViewDrawHook(
+                    xposed, textViewClass, baseTypeface, packageName, apiCapabilities);
+            installedPid = ProcessScopedInstallGate.currentPid();
+            DpisLog.i(LOG_PREFIX + "hook ready for " + packageName
+                    + ", hookIds=" + HOOK_ID_TEXTVIEW_SET_TYPEFACE + ","
+                    + HOOK_ID_TEXTVIEW_SET_TYPEFACE_WITH_STYLE + ","
+                    + HOOK_ID_PAINT_SET_TYPEFACE + ","
+                    + HOOK_ID_TEXTVIEW_ON_ATTACHED_TO_WINDOW + ","
+                    + HOOK_ID_TEXTVIEW_ON_DRAW);
+            bridgeLog(xposed, LOG_PREFIX + "hook ready: package=" + packageName
+                    + ", hookIds=" + HOOK_ID_TEXTVIEW_SET_TYPEFACE + ","
+                    + HOOK_ID_TEXTVIEW_SET_TYPEFACE_WITH_STYLE + ","
+                    + HOOK_ID_PAINT_SET_TYPEFACE + ","
+                    + HOOK_ID_TEXTVIEW_ON_ATTACHED_TO_WINDOW + ","
+                    + HOOK_ID_TEXTVIEW_ON_DRAW);
+            FeedbackDiagnosticRuntimeEvents.recordHotReload(
+                    packageName,
+                    "typeface",
+                    "installed",
+                    "typeface hook ready: id=" + targetTypefaceId);
         }
-    }
-
-    private static boolean isHookInstalledForCurrentProcess() {
-        return hookInstalled && hookInstalledPid == Process.myPid();
     }
 
     private static Typeface loadTargetTypeface(String packageName,
@@ -261,11 +300,16 @@ final class TypefaceOverrideHookInstaller {
     private static void installTextViewAttachHook(XposedInterface xposed,
                                                   Class<?> textViewClass,
                                                   Typeface baseTypeface,
-                                                  String packageName) {
+                                                  String packageName,
+                                                  ModernApiCapabilities apiCapabilities) {
         try {
             Method onAttachedToWindow = findOnAttachedToWindowMethod(textViewClass);
-            xposed.hook(onAttachedToWindow)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            // Stable id lets 102 replace the reinforcement hook without keeping
+            // a stale attach-time typeface route after a module hot reload.
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(onAttachedToWindow)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            HOOK_ID_TEXTVIEW_ON_ATTACHED_TO_WINDOW)
                     .intercept(chain -> {
                         Object result = chain.proceed();
                         if (Boolean.TRUE.equals(INTERNAL_UPDATE.get())) {
@@ -281,6 +325,8 @@ final class TypefaceOverrideHookInstaller {
                         }
                         applyTextViewTypeface(textView, replacement, null);
                         logReplacementHit(packageName, "TextView.onAttachedToWindow");
+                        bridgeOverrideAppliedIfChanged(
+                                xposed, packageName, HOOK_ID_TEXTVIEW_ON_ATTACHED_TO_WINDOW);
                         return result;
                     });
             logIfChanged(packageName + ":attach-hook",
@@ -295,11 +341,14 @@ final class TypefaceOverrideHookInstaller {
     private static void installTextViewDrawHook(XposedInterface xposed,
                                                 Class<?> textViewClass,
                                                 Typeface baseTypeface,
-                                                String packageName) {
+                                                String packageName,
+                                                ModernApiCapabilities apiCapabilities) {
         try {
             Method onDraw = textViewClass.getDeclaredMethod("onDraw", Canvas.class);
-            xposed.hook(onDraw)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(onDraw)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            HOOK_ID_TEXTVIEW_ON_DRAW)
                     .intercept(chain -> {
                         if (!Boolean.TRUE.equals(INTERNAL_UPDATE.get())) {
                             Object thisObject = chain.getThisObject();
@@ -309,6 +358,8 @@ final class TypefaceOverrideHookInstaller {
                                 if (replacement != null) {
                                     applyTextViewTypeface(textView, replacement, null);
                                     logReplacementHit(packageName, "TextView.onDraw");
+                                    bridgeOverrideAppliedIfChanged(
+                                            xposed, packageName, HOOK_ID_TEXTVIEW_ON_DRAW);
                                 }
                             }
                         }
@@ -336,5 +387,27 @@ final class TypefaceOverrideHookInstaller {
         logIfChanged(packageName + ":replacement-hit:" + source,
                 LOG_PREFIX + "replacement hit: package=" + packageName
                         + ", source=" + source);
+    }
+
+    private static void bridgeLog(XposedInterface xposed, String message) {
+        if (xposed == null || (!BuildConfig.DEBUG && !DpisLog.isLoggingEnabled())) {
+            return;
+        }
+        try {
+            xposed.log(android.util.Log.INFO, DpisLog.TAG, BRIDGE_LOG_PREFIX + message);
+        } catch (Throwable ignored) {
+            // Bridge evidence is diagnostic-only; target app behavior wins.
+        }
+    }
+
+    private static void bridgeOverrideAppliedIfChanged(
+            XposedInterface xposed, String packageName, String hookId) {
+        String key = packageName + ":bridge-override:" + hookId;
+        String message = LOG_PREFIX + "override applied: package="
+                + packageName + ", hookId=" + hookId;
+        String previous = LAST_MESSAGES.put(key, message);
+        if (!message.equals(previous)) {
+            bridgeLog(xposed, message);
+        }
     }
 }

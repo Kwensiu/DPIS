@@ -16,7 +16,14 @@ final class ResourcesImplHookInstaller {
     private ResourcesImplHookInstaller() {
     }
 
-    static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
+    static void resetForHotReload() {
+        hookInstalled = false;
+    }
+
+    static void install(XposedInterface xposed,
+                        String packageName,
+                        DpiConfigStore store,
+                        ModernApiCapabilities apiCapabilities)
             throws ReflectiveOperationException {
         if (hookInstalled) {
             return;
@@ -33,8 +40,10 @@ final class ResourcesImplHookInstaller {
             Method method = resourcesImplClass.getDeclaredMethod(
                     "updateConfiguration", Configuration.class, DisplayMetrics.class,
                     compatibilityInfoClass);
-            xposed.hook(method)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(method)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            "resources_impl_update_configuration")
                     .intercept(chain -> {
                         Configuration config = (Configuration) chain.getArg(0);
                         DisplayMetrics metrics = (DisplayMetrics) chain.getArg(1);

@@ -11,17 +11,21 @@ import io.github.libxposed.api.XposedInterface;
 
 final class WindowManagerProbeHookInstaller {
     private static volatile String targetPackageName;
-    private static volatile boolean hookInstalled;
+    private static volatile int installedPid = -1;
 
     private WindowManagerProbeHookInstaller() {
     }
 
+    static void resetForHotReload() {
+        installedPid = -1;
+    }
+
     static void install(XposedInterface xposed, String packageName) throws ReflectiveOperationException {
-        if (hookInstalled) {
+        if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
         }
         synchronized (WindowManagerProbeHookInstaller.class) {
-            if (hookInstalled) {
+            if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
                 return;
             }
             targetPackageName = packageName;
@@ -30,7 +34,7 @@ final class WindowManagerProbeHookInstaller {
                 hookProbeMethod(xposed, windowManagerClass, "getCurrentWindowMetrics");
                 hookProbeMethod(xposed, windowManagerClass, "getMaximumWindowMetrics");
             }
-            hookInstalled = true;
+            installedPid = ProcessScopedInstallGate.currentPid();
             DpisLog.i("WindowManager probe hook ready");
         }
     }

@@ -11,7 +11,7 @@ import java.util.Map;
 import io.github.libxposed.api.XposedInterface;
 
 final class DisplayHookInstaller {
-    private static volatile boolean hookInstalled;
+    private static volatile int installedPid = -1;
     private static volatile String targetPackageName;
     private static volatile DpiConfigStore targetStore;
     private static volatile Method currentPackageNameMethod;
@@ -19,17 +19,26 @@ final class DisplayHookInstaller {
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
     private static final RuntimeHotPathEvidenceSampler HOTPATH_SAMPLER =
             new RuntimeHotPathEvidenceSampler();
+    private static final String HOOK_ID_DISPLAY_GET_METRICS = "display_get_metrics";
+    private static final String HOOK_ID_DISPLAY_GET_REAL_METRICS = "display_get_real_metrics";
+    private static final String HOOK_ID_DISPLAY_GET_DISPLAY_INFO = "display_get_display_info";
+    private static final String HOOK_ID_DISPLAY_GET_SIZE = "display_get_size";
+    private static final String HOOK_ID_DISPLAY_GET_REAL_SIZE = "display_get_real_size";
 
     private DisplayHookInstaller() {
     }
 
+    static void resetForHotReload() {
+        installedPid = -1;
+    }
+
     static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
             throws ReflectiveOperationException {
-        if (hookInstalled) {
+        if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
         }
         synchronized (DisplayHookInstaller.class) {
-            if (hookInstalled) {
+            if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
                 return;
             }
             targetPackageName = packageName;
@@ -41,7 +50,7 @@ final class DisplayHookInstaller {
             hookDisplayInfoMethod(xposed, displayClass, bootClassLoader);
             hookPointMethod(xposed, displayClass, "getSize");
             hookPointMethod(xposed, displayClass, "getRealSize");
-            hookInstalled = true;
+            installedPid = ProcessScopedInstallGate.currentPid();
             DpisLog.i("Display hook ready, " + RuntimeDiagnosticLogFingerprint.field());
         }
     }
@@ -58,8 +67,16 @@ final class DisplayHookInstaller {
                                                  String methodName)
             throws ReflectiveOperationException {
         Method method = displayClass.getDeclaredMethod(methodName, DisplayMetrics.class);
-        xposed.hook(method)
-                .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+        XposedInterface.HookBuilder hookBuilder =
+                xposed.hook(method).setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE);
+        if ("getMetrics".equals(methodName)) {
+            hookBuilder = ModernApiCapabilitiesResolver.fromXposed(xposed)
+                    .applyStableHookId(hookBuilder, HOOK_ID_DISPLAY_GET_METRICS);
+        } else if ("getRealMetrics".equals(methodName)) {
+            hookBuilder = ModernApiCapabilitiesResolver.fromXposed(xposed)
+                    .applyStableHookId(hookBuilder, HOOK_ID_DISPLAY_GET_REAL_METRICS);
+        }
+        hookBuilder
                 .intercept(chain -> {
                     Object result = chain.proceed();
                     DisplayMetrics metrics = (DisplayMetrics) chain.getArg(0);
@@ -71,8 +88,16 @@ final class DisplayHookInstaller {
     private static void hookPointMethod(XposedInterface xposed, Class<?> displayClass,
                                         String methodName) throws ReflectiveOperationException {
         Method method = displayClass.getDeclaredMethod(methodName, Point.class);
-        xposed.hook(method)
-                .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+        XposedInterface.HookBuilder hookBuilder =
+                xposed.hook(method).setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE);
+        if ("getSize".equals(methodName)) {
+            hookBuilder = ModernApiCapabilitiesResolver.fromXposed(xposed)
+                    .applyStableHookId(hookBuilder, HOOK_ID_DISPLAY_GET_SIZE);
+        } else if ("getRealSize".equals(methodName)) {
+            hookBuilder = ModernApiCapabilitiesResolver.fromXposed(xposed)
+                    .applyStableHookId(hookBuilder, HOOK_ID_DISPLAY_GET_REAL_SIZE);
+        }
+        hookBuilder
                 .intercept(chain -> {
                     Object result = chain.proceed();
                     Point point = (Point) chain.getArg(0);
@@ -87,8 +112,11 @@ final class DisplayHookInstaller {
         try {
             Class<?> displayInfoClass = Class.forName("android.view.DisplayInfo", false, bootClassLoader);
             Method method = displayClass.getDeclaredMethod("getDisplayInfo", displayInfoClass);
-            xposed.hook(method)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            // Stable id lets API 102 replace the same display info hook during hot reload.
+            ModernApiCapabilitiesResolver.fromXposed(xposed).applyStableHookId(
+                            xposed.hook(method)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            HOOK_ID_DISPLAY_GET_DISPLAY_INFO)
                     .intercept(chain -> {
                         Object result = chain.proceed();
                         Object displayInfo = chain.getArg(0);

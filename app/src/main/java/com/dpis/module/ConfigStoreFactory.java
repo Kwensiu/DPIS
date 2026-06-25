@@ -15,11 +15,47 @@ final class ConfigStoreFactory {
     }
 
     static DpiConfigStore createLocalModuleConfigStore(Context context) {
-        return new DpiConfigStore(context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE));
+        File legacySharedPrefsFile = legacySharedPrefsFile(context);
+        DpiConfigStore store = new DpiConfigStore(
+                context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE),
+                legacySharedPrefsFile);
+        if ("legacy".equals(BuildConfig.FLAVOR)) {
+            store.importSharedPreferencesXml(legacySharedPrefsFile);
+        }
+        return store;
     }
 
     static DpiConfigStore createLocalUiModuleConfigStore(Context context, XposedService service) {
-        return createLocalModuleConfigStore(context);
+        File legacySharedPrefsFile = legacySharedPrefsFile(context);
+        SharedPreferences preferences = context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE);
+        boolean usingRemote = false;
+        if ("modern".equals(BuildConfig.FLAVOR) && service != null) {
+            try {
+                SharedPreferences remotePreferences = service.getRemotePreferences(DpiConfigStore.GROUP);
+                if (remotePreferences != null) {
+                    preferences = remotePreferences;
+                    usingRemote = true;
+                }
+            } catch (Throwable ignored) {
+                // Remote preferences are unavailable; keep the app-local store.
+            }
+        }
+        DpiConfigStore store = new DpiConfigStore(preferences, legacySharedPrefsFile);
+        if ("modern".equals(BuildConfig.FLAVOR)
+                && usingRemote
+                && !store.hasAnyUserVisiblePackageConfig()) {
+            store.importSharedPreferencesXml(legacySharedPrefsFile);
+        }
+        if ("legacy".equals(BuildConfig.FLAVOR) && !usingRemote) {
+            store.importSharedPreferencesXml(legacySharedPrefsFile);
+        }
+        return store;
+    }
+
+    private static File legacySharedPrefsFile(Context context) {
+        return new File(
+                new File(context.getApplicationInfo().dataDir, "shared_prefs"),
+                DpiConfigStore.GROUP + ".xml");
     }
 
     static DpiConfigStore createRuntimeDeliveryModuleConfigStore(XposedService service) {

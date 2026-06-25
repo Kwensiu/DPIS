@@ -44,6 +44,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(main.contains("showFeedbackDiagnosticConfirmation(item, state)"));
         assertTrue(main.contains("resolvePackageVersionName(item.packageName)"));
         assertTrue(main.contains("feedbackDiagnosticCoordinator.start("));
+        assertTrue(main.contains("FeedbackDiagnosticCoordinator.Request.fromPersisted("));
         assertTrue(main.contains("maybeShowPendingFeedbackDiagnosticResult();"));
         assertTrue(main.contains("showFeedbackDiagnosticPackagingDialog();"));
         assertTrue(main.contains("feedbackDiagnosticExportBuilder.buildPackage(result)"));
@@ -64,6 +65,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(coordinator.contains("FeedbackDiagnosticRuntimeTransport.stopSnapshot("));
         assertTrue(coordinator.contains("host.onFeedbackDiagnosticRootRequired();"));
         assertTrue(coordinator.contains("host.onFeedbackDiagnosticFinished(result);"));
+        assertTrue(coordinator.contains("static Request fromPersisted("));
         assertFalse(coordinator.contains("DEFAULT_DURATION_MS"));
         assertFalse(coordinator.contains("finish(true), DEFAULT_DURATION_MS"));
         assertFalse(coordinator.contains("bringDpisToFront"));

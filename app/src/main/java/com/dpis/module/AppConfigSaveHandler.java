@@ -3,7 +3,7 @@ package com.dpis.module;
 import com.google.android.material.textfield.TextInputEditText;
 
 final class AppConfigSaveHandler {
-    int[] save(AppListItem item,
+    Result save(AppListItem item,
             TextInputEditText viewportInput,
             TextInputEditText fontScaleInput,
             String viewportTargetType,
@@ -23,7 +23,7 @@ final class AppConfigSaveHandler {
                     viewportInput, viewportTargetType);
             Integer fontScalePercent = parseFontScalePercentOrNull(fontScaleInput);
             if (store == null) {
-                return new int[] { 1, R.string.status_save_requires_init };
+                return Result.failure(R.string.status_save_requires_init);
             }
             return saveResolved(item,
                     viewportTargetSpec,
@@ -41,11 +41,11 @@ final class AppConfigSaveHandler {
                     store,
                     onChanged);
         } catch (NumberFormatException exception) {
-            return new int[] { 0, R.string.status_save_invalid };
+            return Result.failure(R.string.status_save_invalid);
         }
     }
 
-    int[] saveResolved(AppListItem item,
+    Result saveResolved(AppListItem item,
             ViewportTargetSpec viewportTargetSpec,
             String viewportTargetType,
             String currentViewportApplyMode,
@@ -61,9 +61,10 @@ final class AppConfigSaveHandler {
             DpiConfigStore store,
             Runnable onChanged) {
         if (store == null) {
-            return new int[] { 1, R.string.status_save_requires_init };
+            return Result.failure(R.string.status_save_requires_init);
         }
         try {
+            PackageConfigValue originalPackageConfig = store.readPackageConfig(item.packageName);
             if (isUnchangedGlobalPrefillPreview(item,
                     viewportTargetSpec,
                     currentViewportApplyMode,
@@ -76,7 +77,7 @@ final class AppConfigSaveHandler {
                 if (cleared && onChanged != null) {
                     onChanged.run();
                 }
-                return new int[] { 1, 0 };
+                return Result.success(0);
             }
             String viewportApplyMode = resolveViewportApplyModeForSave(
                     store, item.packageName, currentViewportApplyMode,
@@ -108,7 +109,6 @@ final class AppConfigSaveHandler {
                         && saved;
                 saved = store.setTargetViewportApplyMode(item.packageName, ViewportApplyMode.OFF)
                         && saved;
-                ViewportPropertySyncer.clearTargetAsync(item.packageName);
             } else {
                 saved = store.setTargetViewportSpec(item.packageName, viewportTargetSpec) && saved;
                 saved = saveInactiveViewportDraft(
@@ -119,43 +119,69 @@ final class AppConfigSaveHandler {
                         viewportAbsoluteInput) && saved;
                 saved = store.setTargetViewportApplyMode(item.packageName, viewportApplyMode)
                         && saved;
-                ViewportPropertySyncer.publishTargetAsync(
-                        item.packageName, viewportTargetSpec, viewportApplyMode);
             }
             if (fontScalePercent == null) {
                 saved = store.clearTargetFontScalePercent(item.packageName) && saved;
                 saved = store.setTargetFontApplyMode(
                         item.packageName,
                         ConfigDraftSaveSemantics.fontApplyModeForSave(fontMode)) && saved;
-                FontRuntimePropertySyncer.clearFontScaleTargetAsync(item.packageName);
             } else {
                 saved = store.setTargetFontScalePercent(item.packageName, fontScalePercent) && saved;
                 saved = store.setTargetFontApplyMode(item.packageName, fontMode) && saved;
-                FontRuntimePropertySyncer.publishTargetAsync(
-                        item.packageName,
-                        fontScalePercent,
-                        fontMode,
-                        FontHookDomainDecision.isHyperOsNativeFlutterEnabled(
-                                store, item.packageName));
             }
             if (selectedTypefaceId == null || selectedTypefaceId.isBlank()) {
                 saved = store.clearTargetTypefaceId(item.packageName) && saved;
-                FontRuntimePropertySyncer.publishTypefaceTargetAsync(item.packageName, null);
             } else {
                 saved = store.setTargetTypefaceId(item.packageName, selectedTypefaceId) && saved;
-                FontRuntimePropertySyncer.publishTypefaceTargetAsync(item.packageName, selectedTypefaceId);
             }
             publishFontHookDomainsAfterSave(item.packageName, store);
             saved = store.prunePackageIfOnlyDefaultConfigRemains(item.packageName) && saved;
+            if (!saved) {
+                return Result.failure(R.string.system_settings_save_failed);
+            }
+            PackageConfigValue expectedPackageConfig = expectedPackageConfigAfterSave(
+                    viewportTargetSpec,
+                    viewportTargetType,
+                    viewportApplyMode,
+                    fontScalePercent,
+                    fontMode,
+                    selectedTypefaceId,
+                    draftFontHookDomainsRaw,
+                    fontHookDomainsResetRequested,
+                    originalPackageConfig);
+            if (!didPersistExpectedPackageConfig(
+                    store,
+                    item.packageName,
+                    expectedPackageConfig)) {
+                return Result.failure(R.string.system_settings_save_failed);
+            }
             if (saved && onChanged != null) {
                 onChanged.run();
             }
             if (saved && emulationRequestedWithoutSystemScope) {
                 hint = R.string.system_mode_requires_system_scope_hint;
             }
-            return new int[] { 1, hint };
+            return Result.success(hint);
         } catch (NumberFormatException exception) {
-            return new int[] { 0, R.string.status_save_invalid };
+            return Result.failure(R.string.status_save_invalid);
+        }
+    }
+
+    static final class Result {
+        final boolean success;
+        final int messageResId;
+
+        private Result(boolean success, int messageResId) {
+            this.success = success;
+            this.messageResId = messageResId;
+        }
+
+        static Result success(int messageResId) {
+            return new Result(true, messageResId);
+        }
+
+        static Result failure(int messageResId) {
+            return new Result(false, messageResId);
         }
     }
 
@@ -232,6 +258,116 @@ final class AppConfigSaveHandler {
                 && fontScalePercent == null
                 && normalizeNullableString(selectedTypefaceId) == null
                 && normalizeNullableString(draftFontHookDomainsRaw) == null;
+    }
+
+    private static PackageConfigValue expectedPackageConfigAfterSave(
+            ViewportTargetSpec viewportTargetSpec,
+            String viewportTargetType,
+            String viewportApplyMode,
+            Integer fontScalePercent,
+            String fontMode,
+            String selectedTypefaceId,
+            String draftFontHookDomainsRaw,
+            boolean fontHookDomainsResetRequested,
+            PackageConfigValue originalPackageConfig) {
+        PackageConfigValue original = originalPackageConfig != null
+                ? originalPackageConfig
+                : PackageConfigValue.EMPTY;
+        ViewportTargetSpec normalizedViewportSpec = viewportTargetSpec != null
+                ? viewportTargetSpec
+                : ViewportTargetSpec.off();
+        String savedViewportType = normalizedViewportSpec.isEnabled()
+                ? normalizedViewportSpec.type()
+                : ConfigDraftSaveSemantics.viewportTargetTypeForSave(viewportTargetType);
+        String savedViewportMode = ConfigDraftSaveSemantics.viewportApplyModeForSave(
+                viewportApplyMode,
+                normalizedViewportSpec);
+        String savedFontMode = fontScalePercent != null
+                ? FontApplyMode.normalize(fontMode)
+                : ConfigDraftSaveSemantics.fontApplyModeForSave(fontMode);
+        if (!ViewportTargetType.ABSOLUTE_DP.equals(savedViewportType)) {
+            savedViewportType = ViewportTargetType.OFF;
+        }
+        if (!ViewportApplyMode.SYSTEM.equals(savedViewportMode)
+                && !ViewportApplyMode.COMPAT.equals(savedViewportMode)) {
+            savedViewportMode = ViewportApplyMode.OFF;
+        }
+        if (!FontApplyMode.FIELD_REWRITE.equals(savedFontMode)) {
+            savedFontMode = FontApplyMode.OFF;
+        }
+        return new PackageConfigValue(
+                normalizedViewportSpec,
+                savedViewportType,
+                savedViewportMode,
+                fontScalePercent,
+                savedFontMode,
+                selectedTypefaceId,
+                expectedFontHookDomainsRawAfterSave(
+                        draftFontHookDomainsRaw,
+                        fontHookDomainsResetRequested,
+                        original.fontHookDomainsRaw),
+                original.dpisEnabled,
+                original.wechatDpi);
+    }
+
+    private static String expectedFontHookDomainsRawAfterSave(
+            String draftFontHookDomainsRaw,
+            boolean fontHookDomainsResetRequested,
+            String currentFontHookDomainsRaw) {
+        if (fontHookDomainsResetRequested) {
+            return null;
+        }
+        if (draftFontHookDomainsRaw == null) {
+            return currentFontHookDomainsRaw;
+        }
+        FontHookDomainPresentation presentation = FontHookDomainPresentation
+                .forRecommendedTemplateRaw(draftFontHookDomainsRaw);
+        return presentation.normalizedRawOrNull();
+    }
+
+    private static boolean didPersistExpectedPackageConfig(
+            DpiConfigStore store,
+            String packageName,
+            PackageConfigValue expectedPackageConfig) {
+        if (store == null || packageName == null || packageName.isBlank()) {
+            return false;
+        }
+        PackageConfigValue expected = expectedPackageConfig != null
+                ? expectedPackageConfig
+                : PackageConfigValue.EMPTY;
+        PackageConfigValue actual = normalizePersistedPackageConfigForVerification(
+                store.readPackageConfig(packageName));
+        if (!expected.equals(actual)) {
+            return false;
+        }
+        return expected.hasAnyValue()
+                ? store.hasRealPackageConfig(packageName)
+                : !store.hasRealPackageConfig(packageName);
+    }
+
+    private static PackageConfigValue normalizePersistedPackageConfigForVerification(
+            PackageConfigValue value) {
+        PackageConfigValue actual = value != null ? value : PackageConfigValue.EMPTY;
+        String viewportTargetType = ViewportTargetType.ABSOLUTE_DP.equals(actual.viewportTargetType)
+                ? actual.viewportTargetType
+                : ViewportTargetType.OFF;
+        String viewportApplyMode = ViewportApplyMode.SYSTEM.equals(actual.viewportApplyMode)
+                || ViewportApplyMode.COMPAT.equals(actual.viewportApplyMode)
+                ? actual.viewportApplyMode
+                : ViewportApplyMode.OFF;
+        String fontApplyMode = FontApplyMode.FIELD_REWRITE.equals(actual.fontApplyMode)
+                ? actual.fontApplyMode
+                : FontApplyMode.OFF;
+        return new PackageConfigValue(
+                actual.viewportTargetSpec,
+                viewportTargetType,
+                viewportApplyMode,
+                actual.fontScalePercent,
+                fontApplyMode,
+                actual.typefaceId,
+                actual.fontHookDomainsRaw,
+                actual.dpisEnabled,
+                actual.wechatDpi);
     }
 
     private static void publishFontHookDomainsAfterSave(String packageName, DpiConfigStore store) {

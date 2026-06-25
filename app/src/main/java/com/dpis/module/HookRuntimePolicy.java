@@ -2,14 +2,17 @@ package com.dpis.module;
 
 final class HookRuntimePolicy {
     final boolean systemServerHooksEnabled;
+    final boolean systemServerHooksDesiredEnabled;
     final boolean systemServerSafeModeEnabled;
     final boolean globalLogEnabled;
     final boolean probeHooksEnabled;
 
     private HookRuntimePolicy(boolean systemServerHooksEnabled,
+                              boolean systemServerHooksDesiredEnabled,
                               boolean systemServerSafeModeEnabled,
                               boolean globalLogEnabled) {
         this.systemServerHooksEnabled = systemServerHooksEnabled;
+        this.systemServerHooksDesiredEnabled = systemServerHooksDesiredEnabled;
         this.systemServerSafeModeEnabled = systemServerSafeModeEnabled;
         this.globalLogEnabled = globalLogEnabled;
         this.probeHooksEnabled = !systemServerSafeModeEnabled && globalLogEnabled;
@@ -18,15 +21,17 @@ final class HookRuntimePolicy {
     static HookRuntimePolicy fromStore(DpiConfigStore store) {
         return new HookRuntimePolicy(
                 store.isSystemServerHooksEnabled(),
+                store.isSystemServerHooksEnabled(),
                 store.isSystemServerSafeModeEnabled(),
                 store.isGlobalLogEnabled());
     }
 
     static HookRuntimePolicy fromSnapshot(ConfigSnapshot snapshot) {
         if (snapshot == null) {
-            return new HookRuntimePolicy(true, true, false);
+            return new HookRuntimePolicy(true, true, true, false);
         }
         return new HookRuntimePolicy(
+                snapshot.isSystemServerHooksEnabled(),
                 snapshot.isSystemServerHooksEnabled(),
                 snapshot.isSystemServerSafeModeEnabled(),
                 snapshot.isGlobalLogEnabled());
@@ -34,8 +39,20 @@ final class HookRuntimePolicy {
 
     static HookRuntimePolicy fromNullableStore(DpiConfigStore store) {
         if (store == null) {
-            return new HookRuntimePolicy(true, true, false);
+            return new HookRuntimePolicy(true, true, true, false);
         }
         return fromStore(store);
+    }
+
+    static HookRuntimePolicy fromEffectiveSystemHookState(DpiConfigStore store,
+                                                          boolean systemServerHooksEffectiveEnabled) {
+        if (store == null) {
+            return new HookRuntimePolicy(systemServerHooksEffectiveEnabled, true, true, false);
+        }
+        return new HookRuntimePolicy(
+                systemServerHooksEffectiveEnabled,
+                store.isSystemServerHooksEnabled(),
+                store.isSystemServerSafeModeEnabled(),
+                store.isGlobalLogEnabled());
     }
 }

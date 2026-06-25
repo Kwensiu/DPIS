@@ -14,18 +14,22 @@ final class ResourcesProbeHookInstaller {
     private static final AtomicInteger CONFIGURATION_LOG_COUNT = new AtomicInteger();
     private static volatile String targetPackageName;
     private static volatile DpiConfigStore configStore;
-    private static volatile boolean hookInstalled;
+    private static volatile int installedPid = -1;
 
     private ResourcesProbeHookInstaller() {
     }
 
+    static void resetForHotReload() {
+        installedPid = -1;
+    }
+
     static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
             throws ReflectiveOperationException {
-        if (hookInstalled) {
+        if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
         }
         synchronized (ResourcesProbeHookInstaller.class) {
-            if (hookInstalled) {
+            if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
                 return;
             }
             targetPackageName = packageName;
@@ -70,7 +74,7 @@ final class ResourcesProbeHookInstaller {
                         return result;
                     });
 
-            hookInstalled = true;
+            installedPid = ProcessScopedInstallGate.currentPid();
             DpisLog.i("Resources probe hook ready");
         }
     }

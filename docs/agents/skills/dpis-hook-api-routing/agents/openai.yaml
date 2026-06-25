@@ -1,0 +1,4 @@
+interface:
+  display_name: "DPIS Hook API Routing"
+  short_description: "DPIS Xposed API routing and hook workflow"
+  default_prompt: "Use $dpis-hook-api-routing to implement or diagnose a DPIS legacy or libxposed hook change."

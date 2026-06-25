@@ -63,6 +63,14 @@ shared route code, use the project-local playbook in
 `docs/agents/skills/dpis-runtime-route-diagnose/SKILL.md`. This is a
 project-local skill bundle and does not modify global agent skills.
 
+### DPIS hook API routing
+
+When a task mentions Legacy Xposed hooks, libxposed hooks, API 101 or 102
+capability gating, modern/legacy flavor hook wiring, or fallback behavior
+between old and new framework capabilities, use the project-local playbook in
+`docs/agents/skills/dpis-hook-api-routing/SKILL.md`. This is a project-local
+skill bundle and does not modify global agent skills.
+
 ### DPIS localization playbook
 
 When a task mentions translations, localization, l10n, locale resource files,
@@ -227,3 +235,12 @@ bundle and does not modify global agent skills.
   - Verification steps/commands executed
   - Screenshots or logs for UI/runtime behavior changes when relevant
   - Linked issue/task if available
+
+## RTK In Codex
+- Codex sessions should not assume the Bash hook is active.
+- When compact shell output matters, call `rtk` explicitly, for example
+  `rtk git status`, `rtk gradlew :app:testAllDebugUnitTests`, or `rtk rg`.
+- Treat this file and `C:/<username>/.claude/RTK.md` as the durable source
+  of this preference; do not rely on chat history to preserve it.
+
+@C:\<username>\.codex\RTK.md

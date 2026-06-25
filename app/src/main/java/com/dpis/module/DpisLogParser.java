@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -12,8 +13,12 @@ import java.util.regex.Pattern;
 
 final class DpisLogParser {
     private static final String DPIS_MODULE_PACKAGE = "io.github.kwensiu.dpis";
+    private static final String LSPOSED_HOT_RELOAD_PREFIX = "Auto hot reload ";
     private static final Pattern LSPOSED_TIMESTAMP_PATTERN = Pattern.compile(
             "^\\[\\s*\\d{4}-(\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})(\\.\\d+)?\\s+.*"
+    );
+    private static final Pattern GENERIC_LSPOSED_PATTERN = Pattern.compile(
+            "^\\[\\s*\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?\\s+.*\\s([VDIWEF])/([^\\]\\s]+)\\s*]\\s*(.*)$"
     );
 
     private DpisLogParser() {
@@ -56,6 +61,12 @@ final class DpisLogParser {
         } catch (IOException exception) {
             throw new IllegalStateException(exception);
         }
+        entries.sort(Comparator
+                .comparingLong((DpisLogEntry entry) -> entry.timestampMillis)
+                .thenComparing(entry -> entry.timestamp)
+                .thenComparing(entry -> entry.process)
+                .thenComparing(entry -> entry.tag)
+                .thenComparing(entry -> entry.message));
         return entries;
     }
 
@@ -64,8 +75,10 @@ final class DpisLogParser {
             return null;
         }
         return new DpisLogEntry(
+                sortableTimestampMillis(line.timestamp),
                 line.timestamp,
                 line.level,
+                "LSPosed",
                 line.process,
                 line.modulePackage,
                 line.tag,
@@ -75,7 +88,14 @@ final class DpisLogParser {
     }
 
     private static boolean isRelevantToDpis(ParsedLine line) {
-        return DPIS_MODULE_PACKAGE.equals(line.modulePackage);
+        return DPIS_MODULE_PACKAGE.equals(line.modulePackage)
+                || isDpisHotReloadFrameworkWarning(line.message);
+    }
+
+    private static boolean isDpisHotReloadFrameworkWarning(String message) {
+        return message != null
+                && message.contains(DPIS_MODULE_PACKAGE)
+                && message.contains(LSPOSED_HOT_RELOAD_PREFIX);
     }
 
     private static ParsedLine parseLine(String line, String inheritedTimestamp) {
@@ -88,6 +108,11 @@ final class DpisLogParser {
         }
         String timestamp = extractTime(trimmed);
         ParsedLine parsedLine = parseLsposedMetadata(trimmed);
+        if (parsedLine != null) {
+            parsedLine.timestamp = timestamp != null ? timestamp : inheritedTimestamp;
+            return parsedLine;
+        }
+        parsedLine = parseGenericLsposedLine(trimmed);
         if (parsedLine != null) {
             parsedLine.timestamp = timestamp != null ? timestamp : inheritedTimestamp;
             return parsedLine;
@@ -132,6 +157,22 @@ final class DpisLogParser {
         return new ParsedLine("", level, process, modulePackage, tag, message, line);
     }
 
+    private static ParsedLine parseGenericLsposedLine(String line) {
+        Matcher matcher = GENERIC_LSPOSED_PATTERN.matcher(line);
+        if (!matcher.matches()) {
+            return null;
+        }
+        return new ParsedLine(
+                "",
+                matcher.group(1),
+                "",
+                "",
+                matcher.group(2),
+                matcher.group(3).trim(),
+                line
+        );
+    }
+
     private static String stripKnownPrefixes(String line) {
         String value = line;
         value = value.replaceFirst("^\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d+\\s+", "");
@@ -155,6 +196,27 @@ final class DpisLogParser {
             return line.substring(5, 19);
         }
         return null;
+    }
+
+    private static long sortableTimestampMillis(String timestamp) {
+        if (timestamp == null || timestamp.isBlank()) {
+            return 0L;
+        }
+        String digits = timestamp.replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) {
+            return 0L;
+        }
+        if (digits.length() > 17) {
+            digits = digits.substring(0, 17);
+        }
+        while (digits.length() < 17) {
+            digits += "0";
+        }
+        try {
+            return Long.parseLong(digits);
+        } catch (NumberFormatException exception) {
+            return 0L;
+        }
     }
 
     private static String extractFallbackTag(String body) {

@@ -20,7 +20,7 @@ final class ViewRootProbeHookInstaller {
     private static final AtomicInteger FRAME_LOG_COUNT = new AtomicInteger();
     private static final AtomicInteger RELAYOUT_LOG_COUNT = new AtomicInteger();
     private static final AtomicInteger RESIZED_LOG_COUNT = new AtomicInteger();
-    private static volatile boolean hookInstalled;
+    private static volatile int installedPid = -1;
     private static volatile String lastMeasureLog;
     private static volatile String lastFrameLog;
     private static volatile String lastRelayoutLog;
@@ -30,12 +30,16 @@ final class ViewRootProbeHookInstaller {
     private ViewRootProbeHookInstaller() {
     }
 
+    static void resetForHotReload() {
+        installedPid = -1;
+    }
+
     static void install(XposedInterface xposed, String packageName) throws ReflectiveOperationException {
-        if (hookInstalled) {
+        if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
         }
         synchronized (ViewRootProbeHookInstaller.class) {
-            if (hookInstalled) {
+            if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
                 return;
             }
             installedPackageName = packageName;
@@ -98,7 +102,7 @@ final class ViewRootProbeHookInstaller {
                         }
                         return chain.proceed();
                     });
-            hookInstalled = true;
+            installedPid = ProcessScopedInstallGate.currentPid();
             DpisLog.i("ViewRoot probe hook ready");
         }
     }

@@ -24,9 +24,13 @@ final class ResourcesReadHookInstaller {
     private ResourcesReadHookInstaller() {
     }
 
+    static void resetForHotReload() {
+        hookInstalled = false;
+    }
+
     static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
             throws ReflectiveOperationException {
-        install(xposed, packageName, store, true);
+        install(xposed, packageName, store, true, false);
     }
 
     static void install(XposedInterface xposed,
@@ -37,7 +41,7 @@ final class ResourcesReadHookInstaller {
         install(xposed, packageName, store, new ResourcesReadHookPolicy(
                 viewportHandlingEnabled,
                 true,
-                false));
+                false), ModernApiCapabilitiesResolver.fromXposed(xposed));
     }
 
     static void install(XposedInterface xposed,
@@ -49,13 +53,14 @@ final class ResourcesReadHookInstaller {
         install(xposed, packageName, store, new ResourcesReadHookPolicy(
                 viewportHandlingEnabled,
                 fontConfigurationOverrideEnabled,
-                false));
+                false), ModernApiCapabilitiesResolver.fromXposed(xposed));
     }
 
     static void install(XposedInterface xposed,
                         String packageName,
                         DpiConfigStore store,
-                        ResourcesReadHookPolicy policy)
+                        ResourcesReadHookPolicy policy,
+                        ModernApiCapabilities apiCapabilities)
             throws ReflectiveOperationException {
         if (hookInstalled) {
             return;
@@ -76,8 +81,10 @@ final class ResourcesReadHookInstaller {
             Class<?> resourcesClass = Class.forName("android.content.res.Resources", false, bootClassLoader);
 
             Method getConfigurationMethod = resourcesClass.getDeclaredMethod("getConfiguration");
-            xposed.hook(getConfigurationMethod)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(getConfigurationMethod)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            "resources_read_get_configuration")
                     .intercept(chain -> {
                         Object result = chain.proceed();
                         if (!(result instanceof Configuration configuration)) {
@@ -103,10 +110,11 @@ final class ResourcesReadHookInstaller {
                                 configurationFontOverrideEnabled);
                         return result;
                     });
-
             Method getDisplayMetricsMethod = resourcesClass.getDeclaredMethod("getDisplayMetrics");
-            xposed.hook(getDisplayMetricsMethod)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(getDisplayMetricsMethod)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            "resources_read_get_display_metrics")
                     .intercept(chain -> {
                         Object result = chain.proceed();
                         if (!(result instanceof DisplayMetrics metrics)) {
@@ -135,10 +143,11 @@ final class ResourcesReadHookInstaller {
                         }
                         return result;
                     });
-
             Method getSystemMethod = resourcesClass.getDeclaredMethod("getSystem");
-            xposed.hook(getSystemMethod)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(getSystemMethod)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            "resources_read_get_system")
                     .intercept(chain -> {
                         Object result = chain.proceed();
                         if (!(result instanceof Resources resources)) {
@@ -176,9 +185,13 @@ final class ResourcesReadHookInstaller {
                         }
                         return result;
                     });
-
             hookInstalled = true;
             DpisLog.i("Resources read hook ready");
+            FeedbackDiagnosticRuntimeEvents.recordHotReload(
+                    packageName,
+                    "resources",
+                    "installed",
+                    "resources read hook ready");
         }
     }
 
@@ -460,7 +473,44 @@ final class ResourcesReadHookInstaller {
                     "viewport",
                     "resources_read_configuration_override",
                     detail);
+            maybeLogLegacyAutoFallbackSuccess(
+                    store,
+                    packageName,
+                    sourceTag,
+                    originalWidthDp,
+                    originalHeightDp,
+                    originalSmallestWidthDp,
+                    originalDensityDpi,
+                    config);
         }
+    }
+
+    private static void maybeLogLegacyAutoFallbackSuccess(DpiConfigStore store,
+                                                          String packageName,
+                                                          String sourceTag,
+                                                          int originalWidthDp,
+                                                          int originalHeightDp,
+                                                          int originalSmallestWidthDp,
+                                                          int originalDensityDpi,
+                                                          Configuration config) {
+        if (store == null
+                || packageName == null
+                || packageName.isBlank()
+                || sourceTag == null
+                || !sourceTag.startsWith("LegacyResourcesRead(")
+                || !ViewportApplyMode.AUTO.equals(
+                        ViewportApplyMode.normalize(store.getTargetViewportApplyMode(packageName)))
+                || !store.isSystemServerHooksEnabled()) {
+            return;
+        }
+        logIfChanged(packageName + ":" + sourceTag + ":legacy-auto-fallback",
+                "DPIS_VIEWPORT legacy auto fallback success: package=" + packageName
+                        + ", source=" + sourceTag
+                        + ", widthDp " + originalWidthDp + " -> " + config.screenWidthDp
+                        + ", heightDp " + originalHeightDp + " -> " + config.screenHeightDp
+                        + ", smallestWidthDp " + originalSmallestWidthDp + " -> "
+                        + config.smallestScreenWidthDp
+                        + ", densityDpi " + originalDensityDpi + " -> " + config.densityDpi);
     }
 
     static void applyMetricsOverride(DisplayMetrics metrics,

@@ -109,7 +109,7 @@ public class ViewportModePolicyTest {
     }
 
     @Test
-    public void autoFallsBackToCompatConfigurationOverrideWhenSystemHookOff() {
+    public void autoTurnsOffWithoutCompatConfigurationOverrideWhenSystemHookOff() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
         store.setSystemServerHooksEnabled(false);
@@ -118,8 +118,8 @@ public class ViewportModePolicyTest {
 
         String mode = ViewportModePolicy.resolve(store, "com.example.target");
 
-        assertEquals(ViewportApplyMode.COMPAT, mode);
-        assertTrue(ViewportModePolicy.shouldApplyConfigurationOverride(store, "com.example.target"));
+        assertEquals(ViewportApplyMode.OFF, mode);
+        assertFalse(ViewportModePolicy.shouldApplyConfigurationOverride(store, "com.example.target"));
     }
 
     @Test

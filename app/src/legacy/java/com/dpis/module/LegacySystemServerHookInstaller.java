@@ -5,12 +5,48 @@ import android.content.res.Configuration;
 import android.util.Log;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 
 final class LegacySystemServerHookInstaller {
+    private static final int MAX_PACKAGE_RECURSION_DEPTH = 5;
+    private static final String[] PACKAGE_STRING_METHOD_NAMES = new String[]{
+            "getOwningPackage",
+            "getPackageName",
+            "getPackage",
+            "getOpPackageName"
+    };
+    private static final String[] PACKAGE_OBJECT_METHOD_NAMES = new String[]{
+            "getIntent",
+            "getComponent",
+            "getActivityInfo",
+            "getApplicationInfo",
+            "getRequest",
+            "getTargetActivity",
+            "getOrigActivity",
+            "getRealActivity"
+    };
+    private static final String[] PACKAGE_STRING_FIELD_NAMES = new String[]{
+            "packageName", "mPackageName", "package", "launchedFromPackage"
+    };
+    private static final String[] PACKAGE_OBJECT_FIELD_NAMES = new String[]{
+            "intent",
+            "mIntent",
+            "component",
+            "mComponent",
+            "activityInfo",
+            "applicationInfo",
+            "request",
+            "mRequest",
+            "targetActivity",
+            "origActivity",
+            "realActivity"
+    };
     private static final AtomicBoolean LAUNCH_ACTIVITY_ITEM_INSTALLED = new AtomicBoolean(false);
     private static final AtomicBoolean RUST_PROCESS_INSTALLED = new AtomicBoolean(false);
 
@@ -24,9 +60,12 @@ final class LegacySystemServerHookInstaller {
                                 () -> ConfigSnapshotLoader.fromStore(
                                         ConfigStoreFactory.createForLegacySystemServerHost()),
                                 ConfigSnapshotRefreshPolicy.SYSTEM_SERVER_TTL_MILLIS));
+        boolean systemServerHooksEnabled = source.isSystemServerHooksEnabled();
         int hookedCount = 0;
         int constructorHookCount = 0;
         boolean attempted = false;
+        logDebug("legacy system_server install enter: hooksEnabled="
+                + systemServerHooksEnabled);
 
         // initZygote can run before HyperOS exposes android.os.RustProcessImpl.
         // Keep RustProcess retryable so the later system_server entry can install it.
@@ -74,19 +113,28 @@ final class LegacySystemServerHookInstaller {
     }
 
     static void applyLaunchActivityItemArgs(PerAppDisplayConfigSource source, Object[] args) {
-        if (source == null || args == null || !source.isSystemServerHooksEnabled()) {
+        if (source == null || args == null) {
+            return;
+        }
+        if (!source.isSystemServerHooksEnabled()) {
+            logDebug("legacy system_server launch-activity-item skipped: reason=hooks-disabled");
             return;
         }
         String packageName = findActivityInfoPackage(args);
         if (packageName == null) {
+            logDebug("legacy system_server launch-activity-item skipped: reason=package-unresolved");
             return;
         }
         PerAppDisplayConfig config = source.get(packageName);
         if (config == null) {
+            logDebug("legacy system_server launch-activity-item skipped: package="
+                    + packageName + ", reason=config-missing");
             return;
         }
         Configuration baseConfiguration = findFirstConfiguration(args);
         if (baseConfiguration == null) {
+            logDebug("legacy system_server launch-activity-item skipped: package="
+                    + packageName + ", reason=configuration-missing");
             return;
         }
         PerAppDisplayEnvironment environment = null;
@@ -117,6 +165,133 @@ final class LegacySystemServerHookInstaller {
                     && activityInfo.packageName != null
                     && !activityInfo.packageName.isBlank()) {
                 return activityInfo.packageName;
+            }
+        }
+        for (Object arg : args) {
+            String packageName = findPackageNameRecursive(arg, 0);
+            if (packageName != null) {
+                return packageName;
+            }
+        }
+        return null;
+    }
+
+    private static String findPackageNameRecursive(Object target, int depth) {
+        if (target == null || depth > MAX_PACKAGE_RECURSION_DEPTH) {
+            return null;
+        }
+        if (target instanceof ActivityInfo activityInfo
+                && activityInfo.packageName != null
+                && !activityInfo.packageName.isBlank()) {
+            return activityInfo.packageName;
+        }
+        if (target instanceof String value && isLikelyPackageName(value)) {
+            return value;
+        }
+        for (String methodName : PACKAGE_STRING_METHOD_NAMES) {
+            String fromMethod = invokeStringMethod(target, methodName);
+            if (fromMethod != null) {
+                return fromMethod;
+            }
+        }
+        for (String methodName : PACKAGE_OBJECT_METHOD_NAMES) {
+            Object value = invokeObjectMethod(target, methodName);
+            String nestedPackage = findPackageNameRecursive(value, depth + 1);
+            if (nestedPackage != null) {
+                return nestedPackage;
+            }
+        }
+        for (String fieldName : PACKAGE_STRING_FIELD_NAMES) {
+            Object value = readField(target, fieldName);
+            if (value instanceof String stringValue && isLikelyPackageName(stringValue)) {
+                return stringValue;
+            }
+        }
+        for (String fieldName : PACKAGE_OBJECT_FIELD_NAMES) {
+            String nestedPackage = findPackageNameRecursive(readField(target, fieldName), depth + 1);
+            if (nestedPackage != null) {
+                return nestedPackage;
+            }
+        }
+        for (Field field : target.getClass().getDeclaredFields()) {
+            if (field.getType().isPrimitive() || field.getType().isEnum()) {
+                continue;
+            }
+            try {
+                field.setAccessible(true);
+                Object nested = field.get(target);
+                if (nested == null || nested == target || Objects.equals(field.getName(), "this$0")) {
+                    continue;
+                }
+                String value = findPackageNameRecursive(nested, depth + 1);
+                if (value != null) {
+                    return value;
+                }
+            } catch (ReflectiveOperationException ignored) {
+                // Continue probing.
+            }
+        }
+        return extractPackageFromText(String.valueOf(target));
+    }
+
+    private static String invokeStringMethod(Object target, String methodName) {
+        try {
+            Method method = target.getClass().getMethod(methodName);
+            if (method.getParameterCount() != 0 || method.getReturnType() != String.class) {
+                return null;
+            }
+            Object value = method.invoke(target);
+            return value instanceof String stringValue && isLikelyPackageName(stringValue)
+                    ? stringValue
+                    : null;
+        } catch (ReflectiveOperationException ignored) {
+            return null;
+        }
+    }
+
+    private static Object invokeObjectMethod(Object target, String methodName) {
+        try {
+            Method method = target.getClass().getMethod(methodName);
+            if (method.getParameterCount() != 0) {
+                return null;
+            }
+            return method.invoke(target);
+        } catch (ReflectiveOperationException ignored) {
+            return null;
+        }
+    }
+
+    private static Object readField(Object target, String fieldName) {
+        Class<?> current = target.getClass();
+        while (current != null && current != Object.class) {
+            try {
+                Field field = current.getDeclaredField(fieldName);
+                field.setAccessible(true);
+                return field.get(target);
+            } catch (ReflectiveOperationException ignored) {
+                current = current.getSuperclass();
+            }
+        }
+        return null;
+    }
+
+    private static boolean isLikelyPackageName(String value) {
+        return value != null
+                && !value.isBlank()
+                && value.indexOf('.') > 0
+                && !value.contains(" ")
+                && !value.contains("/")
+                && Character.isJavaIdentifierStart(value.charAt(0));
+    }
+
+    private static String extractPackageFromText(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String[] tokens = value.split("[^A-Za-z0-9_.$]+");
+        for (String token : tokens) {
+            if (isLikelyPackageName(token)) {
+                return token;
             }
         }
         return null;

@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make viewport `auto` system-first while retaining an app-process compat fallback only when runtime evidence shows system did not apply.
+**Goal:** Make viewport `auto` system-first without treating an unavailable system route as an implicit compat selection. App-process derivation is reserved for guarded runtime evidence that proves the system route failed after it was expected to run.
 
-**Architecture:** Keep requested mode and execution route separate. `auto` remains system-preferred in mode resolution, but app-process resource hooks stay installed as an observer/fallback route. Fallback only applies when marker/record evidence is present and clearly invalid; an empty marker is treated as pending system evidence, not as a fallback trigger.
+**Architecture:** Keep requested mode and execution route separate. `auto` remains system-preferred in mode resolution. Missing system capability resolves to `off`, while guarded app-process fallback only applies when marker/record evidence is present and clearly invalid; an empty marker is treated as pending system evidence, not as a fallback trigger.
 
 **Tech Stack:** Android Java, libxposed API 101, legacy Xposed API 100, JUnit4.
 

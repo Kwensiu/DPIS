@@ -25,13 +25,112 @@ How does the Modern APK route viewport and font runtime changes through
 libxposed, and how do we keep future Legacy experiments from accidentally
 changing Modern behavior?
 
+## 102 Coexistence Plan
+
+The Modern codebase stays single-track. API 102 does not get a separate business
+tree; it adds lifecycle and hook-management capabilities on top of the existing
+101 runtime routes.
+
+Artifact/runtime rule:
+
+- the shipped Modern artifact declares API 102 because LSPosed only allows one
+  advertised modern API version per artifact;
+- that declaration does not mean "102-only runtime behavior";
+- on a 101-capable LSPosed framework, DPIS still runs the same Modern route tree
+  and degrades to the 101 capability set;
+- on a 102-capable LSPosed framework, DPIS keeps the same route tree but also
+  enables stable hook ids, hot-reload callbacks, and related 102 maintenance
+  features.
+
+Naming rule:
+
+- user-facing terminology stays `modern`;
+- internal capability boundaries may be named by concrete libxposed API
+  versions such as `101`, `102`, and later `103`/`104`;
+- shared routing, planner, and runtime semantics should not be renamed to
+  `modern101` / `modern102` because they still describe one Modern route tree.
+
+Planned shape:
+
+- keep the current shared app-process and system_server routing model;
+- add `onHotReloading()` / `onHotReloaded()` in the Modern entry only;
+- treat `replaceHook()` and hook ids as the preferred 102-level maintenance
+  path for hooks that already have stable identities;
+- keep 101-compatible install behavior as the default runtime path and fall back
+  to full reinstall when a hook is not yet id-stable;
+- avoid splitting installer logic into `101` and `102` copies unless a route
+  proves it needs different runtime behavior.
+
+Hot reload implementation notes:
+
+- when a hook can be given a stable id, assign it once at install time instead
+  of adding a second replacement path later;
+- for stable app-process resource hooks, let API 102 rebuild the hook with the
+  same executable and id so the framework replaces it atomically;
+- when a hook is not yet id-stable, keep it on the restart-required path until
+  the route has a proven reload owner;
+- start with the hot paths that already have stable ownership boundaries:
+  `ModuleMain`, `AppProcessHookInstaller`, and the system_server installer
+  entry, then expand only when a real reload path is needed.
+- verify hot reload with LSPosed bridge logs first. A successful module-side
+  reload should show `DPIS hot reload begin`, `DPIS hot reload replay`, and
+  `DPIS hot reload end` in `modules_*.log` or `verbose_*.log`. Feedback
+  diagnostics are useful as supporting context only, because reinstall-driven
+  reload can end the diagnostic session before packaging. System-server replay
+  is not part of the current 102 hot-reload surface and still depends on the
+  next normal install path.
+- if LSPosed reports `Auto hot reload failed ... status=3, message=null` and
+  there is no `DPIS hot reload begin`, the reload did not reach the new replay
+  path. The common first-update case is that the already-running target process
+  still holds an older DPIS generation whose default `onHotReloading()` rejects
+  reload. Restart the target process once after installing the 102-capable
+  build, then use the next install/update to validate the hot-reload path.
+- LSPosed's notification progress may lag behind the install moment for target
+  processes that are stopped, stale, or not immediately schedulable. In the
+  2026-06-24 device export, old `Auto hot reload failed` lines clustered around
+  04:34-04:44, while later user-launched/active processes produced fresh
+  `DPIS hot reload begin -> replay -> end` evidence at 12:20 and 12:35. Treat
+  those later bridge logs as the replay truth for that process instead of
+  treating the notification progress as a DPIS save/config failure.
+- API 102 still does not replay package-ready callbacks automatically. DPIS
+  carries the last package-ready package/classloader/applicationInfo through
+  `setSavedInstanceState(...)` and, after generic module-loaded replay, retries
+  the package-ready supplement routes that need the app classloader: WeChat DPI,
+  typeface replacement, and Flutter settings. This supplement replay is
+  intentionally app-process only; system_server uses the narrower replay path
+  below.
+- system_server replay is narrower and more valuable than broad app-process
+  replay. On API 102 hot reload, only the system process clears the
+  system_server install gate and re-enters the existing system_server installer
+  with stable hook ids. App processes continue to use best-effort replay and may
+  still need a target app restart when frozen or cached runtime objects remain.
+
+Practical boundary:
+
+- the Modern artifact advertises 102, but shared route semantics still use the
+  101 capability set as the runtime fallback baseline;
+- 102 is used to simplify lifecycle cleanup and hot-reload replay when the host
+  framework actually exposes 102 features;
+- Legacy stays on its own 100 surface and is not part of the 102 migration.
+- version-specific capability code should stay explicit (`101`, `102`) rather
+  than introducing vague tiers like `baseline` / `enhanced`.
+
+Current structure note:
+
+- `system_server` hook entry definitions now live in a dedicated catalog so the
+  shared installer no longer owns raw entry arrays inline;
+- 102 may assign stable hook ids for those entries as future maintenance
+  anchors, but `system_server` still does not advertise replay/hot-reload
+  support until install ownership is narrowed beyond the current process-scoped
+  one-shot gate.
+
 ## Route Map
 
 ```text
 Viewport mode
   auto
     -> system hooks enabled  => system
-    -> system hooks disabled => compat
+    -> system hooks disabled => off
 
   system
     -> libxposed system_server route
@@ -85,6 +184,12 @@ TextView `setTextSize` SP/absolute rewrites, TextView current-px attach/setText
 reinforcement, TextView span rewrite, Paint/TextPaint fallback, Android WebView
 textZoom, and X5 WebView textZoom. These events are intended to prove callback
 and mutation timing; they are not a user-visible summary layer.
+
+As of 2026-06-24, `ForceTextSizeHookInstaller` also emits LSPosed bridge-window
+evidence for API 102-friendly field-rewrite hooks. Runtime diagnostics can now
+look for `DPIS_FONT ForceTextSize hook ready` plus first-hit
+`... override applied` bridge lines to distinguish install success from actual
+rewrite callbacks.
 
 ## Full Tree
 
@@ -319,6 +424,8 @@ Detailed app-specific runtime evidence lives in
   +-- app/src/modern/java/com/dpis/module/ModuleMain.java
   +-- libxposed XposedModule lifecycle
   +-- SystemServerDisplayEnvironmentInstaller installation through XposedInterface
+  +-- 102 hot-reload callbacks are only enabled when the Modern entry is running
+      on an API 102-capable framework
 
 100-only
   |
@@ -381,6 +488,36 @@ superseded.
 
 ## Update Log
 
+- 2026-06-23: hot reload validation now treats LSPosed bridge logs as the
+  primary evidence source. `ModuleMain` emits `hot reload begin/replay/end`
+  through the libxposed log channel so a future reinstall can distinguish
+  framework-level reload failure from module replay failure.
+- 2026-06-24: feedback diagnostics and the in-app LSPosed log page now retain
+  LSPosedService hot-reload warnings that explicitly mention DPIS. These lines
+  are framework outcomes, not module-emitted hook evidence, and are classified
+  separately as `route=hot_reload stage=skipped`.
+- 2026-06-23: removed the unused Modern hook handle registry. API 102 hook
+  identity is represented by `setId(...)`; API 101 compatibility remains the
+  existing install-and-restart path and does not share this hot-reload surface.
+- 2026-06-23: completed the first API 102 hook-id pass for app-process
+  resources hooks. `ResourcesManager` fixed hooks now use stable ids, and the
+  dynamic resource-creation / `createResourcesImpl` overload hooks derive ids
+  from their method signatures so hot reload can replace them instead of
+  stacking id-less duplicates.
+- 2026-06-23: Modern runtime now plans for API 102 hot reload by keeping 101
+  as the baseline route, assigning stable IDs to replaceable resource hooks,
+  and treating `replaceHook()` as a possible path only for hooks that already
+  have a known executable owner. This is a lifecycle addition, not a new
+  viewport or font semantics route.
+- 2026-06-24: shared Modern hook code now routes version-specific hook
+  capabilities through explicit `101` / `102` capability helpers instead of
+  hardcoding `setId(...)` directly in every installer. The external product
+  name remains `modern`; the version split is an internal code capability
+  boundary.
+- 2026-06-24: typeface replacement joined the API 102 stable-id pass. Its
+  TextView/Paint hooks now have concrete ids and first-hit bridge evidence, so
+  hot-reload validation can distinguish hook install from actual typeface
+  replacement without creating a separate 102-only typeface route.
 - 2026-06-21: feedback diagnostic LSPosed timeline now preserves semantic
   stage ordering for same-timestamp runtime events (`begin` before
   `applied`/`skipped`, then `end`), and explicit `DPIS_VIEWPORT*` messages no

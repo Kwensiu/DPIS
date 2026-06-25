@@ -70,7 +70,9 @@ final class AppConfigDialogBinder {
         ) {
         }
 
-        int[] saveAppConfig(AppListItem item,
+        AppConfigSaveHandler.Result saveAppConfig(View dialogView,
+                AppListItem item,
+                boolean dpisEnabled,
                 TextInputEditText viewportInput,
                 TextInputEditText fontScaleInput,
                 String viewportMode,
@@ -120,7 +122,7 @@ final class AppConfigDialogBinder {
         state.captureSavedDraft(views, item != null && item.previewFromGlobalPrefill);
         state.bindUnsavedBadge(UnsavedBadgeBinder.bind(
                 dialogView, () -> state.hasUnsavedChanges(views), showDragHandle));
-        AppConfigDialogActionStyle style = resolveDialogActionStyle(views.scopeButton);
+        AppConfigDialogActionStyle style = captureDialogActionStyle(views.scopeButton);
         refreshDialogState(views, state, style, systemHooksEnabled, item);
         new AppConfigSheetInteractions(this, host)
                 .bind(dialogView, item, views, state, style, systemHooksEnabled);
@@ -254,7 +256,7 @@ final class AppConfigDialogBinder {
                 initialViewportAbsoluteInput);
     }
 
-    private AppConfigDialogActionStyle resolveDialogActionStyle(MaterialButton baseButton) {
+    static AppConfigDialogActionStyle captureDialogActionStyle(MaterialButton baseButton) {
         ColorStateList defaultActionBgTint = baseButton.getBackgroundTintList();
         int defaultActionStrokeWidth = baseButton.getStrokeWidth();
         int defaultActionTextColor = MaterialColors.getColor(

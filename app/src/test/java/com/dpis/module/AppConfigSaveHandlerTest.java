@@ -269,7 +269,7 @@ public class AppConfigSaveHandlerTest {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
 
-        int[] result = new AppConfigSaveHandler().saveResolved(
+        AppConfigSaveHandler.Result result = new AppConfigSaveHandler().saveResolved(
                 item,
                 ViewportTargetSpec.off(),
                 ViewportTargetType.RELATIVE_SCALE,
@@ -286,7 +286,7 @@ public class AppConfigSaveHandlerTest {
                 store,
                 null);
 
-        assertEquals(1, result[0]);
+        assertTrue(result.success);
         assertNull(store.getTargetFontScalePercent(item.packageName));
         assertEquals(FontApplyMode.FIELD_REWRITE,
                 store.getTargetFontApplyMode(item.packageName));
@@ -298,7 +298,7 @@ public class AppConfigSaveHandlerTest {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
 
-        int[] result = new AppConfigSaveHandler().saveResolved(
+        AppConfigSaveHandler.Result result = new AppConfigSaveHandler().saveResolved(
                 item,
                 ViewportTargetSpec.off(),
                 ViewportTargetType.ABSOLUTE_DP,
@@ -315,7 +315,7 @@ public class AppConfigSaveHandlerTest {
                 store,
                 null);
 
-        assertEquals(1, result[0]);
+        assertTrue(result.success);
         assertFalse(store.getTargetViewportSpec(item.packageName).isEnabled());
         assertEquals(ViewportTargetType.ABSOLUTE_DP,
                 store.getTargetViewportType(item.packageName));
@@ -329,7 +329,7 @@ public class AppConfigSaveHandlerTest {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
 
-        int[] result = new AppConfigSaveHandler().saveResolved(
+        AppConfigSaveHandler.Result result = new AppConfigSaveHandler().saveResolved(
                 item,
                 ViewportTargetSpec.off(),
                 ViewportTargetType.RELATIVE_SCALE,
@@ -346,7 +346,7 @@ public class AppConfigSaveHandlerTest {
                 store,
                 null);
 
-        assertEquals(1, result[0]);
+        assertTrue(result.success);
         assertEquals(FontApplyMode.OFF,
                 store.getTargetFontApplyMode(item.packageName));
         assertFalse(store.hasRealPackageConfig(item.packageName));
@@ -362,7 +362,7 @@ public class AppConfigSaveHandlerTest {
         assertTrue(store.setTargetFontApplyMode(
                 item.packageName, FontApplyMode.SYSTEM_EMULATION));
 
-        int[] result = new AppConfigSaveHandler().saveResolved(
+        AppConfigSaveHandler.Result result = new AppConfigSaveHandler().saveResolved(
                 item,
                 ViewportTargetSpec.off(),
                 ViewportTargetType.RELATIVE_SCALE,
@@ -379,7 +379,7 @@ public class AppConfigSaveHandlerTest {
                 store,
                 null);
 
-        assertEquals(1, result[0]);
+        assertTrue(result.success);
         assertFalse(store.hasRealPackageConfig(item.packageName));
         assertFalse(store.hasUserVisiblePackageConfig(item.packageName));
         assertFalse(store.getConfiguredPackages().contains(item.packageName));
@@ -396,7 +396,7 @@ public class AppConfigSaveHandlerTest {
                 "serif",
                 "resources_font"));
 
-        int[] result = new AppConfigSaveHandler().saveResolved(
+        AppConfigSaveHandler.Result result = new AppConfigSaveHandler().saveResolved(
                 item,
                 ViewportTargetSpec.relativeScale(875),
                 ViewportTargetType.RELATIVE_SCALE,
@@ -413,7 +413,7 @@ public class AppConfigSaveHandlerTest {
                 store,
                 null);
 
-        assertEquals(1, result[0]);
+        assertTrue(result.success);
         assertFalse(store.hasRealPackageConfig(item.packageName));
         assertFalse(store.getConfiguredPackages().contains(item.packageName));
     }
@@ -429,7 +429,7 @@ public class AppConfigSaveHandlerTest {
                 "serif",
                 "resources_font"));
 
-        int[] result = new AppConfigSaveHandler().saveResolved(
+        AppConfigSaveHandler.Result result = new AppConfigSaveHandler().saveResolved(
                 item,
                 ViewportTargetSpec.off(),
                 ViewportTargetType.RELATIVE_SCALE,
@@ -446,7 +446,7 @@ public class AppConfigSaveHandlerTest {
                 store,
                 null);
 
-        assertEquals(1, result[0]);
+        assertTrue(result.success);
         assertFalse(store.hasRealPackageConfig(item.packageName));
         assertFalse(store.getConfiguredPackages().contains(item.packageName));
     }
@@ -462,7 +462,7 @@ public class AppConfigSaveHandlerTest {
                 "serif",
                 "resources_font"));
 
-        int[] result = new AppConfigSaveHandler().saveResolved(
+        AppConfigSaveHandler.Result result = new AppConfigSaveHandler().saveResolved(
                 item,
                 ViewportTargetSpec.relativeScale(900),
                 ViewportTargetType.RELATIVE_SCALE,
@@ -479,10 +479,40 @@ public class AppConfigSaveHandlerTest {
                 store,
                 null);
 
-        assertEquals(1, result[0]);
+        assertTrue(result.success);
         assertTrue(store.hasRealPackageConfig(item.packageName));
         assertEquals(ViewportTargetSpec.relativeScale(900),
                 store.getTargetViewportSpec(item.packageName));
+    }
+
+    @Test
+    public void saveReportsFailureWhenStoreCommitFails() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        prefs.setCommitResult(false);
+        boolean[] changed = {false};
+
+        AppConfigSaveHandler.Result result = new AppConfigSaveHandler().saveResolved(
+                app("com.example.app"),
+                ViewportTargetSpec.relativeScale(900),
+                ViewportTargetType.RELATIVE_SCALE,
+                ViewportApplyMode.AUTO,
+                false,
+                125,
+                FontApplyMode.FIELD_REWRITE,
+                null,
+                null,
+                false,
+                "90",
+                "",
+                true,
+                store,
+                () -> changed[0] = true);
+
+        assertFalse(result.success);
+        assertEquals(R.string.system_settings_save_failed, result.messageResId);
+        assertFalse(changed[0]);
+        assertFalse(store.hasRealPackageConfig("com.example.app"));
     }
 
     private static AppListItem app(String packageName) {

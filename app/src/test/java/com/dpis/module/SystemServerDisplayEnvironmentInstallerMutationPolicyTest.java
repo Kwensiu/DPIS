@@ -83,17 +83,28 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     public void hyperOsBootstrapHooksAreGuardedBySafeModeInSource() throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
 
-        int launchHookIndex = source.indexOf("if (installLaunchActivityItemHook(xposed, source))");
-        assertTrue(launchHookIndex > 0);
-        String launchContext = source.substring(Math.max(0, launchHookIndex - 260), launchHookIndex);
-        assertTrue(launchContext.contains("SystemServerMutationPolicy.shouldInstallTarget("));
-        assertTrue(launchContext.contains("launch-activity-item"));
+        assertTrue(source.contains("SystemServerMutationPolicy.shouldInstallTarget("));
+        assertTrue(source.contains("launch-activity-item"));
+        assertTrue(source.contains("HyperOsRustProcessHookInstaller.install(xposed, source)"));
+        assertTrue(source.contains("hyperos-rust-process"));
+    }
 
-        int rustHookIndex = source.indexOf("if (HyperOsRustProcessHookInstaller.install(xposed, source))");
-        assertTrue(rustHookIndex > 0);
-        String rustContext = source.substring(Math.max(0, rustHookIndex - 260), rustHookIndex);
-        assertTrue(rustContext.contains("SystemServerMutationPolicy.shouldInstallTarget("));
-        assertTrue(rustContext.contains("hyperos-rust-process"));
+    @Test
+    public void systemServerHookCatalogOwnsModernEntryDefinitions() throws IOException {
+        String installer = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+        String catalog = read("src/main/java/com/dpis/module/SystemServerHookCatalog.java");
+        String spec = read("src/main/java/com/dpis/module/SystemServerHookSpec.java");
+
+        assertTrue(installer.contains("SystemServerHookCatalog.methodHookSpecs()"));
+        assertTrue(installer.contains("SystemServerHookCatalog.LAUNCH_ACTIVITY_ITEM"));
+        assertFalse(installer.contains("private static final HookTarget[] HOOK_TARGETS"));
+        assertTrue(catalog.contains("static final SystemServerHookSpec LAUNCH_ACTIVITY_ITEM"));
+        assertTrue(catalog.contains("static final SystemServerHookSpec CONFIG_DISPATCH"));
+        assertTrue(catalog.contains("static final SystemServerHookSpec DISPLAY_MANAGER_INFO"));
+        assertTrue(catalog.contains("\"system_server_launch_activity_item\""));
+        assertTrue(catalog.contains("\"system_server_display_manager_info\""));
+        assertTrue(spec.contains("String hookIdFor(Method method)"));
+        assertTrue(spec.contains("String hookIdFor(Constructor<?> constructor)"));
     }
 
     @Test

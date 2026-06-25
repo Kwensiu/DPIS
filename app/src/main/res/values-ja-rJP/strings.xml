@@ -284,7 +284,7 @@
     <string name="dialog_hook_chain_tab_font">フォント</string>
     <string name="dialog_viewport_apply_strategy_title">インターフェース倍率の適用方針</string>
     <string name="dialog_viewport_apply_auto">自動</string>
-    <string name="dialog_viewport_apply_auto_subtitle">System ルートを優先し、失敗時は静かにフォールバックします。</string>
+    <string name="dialog_viewport_apply_auto_subtitle">System ルートが利用可能な場合に使用します。</string>
     <string name="dialog_viewport_apply_system">System</string>
     <string name="dialog_viewport_apply_system_subtitle">system-server ルートのみを使用します。</string>
     <string name="dialog_viewport_apply_compat">Compat</string>

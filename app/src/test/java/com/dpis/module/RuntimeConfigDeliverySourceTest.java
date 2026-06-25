@@ -21,10 +21,14 @@ public class RuntimeConfigDeliverySourceTest {
         assertTrue(delivery.contains("DpisApplication.reloadConfigStore();"));
         assertTrue(mainActivity.contains("private void onRuntimeConfigSaved()"));
         assertTrue(mainActivity.contains("RuntimeConfigDelivery.publishLocalSnapshotAfterSave();"));
-        assertTrue(mainActivity.contains("this::onRuntimeConfigSaved"));
+        assertTrue(mainActivity.contains("private AppConfigSaveHandler.Result finalizeAppConfigSaveWithWechatDpi("));
+        assertTrue(mainActivity.contains("private AppConfigSaveHandler.Result finalizeAppConfigSaveWithRuntimeSync("));
+        assertTrue(mainActivity.contains("return finalizeAppConfigSaveWithRuntimeSync("));
+        assertTrue(mainActivity.contains("ViewportPropertySyncer.syncConfiguredTargetsAsync(store);"));
+        assertTrue(mainActivity.contains("FontRuntimePropertySyncer.syncConfiguredTargetsAsync(store);"));
         assertTrue(appConfigHost.contains("public void onRuntimeConfigSaved()"));
         assertTrue(appConfigHost.contains("MainActivity.this.onRuntimeConfigSaved();"));
-        assertTrue(sheetActions.contains("host.onRuntimeConfigSaved();"));
+        assertTrue(sheetActions.contains("AppConfigSaveHandler.Result result = host.saveAppConfig("));
         assertTrue(mainActivity.contains("if (result.successCount() > 0)"));
         assertTrue(mainActivity.contains("onRuntimeConfigSaved();"));
         assertTrue(occurrences(fontLibrary, "RuntimeConfigDelivery.publishLocalSnapshotAfterSave();") >= 4);
@@ -42,7 +46,7 @@ public class RuntimeConfigDeliverySourceTest {
     }
 
     private static String hostBlock(String source) {
-        int start = source.indexOf("public int[] saveAppConfig(");
+        int start = source.indexOf("public AppConfigSaveHandler.Result saveAppConfig(");
         int end = source.indexOf("public void onDraftStateChanged", start);
         return source.substring(start, end);
     }

@@ -2,6 +2,12 @@ package com.dpis.module;
 
 import android.content.SharedPreferences;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -9,6 +15,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 final class DpiConfigStore {
     private static final int MIN_VIEWPORT_WIDTH_DP = 1;
@@ -159,14 +172,27 @@ final class DpiConfigStore {
 
     private final SharedPreferences preferences;
     private final SharedPreferences fallbackPreferences;
+    private final File legacySharedPrefsMirrorFile;
 
     DpiConfigStore(SharedPreferences preferences) {
-        this(preferences, null);
+        this(preferences, null, null);
+    }
+
+    DpiConfigStore(SharedPreferences preferences, File legacySharedPrefsMirrorFile) {
+        this(preferences, null, legacySharedPrefsMirrorFile);
     }
 
     DpiConfigStore(SharedPreferences preferences, SharedPreferences fallbackPreferences) {
+        this(preferences, fallbackPreferences, null);
+    }
+
+    private DpiConfigStore(
+            SharedPreferences preferences,
+            SharedPreferences fallbackPreferences,
+            File legacySharedPrefsMirrorFile) {
         this.preferences = preferences;
         this.fallbackPreferences = fallbackPreferences;
+        this.legacySharedPrefsMirrorFile = legacySharedPrefsMirrorFile;
     }
 
     Set<String> getConfiguredPackages() {
@@ -188,6 +214,15 @@ final class DpiConfigStore {
             collectPackageNamesFromSavedState(packages, fallbackPreferences.getAll());
         }
         return new LinkedHashSet<>(packages);
+    }
+
+    boolean hasAnyUserVisiblePackageConfig() {
+        for (String packageName : getConfiguredPackages()) {
+            if (hasUserVisiblePackageConfig(packageName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     Integer getTargetViewportWidthDp(String packageName) {
@@ -285,6 +320,20 @@ final class DpiConfigStore {
             return null;
         }
         return normalizeTypefaceId(getPackageString(key, packageKey, null));
+    }
+
+    String getTargetFontHookDomainsRaw(String packageName) {
+        String key = keyForFontHookDomains(packageName);
+        String packageKey = keyForPackageFontHookDomains(packageName);
+        if (!containsPackageValue(key, packageKey)) {
+            return null;
+        }
+        String value = getPackageString(key, packageKey, null);
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     Integer getWechatDpi(String packageName) {
@@ -1548,6 +1597,19 @@ final class DpiConfigStore {
         return replaceEntries(entries);
     }
 
+    boolean importSharedPreferencesXml(File sourceFile) {
+        if (sourceFile == null || !sourceFile.exists()) {
+            return false;
+        }
+        try {
+            Map<String, Object> entries = readSharedPreferencesXml(sourceFile);
+            return !entries.isEmpty() && replaceAll(entries);
+        } catch (Throwable throwable) {
+            DpisLog.e("legacy shared prefs import failed", throwable);
+            return false;
+        }
+    }
+
     boolean replaceBackup(Map<String, Object> entries) {
         return replaceBackupEntries(entries);
     }
@@ -1572,8 +1634,15 @@ final class DpiConfigStore {
         if (entries == null) {
             return false;
         }
-        return replaceBackupEntries(preferences, entries)
-                && migrateLegacyPackageConfigToAggregated();
+        boolean replaced = replaceBackupEntries(preferences, entries);
+        if (!replaced) {
+            return false;
+        }
+        boolean migrated = migrateLegacyPackageConfigToAggregated();
+        if (migrated) {
+            mirrorLegacySharedPrefsFile();
+        }
+        return migrated;
     }
 
     private static boolean replaceBackupEntries(
@@ -1756,13 +1825,21 @@ final class DpiConfigStore {
     private boolean commitBoth(EditorAction action) {
         SharedPreferences.Editor primaryEditor = preferences.edit();
         action.apply(primaryEditor);
-        return primaryEditor.commit();
+        boolean committed = primaryEditor.commit();
+        if (committed) {
+            mirrorLegacySharedPrefsFile();
+        }
+        return committed;
     }
 
     private boolean commitLocalOnly(EditorAction action) {
         SharedPreferences.Editor editor = preferences.edit();
         action.apply(editor);
-        return editor.commit();
+        boolean committed = editor.commit();
+        if (committed) {
+            mirrorLegacySharedPrefsFile();
+        }
+        return committed;
     }
 
 
@@ -1782,6 +1859,205 @@ final class DpiConfigStore {
 
     private interface EditorAction {
         void apply(SharedPreferences.Editor editor);
+    }
+
+    private void mirrorLegacySharedPrefsFile() {
+        if (legacySharedPrefsMirrorFile == null) {
+            return;
+        }
+        try {
+            // Some Android builds back SharedPreferences with an APEX-managed prefs
+            // directory. Legacy XSharedPreferences still reads the conventional
+            // /data/user/0/<pkg>/shared_prefs/<name>.xml path, so serialize the
+            // committed logical preference snapshot there after each local commit.
+            File parent = legacySharedPrefsMirrorFile.getParentFile();
+            if (parent == null || (!parent.exists() && !parent.mkdirs() && !parent.exists())) {
+                return;
+            }
+            File tempFile = new File(parent, legacySharedPrefsMirrorFile.getName() + ".tmp");
+            writeSharedPreferencesXml(preferences.getAll(), tempFile);
+            try {
+                Files.move(
+                        tempFile.toPath(),
+                        legacySharedPrefsMirrorFile.toPath(),
+                        StandardCopyOption.REPLACE_EXISTING,
+                        StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException ignored) {
+                Files.move(
+                        tempFile.toPath(),
+                        legacySharedPrefsMirrorFile.toPath(),
+                        StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (IOException throwable) {
+            DpisLog.e("legacy shared prefs mirror failed", throwable);
+        } catch (Throwable throwable) {
+            DpisLog.e("legacy shared prefs mirror failed", throwable);
+        }
+    }
+
+    static void writeSharedPreferencesXmlForTest(Map<String, ?> entries, File targetFile)
+            throws IOException {
+        writeSharedPreferencesXml(entries, targetFile);
+    }
+
+    static Map<String, Object> readSharedPreferencesXmlForTest(File sourceFile)
+            throws Exception {
+        return readSharedPreferencesXml(sourceFile);
+    }
+
+    private static void writeSharedPreferencesXml(Map<String, ?> entries, File targetFile)
+            throws IOException {
+        Files.write(
+                targetFile.toPath(),
+                sharedPreferencesXml(entries).getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static String sharedPreferencesXml(Map<String, ?> entries) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n");
+        builder.append("<map>\n");
+        if (entries != null) {
+            for (Map.Entry<String, ?> entry : entries.entrySet()) {
+                appendPreferenceXmlEntry(builder, entry.getKey(), normalizeValue(entry.getValue()));
+            }
+        }
+        builder.append("</map>\n");
+        return builder.toString();
+    }
+
+    private static Map<String, Object> readSharedPreferencesXml(File sourceFile)
+            throws Exception {
+        LinkedHashMap<String, Object> entries = new LinkedHashMap<>();
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        setXmlFeatureIfSupported(factory, "http://apache.org/xml/features/disallow-doctype-decl", true);
+        setXmlFeatureIfSupported(factory, "http://xml.org/sax/features/external-general-entities", false);
+        setXmlFeatureIfSupported(factory, "http://xml.org/sax/features/external-parameter-entities", false);
+        Element root = factory.newDocumentBuilder().parse(sourceFile).getDocumentElement();
+        if (root == null || !"map".equals(root.getTagName())) {
+            return entries;
+        }
+        NodeList children = root.getChildNodes();
+        for (int index = 0; index < children.getLength(); index++) {
+            Node node = children.item(index);
+            if (!(node instanceof Element element)) {
+                continue;
+            }
+            String key = element.getAttribute("name");
+            if (key == null || key.isEmpty()) {
+                continue;
+            }
+            Object value = readSharedPreferencesXmlValue(element);
+            if (value != null) {
+                entries.put(key, value);
+            }
+        }
+        return entries;
+    }
+
+    private static void setXmlFeatureIfSupported(
+            DocumentBuilderFactory factory,
+            String feature,
+            boolean value) {
+        try {
+            factory.setFeature(feature, value);
+        } catch (ParserConfigurationException ignored) {
+            // Android XML implementations vary; SharedPreferences XML is app-owned.
+        }
+    }
+
+    private static Object readSharedPreferencesXmlValue(Element element) {
+        String tag = element.getTagName();
+        try {
+            return switch (tag) {
+                case "string" -> element.getTextContent();
+                case "int" -> Integer.parseInt(element.getAttribute("value"));
+                case "long" -> Long.parseLong(element.getAttribute("value"));
+                case "float" -> Float.parseFloat(element.getAttribute("value"));
+                case "boolean" -> Boolean.parseBoolean(element.getAttribute("value"));
+                case "set" -> readSharedPreferencesXmlStringSet(element);
+                default -> null;
+            };
+        } catch (RuntimeException ignored) {
+            return null;
+        }
+    }
+
+    private static LinkedHashSet<String> readSharedPreferencesXmlStringSet(Element element) {
+        LinkedHashSet<String> values = new LinkedHashSet<>();
+        NodeList children = element.getChildNodes();
+        for (int index = 0; index < children.getLength(); index++) {
+            Node node = children.item(index);
+            if (node instanceof Element child && "string".equals(child.getTagName())) {
+                values.add(child.getTextContent());
+            }
+        }
+        return values;
+    }
+
+    private static void appendPreferenceXmlEntry(StringBuilder builder, String key, Object value) {
+        if (key == null || key.isEmpty() || value == null) {
+            return;
+        }
+        String escapedKey = escapeXml(key);
+        if (value instanceof String stringValue) {
+            builder.append("    <string name=\"")
+                    .append(escapedKey)
+                    .append("\">")
+                    .append(escapeXml(stringValue))
+                    .append("</string>\n");
+        } else if (value instanceof Integer intValue) {
+            appendPrimitiveXmlEntry(builder, "int", escapedKey, Integer.toString(intValue));
+        } else if (value instanceof Long longValue) {
+            appendPrimitiveXmlEntry(builder, "long", escapedKey, Long.toString(longValue));
+        } else if (value instanceof Float floatValue) {
+            appendPrimitiveXmlEntry(builder, "float", escapedKey, Float.toString(floatValue));
+        } else if (value instanceof Boolean booleanValue) {
+            appendPrimitiveXmlEntry(builder, "boolean", escapedKey, Boolean.toString(booleanValue));
+        } else if (value instanceof Set<?> setValue) {
+            if (setValue.isEmpty()) {
+                builder.append("    <set name=\"").append(escapedKey).append("\" />\n");
+                return;
+            }
+            builder.append("    <set name=\"").append(escapedKey).append("\">\n");
+            for (Object item : setValue) {
+                if (item instanceof String stringItem) {
+                    builder.append("        <string>")
+                            .append(escapeXml(stringItem))
+                            .append("</string>\n");
+                }
+            }
+            builder.append("    </set>\n");
+        }
+    }
+
+    private static void appendPrimitiveXmlEntry(
+            StringBuilder builder,
+            String tag,
+            String escapedKey,
+            String value) {
+        builder.append("    <")
+                .append(tag)
+                .append(" name=\"")
+                .append(escapedKey)
+                .append("\" value=\"")
+                .append(escapeXml(value))
+                .append("\" />\n");
+    }
+
+    private static String escapeXml(String value) {
+        StringBuilder builder = new StringBuilder(value.length());
+        for (int index = 0; index < value.length(); index++) {
+            char character = value.charAt(index);
+            switch (character) {
+                case '&' -> builder.append("&amp;");
+                case '<' -> builder.append("&lt;");
+                case '>' -> builder.append("&gt;");
+                case '"' -> builder.append("&quot;");
+                case '\'' -> builder.append("&apos;");
+                default -> builder.append(character);
+            }
+        }
+        return builder.toString();
     }
 
     private interface PreferenceReader<T> {

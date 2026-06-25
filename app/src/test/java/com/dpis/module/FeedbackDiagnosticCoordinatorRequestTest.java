@@ -1,7 +1,9 @@
 package com.dpis.module;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -31,6 +33,54 @@ public final class FeedbackDiagnosticCoordinatorRequestTest {
         );
 
         assertNull(request.wechatDpi);
+    }
+
+    @Test
+    public void fromPersistedPrefersStoreOverStaleItemSnapshot() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        String packageName = "com.tencent.mm";
+        assertTrue(store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(900)));
+        assertTrue(store.setTargetViewportApplyMode(packageName, ViewportApplyMode.SYSTEM));
+        assertTrue(store.setTargetFontScalePercent(packageName, 125));
+        assertTrue(store.setTargetFontApplyMode(packageName, FontApplyMode.FIELD_REWRITE));
+        assertTrue(store.setTargetTypefaceId(packageName, "font_modern"));
+        assertTrue(store.setPackageFontHookDomainsRaw(packageName, "resources_font"));
+        assertTrue(store.setWechatDpi(packageName, 610));
+        AppListItem staleItem = app(packageName, null);
+
+        FeedbackDiagnosticCoordinator.Request request
+                = FeedbackDiagnosticCoordinator.Request.fromPersisted(
+                        staleItem,
+                        null,
+                        "8.0.74",
+                        store
+                );
+
+        assertTrue(request.dpisEnabled);
+        assertFalse(request.previewFromGlobalPrefill);
+        assertEquals(ViewportTargetSpec.relativeScale(900), request.viewportTargetSpec);
+        assertEquals(ViewportApplyMode.SYSTEM, request.viewportApplyMode);
+        assertEquals(Integer.valueOf(125), request.fontScalePercent);
+        assertEquals(FontApplyMode.FIELD_REWRITE, request.fontApplyMode);
+        assertEquals("font_modern", request.typefaceId);
+        assertEquals("resources_font", request.fontHookDomainsRaw);
+        assertEquals(Integer.valueOf(610), request.wechatDpi);
+    }
+
+    @Test
+    public void fromPersistedFallsBackWhenStoreUnavailable() {
+        AppListItem item = app("com.tencent.mm", 600);
+
+        FeedbackDiagnosticCoordinator.Request request
+                = FeedbackDiagnosticCoordinator.Request.fromPersisted(
+                        item,
+                        null,
+                        "8.0.74",
+                        null
+                );
+
+        assertEquals(Integer.valueOf(600), request.wechatDpi);
     }
 
     private static AppListItem app(String packageName, Integer wechatDpi) {

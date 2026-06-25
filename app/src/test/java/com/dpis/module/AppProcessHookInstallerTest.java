@@ -105,7 +105,7 @@ public class AppProcessHookInstallerTest {
     }
 
     @Test
-    public void compatViewportKeepsDisplaySupplementHooks() {
+    public void autoViewportDoesNotInstallDisplaySupplementHooksWhenSystemUnavailable() {
         HookExecutionPlan plan = HookExecutionPlanner.buildPlan(
                 createPolicy(false, false),
                 true,
@@ -116,8 +116,8 @@ public class AppProcessHookInstallerTest {
                 false,
                 DebugFontOverride.none());
 
-        assertTrue(plan.viewportEnabled);
-        assertTrue(AppProcessHookInstaller.shouldInstallAppProcessViewportSupplementHooksForTest(
+        assertFalse(plan.viewportEnabled);
+        assertFalse(AppProcessHookInstaller.shouldInstallAppProcessViewportSupplementHooksForTest(
                 plan,
                 ViewportTargetSpec.absoluteDp(300)));
     }
@@ -417,9 +417,12 @@ public class AppProcessHookInstallerTest {
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
         assertTrue(source.contains("TypefaceOverrideHookInstaller.install("));
+        assertTrue(source.contains("ModernApiCapabilitiesResolver.fromXposed(xposed)"));
+        assertTrue(source.contains("installFromPlan("));
+        assertTrue(source.contains("ModernApiCapabilities apiCapabilities"));
         assertTrue(source.indexOf("installTypefaceHooks(xposed, packageName, store, packagePlan.targetTypefaceId);")
-                < source.indexOf("installFromPlan(xposed, packageName, store, plan,"
-                + " packagePlan.targetViewportSpec);"));
+                < source.indexOf("installFromPlan("));
+        assertTrue(source.contains("packagePlan.targetViewportSpec, apiCapabilities);"));
         assertTrue(moduleMain.contains("packagePlan.targetTypefaceId"));
         assertTrue(moduleMain.contains("retryTypefaceHooksWithPackageReady"));
         assertTrue(moduleMain.contains("AppProcessHookInstaller.installTypefaceHooks("));

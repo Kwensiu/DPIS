@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import de.robv.android.xposed.XposedBridge;
 import io.github.libxposed.api.XposedInterface;
 
 final class FlutterSettingsFontHookInstaller {
@@ -1601,7 +1600,7 @@ final class FlutterSettingsFontHookInstaller {
             return;
         }
         try {
-            XposedBridge.log(BRIDGE_LOG_PREFIX + message);
+            android.util.Log.i("DPIS", BRIDGE_LOG_PREFIX + message);
         } catch (Throwable ignored) {
             // Probe logging must never affect target app behavior.
         }

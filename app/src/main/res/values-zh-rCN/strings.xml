@@ -284,7 +284,7 @@
     <string name="dialog_hook_chain_tab_font">字体</string>
     <string name="dialog_viewport_apply_strategy_title">界面比例应用策略</string>
     <string name="dialog_viewport_apply_auto">自动</string>
-    <string name="dialog_viewport_apply_auto_subtitle">优先走系统路线，失败时静默回退。</string>
+    <string name="dialog_viewport_apply_auto_subtitle">系统路线可用时使用。</string>
     <string name="dialog_viewport_apply_system">系统</string>
     <string name="dialog_viewport_apply_system_subtitle">仅使用系统层路线。</string>
     <string name="dialog_viewport_apply_compat">兼容</string>

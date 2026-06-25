@@ -21,11 +21,29 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.github.libxposed.api.XposedInterface;
 
 final class ForceTextSizeHookInstaller {
+    private static final String BRIDGE_LOG_PREFIX = "DPIS ";
     private static final String XIAOHEIHE_EXPRESSION_TEXT_VIEW =
             "com.max.xiaoheihe.module.expression.widget.ExpressionTextView";
     private static final String FONT_LOG_KEY_PREFIX = "font";
     private static final String FONT_HOT_LOG_KEY_PREFIX = "font-hot";
-    private static volatile boolean hookInstalled;
+    private static final String BRIDGE_LOG_KEY_PREFIX = "font-bridge";
+    private static final String HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_WITH_UNIT =
+            "textview_set_text_size_with_unit";
+    private static final String HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_DEFAULT_SP =
+            "textview_set_text_size_default_sp";
+    private static final String HOOK_ID_TEXTVIEW_SET_TEXT =
+            "textview_set_text";
+    private static final String HOOK_ID_TEXTVIEW_ATTACH =
+            "textview_on_attached_to_window";
+    private static final String HOOK_ID_TEXTVIEW_SET_TEXT_APPEARANCE_CONTEXT =
+            "textview_set_text_appearance_context";
+    private static final String HOOK_ID_TEXTVIEW_SET_TEXT_APPEARANCE_RES =
+            "textview_set_text_appearance_res";
+    private static final String HOOK_ID_PAINT_SET_TEXT_SIZE =
+            "paint_set_text_size";
+    private static final String HOOK_ID_TEXTPAINT_SET_TEXT_SIZE =
+            "textpaint_set_text_size";
+    private static volatile int installedPid = -1;
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
     private static final Map<String, Integer> HOT_LOG_COUNTS = new ConcurrentHashMap<>();
     private static final Map<String, Integer> CALLER_SAMPLE_COUNTS = new ConcurrentHashMap<>();
@@ -54,10 +72,15 @@ final class ForceTextSizeHookInstaller {
     private ForceTextSizeHookInstaller() {
     }
 
+    static void resetForHotReload() {
+        installedPid = -1;
+    }
+
     static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
             throws ReflectiveOperationException {
         install(xposed, packageName, store,
-                FontHookArbitration.resolveDomainPlan(true, true));
+                FontHookArbitration.resolveDomainPlan(true, true),
+                ModernApiCapabilitiesResolver.fromXposed(xposed));
     }
 
     static void install(XposedInterface xposed,
@@ -65,11 +88,25 @@ final class ForceTextSizeHookInstaller {
                         DpiConfigStore store,
                         FontHookArbitration.FontDomainPlan domainPlan)
             throws ReflectiveOperationException {
-        if (hookInstalled) {
+        install(
+                xposed,
+                packageName,
+                store,
+                domainPlan,
+                ModernApiCapabilitiesResolver.fromXposed(xposed));
+    }
+
+    static void install(XposedInterface xposed,
+                        String packageName,
+                        DpiConfigStore store,
+                        FontHookArbitration.FontDomainPlan domainPlan,
+                        ModernApiCapabilities apiCapabilities)
+            throws ReflectiveOperationException {
+        if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
         }
         synchronized (ForceTextSizeHookInstaller.class) {
-            if (hookInstalled) {
+            if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
                 return;
             }
             FontScaleOverride.Result fontScale = FontScaleOverride.resolve(store, packageName, 1.0f);
@@ -80,8 +117,10 @@ final class ForceTextSizeHookInstaller {
             ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
             Class<?> textViewClass = Class.forName("android.widget.TextView", false, bootClassLoader);
             Method setTextSizeMethod = textViewClass.getDeclaredMethod("setTextSize", int.class, float.class);
-            xposed.hook(setTextSizeMethod)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(setTextSizeMethod)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_WITH_UNIT)
                     .intercept(chain -> {
                         if (Boolean.TRUE.equals(INTERNAL_UPDATE.get())) {
                             return chain.proceed();
@@ -182,6 +221,11 @@ final class ForceTextSizeHookInstaller {
                             markAppliedTargetSize(textView, forcedPx);
                             recordTextViewRewrite(textView, originalPx, forcedPx, factor, unit);
                             FeedbackDiagnosticRuntimeHotPathEvents.applied(packageName, routeName, detail);
+                            bridgeMutationAppliedIfChanged(
+                                    xposed,
+                                    packageName,
+                                    HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_WITH_UNIT,
+                                    "textview setTextSize(unit) override applied");
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
                             FeedbackDiagnosticRuntimeHotPathEvents.end(packageName, routeName, detail);
@@ -204,8 +248,10 @@ final class ForceTextSizeHookInstaller {
                         return result;
                     });
             Method setTextSizeFloatMethod = textViewClass.getDeclaredMethod("setTextSize", float.class);
-            xposed.hook(setTextSizeFloatMethod)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(setTextSizeFloatMethod)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_DEFAULT_SP)
                     .intercept(chain -> {
                         if (Boolean.TRUE.equals(INTERNAL_UPDATE.get())) {
                             return chain.proceed();
@@ -316,6 +362,11 @@ final class ForceTextSizeHookInstaller {
                                     "textview_sp_rewrite",
                                     detail
                             );
+                            bridgeMutationAppliedIfChanged(
+                                    xposed,
+                                    packageName,
+                                    HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_DEFAULT_SP,
+                                    "textview setTextSize(default sp) override applied");
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
                             FeedbackDiagnosticRuntimeHotPathEvents.end(
@@ -343,16 +394,33 @@ final class ForceTextSizeHookInstaller {
                     });
             if (shouldInstallCurrentPxTextViewFallbacks(domainPlan)) {
                 installTextAppearanceHooks(
-                        xposed, textViewClass, factor, targetPercent, packageName, domainPlan);
+                        xposed,
+                        textViewClass,
+                        factor,
+                        targetPercent,
+                        packageName,
+                        domainPlan,
+                        apiCapabilities);
                 installTextViewAttachHook(
-                        xposed, textViewClass, factor, targetPercent, packageName, domainPlan);
+                        xposed,
+                        textViewClass,
+                        factor,
+                        targetPercent,
+                        packageName,
+                        domainPlan,
+                        apiCapabilities);
             } else {
                 logIfChanged(buildFontLogKey(packageName, "textview-current-px-fallback-suppressed"),
                         "DPIS_FONT TextView current-px fallbacks suppressed: reason="
                                 + domainPlan.reason);
             }
             if (domainPlan == null || domainPlan.paintFallbackEnabled) {
-                installPaintTextSizeHooks(xposed, factor, targetPercent, packageName);
+                installPaintTextSizeHooks(
+                        xposed,
+                        factor,
+                        targetPercent,
+                        packageName,
+                        apiCapabilities);
             } else {
                 // Paint/TextPaint cannot reliably tell whether incoming sizes were already
                 // handled by Resources, WebView, or TextView domains, so keep it as a last fallback.
@@ -362,22 +430,42 @@ final class ForceTextSizeHookInstaller {
             }
             if (shouldInstallCurrentPxTextViewFallbacks(domainPlan)) {
                 installExpressionTextSetTextHook(
-                        xposed, textViewClass, factor, targetPercent, packageName, domainPlan);
+                        xposed,
+                        textViewClass,
+                        factor,
+                        targetPercent,
+                        packageName,
+                        domainPlan,
+                        apiCapabilities);
             }
-            hookInstalled = true;
+            installedPid = ProcessScopedInstallGate.currentPid();
             DpisLog.i("ForceTextSize hook ready"
                     + ", paintFallback=" + (domainPlan == null
                             || domainPlan.paintFallbackEnabled));
+            bridgeLog(xposed, "DPIS_FONT ForceTextSize hook ready: package=" + packageName
+                    + ", hookIds="
+                    + HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_WITH_UNIT + ","
+                    + HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_DEFAULT_SP + ","
+                    + HOOK_ID_TEXTVIEW_SET_TEXT + ","
+                    + HOOK_ID_TEXTVIEW_ATTACH + ","
+                    + HOOK_ID_TEXTVIEW_SET_TEXT_APPEARANCE_CONTEXT + ","
+                    + HOOK_ID_TEXTVIEW_SET_TEXT_APPEARANCE_RES + ","
+                    + HOOK_ID_PAINT_SET_TEXT_SIZE + ","
+                    + HOOK_ID_TEXTPAINT_SET_TEXT_SIZE);
         }
     }
 
     private static void installPaintTextSizeHooks(XposedInterface xposed,
                                                   float factor,
                                                   Integer targetPercent,
-                                                  String packageName) throws ReflectiveOperationException {
+                                                  String packageName,
+                                                  ModernApiCapabilities apiCapabilities)
+            throws ReflectiveOperationException {
         Method paintSetTextSize = Paint.class.getDeclaredMethod("setTextSize", float.class);
-        xposed.hook(paintSetTextSize)
-                .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+        apiCapabilities.applyStableHookId(
+                        xposed.hook(paintSetTextSize)
+                                .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                        HOOK_ID_PAINT_SET_TEXT_SIZE)
                 .intercept(chain -> {
                     if (Boolean.TRUE.equals(INTERNAL_UPDATE.get())) {
                         return chain.proceed();
@@ -420,6 +508,11 @@ final class ForceTextSizeHookInstaller {
                                 "paint_text_size_fallback",
                                 detail
                         );
+                        bridgeMutationAppliedIfChanged(
+                                xposed,
+                                packageName,
+                                HOOK_ID_PAINT_SET_TEXT_SIZE,
+                                "Paint.setTextSize fallback applied");
                     } finally {
                         FeedbackDiagnosticRuntimeHotPathEvents.end(
                                 packageName,
@@ -447,8 +540,10 @@ final class ForceTextSizeHookInstaller {
             if (textPaintSetTextSize.equals(paintSetTextSize)) {
                 return;
             }
-            xposed.hook(textPaintSetTextSize)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(textPaintSetTextSize)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            HOOK_ID_TEXTPAINT_SET_TEXT_SIZE)
                     .intercept(chain -> {
                         if (Boolean.TRUE.equals(INTERNAL_UPDATE.get())) {
                             return chain.proceed();
@@ -491,6 +586,11 @@ final class ForceTextSizeHookInstaller {
                                     "textpaint_text_size_fallback",
                                     detail
                             );
+                            bridgeMutationAppliedIfChanged(
+                                    xposed,
+                                    packageName,
+                                    HOOK_ID_TEXTPAINT_SET_TEXT_SIZE,
+                                    "TextPaint.setTextSize fallback applied");
                         } finally {
                             FeedbackDiagnosticRuntimeHotPathEvents.end(
                                     packageName,
@@ -595,11 +695,14 @@ final class ForceTextSizeHookInstaller {
                                                   float factor,
                                                   Integer targetPercent,
                                                   String packageName,
-                                                  FontHookArbitration.FontDomainPlan domainPlan) {
+                                                  FontHookArbitration.FontDomainPlan domainPlan,
+                                                  ModernApiCapabilities apiCapabilities) {
         try {
             Method onAttachedToWindowMethod = findOnAttachedToWindowMethod(textViewClass);
-            xposed.hook(onAttachedToWindowMethod)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(onAttachedToWindowMethod)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            HOOK_ID_TEXTVIEW_ATTACH)
                     .intercept(chain -> {
                         Object result = chain.proceed();
                         if (!isTargetPercentActive(targetPercent)) {
@@ -623,6 +726,11 @@ final class ForceTextSizeHookInstaller {
                                     "textview_current_px_fallback",
                                     detail
                             );
+                            bridgeMutationAppliedIfChanged(
+                                    xposed,
+                                    packageName,
+                                    HOOK_ID_TEXTVIEW_ATTACH,
+                                    "TextView attach fallback applied");
                             if (verboseFontLogsEnabled && DpisLog.isLoggingEnabled()) {
                                 logSampled(buildHotFontLogKey(
                                                 packageName,
@@ -674,12 +782,15 @@ final class ForceTextSizeHookInstaller {
                                                          float factor,
                                                          Integer targetPercent,
                                                          String packageName,
-                                                         FontHookArbitration.FontDomainPlan domainPlan)
+                                                         FontHookArbitration.FontDomainPlan domainPlan,
+                                                         ModernApiCapabilities apiCapabilities)
             throws ReflectiveOperationException {
         Method setTextMethod = textViewClass.getDeclaredMethod(
                 "setText", CharSequence.class, TextView.BufferType.class);
-        xposed.hook(setTextMethod)
-                .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+        apiCapabilities.applyStableHookId(
+                        xposed.hook(setTextMethod)
+                                .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                        HOOK_ID_TEXTVIEW_SET_TEXT)
                 .intercept(chain -> {
                     if (Boolean.TRUE.equals(INTERNAL_TEXT_UPDATE.get())) {
                         return chain.proceed();
@@ -746,6 +857,11 @@ final class ForceTextSizeHookInstaller {
                                 "textview_span_rewrite",
                                 detail
                         );
+                        bridgeMutationAppliedIfChanged(
+                                xposed,
+                                packageName,
+                                HOOK_ID_TEXTVIEW_SET_TEXT,
+                                "TextView span rewrite applied");
                     } finally {
                         INTERNAL_TEXT_UPDATE.set(Boolean.FALSE);
                         FeedbackDiagnosticRuntimeHotPathEvents.end(
@@ -885,12 +1001,15 @@ final class ForceTextSizeHookInstaller {
                                                    float factor,
                                                    Integer targetPercent,
                                                    String packageName,
-                                                   FontHookArbitration.FontDomainPlan domainPlan) {
+                                                   FontHookArbitration.FontDomainPlan domainPlan,
+                                                   ModernApiCapabilities apiCapabilities) {
         try {
             Method setTextAppearanceCtx = textViewClass.getDeclaredMethod(
                     "setTextAppearance", android.content.Context.class, int.class);
-            xposed.hook(setTextAppearanceCtx)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(setTextAppearanceCtx)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            HOOK_ID_TEXTVIEW_SET_TEXT_APPEARANCE_CONTEXT)
                     .intercept(chain -> {
                         Object result = chain.proceed();
                         if (!isTargetPercentActive(targetPercent)) {
@@ -909,12 +1028,18 @@ final class ForceTextSizeHookInstaller {
                                 detail
                         );
                         try {
-                            applyTextViewSizeOverride(textView, factor, domainPlan);
-                            FeedbackDiagnosticRuntimeHotPathEvents.applied(
-                                    packageName,
-                                    "text_appearance",
-                                    detail
-                            );
+                            if (applyTextViewSizeOverride(textView, factor, domainPlan)) {
+                                FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                                        packageName,
+                                        "text_appearance",
+                                        detail
+                                );
+                                bridgeMutationAppliedIfChanged(
+                                        xposed,
+                                        packageName,
+                                        HOOK_ID_TEXTVIEW_SET_TEXT_APPEARANCE_CONTEXT,
+                                        "TextAppearance(Context,int) fallback applied");
+                            }
                         } finally {
                             FeedbackDiagnosticRuntimeHotPathEvents.end(
                                     packageName,
@@ -933,8 +1058,10 @@ final class ForceTextSizeHookInstaller {
         }
         try {
             Method setTextAppearanceRes = textViewClass.getDeclaredMethod("setTextAppearance", int.class);
-            xposed.hook(setTextAppearanceRes)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(setTextAppearanceRes)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            HOOK_ID_TEXTVIEW_SET_TEXT_APPEARANCE_RES)
                     .intercept(chain -> {
                         Object result = chain.proceed();
                         if (!isTargetPercentActive(targetPercent)) {
@@ -953,12 +1080,18 @@ final class ForceTextSizeHookInstaller {
                                 detail
                         );
                         try {
-                            applyTextViewSizeOverride(textView, factor, domainPlan);
-                            FeedbackDiagnosticRuntimeHotPathEvents.applied(
-                                    packageName,
-                                    "text_appearance_int",
-                                    detail
-                            );
+                            if (applyTextViewSizeOverride(textView, factor, domainPlan)) {
+                                FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                                        packageName,
+                                        "text_appearance_int",
+                                        detail
+                                );
+                                bridgeMutationAppliedIfChanged(
+                                        xposed,
+                                        packageName,
+                                        HOOK_ID_TEXTVIEW_SET_TEXT_APPEARANCE_RES,
+                                        "TextAppearance(int) fallback applied");
+                            }
                         } finally {
                             FeedbackDiagnosticRuntimeHotPathEvents.end(
                                     packageName,
@@ -1197,6 +1330,23 @@ final class ForceTextSizeHookInstaller {
         }
     }
 
+    private static void bridgeMutationAppliedIfChanged(XposedInterface xposed,
+                                                       String packageName,
+                                                       String hookId,
+                                                       String eventName) {
+        bridgeLogIfChanged(
+                xposed,
+                buildBridgeLogKey(packageName, hookId),
+                "DPIS_FONT " + eventName + ": package=" + packageName + ", hookId=" + hookId);
+    }
+
+    private static void bridgeLogIfChanged(XposedInterface xposed, String key, String message) {
+        String previous = LAST_MESSAGES.put(key, message);
+        if (!message.equals(previous)) {
+            bridgeLog(xposed, message);
+        }
+    }
+
     private static void logSampled(String key, String message, int interval) {
         if (!verboseFontLogsEnabled) {
             return;
@@ -1220,6 +1370,12 @@ final class ForceTextSizeHookInstaller {
     private static String buildHotFontLogKey(String packageName, String suffix) {
         String pkg = packageName == null ? "unknown" : packageName;
         return pkg + ":" + FONT_HOT_LOG_KEY_PREFIX + ":" + suffix;
+    }
+
+    private static String buildBridgeLogKey(String packageName, String hookId) {
+        String pkg = packageName == null ? "unknown" : packageName;
+        String id = hookId == null ? "unknown" : hookId;
+        return pkg + ":" + BRIDGE_LOG_KEY_PREFIX + ":" + id;
     }
 
     private static void logCallerSample(String packageName, String sourceTag) {
@@ -1479,5 +1635,16 @@ final class ForceTextSizeHookInstaller {
 
     private static boolean isVerboseFontLogsEnabled(DpiConfigStore store) {
         return store != null && store.isFontDebugOverlayEnabled();
+    }
+
+    private static void bridgeLog(XposedInterface xposed, String message) {
+        if (xposed == null || (!BuildConfig.DEBUG && !DpisLog.isLoggingEnabled())) {
+            return;
+        }
+        try {
+            xposed.log(android.util.Log.INFO, DpisLog.TAG, BRIDGE_LOG_PREFIX + message);
+        } catch (Throwable ignored) {
+            // Bridge evidence must not affect target app behavior.
+        }
     }
 }

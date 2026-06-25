@@ -10,35 +10,56 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.github.libxposed.api.XposedInterface;
 
 final class ActivityThreadFontHookInstaller {
+    private static final String BRIDGE_LOG_PREFIX = "DPIS ";
     private static final String FONT_LOG_KEY_PREFIX = "font";
-    private static volatile boolean hookInstalled;
+    private static final String HOOK_ID_HANDLE_BIND_APPLICATION =
+            "activity_thread_handle_bind_application";
+    private static volatile int installedPid = -1;
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
 
     private ActivityThreadFontHookInstaller() {
     }
 
-    static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
+    static void resetForHotReload() {
+        installedPid = -1;
+    }
+
+    static void install(XposedInterface xposed,
+                        String packageName,
+                        DpiConfigStore store,
+                        ModernApiCapabilities apiCapabilities)
             throws ReflectiveOperationException {
-        if (hookInstalled) {
+        if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
         }
         synchronized (ActivityThreadFontHookInstaller.class) {
-            if (hookInstalled) {
+            if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
                 return;
             }
             ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
             Class<?> activityThreadClass =
                     Class.forName("android.app.ActivityThread", false, bootClassLoader);
             Method handleBindApplication = resolveHandleBindApplication(activityThreadClass);
-            xposed.hook(handleBindApplication)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+            // This is a single stable process-entry hook, so it is a good 102
+            // replace target and easy to verify from runtime logs.
+            apiCapabilities.applyStableHookId(
+                            xposed.hook(handleBindApplication)
+                                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
+                            HOOK_ID_HANDLE_BIND_APPLICATION)
                     .intercept(chain -> {
                         Object bindData = chain.getArg(0);
-                        applyFontScaleToBindData(bindData, packageName, store);
+                        boolean changed = applyFontScaleToBindData(bindData, packageName, store);
+                        if (changed) {
+                            bridgeLog(xposed, "DPIS_FONT ActivityThread bind override applied: package="
+                                    + packageName + ", hookId=" + HOOK_ID_HANDLE_BIND_APPLICATION);
+                        }
                         return chain.proceed();
                     });
-            hookInstalled = true;
-            DpisLog.i("ActivityThread font hook ready");
+            installedPid = ProcessScopedInstallGate.currentPid();
+            DpisLog.i("ActivityThread font hook ready: hookId="
+                    + HOOK_ID_HANDLE_BIND_APPLICATION);
+            bridgeLog(xposed, "DPIS_FONT ActivityThread font hook ready: package="
+                    + packageName + ", hookId=" + HOOK_ID_HANDLE_BIND_APPLICATION);
         }
     }
 
@@ -103,5 +124,16 @@ final class ActivityThreadFontHookInstaller {
     private static String buildFontLogKey(String packageName, String suffix) {
         String pkg = packageName == null ? "unknown" : packageName;
         return pkg + ":" + FONT_LOG_KEY_PREFIX + ":" + suffix;
+    }
+
+    private static void bridgeLog(XposedInterface xposed, String message) {
+        if (xposed == null || (!BuildConfig.DEBUG && !DpisLog.isLoggingEnabled())) {
+            return;
+        }
+        try {
+            xposed.log(android.util.Log.INFO, DpisLog.TAG, BRIDGE_LOG_PREFIX + message);
+        } catch (Throwable ignored) {
+            // Bridge evidence must not affect target app behavior.
+        }
     }
 }

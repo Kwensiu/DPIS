@@ -10,7 +10,9 @@ final class FontHookDomainDecision {
         }
         Integer fontScalePercent = store.getTargetFontScalePercent(packageName);
         return isHyperOsNativeFlutterEnabled(
-                HookRuntimePolicy.fromNullableStore(store),
+                HookRuntimePolicy.fromEffectiveSystemHookState(
+                        store,
+                        SystemScopeCoordinator.resolveSystemHookEffectiveEnabled(store)),
                 packageName,
                 store.getTargetViewportSpec(packageName),
                 store.getTargetViewportApplyMode(packageName),
@@ -25,7 +27,9 @@ final class FontHookDomainDecision {
             return false;
         }
         return isHyperOsNativeFlutterEnabled(
-                HookRuntimePolicy.fromSnapshot(snapshot),
+                HookRuntimePolicy.fromEffectiveSystemHookState(
+                        null,
+                        snapshot != null && snapshot.isSystemServerHooksEnabled()),
                 packageConfig.packageName,
                 packageConfig.targetViewportSpec,
                 packageConfig.targetViewportMode,

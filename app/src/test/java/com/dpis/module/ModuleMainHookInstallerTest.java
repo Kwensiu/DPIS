@@ -159,10 +159,89 @@ public class ModuleMainHookInstallerTest {
         String appProcessInstaller = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
 
         assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));
-        assertTrue(moduleMain.contains("AppProcessHookInstaller.install(this, store, policy, packagePlan)"));
+        assertTrue(moduleMain.contains("AppProcessHookInstaller.install("));
+        assertTrue(moduleMain.contains("getModernApiCapabilities()"));
         assertTrue(appProcessInstaller.contains("HyperOsFlutterFontHookInstaller.install("));
         assertTrue(appProcessInstaller.contains("resolveFontDomainPlan("));
         assertTrue(appProcessInstaller.contains("hyperOsNativeFlutterEnabled"));
+    }
+
+    @Test
+    public void modernHotReloadUsesVersionedModernApiCapabilities() throws IOException {
+        String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
+        String resourcesRead = read("src/main/java/com/dpis/module/ResourcesReadHookInstaller.java");
+        String resourcesImpl = read("src/main/java/com/dpis/module/ResourcesImplHookInstaller.java");
+        String resourcesManager = read("src/main/java/com/dpis/module/ResourcesManagerHookInstaller.java");
+        String capabilities = read("src/main/java/com/dpis/module/ModernApiCapabilities.java");
+        String api101 = read("src/main/java/com/dpis/module/ModernApi101Capabilities.java");
+        String api102 = read("src/main/java/com/dpis/module/ModernApi102Capabilities.java");
+        String resolver = read("src/main/java/com/dpis/module/ModernApiCapabilitiesResolver.java");
+
+        assertTrue(moduleMain.contains("onHotReloaded(XposedModuleInterface.HotReloadedParam param)"));
+        assertTrue(moduleMain.contains("lastPackageReadyPackageName"));
+        assertTrue(moduleMain.contains("restoreHotReloadState(savedState)"));
+        assertTrue(moduleMain.contains("replayPackageReadySupplementsAfterHotReload("));
+        assertTrue(moduleMain.contains("package-ready hot reload replay enter"));
+        assertTrue(moduleMain.contains("AppProcessHotReloadResetter.resetAll();"));
+        assertFalse(moduleMain.contains("ModernHookRegistry"));
+        assertTrue(moduleMain.contains("private volatile ModernApiCapabilities modernApiCapabilities;"));
+        assertTrue(moduleMain.contains("private ModernApiCapabilities getModernApiCapabilities()"));
+        assertTrue(moduleMain.contains("ModernApiCapabilitiesResolver.fromXposed(this)"));
+        assertTrue(capabilities.contains("interface ModernApiCapabilities"));
+        assertTrue(capabilities.contains("supportsStableHookIds()"));
+        assertTrue(capabilities.contains("supportsHotReloadCallbacks()"));
+        assertTrue(capabilities.contains("applyStableHookId"));
+        assertTrue(api101.contains("final class ModernApi101Capabilities"));
+        assertTrue(api101.contains("return false;"));
+        assertTrue(api102.contains("final class ModernApi102Capabilities"));
+        assertTrue(api102.contains("XposedInterface.HookBuilder.class.getMethod(\"setId\", String.class)"));
+        assertTrue(resolver.contains("static final int API_101 = 101;"));
+        assertTrue(resolver.contains("static final int API_102 = 102;"));
+        assertTrue(resolver.contains("The published Modern artifact declares 102"));
+        assertTrue(resolver.contains("Runtime behavior still degrades"));
+        assertTrue(resolver.contains("101 capability set when the host framework does not expose 102 features"));
+        assertTrue(resourcesRead.contains("apiCapabilities.applyStableHookId("));
+        assertTrue(resourcesImpl.contains("apiCapabilities.applyStableHookId("));
+        assertTrue(resourcesManager.contains("apiCapabilities.applyStableHookId("));
+        assertTrue(read("src/main/java/com/dpis/module/ActivityThreadFontHookInstaller.java")
+                .contains("HOOK_ID_HANDLE_BIND_APPLICATION"));
+        assertTrue(read("src/main/java/com/dpis/module/WebViewFontHookInstaller.java")
+                .contains("HOOK_ID_WEBVIEW_GET_SETTINGS"));
+        assertTrue(read("src/main/java/com/dpis/module/WebViewFontHookInstaller.java")
+                .contains("HOOK_ID_WEBSETTINGS_SET_TEXT_ZOOM"));
+        assertTrue(read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java")
+                .contains("HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_WITH_UNIT"));
+        assertTrue(read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java")
+                .contains("HOOK_ID_PAINT_SET_TEXT_SIZE"));
+        assertTrue(read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java")
+                .contains("bridgeMutationAppliedIfChanged("));
+        String typefaceInstaller = read("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java");
+        assertTrue(typefaceInstaller.contains("HOOK_ID_TEXTVIEW_SET_TYPEFACE"));
+        assertTrue(typefaceInstaller.contains("HOOK_ID_PAINT_SET_TYPEFACE"));
+        assertTrue(typefaceInstaller.contains("apiCapabilities.applyStableHookId("));
+        assertTrue(typefaceInstaller.contains("bridgeOverrideAppliedIfChanged("));
+        assertTrue(read("src/main/java/com/dpis/module/AppProcessHookInstaller.java")
+                .contains("plan.fontDomainPlan,\n                    apiCapabilities"));
+        assertTrue(read("src/main/java/com/dpis/module/DisplayHookInstaller.java")
+                .contains("HOOK_ID_DISPLAY_GET_DISPLAY_INFO"));
+        assertTrue(read("src/main/java/com/dpis/module/WindowMetricsHookInstaller.java")
+                .contains("HOOK_ID_WINDOW_METRICS_GET_BOUNDS"));
+        assertTrue(read("src/modern/java/com/dpis/module/ModernAppSpecificRouteInstaller.java")
+                .contains("handlePackageReadyReplay("));
+        assertTrue(read("src/modern/java/com/dpis/module/ModernAppSpecificRouteInstaller.java")
+                .contains("\"hot_reload_package_ready\""));
+        assertTrue(moduleMain.contains("replaySystemServerAfterHotReload(store, currentProcessName);"));
+        assertTrue(moduleMain.contains("system_server hot reload replay enter"));
+        assertTrue(moduleMain.contains("SystemServerDisplayEnvironmentInstaller.resetForHotReload();"));
+        assertTrue(moduleMain.contains("\"hot-reload\""));
+        assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
+                .contains("apiCapabilities.applyStableHookId("));
+        assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
+                .contains("static void resetForHotReload()"));
+        assertTrue(read("src/main/java/com/dpis/module/AppProcessHotReloadResetter.java")
+                .contains("static void resetAll()"));
+        assertTrue(read("src/main/java/com/dpis/module/SystemServerHookCatalog.java")
+                .contains("system_server_launch_activity_item"));
     }
 
     @Test
@@ -229,6 +308,24 @@ public class ModuleMainHookInstallerTest {
     }
 
     @Test
+    public void modernRuntimeHotReloadDocsAndScriptMatchCurrentBoundary() throws IOException {
+        String docs = readRepositoryRoot("docs/modern-runtime-resync.md");
+        String script = readRepositoryRoot("scripts/pull-lsposed-logs.ps1");
+
+        assertTrue(docs.contains("System-server replay"));
+        assertTrue(docs.contains("hot-reload surface"));
+        assertTrue(docs.contains("the shipped Modern artifact declares API 102"));
+        assertTrue(docs.contains("that declaration does not mean \"102-only runtime behavior\""));
+        assertTrue(docs.contains("degrades to the 101 capability set"));
+        assertTrue(docs.contains("ForceTextSize hook ready"));
+        assertTrue(docs.contains("dynamic resource-creation / `createResourcesImpl` overload hooks derive ids"));
+        assertTrue(script.contains("[string] $Device"));
+        assertTrue(script.contains("ls -t /data/adb/lspd/log/modules_*.log"));
+        assertTrue(script.contains("verbose_*.log"));
+        assertFalse(script.contains("192.168.5.130:5555"));
+    }
+
+    @Test
     public void moduleMainAllowsPackageOwnedSecondaryProcessesForViewportHooks() throws IOException {
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
@@ -248,5 +345,9 @@ public class ModuleMainHookInstallerTest {
 
     private static String read(String relativePath) throws IOException {
         return SourceSmokeTestPaths.read(relativePath);
+    }
+
+    private static String readRepositoryRoot(String relativePath) throws IOException {
+        return SourceSmokeTestPaths.readRepositoryRoot(relativePath);
     }
 }

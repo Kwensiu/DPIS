@@ -103,16 +103,11 @@ final class SystemScopeCoordinator {
         }
     }
 
-    boolean resolveSystemHookEffectiveEnabled(DpiConfigStore store) {
+    static boolean resolveSystemHookEffectiveEnabled(DpiConfigStore store) {
         if (store == null) {
             return false;
         }
         boolean desiredEnabled = store.isSystemServerHooksEnabled();
-        if ("legacy".equals(BuildConfig.FLAVOR)) {
-            // Legacy LSPosed builds do not expose libxposed service scope state,
-            // but the system_server hook is still driven by the stored toggle and LSPosed scope.
-            return desiredEnabled;
-        }
         XposedService service = DpisApplication.getXposedService();
         boolean serviceAvailable = service != null;
         boolean scopeSelected = false;
@@ -123,6 +118,37 @@ final class SystemScopeCoordinator {
             } catch (RuntimeException ignored) {
                 scopeSelected = false;
             }
+        }
+        boolean effectiveEnabled = resolveSystemHookEffectiveEnabled(
+                desiredEnabled,
+                serviceAvailable,
+                scopeSelected);
+        DpisLog.i("system hook resolve: desired=" + desiredEnabled
+                + ", serviceAvailable=" + serviceAvailable
+                + ", scopeSelected=" + scopeSelected
+                + ", effective=" + effectiveEnabled);
+        return effectiveEnabled;
+    }
+
+    static boolean resolveSystemHookEffectiveEnabled(boolean desiredEnabled,
+                                                     boolean serviceAvailable,
+                                                     boolean scopeSelected) {
+        return resolveSystemHookEffectiveEnabled(
+                desiredEnabled,
+                serviceAvailable,
+                scopeSelected,
+                "legacy".equals(BuildConfig.FLAVOR));
+    }
+
+    static boolean resolveSystemHookEffectiveEnabled(boolean desiredEnabled,
+                                                     boolean serviceAvailable,
+                                                     boolean scopeSelected,
+                                                     boolean legacyFlavor) {
+        if (legacyFlavor && !serviceAvailable) {
+            // Legacy keeps a stored-toggle fallback when the libxposed service
+            // is unavailable, but it still prefers a real scope read when the
+            // service exists.
+            return desiredEnabled;
         }
         return SystemHookEffectiveView.resolve(
                 desiredEnabled,

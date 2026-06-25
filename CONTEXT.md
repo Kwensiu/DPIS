@@ -30,8 +30,9 @@ Viewport target type and viewport apply strategy are separate concepts:
 
 Viewport apply strategies:
 
-- `auto`: prefer the system route when system hooks are available; fall back to
-  compat only when system hooks are unavailable.
+- `auto`: use the system route only when system hooks are available. Missing or
+  unavailable system hooks do not imply a compat fallback; choose `compat`
+  explicitly or rely on guarded runtime fallback evidence where documented.
 - `system`: system-server route only.
 - `compat`: app-process compatibility route only.
 - `off`: disabled.

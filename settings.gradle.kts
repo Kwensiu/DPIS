@@ -1,3 +1,5 @@
+include(":app")
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -42,5 +44,3 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "DPIS"
-
-include(":app")

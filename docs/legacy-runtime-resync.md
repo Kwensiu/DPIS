@@ -27,7 +27,7 @@ This is the living tracker for the Legacy viewport/runtime investigation.
 Viewport mode
   auto
     -> system hooks enabled  => system
-    -> system hooks disabled => compat
+    -> system hooks disabled => off
 
   system
     -> system_server mutation route
@@ -36,7 +36,7 @@ Viewport mode
 
   compat
     -> app-process resource/display/window route
-    -> intended fallback when system route is unavailable or not chosen
+    -> explicit app-process route when selected
 
 Font mode
   system
@@ -172,12 +172,13 @@ DPIS viewport target package
               +-- system hooks enabled
               |     +-- EffectiveModeResolver => system
               +-- system hooks disabled
-                    +-- EffectiveModeResolver => compat
+                    +-- EffectiveModeResolver => off
 ```
 
 ## Current Route Decision
 
-The legacy absolute-width viewport route is this coverage model:
+The legacy absolute-width viewport route is this coverage model when the
+resolved route is `system` or `compat`:
 
 ```text
 legacy auto/system absolute viewport
