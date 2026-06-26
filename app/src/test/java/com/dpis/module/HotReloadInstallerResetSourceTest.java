@@ -12,6 +12,9 @@ public class HotReloadInstallerResetSourceTest {
         assertSourceContains("src/main/java/com/dpis/module/ActivityThreadFontHookInstaller.java",
                 "static void resetForHotReload()",
                 "installedPid = -1;");
+        assertSourceContains("src/main/java/com/dpis/module/ChromiumViewportProbeHookInstaller.java",
+                "static void resetForHotReload()",
+                "installedPid = -1;");
         assertSourceContains("src/main/java/com/dpis/module/DisplayHookInstaller.java",
                 "static void resetForHotReload()",
                 "installedPid = -1;");
@@ -52,6 +55,7 @@ public class HotReloadInstallerResetSourceTest {
         assertSourceContains("src/main/java/com/dpis/module/AppProcessHotReloadResetter.java",
                 "static void resetAll()",
                 "ActivityThreadFontHookInstaller.resetForHotReload();",
+                "ChromiumViewportProbeHookInstaller.resetForHotReload();",
                 "DisplayHookInstaller.resetForHotReload();",
                 "ForceTextSizeHookInstaller.resetForHotReload();",
                 "PaintTextSizeFallbackHookInstaller.resetForHotReload();",

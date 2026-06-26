@@ -9,6 +9,7 @@ final class AppProcessHotReloadResetter {
         // installers have a single integration point instead of growing
         // ModuleMain replay with another handwritten call.
         ActivityThreadFontHookInstaller.resetForHotReload();
+        ChromiumViewportProbeHookInstaller.resetForHotReload();
         DisplayHookInstaller.resetForHotReload();
         ForceTextSizeHookInstaller.resetForHotReload();
         PaintTextSizeFallbackHookInstaller.resetForHotReload();

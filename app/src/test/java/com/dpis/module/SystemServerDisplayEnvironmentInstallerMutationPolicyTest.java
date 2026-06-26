@@ -56,6 +56,21 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     }
 
     @Test
+    public void hotEntryQuickGateSeesWebApkOwnerInsideChromeCarrierText() {
+        Set<String> configured = new LinkedHashSet<>();
+        configured.add("org.chromium.webapk.a5e359e2ce8b830bb_v2");
+
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldInspectHotEntryForTest(
+                        "display-policy-layout",
+                        new FakeWindow("Window{u0 com.android.chrome/"
+                                + "org.chromium.chrome.browser.webapps.SameTaskWebApkActivity "
+                                + WebApkCarrierResolver.WEBAPK_PACKAGE_EXTRA
+                                + "=org.chromium.webapk.a5e359e2ce8b830bb_v2}"),
+                        configured));
+    }
+
+    @Test
     public void safeModeInstallsCoreTargets() {
         assertFalse(SystemServerMutationPolicy.shouldInstallTarget("display-policy-layout", true));
         assertFalse(SystemServerMutationPolicy.shouldInstallTarget("relayout-dispatch", true));

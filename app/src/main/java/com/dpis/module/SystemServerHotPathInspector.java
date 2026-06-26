@@ -36,6 +36,12 @@ final class SystemServerHotPathInspector {
         if (text == null || text.isEmpty() || configuredPackages == null || configuredPackages.isEmpty()) {
             return false;
         }
+        for (String webApkOwner : WebApkCarrierResolver.collectOwnerPackagesFromText(
+                text, configuredPackages.size())) {
+            if (configuredPackages.contains(webApkOwner)) {
+                return true;
+            }
+        }
         for (String configuredPackage : configuredPackages) {
             if (configuredPackage != null
                     && !configuredPackage.isEmpty()

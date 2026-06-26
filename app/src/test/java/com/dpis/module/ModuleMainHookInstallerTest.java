@@ -23,6 +23,28 @@ public class ModuleMainHookInstallerTest {
     }
 
     @Test
+    public void moduleMainDoesNotAliasChromeToWebApkOwnerInAppProcess() throws IOException {
+        String source = read("src/modern/java/com/dpis/module/ModuleMain.java");
+
+        assertTrue(source.contains("packageNameFromProcessName(processName)"));
+        assertFalse(source.contains(WebApkCarrierResolver.WEBAPK_PACKAGE_EXTRA));
+        assertFalse(source.contains("WebApkCarrierResolver"));
+    }
+
+    @Test
+    public void moduleMainInstallsChromeChromiumViewportProbeOnlyWhenDebugPropertyMatches()
+            throws IOException {
+        String source = read("src/modern/java/com/dpis/module/ModuleMain.java");
+
+        assertTrue(source.contains("installChromiumViewportProbe(param.getPackageName(), param.getClassLoader())"));
+        assertTrue(source.contains("installChromiumViewportProbe(packageName, classLoader)"));
+        assertTrue(source.contains("ChromiumViewportProbeHookInstaller.install(this, classLoader)"));
+        assertTrue(source.contains("WebApkRuntimeOwnerBridge.CHROME_PACKAGE.equals(packageName)"));
+        assertTrue(source.contains("debug.dpis.webapk.chromium_probe_package"));
+        assertTrue(source.contains("DebugPackageOverride.matches(PROP_CHROMIUM_VIEWPORT_PROBE_PACKAGE"));
+    }
+
+    @Test
     public void moduleMainDelegatesAppSpecificRoutes() throws IOException {
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
 

@@ -57,6 +57,7 @@ final class AppProcessHookInstaller {
                     packagePlan.targetViewportMode,
                     policy == null || policy.systemServerHooksEnabled);
         }
+        WebApkRuntimeOwnerBridge.installLifecycleHooks(xposed, packageName, apiCapabilities);
         installFromPlan(
                 xposed, packageName, store, plan, packagePlan.targetViewportSpec, apiCapabilities);
         if (plan.probeHooksRequested) {

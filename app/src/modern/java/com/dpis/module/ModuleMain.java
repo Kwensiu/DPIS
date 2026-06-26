@@ -7,6 +7,8 @@ import io.github.libxposed.api.XposedModuleInterface;
 
 public final class ModuleMain extends XposedModule {
     private static final String BRIDGE_LOG_PREFIX = "DPIS ";
+    private static final String PROP_CHROMIUM_VIEWPORT_PROBE_PACKAGE =
+            "debug.dpis.webapk.chromium_probe_package";
     private volatile DpiConfigStore configStore;
     private volatile ModernApiCapabilities modernApiCapabilities;
     private volatile boolean moduleLoadedObserved;
@@ -89,6 +91,7 @@ public final class ModuleMain extends XposedModule {
         }
         installAppProcessHooksIfConfigured(store, policy, snapshot, param.getPackageName(),
                 "package-ready");
+        installChromiumViewportProbe(param.getPackageName(), param.getClassLoader());
         retryTypefaceHooksWithPackageReady(store, snapshot, param.getPackageName());
         retryFlutterHooksWithAppClassLoader(store, snapshot, param.getClassLoader(),
                 param.getPackageName());
@@ -234,7 +237,22 @@ public final class ModuleMain extends XposedModule {
         ModernAppSpecificRouteInstaller.handlePackageReadyReplay(
                 this, packageName, classLoader, applicationInfo, currentProcessName);
         retryTypefaceHooksWithPackageReady(store, snapshot, packageName);
+        installChromiumViewportProbe(packageName, classLoader);
         retryFlutterHooksWithAppClassLoader(store, snapshot, classLoader, packageName);
+    }
+
+    private void installChromiumViewportProbe(String packageName, ClassLoader classLoader) {
+        if (!WebApkRuntimeOwnerBridge.CHROME_PACKAGE.equals(packageName)
+                || classLoader == null
+                || !DebugPackageOverride.matches(PROP_CHROMIUM_VIEWPORT_PROBE_PACKAGE,
+                        packageName)) {
+            return;
+        }
+        try {
+            ChromiumViewportProbeHookInstaller.install(this, classLoader);
+        } catch (Throwable throwable) {
+            DpisLog.e("DPIS_WEBAPK Chromium viewport probe failed", throwable);
+        }
     }
 
     private void maybeInstallAppProcessFromModuleLoaded(DpiConfigStore store, String processName) {

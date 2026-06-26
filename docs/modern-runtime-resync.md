@@ -469,6 +469,7 @@ superseded.
 | 2026-06-17 | WeChat DPI | Move the independent route's first install attempt to package-loaded | superseded | Runtime validation showed package-loaded is useful for timing but not sufficient by itself | Package-loaded and module-loaded class probes remain removed; package-ready is the main app-specific entry, with only a narrow `Application.attach(Context)` retry for WeChat runtime classloader recovery |
 | 2026-06-22 | WeChat DPI | Remove high-risk new route expansion, then reintroduce only the runtime pieces proven necessary on 8.0.74 | active / adjusted | User reports indicated newer builds could crash/jank while v1.12.3 behavior was best; later device validation showed 8.0.74 needs `package-ready` plus `Application.attach` retry to reach Tinker `DelegateLastClassLoader`, and versionCode 3120 uses static method roles `d/e/g/k/l` with bottom-tab enabled | Keep static route preferred for known versions, DexKit as fallback for unknown versions, and express version-specific extras through the static table instead of broad route expansion |
 | 2026-06-18 | modern system_server | Move the first system_server installer attempt to libxposed's `onSystemServerStarting` callback | active | LSPosed_20260617_235835 showed preconfigured unrestricted apps launching at boot before DPIS UI, while the system process had only `module-loaded app hook install skipped system process` and no system_server hook/callback evidence | `onPackageReady` remains a de-duplicated fallback; this is a lifecycle timing fix, not an app-specific package recommendation |
+| 2026-06-26 | Chrome WebAPK owner routing | Let Chrome app-process hot paths resolve configured `org.chromium.webapk.*` owners from WebAPK carrier evidence | active / Chromium Java boundary proven | Unit tests cover owner extraction from `org.chromium.chrome.browser.webapk_package_name`, `webapp://webapk-...`, config fallback from `com.android.chrome` to the configured WebAPK owner, hot-entry gating, ordinary Chrome activity rejection, debug-gated Chrome package-ready Chromium probe installation, and low-frequency owner handoff logging. Device validation with Chrome 80% and GitHub WebAPK 150% showed early Chrome Resources writes at 80%, then WebAPK owner handoff to 150%; `WindowAndroid.<init>` sees `widthDp=540,densityDpi=320` after owner sync when `debug.dpis.webapk.chromium_probe_package=com.android.chrome` enables the temporary probe | This is not a Chrome global alias. Default logs keep owner handoff and resource-sync state changes only; detailed Chromium Java viewport probe logs are explicit debug evidence, not normal Xposed log output. Android Resources and Chromium Java `WindowAndroid` now prove owner scaling, but DPIS still should not claim final web-content scale until Chromium native/renderer device-scale behavior is proven |
 | 2026-06-15 | shared app-process font | Add an event-gated `resources_font` scheduler for Resources read-path font conflicts | active / shared | Bilibili `resources_font`-only repro showed `Configuration.fontScale` alternating between base and target while `getDisplayMetrics` recomputed `scaledDensity`; after the event gate, `scaledDensity=3.0` and `1.4 -> 1.0` disappeared, and read metrics logging dropped sharply after idempotent writes. TapTap system-font repro later showed no config churn after disabling read-side configuration writes, but `getDisplayMetrics` could still downgrade target metrics from `4.2` to `3.9` when the system config stayed at `1.3` | Read-conflict target suppression outranks Compose base suppression; non-Compose observations must not clear an established read-conflict target state. Compat `resources_font` uses `ResourcesImpl` as a low-frequency metrics seed plus `ResourcesRead` fallback; when `ResourcesRead` is installed only for font it skips viewport target resolution and `VirtualDisplayState` reuse while keeping metrics density synchronized with configuration; system font emulation does not let `ResourcesRead(getConfiguration)` force target `fontScale` on every read, but `ResourcesRead(getDisplayMetrics)` may fill `scaledDensity` from the target factor so read-side metrics do not downgrade an already-targeted font scale; Compose diagnostics can detach after the read-conflict target event is established; `ResourcesManager` write-side hooks remain for viewport and system font emulation |
 
 ## Safety Rules
@@ -623,3 +624,39 @@ superseded.
   typeface mirror is present, so `ModuleMain` can fall back to
   LSPosed remote preferences when volatile per-package properties are empty
   after reboot but before DPIS has replayed runtime mirrors.
+- 2026-06-26: Chrome WebAPK final-content validation gained a minimal
+  app-process owner bridge. In `com.android.chrome` only, ActivityThread launch
+  records and `SameTaskWebApkActivity` lifecycle callbacks cache the
+  `org.chromium.webapk.*` owner; shared Resources and Display hot paths can then
+  resolve that owner's runtime-property store instead of Chrome's carrier
+  values. This is explicitly not a global Chrome alias, and it does not rewrite
+  system_server `ActivityRecord` configuration.
+- 2026-06-26: Device validation on `192.168.5.130:5555` with Chrome configured
+  to 80% and GitHub WebAPK `org.chromium.webapk.ac19cf34f94565db5_v2`
+  configured to 150% showed the owner bridge first observes Chrome's 80%
+  module-loaded Resources writes, then caches the WebAPK owner at
+  `handleLaunchActivity` / `SameTaskWebApkActivity` and rewrites shared
+  Resources paths to the WebAPK target. After resolving the owner runtime store
+  with `AutoViewportRuntimeRoute.ANY_ENABLED_TARGET`, `ResourcesManager`,
+  `ResourcesImpl`, `ResourcesManagerActivity`, and lifecycle resource sync all
+  report `targetViewportWidthDp=540` / `densityDpi=320`. A Chrome package-ready
+  Chromium Java probe also shows `org.chromium.ui.base.WindowAndroid` receives
+  the `SameTaskWebApkActivity` context at `widthDp=540,densityDpi=320`. The
+  remaining unproven boundary is Chromium native/renderer final page scale;
+  `dumpsys activity` may still show the system-side `CurrentConfiguration` at
+  `sw360dp / 480dpi` for compat mode, which is not by itself a negative signal
+  for app-process Resources or Chromium Java visibility.
+- 2026-06-27: WebAPK logging policy was tightened after validation. The owner
+  bridge still emits low-frequency semantic evidence for owner cache, owner
+  handoff, owner clear, unresolved state changes, and activity resource-sync
+  value changes. The Chromium Java `WindowAndroid` / `ResourceManager` viewport
+  probe is no longer installed by default; enable it only in debug builds with
+  `setprop debug.dpis.webapk.chromium_probe_package com.android.chrome` when
+  proving the Java-to-Chromium boundary. This keeps LSPosed/Xposed logs useful
+  without making validation probes part of normal runtime noise.
+- 2026-06-26: A pending-owner property experiment was rejected because
+  app-process publication did not reliably persist and the earlier
+  system_server publisher would require system-scope effectiveness. Do not
+  reintroduce that route. Product semantics should describe Chrome WebAPK as
+  owner-aware through Android Resources and Chromium Java boundaries, with final
+  renderer/device-scale impact still experimental until native evidence exists.

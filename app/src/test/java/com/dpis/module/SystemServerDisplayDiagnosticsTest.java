@@ -164,6 +164,48 @@ public class SystemServerDisplayDiagnosticsTest {
     }
 
     @Test
+    public void resolvesConfiguredWebApkOwnerFromChromeCarrierText() {
+        String packageName = SystemServerDisplayEnvironmentInstaller.resolveConfiguredPackageForTest(
+                new PackageCarrier("com.android.chrome"),
+                "org.chromium.webapk.a5e359e2ce8b830bb_v2"::equals,
+                new WindowTextCarrier("Intent { cmp=com.android.chrome/"
+                        + "org.chromium.chrome.browser.webapps.SameTaskWebApkActivity "
+                        + "(has extras) extras={"
+                        + WebApkCarrierResolver.WEBAPK_PACKAGE_EXTRA
+                        + "=org.chromium.webapk.a5e359e2ce8b830bb_v2} }"));
+
+        assertEquals("org.chromium.webapk.a5e359e2ce8b830bb_v2", packageName);
+    }
+
+    @Test
+    public void launchActivityItemPrefersConfiguredWebApkOwnerFromChromeCarrierText() {
+        String packageName = SystemServerDisplayEnvironmentInstaller
+                .resolveLaunchActivityItemPackageForTest(
+                        "com.android.chrome",
+                        "org.chromium.webapk.a5e359e2ce8b830bb_v2"::equals,
+                        new WindowTextCarrier("Intent { cmp=com.android.chrome/"
+                                + "org.chromium.chrome.browser.webapps.SameTaskWebApkActivity "
+                                + WebApkCarrierResolver.WEBAPK_PACKAGE_EXTRA
+                                + "=org.chromium.webapk.a5e359e2ce8b830bb_v2 }"));
+
+        assertEquals("org.chromium.webapk.a5e359e2ce8b830bb_v2", packageName);
+    }
+
+    @Test
+    public void launchActivityItemKeepsChromeWhenWebApkOwnerIsUnconfigured() {
+        String packageName = SystemServerDisplayEnvironmentInstaller
+                .resolveLaunchActivityItemPackageForTest(
+                        "com.android.chrome",
+                        "com.android.chrome"::equals,
+                        new WindowTextCarrier("Intent { cmp=com.android.chrome/"
+                                + "org.chromium.chrome.browser.webapps.SameTaskWebApkActivity "
+                                + WebApkCarrierResolver.WEBAPK_PACKAGE_EXTRA
+                                + "=org.chromium.webapk.a5e359e2ce8b830bb_v2 }"));
+
+        assertEquals("com.android.chrome", packageName);
+    }
+
+    @Test
     public void formatsConfigFallbackLog() {
         String message = SystemServerDisplayDiagnostics.buildConfigFallbackLog(
                 "display-policy-layout",

@@ -73,6 +73,8 @@ final class ResourcesImplHookInstaller {
                                              DisplayMetrics metrics,
                                              DpiConfigStore store,
                                              Boolean windowScopedOverride) {
+        packageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(store, packageName);
+        store = WebApkRuntimeOwnerBridge.resolveEffectiveStore(store, packageName);
         if (config == null) {
             logIfChanged(packageName + ":skip", "ResourcesImpl skip: config is null");
             return;

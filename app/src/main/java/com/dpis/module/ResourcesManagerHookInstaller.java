@@ -166,6 +166,8 @@ final class ResourcesManagerHookInstaller {
                                       DpiConfigStore store,
                                       String packageName,
                                       String sourceTag) {
+        packageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(store, packageName);
+        store = WebApkRuntimeOwnerBridge.resolveEffectiveStore(store, packageName);
         if (resourcesManager == null || key == null) {
             recordViewportSkip(packageName, "resources_manager_key_override",
                     "missing_resources_manager_or_key",
@@ -366,6 +368,8 @@ final class ResourcesManagerHookInstaller {
 
     static void applyResourceOverrides(Configuration config, DpiConfigStore store,
                                        String packageName, String sourceTag) {
+        packageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(store, packageName);
+        store = WebApkRuntimeOwnerBridge.resolveEffectiveStore(store, packageName);
         if (config == null) {
             recordViewportSkip(packageName, "resources_manager_config_override",
                     "null_configuration",

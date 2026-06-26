@@ -304,6 +304,8 @@ final class ResourcesReadHookInstaller {
                                                    Boolean windowScopedOverride,
                                                    boolean viewportHandlingEnabled,
                                                    boolean fontConfigurationOverrideEnabled) {
+        packageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(store, packageName);
+        store = WebApkRuntimeOwnerBridge.resolveEffectiveStore(store, packageName);
         if (config == null) {
             return;
         }
@@ -653,6 +655,8 @@ final class ResourcesReadHookInstaller {
                                              DpiConfigStore store,
                                              boolean viewportHandlingEnabled,
                                              boolean metricsTargetFontOverrideEnabled) {
+        packageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(store, packageName);
+        store = WebApkRuntimeOwnerBridge.resolveEffectiveStore(store, packageName);
         if (metrics == null || config == null) {
             recordMetricsSkip(packageName, "null_input",
                     "source=ResourcesRead(getDisplayMetrics), reason=null_input");

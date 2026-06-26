@@ -148,7 +148,12 @@ final class DisplayHookInstaller {
                             + ", currentPackage=" + safeValue(currentPackageName));
             return;
         }
-        VirtualDisplayOverride.Result override = resolvePackageScopedOverride();
+        String effectivePackageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(
+                targetStore, targetPackageName);
+        DpiConfigStore effectiveStore = WebApkRuntimeOwnerBridge.resolveEffectiveStore(
+                targetStore, effectivePackageName);
+        VirtualDisplayOverride.Result override = resolvePackageScopedOverride(
+                effectivePackageName, effectiveStore);
         if (override == null) {
             recordViewportSkipAtMostEvery(
                     routeName,
@@ -183,12 +188,14 @@ final class DisplayHookInstaller {
                             + ", densityDpi=" + metrics.densityDpi);
             return;
         }
-        String message = "Display override(" + sourceTag + "): widthPx=" + metrics.widthPixels
+        String message = "Display override(" + sourceTag + "): package="
+                + safeValue(effectivePackageName)
+                + ", widthPx=" + metrics.widthPixels
                 + ", heightPx=" + metrics.heightPixels
                 + ", densityDpi=" + metrics.densityDpi;
-        if (logIfChanged("metrics:" + sourceTag, message)) {
+        if (logIfChanged(effectivePackageName + ":metrics:" + sourceTag, message)) {
             FeedbackDiagnosticRuntimeHotPathEvents.applied(
-                    targetPackageName,
+                    effectivePackageName,
                     "viewport",
                     routeName,
                     "source=" + sourceTag
@@ -221,7 +228,12 @@ final class DisplayHookInstaller {
                             + ", currentPackage=" + safeValue(currentPackageName));
             return;
         }
-        VirtualDisplayOverride.Result override = resolvePackageScopedOverride();
+        String effectivePackageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(
+                targetStore, targetPackageName);
+        DpiConfigStore effectiveStore = WebApkRuntimeOwnerBridge.resolveEffectiveStore(
+                targetStore, effectivePackageName);
+        VirtualDisplayOverride.Result override = resolvePackageScopedOverride(
+                effectivePackageName, effectiveStore);
         if (override == null) {
             recordViewportSkipAtMostEvery(
                     routeName,
@@ -239,10 +251,11 @@ final class DisplayHookInstaller {
                             + ", size=" + point.x + "x" + point.y);
             return;
         }
-        String message = "Display override(" + sourceTag + "): size=" + point.x + "x" + point.y;
-        if (logIfChanged("point:" + sourceTag, message)) {
+        String message = "Display override(" + sourceTag + "): package="
+                + safeValue(effectivePackageName) + ", size=" + point.x + "x" + point.y;
+        if (logIfChanged(effectivePackageName + ":point:" + sourceTag, message)) {
             FeedbackDiagnosticRuntimeHotPathEvents.applied(
-                    targetPackageName,
+                    effectivePackageName,
                     "viewport",
                     routeName,
                     "source=" + sourceTag
@@ -271,7 +284,12 @@ final class DisplayHookInstaller {
                             + ", currentPackage=" + safeValue(currentPackageName));
             return;
         }
-        VirtualDisplayOverride.Result override = resolvePackageScopedOverride();
+        String effectivePackageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(
+                targetStore, targetPackageName);
+        DpiConfigStore effectiveStore = WebApkRuntimeOwnerBridge.resolveEffectiveStore(
+                targetStore, effectivePackageName);
+        VirtualDisplayOverride.Result override = resolvePackageScopedOverride(
+                effectivePackageName, effectiveStore);
         if (override == null) {
             recordViewportSkipAtMostEvery(
                     routeName,
@@ -296,11 +314,12 @@ final class DisplayHookInstaller {
                             + ", densityDpi=" + override.densityDpi);
             return;
         }
-        String message = "Display override(" + sourceTag + "): logical=" + override.widthPx + "x"
+        String message = "Display override(" + sourceTag + "): package="
+                + safeValue(effectivePackageName) + ", logical=" + override.widthPx + "x"
                 + override.heightPx + ", densityDpi=" + override.densityDpi;
-        if (logIfChanged("displayInfo:" + sourceTag, message)) {
+        if (logIfChanged(effectivePackageName + ":displayInfo:" + sourceTag, message)) {
             FeedbackDiagnosticRuntimeHotPathEvents.applied(
-                    targetPackageName,
+                    effectivePackageName,
                     "viewport",
                     routeName,
                     "source=" + sourceTag

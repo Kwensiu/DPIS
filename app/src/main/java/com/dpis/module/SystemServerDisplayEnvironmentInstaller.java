@@ -237,6 +237,20 @@ final class SystemServerDisplayEnvironmentInstaller {
         }).packageName;
     }
 
+    static String resolveLaunchActivityItemPackageForTest(String primaryPackage,
+                                                          Predicate<String> hasConfig,
+                                                          Object textSource) {
+        return resolveLaunchActivityItemPackage(
+                packageName -> {
+                    if (packageName == null || hasConfig == null || !hasConfig.test(packageName)) {
+                        return null;
+                    }
+                    return new PerAppDisplayConfig(packageName, 1);
+                },
+                primaryPackage,
+                textSource);
+    }
+
     private static boolean installTargetHooks(XposedInterface xposed,
                                               PerAppDisplayConfigSource source,
                                               SystemServerHookSpec hookSpec,
@@ -496,7 +510,7 @@ final class SystemServerDisplayEnvironmentInstaller {
 
     private static void applyLaunchActivityItemArgs(PerAppDisplayConfigSource source,
                                                     List<Object> args) {
-        String packageName = findActivityInfoPackage(args);
+        String packageName = resolveLaunchActivityItemPackage(source, args);
         if (packageName == null) {
             return;
         }
@@ -595,6 +609,33 @@ final class SystemServerDisplayEnvironmentInstaller {
         return null;
     }
 
+    private static String resolveLaunchActivityItemPackage(PerAppDisplayConfigSource source,
+                                                           List<Object> args) {
+        return resolveLaunchActivityItemPackage(
+                source != null ? source::get : null, findActivityInfoPackage(args), args);
+    }
+
+    private static String resolveLaunchActivityItemPackage(ConfigLookup lookup,
+                                                           String primaryPackage,
+                                                           Object textSource) {
+        String webApkOwner = configuredWebApkOwnerFromText(lookup, safeToString(textSource));
+        return webApkOwner != null ? webApkOwner : primaryPackage;
+    }
+
+    private static String configuredWebApkOwnerFromText(ConfigLookup lookup,
+                                                        String text) {
+        if (lookup == null || text == null || text.isEmpty()) {
+            return null;
+        }
+        for (String owner : WebApkCarrierResolver.collectOwnerPackagesFromText(text, 4)) {
+            if (selectConfigForSystemServerEntry("launch-activity-item", lookup.find(owner))
+                    != null) {
+                return owner;
+            }
+        }
+        return null;
+    }
+
     private static Configuration findFirstConfiguration(List<Object> args) {
         for (Object arg : args) {
             if (arg instanceof Configuration configuration) {
@@ -614,6 +655,8 @@ final class SystemServerDisplayEnvironmentInstaller {
         if (packageName == null || !isLikelyPackageName(packageName)) {
             return;
         }
+        packageName = resolveLaunchActivityItemPackage(
+                source::get, packageName, launchActivityItem);
         PerAppDisplayConfig config = selectConfigForSystemServerEntry(
                 "launch-activity-item", source.get(packageName));
         if (config == null || !hasSystemServerViewportOverride(config)) {
@@ -936,9 +979,14 @@ final class SystemServerDisplayEnvironmentInstaller {
         if (maxCount <= 0) {
             return packages;
         }
+        collectWebApkOwnerPackagesFromText(safeToString(self), packages, maxCount);
         collectPackagesFromText(safeToString(self), packages, maxCount);
         if (args != null) {
             for (Object arg : args) {
+                collectWebApkOwnerPackagesFromText(safeToString(arg), packages, maxCount);
+                if (packages.size() >= maxCount) {
+                    break;
+                }
                 collectPackagesFromText(safeToString(arg), packages, maxCount);
                 if (packages.size() >= maxCount) {
                     break;
@@ -1853,12 +1901,31 @@ final class SystemServerDisplayEnvironmentInstaller {
     }
 
     private static String extractPackageFromText(String value) {
+        String webApkOwner = WebApkCarrierResolver.ownerPackageFromText(value);
+        if (webApkOwner != null) {
+            return webApkOwner;
+        }
         Set<String> candidates = new LinkedHashSet<>();
         collectPackagesFromText(value, candidates, 1);
         for (String candidate : candidates) {
             return candidate;
         }
         return null;
+    }
+
+    private static void collectWebApkOwnerPackagesFromText(String value,
+                                                           Set<String> output,
+                                                           int maxCount) {
+        if (output == null || output.size() >= maxCount) {
+            return;
+        }
+        for (String owner : WebApkCarrierResolver.collectOwnerPackagesFromText(
+                value, maxCount - output.size())) {
+            output.add(owner);
+            if (output.size() >= maxCount) {
+                return;
+            }
+        }
     }
 
     private static void collectPackagesFromText(String value, Set<String> output, int maxCount) {
