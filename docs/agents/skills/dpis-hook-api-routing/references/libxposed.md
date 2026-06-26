@@ -17,12 +17,21 @@ inside that family.
 
 1. Define the target behavior, not the preferred API.
 2. Identify the minimum libxposed feature set required.
-3. Determine whether the behavior is expressible on API 101.
-4. If the behavior benefits from a newer capability, define the exact gated
+3. Identify whether the target app classes require the attached application
+   context or process classloader.
+4. Determine whether the behavior is expressible on API 101.
+5. If the behavior benefits from a newer capability, define the exact gated
    delta.
-5. Implement capability detection before higher-capability calls.
-6. Keep the baseline path operational, testable, and visible in the code
+6. Implement capability detection before higher-capability calls.
+7. Keep the baseline path operational, testable, and visible in the code
    layout.
+
+## Classloader Boundary
+
+Do not resolve target app classes with the module classloader. If a hook needs
+target app classes that are only safe after `Application.attach(...)` or another
+runtime context boundary, name that boundary and use the attached `Context` or
+target process classloader.
 
 ## Hard Rule For New API Usage
 
@@ -50,6 +59,8 @@ Good patterns:
 - comments that explain why the enhanced path exists and what the baseline path
   preserves
 - one installer-local gate when the delta is small and readability matters
+- app-class hooks that name whether they use the package classloader,
+  `Application.attach(...)`, or another runtime context boundary
 
 Risky patterns:
 
@@ -58,12 +69,14 @@ Risky patterns:
 - feature detection scattered across unrelated hook classes
 - enabling a higher-capability path based only on compile-time assumptions or UI
   labels
+- resolving target app classes with the module classloader
 
 ## Review Questions
 
 - Can the 101 path still be understood on its own?
 - Does the 102 path add a real capability, safety improvement, or correctness
   fix?
+- Is the target classloader source named and verified?
 - Is capability detection centralized enough to audit?
 - Would the code still be maintainable if a later framework revision adds a
   third branch?

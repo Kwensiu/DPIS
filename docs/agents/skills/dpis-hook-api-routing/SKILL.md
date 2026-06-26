@@ -75,8 +75,10 @@ contracts.
      `references/migration.md`.
 4. For Modern, prove the capability boundary before selecting a higher-capability
    behavior.
-5. Implement the narrowest hook shape that preserves the flavor boundary.
-6. Verify entry, install, callback, visible effect, and fallback behavior with
+5. If a capability is absent, choose an explicit fallback: API 101-compatible
+   behavior, manual validation step, or documented non-support.
+6. Implement the narrowest hook shape that preserves the flavor boundary.
+7. Verify entry, install, callback, visible effect, and fallback behavior with
    `references/verification-checklist.md`.
 
 ## Decision Order
@@ -88,7 +90,7 @@ Make decisions in this order:
 3. What is the minimum API surface needed for the desired behavior?
 4. Is that API surface guaranteed on the target framework?
 5. If not, what is the fallback: API 101-compatible behavior, Legacy behavior,
-   or explicit non-support?
+   manual validation, or explicit non-support?
 
 Do not invert this order by starting from a preferred new API and searching for
 somewhere to force it in.
@@ -133,6 +135,8 @@ Version number alone is acceptable only when the newer feature is fully defined
 by that version boundary and the task does not rely on extra runtime probing for
 that specific API. If feature-specific runtime probing exists and is cheap, use
 it.
+If a capability is absent, do not silently continue through a partial
+higher-capability path.
 
 ## Templates
 

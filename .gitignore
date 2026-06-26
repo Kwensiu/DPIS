@@ -26,6 +26,7 @@ Thumbs.db
 /.superpowers/
 
 # Local runtime logs
+/.debug-*/
 /logs/
 /boot-full.txt
 /startup*.log

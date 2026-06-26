@@ -10,7 +10,9 @@ Use this checklist after implementation or during diagnosis.
 4. Hook installed.
 5. Callback or equivalent runtime action fired.
 6. Target package or process resolved correctly.
-7. Visible runtime effect changed as intended.
+7. Target classloader or attached runtime context resolved correctly when app
+   classes are involved.
+8. Visible runtime effect changed as intended.
 
 ## Additional Proof For Modern/libxposed
 
@@ -38,6 +40,7 @@ Prefer the smallest credible set:
 - source smoke tests when wiring changes
 - LSPosed or module logs proving entry/install/callback
 - behavior checks tied to the target app or route
+- APK/module metadata checks when entry registration or packaging changes
 - code comments when explicit non-support is intentional
 
 ## Finish Gate
