@@ -115,7 +115,7 @@ public final class LegacyModuleManifestMetadataTest {
         int xSharedIndex = compatFactory.indexOf("XSharedPreferencesAdapter");
         assertTrue(propertyIndex >= 0);
         assertTrue(xSharedIndex >= 0);
-        assertTrue(factory.contains("AutoViewportRuntimeRoute.ABSOLUTE_TARGETS_ONLY"));
+        assertTrue(factory.contains("AutoViewportRuntimeRoute.ANY_ENABLED_TARGET"));
         assertTrue(compatFactory.contains("new DpiConfigStore("));
     }
 

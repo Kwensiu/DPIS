@@ -59,7 +59,7 @@ public class HyperOsFlutterFontHookConfigTest {
 
         assertTrue(factory.contains("createForLegacyHost(String packageName)"));
         assertTrue(factory.contains("new RuntimePropertyConfigPreferences(packageName, autoViewportRuntimeRoute)"));
-        assertTrue(factory.contains("AutoViewportRuntimeRoute.ABSOLUTE_TARGETS_ONLY"));
+        assertTrue(factory.contains("AutoViewportRuntimeRoute.ANY_ENABLED_TARGET"));
         assertFalse(factory.contains("CompatConfigProviderPreferences"));
         assertTrue(prefs.contains("ViewportPropertyBridge.readTargetSpec(packageName)"));
         assertTrue(prefs.contains("HyperOsFlutterFontBridge.readForceFontScalePercent(packageName)"));

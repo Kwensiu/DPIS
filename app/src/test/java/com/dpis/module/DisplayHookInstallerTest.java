@@ -89,6 +89,33 @@ public class DisplayHookInstallerTest {
         VirtualDisplayState.set(null);
     }
 
+    @Test
+    public void usesPackageScopedDisplayRecordForWebApkOwner() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        String packageName = "org.chromium.webapk.ac19cf34f94565db5_v2";
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(150000);
+        store.setTargetDpisEnabled(packageName, true);
+        store.setTargetViewportSpec(packageName, targetSpec);
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
+                360, 792, 360, 480, 1080, 2376);
+        VirtualDisplayOverride.Result virtualDisplay =
+                new VirtualDisplayOverride.Result(540, 1188, 540, 320, 1080, 2376);
+
+        VirtualDisplayState.publish(
+                packageName,
+                targetSpec,
+                source,
+                new ViewportOverride.Result(540, 1188, 540, 320),
+                virtualDisplay,
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+
+        assertEquals(320, DisplayHookInstaller.resolvePackageScopedOverrideForTest(
+                packageName, store).densityDpi);
+
+        VirtualDisplayState.set(null);
+    }
+
     private static String testCurrentPackageName() {
         return "com.max.xiaoheihe";
     }

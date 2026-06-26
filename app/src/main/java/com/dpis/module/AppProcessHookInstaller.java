@@ -59,7 +59,8 @@ final class AppProcessHookInstaller {
         }
         WebApkRuntimeOwnerBridge.installLifecycleHooks(xposed, packageName, apiCapabilities);
         installFromPlan(
-                xposed, packageName, store, plan, packagePlan.targetViewportSpec, apiCapabilities);
+                xposed, packageName, store, policy, plan, packagePlan.targetViewportSpec,
+                apiCapabilities);
         if (plan.probeHooksRequested) {
             DpisLog.i("hooks installed (full): viewportEnabled=" + plan.viewportEnabled
                     + ", viewportMode=" + packagePlan.targetViewportMode
@@ -172,6 +173,7 @@ final class AppProcessHookInstaller {
     private static void installFromPlan(XposedInterface xposed,
                                         String packageName,
                                         DpiConfigStore store,
+                                        HookRuntimePolicy policy,
                                         HookExecutionPlan plan,
                                         ViewportTargetSpec targetViewportSpec,
                                         ModernApiCapabilities apiCapabilities) throws Throwable {
@@ -187,7 +189,7 @@ final class AppProcessHookInstaller {
         if (plan.resourcesHooksEnabled) {
             if (plan.resourcesWriteHooksEnabled) {
                 ResourcesManagerHookInstaller.install(
-                        xposed, packageName, store, apiCapabilities);
+                        xposed, packageName, store, policy, apiCapabilities);
             } else {
                 DpisLog.i("Resources write hooks skipped: package=" + packageName);
             }
@@ -198,7 +200,7 @@ final class AppProcessHookInstaller {
                 DpisLog.i("ResourcesImpl hook skipped by debug property for " + packageName);
             } else {
                 ResourcesImplHookInstaller.install(
-                        xposed, packageName, store, apiCapabilities);
+                        xposed, packageName, store, policy, apiCapabilities);
             }
             if (!plan.resourcesReadHooksEnabled) {
                 DpisLog.i("ResourcesRead hook skipped: package=" + packageName);
@@ -210,6 +212,7 @@ final class AppProcessHookInstaller {
                         xposed,
                         packageName,
                         store,
+                        policy,
                         plan.resourcesReadPolicy,
                         apiCapabilities);
             }
@@ -250,7 +253,7 @@ final class AppProcessHookInstaller {
                     + ", targetViewportSpec=" + targetViewportSpec);
         }
         if (plan.resourcesProbeEnabled) {
-            ResourcesProbeHookInstaller.install(xposed, packageName, store);
+            ResourcesProbeHookInstaller.install(xposed, packageName, store, policy);
         }
         if (plan.viewportProbeEnabled) {
             WindowManagerProbeHookInstaller.install(xposed, packageName);

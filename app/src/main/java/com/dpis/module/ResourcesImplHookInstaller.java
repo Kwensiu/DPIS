@@ -23,6 +23,7 @@ final class ResourcesImplHookInstaller {
     static void install(XposedInterface xposed,
                         String packageName,
                         DpiConfigStore store,
+                        HookRuntimePolicy policy,
                         ModernApiCapabilities apiCapabilities)
             throws ReflectiveOperationException {
         if (hookInstalled) {
@@ -47,7 +48,7 @@ final class ResourcesImplHookInstaller {
                     .intercept(chain -> {
                         Configuration config = (Configuration) chain.getArg(0);
                         DisplayMetrics metrics = (DisplayMetrics) chain.getArg(1);
-                        applyDensityOverride(packageName, config, metrics, store);
+                        applyDensityOverride(packageName, config, metrics, store, policy);
                         return chain.proceed();
                     });
             hookInstalled = true;
@@ -60,18 +61,27 @@ final class ResourcesImplHookInstaller {
         applyDensityOverride(packageName, config, metrics, store, null);
     }
 
+    static void applyDensityOverride(String packageName,
+                                     Configuration config,
+                                     DisplayMetrics metrics,
+                                     DpiConfigStore store,
+                                     HookRuntimePolicy policy) {
+        applyDensityOverride(packageName, config, metrics, store, policy, null);
+    }
+
     static void applyDensityOverrideForTest(String packageName,
                                             Configuration config,
                                             DisplayMetrics metrics,
                                             DpiConfigStore store,
                                             boolean windowScoped) {
-        applyDensityOverride(packageName, config, metrics, store, windowScoped);
+        applyDensityOverride(packageName, config, metrics, store, null, windowScoped);
     }
 
     private static void applyDensityOverride(String packageName,
                                              Configuration config,
                                              DisplayMetrics metrics,
                                              DpiConfigStore store,
+                                             HookRuntimePolicy policy,
                                              Boolean windowScopedOverride) {
         packageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(store, packageName);
         store = WebApkRuntimeOwnerBridge.resolveEffectiveStore(store, packageName);
@@ -191,7 +201,7 @@ final class ResourcesImplHookInstaller {
                 || result.smallestWidthDp != originalSmallestWidthDp
                 || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi);
         boolean applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
-                store, packageName, resolution, needsViewportUpdate)
+                policy, store, packageName, resolution, needsViewportUpdate)
                 && !appProcessWindowMetricsOnly;
         VirtualDisplayOverride.Result sharedResult =
                 trustedDisplayTarget != null
@@ -207,7 +217,7 @@ final class ResourcesImplHookInstaller {
         VirtualDisplayOverride.Result publishableSharedResult = windowScoped ? null : sharedResult;
         boolean canPublishFromResourcesImpl = !windowLikeBorrow
                 && !appProcessWindowMetricsOnly
-                && shouldPublishResourcesImplResult(resolution, needsViewportUpdate);
+                && shouldPublishResourcesImplResult(packageName, resolution, needsViewportUpdate);
         if (canPublishFromResourcesImpl && publishableSharedResult != null) {
             boolean canPublishState = VirtualDisplayState.setUnlessDerivedFromTargetConfig(
                     publishableSharedResult, originalSmallestWidthDp, targetViewportWidth);
@@ -391,12 +401,20 @@ final class ResourcesImplHookInstaller {
         return true;
     }
 
-    private static boolean shouldPublishResourcesImplResult(ViewportTargetResolution resolution,
+    static boolean shouldPublishResourcesImplResultForTest(String packageName,
+                                                           ViewportTargetResolution resolution,
+                                                           boolean needsViewportUpdate) {
+        return shouldPublishResourcesImplResult(packageName, resolution, needsViewportUpdate);
+    }
+
+    private static boolean shouldPublishResourcesImplResult(String packageName,
+                                                            ViewportTargetResolution resolution,
                                                             boolean needsViewportUpdate) {
         if (resolution == null || resolution.spec == null || !resolution.spec.isEnabled()) {
             return false;
         }
-        if (resolution.isAppProcessDisplayBorrowTarget()) {
+        if (resolution.isAppProcessDisplayBorrowTarget()
+                && !WebApkCarrierResolver.isWebApkOwnerPackage(packageName)) {
             return false;
         }
         if (needsViewportUpdate) {

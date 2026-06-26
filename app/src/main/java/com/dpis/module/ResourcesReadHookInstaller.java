@@ -62,6 +62,17 @@ final class ResourcesReadHookInstaller {
                         ResourcesReadHookPolicy policy,
                         ModernApiCapabilities apiCapabilities)
             throws ReflectiveOperationException {
+        install(xposed, packageName, store, HookRuntimePolicy.fromStore(store), policy,
+                apiCapabilities);
+    }
+
+    static void install(XposedInterface xposed,
+                        String packageName,
+                        DpiConfigStore store,
+                        HookRuntimePolicy runtimePolicy,
+                        ResourcesReadHookPolicy policy,
+                        ModernApiCapabilities apiCapabilities)
+            throws ReflectiveOperationException {
         if (hookInstalled) {
             return;
         }
@@ -107,7 +118,8 @@ final class ResourcesReadHookInstaller {
                                 "ResourcesRead(getConfiguration)",
                                 null,
                                 viewportReadHandlingEnabled,
-                                configurationFontOverrideEnabled);
+                                configurationFontOverrideEnabled,
+                                runtimePolicy);
                         return result;
                     });
             Method getDisplayMetricsMethod = resourcesClass.getDeclaredMethod("getDisplayMetrics");
@@ -168,7 +180,8 @@ final class ResourcesReadHookInstaller {
                                     "ResourcesRead(getSystem)",
                                     null,
                                     viewportReadHandlingEnabled,
-                                    configurationFontOverrideEnabled);
+                                    configurationFontOverrideEnabled,
+                                    runtimePolicy);
                             DisplayMetrics metrics = resources.getDisplayMetrics();
                             applyMetricsOverride(
                                     resources,
@@ -207,7 +220,16 @@ final class ResourcesReadHookInstaller {
                                            String packageName,
                                            DpiConfigStore store,
                                            String sourceTag) {
-        applyConfigurationOverride(resourceScope, config, packageName, store, sourceTag, null);
+        applyConfigurationOverride(
+                resourceScope,
+                config,
+                packageName,
+                store,
+                sourceTag,
+                null,
+                true,
+                true,
+                HookRuntimePolicy.fromStore(store));
     }
 
     static void applyConfigurationOverrideForTest(Object resourceScope,
@@ -239,7 +261,8 @@ final class ResourcesReadHookInstaller {
                 sourceTag,
                 windowScopedOverride,
                 true,
-                true);
+                true,
+                HookRuntimePolicy.fromStore(store));
     }
 
     static void applyConfigurationOverrideForTest(Object resourceScope,
@@ -257,7 +280,8 @@ final class ResourcesReadHookInstaller {
                 sourceTag,
                 windowScoped,
                 viewportHandlingEnabled,
-                true);
+                true,
+                HookRuntimePolicy.fromStore(store));
     }
 
     static void applyConfigurationOverrideForTest(Object resourceScope,
@@ -267,7 +291,8 @@ final class ResourcesReadHookInstaller {
                                                   String sourceTag,
                                                   boolean windowScoped,
                                                   boolean viewportHandlingEnabled,
-                                                  boolean fontConfigurationOverrideEnabled) {
+                                                  boolean fontConfigurationOverrideEnabled,
+                                                  HookRuntimePolicy policy) {
         applyConfigurationOverride(
                 resourceScope,
                 config,
@@ -276,7 +301,8 @@ final class ResourcesReadHookInstaller {
                 sourceTag,
                 Boolean.valueOf(windowScoped),
                 viewportHandlingEnabled,
-                fontConfigurationOverrideEnabled);
+                fontConfigurationOverrideEnabled,
+                policy);
     }
 
     private static void applyConfigurationOverride(Object resourceScope,
@@ -293,7 +319,8 @@ final class ResourcesReadHookInstaller {
                 sourceTag,
                 null,
                 viewportHandlingEnabled,
-                true);
+                true,
+                HookRuntimePolicy.fromStore(store));
     }
 
     private static void applyConfigurationOverride(Object resourceScope,
@@ -303,7 +330,8 @@ final class ResourcesReadHookInstaller {
                                                    String sourceTag,
                                                    Boolean windowScopedOverride,
                                                    boolean viewportHandlingEnabled,
-                                                   boolean fontConfigurationOverrideEnabled) {
+                                                   boolean fontConfigurationOverrideEnabled,
+                                                   HookRuntimePolicy policy) {
         packageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(store, packageName);
         store = WebApkRuntimeOwnerBridge.resolveEffectiveStore(store, packageName);
         if (config == null) {
@@ -377,7 +405,7 @@ final class ResourcesReadHookInstaller {
                 || result.smallestWidthDp != originalSmallestWidthDp
                 || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi);
         boolean applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
-                store, packageName, resolution, needsViewportUpdate);
+                policy, store, packageName, resolution, needsViewportUpdate);
         if (needsViewportUpdate) {
             if (applyToConfiguration) {
                 ViewportOverride.apply(config, result);
@@ -501,8 +529,7 @@ final class ResourcesReadHookInstaller {
                 || sourceTag == null
                 || !sourceTag.startsWith("LegacyResourcesRead(")
                 || !ViewportApplyMode.AUTO.equals(
-                        ViewportApplyMode.normalize(store.getTargetViewportApplyMode(packageName)))
-                || !store.isSystemServerHooksEnabled()) {
+                        ViewportApplyMode.normalize(store.getTargetViewportApplyMode(packageName)))) {
             return;
         }
         logIfChanged(packageName + ":" + sourceTag + ":legacy-auto-fallback",

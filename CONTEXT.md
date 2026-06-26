@@ -30,9 +30,8 @@ Viewport target type and viewport apply strategy are separate concepts:
 
 Viewport apply strategies:
 
-- `auto`: use the system route only when system hooks are available. Missing or
-  unavailable system hooks do not imply a compat fallback; choose `compat`
-  explicitly or rely on guarded runtime fallback evidence where documented.
+- `auto`: use the system route when system hooks are available; otherwise
+  fall back to the compat route.
 - `system`: system-server route only.
 - `compat`: app-process compatibility route only.
 - `off`: disabled.
@@ -62,7 +61,7 @@ System route:
 
 - Runs in `system_server`.
 - Mutates package-scoped launch/config/display data.
-- Is required for `auto` when system hooks are available.
+- Is the first choice for `auto` when system hooks are available.
 - In safe mode, keep only package-gated low-risk entries. `launch-activity-item`
   is needed for apps whose activity-start path does not expose a mutable
   configuration.
@@ -74,9 +73,8 @@ Compat route:
 - Can fix apps not reached by system route, but has higher risk of layout or
   process instability.
 
-Do not re-enable app-process viewport hooks for `auto` just to fix one app. If
-`auto` fails, first verify the system route, safe-mode entries, package scope,
-and runtime property projection.
+If `auto` falls back to compat, verify whether the system route is unavailable
+or ineffective before treating the compat path as a regression.
 
 ## Runtime Properties
 

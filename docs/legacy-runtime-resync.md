@@ -27,7 +27,7 @@ This is the living tracker for the Legacy viewport/runtime investigation.
 Viewport mode
   auto
     -> system hooks enabled  => system
-    -> system hooks disabled => off
+    -> system hooks unavailable or ineffective => compat
 
   system
     -> system_server mutation route
@@ -193,6 +193,10 @@ legacy auto/system absolute viewport
   +-- app-process FlutterJNI viewport metrics bridge
         -> covers Flutter/mixed shells that consume engine viewport DPR
 ```
+
+Legacy main-process auto treats any enabled viewport target as an app-process
+compat projection route. This keeps relative-scale targets from falling back to
+off when system hooks are unavailable.
 
 legacy does not currently install the shared modern
 `SystemServerDisplayEnvironmentInstaller`, so `config-dispatch` and

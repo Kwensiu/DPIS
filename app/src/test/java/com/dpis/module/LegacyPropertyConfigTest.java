@@ -114,22 +114,22 @@ public class LegacyPropertyConfigTest {
     }
 
     @Test
-    public void legacyMainProcessKeepsAutoRelativeScaleSystemFirst() {
+    public void legacyMainProcessTreatsAutoAsCompatForAnyEnabledViewportTarget() {
+        assertEquals(ViewportApplyMode.COMPAT,
+                RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
+                        ViewportApplyMode.AUTO,
+                        ViewportTargetSpec.relativeScale(150000),
+                        RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET));
         assertEquals(ViewportApplyMode.COMPAT,
                 RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
                         ViewportApplyMode.AUTO,
                         ViewportTargetSpec.absoluteDp(500),
-                        RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ABSOLUTE_TARGETS_ONLY));
-        assertEquals(ViewportApplyMode.AUTO,
-                RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
-                        ViewportApplyMode.AUTO,
-                        ViewportTargetSpec.relativeScale(150000),
-                        RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ABSOLUTE_TARGETS_ONLY));
+                        RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET));
         assertEquals(ViewportApplyMode.AUTO,
                 RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
                         ViewportApplyMode.AUTO,
                         ViewportTargetSpec.off(),
-                        RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ABSOLUTE_TARGETS_ONLY));
+                        RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET));
     }
 
     @Test

@@ -22,11 +22,11 @@ public class EffectiveModeResolverTest {
     }
 
     @Test
-    public void viewportAutoTurnsOffWhenSystemHooksDisabled() {
+    public void viewportAutoFallsBackToCompatWhenSystemHooksDisabled() {
         String mode = EffectiveModeResolver.resolveViewportMode(
                 ViewportApplyMode.AUTO, false);
 
-        assertEquals(ViewportApplyMode.OFF, mode);
+        assertEquals(ViewportApplyMode.COMPAT, mode);
     }
 
     @Test

@@ -7,6 +7,8 @@ import org.junit.After;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class ResourcesImplHookInstallerTest {
     @After
@@ -624,6 +626,29 @@ public class ResourcesImplHookInstallerTest {
 
         assertEquals(480, windowConfig.densityDpi);
         assertEquals(320, windowMetrics.densityDpi);
+    }
+
+    @Test
+    public void webApkBorrowTargetPublishesResourcesImplDisplayState() {
+        ViewportTargetSpec spec = ViewportTargetSpec.relativeScale(150000);
+        ViewportRuntimeRecord record = new ViewportRuntimeRecord(
+                "org.chromium.webapk.ac19cf34f94565db5_v2",
+                spec,
+                "source",
+                540,
+                new ViewportOverride.Result(540, 1188, 540, 320),
+                new VirtualDisplayOverride.Result(540, 1188, 540, 320, 1080, 2376),
+                "result",
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS,
+                1L,
+                ViewportSourceSnapshot.SCOPE_DISPLAY);
+        ViewportTargetResolution resolution =
+                ViewportTargetResolution.fromAppProcessBorrowRecord(record);
+
+        assertTrue(ResourcesImplHookInstaller.shouldPublishResourcesImplResultForTest(
+                "org.chromium.webapk.ac19cf34f94565db5_v2", resolution, true));
+        assertFalse(ResourcesImplHookInstaller.shouldPublishResourcesImplResultForTest(
+                "com.example.viewport", resolution, true));
     }
 
     private static void putCompatViewport(FakePrefs prefs, String packageName, int widthDp) {

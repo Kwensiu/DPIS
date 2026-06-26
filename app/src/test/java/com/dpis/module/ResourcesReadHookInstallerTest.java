@@ -578,7 +578,8 @@ public class ResourcesReadHookInstallerTest {
                 "ResourcesRead(getConfiguration)",
                 false,
                 true,
-                false);
+                false,
+                HookRuntimePolicy.fromStore(store));
 
         assertEquals(1.3f, config.fontScale, 0.0001f);
     }

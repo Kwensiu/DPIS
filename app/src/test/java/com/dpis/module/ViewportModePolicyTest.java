@@ -109,7 +109,7 @@ public class ViewportModePolicyTest {
     }
 
     @Test
-    public void autoTurnsOffWithoutCompatConfigurationOverrideWhenSystemHookOff() {
+    public void autoFallsBackToCompatWithoutConfigurationOverrideWhenSystemHookOff() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
         store.setSystemServerHooksEnabled(false);
@@ -118,8 +118,22 @@ public class ViewportModePolicyTest {
 
         String mode = ViewportModePolicy.resolve(store, "com.example.target");
 
-        assertEquals(ViewportApplyMode.OFF, mode);
-        assertFalse(ViewportModePolicy.shouldApplyConfigurationOverride(store, "com.example.target"));
+        assertEquals(ViewportApplyMode.COMPAT, mode);
+        assertTrue(ViewportModePolicy.shouldApplyConfigurationOverride(store, "com.example.target"));
+    }
+
+    @Test
+    public void webApkOwnerAutoKeepsAppProcessConfigurationOverrideWhenSystemHookOn() {
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        String packageName = "org.chromium.webapk.ac19cf34f94565db5_v2";
+        store.setSystemServerHooksEnabled(true);
+        store.setTargetDpisEnabled(packageName, true);
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(150000));
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.AUTO);
+
+        assertEquals(ViewportApplyMode.SYSTEM, ViewportModePolicy.resolve(store, packageName));
+        assertTrue(ViewportModePolicy.shouldApplyConfigurationOverride(store, packageName));
     }
 
     @Test

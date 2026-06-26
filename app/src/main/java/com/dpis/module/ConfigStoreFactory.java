@@ -140,7 +140,7 @@ final class ConfigStoreFactory {
 
     static DpiConfigStore createForLegacyMainProcessHost(String packageName) {
         return createForLegacyHost(packageName,
-                RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ABSOLUTE_TARGETS_ONLY);
+                RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET);
     }
 
     private static DpiConfigStore createForLegacyHost(

@@ -40,6 +40,15 @@ final class ResourcesManagerHookInstaller {
                         DpiConfigStore store,
                         ModernApiCapabilities apiCapabilities)
             throws ReflectiveOperationException {
+        install(xposed, packageName, store, HookRuntimePolicy.fromStore(store), apiCapabilities);
+    }
+
+    static void install(XposedInterface xposed,
+                        String packageName,
+                        DpiConfigStore store,
+                        HookRuntimePolicy policy,
+                        ModernApiCapabilities apiCapabilities)
+            throws ReflectiveOperationException {
         if (hookInstalled) {
             return;
         }
@@ -60,7 +69,8 @@ final class ResourcesManagerHookInstaller {
                             HOOK_ID_APPLY_CONFIGURATION)
                     .intercept(chain -> {
                         Configuration config = (Configuration) chain.getArg(0);
-                        applyResourceOverrides(config, store, packageName, "ResourcesManager");
+                        applyResourceOverrides(config, store, packageName, "ResourcesManager",
+                                policy);
                         return chain.proceed();
                     });
 
@@ -73,14 +83,14 @@ final class ResourcesManagerHookInstaller {
                     .intercept(chain -> {
                         Configuration overrideConfig = (Configuration) chain.getArg(1);
                         applyResourceOverrides(overrideConfig, store, packageName,
-                                "ResourcesManagerActivity");
+                                "ResourcesManagerActivity", policy);
                         return chain.proceed();
                     });
 
             int createHookCount = installResourceCreationHooks(
-                    xposed, resourcesManagerClass, packageName, store, apiCapabilities);
+                    xposed, resourcesManagerClass, packageName, store, policy, apiCapabilities);
             int keyHookCount = installResourcesKeyHooks(
-                    xposed, resourcesManagerClass, packageName, store, apiCapabilities);
+                    xposed, resourcesManagerClass, packageName, store, policy, apiCapabilities);
             hookInstalled = true;
             DpisLog.i("ResourcesManager hook ready (createHooks=" + createHookCount
                     + ", keyHooks=" + keyHookCount + ")");
@@ -102,6 +112,7 @@ final class ResourcesManagerHookInstaller {
                                                     Class<?> resourcesManagerClass,
                                                     String packageName,
                                                     DpiConfigStore store,
+                                                    HookRuntimePolicy policy,
                                                     ModernApiCapabilities apiCapabilities) {
         int hookedCount = 0;
         Set<Method> hookedMethods = new HashSet<>();
@@ -124,7 +135,7 @@ final class ResourcesManagerHookInstaller {
                     .intercept(chain -> {
                         Configuration config = (Configuration) chain.getArg(configArgIndex);
                         applyResourceOverrides(config, store, packageName,
-                                "ResourcesManagerCreate(" + methodName + ")");
+                                "ResourcesManagerCreate(" + methodName + ")", policy);
                         return chain.proceed();
                     });
             hookedCount++;
@@ -136,6 +147,7 @@ final class ResourcesManagerHookInstaller {
                                                 Class<?> resourcesManagerClass,
                                                 String packageName,
                                                 DpiConfigStore store,
+                                                HookRuntimePolicy policy,
                                                 ModernApiCapabilities apiCapabilities) {
         int hookedCount = 0;
         Set<Method> hookedMethods = new HashSet<>();
@@ -153,7 +165,8 @@ final class ResourcesManagerHookInstaller {
                     .intercept(chain -> {
                         Object key = chain.getArg(0);
                         maybeApplyKeyOverride(
-                                chain.getThisObject(), key, store, packageName, methodName);
+                                chain.getThisObject(), key, store, packageName, methodName,
+                                policy);
                         return chain.proceed();
                     });
             hookedCount++;
@@ -166,6 +179,16 @@ final class ResourcesManagerHookInstaller {
                                       DpiConfigStore store,
                                       String packageName,
                                       String sourceTag) {
+        maybeApplyKeyOverride(resourcesManager, key, store, packageName, sourceTag,
+                HookRuntimePolicy.fromStore(store));
+    }
+
+    static void maybeApplyKeyOverride(Object resourcesManager,
+                                      Object key,
+                                      DpiConfigStore store,
+                                      String packageName,
+                                      String sourceTag,
+                                      HookRuntimePolicy policy) {
         packageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(store, packageName);
         store = WebApkRuntimeOwnerBridge.resolveEffectiveStore(store, packageName);
         if (resourcesManager == null || key == null) {
@@ -175,7 +198,7 @@ final class ResourcesManagerHookInstaller {
                             + "), reason=missing_resources_manager_or_key");
             return;
         }
-        if (!ViewportModePolicy.shouldApplyConfigurationOverride(store, packageName)) {
+        if (!ViewportModePolicy.shouldApplyConfigurationOverride(policy, store, packageName)) {
             recordViewportSkip(packageName, "resources_manager_key_override",
                     "configuration_override_disabled",
                     "source=ResourcesManagerKey(" + sourceTag
@@ -226,7 +249,7 @@ final class ResourcesManagerHookInstaller {
         copyViewportConfiguration(sourceConfig, targetConfig);
         targetConfig.fontScale = sourceConfig.fontScale;
         applyResourceOverrides(targetConfig, store, packageName,
-                "ResourcesManagerKey(" + sourceTag + ")");
+                "ResourcesManagerKey(" + sourceTag + ")", policy);
         if (!hasViewportOverride(targetConfig, sourceConfig)) {
             recordViewportSkip(packageName, "resources_manager_key_override",
                     "no_viewport_delta_after_resolution",
@@ -368,6 +391,15 @@ final class ResourcesManagerHookInstaller {
 
     static void applyResourceOverrides(Configuration config, DpiConfigStore store,
                                        String packageName, String sourceTag) {
+        applyResourceOverrides(config, store, packageName, sourceTag,
+                HookRuntimePolicy.fromStore(store));
+    }
+
+    static void applyResourceOverrides(Configuration config,
+                                       DpiConfigStore store,
+                                       String packageName,
+                                       String sourceTag,
+                                       HookRuntimePolicy policy) {
         packageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(store, packageName);
         store = WebApkRuntimeOwnerBridge.resolveEffectiveStore(store, packageName);
         if (config == null) {
@@ -464,7 +496,7 @@ final class ResourcesManagerHookInstaller {
                 || result.smallestWidthDp != originalSmallestWidthDp
                 || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi);
         boolean applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
-                store, packageName, resolution, needsViewportUpdate);
+                policy, store, packageName, resolution, needsViewportUpdate);
         if (!needsViewportUpdate
                 && !fontScale.changed) {
             VirtualDisplayOverride.Result stableResult =

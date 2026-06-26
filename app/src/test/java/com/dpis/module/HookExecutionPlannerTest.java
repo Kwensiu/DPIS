@@ -149,9 +149,9 @@ public class HookExecutionPlannerTest {
                 false,
                 DebugFontOverride.none());
 
-        assertEquals(ViewportApplyMode.OFF, plan.resolvedViewportMode);
-        assertFalse(plan.viewportEnabled);
-        assertFalse(plan.resourcesHooksEnabled);
+        assertEquals(ViewportApplyMode.COMPAT, plan.resolvedViewportMode);
+        assertTrue(plan.viewportEnabled);
+        assertTrue(plan.resourcesHooksEnabled);
     }
 
     @Test

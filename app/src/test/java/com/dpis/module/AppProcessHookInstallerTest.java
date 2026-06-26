@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -116,8 +117,9 @@ public class AppProcessHookInstallerTest {
                 false,
                 DebugFontOverride.none());
 
-        assertFalse(plan.viewportEnabled);
-        assertFalse(AppProcessHookInstaller.shouldInstallAppProcessViewportSupplementHooksForTest(
+        assertTrue(plan.viewportEnabled);
+        assertEquals(ViewportApplyMode.COMPAT, plan.resolvedViewportMode);
+        assertTrue(AppProcessHookInstaller.shouldInstallAppProcessViewportSupplementHooksForTest(
                 plan,
                 ViewportTargetSpec.absoluteDp(300)));
     }
@@ -422,7 +424,9 @@ public class AppProcessHookInstallerTest {
         assertTrue(source.contains("ModernApiCapabilities apiCapabilities"));
         assertTrue(source.indexOf("installTypefaceHooks(xposed, packageName, store, packagePlan.targetTypefaceId);")
                 < source.indexOf("installFromPlan("));
-        assertTrue(source.contains("packagePlan.targetViewportSpec, apiCapabilities);"));
+        assertTrue(source.contains("packagePlan.targetViewportSpec,"));
+        assertTrue(source.contains("policy,"));
+        assertTrue(source.contains("apiCapabilities);"));
         assertTrue(moduleMain.contains("packagePlan.targetTypefaceId"));
         assertTrue(moduleMain.contains("retryTypefaceHooksWithPackageReady"));
         assertTrue(moduleMain.contains("AppProcessHookInstaller.installTypefaceHooks("));

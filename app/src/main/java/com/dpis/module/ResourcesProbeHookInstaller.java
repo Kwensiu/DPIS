@@ -14,6 +14,7 @@ final class ResourcesProbeHookInstaller {
     private static final AtomicInteger CONFIGURATION_LOG_COUNT = new AtomicInteger();
     private static volatile String targetPackageName;
     private static volatile DpiConfigStore configStore;
+    private static volatile HookRuntimePolicy runtimePolicy;
     private static volatile int installedPid = -1;
 
     private ResourcesProbeHookInstaller() {
@@ -25,6 +26,14 @@ final class ResourcesProbeHookInstaller {
 
     static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
             throws ReflectiveOperationException {
+        install(xposed, packageName, store, HookRuntimePolicy.fromStore(store));
+    }
+
+    static void install(XposedInterface xposed,
+                        String packageName,
+                        DpiConfigStore store,
+                        HookRuntimePolicy policy)
+            throws ReflectiveOperationException {
         if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
         }
@@ -34,6 +43,7 @@ final class ResourcesProbeHookInstaller {
             }
             targetPackageName = packageName;
             configStore = store;
+            runtimePolicy = policy;
             ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
             Class<?> resourcesClass = Class.forName("android.content.res.Resources", false,
                     bootClassLoader);
@@ -132,7 +142,8 @@ final class ResourcesProbeHookInstaller {
         if (targetWidthDp == null) {
             return configuration;
         }
-        if (!ViewportModePolicy.shouldApplyConfigurationOverride(configStore, targetPackageName)) {
+        if (!ViewportModePolicy.shouldApplyConfigurationOverride(
+                runtimePolicy, configStore, targetPackageName)) {
             return configuration;
         }
         return createOverriddenConfiguration(configuration, targetWidthDp);
