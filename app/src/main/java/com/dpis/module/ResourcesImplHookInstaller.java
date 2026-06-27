@@ -140,7 +140,7 @@ final class ResourcesImplHookInstaller {
         VirtualDisplayOverride.Result trustedDisplayTarget =
                 stableTargetForResult != null ? stableTargetForResult : pixelDerivedTarget;
         ViewportOverride.Result resolvedRecordResult =
-                ViewportResolvedTarget.viewportResult(resolution, windowScoped);
+                ViewportResolvedTarget.viewportResult(resolution, windowScoped, config);
         ViewportOverride.Result windowLikeBorrowResult =
                 resolveWindowLikeBorrowResult(config, resolution, windowScoped);
         ViewportOverride.Result appProcessWindowMetricsResult =

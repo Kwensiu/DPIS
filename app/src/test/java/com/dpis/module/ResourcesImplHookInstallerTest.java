@@ -400,6 +400,70 @@ public class ResourcesImplHookInstallerTest {
     }
 
     @Test
+    public void stalePortraitRecordDoesNotRewriteLandscapeConfigurationAsPortrait() {
+        String packageName = "com.example.viewport";
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(200000);
+        ViewportSourceSnapshot portraitSource = ViewportSourceSnapshot.systemDisplayInfo(
+                462, 1001, 462, 374, 1080, 2340);
+        VirtualDisplayState.publish(
+                packageName,
+                targetSpec,
+                portraitSource,
+                new ViewportOverride.Result(924, 2002, 924, 187),
+                new VirtualDisplayOverride.Result(924, 2002, 924, 187, 1080, 2340),
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+        Configuration landscape = new Configuration();
+        landscape.screenWidthDp = 1001;
+        landscape.screenHeightDp = 462;
+        landscape.smallestScreenWidthDp = 462;
+        landscape.densityDpi = 374;
+        landscape.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.widthPixels = 2340;
+        metrics.heightPixels = 1080;
+        metrics.densityDpi = 374;
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setTargetViewportSpec(packageName, targetSpec);
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+
+        ResourcesImplHookInstaller.applyDensityOverride(packageName, landscape, metrics, store);
+
+        assertEquals(2002, landscape.screenWidthDp);
+        assertEquals(924, landscape.screenHeightDp);
+        assertEquals(924, landscape.smallestScreenWidthDp);
+        assertEquals(187, landscape.densityDpi);
+    }
+
+    @Test
+    public void chromeResourcesImplConfigurationAppliesCompatViewport() {
+        String packageName = WebApkRuntimeOwnerBridge.CHROME_PACKAGE;
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(200000));
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+        Configuration config = new Configuration();
+        config.screenWidthDp = 1001;
+        config.screenHeightDp = 462;
+        config.smallestScreenWidthDp = 462;
+        config.densityDpi = 374;
+        config.fontScale = 1.15f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.widthPixels = 2340;
+        metrics.heightPixels = 1080;
+        metrics.densityDpi = 374;
+        metrics.density = 2.3375f;
+        metrics.scaledDensity = 2.688125f;
+
+        ResourcesImplHookInstaller.applyDensityOverride(packageName, config, metrics, store);
+
+        assertEquals(2002, config.screenWidthDp);
+        assertEquals(924, config.screenHeightDp);
+        assertEquals(924, config.smallestScreenWidthDp);
+        assertEquals(187, config.densityDpi);
+    }
+
+    @Test
     public void absoluteViewportUsesPhysicalPixelsWhenSourceDensityDrifted() {
         String packageName = "com.example.viewport";
         Configuration config = new Configuration();

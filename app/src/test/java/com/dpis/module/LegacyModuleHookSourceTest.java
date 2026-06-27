@@ -112,7 +112,20 @@ public class LegacyModuleHookSourceTest {
         assertTrue(systemServerSource.contains("ViewportRuntimeMarkerBridge.publishSystemServerRecord"));
         assertTrue(systemServerSource.contains("ViewportRuntimeMarkerBridge.read"));
         assertTrue(systemServerSource.contains("matchesCurrentConfiguration"));
+        assertTrue(systemServerSource.contains(
+                "legacy system_server launch-activity-item marker state: package="));
+        assertTrue(systemServerSource.contains(
+                "legacy system_server launch-activity-item marker publish: package="));
+        assertTrue(systemServerSource.contains(
+                "legacy system_server launch-activity-item marker reuse: package="));
         assertTrue(systemServerSource.contains("ViewportOverride.apply"));
+        assertTrue(systemServerSource.contains("applyLaunchActivityItemObject(source, param.thisObject)"));
+        assertTrue(systemServerSource.contains("readLaunchActivityInfo"));
+        assertTrue(systemServerSource.contains("readLaunchActivityConfiguration"));
+        assertTrue(systemServerSource.contains("applyConfigurationField(launchActivityItem, \"mCurConfig\", environment)"));
+        assertTrue(systemServerSource.contains("applyConfigurationField(launchActivityItem, \"mOverrideConfig\", environment)"));
+        assertTrue(systemServerSource.contains(
+                "legacy system_server launch-activity-item object apply: package="));
         assertTrue(systemServerSource.contains("FontApplyMode.SYSTEM_EMULATION"));
         assertTrue(systemServerSource.contains("LegacyRustProcessHookInstaller.install(source)"));
         assertTrue(systemServerSource.contains("findPackageNameRecursive(arg, 0)"));
@@ -128,7 +141,7 @@ public class LegacyModuleHookSourceTest {
                 launchApplyIndex, afterLaunchApplyIndex);
         assertTrue(launchApplyMethod.contains(
                 "resolveTargetEnvironment(packageName, baseConfiguration, config)"));
-        assertFalse(launchApplyMethod.contains("applyConfiguration(configuration, environment)"));
+        assertTrue(launchApplyMethod.contains("applyConfiguration(configuration, environment)"));
 
         String compatRustSource = read("src/legacy/java/com/dpis/module/LegacyRustProcessHookInstaller.java");
         assertTrue(compatRustSource.contains("XposedBridge.hookMethod(method"));

@@ -4,6 +4,7 @@ import android.content.res.Configuration;
 import android.content.pm.ActivityInfo;
 import android.graphics.Rect;
 import android.os.Binder;
+import android.os.IBinder;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -12,6 +13,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
@@ -94,6 +96,7 @@ final class SystemServerDisplayEnvironmentInstaller {
             "frames", "windowFrames", "clientWindowFrames", "outFrames", "result"
     };
     private static volatile int installedPid = -1;
+    private static final Set<String> installedEntries = new LinkedHashSet<>();
 
     private SystemServerDisplayEnvironmentInstaller() {
     }
@@ -101,22 +104,30 @@ final class SystemServerDisplayEnvironmentInstaller {
     static void resetForHotReload() {
         synchronized (SystemServerDisplayEnvironmentInstaller.class) {
             installedPid = -1;
+            installedEntries.clear();
         }
     }
 
-    static void install(XposedInterface xposed,
-                        DpiConfigStore store,
-                        ModernApiCapabilities apiCapabilities) {
+    static InstallResult install(XposedInterface xposed,
+                                 DpiConfigStore store,
+                                 ModernApiCapabilities apiCapabilities) {
+        return install(xposed, store, apiCapabilities, null);
+    }
+
+    static InstallResult install(XposedInterface xposed,
+                                 DpiConfigStore store,
+                                 ModernApiCapabilities apiCapabilities,
+                                 ClassLoader systemServerClassLoader) {
         if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             SystemServerDisplayDiagnostics.recordPending("system_server install skipped: reason=already-installed-fast-path");
             DpisLog.i(SystemServerDisplayDiagnostics.buildInstallSkipLog("already-installed-fast-path"));
-            return;
+            return new InstallResult(0, 0, true);
         }
         synchronized (SystemServerDisplayEnvironmentInstaller.class) {
             if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
                 SystemServerDisplayDiagnostics.recordPending("system_server install skipped: reason=already-installed-synchronized");
                 DpisLog.i(SystemServerDisplayDiagnostics.buildInstallSkipLog("already-installed-synchronized"));
-                return;
+                return new InstallResult(0, 0, true);
             }
             SystemServerDisplayDiagnostics.recordPending(
                     SystemServerDisplayDiagnostics.buildInstallEnterLog(store == null, installedPid != -1));
@@ -126,11 +137,7 @@ final class SystemServerDisplayEnvironmentInstaller {
                 SystemServerDisplayDiagnostics.recordPending(
                         SystemServerDisplayDiagnostics.buildBootstrapLog());
                 DpisLog.i(SystemServerDisplayDiagnostics.buildBootstrapLog());
-                boolean systemHooksEffectiveEnabled =
-                        SystemScopeCoordinator.resolveSystemHookEffectiveEnabled(store);
-                HookRuntimePolicy policy = HookRuntimePolicy.fromEffectiveSystemHookState(
-                        store,
-                        systemHooksEffectiveEnabled);
+                HookRuntimePolicy policy = HookRuntimePolicy.fromStore(store);
                 if (!policy.systemServerHooksEnabled) {
                     SystemServerDisplayDiagnostics.recordPending(
                             SystemServerDisplayDiagnostics.buildGateDisabledLog(
@@ -143,34 +150,49 @@ final class SystemServerDisplayEnvironmentInstaller {
                             "skipped",
                             "system_server install skipped: gate disabled");
                     installedPid = ProcessScopedInstallGate.currentPid();
-                    return;
+                    return new InstallResult(0, 0, false);
                 }
-                PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(
-                        new RefreshingConfigSnapshotProvider(
-                                () -> ConfigSnapshotLoader.fromStore(
-                                        ConfigStoreFactory.createForXposedHost(xposed)),
-                                ConfigSnapshotRefreshPolicy.SYSTEM_SERVER_TTL_MILLIS));
+                PerAppDisplayConfigSource source =
+                        PerAppDisplayConfigSource.withLegacyRuntimePropertyFallback(
+                                new RefreshingConfigSnapshotProvider(
+                                        () -> ConfigSnapshotLoader.fromStore(
+                                                ConfigStoreFactory.createForXposedHost(xposed)),
+                                        ConfigSnapshotRefreshPolicy.SYSTEM_SERVER_TTL_MILLIS));
                 Set<String> configuredPackages = source.getConfiguredPackages();
                 int installedCount = 0;
                 int missingCount = 0;
+                StringBuilder installedEntrySummary = new StringBuilder();
+                StringBuilder missingEntrySummary = new StringBuilder();
                 if (SystemServerMutationPolicy.shouldInstallTarget(
                         "launch-activity-item", policy.systemServerSafeModeEnabled)) {
-                    if (installLaunchActivityItemHook(
+                    if (isEntryInstalled("launch-activity-item")) {
+                        installedCount++;
+                        appendEntry(installedEntrySummary, "launch-activity-item");
+                    } else if (installLaunchActivityItemHook(
                             xposed,
                             source,
                             SystemServerHookCatalog.LAUNCH_ACTIVITY_ITEM,
                             apiCapabilities)) {
+                        markEntryInstalled("launch-activity-item");
                         installedCount++;
+                        appendEntry(installedEntrySummary, "launch-activity-item");
                     } else {
                         missingCount++;
+                        appendEntry(missingEntrySummary, "launch-activity-item");
                     }
                 }
                 if (SystemServerMutationPolicy.shouldInstallTarget(
                         "hyperos-rust-process", policy.systemServerSafeModeEnabled)) {
-                    if (HyperOsRustProcessHookInstaller.install(xposed, source)) {
+                    if (isEntryInstalled("hyperos-rust-process")) {
                         installedCount++;
+                        appendEntry(installedEntrySummary, "hyperos-rust-process");
+                    } else if (HyperOsRustProcessHookInstaller.install(xposed, source)) {
+                        markEntryInstalled("hyperos-rust-process");
+                        installedCount++;
+                        appendEntry(installedEntrySummary, "hyperos-rust-process");
                     } else {
                         missingCount++;
+                        appendEntry(missingEntrySummary, "hyperos-rust-process");
                     }
                 }
                 for (SystemServerHookSpec hookSpec : SystemServerHookCatalog.methodHookSpecs()) {
@@ -178,15 +200,22 @@ final class SystemServerDisplayEnvironmentInstaller {
                             hookSpec.entryName, policy.systemServerSafeModeEnabled)) {
                         continue;
                     }
-                    if (installTargetHooks(
+                    if (isEntryInstalled(hookSpec.entryName)) {
+                        installedCount++;
+                        appendEntry(installedEntrySummary, hookSpec.entryName);
+                    } else if (installTargetHooks(
                             xposed,
                             source,
                             hookSpec,
                             configuredPackages,
-                            apiCapabilities)) {
+                            apiCapabilities,
+                            systemServerClassLoader)) {
+                        markEntryInstalled(hookSpec.entryName);
                         installedCount++;
+                        appendEntry(installedEntrySummary, hookSpec.entryName);
                     } else {
                         missingCount++;
+                        appendEntry(missingEntrySummary, hookSpec.entryName);
                     }
                 }
                 SystemServerDisplayDiagnostics.recordPending(
@@ -200,13 +229,65 @@ final class SystemServerDisplayEnvironmentInstaller {
                         "installed",
                         "system_server install summary: installed=" + installedCount
                                 + ", missing=" + missingCount);
-                installedPid = ProcessScopedInstallGate.currentPid();
+                markInstalledWhenComplete(missingCount);
+                return new InstallResult(installedCount, missingCount, false,
+                        installedEntrySummary.toString(), missingEntrySummary.toString());
             } catch (Throwable throwable) {
                 SystemServerDisplayDiagnostics.recordPending(
                         "system_server install failed: throwable=" + throwable.getClass().getName());
                 DpisLog.e("system_server install failed", throwable);
                 throw throwable;
             }
+        }
+    }
+
+    private static void markInstalledWhenComplete(int missingCount) {
+        if (missingCount == 0) {
+            installedPid = ProcessScopedInstallGate.currentPid();
+        }
+    }
+
+    private static boolean isEntryInstalled(String entryName) {
+        return installedEntries.contains(entryName);
+    }
+
+    private static void markEntryInstalled(String entryName) {
+        installedEntries.add(entryName);
+    }
+
+    private static void appendEntry(StringBuilder builder, String entryName) {
+        if (builder.length() > 0) {
+            builder.append(',');
+        }
+        builder.append(entryName);
+    }
+
+    static final class InstallResult {
+        final int installedCount;
+        final int missingCount;
+        final boolean alreadyInstalled;
+        final String installedEntries;
+        final String missingEntries;
+
+        InstallResult(int installedCount, int missingCount, boolean alreadyInstalled) {
+            this(installedCount, missingCount, alreadyInstalled, "", "");
+        }
+
+        InstallResult(int installedCount, int missingCount, boolean alreadyInstalled,
+                String installedEntries, String missingEntries) {
+            this.installedCount = installedCount;
+            this.missingCount = missingCount;
+            this.alreadyInstalled = alreadyInstalled;
+            this.installedEntries = installedEntries;
+            this.missingEntries = missingEntries;
+        }
+
+        boolean hasInstalledHooks() {
+            return alreadyInstalled || installedCount > 0;
+        }
+
+        boolean isComplete() {
+            return alreadyInstalled || missingCount == 0;
         }
     }
 
@@ -237,6 +318,24 @@ final class SystemServerDisplayEnvironmentInstaller {
         }).packageName;
     }
 
+    static String resolveRelayoutWindowPackageForTest(Object windowManagerService,
+                                                      List<Object> values,
+                                                      Predicate<String> hasConfig) {
+        if (values == null) {
+            values = List.of();
+        }
+        Object target = resolveRelayoutWindowTarget(windowManagerService, values);
+        List<Object> candidates = new ArrayList<>();
+        candidates.add(windowManagerService);
+        candidates.addAll(values);
+        return resolveConfiguredPackage(target, candidates, packageName -> {
+            if (packageName == null || hasConfig == null || !hasConfig.test(packageName)) {
+                return null;
+            }
+            return new PerAppDisplayConfig(packageName, 1);
+        }).packageName;
+    }
+
     static String resolveLaunchActivityItemPackageForTest(String primaryPackage,
                                                           Predicate<String> hasConfig,
                                                           Object textSource) {
@@ -252,12 +351,13 @@ final class SystemServerDisplayEnvironmentInstaller {
     }
 
     private static boolean installTargetHooks(XposedInterface xposed,
-                                              PerAppDisplayConfigSource source,
-                                              SystemServerHookSpec hookSpec,
-                                              Set<String> configuredPackages,
-                                              ModernApiCapabilities apiCapabilities) {
+                                               PerAppDisplayConfigSource source,
+                                               SystemServerHookSpec hookSpec,
+                                               Set<String> configuredPackages,
+                                               ModernApiCapabilities apiCapabilities,
+                                               ClassLoader systemServerClassLoader) {
         boolean hooked = false;
-        for (ClassLoader classLoader : resolveCandidateClassLoaders()) {
+        for (ClassLoader classLoader : resolveCandidateClassLoaders(systemServerClassLoader)) {
             for (String className : hookSpec.classNames) {
                 Class<?> clazz = resolveClass(className, classLoader);
                 if (clazz == null) {
@@ -290,26 +390,31 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     }
                                     boolean loggingEnabled = DpisLog.isLoggingEnabled();
                                     Set<String> currentConfiguredPackages = source.getConfiguredPackages();
+                                    Object contextObject = resolveEntryContextObject(
+                                            hookSpec.entryName, thisObject, args);
+                                    List<Object> contextArgs = resolveEntryContextArgs(
+                                            contextObject, thisObject, args);
                                     if (!shouldInspectHotEntry(
                                             hookSpec.entryName,
-                                            thisObject,
-                                            args,
+                                            contextObject,
+                                            contextArgs,
+                                            contextObject != thisObject,
                                             currentConfiguredPackages)) {
                                         return chain.proceed();
                                     }
                                     if (loggingEnabled
                                             && SystemServerHookLogGate.shouldLogInterceptEnter(
                                                     hookSpec.entryName)) {
-                                        logInterceptEnter(hookSpec.entryName, thisObject, args);
+                                        logInterceptEnter(hookSpec.entryName, contextObject, contextArgs);
                                     }
                                     ResolvedPackage resolvedPackage = resolveConfiguredPackage(
-                                            thisObject,
-                                            args,
+                                            contextObject,
+                                            contextArgs,
                                             packageName -> selectConfigForSystemServerEntry(
                                                     hookSpec.entryName, source.get(packageName)));
                                     if (resolvedPackage.packageName == null) {
                                         if (loggingEnabled) {
-                                            logPackageResolveMiss(hookSpec.entryName, thisObject, args);
+                                            logPackageResolveMiss(hookSpec.entryName, contextObject, contextArgs);
                                         }
                                         return chain.proceed();
                                     }
@@ -329,7 +434,7 @@ final class SystemServerDisplayEnvironmentInstaller {
                                                 packageName,
                                                 resolvedPackage.candidatePackagesSummary);
                                     }
-                                    Snapshot before = captureSnapshot(thisObject, args);
+                                    Snapshot before = captureSnapshot(contextObject, contextArgs);
                                     PerAppDisplayEnvironment preEnvironment = resolveTargetEnvironment(
                                             packageName, before, before, config);
                                     if (SystemServerMutationPolicy.shouldApplyPreProceedMutations(
@@ -344,7 +449,7 @@ final class SystemServerDisplayEnvironmentInstaller {
                                         boolean changed = applyEnvironment(
                                                 hookSpec.entryName, before, applyEnvironment, config);
                                         changed |= applyConfigDispatchObject(
-                                                hookSpec.entryName, thisObject, applyEnvironment);
+                                                hookSpec.entryName, contextObject, applyEnvironment);
                                         if (changed) {
                                             logViewportMarkerProbe(
                                                     hookSpec.entryName, packageName, before, applyEnvironment, config);
@@ -353,14 +458,14 @@ final class SystemServerDisplayEnvironmentInstaller {
                                     proceedAttempted = true;
                                     result = chain.proceed();
                                     proceeded = true;
-                                    Snapshot after = captureSnapshot(thisObject, args);
+                                    Snapshot after = captureSnapshot(contextObject, contextArgs);
                                     PerAppDisplayEnvironment environment = resolveTargetEnvironment(
                                             packageName, before, after, config);
                                     PerAppDisplayEnvironment effectiveEnvironment = chooseEffectiveEnvironment(
                                             preEnvironment, environment);
                                     if (SystemServerEntryRoute.isConfigDispatch(hookSpec.entryName)) {
                                         applyConfigDispatchObject(
-                                                hookSpec.entryName, thisObject, effectiveEnvironment);
+                                                hookSpec.entryName, contextObject, effectiveEnvironment);
                                     }
                                     if (loggingEnabled) {
                                         logTargetComputation(hookSpec.entryName, packageName,
@@ -506,6 +611,126 @@ final class SystemServerDisplayEnvironmentInstaller {
             DpisLog.i("system_server hook ready: entry=launch-activity-item, class=LaunchActivityItem");
         }
         return hooked;
+    }
+
+    private static Object resolveEntryContextObject(String entryName, Object self, List<Object> args) {
+        if (SystemServerEntryRoute.isRelayoutDispatch(entryName)) {
+            return resolveRelayoutWindowTarget(self, args);
+        }
+        return self;
+    }
+
+    private static List<Object> resolveEntryContextArgs(Object contextObject,
+                                                      Object self,
+                                                      List<Object> args) {
+        if (contextObject == null || contextObject == self) {
+            return args;
+        }
+        List<Object> contextArgs = new ArrayList<>();
+        contextArgs.add(contextObject);
+        if (args != null) {
+            contextArgs.addAll(args);
+        }
+        return contextArgs;
+    }
+
+    private static Object resolveRelayoutWindowTarget(Object windowManagerService,
+                                                      List<Object> args) {
+        Object client = firstWindowClient(args);
+        Object mappedWindow = findWindowStateByClient(windowManagerService, client);
+        return mappedWindow != null ? mappedWindow : windowManagerService;
+    }
+
+    private static Object firstWindowClient(List<Object> args) {
+        if (args == null) {
+            return null;
+        }
+        if (args.size() > 1 && invokeBinder(args.get(1)) != null) {
+            return args.get(1);
+        }
+        for (Object arg : args) {
+            if (isWindowClientObject(arg)) {
+                return arg;
+            }
+        }
+        for (Object arg : args) {
+            if (arg == null) {
+                continue;
+            }
+            if (invokeBinder(arg) != null) {
+                return arg;
+            }
+        }
+        return null;
+    }
+
+    private static boolean isWindowClientObject(Object value) {
+        if (value == null) {
+            return false;
+        }
+        Class<?> clazz = value.getClass();
+        if (isWindowClientTypeName(clazz.getName())) {
+            return true;
+        }
+        for (Class<?> interfaceClass : clazz.getInterfaces()) {
+            if (isWindowClientTypeName(interfaceClass.getName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isWindowClientTypeName(String name) {
+        return name != null
+                && name.contains("android.view.IWindow")
+                && !name.contains("IWindowSession");
+    }
+
+    private static Object findWindowStateByClient(Object windowManagerService,
+                                                  Object client) {
+        if (windowManagerService == null || client == null) {
+            return null;
+        }
+        Object windowMap = readField(windowManagerService, "mWindowMap");
+        if (!(windowMap instanceof Map<?, ?> map)) {
+            return null;
+        }
+        Object direct = map.get(client);
+        if (direct != null) {
+            return direct;
+        }
+        IBinder binder = invokeBinder(client);
+        if (binder != null) {
+            Object byBinder = map.get(binder);
+            if (byBinder != null) {
+                return byBinder;
+            }
+        }
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            if (Objects.equals(client, entry.getKey())
+                    || Objects.equals(binder, entry.getKey())
+                    || Objects.equals(client, readField(entry.getValue(), "mClient"))
+                    || Objects.equals(binder, invokeBinder(readField(entry.getValue(), "mClient")))) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    private static IBinder invokeBinder(Object value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            Method method = REFLECTION_CACHE.findNoArgMethod(value.getClass(), "asBinder");
+            if (method == null) {
+                return null;
+            }
+            Object binder = method.invoke(value);
+            return binder instanceof IBinder iBinder ? iBinder : null;
+        } catch (ReflectiveOperationException ignored) {
+            return null;
+        }
     }
 
     private static void applyLaunchActivityItemArgs(PerAppDisplayConfigSource source,
@@ -784,8 +1009,9 @@ final class SystemServerDisplayEnvironmentInstaller {
         return joiner.toString();
     }
 
-    private static Set<ClassLoader> resolveCandidateClassLoaders() {
+    private static Set<ClassLoader> resolveCandidateClassLoaders(ClassLoader systemServerClassLoader) {
         Set<ClassLoader> classLoaders = new LinkedHashSet<>();
+        classLoaders.add(systemServerClassLoader);
         classLoaders.add(Thread.currentThread().getContextClassLoader());
         classLoaders.add(SystemServerDisplayEnvironmentInstaller.class.getClassLoader());
         classLoaders.add(ClassLoader.getSystemClassLoader());
@@ -1071,13 +1297,107 @@ final class SystemServerDisplayEnvironmentInstaller {
         }
         int widthPx = resolveWidthPx(configuration, frame);
         int heightPx = resolveHeightPx(configuration, frame);
-        PerAppDisplayEnvironment alreadyApplied = resolveAlreadyAppliedRelativeScaleEnvironment(
-                packageName, configuration, widthPx, heightPx, config);
-        if (alreadyApplied != null) {
-            return alreadyApplied;
+        if (config.targetViewportSpec.isRelativeScale()) {
+            return resolveRelativeScaleEnvironment(
+                    packageName, configuration, widthPx, heightPx, config);
         }
         return PerAppDisplayOverrideCalculator.calculate(
                 configuration, widthPx, heightPx, config.targetViewportSpec);
+    }
+
+    private static PerAppDisplayEnvironment resolveRelativeScaleEnvironment(
+            String packageName,
+            Configuration configuration,
+            int widthPx,
+            int heightPx,
+            PerAppDisplayConfig config) {
+        if (packageName == null || configuration == null || config == null
+                || !config.targetViewportSpec.isRelativeScale()) {
+            return null;
+        }
+        ViewportRuntimeMarkerBridge.ParseResult marker = ViewportRuntimeMarkerBridge.read(
+                packageName,
+                config.targetViewportSpec.fingerprint(),
+                RuntimeClock.crossProcessMarkerMillis());
+        if (isStaleMarker(marker)) {
+            marker = ViewportRuntimeMarkerBridge.readAllowingStale(
+                    packageName,
+                    config.targetViewportSpec.fingerprint(),
+                    RuntimeClock.crossProcessMarkerMillis());
+        }
+        String scope = ViewportConfigurationScope.isWindowScoped(configuration)
+                ? ViewportSourceSnapshot.SCOPE_WINDOW
+                : ViewportSourceSnapshot.SCOPE_DISPLAY;
+        if (isAlreadyAppliedRelativeScaleMarker(configuration, scope, marker)) {
+            return new PerAppDisplayEnvironment(
+                    configuration.screenWidthDp,
+                    configuration.screenHeightDp,
+                    configuration.smallestScreenWidthDp,
+                    configuration.densityDpi,
+                    widthPx,
+                    heightPx);
+        }
+        if (canReuseCompleteMarkerResult(configuration, marker)) {
+            return new PerAppDisplayEnvironment(
+                    marker.record.resultWidthDp,
+                    marker.record.resultHeightDp,
+                    marker.record.resultSmallestWidthDp,
+                    marker.record.resultDensityDpi,
+                    widthPx,
+                    heightPx);
+        }
+        if (!canDeriveRelativeScaleFromSystemServerSource(configuration, marker)) {
+            return null;
+        }
+        return PerAppDisplayOverrideCalculator.calculate(
+                configuration, widthPx, heightPx, config.targetViewportSpec);
+    }
+
+    private static boolean canDeriveRelativeScaleFromSystemServerSource(
+            Configuration configuration,
+            ViewportRuntimeMarkerBridge.ParseResult marker) {
+        return configuration != null
+                && !ViewportConfigurationScope.isWindowScoped(configuration)
+                && marker != null
+                && "empty".equals(marker.reason);
+    }
+
+    private static boolean isStaleMarker(ViewportRuntimeMarkerBridge.ParseResult marker) {
+        return marker != null && !marker.hit && "stale".equals(marker.reason);
+    }
+
+    private static boolean hasCompleteMarkerResult(
+            ViewportRuntimeMarkerBridge.ParseResult marker) {
+        return marker != null
+                && marker.hit
+                && marker.record != null
+                && marker.record.resultWidthDp > 0
+                && marker.record.resultHeightDp > 0
+                && marker.record.resultSmallestWidthDp > 0
+                && marker.record.resultDensityDpi > 0;
+    }
+
+    private static boolean canReuseCompleteMarkerResult(
+            Configuration configuration,
+            ViewportRuntimeMarkerBridge.ParseResult marker) {
+        return hasCompleteMarkerResult(marker)
+                && sameOrientation(configuration, marker.record.resultWidthDp, marker.record.resultHeightDp);
+    }
+
+    private static boolean sameOrientation(Configuration configuration,
+                                           int widthDp,
+                                           int heightDp) {
+        if (configuration == null
+                || configuration.screenWidthDp <= 0
+                || configuration.screenHeightDp <= 0
+                || widthDp <= 0
+                || heightDp <= 0) {
+            return true;
+        }
+        int sourceCompare = Integer.compare(
+                configuration.screenWidthDp, configuration.screenHeightDp);
+        int resultCompare = Integer.compare(widthDp, heightDp);
+        return sourceCompare == 0 || resultCompare == 0 || sourceCompare == resultCompare;
     }
 
     private static PerAppDisplayEnvironment resolveAlreadyAppliedRelativeScaleEnvironment(
@@ -1134,6 +1454,12 @@ final class SystemServerDisplayEnvironmentInstaller {
         if (environment == null || config == null || !config.targetViewportSpec.isRelativeScale()) {
             return environment;
         }
+        // Window-scoped resize must not publish a new relative-scale baseline,
+        // but it may reuse a complete result already proven by display/system
+        // marker evidence.
+        if (canApplyWindowScopedMarkerResult(packageName, source, environment, config)) {
+            return environment;
+        }
         boolean published = publishViewportRuntimeMarker(
                 packageName,
                 source,
@@ -1151,6 +1477,34 @@ final class SystemServerDisplayEnvironmentInstaller {
                     resolveLogMinIntervalMs(entryName));
         }
         return null;
+    }
+
+    private static boolean canApplyWindowScopedMarkerResult(String packageName,
+                                                           Snapshot source,
+                                                           PerAppDisplayEnvironment environment,
+                                                           PerAppDisplayConfig config) {
+        if (source == null || source.configuration == null
+                || environment == null || config == null
+                || !config.targetViewportSpec.isRelativeScale()
+                || !ViewportConfigurationScope.isWindowScoped(source.configuration)) {
+            return false;
+        }
+        ViewportRuntimeMarkerBridge.ParseResult marker = ViewportRuntimeMarkerBridge.readAllowingStale(
+                packageName,
+                config.targetViewportSpec.fingerprint(),
+                RuntimeClock.crossProcessMarkerMillis());
+        return environmentMatchesMarkerResult(environment, marker);
+    }
+
+    private static boolean environmentMatchesMarkerResult(
+            PerAppDisplayEnvironment environment,
+            ViewportRuntimeMarkerBridge.ParseResult marker) {
+        return environment != null
+                && hasCompleteMarkerResult(marker)
+                && environment.widthDp == marker.record.resultWidthDp
+                && environment.heightDp == marker.record.resultHeightDp
+                && environment.smallestWidthDp == marker.record.resultSmallestWidthDp
+                && environment.densityDpi == marker.record.resultDensityDpi;
     }
 
     private static boolean publishViewportRuntimeMarker(String packageName,
@@ -1180,9 +1534,77 @@ final class SystemServerDisplayEnvironmentInstaller {
     private static boolean shouldInspectHotEntry(String entryName,
                                                  Object self,
                                                  List<Object> args,
+                                                 boolean resolvedTargetObject,
                                                  Set<String> configuredPackages) {
+        if (resolvedTargetObject && SystemServerEntryRoute.isRelayoutDispatch(entryName)) {
+            // relayoutWindow often resolves a concrete WindowState from WMS.mWindowMap.
+            // Keep the relayout hotpath cheap by requiring a light package hit
+            // on that resolved target before entering the full resolver.
+            return hasConfiguredPackageHintOnResolvedTarget(self, configuredPackages);
+        }
         return SystemServerHotPathInspector.shouldInspectHotEntry(
                 entryName, self, args, configuredPackages);
+    }
+
+    private static boolean hasConfiguredPackageHintOnResolvedTarget(
+            Object target,
+            Set<String> configuredPackages) {
+        if (target == null || configuredPackages == null || configuredPackages.isEmpty()) {
+            return false;
+        }
+        Set<String> candidates = new LinkedHashSet<>();
+        addCandidatePackage(candidates, directPackageName(target));
+        addCandidatePackage(candidates, directPackageName(readField(target, "mAttrs")));
+        addCandidatePackage(candidates, directPackageName(readField(target, "mActivityRecord")));
+        addCandidatePackage(candidates, directPackageName(readField(target, "activityRecord")));
+        addCandidatePackage(candidates, directPackageName(readField(target, "mToken")));
+        for (String candidate : candidates) {
+            if (candidate != null && configuredPackages.contains(candidate)) {
+                return true;
+            }
+        }
+        return SystemServerHotPathInspector.shouldInspectHotEntry(
+                "relayout-dispatch", target, List.of(), configuredPackages);
+    }
+
+    private static void addCandidatePackage(Set<String> candidates, String packageName) {
+        if (candidates == null || packageName == null || packageName.isBlank()) {
+            return;
+        }
+        candidates.add(packageName);
+    }
+
+    private static String directPackageName(Object target) {
+        if (target == null) {
+            return null;
+        }
+        if (target instanceof ActivityInfo activityInfo
+                && isLikelyPackageName(activityInfo.packageName)) {
+            return activityInfo.packageName;
+        }
+        Object packageName = readField(target, "packageName");
+        if (packageName instanceof String stringValue && isLikelyPackageName(stringValue)) {
+            return stringValue;
+        }
+        Object packageField = readField(target, "mPackageName");
+        if (packageField instanceof String stringValue && isLikelyPackageName(stringValue)) {
+            return stringValue;
+        }
+        Object component = readField(target, "mActivityComponent");
+        String componentPackage = invokeStringMethod(component, "getPackageName");
+        if (componentPackage != null) {
+            return componentPackage;
+        }
+        Object info = readField(target, "info");
+        if (info instanceof ActivityInfo activityInfo && isLikelyPackageName(activityInfo.packageName)) {
+            return activityInfo.packageName;
+        }
+        Object activityInfo = readField(target, "mInfo");
+        if (activityInfo instanceof ActivityInfo resolvedInfo
+                && isLikelyPackageName(resolvedInfo.packageName)) {
+            return resolvedInfo.packageName;
+        }
+        return null;
     }
 
     private static PerAppDisplayConfig selectConfigForSystemServer(
@@ -1378,7 +1800,17 @@ final class SystemServerDisplayEnvironmentInstaller {
     static boolean shouldInspectHotEntryForTest(String entryName,
                                                 Object self,
                                                 Set<String> configuredPackages) {
-        return shouldInspectHotEntry(entryName, self, List.of(), configuredPackages);
+        return shouldInspectHotEntry(entryName, self, List.of(), false, configuredPackages);
+    }
+
+    static boolean shouldInspectResolvedRelayoutTargetForTest(Object self,
+                                                              Set<String> configuredPackages) {
+        return shouldInspectHotEntry(
+                "relayout-dispatch",
+                self,
+                List.of(),
+                true,
+                configuredPackages);
     }
 
     static boolean shouldUseConfigInSystemServerForTest(PerAppDisplayConfig config) {
@@ -1394,6 +1826,33 @@ final class SystemServerDisplayEnvironmentInstaller {
                                                              String scope,
                                                              ViewportRuntimeMarkerBridge.ParseResult marker) {
         return isAlreadyAppliedRelativeScaleMarker(configuration, scope, marker);
+    }
+
+    static boolean hasCompleteMarkerResultForTest(
+            ViewportRuntimeMarkerBridge.ParseResult marker) {
+        return hasCompleteMarkerResult(marker);
+    }
+
+    static boolean canReuseCompleteMarkerResultForTest(
+            Configuration configuration,
+            ViewportRuntimeMarkerBridge.ParseResult marker) {
+        return canReuseCompleteMarkerResult(configuration, marker);
+    }
+
+    static boolean environmentMatchesMarkerResultForTest(
+            PerAppDisplayEnvironment environment,
+            ViewportRuntimeMarkerBridge.ParseResult marker) {
+        return environmentMatchesMarkerResult(environment, marker);
+    }
+
+    static boolean canDeriveRelativeScaleFromSystemServerSourceForTest(
+            Configuration configuration,
+            ViewportRuntimeMarkerBridge.ParseResult marker) {
+        return canDeriveRelativeScaleFromSystemServerSource(configuration, marker);
+    }
+
+    static boolean isStaleMarkerForTest(ViewportRuntimeMarkerBridge.ParseResult marker) {
+        return isStaleMarker(marker);
     }
 
     static boolean shouldEmitLogForTest(String previousMessage,
@@ -1843,6 +2302,9 @@ final class SystemServerDisplayEnvironmentInstaller {
     }
 
     private static String invokeStringMethod(Object target, String methodName) {
+        if (target == null) {
+            return null;
+        }
         try {
             Method method = REFLECTION_CACHE.findNoArgMethod(target.getClass(), methodName);
             if (method == null) {
@@ -1856,6 +2318,9 @@ final class SystemServerDisplayEnvironmentInstaller {
     }
 
     private static Configuration invokeConfigurationMethod(Object target, String methodName) {
+        if (target == null) {
+            return null;
+        }
         try {
             Method method = REFLECTION_CACHE.findNoArgMethod(target.getClass(), methodName);
             if (method == null) {
@@ -1869,6 +2334,9 @@ final class SystemServerDisplayEnvironmentInstaller {
     }
 
     private static Object invokeObjectMethod(Object target, String methodName) {
+        if (target == null) {
+            return null;
+        }
         try {
             Method method = REFLECTION_CACHE.findNoArgMethod(target.getClass(), methodName);
             if (method == null) {

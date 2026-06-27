@@ -333,7 +333,9 @@ final class ViewportRuntimeMarkerBridge {
             set.invoke(null, key, value);
             return true;
         } catch (Throwable throwable) {
-            DpisLog.e("DPIS_VIEWPORT_MARKER publish failed: key=" + key, throwable);
+            // Marker publication has a process-local fallback. When property
+            // writes fail in ordinary app processes, the follow-up fallback log
+            // is enough evidence without escalating to an error-level stack.
             return false;
         }
     }

@@ -103,7 +103,7 @@ public class TargetViewportWidthResolverTest {
     }
 
     @Test
-    public void appProcessRelativeScaleDerivesTargetWithoutDisplayRecord() {
+    public void resourcesReadRelativeScaleDoesNotDeriveTargetWithoutDisplayRecord() {
         String packageName = "com.example.viewport";
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(150000));
@@ -116,14 +116,13 @@ public class TargetViewportWidthResolverTest {
         ViewportTargetResolution resolution =
                 TargetViewportWidthResolver.resolve(store, packageName, source);
 
-        assertEquals(ViewportTargetResolution.REASON_APP_PROCESS_RELATIVE_SCALE,
-                resolution.reason);
-        assertEquals(540, resolution.effectiveSmallestWidthDp);
+        assertEquals("relative-scale-no-display-baseline", resolution.reason);
+        assertEquals(0, resolution.effectiveSmallestWidthDp);
         assertNull(resolution.record);
     }
 
     @Test
-    public void appProcessRelativeScaleKeepsMilliPercentPrecisionWhenDerivingTarget() {
+    public void resourcesReadRelativeScaleDoesNotCompoundAlreadyScaledTarget() {
         String packageName = "com.example.viewport";
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(83333));
@@ -136,9 +135,8 @@ public class TargetViewportWidthResolverTest {
         ViewportTargetResolution resolution =
                 TargetViewportWidthResolver.resolve(store, packageName, source);
 
-        assertEquals(ViewportTargetResolution.REASON_APP_PROCESS_RELATIVE_SCALE,
-                resolution.reason);
-        assertEquals(400, resolution.effectiveSmallestWidthDp);
+        assertEquals("relative-scale-no-display-baseline", resolution.reason);
+        assertEquals(0, resolution.effectiveSmallestWidthDp);
         assertNull(resolution.record);
     }
 

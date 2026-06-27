@@ -10,6 +10,7 @@ import org.junit.Test;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -246,7 +247,7 @@ public class ResourcesReadHookInstallerTest {
     }
 
     @Test
-    public void relativeScaleConfigurationReadCanDeriveWindowTargetWithoutRecord() {
+    public void relativeScaleConfigurationReadDoesNotDeriveWithoutDisplayBaseline() {
         Configuration config = new Configuration();
         config.densityDpi = 480;
         config.screenWidthDp = 360;
@@ -260,10 +261,10 @@ public class ResourcesReadHookInstallerTest {
         ResourcesReadHookInstaller.applyConfigurationOverride(config, PACKAGE_NAME, store,
                 "ResourcesRead(getConfiguration)");
 
-        assertEquals(540, config.screenWidthDp);
-        assertEquals(960, config.screenHeightDp);
-        assertEquals(540, config.smallestScreenWidthDp);
-        assertEquals(320, config.densityDpi);
+        assertEquals(360, config.screenWidthDp);
+        assertEquals(640, config.screenHeightDp);
+        assertEquals(360, config.smallestScreenWidthDp);
+        assertEquals(480, config.densityDpi);
         assertEquals(null, VirtualDisplayState.get());
     }
 
@@ -311,7 +312,7 @@ public class ResourcesReadHookInstallerTest {
     }
 
     @Test
-    public void relativeScaleMetricsReadCanDeriveTargetDensityWithoutRecord() {
+    public void relativeScaleMetricsReadDoesNotDeriveWithoutDisplayBaseline() {
         Configuration config = new Configuration();
         config.densityDpi = 480;
         config.screenWidthDp = 360;
@@ -330,9 +331,9 @@ public class ResourcesReadHookInstallerTest {
 
         ResourcesReadHookInstaller.applyMetricsOverride(null, metrics, config, PACKAGE_NAME, store);
 
-        assertEquals(320, metrics.densityDpi);
-        assertEquals(DensityOverride.densityFromDpi(320), metrics.density, 0.0001f);
-        assertEquals(DensityOverride.scaledDensityFrom(320, 1.0f),
+        assertEquals(480, metrics.densityDpi);
+        assertEquals(DensityOverride.densityFromDpi(480), metrics.density, 0.0001f);
+        assertEquals(DensityOverride.scaledDensityFrom(480, 1.0f),
                 metrics.scaledDensity, 0.0001f);
         assertEquals(1080, metrics.widthPixels);
         assertEquals(1920, metrics.heightPixels);
@@ -340,7 +341,7 @@ public class ResourcesReadHookInstallerTest {
     }
 
     @Test
-    public void relativeScaleWindowMetricsReadDerivesDensityWithoutReusingDisplayPixels() {
+    public void relativeScaleWindowMetricsReadDoesNotDeriveWithoutDisplayBaseline() {
         Configuration config = new Configuration();
         config.densityDpi = 480;
         config.screenWidthDp = 360;
@@ -360,9 +361,9 @@ public class ResourcesReadHookInstallerTest {
         ResourcesReadHookInstaller.applyMetricsOverrideForTest(
                 null, metrics, config, PACKAGE_NAME, true, store);
 
-        assertEquals(320, metrics.densityDpi);
-        assertEquals(DensityOverride.densityFromDpi(320), metrics.density, 0.0001f);
-        assertEquals(DensityOverride.scaledDensityFrom(320, 1.0f),
+        assertEquals(480, metrics.densityDpi);
+        assertEquals(DensityOverride.densityFromDpi(480), metrics.density, 0.0001f);
+        assertEquals(DensityOverride.scaledDensityFrom(480, 1.0f),
                 metrics.scaledDensity, 0.0001f);
         assertEquals(1080, metrics.widthPixels);
         assertEquals(1920, metrics.heightPixels);
@@ -455,6 +456,47 @@ public class ResourcesReadHookInstallerTest {
         assertEquals(DensityOverride.densityFromDpi(320), metrics.density, 0.0001f);
         assertEquals(1080, metrics.widthPixels);
         assertEquals(1920, metrics.heightPixels);
+    }
+
+    @Test
+    public void chromeResourcesReadConfigurationAppliesCompatViewport() {
+        Configuration config = new Configuration();
+        config.densityDpi = 374;
+        config.screenWidthDp = 1001;
+        config.screenHeightDp = 462;
+        config.smallestScreenWidthDp = 462;
+        config.fontScale = 1.15f;
+        FakePrefs prefs = new FakePrefs();
+        DpiConfigStore store = new DpiConfigStore(prefs);
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(200000);
+        store.setTargetViewportSpec(WebApkRuntimeOwnerBridge.CHROME_PACKAGE, targetSpec);
+        store.setTargetViewportApplyMode(WebApkRuntimeOwnerBridge.CHROME_PACKAGE,
+                ViewportApplyMode.COMPAT);
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
+                1001, 462, 462, 374, 2340, 1080);
+        VirtualDisplayState.publish(
+                WebApkRuntimeOwnerBridge.CHROME_PACKAGE,
+                targetSpec,
+                source,
+                new ViewportOverride.Result(2002, 924, 924, 187),
+                new VirtualDisplayOverride.Result(2002, 924, 924, 187, 2340, 1080),
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+
+        ResourcesReadHookInstaller.applyConfigurationOverrideForTest(
+                null,
+                config,
+                WebApkRuntimeOwnerBridge.CHROME_PACKAGE,
+                store,
+                "ResourcesRead(getConfiguration)",
+                false,
+                true,
+                true,
+                HookRuntimePolicy.fromStore(store));
+
+        assertEquals(2002, config.screenWidthDp);
+        assertEquals(924, config.screenHeightDp);
+        assertEquals(924, config.smallestScreenWidthDp);
+        assertEquals(187, config.densityDpi);
     }
 
     @Test

@@ -66,15 +66,48 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
                         new FakeWindow("Window{u0 com.android.chrome/"
                                 + "org.chromium.chrome.browser.webapps.SameTaskWebApkActivity "
                                 + WebApkCarrierResolver.WEBAPK_PACKAGE_EXTRA
-                                + "=org.chromium.webapk.a5e359e2ce8b830bb_v2}"),
+                        + "=org.chromium.webapk.a5e359e2ce8b830bb_v2}"),
+                        configured));
+    }
+
+    @Test
+    public void relayoutQuickGateScansLaterWindowArguments() {
+        Set<String> configured = new LinkedHashSet<>();
+        configured.add("com.android.chrome");
+
+        assertTrue(SystemServerHotPathInspector.shouldInspectHotEntry(
+                "relayout-dispatch",
+                "WindowManagerService",
+                java.util.List.of(
+                        "session",
+                        "client",
+                        "attrs",
+                        "requestedWidth",
+                        "requestedHeight",
+                        "Window{7a03626 u0 com.android.chrome/com.google.android.apps.chrome.Main}"),
+                configured));
+    }
+
+    @Test
+    public void relayoutQuickGateAllowsResolvedWindowStateForPackageResolver() {
+        Set<String> configured = new LinkedHashSet<>();
+        configured.add("com.android.chrome");
+
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .shouldInspectResolvedRelayoutTargetForTest(
+                        new FakeWindow("WindowStateWithoutPackageText"),
+                        configured));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .shouldInspectResolvedRelayoutTargetForTest(
+                        new FakeWindow("WindowStateWithoutPackageText", "com.android.chrome"),
                         configured));
     }
 
     @Test
     public void safeModeInstallsCoreTargets() {
         assertFalse(SystemServerMutationPolicy.shouldInstallTarget("display-policy-layout", true));
-        assertFalse(SystemServerMutationPolicy.shouldInstallTarget("relayout-dispatch", true));
-        assertFalse(SystemServerMutationPolicy.shouldInstallTarget("display-content-config", true));
+        assertTrue(SystemServerMutationPolicy.shouldInstallTarget("relayout-dispatch", true));
+        assertTrue(SystemServerMutationPolicy.shouldInstallTarget("display-content-config", true));
         assertTrue(SystemServerMutationPolicy.shouldInstallTarget("activity-start", true));
         assertTrue(SystemServerMutationPolicy.shouldInstallTarget("config-dispatch", true));
         assertTrue(SystemServerMutationPolicy.shouldInstallTarget("launch-activity-item", true));
@@ -102,6 +135,7 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
         assertTrue(source.contains("launch-activity-item"));
         assertTrue(source.contains("HyperOsRustProcessHookInstaller.install(xposed, source)"));
         assertTrue(source.contains("hyperos-rust-process"));
+        assertTrue(source.contains("PerAppDisplayConfigSource.withLegacyRuntimePropertyFallback("));
     }
 
     @Test
@@ -120,6 +154,20 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
         assertTrue(catalog.contains("\"system_server_display_manager_info\""));
         assertTrue(spec.contains("String hookIdFor(Method method)"));
         assertTrue(spec.contains("String hookIdFor(Constructor<?> constructor)"));
+    }
+
+    @Test
+    public void partialSystemServerInstallDoesNotCloseProcessGate() throws IOException {
+        String installer = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+        String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
+
+        assertTrue(installer.contains("markInstalledWhenComplete(missingCount);"));
+        assertTrue(installer.contains("if (missingCount == 0)"));
+        assertTrue(installer.contains("private static final Set<String> installedEntries"));
+        assertTrue(installer.contains("isEntryInstalled(hookSpec.entryName)"));
+        assertTrue(installer.contains("markEntryInstalled(hookSpec.entryName);"));
+        assertTrue(installer.contains("boolean isComplete()"));
+        assertTrue(moduleMain.contains("systemServerInstallAttempted = result.isComplete();"));
     }
 
     @Test
@@ -152,6 +200,97 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
         assertTrue(source.contains("if (!hasSystemServerViewportOverride(config))"));
         assertTrue(source.contains("resolveMarkerGatedEnvironment("));
         assertTrue(source.contains("config.targetViewportSpec.isRelativeScale()"));
+    }
+
+    @Test
+    public void relativeScaleMaintenanceRequiresMarkerOrDisplayBaseline() {
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(150000);
+        ViewportRuntimeMarkerBridge.MarkerRecord completeRecord = markerRecord(targetSpec);
+        ViewportRuntimeMarkerBridge.MarkerRecord incompleteRecord =
+                new ViewportRuntimeMarkerBridge.MarkerRecord(
+                        "pkg",
+                        targetSpec.fingerprint(),
+                        "source",
+                        540,
+                        "result",
+                        ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER,
+                        1L);
+
+        assertTrue(SystemServerDisplayEnvironmentInstaller.hasCompleteMarkerResultForTest(
+                ViewportRuntimeMarkerBridge.ParseResult.hit(completeRecord, 0L)));
+        assertFalse(SystemServerDisplayEnvironmentInstaller.hasCompleteMarkerResultForTest(
+                ViewportRuntimeMarkerBridge.ParseResult.hit(incompleteRecord, 0L)));
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .canDeriveRelativeScaleFromSystemServerSourceForTest(
+                        configuration(), ViewportRuntimeMarkerBridge.ParseResult.miss("empty")));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .canDeriveRelativeScaleFromSystemServerSourceForTest(
+                        configuration(), ViewportRuntimeMarkerBridge.ParseResult.hit(incompleteRecord, 0L)));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .canDeriveRelativeScaleFromSystemServerSourceForTest(
+                        configuration(), ViewportRuntimeMarkerBridge.ParseResult.miss("stale")));
+        assertTrue(SystemServerDisplayEnvironmentInstaller.isStaleMarkerForTest(
+                ViewportRuntimeMarkerBridge.ParseResult.miss("stale")));
+    }
+
+    @Test
+    public void windowScopedMaintenanceMayReuseCompleteMarkerResultOnly() {
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(150000);
+        ViewportRuntimeMarkerBridge.ParseResult marker =
+                ViewportRuntimeMarkerBridge.ParseResult.hit(markerRecord(targetSpec), 0L);
+
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .environmentMatchesMarkerResultForTest(
+                        new PerAppDisplayEnvironment(540, 1188, 540, 320, 1080, 2376),
+                        marker));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .environmentMatchesMarkerResultForTest(
+                        new PerAppDisplayEnvironment(360, 640, 360, 480, 1080, 2376),
+                        marker));
+    }
+
+    @Test
+    public void completeMarkerResultRequiresMatchingOrientationForReuse() {
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(150000);
+        ViewportRuntimeMarkerBridge.ParseResult portraitMarker =
+                ViewportRuntimeMarkerBridge.ParseResult.hit(markerRecord(targetSpec), 0L);
+        android.content.res.Configuration portrait = configuration();
+        android.content.res.Configuration landscape = new android.content.res.Configuration();
+        landscape.screenWidthDp = 792;
+        landscape.screenHeightDp = 360;
+        landscape.smallestScreenWidthDp = 360;
+        landscape.densityDpi = 480;
+
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .canReuseCompleteMarkerResultForTest(portrait, portraitMarker));
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .canReuseCompleteMarkerResultForTest(landscape, portraitMarker));
+    }
+
+    private static ViewportRuntimeMarkerBridge.MarkerRecord markerRecord(ViewportTargetSpec targetSpec) {
+        return new ViewportRuntimeMarkerBridge.MarkerRecord(
+                "pkg",
+                targetSpec.fingerprint(),
+                ViewportRuntimeMarkerBridge.configurationSignature(
+                        360, 792, 360, 480, ViewportSourceSnapshot.SCOPE_DISPLAY),
+                540,
+                ViewportRuntimeMarkerBridge.configurationSignature(
+                        540, 1188, 540, 320, ViewportSourceSnapshot.SCOPE_DISPLAY),
+                540,
+                1188,
+                540,
+                320,
+                ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER,
+                1L);
+    }
+
+    private static android.content.res.Configuration configuration() {
+        android.content.res.Configuration config = new android.content.res.Configuration();
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 792;
+        config.smallestScreenWidthDp = 360;
+        config.densityDpi = 480;
+        return config;
     }
 
     @Test
@@ -423,14 +562,30 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
 
     private static final class FakeWindow {
         private final String text;
+        @SuppressWarnings("unused")
+        private final FakeLayoutParams mAttrs;
 
         private FakeWindow(String text) {
+            this(text, null);
+        }
+
+        private FakeWindow(String text, String packageName) {
             this.text = text;
+            this.mAttrs = packageName == null ? null : new FakeLayoutParams(packageName);
         }
 
         @Override
         public String toString() {
             return text;
+        }
+    }
+
+    private static final class FakeLayoutParams {
+        @SuppressWarnings("unused")
+        private final String packageName;
+
+        private FakeLayoutParams(String packageName) {
+            this.packageName = packageName;
         }
     }
 }

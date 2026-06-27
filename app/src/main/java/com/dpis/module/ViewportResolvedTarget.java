@@ -8,6 +8,12 @@ final class ViewportResolvedTarget {
 
     static ViewportOverride.Result viewportResult(ViewportTargetResolution resolution,
                                                   boolean windowScoped) {
+        return viewportResult(resolution, windowScoped, null);
+    }
+
+    static ViewportOverride.Result viewportResult(ViewportTargetResolution resolution,
+                                                  boolean windowScoped,
+                                                  Configuration sourceConfig) {
         if (windowScoped
                 || resolution == null
                 || resolution.record == null
@@ -18,7 +24,25 @@ final class ViewportResolvedTarget {
                 || resolution.record.viewportResult.densityDpi <= 0) {
             return null;
         }
+        if (!sameOrientation(sourceConfig, resolution.record.viewportResult)) {
+            return null;
+        }
         return resolution.record.viewportResult;
+    }
+
+    private static boolean sameOrientation(Configuration sourceConfig,
+                                           ViewportOverride.Result result) {
+        if (sourceConfig == null
+                || sourceConfig.screenWidthDp <= 0
+                || sourceConfig.screenHeightDp <= 0
+                || result == null
+                || result.widthDp <= 0
+                || result.heightDp <= 0) {
+            return true;
+        }
+        int sourceCompare = Integer.compare(sourceConfig.screenWidthDp, sourceConfig.screenHeightDp);
+        int resultCompare = Integer.compare(result.widthDp, result.heightDp);
+        return sourceCompare == 0 || resultCompare == 0 || sourceCompare == resultCompare;
     }
 
     static ViewportOverride.Result viewportResult(VirtualDisplayOverride.Result result) {

@@ -100,6 +100,107 @@ public class ResourcesManagerHookInstallerTest {
     }
 
     @Test
+    public void stalePortraitRecordDoesNotRewriteLandscapeConfigurationAsPortrait() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(200000);
+        store.setTargetViewportSpec(PACKAGE_NAME, targetSpec);
+        store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
+        ViewportSourceSnapshot portraitSource = ViewportSourceSnapshot.systemDisplayInfo(
+                462, 1001, 462, 374, 1080, 2340);
+        VirtualDisplayState.publish(
+                PACKAGE_NAME,
+                targetSpec,
+                portraitSource,
+                new ViewportOverride.Result(924, 2002, 924, 187),
+                new VirtualDisplayOverride.Result(924, 2002, 924, 187, 1080, 2340),
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+        Configuration landscape = new Configuration();
+        landscape.screenWidthDp = 1001;
+        landscape.screenHeightDp = 462;
+        landscape.smallestScreenWidthDp = 462;
+        landscape.densityDpi = 374;
+        landscape.fontScale = 1.0f;
+
+        ResourcesManagerHookInstaller.applyResourceOverrides(
+                landscape, store, PACKAGE_NAME, "ResourcesManagerActivity");
+
+        assertEquals(2002, landscape.screenWidthDp);
+        assertEquals(924, landscape.screenHeightDp);
+        assertEquals(924, landscape.smallestScreenWidthDp);
+        assertEquals(187, landscape.densityDpi);
+    }
+
+    @Test
+    public void chromeActivityScopedConfigurationAppliesCompatViewport() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(200000);
+        String packageName = WebApkRuntimeOwnerBridge.CHROME_PACKAGE;
+        store.setTargetViewportSpec(packageName, targetSpec);
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+        Configuration config = new Configuration();
+        config.screenWidthDp = 1001;
+        config.screenHeightDp = 462;
+        config.smallestScreenWidthDp = 462;
+        config.densityDpi = 374;
+        config.fontScale = 1.15f;
+
+        ResourcesManagerHookInstaller.applyResourceOverrides(
+                config, store, packageName, "ResourcesManagerActivity");
+
+        assertEquals(2002, config.screenWidthDp);
+        assertEquals(924, config.screenHeightDp);
+        assertEquals(924, config.smallestScreenWidthDp);
+        assertEquals(187, config.densityDpi);
+    }
+
+    @Test
+    public void chromeResourcesManagerConfigurationAppliesCompatViewport() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(200000);
+        String packageName = WebApkRuntimeOwnerBridge.CHROME_PACKAGE;
+        store.setTargetViewportSpec(packageName, targetSpec);
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+        Configuration config = new Configuration();
+        config.screenWidthDp = 1001;
+        config.screenHeightDp = 462;
+        config.smallestScreenWidthDp = 462;
+        config.densityDpi = 374;
+        config.fontScale = 1.15f;
+
+        ResourcesManagerHookInstaller.applyResourceOverrides(
+                config, store, packageName, "ResourcesManager");
+
+        assertEquals(2002, config.screenWidthDp);
+        assertEquals(924, config.screenHeightDp);
+        assertEquals(924, config.smallestScreenWidthDp);
+        assertEquals(187, config.densityDpi);
+    }
+
+    @Test
+    public void chromeResourceCreationConfigurationAppliesCompatViewport() {
+        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(200000);
+        String packageName = WebApkRuntimeOwnerBridge.CHROME_PACKAGE;
+        store.setTargetViewportSpec(packageName, targetSpec);
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
+        Configuration config = new Configuration();
+        config.screenWidthDp = 1001;
+        config.screenHeightDp = 462;
+        config.smallestScreenWidthDp = 462;
+        config.densityDpi = 374;
+        config.fontScale = 1.15f;
+
+        ResourcesManagerHookInstaller.applyResourceOverrides(
+                config, store, packageName,
+                "ResourcesManagerCreate(createBaseTokenResources)");
+
+        assertEquals(2002, config.screenWidthDp);
+        assertEquals(924, config.screenHeightDp);
+        assertEquals(924, config.smallestScreenWidthDp);
+        assertEquals(187, config.densityDpi);
+    }
+
+    @Test
     public void fillsEmptyResourcesKeyOverrideFromGlobalConfiguration() {
         FakePrefs prefs = new FakePrefs();
         putCompatViewport(prefs, 800);

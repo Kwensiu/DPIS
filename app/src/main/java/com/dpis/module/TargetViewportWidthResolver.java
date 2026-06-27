@@ -104,6 +104,9 @@ final class TargetViewportWidthResolver {
         if (targetSpec.isRelativeScale()
                 && source.appProcessConsumerScoped()
                 && compatDerivationAllowed) {
+            if (!source.canPublishFreshRelativeBaseline()) {
+                return ViewportTargetResolution.none("relative-scale-no-display-baseline");
+            }
             int effectiveTarget = Math.max(1,
                     Math.round((source.smallestWidthDp * targetSpec.scaleMilliPercent()) / 100000.0f));
             return ViewportTargetResolution.resolved(
@@ -160,7 +163,8 @@ final class TargetViewportWidthResolver {
         if (marker == null || marker.hit) {
             return false;
         }
-        return "target-mismatch".equals(marker.reason)
+        return "empty".equals(marker.reason)
+                || "target-mismatch".equals(marker.reason)
                 || "package-mismatch".equals(marker.reason)
                 || "malformed".equals(marker.reason)
                 || "too-long".equals(marker.reason)

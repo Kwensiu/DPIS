@@ -51,7 +51,7 @@ final class AppProcessHookInstaller {
             installTypefaceHooks(xposed, packageName, store, packagePlan.targetTypefaceId);
         }
         if (plan.viewportEnabled) {
-            AppProcessViewportStateSeeder.seedAbsoluteTarget(
+            AppProcessViewportStateSeeder.seedDisplayBaseline(
                     packageName,
                     packagePlan.targetViewportSpec,
                     packagePlan.targetViewportMode,

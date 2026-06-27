@@ -8,13 +8,13 @@ final class AppProcessViewportStateSeeder {
     private AppProcessViewportStateSeeder() {
     }
 
-    static void seedAbsoluteTarget(String packageName,
+    static void seedDisplayBaseline(String packageName,
                                    ViewportTargetSpec targetSpec,
                                    String requestedMode,
                                    boolean systemHooksEnabled) {
         try {
             Resources resources = Resources.getSystem();
-            seedAbsoluteTarget(packageName, targetSpec, requestedMode, systemHooksEnabled,
+            seedDisplayBaseline(packageName, targetSpec, requestedMode, systemHooksEnabled,
                     resources.getConfiguration(),
                     resources.getDisplayMetrics());
         } catch (Throwable throwable) {
@@ -23,7 +23,7 @@ final class AppProcessViewportStateSeeder {
         }
     }
 
-    static ViewportRuntimeRecord seedAbsoluteTarget(String packageName,
+    static ViewportRuntimeRecord seedDisplayBaseline(String packageName,
                                                     ViewportTargetSpec targetSpec,
                                                     String requestedMode,
                                                     boolean systemHooksEnabled,
@@ -35,7 +35,7 @@ final class AppProcessViewportStateSeeder {
                 || targetSpec == null) {
             return null;
         }
-        if (!targetSpec.isEnabled() || !targetSpec.isAbsoluteDp()) {
+        if (!targetSpec.isEnabled()) {
             return null;
         }
         String mode = EffectiveModeResolver.resolveViewportMode(
@@ -58,6 +58,8 @@ final class AppProcessViewportStateSeeder {
             sourceHeightDp = Math.max(1, Math.round(sourceHeightPx / density));
             sourceSmallestWidthDp = Math.min(sourceWidthDp, sourceHeightDp);
         }
+        int targetSmallestWidthDp = resolveTargetSmallestWidthDp(
+                targetSpec, sourceSmallestWidthDp);
         VirtualDisplayOverride.Result virtualDisplay =
                 VirtualDisplayPlan.deriveAbsoluteResultFromPhysicalPixels(
                         sourceWidthDp,
@@ -65,7 +67,7 @@ final class AppProcessViewportStateSeeder {
                         sourceSmallestWidthDp,
                         sourceWidthPx,
                         sourceHeightPx,
-                        targetSpec.absoluteWidthDp());
+                        targetSmallestWidthDp);
         if (virtualDisplay == null) {
             return null;
         }
@@ -89,7 +91,8 @@ final class AppProcessViewportStateSeeder {
                 virtualDisplay,
                 ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
         DpisLog.i("DPIS_VIEWPORT app-process state seeded: package=" + packageName
-                + ", targetWidthDp=" + targetSpec.absoluteWidthDp()
+                + ", targetSpec=" + targetSpec
+                + ", targetSmallestWidthDp=" + targetSmallestWidthDp
                 + ", source=wDp=" + sourceWidthDp
                 + ",hDp=" + sourceHeightDp
                 + ",swDp=" + sourceSmallestWidthDp
@@ -103,5 +106,21 @@ final class AppProcessViewportStateSeeder {
                 + ",wPx=" + virtualDisplay.widthPx
                 + ",hPx=" + virtualDisplay.heightPx);
         return record;
+    }
+
+    private static int resolveTargetSmallestWidthDp(ViewportTargetSpec targetSpec,
+                                                    int sourceSmallestWidthDp) {
+        if (targetSpec == null || !targetSpec.isEnabled() || sourceSmallestWidthDp <= 0) {
+            return 0;
+        }
+        if (targetSpec.isAbsoluteDp()) {
+            return targetSpec.absoluteWidthDp();
+        }
+        if (targetSpec.isRelativeScale()) {
+            return Math.max(1,
+                    Math.round(sourceSmallestWidthDp
+                            * (targetSpec.scaleMilliPercent() / 100000.0f)));
+        }
+        return 0;
     }
 }

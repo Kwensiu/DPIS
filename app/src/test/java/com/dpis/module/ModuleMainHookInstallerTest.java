@@ -15,9 +15,18 @@ public class ModuleMainHookInstallerTest {
         assertTrue(source.contains("SystemServerMutationPolicy.shouldInstallSystemServerHooks("));
         assertTrue(source.contains("public void onSystemServerStarting(SystemServerStartingParam param)"));
         assertTrue(source.contains("system_server starting hook install enter"));
+        assertTrue(source.contains("bridgeRuntimeLog(\"system_server starting hook install enter"));
         assertTrue(source.contains("\"system-server-starting\""));
+        assertTrue(source.contains("\"module-loaded\""));
+        assertTrue(source.contains("resolveSystemServerRuntimePolicy("));
+        assertTrue(source.contains("HookRuntimePolicy.fromStore(store)"));
         assertTrue(source.contains("maybeInstallSystemServerHooks(store, policy, currentProcessName"));
-        assertTrue(source.contains("system_server installer ready: source="));
+        assertTrue(source.contains("param != null ? param.getClassLoader() : null"));
+        assertTrue(source.contains("getModernApiCapabilities(), systemServerClassLoader"));
+        assertTrue(source.contains("maybeInstallSystemServerHooks(configStore, policy, param.getProcessName()"));
+        assertTrue(source.contains("system_server installer "));
+        assertTrue(source.contains("bridgeRuntimeLog(message);"));
+        assertTrue(source.contains("result.hasInstalledHooks() ? \"ready\" : \"no-hooks\""));
         assertTrue(source.contains("ModulePackagePlan.resolve("));
         assertFalse(SourceSmokeTestPaths.exists("src", "main", "java", "com", "dpis", "module", "ModuleMain.java"));
     }

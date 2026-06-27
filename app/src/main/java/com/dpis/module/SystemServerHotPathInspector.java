@@ -23,13 +23,20 @@ final class SystemServerHotPathInspector {
         if (args == null || args.isEmpty()) {
             return false;
         }
-        int maxArgs = Math.min(args.size(), 3);
+        int maxArgs = Math.min(args.size(), maxArgsToInspect(entryName));
         for (int i = 0; i < maxArgs; i++) {
             if (containsConfiguredPackageHint(String.valueOf(args.get(i)), configuredPackages)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static int maxArgsToInspect(String entryName) {
+        if (SystemServerEntryRoute.isRelayoutDispatch(entryName)) {
+            return 8;
+        }
+        return 3;
     }
 
     private static boolean containsConfiguredPackageHint(String text, Set<String> configuredPackages) {

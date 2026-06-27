@@ -50,7 +50,7 @@ public class ViewportTargetResolverTest {
     }
 
     @Test
-    public void resourcesReadDerivesLocalRelativeTargetWithoutPublishingBaseline() {
+    public void resourcesReadDoesNotDeriveRelativeTargetWithoutDisplayBaseline() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetViewportSpec("com.example", ViewportTargetSpec.relativeScale(106000));
         store.setTargetViewportApplyMode("com.example", ViewportApplyMode.COMPAT);
@@ -65,9 +65,8 @@ public class ViewportTargetResolverTest {
         ViewportTargetResolution result =
                 TargetViewportWidthResolver.resolve(store, "com.example", readSource);
 
-        assertTrue(result.hasTarget());
-        assertEquals(ViewportTargetResolution.REASON_APP_PROCESS_RELATIVE_SCALE, result.reason);
-        assertEquals(436, result.effectiveSmallestWidthDp);
+        assertFalse(result.hasTarget());
+        assertEquals("relative-scale-no-display-baseline", result.reason);
         assertEquals(0, VirtualDisplayState.recordCountForTest());
     }
 
@@ -133,7 +132,7 @@ public class ViewportTargetResolverTest {
     }
 
     @Test
-    public void autoSystemDoesNotFallbackForEmptyMarker() {
+    public void autoSystemFallsBackToCompatForEmptyMarker() {
         DpiConfigStore store = new DpiConfigStore(new FakePrefs());
         store.setTargetViewportSpec("com.example", ViewportTargetSpec.relativeScale(150000));
         store.setTargetViewportApplyMode("com.example", ViewportApplyMode.AUTO);
@@ -143,8 +142,9 @@ public class ViewportTargetResolverTest {
         ViewportTargetResolution result =
                 TargetViewportWidthResolver.resolve(store, "com.example", source);
 
-        assertFalse(result.hasTarget());
-        assertEquals("system-route-no-compat-fallback", result.reason);
+        assertTrue(result.hasTarget());
+        assertEquals(617, result.effectiveSmallestWidthDp);
+        assertEquals("relative-scale", result.reason);
     }
 
 }

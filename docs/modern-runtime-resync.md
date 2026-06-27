@@ -654,6 +654,133 @@ superseded.
   `setprop debug.dpis.webapk.chromium_probe_package com.android.chrome` when
   proving the Java-to-Chromium boundary. This keeps LSPosed/Xposed logs useful
   without making validation probes part of normal runtime noise.
+- 2026-06-27: Chrome rotation behavior was corrected after side-by-side device
+  validation. Explicit `system` mode does not visibly relaunch Chrome on either
+  tested device, but only the browser shell UI follows the viewport target; web
+  content does not. `auto` when it falls back to compat, and explicit `compat`,
+  make web content follow the target but Chrome can schedule an Activity
+  relaunch on rotation. A temporary Chrome/WebAPK metrics-only experiment reduced
+  app-process `Configuration` writes but also made compat mode scale web content
+  without scaling Chrome UI, and did not prove relaunch avoidance. The active
+  behavior is therefore to keep compat applying both `Configuration` and metrics
+  for Chrome/WebAPK so UI and content scale together; the relaunch risk is
+  documented as a Chrome compat-route tradeoff instead of hidden by partial
+  scaling.
+- 2026-06-27: Device `192.168.5.130:5555` showed Chrome explicit `system`
+  viewport had LSPosed `system` scope selected and the module loaded in the
+  `system` process, but the Modern system_server installer did not enter through
+  the normal callback path. Modern now also tries system_server installation
+  from `onModuleLoaded` when the current process is `system` / `android`.
+  Inside that system process, reaching the process is treated as runtime scope
+  proof, because `XposedService` is UI-side and may be unavailable there; the
+  stored user `system_server.hooks_enabled` switch still gates installation.
+  Validation after reinstall showed `DPIS system_server hot reload replay ready:
+  process=system, package=android`.
+- 2026-06-27: Follow-up validation showed Chrome can theoretically work through
+  the system-mode chain on Legacy (`192.168.5.131:5555`), so the Modern Chrome
+  failure is not recorded as a package-level auto-to-compat exception. Broader
+  testing on `192.168.5.130:5555` indicated Modern explicit `system` was not
+  effective for multiple apps. The first confirmed Modern defect was an internal
+  installer gate that re-read `XposedService` inside the hooked `system` process
+  and therefore treated system hooks as unavailable even after the system
+  process had already proven scope. The installer now uses the stored user
+  switch in that runtime path and reports real installed/missing counts instead
+  of an outer false-ready message. After reboot, launch-time system mode became
+  effective, but shrinking into a floating window restored the platform
+  configuration. Current evidence shows only `launch-activity-item` installed
+  while maintenance entries such as `config-dispatch` and `display-manager-info`
+  remain missing. The device `services.jar` still contains the configured
+  `ActivityRecord`, `DisplayContent`, `DisplayManagerService`,
+  `WindowManagerService`, and `DisplayPolicy` methods, so the likely Modern
+  delta is classloader reachability: `onSystemServerStarting` exposes the
+  system_server classloader, but the installer previously ignored it and
+  searched only generic/module/boot loaders. The Modern entry now passes
+  `SystemServerStartingParam.getClassLoader()` into the shared installer for
+  method-entry resolution; module-loaded and hot-reload replay still cannot
+  provide that classloader and should be treated as launch-entry-only unless a
+  later complete install observes the real system_server classloader. The
+  installer no longer marks the process-level install gate complete when any
+  requested entry is missing, and `ModuleMain` only closes its local install
+  gate after a complete result. This lets the early module-loaded attempt keep
+  `LaunchActivityItem` coverage without blocking `onSystemServerStarting` from
+  installing resize/rotation maintenance entries such as `config-dispatch` and
+  `display-manager-info`.
+- 2026-06-27: Floating-window resize and repeated orientation changes exposed a
+  separate relative-scale safety issue: app-process read paths could derive a
+  new relative target from a configuration that had already been scaled. That
+  makes repeated resize/rotation compound the scale and can visibly shrink the
+  app each cycle. `ResourcesRead`-scoped relative-scale consumers now require a
+  display/system baseline record before borrowing a target; without that
+  baseline they skip rather than multiplying the current window/configuration
+  again. This is a safety clamp, not proof that Modern system-mode resize
+  maintenance is complete. Stable resize still depends on installing the
+  system_server maintenance entries or importing a trusted display baseline.
+- 2026-06-27: The visible difference from the pre-auto-unification behavior is
+  that `auto` now resolves to `system` whenever the stored system switch is on.
+  That is correct only if the system route produces a fresh runtime marker. On
+  devices where Modern installs only `launch-activity-item` and misses resize
+  maintenance entries, floating-window resize can leave the marker empty. Empty
+  marker is now treated as system-route ineffective for `auto` only, so relative
+  scale may fall back to compat; explicit `system` still requires system-route
+  evidence and does not use this fallback.
+- 2026-06-27: The empty-marker fallback alone did not cover floating-window
+  resize because app-process consumer paths also refuse to derive relative
+  scale without a stable display baseline, to avoid compounding. The existing
+  app-process viewport state seed now publishes a display-scoped baseline for
+  relative-scale targets too. Resize/window paths can borrow that baseline
+  instead of multiplying the current window configuration again.
+- 2026-06-27: Explicit `system` mode must not use app-process configuration
+  fallback. Only `auto` may fall back when system evidence is missing or
+  ineffective. This keeps explicit system honest: launch-time system mutation
+  may still be visible, but resize/rotation maintenance requires real
+  system_server entries instead of repeated app-process rewrites.
+- 2026-06-27: Hook installation is not the same as an effective viewport
+  mutation. Fullscreen rotation and floating-window resize both exposed the
+  same relative-scale system-route bug: maintenance entries may receive a
+  `Configuration` that already contains DPIS' previous target, so deriving a
+  fresh relative target from that configuration compounds the scale every
+  cycle. System-server relative-scale target resolution now mirrors the compat
+  route's baseline discipline: reuse an already-applied marker, reuse a
+  complete marker result, or derive only on the first display-baseline pass
+  when no marker exists. Stale markers are read for result reuse; they are not
+  permission to multiply the current configuration again.
+- 2026-06-27: Follow-up floating-window validation showed safe mode installed
+  `config-dispatch` and `display-manager-info` but not
+  `display-content-config`; Chrome's app-side `ViewRootImpl` still received
+  `smallestScreenWidthDp=360` during Oplus zoom-window relayout. Safe mode now
+  includes `display-content-config` as a configuration maintenance entry while
+  still excluding the hotter `relayout-dispatch` and `display-policy-layout`
+  frame/layout hooks.
+- 2026-06-27: Retest with `display-content-config` installed still left the
+  Oplus floating-window path at `smallestScreenWidthDp=360`. The observed final
+  transition is `WindowManager.relayoutWindow` for
+  `Window{... com.android.chrome/...}`, so safe mode now includes
+  `relayout-dispatch` as the next maintenance entry. `display-policy-layout`
+  remains excluded until relayout evidence proves it is still insufficient.
+- 2026-06-27: Retest with `relayout-dispatch` installed still showed no DPIS
+  `relayout-dispatch` target/apply/probe lines during Oplus zoom-window resize,
+  while `config-dispatch` continued to run. This points at the hot-entry quick
+  gate rather than a missing hook. The relayout gate now scans later arguments
+  for window/package hints so `Window{... com.android.chrome/...}` can pass the
+  filter even when it is not among the first three arguments.
+- 2026-06-27: The later-argument text scan was still too weak for real
+  `WindowManagerService.relayoutWindow` paths. The method signature identifies
+  the app through the `IWindow` client and `WindowManagerService.mWindowMap`,
+  not necessarily through argument `toString()` text. `relayout-dispatch` now
+  resolves the client to its `WindowState` first, then reuses the existing
+  package/config/frame resolver on that concrete window object. Once a
+  `WindowState` is found, the hot-entry quick gate yields to normal
+  package/config resolution instead of requiring another cheap text hit.
+- 2026-06-27: Retest after the `WindowState` resolver proved
+  `relayout-dispatch` reached Chrome and computed the intended
+  `wDp=540,hDp=1188,swDp=540,dpi=320` target, but then skipped mutation with
+  `reason=marker-publish-failed`. The source configuration was window-scoped
+  (`wDp=360,hDp=640,swDp=360,dpi=480`), so the marker publisher correctly
+  refused to create a new baseline from the floating-window config. The gate now
+  allows window-scoped maintenance to apply only when the target environment
+  exactly matches a complete existing display/system marker result. This keeps
+  the anti-compounding rule while letting resize maintenance reuse the proven
+  display baseline.
 - 2026-06-26: A pending-owner property experiment was rejected because
   app-process publication did not reliably persist and the earlier
   system_server publisher would require system-scope effectiveness. Do not

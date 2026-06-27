@@ -1,8 +1,13 @@
 package com.dpis.module;
 
 import android.content.res.Configuration;
+import android.os.Binder;
+import android.os.IBinder;
 
 import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
@@ -164,6 +169,39 @@ public class SystemServerDisplayDiagnosticsTest {
     }
 
     @Test
+    public void resolvesRelayoutPackageThroughWindowManagerWindowMap() {
+        FakeWindowClient client = new FakeWindowClient();
+        FakeWindowState windowState = new FakeWindowState(client, "com.android.chrome");
+        FakeWindowManagerService windowManagerService = new FakeWindowManagerService();
+        windowManagerService.mWindowMap.put(client.asBinder(), windowState);
+
+        String packageName = SystemServerDisplayEnvironmentInstaller
+                .resolveRelayoutWindowPackageForTest(
+                        windowManagerService,
+                        java.util.List.of(client),
+                        "com.android.chrome"::equals);
+
+        assertEquals("com.android.chrome", packageName);
+    }
+
+    @Test
+    public void relayoutPackageResolverPrefersIWindowClientOverSessionBinder() {
+        FakeWindowSession session = new FakeWindowSession();
+        FakeWindowClient client = new FakeWindowClient();
+        FakeWindowState windowState = new FakeWindowState(client, "com.android.chrome");
+        FakeWindowManagerService windowManagerService = new FakeWindowManagerService();
+        windowManagerService.mWindowMap.put(client.asBinder(), windowState);
+
+        String packageName = SystemServerDisplayEnvironmentInstaller
+                .resolveRelayoutWindowPackageForTest(
+                        windowManagerService,
+                        java.util.List.of(session, client),
+                        "com.android.chrome"::equals);
+
+        assertEquals("com.android.chrome", packageName);
+    }
+
+    @Test
     public void resolvesConfiguredWebApkOwnerFromChromeCarrierText() {
         String packageName = SystemServerDisplayEnvironmentInstaller.resolveConfiguredPackageForTest(
                 new PackageCarrier("com.android.chrome"),
@@ -292,6 +330,36 @@ public class SystemServerDisplayDiagnosticsTest {
         @Override
         public String toString() {
             return text;
+        }
+    }
+
+    private static final class FakeWindowManagerService {
+        final Map<Object, Object> mWindowMap = new HashMap<>();
+    }
+
+    private static final class FakeWindowClient {
+        private final IBinder binder = new Binder();
+
+        public IBinder asBinder() {
+            return binder;
+        }
+    }
+
+    private static final class FakeWindowSession {
+        private final IBinder binder = new Binder();
+
+        public IBinder asBinder() {
+            return binder;
+        }
+    }
+
+    private static final class FakeWindowState {
+        final Object mClient;
+        final String packageName;
+
+        private FakeWindowState(Object client, String packageName) {
+            this.mClient = client;
+            this.packageName = packageName;
         }
     }
 }

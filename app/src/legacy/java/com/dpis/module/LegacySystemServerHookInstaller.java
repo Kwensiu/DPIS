@@ -8,7 +8,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Objects;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ConcurrentHashMap;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
@@ -49,6 +51,7 @@ final class LegacySystemServerHookInstaller {
     };
     private static final AtomicBoolean LAUNCH_ACTIVITY_ITEM_INSTALLED = new AtomicBoolean(false);
     private static final AtomicBoolean RUST_PROCESS_INSTALLED = new AtomicBoolean(false);
+    private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
 
     private LegacySystemServerHookInstaller() {
     }
@@ -100,6 +103,11 @@ final class LegacySystemServerHookInstaller {
                     protected void beforeHookedMethod(MethodHookParam param) {
                         applyLaunchActivityItemArgs(source, param.args);
                     }
+
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        applyLaunchActivityItemObject(source, param.thisObject);
+                    }
                 });
                 hookedCount++;
                 constructorHookCount++;
@@ -144,10 +152,10 @@ final class LegacySystemServerHookInstaller {
         boolean changed = false;
         for (Object arg : args) {
             if (arg instanceof Configuration configuration) {
-                // Keep launch-time ActivityRecord configuration stable. The
-                // published marker lets app-process hooks apply viewport state
-                // without forcing ActivityTaskManager to relaunch the activity
-                // for screen size / density drift during navigation.
+                // Legacy has only the launch-time system route. When the
+                // package resolves to system mode, commit the launch viewport
+                // Configuration here so launch-time UI can follow the target.
+                changed |= applyConfiguration(configuration, environment);
                 changed |= applyFontScale(configuration, config);
             }
         }
@@ -156,6 +164,45 @@ final class LegacySystemServerHookInstaller {
                     + ", widthDp=" + baseConfiguration.screenWidthDp
                     + ", densityDpi=" + baseConfiguration.densityDpi
                     + ", fontScale=" + baseConfiguration.fontScale);
+        }
+    }
+
+    static void applyLaunchActivityItemObject(PerAppDisplayConfigSource source, Object launchActivityItem) {
+        if (source == null || launchActivityItem == null) {
+            return;
+        }
+        ActivityInfo activityInfo = readLaunchActivityInfo(launchActivityItem);
+        String packageName = activityInfo != null ? activityInfo.packageName : null;
+        if (!isLikelyPackageName(packageName)) {
+            return;
+        }
+        PerAppDisplayConfig config = source.get(packageName);
+        if (config == null) {
+            return;
+        }
+        Configuration baseConfiguration = readLaunchActivityConfiguration(launchActivityItem);
+        if (baseConfiguration == null) {
+            return;
+        }
+        PerAppDisplayEnvironment environment = null;
+        if (config.hasViewportOverride()) {
+            environment = resolveTargetEnvironment(packageName, baseConfiguration, config);
+        }
+        boolean changed = false;
+        // Some platform builds keep the effective launch values only on the
+        // constructed LaunchActivityItem object, so commit both known fields.
+        changed |= applyConfigurationField(launchActivityItem, "mCurConfig", environment);
+        changed |= applyConfigurationField(launchActivityItem, "mOverrideConfig", environment);
+        changed |= applyFontScaleField(launchActivityItem, "mCurConfig", config);
+        changed |= applyFontScaleField(launchActivityItem, "mOverrideConfig", config);
+        if (changed) {
+            logIfChanged(
+                    packageName + ":legacy-system-launch-object-apply",
+                    "legacy system_server launch-activity-item object apply: package="
+                            + packageName
+                            + ", widthDp=" + baseConfiguration.screenWidthDp
+                            + ", densityDpi=" + baseConfiguration.densityDpi
+                            + ", fontScale=" + baseConfiguration.fontScale);
         }
     }
 
@@ -306,6 +353,20 @@ final class LegacySystemServerHookInstaller {
         return null;
     }
 
+    private static ActivityInfo readLaunchActivityInfo(Object launchActivityItem) {
+        Object value = readField(launchActivityItem, "mInfo");
+        return value instanceof ActivityInfo info ? info : null;
+    }
+
+    private static Configuration readLaunchActivityConfiguration(Object launchActivityItem) {
+        Object override = readField(launchActivityItem, "mOverrideConfig");
+        if (override instanceof Configuration configuration) {
+            return configuration;
+        }
+        Object current = readField(launchActivityItem, "mCurConfig");
+        return current instanceof Configuration configuration ? configuration : null;
+    }
+
     private static boolean applyConfiguration(Configuration configuration,
                                               PerAppDisplayEnvironment environment) {
         if (configuration == null || environment == null) {
@@ -323,6 +384,16 @@ final class LegacySystemServerHookInstaller {
                     environment.densityDpi));
         }
         return changed;
+    }
+
+    private static boolean applyConfigurationField(Object target,
+                                                   String fieldName,
+                                                   PerAppDisplayEnvironment environment) {
+        Object value = readField(target, fieldName);
+        if (!(value instanceof Configuration configuration)) {
+            return false;
+        }
+        return applyConfiguration(configuration, environment);
     }
 
     private static PerAppDisplayEnvironment resolveTargetEnvironment(String packageName,
@@ -362,8 +433,18 @@ final class LegacySystemServerHookInstaller {
                 config.targetViewportSpec.fingerprint(),
                 RuntimeClock.crossProcessMarkerMillis());
         if (!matchesCurrentConfiguration(configuration, marker)) {
+            maybeLogMarkerState(packageName, configuration, config, marker);
             return null;
         }
+        logIfChanged(
+                packageName + ":legacy-system-marker-reuse",
+                "legacy system_server launch-activity-item marker reuse: package="
+                        + packageName
+                        + ", widthDp=" + configuration.screenWidthDp
+                        + ", heightDp=" + configuration.screenHeightDp
+                        + ", smallestWidthDp=" + configuration.smallestScreenWidthDp
+                        + ", densityDpi=" + configuration.densityDpi
+                        + ", markerAgeMs=" + marker.ageMillis);
         return new PerAppDisplayEnvironment(
                 configuration.screenWidthDp,
                 configuration.screenHeightDp,
@@ -382,13 +463,28 @@ final class LegacySystemServerHookInstaller {
                 || !config.targetViewportSpec.isEnabled()) {
             return false;
         }
-        return ViewportRuntimeMarkerBridge.publishSystemServerRecord(
+        boolean published = ViewportRuntimeMarkerBridge.publishSystemServerRecord(
                 packageName,
                 config.targetViewportSpec,
                 new ConfigurationMarker(source),
                 new EnvironmentMarker(environment),
                 ViewportSourceSnapshot.SCOPE_DISPLAY,
                 RuntimeClock.crossProcessMarkerMillis());
+        logIfChanged(
+                packageName + ":legacy-system-marker-publish",
+                "legacy system_server launch-activity-item marker publish: package="
+                        + packageName
+                        + ", published=" + published
+                        + ", targetFp=" + config.targetViewportSpec.fingerprint()
+                        + ", sourceWidthDp=" + source.screenWidthDp
+                        + ", sourceHeightDp=" + source.screenHeightDp
+                        + ", sourceSmallestWidthDp=" + source.smallestScreenWidthDp
+                        + ", sourceDensityDpi=" + source.densityDpi
+                        + ", targetWidthDp=" + environment.widthDp
+                        + ", targetHeightDp=" + environment.heightDp
+                        + ", targetSmallestWidthDp=" + environment.smallestWidthDp
+                        + ", targetDensityDpi=" + environment.densityDpi);
+        return published;
     }
 
     private static boolean matchesCurrentConfiguration(
@@ -422,6 +518,16 @@ final class LegacySystemServerHookInstaller {
         return true;
     }
 
+    private static boolean applyFontScaleField(Object target,
+                                               String fieldName,
+                                               PerAppDisplayConfig config) {
+        Object value = readField(target, fieldName);
+        if (!(value instanceof Configuration configuration)) {
+            return false;
+        }
+        return applyFontScale(configuration, config);
+    }
+
     private static int resolveWidthPx(Configuration configuration) {
         if (configuration == null || configuration.screenWidthDp <= 0 || configuration.densityDpi <= 0) {
             return 0;
@@ -441,6 +547,39 @@ final class LegacySystemServerHookInstaller {
             return;
         }
         DpisLog.i(message);
+    }
+
+    private static boolean logIfChanged(String key, String message) {
+        String previous = LAST_MESSAGES.put(key, message);
+        if (message.equals(previous)) {
+            return false;
+        }
+        logDebug(message);
+        return true;
+    }
+
+    private static void maybeLogMarkerState(String packageName,
+                                            Configuration configuration,
+                                            PerAppDisplayConfig config,
+                                            ViewportRuntimeMarkerBridge.ParseResult marker) {
+        if (packageName == null || packageName.isBlank()
+                || configuration == null
+                || config == null
+                || !config.targetViewportSpec.isEnabled()
+                || marker == null) {
+            return;
+        }
+        logIfChanged(
+                packageName + ":legacy-system-marker-state",
+                "legacy system_server launch-activity-item marker state: package="
+                        + packageName
+                        + ", hit=" + marker.hit
+                        + ", reason=" + marker.reason
+                        + ", targetFp=" + config.targetViewportSpec.fingerprint()
+                        + ", widthDp=" + configuration.screenWidthDp
+                        + ", heightDp=" + configuration.screenHeightDp
+                        + ", smallestWidthDp=" + configuration.smallestScreenWidthDp
+                        + ", densityDpi=" + configuration.densityDpi);
     }
 
     private static void logInstallSummaryIfAttempted(boolean attempted,

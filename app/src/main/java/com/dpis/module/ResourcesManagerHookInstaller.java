@@ -443,7 +443,7 @@ final class ResourcesManagerHookInstaller {
         VirtualDisplayOverride.Result stableTarget =
                 ViewportResolvedTarget.virtualDisplayResult(resolution, targetViewportWidth);
         ViewportOverride.Result resolvedRecordResult =
-                ViewportResolvedTarget.viewportResult(resolution, windowScoped);
+                ViewportResolvedTarget.viewportResult(resolution, windowScoped, config);
         ViewportOverride.Result result = resolvedRecordResult != null
                 ? resolvedRecordResult
                 : ViewportOverride.derive(

@@ -56,8 +56,7 @@ final class ViewportModePolicy {
         }
         String requestedMode = ViewportApplyMode.normalize(
                 store.getTargetViewportApplyMode(packageName));
-        if ((!ViewportApplyMode.AUTO.equals(requestedMode)
-                && !ViewportApplyMode.SYSTEM.equals(requestedMode))
+        if (!ViewportApplyMode.AUTO.equals(requestedMode)
                 || !store.isSystemServerHooksEnabled()) {
             return false;
         }
@@ -79,9 +78,7 @@ final class ViewportModePolicy {
         String requestedMode = ViewportApplyMode.normalize(
                 store.getTargetViewportApplyMode(packageName));
         boolean systemHooksEnabled = policy == null || policy.systemServerHooksEnabled;
-        if ((!ViewportApplyMode.AUTO.equals(requestedMode)
-                && !ViewportApplyMode.SYSTEM.equals(requestedMode))
-                || !systemHooksEnabled) {
+        if (!ViewportApplyMode.AUTO.equals(requestedMode) || !systemHooksEnabled) {
             return false;
         }
         return true;
