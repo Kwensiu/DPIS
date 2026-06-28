@@ -14,13 +14,29 @@ public class ModuleMainHookInstallerTest {
 
         assertTrue(source.contains("SystemServerMutationPolicy.shouldInstallSystemServerHooks("));
         assertTrue(source.contains("public void onSystemServerStarting(SystemServerStartingParam param)"));
+        assertTrue(source.contains("public void onPackageLoaded(PackageLoadedParam param)"));
+        assertTrue(source.contains("onPackageLoaded enter: process="));
         assertTrue(source.contains("system_server starting hook install enter"));
         assertTrue(source.contains("bridgeRuntimeLog(\"system_server starting hook install enter"));
         assertTrue(source.contains("\"system-server-starting\""));
         assertTrue(source.contains("\"module-loaded\""));
+        assertTrue(source.contains("\"package-loaded\""));
         assertTrue(source.contains("resolveSystemServerRuntimePolicy("));
+        assertTrue(source.contains("resolveHookedRuntimePolicy("));
         assertTrue(source.contains("HookRuntimePolicy.fromStore(store)"));
-        assertTrue(source.contains("maybeInstallSystemServerHooks(store, policy, currentProcessName"));
+        assertTrue(source.contains("HookRuntimePolicy appProcessPolicy = resolveHookedRuntimePolicy(store);"));
+        assertTrue(source.contains("installAppProcessHooksIfConfigured(store, appProcessPolicy, snapshot"));
+        assertTrue(source.contains("HookRuntimePolicy policy = resolveHookedRuntimePolicy(store);"));
+        assertTrue(source.contains("installAppProcessHooksIfConfigured(runtimeStore, policy, snapshot"));
+        assertTrue(source.contains("String processName = resolveCurrentProcessName();"));
+        assertTrue(source.contains("maybeInstallAppProcessFromPackageLoaded(store, processName, param.getPackageName())"));
+        assertTrue(source.contains("Application.getProcessName()"));
+        assertTrue(source.contains("Path.of(\"/proc/self/cmdline\")"));
+        assertTrue(source.contains("package-loaded app hook install enter"));
+        assertTrue(source.contains("package-loaded app hook install skipped system process"));
+        assertTrue(source.contains("package-loaded app hook install failed"));
+        assertTrue(source.contains("Do not downgrade route planning just because"));
+        assertTrue(source.contains("maybeInstallSystemServerHooks(store, systemPolicy, currentProcessName"));
         assertTrue(source.contains("param != null ? param.getClassLoader() : null"));
         assertTrue(source.contains("getModernApiCapabilities(), systemServerClassLoader"));
         assertTrue(source.contains("maybeInstallSystemServerHooks(configStore, policy, param.getProcessName()"));
@@ -159,6 +175,7 @@ public class ModuleMainHookInstallerTest {
         assertTrue(moduleMain.contains("module-loaded app config unavailable"));
         assertTrue(moduleMain.contains("appProcessInstallAttempted"));
         assertTrue(moduleMain.contains("\"module-loaded\""));
+        assertTrue(moduleMain.contains("\"package-loaded\""));
         assertTrue(moduleMain.contains("\"module-loaded-fallback\""));
         assertTrue(moduleMain.contains("\"package-ready\""));
         assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")

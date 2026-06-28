@@ -1,6 +1,13 @@
 package com.dpis.module;
 
+import android.app.Application;
 import android.content.pm.ApplicationInfo;
+import android.os.Build;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import io.github.libxposed.api.XposedModule;
 import io.github.libxposed.api.XposedModuleInterface;
@@ -71,6 +78,24 @@ public final class ModuleMain extends XposedModule {
     }
 
     @Override
+    public void onPackageLoaded(PackageLoadedParam param) {
+        String processName = resolveCurrentProcessName();
+        log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX + "onPackageLoaded enter: process="
+                + processName + ", package=" + param.getPackageName());
+        DpiConfigStore store = getOrCreateConfigStore();
+        try {
+            maybeInstallAppProcessFromPackageLoaded(store, processName, param.getPackageName());
+        } catch (Throwable throwable) {
+            rawBridgeLog("package-loaded app hook install failed: process=" + processName
+                    + ", package=" + param.getPackageName()
+                    + ", error=" + throwable.getClass().getName()
+                    + ": " + throwable.getMessage());
+            DpisLog.e("package-loaded app hook install failed: process=" + processName
+                    + ", package=" + param.getPackageName(), throwable);
+        }
+    }
+
+    @Override
     public void onPackageReady(PackageReadyParam param) {
         log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX + "onPackageReady enter: process=" + currentProcessName
                 + ", package=" + param.getPackageName());
@@ -82,21 +107,20 @@ public final class ModuleMain extends XposedModule {
                 param.getApplicationInfo());
         DpiConfigStore store = getOrCreateConfigStore();
         ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(store);
-        HookRuntimePolicy policy = HookRuntimePolicy.fromEffectiveSystemHookState(
-                store,
-                SystemScopeCoordinator.resolveSystemHookEffectiveEnabled(store));
-        DpisLog.setLoggingEnabled(policy.globalLogEnabled);
+        HookRuntimePolicy systemPolicy = resolveSystemServerRuntimePolicy(store, currentProcessName);
+        HookRuntimePolicy appProcessPolicy = resolveHookedRuntimePolicy(store);
+        DpisLog.setLoggingEnabled(appProcessPolicy.globalLogEnabled);
         log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX + "package ready: process=" + currentProcessName
                 + ", package=" + param.getPackageName());
         SystemServerDisplayDiagnostics.flushPending();
-        maybeInstallSystemServerHooks(store, policy, currentProcessName, param.getPackageName(),
+        maybeInstallSystemServerHooks(store, systemPolicy, currentProcessName, param.getPackageName(),
                 null,
                 "package-ready");
         maybeLogFirstPackageReady(param.getPackageName());
         if (ModernAppSpecificRouteInstaller.handlePackageReady(this, param, currentProcessName)) {
             return;
         }
-        installAppProcessHooksIfConfigured(store, policy, snapshot, param.getPackageName(),
+        installAppProcessHooksIfConfigured(store, appProcessPolicy, snapshot, param.getPackageName(),
                 "package-ready");
         installChromiumViewportProbe(param.getPackageName(), param.getClassLoader());
         retryTypefaceHooksWithPackageReady(store, snapshot, param.getPackageName());
@@ -288,9 +312,7 @@ public final class ModuleMain extends XposedModule {
                     + ", package=" + packageName
                     + ", packages=" + snapshot.getConfiguredPackages());
         }
-        HookRuntimePolicy policy = HookRuntimePolicy.fromEffectiveSystemHookState(
-                store,
-                SystemScopeCoordinator.resolveSystemHookEffectiveEnabled(store));
+        HookRuntimePolicy policy = resolveHookedRuntimePolicy(store);
         DpisLog.setLoggingEnabled(policy.globalLogEnabled);
         if (ModernAppSpecificRouteInstaller.shouldSuppressModuleLoadedGenericHooks(
                 packageName, processName)) {
@@ -298,6 +320,69 @@ public final class ModuleMain extends XposedModule {
         }
         installAppProcessHooksIfConfigured(runtimeStore, policy, snapshot, packageName,
                 source);
+    }
+
+    private void maybeInstallAppProcessFromPackageLoaded(DpiConfigStore store,
+            String processName,
+            String packageName) {
+        rawBridgeLog("package-loaded app hook install enter: process=" + processName
+                + ", package=" + packageName);
+        if (SystemServerProcess.isSystemServer(processName, packageName)) {
+            rawBridgeLog("package-loaded app hook install skipped system process: process="
+                    + processName + ", package=" + packageName);
+            return;
+        }
+        ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(store);
+        HookRuntimePolicy policy = resolveHookedRuntimePolicy(store);
+        DpisLog.setLoggingEnabled(policy.globalLogEnabled);
+        if (ModernAppSpecificRouteInstaller.shouldSuppressModuleLoadedGenericHooks(
+                packageName, processName)) {
+            return;
+        }
+        installAppProcessHooksIfConfigured(store, policy, snapshot, packageName,
+                "package-loaded");
+    }
+
+    private String resolveCurrentProcessName() {
+        String processName = currentProcessName;
+        if (isKnownProcessName(processName)) {
+            return processName;
+        }
+        String runtimeProcessName = runtimeProcessName();
+        if (isKnownProcessName(runtimeProcessName)) {
+            currentProcessName = runtimeProcessName;
+            return runtimeProcessName;
+        }
+        return processName;
+    }
+
+    private static boolean isKnownProcessName(String processName) {
+        return processName != null && !processName.isBlank() && !"unknown".equals(processName);
+    }
+
+    private static String runtimeProcessName() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            String processName = Application.getProcessName();
+            if (isKnownProcessName(processName)) {
+                return processName;
+            }
+        }
+        // onPackageLoaded has no process-name accessor in libxposed API 101.
+        // Keep Android 8.x supported by reading the kernel-provided cmdline.
+        return readProcSelfCmdline();
+    }
+
+    private static String readProcSelfCmdline() {
+        try {
+            byte[] bytes = Files.readAllBytes(Path.of("/proc/self/cmdline"));
+            int length = 0;
+            while (length < bytes.length && bytes[length] != 0) {
+                length++;
+            }
+            return new String(bytes, 0, length, StandardCharsets.UTF_8).trim();
+        } catch (IOException | RuntimeException ignored) {
+            return null;
+        }
     }
 
     private static DpiConfigStore createModuleLoadedAppProcessStore(DpiConfigStore fallbackStore,
@@ -470,6 +555,13 @@ public final class ModuleMain extends XposedModule {
         return HookRuntimePolicy.fromEffectiveSystemHookState(
                 store,
                 SystemScopeCoordinator.resolveSystemHookEffectiveEnabled(store));
+    }
+
+    private HookRuntimePolicy resolveHookedRuntimePolicy(DpiConfigStore store) {
+        // If this code is running inside a hooked process, that process already
+        // proves the module scope. Do not downgrade route planning just because
+        // XposedService is unavailable inside the runtime process.
+        return HookRuntimePolicy.fromStore(store);
     }
 
     private static String describeClassLoader(SystemServerStartingParam param) {

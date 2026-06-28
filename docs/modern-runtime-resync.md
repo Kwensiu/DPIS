@@ -206,6 +206,11 @@ DPIS modern target package
   |           |     +-- initialize host config store
   |           |     +-- maybeInstallAppProcessFromModuleLoaded
   |           |
+  |           +-- onPackageLoaded
+  |           |     |
+  |           |     +-- maybeInstallAppProcessFromPackageLoaded
+  |           |           generic app-process early install only
+  |           |
   |           +-- onSystemServerStarting
   |           |     |
   |           |     +-- maybeInstallSystemServerHooks (official system_server entry)
@@ -469,6 +474,8 @@ superseded.
 | 2026-06-17 | WeChat DPI | Move the independent route's first install attempt to package-loaded | superseded | Runtime validation showed package-loaded is useful for timing but not sufficient by itself | Package-loaded and module-loaded class probes remain removed; package-ready is the main app-specific entry, with only a narrow `Application.attach(Context)` retry for WeChat runtime classloader recovery |
 | 2026-06-22 | WeChat DPI | Remove high-risk new route expansion, then reintroduce only the runtime pieces proven necessary on 8.0.74 | active / adjusted | User reports indicated newer builds could crash/jank while v1.12.3 behavior was best; later device validation showed 8.0.74 needs `package-ready` plus `Application.attach` retry to reach Tinker `DelegateLastClassLoader`, and versionCode 3120 uses static method roles `d/e/g/k/l` with bottom-tab enabled | Keep static route preferred for known versions, DexKit as fallback for unknown versions, and express version-specific extras through the static table instead of broad route expansion |
 | 2026-06-18 | modern system_server | Move the first system_server installer attempt to libxposed's `onSystemServerStarting` callback | active | LSPosed_20260617_235835 showed preconfigured unrestricted apps launching at boot before DPIS UI, while the system process had only `module-loaded app hook install skipped system process` and no system_server hook/callback evidence | `onPackageReady` remains a de-duplicated fallback; this is a lifecycle timing fix, not an app-specific package recommendation |
+| 2026-06-28 | modern generic app-process | Reintroduce `onPackageLoaded` only for generic app-process early install | active | User follow-up isolated the remaining concern to apps that may read runtime state before `package-ready`, while prior WeChat investigation had already shown package-loaded is not sufficient as an app-specific classloader route | This does not restore the removed WeChat package-loaded route. It is a generic early-install supplement before `package-ready`, with system_server and app-specific routes still owned by their later/narrower entries. libxposed API 101 `PackageLoadedParam` has no process-name accessor, so the entry uses the already-recorded module-loaded process name and falls back to runtime process-name resolution when needed |
+| 2026-06-28 | modern app-process policy | Treat hooked modern app processes as scope-proven runtime and stop downgrading route planning on missing `XposedService` | active | LSPosed_20260627_152714 `full.log` showed target app processes logging `system hook resolve: desired=true, serviceAvailable=false, scopeSelected=false, effective=false` immediately before `package ready`, while the user reported WeChat, Google, and Telegram all failing after boot | Keep `SystemScopeCoordinator.resolveSystemHookEffectiveEnabled(...)` for UI/effective-state observation and non-hooked contexts. Inside already-hooked runtime processes, use stored policy directly because `XposedService` availability is not a reliable capability signal there |
 | 2026-06-26 | Chrome WebAPK owner routing | Let Chrome app-process hot paths resolve configured `org.chromium.webapk.*` owners from WebAPK carrier evidence | active / Chromium Java boundary proven | Unit tests cover owner extraction from `org.chromium.chrome.browser.webapk_package_name`, `webapp://webapk-...`, config fallback from `com.android.chrome` to the configured WebAPK owner, hot-entry gating, ordinary Chrome activity rejection, debug-gated Chrome package-ready Chromium probe installation, and low-frequency owner handoff logging. Device validation with Chrome 80% and GitHub WebAPK 150% showed early Chrome Resources writes at 80%, then WebAPK owner handoff to 150%; `WindowAndroid.<init>` sees `widthDp=540,densityDpi=320` after owner sync when `debug.dpis.webapk.chromium_probe_package=com.android.chrome` enables the temporary probe | This is not a Chrome global alias. Default logs keep owner handoff and resource-sync state changes only; detailed Chromium Java viewport probe logs are explicit debug evidence, not normal Xposed log output. Android Resources and Chromium Java `WindowAndroid` now prove owner scaling, but DPIS still should not claim final web-content scale until Chromium native/renderer device-scale behavior is proven |
 | 2026-06-15 | shared app-process font | Add an event-gated `resources_font` scheduler for Resources read-path font conflicts | active / shared | Bilibili `resources_font`-only repro showed `Configuration.fontScale` alternating between base and target while `getDisplayMetrics` recomputed `scaledDensity`; after the event gate, `scaledDensity=3.0` and `1.4 -> 1.0` disappeared, and read metrics logging dropped sharply after idempotent writes. TapTap system-font repro later showed no config churn after disabling read-side configuration writes, but `getDisplayMetrics` could still downgrade target metrics from `4.2` to `3.9` when the system config stayed at `1.3` | Read-conflict target suppression outranks Compose base suppression; non-Compose observations must not clear an established read-conflict target state. Compat `resources_font` uses `ResourcesImpl` as a low-frequency metrics seed plus `ResourcesRead` fallback; when `ResourcesRead` is installed only for font it skips viewport target resolution and `VirtualDisplayState` reuse while keeping metrics density synchronized with configuration; system font emulation does not let `ResourcesRead(getConfiguration)` force target `fontScale` on every read, but `ResourcesRead(getDisplayMetrics)` may fill `scaledDensity` from the target factor so read-side metrics do not downgrade an already-targeted font scale; Compose diagnostics can detach after the read-conflict target event is established; `ResourcesManager` write-side hooks remain for viewport and system font emulation |
 
@@ -781,6 +788,18 @@ superseded.
   exactly matches a complete existing display/system marker result. This keeps
   the anti-compounding rule while letting resize maintenance reuse the proven
   display baseline.
+- 2026-06-28: A modern runtime-policy regression showed that app-process route
+  planning was still calling
+  `SystemScopeCoordinator.resolveSystemHookEffectiveEnabled(store)` inside
+  already-hooked target processes. In LSPosed export
+  `LSPosed_20260627_152714`, `full.log` captured
+  `system hook resolve: desired=true, serviceAvailable=false, scopeSelected=false, effective=false`
+  from hooked WeChat sub-processes even though DPIS had already been injected.
+  This caused route planning to treat system hooks as ineffective simply
+  because `XposedService` was unavailable in the runtime process. Modern hooked
+  app processes now resolve runtime policy directly from stored config; the
+  UI/effective-state resolver remains for non-hooked/UI contexts and for
+  explicit scope observation.
 - 2026-06-26: A pending-owner property experiment was rejected because
   app-process publication did not reliably persist and the earlier
   system_server publisher would require system-scope effectiveness. Do not
