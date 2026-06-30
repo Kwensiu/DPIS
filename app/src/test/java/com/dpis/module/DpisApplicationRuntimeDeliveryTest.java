@@ -157,7 +157,6 @@ public class DpisApplicationRuntimeDeliveryTest {
         DpiConfigStore local = new DpiConfigStore(localPrefs);
         assertTrue(local.setStartupDisclaimerAccepted(true));
         assertTrue(local.setInterfaceScalePercent(73));
-        assertTrue(local.setLauncherIconHidden(true));
         assertTrue(local.setTargetFontScalePercent("com.miui.weather2", 200));
 
         FakePrefs deliveryPrefs = new FakePrefs();
@@ -167,10 +166,8 @@ public class DpisApplicationRuntimeDeliveryTest {
 
         assertTrue(local.isStartupDisclaimerAccepted());
         assertEquals(73, local.getInterfaceScalePercent());
-        assertTrue(local.isLauncherIconHidden());
         assertFalse(runtimeDelivery.isStartupDisclaimerAccepted());
         assertEquals(AppUiScaleManager.DEFAULT_SCALE_PERCENT, runtimeDelivery.getInterfaceScalePercent());
-        assertFalse(runtimeDelivery.isLauncherIconHidden());
         assertEquals(Integer.valueOf(200), runtimeDelivery.getTargetFontScalePercent("com.miui.weather2"));
     }
 
@@ -183,7 +180,6 @@ public class DpisApplicationRuntimeDeliveryTest {
         deliveryPrefs.edit()
                 .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
                 .putInt(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT, 73)
-                .putBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, true)
                 .commit();
         DpiConfigStore runtimeDelivery = new DpiConfigStore(deliveryPrefs);
 
@@ -191,10 +187,8 @@ public class DpisApplicationRuntimeDeliveryTest {
 
         assertFalse(local.isStartupDisclaimerAccepted());
         assertEquals(AppUiScaleManager.DEFAULT_SCALE_PERCENT, local.getInterfaceScalePercent());
-        assertFalse(local.isLauncherIconHidden());
         assertFalse(runtimeDelivery.isStartupDisclaimerAccepted());
         assertEquals(AppUiScaleManager.DEFAULT_SCALE_PERCENT, runtimeDelivery.getInterfaceScalePercent());
-        assertFalse(runtimeDelivery.isLauncherIconHidden());
     }
 
     private static void invokePublish(DpiConfigStore from, DpiConfigStore to) throws Exception {

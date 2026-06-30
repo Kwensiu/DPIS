@@ -53,7 +53,6 @@ final class DpiConfigStore {
     private static final String LEGACY_WECHAT_DPI_KEY = "wechat."
             + WechatDpiConfig.PACKAGE_NAME + ".wekit_dpi";
     private static final String[] LOCAL_ONLY_RUNTIME_DELIVERY_KEYS = {
-            KEY_HIDE_LAUNCHER_ICON,
             KEY_INTERFACE_SCALE_PERCENT,
             KEY_STARTUP_DISCLAIMER_ACCEPTED
     };
@@ -435,18 +434,6 @@ final class DpiConfigStore {
 
     boolean setGlobalLogEnabled(boolean enabled) {
         return commitBoth(editor -> editor.putBoolean(KEY_GLOBAL_LOG_ENABLED, enabled));
-    }
-
-    boolean isLauncherIconHidden() {
-        return getLocalOnlyBoolean(KEY_HIDE_LAUNCHER_ICON, false);
-    }
-
-    boolean hasLauncherIconHidden() {
-        return containsLocalOnly(KEY_HIDE_LAUNCHER_ICON);
-    }
-
-    boolean setLauncherIconHidden(boolean hidden) {
-        return commitLocalOnly(editor -> editor.putBoolean(KEY_HIDE_LAUNCHER_ICON, hidden));
     }
 
     int getInterfaceScalePercent() {

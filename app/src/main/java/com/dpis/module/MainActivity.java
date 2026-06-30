@@ -2133,9 +2133,7 @@ public final class MainActivity
 
     private boolean maybeShowStartupDisclaimerDialog() {
         return updatePromptDialogCoordinator().maybeShowStartupDisclaimerDialog(
-                new DpiConfigStore(
-                        getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE)
-                ),
+                new StartupDisclaimerStore(this),
                 this::maybeCheckForUpdatesOnStartup
         );
     }

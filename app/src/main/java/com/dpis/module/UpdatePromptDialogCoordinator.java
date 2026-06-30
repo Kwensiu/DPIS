@@ -54,8 +54,8 @@ final class UpdatePromptDialogCoordinator {
         this.releaseNotesController = releaseNotesController;
     }
 
-    boolean maybeShowStartupDisclaimerDialog(DpiConfigStore store, Runnable onAccepted) {
-        if (store == null || store.isStartupDisclaimerAccepted() || activity.isFinishing() || activity.isDestroyed()) {
+    boolean maybeShowStartupDisclaimerDialog(StartupDisclaimerStore store, Runnable onAccepted) {
+        if (store == null || store.isAccepted() || activity.isFinishing() || activity.isDestroyed()) {
             return false;
         }
         showStartupDisclaimerDialog(store, onAccepted);
@@ -184,7 +184,7 @@ final class UpdatePromptDialogCoordinator {
                 });
     }
 
-    private void showStartupDisclaimerDialog(DpiConfigStore store, Runnable onAccepted) {
+    private void showStartupDisclaimerDialog(StartupDisclaimerStore store, Runnable onAccepted) {
         View dialogView = LayoutInflater.from(activity)
                 .inflate(R.layout.dialog_startup_disclaimer, null, false);
         MaterialCheckBox agreementCheckBox = dialogView.findViewById(R.id.startup_disclaimer_checkbox);
@@ -210,7 +210,7 @@ final class UpdatePromptDialogCoordinator {
             if (!agreementCheckBox.isChecked()) {
                 return;
             }
-            if (!store.setStartupDisclaimerAccepted(true)) {
+            if (!store.setAccepted(true)) {
                 host.showToast(R.string.startup_disclaimer_save_failed);
                 return;
             }

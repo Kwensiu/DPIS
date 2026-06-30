@@ -245,6 +245,8 @@ public class SystemServerSettingsLayoutSmokeTest {
 
         assertTrue(source.contains("private void applyLauncherIconVisibilityFromStore()"));
         assertTrue(source.contains("boolean actualHidden = resolveLauncherIconHiddenState("));
+        assertTrue(source.contains("new LauncherIconVisibilityStore(activity)"));
+        assertTrue(source.contains("launcherIconVisibilityStore.setHidden("));
         assertTrue(!source.contains("if (!setLauncherAliasHidden(requestedHidden))"));
         assertTrue(source.contains("new ComponentName("));
         assertTrue(source.contains("MainActivity.class.getName() + \"Launcher\""));

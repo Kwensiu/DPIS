@@ -987,25 +987,6 @@ public class DpiConfigStoreTest {
     }
 
     @Test
-    public void launcherIconIsVisibleByDefault() {
-        FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
-
-        assertFalse(store.isLauncherIconHidden());
-    }
-
-    @Test
-    public void updatesLauncherIconVisibilityToggle() {
-        FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
-
-        assertTrue(store.setLauncherIconHidden(true));
-        assertTrue(store.isLauncherIconHidden());
-        assertTrue(store.setLauncherIconHidden(false));
-        assertFalse(store.isLauncherIconHidden());
-    }
-
-    @Test
     public void startupDisclaimerRequiresExplicitAcceptance() {
         FakePrefs prefs = new FakePrefs();
         DpiConfigStore store = new DpiConfigStore(prefs);
@@ -1042,7 +1023,6 @@ public class DpiConfigStoreTest {
         assertTrue(store.setTargetViewportWidthDp("com.max.xiaoheihe", 360));
         assertTrue(store.setStartupDisclaimerAccepted(true));
         assertTrue(store.setInterfaceScalePercent(73));
-        assertTrue(store.setLauncherIconHidden(true));
 
         assertEquals(Integer.valueOf(150),
                 store.getTargetFontScalePercent("com.max.xiaoheihe"));
@@ -1050,7 +1030,6 @@ public class DpiConfigStoreTest {
                 store.getTargetViewportWidthDp("com.max.xiaoheihe"));
         assertTrue(store.isStartupDisclaimerAccepted());
         assertEquals(73, store.getInterfaceScalePercent());
-        assertTrue(store.isLauncherIconHidden());
         assertTrue(remotePrefs.getAll().isEmpty());
     }
 
@@ -1095,7 +1074,6 @@ public class DpiConfigStoreTest {
         remotePrefs.edit()
                 .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
                 .putInt(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT, 73)
-                .putBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, true)
                 .putString("default_config.font.typeface_id", "remote_default_font")
                 .putStringSet(QuickTemplateStore.KEY_TEMPLATE_IDS,
                         new LinkedHashSet<>(Set.of("template_a")))
@@ -1108,7 +1086,6 @@ public class DpiConfigStoreTest {
 
         assertFalse(snapshot.containsKey(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED));
         assertFalse(snapshot.containsKey(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT));
-        assertFalse(snapshot.containsKey(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON));
         assertFalse(snapshot.containsKey("default_config.font.typeface_id"));
         assertFalse(snapshot.containsKey(QuickTemplateStore.KEY_TEMPLATE_IDS));
         assertFalse(snapshot.containsKey("template.template_a.name"));

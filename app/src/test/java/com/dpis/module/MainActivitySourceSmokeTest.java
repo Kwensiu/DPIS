@@ -478,12 +478,12 @@ public class MainActivitySourceSmokeTest {
                 "updatePromptDialogCoordinator().maybeShowStartupDisclaimerDialog("
             )
         );
-        assertTrue(
-            source.contains(
-                "new DpiConfigStore("
-            )
+        assertTrue(source.contains("new StartupDisclaimerStore(this)"));
+        String disclaimerBlock = source.substring(
+            source.indexOf("private boolean maybeShowStartupDisclaimerDialog()"),
+            source.indexOf("private boolean maybeShowModuleRuntimeReloadAdvice()")
         );
-        assertTrue(source.contains("getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE)"));
+        assertTrue(!disclaimerBlock.contains("DpiConfigStore"));
     }
 
     @Test

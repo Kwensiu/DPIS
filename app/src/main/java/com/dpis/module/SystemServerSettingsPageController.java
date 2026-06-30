@@ -63,6 +63,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
 
     private final LocalizedActivity activity;
     private final View root;
+    private final LauncherIconVisibilityStore launcherIconVisibilityStore;
     private DpiConfigStore store;
     private MaterialSwitch hooksEnabledSwitch;
     private MaterialSwitch safeModeSwitch;
@@ -105,6 +106,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     SystemServerSettingsPageController(LocalizedActivity activity, View root) {
         this.activity = activity;
         this.root = root;
+        this.launcherIconVisibilityStore = new LauncherIconVisibilityStore(activity);
     }
 
     void bind() {
@@ -926,12 +928,13 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void applyLauncherIconVisibilityFromStore() {
-        if (store == null || hideLauncherIconSwitch == null) {
+        if (hideLauncherIconSwitch == null) {
             return;
         }
-        boolean actualHidden = resolveLauncherIconHiddenState(store.isLauncherIconHidden());
-        if (actualHidden != store.isLauncherIconHidden()) {
-            store.setLauncherIconHidden(actualHidden);
+        boolean storedHidden = launcherIconVisibilityStore.isHidden();
+        boolean actualHidden = resolveLauncherIconHiddenState(storedHidden);
+        if (actualHidden != storedHidden) {
+            launcherIconVisibilityStore.setHidden(actualHidden);
         }
         setCheckedSilently(hideLauncherIconSwitch, actualHidden, this::onHideLauncherIconChanged);
     }
@@ -1247,9 +1250,6 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void onHideLauncherIconChanged(CompoundButton buttonView, boolean isChecked) {
-        if (store == null) {
-            return;
-        }
         if (isChecked) {
             showHideLauncherIconConfirmationDialog();
             return;
@@ -1351,12 +1351,13 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void syncLauncherIconSwitch() {
-        if (store == null || hideLauncherIconSwitch == null) {
+        if (hideLauncherIconSwitch == null) {
             return;
         }
-        boolean hidden = resolveLauncherIconHiddenState(store.isLauncherIconHidden());
-        if (hidden != store.isLauncherIconHidden()) {
-            store.setLauncherIconHidden(hidden);
+        boolean storedHidden = launcherIconVisibilityStore.isHidden();
+        boolean hidden = resolveLauncherIconHiddenState(storedHidden);
+        if (hidden != storedHidden) {
+            launcherIconVisibilityStore.setHidden(hidden);
         }
         setCheckedSilently(hideLauncherIconSwitch, hidden, this::onHideLauncherIconChanged);
     }
@@ -1366,7 +1367,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             showToast(R.string.settings_hide_launcher_icon_apply_failed);
             return false;
         }
-        if (store.setLauncherIconHidden(hidden)) {
+        if (launcherIconVisibilityStore.setHidden(hidden)) {
             return true;
         }
         setLauncherAliasHidden(!hidden);

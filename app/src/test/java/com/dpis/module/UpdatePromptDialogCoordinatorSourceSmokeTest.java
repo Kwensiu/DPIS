@@ -17,7 +17,8 @@ public class UpdatePromptDialogCoordinatorSourceSmokeTest {
         assertTrue(source.contains("void showUpdateAvailableDialog("));
         assertTrue(source.contains("new MaterialAlertDialogBuilder(activity)"));
         assertTrue(source.contains("R.layout.dialog_startup_disclaimer"));
-        assertTrue(source.contains("setStartupDisclaimerAccepted(true)"));
+        assertTrue(source.contains("StartupDisclaimerStore"));
+        assertTrue(source.contains("store.setAccepted(true)"));
         assertTrue(source.contains("UpdateAvailableDialog.create("));
         assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialogHandle.dialog, activity)"));
         assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialog, activity)"));
