@@ -106,7 +106,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
                         item,
                         getHookConfigStore(),
                         new GlobalPrefillStore(
-                                getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE))
+                                getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE))
                                 .read()),
                 isSystemHookEnabled());
         activeEditorRoot = panel;
@@ -240,7 +240,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
 
             @Override
             public boolean setDpisEnabled(String packageName, boolean enabled) {
-                DpiConfigStore store = getHookConfigStore();
+                DpisConfigStore store = getHookConfigStore();
                 if (store == null || !store.setTargetDpisEnabled(packageName, enabled)) {
                     showToast(R.string.system_settings_save_failed);
                     return false;
@@ -328,7 +328,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
             }
 
             @Override
-            public DpiConfigStore getConfigStore() {
+            public DpisConfigStore getConfigStore() {
                 return getHookConfigStore();
             }
 
@@ -425,17 +425,17 @@ public final class QuickConfigActivity extends LocalizedActivity {
     }
 
     private boolean isSystemHookEnabled() {
-        DpiConfigStore store = getHookConfigStore();
+        DpisConfigStore store = getHookConfigStore();
         return store != null && store.isSystemServerHooksEnabled();
     }
 
-    private DpiConfigStore getHookConfigStore() {
+    private DpisConfigStore getHookConfigStore() {
         return DpisApplication.getActiveHookConfigStore(this);
     }
 
     private void publishAfterSave(String packageName) {
         RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
-        DpiConfigStore store = getHookConfigStore();
+        DpisConfigStore store = getHookConfigStore();
         ViewportPropertySyncer.syncTarget(packageName, store);
         FontRuntimePropertySyncer.syncTarget(packageName, store);
     }
@@ -456,7 +456,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
         if (!result.success) {
             return result;
         }
-        DpiConfigStore store = getHookConfigStore();
+        DpisConfigStore store = getHookConfigStore();
         if (!WechatDpiSheetBinder.save(dialogView, packageName, dpisEnabled, store)) {
             return AppConfigSaveHandler.Result.failure(
                     WechatDpiSheetBinder.isInputValid(dialogView)
@@ -569,7 +569,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
         if (!WechatDpiConfig.appliesTo(packageName)) {
             return null;
         }
-        DpiConfigStore store = getHookConfigStore();
+        DpisConfigStore store = getHookConfigStore();
         return store != null ? store.getWechatDpi(packageName) : null;
     }
 
@@ -780,7 +780,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
         if (item == null || item.packageName == null || item.packageName.isBlank()) {
             return;
         }
-        DpiConfigStore store = getHookConfigStore();
+        DpisConfigStore store = getHookConfigStore();
         Set<String> automaticKnownDomains = recommendedTemplateFontHookDomains();
         HookDomainOverride currentOverride = resolveFontHookDomainsForDraft(item, state);
         FontHookDomainDialog.show(
@@ -955,13 +955,13 @@ public final class QuickConfigActivity extends LocalizedActivity {
         if (item == null || !item.hyperOsNativeProxyCandidate) {
             return false;
         }
-        DpiConfigStore store = getHookConfigStore();
+        DpisConfigStore store = getHookConfigStore();
         return store != null
                 && store.isTargetDpisEnabled(item.packageName)
                 && hasActiveStoredConfig(store, item.packageName);
     }
 
-    private static boolean hasActiveStoredConfig(DpiConfigStore store, String packageName) {
+    private static boolean hasActiveStoredConfig(DpisConfigStore store, String packageName) {
         ViewportTargetSpec viewportTargetSpec = store.getTargetViewportSpec(packageName);
         Integer fontScalePercent = store.getTargetFontScalePercent(packageName);
         return viewportTargetSpec.isEnabled()

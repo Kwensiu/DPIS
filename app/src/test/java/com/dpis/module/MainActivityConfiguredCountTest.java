@@ -13,7 +13,7 @@ public class MainActivityConfiguredCountTest {
         prefs.edit()
                 .putInt("viewport.com.example.saved.width_dp", 360)
                 .commit();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
 
         assertEquals(2, MainActivity.countUserVisibleConfiguredPackages(
                 store,

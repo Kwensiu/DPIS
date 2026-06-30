@@ -116,7 +116,7 @@ public final class LegacyModuleManifestMetadataTest {
         assertTrue(propertyIndex >= 0);
         assertTrue(xSharedIndex >= 0);
         assertTrue(factory.contains("AutoViewportRuntimeRoute.ANY_ENABLED_TARGET"));
-        assertTrue(compatFactory.contains("new DpiConfigStore("));
+        assertTrue(compatFactory.contains("new DpisConfigStore("));
     }
 
     @Test

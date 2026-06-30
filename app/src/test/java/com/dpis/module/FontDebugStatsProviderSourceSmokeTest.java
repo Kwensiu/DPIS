@@ -46,7 +46,7 @@ public class FontDebugStatsProviderSourceSmokeTest {
         String transport = read("src/main/java/com/dpis/module/FontDebugStatsTransport.java");
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
-        assertTrue(transport.contains("xposed.getRemotePreferences(DpiConfigStore.GROUP)"));
+        assertTrue(transport.contains("xposed.getRemotePreferences(DpisConfigStore.GROUP)"));
         assertTrue(transport.contains("MODULE_CLASS_PACKAGE + \".FontDebugStatsReceiver\""));
         assertTrue(transport.contains("MODULE_CLASS_PACKAGE + \".FontDebugStatsIngestService\""));
         assertTrue(transport.contains("MODULE_CLASS_PACKAGE + \".FontDebugStatsIngestActivity\""));

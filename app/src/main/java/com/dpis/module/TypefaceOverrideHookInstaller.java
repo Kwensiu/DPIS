@@ -43,7 +43,7 @@ final class TypefaceOverrideHookInstaller {
     static void install(XposedInterface xposed,
                         String packageName,
                         String targetTypefaceId,
-                        DpiConfigStore store,
+                        DpisConfigStore store,
                         FontLibraryStore fontLibraryStore,
                         ModernApiCapabilities apiCapabilities) throws ReflectiveOperationException {
         if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
@@ -163,7 +163,7 @@ final class TypefaceOverrideHookInstaller {
 
     private static Typeface loadTargetTypeface(String packageName,
                                                String targetTypefaceId,
-                                               DpiConfigStore store,
+                                               DpisConfigStore store,
                                                FontLibraryStore fontLibraryStore) {
         String typefaceId = targetTypefaceId;
         if ((typefaceId == null || typefaceId.isBlank()) && store != null) {

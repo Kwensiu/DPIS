@@ -34,7 +34,7 @@ final class HyperOsNativeFontPropertySyncer {
         cleanerThread.start();
     }
 
-    static void clearConfiguredFontTargetsAsync(DpiConfigStore store) {
+    static void clearConfiguredFontTargetsAsync(DpisConfigStore store) {
         if (store == null) {
             return;
         }
@@ -48,7 +48,7 @@ final class HyperOsNativeFontPropertySyncer {
         cleanerThread.start();
     }
 
-    static void syncConfiguredFontTargetsAsync(DpiConfigStore store) {
+    static void syncConfiguredFontTargetsAsync(DpisConfigStore store) {
         if (store == null) {
             return;
         }
@@ -78,7 +78,7 @@ final class HyperOsNativeFontPropertySyncer {
         runRootCommand(command);
     }
 
-    private static void clearFontTargets(DpiConfigStore store, LinkedHashSet<String> packages) {
+    private static void clearFontTargets(DpisConfigStore store, LinkedHashSet<String> packages) {
         StringBuilder command = new StringBuilder();
         for (String packageName : packages) {
             if (packageName == null || packageName.isBlank()) {
@@ -118,17 +118,17 @@ final class HyperOsNativeFontPropertySyncer {
         return buildPublishCommand(fontProperty, fontScalePercent);
     }
 
-    static boolean shouldPreserveCompatForceFontForTest(DpiConfigStore store, String packageName) {
+    static boolean shouldPreserveCompatForceFontForTest(DpisConfigStore store, String packageName) {
         return shouldPreserveCompatForceFont(store, packageName);
     }
 
-    static boolean shouldPublishForceFontOnRecoveryForTest(DpiConfigStore store,
+    static boolean shouldPublishForceFontOnRecoveryForTest(DpisConfigStore store,
                                                            String packageName,
                                                            String fontMode) {
         return shouldPublishForceFontOnRecovery(store, packageName, fontMode);
     }
 
-    private static boolean shouldPublishForceFontOnRecovery(DpiConfigStore store,
+    private static boolean shouldPublishForceFontOnRecovery(DpisConfigStore store,
                                                            String packageName,
                                                            String fontMode) {
         if (store == null) {
@@ -142,7 +142,7 @@ final class HyperOsNativeFontPropertySyncer {
                 && FontApplyMode.isEnabled(normalizedMode);
     }
 
-    private static boolean shouldPreserveCompatForceFont(DpiConfigStore store, String packageName) {
+    private static boolean shouldPreserveCompatForceFont(DpisConfigStore store, String packageName) {
         if (store == null || packageName == null || packageName.isBlank()
                 || !store.isTargetDpisEnabled(packageName)) {
             return false;

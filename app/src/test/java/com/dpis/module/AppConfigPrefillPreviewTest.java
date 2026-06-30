@@ -22,7 +22,7 @@ public class AppConfigPrefillPreviewTest {
 
     @Test
     public void configuredAppsIgnoreGlobalPrefill() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
         store.setTargetFontScalePercent(item.packageName, 110);
         TemplateConfigValue prefill = new TemplateConfigValue(
@@ -42,7 +42,7 @@ public class AppConfigPrefillPreviewTest {
 
     @Test
     public void partiallyConfiguredAppsIgnoreGlobalPrefill() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
         store.setTargetDpisEnabled(item.packageName, false);
         TemplateConfigValue prefill = new TemplateConfigValue(
@@ -61,7 +61,7 @@ public class AppConfigPrefillPreviewTest {
 
     @Test
     public void unconfiguredAppsDisplayGlobalPrefillAsPreviewOnly() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
         TemplateConfigValue prefill = new TemplateConfigValue(
                 ViewportTargetSpec.relativeScale(87500),
@@ -87,7 +87,7 @@ public class AppConfigPrefillPreviewTest {
 
     @Test
     public void advancedEnabledStateCanChangeWithoutSavingPrefillConfig() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
         TemplateConfigValue prefill = new TemplateConfigValue(
                 ViewportTargetSpec.relativeScale(87500),
@@ -113,7 +113,7 @@ public class AppConfigPrefillPreviewTest {
 
     @Test
     public void emptyGlobalPrefillDoesNotCreatePreview() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
 
         AppListItem result = AppConfigPrefillPreview.applyIfEligible(

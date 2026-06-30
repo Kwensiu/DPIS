@@ -11,7 +11,7 @@ import java.util.Arrays;
 public class HyperOsFlutterFontHookConfigTest {
     @Test
     public void experimentalHookDefaultsOffAndPersists() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
 
         assertFalse(store.isFlutterFontHookEnabled());
         assertFalse(store.isFlutterSettingsFontHookEnabled());
@@ -69,8 +69,8 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(prefs.contains("FontHookDomainPropertyBridge.readOverride(packageName)"));
         assertTrue(prefs.contains("HyperOsFlutterFontBridge.readTypefaceId(packageName)"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)"));
-        assertTrue(app.contains("DpiConfigStore localStore = ConfigStoreFactory.createLocalModuleConfigStore(this);"));
-        assertTrue(app.contains("static DpiConfigStore getActiveHookConfigStore(Context context)"));
+        assertTrue(app.contains("DpisConfigStore localStore = ConfigStoreFactory.createLocalModuleConfigStore(this);"));
+        assertTrue(app.contains("static DpisConfigStore getActiveHookConfigStore(Context context)"));
         assertTrue(app.contains("if (context == null)"));
         assertTrue(app.contains("return null;"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)"));

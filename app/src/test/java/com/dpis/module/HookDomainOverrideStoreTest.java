@@ -14,7 +14,7 @@ public class HookDomainOverrideStoreTest {
     @Test
     public void missingKeyUsesAutomaticPath() {
         HookDomainOverrideStore store = new HookDomainOverrideStore(
-                new DpiConfigStore(new FakePrefs()));
+                new DpisConfigStore(new FakePrefs()));
 
         HookDomainOverride override = store.read("com.example.app");
 
@@ -25,7 +25,7 @@ public class HookDomainOverrideStoreTest {
 
     @Test
     public void emptyKeyStoresCustomZeroDomainPath() {
-        DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore configStore = new DpisConfigStore(new FakePrefs());
         HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
 
         assertTrue(store.save("com.example.app", Set.of(), Set.of()));
@@ -40,7 +40,7 @@ public class HookDomainOverrideStoreTest {
 
     @Test
     public void emptyCustomPathSurvivesSnapshotAsExplicitOptOut() {
-        DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore configStore = new DpisConfigStore(new FakePrefs());
         HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
 
         assertTrue(store.save("com.example.app", Set.of(), Set.of()));
@@ -54,7 +54,7 @@ public class HookDomainOverrideStoreTest {
 
     @Test
     public void unknownIdsArePreservedOnReadAndSave() {
-        DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore configStore = new DpisConfigStore(new FakePrefs());
         HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
 
         assertTrue(configStore.setPackageFontHookDomainsRaw(
@@ -75,7 +75,7 @@ public class HookDomainOverrideStoreTest {
 
     @Test
     public void saveIgnoresSystemOnlyDomainsForCompatCustomPath() {
-        DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore configStore = new DpisConfigStore(new FakePrefs());
         HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
 
         assertTrue(store.save("com.example.app",
@@ -89,7 +89,7 @@ public class HookDomainOverrideStoreTest {
 
     @Test
     public void readDropsSystemOnlyDomainsFromStaleCustomPath() {
-        DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore configStore = new DpisConfigStore(new FakePrefs());
         HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
         assertTrue(configStore.setPackageFontHookDomainsRaw(
                 "com.example.app",
@@ -104,7 +104,7 @@ public class HookDomainOverrideStoreTest {
 
     @Test
     public void restoreClearsCustomKeyAndUnknownIds() {
-        DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore configStore = new DpisConfigStore(new FakePrefs());
         HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
         assertTrue(store.save("com.example.app",
                 orderedSet("resources_font"),
@@ -118,7 +118,7 @@ public class HookDomainOverrideStoreTest {
 
     @Test
     public void restoreKeepsPackageWhenExplicitDpisEnabledKeyRemains() {
-        DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore configStore = new DpisConfigStore(new FakePrefs());
         HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
         assertTrue(store.save("com.example.app", orderedSet("resources_font"), Set.of()));
         assertTrue(configStore.setTargetDpisEnabled("com.example.app", false));
@@ -133,7 +133,7 @@ public class HookDomainOverrideStoreTest {
 
     @Test
     public void savingAutomaticKnownPathClearsKeyWhenNoUnknownIdsExist() {
-        DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore configStore = new DpisConfigStore(new FakePrefs());
         HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
         assertTrue(store.save("com.example.app",
                 orderedSet("resources_font"),
@@ -151,11 +151,11 @@ public class HookDomainOverrideStoreTest {
     @Test
     public void snapshotAndReplaceAllPreserveEmptyCustomPathValue() {
         FakePrefs primary = new FakePrefs();
-        DpiConfigStore source = new DpiConfigStore(primary);
+        DpisConfigStore source = new DpisConfigStore(primary);
         HookDomainOverrideStore sourceOverrides = new HookDomainOverrideStore(source);
         assertTrue(sourceOverrides.save("com.example.app", Set.of(), Set.of()));
 
-        DpiConfigStore target = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore target = new DpisConfigStore(new FakePrefs());
         assertTrue(target.replaceAll(source.snapshotAll()));
 
         HookDomainOverride targetOverride =
@@ -166,7 +166,7 @@ public class HookDomainOverrideStoreTest {
 
     @Test
     public void clearingLastViewportAndFontValuesKeepsPackageWhenCustomPathRemains() {
-        DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore configStore = new DpisConfigStore(new FakePrefs());
         HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
         assertTrue(configStore.setTargetViewportWidthDp("com.example.app", 411));
         assertTrue(configStore.setTargetFontScalePercent("com.example.app", 130));
@@ -228,7 +228,7 @@ public class HookDomainOverrideStoreTest {
 
     @Test
     public void rawValueForSelectionKeepsPreviewDomainsWithoutWritingStoreState() {
-        DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore configStore = new DpisConfigStore(new FakePrefs());
         HookDomainOverrideStore store = new HookDomainOverrideStore(configStore);
 
         String raw = HookDomainOverrideStore.rawValueForSelection(

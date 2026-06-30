@@ -16,7 +16,7 @@ final class AppConfigSaveHandler {
             String viewportScaleInput,
             String viewportAbsoluteInput,
             boolean systemHooksEnabled,
-            DpiConfigStore store,
+            DpisConfigStore store,
             Runnable onChanged) {
         try {
             ViewportTargetSpec viewportTargetSpec = parseViewportTargetSpecOrNull(
@@ -58,7 +58,7 @@ final class AppConfigSaveHandler {
             String viewportScaleInput,
             String viewportAbsoluteInput,
             boolean systemHooksEnabled,
-            DpiConfigStore store,
+            DpisConfigStore store,
             Runnable onChanged) {
         if (store == null) {
             return Result.failure(R.string.status_save_requires_init);
@@ -185,7 +185,7 @@ final class AppConfigSaveHandler {
         }
     }
 
-    static boolean persistPreviewOnlyConfig(DpiConfigStore store,
+    static boolean persistPreviewOnlyConfig(DpisConfigStore store,
             AppListItem item,
             String draftFontHookDomainsRaw,
             boolean fontHookDomainsResetRequested) {
@@ -326,7 +326,7 @@ final class AppConfigSaveHandler {
     }
 
     private static boolean didPersistExpectedPackageConfig(
-            DpiConfigStore store,
+            DpisConfigStore store,
             String packageName,
             PackageConfigValue expectedPackageConfig) {
         if (store == null || packageName == null || packageName.isBlank()) {
@@ -370,7 +370,7 @@ final class AppConfigSaveHandler {
                 actual.wechatDpi);
     }
 
-    private static void publishFontHookDomainsAfterSave(String packageName, DpiConfigStore store) {
+    private static void publishFontHookDomainsAfterSave(String packageName, DpisConfigStore store) {
         HookDomainOverride override = new HookDomainOverrideStore(store).read(packageName);
         if (override.customPathEnabled) {
             FontHookDomainPropertySyncer.publishTargetAsync(packageName, override.enabledKnownDomains);
@@ -379,7 +379,7 @@ final class AppConfigSaveHandler {
         FontHookDomainPropertySyncer.clearTargetAsync(packageName);
     }
 
-    static String resolveViewportApplyModeForSave(DpiConfigStore store,
+    static String resolveViewportApplyModeForSave(DpisConfigStore store,
             String packageName,
             String itemViewportMode,
             boolean viewportApplyModeResetRequested,
@@ -402,7 +402,7 @@ final class AppConfigSaveHandler {
                 : ViewportApplyMode.AUTO;
     }
 
-    private static boolean saveInactiveViewportDraft(DpiConfigStore store,
+    private static boolean saveInactiveViewportDraft(DpisConfigStore store,
             String packageName,
             ViewportTargetSpec activeSpec,
             String viewportScaleInput,

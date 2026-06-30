@@ -8,7 +8,7 @@ import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textview.MaterialTextView;
 
 public final class ExperimentalSettingsActivity extends LocalizedActivity {
-    private DpiConfigStore configStore;
+    private DpisConfigStore configStore;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

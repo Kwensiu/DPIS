@@ -11,7 +11,7 @@ public final class DpisPackageLifecycleReceiver extends BroadcastReceiver {
             return;
         }
         HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(context);
-        DpiConfigStore store = DpisApplication.getConfigStore();
+        DpisConfigStore store = DpisApplication.getConfigStore();
         if (store == null) {
             store = ConfigStoreFactory.createLocalModuleConfigStore(context);
         }

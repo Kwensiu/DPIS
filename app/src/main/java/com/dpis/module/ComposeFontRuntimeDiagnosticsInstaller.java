@@ -51,7 +51,7 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
 
     static void install(XposedInterface xposed,
                         String packageName,
-                        DpiConfigStore store,
+                        DpisConfigStore store,
                         FontHookArbitration.FontDomainPlan domainPlan,
                         String hookDomains,
                         String hookDomainSource) {
@@ -99,7 +99,7 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
         return targetPercent == null || targetPercent <= 0 ? null : targetPercent / 100f;
     }
 
-    static Float resolveCurrentTargetFactorForTest(DpiConfigStore store, String packageName) {
+    static Float resolveCurrentTargetFactorForTest(DpisConfigStore store, String packageName) {
         return resolveCurrentTargetFactor(store, packageName);
     }
 
@@ -109,7 +109,7 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
 
     private static void registerCallbacks(Application application,
                                           String packageName,
-                                          DpiConfigStore store,
+                                          DpisConfigStore store,
                                           FontHookArbitration.FontDomainPlan domainPlan,
                                           String hookDomains,
                                           String hookDomainSource) {
@@ -136,7 +136,7 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
 
     private static void evaluate(Activity activity,
                                  String packageName,
-                                 DpiConfigStore store,
+                                 DpisConfigStore store,
                                  FontHookArbitration.FontDomainPlan domainPlan,
                                  String hookDomains,
                                  String hookDomainSource) {
@@ -222,7 +222,7 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
 
     private static void attachLayoutListener(Activity activity,
                                              String packageName,
-                                             DpiConfigStore store,
+                                             DpisConfigStore store,
                                              FontHookArbitration.FontDomainPlan domainPlan,
                                              String hookDomains,
                                              String hookDomainSource) {
@@ -320,7 +320,7 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
         }
     }
 
-    private static Float resolveCurrentTargetFactor(DpiConfigStore store, String packageName) {
+    private static Float resolveCurrentTargetFactor(DpisConfigStore store, String packageName) {
         if (store == null) {
             return null;
         }
@@ -329,7 +329,7 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
 
     private static void installApplicationRetryHook(XposedInterface xposed,
                                                     String packageName,
-                                                    DpiConfigStore store,
+                                                    DpisConfigStore store,
                                                     FontHookArbitration.FontDomainPlan domainPlan,
                                                     String hookDomains,
                                                     String hookDomainSource) {
@@ -379,7 +379,7 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
 
     private static void installActivityFallbackHooks(XposedInterface xposed,
                                                      String packageName,
-                                                     DpiConfigStore store,
+                                                     DpisConfigStore store,
                                                      FontHookArbitration.FontDomainPlan domainPlan,
                                                      String hookDomains,
                                                      String hookDomainSource) {
@@ -493,13 +493,13 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
     private static final class DiagnosticsCallbacks
             implements Application.ActivityLifecycleCallbacks {
         private final String packageName;
-        private final DpiConfigStore store;
+        private final DpisConfigStore store;
         private final FontHookArbitration.FontDomainPlan domainPlan;
         private final String hookDomains;
         private final String hookDomainSource;
 
         DiagnosticsCallbacks(String packageName,
-                             DpiConfigStore store,
+                             DpisConfigStore store,
                              FontHookArbitration.FontDomainPlan domainPlan,
                              String hookDomains,
                              String hookDomainSource) {

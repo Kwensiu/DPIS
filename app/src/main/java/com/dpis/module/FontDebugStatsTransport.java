@@ -21,7 +21,7 @@ final class FontDebugStatsTransport {
             return;
         }
         try {
-            remotePreferences = xposed.getRemotePreferences(DpiConfigStore.GROUP);
+            remotePreferences = xposed.getRemotePreferences(DpisConfigStore.GROUP);
         } catch (Throwable ignored) {
             remotePreferences = null;
         }

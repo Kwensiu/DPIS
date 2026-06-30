@@ -21,7 +21,7 @@ public final class StartupDisclaimerStoreTest {
     public void keepsExistingConsentFromLegacyDpiConfigKey() {
         FakePrefs legacyPreferences = new FakePrefs();
         legacyPreferences.edit()
-                .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
+                .putBoolean(DpisConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
                 .commit();
         StartupDisclaimerStore store = new StartupDisclaimerStore(new FakePrefs(), legacyPreferences);
 
@@ -33,7 +33,7 @@ public final class StartupDisclaimerStoreTest {
         FakePrefs preferences = new FakePrefs();
         FakePrefs legacyPreferences = new FakePrefs();
         legacyPreferences.edit()
-                .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
+                .putBoolean(DpisConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
                 .commit();
         StartupDisclaimerStore store = new StartupDisclaimerStore(preferences, legacyPreferences);
 

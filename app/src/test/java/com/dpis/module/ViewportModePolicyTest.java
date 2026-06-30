@@ -10,7 +10,7 @@ public class ViewportModePolicyTest {
     @Test
     public void systemModeTurnsOffInAppProcessWhenSystemHookOff() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setSystemServerHooksEnabled(false);
         store.setTargetViewportWidthDp("com.example.target", 360);
         store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.SYSTEM_EMULATION);
@@ -24,7 +24,7 @@ public class ViewportModePolicyTest {
     @Test
     public void systemHookOnKeepsSystemModeOutOfAppProcessConfigurationOverride() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setSystemServerHooksEnabled(true);
         store.setTargetViewportWidthDp("com.example.target", 360);
         store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.SYSTEM_EMULATION);
@@ -38,7 +38,7 @@ public class ViewportModePolicyTest {
     @Test
     public void autoUsesSystemModeOutOfAppProcessConfigurationOverrideWhenSystemHookOn() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setSystemServerHooksEnabled(true);
         store.setTargetViewportSpec("com.example.target", ViewportTargetSpec.absoluteDp(360));
         store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.AUTO);
@@ -52,7 +52,7 @@ public class ViewportModePolicyTest {
     @Test
     public void relativeScaleDoesNotForceConfigurationOverrideInSystemRoute() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setSystemServerHooksEnabled(true);
         store.setTargetViewportSpec("com.example.target", ViewportTargetSpec.relativeScale(150000));
         store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.AUTO);
@@ -66,7 +66,7 @@ public class ViewportModePolicyTest {
     @Test
     public void autoAppliesGuardedConfigurationFallbackWhenSystemRouteStillNeedsViewportUpdate() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         ViewportTargetSpec spec = ViewportTargetSpec.relativeScale(150000);
         store.setSystemServerHooksEnabled(true);
         store.setTargetViewportSpec("com.example.target", spec);
@@ -81,7 +81,7 @@ public class ViewportModePolicyTest {
     @Test
     public void explicitSystemDoesNotApplyGuardedConfigurationFallbackInAppProcess() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         ViewportTargetSpec spec = ViewportTargetSpec.absoluteDp(300);
         store.setSystemServerHooksEnabled(true);
         store.setTargetViewportSpec("com.example.target", spec);
@@ -96,7 +96,7 @@ public class ViewportModePolicyTest {
     @Test
     public void autoDoesNotApplyGuardedConfigurationFallbackWhenConfigurationAlreadyMatches() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         ViewportTargetSpec spec = ViewportTargetSpec.relativeScale(150000);
         store.setSystemServerHooksEnabled(true);
         store.setTargetViewportSpec("com.example.target", spec);
@@ -111,7 +111,7 @@ public class ViewportModePolicyTest {
     @Test
     public void autoFallsBackToCompatWithoutConfigurationOverrideWhenSystemHookOff() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setSystemServerHooksEnabled(false);
         store.setTargetViewportSpec("com.example.target", ViewportTargetSpec.absoluteDp(360));
         store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.AUTO);
@@ -125,7 +125,7 @@ public class ViewportModePolicyTest {
     @Test
     public void webApkOwnerAutoKeepsAppProcessConfigurationOverrideWhenSystemHookOn() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         String packageName = "org.chromium.webapk.ac19cf34f94565db5_v2";
         store.setSystemServerHooksEnabled(true);
         store.setTargetDpisEnabled(packageName, true);
@@ -139,7 +139,7 @@ public class ViewportModePolicyTest {
     @Test
     public void fieldRewriteAppliesConfigurationOverrideInAppProcess() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setSystemServerHooksEnabled(false);
         store.setTargetViewportWidthDp("com.example.target", 360);
         store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.FIELD_REWRITE);

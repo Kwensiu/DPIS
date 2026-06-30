@@ -31,7 +31,7 @@ public class WechatDpiPropertySyncerTest {
 
     @Test
     public void syncCommandPublishesConfiguredWechatDpiWhenTargetEnabled() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setWechatDpi("com.tencent.mm", 600);
 
         assertEquals("setprop 'debug.dpis.wechat.dpi.c5fe9776' '600'; "
@@ -41,7 +41,7 @@ public class WechatDpiPropertySyncerTest {
 
     @Test
     public void syncCommandClearsWechatDpiWhenTargetDisabled() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setWechatDpi("com.tencent.mm", 600);
         store.setTargetDpisEnabled("com.tencent.mm", false);
 
@@ -52,7 +52,7 @@ public class WechatDpiPropertySyncerTest {
 
     @Test
     public void syncCommandClearsWechatDpiEvenWhenPackageNoLongerConfigured() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
 
         assertEquals("setprop 'debug.dpis.wechat.dpi.c5fe9776' '0'; "
                         + "setprop 'persist.debug.dpis.wechat.dpi.c5fe9776' '0'",

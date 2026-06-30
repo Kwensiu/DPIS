@@ -12,7 +12,7 @@ import org.junit.Test;
 public class ConfigSnapshotTest {
     @Test
     public void snapshotKeepsConfiguredDisabledPackageButSourceSkipsIt() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportWidthDp("com.example.app", 360);
         store.setTargetDpisEnabled("com.example.app", false);
 
@@ -29,13 +29,13 @@ public class ConfigSnapshotTest {
     public void snapshotPreservesLegacyDefaultModes() {
         FakePrefs prefs = new FakePrefs();
         prefs.edit()
-                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
+                .putStringSet(DpisConfigStore.KEY_TARGET_PACKAGES,
                         java.util.Set.of("com.example.app"))
                 .putInt("viewport.com.example.app.width_dp", 360)
                 .putInt("font.com.example.app.scale_percent", 125)
                 .commit();
 
-        ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(new DpiConfigStore(prefs));
+        ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(new DpisConfigStore(prefs));
         PackageConfigSnapshot packageConfig = snapshot.getPackage("com.example.app");
 
         assertNotNull(packageConfig);
@@ -46,7 +46,7 @@ public class ConfigSnapshotTest {
     @Test
     public void snapshotIncludesTypefaceId() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setTargetTypefaceId("com.example.app", "font_abcd1234");
 
         ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(store);
@@ -57,7 +57,7 @@ public class ConfigSnapshotTest {
 
     @Test
     public void configuredPackagesAreImmutable() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportWidthDp("com.example.app", 360);
 
         ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(store);
@@ -68,7 +68,7 @@ public class ConfigSnapshotTest {
 
     @Test
     public void globalFlagsAreCapturedOnce() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setSystemServerHooksEnabled(false);
         ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(store);
 
@@ -80,7 +80,7 @@ public class ConfigSnapshotTest {
 
     @Test
     public void packageSnapshotIgnoresLegacyGlobalExperimentalFlags() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 125);
         store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
         store.setFlutterFontHookEnabled(true);

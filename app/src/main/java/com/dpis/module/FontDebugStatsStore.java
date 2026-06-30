@@ -39,7 +39,7 @@ final class FontDebugStatsStore {
     }
 
     static SharedPreferences getPreferences(Context context) {
-        return context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE);
+        return context.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE);
     }
 
     static void clearStats(Context context) {

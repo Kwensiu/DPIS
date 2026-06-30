@@ -69,7 +69,7 @@ public class ResourcesReadHookInstallerTest {
         config.fontScale = 1.0f;
         FakePrefs prefs = new FakePrefs();
         putCompatViewport(prefs, 800);
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
 
         ResourcesReadHookInstaller.applyConfigurationOverride(config, PACKAGE_NAME, store,
                 "ResourcesRead(getConfiguration)");
@@ -168,7 +168,7 @@ public class ResourcesReadHookInstallerTest {
         config.fontScale = 1.0f;
         FakePrefs prefs = new FakePrefs();
         putCompatViewport(prefs, 411);
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
 
         ResourcesReadHookInstaller.applyConfigurationOverride(config, PACKAGE_NAME, store,
                 "ResourcesRead(getConfiguration)");
@@ -190,7 +190,7 @@ public class ResourcesReadHookInstallerTest {
         config.fontScale = 1.0f;
         FakePrefs prefs = new FakePrefs();
         putCompatViewport(prefs, 360);
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
 
         ResourcesReadHookInstaller.applyConfigurationOverride(config, PACKAGE_NAME, store,
                 "ResourcesRead(getConfiguration)");
@@ -222,7 +222,7 @@ public class ResourcesReadHookInstallerTest {
                 new ViewportOverride.Result(360, 720, 360, 467),
                 null,
                 ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER);
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportSpec(PACKAGE_NAME, targetSpec);
         store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
 
@@ -254,7 +254,7 @@ public class ResourcesReadHookInstallerTest {
         config.screenHeightDp = 640;
         config.smallestScreenWidthDp = 360;
         config.fontScale = 1.0f;
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportSpec(PACKAGE_NAME, ViewportTargetSpec.relativeScale(150000));
         store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
 
@@ -293,7 +293,7 @@ public class ResourcesReadHookInstallerTest {
         windowConfig.screenHeightDp = 640;
         windowConfig.smallestScreenWidthDp = 360;
         windowConfig.fontScale = 1.0f;
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportSpec(PACKAGE_NAME, targetSpec);
         store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
 
@@ -325,7 +325,7 @@ public class ResourcesReadHookInstallerTest {
         metrics.scaledDensity = 3.0f;
         metrics.widthPixels = 1080;
         metrics.heightPixels = 1920;
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportSpec(PACKAGE_NAME, ViewportTargetSpec.relativeScale(150000));
         store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
 
@@ -354,7 +354,7 @@ public class ResourcesReadHookInstallerTest {
         metrics.scaledDensity = 3.0f;
         metrics.widthPixels = 1080;
         metrics.heightPixels = 1920;
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportSpec(PACKAGE_NAME, ViewportTargetSpec.relativeScale(150000));
         store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
 
@@ -401,7 +401,7 @@ public class ResourcesReadHookInstallerTest {
         metrics.scaledDensity = 2.0f;
         metrics.widthPixels = 1080;
         metrics.heightPixels = 1920;
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportSpec(PACKAGE_NAME, targetSpec);
         store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
 
@@ -445,7 +445,7 @@ public class ResourcesReadHookInstallerTest {
         metrics.scaledDensity = 3.0f;
         metrics.widthPixels = 1080;
         metrics.heightPixels = 1920;
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportSpec(PACKAGE_NAME, targetSpec);
         store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
 
@@ -467,7 +467,7 @@ public class ResourcesReadHookInstallerTest {
         config.smallestScreenWidthDp = 462;
         config.fontScale = 1.15f;
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(200000);
         store.setTargetViewportSpec(WebApkRuntimeOwnerBridge.CHROME_PACKAGE, targetSpec);
         store.setTargetViewportApplyMode(WebApkRuntimeOwnerBridge.CHROME_PACKAGE,
@@ -515,7 +515,7 @@ public class ResourcesReadHookInstallerTest {
         config.fontScale = 1.5f;
         FakePrefs prefs = new FakePrefs();
         prefs.edit().putInt("font." + PACKAGE_NAME + ".scale_percent", 150).commit();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
 
         Object resources = new Object();
         ResourcesFontScheduler.observe(PACKAGE_NAME, "root-a", resources, evidence,
@@ -557,7 +557,7 @@ public class ResourcesReadHookInstallerTest {
     @Test
     public void metricsResourcesFontConflictUsesEventGate() {
         Object resources = new Object();
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetFontScalePercent(PACKAGE_NAME, 140);
         store.setTargetFontApplyMode(PACKAGE_NAME, FontApplyMode.FIELD_REWRITE);
         Configuration baseConfig = new Configuration();
@@ -587,7 +587,7 @@ public class ResourcesReadHookInstallerTest {
     @Test
     public void configurationReadUsesEventGatedTargetFontScale() {
         Object resources = new Object();
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetFontScalePercent(PACKAGE_NAME, 140);
         store.setTargetFontApplyMode(PACKAGE_NAME, FontApplyMode.FIELD_REWRITE);
         Configuration config = new Configuration();
@@ -605,7 +605,7 @@ public class ResourcesReadHookInstallerTest {
     @Test
     public void systemModeConfigurationReadDoesNotForceTargetFontScale() {
         Object resources = new Object();
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetFontScalePercent(PACKAGE_NAME, 140);
         store.setTargetFontApplyMode(PACKAGE_NAME, FontApplyMode.SYSTEM_EMULATION);
         Configuration config = new Configuration();
@@ -629,7 +629,7 @@ public class ResourcesReadHookInstallerTest {
     @Test
     public void systemModeMetricsReadKeepsTargetScaledDensityWithoutConfigurationWrite() {
         Object resources = new Object();
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetFontScalePercent(PACKAGE_NAME, 140);
         store.setTargetFontApplyMode(PACKAGE_NAME, FontApplyMode.SYSTEM_EMULATION);
         Configuration config = new Configuration();
@@ -659,7 +659,7 @@ public class ResourcesReadHookInstallerTest {
     @Test
     public void configurationDensitySourceUsesEventGatedTargetFontScale() {
         Object resources = new Object();
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetFontScalePercent(PACKAGE_NAME, 140);
         store.setTargetFontApplyMode(PACKAGE_NAME, FontApplyMode.FIELD_REWRITE);
         Configuration config = new Configuration();
@@ -685,7 +685,7 @@ public class ResourcesReadHookInstallerTest {
         Object resources = new Object();
         FakePrefs prefs = new FakePrefs();
         putCompatViewport(prefs, 800);
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setTargetFontScalePercent(PACKAGE_NAME, 140);
         store.setTargetFontApplyMode(PACKAGE_NAME, FontApplyMode.FIELD_REWRITE);
         Configuration config = new Configuration();
@@ -717,7 +717,7 @@ public class ResourcesReadHookInstallerTest {
         Object resources = new Object();
         VirtualDisplayState.set(new VirtualDisplayOverride.Result(800, 1636, 800,
                 216, 1080, 2209));
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetFontScalePercent(PACKAGE_NAME, 140);
         store.setTargetFontApplyMode(PACKAGE_NAME, FontApplyMode.FIELD_REWRITE);
         Configuration config = new Configuration();

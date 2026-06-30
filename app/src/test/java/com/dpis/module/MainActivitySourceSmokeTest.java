@@ -483,7 +483,7 @@ public class MainActivitySourceSmokeTest {
             source.indexOf("private boolean maybeShowStartupDisclaimerDialog()"),
             source.indexOf("private boolean maybeShowModuleRuntimeReloadAdvice()")
         );
-        assertTrue(!disclaimerBlock.contains("DpiConfigStore"));
+        assertTrue(!disclaimerBlock.contains("DpisConfigStore"));
     }
 
     @Test
@@ -1634,7 +1634,7 @@ public class MainActivitySourceSmokeTest {
             source.contains("shouldPrepareHyperOsNativeProxyForRestart(item)")
         );
         assertTrue(
-            methodBody.contains("DpiConfigStore store = getHookConfigStore();")
+            methodBody.contains("DpisConfigStore store = getHookConfigStore();")
         );
         assertTrue(
             methodBody.contains("store.isTargetDpisEnabled(item.packageName)")

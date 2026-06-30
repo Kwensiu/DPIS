@@ -60,7 +60,7 @@ public final class FontDebugOverlayService extends Service {
     private WindowManager.LayoutParams layoutParams;
     private TextView overlayTextView;
     private View overlayRoot;
-    private DpiConfigStore store;
+    private DpisConfigStore store;
     private GestureDetector gestureDetector;
     private boolean suppressLongPress;
     private int maxPointerCountDuringGesture = 1;

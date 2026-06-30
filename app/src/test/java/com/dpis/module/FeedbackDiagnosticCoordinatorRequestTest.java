@@ -38,7 +38,7 @@ public final class FeedbackDiagnosticCoordinatorRequestTest {
     @Test
     public void fromPersistedPrefersStoreOverStaleItemSnapshot() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         String packageName = "com.tencent.mm";
         assertTrue(store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(90000)));
         assertTrue(store.setTargetViewportApplyMode(packageName, ViewportApplyMode.SYSTEM));

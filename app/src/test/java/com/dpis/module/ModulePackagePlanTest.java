@@ -11,7 +11,7 @@ import static org.junit.Assert.assertTrue;
 public final class ModulePackagePlanTest {
     @Test
     public void skipsPackagesWithoutConfiguration() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
 
         ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
 
@@ -20,7 +20,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void installsViewportHooksForConfiguredViewportPackage() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportWidthDp("com.example.app", 411);
         store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.FIELD_REWRITE);
 
@@ -34,7 +34,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void autoViewportKeepsLegacyAppProcessViewportHooksAvailable() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setSystemServerHooksEnabled(true);
         store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(150000));
         store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.AUTO);
@@ -48,7 +48,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void compatViewportUsesAppProcessViewportHooks() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setSystemServerHooksEnabled(true);
         store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(150000));
         store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.COMPAT);
@@ -62,7 +62,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void viewportOnlyPackageHasNoSecondaryProcessSafeRouteAfterViewportSuppression() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(150000));
         store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.COMPAT);
 
@@ -77,7 +77,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void fontRouteSurvivesSecondaryProcessViewportSuppression() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(150000));
         store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.COMPAT);
         store.setTargetFontScalePercent("com.example.app", 120);
@@ -95,7 +95,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void installsFontHooksForConfiguredFontPackage() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 120);
         store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
 
@@ -109,7 +109,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void ignoresLegacyGlobalHyperOsNativeFlutterFlagForAppProcessDispatch() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 120);
         store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
         store.setFlutterFontHookEnabled(true);
@@ -123,7 +123,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void ignoresLegacyGlobalFlutterSettingsFlagForAppProcessDispatch() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 120);
         store.setTargetFontApplyMode("com.example.app", FontApplyMode.SYSTEM_EMULATION);
         store.setFlutterFontHookEnabled(true);
@@ -138,7 +138,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void flutterMasterSwitchGatesFlutterSettingsFlag() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 120);
         store.setTargetFontApplyMode("com.example.app", FontApplyMode.SYSTEM_EMULATION);
         store.setFlutterFontHookEnabled(false);
@@ -152,7 +152,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void flutterMasterSwitchGatesHyperOsNativeFlutterFlag() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 120);
         store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
         store.setFlutterFontHookEnabled(false);
@@ -166,7 +166,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void legacyLegacyInstallsFontFieldRewriteOnlyPackage() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 120);
         store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
 
@@ -178,7 +178,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void legacyLegacyInstallsFontSystemEmulationPackage() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 120);
         store.setTargetFontApplyMode("com.example.app", FontApplyMode.SYSTEM_EMULATION);
 
@@ -189,7 +189,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void installsTypefaceHooksForTypefaceOnlyPackage() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetTypefaceId("com.example.app", "font_abcd1234");
 
         ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
@@ -204,7 +204,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void legacyLegacyInstallsForTypefaceOnlyPackage() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetTypefaceId("com.example.app", "font_abcd1234");
 
         ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
@@ -215,7 +215,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void skipsTypefacePackageDisabledByTargetToggle() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetTypefaceId("com.example.app", "font_abcd1234");
         store.setTargetDpisEnabled("com.example.app", false);
 
@@ -228,7 +228,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void skipsPackagesDisabledByTargetToggle() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportWidthDp("com.example.app", 411);
         store.setTargetDpisEnabled("com.example.app", false);
 
@@ -239,7 +239,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void disabledPackageStillCarriesInactiveFlutterSupplementsOnlyForDiagnostics() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 120);
         store.setTargetFontApplyMode("com.example.app", FontApplyMode.SYSTEM_EMULATION);
         store.setFlutterFontHookEnabled(true);
@@ -256,7 +256,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void buildExecutionPlanForwardsCustomHookDomainOverride() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 120);
         store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
         assertTrue(new HookDomainOverrideStore(store).save(
@@ -278,7 +278,7 @@ public final class ModulePackagePlanTest {
 
     @Test
     public void buildExecutionPlanForwardsDebugOverride() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetFontScalePercent("com.example.app", 120);
         store.setTargetFontApplyMode("com.example.app", FontApplyMode.FIELD_REWRITE);
 

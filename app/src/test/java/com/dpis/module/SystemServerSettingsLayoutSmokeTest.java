@@ -297,7 +297,7 @@ public class SystemServerSettingsLayoutSmokeTest {
 
     @Test
     public void releaseBuildForcesSystemHooksEnabledAtStoreReadBoundary() throws IOException {
-        String source = read("src/main/java/com/dpis/module/DpiConfigStore.java");
+        String source = read("src/main/java/com/dpis/module/DpisConfigStore.java");
 
         assertTrue(source.contains("if (!BuildConfig.DEBUG) {"));
         assertTrue(source.contains("return true;"));

@@ -24,7 +24,7 @@ final class QuickTemplateApplyCoordinator {
     private final ConfigWriter configWriter;
     private final RuntimePublisher runtimePublisher;
 
-    QuickTemplateApplyCoordinator(DpiConfigStore store) {
+    QuickTemplateApplyCoordinator(DpisConfigStore store) {
         this(new StoreConfigWriter(store), new StoreRuntimePublisher(store));
     }
 
@@ -159,7 +159,7 @@ final class QuickTemplateApplyCoordinator {
     private static final class StoreConfigWriter implements ConfigWriter {
         private final PackageConfigRepository packageConfigRepository;
 
-        StoreConfigWriter(DpiConfigStore store) {
+        StoreConfigWriter(DpisConfigStore store) {
             this.packageConfigRepository = new PackageConfigRepository(store);
         }
 
@@ -237,9 +237,9 @@ final class QuickTemplateApplyCoordinator {
     }
 
     private static final class StoreRuntimePublisher implements RuntimePublisher {
-        private final DpiConfigStore store;
+        private final DpisConfigStore store;
 
-        StoreRuntimePublisher(DpiConfigStore store) {
+        StoreRuntimePublisher(DpisConfigStore store) {
             this.store = store;
         }
 

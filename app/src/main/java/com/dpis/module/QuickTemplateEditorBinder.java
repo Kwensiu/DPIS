@@ -103,7 +103,7 @@ final class QuickTemplateEditorBinder {
         this.onClose = onClose;
         this.showSheetBadge = showSheetBadge;
         SharedPreferences preferences = activity.getSharedPreferences(
-                DpiConfigStore.GROUP, Activity.MODE_PRIVATE);
+                DpisConfigStore.GROUP, Activity.MODE_PRIVATE);
         quickTemplateStore = new QuickTemplateStore(preferences);
         typefaceBinder = new AppConfigDialogBinder(activity, createTypefaceHost());
         ready = resolveTemplate(requestedTemplateId);
@@ -656,9 +656,9 @@ final class QuickTemplateEditorBinder {
             }
 
             @Override
-            public DpiConfigStore getConfigStore() {
-                return new DpiConfigStore(activity.getSharedPreferences(
-                        DpiConfigStore.GROUP, Activity.MODE_PRIVATE));
+            public DpisConfigStore getConfigStore() {
+                return new DpisConfigStore(activity.getSharedPreferences(
+                        DpisConfigStore.GROUP, Activity.MODE_PRIVATE));
             }
 
             @Override

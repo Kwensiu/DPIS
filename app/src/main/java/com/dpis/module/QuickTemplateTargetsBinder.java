@@ -78,7 +78,7 @@ final class QuickTemplateTargetsBinder {
         this.rootView = rootView;
         this.host = host;
         SharedPreferences preferences = activity.getSharedPreferences(
-                DpiConfigStore.GROUP, Activity.MODE_PRIVATE);
+                DpisConfigStore.GROUP, Activity.MODE_PRIVATE);
         this.quickTemplateStore = new QuickTemplateStore(preferences);
         this.filterPreferences = activity.getSharedPreferences(
                 FILTER_PREFS_NAME, Activity.MODE_PRIVATE);

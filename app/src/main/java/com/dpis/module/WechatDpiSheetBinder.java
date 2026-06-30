@@ -33,7 +33,7 @@ final class WechatDpiSheetBinder {
                 showHelpDialog(v);
             });
         }
-        DpiConfigStore store = DpisApplication.getActiveHookConfigStore(
+        DpisConfigStore store = DpisApplication.getActiveHookConfigStore(
                 dialogView.getContext());
         Integer initial = store != null ? store.getWechatDpi(item.packageName) : null;
         inputView.setText(initial != null ? String.valueOf(initial) : "");
@@ -78,7 +78,7 @@ final class WechatDpiSheetBinder {
     }
 
     static boolean save(View dialogView, String packageName, boolean dpisEnabled,
-            DpiConfigStore store) {
+            DpisConfigStore store) {
         if (!WechatDpiConfig.appliesTo(packageName)) {
             return true;
         }
@@ -97,7 +97,7 @@ final class WechatDpiSheetBinder {
         if (!WechatDpiConfig.appliesTo(packageName)) {
             return;
         }
-        DpiConfigStore store = DpisApplication.getActiveHookConfigStore(null);
+        DpisConfigStore store = DpisApplication.getActiveHookConfigStore(null);
         Integer dpi = store != null && dpisEnabled ? store.getWechatDpi(packageName) : null;
         WechatDpiPropertySyncer.publishDpiAsync(packageName, dpi);
     }

@@ -22,7 +22,7 @@ public final class DpisApplication extends Application implements XposedServiceH
             new CopyOnWriteArraySet<>();
 
     private static volatile DpisApplication instance;
-    private static volatile DpiConfigStore configStore;
+    private static volatile DpisConfigStore configStore;
     private static volatile XposedService xposedService;
     private static volatile boolean xposedSelfLoaded;
     public boolean xposedSelfLoadedByLegacyConstructorHook;
@@ -46,8 +46,8 @@ public final class DpisApplication extends Application implements XposedServiceH
 
     @Override
     public void onServiceBind(XposedService service) {
-        DpiConfigStore localStore = ConfigStoreFactory.createLocalModuleConfigStore(this);
-        DpiConfigStore runtimeDeliveryStore =
+        DpisConfigStore localStore = ConfigStoreFactory.createLocalModuleConfigStore(this);
+        DpisConfigStore runtimeDeliveryStore =
                 ConfigStoreFactory.createRuntimeDeliveryModuleConfigStore(service);
         migrateLocalConfigStore(localStore);
         migrateLocalConfigStore(runtimeDeliveryStore);
@@ -67,7 +67,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         notifyServiceStateChanged();
     }
 
-    static DpiConfigStore getConfigStore() {
+    static DpisConfigStore getConfigStore() {
         return configStore;
     }
 
@@ -94,8 +94,8 @@ public final class DpisApplication extends Application implements XposedServiceH
         }
     }
 
-    static DpiConfigStore getActiveHookConfigStore(Context context) {
-        DpiConfigStore sharedStore = configStore;
+    static DpisConfigStore getActiveHookConfigStore(Context context) {
+        DpisConfigStore sharedStore = configStore;
         if (sharedStore != null) {
             return sharedStore;
         }
@@ -114,10 +114,10 @@ public final class DpisApplication extends Application implements XposedServiceH
             return;
         }
         XposedService service = xposedService;
-        DpiConfigStore localStore = ConfigStoreFactory.createLocalModuleConfigStore(application);
+        DpisConfigStore localStore = ConfigStoreFactory.createLocalModuleConfigStore(application);
         migrateLocalConfigStore(localStore);
         migrateLocalConfigStore(ConfigStoreFactory.createRuntimeDeliveryModuleConfigStore(service));
-        DpiConfigStore refreshedStore = service != null
+        DpisConfigStore refreshedStore = service != null
                 ? ConfigStoreFactory.createLocalUiModuleConfigStore(application, service)
                 : ConfigStoreFactory.createLocalModuleConfigStore(application);
         configStore = refreshedStore;
@@ -143,7 +143,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         }
     }
 
-    private static void migrateLocalConfigStore(DpiConfigStore store) {
+    private static void migrateLocalConfigStore(DpisConfigStore store) {
         if (store == null) {
             return;
         }
@@ -151,7 +151,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         store.migrateLegacyPackageConfigToAggregated();
     }
 
-    private static void publishRuntimeConfig(DpiConfigStore from, DpiConfigStore to) {
+    private static void publishRuntimeConfig(DpisConfigStore from, DpisConfigStore to) {
         if (from == null || to == null || from == to) {
             return;
         }

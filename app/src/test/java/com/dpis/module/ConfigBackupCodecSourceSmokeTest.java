@@ -33,7 +33,7 @@ public class ConfigBackupCodecSourceSmokeTest {
     @Test
     public void codecSupportsTypefaceIdStringEntries() throws IOException {
         String codec = read("src/main/java/com/dpis/module/ConfigBackupCodec.java");
-        String store = read("src/main/java/com/dpis/module/DpiConfigStore.java");
+        String store = read("src/main/java/com/dpis/module/DpisConfigStore.java");
         String settings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
 
         assertTrue(store.contains("\"font.\" + packageName + \".typeface_id\""));

@@ -39,7 +39,7 @@ final class DebugConfigApplier {
             Log.w(TAG, "ignored: missing package");
             return;
         }
-        DpiConfigStore store = DpisApplication.getConfigStore();
+        DpisConfigStore store = DpisApplication.getConfigStore();
         boolean saved = true;
 
         if (intent.hasExtra(EXTRA_VIEWPORT_WIDTH_DP)) {

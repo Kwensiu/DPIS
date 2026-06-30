@@ -17,7 +17,7 @@ final class DiagnosticLogGate {
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return false;
         }
-        DpiConfigStore store = ConfigStoreFactory.createLocalModuleConfigStore(activity);
+        DpisConfigStore store = ConfigStoreFactory.createLocalModuleConfigStore(activity);
         if (store.isGlobalLogEnabled()) {
             return true;
         }
@@ -49,7 +49,7 @@ final class DiagnosticLogGate {
         return false;
     }
 
-    private static boolean enableLogs(Context context, DpiConfigStore store) {
+    private static boolean enableLogs(Context context, DpisConfigStore store) {
         if (store == null || !store.setGlobalLogEnabled(true)) {
             return false;
         }

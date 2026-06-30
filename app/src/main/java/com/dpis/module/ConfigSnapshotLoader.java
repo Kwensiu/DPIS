@@ -8,7 +8,7 @@ final class ConfigSnapshotLoader {
     private ConfigSnapshotLoader() {
     }
 
-    static ConfigSnapshot fromStore(DpiConfigStore store) {
+    static ConfigSnapshot fromStore(DpisConfigStore store) {
         if (store == null) {
             return ConfigSnapshot.empty();
         }

@@ -56,7 +56,7 @@ final class ModulePackagePlan {
                 : HookDomainOverride.automatic();
     }
 
-    static ModulePackagePlan resolve(DpiConfigStore store, String packageName) {
+    static ModulePackagePlan resolve(DpisConfigStore store, String packageName) {
         return resolve(ConfigSnapshotLoader.fromStore(store), packageName);
     }
 

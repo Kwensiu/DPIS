@@ -56,7 +56,7 @@ public class RuntimeConfigDeliverySourceTest {
 
     private static String activeFontLibraryFactoryBlock(String source) {
         int start = source.indexOf("static FontLibraryStore createLocalUiFontLibraryStore(");
-        int end = source.indexOf("static DpiConfigStore createForXposedHost", start);
+        int end = source.indexOf("static DpisConfigStore createForXposedHost", start);
         return source.substring(start, end);
     }
 

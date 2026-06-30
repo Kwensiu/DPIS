@@ -14,7 +14,7 @@ final class HyperOsNativeProxyRefreshCoordinator {
      * back into app startup, service binding, or MY_PACKAGE_REPLACED without revisiting the native
      * file side-effect scope.
      */
-    static void refreshConfiguredTargetsAsync(Context context, DpiConfigStore store) {
+    static void refreshConfiguredTargetsAsync(Context context, DpisConfigStore store) {
         if (context == null || store == null) {
             return;
         }
@@ -28,11 +28,11 @@ final class HyperOsNativeProxyRefreshCoordinator {
         refreshThread.start();
     }
 
-    static LinkedHashSet<String> collectRefreshPackagesForTest(DpiConfigStore store) {
+    static LinkedHashSet<String> collectRefreshPackagesForTest(DpisConfigStore store) {
         return collectRefreshPackages(store);
     }
 
-    private static LinkedHashSet<String> collectRefreshPackages(DpiConfigStore store) {
+    private static LinkedHashSet<String> collectRefreshPackages(DpisConfigStore store) {
         LinkedHashSet<String> packages = new LinkedHashSet<>();
         if (store == null
                 || !store.isFlutterFontHookEnabled()

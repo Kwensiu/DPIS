@@ -4,14 +4,14 @@ final class ViewportModePolicy {
     private ViewportModePolicy() {
     }
 
-    static String resolve(DpiConfigStore store, String packageName) {
+    static String resolve(DpisConfigStore store, String packageName) {
         if (store == null || packageName == null || packageName.isEmpty()) {
             return ViewportApplyMode.OFF;
         }
         return resolve(store.isSystemServerHooksEnabled(), store, packageName);
     }
 
-    static String resolve(HookRuntimePolicy policy, DpiConfigStore store, String packageName) {
+    static String resolve(HookRuntimePolicy policy, DpisConfigStore store, String packageName) {
         if (store == null || packageName == null || packageName.isEmpty()) {
             return ViewportApplyMode.OFF;
         }
@@ -20,14 +20,14 @@ final class ViewportModePolicy {
     }
 
     private static String resolve(boolean systemHooksEnabled,
-                                  DpiConfigStore store,
+                                  DpisConfigStore store,
                                   String packageName) {
         return EffectiveModeResolver.resolveViewportMode(
                 store.getTargetViewportApplyMode(packageName),
                 systemHooksEnabled);
     }
 
-    static boolean shouldApplyConfigurationOverride(DpiConfigStore store, String packageName) {
+    static boolean shouldApplyConfigurationOverride(DpisConfigStore store, String packageName) {
         if (shouldApplyWebApkOwnerConfigurationOverride(store, packageName)) {
             return true;
         }
@@ -35,7 +35,7 @@ final class ViewportModePolicy {
     }
 
     static boolean shouldApplyConfigurationOverride(HookRuntimePolicy policy,
-                                                    DpiConfigStore store,
+                                                    DpisConfigStore store,
                                                     String packageName) {
         if (shouldApplyWebApkOwnerConfigurationOverride(store, packageName)) {
             return true;
@@ -43,7 +43,7 @@ final class ViewportModePolicy {
         return ViewportApplyMode.COMPAT.equals(resolve(policy, store, packageName));
     }
 
-    static boolean shouldApplyConfigurationOverride(DpiConfigStore store,
+    static boolean shouldApplyConfigurationOverride(DpisConfigStore store,
                                                     String packageName,
                                                     ViewportTargetResolution resolution,
                                                     boolean viewportNeedsUpdate) {
@@ -64,7 +64,7 @@ final class ViewportModePolicy {
     }
 
     static boolean shouldApplyConfigurationOverride(HookRuntimePolicy policy,
-                                                    DpiConfigStore store,
+                                                    DpisConfigStore store,
                                                     String packageName,
                                                     ViewportTargetResolution resolution,
                                                     boolean viewportNeedsUpdate) {
@@ -84,7 +84,7 @@ final class ViewportModePolicy {
         return true;
     }
 
-    private static boolean shouldApplyWebApkOwnerConfigurationOverride(DpiConfigStore store,
+    private static boolean shouldApplyWebApkOwnerConfigurationOverride(DpisConfigStore store,
                                                                        String packageName) {
         // Chrome-carried WebAPK owner routing is an app-process bridge by design.
         // Keep owner targets compat-capable here even if global auto now resolves

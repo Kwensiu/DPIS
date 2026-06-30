@@ -16,7 +16,7 @@ public class DpisApplicationRuntimeDeliveryTest {
     @Test
     public void publishRuntimeConfigKeepsTemplatesAndGlobalPrefillLocalOnly() throws Exception {
         FakePrefs localPrefs = new FakePrefs();
-        DpiConfigStore local = new DpiConfigStore(localPrefs);
+        DpisConfigStore local = new DpisConfigStore(localPrefs);
         TemplateConfigValue globalPrefill = new TemplateConfigValue(
                 ViewportTargetSpec.absoluteDp(411),
                 ViewportApplyMode.AUTO,
@@ -41,7 +41,7 @@ public class DpisApplicationRuntimeDeliveryTest {
         assertTrue(localTemplates.reorder(List.of("template_a")));
 
         FakePrefs deliveryPrefs = new FakePrefs();
-        DpiConfigStore runtimeDelivery = new DpiConfigStore(deliveryPrefs);
+        DpisConfigStore runtimeDelivery = new DpisConfigStore(deliveryPrefs);
         assertTrue(runtimeDelivery.setTargetFontScalePercent("com.miui.weather2", 200));
 
         invokePublish(local, runtimeDelivery);
@@ -61,10 +61,10 @@ public class DpisApplicationRuntimeDeliveryTest {
     @Test
     public void publishRuntimeConfigClearsRemoteTemplateAndPrefillConfigAfterLocalDelete() throws Exception {
         FakePrefs localPrefs = new FakePrefs();
-        DpiConfigStore local = new DpiConfigStore(localPrefs);
+        DpisConfigStore local = new DpisConfigStore(localPrefs);
 
         FakePrefs deliveryPrefs = new FakePrefs();
-        DpiConfigStore runtimeDelivery = new DpiConfigStore(deliveryPrefs);
+        DpisConfigStore runtimeDelivery = new DpisConfigStore(deliveryPrefs);
         assertTrue(new GlobalPrefillStore(deliveryPrefs).write(new TemplateConfigValue(
                 ViewportTargetSpec.absoluteDp(512),
                 ViewportApplyMode.SYSTEM,
@@ -98,11 +98,11 @@ public class DpisApplicationRuntimeDeliveryTest {
     @Test
     public void publishRuntimeConfigOverwritesRemoteFromLocalAfterServiceBind() throws Exception {
         FakePrefs localPrefs = new FakePrefs();
-        DpiConfigStore local = new DpiConfigStore(localPrefs);
+        DpisConfigStore local = new DpisConfigStore(localPrefs);
         assertTrue(local.setHyperOsFlutterFontHookEnabled(false));
 
         FakePrefs deliveryPrefs = new FakePrefs();
-        DpiConfigStore runtimeDelivery = new DpiConfigStore(deliveryPrefs);
+        DpisConfigStore runtimeDelivery = new DpisConfigStore(deliveryPrefs);
         assertTrue(runtimeDelivery.setHyperOsFlutterFontHookEnabled(true));
         assertTrue(runtimeDelivery.setTargetFontScalePercent("com.miui.weather2", 200));
         assertTrue(runtimeDelivery.setTargetFontApplyMode("com.miui.weather2", FontApplyMode.FIELD_REWRITE));
@@ -122,11 +122,11 @@ public class DpisApplicationRuntimeDeliveryTest {
     @Test
     public void publishesWechatDpiToRemoteConfigOnServiceBind() throws Exception {
         FakePrefs localPrefs = new FakePrefs();
-        DpiConfigStore local = new DpiConfigStore(localPrefs);
+        DpisConfigStore local = new DpisConfigStore(localPrefs);
         assertTrue(local.setWechatDpi("com.tencent.mm", 600));
 
         FakePrefs deliveryPrefs = new FakePrefs();
-        DpiConfigStore runtimeDelivery = new DpiConfigStore(deliveryPrefs);
+        DpisConfigStore runtimeDelivery = new DpisConfigStore(deliveryPrefs);
 
         invokePublish(local, runtimeDelivery);
 
@@ -137,11 +137,11 @@ public class DpisApplicationRuntimeDeliveryTest {
     @Test
     public void publishRuntimeConfigDoesNotSendLocalStartupDisclaimerConsent() throws Exception {
         FakePrefs localPrefs = new FakePrefs();
-        DpiConfigStore local = new DpiConfigStore(localPrefs);
+        DpisConfigStore local = new DpisConfigStore(localPrefs);
         assertTrue(local.setStartupDisclaimerAccepted(true));
 
         FakePrefs deliveryPrefs = new FakePrefs();
-        DpiConfigStore runtimeDelivery = new DpiConfigStore(deliveryPrefs);
+        DpisConfigStore runtimeDelivery = new DpisConfigStore(deliveryPrefs);
         assertTrue(runtimeDelivery.setTargetFontScalePercent("com.miui.weather2", 200));
 
         invokePublish(local, runtimeDelivery);
@@ -154,13 +154,13 @@ public class DpisApplicationRuntimeDeliveryTest {
     @Test
     public void publishRuntimeConfigDoesNotSendLocalOnlyUiState() throws Exception {
         FakePrefs localPrefs = new FakePrefs();
-        DpiConfigStore local = new DpiConfigStore(localPrefs);
+        DpisConfigStore local = new DpisConfigStore(localPrefs);
         assertTrue(local.setStartupDisclaimerAccepted(true));
         assertTrue(local.setInterfaceScalePercent(73));
         assertTrue(local.setTargetFontScalePercent("com.miui.weather2", 200));
 
         FakePrefs deliveryPrefs = new FakePrefs();
-        DpiConfigStore runtimeDelivery = new DpiConfigStore(deliveryPrefs);
+        DpisConfigStore runtimeDelivery = new DpisConfigStore(deliveryPrefs);
 
         invokePublish(local, runtimeDelivery);
 
@@ -174,14 +174,14 @@ public class DpisApplicationRuntimeDeliveryTest {
     @Test
     public void publishRuntimeConfigClearsRemoteOnlyUiState() throws Exception {
         FakePrefs localPrefs = new FakePrefs();
-        DpiConfigStore local = new DpiConfigStore(localPrefs);
+        DpisConfigStore local = new DpisConfigStore(localPrefs);
 
         FakePrefs deliveryPrefs = new FakePrefs();
         deliveryPrefs.edit()
-                .putBoolean(DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
-                .putInt(DpiConfigStore.KEY_INTERFACE_SCALE_PERCENT, 73)
+                .putBoolean(DpisConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, true)
+                .putInt(DpisConfigStore.KEY_INTERFACE_SCALE_PERCENT, 73)
                 .commit();
-        DpiConfigStore runtimeDelivery = new DpiConfigStore(deliveryPrefs);
+        DpisConfigStore runtimeDelivery = new DpisConfigStore(deliveryPrefs);
 
         invokePublish(local, runtimeDelivery);
 
@@ -191,9 +191,9 @@ public class DpisApplicationRuntimeDeliveryTest {
         assertEquals(AppUiScaleManager.DEFAULT_SCALE_PERCENT, runtimeDelivery.getInterfaceScalePercent());
     }
 
-    private static void invokePublish(DpiConfigStore from, DpiConfigStore to) throws Exception {
+    private static void invokePublish(DpisConfigStore from, DpisConfigStore to) throws Exception {
         Method method = DpisApplication.class.getDeclaredMethod(
-                "publishRuntimeConfig", DpiConfigStore.class, DpiConfigStore.class);
+                "publishRuntimeConfig", DpisConfigStore.class, DpisConfigStore.class);
         method.setAccessible(true);
         method.invoke(null, from, to);
     }

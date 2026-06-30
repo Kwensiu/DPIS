@@ -85,7 +85,7 @@ final class AppConfigDialogBinder {
                 String viewportScaleInput,
                 String viewportAbsoluteInput);
 
-        DpiConfigStore getConfigStore();
+        DpisConfigStore getConfigStore();
 
         void requestAppsLoad();
 

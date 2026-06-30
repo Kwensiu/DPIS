@@ -18,7 +18,7 @@ final class FontHookDomainPropertySyncer {
         publisherThread.start();
     }
 
-    static void publishFromStoreAsync(String packageName, DpiConfigStore store) {
+    static void publishFromStoreAsync(String packageName, DpisConfigStore store) {
         if (packageName == null || packageName.isBlank() || store == null) {
             return;
         }
@@ -41,7 +41,7 @@ final class FontHookDomainPropertySyncer {
         cleanerThread.start();
     }
 
-    static void syncConfiguredTargetsAsync(DpiConfigStore store) {
+    static void syncConfiguredTargetsAsync(DpisConfigStore store) {
         if (store == null) {
             return;
         }

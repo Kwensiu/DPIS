@@ -38,7 +38,7 @@ public class SystemServerMutationPolicyHookInstallerTest {
 
     private static HookRuntimePolicy createPolicy(boolean safeMode, boolean systemHooksEnabled) {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setSystemServerSafeModeEnabled(safeMode);
         store.setSystemServerHooksEnabled(systemHooksEnabled);
         return HookRuntimePolicy.fromStore(store);

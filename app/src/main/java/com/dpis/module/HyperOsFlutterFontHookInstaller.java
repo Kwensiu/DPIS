@@ -53,7 +53,7 @@ final class HyperOsFlutterFontHookInstaller {
     private HyperOsFlutterFontHookInstaller() {
     }
 
-    static void install(XposedInterface xposed, String packageName, DpiConfigStore store) {
+    static void install(XposedInterface xposed, String packageName, DpisConfigStore store) {
         if (store == null) {
             return;
         }

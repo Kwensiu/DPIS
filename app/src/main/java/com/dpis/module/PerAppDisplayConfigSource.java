@@ -14,7 +14,7 @@ final class PerAppDisplayConfigSource {
     private final SnapshotProvider snapshotProvider;
     private final PackageFallbackProvider packageFallbackProvider;
 
-    PerAppDisplayConfigSource(DpiConfigStore store) {
+    PerAppDisplayConfigSource(DpisConfigStore store) {
         this(ConfigSnapshotLoader.fromStore(store));
     }
 
@@ -99,7 +99,7 @@ final class PerAppDisplayConfigSource {
 
     private static PackageConfigSnapshot loadLegacyRuntimePropertyConfig(String packageName) {
         ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(
-                new DpiConfigStore(new RuntimePropertyConfigPreferences(packageName)));
+                new DpisConfigStore(new RuntimePropertyConfigPreferences(packageName)));
         return snapshot.getPackage(packageName);
     }
 }

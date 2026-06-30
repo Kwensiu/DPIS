@@ -75,7 +75,7 @@ public class WebApkRuntimeOwnerBridgeTest {
 
     @Test
     public void emptyOwnerConfigDoesNotOverrideChromeCarrier() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetDpisEnabled(OWNER, true);
 
         assertFalse(WebApkRuntimeOwnerBridge.hasActiveOwnerConfigForTest(store, OWNER));
@@ -83,7 +83,7 @@ public class WebApkRuntimeOwnerBridgeTest {
 
     @Test
     public void activeOwnerConfigCanOverrideChromeCarrier() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetDpisEnabled(OWNER, true);
         store.setTargetViewportSpec(OWNER, ViewportTargetSpec.relativeScale(150000));
 

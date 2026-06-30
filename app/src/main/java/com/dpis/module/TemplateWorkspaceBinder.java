@@ -45,7 +45,7 @@ final class TemplateWorkspaceBinder {
         this.context = context;
         this.globalPrefillActions = globalPrefillActions;
         this.quickTemplateActions = quickTemplateActions;
-        this.preferences = context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE);
+        this.preferences = context.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE);
         this.formatter = new TemplateConfigSummaryFormatter(
                 new ResourceSummaryText(context),
                 new TemplateTypefaceResolver(() -> ConfigStoreFactory.createLocalUiFontLibraryStore(

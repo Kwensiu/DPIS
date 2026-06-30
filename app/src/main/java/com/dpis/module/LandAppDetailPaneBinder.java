@@ -1314,7 +1314,7 @@ final class LandAppDetailPaneBinder {
         if (item == null || item.packageName == null || item.packageName.isBlank()) {
             return HookDomainOverride.automatic();
         }
-        DpiConfigStore store = DpisApplication.getActiveHookConfigStore(activity);
+        DpisConfigStore store = DpisApplication.getActiveHookConfigStore(activity);
         return HookDomainOverrideStore.automaticIfSelectionMatchesAutomatic(
                 new HookDomainOverrideStore(store).read(item.packageName),
                 FontHookDomainRegistry.recommendedTemplateKnownDomains());

@@ -33,7 +33,7 @@ final class WebApkRuntimeOwnerBridge {
     private WebApkRuntimeOwnerBridge() {
     }
 
-    static String resolveEffectivePackage(DpiConfigStore store, String carrierPackage) {
+    static String resolveEffectivePackage(DpisConfigStore store, String carrierPackage) {
         if (!CHROME_PACKAGE.equals(carrierPackage) || store == null) {
             return carrierPackage;
         }
@@ -42,7 +42,7 @@ final class WebApkRuntimeOwnerBridge {
             recordUnresolved();
             return carrierPackage;
         }
-        DpiConfigStore ownerStore = ownerStore(owner, store);
+        DpisConfigStore ownerStore = ownerStore(owner, store);
         if (!hasActiveOwnerConfig(ownerStore, owner)) {
             logIfChanged("unconfigured:" + owner,
                     "DPIS_WEBAPK Chrome carrier owner ignored: carrier="
@@ -55,14 +55,14 @@ final class WebApkRuntimeOwnerBridge {
         return owner;
     }
 
-    static DpiConfigStore resolveEffectiveStore(DpiConfigStore store, String effectivePackage) {
+    static DpisConfigStore resolveEffectiveStore(DpisConfigStore store, String effectivePackage) {
         if (WebApkCarrierResolver.isWebApkOwnerPackage(effectivePackage)) {
             return ownerStore(effectivePackage, store);
         }
         return store;
     }
 
-    private static boolean hasActiveOwnerConfig(DpiConfigStore store, String owner) {
+    private static boolean hasActiveOwnerConfig(DpisConfigStore store, String owner) {
         if (store == null || !store.isTargetDpisEnabled(owner)) {
             return false;
         }
@@ -74,10 +74,10 @@ final class WebApkRuntimeOwnerBridge {
                 && !store.getTargetTypefaceId(owner).isBlank());
     }
 
-    private static DpiConfigStore ownerStore(String owner, DpiConfigStore fallbackStore) {
+    private static DpisConfigStore ownerStore(String owner, DpisConfigStore fallbackStore) {
         // WebAPK owner sync runs inside Chrome's app process, so an owner saved as
         // viewport auto must resolve like the normal app-process fallback route.
-        return new DpiConfigStore(new RuntimePropertyConfigPreferences(
+        return new DpisConfigStore(new RuntimePropertyConfigPreferences(
                 owner,
                 RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET));
     }
@@ -155,7 +155,7 @@ final class WebApkRuntimeOwnerBridge {
         LAST_MESSAGES.clear();
     }
 
-    static boolean hasActiveOwnerConfigForTest(DpiConfigStore store, String owner) {
+    static boolean hasActiveOwnerConfigForTest(DpisConfigStore store, String owner) {
         return hasActiveOwnerConfig(store, owner);
     }
 
@@ -317,7 +317,7 @@ final class WebApkRuntimeOwnerBridge {
             if (resources == null) {
                 return;
             }
-            DpiConfigStore ownerStore = ownerStore(owner, null);
+            DpisConfigStore ownerStore = ownerStore(owner, null);
             Configuration config = resources.getConfiguration();
             ResourcesManagerHookInstaller.applyResourceOverrides(
                     config, ownerStore, owner, "WebApkOwnerBridge(" + sourceTag + ")");

@@ -13,7 +13,7 @@ final class LauncherIconVisibilityStore {
     LauncherIconVisibilityStore(Context context) {
         this(
                 context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE),
-                context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE));
+                context.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE));
     }
 
     LauncherIconVisibilityStore(
@@ -29,7 +29,7 @@ final class LauncherIconVisibilityStore {
             return preferences.getBoolean(KEY_HIDDEN, false);
         }
         return legacyPreferences != null
-                && legacyPreferences.getBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, false);
+                && legacyPreferences.getBoolean(DpisConfigStore.KEY_HIDE_LAUNCHER_ICON, false);
     }
 
     boolean setHidden(boolean hidden) {

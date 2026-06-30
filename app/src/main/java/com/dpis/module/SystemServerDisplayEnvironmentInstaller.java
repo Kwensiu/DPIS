@@ -109,13 +109,13 @@ final class SystemServerDisplayEnvironmentInstaller {
     }
 
     static InstallResult install(XposedInterface xposed,
-                                 DpiConfigStore store,
+                                 DpisConfigStore store,
                                  ModernApiCapabilities apiCapabilities) {
         return install(xposed, store, apiCapabilities, null);
     }
 
     static InstallResult install(XposedInterface xposed,
-                                 DpiConfigStore store,
+                                 DpisConfigStore store,
                                  ModernApiCapabilities apiCapabilities,
                                  ClassLoader systemServerClassLoader) {
         if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {

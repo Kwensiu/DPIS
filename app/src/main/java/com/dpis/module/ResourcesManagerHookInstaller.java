@@ -37,7 +37,7 @@ final class ResourcesManagerHookInstaller {
 
     static void install(XposedInterface xposed,
                         String packageName,
-                        DpiConfigStore store,
+                        DpisConfigStore store,
                         ModernApiCapabilities apiCapabilities)
             throws ReflectiveOperationException {
         install(xposed, packageName, store, HookRuntimePolicy.fromStore(store), apiCapabilities);
@@ -45,7 +45,7 @@ final class ResourcesManagerHookInstaller {
 
     static void install(XposedInterface xposed,
                         String packageName,
-                        DpiConfigStore store,
+                        DpisConfigStore store,
                         HookRuntimePolicy policy,
                         ModernApiCapabilities apiCapabilities)
             throws ReflectiveOperationException {
@@ -111,7 +111,7 @@ final class ResourcesManagerHookInstaller {
     private static int installResourceCreationHooks(XposedInterface xposed,
                                                     Class<?> resourcesManagerClass,
                                                     String packageName,
-                                                    DpiConfigStore store,
+                                                    DpisConfigStore store,
                                                     HookRuntimePolicy policy,
                                                     ModernApiCapabilities apiCapabilities) {
         int hookedCount = 0;
@@ -146,7 +146,7 @@ final class ResourcesManagerHookInstaller {
     private static int installResourcesKeyHooks(XposedInterface xposed,
                                                 Class<?> resourcesManagerClass,
                                                 String packageName,
-                                                DpiConfigStore store,
+                                                DpisConfigStore store,
                                                 HookRuntimePolicy policy,
                                                 ModernApiCapabilities apiCapabilities) {
         int hookedCount = 0;
@@ -176,7 +176,7 @@ final class ResourcesManagerHookInstaller {
 
     static void maybeApplyKeyOverride(Object resourcesManager,
                                       Object key,
-                                      DpiConfigStore store,
+                                      DpisConfigStore store,
                                       String packageName,
                                       String sourceTag) {
         maybeApplyKeyOverride(resourcesManager, key, store, packageName, sourceTag,
@@ -185,7 +185,7 @@ final class ResourcesManagerHookInstaller {
 
     static void maybeApplyKeyOverride(Object resourcesManager,
                                       Object key,
-                                      DpiConfigStore store,
+                                      DpisConfigStore store,
                                       String packageName,
                                       String sourceTag,
                                       HookRuntimePolicy policy) {
@@ -309,7 +309,7 @@ final class ResourcesManagerHookInstaller {
     }
 
     private static boolean shouldPreserveWindowLikeResourcesKeyOverride(Configuration sourceConfig,
-                                                                       DpiConfigStore store,
+                                                                       DpisConfigStore store,
                                                                        String packageName,
                                                                        String sourceTag) {
         if (sourceConfig == null
@@ -389,14 +389,14 @@ final class ResourcesManagerHookInstaller {
                 || methodName.contains("createBaseTokenResources"));
     }
 
-    static void applyResourceOverrides(Configuration config, DpiConfigStore store,
+    static void applyResourceOverrides(Configuration config, DpisConfigStore store,
                                        String packageName, String sourceTag) {
         applyResourceOverrides(config, store, packageName, sourceTag,
                 HookRuntimePolicy.fromStore(store));
     }
 
     static void applyResourceOverrides(Configuration config,
-                                       DpiConfigStore store,
+                                       DpisConfigStore store,
                                        String packageName,
                                        String sourceTag,
                                        HookRuntimePolicy policy) {

@@ -15,7 +15,7 @@ final class WechatDpiPropertySyncer {
         publisherThread.start();
     }
 
-    static void syncConfiguredTargetsAsync(DpiConfigStore store) {
+    static void syncConfiguredTargetsAsync(DpisConfigStore store) {
         if (store == null) {
             return;
         }
@@ -29,7 +29,7 @@ final class WechatDpiPropertySyncer {
         syncThread.start();
     }
 
-    static String buildSyncCommandForTest(DpiConfigStore store) {
+    static String buildSyncCommandForTest(DpisConfigStore store) {
         return buildSyncCommand(store);
     }
 
@@ -37,7 +37,7 @@ final class WechatDpiPropertySyncer {
         return buildDpiCommand(packageName, dpi);
     }
 
-    private static String buildSyncCommand(DpiConfigStore store) {
+    private static String buildSyncCommand(DpisConfigStore store) {
         if (store == null) {
             return "";
         }

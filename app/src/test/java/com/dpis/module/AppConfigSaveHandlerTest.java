@@ -12,7 +12,7 @@ import static org.junit.Assert.assertTrue;
 public class AppConfigSaveHandlerTest {
     @Test
     public void saveUsesCurrentViewportModeOverPersistedAuto() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(90000));
         store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.AUTO);
 
@@ -28,7 +28,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void saveFallsBackToPersistedViewportModeWhenCurrentModeIsMissing() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.relativeScale(90000));
         store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.COMPAT);
 
@@ -44,7 +44,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void saveFallsBackToListItemViewportModeForFirstEnabledSave() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
 
         String resolvedMode = AppConfigSaveHandler.resolveViewportApplyModeForSave(
                 store,
@@ -58,7 +58,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void saveDefaultsFirstEnabledViewportModeToAutoWithoutListItemMode() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
 
         String resolvedMode = AppConfigSaveHandler.resolveViewportApplyModeForSave(
                 store,
@@ -72,7 +72,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void saveDefaultsInvalidViewportModeToAutoInsteadOfDroppingEnabledTarget() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
 
         String resolvedMode = AppConfigSaveHandler.resolveViewportApplyModeForSave(
                 store,
@@ -86,7 +86,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void saveUsesPreviewViewportApplyModeFallbackBeforeRealConfigExists() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
 
         String resolvedMode = AppConfigSaveHandler.resolveViewportApplyModeForSave(
                 store,
@@ -100,7 +100,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void savingPreviewOnlyConfigConvertsHiddenPrefillDomainsToRealPackageConfig() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
                 ViewportTargetSpec.off(),
                 ViewportApplyMode.OFF,
@@ -120,7 +120,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void savingNonPreviewItemDoesNotCreateHiddenPrefillConfig() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
 
         assertTrue(AppConfigSaveHandler.persistPreviewOnlyConfig(store, item, null, false));
@@ -130,7 +130,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void hookDomainOnlyPreviewSavePersistsRealPackageConfig() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
                 ViewportTargetSpec.off(),
                 ViewportApplyMode.OFF,
@@ -148,7 +148,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void clearedHookDomainPreviewDoesNotForcePackageConfig() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
                 ViewportTargetSpec.off(),
                 ViewportApplyMode.OFF,
@@ -190,7 +190,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void resetThenSaveDoesNotPersistHiddenPreviewHookDomains() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
                 ViewportTargetSpec.off(),
                 ViewportApplyMode.COMPAT,
@@ -224,7 +224,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void hookDomainResetClearsStoredCustomDomainsOnSave() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
         assertTrue(store.setPackageFontHookDomainsRaw(item.packageName, "resources_font"));
 
@@ -236,7 +236,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void hookDomainSaveClearsRawWhenDraftMatchesRecommendedDomains() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
         String recommendedRaw = HookDomainOverrideStore.formatCsv(
                 FontHookDomainRegistry.recommendedTemplateKnownDomains(),
@@ -251,7 +251,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void viewportApplyModeResetOverridesPersistedModeOnSave() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.COMPAT);
 
         String resolvedMode = AppConfigSaveHandler.resolveViewportApplyModeForSave(
@@ -266,7 +266,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void savePreservesFontModeWhenFontScaleIsEmpty() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
 
         AppConfigSaveHandler.Result result = new AppConfigSaveHandler().saveResolved(
@@ -295,7 +295,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void savePreservesViewportTargetTypeWhenViewportInputIsEmpty() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
 
         AppConfigSaveHandler.Result result = new AppConfigSaveHandler().saveResolved(
@@ -326,7 +326,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void saveClearsDefaultSystemFontModeWhenFontScaleIsEmpty() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
 
         AppConfigSaveHandler.Result result = new AppConfigSaveHandler().saveResolved(
@@ -355,7 +355,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void savePrunesFullyDefaultPackageConfigAfterReset() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
         assertTrue(store.setTargetViewportTypeDraft(
                 item.packageName, ViewportTargetType.RELATIVE_SCALE));
@@ -387,7 +387,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void unchangedGlobalPrefillPreviewSaveDoesNotCreatePackageConfig() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
                 ViewportTargetSpec.relativeScale(87500),
                 ViewportApplyMode.AUTO,
@@ -420,7 +420,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void resetGlobalPrefillPreviewThenSaveDoesNotCreatePackageConfig() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
                 ViewportTargetSpec.relativeScale(87500),
                 ViewportApplyMode.AUTO,
@@ -453,7 +453,7 @@ public class AppConfigSaveHandlerTest {
 
     @Test
     public void changedGlobalPrefillPreviewSaveCreatesPackageConfig() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
                 ViewportTargetSpec.relativeScale(87500),
                 ViewportApplyMode.AUTO,
@@ -488,7 +488,7 @@ public class AppConfigSaveHandlerTest {
     @Test
     public void saveReportsFailureWhenStoreCommitFails() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         prefs.setCommitResult(false);
         boolean[] changed = {false};
 

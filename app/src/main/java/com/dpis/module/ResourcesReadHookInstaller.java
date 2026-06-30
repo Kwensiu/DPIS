@@ -28,14 +28,14 @@ final class ResourcesReadHookInstaller {
         hookInstalled = false;
     }
 
-    static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
+    static void install(XposedInterface xposed, String packageName, DpisConfigStore store)
             throws ReflectiveOperationException {
         install(xposed, packageName, store, true, false);
     }
 
     static void install(XposedInterface xposed,
                         String packageName,
-                        DpiConfigStore store,
+                        DpisConfigStore store,
                         boolean viewportHandlingEnabled)
             throws ReflectiveOperationException {
         install(xposed, packageName, store, new ResourcesReadHookPolicy(
@@ -46,7 +46,7 @@ final class ResourcesReadHookInstaller {
 
     static void install(XposedInterface xposed,
                         String packageName,
-                        DpiConfigStore store,
+                        DpisConfigStore store,
                         boolean viewportHandlingEnabled,
                         boolean fontConfigurationOverrideEnabled)
             throws ReflectiveOperationException {
@@ -58,7 +58,7 @@ final class ResourcesReadHookInstaller {
 
     static void install(XposedInterface xposed,
                         String packageName,
-                        DpiConfigStore store,
+                        DpisConfigStore store,
                         ResourcesReadHookPolicy policy,
                         ModernApiCapabilities apiCapabilities)
             throws ReflectiveOperationException {
@@ -68,7 +68,7 @@ final class ResourcesReadHookInstaller {
 
     static void install(XposedInterface xposed,
                         String packageName,
-                        DpiConfigStore store,
+                        DpisConfigStore store,
                         HookRuntimePolicy runtimePolicy,
                         ResourcesReadHookPolicy policy,
                         ModernApiCapabilities apiCapabilities)
@@ -210,7 +210,7 @@ final class ResourcesReadHookInstaller {
 
     static void applyConfigurationOverride(Configuration config,
                                            String packageName,
-                                           DpiConfigStore store,
+                                           DpisConfigStore store,
                                            String sourceTag) {
         applyConfigurationOverride(null, config, packageName, store, sourceTag);
     }
@@ -218,7 +218,7 @@ final class ResourcesReadHookInstaller {
     static void applyConfigurationOverride(Object resourceScope,
                                            Configuration config,
                                            String packageName,
-                                           DpiConfigStore store,
+                                           DpisConfigStore store,
                                            String sourceTag) {
         applyConfigurationOverride(
                 resourceScope,
@@ -235,7 +235,7 @@ final class ResourcesReadHookInstaller {
     static void applyConfigurationOverrideForTest(Object resourceScope,
                                                   Configuration config,
                                                   String packageName,
-                                                  DpiConfigStore store,
+                                                  DpisConfigStore store,
                                                   String sourceTag,
                                                   boolean windowScoped) {
         applyConfigurationOverride(
@@ -250,7 +250,7 @@ final class ResourcesReadHookInstaller {
     private static void applyConfigurationOverride(Object resourceScope,
                                                    Configuration config,
                                                    String packageName,
-                                                   DpiConfigStore store,
+                                                   DpisConfigStore store,
                                                    String sourceTag,
                                                    Boolean windowScopedOverride) {
         applyConfigurationOverride(
@@ -268,7 +268,7 @@ final class ResourcesReadHookInstaller {
     static void applyConfigurationOverrideForTest(Object resourceScope,
                                                   Configuration config,
                                                   String packageName,
-                                                  DpiConfigStore store,
+                                                  DpisConfigStore store,
                                                   String sourceTag,
                                                   boolean windowScoped,
                                                   boolean viewportHandlingEnabled) {
@@ -287,7 +287,7 @@ final class ResourcesReadHookInstaller {
     static void applyConfigurationOverrideForTest(Object resourceScope,
                                                   Configuration config,
                                                   String packageName,
-                                                  DpiConfigStore store,
+                                                  DpisConfigStore store,
                                                   String sourceTag,
                                                   boolean windowScoped,
                                                   boolean viewportHandlingEnabled,
@@ -308,7 +308,7 @@ final class ResourcesReadHookInstaller {
     private static void applyConfigurationOverride(Object resourceScope,
                                                    Configuration config,
                                                    String packageName,
-                                                   DpiConfigStore store,
+                                                   DpisConfigStore store,
                                                    String sourceTag,
                                                    boolean viewportHandlingEnabled) {
         applyConfigurationOverride(
@@ -326,7 +326,7 @@ final class ResourcesReadHookInstaller {
     private static void applyConfigurationOverride(Object resourceScope,
                                                    Configuration config,
                                                    String packageName,
-                                                   DpiConfigStore store,
+                                                   DpisConfigStore store,
                                                    String sourceTag,
                                                    Boolean windowScopedOverride,
                                                    boolean viewportHandlingEnabled,
@@ -515,7 +515,7 @@ final class ResourcesReadHookInstaller {
         }
     }
 
-    private static void maybeLogLegacyAutoFallbackSuccess(DpiConfigStore store,
+    private static void maybeLogLegacyAutoFallbackSuccess(DpisConfigStore store,
                                                           String packageName,
                                                           String sourceTag,
                                                           int originalWidthDp,
@@ -559,7 +559,7 @@ final class ResourcesReadHookInstaller {
                                      DisplayMetrics metrics,
                                      Configuration config,
                                      String packageName,
-                                     DpiConfigStore store) {
+                                     DpisConfigStore store) {
         applyMetricsOverride(resourceScope, metrics, config, packageName,
                 ViewportConfigurationScope.isWindowScoped(config), store, true, false);
     }
@@ -568,7 +568,7 @@ final class ResourcesReadHookInstaller {
                                              DisplayMetrics metrics,
                                              Configuration config,
                                              String packageName,
-                                             DpiConfigStore store,
+                                             DpisConfigStore store,
                                              boolean viewportHandlingEnabled) {
         applyMetricsOverride(resourceScope, metrics, config, packageName,
                 ViewportConfigurationScope.isWindowScoped(config), store, viewportHandlingEnabled,
@@ -579,7 +579,7 @@ final class ResourcesReadHookInstaller {
                                              DisplayMetrics metrics,
                                              Configuration config,
                                              String packageName,
-                                             DpiConfigStore store,
+                                             DpisConfigStore store,
                                              boolean viewportHandlingEnabled,
                                              boolean metricsTargetFontOverrideEnabled) {
         applyMetricsOverride(resourceScope, metrics, config, packageName,
@@ -600,7 +600,7 @@ final class ResourcesReadHookInstaller {
                                             Configuration config,
                                             String packageName,
                                             boolean windowScoped,
-                                            DpiConfigStore store) {
+                                            DpisConfigStore store) {
         applyMetricsOverride(
                 resourceScope,
                 metrics,
@@ -617,7 +617,7 @@ final class ResourcesReadHookInstaller {
                                             Configuration config,
                                             String packageName,
                                             boolean windowScoped,
-                                            DpiConfigStore store,
+                                            DpisConfigStore store,
                                             boolean viewportHandlingEnabled) {
         applyMetricsOverride(
                 resourceScope,
@@ -635,7 +635,7 @@ final class ResourcesReadHookInstaller {
                                             Configuration config,
                                             String packageName,
                                             boolean windowScoped,
-                                            DpiConfigStore store,
+                                            DpisConfigStore store,
                                             boolean viewportHandlingEnabled,
                                             boolean metricsTargetFontOverrideEnabled) {
         applyMetricsOverride(
@@ -662,7 +662,7 @@ final class ResourcesReadHookInstaller {
                                              Configuration config,
                                              String packageName,
                                              boolean windowScoped,
-                                             DpiConfigStore store) {
+                                             DpisConfigStore store) {
         applyMetricsOverride(
                 resourceScope,
                 metrics,
@@ -679,7 +679,7 @@ final class ResourcesReadHookInstaller {
                                              Configuration config,
                                              String packageName,
                                              boolean windowScoped,
-                                             DpiConfigStore store,
+                                             DpisConfigStore store,
                                              boolean viewportHandlingEnabled,
                                              boolean metricsTargetFontOverrideEnabled) {
         packageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(store, packageName);
@@ -914,7 +914,7 @@ final class ResourcesReadHookInstaller {
     private static LocalMetricsViewportResult resolveLocalMetricsViewportResult(
             Configuration config,
             String packageName,
-            DpiConfigStore store,
+            DpisConfigStore store,
             boolean windowScoped) {
         if (store == null || config == null) {
             return null;

@@ -5,7 +5,7 @@ final class AppConfigPrefillPreview {
     }
 
     static AppListItem applyIfEligible(AppListItem item,
-            DpiConfigStore store,
+            DpisConfigStore store,
             TemplateConfigValue globalPrefill) {
         if (store == null) {
             return item;

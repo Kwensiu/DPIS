@@ -56,7 +56,7 @@ final class FlutterSettingsFontHookInstaller {
     private static final AtomicBoolean APP_CLASSLOADER_RETRY_ATTEMPTED = new AtomicBoolean();
 
     private static volatile XposedInterface storedXposed;
-    private static volatile DpiConfigStore storedStore;
+    private static volatile DpisConfigStore storedStore;
     private static volatile FontHookArbitration.FontDomainPlan storedDomainPlan;
     private static volatile String storedPackageName;
 
@@ -65,7 +65,7 @@ final class FlutterSettingsFontHookInstaller {
 
     static void retryWithAppClassLoader(XposedInterface xposed,
             String packageName,
-            DpiConfigStore store,
+            DpisConfigStore store,
             FontHookArbitration.FontDomainPlan domainPlan,
             ClassLoader appClassLoader) {
         bridgeProbe("DPIS_FONT flutter-retry-inner enter: package=" + packageName
@@ -175,7 +175,7 @@ final class FlutterSettingsFontHookInstaller {
 
     private static void callRetryWithClassLoader(ClassLoader classLoader, String source) {
         XposedInterface xposed = storedXposed;
-        DpiConfigStore store = storedStore;
+        DpisConfigStore store = storedStore;
         FontHookArbitration.FontDomainPlan domainPlan = storedDomainPlan;
         String packageName = storedPackageName;
         if (xposed == null || store == null || domainPlan == null || packageName == null) {
@@ -196,7 +196,7 @@ final class FlutterSettingsFontHookInstaller {
 
     static void install(XposedInterface xposed,
             String packageName,
-            DpiConfigStore store,
+            DpisConfigStore store,
             FontHookArbitration.FontDomainPlan domainPlan) {
         DpisLog.i("DPIS_FONT Flutter settings install entry: package=" + packageName
                 + ", hasXposed=" + (xposed != null)

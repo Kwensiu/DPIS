@@ -36,7 +36,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
     private static final ThreadLocal<Boolean> RESOURCES_READ_INTERNAL_UPDATE =
             ThreadLocal.withInitial(() -> Boolean.FALSE);
     private static final AtomicReference<Method> CURRENT_PACKAGE_METHOD = new AtomicReference<>();
-    private static final Map<String, DpiConfigStore> LEGACY_HOST_STORE_CACHE =
+    private static final Map<String, DpisConfigStore> LEGACY_HOST_STORE_CACHE =
             new ConcurrentHashMap<>();
 
     @Override
@@ -61,7 +61,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
             installSystemServerHooksForLegacy();
             return;
         }
-        DpiConfigStore store = createLegacyStore(packageName, lpparam.processName);
+        DpisConfigStore store = createLegacyStore(packageName, lpparam.processName);
         DpisLog.setLoggingEnabled(store.isGlobalLogEnabled());
         compatDebugLog("legacy handleLoadPackage: package=" + packageName
                 + ", process=" + lpparam.processName);
@@ -110,7 +110,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
         }
     }
 
-    private static DpiConfigStore createLegacyStore(String packageName, String processName) {
+    private static DpisConfigStore createLegacyStore(String packageName, String processName) {
         if (packageName != null && packageName.equals(processName)) {
             return ConfigStoreFactory.createForLegacyMainProcessHost(packageName);
         }
@@ -140,7 +140,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
 
     private static void installTypefaceOverrideHook(String packageName,
                                                     String targetTypefaceId,
-                                                    DpiConfigStore store) {
+                                                    DpisConfigStore store) {
         try {
             LegacyTypefaceOverrideHookInstaller.install(
                     packageName,
@@ -153,7 +153,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
         }
     }
 
-    private static void installResourcesImplHook(String packageName, DpiConfigStore store) {
+    private static void installResourcesImplHook(String packageName, DpisConfigStore store) {
         if (!RESOURCES_IMPL_HOOKED.compareAndSet(false, true)) {
             return;
         }
@@ -186,7 +186,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
         }
     }
 
-    private static void installResourcesManagerHook(String packageName, DpiConfigStore store) {
+    private static void installResourcesManagerHook(String packageName, DpisConfigStore store) {
         if (!RESOURCES_MANAGER_HOOKED.compareAndSet(false, true)) {
             return;
         }
@@ -230,7 +230,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
 
     private static int installUpdateResourcesForActivityHook(Class<?> resourcesManagerClass,
                                                              String packageName,
-                                                             DpiConfigStore store) {
+                                                             DpisConfigStore store) {
         try {
             ClassLoader bootClassLoader = ClassLoader.getSystemClassLoader();
             Class<?> iBinderClass = Class.forName("android.os.IBinder", false, bootClassLoader);
@@ -259,7 +259,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
 
     private static int installResourceCreationHooks(Class<?> resourcesManagerClass,
                                                     String packageName,
-                                                    DpiConfigStore store) {
+                                                    DpisConfigStore store) {
         int hookedCount = 0;
         Set<Method> hookedMethods = new HashSet<>();
         for (Method method : resourcesManagerClass.getDeclaredMethods()) {
@@ -287,7 +287,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
 
     private static int installResourcesKeyHooks(Class<?> resourcesManagerClass,
                                                 String packageName,
-                                                DpiConfigStore store) {
+                                                DpisConfigStore store) {
         int hookedCount = 0;
         Set<Method> hookedMethods = new HashSet<>();
         for (Method method : resourcesManagerClass.getDeclaredMethods()) {
@@ -336,7 +336,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
                 && "android.content.res.ResourcesKey".equals(parameterTypes[0].getName());
     }
 
-    private static void installResourcesReadHooks(String packageName, DpiConfigStore store) {
+    private static void installResourcesReadHooks(String packageName, DpisConfigStore store) {
         if (!RESOURCES_READ_HOOKED.compareAndSet(false, true)) {
             return;
         }
@@ -352,7 +352,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
                     Object result = param.getResult();
                     if (result instanceof Configuration configuration) {
                         String activePackage = resolveActivePackageName(packageName);
-                        DpiConfigStore activeStore = resolveStoreForPackage(activePackage, store);
+                        DpisConfigStore activeStore = resolveStoreForPackage(activePackage, store);
                         ResourcesReadHookInstaller.applyConfigurationOverride(
                                 configuration, activePackage, activeStore,
                                 "LegacyResourcesRead(getConfiguration)");
@@ -396,7 +396,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
                     try {
                         Configuration config = resources.getConfiguration();
                         String activePackage = resolveActivePackageName(packageName);
-                        DpiConfigStore activeStore = resolveStoreForPackage(activePackage, store);
+                        DpisConfigStore activeStore = resolveStoreForPackage(activePackage, store);
                         ResourcesReadHookInstaller.applyConfigurationOverride(
                                 config, activePackage, activeStore,
                                 "LegacyResourcesRead(getSystem)");
@@ -416,7 +416,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
         }
     }
 
-    private static void installDisplayHooks(String packageName, DpiConfigStore store) {
+    private static void installDisplayHooks(String packageName, DpisConfigStore store) {
         DisplayHookInstaller.setTargetPackageNameForLegacy(packageName);
         DisplayHookInstaller.setTargetStoreForLegacy(store);
         if (!DISPLAY_HOOKED.compareAndSet(false, true)) {
@@ -508,7 +508,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
         }
     }
 
-    private static void installFontFieldRewriteHooks(String packageName, DpiConfigStore store) {
+    private static void installFontFieldRewriteHooks(String packageName, DpisConfigStore store) {
         if (!FONT_FIELD_REWRITE_HOOKED.compareAndSet(false, true)) {
             return;
         }
@@ -587,7 +587,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
     }
 
     private static void applyResourceOverrides(Configuration config,
-                                               DpiConfigStore store,
+                                               DpisConfigStore store,
                                                String packageName,
                                                String sourceTag) {
         try {
@@ -621,7 +621,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
         return fallbackPackageName;
     }
 
-    private static DpiConfigStore resolveStoreForPackage(String packageName, DpiConfigStore fallbackStore) {
+    private static DpisConfigStore resolveStoreForPackage(String packageName, DpisConfigStore fallbackStore) {
         if (packageName == null || packageName.isBlank()) {
             return fallbackStore;
         }

@@ -36,7 +36,7 @@ public class QuickTemplateStoreTest {
         assertEquals(List.of(template), store.readAll());
         assertEquals(new LinkedHashSet<>(Set.of("com.example.one", "com.example.two")),
                 store.read("template_a").selectedPackages);
-        assertFalse(prefs.contains(DpiConfigStore.KEY_TARGET_PACKAGES));
+        assertFalse(prefs.contains(DpisConfigStore.KEY_TARGET_PACKAGES));
     }
 
     @Test

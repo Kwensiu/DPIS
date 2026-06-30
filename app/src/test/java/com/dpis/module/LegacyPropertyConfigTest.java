@@ -143,7 +143,7 @@ public class LegacyPropertyConfigTest {
 
     @Test
     public void emptyRuntimeMirrorDoesNotMarkPackageConfiguredFromGlobalFlagsOnly() {
-        DpiConfigStore store = new DpiConfigStore(
+        DpisConfigStore store = new DpisConfigStore(
                 new RuntimePropertyConfigPreferences("com.example.alwaysrunning",
                         RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET));
 

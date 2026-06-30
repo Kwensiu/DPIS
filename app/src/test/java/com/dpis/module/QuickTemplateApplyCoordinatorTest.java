@@ -104,7 +104,7 @@ public class QuickTemplateApplyCoordinatorTest {
     @Test
     public void storeBackedApplyUsesPackageTemplateAdapterOnly() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         assertTrue(store.writePackageConfig("com.tencent.mm", new PackageConfigValue(
                 ViewportTargetSpec.relativeScale(120000),
                 ViewportTargetType.RELATIVE_SCALE,

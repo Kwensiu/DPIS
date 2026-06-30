@@ -48,7 +48,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
     private LinearLayout listView;
     private MaterialTextView emptyView;
     private FontLibraryStore fontLibraryStore;
-    private DpiConfigStore configStore;
+    private DpisConfigStore configStore;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

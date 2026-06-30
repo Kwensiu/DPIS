@@ -10,7 +10,7 @@ final class FontScaleOverride {
     private FontScaleOverride() {
     }
 
-    static Result resolve(DpiConfigStore store, String packageName, float currentFontScale) {
+    static Result resolve(DpisConfigStore store, String packageName, float currentFontScale) {
         float original = currentFontScale > 0f ? currentFontScale : 1.0f;
         Integer targetPercent = store != null ? store.getTargetFontScalePercent(packageName) : null;
         String mode = store != null ? store.getTargetFontApplyMode(packageName) : FontApplyMode.OFF;
@@ -24,14 +24,14 @@ final class FontScaleOverride {
                 Math.abs(effective - original) > EPSILON);
     }
 
-    static Result resolveForResources(DpiConfigStore store,
+    static Result resolveForResources(DpisConfigStore store,
                                       String packageName,
                                       float currentFontScale) {
         return resolveForResources(null, store, packageName, currentFontScale);
     }
 
     static Result resolveForResources(Object resourceScope,
-                                      DpiConfigStore store,
+                                      DpisConfigStore store,
                                       String packageName,
                                       float currentFontScale) {
         float targetFactor = targetFactorForResources(store, packageName);
@@ -46,7 +46,7 @@ final class FontScaleOverride {
                 resolve(store, packageName, currentFontScale));
     }
 
-    static float targetFactorForResources(DpiConfigStore store, String packageName) {
+    static float targetFactorForResources(DpisConfigStore store, String packageName) {
         Integer targetPercent = store != null ? store.getTargetFontScalePercent(packageName) : null;
         if (targetPercent == null || targetPercent <= 0) {
             return 0f;

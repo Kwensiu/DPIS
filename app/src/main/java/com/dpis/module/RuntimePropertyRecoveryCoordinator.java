@@ -11,7 +11,7 @@ final class RuntimePropertyRecoveryCoordinator {
     private RuntimePropertyRecoveryCoordinator() {
     }
 
-    static void resyncConfiguredTargetsAsync(DpiConfigStore store) {
+    static void resyncConfiguredTargetsAsync(DpisConfigStore store) {
         if (store == null) {
             return;
         }

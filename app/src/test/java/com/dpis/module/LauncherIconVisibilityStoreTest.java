@@ -22,7 +22,7 @@ public final class LauncherIconVisibilityStoreTest {
     public void readsLegacyDpiConfigLauncherIconState() {
         FakePrefs legacyPreferences = new FakePrefs();
         legacyPreferences.edit()
-                .putBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, true)
+                .putBoolean(DpisConfigStore.KEY_HIDE_LAUNCHER_ICON, true)
                 .commit();
         LauncherIconVisibilityStore store = new LauncherIconVisibilityStore(
                 new FakePrefs(),
@@ -36,7 +36,7 @@ public final class LauncherIconVisibilityStoreTest {
         FakePrefs preferences = new FakePrefs();
         FakePrefs legacyPreferences = new FakePrefs();
         legacyPreferences.edit()
-                .putBoolean(DpiConfigStore.KEY_HIDE_LAUNCHER_ICON, true)
+                .putBoolean(DpisConfigStore.KEY_HIDE_LAUNCHER_ICON, true)
                 .commit();
         LauncherIconVisibilityStore store = new LauncherIconVisibilityStore(
                 preferences,

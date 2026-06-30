@@ -8,7 +8,7 @@ public class PaintTextSizeFallbackHookInstallerTest {
     @Test
     public void returnsFactorForFieldRewriteMode() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setTargetFontScalePercent("com.max.xiaoheihe", 150);
         store.setTargetFontApplyMode("com.max.xiaoheihe", FontApplyMode.FIELD_REWRITE);
 
@@ -21,7 +21,7 @@ public class PaintTextSizeFallbackHookInstallerTest {
     @Test
     public void returnsIdentityFactorForSystemEmulationMode() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setTargetFontScalePercent("com.max.xiaoheihe", 150);
         store.setTargetFontApplyMode("com.max.xiaoheihe", FontApplyMode.SYSTEM_EMULATION);
 

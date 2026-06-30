@@ -29,7 +29,7 @@ final class LegacyTypefaceOverrideHookInstaller {
 
     static void install(String packageName,
                         String targetTypefaceId,
-                        DpiConfigStore store,
+                        DpisConfigStore store,
                         FontLibraryStore fontLibraryStore) throws ReflectiveOperationException {
         if (isHookInstalledForCurrentProcess()) {
             return;
@@ -121,7 +121,7 @@ final class LegacyTypefaceOverrideHookInstaller {
 
     private static Typeface loadTargetTypeface(String packageName,
                                                String targetTypefaceId,
-                                               DpiConfigStore store,
+                                               DpisConfigStore store,
                                                FontLibraryStore fontLibraryStore) {
         String typefaceId = targetTypefaceId;
         if ((typefaceId == null || typefaceId.isBlank()) && store != null) {

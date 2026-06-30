@@ -88,7 +88,7 @@ final class GlobalPrefillEditorBinder {
         this.onClose = onClose;
         this.showSheetBadge = showSheetBadge;
         SharedPreferences preferences = activity.getSharedPreferences(
-                DpiConfigStore.GROUP, Activity.MODE_PRIVATE);
+                DpisConfigStore.GROUP, Activity.MODE_PRIVATE);
         globalPrefillStore = new GlobalPrefillStore(preferences);
         typefaceBinder = new AppConfigDialogBinder(activity, createTypefaceHost());
         rootView = root;
@@ -526,9 +526,9 @@ final class GlobalPrefillEditorBinder {
             }
 
             @Override
-            public DpiConfigStore getConfigStore() {
-                return new DpiConfigStore(activity.getSharedPreferences(
-                        DpiConfigStore.GROUP, Activity.MODE_PRIVATE));
+            public DpisConfigStore getConfigStore() {
+                return new DpisConfigStore(activity.getSharedPreferences(
+                        DpisConfigStore.GROUP, Activity.MODE_PRIVATE));
             }
 
             @Override

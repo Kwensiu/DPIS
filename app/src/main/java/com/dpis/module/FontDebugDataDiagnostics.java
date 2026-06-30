@@ -15,7 +15,7 @@ final class FontDebugDataDiagnostics {
     private FontDebugDataDiagnostics() {
     }
 
-    static NoDataReason resolveNoDataReason(DpiConfigStore store, SharedPreferences preferences) {
+    static NoDataReason resolveNoDataReason(DpisConfigStore store, SharedPreferences preferences) {
         if (preferences == null) {
             return NoDataReason.NOT_INJECTED;
         }
@@ -31,7 +31,7 @@ final class FontDebugDataDiagnostics {
         return NoDataReason.NOT_INJECTED;
     }
 
-    private static boolean hasConfiguredTargets(DpiConfigStore store) {
+    private static boolean hasConfiguredTargets(DpisConfigStore store) {
         if (store == null) {
             return false;
         }

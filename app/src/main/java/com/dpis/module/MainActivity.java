@@ -1135,7 +1135,7 @@ public final class MainActivity
     }
 
     private boolean setDpisEnabled(String packageName, boolean enabled) {
-        DpiConfigStore store = getHookConfigStore();
+        DpisConfigStore store = getHookConfigStore();
         if (store == null) {
             showToast(R.string.status_save_requires_init);
             return false;
@@ -1903,7 +1903,7 @@ public final class MainActivity
                 && selection.templateId != null
                 && new QuickTemplateStore(
                         getSharedPreferences(
-                                DpiConfigStore.GROUP,
+                                DpisConfigStore.GROUP,
                                 Context.MODE_PRIVATE
                         )
                 ).read(selection.templateId) == null) {
@@ -2654,9 +2654,9 @@ public final class MainActivity
         if (activeAppEditorDialog != null && activeAppEditorDialog.isShowing()) {
             return;
         }
-        DpiConfigStore store = getHookConfigStore();
+        DpisConfigStore store = getHookConfigStore();
         TemplateConfigValue globalPrefill = new GlobalPrefillStore(
-                getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE)
+                getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)
         ).read();
         AppListItem sheetItem = AppConfigPrefillPreview.applyIfEligible(
                 item,
@@ -2725,9 +2725,9 @@ public final class MainActivity
             showEditBottomSheet(item);
             return;
         }
-        DpiConfigStore store = getHookConfigStore();
+        DpisConfigStore store = getHookConfigStore();
         TemplateConfigValue globalPrefill = new GlobalPrefillStore(
-                getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE)
+                getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)
         ).read();
         AppListItem sheetItem = AppConfigPrefillPreview.applyIfEligible(
                 item,
@@ -2911,7 +2911,7 @@ public final class MainActivity
     }
 
     private HomeWorkspaceBinder.State createHomeWorkspaceState() {
-        DpiConfigStore configStore = getHookConfigStore();
+        DpisConfigStore configStore = getHookConfigStore();
         int visibleConfiguredAppCount = countUserVisibleConfiguredPackages(
                 configStore,
                 loadScopeState()
@@ -2925,7 +2925,7 @@ public final class MainActivity
                 ).listFonts().size(),
                 new QuickTemplateStore(
                         getSharedPreferences(
-                                DpiConfigStore.GROUP,
+                                DpisConfigStore.GROUP,
                                 Context.MODE_PRIVATE
                         )
                 ).readAll().size(),
@@ -2979,7 +2979,7 @@ public final class MainActivity
         };
     }
 
-    static int countUserVisibleConfiguredPackages(DpiConfigStore store,
+    static int countUserVisibleConfiguredPackages(DpisConfigStore store,
             ScopeState scopeState) {
         Set<String> packageNames = new HashSet<>();
         if (store != null) {
@@ -3093,7 +3093,7 @@ public final class MainActivity
                 || item.packageName.isBlank()) {
             return false;
         }
-        DpiConfigStore store = getHookConfigStore();
+        DpisConfigStore store = getHookConfigStore();
         String normalizedViewportTargetType = ViewportTargetType.normalize(viewportTargetType);
         String rawViewportInput = ViewportTargetType.ABSOLUTE_DP.equals(normalizedViewportTargetType)
                 ? viewportAbsoluteInput
@@ -3199,7 +3199,7 @@ public final class MainActivity
             View configRoot,
             String packageName,
             boolean dpisEnabled,
-            DpiConfigStore store) {
+            DpisConfigStore store) {
         if (saveResult == null) {
             return AppConfigSaveHandler.Result.failure(R.string.system_settings_save_failed);
         }
@@ -3221,7 +3221,7 @@ public final class MainActivity
             View configRoot,
             String packageName,
             boolean dpisEnabled,
-            DpiConfigStore store) {
+            DpisConfigStore store) {
         AppConfigSaveHandler.Result result = finalizeAppConfigSaveWithWechatDpi(
                 saveResult,
                 configRoot,
@@ -3268,7 +3268,7 @@ public final class MainActivity
     }
 
     private void syncRuntimePropertiesForTargetLaunch(String packageName, int generation) {
-        DpiConfigStore store = getHookConfigStore();
+        DpisConfigStore store = getHookConfigStore();
         ViewportPropertySyncer.syncTarget(packageName, store);
         FontRuntimePropertySyncer.syncTarget(packageName, store);
         synchronized (pendingRuntimePropertyGenerations) {
@@ -3404,7 +3404,7 @@ public final class MainActivity
                     public boolean saveOrder(List<String> orderedIds) {
                         return new QuickTemplateStore(
                                 getSharedPreferences(
-                                        DpiConfigStore.GROUP,
+                                        DpisConfigStore.GROUP,
                                         Context.MODE_PRIVATE
                                 )
                         ).reorder(orderedIds);
@@ -3428,7 +3428,7 @@ public final class MainActivity
 
     private void applyQuickTemplate(String templateId) {
         QuickTemplateStore store = new QuickTemplateStore(
-                getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE)
+                getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)
         );
         QuickTemplateStore.QuickTemplate template = store.read(templateId);
         if (template == null) {
@@ -3741,7 +3741,7 @@ public final class MainActivity
             }
 
             @Override
-            public DpiConfigStore getConfigStore() {
+            public DpisConfigStore getConfigStore() {
                 return MainActivity.this.getHookConfigStore();
             }
 
@@ -3992,7 +3992,7 @@ public final class MainActivity
         if (!WechatDpiConfig.appliesTo(packageName)) {
             return null;
         }
-        DpiConfigStore store = getHookConfigStore();
+        DpisConfigStore store = getHookConfigStore();
         return store != null ? store.getWechatDpi(packageName) : null;
     }
 
@@ -4244,7 +4244,7 @@ public final class MainActivity
                 || item.packageName.isBlank()) {
             return;
         }
-        DpiConfigStore store = getHookConfigStore();
+        DpisConfigStore store = getHookConfigStore();
         Set<String> automaticKnownDomains = recommendedTemplateFontHookDomains();
         HookDomainOverride currentOverride = resolveFontHookDomainsForDraft(item, state);
         FontHookDomainDialog.show(
@@ -4450,13 +4450,13 @@ public final class MainActivity
         if (item == null || !item.hyperOsNativeProxyCandidate) {
             return false;
         }
-        DpiConfigStore store = getHookConfigStore();
+        DpisConfigStore store = getHookConfigStore();
         return (store.isTargetDpisEnabled(item.packageName)
                 && hasActiveStoredConfig(store, item.packageName));
     }
 
     private static boolean hasActiveStoredConfig(
-            DpiConfigStore store,
+            DpisConfigStore store,
             String packageName
     ) {
         ViewportTargetSpec viewportTargetSpec = store.getTargetViewportSpec(
@@ -4499,7 +4499,7 @@ public final class MainActivity
                 );
     }
 
-    private DpiConfigStore getHookConfigStore() {
+    private DpisConfigStore getHookConfigStore() {
         return DpisApplication.getActiveHookConfigStore(this);
     }
 

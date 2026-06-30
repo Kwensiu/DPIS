@@ -34,7 +34,7 @@ final class WebViewFontHookInstaller {
 
     static void install(XposedInterface xposed,
                         String packageName,
-                        DpiConfigStore store,
+                        DpisConfigStore store,
                         ModernApiCapabilities apiCapabilities)
             throws ReflectiveOperationException {
         if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {

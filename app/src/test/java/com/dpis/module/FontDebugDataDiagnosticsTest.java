@@ -10,7 +10,7 @@ public class FontDebugDataDiagnosticsTest {
     @Test
     public void returnsScopeMissingWhenNoConfiguredTargets() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
 
         FontDebugDataDiagnostics.NoDataReason reason =
                 FontDebugDataDiagnostics.resolveNoDataReason(store, prefs);
@@ -21,8 +21,8 @@ public class FontDebugDataDiagnosticsTest {
     @Test
     public void returnsNotInjectedWhenTargetsConfiguredButNoSignals() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
-        prefs.edit().putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
+        DpisConfigStore store = new DpisConfigStore(prefs);
+        prefs.edit().putStringSet(DpisConfigStore.KEY_TARGET_PACKAGES,
                 Collections.singleton("com.example.app")).commit();
 
         FontDebugDataDiagnostics.NoDataReason reason =
@@ -34,9 +34,9 @@ public class FontDebugDataDiagnosticsTest {
     @Test
     public void returnsNoEventsWhenViewportSignalExistsWithoutFontEvents() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         prefs.edit()
-                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES, Collections.singleton("com.example.app"))
+                .putStringSet(DpisConfigStore.KEY_TARGET_PACKAGES, Collections.singleton("com.example.app"))
                 .putString(FontDebugStatsStore.KEY_VIEWPORT_DEBUG_SUMMARY, "视口: 360dp -> 320dp")
                 .commit();
 
@@ -49,9 +49,9 @@ public class FontDebugDataDiagnosticsTest {
     @Test
     public void returnsNoneWhenFontEventsExist() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         prefs.edit()
-                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES, Collections.singleton("com.example.app"))
+                .putStringSet(DpisConfigStore.KEY_TARGET_PACKAGES, Collections.singleton("com.example.app"))
                 .putInt(FontDebugStatsStore.KEY_EVENT_TOTAL, 3)
                 .commit();
 

@@ -16,7 +16,7 @@ public class TargetViewportWidthResolverTest {
     @Test
     public void returnsNullWhenEmulationModeAndSystemHookOff() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setSystemServerHooksEnabled(false);
         store.setTargetViewportWidthDp("com.example.target", 360);
         store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.SYSTEM_EMULATION);
@@ -29,7 +29,7 @@ public class TargetViewportWidthResolverTest {
     @Test
     public void keepsWidthWhenReplaceModeAndSystemHookOff() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setSystemServerHooksEnabled(false);
         store.setTargetViewportWidthDp("com.example.target", 360);
         store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.FIELD_REWRITE);
@@ -42,7 +42,7 @@ public class TargetViewportWidthResolverTest {
     @Test
     public void explicitRuntimeClearDoesNotShadowReplaceModeStoreWidth() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setTargetViewportWidthDp("com.example.target", 360);
         store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.FIELD_REWRITE);
 
@@ -55,7 +55,7 @@ public class TargetViewportWidthResolverTest {
     @Test
     public void explicitRuntimeClearDisablesSystemEmulationStoreWidth() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setTargetViewportWidthDp("com.example.target", 360);
         store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.SYSTEM_EMULATION);
 
@@ -90,7 +90,7 @@ public class TargetViewportWidthResolverTest {
                 new ViewportOverride.Result(500, 1022, 500, 346),
                 null,
                 ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER);
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportSpec(packageName, targetSpec);
         store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
 
@@ -105,7 +105,7 @@ public class TargetViewportWidthResolverTest {
     @Test
     public void resourcesReadRelativeScaleDoesNotDeriveTargetWithoutDisplayRecord() {
         String packageName = "com.example.viewport";
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(150000));
         store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
         ViewportSourceSnapshot source = ViewportSourceSnapshot.fromConfiguration(
@@ -124,7 +124,7 @@ public class TargetViewportWidthResolverTest {
     @Test
     public void resourcesReadRelativeScaleDoesNotCompoundAlreadyScaledTarget() {
         String packageName = "com.example.viewport";
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(83333));
         store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
         ViewportSourceSnapshot source = ViewportSourceSnapshot.fromConfiguration(
@@ -155,7 +155,7 @@ public class TargetViewportWidthResolverTest {
                 new ViewportOverride.Result(540, 1188, 540, 320),
                 null,
                 ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportSpec(packageName, targetSpec);
         store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
         ViewportSourceSnapshot source = ViewportSourceSnapshot.fromConfiguration(
@@ -187,7 +187,7 @@ public class TargetViewportWidthResolverTest {
                 new ViewportOverride.Result(540, 1188, 540, 320),
                 null,
                 ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportSpec(packageName, targetSpec);
         store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT);
         ViewportSourceSnapshot mixedWindowSource = ViewportSourceSnapshot.fromConfiguration(

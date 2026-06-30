@@ -40,7 +40,7 @@ public class DisplayHookInstallerTest {
     @Test
     public void legacyCanInitializeDisplayTarget() {
         DisplayHookInstaller.setTargetPackageNameForLegacy("com.max.xiaoheihe");
-        DisplayHookInstaller.setTargetStoreForLegacy(new DpiConfigStore(new FakePrefs()));
+        DisplayHookInstaller.setTargetStoreForLegacy(new DpisConfigStore(new FakePrefs()));
         setCurrentPackageResolver("com.max.xiaoheihe");
 
         assertEquals(true, DisplayHookInstaller.shouldApplyOverrideForPackage("com.max.xiaoheihe"));
@@ -53,7 +53,7 @@ public class DisplayHookInstallerTest {
     @Test
     public void skipsGlobalDisplayStateWithoutPackageScopedRecord() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setTargetViewportSpec("com.tencent.mm", ViewportTargetSpec.relativeScale(150000));
         VirtualDisplayState.set(new VirtualDisplayOverride.Result(900, 1800, 900,
                 240, 1080, 2160));
@@ -67,7 +67,7 @@ public class DisplayHookInstallerTest {
     @Test
     public void usesPackageScopedDisplayRecordForCurrentTarget() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(150000);
         store.setTargetViewportSpec("com.tencent.mm", targetSpec);
         ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
@@ -92,7 +92,7 @@ public class DisplayHookInstallerTest {
     @Test
     public void usesPackageScopedDisplayRecordForWebApkOwner() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         String packageName = "org.chromium.webapk.ac19cf34f94565db5_v2";
         ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(150000);
         store.setTargetDpisEnabled(packageName, true);

@@ -53,7 +53,7 @@ public class QuickTemplateTargetSelectionTest {
 
         assertEquals(orderedSet("com.example.installed"),
                 store.read("template_a").selectedPackages);
-        assertFalse(prefs.contains(DpiConfigStore.KEY_TARGET_PACKAGES));
+        assertFalse(prefs.contains(DpisConfigStore.KEY_TARGET_PACKAGES));
     }
 
     @Test

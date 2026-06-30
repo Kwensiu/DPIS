@@ -11,7 +11,7 @@ import static org.junit.Assert.assertTrue;
 public class PerAppDisplayConfigSourceTest {
     @Test
     public void returnsNullWhenViewportAndFontAreBothMissing() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
 
         PerAppDisplayConfig config = new PerAppDisplayConfigSource(store)
                 .get("com.example.target");
@@ -22,7 +22,7 @@ public class PerAppDisplayConfigSourceTest {
     @Test
     public void returnsFontOnlyConfigWhenViewportMissing() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         assertTrue(store.setTargetFontScalePercent("com.example.target", 125));
 
         PerAppDisplayConfig config = new PerAppDisplayConfigSource(store)
@@ -37,7 +37,7 @@ public class PerAppDisplayConfigSourceTest {
     @Test
     public void returnsNullWhenTargetDpisDisabled() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         assertTrue(store.setTargetViewportWidthDp("com.example.target", 500));
         assertTrue(store.setTargetFontScalePercent("com.example.target", 300));
         assertTrue(store.setTargetFontApplyMode(
@@ -53,7 +53,7 @@ public class PerAppDisplayConfigSourceTest {
     @Test
     public void providerReflectsUpdatedStoreOnEachRead() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         assertTrue(store.setTargetFontScalePercent("com.example.target", 300));
         PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(
                 () -> ConfigSnapshotLoader.fromStore(store));
@@ -91,7 +91,7 @@ public class PerAppDisplayConfigSourceTest {
     @Test
     public void doesNotUsePackageFallbackWhenSnapshotDisablesPackage() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         assertTrue(store.setTargetFontScalePercent("com.example.target", 200));
         assertTrue(store.setTargetDpisEnabled("com.example.target", false));
         PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(
@@ -114,7 +114,7 @@ public class PerAppDisplayConfigSourceTest {
     @Test
     public void usesPackageFallbackWhenSnapshotHasStaleEnabledPackage() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         assertTrue(store.setTargetFontScalePercent("com.example.target", 100));
         PerAppDisplayConfigSource source = new PerAppDisplayConfigSource(
                 () -> ConfigSnapshotLoader.fromStore(store),
@@ -140,7 +140,7 @@ public class PerAppDisplayConfigSourceTest {
     @Test
     public void keepsViewportConfigWhenViewportExists() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         assertTrue(store.setTargetViewportWidthDp("com.example.target", 360));
 
         PerAppDisplayConfig config = new PerAppDisplayConfigSource(store)
@@ -154,7 +154,7 @@ public class PerAppDisplayConfigSourceTest {
     @Test
     public void nativeFlutterFlagReflectsFinalDomainPlan() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         assertTrue(store.setTargetFontScalePercent("com.miui.gallery", 200));
         assertTrue(store.setTargetFontApplyMode("com.miui.gallery", FontApplyMode.FIELD_REWRITE));
 
@@ -178,7 +178,7 @@ public class PerAppDisplayConfigSourceTest {
 
     @Test
     public void reportsSystemServerHooksEnabledByDefault() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
 
         boolean enabled = new PerAppDisplayConfigSource(store).isSystemServerHooksEnabled();
 
@@ -188,7 +188,7 @@ public class PerAppDisplayConfigSourceTest {
     @Test
     public void reportsSystemServerHooksDisabledWhenStoreFlagOff() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         assertTrue(store.setSystemServerHooksEnabled(false));
 
         boolean enabled = new PerAppDisplayConfigSource(store).isSystemServerHooksEnabled();

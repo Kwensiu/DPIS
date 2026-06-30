@@ -13,7 +13,7 @@ public class ActivityThreadFontHookInstallerTest {
     @Test
     public void applyFontScaleToBindData_usesPerAppFontPercent() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setTargetFontScalePercent("com.max.xiaoheihe", 150);
 
         FakeBindData bindData = new FakeBindData();
@@ -29,7 +29,7 @@ public class ActivityThreadFontHookInstallerTest {
     @Test
     public void applyFontScaleToBindData_returnsFalseWhenNoFontConfig() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
 
         FakeBindData bindData = new FakeBindData();
         bindData.config.fontScale = 1.0f;

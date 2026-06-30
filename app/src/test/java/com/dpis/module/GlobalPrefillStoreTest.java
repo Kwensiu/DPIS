@@ -28,15 +28,15 @@ public class GlobalPrefillStoreTest {
         assertTrue(store.write(value));
 
         assertEquals(value, store.read());
-        assertFalse(prefs.contains(DpiConfigStore.KEY_TARGET_PACKAGES));
-        assertFalse(new DpiConfigStore(prefs).getConfiguredPackages().contains("missing_font_id"));
+        assertFalse(prefs.contains(DpisConfigStore.KEY_TARGET_PACKAGES));
+        assertFalse(new DpisConfigStore(prefs).getConfiguredPackages().contains("missing_font_id"));
     }
 
     @Test
     public void clearRemovesOnlyGlobalPrefillKeys() {
         FakePrefs prefs = new FakePrefs();
         GlobalPrefillStore store = new GlobalPrefillStore(prefs);
-        DpiConfigStore dpiConfigStore = new DpiConfigStore(prefs);
+        DpisConfigStore dpiConfigStore = new DpisConfigStore(prefs);
         assertTrue(dpiConfigStore.setTargetTypefaceId("com.example.app", "font_existing"));
         assertTrue(store.write(new TemplateConfigValue(
                 ViewportTargetSpec.absoluteDp(480),
@@ -78,8 +78,8 @@ public class GlobalPrefillStoreTest {
 
         assertTrue(new GlobalPrefillStore(prefs).write(TemplateConfigValue.EMPTY));
 
-        assertFalse(prefs.contains(DpiConfigStore.KEY_TARGET_PACKAGES));
-        assertEquals(Set.of(), new DpiConfigStore(prefs).getConfiguredPackages());
+        assertFalse(prefs.contains(DpisConfigStore.KEY_TARGET_PACKAGES));
+        assertEquals(Set.of(), new DpisConfigStore(prefs).getConfiguredPackages());
     }
 
     @Test

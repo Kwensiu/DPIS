@@ -38,7 +38,7 @@ final class ViewportPropertySyncer {
         cleanerThread.start();
     }
 
-    static void syncConfiguredTargetsAsync(DpiConfigStore store) {
+    static void syncConfiguredTargetsAsync(DpisConfigStore store) {
         if (store == null) {
             return;
         }
@@ -48,7 +48,7 @@ final class ViewportPropertySyncer {
         syncThread.start();
     }
 
-    static void syncConfiguredTargets(DpiConfigStore store) {
+    static void syncConfiguredTargets(DpisConfigStore store) {
         if (store == null) {
             return;
         }
@@ -58,7 +58,7 @@ final class ViewportPropertySyncer {
         }
     }
 
-    static void syncTarget(String packageName, DpiConfigStore store) {
+    static void syncTarget(String packageName, DpisConfigStore store) {
         if (packageName == null || packageName.isBlank() || store == null) {
             return;
         }
@@ -114,7 +114,7 @@ final class ViewportPropertySyncer {
                         enc.compatMode);
     }
 
-    private static String buildConfiguredTargetsCommand(DpiConfigStore store) {
+    private static String buildConfiguredTargetsCommand(DpisConfigStore store) {
         LinkedHashSet<String> packages = new LinkedHashSet<>(store.getConfiguredPackages());
         if (packages.isEmpty()) {
             return "";

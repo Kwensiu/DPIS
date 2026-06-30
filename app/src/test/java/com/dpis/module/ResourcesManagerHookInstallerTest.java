@@ -32,7 +32,7 @@ public class ResourcesManagerHookInstallerTest {
         FeedbackDiagnosticRuntimeEvents.start(PACKAGE_NAME, request());
 
         ResourcesManagerHookInstaller.applyResourceOverrides(
-                null, new DpiConfigStore(new FakePrefs()), PACKAGE_NAME, "ResourcesManager");
+                null, new DpisConfigStore(new FakePrefs()), PACKAGE_NAME, "ResourcesManager");
 
         List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
         assertTrue(events.stream().anyMatch(event ->
@@ -54,7 +54,7 @@ public class ResourcesManagerHookInstallerTest {
         config.fontScale = 1.0f;
         FakePrefs prefs = new FakePrefs();
         putCompatViewport(prefs, 800);
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
 
         ResourcesManagerHookInstaller.applyResourceOverrides(config, store, PACKAGE_NAME,
                 "ResourcesManager");
@@ -65,7 +65,7 @@ public class ResourcesManagerHookInstallerTest {
 
     @Test
     public void relativeScaleDoesNotApplyTwiceAfterConfigurationOnlyHookPublishesRecord() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetViewportSpec(PACKAGE_NAME, ViewportTargetSpec.relativeScale(90000));
         store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
         Configuration initial = new Configuration();
@@ -101,7 +101,7 @@ public class ResourcesManagerHookInstallerTest {
 
     @Test
     public void stalePortraitRecordDoesNotRewriteLandscapeConfigurationAsPortrait() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(200000);
         store.setTargetViewportSpec(PACKAGE_NAME, targetSpec);
         store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT);
@@ -132,7 +132,7 @@ public class ResourcesManagerHookInstallerTest {
 
     @Test
     public void chromeActivityScopedConfigurationAppliesCompatViewport() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(200000);
         String packageName = WebApkRuntimeOwnerBridge.CHROME_PACKAGE;
         store.setTargetViewportSpec(packageName, targetSpec);
@@ -155,7 +155,7 @@ public class ResourcesManagerHookInstallerTest {
 
     @Test
     public void chromeResourcesManagerConfigurationAppliesCompatViewport() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(200000);
         String packageName = WebApkRuntimeOwnerBridge.CHROME_PACKAGE;
         store.setTargetViewportSpec(packageName, targetSpec);
@@ -178,7 +178,7 @@ public class ResourcesManagerHookInstallerTest {
 
     @Test
     public void chromeResourceCreationConfigurationAppliesCompatViewport() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(200000);
         String packageName = WebApkRuntimeOwnerBridge.CHROME_PACKAGE;
         store.setTargetViewportSpec(packageName, targetSpec);
@@ -204,7 +204,7 @@ public class ResourcesManagerHookInstallerTest {
     public void fillsEmptyResourcesKeyOverrideFromGlobalConfiguration() {
         FakePrefs prefs = new FakePrefs();
         putCompatViewport(prefs, 800);
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         Configuration globalConfig = new Configuration();
         globalConfig.screenWidthDp = 360;
         globalConfig.screenHeightDp = 736;
@@ -228,7 +228,7 @@ public class ResourcesManagerHookInstallerTest {
     public void keepsExistingResourcesKeyOverride() {
         FakePrefs prefs = new FakePrefs();
         putCompatViewport(prefs, 800);
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         Configuration globalConfig = new Configuration();
         globalConfig.screenWidthDp = 360;
         globalConfig.screenHeightDp = 736;
@@ -254,7 +254,7 @@ public class ResourcesManagerHookInstallerTest {
     public void replacesResourcesKeyOverrideThatMatchesBaseActivityConfiguration() {
         FakePrefs prefs = new FakePrefs();
         putCompatViewport(prefs, 800);
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         Configuration globalConfig = new Configuration();
         globalConfig.screenWidthDp = 360;
         globalConfig.screenHeightDp = 736;
@@ -281,7 +281,7 @@ public class ResourcesManagerHookInstallerTest {
     public void preservesExistingResourcesKeyFontOnlyOverride() {
         FakePrefs prefs = new FakePrefs();
         putCompatViewport(prefs, 800);
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         Configuration globalConfig = new Configuration();
         globalConfig.screenWidthDp = 360;
         globalConfig.screenHeightDp = 736;
@@ -311,7 +311,7 @@ public class ResourcesManagerHookInstallerTest {
                 .putString("viewport." + PACKAGE_NAME + ".type", ViewportTargetType.RELATIVE_SCALE)
                 .putString("viewport." + PACKAGE_NAME + ".mode", ViewportApplyMode.COMPAT)
                 .commit();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         ViewportRuntimeMarkerBridge.MarkerRecord marker =
                 new ViewportRuntimeMarkerBridge.MarkerRecord(
                         PACKAGE_NAME,
@@ -370,7 +370,7 @@ public class ResourcesManagerHookInstallerTest {
         config.fontScale = 1.0f;
         FakePrefs prefs = new FakePrefs();
         putCompatViewport(prefs, 411);
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
 
         ResourcesManagerHookInstaller.applyResourceOverrides(config, store, PACKAGE_NAME,
                 "ResourcesManager");
@@ -392,7 +392,7 @@ public class ResourcesManagerHookInstallerTest {
         config.fontScale = 1.0f;
         FakePrefs prefs = new FakePrefs();
         putCompatViewport(prefs, 360);
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
 
         ResourcesManagerHookInstaller.applyResourceOverrides(config, store, PACKAGE_NAME,
                 "ResourcesManager");
@@ -414,7 +414,7 @@ public class ResourcesManagerHookInstallerTest {
         config.fontScale = 1.0f;
         FakePrefs prefs = new FakePrefs();
         putCompatViewport(prefs, 500);
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
 
         ResourcesManagerHookInstaller.applyResourceOverrides(config, store, PACKAGE_NAME,
                 "ResourcesManager");

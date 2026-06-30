@@ -103,7 +103,7 @@ public class RefreshingConfigSnapshotProviderTest {
 
     private static ConfigSnapshot snapshotWithPackage(String packageName) {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setTargetViewportWidthDp(packageName, 360);
         return ConfigSnapshotLoader.fromStore(store);
     }

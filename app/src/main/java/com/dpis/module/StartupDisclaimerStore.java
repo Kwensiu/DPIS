@@ -13,7 +13,7 @@ final class StartupDisclaimerStore {
     StartupDisclaimerStore(Context context) {
         this(
                 context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE),
-                context.getSharedPreferences(DpiConfigStore.GROUP, Context.MODE_PRIVATE));
+                context.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE));
     }
 
     StartupDisclaimerStore(
@@ -30,7 +30,7 @@ final class StartupDisclaimerStore {
         }
         return legacyPreferences != null
                 && legacyPreferences.getBoolean(
-                        DpiConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED,
+                        DpisConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED,
                         false);
     }
 

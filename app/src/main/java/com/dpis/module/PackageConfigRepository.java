@@ -1,9 +1,9 @@
 package com.dpis.module;
 
 final class PackageConfigRepository {
-    private final DpiConfigStore store;
+    private final DpisConfigStore store;
 
-    PackageConfigRepository(DpiConfigStore store) {
+    PackageConfigRepository(DpisConfigStore store) {
         this.store = store;
     }
 

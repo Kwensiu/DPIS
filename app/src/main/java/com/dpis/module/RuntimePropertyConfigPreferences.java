@@ -86,9 +86,9 @@ final class RuntimePropertyConfigPreferences implements SharedPreferences {
             values.put(typefaceIdKey(), typefaceId);
         }
         boolean hasPackageRuntimeConfig = !values.isEmpty();
-        values.put(DpiConfigStore.KEY_GLOBAL_LOG_ENABLED,
+        values.put(DpisConfigStore.KEY_GLOBAL_LOG_ENABLED,
                 RuntimeDebugPropertyBridge.readGlobalLogEnabled());
-        values.put(DpiConfigStore.KEY_FONT_DEBUG_OVERLAY_ENABLED,
+        values.put(DpisConfigStore.KEY_FONT_DEBUG_OVERLAY_ENABLED,
                 RuntimeDebugPropertyBridge.readFontDebugOverlayEnabled());
         if (hasPackageRuntimeConfig) {
             HookDomainOverride override = FontHookDomainPropertyBridge.readOverride(packageName);
@@ -97,7 +97,7 @@ final class RuntimePropertyConfigPreferences implements SharedPreferences {
                         FontHookDomainRegistry.orderedCustomizableSubset(
                                 override.enabledKnownDomains)));
             }
-            values.put(DpiConfigStore.KEY_TARGET_PACKAGES,
+            values.put(DpisConfigStore.KEY_TARGET_PACKAGES,
                     new LinkedHashSet<>(Collections.singleton(packageName)));
         }
         cachedSnapshot = Collections.unmodifiableMap(values);

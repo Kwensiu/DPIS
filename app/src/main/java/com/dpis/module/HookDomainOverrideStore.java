@@ -4,9 +4,9 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 final class HookDomainOverrideStore {
-    private final DpiConfigStore configStore;
+    private final DpisConfigStore configStore;
 
-    HookDomainOverrideStore(DpiConfigStore configStore) {
+    HookDomainOverrideStore(DpisConfigStore configStore) {
         this.configStore = configStore;
     }
 

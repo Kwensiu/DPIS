@@ -14,7 +14,7 @@ public class GlobalPrefillSaveHandlerTest {
     @Test
     public void saveWritesOnlyDefaultConfigKeys() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         assertTrue(store.setTargetViewportSpec("com.example.app", ViewportTargetSpec.absoluteDp(411)));
         assertTrue(store.setTargetViewportApplyMode("com.example.app", ViewportApplyMode.SYSTEM));
         assertTrue(store.setTargetFontScalePercent("com.example.app", 120));
@@ -82,7 +82,7 @@ public class GlobalPrefillSaveHandlerTest {
     @Test
     public void clearLeavesPackageConfigAndTargetPackagesUntouched() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         assertTrue(store.setTargetFontScalePercent("com.example.app", 110));
         assertTrue(store.setTargetTypefaceId("com.example.app", "existing_font"));
         GlobalPrefillStore globalPrefillStore = new GlobalPrefillStore(prefs);

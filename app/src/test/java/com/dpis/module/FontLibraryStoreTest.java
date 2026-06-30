@@ -87,7 +87,7 @@ public final class FontLibraryStoreTest {
                 "Example.ttf",
                 1234L);
 
-        FontLibraryStore.DeleteResult result = store.deleteFont(entry.id, new DpiConfigStore(new FakePrefs()));
+        FontLibraryStore.DeleteResult result = store.deleteFont(entry.id, new DpisConfigStore(new FakePrefs()));
 
         assertSame(FontLibraryStore.DeleteResult.DELETED, result);
         assertNull(store.findById(entry.id));
@@ -105,7 +105,7 @@ public final class FontLibraryStoreTest {
                 1234L);
         prefs.setCommitResult(false);
 
-        FontLibraryStore.DeleteResult result = store.deleteFont(entry.id, new DpiConfigStore(new FakePrefs()));
+        FontLibraryStore.DeleteResult result = store.deleteFont(entry.id, new DpisConfigStore(new FakePrefs()));
 
         assertSame(FontLibraryStore.DeleteResult.DELETE_FAILED, result);
         assertEquals(entry, store.findById(entry.id));
@@ -126,7 +126,7 @@ public final class FontLibraryStoreTest {
         assertTrue(storedFile.mkdir());
         assertTrue(new File(storedFile, "child").createNewFile());
 
-        FontLibraryStore.DeleteResult result = store.deleteFont(entry.id, new DpiConfigStore(new FakePrefs()));
+        FontLibraryStore.DeleteResult result = store.deleteFont(entry.id, new DpisConfigStore(new FakePrefs()));
 
         assertSame(FontLibraryStore.DeleteResult.DELETE_FAILED, result);
         assertEquals(entry, store.findById(entry.id));
@@ -158,7 +158,7 @@ public final class FontLibraryStoreTest {
                 writeFile("Example.ttf", "fake-font-data"),
                 "Example.ttf",
                 1234L);
-        DpiConfigStore configStore = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore configStore = new DpisConfigStore(new FakePrefs());
         configStore.setTargetTypefaceId("com.example.app", entry.id);
 
         FontLibraryStore.DeleteResult result = store.deleteFont(entry.id, configStore);
@@ -420,7 +420,7 @@ public final class FontLibraryStoreTest {
 
         FontLibraryStore.DeleteResult result = store.deleteFont(
                 entries.get(0).id,
-                new DpiConfigStore(new FakePrefs()));
+                new DpisConfigStore(new FakePrefs()));
 
         assertSame(FontLibraryStore.DeleteResult.DELETED, result);
         assertNull(store.findById(entries.get(0).id));
@@ -441,11 +441,11 @@ public final class FontLibraryStoreTest {
                 1234L);
         File sharedFile = new File(entries.get(0).storedPath);
         assertSame(FontLibraryStore.DeleteResult.DELETED,
-                store.deleteFont(entries.get(0).id, new DpiConfigStore(new FakePrefs())));
+                store.deleteFont(entries.get(0).id, new DpisConfigStore(new FakePrefs())));
 
         FontLibraryStore.DeleteResult result = store.deleteFont(
                 entries.get(1).id,
-                new DpiConfigStore(new FakePrefs()));
+                new DpisConfigStore(new FakePrefs()));
 
         assertSame(FontLibraryStore.DeleteResult.DELETED, result);
         assertFalse(sharedFile.exists());

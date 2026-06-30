@@ -13,7 +13,7 @@ final class ResourcesProbeHookInstaller {
     private static final AtomicInteger DISPLAY_METRICS_LOG_COUNT = new AtomicInteger();
     private static final AtomicInteger CONFIGURATION_LOG_COUNT = new AtomicInteger();
     private static volatile String targetPackageName;
-    private static volatile DpiConfigStore configStore;
+    private static volatile DpisConfigStore configStore;
     private static volatile HookRuntimePolicy runtimePolicy;
     private static volatile int installedPid = -1;
 
@@ -24,14 +24,14 @@ final class ResourcesProbeHookInstaller {
         installedPid = -1;
     }
 
-    static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
+    static void install(XposedInterface xposed, String packageName, DpisConfigStore store)
             throws ReflectiveOperationException {
         install(xposed, packageName, store, HookRuntimePolicy.fromStore(store));
     }
 
     static void install(XposedInterface xposed,
                         String packageName,
-                        DpiConfigStore store,
+                        DpisConfigStore store,
                         HookRuntimePolicy policy)
             throws ReflectiveOperationException {
         if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {

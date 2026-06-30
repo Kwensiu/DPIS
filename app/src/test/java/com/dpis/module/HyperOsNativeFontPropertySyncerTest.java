@@ -35,12 +35,12 @@ public class HyperOsNativeFontPropertySyncerTest {
     public void preservesCompatForceFontForActiveFieldRewriteTarget() {
         FakePrefs preferences = new FakePrefs();
         preferences.edit()
-                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
+                .putStringSet(DpisConfigStore.KEY_TARGET_PACKAGES,
                         new LinkedHashSet<>(Set.of("com.miui.gallery")))
                 .putInt("font.com.miui.gallery.scale_percent", 200)
                 .putString("font.com.miui.gallery.mode", FontApplyMode.FIELD_REWRITE)
                 .commit();
-        DpiConfigStore store = new DpiConfigStore(preferences);
+        DpisConfigStore store = new DpisConfigStore(preferences);
 
         assertTrue(HyperOsNativeFontPropertySyncer.shouldPreserveCompatForceFontForTest(
                 store, "com.miui.gallery"));
@@ -50,24 +50,24 @@ public class HyperOsNativeFontPropertySyncerTest {
     public void doesNotPreserveCompatForceFontForSystemEmulationOrDisabledTarget() {
         FakePrefs systemEmulation = new FakePrefs();
         systemEmulation.edit()
-                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
+                .putStringSet(DpisConfigStore.KEY_TARGET_PACKAGES,
                         new LinkedHashSet<>(Set.of("com.miui.gallery")))
                 .putInt("font.com.miui.gallery.scale_percent", 200)
                 .putString("font.com.miui.gallery.mode", FontApplyMode.SYSTEM_EMULATION)
                 .commit();
         assertFalse(HyperOsNativeFontPropertySyncer.shouldPreserveCompatForceFontForTest(
-                new DpiConfigStore(systemEmulation), "com.miui.gallery"));
+                new DpisConfigStore(systemEmulation), "com.miui.gallery"));
 
         FakePrefs disabled = new FakePrefs();
         disabled.edit()
-                .putStringSet(DpiConfigStore.KEY_TARGET_PACKAGES,
+                .putStringSet(DpisConfigStore.KEY_TARGET_PACKAGES,
                         new LinkedHashSet<>(Set.of("com.miui.gallery")))
                 .putInt("font.com.miui.gallery.scale_percent", 200)
                 .putString("font.com.miui.gallery.mode", FontApplyMode.FIELD_REWRITE)
                 .putBoolean("target.com.miui.gallery.dpis_enabled", false)
                 .commit();
         assertFalse(HyperOsNativeFontPropertySyncer.shouldPreserveCompatForceFontForTest(
-                new DpiConfigStore(disabled), "com.miui.gallery"));
+                new DpisConfigStore(disabled), "com.miui.gallery"));
     }
 
     @Test
@@ -76,7 +76,7 @@ public class HyperOsNativeFontPropertySyncerTest {
         preferences.edit()
                 .putBoolean("font.hyperos_flutter_hook_enabled", false)
                 .commit();
-        DpiConfigStore store = new DpiConfigStore(preferences);
+        DpisConfigStore store = new DpisConfigStore(preferences);
 
         assertTrue(HyperOsNativeFontPropertySyncer.shouldPublishForceFontOnRecoveryForTest(
                 store, "com.miui.gallery", FontApplyMode.FIELD_REWRITE));

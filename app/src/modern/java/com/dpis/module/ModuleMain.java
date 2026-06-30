@@ -16,7 +16,7 @@ public final class ModuleMain extends XposedModule {
     private static final String BRIDGE_LOG_PREFIX = "DPIS ";
     private static final String PROP_CHROMIUM_VIEWPORT_PROBE_PACKAGE =
             "debug.dpis.webapk.chromium_probe_package";
-    private volatile DpiConfigStore configStore;
+    private volatile DpisConfigStore configStore;
     private volatile ModernApiCapabilities modernApiCapabilities;
     private volatile boolean moduleLoadedObserved;
     private volatile boolean systemServerInstallAttempted;
@@ -64,7 +64,7 @@ public final class ModuleMain extends XposedModule {
 
     @Override
     public void onSystemServerStarting(SystemServerStartingParam param) {
-        DpiConfigStore store = getOrCreateConfigStore();
+        DpisConfigStore store = getOrCreateConfigStore();
         String processName = currentProcessName;
         if (!SystemServerProcess.isSystemServer(processName, "android")) {
             processName = "system";
@@ -82,7 +82,7 @@ public final class ModuleMain extends XposedModule {
         String processName = resolveCurrentProcessName();
         log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX + "onPackageLoaded enter: process="
                 + processName + ", package=" + param.getPackageName());
-        DpiConfigStore store = getOrCreateConfigStore();
+        DpisConfigStore store = getOrCreateConfigStore();
         try {
             maybeInstallAppProcessFromPackageLoaded(store, processName, param.getPackageName());
         } catch (Throwable throwable) {
@@ -105,7 +105,7 @@ public final class ModuleMain extends XposedModule {
                 "libxposed-package-ready");
         rememberPackageReady(param.getPackageName(), param.getClassLoader(),
                 param.getApplicationInfo());
-        DpiConfigStore store = getOrCreateConfigStore();
+        DpisConfigStore store = getOrCreateConfigStore();
         ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(store);
         HookRuntimePolicy systemPolicy = resolveSystemServerRuntimePolicy(store, currentProcessName);
         HookRuntimePolicy appProcessPolicy = resolveHookedRuntimePolicy(store);
@@ -161,7 +161,7 @@ public final class ModuleMain extends XposedModule {
         firstPackageReadyLogged = false;
         appProcessInstallAttempted = false;
         AppProcessHotReloadResetter.resetAll();
-        DpiConfigStore store = getOrCreateConfigStore();
+        DpisConfigStore store = getOrCreateConfigStore();
         try {
             log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX
                     + "hot reload replay: process=" + currentProcessName
@@ -192,7 +192,7 @@ public final class ModuleMain extends XposedModule {
         }
     }
 
-    private void replaySystemServerAfterHotReload(DpiConfigStore store, String processName) {
+    private void replaySystemServerAfterHotReload(DpisConfigStore store, String processName) {
         if (!SystemServerProcess.isSystemServer(processName, "")) {
             DpisLog.i("system_server hot reload skipped: process=" + processName);
             return;
@@ -245,7 +245,7 @@ public final class ModuleMain extends XposedModule {
                 null);
     }
 
-    private void replayPackageReadySupplementsAfterHotReload(DpiConfigStore store,
+    private void replayPackageReadySupplementsAfterHotReload(DpisConfigStore store,
             String packageName,
             ClassLoader classLoader,
             ApplicationInfo applicationInfo) {
@@ -285,7 +285,7 @@ public final class ModuleMain extends XposedModule {
         }
     }
 
-    private void maybeInstallAppProcessFromModuleLoaded(DpiConfigStore store, String processName) {
+    private void maybeInstallAppProcessFromModuleLoaded(DpisConfigStore store, String processName) {
         rawBridgeLog("module-loaded app hook install enter: process=" + processName);
         if (SystemServerProcess.isSystemServer(processName, "")) {
             rawBridgeLog("module-loaded app hook install skipped system process: process="
@@ -293,7 +293,7 @@ public final class ModuleMain extends XposedModule {
             return;
         }
         String packageName = packageNameFromProcessName(processName);
-        DpiConfigStore runtimeStore = createModuleLoadedAppProcessStore(store, packageName);
+        DpisConfigStore runtimeStore = createModuleLoadedAppProcessStore(store, packageName);
         ConfigSnapshot snapshot = ConfigSnapshotLoader.fromStore(runtimeStore);
         String source = "module-loaded";
         if (!snapshot.isConfigured(packageName)) {
@@ -322,7 +322,7 @@ public final class ModuleMain extends XposedModule {
                 source);
     }
 
-    private void maybeInstallAppProcessFromPackageLoaded(DpiConfigStore store,
+    private void maybeInstallAppProcessFromPackageLoaded(DpisConfigStore store,
             String processName,
             String packageName) {
         rawBridgeLog("package-loaded app hook install enter: process=" + processName
@@ -385,7 +385,7 @@ public final class ModuleMain extends XposedModule {
         }
     }
 
-    private static DpiConfigStore createModuleLoadedAppProcessStore(DpiConfigStore fallbackStore,
+    private static DpisConfigStore createModuleLoadedAppProcessStore(DpisConfigStore fallbackStore,
             String packageName) {
         if (packageName == null || packageName.isBlank()) {
             return fallbackStore;
@@ -396,7 +396,7 @@ public final class ModuleMain extends XposedModule {
         // For per-app runtime mirrors, treat auto viewport as the app-process
         // projection route. Relative scale intentionally avoids system_server
         // viewport mutation, while absolute targets may still use system_server.
-        return new DpiConfigStore(
+        return new DpisConfigStore(
                 new RuntimePropertyConfigPreferences(packageName,
                         RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET));
     }
@@ -409,7 +409,7 @@ public final class ModuleMain extends XposedModule {
         return separator > 0 ? processName.substring(0, separator) : processName;
     }
 
-    private void installAppProcessHooksIfConfigured(DpiConfigStore store,
+    private void installAppProcessHooksIfConfigured(DpisConfigStore store,
             HookRuntimePolicy policy,
             ConfigSnapshot snapshot,
             String requestedPackageName,
@@ -479,7 +479,7 @@ public final class ModuleMain extends XposedModule {
                 && packagePlan.viewportEnabled;
     }
 
-    private void retryFlutterHooksWithAppClassLoader(DpiConfigStore store,
+    private void retryFlutterHooksWithAppClassLoader(DpisConfigStore store,
             ConfigSnapshot snapshot,
             ClassLoader classLoader,
             String packageName) {
@@ -508,7 +508,7 @@ public final class ModuleMain extends XposedModule {
                 this, packageName, store, executionPlan.fontDomainPlan, classLoader);
     }
 
-    private void retryTypefaceHooksWithPackageReady(DpiConfigStore store,
+    private void retryTypefaceHooksWithPackageReady(DpisConfigStore store,
             ConfigSnapshot snapshot,
             String packageName) {
         if (SystemServerProcess.isSystemServer(currentProcessName, packageName)) {
@@ -525,8 +525,8 @@ public final class ModuleMain extends XposedModule {
                 packagePlan.targetTypefaceId);
     }
 
-    private DpiConfigStore getOrCreateConfigStore() {
-        DpiConfigStore local = configStore;
+    private DpisConfigStore getOrCreateConfigStore() {
+        DpisConfigStore local = configStore;
         if (local == null) {
             local = ConfigStoreFactory.createForXposedHost(this);
             FontDebugStatsTransport.initialize(this);
@@ -544,7 +544,7 @@ public final class ModuleMain extends XposedModule {
         return local;
     }
 
-    private HookRuntimePolicy resolveSystemServerRuntimePolicy(DpiConfigStore store,
+    private HookRuntimePolicy resolveSystemServerRuntimePolicy(DpisConfigStore store,
             String processName) {
         if (SystemServerProcess.isSystemServer(processName, "")) {
             // Reaching the system process is the runtime scope proof. XposedService
@@ -557,7 +557,7 @@ public final class ModuleMain extends XposedModule {
                 SystemScopeCoordinator.resolveSystemHookEffectiveEnabled(store));
     }
 
-    private HookRuntimePolicy resolveHookedRuntimePolicy(DpiConfigStore store) {
+    private HookRuntimePolicy resolveHookedRuntimePolicy(DpisConfigStore store) {
         // If this code is running inside a hooked process, that process already
         // proves the module scope. Do not downgrade route planning just because
         // XposedService is unavailable inside the runtime process.
@@ -571,7 +571,7 @@ public final class ModuleMain extends XposedModule {
         return param.getClassLoader().getClass().getName();
     }
 
-    private void maybeInstallSystemServerHooks(DpiConfigStore store,
+    private void maybeInstallSystemServerHooks(DpisConfigStore store,
             HookRuntimePolicy policy,
             String processName,
             String packageName,

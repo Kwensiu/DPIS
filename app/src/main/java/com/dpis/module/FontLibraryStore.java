@@ -94,7 +94,7 @@ final class FontLibraryStore {
         return file.isFile() ? file : null;
     }
 
-    synchronized DeleteResult deleteFont(String id, DpiConfigStore configStore) {
+    synchronized DeleteResult deleteFont(String id, DpisConfigStore configStore) {
         FontLibraryEntry entry = findById(id);
         if (entry == null) {
             return DeleteResult.NOT_FOUND;
@@ -364,7 +364,7 @@ final class FontLibraryStore {
         }
     }
 
-    private boolean isReferenced(String id, DpiConfigStore configStore) {
+    private boolean isReferenced(String id, DpisConfigStore configStore) {
         if (configStore == null) {
             return false;
         }

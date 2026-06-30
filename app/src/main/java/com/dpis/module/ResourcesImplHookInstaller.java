@@ -22,7 +22,7 @@ final class ResourcesImplHookInstaller {
 
     static void install(XposedInterface xposed,
                         String packageName,
-                        DpiConfigStore store,
+                        DpisConfigStore store,
                         HookRuntimePolicy policy,
                         ModernApiCapabilities apiCapabilities)
             throws ReflectiveOperationException {
@@ -57,14 +57,14 @@ final class ResourcesImplHookInstaller {
     }
 
     static void applyDensityOverride(String packageName, Configuration config, DisplayMetrics metrics,
-                                     DpiConfigStore store) {
+                                     DpisConfigStore store) {
         applyDensityOverride(packageName, config, metrics, store, null);
     }
 
     static void applyDensityOverride(String packageName,
                                      Configuration config,
                                      DisplayMetrics metrics,
-                                     DpiConfigStore store,
+                                     DpisConfigStore store,
                                      HookRuntimePolicy policy) {
         applyDensityOverride(packageName, config, metrics, store, policy, null);
     }
@@ -72,7 +72,7 @@ final class ResourcesImplHookInstaller {
     static void applyDensityOverrideForTest(String packageName,
                                             Configuration config,
                                             DisplayMetrics metrics,
-                                            DpiConfigStore store,
+                                            DpisConfigStore store,
                                             boolean windowScoped) {
         applyDensityOverride(packageName, config, metrics, store, null, windowScoped);
     }
@@ -80,7 +80,7 @@ final class ResourcesImplHookInstaller {
     private static void applyDensityOverride(String packageName,
                                              Configuration config,
                                              DisplayMetrics metrics,
-                                             DpiConfigStore store,
+                                             DpisConfigStore store,
                                              HookRuntimePolicy policy,
                                              Boolean windowScopedOverride) {
         packageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(store, packageName);

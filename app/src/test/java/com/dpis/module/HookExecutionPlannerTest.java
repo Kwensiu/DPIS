@@ -539,7 +539,7 @@ public class HookExecutionPlannerTest {
                                                   boolean systemHooksEnabled,
                                                   boolean globalLogEnabled) {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setSystemServerSafeModeEnabled(safeMode);
         store.setSystemServerHooksEnabled(systemHooksEnabled);
         store.setGlobalLogEnabled(globalLogEnabled);

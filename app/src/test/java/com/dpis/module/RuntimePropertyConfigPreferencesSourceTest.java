@@ -28,9 +28,9 @@ public class RuntimePropertyConfigPreferencesSourceTest {
     public void readsDebugSwitchesFromRuntimePropertyMirror() throws Exception {
         String source = read("src/main/java/com/dpis/module/RuntimePropertyConfigPreferences.java");
 
-        assertTrue(source.contains("DpiConfigStore.KEY_GLOBAL_LOG_ENABLED"));
+        assertTrue(source.contains("DpisConfigStore.KEY_GLOBAL_LOG_ENABLED"));
         assertTrue(source.contains("RuntimeDebugPropertyBridge.readGlobalLogEnabled()"));
-        assertTrue(source.contains("DpiConfigStore.KEY_FONT_DEBUG_OVERLAY_ENABLED"));
+        assertTrue(source.contains("DpisConfigStore.KEY_FONT_DEBUG_OVERLAY_ENABLED"));
         assertTrue(source.contains("RuntimeDebugPropertyBridge.readFontDebugOverlayEnabled()"));
     }
 

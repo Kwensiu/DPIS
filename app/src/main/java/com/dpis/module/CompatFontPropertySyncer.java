@@ -32,7 +32,7 @@ final class CompatFontPropertySyncer {
         cleanerThread.start();
     }
 
-    static void syncConfiguredTargetsAsync(DpiConfigStore store) {
+    static void syncConfiguredTargetsAsync(DpisConfigStore store) {
         if (store == null) {
             return;
         }

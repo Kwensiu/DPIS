@@ -205,7 +205,7 @@ public class VirtualDisplayOverrideTest {
     }
 
     private static void publishTargetRecord() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         ViewportTargetSpec targetSpec = ViewportTargetSpec.absoluteDp(300);
         store.setTargetViewportSpec("com.max.xiaoheihe", targetSpec);
         DisplayHookInstaller.setTargetStoreForLegacy(store);

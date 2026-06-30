@@ -50,7 +50,7 @@ public class ComposeFontRuntimeDiagnosticsInstallerTest {
     @Test
     public void targetFactorResolutionReflectsCurrentStoreValue() {
         String packageName = "com.example.compose";
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
 
         assertNull(ComposeFontRuntimeDiagnosticsInstaller.resolveCurrentTargetFactorForTest(
                 store, packageName));

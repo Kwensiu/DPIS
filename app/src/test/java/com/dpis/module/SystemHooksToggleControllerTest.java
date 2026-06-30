@@ -9,7 +9,7 @@ import static org.junit.Assert.assertTrue;
 public class SystemHooksToggleControllerTest {
     @Test
     public void syncFromStore_reflectsStoredState() {
-        DpiConfigStore store = createStore(false);
+        DpisConfigStore store = createStore(false);
         FakeScopeGateway gateway = new FakeScopeGateway();
         FakeView view = new FakeView();
         SystemHooksToggleController controller = new SystemHooksToggleController(
@@ -25,7 +25,7 @@ public class SystemHooksToggleControllerTest {
 
     @Test
     public void disable_setsStoreFalse_withoutScopeMutation() {
-        DpiConfigStore store = createStore(true);
+        DpisConfigStore store = createStore(true);
         FakeScopeGateway gateway = new FakeScopeGateway();
         FakeView view = new FakeView();
         FakeDelivery delivery = new FakeDelivery();
@@ -45,7 +45,7 @@ public class SystemHooksToggleControllerTest {
     @Test
     public void disable_whenStoreWriteFails_rollsBackToOnState() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         FakeScopeGateway gateway = new FakeScopeGateway();
         FakeView view = new FakeView();
         FakeDelivery delivery = new FakeDelivery();
@@ -64,7 +64,7 @@ public class SystemHooksToggleControllerTest {
 
     @Test
     public void enable_withoutService_keepsDesiredOnAndShowsInitRequired() {
-        DpiConfigStore store = createStore(false);
+        DpisConfigStore store = createStore(false);
         FakeScopeGateway gateway = new FakeScopeGateway();
         gateway.serviceAvailable = false;
         gateway.hasSystemScopeSelected = false;
@@ -85,7 +85,7 @@ public class SystemHooksToggleControllerTest {
 
     @Test
     public void enable_withScopeMissing_showsScopeRequiredAndKeepsDesiredOn() {
-        DpiConfigStore store = createStore(false);
+        DpisConfigStore store = createStore(false);
         FakeScopeGateway gateway = new FakeScopeGateway();
         gateway.hasSystemScopeSelected = false;
         FakeView view = new FakeView();
@@ -106,7 +106,7 @@ public class SystemHooksToggleControllerTest {
 
     @Test
     public void enable_withScopeReady_setsOnStateWithoutWarnings() {
-        DpiConfigStore store = createStore(false);
+        DpisConfigStore store = createStore(false);
         FakeScopeGateway gateway = new FakeScopeGateway();
         FakeView view = new FakeView();
         FakeDelivery delivery = new FakeDelivery();
@@ -127,7 +127,7 @@ public class SystemHooksToggleControllerTest {
 
     @Test
     public void syncFromStore_withDesiredOnAndScopeMissing_rendersMissingState() {
-        DpiConfigStore store = createStore(true);
+        DpisConfigStore store = createStore(true);
         FakeScopeGateway gateway = new FakeScopeGateway();
         gateway.hasSystemScopeSelected = false;
         FakeView view = new FakeView();
@@ -146,7 +146,7 @@ public class SystemHooksToggleControllerTest {
 
     @Test
     public void syncFromStore_whenScopeQueryThrows_treatsAsScopeMissing() {
-        DpiConfigStore store = createStore(false);
+        DpisConfigStore store = createStore(false);
         FakeScopeGateway gateway = new FakeScopeGateway();
         gateway.throwOnHasScopeSelected = true;
         FakeView view = new FakeView();
@@ -164,9 +164,9 @@ public class SystemHooksToggleControllerTest {
         assertTrue(store.isSystemServerHooksEnabled());
     }
 
-    private static DpiConfigStore createStore(boolean hooksEnabled) {
+    private static DpisConfigStore createStore(boolean hooksEnabled) {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         if (!hooksEnabled) {
             store.setSystemServerHooksEnabled(false);
         }

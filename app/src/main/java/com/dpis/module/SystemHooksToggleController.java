@@ -17,17 +17,17 @@ final class SystemHooksToggleController {
         boolean hasSystemScopeSelected();
     }
 
-    private final DpiConfigStore store;
+    private final DpisConfigStore store;
     private final ScopeGateway scopeGateway;
     private final View view;
     private final Runnable onConfigSaved;
 
-    SystemHooksToggleController(DpiConfigStore store, ScopeGateway scopeGateway, View view) {
+    SystemHooksToggleController(DpisConfigStore store, ScopeGateway scopeGateway, View view) {
         this(store, scopeGateway, view, RuntimeConfigDelivery::publishLocalSnapshotAfterSave);
     }
 
     SystemHooksToggleController(
-            DpiConfigStore store,
+            DpisConfigStore store,
             ScopeGateway scopeGateway,
             View view,
             Runnable onConfigSaved) {

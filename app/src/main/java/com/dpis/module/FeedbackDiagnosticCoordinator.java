@@ -120,7 +120,7 @@ final class FeedbackDiagnosticCoordinator {
                 AppListItem item,
                 AppConfigDialogBinder.AppConfigDialogState state,
                 String versionName,
-                DpiConfigStore store
+                DpisConfigStore store
         ) {
             String statePackageName = state != null ? valueOrEmpty(state.packageName) : "";
             String packageName = !statePackageName.isBlank()

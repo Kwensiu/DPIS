@@ -13,7 +13,7 @@ import io.github.libxposed.api.XposedInterface;
 final class DisplayHookInstaller {
     private static volatile int installedPid = -1;
     private static volatile String targetPackageName;
-    private static volatile DpiConfigStore targetStore;
+    private static volatile DpisConfigStore targetStore;
     private static volatile Method currentPackageNameMethod;
     private static volatile boolean currentPackageNameUnavailable;
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
@@ -32,7 +32,7 @@ final class DisplayHookInstaller {
         installedPid = -1;
     }
 
-    static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
+    static void install(XposedInterface xposed, String packageName, DpisConfigStore store)
             throws ReflectiveOperationException {
         if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
@@ -59,7 +59,7 @@ final class DisplayHookInstaller {
         targetPackageName = packageName;
     }
 
-    static void setTargetStoreForLegacy(DpiConfigStore store) {
+    static void setTargetStoreForLegacy(DpisConfigStore store) {
         targetStore = store;
     }
 
@@ -150,7 +150,7 @@ final class DisplayHookInstaller {
         }
         String effectivePackageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(
                 targetStore, targetPackageName);
-        DpiConfigStore effectiveStore = WebApkRuntimeOwnerBridge.resolveEffectiveStore(
+        DpisConfigStore effectiveStore = WebApkRuntimeOwnerBridge.resolveEffectiveStore(
                 targetStore, effectivePackageName);
         VirtualDisplayOverride.Result override = resolvePackageScopedOverride(
                 effectivePackageName, effectiveStore);
@@ -230,7 +230,7 @@ final class DisplayHookInstaller {
         }
         String effectivePackageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(
                 targetStore, targetPackageName);
-        DpiConfigStore effectiveStore = WebApkRuntimeOwnerBridge.resolveEffectiveStore(
+        DpisConfigStore effectiveStore = WebApkRuntimeOwnerBridge.resolveEffectiveStore(
                 targetStore, effectivePackageName);
         VirtualDisplayOverride.Result override = resolvePackageScopedOverride(
                 effectivePackageName, effectiveStore);
@@ -286,7 +286,7 @@ final class DisplayHookInstaller {
         }
         String effectivePackageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(
                 targetStore, targetPackageName);
-        DpiConfigStore effectiveStore = WebApkRuntimeOwnerBridge.resolveEffectiveStore(
+        DpisConfigStore effectiveStore = WebApkRuntimeOwnerBridge.resolveEffectiveStore(
                 targetStore, effectivePackageName);
         VirtualDisplayOverride.Result override = resolvePackageScopedOverride(
                 effectivePackageName, effectiveStore);
@@ -344,7 +344,7 @@ final class DisplayHookInstaller {
     }
 
     static VirtualDisplayOverride.Result resolvePackageScopedOverrideForTest(String packageName,
-                                                                             DpiConfigStore store) {
+                                                                             DpisConfigStore store) {
         return resolvePackageScopedOverride(packageName, store);
     }
 
@@ -353,7 +353,7 @@ final class DisplayHookInstaller {
     }
 
     private static VirtualDisplayOverride.Result resolvePackageScopedOverride(String packageName,
-                                                                             DpiConfigStore store) {
+                                                                             DpisConfigStore store) {
         if (packageName == null || packageName.isBlank() || store == null) {
             return null;
         }

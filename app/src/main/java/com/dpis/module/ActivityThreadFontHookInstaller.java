@@ -26,7 +26,7 @@ final class ActivityThreadFontHookInstaller {
 
     static void install(XposedInterface xposed,
                         String packageName,
-                        DpiConfigStore store,
+                        DpisConfigStore store,
                         ModernApiCapabilities apiCapabilities)
             throws ReflectiveOperationException {
         if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
@@ -63,7 +63,7 @@ final class ActivityThreadFontHookInstaller {
         }
     }
 
-    static boolean applyFontScaleToBindData(Object bindData, String packageName, DpiConfigStore store) {
+    static boolean applyFontScaleToBindData(Object bindData, String packageName, DpisConfigStore store) {
         if (bindData == null) {
             return false;
         }

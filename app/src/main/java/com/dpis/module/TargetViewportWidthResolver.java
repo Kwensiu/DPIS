@@ -4,7 +4,7 @@ final class TargetViewportWidthResolver {
     private TargetViewportWidthResolver() {
     }
 
-    static Integer resolve(DpiConfigStore store, String packageName) {
+    static Integer resolve(DpisConfigStore store, String packageName) {
         if (store == null || packageName == null || packageName.isEmpty()) {
             return null;
         }
@@ -12,11 +12,11 @@ final class TargetViewportWidthResolver {
         return resolve(store, packageName, runtimeOverride);
     }
 
-    static Integer resolveForTest(DpiConfigStore store, String packageName, Integer runtimeOverride) {
+    static Integer resolveForTest(DpisConfigStore store, String packageName, Integer runtimeOverride) {
         return resolve(store, packageName, runtimeOverride);
     }
 
-    static ViewportTargetResolution resolve(DpiConfigStore store,
+    static ViewportTargetResolution resolve(DpisConfigStore store,
                                             String packageName,
                                             ViewportSourceSnapshot source) {
         if (store == null || packageName == null || packageName.isEmpty()) {
@@ -201,7 +201,7 @@ final class TargetViewportWidthResolver {
         return targetViewportWidthDp;
     }
 
-    private static Integer resolve(DpiConfigStore store, String packageName, Integer runtimeOverride) {
+    private static Integer resolve(DpisConfigStore store, String packageName, Integer runtimeOverride) {
         if (runtimeOverride != null) {
             if (runtimeOverride > 0) {
                 return runtimeOverride;

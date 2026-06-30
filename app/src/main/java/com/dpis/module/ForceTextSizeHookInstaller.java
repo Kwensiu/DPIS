@@ -76,7 +76,7 @@ final class ForceTextSizeHookInstaller {
         installedPid = -1;
     }
 
-    static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
+    static void install(XposedInterface xposed, String packageName, DpisConfigStore store)
             throws ReflectiveOperationException {
         install(xposed, packageName, store,
                 FontHookArbitration.resolveDomainPlan(true, true),
@@ -85,7 +85,7 @@ final class ForceTextSizeHookInstaller {
 
     static void install(XposedInterface xposed,
                         String packageName,
-                        DpiConfigStore store,
+                        DpisConfigStore store,
                         FontHookArbitration.FontDomainPlan domainPlan)
             throws ReflectiveOperationException {
         install(
@@ -98,7 +98,7 @@ final class ForceTextSizeHookInstaller {
 
     static void install(XposedInterface xposed,
                         String packageName,
-                        DpiConfigStore store,
+                        DpisConfigStore store,
                         FontHookArbitration.FontDomainPlan domainPlan,
                         ModernApiCapabilities apiCapabilities)
             throws ReflectiveOperationException {
@@ -1633,7 +1633,7 @@ final class ForceTextSizeHookInstaller {
         return factor > 0f && factor != 1.0f;
     }
 
-    private static boolean isVerboseFontLogsEnabled(DpiConfigStore store) {
+    private static boolean isVerboseFontLogsEnabled(DpisConfigStore store) {
         return store != null && store.isFontDebugOverlayEnabled();
     }
 

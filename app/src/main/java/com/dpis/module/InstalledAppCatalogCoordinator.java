@@ -78,7 +78,7 @@ final class InstalledAppCatalogCoordinator {
     }
 
     List<AppListItem> loadInstalledApps(boolean forceInstalledAppCatalogReload,
-            DpiConfigStore store,
+            DpisConfigStore store,
             Set<String> scopePackages,
             boolean scopeKnown) {
         List<InstalledAppCatalogItem> catalog = loadInstalledAppCatalog(
@@ -107,7 +107,7 @@ final class InstalledAppCatalogCoordinator {
         return result;
     }
 
-    static AppListItem createAppListItem(DpiConfigStore store,
+    static AppListItem createAppListItem(DpisConfigStore store,
             Set<String> scopePackages,
             boolean scopeKnown,
             String label,
@@ -158,7 +158,7 @@ final class InstalledAppCatalogCoordinator {
                 systemApp, hyperOsNativeProxyCandidate, icon);
     }
 
-    static boolean isUserVisibleConfiguredPackage(DpiConfigStore store,
+    static boolean isUserVisibleConfiguredPackage(DpisConfigStore store,
             String packageName,
             boolean scopeKnown,
             boolean inScope) {

@@ -27,7 +27,7 @@ final class PaintTextSizeFallbackHookInstaller {
         installedPid = -1;
     }
 
-    static void install(XposedInterface xposed, String packageName, DpiConfigStore store)
+    static void install(XposedInterface xposed, String packageName, DpisConfigStore store)
             throws ReflectiveOperationException {
         if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
@@ -125,7 +125,7 @@ final class PaintTextSizeFallbackHookInstaller {
         }
     }
 
-    static float resolveFieldRewriteFactor(DpiConfigStore store, String packageName) {
+    static float resolveFieldRewriteFactor(DpisConfigStore store, String packageName) {
         if (store == null) {
             return 1.0f;
         }
@@ -217,7 +217,7 @@ final class PaintTextSizeFallbackHookInstaller {
         return factor > 0f && factor != 1.0f;
     }
 
-    private static boolean isVerboseFontLogsEnabled(DpiConfigStore store) {
+    private static boolean isVerboseFontLogsEnabled(DpisConfigStore store) {
         return store != null && store.isFontDebugOverlayEnabled();
     }
 }

@@ -12,7 +12,7 @@ public class FontScaleOverrideTest {
     @Test
     public void resolveFallsBackToOriginalWhenTargetMissing() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
 
         FontScaleOverride.Result result = FontScaleOverride.resolve(
                 store, "com.max.xiaoheihe", 1.25f);
@@ -26,7 +26,7 @@ public class FontScaleOverrideTest {
     public void resolveAppliesTargetPercentWhenConfigured() {
         FakePrefs prefs = new FakePrefs();
         prefs.edit().putInt("font.com.max.xiaoheihe.scale_percent", 150).commit();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setSystemServerHooksEnabled(true);
 
         FontScaleOverride.Result result = FontScaleOverride.resolve(
@@ -40,7 +40,7 @@ public class FontScaleOverrideTest {
     @Test
     public void resolveAppliesFieldRewritePercentForResourcesFontDomain() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setSystemServerHooksEnabled(true);
         String packageName = "com.example.flutterapp";
         store.setTargetFontScalePercent(packageName, 300);
@@ -57,7 +57,7 @@ public class FontScaleOverrideTest {
     @Test
     public void resolveSkipsEmulationWhenSystemHookOff() {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setSystemServerHooksEnabled(false);
         store.setTargetFontScalePercent("com.max.xiaoheihe", 150);
         store.setTargetFontApplyMode("com.max.xiaoheihe", FontApplyMode.SYSTEM_EMULATION);

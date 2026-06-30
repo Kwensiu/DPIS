@@ -103,7 +103,7 @@ final class SystemScopeCoordinator {
         }
     }
 
-    static boolean resolveSystemHookEffectiveEnabled(DpiConfigStore store) {
+    static boolean resolveSystemHookEffectiveEnabled(DpisConfigStore store) {
         if (store == null) {
             return false;
         }

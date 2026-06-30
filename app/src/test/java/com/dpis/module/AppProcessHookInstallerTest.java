@@ -400,7 +400,7 @@ public class AppProcessHookInstallerTest {
 
     @Test
     public void typefacePlanDoesNotEnableFontScaleHooks() {
-        DpiConfigStore store = new DpiConfigStore(new FakePrefs());
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         store.setTargetTypefaceId("com.example.app", "font_abcd1234");
 
         ModulePackagePlan plan = ModulePackagePlan.resolve(store, "com.example.app");
@@ -558,7 +558,7 @@ public class AppProcessHookInstallerTest {
                                                   boolean systemHooksEnabled,
                                                   boolean globalLogEnabled) {
         FakePrefs prefs = new FakePrefs();
-        DpiConfigStore store = new DpiConfigStore(prefs);
+        DpisConfigStore store = new DpisConfigStore(prefs);
         store.setSystemServerSafeModeEnabled(safeMode);
         store.setSystemServerHooksEnabled(systemHooksEnabled);
         store.setGlobalLogEnabled(globalLogEnabled);

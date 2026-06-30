@@ -12,7 +12,7 @@ final class ViewportDebugReporter {
     private ViewportDebugReporter() {
     }
 
-    static void report(DpiConfigStore store,
+    static void report(DpisConfigStore store,
                        String packageName,
                        String viewportMode,
                        int sourceWidthDp,

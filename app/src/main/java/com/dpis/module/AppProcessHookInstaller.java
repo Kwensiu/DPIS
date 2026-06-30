@@ -22,7 +22,7 @@ final class AppProcessHookInstaller {
     }
 
     static void install(XposedInterface xposed,
-                        DpiConfigStore store,
+                        DpisConfigStore store,
                         HookRuntimePolicy policy,
                         ModulePackagePlan packagePlan,
                         ModernApiCapabilities apiCapabilities) throws Throwable {
@@ -172,7 +172,7 @@ final class AppProcessHookInstaller {
 
     private static void installFromPlan(XposedInterface xposed,
                                         String packageName,
-                                        DpiConfigStore store,
+                                        DpisConfigStore store,
                                         HookRuntimePolicy policy,
                                         HookExecutionPlan plan,
                                         ViewportTargetSpec targetViewportSpec,
@@ -293,7 +293,7 @@ final class AppProcessHookInstaller {
 
     static void installTypefaceHooks(XposedInterface xposed,
                                      String packageName,
-                                     DpiConfigStore store,
+                                     DpisConfigStore store,
                                      String targetTypefaceId) {
         try {
             DpisLog.i("DPIS_FONT_STYLE install requested: package=" + packageName

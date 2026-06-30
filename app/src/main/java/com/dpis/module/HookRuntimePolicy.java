@@ -18,7 +18,7 @@ final class HookRuntimePolicy {
         this.probeHooksEnabled = !systemServerSafeModeEnabled && globalLogEnabled;
     }
 
-    static HookRuntimePolicy fromStore(DpiConfigStore store) {
+    static HookRuntimePolicy fromStore(DpisConfigStore store) {
         return new HookRuntimePolicy(
                 store.isSystemServerHooksEnabled(),
                 store.isSystemServerHooksEnabled(),
@@ -37,14 +37,14 @@ final class HookRuntimePolicy {
                 snapshot.isGlobalLogEnabled());
     }
 
-    static HookRuntimePolicy fromNullableStore(DpiConfigStore store) {
+    static HookRuntimePolicy fromNullableStore(DpisConfigStore store) {
         if (store == null) {
             return new HookRuntimePolicy(true, true, true, false);
         }
         return fromStore(store);
     }
 
-    static HookRuntimePolicy fromEffectiveSystemHookState(DpiConfigStore store,
+    static HookRuntimePolicy fromEffectiveSystemHookState(DpisConfigStore store,
                                                           boolean systemServerHooksEffectiveEnabled) {
         if (store == null) {
             return new HookRuntimePolicy(systemServerHooksEffectiveEnabled, true, true, false);

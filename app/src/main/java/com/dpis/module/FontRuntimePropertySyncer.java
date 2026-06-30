@@ -54,7 +54,7 @@ final class FontRuntimePropertySyncer {
         cleanerThread.start();
     }
 
-    static void syncConfiguredTargetsAsync(DpiConfigStore store) {
+    static void syncConfiguredTargetsAsync(DpisConfigStore store) {
         if (store == null) {
             return;
         }
@@ -64,7 +64,7 @@ final class FontRuntimePropertySyncer {
         syncThread.start();
     }
 
-    static void syncConfiguredTargets(DpiConfigStore store) {
+    static void syncConfiguredTargets(DpisConfigStore store) {
         if (store == null) {
             return;
         }
@@ -74,7 +74,7 @@ final class FontRuntimePropertySyncer {
         }
     }
 
-    static void syncTarget(String packageName, DpiConfigStore store) {
+    static void syncTarget(String packageName, DpisConfigStore store) {
         if (packageName == null || packageName.isBlank() || store == null) {
             return;
         }
@@ -152,7 +152,7 @@ final class FontRuntimePropertySyncer {
                         value);
     }
 
-    private static String buildConfiguredTargetsCommand(DpiConfigStore store) {
+    private static String buildConfiguredTargetsCommand(DpisConfigStore store) {
         LinkedHashSet<String> packages = new LinkedHashSet<>(store.getConfiguredPackages());
         if (packages.isEmpty()) {
             return "";
@@ -164,7 +164,7 @@ final class FontRuntimePropertySyncer {
         return command.toString();
     }
 
-    private static String buildTargetCommands(String packageName, DpiConfigStore store) {
+    private static String buildTargetCommands(String packageName, DpisConfigStore store) {
         Integer fontScalePercent = store.getTargetFontScalePercent(packageName);
         String mode = store.getTargetFontApplyMode(packageName);
         String typefaceId = store.isTargetDpisEnabled(packageName)

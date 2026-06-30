@@ -64,7 +64,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     private final LocalizedActivity activity;
     private final View root;
     private final LauncherIconVisibilityStore launcherIconVisibilityStore;
-    private DpiConfigStore store;
+    private DpisConfigStore store;
     private MaterialSwitch hooksEnabledSwitch;
     private MaterialSwitch safeModeSwitch;
     private MaterialSwitch globalLogSwitch;
@@ -785,7 +785,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void exportConfigBackup(Uri uri) {
-        DpiConfigStore localStore = store;
+        DpisConfigStore localStore = store;
         if (localStore == null) {
             showToast(R.string.status_save_requires_init);
             return;
@@ -812,7 +812,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void importConfigBackup(Uri uri) {
-        DpiConfigStore localStore = store;
+        DpisConfigStore localStore = store;
         if (localStore == null) {
             showToast(R.string.status_save_requires_init);
             return;
