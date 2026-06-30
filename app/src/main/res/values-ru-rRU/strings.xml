@@ -35,6 +35,8 @@ Mini Programs are not supported yet.</string>
     <string name="template_search_hint">Название шаблона</string>
     <string name="search_clear">Очистить результаты поиска</string>
     <string name="quick_search_button">Быстрый поиск</string>
+    <string name="quick_config_tile_label">Быстрая настройка DPIS</string>
+    <string name="quick_config_target_unavailable">Не удалось открыть настройки этого приложения.</string>
     <string name="land_detail_empty_title">Выберите приложение</string>
     <string name="land_detail_empty_message">Настройки приложения отображаются здесь в альбомной ориентации.</string>
     <string name="template_detail_empty_title">Выберите элемент шаблона</string>

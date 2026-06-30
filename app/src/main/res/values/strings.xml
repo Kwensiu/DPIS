@@ -36,6 +36,8 @@ Mini Programs are not supported yet.</string>
     <string name="template_search_hint">Template name</string>
     <string name="search_clear">Clear search</string>
     <string name="quick_search_button">Quick search</string>
+    <string name="quick_config_tile_label">DPIS quick config</string>
+    <string name="quick_config_target_unavailable">Unable to open this app config.</string>
     <string name="land_detail_empty_title">Select an app</string>
     <string name="land_detail_empty_message">App configuration appears here in landscape.</string>
     <string name="template_detail_empty_title">Select a template item</string>

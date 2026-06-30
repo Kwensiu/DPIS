@@ -35,6 +35,8 @@
     <string name="template_search_hint">搜索模板名</string>
     <string name="search_clear">清除搜索</string>
     <string name="quick_search_button">快速搜索</string>
+    <string name="quick_config_tile_label">DPIS 快速配置</string>
+    <string name="quick_config_target_unavailable">无法打开此应用配置。</string>
     <string name="land_detail_empty_title">选择应用</string>
     <string name="land_detail_empty_message">选择应用配置以编辑</string>
     <string name="template_detail_empty_title">选择模板项</string>

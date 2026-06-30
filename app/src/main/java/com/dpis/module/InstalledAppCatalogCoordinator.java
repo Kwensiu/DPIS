@@ -107,7 +107,7 @@ final class InstalledAppCatalogCoordinator {
         return result;
     }
 
-    private static AppListItem createAppListItem(DpiConfigStore store,
+    static AppListItem createAppListItem(DpiConfigStore store,
             Set<String> scopePackages,
             boolean scopeKnown,
             String label,

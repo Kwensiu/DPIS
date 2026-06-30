@@ -35,6 +35,8 @@ Mini Programs はまだサポートされていません。</string>
     <string name="template_search_hint">テンプレート名</string>
     <string name="search_clear">検索をクリア</string>
     <string name="quick_search_button">クイック検索</string>
+    <string name="quick_config_tile_label">DPIS クイック設定</string>
+    <string name="quick_config_target_unavailable">このアプリ設定を開けません。</string>
     <string name="land_detail_empty_title">アプリを選択</string>
     <string name="land_detail_empty_message">横画面ではここにアプリ設定が表示されます。</string>
     <string name="template_detail_empty_title">テンプレート項目を選択</string>

@@ -18,6 +18,7 @@
     <dimen name="page_card_corner_radius">24dp</dimen>
     <dimen name="page_card_stroke_width">1dp</dimen>
     <dimen name="dialog_sheet_header_subtitle_spacing_top">1dp</dimen>
+    <dimen name="quick_config_panel_corner_radius">28dp</dimen>
 
     <!-- Main app screen. -->
     <dimen name="main_toolbar_padding_horizontal">16dp</dimen>
