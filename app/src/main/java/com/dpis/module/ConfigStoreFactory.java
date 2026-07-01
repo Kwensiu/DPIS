@@ -27,7 +27,9 @@ final class ConfigStoreFactory {
 
     static DpisConfigStore createLocalUiModuleConfigStore(Context context, XposedService service) {
         File legacySharedPrefsFile = legacySharedPrefsFile(context);
-        SharedPreferences preferences = context.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE);
+        SharedPreferences localPreferences =
+                context.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE);
+        SharedPreferences preferences = localPreferences;
         boolean usingRemote = false;
         if ("modern".equals(BuildConfig.FLAVOR) && service != null) {
             try {
@@ -40,7 +42,8 @@ final class ConfigStoreFactory {
                 // Remote preferences are unavailable; keep the app-local store.
             }
         }
-        DpisConfigStore store = new DpisConfigStore(preferences, legacySharedPrefsFile);
+        DpisConfigStore store = new DpisConfigStore(
+                preferences, null, legacySharedPrefsFile, localPreferences);
         if ("modern".equals(BuildConfig.FLAVOR)
                 && usingRemote
                 && !store.hasAnyUserVisiblePackageConfig()) {

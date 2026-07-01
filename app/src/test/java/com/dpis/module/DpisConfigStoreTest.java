@@ -1034,6 +1034,27 @@ public class DpisConfigStoreTest {
     }
 
     @Test
+    public void localOnlyUiStateUsesExplicitLocalPreferences() {
+        FakePrefs remotePrefs = new FakePrefs();
+        FakePrefs localPrefs = new FakePrefs();
+        DpisConfigStore store = new DpisConfigStore(remotePrefs, null, null, localPrefs);
+
+        assertTrue(store.setTargetFontScalePercent("com.max.xiaoheihe", 150));
+        assertTrue(store.setInterfaceScalePercent(73));
+        assertTrue(store.setStartupDisclaimerAccepted(true));
+
+        assertEquals(Integer.valueOf(150),
+                store.getTargetFontScalePercent("com.max.xiaoheihe"));
+        assertEquals(73, store.getInterfaceScalePercent());
+        assertTrue(store.isStartupDisclaimerAccepted());
+        assertTrue(remotePrefs.getAll().containsKey("font.com.max.xiaoheihe.scale_percent"));
+        assertFalse(remotePrefs.getAll().containsKey(DpisConfigStore.KEY_INTERFACE_SCALE_PERCENT));
+        assertFalse(remotePrefs.getAll().containsKey(DpisConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED));
+        assertEquals(73, localPrefs.getInt(DpisConfigStore.KEY_INTERFACE_SCALE_PERCENT, 0));
+        assertTrue(localPrefs.getBoolean(DpisConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, false));
+    }
+
+    @Test
     public void ensureSeedConfigUsesOnlyCurrentStoreExistence() {
         FakePrefs prefs = new FakePrefs();
         prefs.edit()

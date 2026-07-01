@@ -186,6 +186,7 @@ final class DpisConfigStore {
 
     private final SharedPreferences preferences;
     private final SharedPreferences fallbackPreferences;
+    private final SharedPreferences localOnlyPreferences;
     private final File legacySharedPrefsMirrorFile;
 
     DpisConfigStore(SharedPreferences preferences) {
@@ -200,13 +201,22 @@ final class DpisConfigStore {
         this(preferences, fallbackPreferences, null);
     }
 
+    DpisConfigStore(
+            SharedPreferences preferences,
+            SharedPreferences fallbackPreferences,
+            File legacySharedPrefsMirrorFile,
+            SharedPreferences localOnlyPreferences) {
+        this.preferences = preferences;
+        this.fallbackPreferences = fallbackPreferences;
+        this.localOnlyPreferences = localOnlyPreferences != null ? localOnlyPreferences : preferences;
+        this.legacySharedPrefsMirrorFile = legacySharedPrefsMirrorFile;
+    }
+
     private DpisConfigStore(
             SharedPreferences preferences,
             SharedPreferences fallbackPreferences,
             File legacySharedPrefsMirrorFile) {
-        this.preferences = preferences;
-        this.fallbackPreferences = fallbackPreferences;
-        this.legacySharedPrefsMirrorFile = legacySharedPrefsMirrorFile;
+        this(preferences, fallbackPreferences, legacySharedPrefsMirrorFile, preferences);
     }
 
     Set<String> getConfiguredPackages() {
@@ -1820,10 +1830,11 @@ final class DpisConfigStore {
     }
 
     private int getLocalOnlyInt(String key, int defaultValue) {
-        if (!preferences.contains(key)) {
+        if (!localOnlyPreferences.contains(key)) {
             return defaultValue;
         }
-        Integer value = readPreferenceValue(preferences, prefs -> prefs.getInt(key, defaultValue));
+        Integer value = readPreferenceValue(
+                localOnlyPreferences, prefs -> prefs.getInt(key, defaultValue));
         return value != null ? value : defaultValue;
     }
 
@@ -1852,10 +1863,11 @@ final class DpisConfigStore {
     }
 
     private boolean getLocalOnlyBoolean(String key, boolean defaultValue) {
-        if (!preferences.contains(key)) {
+        if (!localOnlyPreferences.contains(key)) {
             return defaultValue;
         }
-        Boolean value = readPreferenceValue(preferences, prefs -> prefs.getBoolean(key, defaultValue));
+        Boolean value = readPreferenceValue(
+                localOnlyPreferences, prefs -> prefs.getBoolean(key, defaultValue));
         return value != null ? value : defaultValue;
     }
 
@@ -1899,7 +1911,7 @@ final class DpisConfigStore {
     }
 
     private boolean commitLocalOnly(EditorAction action) {
-        SharedPreferences.Editor editor = preferences.edit();
+        SharedPreferences.Editor editor = localOnlyPreferences.edit();
         action.apply(editor);
         boolean committed = editor.commit();
         if (committed) {
