@@ -30,9 +30,7 @@ final class AppUiScaleManager {
     }
 
     static int getScalePercent(Context context) {
-        return normalizeScalePercent(context
-                .getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)
-                .getInt(DpisConfigStore.KEY_INTERFACE_SCALE_PERCENT, DEFAULT_SCALE_PERCENT));
+        return new InterfaceScaleStore(context).getPercent();
     }
 
     static int normalizeScalePercent(int percent) {

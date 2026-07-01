@@ -89,7 +89,7 @@ public class MainViewModelTest {
     }
 
     @Test
-    public void workspaceMode_changesWithoutClearingAppSearchFilterOrPagerData() {
+    public void workspaceModeKeepsSeparateAppAndTemplateSearchQueries() {
         List<AppListItem> source = List.of(
                 app("Alpha Tool", "com.example.alpha", true, false),
                 app("Beta Tool", "com.example.beta", true, false));
@@ -103,15 +103,23 @@ public class MainViewModelTest {
         MainUiState templateState = viewModel.getState();
 
         assertEquals(MainWorkspaceMode.TEMPLATE, templateState.workspaceMode);
-        assertEquals("alpha", templateState.query);
+        assertEquals("", templateState.currentQuery());
+        assertEquals("alpha", templateState.appQuery);
         assertTrue(templateState.filterState.injectedOnly);
         assertEquals(1, templateState.visibleItems(AppListPage.ALL_APPS).size());
+
+        viewModel.dispatch(MainUiAction.queryChanged("template"));
+        MainUiState queriedTemplateState = viewModel.getState();
+        assertEquals("template", queriedTemplateState.currentQuery());
+        assertEquals("alpha", queriedTemplateState.appQuery);
+        assertEquals("template", queriedTemplateState.templateQuery);
 
         viewModel.dispatch(MainUiAction.workspaceModeChanged(MainWorkspaceMode.APP));
         MainUiState appState = viewModel.getState();
 
         assertEquals(MainWorkspaceMode.APP, appState.workspaceMode);
-        assertEquals("alpha", appState.query);
+        assertEquals("alpha", appState.currentQuery());
+        assertEquals("template", appState.templateQuery);
         assertTrue(appState.filterState.injectedOnly);
         assertEquals("com.example.alpha", appState.visibleItems(AppListPage.ALL_APPS).get(0).packageName);
     }

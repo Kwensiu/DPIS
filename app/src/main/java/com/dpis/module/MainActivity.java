@@ -80,6 +80,7 @@ public final class MainActivity
     private static final float SEARCH_FAB_HIDDEN_SCALE = 0.92f;
     private static final int SEARCH_FAB_SCROLL_TRIGGER_DY = 8;
     private static final String STATE_CURRENT_QUERY = "state.current_query";
+    private static final String STATE_TEMPLATE_QUERY = "state.template_query";
     private static final String STATE_CURRENT_PAGE = "state.current_page";
     private static final String STATE_WORKSPACE_MODE = "state.workspace_mode";
     private static final String STATE_FILTER_SHOW_SYSTEM
@@ -202,8 +203,10 @@ public final class MainActivity
     private NavigationBarView workspaceSwitch;
     private SparseArray<Parcelable> restoredPageScrollStates;
     private EditText searchInput;
+    private ImageButton searchClearButton;
     private FloatingActionButton searchFocusFab;
     private boolean searchFabHidden;
+    private boolean suppressSearchQueryChange;
     private boolean updatingWorkspaceSelection;
     private boolean updatingFilterTabSelection;
     private ImageButton searchFilterButton;
@@ -266,6 +269,7 @@ public final class MainActivity
         RetainedState retainedState
                 = (RetainedState) getLastNonConfigurationInstance();
         String initialQuery = "";
+        String initialTemplateQuery = "";
         AppListFilterState initialFilterState = appListFilterStateStore.load();
         MainWorkspaceMode initialWorkspaceMode = MainWorkspaceMode.HOME;
         List<AppListItem> initialAppsSnapshot = Collections.emptyList();
@@ -274,6 +278,7 @@ public final class MainActivity
         );
         if (retainedState != null) {
             initialQuery = retainedState.query;
+            initialTemplateQuery = retainedState.templateQuery;
             initialFilterState = retainedState.filterState;
             initialWorkspaceMode = retainedState.workspaceMode;
             templateDetailSelection = retainedState.templateDetailSelection;
@@ -292,6 +297,10 @@ public final class MainActivity
         if (savedInstanceState != null) {
             initialQuery = savedInstanceState.getString(
                     STATE_CURRENT_QUERY,
+                    ""
+            );
+            initialTemplateQuery = savedInstanceState.getString(
+                    STATE_TEMPLATE_QUERY,
                     ""
             );
             initialFilterState = new AppListFilterState(
@@ -328,6 +337,7 @@ public final class MainActivity
         mainViewModel = new MainViewModel(
                 MainUiState.initial(
                         initialQuery,
+                        initialTemplateQuery,
                         initialFilterState,
                         initialAppsSnapshot,
                         initialRefreshingPages,
@@ -411,7 +421,7 @@ public final class MainActivity
             }
             return false;
         });
-        ImageButton searchClearButton = findViewById(R.id.search_clear_button);
+        searchClearButton = findViewById(R.id.search_clear_button);
         searchInput.addTextChangedListener(
                 new TextWatcher() {
             @Override
@@ -431,7 +441,9 @@ public final class MainActivity
                     int count
             ) {
                 String query = s != null ? s.toString() : "";
-                dispatchMainUiAction(MainUiAction.queryChanged(query));
+                if (!suppressSearchQueryChange) {
+                    dispatchMainUiAction(MainUiAction.queryChanged(query));
+                }
                 searchClearButton.setVisibility(
                         query.isEmpty() ? View.GONE : View.VISIBLE
                 );
@@ -446,7 +458,7 @@ public final class MainActivity
             searchInput.setText("");
             searchInput.requestFocus();
         });
-        String restoredQuery = requireUiState().query;
+        String restoredQuery = requireUiState().currentQuery();
         if (!restoredQuery.isEmpty()) {
             searchInput.setText(restoredQuery);
             searchInput.setSelection(restoredQuery.length());
@@ -631,7 +643,8 @@ public final class MainActivity
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         MainUiState state = requireUiState();
-        outState.putString(STATE_CURRENT_QUERY, state.query);
+        outState.putString(STATE_CURRENT_QUERY, state.appQuery);
+        outState.putString(STATE_TEMPLATE_QUERY, state.templateQuery);
         outState.putString(STATE_WORKSPACE_MODE, state.workspaceMode.name());
         outState.putBoolean(
                 STATE_FILTER_SHOW_SYSTEM,
@@ -724,7 +737,8 @@ public final class MainActivity
         captureTemplateEditorDraft();
         return new RetainedState(
                 snapshot,
-                state.query,
+                state.appQuery,
+                state.templateQuery,
                 state.filterState,
                 state.workspaceMode,
                 currentPage,
@@ -1232,6 +1246,7 @@ public final class MainActivity
         if (state == null) {
             return;
         }
+        syncSearchInputWithState(state);
         applyWorkspaceMode(state.workspaceMode);
         applyFilter();
         applyRefreshingStatesToPager();
@@ -1314,6 +1329,7 @@ public final class MainActivity
                     appWorkspace ? View.VISIBLE : View.GONE
             );
         }
+        applySearchClearButtonPosition(appWorkspace);
         boolean animateWorkspace = renderedWorkspaceMode != null
                 && renderedWorkspaceMode != mode;
         renderedWorkspaceMode = mode;
@@ -1343,6 +1359,21 @@ public final class MainActivity
         } else if (settingsWorkspace) {
             bindSettingsWorkspace();
         }
+    }
+
+    private void applySearchClearButtonPosition(boolean filterButtonVisible) {
+        if (searchClearButton == null) {
+            return;
+        }
+        int start = getResources().getDimensionPixelSize(filterButtonVisible
+                ? R.dimen.main_search_action_pair_padding
+                : R.dimen.main_search_action_icon_padding_start);
+        int end = getResources().getDimensionPixelSize(filterButtonVisible
+                ? R.dimen.main_search_action_pair_padding
+                : R.dimen.main_search_action_icon_padding_end);
+        int vertical = getResources().getDimensionPixelSize(
+                R.dimen.main_search_action_icon_padding_vertical);
+        ViewCompat.setPaddingRelative(searchClearButton, start, vertical, end, vertical);
     }
 
     private void restoreAppEditorForCurrentWorkspace() {
@@ -1401,9 +1432,25 @@ public final class MainActivity
         if (templateWorkspaceBinder != null) {
             templateWorkspaceBinder.bind(
                     templateWorkspaceContainer,
-                    requireUiState().query
+                    requireUiState().currentQuery()
             );
         }
+    }
+
+    private void syncSearchInputWithState(MainUiState state) {
+        if (searchInput == null || state == null) {
+            return;
+        }
+        String query = state.currentQuery();
+        Editable current = searchInput.getText();
+        String currentQuery = current != null ? current.toString() : "";
+        if (query.equals(currentQuery)) {
+            return;
+        }
+        suppressSearchQueryChange = true;
+        searchInput.setText(query);
+        suppressSearchQueryChange = false;
+        searchInput.setSelection(query.length());
     }
 
     private void bindToolsWorkspace() {
@@ -4776,6 +4823,7 @@ public final class MainActivity
 
         final List<AppListItem> appsSnapshot;
         final String query;
+        final String templateQuery;
         final AppListFilterState filterState;
         final MainWorkspaceMode workspaceMode;
         final int currentPage;
@@ -4792,6 +4840,7 @@ public final class MainActivity
         RetainedState(
                 List<AppListItem> appsSnapshot,
                 String query,
+                String templateQuery,
                 AppListFilterState filterState,
                 MainWorkspaceMode workspaceMode,
                 int currentPage,
@@ -4807,6 +4856,7 @@ public final class MainActivity
         ) {
             this.appsSnapshot = appsSnapshot;
             this.query = query != null ? query : "";
+            this.templateQuery = templateQuery != null ? templateQuery : "";
             this.filterState
                     = filterState != null
                             ? filterState

@@ -114,11 +114,14 @@
 
                                 <androidx.appcompat.widget.AppCompatImageButton
                                     android:id="@+id/search_clear_button"
-                                    android:layout_width="@dimen/main_search_clear_button_size"
-                                    android:layout_height="@dimen/main_search_clear_button_size"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="match_parent"
                                     android:background="?attr/selectableItemBackgroundBorderless"
                                     android:contentDescription="@string/search_clear"
-                                    android:padding="@dimen/main_search_clear_button_padding"
+                                    android:paddingStart="@dimen/main_search_action_pair_padding"
+                                    android:paddingTop="@dimen/main_search_action_icon_padding_vertical"
+                                    android:paddingEnd="@dimen/main_search_action_pair_padding"
+                                    android:paddingBottom="@dimen/main_search_action_icon_padding_vertical"
                                     android:scaleType="centerInside"
                                     android:src="@drawable/ic_close_24"
                                     android:visibility="gone"

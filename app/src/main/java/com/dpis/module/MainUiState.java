@@ -8,26 +8,29 @@ import java.util.List;
 import java.util.Set;
 
 final class MainUiState {
-    final String query;
+    final String appQuery;
+    final String templateQuery;
     final AppListFilterState filterState;
     final MainWorkspaceMode workspaceMode;
     private final List<AppListItem> appsSnapshot;
     private final EnumMap<AppListPage, List<AppListItem>> visibleSections;
     private final EnumSet<AppListPage> refreshingPages;
 
-    private MainUiState(String query,
+    private MainUiState(String appQuery,
+                        String templateQuery,
                         AppListFilterState filterState,
                         List<AppListItem> appsSnapshot,
                         Set<AppListPage> refreshingPages,
                         MainWorkspaceMode workspaceMode) {
-        this.query = query != null ? query : "";
+        this.appQuery = appQuery != null ? appQuery : "";
+        this.templateQuery = templateQuery != null ? templateQuery : "";
         this.filterState = filterState != null ? filterState : AppListFilterState.defaultState();
         this.workspaceMode = workspaceMode != null ? workspaceMode : MainWorkspaceMode.APP;
         List<AppListItem> safeApps = appsSnapshot != null
                 ? new ArrayList<>(appsSnapshot)
                 : Collections.emptyList();
         this.appsSnapshot = Collections.unmodifiableList(safeApps);
-        this.visibleSections = buildVisibleSections(this.appsSnapshot, this.query, this.filterState);
+        this.visibleSections = buildVisibleSections(this.appsSnapshot, this.appQuery, this.filterState);
         this.refreshingPages = refreshingPages == null || refreshingPages.isEmpty()
                 ? EnumSet.noneOf(AppListPage.class)
                 : EnumSet.copyOf(refreshingPages);
@@ -45,19 +48,36 @@ final class MainUiState {
                                List<AppListItem> appsSnapshot,
                                Set<AppListPage> refreshingPages,
                                MainWorkspaceMode workspaceMode) {
-        return new MainUiState(query, filterState, appsSnapshot, refreshingPages, workspaceMode);
+        return new MainUiState(query, "", filterState, appsSnapshot, refreshingPages, workspaceMode);
+    }
+
+    static MainUiState initial(String appQuery,
+                               String templateQuery,
+                               AppListFilterState filterState,
+                               List<AppListItem> appsSnapshot,
+                               Set<AppListPage> refreshingPages,
+                               MainWorkspaceMode workspaceMode) {
+        return new MainUiState(appQuery, templateQuery, filterState, appsSnapshot,
+                refreshingPages, workspaceMode);
     }
 
     MainUiState withQuery(String query) {
-        return new MainUiState(query, filterState, appsSnapshot, refreshingPages, workspaceMode);
+        if (workspaceMode == MainWorkspaceMode.TEMPLATE) {
+            return new MainUiState(appQuery, query, filterState, appsSnapshot,
+                    refreshingPages, workspaceMode);
+        }
+        return new MainUiState(query, templateQuery, filterState, appsSnapshot,
+                refreshingPages, workspaceMode);
     }
 
     MainUiState withFilterState(AppListFilterState filterState) {
-        return new MainUiState(query, filterState, appsSnapshot, refreshingPages, workspaceMode);
+        return new MainUiState(appQuery, templateQuery, filterState, appsSnapshot,
+                refreshingPages, workspaceMode);
     }
 
     MainUiState withApps(List<AppListItem> appsSnapshot) {
-        return new MainUiState(query, filterState, appsSnapshot, refreshingPages, workspaceMode);
+        return new MainUiState(appQuery, templateQuery, filterState, appsSnapshot,
+                refreshingPages, workspaceMode);
     }
 
     MainUiState withWorkspaceMode(MainWorkspaceMode workspaceMode) {
@@ -65,7 +85,8 @@ final class MainUiState {
         if (this.workspaceMode == nextMode) {
             return this;
         }
-        return new MainUiState(query, filterState, appsSnapshot, refreshingPages, nextMode);
+        return new MainUiState(appQuery, templateQuery, filterState, appsSnapshot,
+                refreshingPages, nextMode);
     }
 
     MainUiState withRefreshingPage(AppListPage page, boolean refreshing) {
@@ -80,14 +101,15 @@ final class MainUiState {
         } else {
             next.remove(page);
         }
-        return new MainUiState(query, filterState, appsSnapshot, next, workspaceMode);
+        return new MainUiState(appQuery, templateQuery, filterState, appsSnapshot, next, workspaceMode);
     }
 
     MainUiState clearRefreshingPages() {
         if (refreshingPages.isEmpty()) {
             return this;
         }
-        return new MainUiState(query, filterState, appsSnapshot, Collections.emptySet(), workspaceMode);
+        return new MainUiState(appQuery, templateQuery, filterState, appsSnapshot,
+                Collections.emptySet(), workspaceMode);
     }
 
     List<AppListItem> appsSnapshot() {
@@ -107,6 +129,10 @@ final class MainUiState {
         return refreshingPages.isEmpty()
                 ? Collections.emptySet()
                 : EnumSet.copyOf(refreshingPages);
+    }
+
+    String currentQuery() {
+        return workspaceMode == MainWorkspaceMode.TEMPLATE ? templateQuery : appQuery;
     }
 
     private static EnumMap<AppListPage, List<AppListItem>> buildVisibleSections(

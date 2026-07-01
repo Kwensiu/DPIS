@@ -155,10 +155,11 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("bindTemplateWorkspace();"));
         assertTrue(
             compact(source).contains(
-                "templateWorkspaceBinder.bind( templateWorkspaceContainer, requireUiState().query );"
+                "templateWorkspaceBinder.bind( templateWorkspaceContainer, requireUiState().currentQuery() );"
             )
         );
         assertTrue(source.contains("R.string.template_search_hint"));
+        assertTrue(source.contains("STATE_TEMPLATE_QUERY"));
         assertTrue(source.contains("QuickTemplateSortDialog.show"));
         assertTrue(
             source.contains("searchFilterButton.setEnabled(appWorkspace);")
@@ -168,6 +169,10 @@ public class MainActivitySourceSmokeTest {
                 "searchFilterButton.setVisibility( appWorkspace ? View.VISIBLE : View.GONE );"
             )
         );
+        assertTrue(source.contains("applySearchClearButtonPosition(appWorkspace);"));
+        assertTrue(source.contains("private void applySearchClearButtonPosition(boolean filterButtonVisible)"));
+        assertTrue(source.contains("R.dimen.main_search_action_pair_padding"));
+        assertTrue(source.contains("R.dimen.main_search_action_icon_padding_end"));
         assertTrue(source.contains("workspaceModeForButtonId(int checkedId)"));
         assertTrue(
             source.contains("checkedId == R.id.workspace_template_button")

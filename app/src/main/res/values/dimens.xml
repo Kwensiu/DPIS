@@ -104,6 +104,7 @@
     <dimen name="main_search_clear_button_padding">6dp</dimen>
     <dimen name="main_search_action_button_size">44dp</dimen>
     <dimen name="main_search_action_button_padding">10dp</dimen>
+    <dimen name="main_search_action_pair_padding">4dp</dimen>
     <dimen name="main_search_action_icon_padding_start">12dp</dimen>
     <dimen name="main_search_action_icon_padding_end">16dp</dimen>
     <dimen name="main_search_action_icon_padding_vertical">14dp</dimen>

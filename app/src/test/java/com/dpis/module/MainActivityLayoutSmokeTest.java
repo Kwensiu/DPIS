@@ -36,6 +36,7 @@ public class MainActivityLayoutSmokeTest {
         assertTrue(layout.contains("@dimen/main_search_card_height"));
         assertTrue(layout.contains("@dimen/main_search_icon_padding_start"));
         assertTrue(layout.contains("@dimen/main_search_icon_padding_end"));
+        assertTrue(layout.contains("@dimen/main_search_action_pair_padding"));
         assertTrue(layout.contains("@dimen/main_search_action_icon_padding_start"));
         assertTrue(layout.contains("@dimen/main_search_action_icon_padding_end"));
         assertTrue(layout.contains("@dimen/main_search_action_icon_padding_vertical"));

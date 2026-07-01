@@ -64,6 +64,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     private final LocalizedActivity activity;
     private final View root;
     private final LauncherIconVisibilityStore launcherIconVisibilityStore;
+    private final InterfaceScaleStore interfaceScaleStore;
     private DpisConfigStore store;
     private MaterialSwitch hooksEnabledSwitch;
     private MaterialSwitch safeModeSwitch;
@@ -107,6 +108,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         this.activity = activity;
         this.root = root;
         this.launcherIconVisibilityStore = new LauncherIconVisibilityStore(activity);
+        this.interfaceScaleStore = new InterfaceScaleStore(activity);
     }
 
     void bind() {
@@ -436,18 +438,13 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void saveInterfaceScalePercent(int percent) {
-        if (store == null) {
-            setInterfaceScalePercentSilently(AppUiScaleManager.getScalePercent(activity));
-            showToast(R.string.system_settings_save_failed);
-            return;
-        }
         int normalized = AppUiScaleManager.normalizeScalePercent(percent);
-        if (normalized == store.getInterfaceScalePercent()) {
+        if (normalized == interfaceScaleStore.getPercent()) {
             setInterfaceScalePercentSilently(normalized);
             return;
         }
-        if (!store.setInterfaceScalePercent(normalized)) {
-            setInterfaceScalePercentSilently(store.getInterfaceScalePercent());
+        if (!interfaceScaleStore.setPercent(normalized)) {
+            setInterfaceScalePercentSilently(interfaceScaleStore.getPercent());
             showToast(R.string.system_settings_save_failed);
             return;
         }
@@ -456,10 +453,6 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void showInterfaceScaleDialog() {
-        if (store == null) {
-            showToast(R.string.status_save_requires_init);
-            return;
-        }
         View dialogView = LayoutInflater.from(activity).inflate(
                 R.layout.dialog_interface_scale, null, false);
         TextInputLayout inputLayout = dialogView.findViewById(R.id.interface_scale_input_layout);
@@ -467,7 +460,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         MaterialButton cancelButton = dialogView.findViewById(R.id.interface_scale_cancel_button);
         MaterialButton saveButton = dialogView.findViewById(R.id.interface_scale_save_button);
 
-        inputView.setText(String.valueOf(store.getInterfaceScalePercent()));
+        inputView.setText(String.valueOf(interfaceScaleStore.getPercent()));
         inputView.setSelection(inputView.length());
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
@@ -859,7 +852,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                 store.isGlobalLogEnabled(),
                 this::onGlobalLogChanged);
         DpisLog.setLoggingEnabled(store.isGlobalLogEnabled());
-        setInterfaceScalePercentSilently(store.getInterfaceScalePercent());
+        setInterfaceScalePercentSilently(interfaceScaleStore.getPercent());
 
         applyLauncherIconVisibilityFromStore();
         syncHooksSwitchWithScope();
