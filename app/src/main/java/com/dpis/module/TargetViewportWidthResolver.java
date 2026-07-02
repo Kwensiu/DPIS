@@ -1,6 +1,20 @@
 package com.dpis.module;
 
 final class TargetViewportWidthResolver {
+
+    // --- single-entry TTL memoize (stage 2 perf optimization, issue #54 item 6) ---
+    // Resources.getConfiguration() / getDisplayMetrics() are called hundreds of
+    // times per second during scroll, each re-running the full target resolution
+    // (4 SystemProperties reflections + VirtualDisplayState lookups + cross-process
+    // marker reads). For a given (packageName, sourceSignature) the resolution is
+    // stable within a scroll session, so a 1-second single-entry cache skips all
+    // of that on hits. The sourceSignature encodes widthDp/heightDp/swDp/density/
+    // scope, so a config change naturally misses. The TTL bounds staleness if the
+    // viewport spec (a runtime property) is changed by another process; viewport
+    // config changes take effect on restart/rebind anyway, so 1s is acceptable.
+    private static final long RESOLVE_CACHE_TTL_NS = 1_000_000_000L;
+    private static volatile ResolveCacheEntry resolveCacheEntry;
+
     private TargetViewportWidthResolver() {
     }
 
@@ -22,6 +36,42 @@ final class TargetViewportWidthResolver {
         if (store == null || packageName == null || packageName.isEmpty()) {
             return ViewportTargetResolution.none("missing-store-or-package");
         }
+        // Use raw int fields + scope as the cache key instead of the hashed
+        // sourceSignature string, so cache hits avoid the string-concat +
+        // shortHash cost (~6.9% of process CPU measured before this change).
+        int widthDp = source != null ? source.widthDp : 0;
+        int heightDp = source != null ? source.heightDp : 0;
+        int smallestWidthDp = source != null ? source.smallestWidthDp : 0;
+        int densityDpi = source != null ? source.densityDpi : 0;
+        String scope = source != null ? source.scope : "null-source";
+        // origin must be part of the cache key: the resolver branches on
+        // appProcessConsumerScoped() (resources_impl / resources_read) and
+        // canPublishFreshRelativeBaseline() (excludes resources_read), so two
+        // calls with the same dp/density/scope but different origins can yield
+        // different ViewportTargetResolution values.
+        String origin = source != null ? source.origin : "null-source";
+        ResolveCacheEntry cached = resolveCacheEntry;
+        if (cached != null
+                && cached.packageName.equals(packageName)
+                && cached.widthDp == widthDp
+                && cached.heightDp == heightDp
+                && cached.smallestWidthDp == smallestWidthDp
+                && cached.densityDpi == densityDpi
+                && cached.scope.equals(scope)
+                && cached.origin.equals(origin)
+                && (System.nanoTime() - cached.createdAtNanos) < RESOLVE_CACHE_TTL_NS) {
+            return cached.resolution;
+        }
+        ViewportTargetResolution resolved = resolveUncached(store, packageName, source);
+        resolveCacheEntry = new ResolveCacheEntry(
+                packageName, widthDp, heightDp, smallestWidthDp, densityDpi, scope, origin,
+                resolved, System.nanoTime());
+        return resolved;
+    }
+
+    private static ViewportTargetResolution resolveUncached(DpisConfigStore store,
+                                            String packageName,
+                                            ViewportSourceSnapshot source) {
         ViewportTargetSpec runtimeSpec = ViewportPropertyBridge.readTargetSpec(packageName);
         ViewportTargetSpec targetSpec = runtimeSpec.isEnabled()
                 ? runtimeSpec
@@ -224,6 +274,42 @@ final class TargetViewportWidthResolver {
                 && record.resultHeightDp > 0
                 && record.resultSmallestWidthDp > 0
                 && record.resultDensityDpi > 0;
+    }
+
+    private static final class ResolveCacheEntry {
+        final String packageName;
+        final int widthDp;
+        final int heightDp;
+        final int smallestWidthDp;
+        final int densityDpi;
+        final String scope;
+        final String origin;
+        final ViewportTargetResolution resolution;
+        final long createdAtNanos;
+
+        ResolveCacheEntry(String packageName,
+                          int widthDp,
+                          int heightDp,
+                          int smallestWidthDp,
+                          int densityDpi,
+                          String scope,
+                          String origin,
+                          ViewportTargetResolution resolution,
+                          long createdAtNanos) {
+            this.packageName = packageName;
+            this.widthDp = widthDp;
+            this.heightDp = heightDp;
+            this.smallestWidthDp = smallestWidthDp;
+            this.densityDpi = densityDpi;
+            this.scope = scope;
+            this.origin = origin;
+            this.resolution = resolution;
+            this.createdAtNanos = createdAtNanos;
+        }
+    }
+
+    static void resetResolveCacheForTest() {
+        resolveCacheEntry = null;
     }
 
 }

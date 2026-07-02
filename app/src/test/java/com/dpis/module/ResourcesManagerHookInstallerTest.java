@@ -23,6 +23,8 @@ public class ResourcesManagerHookInstallerTest {
     public void tearDown() {
         FeedbackDiagnosticRuntimeEvents.cancel();
         FeedbackDiagnosticRuntimeHotPathEvents.resetForTest();
+        TargetViewportWidthResolver.resetResolveCacheForTest();
+        ViewportConfigurationScope.resetReflectionCacheForTest();
         VirtualDisplayState.set(null);
         ResourcesFontScheduler.clearForTest();
     }

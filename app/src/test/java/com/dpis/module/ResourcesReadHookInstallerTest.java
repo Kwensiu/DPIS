@@ -27,6 +27,8 @@ public class ResourcesReadHookInstallerTest {
         FeedbackDiagnosticRuntimeEvents.cancel();
         FeedbackDiagnosticRuntimeHotPathEvents.resetForTest();
         ResourcesReadHookInstaller.resetHotPathSamplerForTest();
+        TargetViewportWidthResolver.resetResolveCacheForTest();
+        ViewportConfigurationScope.resetReflectionCacheForTest();
         VirtualDisplayState.set(null);
         ResourcesFontScheduler.clearForTest();
     }

@@ -556,6 +556,45 @@ superseded.
   trade is deferred as not worth the risk of a visual double-apply regression
   on spanned text.
 
+- 2026-07-03: `ResourcesReadHookInstaller` viewport override hot path
+  (`Resources.getConfiguration` / `getDisplayMetrics`) optimized via two
+  caches addressing issue #54 item 6. (1) `ViewportConfigurationScope` now
+  caches the `Configuration.windowConfiguration` `Field` and the
+  `getBounds`/`getAppBounds`/`getMaxBounds`/`getWindowingMode` `Method`
+  reflection metadata at class level, eliminating per-call
+  `getDeclaredMethod` + `setAccessible` lookups. Rect/int values are still
+  read fresh each call. (2) `TargetViewportWidthResolver.resolve(store,
+  packageName, source)` now memoizes its `ViewportTargetResolution` result in
+  a single-entry 1-second TTL cache keyed by `(packageName, sourceSignature)`.
+  On a cache hit the full target resolution is skipped: 4
+  `SystemProperties.get` reflections (`ViewportPropertyBridge.readTargetSpec`),
+  `VirtualDisplayState` synchronized lookups, and cross-process marker reads.
+  The cache key uses raw int fields (widthDp/heightDp/smallestWidthDp/densityDpi)
+  plus scope and origin, so a Configuration change naturally misses; the TTL
+  bounds staleness if the viewport spec (a runtime property) changes in another
+  process. The key includes `origin` because the resolver branches on
+  `appProcessConsumerScoped()` (resources_impl / resources_read) and
+  `canPublishFreshRelativeBaseline()` (excludes resources_read), so two calls
+  with identical dp/density/scope but different origins yield different
+  resolutions and must not reuse each other's entry. Per CONTEXT.md, viewport
+  config changes take effect on restart/rebind, so 1s staleness is acceptable. Measured on bilibili (compat mode, feed scroll,
+  simpleperf): `TargetViewportWidthResolver.resolve` 10.14%→3.58%,
+  `applyConfigurationOverride` 9.32%→5.57%, `applyMetricsOverride`
+  6.37%→2.12%, `isWindowScoped` 4.65%→0.45%, `readRectMethod` 2.71%→0.22%,
+  `readTargetSpec` 6.84%→0.01%. Residual cost is the cache-key computation
+  (`ViewportSourceSnapshot.sourceSignature` + `shortHash` ~6.9%); a stage-3
+  pass replaced the hashed-string cache key with raw int field comparisons
+  (widthDp/heightDp/smallestWidthDp/densityDpi/scope), eliminating the
+  string-concat + hash on cache hits. After stage 3, measured:
+  `TargetViewportWidthResolver.resolve` 10.14%→0.06%, `sourceSignature`
+  3.55%→0.00%, `shortHash` 3.37%→0.00%, `applyConfigurationOverride`
+  9.32%→3.91%, `applyMetricsOverride` 6.37%→0.96%. The remaining
+  `applyConfigurationOverride` cost (~3.9%) is the per-call apply logic
+  (derive + write to live Configuration + `observeAppProcessProbe` +
+  `VirtualDisplayState.publish`) which cannot be cached because it mutates
+  the caller's Configuration object; `observeAppProcessProbe` (3.19%) is
+  the largest remaining residual and a candidate for a future pass.
+
 - 2026-06-23: hot reload validation now treats LSPosed bridge logs as the
   primary evidence source. `ModuleMain` emits `hot reload begin/replay/end`
   through the libxposed log channel so a future reinstall can distinguish

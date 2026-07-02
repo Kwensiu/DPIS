@@ -10,6 +10,7 @@ import org.junit.Test;
 public class ViewportTargetResolverTest {
     @After
     public void tearDown() {
+        TargetViewportWidthResolver.resetResolveCacheForTest();
         VirtualDisplayState.set(null);
     }
 
@@ -68,6 +69,52 @@ public class ViewportTargetResolverTest {
         assertFalse(result.hasTarget());
         assertEquals("relative-scale-no-display-baseline", result.reason);
         assertEquals(0, VirtualDisplayState.recordCountForTest());
+    }
+
+    // Regression test for the resolve-cache origin key (issue #54 item 6 stage 2/3).
+    // RESOURCES_READ and RESOURCES_IMPL share the same dp/density/scope but
+    // diverge: RESOURCES_READ cannot publish a fresh relative baseline
+    // (canPublishFreshRelativeBaseline() == false) while RESOURCES_IMPL can.
+    // The single-entry cache must key on origin so the two origins never reuse
+    // each other's resolution within the TTL window.
+    @Test
+    public void resolveCacheDoesNotLeakAcrossOriginsWithSameConfig() {
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
+        store.setTargetViewportSpec("com.example", ViewportTargetSpec.relativeScale(106000));
+        store.setTargetViewportApplyMode("com.example", ViewportApplyMode.COMPAT);
+        android.content.res.Configuration config = new android.content.res.Configuration();
+        config.screenWidthDp = 411;
+        config.screenHeightDp = 900;
+        config.smallestScreenWidthDp = 411;
+        config.densityDpi = 420;
+        ViewportSourceSnapshot readSource = ViewportSourceSnapshot.fromConfiguration(
+                ViewportSourceSnapshot.ORIGIN_RESOURCES_READ, config, null);
+        ViewportSourceSnapshot implSource = ViewportSourceSnapshot.fromConfiguration(
+                ViewportSourceSnapshot.ORIGIN_RESOURCES_IMPL, config, null);
+
+        // RESOURCES_READ: cannot publish fresh baseline -> no target.
+        ViewportTargetResolution readResult =
+                TargetViewportWidthResolver.resolve(store, "com.example", readSource);
+        assertFalse("resources_read should not derive a relative target",
+                readResult.hasTarget());
+        assertEquals("relative-scale-no-display-baseline", readResult.reason);
+
+        // RESOURCES_IMPL: same config, can publish fresh baseline -> derives target.
+        ViewportTargetResolution implResult =
+                TargetViewportWidthResolver.resolve(store, "com.example", implSource);
+        assertTrue("resources_impl should derive a relative target",
+                implResult.hasTarget());
+        assertEquals(ViewportTargetResolution.REASON_APP_PROCESS_RELATIVE_SCALE,
+                implResult.reason);
+
+        // RESOURCES_READ again: must still be no-target. If the cache leaked the
+        // RESOURCES_IMPL result across origins, this would wrongly return a target.
+        ViewportTargetResolution readResultAfterImpl =
+                TargetViewportWidthResolver.resolve(store, "com.example", readSource);
+        assertFalse("resources_read must not inherit the resources_impl resolution "
+                        + "from the cache (origin key regression)",
+                readResultAfterImpl.hasTarget());
+        assertEquals("relative-scale-no-display-baseline", readResultAfterImpl.reason);
     }
 
     @Test
