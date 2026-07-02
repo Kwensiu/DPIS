@@ -241,8 +241,8 @@ final class ForceTextSizeHookInstaller {
                                     HOT_LOG_INTERVAL);
                             logCallerSample(packageName, "text-size-unit");
                         }
-                        FontDebugStatsReporter.record(
-                                "text-size-unit-" + unit,
+                        FontDebugStatsReporter.recordUnit(
+                                unit,
                                 textView.getClass().getName(),
                                 textView.getContext());
                         return result;
@@ -256,7 +256,14 @@ final class ForceTextSizeHookInstaller {
                         if (Boolean.TRUE.equals(INTERNAL_UPDATE.get())) {
                             return chain.proceed();
                         }
-                        if (isForwardedFromSetTextSizeWithUnit()) {
+                        // Skip when this one-arg setTextSize(float) call is a nested
+                        // forwarding call from the two-arg setTextSize(int, float)
+                        // overload (observed on OEM ROMs where the unit overload
+                        // delegates down to the float one). The depth ThreadLocal is
+                        // maintained by the WITH_UNIT hook around its chain.proceed(),
+                        // so depth > 0 here is equivalent to seeing >= 2 TextView#setTextSize
+                        // frames on the stack, without the per-call getStackTrace() cost.
+                        if (isInsideTextViewSetTextSize()) {
                             return chain.proceed();
                         }
                         if (!isTargetPercentActive(targetPercent)) {
@@ -478,13 +485,31 @@ final class ForceTextSizeHookInstaller {
                         return chain.proceed();
                     }
                     float incoming = (Float) chain.getArg(0);
-                    PaintFallbackContext context = paintFallbackContext();
+                    float currentPx = paint.getTextSize();
+                    PaintFallbackContext context = paintFallbackContextProvisional();
                     PaintFallbackDecision decision = resolvePaintFallbackDecision(
                             paint,
                             incoming,
-                            paint.getTextSize(),
+                            currentPx,
                             factor,
                             context);
+                    if (decision.action == PaintFallbackAction.WRITE) {
+                        // Defer the stack snapshot to the write gate: most
+                        // Paint.setTextSize calls resolve to a non-WRITE decision
+                        // (already-applied, no-op delta, etc.) for reasons unrelated
+                        // to text-layout ownership, so they never need
+                        // Thread.currentThread().getStackTrace(). Only when we are
+                        // about to write do we re-check whether a stronger domain
+                        // (span processing inside a text layout) already owns this
+                        // paint size, which may flip the decision back to skip.
+                        context = paintFallbackContext();
+                        decision = resolvePaintFallbackDecision(
+                                paint,
+                                incoming,
+                                currentPx,
+                                factor,
+                                context);
+                    }
                     if (decision.action != PaintFallbackAction.WRITE) {
                         return chain.proceed();
                     }
@@ -556,13 +581,25 @@ final class ForceTextSizeHookInstaller {
                             return chain.proceed();
                         }
                         float incoming = (Float) chain.getArg(0);
-                        PaintFallbackContext context = paintFallbackContext();
+                        float currentPx = textPaint.getTextSize();
+                        PaintFallbackContext context = paintFallbackContextProvisional();
                         PaintFallbackDecision decision = resolvePaintFallbackDecision(
                                 textPaint,
                                 incoming,
-                                textPaint.getTextSize(),
+                                currentPx,
                                 factor,
                                 context);
+                        if (decision.action == PaintFallbackAction.WRITE) {
+                            // Defer the stack snapshot to the write gate (see the
+                            // Paint.setTextSize hook above for the rationale).
+                            context = paintFallbackContext();
+                            decision = resolvePaintFallbackDecision(
+                                    textPaint,
+                                    incoming,
+                                    currentPx,
+                                    factor,
+                                    context);
+                        }
                         if (decision.action != PaintFallbackAction.WRITE) {
                             return chain.proceed();
                         }
@@ -676,6 +713,16 @@ final class ForceTextSizeHookInstaller {
                 currentPx,
                 factor,
                 strongerDomainOwns);
+    }
+
+    private static PaintFallbackContext paintFallbackContextProvisional() {
+        // Cheap, allocation-free ownership hint used on the fast path. The
+        // expensive stack snapshot is deferred to paintFallbackContext(), which
+        // is only consulted when the provisional decision is WRITE.
+        if (isInsideTextViewSetTextSize()) {
+            return new PaintFallbackContext(true, "");
+        }
+        return new PaintFallbackContext(false, "");
     }
 
     private static PaintFallbackContext paintFallbackContext() {
@@ -1436,35 +1483,8 @@ final class ForceTextSizeHookInstaller {
         return builder.toString();
     }
 
-    private static boolean isForwardedFromSetTextSizeWithUnit() {
-        StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-        if (trace == null) {
-            return false;
-        }
-        int textViewSetTextSizeFrames = 0;
-        for (StackTraceElement element : trace) {
-            if (element == null) {
-                continue;
-            }
-            String className = element.getClassName();
-            String methodName = element.getMethodName();
-            if ("android.widget.TextView".equals(className)
-                    && "setTextSize".equals(methodName)) {
-                textViewSetTextSizeFrames++;
-                if (textViewSetTextSizeFrames >= 2) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     private static boolean isInsideTextViewSetTextSize() {
         return TEXT_VIEW_SET_TEXT_SIZE_DEPTH.get() > 0;
-    }
-
-    private static boolean isPaintSizeOwnedByTextLayout() {
-        return isPaintSizeOwnedByTextLayout(Thread.currentThread().getStackTrace());
     }
 
     private static boolean isPaintSizeOwnedByTextLayout(StackTraceElement[] trace) {

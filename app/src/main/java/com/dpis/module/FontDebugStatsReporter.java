@@ -26,13 +26,55 @@ final class FontDebugStatsReporter {
     private static int totalEvents;
     private static Snapshot pendingSnapshot;
 
+    // The application context is process-wide constant; caching it avoids a
+    // per-hot-path getApplicationContext() (and the ActivityThread reflection
+    // fallback) on every record() call.
+    private static volatile Context CACHED_APP_CONTEXT;
+
     private FontDebugStatsReporter() {
+    }
+
+    // --- test seams ---
+
+    static void resetForTest() {
+        synchronized (LOCK) {
+            BUCKETS.clear();
+            CUMULATIVE_CHAIN.clear();
+            CUMULATIVE_CHAIN_VIEW.clear();
+            lastSnapshotAt = 0L;
+            totalEvents = 0;
+            pendingSnapshot = null;
+        }
+        CACHED_APP_CONTEXT = null;
+    }
+
+    static int debugTotalEvents() {
+        synchronized (LOCK) {
+            return totalEvents;
+        }
     }
 
     static void record(String chain, String viewClass, Context context) {
         if (!DpisLog.isLoggingEnabled()) {
             return;
         }
+        if (chain == null || chain.isEmpty()) {
+            return;
+        }
+        recordInternal(chain, viewClass, context);
+    }
+
+    // Variant for the text-size-unit hot path: the chain string is only built
+    // ("text-size-unit-" + unit) after the logging gate, so when diagnostics
+    // are off the per-call String allocation is skipped entirely.
+    static void recordUnit(int unit, String viewClass, Context context) {
+        if (!DpisLog.isLoggingEnabled()) {
+            return;
+        }
+        recordInternal("text-size-unit-" + unit, viewClass, context);
+    }
+
+    private static void recordInternal(String chain, String viewClass, Context context) {
         if (chain == null || chain.isEmpty()) {
             return;
         }
@@ -64,6 +106,20 @@ final class FontDebugStatsReporter {
     }
 
     private static Context resolveContext(Context context) {
+        Context cached = CACHED_APP_CONTEXT;
+        if (cached != null) {
+            return cached;
+        }
+        Context resolved = resolveContextUncached(context);
+        // Only cache the process-wide application context; caching a per-call
+        // Activity context would leak that Activity across the process lifetime.
+        if (resolved != null && resolved instanceof Application) {
+            CACHED_APP_CONTEXT = resolved;
+        }
+        return resolved;
+    }
+
+    private static Context resolveContextUncached(Context context) {
         if (context != null) {
             Context app = context.getApplicationContext();
             if (app != null) {

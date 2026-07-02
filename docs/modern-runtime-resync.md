@@ -361,6 +361,7 @@ requested font mode
   |     +-- EffectiveModeResolver => compat
   |     +-- custom hook-chain UI state can select field-rewrite domains
   |     +-- Resources / TextView / Paint / WebView field routes apply in app process
+  |     +-- TextView setTextSize(float) forwarding guard uses depth ThreadLocal, not getStackTrace
   |
   +-- off
         |
@@ -495,6 +496,65 @@ superseded.
   recommended template; it must not grow a Bilibili/Douyin default list.
 
 ## Update Log
+
+- 2026-07-02: `ForceTextSizeHookInstaller` TextView `setTextSize(float)`
+  hot path no longer calls `Thread.currentThread().getStackTrace()` to detect
+  forwarding from the `setTextSize(int, float)` overload. The check now uses
+  the existing `TEXT_VIEW_SET_TEXT_SIZE_DEPTH` ThreadLocal, which the WITH_UNIT
+  hook already maintains around its `chain.proceed()`. `depth > 0` is
+  semantically equivalent to seeing >= 2 `TextView#setTextSize` frames on the
+  stack (the former `isForwardedFromSetTextSizeWithUnit()` definition), so the
+  float-hook fast path on AOSP (where `setTextSize(float)` is always the
+  outermost call, depth == 0) drops a full per-call stack snapshot allocation.
+  The OEM ROM reverse-delegation case (`setTextSize(int,float) ->
+  setTextSize(float)`) is still skipped correctly because the WITH_UNIT hook
+  has already incremented depth before the nested float call enters. The
+  standalone `isForwardedFromSetTextSizeWithUnit()` method was removed;
+  `isInsideTextViewSetTextSize()` (depth > 0) is now the single shared guard
+  for both the float hook and the Paint fallback `paintFallbackContext()`
+  short-circuit.
+
+- 2026-07-02: `FontDebugStatsReporter` hot-path entry points gated so the
+  per-event String allocation is skipped when diagnostics logging is off, and
+  the application `Context` is now resolved once and cached. The
+  `text-size-unit` call site (the only chain key built with a runtime
+  concatenation, `"text-size-unit-" + unit`) now calls
+  `FontDebugStatsReporter.recordUnit(int, String, Context)`, which only builds
+  the chain string after the `DpisLog.isLoggingEnabled()` gate. The remaining
+  call sites pass literal chain keys, so their argument evaluation is already
+  allocation-free. `resolveContext(Context)` caches the process-wide
+  application `Context` in a `volatile` field after the first successful
+  resolution, so subsequent `record()` calls skip `getApplicationContext()`
+  (and the `ActivityThread.currentApplication()` reflection fallback). Only
+  `Application` instances are cached; a per-call Activity context is never
+  retained, avoiding cross-process-lifetime leaks. This addresses issue #54
+  item 4's "debug stats on the hot path" concern for the logging-off production
+  path; the lock-contention / snapshot-build cost under high-density logging
+  is deferred to a later pass.
+
+- 2026-07-03: `ForceTextSizeHookInstaller` Paint/TextPaint fallback hot path
+  no longer calls `Thread.currentThread().getStackTrace()` on every
+  `Paint.setTextSize` / `TextPaint.setTextSize` invocation. The ownership
+  decision (`isPaintSizeOwnedByTextLayout`, which detects span processing
+  inside a text layout) is now deferred to the write gate: a provisional
+  `paintFallbackContextProvisional()` (depth-based, allocation-free) is used
+  first, and the expensive stack snapshot only runs when the provisional
+  decision is `WRITE`, to re-check whether a stronger domain already owns the
+  paint size. Behaviour is unchanged because `strongerDomainOwns=true` only
+  ever makes the decision skip (never write), so a provisional skip is always
+  final. The dead no-arg `isPaintSizeOwnedByTextLayout()` overload (its only
+  caller was the array overload) was removed. Measured on bilibili (compat
+  mode, feed scroll, simpleperf): this workload is write-dominated so the
+  deferral did not reduce the residual `getStackTrace` sample rate here
+  (~0.03% of process CPU is the Paint ownership scan; the remaining ~0.18% of
+  `Throwable.nativeGetStackTrace` cost is the app's own stack inspection, not
+  DPIS). The deferral benefits skip-dominated workloads where most
+  `Paint.setTextSize` calls resolve to a non-WRITE decision for other reasons.
+  Fully eliminating the residual ~0.03% would require hooking hot framework
+  text-layout entry methods (`StaticLayout.generate` / `Builder.build`), whose
+  own per-call hook overhead is assessed to meet or exceed the saving; that
+  trade is deferred as not worth the risk of a visual double-apply regression
+  on spanned text.
 
 - 2026-06-23: hot reload validation now treats LSPosed bridge logs as the
   primary evidence source. `ModuleMain` emits `hot reload begin/replay/end`
