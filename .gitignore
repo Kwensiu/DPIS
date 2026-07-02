@@ -7,6 +7,7 @@ local.properties
 captures/
 
 # IDE / OS
+/.pi/
 .idea/
 *.iml
 .DS_Store
