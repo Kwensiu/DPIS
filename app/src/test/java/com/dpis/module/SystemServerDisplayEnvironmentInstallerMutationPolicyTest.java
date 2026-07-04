@@ -104,10 +104,85 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     }
 
     @Test
+    public void relayoutMutationAllowsOnlyDirectTargetApplicationWindow() {
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .canApplyRelayoutMutationForTest(
+                        new FakeWindow(
+                                "WindowStateWithoutPackageText",
+                                "com.android.chrome",
+                                1,
+                                "com.android.chrome",
+                                null),
+                        "com.android.chrome"));
+    }
+
+    @Test
+    public void relayoutMutationRejectsDifferentOwnerApplicationWindow() {
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .canApplyRelayoutMutationForTest(
+                        new FakeWindow(
+                                "WindowStateWithoutPackageText",
+                                "com.other.app",
+                                1,
+                                "com.other.app",
+                                null),
+                        "com.android.chrome"));
+    }
+
+    @Test
+    public void relayoutMutationRejectsSystemWindowWithTargetActivityRecord() {
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .canApplyRelayoutMutationForTest(
+                        new FakeWindow(
+                                "Window{u0 com.android.systemui/NotificationShade "
+                                        + "for com.android.chrome}",
+                                "com.android.systemui",
+                                2040,
+                                "com.android.chrome",
+                                null),
+                        "com.android.chrome"));
+    }
+
+    @Test
+    public void relayoutMutationAllowsExplicitSystemUiTargetWindow() {
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .canApplyRelayoutMutationForTest(
+                        new FakeWindow(
+                                "Window{u0 com.android.systemui/NotificationShade}",
+                                "com.android.systemui",
+                                2040,
+                                "com.android.systemui",
+                                null),
+                        "com.android.systemui"));
+    }
+
+    @Test
+    public void relayoutMutationAcceptsTokenOwnerPackage() {
+        assertTrue(SystemServerDisplayEnvironmentInstaller
+                .canApplyRelayoutMutationForTest(
+                        new FakeWindow(
+                                "WindowStateWithoutPackageText",
+                                null,
+                                1,
+                                null,
+                                "com.android.chrome"),
+                        "com.android.chrome"));
+    }
+
+    @Test
+    public void relayoutMutationRejectsTextOnlyPackageFallback() {
+        assertFalse(SystemServerDisplayEnvironmentInstaller
+                .canApplyRelayoutMutationForTest(
+                        new FakeWindow(
+                                "Window{u0 com.android.chrome/com.google.android.apps.chrome.Main}"),
+                        "com.android.chrome"));
+    }
+
+    @Test
     public void safeModeInstallsCoreTargets() {
         assertFalse(SystemServerMutationPolicy.shouldInstallTarget("display-policy-layout", true));
+        assertFalse(SystemServerMutationPolicy.shouldInstallTarget("display-content-config", true));
         assertTrue(SystemServerMutationPolicy.shouldInstallTarget("relayout-dispatch", true));
-        assertTrue(SystemServerMutationPolicy.shouldInstallTarget("display-content-config", true));
         assertTrue(SystemServerMutationPolicy.shouldInstallTarget("activity-start", true));
         assertTrue(SystemServerMutationPolicy.shouldInstallTarget("config-dispatch", true));
         assertTrue(SystemServerMutationPolicy.shouldInstallTarget("launch-activity-item", true));
@@ -564,14 +639,27 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
         private final String text;
         @SuppressWarnings("unused")
         private final FakeLayoutParams mAttrs;
+        @SuppressWarnings("unused")
+        private final FakePackageOwner mActivityRecord;
+        @SuppressWarnings("unused")
+        private final FakePackageOwner mToken;
 
         private FakeWindow(String text) {
-            this(text, null);
+            this(text, null, 0, null, null);
         }
 
         private FakeWindow(String text, String packageName) {
+            this(text, packageName, 0, null, null);
+        }
+
+        private FakeWindow(String text, String packageName, int windowType,
+                           String activityPackageName, String tokenPackageName) {
             this.text = text;
-            this.mAttrs = packageName == null ? null : new FakeLayoutParams(packageName);
+            this.mAttrs = packageName == null ? null : new FakeLayoutParams(packageName, windowType);
+            this.mActivityRecord = activityPackageName == null
+                    ? null
+                    : new FakePackageOwner(activityPackageName);
+            this.mToken = tokenPackageName == null ? null : new FakePackageOwner(tokenPackageName);
         }
 
         @Override
@@ -583,8 +671,24 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     private static final class FakeLayoutParams {
         @SuppressWarnings("unused")
         private final String packageName;
+        @SuppressWarnings("unused")
+        private final int type;
 
         private FakeLayoutParams(String packageName) {
+            this(packageName, 0);
+        }
+
+        private FakeLayoutParams(String packageName, int type) {
+            this.packageName = packageName;
+            this.type = type;
+        }
+    }
+
+    private static final class FakePackageOwner {
+        @SuppressWarnings("unused")
+        private final String packageName;
+
+        private FakePackageOwner(String packageName) {
             this.packageName = packageName;
         }
     }

@@ -89,6 +89,10 @@ final class SystemServerDisplayEnvironmentInstaller {
             "mTmpDisplayInfo",
             "mLastDisplayInfo"
     };
+    private static final Set<String> SYSTEM_WINDOW_OWNER_PACKAGES = Set.of(
+            "android",
+            "system",
+            "com.android.systemui");
     private static final String[] FRAME_DIRECT_FIELD_NAMES = new String[]{
             "frame", "mFrame", "displayFrame"
     };
@@ -318,6 +322,24 @@ final class SystemServerDisplayEnvironmentInstaller {
         }).packageName;
     }
 
+    static String resolveConfiguredPackageForEntryForTest(String entryName,
+                                                          Object self,
+                                                          Predicate<String> hasConfig,
+                                                          Object... args) {
+        List<Object> values = new ArrayList<>();
+        if (args != null) {
+            for (Object arg : args) {
+                values.add(arg);
+            }
+        }
+        return resolveConfiguredPackageForEntry(entryName, self, values, packageName -> {
+            if (packageName == null || hasConfig == null || !hasConfig.test(packageName)) {
+                return null;
+            }
+            return new PerAppDisplayConfig(packageName, 1);
+        }).packageName;
+    }
+
     static String resolveRelayoutWindowPackageForTest(Object windowManagerService,
                                                       List<Object> values,
                                                       Predicate<String> hasConfig) {
@@ -394,12 +416,17 @@ final class SystemServerDisplayEnvironmentInstaller {
                                             hookSpec.entryName, thisObject, args);
                                     List<Object> contextArgs = resolveEntryContextArgs(
                                             contextObject, thisObject, args);
-                                    if (!shouldInspectHotEntry(
+                                    RelayoutWindowIdentity relayoutIdentity =
+                                            resolveRelayoutWindowIdentity(
+                                                    hookSpec.entryName, contextObject);
+                                    boolean shouldInspectHotEntry = shouldInspectHotEntry(
                                             hookSpec.entryName,
                                             contextObject,
                                             contextArgs,
                                             contextObject != thisObject,
-                                            currentConfiguredPackages)) {
+                                            relayoutIdentity,
+                                            currentConfiguredPackages);
+                                    if (!shouldInspectHotEntry) {
                                         return chain.proceed();
                                     }
                                     if (loggingEnabled
@@ -407,7 +434,8 @@ final class SystemServerDisplayEnvironmentInstaller {
                                                     hookSpec.entryName)) {
                                         logInterceptEnter(hookSpec.entryName, contextObject, contextArgs);
                                     }
-                                    ResolvedPackage resolvedPackage = resolveConfiguredPackage(
+                                    ResolvedPackage resolvedPackage = resolveConfiguredPackageForEntry(
+                                            hookSpec.entryName,
                                             contextObject,
                                             contextArgs,
                                             packageName -> selectConfigForSystemServerEntry(
@@ -433,6 +461,15 @@ final class SystemServerDisplayEnvironmentInstaller {
                                                 resolvedPackage.fallbackFromPackage,
                                                 packageName,
                                                 resolvedPackage.candidatePackagesSummary);
+                                    }
+                                    if (SystemServerEntryRoute.isRelayoutDispatch(hookSpec.entryName)
+                                            && !canApplyRelayoutMutation(
+                                                    relayoutIdentity, packageName)) {
+                                        if (loggingEnabled) {
+                                            logRelayoutMutationSkip(
+                                                    hookSpec.entryName, packageName, contextObject);
+                                        }
+                                        return chain.proceed();
                                     }
                                     Snapshot before = captureSnapshot(contextObject, contextArgs);
                                     PerAppDisplayEnvironment preEnvironment = resolveTargetEnvironment(
@@ -1225,12 +1262,32 @@ final class SystemServerDisplayEnvironmentInstaller {
     private static ResolvedPackage resolveConfiguredPackage(Object self,
                                                             List<Object> args,
                                                             ConfigLookup lookup) {
+        return resolveConfiguredPackage(self, args, lookup, true);
+    }
+
+    private static ResolvedPackage resolveConfiguredPackageForEntry(String entryName,
+                                                                    Object self,
+                                                                    List<Object> args,
+                                                                    ConfigLookup lookup) {
+        return resolveConfiguredPackage(
+                self,
+                args,
+                lookup,
+                shouldAllowTextConfiguredPackageFallback(entryName));
+    }
+
+    private static ResolvedPackage resolveConfiguredPackage(Object self,
+                                                            List<Object> args,
+                                                            ConfigLookup lookup,
+                                                            boolean allowTextFallback) {
         String primaryPackage = findPackageName(self, args);
         Set<String> candidatePackages = new LinkedHashSet<>();
         if (primaryPackage != null) {
             candidatePackages.add(primaryPackage);
         }
-        candidatePackages.addAll(collectTextPackages(self, args, 6));
+        if (allowTextFallback) {
+            candidatePackages.addAll(collectTextPackages(self, args, 6));
+        }
         String candidateSummary = describePackageCandidates(candidatePackages);
         if (lookup == null) {
             return new ResolvedPackage(primaryPackage, null, candidateSummary, null);
@@ -1251,6 +1308,15 @@ final class SystemServerDisplayEnvironmentInstaller {
             }
         }
         return new ResolvedPackage(primaryPackage, null, candidateSummary, null);
+    }
+
+    private static boolean shouldAllowTextConfiguredPackageFallback(String entryName) {
+        // Window layout/relayout objects may mention an app package while the
+        // actual owner is SystemUI or another system window. Keep text fallback
+        // for launch/config routes, but do not let hot window maintenance select
+        // another app's config from toString() text alone.
+        return !SystemServerEntryRoute.isDisplayPolicyLayout(entryName)
+                && !SystemServerEntryRoute.isRelayoutDispatch(entryName);
     }
 
     private static String summarizeValue(Object value, int maxLength) {
@@ -1536,11 +1602,27 @@ final class SystemServerDisplayEnvironmentInstaller {
                                                  List<Object> args,
                                                  boolean resolvedTargetObject,
                                                  Set<String> configuredPackages) {
+        return shouldInspectHotEntry(
+                entryName,
+                self,
+                args,
+                resolvedTargetObject,
+                resolveRelayoutWindowIdentity(entryName, self),
+                configuredPackages);
+    }
+
+    private static boolean shouldInspectHotEntry(String entryName,
+                                                 Object self,
+                                                 List<Object> args,
+                                                 boolean resolvedTargetObject,
+                                                 RelayoutWindowIdentity relayoutIdentity,
+                                                 Set<String> configuredPackages) {
         if (resolvedTargetObject && SystemServerEntryRoute.isRelayoutDispatch(entryName)) {
             // relayoutWindow often resolves a concrete WindowState from WMS.mWindowMap.
             // Keep the relayout hotpath cheap by requiring a light package hit
             // on that resolved target before entering the full resolver.
-            return hasConfiguredPackageHintOnResolvedTarget(self, configuredPackages);
+            return hasConfiguredPackageHintOnResolvedTarget(
+                    self, relayoutIdentity, configuredPackages);
         }
         return SystemServerHotPathInspector.shouldInspectHotEntry(
                 entryName, self, args, configuredPackages);
@@ -1548,23 +1630,99 @@ final class SystemServerDisplayEnvironmentInstaller {
 
     private static boolean hasConfiguredPackageHintOnResolvedTarget(
             Object target,
+            RelayoutWindowIdentity identity,
             Set<String> configuredPackages) {
         if (target == null || configuredPackages == null || configuredPackages.isEmpty()) {
             return false;
         }
-        Set<String> candidates = new LinkedHashSet<>();
-        addCandidatePackage(candidates, directPackageName(target));
-        addCandidatePackage(candidates, directPackageName(readField(target, "mAttrs")));
-        addCandidatePackage(candidates, directPackageName(readField(target, "mActivityRecord")));
-        addCandidatePackage(candidates, directPackageName(readField(target, "activityRecord")));
-        addCandidatePackage(candidates, directPackageName(readField(target, "mToken")));
-        for (String candidate : candidates) {
+        RelayoutWindowIdentity resolvedIdentity = identity != null
+                ? identity
+                : collectRelayoutWindowIdentity(target);
+        for (String candidate : resolvedIdentity.ownerPackages) {
             if (candidate != null && configuredPackages.contains(candidate)) {
                 return true;
             }
         }
         return SystemServerHotPathInspector.shouldInspectHotEntry(
                 "relayout-dispatch", target, List.of(), configuredPackages);
+    }
+
+    private static RelayoutWindowIdentity resolveRelayoutWindowIdentity(String entryName,
+                                                                        Object target) {
+        if (!SystemServerEntryRoute.isRelayoutDispatch(entryName)) {
+            return null;
+        }
+        return collectRelayoutWindowIdentity(target);
+    }
+
+    private static RelayoutWindowIdentity collectRelayoutWindowIdentity(Object target) {
+        if (target == null) {
+            return RelayoutWindowIdentity.empty();
+        }
+        Object attrs = readField(target, "mAttrs");
+        Set<String> ownerPackages = new LinkedHashSet<>();
+        addCandidatePackage(ownerPackages, directPackageName(target));
+        addCandidatePackage(ownerPackages, directPackageName(attrs));
+        addCandidatePackage(ownerPackages, directPackageName(readField(target, "mActivityRecord")));
+        addCandidatePackage(ownerPackages, directPackageName(readField(target, "activityRecord")));
+        addCandidatePackage(ownerPackages, directPackageName(readField(target, "mToken")));
+        return new RelayoutWindowIdentity(ownerPackages, readIntField(attrs, "type"));
+    }
+
+    private static boolean canApplyRelayoutMutation(RelayoutWindowIdentity identity,
+                                                    String packageName) {
+        if (identity == null || packageName == null || packageName.isBlank()) {
+            return false;
+        }
+        if (!identity.ownerPackages.contains(packageName)) {
+            return false;
+        }
+        if (isSystemWindowType(identity.windowType)
+                && !isSystemWindowOwnerPackage(packageName)) {
+            return false;
+        }
+        if (containsDifferentSystemWindowOwner(identity.ownerPackages, packageName)) {
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean isSystemWindowType(Integer windowType) {
+        // WindowManager.LayoutParams.FIRST_SYSTEM_WINDOW = 2000.
+        return windowType != null && windowType >= 2000;
+    }
+
+    private static boolean containsDifferentSystemWindowOwner(Set<String> packageNames,
+                                                             String targetPackageName) {
+        if (packageNames == null || packageNames.isEmpty()) {
+            return false;
+        }
+        for (String packageName : packageNames) {
+            if (isSystemWindowOwnerPackage(packageName)
+                    && !packageName.equals(targetPackageName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isSystemWindowOwnerPackage(String packageName) {
+        if (packageName == null) {
+            return false;
+        }
+        String normalized = packageName.trim();
+        return SYSTEM_WINDOW_OWNER_PACKAGES.contains(normalized)
+                || normalized.endsWith(".systemui");
+    }
+
+    private static void logRelayoutMutationSkip(String entryName,
+                                                String packageName,
+                                                Object target) {
+        String message = "system_server relayout mutation skipped: reason=non-app-window"
+                + ", entry=" + safeToString(entryName)
+                + ", package=" + safeToString(packageName)
+                + ", target=" + summarizeValue(target, 180);
+        logIfChanged("relayout-skip|" + packageName, message, resolveLogMinIntervalMs(entryName));
     }
 
     private static void addCandidatePackage(Set<String> candidates, String packageName) {
@@ -1605,6 +1763,20 @@ final class SystemServerDisplayEnvironmentInstaller {
             return resolvedInfo.packageName;
         }
         return null;
+    }
+
+    private static final class RelayoutWindowIdentity {
+        final Set<String> ownerPackages;
+        final Integer windowType;
+
+        RelayoutWindowIdentity(Set<String> ownerPackages, Integer windowType) {
+            this.ownerPackages = ownerPackages != null ? ownerPackages : Set.of();
+            this.windowType = windowType;
+        }
+
+        static RelayoutWindowIdentity empty() {
+            return new RelayoutWindowIdentity(Set.of(), null);
+        }
     }
 
     private static PerAppDisplayConfig selectConfigForSystemServer(
@@ -1811,6 +1983,10 @@ final class SystemServerDisplayEnvironmentInstaller {
                 List.of(),
                 true,
                 configuredPackages);
+    }
+
+    static boolean canApplyRelayoutMutationForTest(Object target, String packageName) {
+        return canApplyRelayoutMutation(collectRelayoutWindowIdentity(target), packageName);
     }
 
     static boolean shouldUseConfigInSystemServerForTest(PerAppDisplayConfig config) {

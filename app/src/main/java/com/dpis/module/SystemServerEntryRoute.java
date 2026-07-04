@@ -60,7 +60,6 @@ final class SystemServerEntryRoute {
     static boolean isLowRiskSystemServerEntry(String entryName) {
         return isActivityStart(entryName)
                 || isConfigDispatch(entryName)
-                || isDisplayContentConfig(entryName)
                 || isRelayoutDispatch(entryName)
                 || isLaunchActivityItem(entryName)
                 || isDisplayManagerInfo(entryName)

@@ -169,6 +169,40 @@ public class SystemServerDisplayDiagnosticsTest {
     }
 
     @Test
+    public void windowMaintenanceDoesNotFallbackToAppPackageFromSystemUiWindowText() {
+        String displayPolicyPackage = SystemServerDisplayEnvironmentInstaller
+                .resolveConfiguredPackageForEntryForTest(
+                        "display-policy-layout",
+                        new PackageCarrier("com.android.systemui"),
+                        "com.android.chrome"::equals,
+                        new WindowTextCarrier("Window{u0 com.android.systemui/NotificationShade "
+                                + "for com.android.chrome}"));
+        String relayoutPackage = SystemServerDisplayEnvironmentInstaller
+                .resolveConfiguredPackageForEntryForTest(
+                        "relayout-dispatch",
+                        new PackageCarrier("com.android.systemui"),
+                        "com.android.chrome"::equals,
+                        new WindowTextCarrier("Window{u0 com.android.systemui/NotificationShade "
+                                + "for com.android.chrome}"));
+
+        assertEquals("com.android.systemui", displayPolicyPackage);
+        assertEquals("com.android.systemui", relayoutPackage);
+    }
+
+    @Test
+    public void configDispatchStillFallsBackToConfiguredPackageFromText() {
+        String packageName = SystemServerDisplayEnvironmentInstaller
+                .resolveConfiguredPackageForEntryForTest(
+                        "config-dispatch",
+                        new PackageCarrier("android.graphics"),
+                        "com.max.xiaoheihe"::equals,
+                        new WindowTextCarrier(
+                                "Window{u0 com.max.xiaoheihe/com.max.xiaoheihe.SplashActivity}"));
+
+        assertEquals("com.max.xiaoheihe", packageName);
+    }
+
+    @Test
     public void resolvesRelayoutPackageThroughWindowManagerWindowMap() {
         FakeWindowClient client = new FakeWindowClient();
         FakeWindowState windowState = new FakeWindowState(client, "com.android.chrome");

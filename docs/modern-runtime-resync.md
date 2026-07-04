@@ -887,6 +887,19 @@ superseded.
   exactly matches a complete existing display/system marker result. This keeps
   the anti-compounding rule while letting resize maintenance reuse the proven
   display baseline.
+- 2026-07-04: SystemUI / Control Center reports stopped reproducing after the
+  system-server safe route was narrowed. LSPosed packages showed DPIS scoped to
+  `system` but not configured for `com.android.systemui`; SystemUI scopes in the
+  reports belonged to LuckyTool and ShortX. The final route boundary is:
+  window maintenance must not select an app config from `toString()` text alone,
+  and `relayout-dispatch` mutation must require a real owner package match from
+  the resolved window identity. This is a strong reject with no fallback to
+  later text candidates. Non-SystemUI targets are rejected for system windows,
+  while explicit `com.android.systemui` configuration remains eligible.
+  `display-content-config` no longer installs in safe mode because it acts on
+  global `DisplayContent`, did not resolve the Oplus floating-window path in
+  earlier validation, and is not needed once `relayout-dispatch` owns resize
+  maintenance. Full mode can still install it for explicit route exploration.
 - 2026-06-28: A modern runtime-policy regression showed that app-process route
   planning was still calling
   `SystemScopeCoordinator.resolveSystemHookEffectiveEnabled(store)` inside
