@@ -123,6 +123,10 @@ Current structure note:
   anchors, but `system_server` still does not advertise replay/hot-reload
   support until install ownership is narrowed beyond the current process-scoped
   one-shot gate.
+- App-process font route support now lives under `runtime.font`: ActivityThread,
+  Resources font scheduling/evidence, TextView/Paint field rewrite, WebView,
+  Flutter, HyperOS Flutter, typeface replacement, and Compose diagnostics keep
+  the same install/reset semantics behind the moved package boundary.
 
 ## Route Map
 

@@ -1,10 +1,16 @@
-package com.dpis.module;
+package com.dpis.module.runtime.font;
+
+import com.dpis.module.HyperOsFlutterFontBridge;
+
+import com.dpis.module.FontApplyMode;
+
+import com.dpis.module.DpisConfigStore;
 
 import com.dpis.module.runtime.RootCommandRunner;
 
 import java.util.LinkedHashSet;
 
-final class CompatFontPropertySyncer {
+public final class CompatFontPropertySyncer {
     private CompatFontPropertySyncer() {
     }
 
@@ -65,11 +71,11 @@ final class CompatFontPropertySyncer {
         syncThread.start();
     }
 
-    static String buildSetCommandForTest(String property, int fontScalePercent) {
+    public static String buildSetCommandForTest(String property, int fontScalePercent) {
         return buildSetCommand(property, fontScalePercent);
     }
 
-    static String buildCompatConfigCommandForTest(String packageName, int fontScalePercent, String mode) {
+    public static String buildCompatConfigCommandForTest(String packageName, int fontScalePercent, String mode) {
         return buildCompatConfigCommand(packageName, fontScalePercent, mode);
     }
 

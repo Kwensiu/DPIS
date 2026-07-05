@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.fonts.hookdomain;
+
+import com.dpis.module.R;
 
 import com.dpis.module.hooks.HookDomainOverride;
 import com.dpis.module.hooks.HookDomainOverrideStore;
@@ -32,7 +34,7 @@ public final class FontHookDomainPresentation {
         return override;
     }
 
-    boolean displaysAsAutomatic() {
+    public boolean displaysAsAutomatic() {
         return !override.customPathEnabled;
     }
 
@@ -55,12 +57,12 @@ public final class FontHookDomainPresentation {
                 totalDisplayCount());
     }
 
-    int selectedDisplayCount() {
+    public int selectedDisplayCount() {
         return FontHookDomainRegistry.orderedCustomizableDisplaySubset(
                 override.enabledKnownDomains).size();
     }
 
-    int totalDisplayCount() {
+    public int totalDisplayCount() {
         return FontHookDomainRegistry.orderedCustomizableDisplayIdsList().size();
     }
 }

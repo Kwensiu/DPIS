@@ -351,7 +351,7 @@ public final class DpisConfigStore {
         return ViewportApplyMode.OFF;
     }
 
-    Integer getTargetFontScalePercent(String packageName) {
+    public Integer getTargetFontScalePercent(String packageName) {
         String key = keyForFontScale(packageName);
         String packageKey = keyForPackageFontScale(packageName);
         if (!containsPackageValue(key, packageKey)) {
@@ -361,7 +361,7 @@ public final class DpisConfigStore {
         return normalizeFontScalePercent(percent);
     }
 
-    String getTargetTypefaceId(String packageName) {
+    public String getTargetTypefaceId(String packageName) {
         String key = keyForTypefaceId(packageName);
         String packageKey = keyForPackageTypefaceId(packageName);
         if (!containsPackageValue(key, packageKey)) {
@@ -481,7 +481,7 @@ public final class DpisConfigStore {
         return commitLocalOnly(editor -> editor.putBoolean(KEY_STARTUP_DISCLAIMER_ACCEPTED, accepted));
     }
 
-    boolean isFontDebugOverlayEnabled() {
+    public boolean isFontDebugOverlayEnabled() {
         return getBoolean(KEY_FONT_DEBUG_OVERLAY_ENABLED, false);
     }
 
@@ -505,7 +505,7 @@ public final class DpisConfigStore {
         return commitBoth(editor -> editor.putInt(KEY_FONT_DEBUG_SELECTED_WINDOW, window));
     }
 
-    boolean isHyperOsFlutterFontHookEnabled() {
+    public boolean isHyperOsFlutterFontHookEnabled() {
         return getBoolean(KEY_HYPEROS_FLUTTER_FONT_HOOK_ENABLED, false);
     }
 

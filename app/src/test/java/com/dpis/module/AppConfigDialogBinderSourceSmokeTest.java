@@ -1,5 +1,13 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainDialog;
+
+import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
+
 import com.dpis.module.viewport.DpiConfig;
 
 import com.dpis.module.viewport.ViewportPropertySyncer;
@@ -323,7 +331,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void fontHookDomainDialogUsesImmediateEditorLayout() throws IOException {
-        String source = read("src/main/java/com/dpis/module/FontHookDomainDialog.java");
+        String source = read("src/main/java/com/dpis/module/fonts/hookdomain/FontHookDomainDialog.java");
         String dialogLayout = read("src/main/res/layout/dialog_font_hook_domains.xml");
         String disabledHintBackground = read(
                 "src/main/res/drawable/bg_font_hook_domains_disabled_hint.xml");

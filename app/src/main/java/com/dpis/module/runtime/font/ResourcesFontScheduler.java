@@ -1,11 +1,12 @@
-package com.dpis.module;
+package com.dpis.module.runtime.font;
+
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-final class ResourcesFontScheduler {
+public final class ResourcesFontScheduler {
     private static final float MATCH_TOLERANCE = 0.001f;
     private static final float MIN_BASE_FONT_SCALE = 0.5f;
     private static final float MAX_BASE_FONT_SCALE = 2.0f;
@@ -23,7 +24,7 @@ final class ResourcesFontScheduler {
     private ResourcesFontScheduler() {
     }
 
-    static void observe(String packageName,
+    public static void observe(String packageName,
                         ComposeResourcesFontEvidence.Summary evidence,
                         float observedFontScale,
                         float targetFactor,
@@ -32,7 +33,7 @@ final class ResourcesFontScheduler {
         // Suppression requires a concrete Resources owner observed from a root.
     }
 
-    static void observe(String packageName,
+    public static void observe(String packageName,
                         String scopeKey,
                         Object resourceScope,
                         ComposeResourcesFontEvidence.Summary evidence,
@@ -87,7 +88,7 @@ final class ResourcesFontScheduler {
         }
     }
 
-    static void observeResourcesFontScale(Object resourceScope,
+    public static void observeResourcesFontScale(Object resourceScope,
                                           String packageName,
                                           float observedFontScale,
                                           float targetFactor) {
@@ -119,25 +120,25 @@ final class ResourcesFontScheduler {
         }
     }
 
-    static FontScaleOverride.Result maybeSuppressResourcesFont(String packageName,
+    public static FontScaleOverride.Result maybeSuppressResourcesFont(String packageName,
                                                                FontScaleOverride.Result result) {
         return result;
     }
 
-    static FontScaleOverride.Result maybeSuppressResourcesFont(Object resourceScope,
+    public static FontScaleOverride.Result maybeSuppressResourcesFont(Object resourceScope,
                                                                String packageName,
                                                                FontScaleOverride.Result result) {
         return maybeSuppressResourcesFont(
                 resourceScope, packageName, result, System.currentTimeMillis());
     }
 
-    static FontScaleOverride.Result maybeSuppressResourcesFont(String packageName,
+    public static FontScaleOverride.Result maybeSuppressResourcesFont(String packageName,
                                                                FontScaleOverride.Result result,
                                                                long nowMs) {
         return result;
     }
 
-    static FontScaleOverride.Result maybeSuppressResourcesFont(Object resourceScope,
+    public static FontScaleOverride.Result maybeSuppressResourcesFont(Object resourceScope,
                                                                String packageName,
                                                                FontScaleOverride.Result result,
                                                                long nowMs) {
@@ -159,24 +160,24 @@ final class ResourcesFontScheduler {
                 Math.abs(state.effectiveFontScale - result.original) > FontScaleOverride.EPSILON);
     }
 
-    static float maybeSuppressMetricsFontScale(String packageName, float currentFontScale) {
+    public static float maybeSuppressMetricsFontScale(String packageName, float currentFontScale) {
         return currentFontScale > 0f ? currentFontScale : 1.0f;
     }
 
-    static float maybeSuppressMetricsFontScale(Object resourceScope,
+    public static float maybeSuppressMetricsFontScale(Object resourceScope,
                                                String packageName,
                                                float currentFontScale) {
         return maybeSuppressMetricsFontScale(
                 resourceScope, packageName, currentFontScale, System.currentTimeMillis());
     }
 
-    static float maybeSuppressMetricsFontScale(String packageName,
+    public static float maybeSuppressMetricsFontScale(String packageName,
                                                float currentFontScale,
                                                long nowMs) {
         return currentFontScale > 0f ? currentFontScale : 1.0f;
     }
 
-    static float maybeSuppressMetricsFontScale(Object resourceScope,
+    public static float maybeSuppressMetricsFontScale(Object resourceScope,
                                                String packageName,
                                                float currentFontScale,
                                                long nowMs) {
@@ -188,7 +189,7 @@ final class ResourcesFontScheduler {
         return maybeSuppressMetricsFontScale(resourceScope, packageName, currentFontScale, 0f);
     }
 
-    static float maybeSuppressMetricsFontScale(Object resourceScope,
+    public static float maybeSuppressMetricsFontScale(Object resourceScope,
                                                String packageName,
                                                float currentFontScale,
                                                float targetFactor) {
@@ -206,7 +207,7 @@ final class ResourcesFontScheduler {
         return state.effectiveFontScale;
     }
 
-    static void clearForTest() {
+    public static void clearForTest() {
         RESOURCE_STATES.clear();
         PACKAGE_STATES.clear();
     }

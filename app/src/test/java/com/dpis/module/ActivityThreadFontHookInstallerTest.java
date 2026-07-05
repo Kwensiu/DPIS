@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.ActivityThreadFontHookInstaller;
+
 import android.content.res.Configuration;
 
 import org.junit.Test;

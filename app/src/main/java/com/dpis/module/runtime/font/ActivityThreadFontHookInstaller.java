@@ -1,4 +1,11 @@
-package com.dpis.module;
+package com.dpis.module.runtime.font;
+
+import com.dpis.module.BuildConfig;
+
+
+import com.dpis.module.DpisLog;
+
+import com.dpis.module.DpisConfigStore;
 
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
 
@@ -15,7 +22,7 @@ import com.dpis.module.runtime.ProcessScopedInstallGate;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class ActivityThreadFontHookInstaller {
+public final class ActivityThreadFontHookInstaller {
     private static final String BRIDGE_LOG_PREFIX = "DPIS ";
     private static final String FONT_LOG_KEY_PREFIX = "font";
     private static final String HOOK_ID_HANDLE_BIND_APPLICATION =
@@ -26,11 +33,11 @@ final class ActivityThreadFontHookInstaller {
     private ActivityThreadFontHookInstaller() {
     }
 
-    static void resetForHotReload() {
+    public static void resetForHotReload() {
         installedPid = -1;
     }
 
-    static void install(XposedInterface xposed,
+    public static void install(XposedInterface xposed,
                         String packageName,
                         DpisConfigStore store,
                         ModernApiCapabilities apiCapabilities)
@@ -69,7 +76,7 @@ final class ActivityThreadFontHookInstaller {
         }
     }
 
-    static boolean applyFontScaleToBindData(Object bindData, String packageName, DpisConfigStore store) {
+    public static boolean applyFontScaleToBindData(Object bindData, String packageName, DpisConfigStore store) {
         if (bindData == null) {
             return false;
         }

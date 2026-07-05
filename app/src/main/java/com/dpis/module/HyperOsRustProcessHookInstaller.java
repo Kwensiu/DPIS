@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.HyperOsFlutterFontBridge;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.io.File;

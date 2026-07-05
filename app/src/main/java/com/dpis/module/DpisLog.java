@@ -3,7 +3,7 @@ package com.dpis.module;
 import android.util.Log;
 
 public final class DpisLog {
-    static final String TAG = "DPIS";
+    public static final String TAG = "DPIS";
     private static volatile boolean loggingEnabled = true;
     private static volatile AppLogSink appLogSink;
 

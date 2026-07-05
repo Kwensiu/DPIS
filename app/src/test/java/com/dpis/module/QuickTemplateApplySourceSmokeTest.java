@@ -1,4 +1,8 @@
 package com.dpis.module;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
+
+import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
 import com.dpis.module.viewport.ViewportPropertySyncer;
 
 import com.dpis.module.templates.QuickTemplateApplyAdapters;

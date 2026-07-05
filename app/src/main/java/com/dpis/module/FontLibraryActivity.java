@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
+
 import com.dpis.module.fonts.FontLibraryEntry;
 import com.dpis.module.fonts.FontLibraryStore;
 

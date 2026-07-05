@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.fonts.hookdomain;
 
 import com.dpis.module.hooks.HookDomainOverride;
 
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-final class FontHookDomainPropertyBridge {
+public final class FontHookDomainPropertyBridge {
     private static final String PROPERTY_PREFIX = "debug.dpis.hookdomains.";
     private static final String PERSIST_PROPERTY_PREFIX = "persist.debug.dpis.hookdomains.";
     private static final String VALUE_VERSION_PREFIX = "v2:";
@@ -20,15 +20,15 @@ final class FontHookDomainPropertyBridge {
     private FontHookDomainPropertyBridge() {
     }
 
-    static String propertyNameForPackage(String packageName) {
+    public static String propertyNameForPackage(String packageName) {
         return PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static String persistentPropertyNameForPackage(String packageName) {
+    public static String persistentPropertyNameForPackage(String packageName) {
         return PERSIST_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static HookDomainOverride readOverride(String packageName) {
+    public static HookDomainOverride readOverride(String packageName) {
         if (packageName == null || packageName.isBlank()) {
             return HookDomainOverride.automatic();
         }
@@ -38,16 +38,16 @@ final class FontHookDomainPropertyBridge {
         return parseOverrideValue(packageName, raw);
     }
 
-    static HookDomainOverride parseOverrideValueForTest(String raw) {
+    public static HookDomainOverride parseOverrideValueForTest(String raw) {
         return parseOverrideValue("org.telegram.messenger", raw);
     }
 
-    static String encodeOverrideValue(String packageName, Set<String> domains) {
+    public static String encodeOverrideValue(String packageName, Set<String> domains) {
         int encoded = encodeMask(domains) + 1;
         return VALUE_VERSION_PREFIX + packageCheck(packageName) + ":" + encoded;
     }
 
-    static int encodeMask(Set<String> domains) {
+    public static int encodeMask(Set<String> domains) {
         List<String> ids = FontHookDomainRegistry.orderedCustomizableIdsList();
         Set<String> normalized = FontHookDomainRegistry.orderedCustomizableSubset(domains);
         int mask = 0;
@@ -59,7 +59,7 @@ final class FontHookDomainPropertyBridge {
         return mask;
     }
 
-    static Set<String> decodeMask(int mask) {
+    public static Set<String> decodeMask(int mask) {
         LinkedHashSet<String> domains = new LinkedHashSet<>();
         List<String> ids = FontHookDomainRegistry.orderedCustomizableIdsList();
         for (int i = 0; i < ids.size(); i++) {

@@ -1,9 +1,15 @@
 package com.dpis.module;
 
+import com.dpis.module.PerAppDisplayConfig;
+
+import com.dpis.module.FontApplyMode;
+
+import com.dpis.module.DpisLog;
+
 import java.lang.reflect.Method;
 import java.util.Locale;
 
-final class HyperOsFlutterFontBridge {
+public final class HyperOsFlutterFontBridge {
     private static final String PROPERTY_PREFIX = "debug.dpis.font.";
     private static final String FORCE_PROPERTY_PREFIX = "debug.dpis.forcefont.";
     private static final String COMPAT_FONT_PROPERTY_PREFIX = "debug.dpis.compatfont.";
@@ -20,39 +26,39 @@ final class HyperOsFlutterFontBridge {
     private HyperOsFlutterFontBridge() {
     }
 
-    static String propertyNameForPackage(String packageName) {
+    public static String propertyNameForPackage(String packageName) {
         return PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static String forcePropertyNameForPackage(String packageName) {
+    public static String forcePropertyNameForPackage(String packageName) {
         return FORCE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static String compatFontPropertyNameForPackage(String packageName) {
+    public static String compatFontPropertyNameForPackage(String packageName) {
         return COMPAT_FONT_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static String compatFontModePropertyNameForPackage(String packageName) {
+    public static String compatFontModePropertyNameForPackage(String packageName) {
         return COMPAT_FONT_MODE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static String typefacePropertyNameForPackage(String packageName) {
+    public static String typefacePropertyNameForPackage(String packageName) {
         return TYPEFACE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static String persistentForcePropertyNameForPackage(String packageName) {
+    public static String persistentForcePropertyNameForPackage(String packageName) {
         return PERSIST_FORCE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static String persistentCompatFontPropertyNameForPackage(String packageName) {
+    public static String persistentCompatFontPropertyNameForPackage(String packageName) {
         return PERSIST_COMPAT_FONT_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static String persistentCompatFontModePropertyNameForPackage(String packageName) {
+    public static String persistentCompatFontModePropertyNameForPackage(String packageName) {
         return PERSIST_COMPAT_FONT_MODE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static String persistentTypefacePropertyNameForPackage(String packageName) {
+    public static String persistentTypefacePropertyNameForPackage(String packageName) {
         return PERSIST_TYPEFACE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
@@ -69,7 +75,7 @@ final class HyperOsFlutterFontBridge {
                 persistentCompatFontPropertyNameForPackage(packageName));
     }
 
-    static String readCompatFontMode(String packageName) {
+    public static String readCompatFontMode(String packageName) {
         if (packageName == null || packageName.isEmpty()) {
             return FontApplyMode.OFF;
         }
@@ -78,7 +84,7 @@ final class HyperOsFlutterFontBridge {
                 persistentCompatFontModePropertyNameForPackage(packageName)));
     }
 
-    static String readTypefaceId(String packageName) {
+    public static String readTypefaceId(String packageName) {
         if (packageName == null || packageName.isEmpty()) {
             return null;
         }
@@ -104,11 +110,11 @@ final class HyperOsFlutterFontBridge {
         }
     }
 
-    static String rustBinaryPropertyNameForPackage(String packageName) {
+    public static String rustBinaryPropertyNameForPackage(String packageName) {
         return RUST_BINARY_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static void publishTarget(String packageName, PerAppDisplayConfig config) {
+    public static void publishTarget(String packageName, PerAppDisplayConfig config) {
         if (packageName == null || packageName.isEmpty() || config == null
                 || !config.hyperOsFlutterFontHookEnabled
                 || config.targetFontScalePercent == null
@@ -122,7 +128,7 @@ final class HyperOsFlutterFontBridge {
                 String.valueOf(config.targetFontScalePercent));
     }
 
-    static void publishRustProxyTarget(String packageName, PerAppDisplayConfig config) {
+    public static void publishRustProxyTarget(String packageName, PerAppDisplayConfig config) {
         if (packageName == null || packageName.isEmpty() || config == null
                 || config.targetFontScalePercent == null
                 || config.targetFontScalePercent <= 0) {
@@ -133,7 +139,7 @@ final class HyperOsFlutterFontBridge {
                 String.valueOf(config.targetFontScalePercent));
     }
 
-    static void clearTarget(String packageName) {
+    public static void clearTarget(String packageName) {
         if (packageName == null || packageName.isEmpty()) {
             return;
         }
@@ -143,7 +149,7 @@ final class HyperOsFlutterFontBridge {
         }
     }
 
-    static void clearNativeTarget(String packageName) {
+    public static void clearNativeTarget(String packageName) {
         if (packageName == null || packageName.isEmpty()) {
             return;
         }
@@ -151,7 +157,7 @@ final class HyperOsFlutterFontBridge {
         setSystemProperty(rustBinaryPropertyNameForPackage(packageName), "0");
     }
 
-    static boolean shouldClearOnPublishTargetSkipForTest(String packageName,
+    public static boolean shouldClearOnPublishTargetSkipForTest(String packageName,
                                                         PerAppDisplayConfig config) {
         return shouldClearOnPublishTargetSkip(packageName, config);
     }
@@ -182,7 +188,7 @@ final class HyperOsFlutterFontBridge {
                 || config.targetFontScalePercent <= 0;
     }
 
-    static void publishRustBinaryPath(String packageName, String binaryPath) {
+    public static void publishRustBinaryPath(String packageName, String binaryPath) {
         if (packageName == null || packageName.isEmpty()
                 || binaryPath == null || binaryPath.isEmpty()) {
             return;

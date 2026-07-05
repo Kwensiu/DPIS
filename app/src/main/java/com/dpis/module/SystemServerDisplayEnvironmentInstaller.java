@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.HyperOsFlutterFontBridge;
+
 import com.dpis.module.viewport.PerAppDisplayEnvironment;
 
 import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;

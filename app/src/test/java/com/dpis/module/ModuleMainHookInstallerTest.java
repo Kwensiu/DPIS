@@ -1,5 +1,17 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.WebViewFontHookInstaller;
+
+import com.dpis.module.runtime.font.TypefaceOverrideHookInstaller;
+
+import com.dpis.module.runtime.font.HyperOsFlutterFontHookInstaller;
+
+import com.dpis.module.runtime.font.ForceTextSizeHookInstaller;
+
+import com.dpis.module.runtime.font.FlutterSettingsFontHookInstaller;
+
+import com.dpis.module.runtime.font.ActivityThreadFontHookInstaller;
+
 import com.dpis.module.viewport.DpiConfig;
 
 import com.dpis.module.runtime.appprocess.ChromiumViewportProbeHookInstaller;
@@ -173,7 +185,7 @@ public class ModuleMainHookInstallerTest {
     public void moduleMainConfiguresHyperOsFlutterNativeFontHook() throws IOException {
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
         String build = read("build.gradle.kts");
-        String flutterInstaller = read("src/main/java/com/dpis/module/HyperOsFlutterFontHookInstaller.java");
+        String flutterInstaller = read("src/main/java/com/dpis/module/runtime/font/HyperOsFlutterFontHookInstaller.java");
         String appProcessInstaller = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
 
         assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));
@@ -270,19 +282,19 @@ public class ModuleMainHookInstallerTest {
         assertTrue(resourcesRead.contains("apiCapabilities.applyStableHookId("));
         assertTrue(resourcesImpl.contains("apiCapabilities.applyStableHookId("));
         assertTrue(resourcesManager.contains("apiCapabilities.applyStableHookId("));
-        assertTrue(read("src/main/java/com/dpis/module/ActivityThreadFontHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/font/ActivityThreadFontHookInstaller.java")
                 .contains("HOOK_ID_HANDLE_BIND_APPLICATION"));
-        assertTrue(read("src/main/java/com/dpis/module/WebViewFontHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/font/WebViewFontHookInstaller.java")
                 .contains("HOOK_ID_WEBVIEW_GET_SETTINGS"));
-        assertTrue(read("src/main/java/com/dpis/module/WebViewFontHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/font/WebViewFontHookInstaller.java")
                 .contains("HOOK_ID_WEBSETTINGS_SET_TEXT_ZOOM"));
-        assertTrue(read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java")
                 .contains("HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_WITH_UNIT"));
-        assertTrue(read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java")
                 .contains("HOOK_ID_PAINT_SET_TEXT_SIZE"));
-        assertTrue(read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java")
                 .contains("bridgeMutationAppliedIfChanged("));
-        String typefaceInstaller = read("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java");
+        String typefaceInstaller = read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.java");
         assertTrue(typefaceInstaller.contains("HOOK_ID_TEXTVIEW_SET_TYPEFACE"));
         assertTrue(typefaceInstaller.contains("HOOK_ID_PAINT_SET_TYPEFACE"));
         assertTrue(typefaceInstaller.contains("apiCapabilities.applyStableHookId("));
@@ -337,7 +349,7 @@ public class ModuleMainHookInstallerTest {
     @Test
     public void temporaryProbesAndPackerReferencesDoNotRemainInRuntimeSources() throws IOException {
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
-        String flutterInstaller = read("src/main/java/com/dpis/module/FlutterSettingsFontHookInstaller.java");
+        String flutterInstaller = read("src/main/java/com/dpis/module/runtime/font/FlutterSettingsFontHookInstaller.java");
 
         // Temporary selftest/probe prefixes must not remain
         assertFalse("SELFTEST probe must be removed", moduleMain.contains("DPIS_HOOK_SELFTEST"));

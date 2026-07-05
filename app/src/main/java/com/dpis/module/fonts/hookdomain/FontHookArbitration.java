@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.fonts.hookdomain;
 
 public final class FontHookArbitration {
     private FontHookArbitration() {

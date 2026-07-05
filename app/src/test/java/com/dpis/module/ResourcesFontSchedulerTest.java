@@ -1,5 +1,13 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.hookdomain.FontHookArbitration;
+
+import com.dpis.module.runtime.font.FontScaleOverride;
+
+import com.dpis.module.runtime.font.ResourcesFontScheduler;
+
+import com.dpis.module.runtime.font.ComposeResourcesFontEvidence;
+
 import org.junit.After;
 import org.junit.Test;
 

@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.hookdomain.FontHookArbitration;
+
+import com.dpis.module.runtime.font.ForceTextSizeHookInstaller;
+
 import com.dpis.module.fonts.TextViewFontProvenanceTracker;
 
 import com.dpis.module.fonts.FontFieldRewriteMath;
@@ -117,7 +121,7 @@ public class ForceTextSizeRegressionReferenceTest {
 
     @Test
     public void replacementHookKeepsCurrentPxFallbackBehindDomainPlan() throws Exception {
-        String source = read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java");
+        String source = read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java");
 
         assertTrue(source.contains("installTextViewAttachHook("));
         assertTrue(source.contains("getDeclaredMethod(\"onAttachedToWindow\")"));
@@ -145,7 +149,7 @@ public class ForceTextSizeRegressionReferenceTest {
 
     @Test
     public void paintFallbackUsesArgumentReplacementInsteadOfPostWrite() throws Exception {
-        String source = read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java");
+        String source = read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java");
         String paintHook = source.substring(
                 source.indexOf("Method paintSetTextSize"),
                 source.indexOf("try {", source.indexOf("Method textPaintSetTextSize")));

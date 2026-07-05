@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.fonts.hookdomain;
+
+import com.dpis.module.R;
 
 import com.dpis.module.viewport.ViewportApplyMode;
 

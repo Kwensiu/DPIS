@@ -7,7 +7,7 @@ import java.util.List;
 
 import io.github.libxposed.service.XposedService;
 
-final class SystemScopeCoordinator {
+public final class SystemScopeCoordinator {
     private static final String SYSTEM_SCOPE_MODERN = "system";
 
     interface Host {
@@ -105,7 +105,7 @@ final class SystemScopeCoordinator {
         }
     }
 
-    static boolean resolveSystemHookEffectiveEnabled(DpisConfigStore store) {
+    public static boolean resolveSystemHookEffectiveEnabled(DpisConfigStore store) {
         if (store == null) {
             return false;
         }
@@ -132,7 +132,7 @@ final class SystemScopeCoordinator {
         return effectiveEnabled;
     }
 
-    static boolean resolveSystemHookEffectiveEnabled(boolean desiredEnabled,
+    public static boolean resolveSystemHookEffectiveEnabled(boolean desiredEnabled,
                                                      boolean serviceAvailable,
                                                      boolean scopeSelected) {
         return resolveSystemHookEffectiveEnabled(
@@ -142,7 +142,7 @@ final class SystemScopeCoordinator {
                 "legacy".equals(BuildConfig.FLAVOR));
     }
 
-    static boolean resolveSystemHookEffectiveEnabled(boolean desiredEnabled,
+    public static boolean resolveSystemHookEffectiveEnabled(boolean desiredEnabled,
                                                      boolean serviceAvailable,
                                                      boolean scopeSelected,
                                                      boolean legacyFlavor) {

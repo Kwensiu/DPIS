@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.fonts.hookdomain;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;

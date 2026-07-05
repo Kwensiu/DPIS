@@ -11,29 +11,29 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
     private FeedbackDiagnosticRuntimeHotPathEvents() {
     }
 
-    static void begin(String packageName, String route, String detail) {
+    public static void begin(String packageName, String route, String detail) {
         begin(packageName, ROUTE_FONT, route, detail);
     }
 
-    static void begin(String packageName, String categoryRoute, String routeName, String detail) {
+    public static void begin(String packageName, String categoryRoute, String routeName, String detail) {
         String key = key(packageName, categoryRoute, routeName, detail);
         ACTIVE.put(key, System.currentTimeMillis());
         record(packageName, categoryRoute, routeName, "begin", detail);
     }
 
-    static void applied(String packageName, String route, String detail) {
+    public static void applied(String packageName, String route, String detail) {
         applied(packageName, ROUTE_FONT, route, detail);
     }
 
-    static void applied(String packageName, String categoryRoute, String routeName, String detail) {
+    public static void applied(String packageName, String categoryRoute, String routeName, String detail) {
         record(packageName, categoryRoute, routeName, "applied", detail);
     }
 
-    static void skipped(String packageName, String route, String detail) {
+    public static void skipped(String packageName, String route, String detail) {
         skipped(packageName, ROUTE_FONT, route, detail);
     }
 
-    static void skipped(String packageName, String categoryRoute, String routeName, String detail) {
+    public static void skipped(String packageName, String categoryRoute, String routeName, String detail) {
         record(packageName, categoryRoute, routeName, "skipped", detail);
         ACTIVE.remove(key(packageName, categoryRoute, routeName, detail));
     }
@@ -46,7 +46,7 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
         record(packageName, categoryRoute, routeName, "probe", detail);
     }
 
-    static void event(
+    public static void event(
             String packageName,
             String categoryRoute,
             String routeName,
@@ -56,11 +56,11 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
         record(packageName, categoryRoute, routeName, stage, detail);
     }
 
-    static void end(String packageName, String route, String detail) {
+    public static void end(String packageName, String route, String detail) {
         end(packageName, ROUTE_FONT, route, detail);
     }
 
-    static void end(String packageName, String categoryRoute, String routeName, String detail) {
+    public static void end(String packageName, String categoryRoute, String routeName, String detail) {
         String key = key(packageName, categoryRoute, routeName, detail);
         Long startedAt = ACTIVE.remove(key);
         long durationMs = startedAt != null ? Math.max(0L, System.currentTimeMillis() - startedAt) : -1L;
@@ -70,7 +70,7 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
         record(packageName, categoryRoute, routeName, "end", message);
     }
 
-    static void resetForTest() {
+    public static void resetForTest() {
         ACTIVE.clear();
     }
 

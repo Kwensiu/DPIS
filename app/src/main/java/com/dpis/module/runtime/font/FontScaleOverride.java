@@ -1,4 +1,12 @@
-package com.dpis.module;
+package com.dpis.module.runtime.font;
+
+import com.dpis.module.EffectiveModeResolver;
+
+import com.dpis.module.FontApplyMode;
+
+import com.dpis.module.DpisConfigStore;
+
+import com.dpis.module.runtime.font.ResourcesFontScheduler;
 
 import com.dpis.module.viewport.DensityOverride;
 
@@ -6,13 +14,13 @@ import android.content.res.Configuration;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 
-final class FontScaleOverride {
-    static final float EPSILON = 0.0001f;
+public final class FontScaleOverride {
+    public static final float EPSILON = 0.0001f;
 
     private FontScaleOverride() {
     }
 
-    static Result resolve(DpisConfigStore store, String packageName, float currentFontScale) {
+    public static Result resolve(DpisConfigStore store, String packageName, float currentFontScale) {
         float original = currentFontScale > 0f ? currentFontScale : 1.0f;
         Integer targetPercent = store != null ? store.getTargetFontScalePercent(packageName) : null;
         String mode = store != null ? store.getTargetFontApplyMode(packageName) : FontApplyMode.OFF;
@@ -26,13 +34,13 @@ final class FontScaleOverride {
                 Math.abs(effective - original) > EPSILON);
     }
 
-    static Result resolveForResources(DpisConfigStore store,
+    public static Result resolveForResources(DpisConfigStore store,
                                       String packageName,
                                       float currentFontScale) {
         return resolveForResources(null, store, packageName, currentFontScale);
     }
 
-    static Result resolveForResources(Object resourceScope,
+    public static Result resolveForResources(Object resourceScope,
                                       DpisConfigStore store,
                                       String packageName,
                                       float currentFontScale) {
@@ -48,7 +56,7 @@ final class FontScaleOverride {
                 resolve(store, packageName, currentFontScale));
     }
 
-    static float targetFactorForResources(DpisConfigStore store, String packageName) {
+    public static float targetFactorForResources(DpisConfigStore store, String packageName) {
         Integer targetPercent = store != null ? store.getTargetFontScalePercent(packageName) : null;
         if (targetPercent == null || targetPercent <= 0) {
             return 0f;
@@ -62,7 +70,7 @@ final class FontScaleOverride {
         return targetPercent / 100.0f;
     }
 
-    static boolean applyToConfiguration(Configuration config, Result result) {
+    public static boolean applyToConfiguration(Configuration config, Result result) {
         if (config == null || result == null || !result.changed) {
             return false;
         }
@@ -81,7 +89,7 @@ final class FontScaleOverride {
         metrics.scaledDensity = DensityOverride.scaledDensityFrom(baseDensityDpi, config.fontScale);
     }
 
-    static boolean shouldForceTextUnit(int unit) {
+    public static boolean shouldForceTextUnit(int unit) {
         // SP has already been affected by config.fontScale/scaledDensity.
         return unit == TypedValue.COMPLEX_UNIT_PX
                 || unit == TypedValue.COMPLEX_UNIT_DIP
@@ -100,13 +108,13 @@ final class FontScaleOverride {
         return TypedValue.applyDimension(unit, size, metrics);
     }
 
-    static final class Result {
-        final float original;
-        final float effective;
-        final Integer targetPercent;
-        final boolean changed;
+    public static final class Result {
+        public final float original;
+        public final float effective;
+        public final Integer targetPercent;
+        public final boolean changed;
 
-        Result(float original, float effective, Integer targetPercent, boolean changed) {
+        public Result(float original, float effective, Integer targetPercent, boolean changed) {
             this.original = original;
             this.effective = effective;
             this.targetPercent = targetPercent;

@@ -8,7 +8,7 @@ import com.dpis.module.hooks.HookExecutionPlan;
 import com.dpis.module.hooks.HookExecutionPlanner;
 import com.dpis.module.hooks.HookRuntimePolicy;
 
-final class ModulePackagePlan {
+public final class ModulePackagePlan {
     final String packageName;
     final ViewportTargetSpec targetViewportSpec;
     final String targetViewportMode;

@@ -1,4 +1,12 @@
-package com.dpis.module;
+package com.dpis.module.runtime.font;
+
+import com.dpis.module.HyperOsFlutterFontBridge;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainDecision;
+
+import com.dpis.module.FontApplyMode;
+
+import com.dpis.module.DpisConfigStore;
 
 import com.dpis.module.runtime.RootCommandRunner;
 
@@ -83,22 +91,22 @@ public final class FontRuntimePropertySyncer {
         runRootCommand(buildTargetCommands(packageName, store));
     }
 
-    static String buildTargetCommandForTest(String packageName,
+    public static String buildTargetCommandForTest(String packageName,
                                             int fontScalePercent,
                                             String mode,
                                             boolean hyperOsNativeFontHookEnabled) {
         return buildTargetCommand(packageName, fontScalePercent, mode, hyperOsNativeFontHookEnabled);
     }
 
-    static String buildClearTargetCommandForTest(String packageName) {
+    public static String buildClearTargetCommandForTest(String packageName) {
         return buildClearTargetCommand(packageName);
     }
 
-    static String buildClearFontScaleCommandForTest(String packageName) {
+    public static String buildClearFontScaleCommandForTest(String packageName) {
         return buildClearFontScaleCommand(packageName);
     }
 
-    static String buildTypefaceCommandForTest(String packageName, String typefaceId) {
+    public static String buildTypefaceCommandForTest(String packageName, String typefaceId) {
         return buildTypefaceCommand(packageName, typefaceId);
     }
 

@@ -1,5 +1,15 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.WebViewFontHookInstaller;
+
+import com.dpis.module.runtime.font.TypefaceOverrideHookInstaller;
+
+import com.dpis.module.runtime.font.PaintTextSizeFallbackHookInstaller;
+
+import com.dpis.module.runtime.font.ForceTextSizeHookInstaller;
+
+import com.dpis.module.runtime.font.ActivityThreadFontHookInstaller;
+
 import com.dpis.module.runtime.appprocess.ChromiumViewportProbeHookInstaller;
 
 final class AppProcessHotReloadResetter {

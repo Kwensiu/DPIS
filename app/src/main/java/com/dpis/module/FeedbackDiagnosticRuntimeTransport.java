@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-final class FeedbackDiagnosticRuntimeTransport {
+public final class FeedbackDiagnosticRuntimeTransport {
     private static final String DIRECTORY = "/data/local/tmp/dpis-feedback-diagnostic";
     private static final String MARKER_FILE = DIRECTORY + "/active-session";
     private static final String EVENT_FILE_NAME = "runtime-events.jsonl";
@@ -108,7 +108,7 @@ final class FeedbackDiagnosticRuntimeTransport {
         return Snapshot.available(parseEvents(readResult.output()));
     }
 
-    static void cancel(ShellRunner shellRunner) {
+    public static void cancel(ShellRunner shellRunner) {
         Session session = activeSession;
         activeSession = null;
         remoteSession = null;
@@ -122,11 +122,11 @@ final class FeedbackDiagnosticRuntimeTransport {
         runner.run("rm -f " + shellQuote(session.eventPath) + " " + shellQuote(MARKER_FILE));
     }
 
-    static void record(String category, String stage, String packageName, String message) {
+    public static void record(String category, String stage, String packageName, String message) {
         record(category, "", stage, packageName, message);
     }
 
-    static void record(
+    public static void record(
             String category,
             String route,
             String stage,
@@ -157,7 +157,7 @@ final class FeedbackDiagnosticRuntimeTransport {
         return session != null && session.available ? session.eventPath : "";
     }
 
-    static boolean isCaptureActive() {
+    public static boolean isCaptureActive() {
         Session session = activeSession;
         if (session != null && session.available) {
             return true;
@@ -165,7 +165,7 @@ final class FeedbackDiagnosticRuntimeTransport {
         return resolveRemoteSession() != null;
     }
 
-    static boolean writeSelfTestEvent(
+    public static boolean writeSelfTestEvent(
             String packageName,
             String message,
             ShellRunner shellRunner

@@ -1,4 +1,14 @@
-package com.dpis.module;
+package com.dpis.module.runtime.font;
+
+import com.dpis.module.fonts.hookdomain.FontHookArbitration;
+
+import com.dpis.module.DpisLog;
+
+import com.dpis.module.DpisConfigStore;
+
+import com.dpis.module.runtime.font.ResourcesFontScheduler;
+
+import com.dpis.module.runtime.font.ComposeResourcesFontEvidence;
 
 import com.dpis.module.hooks.HookExecutionPlan;
 
@@ -41,8 +51,8 @@ import io.github.libxposed.api.XposedInterface;
  * via those routes; resources_font only adds value-rewrite (the
  * Configuration.fontScale / scaledDensity values an app may read directly).
  */
-final class ComposeFontRuntimeDiagnosticsInstaller {
-    static final long LAYOUT_EVALUATE_THROTTLE_MS = 500L;
+public final class ComposeFontRuntimeDiagnosticsInstaller {
+    public static final long LAYOUT_EVALUATE_THROTTLE_MS = 500L;
     private static final String FONT_LOG_KEY_PREFIX = "font";
     private static final ConcurrentMap<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
     private static final Object LOCK = new Object();
@@ -54,7 +64,7 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
     private ComposeFontRuntimeDiagnosticsInstaller() {
     }
 
-    static void install(XposedInterface xposed,
+    public static void install(XposedInterface xposed,
                         String packageName,
                         DpisConfigStore store,
                         FontHookArbitration.FontDomainPlan domainPlan,
@@ -84,31 +94,31 @@ final class ComposeFontRuntimeDiagnosticsInstaller {
                 hookDomains, hookDomainSource);
     }
 
-    static boolean shouldInstall(HookExecutionPlan plan) {
+    public static boolean shouldInstall(HookExecutionPlan plan) {
         return plan != null
                 && plan.fontDomainPlan != null
                 && plan.fontDomainPlan.resourcesFontEnabled;
     }
 
-    static boolean shouldDeferRegistration(Application application, boolean alreadyRegistered) {
+    public static boolean shouldDeferRegistration(Application application, boolean alreadyRegistered) {
         return application == null && !alreadyRegistered;
     }
 
-    static boolean shouldEvaluateFromLayout(long nowMs,
+    public static boolean shouldEvaluateFromLayout(long nowMs,
                                             long lastLayoutEvaluationAtMs) {
         return lastLayoutEvaluationAtMs <= 0
                 || nowMs - lastLayoutEvaluationAtMs >= LAYOUT_EVALUATE_THROTTLE_MS;
     }
 
-    static Float resolveTargetFactor(Integer targetPercent) {
+    public static Float resolveTargetFactor(Integer targetPercent) {
         return targetPercent == null || targetPercent <= 0 ? null : targetPercent / 100f;
     }
 
-    static Float resolveCurrentTargetFactorForTest(DpisConfigStore store, String packageName) {
+    public static Float resolveCurrentTargetFactorForTest(DpisConfigStore store, String packageName) {
         return resolveCurrentTargetFactor(store, packageName);
     }
 
-    static boolean shouldSkipForTargetSuppression(String packageName, float targetFactor) {
+    public static boolean shouldSkipForTargetSuppression(String packageName, float targetFactor) {
         return ResourcesFontScheduler.isPackageTargetSuppressed(packageName, targetFactor);
     }
 

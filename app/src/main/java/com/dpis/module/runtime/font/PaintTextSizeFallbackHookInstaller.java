@@ -1,4 +1,12 @@
-package com.dpis.module;
+package com.dpis.module.runtime.font;
+
+import com.dpis.module.FontApplyMode;
+
+import com.dpis.module.FeedbackDiagnosticRuntimeHotPathEvents;
+
+import com.dpis.module.DpisLog;
+
+import com.dpis.module.DpisConfigStore;
 
 import android.graphics.Paint;
 
@@ -12,7 +20,7 @@ import com.dpis.module.runtime.ProcessScopedInstallGate;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class PaintTextSizeFallbackHookInstaller {
+public final class PaintTextSizeFallbackHookInstaller {
     private static final String FONT_LOG_KEY_PREFIX = "font";
     private static volatile int installedPid = -1;
     private static final ThreadLocal<Boolean> INTERNAL_UPDATE =
@@ -27,11 +35,11 @@ final class PaintTextSizeFallbackHookInstaller {
     private PaintTextSizeFallbackHookInstaller() {
     }
 
-    static void resetForHotReload() {
+    public static void resetForHotReload() {
         installedPid = -1;
     }
 
-    static void install(XposedInterface xposed, String packageName, DpisConfigStore store)
+    public static void install(XposedInterface xposed, String packageName, DpisConfigStore store)
             throws ReflectiveOperationException {
         if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
@@ -129,7 +137,7 @@ final class PaintTextSizeFallbackHookInstaller {
         }
     }
 
-    static float resolveFieldRewriteFactor(DpisConfigStore store, String packageName) {
+    public static float resolveFieldRewriteFactor(DpisConfigStore store, String packageName) {
         if (store == null) {
             return 1.0f;
         }

@@ -1,5 +1,17 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
+
+import com.dpis.module.fonts.hookdomain.FontHookArbitration;
+
+import com.dpis.module.runtime.font.ComposeFontRuntimeDiagnosticsInstaller;
+
+import com.dpis.module.runtime.font.TypefaceOverrideHookInstaller;
+
+import com.dpis.module.runtime.font.ForceTextSizeHookInstaller;
+
+import com.dpis.module.runtime.font.ComposeResourcesFontEvidence;
+
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;
 
@@ -524,7 +536,7 @@ public class AppProcessHookInstallerTest {
     public void composeDiagnosticsAreWiredOnlyThroughResourcesFontDomain() throws Exception {
         String source = readSource("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
         String installer = readSource(
-                "src/main/java/com/dpis/module/ComposeFontRuntimeDiagnosticsInstaller.java");
+                "src/main/java/com/dpis/module/runtime/font/ComposeFontRuntimeDiagnosticsInstaller.java");
 
         assertTrue(source.contains("ComposeFontRuntimeDiagnosticsInstaller.shouldInstall(plan)"));
         assertTrue(source.contains("ComposeFontRuntimeDiagnosticsInstaller.install("));
@@ -549,7 +561,7 @@ public class AppProcessHookInstallerTest {
     public void composeDiagnosticsDoNotSuppressGlobalTextViewOrResourceFontRoutes()
             throws Exception {
         String installer = readSource(
-                "src/main/java/com/dpis/module/ComposeFontRuntimeDiagnosticsInstaller.java");
+                "src/main/java/com/dpis/module/runtime/font/ComposeFontRuntimeDiagnosticsInstaller.java");
 
         assertFalse(installer.contains("textViewCurrentPxFallbackEnabled = false"));
         assertFalse(installer.contains("paintFallbackEnabled = false"));

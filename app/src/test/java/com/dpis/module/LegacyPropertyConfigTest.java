@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.CompatFontPropertySyncer;
+
 import com.dpis.module.viewport.ViewportPropertySyncer;
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;

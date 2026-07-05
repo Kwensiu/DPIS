@@ -1,7 +1,7 @@
 package com.dpis.module.hooks;
 
 import com.dpis.module.DpisConfigStore;
-import com.dpis.module.FontHookDomainRegistry;
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
 
 import java.util.LinkedHashSet;
 import java.util.Set;

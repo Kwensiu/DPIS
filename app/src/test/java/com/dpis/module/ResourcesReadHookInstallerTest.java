@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.hookdomain.FontHookArbitration;
+
+import com.dpis.module.runtime.font.ResourcesFontScheduler;
+
+import com.dpis.module.runtime.font.ComposeResourcesFontEvidence;
+
 import com.dpis.module.viewport.DensityOverride;
 
 import com.dpis.module.viewport.VirtualDisplayOverride;

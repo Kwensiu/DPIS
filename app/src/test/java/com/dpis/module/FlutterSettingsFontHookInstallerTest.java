@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.FlutterSettingsFontHookInstaller;
+
 import android.util.DisplayMetrics;
 
 import org.junit.Test;
@@ -38,7 +40,7 @@ public class FlutterSettingsFontHookInstallerTest {
 
         @Test
         public void sourceContainsAppClassLoaderRetryMethod() throws Exception {
-                String source = readSource("src/main/java/com/dpis/module/FlutterSettingsFontHookInstaller.java");
+                String source = readSource("src/main/java/com/dpis/module/runtime/font/FlutterSettingsFontHookInstaller.java");
 
                 assertTrue(source.contains("static void retryWithAppClassLoader("));
                 assertTrue(source.contains("APP_CLASSLOADER_RETRY_ATTEMPTED"));
@@ -51,7 +53,7 @@ public class FlutterSettingsFontHookInstallerTest {
 
         @Test
         public void sourceContainsFlutterViewAttachBridgeForLateSemanticHookInstall() throws Exception {
-                String source = readSource("src/main/java/com/dpis/module/FlutterSettingsFontHookInstaller.java");
+                String source = readSource("src/main/java/com/dpis/module/runtime/font/FlutterSettingsFontHookInstaller.java");
 
                 assertTrue(source.contains("installFlutterViewAttachBridge("));
                 assertTrue(source.contains("installBaseDexFindClassHook("));

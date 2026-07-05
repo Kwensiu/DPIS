@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.FontScaleOverride;
+
 import android.util.TypedValue;
 
 import org.junit.Test;

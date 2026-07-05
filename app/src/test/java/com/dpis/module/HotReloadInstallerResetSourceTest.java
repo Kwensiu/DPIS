@@ -1,5 +1,15 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.WebViewFontHookInstaller;
+
+import com.dpis.module.runtime.font.TypefaceOverrideHookInstaller;
+
+import com.dpis.module.runtime.font.PaintTextSizeFallbackHookInstaller;
+
+import com.dpis.module.runtime.font.ForceTextSizeHookInstaller;
+
+import com.dpis.module.runtime.font.ActivityThreadFontHookInstaller;
+
 import com.dpis.module.runtime.appprocess.ChromiumViewportProbeHookInstaller;
 
 import static org.junit.Assert.assertTrue;
@@ -11,7 +21,7 @@ import java.io.IOException;
 public class HotReloadInstallerResetSourceTest {
     @Test
     public void processScopedInstallersDeclareHotReloadReset() throws IOException {
-        assertSourceContains("src/main/java/com/dpis/module/ActivityThreadFontHookInstaller.java",
+        assertSourceContains("src/main/java/com/dpis/module/runtime/font/ActivityThreadFontHookInstaller.java",
                 "static void resetForHotReload()",
                 "installedPid = -1;");
         assertSourceContains("src/main/java/com/dpis/module/runtime/appprocess/ChromiumViewportProbeHookInstaller.java",
@@ -20,10 +30,10 @@ public class HotReloadInstallerResetSourceTest {
         assertSourceContains("src/main/java/com/dpis/module/DisplayHookInstaller.java",
                 "static void resetForHotReload()",
                 "installedPid = -1;");
-        assertSourceContains("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java",
+        assertSourceContains("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java",
                 "static void resetForHotReload()",
                 "installedPid = -1;");
-        assertSourceContains("src/main/java/com/dpis/module/PaintTextSizeFallbackHookInstaller.java",
+        assertSourceContains("src/main/java/com/dpis/module/runtime/font/PaintTextSizeFallbackHookInstaller.java",
                 "static void resetForHotReload()",
                 "installedPid = -1;");
         assertSourceContains("src/main/java/com/dpis/module/ResourcesProbeHookInstaller.java",
@@ -32,13 +42,13 @@ public class HotReloadInstallerResetSourceTest {
         assertSourceContains("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java",
                 "static void resetForHotReload()",
                 "installedPid = -1;");
-        assertSourceContains("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java",
+        assertSourceContains("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.java",
                 "static void resetForHotReload()",
                 "installedPid = -1;");
         assertSourceContains("src/main/java/com/dpis/module/ViewRootProbeHookInstaller.java",
                 "static void resetForHotReload()",
                 "installedPid = -1;");
-        assertSourceContains("src/main/java/com/dpis/module/WebViewFontHookInstaller.java",
+        assertSourceContains("src/main/java/com/dpis/module/runtime/font/WebViewFontHookInstaller.java",
                 "static void resetForHotReload()",
                 "installedPid = -1;");
         assertSourceContains("src/main/java/com/dpis/module/WindowManagerProbeHookInstaller.java",

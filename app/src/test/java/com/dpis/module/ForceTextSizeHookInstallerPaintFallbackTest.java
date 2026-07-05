@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.ForceTextSizeHookInstaller;
+
 import com.dpis.module.fonts.PaintProvenanceTracker;
 
 import org.junit.Test;

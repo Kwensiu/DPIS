@@ -5,18 +5,18 @@ import com.dpis.module.viewport.ViewportTargetSpec;
 
 import com.dpis.module.hooks.HookDomainOverride;
 
-final class PackageConfigSnapshot {
-    final String packageName;
-    final boolean dpisEnabled;
-    final ViewportTargetSpec targetViewportSpec;
-    final String targetViewportMode;
-    final Integer targetFontScalePercent;
-    final String targetFontMode;
-    final String targetTypefaceId;
-    final boolean flutterFontHookEnabled;
-    final boolean flutterSettingsFontHookEnabled;
-    final boolean hyperOsFlutterFontHookEnabled;
-    final HookDomainOverride hookDomainOverride;
+public final class PackageConfigSnapshot {
+    public final String packageName;
+    public final boolean dpisEnabled;
+    public final ViewportTargetSpec targetViewportSpec;
+    public final String targetViewportMode;
+    public final Integer targetFontScalePercent;
+    public final String targetFontMode;
+    public final String targetTypefaceId;
+    public final boolean flutterFontHookEnabled;
+    public final boolean flutterSettingsFontHookEnabled;
+    public final boolean hyperOsFlutterFontHookEnabled;
+    public final HookDomainOverride hookDomainOverride;
 
     PackageConfigSnapshot(String packageName,
                           boolean dpisEnabled,

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.ResourcesFontScheduler;
+
 import com.dpis.module.viewport.VirtualDisplayOverride;
 import com.dpis.module.viewport.VirtualDisplayState;
 

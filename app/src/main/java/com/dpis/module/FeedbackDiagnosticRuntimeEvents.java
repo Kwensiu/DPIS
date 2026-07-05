@@ -11,7 +11,7 @@ import java.util.Map;
 
 import com.dpis.module.diagnostics.FeedbackDiagnosticTimelineClassifier;
 
-final class FeedbackDiagnosticRuntimeEvents {
+public final class FeedbackDiagnosticRuntimeEvents {
     private static final long REPEAT_WARNING_WINDOW_MS = 300L;
     private static volatile Session activeSession;
 
@@ -50,7 +50,7 @@ final class FeedbackDiagnosticRuntimeEvents {
         );
     }
 
-    static void recordDpisLog(String level, String message) {
+    public static void recordDpisLog(String level, String message) {
         Session session = activeSession;
         if (session == null) {
             return;
@@ -72,7 +72,7 @@ final class FeedbackDiagnosticRuntimeEvents {
         session.recordStructured(route, stage, level, message);
     }
 
-    static void recordHotReload(
+    public static void recordHotReload(
             String packageName,
             String route,
             String stage,

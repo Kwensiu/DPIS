@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
+
+import com.dpis.module.fonts.hookdomain.FontHookArbitration;
+
 import com.dpis.module.hooks.HookDomainPlan;
 
 import static org.junit.Assert.assertEquals;

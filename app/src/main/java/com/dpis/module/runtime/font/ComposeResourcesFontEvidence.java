@@ -1,15 +1,17 @@
-package com.dpis.module;
+package com.dpis.module.runtime.font;
 
-final class ComposeResourcesFontEvidence {
+import com.dpis.module.fonts.hookdomain.FontHookArbitration;
+
+public final class ComposeResourcesFontEvidence {
     private static final float MATCH_TOLERANCE = 0.001f;
 
-    static final class Summary {
-        final boolean resourcesFontDomainEnabled;
-        final boolean fontScaleMatches;
-        final boolean scaledDensityRatioMatches;
-        final boolean composeHeavyCurrentRoot;
-        final boolean resourcesHandled;
-        final float scaledDensityRatio;
+    public static final class Summary {
+        public final boolean resourcesFontDomainEnabled;
+        public final boolean fontScaleMatches;
+        public final boolean scaledDensityRatioMatches;
+        public final boolean composeHeavyCurrentRoot;
+        public final boolean resourcesHandled;
+        public final float scaledDensityRatio;
 
         Summary(boolean resourcesFontDomainEnabled,
                 boolean fontScaleMatches,
@@ -29,7 +31,7 @@ final class ComposeResourcesFontEvidence {
     private ComposeResourcesFontEvidence() {
     }
 
-    static boolean isResourcesHandledCompose(FontHookArbitration.FontDomainPlan domainPlan,
+    public static boolean isResourcesHandledCompose(FontHookArbitration.FontDomainPlan domainPlan,
                                              float observedFontScale,
                                              float observedDensity,
                                              float observedScaledDensity,
@@ -44,7 +46,7 @@ final class ComposeResourcesFontEvidence {
                 composeHeavyCurrentRoot).resourcesHandled;
     }
 
-    static Summary summarize(FontHookArbitration.FontDomainPlan domainPlan,
+    public static Summary summarize(FontHookArbitration.FontDomainPlan domainPlan,
                              float observedFontScale,
                              float observedDensity,
                              float observedScaledDensity,

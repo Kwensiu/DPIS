@@ -77,6 +77,12 @@ TextView span rewrite, Paint/TextPaint fallback, Android WebView textZoom, and
 X5 WebView textZoom. The events are diagnostic-only and gated by the active
 feedback-diagnostic marker.
 
+The shared app-process font route implementation now lives under
+`runtime.font`. Legacy flavor entry points still call the same install/reset
+protocols; the move only classifies ActivityThread, Resources font scheduling,
+TextView/Paint field rewrite, WebView, typeface replacement, Flutter, and
+diagnostic font routes under their runtime owner package.
+
 As of 2026-06-22, the Legacy WeChat DPI route participates in feedback
 diagnostics as `route=wechat_dpi` for WeChat targets. A saved WeChat DPI config
 makes callback and mutation evidence expected; without that config, callback or

@@ -1,4 +1,13 @@
-package com.dpis.module;
+package com.dpis.module.fonts.hookdomain;
+
+import com.dpis.module.DebugFontOverride;
+import com.dpis.module.SystemScopeCoordinator;
+
+import com.dpis.module.PackageConfigSnapshot;
+
+import com.dpis.module.ConfigSnapshot;
+
+import com.dpis.module.DpisConfigStore;
 
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;
@@ -30,7 +39,7 @@ public final class FontHookDomainDecision {
                 new HookDomainOverrideStore(store).read(packageName));
     }
 
-    static boolean isHyperOsNativeFlutterEnabled(ConfigSnapshot snapshot,
+    public static boolean isHyperOsNativeFlutterEnabled(ConfigSnapshot snapshot,
                                                  PackageConfigSnapshot packageConfig) {
         if (snapshot == null || packageConfig == null || !packageConfig.dpisEnabled) {
             return false;

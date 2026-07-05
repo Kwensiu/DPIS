@@ -1,5 +1,13 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainPropertyBridge;
+
+import com.dpis.module.HyperOsFlutterFontBridge;
+
+import com.dpis.module.runtime.font.HyperOsFlutterFontHookInstaller;
+
 import com.dpis.module.viewport.ViewportPropertyBridge;
 import com.dpis.module.viewport.ViewportApplyMode;
 
@@ -179,7 +187,7 @@ public class HyperOsFlutterFontHookConfigTest {
 
     @Test
     public void nativeHookInstallerRequiresEnabledFontMode() throws Exception {
-        String source = readSource("src/main/java/com/dpis/module/HyperOsFlutterFontHookInstaller.java");
+        String source = readSource("src/main/java/com/dpis/module/runtime/font/HyperOsFlutterFontHookInstaller.java");
 
         assertTrue(source.contains("store.getTargetFontApplyMode(packageName)"));
         assertTrue(source.contains("FontApplyMode.isEnabled("));
@@ -196,7 +204,7 @@ public class HyperOsFlutterFontHookConfigTest {
 
     @Test
     public void nativeHookInstallerProbesGenericFlutterLibraryLoads() throws Exception {
-        String source = readSource("src/main/java/com/dpis/module/HyperOsFlutterFontHookInstaller.java");
+        String source = readSource("src/main/java/com/dpis/module/runtime/font/HyperOsFlutterFontHookInstaller.java");
         String nativeSource = readSource("src/main/cpp/dpis_native.cpp");
         String moduleMain = readSource("src/modern/java/com/dpis/module/ModuleMain.java");
         String appProcessInstaller = readSource("src/main/java/com/dpis/module/AppProcessHookInstaller.java");

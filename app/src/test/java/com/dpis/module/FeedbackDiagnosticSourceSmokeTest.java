@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.WebViewFontHookInstaller;
+
+import com.dpis.module.runtime.font.PaintTextSizeFallbackHookInstaller;
+
+import com.dpis.module.runtime.font.ForceTextSizeHookInstaller;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -161,10 +167,10 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         String resultSheet = read(
                 "src/main/java/com/dpis/module/FeedbackDiagnosticResultSheet.java");
         String layout = read("src/main/res/layout/dialog_feedback_diagnostic_result.xml");
-        String forceTextSize = read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java");
+        String forceTextSize = read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java");
         String paintFallback = read(
-                "src/main/java/com/dpis/module/PaintTextSizeFallbackHookInstaller.java");
-        String webViewFont = read("src/main/java/com/dpis/module/WebViewFontHookInstaller.java");
+                "src/main/java/com/dpis/module/runtime/font/PaintTextSizeFallbackHookInstaller.java");
+        String webViewFont = read("src/main/java/com/dpis/module/runtime/font/WebViewFontHookInstaller.java");
         String modernWechat = read(
                 "src/modern/java/com/dpis/module/WechatDpiModernHookInstaller.java");
         String modernAppSpecific = read(

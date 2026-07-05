@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.fonts.hookdomain;
+
+import com.dpis.module.DpisConfigStore;
 
 import com.dpis.module.hooks.HookDomainOverride;
 import com.dpis.module.hooks.HookDomainOverrideStore;
@@ -71,11 +73,11 @@ public final class FontHookDomainPropertySyncer {
         syncThread.start();
     }
 
-    static String buildPublishCommandForTest(String packageName, Set<String> enabledKnownDomains) {
+    public static String buildPublishCommandForTest(String packageName, Set<String> enabledKnownDomains) {
         return buildPublishCommand(packageName, enabledKnownDomains);
     }
 
-    static String buildClearCommandForTest(String packageName) {
+    public static String buildClearCommandForTest(String packageName) {
         return buildClearCommand(packageName);
     }
 

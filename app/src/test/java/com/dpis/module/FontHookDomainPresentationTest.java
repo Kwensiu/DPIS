@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation;
+
 import com.dpis.module.hooks.HookDomainOverride;
 import com.dpis.module.hooks.HookDomainOverrideStore;
 

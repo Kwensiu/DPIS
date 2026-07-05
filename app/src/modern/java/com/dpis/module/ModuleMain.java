@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.FlutterSettingsFontHookInstaller;
+
 import com.dpis.module.runtime.appprocess.ChromiumViewportProbeHookInstaller;
 
 import com.dpis.module.hooks.HookExecutionPlan;

@@ -1,5 +1,10 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.ComposeFontRuntimeDiagnosticsInstaller;
+import com.dpis.module.runtime.font.ComposeResourcesFontEvidence;
+import com.dpis.module.runtime.font.ResourcesFontScheduler;
+import com.dpis.module.fonts.hookdomain.FontHookArbitration;
+
 import org.junit.After;
 import org.junit.Test;
 

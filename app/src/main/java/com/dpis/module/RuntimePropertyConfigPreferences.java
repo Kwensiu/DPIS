@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainPropertyBridge;
+
+import com.dpis.module.HyperOsFlutterFontBridge;
+
 import com.dpis.module.viewport.ViewportPropertyBridge;
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;

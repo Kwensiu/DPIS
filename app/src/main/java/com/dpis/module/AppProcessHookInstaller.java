@@ -1,5 +1,21 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.hookdomain.FontHookArbitration;
+
+import com.dpis.module.runtime.font.ComposeFontRuntimeDiagnosticsInstaller;
+
+import com.dpis.module.runtime.font.WebViewFontHookInstaller;
+
+import com.dpis.module.runtime.font.TypefaceOverrideHookInstaller;
+
+import com.dpis.module.runtime.font.HyperOsFlutterFontHookInstaller;
+
+import com.dpis.module.runtime.font.ForceTextSizeHookInstaller;
+
+import com.dpis.module.runtime.font.FlutterSettingsFontHookInstaller;
+
+import com.dpis.module.runtime.font.ActivityThreadFontHookInstaller;
+
 import com.dpis.module.viewport.AppProcessViewportStateSeeder;
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;

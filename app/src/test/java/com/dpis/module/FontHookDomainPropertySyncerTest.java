@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
+
 import static org.junit.Assert.assertEquals;
 
 import java.util.Set;

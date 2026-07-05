@@ -1,4 +1,17 @@
-package com.dpis.module;
+package com.dpis.module.runtime.font;
+
+import com.dpis.module.BuildConfig;
+
+import com.dpis.module.fonts.hookdomain.FontHookArbitration;
+
+
+import com.dpis.module.FeedbackDiagnosticRuntimeTransport;
+
+import com.dpis.module.FeedbackDiagnosticRuntimeHotPathEvents;
+
+import com.dpis.module.DpisLog;
+
+import com.dpis.module.DpisConfigStore;
 
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
@@ -31,7 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class ForceTextSizeHookInstaller {
+public final class ForceTextSizeHookInstaller {
     private static final String BRIDGE_LOG_PREFIX = "DPIS ";
     private static final String XIAOHEIHE_EXPRESSION_TEXT_VIEW =
             "com.max.xiaoheihe.module.expression.widget.ExpressionTextView";
@@ -83,18 +96,18 @@ final class ForceTextSizeHookInstaller {
     private ForceTextSizeHookInstaller() {
     }
 
-    static void resetForHotReload() {
+    public static void resetForHotReload() {
         installedPid = -1;
     }
 
-    static void install(XposedInterface xposed, String packageName, DpisConfigStore store)
+    public static void install(XposedInterface xposed, String packageName, DpisConfigStore store)
             throws ReflectiveOperationException {
         install(xposed, packageName, store,
                 FontHookArbitration.resolveDomainPlan(true, true),
                 ModernApiCapabilitiesResolver.fromXposed(xposed));
     }
 
-    static void install(XposedInterface xposed,
+    public static void install(XposedInterface xposed,
                         String packageName,
                         DpisConfigStore store,
                         FontHookArbitration.FontDomainPlan domainPlan)
@@ -107,7 +120,7 @@ final class ForceTextSizeHookInstaller {
                 ModernApiCapabilitiesResolver.fromXposed(xposed));
     }
 
-    static void install(XposedInterface xposed,
+    public static void install(XposedInterface xposed,
                         String packageName,
                         DpisConfigStore store,
                         FontHookArbitration.FontDomainPlan domainPlan,
@@ -713,7 +726,7 @@ final class ForceTextSizeHookInstaller {
         return PaintFallbackDecision.observe(resolution.adjustedPx());
     }
 
-    static PaintFallbackDecision resolvePaintFallbackDecisionForTest(Object paint,
+    public static PaintFallbackDecision resolvePaintFallbackDecisionForTest(Object paint,
                                                                      float incomingPx,
                                                                      float currentPx,
                                                                      float factor,
@@ -1560,7 +1573,7 @@ final class ForceTextSizeHookInstaller {
         return builder.toString();
     }
 
-    static boolean shouldForceTextUnitForTest(int unit,
+    public static boolean shouldForceTextUnitForTest(int unit,
                                               FontHookArbitration.FontDomainPlan domainPlan) {
         return shouldForceTextUnit(unit, domainPlan);
     }
@@ -1589,15 +1602,15 @@ final class ForceTextSizeHookInstaller {
         return domainPlan == null || domainPlan.textViewSpRewriteEnabled;
     }
 
-    enum PaintFallbackAction {
+    public enum PaintFallbackAction {
         WRITE,
         SKIP,
         OBSERVE
     }
 
-    static final class PaintFallbackDecision {
-        final PaintFallbackAction action;
-        final float adjustedPx;
+    public static final class PaintFallbackDecision {
+        public final PaintFallbackAction action;
+        public final float adjustedPx;
 
         private PaintFallbackDecision(PaintFallbackAction action, float adjustedPx) {
             this.action = action;

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.FontScaleOverride;
+
 import com.dpis.module.viewport.VirtualDisplayPlan;
 
 import com.dpis.module.viewport.VirtualDisplayOverride;

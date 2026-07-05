@@ -1,10 +1,18 @@
-package com.dpis.module;
+package com.dpis.module.runtime.font;
+
+import com.dpis.module.HyperOsFlutterFontBridge;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainDecision;
+
+import com.dpis.module.FontApplyMode;
+
+import com.dpis.module.DpisConfigStore;
 
 import com.dpis.module.runtime.RootCommandRunner;
 
 import java.util.LinkedHashSet;
 
-final class HyperOsNativeFontPropertySyncer {
+public final class HyperOsNativeFontPropertySyncer {
     private HyperOsNativeFontPropertySyncer() {
     }
 
@@ -116,15 +124,15 @@ final class HyperOsNativeFontPropertySyncer {
         command.append("setprop ").append(shellQuote(property)).append(" 0");
     }
 
-    static String buildPublishCommandForTest(String fontProperty, int fontScalePercent) {
+    public static String buildPublishCommandForTest(String fontProperty, int fontScalePercent) {
         return buildPublishCommand(fontProperty, fontScalePercent);
     }
 
-    static boolean shouldPreserveCompatForceFontForTest(DpisConfigStore store, String packageName) {
+    public static boolean shouldPreserveCompatForceFontForTest(DpisConfigStore store, String packageName) {
         return shouldPreserveCompatForceFont(store, packageName);
     }
 
-    static boolean shouldPublishForceFontOnRecoveryForTest(DpisConfigStore store,
+    public static boolean shouldPublishForceFontOnRecoveryForTest(DpisConfigStore store,
                                                            String packageName,
                                                            String fontMode) {
         return shouldPublishForceFontOnRecovery(store, packageName, fontMode);
@@ -163,7 +171,7 @@ final class HyperOsNativeFontPropertySyncer {
     private static void runRootCommand(String command) {
         RootCommandRunner.run(command);
     }
-    static String shellQuoteForTest(String value) {
+    public static String shellQuoteForTest(String value) {
         return shellQuote(value);
     }
 

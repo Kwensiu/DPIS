@@ -1,6 +1,6 @@
 package com.dpis.module.hooks;
 
-import com.dpis.module.FontHookArbitration;
+import com.dpis.module.fonts.hookdomain.FontHookArbitration;
 import com.dpis.module.FontMode;
 import com.dpis.module.PlanReason;
 import com.dpis.module.ResourcesReadHookPolicy;

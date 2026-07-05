@@ -1,4 +1,14 @@
-package com.dpis.module;
+package com.dpis.module.runtime.font;
+
+import com.dpis.module.BuildConfig;
+
+import com.dpis.module.ModulePackagePlan;
+
+import com.dpis.module.FeedbackDiagnosticRuntimeEvents;
+
+import com.dpis.module.DpisLog;
+
+import com.dpis.module.DpisConfigStore;
 
 import com.dpis.module.fonts.FontLibraryEntry;
 import com.dpis.module.fonts.FontLibraryStore;
@@ -26,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class TypefaceOverrideHookInstaller {
+public final class TypefaceOverrideHookInstaller {
     private static final String BRIDGE_LOG_PREFIX = "DPIS ";
     private static final String LOG_PREFIX = "DPIS_FONT_STYLE ";
     private static final String HOOK_ID_TEXTVIEW_SET_TYPEFACE =
@@ -49,11 +59,11 @@ final class TypefaceOverrideHookInstaller {
     private TypefaceOverrideHookInstaller() {
     }
 
-    static void resetForHotReload() {
+    public static void resetForHotReload() {
         installedPid = -1;
     }
 
-    static void install(XposedInterface xposed,
+    public static void install(XposedInterface xposed,
                         String packageName,
                         String targetTypefaceId,
                         DpisConfigStore store,
@@ -250,19 +260,19 @@ final class TypefaceOverrideHookInstaller {
         }
     }
 
-    static int resolveStyleForTest(Integer originalStyle, Integer explicitStyle) {
+    public static int resolveStyleForTest(Integer originalStyle, Integer explicitStyle) {
         return resolveStyle(originalStyle, explicitStyle);
     }
 
-    static int resolveReplacementStyleForTest(Integer originalStyle, Integer explicitStyle) {
+    public static int resolveReplacementStyleForTest(Integer originalStyle, Integer explicitStyle) {
         return resolveStyle(originalStyle, explicitStyle);
     }
 
-    static int parseTtcIndexFromIdForTest(String typefaceId) {
+    public static int parseTtcIndexFromIdForTest(String typefaceId) {
         return parseTtcIndexFromId(typefaceId);
     }
 
-    static Typeface resolveReplacementForTest(Typeface baseTypeface, Typeface original) {
+    public static Typeface resolveReplacementForTest(Typeface baseTypeface, Typeface original) {
         return resolveReplacement(baseTypeface, original, null);
     }
 

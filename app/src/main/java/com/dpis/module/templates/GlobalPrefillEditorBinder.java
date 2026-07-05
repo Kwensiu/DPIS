@@ -1,5 +1,11 @@
 package com.dpis.module.templates;
 
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainDialog;
+
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetType;
 
