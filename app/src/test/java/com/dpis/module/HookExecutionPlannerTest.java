@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.hooks.FontMode;
+
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
 import com.dpis.module.runtime.font.DebugFontOverride;
 

@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.hooks;
 
 public final class PlanReason {
     public final String primary;

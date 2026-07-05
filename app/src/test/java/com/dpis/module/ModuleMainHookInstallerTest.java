@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.appprocess.WebApkCarrierResolver;
+
 import com.dpis.module.runtime.systemserver.SystemServerDisplayEnvironmentInstaller;
 import com.dpis.module.runtime.systemserver.SystemServerHookCatalog;
 import com.dpis.module.runtime.systemserver.SystemServerMutationPolicy;

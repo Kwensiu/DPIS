@@ -135,7 +135,7 @@ the real dependency graph is inspected.
 | `hooks` | `HookDomainOverride`, `HookDomainOverrideStore`, `HookDomainPlan`, `HookExecutionPlan`, `HookExecutionPlanner`, `HookRuntimePolicy` | Hook-domain override storage and hook execution planning. Existing plan/value fields remain public because root and flavor installers already treat them as direct plan protocols. |
 | `viewport` | `Viewport*`, `DensityOverride`, `VirtualDisplay*`, `PerAppDisplayEnvironment`, `TargetViewportWidthResolver`, `AppProcessViewportStateSeeder` | Viewport target model, property bridge, runtime marker state, and shared viewport geometry helpers. Route installers still live in root/flavor entry packages; they consume viewport protocols without changing route behavior. |
 | `runtime.appprocess` | `ChromiumViewportProbeHookInstaller` | Chromium/WebAPK viewport probe installer moved with app-process runtime ownership. The public install/reset methods are the existing hook entry protocol used by `ModuleMain` and hot-reload reset. |
-| `runtime.appprocess` | `AppProcessHookInstaller`, `AppProcessHotReloadResetter`, `WebApkRuntimeOwnerBridge`, `Resources*HookInstaller`, `DisplayHookInstaller`, `Window*HookInstaller`, `ViewRootProbeHookInstaller` | Shared app-process route orchestration and Resources/Display/Window/WebAPK hook helpers moved under the app-process runtime owner. Flavor entry points still call the same install/reset/apply protocols; route behavior is unchanged. |
+| `runtime.appprocess` | `AppProcessHookInstaller`, `AppProcessHotReloadResetter`, `WebApkCarrierResolver`, `WebApkRuntimeOwnerBridge`, `Resources*HookInstaller`, `DisplayHookInstaller`, `Window*HookInstaller`, `ViewRootProbeHookInstaller` | Shared app-process route orchestration and Resources/Display/Window/WebAPK hook helpers moved under the app-process runtime owner. Flavor entry points still call the same install/reset/apply protocols; route behavior is unchanged. |
 
 ## Deferred Candidates
 
@@ -168,7 +168,7 @@ not as progress toward package cleanup.
 | `SettingsWorkspaceBinder`, `SystemServerSettingsPageController`, `SystemHooksToggleController` | Settings UI slice is coherent, but the current page controller still owns `DpisConfigStore`, service/scope gateways, haptics, cache cleanup, and package-private settings helpers. Move as a settings page wave, not as isolated binders. |
 | `SafeCacheCleaner` | Cache cleanup is still settings-page owned. It now calls the public font-debug cache/stat cleanup seam in `fonts`, but it also clears update and release-note caches, so moving it would mix unrelated settings cleanup responsibilities. |
 | `PerAppDisplayConfigSource` | This is still the runtime config-source seam for system-server and legacy fallbacks. Move only when config-source ownership is isolated from root store construction. |
-| `FontMode`, `PlanReason` | Hook-planner support values are now public because the planner moved to `hooks`, but they still stay root-owned until the broader font-mode/runtime decision model moves together. |
+| `FontMode`, `PlanReason` | Hook-planner support values now live with `HookExecutionPlan` and `HookExecutionPlanner` under `hooks`. |
 | Public Android components such as `MainActivity`, `QuickConfigActivity`, activities, services, providers, and receivers | Package moves would change manifest component class names and may affect shortcuts, QS tiles, or external component references. Handle in a component-routing migration, not this package cleanup. |
 
 ## Naming Cleanup

@@ -26,6 +26,7 @@ import com.dpis.module.viewport.ViewportTargetSpec;
 import com.dpis.module.hooks.HookExecutionPlan;
 import com.dpis.module.hooks.HookExecutionPlanner;
 import com.dpis.module.hooks.HookRuntimePolicy;
+import com.dpis.module.hooks.FontMode;
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
 

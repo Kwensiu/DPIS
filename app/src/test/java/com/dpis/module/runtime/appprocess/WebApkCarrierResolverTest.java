@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.runtime.appprocess;
 
 import org.junit.Test;
 

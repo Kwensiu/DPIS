@@ -1,6 +1,6 @@
 package com.dpis.module.viewport;
 
-import com.dpis.module.WebApkCarrierResolver;
+import com.dpis.module.runtime.appprocess.WebApkCarrierResolver;
 
 import com.dpis.module.DpisConfigStore;
 

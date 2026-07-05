@@ -1,5 +1,7 @@
 package com.dpis.module.runtime.systemserver;
 
+import com.dpis.module.runtime.appprocess.WebApkCarrierResolver;
+
 import com.dpis.module.*;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;

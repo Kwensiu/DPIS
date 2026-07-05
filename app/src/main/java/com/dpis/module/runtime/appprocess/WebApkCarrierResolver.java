@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.runtime.appprocess;
 
 import java.util.LinkedHashSet;
 import java.util.Set;

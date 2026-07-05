@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.hooks;
 
 public enum FontMode {
     OFF,
