@@ -1,6 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.diagnostics;
 
-import com.dpis.module.diagnostics.DpisLogEntry;
+import com.dpis.module.DpisLog;
 
 import android.app.Application;
 import android.content.Context;
@@ -18,7 +18,7 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class DpisAppLogStore implements DpisLog.AppLogSink {
+public final class DpisAppLogStore {
     private static final int DEFAULT_MAX_STORED_LINES = 5_000;
     private static final long DEFAULT_MAX_STORED_BYTES = 1024L * 1024L;
     private static final String LOG_DIRECTORY_NAME = "dpis_logs";
@@ -51,7 +51,6 @@ public final class DpisAppLogStore implements DpisLog.AppLogSink {
         this.maxStoredBytes = Math.max(128L, maxStoredBytes);
     }
 
-    @Override
     public void record(String level, String message) {
         if (message == null || message.isBlank()) {
             return;

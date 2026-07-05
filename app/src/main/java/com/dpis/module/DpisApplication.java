@@ -1,6 +1,7 @@
 package com.dpis.module;
 
 import com.dpis.module.root.RootAccessProbe;
+import com.dpis.module.diagnostics.DpisAppLogStore;
 import com.dpis.module.fonts.HyperOsNativeProxyAssetExporter;
 import com.dpis.module.runtime.RuntimePropertyRecoveryCoordinator;
 import com.dpis.module.updates.UpdatePackageInstaller;
@@ -36,7 +37,8 @@ public final class DpisApplication extends Application implements XposedServiceH
     public void onCreate() {
         super.onCreate();
         instance = this;
-        DpisLog.setAppLogSink(new DpisAppLogStore(this));
+        DpisAppLogStore appLogStore = new DpisAppLogStore(this);
+        DpisLog.setAppLogSink(appLogStore::record);
         DpisLog.i("app process started");
         RootAccessProbe.warmUpAsync();
         DynamicColors.applyToActivitiesIfAvailable(this);

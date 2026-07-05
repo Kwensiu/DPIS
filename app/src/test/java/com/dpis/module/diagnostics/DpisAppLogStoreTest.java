@@ -1,6 +1,4 @@
-package com.dpis.module;
-
-import com.dpis.module.diagnostics.DpisLogEntry;
+package com.dpis.module.diagnostics;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

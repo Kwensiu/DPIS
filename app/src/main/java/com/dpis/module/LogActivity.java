@@ -1,6 +1,7 @@
 package com.dpis.module;
 
 import com.dpis.module.diagnostics.DpisLogEntry;
+import com.dpis.module.diagnostics.DpisAppLogStore;
 import com.dpis.module.diagnostics.DpisLogParser;
 
 import com.dpis.module.diagnostics.LogReadResult;
