@@ -1,5 +1,22 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.DensityOverride;
+import com.dpis.module.viewport.VirtualDisplayPlan;
+
+import com.dpis.module.viewport.VirtualDisplayOverride;
+import com.dpis.module.viewport.VirtualDisplayState;
+
+import com.dpis.module.viewport.TargetViewportWidthResolver;
+import com.dpis.module.viewport.ViewportRuntimeMarkerProbe;
+import com.dpis.module.viewport.ViewportRuntimeRecord;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportConfigurationScope;
+import com.dpis.module.viewport.ViewportModePolicy;
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.ViewportResolvedTarget;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
+import com.dpis.module.viewport.ViewportTargetResolution;
+
 import com.dpis.module.hooks.HookRuntimePolicy;
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;

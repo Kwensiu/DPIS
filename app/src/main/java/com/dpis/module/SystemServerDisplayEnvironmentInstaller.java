@@ -1,5 +1,14 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.PerAppDisplayEnvironment;
+
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;
+import com.dpis.module.viewport.ViewportRuntimeMarkerProbe;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportConfigurationScope;
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
+
 import com.dpis.module.hooks.HookRuntimePolicy;
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
 

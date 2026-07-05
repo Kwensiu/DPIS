@@ -1,5 +1,10 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.DensityOverride;
+
+import com.dpis.module.viewport.VirtualDisplayOverride;
+import com.dpis.module.viewport.VirtualDisplayState;
+
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Paint;

@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
 
 public final class ViewportApplyMode {
     public static final String OFF = "off";

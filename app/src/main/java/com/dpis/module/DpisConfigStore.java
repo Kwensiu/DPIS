@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.DpiConfig;
+
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+import com.dpis.module.viewport.ViewportTargetType;
+
 import com.dpis.module.fonts.FontDebugStatsStore;
 
 import com.dpis.module.templates.TemplateConfigValueAdapters;
@@ -259,7 +265,7 @@ public final class DpisConfigStore {
         return false;
     }
 
-    Integer getTargetViewportWidthDp(String packageName) {
+    public Integer getTargetViewportWidthDp(String packageName) {
         String key = keyForViewportWidth(packageName);
         String packageKey = keyForPackageViewportWidth(packageName);
         if (!containsPackageValue(key, packageKey)) {
@@ -298,7 +304,7 @@ public final class DpisConfigStore {
                 ViewportTargetType.OFF));
     }
 
-    ViewportTargetSpec getTargetViewportSpec(String packageName) {
+    public ViewportTargetSpec getTargetViewportSpec(String packageName) {
         String typeKey = keyForViewportTargetType(packageName);
         String packageTypeKey = keyForPackageViewportTargetType(packageName);
         String type = containsPackageValue(typeKey, packageTypeKey)
@@ -323,7 +329,7 @@ public final class DpisConfigStore {
                 : ViewportTargetSpec.off();
     }
 
-    String getTargetViewportApplyMode(String packageName) {
+    public String getTargetViewportApplyMode(String packageName) {
         String key = keyForViewportMode(packageName);
         String packageKey = keyForPackageViewportMode(packageName);
         if (containsPackageValue(key, packageKey)) {

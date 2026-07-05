@@ -1,10 +1,12 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
 
-final class VirtualDisplayPlan {
+import com.dpis.module.viewport.VirtualDisplayOverride;
+
+public final class VirtualDisplayPlan {
     private VirtualDisplayPlan() {
     }
 
-    static VirtualDisplayOverride.Result derivePublishableResult(int sourceWidthDp,
+    public static VirtualDisplayOverride.Result derivePublishableResult(int sourceWidthDp,
                                                                  int sourceHeightDp,
                                                                  int sourceSmallestWidthDp,
                                                                  int sourceDensityDpi,
@@ -32,7 +34,7 @@ final class VirtualDisplayPlan {
                 targetSmallestWidthDp);
     }
 
-    static VirtualDisplayOverride.Result deriveAbsoluteResultFromPhysicalPixels(
+    public static VirtualDisplayOverride.Result deriveAbsoluteResultFromPhysicalPixels(
             int sourceWidthDp,
             int sourceHeightDp,
             int sourceSmallestWidthDp,

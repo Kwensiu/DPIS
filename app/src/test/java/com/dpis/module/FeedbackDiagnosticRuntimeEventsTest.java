@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;

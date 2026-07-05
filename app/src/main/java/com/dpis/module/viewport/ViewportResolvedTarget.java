@@ -1,17 +1,17 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
 
 import android.content.res.Configuration;
 
-final class ViewportResolvedTarget {
+public final class ViewportResolvedTarget {
     private ViewportResolvedTarget() {
     }
 
-    static ViewportOverride.Result viewportResult(ViewportTargetResolution resolution,
+    public static ViewportOverride.Result viewportResult(ViewportTargetResolution resolution,
                                                   boolean windowScoped) {
         return viewportResult(resolution, windowScoped, null);
     }
 
-    static ViewportOverride.Result viewportResult(ViewportTargetResolution resolution,
+    public static ViewportOverride.Result viewportResult(ViewportTargetResolution resolution,
                                                   boolean windowScoped,
                                                   Configuration sourceConfig) {
         if (windowScoped
@@ -45,7 +45,7 @@ final class ViewportResolvedTarget {
         return sourceCompare == 0 || resultCompare == 0 || sourceCompare == resultCompare;
     }
 
-    static ViewportOverride.Result viewportResult(VirtualDisplayOverride.Result result) {
+    public static ViewportOverride.Result viewportResult(VirtualDisplayOverride.Result result) {
         if (result == null
                 || result.widthDp <= 0
                 || result.heightDp <= 0
@@ -60,7 +60,7 @@ final class ViewportResolvedTarget {
                 result.densityDpi);
     }
 
-    static VirtualDisplayOverride.Result virtualDisplayResult(ViewportTargetResolution resolution,
+    public static VirtualDisplayOverride.Result virtualDisplayResult(ViewportTargetResolution resolution,
                                                               Integer targetViewportWidth) {
         if (resolution != null
                 && resolution.record != null
@@ -70,7 +70,7 @@ final class ViewportResolvedTarget {
         return VirtualDisplayState.getForTarget(targetViewportWidth);
     }
 
-    static int stableDensityDpi(ViewportTargetResolution resolution,
+    public static int stableDensityDpi(ViewportTargetResolution resolution,
                                 VirtualDisplayOverride.Result stableTarget) {
         if (stableTarget != null && stableTarget.densityDpi > 0) {
             return stableTarget.densityDpi;
@@ -84,7 +84,7 @@ final class ViewportResolvedTarget {
         return 0;
     }
 
-    static ViewportOverride.Result appProcessWindowMetricsResult(
+    public static ViewportOverride.Result appProcessWindowMetricsResult(
             Configuration config,
             ViewportTargetResolution resolution,
             Integer targetViewportWidth,

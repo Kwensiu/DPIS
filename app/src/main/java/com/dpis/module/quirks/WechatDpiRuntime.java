@@ -1,6 +1,6 @@
 package com.dpis.module.quirks;
 
-import com.dpis.module.DensityOverride;
+import com.dpis.module.viewport.DensityOverride;
 
 import android.util.DisplayMetrics;
 

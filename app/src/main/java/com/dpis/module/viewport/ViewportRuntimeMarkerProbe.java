@@ -1,4 +1,13 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
+
+import com.dpis.module.FeedbackDiagnosticRuntimeHotPathEvents;
+
+import com.dpis.module.BuildConfig;
+import com.dpis.module.DpisLog;
+
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
+import com.dpis.module.viewport.ViewportTargetSpec;
 
 import android.content.res.Configuration;
 
@@ -7,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.dpis.module.runtime.RuntimeClock;
 
-final class ViewportRuntimeMarkerProbe {
+public final class ViewportRuntimeMarkerProbe {
     private static final long LOG_MIN_INTERVAL_MILLIS = 2_000L;
     private static final int MAX_LOG_KEYS = 128;
     private static final Map<String, Long> LAST_LOG_MILLIS = new ConcurrentHashMap<>();
@@ -15,7 +24,7 @@ final class ViewportRuntimeMarkerProbe {
     private ViewportRuntimeMarkerProbe() {
     }
 
-    static void publishSystemServerProbe(String packageName,
+    public static void publishSystemServerProbe(String packageName,
                                          Configuration sourceConfiguration,
                                          PerAppDisplayEnvironment result,
                                          int targetSmallestWidthDp,
@@ -29,7 +38,7 @@ final class ViewportRuntimeMarkerProbe {
                 entryName);
     }
 
-    static void publishSystemServerProbe(String packageName,
+    public static void publishSystemServerProbe(String packageName,
                                          Configuration sourceConfiguration,
                                          PerAppDisplayEnvironment result,
                                          ViewportTargetSpec targetSpec,
@@ -75,7 +84,7 @@ final class ViewportRuntimeMarkerProbe {
                 + ", property=" + ViewportRuntimeMarkerBridge.propertyNameForPackage(packageName));
     }
 
-    static void observeAppProcessProbe(String packageName,
+    public static void observeAppProcessProbe(String packageName,
                                        int targetSmallestWidthDp,
                                        String sourceTag) {
         observeAppProcessProbe(
@@ -84,7 +93,7 @@ final class ViewportRuntimeMarkerProbe {
                 sourceTag);
     }
 
-    static void observeAppProcessProbe(String packageName,
+    public static void observeAppProcessProbe(String packageName,
                                        ViewportTargetSpec targetSpec,
                                        String sourceTag) {
         if (!BuildConfig.DEBUG || packageName == null) {

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.DpiConfig;
+
 import com.dpis.module.quirks.WechatDpiMethodLocator;
 import com.dpis.module.quirks.WechatDpiRoutes;
 import com.dpis.module.quirks.WechatDpiRuntime;

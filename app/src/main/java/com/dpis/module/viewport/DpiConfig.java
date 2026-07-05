@@ -8,7 +8,7 @@ import java.util.Set;
 
 public final class DpiConfig {
     public static final int SEED_TARGET_VIEWPORT_WIDTH_DP = 360;
-    static final String[] TARGET_PACKAGES = {
+    public static final String[] TARGET_PACKAGES = {
             "bin.mt.plus.canary",
             "com.max.xiaoheihe"
     };

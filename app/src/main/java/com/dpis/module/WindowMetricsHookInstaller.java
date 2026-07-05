@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.VirtualDisplayOverride;
+import com.dpis.module.viewport.VirtualDisplayState;
+
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
 

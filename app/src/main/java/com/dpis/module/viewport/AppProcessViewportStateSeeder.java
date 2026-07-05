@@ -1,14 +1,22 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
+
+import com.dpis.module.DpisLog;
+import com.dpis.module.EffectiveModeResolver;
+
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
+import com.dpis.module.viewport.ViewportTargetSpec;
 
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.util.DisplayMetrics;
 
-final class AppProcessViewportStateSeeder {
+public final class AppProcessViewportStateSeeder {
     private AppProcessViewportStateSeeder() {
     }
 
-    static void seedDisplayBaseline(String packageName,
+    public static void seedDisplayBaseline(String packageName,
                                    ViewportTargetSpec targetSpec,
                                    String requestedMode,
                                    boolean systemHooksEnabled) {
@@ -23,7 +31,7 @@ final class AppProcessViewportStateSeeder {
         }
     }
 
-    static ViewportRuntimeRecord seedDisplayBaseline(String packageName,
+    public static ViewportRuntimeRecord seedDisplayBaseline(String packageName,
                                                     ViewportTargetSpec targetSpec,
                                                     String requestedMode,
                                                     boolean systemHooksEnabled,

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.ViewportApplyMode;
+
 public final class EffectiveModeResolver {
     private EffectiveModeResolver() {
     }

@@ -1,5 +1,7 @@
 package com.dpis.module.runtime;
 
+import com.dpis.module.viewport.DpiConfig;
+
 import com.dpis.module.appconfig.WechatDpiConfig;
 
 import java.lang.reflect.Method;

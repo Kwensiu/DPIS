@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.PerAppDisplayEnvironment;
+
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
+
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.util.Log;

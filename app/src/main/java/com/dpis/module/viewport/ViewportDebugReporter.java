@@ -1,4 +1,9 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
+
+import com.dpis.module.DpisConfigStore;
+
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportOverride;
 
 import com.dpis.module.fonts.FontDebugStatsStore;
 import com.dpis.module.fonts.FontDebugStatsTransport;
@@ -9,13 +14,13 @@ import android.os.Bundle;
 
 import java.lang.reflect.Method;
 
-final class ViewportDebugReporter {
+public final class ViewportDebugReporter {
     private static volatile String lastSummary;
 
     private ViewportDebugReporter() {
     }
 
-    static void report(DpisConfigStore store,
+    public static void report(DpisConfigStore store,
                        String packageName,
                        String viewportMode,
                        int sourceWidthDp,

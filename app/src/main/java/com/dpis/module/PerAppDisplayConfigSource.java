@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.ViewportPropertyBridge;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
 import java.util.Set;
 
 final class PerAppDisplayConfigSource {

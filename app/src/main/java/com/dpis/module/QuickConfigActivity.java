@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.DpiConfig;
+
+import com.dpis.module.viewport.ViewportPropertySyncer;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.hooks.HookDomainOverride;
 import com.dpis.module.hooks.HookDomainOverrideStore;

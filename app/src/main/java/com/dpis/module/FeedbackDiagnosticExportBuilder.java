@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.ViewportTargetSpec;
+
 import com.dpis.module.diagnostics.DpisLogEntry;
 import com.dpis.module.diagnostics.FeedbackDiagnosticLsposedTimelineParser;
 import com.dpis.module.diagnostics.FeedbackDiagnosticSessionWindow;

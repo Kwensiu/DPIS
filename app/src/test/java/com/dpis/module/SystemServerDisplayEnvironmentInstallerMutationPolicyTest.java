@@ -1,5 +1,14 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.PerAppDisplayEnvironment;
+
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;
+import com.dpis.module.viewport.ViewportRuntimeRecord;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
 import com.dpis.module.hooks.HookDomainOverride;
 
 import com.dpis.module.runtime.DebugPackageOverride;

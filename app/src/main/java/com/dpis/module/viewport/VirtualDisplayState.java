@@ -1,11 +1,17 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
+
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;
+import com.dpis.module.viewport.ViewportRuntimeRecord;
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
+import com.dpis.module.viewport.ViewportTargetSpec;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.dpis.module.runtime.RuntimeClock;
 
-final class VirtualDisplayState {
+public final class VirtualDisplayState {
     private static final int MAX_RECORDS = 24;
     private static final Map<String, ViewportRuntimeRecord> RECORDS =
             new LinkedHashMap<>(MAX_RECORDS, 0.75f, true) {
@@ -19,7 +25,7 @@ final class VirtualDisplayState {
     private VirtualDisplayState() {
     }
 
-    static void set(VirtualDisplayOverride.Result result) {
+    public static void set(VirtualDisplayOverride.Result result) {
         current = result;
         if (result == null) {
             synchronized (RECORDS) {
@@ -49,7 +55,7 @@ final class VirtualDisplayState {
                 signatureForSmallestWidth(result.smallestWidthDp)), record);
     }
 
-    static ViewportRuntimeRecord findBySignature(String packageName,
+    public static ViewportRuntimeRecord findBySignature(String packageName,
                                                  ViewportTargetSpec targetSpec,
                                                  String signature) {
         if (targetSpec == null || signature == null) {
@@ -66,7 +72,7 @@ final class VirtualDisplayState {
         }
     }
 
-    static boolean setUnlessDerivedFromTargetConfig(VirtualDisplayOverride.Result result,
+    public static boolean setUnlessDerivedFromTargetConfig(VirtualDisplayOverride.Result result,
                                                     int sourceSmallestWidthDp,
                                                     Integer targetWidthDp) {
         if (result == null) {
@@ -84,7 +90,7 @@ final class VirtualDisplayState {
         return true;
     }
 
-    static ViewportRuntimeRecord publish(String packageName,
+    public static ViewportRuntimeRecord publish(String packageName,
                                          ViewportTargetSpec targetSpec,
                                          ViewportSourceSnapshot source,
                                          ViewportOverride.Result viewportResult,
@@ -125,7 +131,7 @@ final class VirtualDisplayState {
         return record;
     }
 
-    static ViewportRuntimeRecord importMarker(String packageName,
+    public static ViewportRuntimeRecord importMarker(String packageName,
                                               ViewportTargetSpec targetSpec,
                                               ViewportRuntimeMarkerBridge.ParseResult parseResult) {
         if (packageName == null || targetSpec == null || parseResult == null || !parseResult.hit) {
@@ -189,7 +195,7 @@ final class VirtualDisplayState {
                 current.heightPx);
     }
 
-    static ViewportRuntimeRecord findForSource(String packageName,
+    public static ViewportRuntimeRecord findForSource(String packageName,
                                                ViewportTargetSpec targetSpec,
                                                ViewportSourceSnapshot source) {
         if (source == null) {
@@ -198,7 +204,7 @@ final class VirtualDisplayState {
         return findBySignature(packageName, targetSpec, source.sourceSignature());
     }
 
-    static ViewportRuntimeRecord findDisplayRecordForTarget(String packageName,
+    public static ViewportRuntimeRecord findDisplayRecordForTarget(String packageName,
                                                             ViewportTargetSpec targetSpec) {
         if (packageName == null || targetSpec == null) {
             return null;
@@ -213,7 +219,7 @@ final class VirtualDisplayState {
         return null;
     }
 
-    static VirtualDisplayOverride.Result getStableTargetResult(int sourceSmallestWidthDp,
+    public static VirtualDisplayOverride.Result getStableTargetResult(int sourceSmallestWidthDp,
                                                                Integer targetWidthDp) {
         if (current == null
                 || targetWidthDp == null
@@ -225,7 +231,7 @@ final class VirtualDisplayState {
         return current;
     }
 
-    static VirtualDisplayOverride.Result getForTarget(Integer targetWidthDp) {
+    public static VirtualDisplayOverride.Result getForTarget(Integer targetWidthDp) {
         if (current == null
                 || targetWidthDp == null
                 || targetWidthDp <= 0
@@ -235,7 +241,7 @@ final class VirtualDisplayState {
         return current;
     }
 
-    static VirtualDisplayOverride.Result get() {
+    public static VirtualDisplayOverride.Result get() {
         return current;
     }
 
@@ -243,7 +249,7 @@ final class VirtualDisplayState {
         return signatureForSmallestWidth(result != null ? result.smallestWidthDp : 0);
     }
 
-    static String signatureForSmallestWidth(int smallestWidthDp) {
+    public static String signatureForSmallestWidth(int smallestWidthDp) {
         return "sw:" + Math.max(0, smallestWidthDp);
     }
 
@@ -251,7 +257,7 @@ final class VirtualDisplayState {
         return packageName + "|" + targetFingerprint + "|" + signature;
     }
 
-    static int recordCountForTest() {
+    public static int recordCountForTest() {
         synchronized (RECORDS) {
             return RECORDS.size();
         }

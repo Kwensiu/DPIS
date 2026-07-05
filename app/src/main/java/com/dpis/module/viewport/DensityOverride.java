@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
 
 public final class DensityOverride {
     private DensityOverride() {

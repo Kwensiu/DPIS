@@ -1,9 +1,12 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
+
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
 
 import java.lang.reflect.Method;
 import java.util.Locale;
 
-final class ViewportPropertyBridge {
+public final class ViewportPropertyBridge {
     private static final String PROPERTY_PREFIX = "debug.dpis.vp.";
     private static final String TARGET_TYPE_PROPERTY_PREFIX = "debug.dpis.vptype.";
     private static final String SCALE_PROPERTY_PREFIX = "debug.dpis.vpscale.";
@@ -20,47 +23,47 @@ final class ViewportPropertyBridge {
     private ViewportPropertyBridge() {
     }
 
-    static String propertyNameForPackage(String packageName) {
+    public static String propertyNameForPackage(String packageName) {
         return PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static String compatConfigPropertyNameForPackage(String packageName) {
+    public static String compatConfigPropertyNameForPackage(String packageName) {
         return COMPAT_CONFIG_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static String targetTypePropertyNameForPackage(String packageName) {
+    public static String targetTypePropertyNameForPackage(String packageName) {
         return TARGET_TYPE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static String scalePropertyNameForPackage(String packageName) {
+    public static String scalePropertyNameForPackage(String packageName) {
         return SCALE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static String compatModePropertyNameForPackage(String packageName) {
+    public static String compatModePropertyNameForPackage(String packageName) {
         return COMPAT_MODE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static String persistentPropertyNameForPackage(String packageName) {
+    public static String persistentPropertyNameForPackage(String packageName) {
         return PERSIST_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static String persistentCompatConfigPropertyNameForPackage(String packageName) {
+    public static String persistentCompatConfigPropertyNameForPackage(String packageName) {
         return PERSIST_COMPAT_CONFIG_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static String persistentTargetTypePropertyNameForPackage(String packageName) {
+    public static String persistentTargetTypePropertyNameForPackage(String packageName) {
         return PERSIST_TARGET_TYPE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static String persistentScalePropertyNameForPackage(String packageName) {
+    public static String persistentScalePropertyNameForPackage(String packageName) {
         return PERSIST_SCALE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static String persistentCompatModePropertyNameForPackage(String packageName) {
+    public static String persistentCompatModePropertyNameForPackage(String packageName) {
         return PERSIST_COMPAT_MODE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static Integer readTargetWidthDp(String packageName) {
+    public static Integer readTargetWidthDp(String packageName) {
         if (packageName == null || packageName.isEmpty()) {
             return null;
         }
@@ -68,7 +71,7 @@ final class ViewportPropertyBridge {
                 persistentPropertyNameForPackage(packageName));
     }
 
-    static Integer readCompatConfigWidthDp(String packageName) {
+    public static Integer readCompatConfigWidthDp(String packageName) {
         if (packageName == null || packageName.isEmpty()) {
             return null;
         }
@@ -76,7 +79,7 @@ final class ViewportPropertyBridge {
                 persistentCompatConfigPropertyNameForPackage(packageName));
     }
 
-    static ViewportTargetSpec readTargetSpec(String packageName) {
+    public static ViewportTargetSpec readTargetSpec(String packageName) {
         if (packageName == null || packageName.isEmpty()) {
             return ViewportTargetSpec.off();
         }
@@ -93,7 +96,7 @@ final class ViewportPropertyBridge {
         return decoded.targetSpec;
     }
 
-    static String readCompatMode(String packageName) {
+    public static String readCompatMode(String packageName) {
         if (packageName == null || packageName.isEmpty()) {
             return ViewportApplyMode.OFF;
         }
@@ -102,7 +105,7 @@ final class ViewportPropertyBridge {
                 persistentCompatModePropertyNameForPackage(packageName)));
     }
 
-    static Integer parseOverrideValueForTest(String value) {
+    public static Integer parseOverrideValueForTest(String value) {
         return parseOverrideValue(value);
     }
 

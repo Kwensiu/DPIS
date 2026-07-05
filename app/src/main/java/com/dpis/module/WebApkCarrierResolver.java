@@ -3,7 +3,7 @@ package com.dpis.module;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-final class WebApkCarrierResolver {
+public final class WebApkCarrierResolver {
     static final String WEBAPK_PACKAGE_PREFIX = "org.chromium.webapk.";
     static final String WEBAPK_PACKAGE_EXTRA =
             "org.chromium.chrome.browser.webapk_package_name";
@@ -12,7 +12,7 @@ final class WebApkCarrierResolver {
     private WebApkCarrierResolver() {
     }
 
-    static boolean isWebApkOwnerPackage(String packageName) {
+    public static boolean isWebApkOwnerPackage(String packageName) {
         return isLikelyPackageName(packageName)
                 && packageName.startsWith(WEBAPK_PACKAGE_PREFIX);
     }

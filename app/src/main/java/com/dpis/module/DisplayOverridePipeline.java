@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.VirtualDisplayPlan;
+
+import com.dpis.module.viewport.VirtualDisplayOverride;
+
 final class DisplayOverridePipeline {
     private DisplayOverridePipeline() {
     }

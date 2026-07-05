@@ -1,5 +1,19 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.DensityOverride;
+
+import com.dpis.module.viewport.VirtualDisplayOverride;
+import com.dpis.module.viewport.VirtualDisplayState;
+
+import com.dpis.module.viewport.TargetViewportWidthResolver;
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;
+import com.dpis.module.viewport.ViewportRuntimeRecord;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportConfigurationScope;
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
 import com.dpis.module.hooks.HookRuntimePolicy;
 
 import android.content.res.Configuration;

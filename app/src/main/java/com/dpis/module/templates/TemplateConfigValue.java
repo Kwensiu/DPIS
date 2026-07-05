@@ -1,5 +1,8 @@
 package com.dpis.module.templates;
 
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetType;
+
 import java.util.Objects;
 
 public final class TemplateConfigValue {

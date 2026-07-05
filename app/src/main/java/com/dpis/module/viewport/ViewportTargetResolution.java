@@ -1,14 +1,16 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
 
-final class ViewportTargetResolution {
-    static final String REASON_APP_PROCESS_BORROW_TARGET = "app-process-borrow-target";
-    static final String REASON_APP_PROCESS_RELATIVE_SCALE = "app-process-relative-scale";
+import com.dpis.module.viewport.ViewportRuntimeRecord;
 
-    final ViewportTargetSpec spec;
-    final int effectiveSmallestWidthDp;
-    final ViewportSourceSnapshot source;
-    final ViewportRuntimeRecord record;
-    final String reason;
+public final class ViewportTargetResolution {
+    public static final String REASON_APP_PROCESS_BORROW_TARGET = "app-process-borrow-target";
+    public static final String REASON_APP_PROCESS_RELATIVE_SCALE = "app-process-relative-scale";
+
+    public final ViewportTargetSpec spec;
+    public final int effectiveSmallestWidthDp;
+    public final ViewportSourceSnapshot source;
+    public final ViewportRuntimeRecord record;
+    public final String reason;
 
     private ViewportTargetResolution(ViewportTargetSpec spec,
                                      int effectiveSmallestWidthDp,
@@ -22,7 +24,7 @@ final class ViewportTargetResolution {
         this.reason = reason;
     }
 
-    static ViewportTargetResolution resolved(ViewportTargetSpec spec,
+    public static ViewportTargetResolution resolved(ViewportTargetSpec spec,
                                              int effectiveSmallestWidthDp,
                                              ViewportSourceSnapshot source,
                                              String reason) {
@@ -30,7 +32,7 @@ final class ViewportTargetResolution {
                 spec, Math.max(1, effectiveSmallestWidthDp), source, null, reason);
     }
 
-    static ViewportTargetResolution fromRecord(ViewportRuntimeRecord record, String reason) {
+    public static ViewportTargetResolution fromRecord(ViewportRuntimeRecord record, String reason) {
         if (record == null) {
             return none(reason);
         }
@@ -42,25 +44,25 @@ final class ViewportTargetResolution {
                 reason);
     }
 
-    static ViewportTargetResolution fromAppProcessBorrowRecord(ViewportRuntimeRecord record) {
+    public static ViewportTargetResolution fromAppProcessBorrowRecord(ViewportRuntimeRecord record) {
         return fromRecord(record, REASON_APP_PROCESS_BORROW_TARGET);
     }
 
-    static ViewportTargetResolution none(String reason) {
+    public static ViewportTargetResolution none(String reason) {
         return new ViewportTargetResolution(ViewportTargetSpec.off(), 0, null, null, reason);
     }
 
-    boolean hasTarget() {
+    public boolean hasTarget() {
         return effectiveSmallestWidthDp > 0 && spec.isEnabled();
     }
 
-    boolean isAppProcessBorrowTarget() {
+    public boolean isAppProcessBorrowTarget() {
         return spec.isRelativeScale()
                 && (REASON_APP_PROCESS_BORROW_TARGET.equals(reason)
                 || REASON_APP_PROCESS_RELATIVE_SCALE.equals(reason));
     }
 
-    boolean isAppProcessDisplayBorrowTarget() {
+    public boolean isAppProcessDisplayBorrowTarget() {
         return spec.isRelativeScale()
                 && REASON_APP_PROCESS_BORROW_TARGET.equals(reason);
     }

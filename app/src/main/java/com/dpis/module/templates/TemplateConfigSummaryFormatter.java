@@ -1,5 +1,8 @@
 package com.dpis.module.templates;
 
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetType;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

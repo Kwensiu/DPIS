@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
 import android.content.res.Resources;
 import android.text.SpannableString;
 import android.text.Spanned;

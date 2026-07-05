@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime.appprocess;
+
+import com.dpis.module.DpisLog;
 
 import android.content.Context;
 import android.content.res.Configuration;
@@ -13,7 +15,7 @@ import com.dpis.module.runtime.ProcessScopedInstallGate;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class ChromiumViewportProbeHookInstaller {
+public final class ChromiumViewportProbeHookInstaller {
     private static final int MAX_LOGS = 12;
     private static final AtomicInteger LOG_COUNT = new AtomicInteger();
     private static volatile int installedPid = -1;
@@ -21,12 +23,12 @@ final class ChromiumViewportProbeHookInstaller {
     private ChromiumViewportProbeHookInstaller() {
     }
 
-    static void resetForHotReload() {
+    public static void resetForHotReload() {
         installedPid = -1;
         LOG_COUNT.set(0);
     }
 
-    static void install(XposedInterface xposed, ClassLoader classLoader)
+    public static void install(XposedInterface xposed, ClassLoader classLoader)
             throws ReflectiveOperationException {
         if (xposed == null || classLoader == null
                 || ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {

@@ -1,4 +1,7 @@
 package com.dpis.module;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
 import com.dpis.module.templates.TemplateConfigValueAdapters;
 
 import com.dpis.module.templates.GlobalPrefillStore;

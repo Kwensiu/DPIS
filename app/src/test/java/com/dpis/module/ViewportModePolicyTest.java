@@ -1,5 +1,10 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportModePolicy;
+import com.dpis.module.viewport.ViewportTargetResolution;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

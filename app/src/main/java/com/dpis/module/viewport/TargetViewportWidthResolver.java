@@ -1,8 +1,16 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
+
+import com.dpis.module.DpisConfigStore;
+import com.dpis.module.EffectiveModeResolver;
+
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
+import com.dpis.module.viewport.ViewportTargetResolution;
+import com.dpis.module.viewport.ViewportTargetSpec;
 
 import com.dpis.module.runtime.RuntimeClock;
 
-final class TargetViewportWidthResolver {
+public final class TargetViewportWidthResolver {
 
     // --- single-entry TTL memoize (stage 2 perf optimization, issue #54 item 6) ---
     // Resources.getConfiguration() / getDisplayMetrics() are called hundreds of
@@ -20,7 +28,7 @@ final class TargetViewportWidthResolver {
     private TargetViewportWidthResolver() {
     }
 
-    static Integer resolve(DpisConfigStore store, String packageName) {
+    public static Integer resolve(DpisConfigStore store, String packageName) {
         if (store == null || packageName == null || packageName.isEmpty()) {
             return null;
         }
@@ -28,11 +36,11 @@ final class TargetViewportWidthResolver {
         return resolve(store, packageName, runtimeOverride);
     }
 
-    static Integer resolveForTest(DpisConfigStore store, String packageName, Integer runtimeOverride) {
+    public static Integer resolveForTest(DpisConfigStore store, String packageName, Integer runtimeOverride) {
         return resolve(store, packageName, runtimeOverride);
     }
 
-    static ViewportTargetResolution resolve(DpisConfigStore store,
+    public static ViewportTargetResolution resolve(DpisConfigStore store,
                                             String packageName,
                                             ViewportSourceSnapshot source) {
         if (store == null || packageName == null || packageName.isEmpty()) {
@@ -227,7 +235,7 @@ final class TargetViewportWidthResolver {
         return marker != null && !marker.hit && "stale".equals(marker.reason);
     }
 
-    static Integer resolve(Integer targetViewportWidthDp,
+    public static Integer resolve(Integer targetViewportWidthDp,
                            String requestedMode,
                            boolean systemServerHooksEnabled,
                            Integer runtimeOverride) {
@@ -279,15 +287,15 @@ final class TargetViewportWidthResolver {
     }
 
     private static final class ResolveCacheEntry {
-        final String packageName;
-        final int widthDp;
-        final int heightDp;
-        final int smallestWidthDp;
-        final int densityDpi;
-        final String scope;
-        final String origin;
-        final ViewportTargetResolution resolution;
-        final long createdAtNanos;
+        public final String packageName;
+        public final int widthDp;
+        public final int heightDp;
+        public final int smallestWidthDp;
+        public final int densityDpi;
+        public final String scope;
+        public final String origin;
+        public final ViewportTargetResolution resolution;
+        public final long createdAtNanos;
 
         ResolveCacheEntry(String packageName,
                           int widthDp,
@@ -310,7 +318,7 @@ final class TargetViewportWidthResolver {
         }
     }
 
-    static void resetResolveCacheForTest() {
+    public static void resetResolveCacheForTest() {
         resolveCacheEntry = null;
     }
 

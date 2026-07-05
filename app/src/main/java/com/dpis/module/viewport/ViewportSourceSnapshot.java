@@ -1,27 +1,29 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
+
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;
 
 import android.content.res.Configuration;
 import android.util.DisplayMetrics;
 
-final class ViewportSourceSnapshot {
-    static final String SCOPE_DISPLAY = "display";
-    static final String SCOPE_WINDOW = "window";
-    static final String SCOPE_UNKNOWN = "unknown";
-    static final String ORIGIN_RESOURCES_IMPL = "resources_impl";
-    static final String ORIGIN_RESOURCES_MANAGER = "resources_manager";
-    static final String ORIGIN_RESOURCES_READ = "resources_read";
-    static final String ORIGIN_SYSTEM_DISPLAY_INFO = "system_display_info";
-    static final String ORIGIN_SYSTEM_CONFIGURATION = "system_configuration";
+public final class ViewportSourceSnapshot {
+    public static final String SCOPE_DISPLAY = "display";
+    public static final String SCOPE_WINDOW = "window";
+    public static final String SCOPE_UNKNOWN = "unknown";
+    public static final String ORIGIN_RESOURCES_IMPL = "resources_impl";
+    public static final String ORIGIN_RESOURCES_MANAGER = "resources_manager";
+    public static final String ORIGIN_RESOURCES_READ = "resources_read";
+    public static final String ORIGIN_SYSTEM_DISPLAY_INFO = "system_display_info";
+    public static final String ORIGIN_SYSTEM_CONFIGURATION = "system_configuration";
 
-    final int widthDp;
-    final int heightDp;
-    final int smallestWidthDp;
-    final int densityDpi;
-    final int widthPx;
-    final int heightPx;
-    final String scope;
-    final boolean trustedPixels;
-    final String origin;
+    public final int widthDp;
+    public final int heightDp;
+    public final int smallestWidthDp;
+    public final int densityDpi;
+    public final int widthPx;
+    public final int heightPx;
+    public final String scope;
+    public final boolean trustedPixels;
+    public final String origin;
 
     private ViewportSourceSnapshot(int widthDp,
                                    int heightDp,
@@ -43,7 +45,7 @@ final class ViewportSourceSnapshot {
         this.origin = origin != null ? origin : SCOPE_UNKNOWN;
     }
 
-    static ViewportSourceSnapshot fromConfiguration(String origin,
+    public static ViewportSourceSnapshot fromConfiguration(String origin,
                                                     Configuration config,
                                                     DisplayMetrics metrics) {
         if (config == null) {
@@ -63,7 +65,7 @@ final class ViewportSourceSnapshot {
                 origin);
     }
 
-    static ViewportSourceSnapshot systemDisplayInfo(int widthDp,
+    public static ViewportSourceSnapshot systemDisplayInfo(int widthDp,
                                                     int heightDp,
                                                     int smallestWidthDp,
                                                     int densityDpi,
@@ -108,7 +110,7 @@ final class ViewportSourceSnapshot {
                 && !ORIGIN_RESOURCES_READ.equals(origin);
     }
 
-    String sourceSignature() {
+    public String sourceSignature() {
         return ViewportRuntimeMarkerBridge.configurationSignature(
                 widthDp, heightDp, smallestWidthDp, densityDpi, scope);
     }

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.DpiConfig;
+
 import com.dpis.module.settings.LauncherIconVisibilityStore;
 
 import static org.junit.Assert.assertFalse;

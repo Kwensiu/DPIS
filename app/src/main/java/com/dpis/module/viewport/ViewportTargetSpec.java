@@ -1,17 +1,17 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
 
 import java.util.Objects;
 
 public final class ViewportTargetSpec {
-    static final int MIN_SCALE_PERCENT = 30;
-    static final int MAX_SCALE_PERCENT = 300;
-    static final int MIN_SCALE_MILLI_PERCENT = MIN_SCALE_PERCENT * 1000;
-    static final int MAX_SCALE_MILLI_PERCENT = MAX_SCALE_PERCENT * 1000;
-    static final int DEFAULT_SCALE_MILLI_PERCENT = 100000;
+    public static final int MIN_SCALE_PERCENT = 30;
+    public static final int MAX_SCALE_PERCENT = 300;
+    public static final int MIN_SCALE_MILLI_PERCENT = MIN_SCALE_PERCENT * 1000;
+    public static final int MAX_SCALE_MILLI_PERCENT = MAX_SCALE_PERCENT * 1000;
+    public static final int DEFAULT_SCALE_MILLI_PERCENT = 100000;
     // Legacy constants for backward compatibility
-    static final int MIN_SCALE_PERMILLE = MIN_SCALE_PERCENT * 10;
-    static final int MAX_SCALE_PERMILLE = MAX_SCALE_PERCENT * 10;
-    static final int DEFAULT_SCALE_PERMILLE = 1000;
+    public static final int MIN_SCALE_PERMILLE = MIN_SCALE_PERCENT * 10;
+    public static final int MAX_SCALE_PERMILLE = MAX_SCALE_PERCENT * 10;
+    public static final int DEFAULT_SCALE_PERMILLE = 1000;
 
     private final String type;
     private final int scaleMilliPercent;
@@ -75,7 +75,7 @@ public final class ViewportTargetSpec {
         return 0;
     }
 
-    String fingerprint() {
+    public String fingerprint() {
         if (isRelativeScale()) {
             return "r" + Integer.toString(scaleMilliPercent, 36);
         }

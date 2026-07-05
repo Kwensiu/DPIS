@@ -1,5 +1,7 @@
 package com.dpis.module.templates;
 
+import com.dpis.module.viewport.ViewportTargetType;
+
 import com.dpis.module.R;
 
 public final class GlobalPrefillSaveHandler {

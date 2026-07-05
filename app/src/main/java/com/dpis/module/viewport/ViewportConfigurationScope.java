@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
 
 import android.annotation.SuppressLint;
 import android.content.res.Configuration;
@@ -7,7 +7,7 @@ import android.graphics.Rect;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-final class ViewportConfigurationScope {
+public final class ViewportConfigurationScope {
     private static final float WINDOW_AREA_RATIO_THRESHOLD = 0.85f;
     private static final float WINDOW_SHORT_SIDE_RATIO_THRESHOLD = 0.90f;
 
@@ -28,7 +28,7 @@ final class ViewportConfigurationScope {
     private ViewportConfigurationScope() {
     }
 
-    static boolean isWindowScoped(Configuration config) {
+    public static boolean isWindowScoped(Configuration config) {
         Object windowConfiguration = readWindowConfiguration(config);
         if (windowConfiguration == null) {
             return false;
@@ -44,7 +44,7 @@ final class ViewportConfigurationScope {
                 || isWindowScopedBounds(appBounds, maxBounds);
     }
 
-    static boolean isWindowScopedBounds(Rect bounds, Rect maxBounds) {
+    public static boolean isWindowScopedBounds(Rect bounds, Rect maxBounds) {
         if (bounds == null || maxBounds == null || bounds.isEmpty() || maxBounds.isEmpty()) {
             return false;
         }
@@ -55,7 +55,7 @@ final class ViewportConfigurationScope {
                 Math.abs(maxBounds.bottom - maxBounds.top));
     }
 
-    static boolean isWindowScopedBounds(int boundsWidth, int boundsHeight,
+    public static boolean isWindowScopedBounds(int boundsWidth, int boundsHeight,
                                         int maxWidth, int maxHeight) {
         if (boundsWidth <= 0 || boundsHeight <= 0 || maxWidth <= 0 || maxHeight <= 0) {
             return false;
@@ -160,7 +160,7 @@ final class ViewportConfigurationScope {
     }
 
     // --- test seam ---
-    static void resetReflectionCacheForTest() {
+    public static void resetReflectionCacheForTest() {
         cachedWindowConfigurationField = null;
         cachedWindowConfigurationClass = null;
         cachedGetWindowingModeMethod = null;

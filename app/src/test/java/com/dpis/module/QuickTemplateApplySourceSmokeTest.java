@@ -1,4 +1,6 @@
 package com.dpis.module;
+import com.dpis.module.viewport.ViewportPropertySyncer;
+
 import com.dpis.module.templates.QuickTemplateApplyAdapters;
 
 import com.dpis.module.templates.TemplateConfigValue;

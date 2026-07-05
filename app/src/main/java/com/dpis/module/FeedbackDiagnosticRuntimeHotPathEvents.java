@@ -3,7 +3,7 @@ package com.dpis.module;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-final class FeedbackDiagnosticRuntimeHotPathEvents {
+public final class FeedbackDiagnosticRuntimeHotPathEvents {
     private static final Map<String, Long> ACTIVE = new ConcurrentHashMap<>();
     private static final String LOG_PREFIX = "DPIS_DIAG_HOTPATH";
     private static final String ROUTE_FONT = "font";
@@ -38,11 +38,11 @@ final class FeedbackDiagnosticRuntimeHotPathEvents {
         ACTIVE.remove(key(packageName, categoryRoute, routeName, detail));
     }
 
-    static void probe(String packageName, String route, String detail) {
+    public static void probe(String packageName, String route, String detail) {
         probe(packageName, ROUTE_FONT, route, detail);
     }
 
-    static void probe(String packageName, String categoryRoute, String routeName, String detail) {
+    public static void probe(String packageName, String categoryRoute, String routeName, String detail) {
         record(packageName, categoryRoute, routeName, "probe", detail);
     }
 

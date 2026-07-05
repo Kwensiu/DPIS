@@ -1,15 +1,15 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
 
-final class VirtualDisplayOverride {
-    static final class Result {
-        final int widthDp;
-        final int heightDp;
-        final int smallestWidthDp;
-        final int densityDpi;
-        final int widthPx;
-        final int heightPx;
+public final class VirtualDisplayOverride {
+    public static final class Result {
+        public final int widthDp;
+        public final int heightDp;
+        public final int smallestWidthDp;
+        public final int densityDpi;
+        public final int widthPx;
+        public final int heightPx;
 
-        Result(int widthDp, int heightDp, int smallestWidthDp, int densityDpi,
+        public Result(int widthDp, int heightDp, int smallestWidthDp, int densityDpi,
                int widthPx, int heightPx) {
             this.widthDp = widthDp;
             this.heightDp = heightDp;
@@ -23,7 +23,7 @@ final class VirtualDisplayOverride {
     private VirtualDisplayOverride() {
     }
 
-    static Result derive(int sourceWidthDp, int sourceHeightDp, int sourceSmallestWidthDp,
+    public static Result derive(int sourceWidthDp, int sourceHeightDp, int sourceSmallestWidthDp,
                          int sourceDensityDpi, int sourceWidthPx, int sourceHeightPx,
                          int targetWidthDp) {
         if (targetWidthDp <= 0

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.appprocess.ChromiumViewportProbeHookInstaller;
+
 final class AppProcessHotReloadResetter {
     private AppProcessHotReloadResetter() {
     }

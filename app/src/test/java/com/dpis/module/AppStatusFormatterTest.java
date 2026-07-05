@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
 import org.junit.Test;
 
 import java.util.Locale;

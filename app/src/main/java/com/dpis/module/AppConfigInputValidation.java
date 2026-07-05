@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.ViewportTargetSpec;
+import com.dpis.module.viewport.ViewportTargetType;
+
 public final class AppConfigInputValidation {
     private AppConfigInputValidation() {
     }

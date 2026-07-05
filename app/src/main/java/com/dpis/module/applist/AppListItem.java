@@ -1,10 +1,14 @@
 package com.dpis.module.applist;
 
-import com.dpis.module.FontApplyMode;
-import com.dpis.module.ViewportApplyMode;
-import com.dpis.module.ViewportTargetType;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+import com.dpis.module.viewport.ViewportTargetType;
 
-import com.dpis.module.ViewportTargetSpec;
+import com.dpis.module.FontApplyMode;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetType;
+
+import com.dpis.module.viewport.ViewportTargetSpec;
 import com.dpis.module.templates.TemplateConfigValueAdapters;
 
 import com.dpis.module.templates.TemplateConfigValue;

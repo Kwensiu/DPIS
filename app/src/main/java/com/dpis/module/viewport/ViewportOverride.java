@@ -1,17 +1,17 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
 
 import android.content.res.Configuration;
 
 import java.lang.reflect.Field;
 
-final class ViewportOverride {
-    static final class Result {
-        final int widthDp;
-        final int heightDp;
-        final int smallestWidthDp;
-        final int densityDpi;
+public final class ViewportOverride {
+    public static final class Result {
+        public final int widthDp;
+        public final int heightDp;
+        public final int smallestWidthDp;
+        public final int densityDpi;
 
-        Result(int widthDp, int heightDp, int smallestWidthDp, int densityDpi) {
+        public Result(int widthDp, int heightDp, int smallestWidthDp, int densityDpi) {
             this.widthDp = widthDp;
             this.heightDp = heightDp;
             this.smallestWidthDp = smallestWidthDp;
@@ -22,11 +22,11 @@ final class ViewportOverride {
     private ViewportOverride() {
     }
 
-    static Result derive(Configuration config, int targetWidthDp) {
+    public static Result derive(Configuration config, int targetWidthDp) {
         return derive(config, targetWidthDp, false, null);
     }
 
-    static Result derive(Configuration config, int targetWidthDp, boolean windowScoped,
+    public static Result derive(Configuration config, int targetWidthDp, boolean windowScoped,
                          VirtualDisplayOverride.Result stableTarget) {
         if (config == null || targetWidthDp <= 0) {
             return null;
@@ -70,7 +70,7 @@ final class ViewportOverride {
         return new Result(targetWidth, targetHeight, targetSmallest, stableTarget.densityDpi);
     }
 
-    static void apply(Configuration config, Result result) {
+    public static void apply(Configuration config, Result result) {
         if (config == null || result == null) {
             return;
         }

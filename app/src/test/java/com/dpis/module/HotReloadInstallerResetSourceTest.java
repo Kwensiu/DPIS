@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.appprocess.ChromiumViewportProbeHookInstaller;
+
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -12,8 +14,8 @@ public class HotReloadInstallerResetSourceTest {
         assertSourceContains("src/main/java/com/dpis/module/ActivityThreadFontHookInstaller.java",
                 "static void resetForHotReload()",
                 "installedPid = -1;");
-        assertSourceContains("src/main/java/com/dpis/module/ChromiumViewportProbeHookInstaller.java",
-                "static void resetForHotReload()",
+        assertSourceContains("src/main/java/com/dpis/module/runtime/appprocess/ChromiumViewportProbeHookInstaller.java",
+                "public static void resetForHotReload()",
                 "installedPid = -1;");
         assertSourceContains("src/main/java/com/dpis/module/DisplayHookInstaller.java",
                 "static void resetForHotReload()",

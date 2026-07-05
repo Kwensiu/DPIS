@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+import com.dpis.module.viewport.ViewportTargetType;
+
 import com.dpis.module.hooks.HookDomainOverride;
 import com.dpis.module.templates.QuickTemplateApplyAdapters;
 import com.dpis.module.templates.TemplateConfigValueAdapters;

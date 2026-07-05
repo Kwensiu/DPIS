@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetType;
+
 import com.dpis.module.templates.QuickTemplateListAdapter;
 
 import com.dpis.module.templates.QuickTemplateSaveHandler;

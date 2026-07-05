@@ -1,5 +1,8 @@
 package com.dpis.module.templates;
 
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetType;
+
 public final class TemplateCustomSemantics {
     private TemplateCustomSemantics() {
     }

@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.PerAppDisplayEnvironment;
+
+import com.dpis.module.viewport.VirtualDisplayOverride;
+
+import com.dpis.module.viewport.ViewportTargetSpec;
+
 import android.content.res.Configuration;
 
 final class PerAppDisplayOverrideCalculator {

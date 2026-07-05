@@ -1,15 +1,19 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
 
-final class ViewportPropertyProjection {
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+import com.dpis.module.viewport.ViewportTargetType;
 
-    static final class Encoded {
-        final int systemEmulationValue;
-        final String targetType;
-        final int scaleMilliPercent;
-        final int compatConfigValue;
-        final String compatMode;
+public final class ViewportPropertyProjection {
 
-        Encoded(int systemEmulationValue, String targetType, int scaleMilliPercent,
+    public static final class Encoded {
+        public final int systemEmulationValue;
+        public final String targetType;
+        public final int scaleMilliPercent;
+        public final int compatConfigValue;
+        public final String compatMode;
+
+        public Encoded(int systemEmulationValue, String targetType, int scaleMilliPercent,
                 int compatConfigValue, String compatMode) {
             this.systemEmulationValue = systemEmulationValue;
             this.targetType = targetType;
@@ -19,11 +23,11 @@ final class ViewportPropertyProjection {
         }
     }
 
-    static final class Decoded {
-        final ViewportTargetSpec targetSpec;
-        final String mode;
+    public static final class Decoded {
+        public final ViewportTargetSpec targetSpec;
+        public final String mode;
 
-        Decoded(ViewportTargetSpec targetSpec, String mode) {
+        public Decoded(ViewportTargetSpec targetSpec, String mode) {
             this.targetSpec = targetSpec != null ? targetSpec : ViewportTargetSpec.off();
             this.mode = this.targetSpec.isEnabled()
                     ? ViewportApplyMode.normalize(mode)
@@ -34,7 +38,7 @@ final class ViewportPropertyProjection {
     private ViewportPropertyProjection() {
     }
 
-    static Encoded encode(ViewportTargetSpec targetSpec, String mode) {
+    public static Encoded encode(ViewportTargetSpec targetSpec, String mode) {
         String normalizedMode = ViewportApplyMode.normalize(mode);
         ViewportTargetSpec normalizedTarget = targetSpec != null ? targetSpec : ViewportTargetSpec.off();
         boolean enabled = normalizedTarget.isEnabled() && ViewportApplyMode.isEnabled(normalizedMode);
@@ -55,7 +59,7 @@ final class ViewportPropertyProjection {
                 compatConfigValue, compatMode);
     }
 
-    static Decoded decode(Integer systemEmulationValue, String targetType,
+    public static Decoded decode(Integer systemEmulationValue, String targetType,
                           Integer scaleMilliPercent, Integer compatConfigValue, String compatMode) {
         boolean targetTypeMissing = targetType == null || targetType.trim().isEmpty();
         String type = ViewportTargetType.normalize(targetType);

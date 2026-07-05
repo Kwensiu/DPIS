@@ -1,5 +1,7 @@
 package com.dpis.module.appconfig;
 
+import com.dpis.module.viewport.DpiConfig;
+
 public final class WechatDpiConfig {
     public static final String PACKAGE_NAME = "com.tencent.mm";
     public static final int MIN_DPI = 200;

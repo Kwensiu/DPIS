@@ -1,4 +1,10 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
+
+import com.dpis.module.DpisLog;
+
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
+import com.dpis.module.viewport.ViewportTargetSpec;
 
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
@@ -8,11 +14,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-final class ViewportRuntimeMarkerBridge {
+public final class ViewportRuntimeMarkerBridge {
     // Android system property values are capped at 91 bytes including the
     // terminating NUL in native storage, so keep encoded marker payloads within
     // this conservative Java string length.
-    static final int MAX_SYSTEM_PROPERTY_VALUE_LENGTH = 91;
+    public static final int MAX_SYSTEM_PROPERTY_VALUE_LENGTH = 91;
 
     private static final String PROPERTY_PREFIX = "debug.dpis.vprtm.";
     private static final String VALUE_VERSION = "v2";
@@ -26,11 +32,11 @@ final class ViewportRuntimeMarkerBridge {
     private ViewportRuntimeMarkerBridge() {
     }
 
-    static String propertyNameForPackage(String packageName) {
+    public static String propertyNameForPackage(String packageName) {
         return PROPERTY_PREFIX + String.format(Locale.US, "%08x", safeString(packageName).hashCode());
     }
 
-    static MarkerRecord createRecord(String packageName,
+    public static MarkerRecord createRecord(String packageName,
                                      int targetSmallestWidthDp,
                                      int sourceWidthDp,
                                      int sourceHeightDp,
@@ -67,7 +73,7 @@ final class ViewportRuntimeMarkerBridge {
                 Math.max(0L, elapsedRealtimeMillis));
     }
 
-    static MarkerRecord createRecord(String packageName,
+    public static MarkerRecord createRecord(String packageName,
                                      ViewportTargetSpec targetSpec,
                                      int effectiveSmallestWidthDp,
                                      ViewportSourceSnapshot source,
@@ -96,7 +102,7 @@ final class ViewportRuntimeMarkerBridge {
                 Math.max(0L, elapsedRealtimeMillis));
     }
 
-    static String encode(MarkerRecord record) {
+    public static String encode(MarkerRecord record) {
         if (record == null) {
             return "";
         }
@@ -111,14 +117,14 @@ final class ViewportRuntimeMarkerBridge {
                 + "|" + toBase36(record.elapsedRealtimeMillis);
     }
 
-    static ParseResult parse(String packageName,
+    public static ParseResult parse(String packageName,
                              String expectedTargetFingerprint,
                              String raw,
                              long nowElapsedRealtimeMillis) {
         return parse(packageName, expectedTargetFingerprint, raw, nowElapsedRealtimeMillis, false);
     }
 
-    static ParseResult parseAllowingStale(String packageName,
+    public static ParseResult parseAllowingStale(String packageName,
                                           String expectedTargetFingerprint,
                                           String raw,
                                           long nowElapsedRealtimeMillis) {
@@ -201,15 +207,15 @@ final class ViewportRuntimeMarkerBridge {
         return ParseResult.hit(record, ageMillis);
     }
 
-    static String targetFingerprintForAbsoluteDp(int targetSmallestWidthDp) {
+    public static String targetFingerprintForAbsoluteDp(int targetSmallestWidthDp) {
         return "a" + toBase36(targetSmallestWidthDp);
     }
 
-    static String targetFingerprintForSpec(ViewportTargetSpec spec) {
+    public static String targetFingerprintForSpec(ViewportTargetSpec spec) {
         return spec != null ? spec.fingerprint() : "off";
     }
 
-    static String configurationSignature(int widthDp,
+    public static String configurationSignature(int widthDp,
                                          int heightDp,
                                          int smallestWidthDp,
                                          int densityDpi,
@@ -217,7 +223,7 @@ final class ViewportRuntimeMarkerBridge {
         return signature(widthDp, heightDp, smallestWidthDp, densityDpi, scope);
     }
 
-    static boolean publish(String packageName, MarkerRecord record) {
+    public static boolean publish(String packageName, MarkerRecord record) {
         if (packageName == null || packageName.isBlank() || record == null) {
             return false;
         }
@@ -239,7 +245,7 @@ final class ViewportRuntimeMarkerBridge {
         return true;
     }
 
-    static boolean publishSystemServerRecord(String packageName,
+    public static boolean publishSystemServerRecord(String packageName,
                                              ViewportTargetSpec targetSpec,
                                              ConfigurationLike source,
                                              ConfigurationLike result,
@@ -275,7 +281,7 @@ final class ViewportRuntimeMarkerBridge {
         return publish(packageName, record);
     }
 
-    static boolean isCurrentMarker(String packageName, MarkerRecord record) {
+    public static boolean isCurrentMarker(String packageName, MarkerRecord record) {
         if (packageName == null || packageName.isBlank() || record == null) {
             return false;
         }
@@ -283,7 +289,7 @@ final class ViewportRuntimeMarkerBridge {
         return encode(record).equals(current);
     }
 
-    static ParseResult read(String packageName,
+    public static ParseResult read(String packageName,
                             String expectedTargetFingerprint,
                             long nowElapsedRealtimeMillis) {
         if (packageName == null || packageName.isBlank()) {
@@ -299,7 +305,7 @@ final class ViewportRuntimeMarkerBridge {
         return localResult.hit ? localResult : result;
     }
 
-    static ParseResult readAllowingStale(String packageName,
+    public static ParseResult readAllowingStale(String packageName,
                                          String expectedTargetFingerprint,
                                          long nowElapsedRealtimeMillis) {
         if (packageName == null || packageName.isBlank()) {
@@ -455,20 +461,20 @@ final class ViewportRuntimeMarkerBridge {
         return value == null ? "" : value;
     }
 
-    static final class MarkerRecord {
-        final String packageHash;
-        final String targetFingerprint;
-        final String sourceSignature;
-        final int effectiveSmallestWidthDp;
-        final String resultSignature;
-        final int resultWidthDp;
-        final int resultHeightDp;
-        final int resultSmallestWidthDp;
-        final int resultDensityDpi;
-        final String provenance;
-        final long elapsedRealtimeMillis;
+    public static final class MarkerRecord {
+        public final String packageHash;
+        public final String targetFingerprint;
+        public final String sourceSignature;
+        public final int effectiveSmallestWidthDp;
+        public final String resultSignature;
+        public final int resultWidthDp;
+        public final int resultHeightDp;
+        public final int resultSmallestWidthDp;
+        public final int resultDensityDpi;
+        public final String provenance;
+        public final long elapsedRealtimeMillis;
 
-        MarkerRecord(String packageHash,
+        public MarkerRecord(String packageHash,
                      String targetFingerprint,
                      String sourceSignature,
                      int effectiveSmallestWidthDp,
@@ -488,7 +494,7 @@ final class ViewportRuntimeMarkerBridge {
                     elapsedRealtimeMillis);
         }
 
-        MarkerRecord(String packageHash,
+        public MarkerRecord(String packageHash,
                      String targetFingerprint,
                      String sourceSignature,
                      int effectiveSmallestWidthDp,
@@ -513,7 +519,7 @@ final class ViewportRuntimeMarkerBridge {
         }
     }
 
-    interface ConfigurationLike {
+    public interface ConfigurationLike {
         int widthDp();
 
         int heightDp();
@@ -523,11 +529,11 @@ final class ViewportRuntimeMarkerBridge {
         int densityDpi();
     }
 
-    static final class ParseResult {
-        final boolean hit;
-        final MarkerRecord record;
-        final String reason;
-        final long ageMillis;
+    public static final class ParseResult {
+        public final boolean hit;
+        public final MarkerRecord record;
+        public final String reason;
+        public final long ageMillis;
 
         private ParseResult(boolean hit, MarkerRecord record, String reason, long ageMillis) {
             this.hit = hit;
@@ -536,11 +542,11 @@ final class ViewportRuntimeMarkerBridge {
             this.ageMillis = ageMillis;
         }
 
-        static ParseResult hit(MarkerRecord record, long ageMillis) {
+        public static ParseResult hit(MarkerRecord record, long ageMillis) {
             return new ParseResult(true, record, "hit", ageMillis);
         }
 
-        static ParseResult miss(String reason) {
+        public static ParseResult miss(String reason) {
             return new ParseResult(false, null, reason, -1L);
         }
     }

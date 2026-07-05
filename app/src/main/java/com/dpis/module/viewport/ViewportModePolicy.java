@@ -1,19 +1,24 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
+
+import com.dpis.module.WebApkCarrierResolver;
+
+import com.dpis.module.DpisConfigStore;
+import com.dpis.module.EffectiveModeResolver;
 
 import com.dpis.module.hooks.HookRuntimePolicy;
 
-final class ViewportModePolicy {
+public final class ViewportModePolicy {
     private ViewportModePolicy() {
     }
 
-    static String resolve(DpisConfigStore store, String packageName) {
+    public static String resolve(DpisConfigStore store, String packageName) {
         if (store == null || packageName == null || packageName.isEmpty()) {
             return ViewportApplyMode.OFF;
         }
         return resolve(store.isSystemServerHooksEnabled(), store, packageName);
     }
 
-    static String resolve(HookRuntimePolicy policy, DpisConfigStore store, String packageName) {
+    public static String resolve(HookRuntimePolicy policy, DpisConfigStore store, String packageName) {
         if (store == null || packageName == null || packageName.isEmpty()) {
             return ViewportApplyMode.OFF;
         }
@@ -29,14 +34,14 @@ final class ViewportModePolicy {
                 systemHooksEnabled);
     }
 
-    static boolean shouldApplyConfigurationOverride(DpisConfigStore store, String packageName) {
+    public static boolean shouldApplyConfigurationOverride(DpisConfigStore store, String packageName) {
         if (shouldApplyWebApkOwnerConfigurationOverride(store, packageName)) {
             return true;
         }
         return ViewportApplyMode.COMPAT.equals(resolve(store, packageName));
     }
 
-    static boolean shouldApplyConfigurationOverride(HookRuntimePolicy policy,
+    public static boolean shouldApplyConfigurationOverride(HookRuntimePolicy policy,
                                                     DpisConfigStore store,
                                                     String packageName) {
         if (shouldApplyWebApkOwnerConfigurationOverride(store, packageName)) {
@@ -45,7 +50,7 @@ final class ViewportModePolicy {
         return ViewportApplyMode.COMPAT.equals(resolve(policy, store, packageName));
     }
 
-    static boolean shouldApplyConfigurationOverride(DpisConfigStore store,
+    public static boolean shouldApplyConfigurationOverride(DpisConfigStore store,
                                                     String packageName,
                                                     ViewportTargetResolution resolution,
                                                     boolean viewportNeedsUpdate) {
@@ -65,7 +70,7 @@ final class ViewportModePolicy {
         return true;
     }
 
-    static boolean shouldApplyConfigurationOverride(HookRuntimePolicy policy,
+    public static boolean shouldApplyConfigurationOverride(HookRuntimePolicy policy,
                                                     DpisConfigStore store,
                                                     String packageName,
                                                     ViewportTargetResolution resolution,

@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.DpiConfig;
+
+import com.dpis.module.runtime.appprocess.ChromiumViewportProbeHookInstaller;
+
 import com.dpis.module.hooks.HookExecutionPlan;
 import com.dpis.module.hooks.HookRuntimePolicy;
 import com.dpis.module.runtime.hookapi.ModernApi101Capabilities;

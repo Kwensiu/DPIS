@@ -1,5 +1,16 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.VirtualDisplayPlan;
+
+import com.dpis.module.viewport.VirtualDisplayOverride;
+import com.dpis.module.viewport.VirtualDisplayState;
+
+import com.dpis.module.viewport.ViewportRuntimeRecord;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
 import android.graphics.Point;
 import android.util.DisplayMetrics;
 

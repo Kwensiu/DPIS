@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.DensityOverride;
+
 import android.content.res.Configuration;
 import android.util.DisplayMetrics;
 

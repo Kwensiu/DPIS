@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.PerAppDisplayEnvironment;
+
+import com.dpis.module.viewport.ViewportTargetSpec;
+
 import android.content.res.Configuration;
 
 import org.junit.Test;

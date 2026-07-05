@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.ViewportApplyMode;
+
 import com.dpis.module.applist.AppListFilter;
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;

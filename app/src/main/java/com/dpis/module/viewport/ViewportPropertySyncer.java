@@ -1,4 +1,9 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
+
+import com.dpis.module.DpisConfigStore;
+
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
 
 import com.dpis.module.runtime.RootCommandRunner;
 
@@ -72,15 +77,15 @@ public final class ViewportPropertySyncer {
                 mode));
     }
 
-    static String buildSetCommandForTest(String property, int widthDp) {
+    public static String buildSetCommandForTest(String property, int widthDp) {
         return buildSetCommand(property, widthDp);
     }
 
-    static String buildCompatConfigCommandForTest(String packageName, int widthDp, String mode) {
+    public static String buildCompatConfigCommandForTest(String packageName, int widthDp, String mode) {
         return buildCompatConfigCommand(packageName, widthDp, mode);
     }
 
-    static String buildCompatConfigCommandForTest(String packageName,
+    public static String buildCompatConfigCommandForTest(String packageName,
                                                   ViewportTargetSpec targetSpec,
                                                   String mode) {
         return buildCompatConfigCommand(packageName, targetSpec, mode);

@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.DpiConfig;
+
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+import com.dpis.module.viewport.ViewportTargetType;
+
 import com.dpis.module.appconfig.WechatDpiConfig;
 
 import java.util.Objects;

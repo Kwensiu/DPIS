@@ -1,22 +1,26 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
 
-final class ViewportRuntimeRecord {
-    static final String PROVENANCE_SYSTEM_SERVER = "s";
-    static final String PROVENANCE_APP_PROCESS = "a";
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
+import com.dpis.module.viewport.ViewportTargetSpec;
 
-    final String packageName;
-    final ViewportTargetSpec targetSpec;
-    final String targetFingerprint;
-    final String sourceSignature;
-    final int effectiveSmallestWidthDp;
-    final ViewportOverride.Result viewportResult;
-    final VirtualDisplayOverride.Result virtualDisplayResult;
-    final String resultSignature;
-    final String provenance;
-    final long createdElapsedRealtime;
-    final String scope;
+public final class ViewportRuntimeRecord {
+    public static final String PROVENANCE_SYSTEM_SERVER = "s";
+    public static final String PROVENANCE_APP_PROCESS = "a";
 
-    ViewportRuntimeRecord(String packageName,
+    public final String packageName;
+    public final ViewportTargetSpec targetSpec;
+    public final String targetFingerprint;
+    public final String sourceSignature;
+    public final int effectiveSmallestWidthDp;
+    public final ViewportOverride.Result viewportResult;
+    public final VirtualDisplayOverride.Result virtualDisplayResult;
+    public final String resultSignature;
+    public final String provenance;
+    public final long createdElapsedRealtime;
+    public final String scope;
+
+    public ViewportRuntimeRecord(String packageName,
                           ViewportTargetSpec targetSpec,
                           String sourceSignature,
                           int effectiveSmallestWidthDp,

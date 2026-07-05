@@ -1,5 +1,9 @@
 package com.dpis.module.templates;
 
+import com.dpis.module.viewport.ViewportPropertySyncer;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
 import com.dpis.module.hooks.HookDomainOverride;
 import com.dpis.module.hooks.HookDomainOverrideStore;
 
