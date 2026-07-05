@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.XposedSelfActivation;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicBoolean;

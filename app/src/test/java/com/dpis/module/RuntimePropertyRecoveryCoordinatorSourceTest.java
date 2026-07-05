@@ -19,7 +19,7 @@ public final class RuntimePropertyRecoveryCoordinatorSourceTest {
     @Test
     public void coordinatorCentralizesRuntimeMirrorResync() throws IOException {
         String source = readProjectFile(
-                "src/main/java/com/dpis/module/RuntimePropertyRecoveryCoordinator.java");
+                "src/main/java/com/dpis/module/runtime/RuntimePropertyRecoveryCoordinator.java");
         String app = readProjectFile("src/main/java/com/dpis/module/DpisApplication.java");
         String receiver = readProjectFile(
                 "src/main/java/com/dpis/module/DpisPackageLifecycleReceiver.java");

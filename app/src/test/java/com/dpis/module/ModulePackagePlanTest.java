@@ -1,6 +1,7 @@
 package com.dpis.module;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
+import com.dpis.module.runtime.font.DebugFontOverride;
 
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;
@@ -305,4 +306,3 @@ public final class ModulePackagePlanTest {
                 + "paint_text_size_fallback,webview_text_zoom", executionPlan.hookDomains);
     }
 }
-

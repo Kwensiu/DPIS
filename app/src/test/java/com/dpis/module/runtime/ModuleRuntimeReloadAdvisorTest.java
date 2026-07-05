@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.runtime;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

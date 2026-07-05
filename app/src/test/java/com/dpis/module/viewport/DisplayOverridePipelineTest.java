@@ -1,6 +1,5 @@
-package com.dpis.module;
+package com.dpis.module.viewport;
 
-import com.dpis.module.viewport.VirtualDisplayOverride;
 
 import org.junit.Test;
 

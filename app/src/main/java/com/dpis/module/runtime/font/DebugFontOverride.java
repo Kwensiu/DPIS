@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime.font;
+
+import com.dpis.module.*;
 
 public final class DebugFontOverride {
     public final boolean forceFlutterSettings;

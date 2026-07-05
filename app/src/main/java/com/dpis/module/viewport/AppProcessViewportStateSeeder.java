@@ -1,7 +1,6 @@
 package com.dpis.module.viewport;
 
 import com.dpis.module.DpisLog;
-import com.dpis.module.EffectiveModeResolver;
 
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportOverride;

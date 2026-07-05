@@ -1,15 +1,17 @@
-package com.dpis.module;
+package com.dpis.module.runtime;
+
+import com.dpis.module.*;
 
 import java.lang.reflect.Method;
 
-final class XposedSelfActivation {
+public final class XposedSelfActivation {
     private static final String APPLICATION_CLASS_NAME = "com.dpis.module.DpisApplication";
     private static final String MARK_METHOD_NAME = "markXposedSelfLoaded";
 
     private XposedSelfActivation() {
     }
 
-    static boolean markIfSelfPackage(String packageName, ClassLoader classLoader, String source) {
+    public static boolean markIfSelfPackage(String packageName, ClassLoader classLoader, String source) {
         if (!BuildConfig.APPLICATION_ID.equals(packageName) || classLoader == null) {
             return false;
         }

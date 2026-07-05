@@ -1,6 +1,7 @@
 package com.dpis.module.runtime.font;
 
-import com.dpis.module.EffectiveModeResolver;
+import com.dpis.module.viewport.EffectiveModeResolver;
+
 
 import com.dpis.module.FontApplyMode;
 

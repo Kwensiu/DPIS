@@ -9,6 +9,7 @@ import com.dpis.module.runtime.appprocess.ResourcesReadHookInstaller;
 import com.dpis.module.runtime.appprocess.ResourcesManagerHookInstaller;
 
 import com.dpis.module.runtime.appprocess.ResourcesImplHookInstaller;
+import com.dpis.module.runtime.appprocess.WindowFrameOverride;
 
 import com.dpis.module.runtime.font.PaintTextSizeFallbackHookInstaller;
 

@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime;
+
+import com.dpis.module.*;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
 
@@ -17,11 +19,11 @@ import com.dpis.module.runtime.RuntimeDebugPropertySyncer;
  * it only re-applies the current store state after process start, package replace, or
  * service reconnection.</p>
  */
-final class RuntimePropertyRecoveryCoordinator {
+public final class RuntimePropertyRecoveryCoordinator {
     private RuntimePropertyRecoveryCoordinator() {
     }
 
-    static void resyncConfiguredTargetsAsync(DpisConfigStore store) {
+    public static void resyncConfiguredTargetsAsync(DpisConfigStore store) {
         if (store == null) {
             return;
         }

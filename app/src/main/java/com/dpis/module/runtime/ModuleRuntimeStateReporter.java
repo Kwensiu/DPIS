@@ -1,14 +1,16 @@
-package com.dpis.module;
+package com.dpis.module.runtime;
+
+import com.dpis.module.*;
 
 import java.lang.reflect.Method;
 
-final class ModuleRuntimeStateReporter {
+public final class ModuleRuntimeStateReporter {
     private static final String KEY_SYSTEM_SERVER_LOADED_AT = "debug.dpis.module.system_server_loaded_at";
 
     private ModuleRuntimeStateReporter() {
     }
 
-    static void reportSystemServerLoaded() {
+    public static void reportSystemServerLoaded() {
         setSystemProperty(KEY_SYSTEM_SERVER_LOADED_AT,
                 String.valueOf(System.currentTimeMillis()));
     }

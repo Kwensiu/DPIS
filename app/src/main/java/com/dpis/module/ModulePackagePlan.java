@@ -1,6 +1,7 @@
 package com.dpis.module;
 
 import com.dpis.module.runtime.appprocess.AppProcessHookInstaller;
+import com.dpis.module.runtime.font.DebugFontOverride;
 
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;

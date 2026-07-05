@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime.appprocess;
+
+import com.dpis.module.*;
 
 import android.graphics.Rect;
 

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.ModuleRuntimeReloadAdvisor;
+
 import com.dpis.module.diagnostics.FeedbackDiagnosticResultSheet;
 
 import com.dpis.module.diagnostics.FeedbackDiagnosticExportBuilder;

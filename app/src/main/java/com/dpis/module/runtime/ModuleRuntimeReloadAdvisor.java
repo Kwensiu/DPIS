@@ -1,11 +1,13 @@
-package com.dpis.module;
+package com.dpis.module.runtime;
+
+import com.dpis.module.*;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 
-final class ModuleRuntimeReloadAdvisor {
+public final class ModuleRuntimeReloadAdvisor {
     private static final String PREFS_NAME = "dpis.module_runtime";
     private static final String KEY_ACKED_UPDATE_TIME = "acked_update_time";
     private static final long RUNTIME_LOAD_TOLERANCE_MS = 2_000L;
@@ -13,7 +15,7 @@ final class ModuleRuntimeReloadAdvisor {
     private ModuleRuntimeReloadAdvisor() {
     }
 
-    static boolean shouldShowReloadAdvice(Context context) {
+    public static boolean shouldShowReloadAdvice(Context context) {
         long lastUpdateTime = getLastUpdateTime(context);
         long systemServerLoadedAt = ModuleRuntimeStateReporter.getSystemServerLoadedAt();
         if (!isSystemServerRuntimeOlderThanInstall(lastUpdateTime, systemServerLoadedAt)) {
@@ -23,7 +25,7 @@ final class ModuleRuntimeReloadAdvisor {
         return preferences.getLong(KEY_ACKED_UPDATE_TIME, 0L) != lastUpdateTime;
     }
 
-    static void markReloadAdviceAcknowledged(Context context) {
+    public static void markReloadAdviceAcknowledged(Context context) {
         long lastUpdateTime = getLastUpdateTime(context);
         if (lastUpdateTime <= 0L) {
             return;

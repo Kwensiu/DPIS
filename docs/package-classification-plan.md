@@ -78,6 +78,10 @@ the real dependency graph is inspected.
 | `runtime` | `ProcessScopedInstallGate` | Runtime hook idempotency gate shared by app-process and system-server installers. |
 | `runtime` | `RootCommandRunner` | Shared root command transport used by runtime property syncers. |
 | `runtime` | `XSharedPreferencesAdapter` | Read-only legacy Xposed preference adapter used by runtime config-store factories. Public surface is limited to constructors and the `SharedPreferences` contract; reload/snapshot details remain internal. |
+| `runtime` | `ModuleRuntimeReloadAdvisor`, `ModuleRuntimeStateReporter`, `RuntimePropertyRecoveryCoordinator`, `XposedSelfActivation` | Small runtime lifecycle helpers for module reload advice, system-server load markers, runtime-property resync, and self-package activation. Public surface is limited to the existing entry methods used by app startup and flavor entry points. |
+| `runtime.appprocess` | `ResourcesReadHookPolicy`, `WindowFrameOverride` | App-process route policy/value helpers used by hook planning and frame mutation routes. |
+| `runtime.font` | `DebugFontOverride` | Debug-only font override value used by hook planning and app-process font routes. |
+| `viewport` | `DisplayOverridePipeline`, `EffectiveModeResolver`, `PerAppDisplayOverrideCalculator` | Viewport strategy and display-environment calculation helpers shared by UI planning, app-process routes, and system-server routes. |
 | `root` | `RootAccessProbe` | Shared root availability probe used by status UI, log page, process actions, and feedback diagnostics. |
 | `root` | `RootAppProcessLauncher` | Shared root app start/stop/restart launcher used by process actions and feedback diagnostics. The launcher API is public; `ShellResult` exposes immutable accessors instead of public fields. |
 | `fonts` | `HyperOsNativeProxyStatus` | Small status/value object move for HyperOS native proxy detection. |
@@ -163,9 +167,8 @@ not as progress toward package cleanup.
 | `HyperOsNativeProxyRefreshCoordinator` | Semantically adjacent to the native proxy mounter, but it depends on package-private `DpisConfigStore`, `DpisLog`, and startup/package-update side-effect rules. Keep it root-owned until that refresh policy has an explicit public seam. |
 | `SettingsWorkspaceBinder`, `SystemServerSettingsPageController`, `SystemHooksToggleController` | Settings UI slice is coherent, but the current page controller still owns `DpisConfigStore`, service/scope gateways, haptics, cache cleanup, and package-private settings helpers. Move as a settings page wave, not as isolated binders. |
 | `SafeCacheCleaner` | Cache cleanup is still settings-page owned. It now calls the public font-debug cache/stat cleanup seam in `fonts`, but it also clears update and release-note caches, so moving it would mix unrelated settings cleanup responsibilities. |
-| `PerAppDisplayConfigSource`, `PerAppDisplayOverrideCalculator`, `DisplayOverridePipeline` | These are viewport/system-server route model helpers, not ordinary UI helpers. Moving them touches runtime route ownership and source-smoke evidence; handle under the runtime route playbook. |
-| `FontMode`, `PlanReason`, `DebugFontOverride` | Hook-planner support values are now public because the planner moved to `hooks`, but they still stay root-owned until the broader font-mode/runtime decision model moves together. |
-| `ResourcesReadHookPolicy`, `WindowFrameOverride` | Runtime route-owned policy/value types. Move only with the relevant route document review and route-focused tests. |
+| `PerAppDisplayConfigSource` | This is still the runtime config-source seam for system-server and legacy fallbacks. Move only when config-source ownership is isolated from root store construction. |
+| `FontMode`, `PlanReason` | Hook-planner support values are now public because the planner moved to `hooks`, but they still stay root-owned until the broader font-mode/runtime decision model moves together. |
 | Public Android components such as `MainActivity`, `QuickConfigActivity`, activities, services, providers, and receivers | Package moves would change manifest component class names and may affect shortcuts, QS tiles, or external component references. Handle in a component-routing migration, not this package cleanup. |
 
 ## Naming Cleanup

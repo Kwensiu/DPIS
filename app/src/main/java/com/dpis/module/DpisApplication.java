@@ -2,6 +2,7 @@ package com.dpis.module;
 
 import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.fonts.HyperOsNativeProxyAssetExporter;
+import com.dpis.module.runtime.RuntimePropertyRecoveryCoordinator;
 import com.dpis.module.updates.UpdatePackageInstaller;
 
 import android.app.Application;

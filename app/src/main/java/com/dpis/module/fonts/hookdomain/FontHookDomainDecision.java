@@ -1,6 +1,7 @@
 package com.dpis.module.fonts.hookdomain;
 
-import com.dpis.module.DebugFontOverride;
+import com.dpis.module.runtime.font.DebugFontOverride;
+
 import com.dpis.module.SystemScopeCoordinator;
 
 import com.dpis.module.PackageConfigSnapshot;

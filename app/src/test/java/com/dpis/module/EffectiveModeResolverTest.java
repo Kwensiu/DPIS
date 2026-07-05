@@ -1,5 +1,6 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.EffectiveModeResolver;
 import com.dpis.module.viewport.ViewportApplyMode;
 
 import org.junit.Test;

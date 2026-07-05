@@ -15,6 +15,7 @@ import com.dpis.module.runtime.font.TypefaceOverrideHookInstaller;
 import com.dpis.module.runtime.font.ForceTextSizeHookInstaller;
 
 import com.dpis.module.runtime.font.ComposeResourcesFontEvidence;
+import com.dpis.module.runtime.font.DebugFontOverride;
 
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;

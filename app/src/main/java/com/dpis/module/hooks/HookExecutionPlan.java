@@ -1,9 +1,10 @@
 package com.dpis.module.hooks;
 
+import com.dpis.module.runtime.appprocess.ResourcesReadHookPolicy;
+
 import com.dpis.module.fonts.hookdomain.FontHookArbitration;
 import com.dpis.module.FontMode;
 import com.dpis.module.PlanReason;
-import com.dpis.module.ResourcesReadHookPolicy;
 
 public final class HookExecutionPlan {
     public final FontMode fontMode;

@@ -1,16 +1,19 @@
 package com.dpis.module.hooks;
 
+import com.dpis.module.runtime.font.DebugFontOverride;
+
+import com.dpis.module.viewport.EffectiveModeResolver;
+
+import com.dpis.module.runtime.appprocess.ResourcesReadHookPolicy;
+
 import com.dpis.module.viewport.ViewportApplyMode;
 
-import com.dpis.module.DebugFontOverride;
-import com.dpis.module.EffectiveModeResolver;
 import com.dpis.module.FontApplyMode;
 import com.dpis.module.fonts.hookdomain.FontHookArbitration;
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
 import com.dpis.module.FontMode;
 import com.dpis.module.fonts.hookdomain.PackageFontHookDomainDefaults;
 import com.dpis.module.PlanReason;
-import com.dpis.module.ResourcesReadHookPolicy;
 import com.dpis.module.viewport.ViewportApplyMode;
 
 import java.util.Collections;

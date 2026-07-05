@@ -1,6 +1,7 @@
 package com.dpis.module;
 
 import com.dpis.module.fonts.HyperOsNativeProxyAssetExporter;
+import com.dpis.module.runtime.RuntimePropertyRecoveryCoordinator;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

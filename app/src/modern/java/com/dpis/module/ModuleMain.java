@@ -4,6 +4,8 @@ import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
 
 import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
 
+import com.dpis.module.runtime.ModuleRuntimeStateReporter;
+import com.dpis.module.runtime.XposedSelfActivation;
 import com.dpis.module.runtime.systemserver.SystemServerDisplayDiagnostics;
 import com.dpis.module.runtime.systemserver.SystemServerDisplayEnvironmentInstaller;
 import com.dpis.module.runtime.systemserver.SystemServerMutationPolicy;
@@ -15,6 +17,7 @@ import com.dpis.module.runtime.appprocess.AppProcessHotReloadResetter;
 
 import com.dpis.module.runtime.appprocess.AppProcessHookInstaller;
 
+import com.dpis.module.runtime.font.DebugFontOverride;
 import com.dpis.module.runtime.font.FlutterSettingsFontHookInstaller;
 
 import com.dpis.module.runtime.appprocess.ChromiumViewportProbeHookInstaller;
