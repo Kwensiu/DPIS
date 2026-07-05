@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.diagnostics;
+
+import com.dpis.module.*;
 
 import android.app.Activity;
 import android.view.LayoutInflater;
@@ -9,8 +11,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textview.MaterialTextView;
 
-final class FeedbackDiagnosticResultSheet {
-    interface Host {
+public final class FeedbackDiagnosticResultSheet {
+    public interface Host {
         void shareFeedbackDiagnostic(FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage);
 
         void saveFeedbackDiagnostic(FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage);
@@ -19,12 +21,12 @@ final class FeedbackDiagnosticResultSheet {
     private final Activity activity;
     private final Host host;
 
-    FeedbackDiagnosticResultSheet(Activity activity, Host host) {
+    public FeedbackDiagnosticResultSheet(Activity activity, Host host) {
         this.activity = activity;
         this.host = host;
     }
 
-    void show(FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage) {
+    public void show(FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage) {
         if (activity == null || host == null || diagnosticPackage == null
                 || diagnosticPackage.result == null) {
             return;

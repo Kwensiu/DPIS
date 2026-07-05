@@ -1,15 +1,12 @@
-package com.dpis.module;
+package com.dpis.module.diagnostics;
+
+import com.dpis.module.*;
 
 import com.dpis.module.appconfig.AppConfigInputValidation;
 
 import com.dpis.module.viewport.ViewportTargetSpec;
 
-import com.dpis.module.diagnostics.DpisLogEntry;
-import com.dpis.module.diagnostics.FeedbackDiagnosticLsposedTimelineParser;
-import com.dpis.module.diagnostics.FeedbackDiagnosticSessionWindow;
 
-import com.dpis.module.diagnostics.LogReadResult;
-import com.dpis.module.diagnostics.LsposedLogReader;
 import com.dpis.module.root.RootAccessProbe;
 
 import java.io.IOException;
@@ -26,11 +23,11 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-final class FeedbackDiagnosticExportBuilder {
-    static final String DIAGNOSTIC_ENTRY_NAME = "diagnostic.txt";
-    static final String DPIS_LOG_ENTRY_NAME = "dpis-log.txt";
-    static final String LSPOSED_LOG_ENTRY_NAME = "lsposed-log.txt";
-    static final String MIME_TYPE = "application/zip";
+public final class FeedbackDiagnosticExportBuilder {
+    public static final String DIAGNOSTIC_ENTRY_NAME = "diagnostic.txt";
+    public static final String DPIS_LOG_ENTRY_NAME = "dpis-log.txt";
+    public static final String LSPOSED_LOG_ENTRY_NAME = "lsposed-log.txt";
+    public static final String MIME_TYPE = "application/zip";
 
     private static final int RECENT_DPIS_LOG_FALLBACK_LIMIT = 100;
     private static final long RECENT_DPIS_LOG_FALLBACK_WINDOW_MS = 5L * 60L * 1_000L;
@@ -44,10 +41,10 @@ final class FeedbackDiagnosticExportBuilder {
         List<DpisLogEntry> read();
     }
 
-    static final class EntrySummary {
-        final String name;
-        final int byteCount;
-        final int lineCount;
+    public static final class EntrySummary {
+        public final String name;
+        public final int byteCount;
+        public final int lineCount;
 
         EntrySummary(String name, String content) {
             this.name = name;
@@ -57,11 +54,11 @@ final class FeedbackDiagnosticExportBuilder {
         }
     }
 
-    static final class DiagnosticPackage {
-        final FeedbackDiagnosticCoordinator.Result result;
-        final String fileName;
-        final byte[] zipBytes;
-        final List<EntrySummary> entries;
+    public static final class DiagnosticPackage {
+        public final FeedbackDiagnosticCoordinator.Result result;
+        public final String fileName;
+        public final byte[] zipBytes;
+        public final List<EntrySummary> entries;
 
         DiagnosticPackage(
                 FeedbackDiagnosticCoordinator.Result result,
@@ -79,7 +76,7 @@ final class FeedbackDiagnosticExportBuilder {
     private final DpisLogReader dpisLogReader;
     private final RawLogReader lsposedLogReader;
 
-    FeedbackDiagnosticExportBuilder(android.content.Context context) {
+    public FeedbackDiagnosticExportBuilder(android.content.Context context) {
         this(
                 () -> new DpisAppLogStore(context).readRecentEntries(),
                 LsposedLogReader::readLsposedDpisCurrent
@@ -98,11 +95,11 @@ final class FeedbackDiagnosticExportBuilder {
                 : LsposedLogReader::readLsposedDpisCurrent;
     }
 
-    byte[] buildZip(FeedbackDiagnosticCoordinator.Result result) throws IOException {
+    public byte[] buildZip(FeedbackDiagnosticCoordinator.Result result) throws IOException {
         return buildPackage(result).zipBytes;
     }
 
-    DiagnosticPackage buildPackage(FeedbackDiagnosticCoordinator.Result result)
+    public DiagnosticPackage buildPackage(FeedbackDiagnosticCoordinator.Result result)
             throws IOException {
         LogReadResult lsposedLog = readLsposedLog();
         FeedbackDiagnosticSessionWindow window = windowFor(result);
@@ -127,7 +124,7 @@ final class FeedbackDiagnosticExportBuilder {
         );
     }
 
-    void writeZip(OutputStream output, FeedbackDiagnosticCoordinator.Result result)
+    public void writeZip(OutputStream output, FeedbackDiagnosticCoordinator.Result result)
             throws IOException {
         output.write(buildPackage(result).zipBytes);
     }

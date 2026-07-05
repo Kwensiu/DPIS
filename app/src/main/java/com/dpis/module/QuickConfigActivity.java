@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.diagnostics.FeedbackDiagnosticResultSheet;
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticExportBuilder;
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticCoordinator;
+
 import com.dpis.module.appconfig.AppConfigDialogBinder;
 import com.dpis.module.appconfig.AppConfigPrefillPreview;
 import com.dpis.module.appconfig.AppConfigSaveHandler;

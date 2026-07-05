@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeTransport;
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
+
 import android.util.Log;
 
 public final class DpisLog {

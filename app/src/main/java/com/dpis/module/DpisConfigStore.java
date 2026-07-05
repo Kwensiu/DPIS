@@ -372,7 +372,7 @@ public final class DpisConfigStore {
         return normalizeTypefaceId(getPackageString(key, packageKey, null));
     }
 
-    String getTargetFontHookDomainsRaw(String packageName) {
+    public String getTargetFontHookDomainsRaw(String packageName) {
         String key = keyForFontHookDomains(packageName);
         String packageKey = keyForPackageFontHookDomains(packageName);
         if (!containsPackageValue(key, packageKey)) {

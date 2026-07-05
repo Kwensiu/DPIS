@@ -1,6 +1,7 @@
 package com.dpis.module.viewport;
 
-import com.dpis.module.FeedbackDiagnosticRuntimeHotPathEvents;
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+
 
 import com.dpis.module.BuildConfig;
 import com.dpis.module.DpisLog;

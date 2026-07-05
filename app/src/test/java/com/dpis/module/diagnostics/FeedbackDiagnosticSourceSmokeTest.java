@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.diagnostics;
+
+import com.dpis.module.*;
 
 import com.dpis.module.appconfig.AppConfigDialogBinder;
 
@@ -42,7 +44,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
             throws IOException {
         String main = read("src/main/java/com/dpis/module/MainActivity.java");
         String coordinator = read(
-                "src/main/java/com/dpis/module/FeedbackDiagnosticCoordinator.java");
+                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticCoordinator.java");
         String summary = read(
                 "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticSummaryBuilder.java");
 
@@ -93,9 +95,9 @@ public final class FeedbackDiagnosticSourceSmokeTest {
             throws IOException {
         String dpisLog = read("src/main/java/com/dpis/module/DpisLog.java");
         String collector = read(
-                "src/main/java/com/dpis/module/FeedbackDiagnosticRuntimeEvents.java");
+                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticRuntimeEvents.java");
         String hotPath = read(
-                "src/main/java/com/dpis/module/FeedbackDiagnosticRuntimeHotPathEvents.java");
+                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticRuntimeHotPathEvents.java");
 
         assertTrue(dpisLog.contains("FeedbackDiagnosticRuntimeEvents.recordDpisLog(\"I\", msg);"));
         assertTrue(dpisLog.contains("FeedbackDiagnosticRuntimeEvents.recordDpisLog("));
@@ -114,7 +116,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
     public void feedbackDiagnosticFinishesOnlyAfterReturningToDpis()
             throws IOException {
         String coordinator = read(
-                "src/main/java/com/dpis/module/FeedbackDiagnosticCoordinator.java");
+                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticCoordinator.java");
 
         assertTrue(coordinator.contains("recordTimelineEvent(\"foreground returned to DPIS\");"));
         assertTrue(coordinator.contains("finish();"));
@@ -164,10 +166,10 @@ public final class FeedbackDiagnosticSourceSmokeTest {
     public void feedbackDiagnosticResultSupportsShareAndSaveZip() throws IOException {
         String main = read("src/main/java/com/dpis/module/MainActivity.java");
         String exportBuilder = read(
-                "src/main/java/com/dpis/module/FeedbackDiagnosticExportBuilder.java");
+                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticExportBuilder.java");
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
         String resultSheet = read(
-                "src/main/java/com/dpis/module/FeedbackDiagnosticResultSheet.java");
+                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticResultSheet.java");
         String layout = read("src/main/res/layout/dialog_feedback_diagnostic_result.xml");
         String forceTextSize = read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java");
         String paintFallback = read(

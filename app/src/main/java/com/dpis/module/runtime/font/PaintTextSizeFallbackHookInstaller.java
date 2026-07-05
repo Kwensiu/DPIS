@@ -1,8 +1,9 @@
 package com.dpis.module.runtime.font;
 
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+
 import com.dpis.module.FontApplyMode;
 
-import com.dpis.module.FeedbackDiagnosticRuntimeHotPathEvents;
 
 import com.dpis.module.DpisLog;
 

@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-final class FakePrefs implements SharedPreferences {
+public final class FakePrefs implements SharedPreferences {
     private final Map<String, Object> values = new HashMap<>();
     private boolean commitResult = true;
 

@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.diagnostics;
+
+import com.dpis.module.*;
 
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;

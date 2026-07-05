@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.diagnostics;
+
+import com.dpis.module.*;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -9,7 +11,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticTimelineClassifier;
 
 public final class FeedbackDiagnosticRuntimeEvents {
     private static final long REPEAT_WARNING_WINDOW_MS = 300L;
@@ -18,21 +19,21 @@ public final class FeedbackDiagnosticRuntimeEvents {
     private FeedbackDiagnosticRuntimeEvents() {
     }
 
-    static void start(String packageName, FeedbackDiagnosticCoordinator.Request request) {
+    public static void start(String packageName, FeedbackDiagnosticCoordinator.Request request) {
         activeSession = new Session(packageName, request);
     }
 
-    static List<String> stopSnapshot() {
+    public static List<String> stopSnapshot() {
         Session session = activeSession;
         activeSession = null;
         return session != null ? session.snapshot() : List.of();
     }
 
-    static void cancel() {
+    public static void cancel() {
         activeSession = null;
     }
 
-    static List<String> snapshotForTest() {
+    public static List<String> snapshotForTest() {
         Session session = activeSession;
         return session != null ? session.snapshot() : List.of();
     }

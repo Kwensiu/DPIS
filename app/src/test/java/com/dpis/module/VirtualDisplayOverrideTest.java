@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticCoordinator;
+
 import com.dpis.module.runtime.appprocess.DisplayHookInstaller;
 
 import com.dpis.module.viewport.VirtualDisplayPlan;

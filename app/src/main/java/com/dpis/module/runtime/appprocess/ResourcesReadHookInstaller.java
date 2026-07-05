@@ -1,5 +1,9 @@
 package com.dpis.module.runtime.appprocess;
 
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
+
 import com.dpis.module.*;
 import com.dpis.module.runtime.font.FontScaleOverride;
 

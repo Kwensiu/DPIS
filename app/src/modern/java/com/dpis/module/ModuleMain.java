@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
+
 import com.dpis.module.runtime.systemserver.SystemServerDisplayDiagnostics;
 import com.dpis.module.runtime.systemserver.SystemServerDisplayEnvironmentInstaller;
 import com.dpis.module.runtime.systemserver.SystemServerMutationPolicy;

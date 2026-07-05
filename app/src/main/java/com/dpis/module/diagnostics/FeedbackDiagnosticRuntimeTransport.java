@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.diagnostics;
+
+import com.dpis.module.*;
 
 import com.dpis.module.root.RootAppProcessLauncher;
 
@@ -26,14 +28,14 @@ public final class FeedbackDiagnosticRuntimeTransport {
     private static volatile long lastMarkerCheckMillis;
     private static volatile RemoteSession remoteSession;
 
-    interface ShellRunner {
+    public interface ShellRunner {
         RootAppProcessLauncher.ShellResult run(String command);
     }
 
     private FeedbackDiagnosticRuntimeTransport() {
     }
 
-    static Status start(String packageName, ShellRunner shellRunner) {
+    public static Status start(String packageName, ShellRunner shellRunner) {
         String sessionId = UUID.randomUUID().toString();
         String eventPath = DIRECTORY + "/" + sessionId + "-" + EVENT_FILE_NAME;
         ShellRunner runner = shellRunner != null
@@ -57,7 +59,7 @@ public final class FeedbackDiagnosticRuntimeTransport {
         return Status.available(eventPath);
     }
 
-    static Snapshot stopSnapshot(ShellRunner shellRunner) {
+    public static Snapshot stopSnapshot(ShellRunner shellRunner) {
         Session session = activeSession;
         activeSession = null;
         remoteSession = null;
@@ -86,7 +88,7 @@ public final class FeedbackDiagnosticRuntimeTransport {
         return Snapshot.available(parseEvents(readResult.output()));
     }
 
-    static Snapshot peekSnapshot(ShellRunner shellRunner) {
+    public static Snapshot peekSnapshot(ShellRunner shellRunner) {
         Session session = activeSession;
         if (session == null) {
             return Snapshot.unavailable("runtime transport unavailable: not started");
@@ -144,7 +146,7 @@ public final class FeedbackDiagnosticRuntimeTransport {
         }
     }
 
-    static Status statusForTest() {
+    public static Status statusForTest() {
         Session session = activeSession;
         if (session == null) {
             return Status.unavailable("runtime transport unavailable: not started");
@@ -152,7 +154,7 @@ public final class FeedbackDiagnosticRuntimeTransport {
         return session.available ? Status.available(session.eventPath) : Status.unavailable(session.reason);
     }
 
-    static String activeEventPath() {
+    public static String activeEventPath() {
         Session session = activeSession;
         return session != null && session.available ? session.eventPath : "";
     }
@@ -389,10 +391,10 @@ public final class FeedbackDiagnosticRuntimeTransport {
                 : exception.getClass().getSimpleName();
     }
 
-    static final class Status {
-        final boolean available;
-        final String path;
-        final String message;
+    public static final class Status {
+        public final boolean available;
+        public final String path;
+        public final String message;
 
         private Status(boolean available, String path, String message) {
             this.available = available;
@@ -409,10 +411,10 @@ public final class FeedbackDiagnosticRuntimeTransport {
         }
     }
 
-    static final class Snapshot {
-        final boolean available;
-        final List<String> events;
-        final String note;
+    public static final class Snapshot {
+        public final boolean available;
+        public final List<String> events;
+        public final String note;
 
         private Snapshot(boolean available, List<String> events, String note) {
             this.available = available;

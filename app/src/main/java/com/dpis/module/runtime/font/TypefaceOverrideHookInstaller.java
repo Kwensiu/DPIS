@@ -1,10 +1,11 @@
 package com.dpis.module.runtime.font;
 
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
+
 import com.dpis.module.BuildConfig;
 
 import com.dpis.module.ModulePackagePlan;
 
-import com.dpis.module.FeedbackDiagnosticRuntimeEvents;
 
 import com.dpis.module.DpisLog;
 

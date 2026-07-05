@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.diagnostics;
+
+import com.dpis.module.*;
 
 import com.dpis.module.appconfig.AppConfigDialogBinder;
 import com.dpis.module.appconfig.AppConfigInputValidation;
@@ -11,8 +13,6 @@ import com.dpis.module.applist.AppListItem;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticForegroundAppReader;
-import com.dpis.module.diagnostics.FeedbackDiagnosticSummaryBuilder;
 import com.dpis.module.root.RootAccessProbe;
 
 import java.text.SimpleDateFormat;
@@ -23,10 +23,10 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-final class FeedbackDiagnosticCoordinator {
+public final class FeedbackDiagnosticCoordinator {
     private static final long FOREGROUND_CHECK_INTERVAL_MS = 1_000L;
 
-    interface Host {
+    public interface Host {
         boolean restartTargetAppForDiagnostic(String packageName);
 
         String dpisPackageName();
@@ -46,23 +46,23 @@ final class FeedbackDiagnosticCoordinator {
         void onFeedbackDiagnosticFinished(Result result);
     }
 
-    static final class Request {
-        final String packageName;
-        final String label;
-        final String versionName;
-        final boolean scopeKnown;
-        final boolean inScope;
-        final boolean dpisEnabled;
-        final boolean previewFromGlobalPrefill;
-        final ViewportTargetSpec viewportTargetSpec;
-        final String viewportApplyMode;
-        final Integer fontScalePercent;
-        final String fontApplyMode;
-        final String typefaceId;
-        final String fontHookDomainsRaw;
-        final Integer wechatDpi;
+    public static final class Request {
+        public final String packageName;
+        public final String label;
+        public final String versionName;
+        public final boolean scopeKnown;
+        public final boolean inScope;
+        public final boolean dpisEnabled;
+        public final boolean previewFromGlobalPrefill;
+        public final ViewportTargetSpec viewportTargetSpec;
+        public final String viewportApplyMode;
+        public final Integer fontScalePercent;
+        public final String fontApplyMode;
+        public final String typefaceId;
+        public final String fontHookDomainsRaw;
+        public final Integer wechatDpi;
 
-        Request(
+        public Request(
                 String packageName,
                 String label,
                 String versionName,
@@ -96,14 +96,14 @@ final class FeedbackDiagnosticCoordinator {
             this.wechatDpi = wechatDpi;
         }
 
-        static Request from(
+        public static Request from(
                 AppListItem item,
                 AppConfigDialogBinder.AppConfigDialogState state
         ) {
             return from(item, state, "");
         }
 
-        static Request from(
+        public static Request from(
                 AppListItem item,
                 AppConfigDialogBinder.AppConfigDialogState state,
                 String versionName
@@ -129,7 +129,7 @@ final class FeedbackDiagnosticCoordinator {
             );
         }
 
-        static Request fromPersisted(
+        public static Request fromPersisted(
                 AppListItem item,
                 AppConfigDialogBinder.AppConfigDialogState state,
                 String versionName,
@@ -169,21 +169,21 @@ final class FeedbackDiagnosticCoordinator {
             );
         }
 
-        boolean isValid() {
+        public boolean isValid() {
             return !packageName.isBlank();
         }
     }
 
-    static final class Result {
-        final Request request;
-        final long startedAtMillis;
-        final long finishedAtMillis;
-        final long durationMs;
-        final boolean targetLaunchStarted;
-        final RootAccessProbe.Result rootAccess;
-        final boolean systemHooksEnabled;
-        final String summary;
-        final List<String> timelineEvents;
+    public static final class Result {
+        public final Request request;
+        public final long startedAtMillis;
+        public final long finishedAtMillis;
+        public final long durationMs;
+        public final boolean targetLaunchStarted;
+        public final RootAccessProbe.Result rootAccess;
+        public final boolean systemHooksEnabled;
+        public final String summary;
+        public final List<String> timelineEvents;
 
         Result(
                 Request request,
@@ -221,7 +221,7 @@ final class FeedbackDiagnosticCoordinator {
     private String lastObservedForegroundPackage;
     private final List<String> runningTimelineEvents = new ArrayList<>();
 
-    FeedbackDiagnosticCoordinator(Host host) {
+    public FeedbackDiagnosticCoordinator(Host host) {
         this(
                 host,
                 new Handler(Looper.getMainLooper()),
@@ -242,7 +242,7 @@ final class FeedbackDiagnosticCoordinator {
         this.summaryBuilder = summaryBuilder;
     }
 
-    boolean start(Request request) {
+    public boolean start(Request request) {
         if (running || host == null || request == null || !request.isValid()) {
             return false;
         }
@@ -280,23 +280,23 @@ final class FeedbackDiagnosticCoordinator {
         return true;
     }
 
-    boolean isRunning() {
+    public boolean isRunning() {
         return running;
     }
 
-    void cancel() {
+    public void cancel() {
         FeedbackDiagnosticRuntimeEvents.cancel();
         FeedbackDiagnosticRuntimeTransport.cancel(null);
         clearRunningState();
         handler.removeCallbacksAndMessages(null);
     }
 
-    void shutdown() {
+    public void shutdown() {
         cancel();
         executor.shutdownNow();
     }
 
-    void onDpisResumed() {
+    public void onDpisResumed() {
         if (running && runningTargetLaunchStarted) {
             finish();
         }

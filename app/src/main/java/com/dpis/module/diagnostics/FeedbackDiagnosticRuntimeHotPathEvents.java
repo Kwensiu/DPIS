@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.diagnostics;
+
+import com.dpis.module.*;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

@@ -18,7 +18,7 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-final class DpisAppLogStore implements DpisLog.AppLogSink {
+public final class DpisAppLogStore implements DpisLog.AppLogSink {
     private static final int DEFAULT_MAX_STORED_LINES = 5_000;
     private static final long DEFAULT_MAX_STORED_BYTES = 1024L * 1024L;
     private static final String LOG_DIRECTORY_NAME = "dpis_logs";
@@ -37,7 +37,7 @@ final class DpisAppLogStore implements DpisLog.AppLogSink {
     private final long maxStoredBytes;
     private final Object lock = new Object();
 
-    DpisAppLogStore(Context context) {
+    public DpisAppLogStore(Context context) {
         appContext = context.getApplicationContext();
         logFile = new File(new File(appContext.getFilesDir(), LOG_DIRECTORY_NAME), LOG_FILE_NAME);
         maxStoredLines = DEFAULT_MAX_STORED_LINES;
@@ -74,13 +74,13 @@ final class DpisAppLogStore implements DpisLog.AppLogSink {
         }
     }
 
-    List<DpisLogEntry> readRecentEntries() {
+    public List<DpisLogEntry> readRecentEntries() {
         synchronized (lock) {
             return readEntriesLocked();
         }
     }
 
-    List<DpisLogEntry> readRecentEntries(int maxEntries) {
+    public List<DpisLogEntry> readRecentEntries(int maxEntries) {
         synchronized (lock) {
             List<DpisLogEntry> entries = readEntriesLocked();
             if (maxEntries <= 0 || entries.size() <= maxEntries) {
