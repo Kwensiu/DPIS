@@ -1,6 +1,7 @@
-package com.dpis.module;
+package com.dpis.module.runtime.systemserver;
 
-final class SystemServerEntryRoute {
+import com.dpis.module.*;
+public final class SystemServerEntryRoute {
     private static final String ENTRY_CONFIG_DISPATCH = "config-dispatch";
     private static final String ENTRY_ACTIVITY_START = "activity-start";
     private static final String ENTRY_LAUNCH_ACTIVITY_ITEM = "launch-activity-item";

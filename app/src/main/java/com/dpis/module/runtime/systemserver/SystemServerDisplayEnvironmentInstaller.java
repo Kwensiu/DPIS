@@ -1,5 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime.systemserver;
 
+import com.dpis.module.*;
 import com.dpis.module.HyperOsFlutterFontBridge;
 
 import com.dpis.module.viewport.PerAppDisplayEnvironment;
@@ -43,7 +44,7 @@ import java.util.function.Predicate;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class SystemServerDisplayEnvironmentInstaller {
+public final class SystemServerDisplayEnvironmentInstaller {
     private static final String PROP_DISABLE_SYSTEM_SERVER_FONT_PACKAGE =
             "debug.dpis.font.disable_system_server_package";
     private static final String PROP_SYSTEM_SERVER_FONT_FALLBACK_PACKAGE =
@@ -127,20 +128,20 @@ final class SystemServerDisplayEnvironmentInstaller {
     private SystemServerDisplayEnvironmentInstaller() {
     }
 
-    static void resetForHotReload() {
+    public static void resetForHotReload() {
         synchronized (SystemServerDisplayEnvironmentInstaller.class) {
             installedPid = -1;
             installedEntries.clear();
         }
     }
 
-    static InstallResult install(XposedInterface xposed,
+    public static InstallResult install(XposedInterface xposed,
                                  DpisConfigStore store,
                                  ModernApiCapabilities apiCapabilities) {
         return install(xposed, store, apiCapabilities, null);
     }
 
-    static InstallResult install(XposedInterface xposed,
+    public static InstallResult install(XposedInterface xposed,
                                  DpisConfigStore store,
                                  ModernApiCapabilities apiCapabilities,
                                  ClassLoader systemServerClassLoader) {
@@ -288,12 +289,12 @@ final class SystemServerDisplayEnvironmentInstaller {
         builder.append(entryName);
     }
 
-    static final class InstallResult {
-        final int installedCount;
-        final int missingCount;
-        final boolean alreadyInstalled;
-        final String installedEntries;
-        final String missingEntries;
+    public static final class InstallResult {
+        public final int installedCount;
+        public final int missingCount;
+        public final boolean alreadyInstalled;
+        public final String installedEntries;
+        public final String missingEntries;
 
         InstallResult(int installedCount, int missingCount, boolean alreadyInstalled) {
             this(installedCount, missingCount, alreadyInstalled, "", "");
@@ -308,11 +309,11 @@ final class SystemServerDisplayEnvironmentInstaller {
             this.missingEntries = missingEntries;
         }
 
-        boolean hasInstalledHooks() {
+        public boolean hasInstalledHooks() {
             return alreadyInstalled || installedCount > 0;
         }
 
-        boolean isComplete() {
+        public boolean isComplete() {
             return alreadyInstalled || missingCount == 0;
         }
     }

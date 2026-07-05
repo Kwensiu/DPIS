@@ -138,7 +138,7 @@ Viewport mode
 
   system
     -> libxposed system_server route
-    -> SystemServerDisplayEnvironmentInstaller owns system-side viewport mutation
+    -> runtime.systemserver.SystemServerDisplayEnvironmentInstaller owns system-side viewport mutation
     -> target selection is field-aware for each system_server entry
     -> app-process Resources bridge remains installed for resource sync/fallback
     -> app-process Display / WindowMetrics supplement is skipped
@@ -150,7 +150,7 @@ Viewport mode
 Font mode
   system
     -> internal system_server_font domain
-    -> SystemServerDisplayEnvironmentInstaller writes Configuration.fontScale
+    -> runtime.systemserver.SystemServerDisplayEnvironmentInstaller writes Configuration.fontScale
        only at launch-activity-item
     -> internal app-process semantic supplements:
        activity_thread_font, resources_font, webview_text_zoom
@@ -229,10 +229,10 @@ DPIS modern target package
   +-- system_server route
   |     |
   |     +-- guard:
-  |     |     SystemServerMutationPolicy.shouldInstallSystemServerHooks
+  |     |     runtime.systemserver.SystemServerMutationPolicy.shouldInstallSystemServerHooks
   |     |
   |     +-- installer:
-  |     |     SystemServerDisplayEnvironmentInstaller.install
+  |     |     runtime.systemserver.SystemServerDisplayEnvironmentInstaller.install
   |     |
   |     +-- source:
   |     |     PerAppDisplayConfigSource
@@ -433,7 +433,7 @@ Detailed app-specific runtime evidence lives in
   |
   +-- app/src/modern/java/com/dpis/module/ModuleMain.java
   +-- libxposed XposedModule lifecycle
-  +-- SystemServerDisplayEnvironmentInstaller installation through XposedInterface
+  +-- runtime.systemserver.SystemServerDisplayEnvironmentInstaller installation through XposedInterface
   +-- 102 hot-reload callbacks are only enabled when the Modern entry is running
       on an API 102-capable framework
 
@@ -454,6 +454,11 @@ shared
   +-- runtime.appprocess.DisplayHookInstaller / runtime.appprocess.WindowMetricsHookInstaller
   +-- ViewportModePolicy / EffectiveModeResolver
 ```
+
+
+System-server route implementation classes now live under `runtime.systemserver`. Flavor entry points still use the same install,
+diagnostic, policy, and process-check protocols; this is package
+classification only, not a route behavior change.
 
 ## Experiment Ledger
 

@@ -7,27 +7,27 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
-final class SourceSmokeTestPaths {
+public final class SourceSmokeTestPaths {
     private SourceSmokeTestPaths() {
     }
 
-    static String read(String relativePath) throws IOException {
+    public static String read(String relativePath) throws IOException {
         return new String(Files.readAllBytes(resolve(relativePath)), StandardCharsets.UTF_8);
     }
 
-    static InputStream open(String relativePath) throws IOException {
+    public static InputStream open(String relativePath) throws IOException {
         return Files.newInputStream(resolve(relativePath));
     }
 
-    static boolean exists(String relativePath) {
+    public static boolean exists(String relativePath) {
         return Files.exists(resolveIfPresent(relativePath));
     }
 
-    static boolean exists(String first, String... more) {
+    public static boolean exists(String first, String... more) {
         return exists(Path.of(first, more).toString());
     }
 
-    static String readRepositoryRoot(String relativePath) throws IOException {
+    public static String readRepositoryRoot(String relativePath) throws IOException {
         return new String(
                 Files.readAllBytes(resolveRepositoryRoot(relativePath)),
                 StandardCharsets.UTF_8);

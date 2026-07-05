@@ -1,5 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime.systemserver;
 
+import com.dpis.module.*;
 import com.dpis.module.viewport.PerAppDisplayEnvironment;
 
 import android.content.res.Configuration;
@@ -8,8 +9,8 @@ import android.graphics.Rect;
 import java.util.ArrayList;
 import java.util.List;
 
-final class SystemServerDisplayDiagnostics {
-    static final String BUILD_MARKER = "2026-04-16-non-primary-alignment-v9";
+public final class SystemServerDisplayDiagnostics {
+    public static final String BUILD_MARKER = "2026-04-16-non-primary-alignment-v9";
     private static final int MAX_PENDING_EVENTS = 32;
     private static final Object PENDING_LOCK = new Object();
     private static final List<String> PENDING_EVENTS = new ArrayList<>();
@@ -42,7 +43,7 @@ final class SystemServerDisplayDiagnostics {
                 + ", safeMode=" + safeModeEnabled;
     }
 
-    static String buildPackageReadyStateLog(String processName, String packageName,
+    public static String buildPackageReadyStateLog(String processName, String packageName,
                                             boolean moduleLoadedObserved,
                                             boolean installAttempted) {
         return "system_server package ready: process=" + safeSummary(processName)
@@ -190,7 +191,7 @@ final class SystemServerDisplayDiagnostics {
         return configurationSummary + "," + frameSummary;
     }
 
-    static void recordPending(String message) {
+    public static void recordPending(String message) {
         synchronized (PENDING_LOCK) {
             if (PENDING_EVENTS.size() >= MAX_PENDING_EVENTS) {
                 PENDING_EVENTS.remove(0);
@@ -199,7 +200,7 @@ final class SystemServerDisplayDiagnostics {
         }
     }
 
-    static void flushPending() {
+    public static void flushPending() {
         List<String> snapshot;
         synchronized (PENDING_LOCK) {
             if (PENDING_EVENTS.isEmpty()) {

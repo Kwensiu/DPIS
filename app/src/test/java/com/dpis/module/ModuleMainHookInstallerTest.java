@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.systemserver.SystemServerDisplayEnvironmentInstaller;
+import com.dpis.module.runtime.systemserver.SystemServerHookCatalog;
+import com.dpis.module.runtime.systemserver.SystemServerMutationPolicy;
+
 import com.dpis.module.runtime.appprocess.DisplayHookInstaller;
 
 import com.dpis.module.runtime.appprocess.WindowMetricsHookInstaller;
@@ -225,7 +229,7 @@ public class ModuleMainHookInstallerTest {
         assertTrue(moduleMain.contains("\"package-loaded\""));
         assertTrue(moduleMain.contains("\"module-loaded-fallback\""));
         assertTrue(moduleMain.contains("\"package-ready\""));
-        assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java")
                 .contains("HyperOsRustProcessHookInstaller.install("));
         assertFalse(SourceSmokeTestPaths.exists("src", "modern", "resources", "META-INF", "xposed", "native_init.list"));
         assertFalse(SourceSmokeTestPaths.exists("src", "main", "assets", "native_init"));
@@ -331,19 +335,19 @@ public class ModuleMainHookInstallerTest {
         assertTrue(moduleMain.contains("system_server hot reload replay enter"));
         assertTrue(moduleMain.contains("SystemServerDisplayEnvironmentInstaller.resetForHotReload();"));
         assertTrue(moduleMain.contains("\"hot-reload\""));
-        assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java")
                 .contains("apiCapabilities.applyStableHookId("));
-        assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java")
                 .contains("static void resetForHotReload()"));
         assertTrue(read("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHotReloadResetter.java")
                 .contains("static void resetAll()"));
-        assertTrue(read("src/main/java/com/dpis/module/SystemServerHookCatalog.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerHookCatalog.java")
                 .contains("system_server_launch_activity_item"));
     }
 
     @Test
     public void systemServerHookDoesNotRetryOriginalAfterProceedThrows() throws IOException {
-        String installer = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+        String installer = read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java");
 
         assertTrue(installer.contains("boolean proceedAttempted = false;"));
         assertTrue(installer.contains("proceedAttempted = true;"));
@@ -358,7 +362,7 @@ public class ModuleMainHookInstallerTest {
                 .contains("DPIS_DIAG"));
         assertFalse(read("src/main/java/com/dpis/module/ConfigStoreFactory.java")
                 .contains("DPIS_DIAG"));
-        assertFalse(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
+        assertFalse(read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java")
                 .contains("DPIS_DIAG"));
     }
 

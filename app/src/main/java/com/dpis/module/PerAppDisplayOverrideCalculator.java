@@ -8,11 +8,11 @@ import com.dpis.module.viewport.ViewportTargetSpec;
 
 import android.content.res.Configuration;
 
-final class PerAppDisplayOverrideCalculator {
+public final class PerAppDisplayOverrideCalculator {
     private PerAppDisplayOverrideCalculator() {
     }
 
-    static PerAppDisplayEnvironment calculate(Configuration configuration,
+    public static PerAppDisplayEnvironment calculate(Configuration configuration,
                                               int widthPx,
                                               int heightPx,
                                               int targetViewportWidthDp) {
@@ -39,7 +39,7 @@ final class PerAppDisplayOverrideCalculator {
                 heightPx);
     }
 
-    static PerAppDisplayEnvironment calculate(Configuration configuration,
+    public static PerAppDisplayEnvironment calculate(Configuration configuration,
                                               int widthPx,
                                               int heightPx,
                                               ViewportTargetSpec targetSpec) {

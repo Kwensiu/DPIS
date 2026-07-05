@@ -8,44 +8,44 @@ import com.dpis.module.viewport.ViewportTargetSpec;
 
 import java.util.Set;
 
-final class PerAppDisplayConfigSource {
-    interface SnapshotProvider {
+public final class PerAppDisplayConfigSource {
+    public interface SnapshotProvider {
         ConfigSnapshot get();
     }
 
-    interface PackageFallbackProvider {
+    public interface PackageFallbackProvider {
         PackageConfigSnapshot get(String packageName);
     }
 
     private final SnapshotProvider snapshotProvider;
     private final PackageFallbackProvider packageFallbackProvider;
 
-    PerAppDisplayConfigSource(DpisConfigStore store) {
+    public PerAppDisplayConfigSource(DpisConfigStore store) {
         this(ConfigSnapshotLoader.fromStore(store));
     }
 
-    PerAppDisplayConfigSource(ConfigSnapshot snapshot) {
+    public PerAppDisplayConfigSource(ConfigSnapshot snapshot) {
         this(() -> snapshot);
     }
 
-    PerAppDisplayConfigSource(SnapshotProvider snapshotProvider) {
+    public PerAppDisplayConfigSource(SnapshotProvider snapshotProvider) {
         this(snapshotProvider, null);
     }
 
-    PerAppDisplayConfigSource(SnapshotProvider snapshotProvider,
+    public PerAppDisplayConfigSource(SnapshotProvider snapshotProvider,
                               PackageFallbackProvider packageFallbackProvider) {
         this.snapshotProvider = snapshotProvider;
         this.packageFallbackProvider = packageFallbackProvider;
     }
 
-    static PerAppDisplayConfigSource withLegacyRuntimePropertyFallback(
+    public static PerAppDisplayConfigSource withLegacyRuntimePropertyFallback(
             SnapshotProvider snapshotProvider) {
         return new PerAppDisplayConfigSource(
                 snapshotProvider,
                 PerAppDisplayConfigSource::loadLegacyRuntimePropertyConfig);
     }
 
-    PerAppDisplayConfig get(String packageName) {
+    public PerAppDisplayConfig get(String packageName) {
         ConfigSnapshot snapshot = getSnapshot();
         PackageConfigSnapshot packageConfig = snapshot.getPackage(packageName);
         if (packageConfig != null && !packageConfig.dpisEnabled) {
@@ -83,11 +83,11 @@ final class PerAppDisplayConfigSource {
                 packageConfig.hookDomainOverride);
     }
 
-    Set<String> getConfiguredPackages() {
+    public Set<String> getConfiguredPackages() {
         return getSnapshot().getConfiguredPackages();
     }
 
-    boolean isSystemServerHooksEnabled() {
+    public boolean isSystemServerHooksEnabled() {
         return getSnapshot().isSystemServerHooksEnabled();
     }
 

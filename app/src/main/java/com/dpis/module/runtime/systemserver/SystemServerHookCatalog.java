@@ -1,6 +1,7 @@
-package com.dpis.module;
+package com.dpis.module.runtime.systemserver;
 
-final class SystemServerHookCatalog {
+import com.dpis.module.*;
+public final class SystemServerHookCatalog {
     static final SystemServerHookSpec LAUNCH_ACTIVITY_ITEM =
             SystemServerHookSpec.constructor(
                     "launch-activity-item",

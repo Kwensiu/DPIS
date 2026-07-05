@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime.systemserver;
+
+import com.dpis.module.*;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
 
@@ -219,7 +221,7 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
 
     @Test
     public void hyperOsBootstrapHooksAreGuardedBySafeModeInSource() throws IOException {
-        String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+        String source = read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java");
 
         assertTrue(source.contains("SystemServerMutationPolicy.shouldInstallTarget("));
         assertTrue(source.contains("launch-activity-item"));
@@ -230,9 +232,9 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
 
     @Test
     public void systemServerHookCatalogOwnsModernEntryDefinitions() throws IOException {
-        String installer = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
-        String catalog = read("src/main/java/com/dpis/module/SystemServerHookCatalog.java");
-        String spec = read("src/main/java/com/dpis/module/SystemServerHookSpec.java");
+        String installer = read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java");
+        String catalog = read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerHookCatalog.java");
+        String spec = read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerHookSpec.java");
 
         assertTrue(installer.contains("SystemServerHookCatalog.methodHookSpecs()"));
         assertTrue(installer.contains("SystemServerHookCatalog.LAUNCH_ACTIVITY_ITEM"));
@@ -248,7 +250,7 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
 
     @Test
     public void partialSystemServerInstallDoesNotCloseProcessGate() throws IOException {
-        String installer = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+        String installer = read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java");
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
         assertTrue(installer.contains("markInstalledWhenComplete(missingCount);"));
@@ -263,7 +265,7 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     @Test
     public void launchActivityItemRestoresViewportConfigMutation()
             throws IOException {
-        String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+        String source = read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java");
         int methodIndex = source.indexOf("private static void applyLaunchActivityItemArgs");
         int nextMethodIndex = source.indexOf("private static void logViewportMarkerProbe", methodIndex);
         assertTrue(methodIndex > 0);
@@ -280,7 +282,7 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     @Test
     public void relativeScaleUsesMarkerGatedExplicitSystemServerViewportMutation()
             throws IOException {
-        String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+        String source = read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java");
         assertTrue(source.contains("private static boolean hasSystemServerViewportOverride"));
         assertTrue(source.contains("if (ViewportApplyMode.SYSTEM.equals(mode))"));
         assertTrue(source.contains("ViewportApplyMode.AUTO.equals(mode)"));
@@ -485,8 +487,8 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     @Test
     public void systemServerMutationSchedulerTodoDocumentsFieldSemantics()
             throws IOException {
-        String installer = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
-        String policy = read("src/main/java/com/dpis/module/SystemServerMutationPolicy.java");
+        String installer = read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java");
+        String policy = read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerMutationPolicy.java");
 
         assertTrue(installer.contains("TODO(system-mutation-scheduler)"));
         assertTrue(installer.contains("SystemServerMutationField.VIEWPORT"));
@@ -554,7 +556,7 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     @Test
     public void debugSystemServerFontDisableIsDebugOnlyAndLoggedInSource()
             throws IOException {
-        String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+        String source = read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java");
         String matcher = read("src/main/java/com/dpis/module/runtime/DebugPackageOverride.java");
 
         assertTrue(source.contains("debug.dpis.font.disable_system_server_package"));
@@ -599,7 +601,7 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     @Test
     public void debugSystemServerFontFallbackIsDebugOnlyAndLoggedInSource()
             throws IOException {
-        String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+        String source = read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java");
         String matcher = read("src/main/java/com/dpis/module/runtime/DebugPackageOverride.java");
 
         assertTrue(source.contains("debug.dpis.font.system_server_fallback_package"));

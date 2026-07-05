@@ -1,8 +1,9 @@
-package com.dpis.module;
+package com.dpis.module.runtime.systemserver;
 
+import com.dpis.module.*;
 import com.dpis.module.hooks.HookRuntimePolicy;
 
-final class SystemServerMutationPolicy {
+public final class SystemServerMutationPolicy {
     private SystemServerMutationPolicy() {
     }
 
@@ -46,7 +47,7 @@ final class SystemServerMutationPolicy {
         return true;
     }
 
-    static boolean shouldInstallSystemServerHooks(String processName,
+    public static boolean shouldInstallSystemServerHooks(String processName,
                                                   String packageName,
                                                   HookRuntimePolicy policy) {
         if (!SystemServerProcess.isSystemServer(processName, packageName)) {

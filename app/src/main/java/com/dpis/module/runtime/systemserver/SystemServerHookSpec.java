@@ -1,9 +1,10 @@
-package com.dpis.module;
+package com.dpis.module.runtime.systemserver;
 
+import com.dpis.module.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
-final class SystemServerHookSpec {
+public final class SystemServerHookSpec {
     final String entryName;
     final String[] classNames;
     final String[] methodNames;

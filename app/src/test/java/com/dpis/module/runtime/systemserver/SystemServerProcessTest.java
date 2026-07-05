@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime.systemserver;
+
+import com.dpis.module.*;
 
 import org.junit.Test;
 

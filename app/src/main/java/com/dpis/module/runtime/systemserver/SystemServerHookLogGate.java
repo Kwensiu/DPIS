@@ -1,10 +1,11 @@
-package com.dpis.module;
+package com.dpis.module.runtime.systemserver;
 
+import com.dpis.module.*;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-final class SystemServerHookLogGate {
+public final class SystemServerHookLogGate {
     private static final int MAX_LOG_CACHE_ENTRIES = 2048;
     private static final ConcurrentMap<String, String> LAST_PROBE_LOGS = new ConcurrentHashMap<>();
     private static final ConcurrentMap<String, Long> LAST_PROBE_LOG_TIMESTAMPS =

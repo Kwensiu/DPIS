@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.systemserver.SystemServerDisplayEnvironmentInstaller;
+
 import com.dpis.module.runtime.appprocess.ViewRootProbeHookInstaller;
 
 import com.dpis.module.runtime.appprocess.WindowSessionProbeHookInstaller;
@@ -59,7 +61,7 @@ public class HotReloadInstallerResetSourceTest {
         assertSourceContains("src/main/java/com/dpis/module/runtime/appprocess/ResourcesProbeHookInstaller.java",
                 "static void resetForHotReload()",
                 "installedPid = -1;");
-        assertSourceContains("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java",
+        assertSourceContains("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java",
                 "static void resetForHotReload()",
                 "installedPid = -1;");
         assertSourceContains("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.java",

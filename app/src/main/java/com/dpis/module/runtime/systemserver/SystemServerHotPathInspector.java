@@ -1,9 +1,10 @@
-package com.dpis.module;
+package com.dpis.module.runtime.systemserver;
 
+import com.dpis.module.*;
 import java.util.List;
 import java.util.Set;
 
-final class SystemServerHotPathInspector {
+public final class SystemServerHotPathInspector {
     private SystemServerHotPathInspector() {
     }
 

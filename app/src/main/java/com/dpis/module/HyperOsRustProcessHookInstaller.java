@@ -11,7 +11,7 @@ import java.util.StringJoiner;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class HyperOsRustProcessHookInstaller {
+public final class HyperOsRustProcessHookInstaller {
     private static final String RUST_PROCESS_IMPL = "android.os.RustProcessImpl";
     private static final String START_RUST_PROCESS = "startRustProcess";
     private static final int ARG_PACKAGE_NAME = 1;
@@ -24,7 +24,7 @@ final class HyperOsRustProcessHookInstaller {
     private HyperOsRustProcessHookInstaller() {
     }
 
-    static boolean install(XposedInterface xposed, PerAppDisplayConfigSource source) {
+    public static boolean install(XposedInterface xposed, PerAppDisplayConfigSource source) {
         Class<?> clazz = resolveClass(RUST_PROCESS_IMPL);
         if (clazz == null) {
             DpisLog.i("DPIS_FONT HyperOS Rust process hook missing: class=" + RUST_PROCESS_IMPL);

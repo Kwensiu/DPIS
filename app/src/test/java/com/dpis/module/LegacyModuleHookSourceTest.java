@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.systemserver.SystemServerProcess;
+
 import com.dpis.module.runtime.appprocess.DisplayHookInstaller;
 
 import com.dpis.module.runtime.appprocess.ResourcesReadHookInstaller;

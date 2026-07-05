@@ -4,7 +4,7 @@ import android.os.SystemClock;
 
 import java.util.function.Supplier;
 
-final class RefreshingConfigSnapshotProvider implements PerAppDisplayConfigSource.SnapshotProvider {
+public final class RefreshingConfigSnapshotProvider implements PerAppDisplayConfigSource.SnapshotProvider {
     private static final long FAILURE_LOG_MIN_INTERVAL_MILLIS = 30_000L;
 
     interface Clock {
@@ -20,11 +20,11 @@ final class RefreshingConfigSnapshotProvider implements PerAppDisplayConfigSourc
     private volatile long lastFailureLoggedAtMillis;
     private volatile String lastFailureMessage;
 
-    RefreshingConfigSnapshotProvider(Supplier<ConfigSnapshot> loader, long ttlMillis) {
+    public RefreshingConfigSnapshotProvider(Supplier<ConfigSnapshot> loader, long ttlMillis) {
         this(loader, ttlMillis, SystemClock::elapsedRealtime);
     }
 
-    RefreshingConfigSnapshotProvider(Supplier<ConfigSnapshot> loader,
+    public RefreshingConfigSnapshotProvider(Supplier<ConfigSnapshot> loader,
                                      long ttlMillis,
                                      Clock clock) {
         this.loader = loader;

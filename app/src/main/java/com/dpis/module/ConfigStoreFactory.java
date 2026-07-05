@@ -91,7 +91,7 @@ public final class ConfigStoreFactory {
         return createLocalFontLibraryStore(context);
     }
 
-    static DpisConfigStore createForXposedHost(XposedInterface xposed) {
+    public static DpisConfigStore createForXposedHost(XposedInterface xposed) {
         SharedPreferences remotePreferences = null;
         if (xposed != null) {
             try {

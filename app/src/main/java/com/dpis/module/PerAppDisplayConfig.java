@@ -6,38 +6,38 @@ import com.dpis.module.viewport.ViewportTargetSpec;
 
 import com.dpis.module.hooks.HookDomainOverride;
 
-final class PerAppDisplayConfig {
-    final String packageName;
-    final ViewportTargetSpec targetViewportSpec;
-    final String targetViewportMode;
-    final Integer targetFontScalePercent;
-    final String targetFontMode;
-    final boolean hyperOsFlutterFontHookEnabled;
-    final boolean viewportOverrideEnabled;
-    final HookDomainOverride hookDomainOverride;
+public final class PerAppDisplayConfig {
+    public final String packageName;
+    public final ViewportTargetSpec targetViewportSpec;
+    public final String targetViewportMode;
+    public final Integer targetFontScalePercent;
+    public final String targetFontMode;
+    public final boolean hyperOsFlutterFontHookEnabled;
+    public final boolean viewportOverrideEnabled;
+    public final HookDomainOverride hookDomainOverride;
 
-    PerAppDisplayConfig(String packageName, int targetViewportWidthDp) {
+    public PerAppDisplayConfig(String packageName, int targetViewportWidthDp) {
         this(packageName, targetViewportWidthDp, null);
     }
 
-    PerAppDisplayConfig(String packageName, int targetViewportWidthDp,
+    public PerAppDisplayConfig(String packageName, int targetViewportWidthDp,
                         Integer targetFontScalePercent) {
         this(packageName, Integer.valueOf(targetViewportWidthDp),
                 targetFontScalePercent, FontApplyMode.OFF);
     }
 
-    PerAppDisplayConfig(String packageName, Integer targetViewportWidthDp,
+    public PerAppDisplayConfig(String packageName, Integer targetViewportWidthDp,
                         Integer targetFontScalePercent) {
         this(packageName, targetViewportWidthDp, targetFontScalePercent, FontApplyMode.OFF);
     }
 
-    PerAppDisplayConfig(String packageName, Integer targetViewportWidthDp,
+    public PerAppDisplayConfig(String packageName, Integer targetViewportWidthDp,
                         Integer targetFontScalePercent, String targetFontMode) {
         this(packageName, targetViewportWidthDp, targetFontScalePercent, targetFontMode, false,
                 HookDomainOverride.automatic());
     }
 
-    PerAppDisplayConfig(String packageName,
+    public PerAppDisplayConfig(String packageName,
                         Integer targetViewportWidthDp,
                         Integer targetFontScalePercent,
                         String targetFontMode,
@@ -46,7 +46,7 @@ final class PerAppDisplayConfig {
                 hyperOsFlutterFontHookEnabled, HookDomainOverride.automatic());
     }
 
-    PerAppDisplayConfig(String packageName,
+    public PerAppDisplayConfig(String packageName,
                         Integer targetViewportWidthDp,
                         Integer targetFontScalePercent,
                         String targetFontMode,
@@ -63,7 +63,7 @@ final class PerAppDisplayConfig {
                 hookDomainOverride);
     }
 
-    PerAppDisplayConfig(String packageName,
+    public PerAppDisplayConfig(String packageName,
                         ViewportTargetSpec targetViewportSpec,
                         String targetViewportMode,
                         Integer targetFontScalePercent,
@@ -84,11 +84,11 @@ final class PerAppDisplayConfig {
                 : HookDomainOverride.automatic();
     }
 
-    boolean hasViewportOverride() {
+    public boolean hasViewportOverride() {
         return viewportOverrideEnabled;
     }
 
-    int targetViewportWidthDp() {
+    public int targetViewportWidthDp() {
         return targetViewportSpec.isAbsoluteDp()
                 ? targetViewportSpec.absoluteWidthDp()
                 : 0;

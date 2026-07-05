@@ -70,6 +70,7 @@ the real dependency graph is inspected.
 | `viewport` | `DpiConfig` | Low-risk utility move. Keeps compat viewport seed rules near viewport semantics. |
 | `runtime.systemserver` | `LegacySystemServerGate` | Small legacy gate move for system-server installation policy. |
 | `runtime.systemserver` | `ConfigSnapshotRefreshPolicy`, `ReflectionProbeCache`, `SystemServerPackageUidResolver` | System-server route support helpers with narrow callers. |
+| `runtime.systemserver` | `SystemServerDisplayDiagnostics`, `SystemServerDisplayEnvironmentInstaller`, `SystemServerEntryRoute`, `SystemServerHookCatalog`, `SystemServerHookLogGate`, `SystemServerHookSpec`, `SystemServerHotPathInspector`, `SystemServerMutationField`, `SystemServerMutationPolicy`, `SystemServerProcess` | System-server route installation, diagnostics, route catalog, log gating, mutation policy, and process checks. Flavor entries keep calling the same public install/diagnostic protocols; route behavior is unchanged. |
 | `runtime` | `CallerTrace` | Runtime probe caller formatting helper shared by app-process probe hooks. |
 | `runtime` | `DebugPackageOverride` | Debug-only package override matcher shared by app-process, modern, and system-server debug gates. |
 | `runtime` | `RuntimeDiagnosticLogFingerprint` | Stable runtime log fingerprint helper used by app-process display/window hook logs. Moved separately because it has no diagnostic package file-role ownership. |
@@ -167,7 +168,7 @@ not as progress toward package cleanup.
 | `FeedbackDiagnosticRuntimeEvents`, `FeedbackDiagnosticRuntimeHotPathEvents`, `FeedbackDiagnosticRuntimeSelfTest`, `FeedbackDiagnosticRuntimeTransport` | These are runtime capture and hook hot-path pieces used directly by app-process/system-server route installers and runtime tests. Moving them would require publishing hook-facing internals across package boundaries; keep them root-owned until runtime route ownership is reviewed. |
 | `PerAppDisplayConfigSource`, `PerAppDisplayOverrideCalculator`, `DisplayOverridePipeline` | These are viewport/system-server route model helpers, not ordinary UI helpers. Moving them touches runtime route ownership and source-smoke evidence; handle under the runtime route playbook. |
 | `FontMode`, `PlanReason`, `DebugFontOverride` | Hook-planner support values are now public because the planner moved to `hooks`, but they still stay root-owned until the broader font-mode/runtime decision model moves together. |
-| `ResourcesReadHookPolicy`, `SystemServerHookSpec`, `SystemServerMutationField`, `SystemServerProcess`, `WindowFrameOverride` | Runtime route-owned policy/value types. Move only with the relevant route document review and route-focused tests. |
+| `ResourcesReadHookPolicy`, `WindowFrameOverride` | Runtime route-owned policy/value types. Move only with the relevant route document review and route-focused tests. |
 | Public Android components such as `MainActivity`, `QuickConfigActivity`, activities, services, providers, and receivers | Package moves would change manifest component class names and may affect shortcuts, QS tiles, or external component references. Handle in a component-routing migration, not this package cleanup. |
 
 ## Naming Cleanup

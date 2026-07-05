@@ -1,6 +1,7 @@
-package com.dpis.module;
+package com.dpis.module.runtime.systemserver;
 
-final class SystemServerProcess {
+import com.dpis.module.*;
+public final class SystemServerProcess {
     private static final String PROCESS_ANDROID = "android";
     private static final String PROCESS_SYSTEM = "system";
     private static final String PACKAGE_ANDROID = "android";
@@ -8,7 +9,7 @@ final class SystemServerProcess {
     private SystemServerProcess() {
     }
 
-    static boolean isSystemServer(String processName, String packageName) {
+    public static boolean isSystemServer(String processName, String packageName) {
         return PROCESS_ANDROID.equals(processName)
                 || PROCESS_SYSTEM.equals(processName)
                 || PACKAGE_ANDROID.equals(packageName);

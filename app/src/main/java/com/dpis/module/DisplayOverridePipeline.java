@@ -4,7 +4,7 @@ import com.dpis.module.viewport.VirtualDisplayPlan;
 
 import com.dpis.module.viewport.VirtualDisplayOverride;
 
-final class DisplayOverridePipeline {
+public final class DisplayOverridePipeline {
     private DisplayOverridePipeline() {
     }
 

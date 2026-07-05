@@ -9,11 +9,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-final class ConfigSnapshotLoader {
+public final class ConfigSnapshotLoader {
     private ConfigSnapshotLoader() {
     }
 
-    static ConfigSnapshot fromStore(DpisConfigStore store) {
+    public static ConfigSnapshot fromStore(DpisConfigStore store) {
         if (store == null) {
             return ConfigSnapshot.empty();
         }

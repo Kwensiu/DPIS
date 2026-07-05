@@ -17,7 +17,7 @@ public final class WebApkCarrierResolver {
                 && packageName.startsWith(WEBAPK_PACKAGE_PREFIX);
     }
 
-    static Set<String> collectOwnerPackagesFromText(String text, int maxCount) {
+    public static Set<String> collectOwnerPackagesFromText(String text, int maxCount) {
         Set<String> owners = new LinkedHashSet<>();
         collectByPrefix(text, WEBAPK_PACKAGE_PREFIX, owners, maxCount);
         collectFromWebAppUri(text, owners, maxCount);
