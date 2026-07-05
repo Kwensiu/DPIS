@@ -16,6 +16,7 @@ import android.util.Log;
 
 import com.dpis.module.runtime.RuntimeClock;
 import com.dpis.module.runtime.systemserver.ConfigSnapshotRefreshPolicy;
+import com.dpis.module.runtime.systemserver.PerAppDisplayConfig;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;

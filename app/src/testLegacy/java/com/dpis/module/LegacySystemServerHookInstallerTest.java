@@ -7,6 +7,8 @@ import com.dpis.module.viewport.ViewportTargetSpec;
 
 import com.dpis.module.hooks.HookDomainOverride;
 
+import com.dpis.module.runtime.systemserver.PerAppDisplayConfig;
+
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 

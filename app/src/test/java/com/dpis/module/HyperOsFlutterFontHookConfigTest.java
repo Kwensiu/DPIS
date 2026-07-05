@@ -12,6 +12,7 @@ import com.dpis.module.fonts.hookdomain.FontHookDomainPropertyBridge;
 
 
 import com.dpis.module.runtime.font.HyperOsFlutterFontHookInstaller;
+import com.dpis.module.runtime.systemserver.PerAppDisplayConfig;
 
 import com.dpis.module.viewport.ViewportPropertyBridge;
 import com.dpis.module.viewport.ViewportApplyMode;

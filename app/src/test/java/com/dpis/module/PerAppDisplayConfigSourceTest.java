@@ -10,6 +10,8 @@ import com.dpis.module.viewport.ViewportOverride;
 import com.dpis.module.hooks.HookDomainOverride;
 import com.dpis.module.hooks.HookDomainOverrideStore;
 
+import com.dpis.module.runtime.systemserver.PerAppDisplayConfig;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

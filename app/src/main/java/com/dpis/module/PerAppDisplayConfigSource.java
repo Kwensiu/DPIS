@@ -4,6 +4,8 @@ import com.dpis.module.fonts.FontApplyMode;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainDecision;
 
+import com.dpis.module.runtime.systemserver.PerAppDisplayConfig;
+
 import com.dpis.module.viewport.ViewportPropertyBridge;
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;
@@ -111,4 +113,3 @@ public final class PerAppDisplayConfigSource {
         return snapshot.getPackage(packageName);
     }
 }
-
