@@ -1,5 +1,8 @@
 package com.dpis.module.templates;
 
+import com.dpis.module.DpisConfigStore;
+
+
 import com.dpis.module.*;
 
 

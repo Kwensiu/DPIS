@@ -1,7 +1,8 @@
 package com.dpis.module.appconfig;
 
+import com.dpis.module.fonts.FontApplyMode;
+
 import com.dpis.module.R;
-import com.dpis.module.FontApplyMode;
 
 import com.dpis.module.viewport.ViewportTargetType;
 

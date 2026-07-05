@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontApplyMode;
+
 import com.dpis.module.fonts.HyperOsNativeProxyBindMounter;
 
 import android.content.Context;

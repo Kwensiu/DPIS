@@ -1,9 +1,11 @@
 package com.dpis.module.runtime.font;
 
-import com.dpis.module.BuildConfig;
 import com.dpis.module.DpisConfigStore;
+
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.BuildConfig;
 import com.dpis.module.DpisLog;
-import com.dpis.module.FontApplyMode;
 
 import android.annotation.SuppressLint;
 import android.os.Build;

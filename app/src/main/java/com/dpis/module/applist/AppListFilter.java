@@ -1,6 +1,7 @@
 package com.dpis.module.applist;
 
-import com.dpis.module.FontApplyMode;
+import com.dpis.module.fonts.FontApplyMode;
+
 
 import java.util.Locale;
 

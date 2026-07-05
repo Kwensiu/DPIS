@@ -1,8 +1,9 @@
 package com.dpis.module.viewport;
 
+import com.dpis.module.DpisConfigStore;
+
 import com.dpis.module.runtime.appprocess.WebApkCarrierResolver;
 
-import com.dpis.module.DpisConfigStore;
 
 import com.dpis.module.hooks.HookRuntimePolicy;
 

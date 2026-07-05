@@ -1,7 +1,9 @@
 package com.dpis.module.hooks;
 
 import com.dpis.module.ConfigSnapshot;
+
 import com.dpis.module.DpisConfigStore;
+
 
 public final class HookRuntimePolicy {
     public final boolean systemServerHooksEnabled;

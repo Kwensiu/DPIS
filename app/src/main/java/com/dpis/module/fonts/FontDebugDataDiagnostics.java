@@ -1,5 +1,7 @@
 package com.dpis.module.fonts;
 
+import com.dpis.module.DpisConfigStore;
+
 import com.dpis.module.*;
 
 import android.content.SharedPreferences;

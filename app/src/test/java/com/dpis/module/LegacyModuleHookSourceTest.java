@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+
+
+import com.dpis.module.fonts.FontApplyMode;
+
 import com.dpis.module.runtime.systemserver.SystemServerProcess;
 
 import com.dpis.module.runtime.appprocess.DisplayHookInstaller;
@@ -8,7 +12,6 @@ import com.dpis.module.runtime.appprocess.ResourcesReadHookInstaller;
 
 import com.dpis.module.runtime.appprocess.ResourcesManagerHookInstaller;
 
-import com.dpis.module.HyperOsFlutterFontBridge;
 
 import com.dpis.module.fonts.FontLibraryStore;
 

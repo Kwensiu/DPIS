@@ -1,5 +1,7 @@
 package com.dpis.module.runtime.font;
 
+import com.dpis.module.DpisConfigStore;
+
 import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
 
 import com.dpis.module.BuildConfig;
@@ -9,7 +11,6 @@ import com.dpis.module.ModulePackagePlan;
 
 import com.dpis.module.DpisLog;
 
-import com.dpis.module.DpisConfigStore;
 
 import com.dpis.module.fonts.FontLibraryEntry;
 import com.dpis.module.fonts.FontLibraryStore;

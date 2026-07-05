@@ -1,5 +1,7 @@
 package com.dpis.module.runtime.appprocess;
 
+import com.dpis.module.DpisConfigStore;
+
 import com.dpis.module.runtime.font.DebugFontOverride;
 
 import com.dpis.module.*;

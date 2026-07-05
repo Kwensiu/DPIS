@@ -1,13 +1,15 @@
 package com.dpis.module.runtime.font;
 
+import com.dpis.module.DpisConfigStore;
+
+import com.dpis.module.fonts.FontApplyMode;
+
 import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
 
-import com.dpis.module.FontApplyMode;
 
 
 import com.dpis.module.DpisLog;
 
-import com.dpis.module.DpisConfigStore;
 
 import android.graphics.Paint;
 

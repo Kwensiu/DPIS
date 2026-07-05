@@ -1,5 +1,7 @@
 package com.dpis.module.runtime;
 
+import com.dpis.module.DpisConfigStore;
+
 import com.dpis.module.*;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;

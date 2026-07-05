@@ -1,5 +1,9 @@
 package com.dpis.module.templates;
 
+import com.dpis.module.DpisConfigStore;
+
+import com.dpis.module.fonts.FontApplyMode;
+
 import com.dpis.module.appconfig.AppConfigDialogBinder;
 import com.dpis.module.appconfig.AppConfigInputValidation;
 import com.dpis.module.appconfig.AppConfigSaveHandler;

@@ -1,6 +1,9 @@
 package com.dpis.module;
 
 
+import com.dpis.module.fonts.FontApplyMode;
+
+
 
 import com.dpis.module.appconfig.AppConfigDialogBinder;
 import com.dpis.module.appconfig.AppConfigInputValidation;

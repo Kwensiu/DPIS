@@ -1,8 +1,9 @@
 package com.dpis.module.quirks;
 
+import com.dpis.module.DpisConfigStore;
+
 import com.dpis.module.viewport.DpiConfig;
 
-import com.dpis.module.DpisConfigStore;
 import com.dpis.module.appconfig.WechatDpiConfig;
 import com.dpis.module.runtime.WechatDpiPropertyBridge;
 

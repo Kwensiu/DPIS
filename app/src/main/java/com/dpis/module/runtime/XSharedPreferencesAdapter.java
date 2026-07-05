@@ -1,5 +1,7 @@
 package com.dpis.module.runtime;
 
+import com.dpis.module.DpisConfigStore;
+
 import android.content.SharedPreferences;
 
 import java.util.Collections;

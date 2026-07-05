@@ -1,5 +1,7 @@
 package com.dpis.module.templates;
 
+import com.dpis.module.PackageConfigValue;
+
 import com.dpis.module.viewport.ViewportTargetSpec;
 import com.dpis.module.viewport.ViewportTargetType;
 

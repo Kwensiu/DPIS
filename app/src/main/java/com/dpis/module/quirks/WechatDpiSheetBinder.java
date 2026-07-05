@@ -1,9 +1,10 @@
 package com.dpis.module.quirks;
 
+import com.dpis.module.DpisConfigStore;
+
 import com.dpis.module.viewport.DpiConfig;
 
 import com.dpis.module.DpisApplication;
-import com.dpis.module.DpisConfigStore;
 import com.dpis.module.R;
 import com.dpis.module.appconfig.WechatDpiConfig;
 

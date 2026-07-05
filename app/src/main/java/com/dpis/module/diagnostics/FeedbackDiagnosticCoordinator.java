@@ -1,5 +1,9 @@
 package com.dpis.module.diagnostics;
 
+import com.dpis.module.DpisConfigStore;
+
+import com.dpis.module.fonts.FontApplyMode;
+
 import com.dpis.module.*;
 
 import com.dpis.module.appconfig.AppConfigDialogBinder;

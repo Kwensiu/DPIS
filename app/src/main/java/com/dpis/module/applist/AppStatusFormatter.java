@@ -1,10 +1,11 @@
 package com.dpis.module.applist;
 
+import com.dpis.module.fonts.FontApplyMode;
+
 import com.dpis.module.viewport.EffectiveModeResolver;
 
 import com.dpis.module.R;
 
-import com.dpis.module.FontApplyMode;
 
 import com.dpis.module.appconfig.AppConfigInputValidation;
 

@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.fonts;
 
 public final class FontApplyMode {
     public static final String OFF = "off";

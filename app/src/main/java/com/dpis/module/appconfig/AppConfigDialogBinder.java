@@ -1,12 +1,14 @@
 package com.dpis.module.appconfig;
 
+import com.dpis.module.DpisConfigStore;
+
+import com.dpis.module.fonts.FontApplyMode;
+
 import com.dpis.module.applist.AppStatusFormatter;
 
 import com.dpis.module.R;
 import com.dpis.module.ConfigStoreFactory;
-import com.dpis.module.DpisConfigStore;
 import com.dpis.module.DpisApplication;
-import com.dpis.module.FontApplyMode;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation;
 
