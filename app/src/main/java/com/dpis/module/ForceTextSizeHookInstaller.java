@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
+
 import com.dpis.module.fonts.FontDebugStatsReporter;
 import com.dpis.module.fonts.TextViewFontProvenanceTracker;
 

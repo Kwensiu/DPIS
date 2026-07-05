@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.applist.AppListItem;
+import com.dpis.module.applist.AppListPage;
+import com.dpis.module.applist.AppListPagerAdapter;
+
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -9,7 +13,7 @@ import org.junit.Test;
 public class AppListPagerAdapterSourceSmokeTest {
     @Test
     public void pageListAdapter_usesListAdapterAndDiffUtil() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppListPagerAdapter.java");
+        String source = read("src/main/java/com/dpis/module/applist/AppListPagerAdapter.java");
 
         assertTrue(source.contains("interface OnPageListScrollListener"));
         assertTrue(source.contains("interface OnIconResolveRequestListener"));
@@ -27,7 +31,7 @@ public class AppListPagerAdapterSourceSmokeTest {
 
     @Test
     public void submitPage_updatesActiveHolderWithoutPageLevelRebind() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppListPagerAdapter.java");
+        String source = read("src/main/java/com/dpis/module/applist/AppListPagerAdapter.java");
 
         assertTrue(source.contains("PageHolder holder = activeHolders.get(page);"));
         assertTrue(source.contains("holder.submitItems(snapshot);"));
@@ -36,7 +40,7 @@ public class AppListPagerAdapterSourceSmokeTest {
 
     @Test
     public void statusRefresh_limitsUpdateToVisibleRowsAndDisablesChangeAnimations() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppListPagerAdapter.java");
+        String source = read("src/main/java/com/dpis/module/applist/AppListPagerAdapter.java");
 
         assertTrue(source.contains("setSupportsChangeAnimations(false)"));
         assertTrue(source.contains("adapter.submit(items, this::refreshStatuses);"));
@@ -47,7 +51,7 @@ public class AppListPagerAdapterSourceSmokeTest {
 
     @Test
     public void missingIcon_usesSkeletonAndRequestsAsyncResolve() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppListPagerAdapter.java");
+        String source = read("src/main/java/com/dpis/module/applist/AppListPagerAdapter.java");
 
         assertTrue(source.contains("holder.iconSkeleton.setVisibility(View.VISIBLE);"));
         assertTrue(source.contains("holder.iconSkeleton.setVisibility(View.GONE);"));
@@ -57,14 +61,14 @@ public class AppListPagerAdapterSourceSmokeTest {
 
     @Test
     public void diffCallback_comparesTypefaceId() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppListPagerAdapter.java");
+        String source = read("src/main/java/com/dpis/module/applist/AppListPagerAdapter.java");
 
         assertTrue(source.contains("Objects.equals(oldItem.typefaceId, newItem.typefaceId)"));
     }
 
     @Test
     public void diffCallback_comparesInactiveViewportScaleDraft() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppListPagerAdapter.java");
+        String source = read("src/main/java/com/dpis/module/applist/AppListPagerAdapter.java");
 
         assertTrue(source.contains(
                 "Objects.equals(oldItem.viewportScaleMilliPercent, newItem.viewportScaleMilliPercent)"));

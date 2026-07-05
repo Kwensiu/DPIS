@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.hooks.HookExecutionPlan;
+
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;

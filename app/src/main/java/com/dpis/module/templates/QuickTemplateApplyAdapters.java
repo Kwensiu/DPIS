@@ -1,5 +1,8 @@
 package com.dpis.module.templates;
 
+import com.dpis.module.hooks.HookDomainOverride;
+import com.dpis.module.hooks.HookDomainOverrideStore;
+
 import com.dpis.module.*;
 
 

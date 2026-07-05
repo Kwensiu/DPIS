@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.hooks.HookExecutionPlan;
+import com.dpis.module.hooks.HookExecutionPlanner;
+import com.dpis.module.hooks.HookRuntimePolicy;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
+
 import com.dpis.module.runtime.DebugPackageOverride;
 import com.dpis.module.runtime.RuntimeDiagnosticLogFingerprint;
 

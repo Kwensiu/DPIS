@@ -1,10 +1,12 @@
-package com.dpis.module;
+package com.dpis.module.runtime.hookapi;
+
+import com.dpis.module.DpisLog;
 
 import java.lang.reflect.Method;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class ModernApi102Capabilities implements ModernApiCapabilities {
+public final class ModernApi102Capabilities implements ModernApiCapabilities {
     static final ModernApi102Capabilities INSTANCE = new ModernApi102Capabilities();
     private final Method setIdMethod;
 

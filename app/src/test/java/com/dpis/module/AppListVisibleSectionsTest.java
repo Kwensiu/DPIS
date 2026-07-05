@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.applist.AppListItem;
+import com.dpis.module.applist.AppListPage;
+import com.dpis.module.applist.AppListVisibleSections;
+
 import static org.junit.Assert.assertEquals;
 
 import java.util.List;

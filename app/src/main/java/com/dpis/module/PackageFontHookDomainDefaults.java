@@ -5,13 +5,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-final class PackageFontHookDomainDefaults {
+public final class PackageFontHookDomainDefaults {
     private static final Map<String, Set<String>> EXACT_DEFAULTS = createDefaults();
 
     private PackageFontHookDomainDefaults() {
     }
 
-    static Set<String> resolveExactDefaults(String packageName) {
+    public static Set<String> resolveExactDefaults(String packageName) {
         if (packageName == null || packageName.isBlank()) {
             return Collections.emptySet();
         }

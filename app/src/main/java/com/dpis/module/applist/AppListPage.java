@@ -1,6 +1,8 @@
-package com.dpis.module;
+package com.dpis.module.applist;
 
-enum AppListPage {
+import com.dpis.module.R;
+
+public enum AppListPage {
     ALL_APPS(0, R.string.tab_all_apps, AppListFilter.Tab.ALL_APPS),
     CONFIGURED_APPS(1, R.string.tab_configured_apps, AppListFilter.Tab.CONFIGURED_APPS);
 
@@ -14,19 +16,19 @@ enum AppListPage {
         this.filterTab = filterTab;
     }
 
-    int position() {
+    public int position() {
         return position;
     }
 
-    int titleRes() {
+    public int titleRes() {
         return titleRes;
     }
 
-    AppListFilter.Tab filterTab() {
+    public AppListFilter.Tab filterTab() {
         return filterTab;
     }
 
-    static AppListPage fromPosition(int position) {
+    public static AppListPage fromPosition(int position) {
         return position == 1 ? CONFIGURED_APPS : ALL_APPS;
     }
 }

@@ -1,8 +1,8 @@
-package com.dpis.module;
+package com.dpis.module.runtime.hookapi;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class ModernApi101Capabilities implements ModernApiCapabilities {
+public final class ModernApi101Capabilities implements ModernApiCapabilities {
     static final ModernApi101Capabilities INSTANCE = new ModernApi101Capabilities();
 
     private ModernApi101Capabilities() {

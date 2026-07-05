@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.hooks;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -9,7 +9,7 @@ public final class HookDomainOverride {
     public final Set<String> enabledKnownDomains;
     public final Set<String> unknownDomains;
 
-    HookDomainOverride(boolean customPathEnabled,
+    public HookDomainOverride(boolean customPathEnabled,
                        Set<String> enabledKnownDomains,
                        Set<String> unknownDomains) {
         this.customPathEnabled = customPathEnabled;

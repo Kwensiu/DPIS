@@ -1,22 +1,22 @@
 package com.dpis.module;
 
-final class FontHookArbitration {
+public final class FontHookArbitration {
     private FontHookArbitration() {
     }
 
-    static FontDomainPlan resolveDomainPlan(boolean fontScaleEnabled,
+    public static FontDomainPlan resolveDomainPlan(boolean fontScaleEnabled,
                                             boolean fieldRewriteEnabled) {
         return resolveDomainPlan(fontScaleEnabled, fieldRewriteEnabled, false, false);
     }
 
-    static FontDomainPlan resolveDomainPlan(boolean fontScaleEnabled,
+    public static FontDomainPlan resolveDomainPlan(boolean fontScaleEnabled,
                                             boolean fieldRewriteEnabled,
                                             boolean hyperOsNativeFlutterEnabled) {
         return resolveDomainPlan(fontScaleEnabled, fieldRewriteEnabled,
                 false, hyperOsNativeFlutterEnabled);
     }
 
-    static FontDomainPlan resolveDomainPlan(boolean fontScaleEnabled,
+    public static FontDomainPlan resolveDomainPlan(boolean fontScaleEnabled,
                                             boolean fieldRewriteEnabled,
                                             boolean flutterSettingsEnabled,
                                             boolean hyperOsNativeFlutterEnabled) {
@@ -33,20 +33,20 @@ final class FontHookArbitration {
                 hyperOsNativeFlutterEnabled);
     }
 
-    static final class FontDomainPlan {
-        final boolean resourcesFontEnabled;
-        final boolean webViewTextZoomEnabled;
-        final boolean textViewHooksEnabled;
-        final boolean textViewSpRewriteEnabled;
-        final boolean textViewAbsoluteRewriteEnabled;
-        final boolean textViewCurrentPxFallbackEnabled;
-        final boolean paintFallbackEnabled;
-        final boolean flutterSettingsEnabled;
-        final boolean hyperOsNativeFlutterEnabled;
-        final boolean genericNativeFlutterEnabled;
-        final String reason;
+    public static final class FontDomainPlan {
+        public final boolean resourcesFontEnabled;
+        public final boolean webViewTextZoomEnabled;
+        public final boolean textViewHooksEnabled;
+        public final boolean textViewSpRewriteEnabled;
+        public final boolean textViewAbsoluteRewriteEnabled;
+        public final boolean textViewCurrentPxFallbackEnabled;
+        public final boolean paintFallbackEnabled;
+        public final boolean flutterSettingsEnabled;
+        public final boolean hyperOsNativeFlutterEnabled;
+        public final boolean genericNativeFlutterEnabled;
+        public final String reason;
 
-        FontDomainPlan(boolean resourcesFontEnabled,
+        public FontDomainPlan(boolean resourcesFontEnabled,
                        boolean webViewTextZoomEnabled,
                        boolean textViewHooksEnabled,
                        boolean textViewSpRewriteEnabled,
@@ -70,7 +70,7 @@ final class FontHookArbitration {
             this.reason = reason;
         }
 
-        static FontDomainPlan fontScaleDisabled() {
+        public static FontDomainPlan fontScaleDisabled() {
             return new FontDomainPlan(
                     false,
                     false,
@@ -85,7 +85,7 @@ final class FontHookArbitration {
                     "font-scale-disabled");
         }
 
-        static FontDomainPlan semanticFontDomainPlan(boolean flutterSettingsEnabled,
+        public static FontDomainPlan semanticFontDomainPlan(boolean flutterSettingsEnabled,
                                                      boolean hyperOsNativeFlutterEnabled) {
             return new FontDomainPlan(
                     true,
@@ -101,7 +101,7 @@ final class FontHookArbitration {
                     "semantic-font-domain-plan");
         }
 
-        static FontDomainPlan fieldRewriteDomainPlan(boolean flutterSettingsEnabled,
+        public static FontDomainPlan fieldRewriteDomainPlan(boolean flutterSettingsEnabled,
                                                      boolean hyperOsNativeFlutterEnabled) {
             return new FontDomainPlan(
                     false,

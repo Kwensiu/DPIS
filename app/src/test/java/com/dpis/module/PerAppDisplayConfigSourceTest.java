@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.hooks.HookDomainOverride;
+import com.dpis.module.hooks.HookDomainOverrideStore;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

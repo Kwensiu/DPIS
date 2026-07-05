@@ -1,5 +1,10 @@
 package com.dpis.module;
 
+import com.dpis.module.hooks.HookDomainOverride;
+import com.dpis.module.hooks.HookDomainOverrideStore;
+import com.dpis.module.hooks.HookExecutionPlan;
+import com.dpis.module.hooks.HookRuntimePolicy;
+
 import org.junit.Test;
 
 import java.util.Set;

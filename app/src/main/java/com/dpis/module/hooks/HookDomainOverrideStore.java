@@ -1,4 +1,7 @@
-package com.dpis.module;
+package com.dpis.module.hooks;
+
+import com.dpis.module.DpisConfigStore;
+import com.dpis.module.FontHookDomainRegistry;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -18,7 +21,7 @@ public final class HookDomainOverrideStore {
         return fromRaw(raw);
     }
 
-    boolean save(String packageName, Set<String> enabledKnownDomains, Set<String> unknownDomains) {
+    public boolean save(String packageName, Set<String> enabledKnownDomains, Set<String> unknownDomains) {
         if (configStore == null || packageName == null || packageName.isBlank()) {
             return false;
         }
@@ -28,7 +31,7 @@ public final class HookDomainOverrideStore {
         return configStore.setPackageFontHookDomainsRaw(packageName, raw);
     }
 
-    boolean saveCustomIfDifferentFromAutomatic(String packageName,
+    public boolean saveCustomIfDifferentFromAutomatic(String packageName,
                                                Set<String> enabledKnownDomains,
                                                Set<String> automaticKnownDomains,
                                                Set<String> unknownDomains) {
@@ -39,7 +42,7 @@ public final class HookDomainOverrideStore {
         return save(packageName, enabledKnownDomains, unknownDomains);
     }
 
-    boolean restoreRecommended(String packageName) {
+    public boolean restoreRecommended(String packageName) {
         if (configStore == null || packageName == null || packageName.isBlank()) {
             return false;
         }

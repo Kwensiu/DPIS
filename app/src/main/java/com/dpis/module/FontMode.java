@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-enum FontMode {
+public enum FontMode {
     OFF,
     EMULATION,
     FIELD_REWRITE

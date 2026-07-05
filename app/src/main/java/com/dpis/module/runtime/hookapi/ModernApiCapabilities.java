@@ -1,8 +1,8 @@
-package com.dpis.module;
+package com.dpis.module.runtime.hookapi;
 
 import io.github.libxposed.api.XposedInterface;
 
-interface ModernApiCapabilities {
+public interface ModernApiCapabilities {
     int apiVersion();
 
     boolean supportsStableHookIds();

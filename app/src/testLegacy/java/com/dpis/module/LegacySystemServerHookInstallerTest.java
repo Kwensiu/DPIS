@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.hooks.HookDomainOverride;
+
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 

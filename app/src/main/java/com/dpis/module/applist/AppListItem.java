@@ -1,5 +1,10 @@
-package com.dpis.module;
+package com.dpis.module.applist;
 
+import com.dpis.module.FontApplyMode;
+import com.dpis.module.ViewportApplyMode;
+import com.dpis.module.ViewportTargetType;
+
+import com.dpis.module.ViewportTargetSpec;
 import com.dpis.module.templates.TemplateConfigValueAdapters;
 
 import com.dpis.module.templates.TemplateConfigValue;
@@ -7,30 +12,30 @@ import com.dpis.module.templates.TemplateConfigValue;
 import android.graphics.drawable.Drawable;
 
 public final class AppListItem {
-    final String label;
-    final String packageName;
-    final boolean inScope;
-    final boolean scopeKnown;
-    final ViewportTargetSpec viewportTargetSpec;
-    final String viewportTargetType;
-    final Integer viewportWidthDp;
-    final Integer viewportScaleMilliPercent;
-    final String viewportMode;
-    final Integer fontScalePercent;
-    final String fontMode;
-    final String typefaceId;
-    final boolean appSpecificConfigActive;
-    final Integer wechatDpi;
-    final boolean dpisEnabled;
-    final boolean configured;
-    final boolean installed;
-    final boolean systemApp;
-    final boolean hyperOsNativeProxyCandidate;
-    final boolean previewFromGlobalPrefill;
-    final String previewFontHookDomainsRaw;
-    final Drawable icon;
+    public final String label;
+    public final String packageName;
+    public final boolean inScope;
+    public final boolean scopeKnown;
+    public final ViewportTargetSpec viewportTargetSpec;
+    public final String viewportTargetType;
+    public final Integer viewportWidthDp;
+    public final Integer viewportScaleMilliPercent;
+    public final String viewportMode;
+    public final Integer fontScalePercent;
+    public final String fontMode;
+    public final String typefaceId;
+    public final boolean appSpecificConfigActive;
+    public final Integer wechatDpi;
+    public final boolean dpisEnabled;
+    public final boolean configured;
+    public final boolean installed;
+    public final boolean systemApp;
+    public final boolean hyperOsNativeProxyCandidate;
+    public final boolean previewFromGlobalPrefill;
+    public final String previewFontHookDomainsRaw;
+    public final Drawable icon;
 
-    AppListItem(String label,
+    public AppListItem(String label,
                 String packageName,
                 boolean inScope,
                 boolean scopeKnown,
@@ -51,7 +56,7 @@ public final class AppListItem {
                 hyperOsNativeProxyCandidate, icon);
     }
 
-    AppListItem(String label,
+    public AppListItem(String label,
                 String packageName,
                 boolean inScope,
                 boolean scopeKnown,
@@ -71,7 +76,7 @@ public final class AppListItem {
                 hyperOsNativeProxyCandidate, icon);
     }
 
-    AppListItem(String label,
+    public AppListItem(String label,
                 String packageName,
                 boolean inScope,
                 boolean scopeKnown,
@@ -151,7 +156,7 @@ public final class AppListItem {
         this.icon = icon;
     }
 
-    AppListItem(String label,
+    public AppListItem(String label,
                 String packageName,
                 boolean inScope,
                 boolean scopeKnown,
@@ -171,7 +176,7 @@ public final class AppListItem {
                 appSpecificConfigActive, dpisEnabled, systemApp, hyperOsNativeProxyCandidate, icon);
     }
 
-    AppListItem(String label,
+    public AppListItem(String label,
                 String packageName,
                 boolean inScope,
                 boolean scopeKnown,
@@ -196,7 +201,7 @@ public final class AppListItem {
                 systemApp, hyperOsNativeProxyCandidate, false, null, icon);
     }
 
-    AppListItem(String label,
+    public AppListItem(String label,
                 String packageName,
                 boolean inScope,
                 boolean scopeKnown,
@@ -222,11 +227,11 @@ public final class AppListItem {
                 systemApp, hyperOsNativeProxyCandidate, false, null, icon);
     }
 
-    boolean hasAppSpecificConfig() {
+    public boolean hasAppSpecificConfig() {
         return appSpecificConfigActive;
     }
 
-    AppListItem withGlobalPrefillPreview(TemplateConfigValue prefill) {
+    public AppListItem withGlobalPrefillPreview(TemplateConfigValue prefill) {
         TemplateConfigValue normalized = prefill != null ? prefill : TemplateConfigValue.EMPTY;
         ViewportTargetSpec viewportTargetSpec =
                 TemplateConfigValueAdapters.toViewportTargetSpec(normalized);
@@ -258,7 +263,7 @@ public final class AppListItem {
                 icon);
     }
 
-    AppListItem withWechatDpi(Integer updatedWechatDpi) {
+    public AppListItem withWechatDpi(Integer updatedWechatDpi) {
         if (java.util.Objects.equals(wechatDpi, updatedWechatDpi)) {
             return this;
         }

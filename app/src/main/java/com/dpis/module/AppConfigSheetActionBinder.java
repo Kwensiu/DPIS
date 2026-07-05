@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.applist.AppListItem;
+
 import com.dpis.module.quirks.WechatDpiSheetBinder;
 
 import android.view.View;

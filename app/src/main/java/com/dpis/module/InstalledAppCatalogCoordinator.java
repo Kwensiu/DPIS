@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.applist.AppListItem;
+
 import com.dpis.module.applist.InstalledAppCatalogItem;
 
 import com.dpis.module.fonts.HyperOsNativeAppDetector;

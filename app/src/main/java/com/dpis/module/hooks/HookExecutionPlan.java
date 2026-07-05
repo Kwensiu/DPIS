@@ -1,37 +1,42 @@
-package com.dpis.module;
+package com.dpis.module.hooks;
 
-final class HookExecutionPlan {
-    final FontMode fontMode;
-    final boolean viewportEnabled;
-    final boolean resourcesHooksEnabled;
-    final boolean resourcesWriteHooksEnabled;
-    final boolean resourcesImplHookEnabled;
-    final boolean resourcesReadHooksEnabled;
-    final ResourcesReadHookPolicy resourcesReadPolicy;
-    final boolean activityThreadFontEnabled;
-    final boolean textViewHooksEnabled;
-    final boolean webViewTextZoomEnabled;
-    final boolean flutterSettingsEnabled;
-    final boolean hyperOsNativeFlutterEnabled;
-    final boolean resourcesProbeEnabled;
-    final boolean viewportProbeEnabled;
-    final FontHookArbitration.FontDomainPlan fontDomainPlan;
-    final HookDomainPlan domainPlan;
-    final PlanReason reason;
-    final String resolvedViewportMode;
-    final String resolvedFontMode;
-    final boolean debugForceFlutterSettings;
-    final boolean debugFlutterSettingsOnly;
-    final boolean debugDisableTextViewAbsoluteRewrite;
-    final boolean debugDisableActivityThreadFont;
-    final boolean probeHooksRequested;
-    final String probeInstallMode;
-    final String hookDomains;
-    final String hookDomainSource;
-    final String builtinDomains;
-    final String unknownCustomDomains;
+import com.dpis.module.FontHookArbitration;
+import com.dpis.module.FontMode;
+import com.dpis.module.PlanReason;
+import com.dpis.module.ResourcesReadHookPolicy;
 
-    HookExecutionPlan(FontMode fontMode,
+public final class HookExecutionPlan {
+    public final FontMode fontMode;
+    public final boolean viewportEnabled;
+    public final boolean resourcesHooksEnabled;
+    public final boolean resourcesWriteHooksEnabled;
+    public final boolean resourcesImplHookEnabled;
+    public final boolean resourcesReadHooksEnabled;
+    public final ResourcesReadHookPolicy resourcesReadPolicy;
+    public final boolean activityThreadFontEnabled;
+    public final boolean textViewHooksEnabled;
+    public final boolean webViewTextZoomEnabled;
+    public final boolean flutterSettingsEnabled;
+    public final boolean hyperOsNativeFlutterEnabled;
+    public final boolean resourcesProbeEnabled;
+    public final boolean viewportProbeEnabled;
+    public final FontHookArbitration.FontDomainPlan fontDomainPlan;
+    public final HookDomainPlan domainPlan;
+    public final PlanReason reason;
+    public final String resolvedViewportMode;
+    public final String resolvedFontMode;
+    public final boolean debugForceFlutterSettings;
+    public final boolean debugFlutterSettingsOnly;
+    public final boolean debugDisableTextViewAbsoluteRewrite;
+    public final boolean debugDisableActivityThreadFont;
+    public final boolean probeHooksRequested;
+    public final String probeInstallMode;
+    public final String hookDomains;
+    public final String hookDomainSource;
+    public final String builtinDomains;
+    public final String unknownCustomDomains;
+
+    public HookExecutionPlan(FontMode fontMode,
                       boolean viewportEnabled,
                       boolean resourcesHooksEnabled,
                       boolean resourcesWriteHooksEnabled,

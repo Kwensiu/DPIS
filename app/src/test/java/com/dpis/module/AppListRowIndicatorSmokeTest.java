@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.applist.AppListPage;
+import com.dpis.module.applist.AppListPagerAdapter;
+
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -11,7 +14,7 @@ public class AppListRowIndicatorSmokeTest {
     public void itemRowDoesNotRenderTrailingIndicator() throws IOException {
         String layout = read("src/main/res/layout/item_app_entry.xml");
         String styles = read("src/main/res/values/styles.xml");
-        String adapter = read("src/main/java/com/dpis/module/AppListPagerAdapter.java");
+        String adapter = read("src/main/java/com/dpis/module/applist/AppListPagerAdapter.java");
 
         assertTrue(!layout.contains("@+id/expand_indicator"));
         assertTrue(!layout.contains("@drawable/ic_chevron_right_24"));

@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.hooks.HookDomainOverride;
+import com.dpis.module.hooks.HookDomainOverrideStore;
+
 import com.dpis.module.runtime.RootCommandRunner;
 
 import java.util.LinkedHashSet;

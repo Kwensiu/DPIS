@@ -1,10 +1,10 @@
 package com.dpis.module;
 
-final class DebugFontOverride {
-    final boolean forceFlutterSettings;
-    final boolean flutterSettingsOnly;
-    final boolean disableTextViewAbsoluteRewrite;
-    final boolean disableActivityThreadFont;
+public final class DebugFontOverride {
+    public final boolean forceFlutterSettings;
+    public final boolean flutterSettingsOnly;
+    public final boolean disableTextViewAbsoluteRewrite;
+    public final boolean disableActivityThreadFont;
 
     private DebugFontOverride(boolean forceFlutterSettings,
                               boolean flutterSettingsOnly,
@@ -16,22 +16,22 @@ final class DebugFontOverride {
         this.disableActivityThreadFont = disableActivityThreadFont;
     }
 
-    static DebugFontOverride none() {
+    public static DebugFontOverride none() {
         return new DebugFontOverride(false, false, false, false);
     }
 
-    static DebugFontOverride of(boolean forceFlutterSettings, boolean flutterSettingsOnly) {
+    public static DebugFontOverride of(boolean forceFlutterSettings, boolean flutterSettingsOnly) {
         return new DebugFontOverride(forceFlutterSettings, flutterSettingsOnly, false, false);
     }
 
-    static DebugFontOverride of(boolean forceFlutterSettings,
+    public static DebugFontOverride of(boolean forceFlutterSettings,
                                 boolean flutterSettingsOnly,
                                 boolean disableTextViewAbsoluteRewrite) {
         return of(forceFlutterSettings, flutterSettingsOnly,
                 disableTextViewAbsoluteRewrite, false);
     }
 
-    static DebugFontOverride of(boolean forceFlutterSettings,
+    public static DebugFontOverride of(boolean forceFlutterSettings,
                                 boolean flutterSettingsOnly,
                                 boolean disableTextViewAbsoluteRewrite,
                                 boolean disableActivityThreadFont) {

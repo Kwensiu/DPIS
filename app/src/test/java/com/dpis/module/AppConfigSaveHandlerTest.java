@@ -1,4 +1,8 @@
 package com.dpis.module;
+
+import com.dpis.module.applist.AppListItem;
+import com.dpis.module.hooks.HookDomainOverride;
+import com.dpis.module.hooks.HookDomainOverrideStore;
 import com.dpis.module.templates.TemplateConfigValueAdapters;
 
 import com.dpis.module.templates.TemplateConfigValue;

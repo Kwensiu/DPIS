@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.hooks.HookDomainOverride;
+
 import static org.junit.Assert.assertTrue;
 
 

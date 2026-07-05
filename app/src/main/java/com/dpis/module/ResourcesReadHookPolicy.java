@@ -1,16 +1,16 @@
 package com.dpis.module;
 
-final class ResourcesReadHookPolicy {
-    static final ResourcesReadHookPolicy FULL = new ResourcesReadHookPolicy(
+public final class ResourcesReadHookPolicy {
+    public static final ResourcesReadHookPolicy FULL = new ResourcesReadHookPolicy(
             true,
             true,
             false);
 
-    final boolean viewportHandlingEnabled;
-    final boolean configurationFontOverrideEnabled;
-    final boolean metricsTargetFontOverrideEnabled;
+    public final boolean viewportHandlingEnabled;
+    public final boolean configurationFontOverrideEnabled;
+    public final boolean metricsTargetFontOverrideEnabled;
 
-    ResourcesReadHookPolicy(boolean viewportHandlingEnabled,
+    public ResourcesReadHookPolicy(boolean viewportHandlingEnabled,
                             boolean configurationFontOverrideEnabled,
                             boolean metricsTargetFontOverrideEnabled) {
         this.viewportHandlingEnabled = viewportHandlingEnabled;

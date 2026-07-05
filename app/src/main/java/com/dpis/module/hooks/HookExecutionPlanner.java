@@ -1,14 +1,25 @@
-package com.dpis.module;
+package com.dpis.module.hooks;
+
+import com.dpis.module.DebugFontOverride;
+import com.dpis.module.EffectiveModeResolver;
+import com.dpis.module.FontApplyMode;
+import com.dpis.module.FontHookArbitration;
+import com.dpis.module.FontHookDomainRegistry;
+import com.dpis.module.FontMode;
+import com.dpis.module.PackageFontHookDomainDefaults;
+import com.dpis.module.PlanReason;
+import com.dpis.module.ResourcesReadHookPolicy;
+import com.dpis.module.ViewportApplyMode;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-final class HookExecutionPlanner {
+public final class HookExecutionPlanner {
     private HookExecutionPlanner() {
     }
 
-    static HookExecutionPlan buildPlan(HookRuntimePolicy policy,
+    public static HookExecutionPlan buildPlan(HookRuntimePolicy policy,
                                        boolean viewportConfigured,
                                        String viewportMode,
                                        boolean fontScaleActive,
@@ -29,7 +40,7 @@ final class HookExecutionPlanner {
                 debugOverride);
     }
 
-    static HookExecutionPlan buildPlan(HookRuntimePolicy policy,
+    public static HookExecutionPlan buildPlan(HookRuntimePolicy policy,
                                        String packageName,
                                        boolean viewportConfigured,
                                        String viewportMode,
@@ -53,7 +64,7 @@ final class HookExecutionPlanner {
                 PackageFontHookDomainDefaults.resolveExactDefaults(packageName));
     }
 
-    static HookExecutionPlan buildPlanWithBuiltinDomainsForTest(
+    public static HookExecutionPlan buildPlanWithBuiltinDomainsForTest(
             HookRuntimePolicy policy,
             String packageName,
             boolean viewportConfigured,
@@ -255,7 +266,7 @@ final class HookExecutionPlanner {
                 hookDomainPlan.unknownDomainsCsv());
     }
 
-    static boolean resolveViewportHookEnabled(HookRuntimePolicy policy,
+    public static boolean resolveViewportHookEnabled(HookRuntimePolicy policy,
                                               boolean viewportConfigured,
                                               String viewportMode) {
         if (!viewportConfigured) {
@@ -277,7 +288,7 @@ final class HookExecutionPlanner {
                 || ViewportApplyMode.SYSTEM.equals(resolvedViewportMode);
     }
 
-    static FontMode resolveFontMode(HookRuntimePolicy policy,
+    public static FontMode resolveFontMode(HookRuntimePolicy policy,
                                     boolean fontScaleActive,
                                     String fontMode) {
         if (!fontScaleActive) {
@@ -294,7 +305,7 @@ final class HookExecutionPlanner {
         return FontMode.OFF;
     }
 
-    static String resolveProbeInstallMode(HookRuntimePolicy policy) {
+    public static String resolveProbeInstallMode(HookRuntimePolicy policy) {
         return resolveProbeInstallMode(policy, policy != null && policy.probeHooksEnabled);
     }
 

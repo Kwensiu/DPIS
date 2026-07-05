@@ -1,4 +1,8 @@
 package com.dpis.module;
+
+import com.dpis.module.applist.AppListFilter;
+import com.dpis.module.applist.AppListFilterState;
+import com.dpis.module.applist.AppListFilterStateStore;
 import com.dpis.module.templates.QuickTemplateTargetsBinder;
 
 import com.dpis.module.templates.QuickTemplateTargetCarrierState;

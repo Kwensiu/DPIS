@@ -1,5 +1,12 @@
 package com.dpis.module;
 
+import com.dpis.module.hooks.HookExecutionPlan;
+import com.dpis.module.hooks.HookRuntimePolicy;
+import com.dpis.module.runtime.hookapi.ModernApi101Capabilities;
+import com.dpis.module.runtime.hookapi.ModernApi102Capabilities;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
+
 import com.dpis.module.quirks.WechatDpiMethodLocator;
 import com.dpis.module.quirks.WechatDpiRoutes;
 import com.dpis.module.quirks.WechatDpiRuntime;
@@ -228,10 +235,10 @@ public class ModuleMainHookInstallerTest {
         String resourcesRead = read("src/main/java/com/dpis/module/ResourcesReadHookInstaller.java");
         String resourcesImpl = read("src/main/java/com/dpis/module/ResourcesImplHookInstaller.java");
         String resourcesManager = read("src/main/java/com/dpis/module/ResourcesManagerHookInstaller.java");
-        String capabilities = read("src/main/java/com/dpis/module/ModernApiCapabilities.java");
-        String api101 = read("src/main/java/com/dpis/module/ModernApi101Capabilities.java");
-        String api102 = read("src/main/java/com/dpis/module/ModernApi102Capabilities.java");
-        String resolver = read("src/main/java/com/dpis/module/ModernApiCapabilitiesResolver.java");
+        String capabilities = read("src/main/java/com/dpis/module/runtime/hookapi/ModernApiCapabilities.java");
+        String api101 = read("src/main/java/com/dpis/module/runtime/hookapi/ModernApi101Capabilities.java");
+        String api102 = read("src/main/java/com/dpis/module/runtime/hookapi/ModernApi102Capabilities.java");
+        String resolver = read("src/main/java/com/dpis/module/runtime/hookapi/ModernApiCapabilitiesResolver.java");
 
         assertTrue(moduleMain.contains("onHotReloaded(XposedModuleInterface.HotReloadedParam param)"));
         assertTrue(moduleMain.contains("lastPackageReadyPackageName"));

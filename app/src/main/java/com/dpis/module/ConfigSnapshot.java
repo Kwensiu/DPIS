@@ -6,7 +6,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-final class ConfigSnapshot {
+public final class ConfigSnapshot {
     private static final ConfigSnapshot EMPTY = new ConfigSnapshot(
             Collections.emptySet(),
             Collections.emptyMap(),
@@ -50,46 +50,46 @@ final class ConfigSnapshot {
         this.hasGlobalLogEnabled = hasGlobalLogEnabled;
     }
 
-    static ConfigSnapshot empty() {
+    public static ConfigSnapshot empty() {
         return EMPTY;
     }
 
-    Set<String> getConfiguredPackages() {
+    public Set<String> getConfiguredPackages() {
         return configuredPackages;
     }
 
-    PackageConfigSnapshot getPackage(String packageName) {
+    public PackageConfigSnapshot getPackage(String packageName) {
         if (packageName == null || packageName.isBlank()) {
             return null;
         }
         return packages.get(packageName);
     }
 
-    boolean isConfigured(String packageName) {
+    public boolean isConfigured(String packageName) {
         return packageName != null && configuredPackages.contains(packageName);
     }
 
-    boolean isSystemServerHooksEnabled() {
+    public boolean isSystemServerHooksEnabled() {
         return systemServerHooksEnabled;
     }
 
-    boolean isSystemServerSafeModeEnabled() {
+    public boolean isSystemServerSafeModeEnabled() {
         return systemServerSafeModeEnabled;
     }
 
-    boolean isGlobalLogEnabled() {
+    public boolean isGlobalLogEnabled() {
         return globalLogEnabled;
     }
 
-    boolean hasSystemServerHooksEnabled() {
+    public boolean hasSystemServerHooksEnabled() {
         return hasSystemServerHooksEnabled;
     }
 
-    boolean hasSystemServerSafeModeEnabled() {
+    public boolean hasSystemServerSafeModeEnabled() {
         return hasSystemServerSafeModeEnabled;
     }
 
-    boolean hasGlobalLogEnabled() {
+    public boolean hasGlobalLogEnabled() {
         return hasGlobalLogEnabled;
     }
 }

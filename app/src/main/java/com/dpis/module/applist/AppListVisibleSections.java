@@ -1,19 +1,17 @@
-package com.dpis.module;
-
-import com.dpis.module.applist.AppListFilterState;
+package com.dpis.module.applist;
 
 import java.util.ArrayList;
 import java.util.List;
 
-final class AppListVisibleSections {
+public final class AppListVisibleSections {
     private AppListVisibleSections() {
     }
 
-    static List<AppListItem> filter(List<AppListItem> source, String query, AppListPage page) {
+    public static List<AppListItem> filter(List<AppListItem> source, String query, AppListPage page) {
         return filter(source, query, page, AppListFilterState.noAdditionalConstraints());
     }
 
-    static List<AppListItem> filter(List<AppListItem> source,
+    public static List<AppListItem> filter(List<AppListItem> source,
                                     String query,
                                     AppListPage page,
                                     AppListFilterState state) {

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.hooks.HookDomainOverride;
+
 import android.content.res.Configuration;
 
 import org.junit.Test;

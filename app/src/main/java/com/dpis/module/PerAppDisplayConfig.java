@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.hooks.HookDomainOverride;
+
 final class PerAppDisplayConfig {
     final String packageName;
     final ViewportTargetSpec targetViewportSpec;

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.applist.AppListItem;
+
 import android.os.Handler;
 import android.os.Looper;
 

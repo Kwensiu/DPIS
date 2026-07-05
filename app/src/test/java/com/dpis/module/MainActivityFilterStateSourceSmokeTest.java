@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.applist.AppListFilter;
+import com.dpis.module.applist.AppListFilterState;
+import com.dpis.module.applist.AppListFilterStateStore;
+
 import org.junit.Test;
 
 import java.io.IOException;

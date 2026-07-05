@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
+
 import com.dpis.module.fonts.FontDebugStatsReporter;
 
 import android.content.res.Configuration;

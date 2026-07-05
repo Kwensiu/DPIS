@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.hooks.HookDomainOverride;
+
 import com.dpis.module.ui.DialogWindowSizer;
 
 import android.app.Activity;

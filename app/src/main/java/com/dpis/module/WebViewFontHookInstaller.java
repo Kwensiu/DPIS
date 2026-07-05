@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
+
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 

@@ -417,7 +417,7 @@ public final class DpisConfigStore {
         return FontApplyMode.OFF;
     }
 
-    boolean isSystemServerHooksEnabled() {
+    public boolean isSystemServerHooksEnabled() {
         if (!BuildConfig.DEBUG) {
             return true;
         }
@@ -428,7 +428,7 @@ public final class DpisConfigStore {
         return containsInPrimary(KEY_SYSTEM_SERVER_HOOKS_ENABLED);
     }
 
-    boolean isSystemServerSafeModeEnabled() {
+    public boolean isSystemServerSafeModeEnabled() {
         return getBoolean(KEY_SYSTEM_SERVER_SAFE_MODE_ENABLED, true);
     }
 
@@ -997,7 +997,7 @@ public final class DpisConfigStore {
         return commitBoth(editor -> editor.putStringSet(KEY_TARGET_PACKAGES, packages));
     }
 
-    String getPackageFontHookDomainsRaw(String packageName) {
+    public String getPackageFontHookDomainsRaw(String packageName) {
         if (packageName == null || packageName.isBlank()) {
             return null;
         }
@@ -1009,7 +1009,7 @@ public final class DpisConfigStore {
         return getPackageString(key, packageKey, null);
     }
 
-    boolean setPackageFontHookDomainsRaw(String packageName, String rawValue) {
+    public boolean setPackageFontHookDomainsRaw(String packageName, String rawValue) {
         if (packageName == null || packageName.isBlank() || rawValue == null) {
             return false;
         }
@@ -1021,7 +1021,7 @@ public final class DpisConfigStore {
                 .putString(keyForPackageFontHookDomains(packageName), rawValue));
     }
 
-    boolean clearPackageFontHookDomainsRaw(String packageName) {
+    public boolean clearPackageFontHookDomainsRaw(String packageName) {
         if (packageName == null || packageName.isBlank()) {
             return false;
         }

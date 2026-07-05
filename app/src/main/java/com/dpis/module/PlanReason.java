@@ -1,12 +1,12 @@
 package com.dpis.module;
 
-final class PlanReason {
-    final String primary;
-    final String fallback;
-    final String suppressed;
-    final String debugOverride;
+public final class PlanReason {
+    public final String primary;
+    public final String fallback;
+    public final String suppressed;
+    public final String debugOverride;
 
-    PlanReason(String primary,
+    public PlanReason(String primary,
                String fallback,
                String suppressed,
                String debugOverride) {
@@ -16,7 +16,7 @@ final class PlanReason {
         this.debugOverride = nonNull(debugOverride);
     }
 
-    String formatForLog() {
+    public String formatForLog() {
         return "primary=" + primary
                 + ", fallback=" + fallback
                 + ", suppressed=" + suppressed

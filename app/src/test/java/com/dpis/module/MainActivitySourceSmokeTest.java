@@ -1,5 +1,13 @@
 package com.dpis.module;
 
+import com.dpis.module.applist.AppIconMemoryCache;
+import com.dpis.module.applist.AppListFilter;
+import com.dpis.module.applist.AppListItem;
+import com.dpis.module.applist.AppListPage;
+import com.dpis.module.applist.AppListPagerAdapter;
+import com.dpis.module.hooks.HookDomainOverride;
+import com.dpis.module.hooks.HookDomainOverrideStore;
+
 import com.dpis.module.quirks.WechatDpiSheetBinder;
 import com.dpis.module.templates.QuickTemplateTargetsBinder;
 
@@ -1119,7 +1127,7 @@ public class MainActivitySourceSmokeTest {
     public void appListAdapter_usesStableIdsAndPositionBasedClickBinding()
         throws IOException {
         String source = read(
-            "src/main/java/com/dpis/module/AppListPagerAdapter.java"
+            "src/main/java/com/dpis/module/applist/AppListPagerAdapter.java"
         );
 
         assertTrue(source.contains("setHasStableIds(true);"));

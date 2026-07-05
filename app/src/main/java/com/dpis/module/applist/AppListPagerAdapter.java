@@ -1,4 +1,7 @@
-package com.dpis.module;
+package com.dpis.module.applist;
+
+import com.dpis.module.AppStatusFormatter;
+import com.dpis.module.R;
 
 import android.os.Parcelable;
 import android.util.SparseArray;
@@ -24,20 +27,20 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
 
-final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter.PageHolder> {
-    interface OnAppClickListener {
+public final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter.PageHolder> {
+    public interface OnAppClickListener {
         void onAppClicked(AppListItem item);
     }
 
-    interface OnRefreshListener {
+    public interface OnRefreshListener {
         void onRefresh(AppListPage page);
     }
 
-    interface OnPageListScrollListener {
+    public interface OnPageListScrollListener {
         void onPageListScrolled(AppListPage page, int dy);
     }
 
-    interface OnIconResolveRequestListener {
+    public interface OnIconResolveRequestListener {
         void onIconResolveRequested(String packageName);
     }
 
@@ -52,7 +55,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
     private final BooleanSupplier systemScopeSelectedSupplier;
     private boolean swipeRefreshEnabled = true;
 
-    AppListPagerAdapter(OnAppClickListener onAppClickListener,
+    public AppListPagerAdapter(OnAppClickListener onAppClickListener,
             OnRefreshListener onRefreshListener,
             OnPageListScrollListener onPageListScrollListener,
             OnIconResolveRequestListener onIconResolveRequestListener,
@@ -68,7 +71,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
         }
     }
 
-    void submitPage(AppListPage page, List<AppListItem> items) {
+    public void submitPage(AppListPage page, List<AppListItem> items) {
         List<AppListItem> snapshot = new ArrayList<>(items);
         pages.put(page, snapshot);
         PageHolder holder = activeHolders.get(page);
@@ -77,7 +80,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
         }
     }
 
-    SparseArray<Parcelable> capturePageScrollStates() {
+    public SparseArray<Parcelable> capturePageScrollStates() {
         for (AppListPage page : AppListPage.values()) {
             PageHolder holder = activeHolders.get(page);
             if (holder != null) {
@@ -94,7 +97,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
         return states;
     }
 
-    void restorePageScrollStates(SparseArray<Parcelable> states) {
+    public void restorePageScrollStates(SparseArray<Parcelable> states) {
         pageScrollStates.clear();
         if (states == null) {
             return;
@@ -106,7 +109,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
         }
     }
 
-    void setRefreshing(AppListPage page, boolean refreshing) {
+    public void setRefreshing(AppListPage page, boolean refreshing) {
         refreshingStates.put(page, refreshing);
         PageHolder holder = activeHolders.get(page);
         if (holder != null) {
@@ -114,13 +117,13 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
         }
     }
 
-    void refreshVisibleStatuses() {
+    public void refreshVisibleStatuses() {
         for (PageHolder holder : activeHolders.values()) {
             holder.refreshStatuses();
         }
     }
 
-    void setSwipeRefreshEnabled(boolean enabled) {
+    public void setSwipeRefreshEnabled(boolean enabled) {
         swipeRefreshEnabled = enabled;
         for (PageHolder holder : activeHolders.values()) {
             holder.setSwipeRefreshEnabled(enabled);
@@ -189,14 +192,14 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
                     systemScopeSelectedSupplier);
         }
 
-        void bind(AppListPage page,
+        public void bind(AppListPage page,
                 List<AppListItem> items,
                 Parcelable scrollState,
                 boolean refreshing) {
             controller.bind(page, items, scrollState, refreshing);
         }
 
-        void submitItems(List<AppListItem> items) {
+        public void submitItems(List<AppListItem> items) {
             controller.submitItems(items);
         }
 
@@ -204,34 +207,34 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             return controller.getBoundPage();
         }
 
-        void setRefreshing(boolean refreshing) {
+        public void setRefreshing(boolean refreshing) {
             controller.setRefreshing(refreshing);
         }
 
-        void setSwipeRefreshEnabled(boolean enabled) {
+        public void setSwipeRefreshEnabled(boolean enabled) {
             controller.setSwipeRefreshEnabled(enabled);
         }
 
-        void refreshStatuses() {
+        public void refreshStatuses() {
             controller.refreshStatuses();
         }
 
-        Parcelable captureScrollState() {
+        public Parcelable captureScrollState() {
             return controller.captureScrollState();
         }
 
-        void restoreScrollState(Parcelable state) {
+        public void restoreScrollState(Parcelable state) {
             controller.restoreScrollState(state);
         }
     }
 
-    static final class AppListPageController {
+    public static final class AppListPageController {
         private final SwipeRefreshLayout swipeRefreshLayout;
         private final RecyclerView recyclerView;
         private final PageListAdapter adapter;
         private AppListPage boundPage;
 
-        AppListPageController(SwipeRefreshLayout swipeRefreshLayout,
+        public AppListPageController(SwipeRefreshLayout swipeRefreshLayout,
                 RecyclerView recyclerView,
                 OnAppClickListener onAppClickListener,
                 OnRefreshListener onRefreshListener,
@@ -266,7 +269,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             });
         }
 
-        void bind(AppListPage page,
+        public void bind(AppListPage page,
                 List<AppListItem> items,
                 Parcelable scrollState,
                 boolean refreshing) {
@@ -279,7 +282,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             }
         }
 
-        void submitItems(List<AppListItem> items) {
+        public void submitItems(List<AppListItem> items) {
             adapter.submit(items);
         }
 
@@ -287,15 +290,15 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             return boundPage;
         }
 
-        void setRefreshing(boolean refreshing) {
+        public void setRefreshing(boolean refreshing) {
             swipeRefreshLayout.setRefreshing(refreshing);
         }
 
-        void setSwipeRefreshEnabled(boolean enabled) {
+        public void setSwipeRefreshEnabled(boolean enabled) {
             swipeRefreshLayout.setEnabled(enabled);
         }
 
-        void refreshStatuses() {
+        public void refreshStatuses() {
             RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
             if (!(layoutManager instanceof LinearLayoutManager)) {
                 adapter.refreshVisibleRows(0, adapter.getItemCount() - 1);
@@ -307,7 +310,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             adapter.refreshVisibleRows(firstVisible, lastVisible);
         }
 
-        Parcelable captureScrollState() {
+        public Parcelable captureScrollState() {
             RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
             if (layoutManager == null) {
                 return null;
@@ -315,7 +318,7 @@ final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPagerAdapter
             return layoutManager.onSaveInstanceState();
         }
 
-        void restoreScrollState(Parcelable state) {
+        public void restoreScrollState(Parcelable state) {
             recyclerView.post(() -> {
                 RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
                 if (layoutManager != null) {

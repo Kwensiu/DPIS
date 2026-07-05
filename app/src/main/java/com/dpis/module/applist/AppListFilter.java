@@ -1,11 +1,11 @@
-package com.dpis.module;
+package com.dpis.module.applist;
 
-import com.dpis.module.applist.AppListFilterState;
+import com.dpis.module.FontApplyMode;
 
 import java.util.Locale;
 
-final class AppListFilter {
-    enum Tab {
+public final class AppListFilter {
+    public enum Tab {
         ALL_APPS,
         CONFIGURED_APPS
     }
@@ -13,7 +13,7 @@ final class AppListFilter {
     private AppListFilter() {
     }
 
-    static boolean matches(String query,
+    public static boolean matches(String query,
                            Tab tab,
                            String label,
                            String packageName,

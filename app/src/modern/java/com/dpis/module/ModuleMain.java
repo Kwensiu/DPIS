@@ -1,5 +1,10 @@
 package com.dpis.module;
 
+import com.dpis.module.hooks.HookExecutionPlan;
+import com.dpis.module.hooks.HookRuntimePolicy;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
+
 import com.dpis.module.fonts.FontDebugStatsTransport;
 
 import com.dpis.module.runtime.DebugPackageOverride;

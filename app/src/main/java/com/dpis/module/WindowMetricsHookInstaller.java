@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
+
 import android.graphics.Rect;
 
 import java.lang.reflect.Method;

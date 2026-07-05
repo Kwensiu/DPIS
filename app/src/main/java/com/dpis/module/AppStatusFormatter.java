@@ -9,24 +9,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-final class AppStatusFormatter {
+public final class AppStatusFormatter {
     private AppStatusFormatter() {
     }
 
-    static final class StatusInput {
-        final boolean inScope;
-        final boolean scopeKnown;
-        final boolean installed;
-        final ViewportTargetSpec viewportTargetSpec;
-        final String viewportMode;
-        final Integer fontScalePercent;
-        final String fontMode;
-        final String typefaceId;
-        final boolean dpisEnabled;
-        final boolean appSpecificConfigActive;
-        final Integer wechatDpi;
+    public static final class StatusInput {
+        public final boolean inScope;
+        public final boolean scopeKnown;
+        public final boolean installed;
+        public final ViewportTargetSpec viewportTargetSpec;
+        public final String viewportMode;
+        public final Integer fontScalePercent;
+        public final String fontMode;
+        public final String typefaceId;
+        public final boolean dpisEnabled;
+        public final boolean appSpecificConfigActive;
+        public final Integer wechatDpi;
 
-        StatusInput(boolean inScope,
+        public StatusInput(boolean inScope,
                 boolean scopeKnown,
                 boolean installed,
                 ViewportTargetSpec viewportTargetSpec,
@@ -52,7 +52,7 @@ final class AppStatusFormatter {
             this.wechatDpi = wechatDpi;
         }
 
-        StatusInput(boolean inScope,
+        public StatusInput(boolean inScope,
                 boolean scopeKnown,
                 ViewportTargetSpec viewportTargetSpec,
                 String viewportMode,
@@ -64,7 +64,7 @@ final class AppStatusFormatter {
                     fontMode, typefaceId, dpisEnabled, false, null);
         }
 
-        StatusInput(boolean inScope,
+        public StatusInput(boolean inScope,
                 ViewportTargetSpec viewportTargetSpec,
                 String viewportMode,
                 Integer fontScalePercent,
@@ -75,7 +75,7 @@ final class AppStatusFormatter {
                     fontMode, typefaceId, dpisEnabled, false, null);
         }
 
-        StatusInput(boolean inScope,
+        public StatusInput(boolean inScope,
                 boolean scopeKnown,
                 Integer viewportWidthDp,
                 String viewportMode,
@@ -91,7 +91,7 @@ final class AppStatusFormatter {
                     null);
         }
 
-        StatusInput(boolean inScope,
+        public StatusInput(boolean inScope,
                 Integer viewportWidthDp,
                 String viewportMode,
                 Integer fontScalePercent,
@@ -104,20 +104,20 @@ final class AppStatusFormatter {
     }
 
     static final class Labels {
-        final String injected;
-        final String notInjected;
-        final String enabled;
-        final String disabled;
-        final String notEnabled;
-        final String notInstalled;
-        final String noValue;
-        final String emulation;
-        final String replace;
-        final String viewportScale;
-        final String viewportWidth;
-        final String font;
-        final String wechatDpi;
-        final Locale locale;
+        public final String injected;
+        public final String notInjected;
+        public final String enabled;
+        public final String disabled;
+        public final String notEnabled;
+        public final String notInstalled;
+        public final String noValue;
+        public final String emulation;
+        public final String replace;
+        public final String viewportScale;
+        public final String viewportWidth;
+        public final String font;
+        public final String wechatDpi;
+        public final Locale locale;
 
         Labels(String injected,
                 String notInjected,
@@ -170,11 +170,11 @@ final class AppStatusFormatter {
                 locale);
     }
 
-    static String format(Resources resources, StatusInput input) {
+    public static String format(Resources resources, StatusInput input) {
         return format(labelsFrom(resources), input);
     }
 
-    static String format(Labels labels, StatusInput input) {
+    public static String format(Labels labels, StatusInput input) {
         StatusInput normalized = normalizeInput(input);
         return formatInternal(labels, normalized.inScope, normalized.viewportTargetSpec,
                 normalized.viewportMode, normalized.fontScalePercent, normalized.fontMode,
@@ -182,11 +182,11 @@ final class AppStatusFormatter {
                 normalized.appSpecificConfigActive, normalized.installed, normalized.wechatDpi);
     }
 
-    static String formatCompact(Resources resources, StatusInput input) {
+    public static String formatCompact(Resources resources, StatusInput input) {
         return formatCompact(labelsFrom(resources), input);
     }
 
-    static String formatCompact(Labels labels, StatusInput input) {
+    public static String formatCompact(Labels labels, StatusInput input) {
         StatusInput normalized = normalizeInput(input);
         return formatInternal(labels, normalized.inScope, normalized.viewportTargetSpec,
                 normalized.viewportMode, normalized.fontScalePercent, normalized.fontMode,
@@ -404,7 +404,7 @@ final class AppStatusFormatter {
         return builder.toString();
     }
 
-    static boolean shouldWarnViewportEmulation(Integer viewportWidthDp, String viewportMode,
+    public static boolean shouldWarnViewportEmulation(Integer viewportWidthDp, String viewportMode,
             boolean systemHooksEnabled,
             boolean dpisEnabled) {
         if (!dpisEnabled) {
@@ -420,7 +420,7 @@ final class AppStatusFormatter {
                 && !ViewportApplyMode.SYSTEM_EMULATION.equals(effective);
     }
 
-    static boolean shouldWarnViewportEmulation(ViewportTargetSpec viewportTargetSpec,
+    public static boolean shouldWarnViewportEmulation(ViewportTargetSpec viewportTargetSpec,
             String viewportMode,
             boolean systemHooksEnabled,
             boolean dpisEnabled) {
@@ -433,7 +433,7 @@ final class AppStatusFormatter {
                 dpisEnabled);
     }
 
-    static boolean shouldWarnFontEmulation(Integer fontScalePercent,
+    public static boolean shouldWarnFontEmulation(Integer fontScalePercent,
             String fontMode,
             boolean systemHooksEnabled,
             boolean dpisEnabled) {
@@ -447,7 +447,7 @@ final class AppStatusFormatter {
                 && !FontApplyMode.SYSTEM_EMULATION.equals(effective);
     }
 
-    static CharSequence applyConfigSegmentsWarnStyle(String statusText,
+    public static CharSequence applyConfigSegmentsWarnStyle(String statusText,
             int warnColor,
             boolean warnViewport,
             boolean warnFont) {

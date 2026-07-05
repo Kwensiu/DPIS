@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.hooks.HookDomainOverride;
+
 final class PackageConfigSnapshot {
     final String packageName;
     final boolean dpisEnabled;

@@ -1,5 +1,12 @@
 package com.dpis.module;
 
+import com.dpis.module.hooks.HookDomainOverride;
+import com.dpis.module.hooks.HookExecutionPlan;
+import com.dpis.module.hooks.HookExecutionPlanner;
+import com.dpis.module.hooks.HookRuntimePolicy;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
+
 import com.dpis.module.runtime.DebugPackageOverride;
 
 import org.junit.Test;
@@ -484,7 +491,7 @@ public class AppProcessHookInstallerTest {
     @Test
     public void debugFlutterSettingsPropertiesAreDebugOnlyAndPackageScoped() throws Exception {
         String source = readSource("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
-        String planner = readSource("src/main/java/com/dpis/module/HookExecutionPlanner.java");
+        String planner = readSource("src/main/java/com/dpis/module/hooks/HookExecutionPlanner.java");
         String packagePlan = readSource("src/main/java/com/dpis/module/ModulePackagePlan.java");
 
         assertTrue(source.contains("debug.dpis.font.force_flutter_settings_package"));

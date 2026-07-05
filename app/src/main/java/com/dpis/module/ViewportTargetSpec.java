@@ -65,7 +65,7 @@ public final class ViewportTargetSpec {
         return isRelativeScale() || isAbsoluteDp();
     }
 
-    int activeValue() {
+    public int activeValue() {
         if (isRelativeScale()) {
             return scaleMilliPercent;
         }

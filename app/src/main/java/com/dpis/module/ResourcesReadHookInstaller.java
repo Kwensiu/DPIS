@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.hooks.HookRuntimePolicy;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
+
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.util.DisplayMetrics;

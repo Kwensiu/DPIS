@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.hooks.HookRuntimePolicy;
+
 import android.content.res.Configuration;
 import android.util.DisplayMetrics;
 
