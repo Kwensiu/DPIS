@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontLibraryStore;
+
 import com.dpis.module.templates.TemplateTypefaceResolver;
 
 import com.dpis.module.templates.TemplateSummaryChipBinder;

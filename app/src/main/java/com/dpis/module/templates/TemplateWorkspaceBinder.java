@@ -1,5 +1,8 @@
 package com.dpis.module.templates;
 
+import com.dpis.module.fonts.FontLibraryEntry;
+import com.dpis.module.fonts.FontLibraryStore;
+
 import com.dpis.module.*;
 
 

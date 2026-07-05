@@ -2,6 +2,8 @@ package com.dpis.module;
 
 import com.dpis.module.templates.TemplateConfigSummaryFormatter;
 import com.dpis.module.templates.TemplateTypefaceResolver;
+import com.dpis.module.fonts.FontLibraryEntry;
+import com.dpis.module.fonts.FontLibraryStore;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -49,7 +51,7 @@ public final class TemplateTypefaceResolverTest {
         FontLibraryStore store = new FontLibraryStore(
                 new FakePrefs(),
                 temporaryFolder.newFolder("fonts"));
-        FontLibraryEntry entry = store.registerCopiedFontForTest(
+        FontLibraryEntry entry = store.registerCopiedFont(
                 writeFile("Example.ttf", "fake-font-data"),
                 "Example.ttf",
                 1234L);
@@ -66,7 +68,7 @@ public final class TemplateTypefaceResolverTest {
         FontLibraryStore store = new FontLibraryStore(
                 new FakePrefs(),
                 temporaryFolder.newFolder("fonts"));
-        FontLibraryEntry entry = store.registerCopiedFontForTest(
+        FontLibraryEntry entry = store.registerCopiedFont(
                 writeFile("Gone.ttf", "fake-font-data"),
                 "Gone.ttf",
                 1234L);

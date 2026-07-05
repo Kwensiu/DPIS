@@ -1,8 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.fonts;
 
 import android.content.SharedPreferences;
-
-import com.dpis.module.fonts.FontFileKind;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,6 +17,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 public final class FontLibraryStore {
     private static final String KEY_ENTRIES = "font.library.entries";
@@ -37,17 +36,17 @@ public final class FontLibraryStore {
     private final File fontDirectory;
     private final File publicFontDirectory;
 
-    FontLibraryStore(SharedPreferences preferences, File fontDirectory) {
+    public FontLibraryStore(SharedPreferences preferences, File fontDirectory) {
         this(preferences, fontDirectory, null);
     }
 
-    FontLibraryStore(SharedPreferences preferences, File fontDirectory, File publicFontDirectory) {
+    public FontLibraryStore(SharedPreferences preferences, File fontDirectory, File publicFontDirectory) {
         this.preferences = Objects.requireNonNull(preferences, "preferences");
         this.fontDirectory = fontDirectory;
         this.publicFontDirectory = publicFontDirectory;
     }
 
-    List<FontLibraryEntry> listFonts() {
+    public List<FontLibraryEntry> listFonts() {
         List<FontLibraryEntry> entries = readEntries();
         entries.sort(Comparator
                 .comparing((FontLibraryEntry entry) -> entry.displayName, String.CASE_INSENSITIVE_ORDER)
@@ -55,7 +54,7 @@ public final class FontLibraryStore {
         return entries;
     }
 
-    void purgeOrphanedFiles() {
+    public void purgeOrphanedFiles() {
         if (fontDirectory == null || !fontDirectory.isDirectory()) {
             return;
         }
@@ -96,12 +95,12 @@ public final class FontLibraryStore {
         return file.isFile() ? file : null;
     }
 
-    synchronized DeleteResult deleteFont(String id, DpisConfigStore configStore) {
+    public synchronized DeleteResult deleteFont(String id, Predicate<String> isFontReferenced) {
         FontLibraryEntry entry = findById(id);
         if (entry == null) {
             return DeleteResult.NOT_FOUND;
         }
-        if (isReferenced(entry.id, configStore)) {
+        if (isFontReferenced != null && isFontReferenced.test(entry.id)) {
             return DeleteResult.IN_USE;
         }
         List<FontLibraryEntry> originalEntries = readEntries();
@@ -136,14 +135,14 @@ public final class FontLibraryStore {
         }
     }
 
-    FontLibraryEntry registerCopiedFontForTest(
+    public synchronized FontLibraryEntry registerCopiedFont(
             File sourceFile,
             String sourceFileName,
             long importedAtEpochMs) throws IOException {
         return registerCopiedFont(sourceFile, sourceFileName, sourceFileName, importedAtEpochMs);
     }
 
-    synchronized FontLibraryEntry registerCopiedFont(
+    public synchronized FontLibraryEntry registerCopiedFont(
             File sourceFile,
             String sourceFileName,
             String requestedDisplayName,
@@ -156,7 +155,7 @@ public final class FontLibraryStore {
                 null);
     }
 
-    synchronized FontLibraryEntry registerCopiedFont(
+    public synchronized FontLibraryEntry registerCopiedFont(
             File sourceFile,
             String sourceFileName,
             String requestedDisplayName,
@@ -209,7 +208,7 @@ public final class FontLibraryStore {
         return entry;
     }
 
-    synchronized List<FontLibraryEntry> registerCopiedFontFaces(
+    public synchronized List<FontLibraryEntry> registerCopiedFontFaces(
             File sourceFile,
             String sourceFileName,
             String requestedDisplayName,
@@ -300,7 +299,7 @@ public final class FontLibraryStore {
         return result;
     }
 
-    synchronized RenameResult renameFont(String id, String requestedDisplayName) {
+    public synchronized RenameResult renameFont(String id, String requestedDisplayName) {
         String displayName = sanitizeDisplayName(requestedDisplayName);
         if (displayName == null) {
             return RenameResult.INVALID_NAME;
@@ -364,18 +363,6 @@ public final class FontLibraryStore {
         if (!fontDirectory.isDirectory()) {
             throw new IOException("Font directory is not a directory: " + fontDirectory);
         }
-    }
-
-    private boolean isReferenced(String id, DpisConfigStore configStore) {
-        if (configStore == null) {
-            return false;
-        }
-        for (String packageName : configStore.getConfiguredPackages()) {
-            if (id.equals(configStore.getTargetTypefaceId(packageName))) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static File resolveStoredFile(FontLibraryEntry entry) {
@@ -592,7 +579,7 @@ public final class FontLibraryStore {
         return builder.append('"').toString();
     }
 
-    static String normalizeDisplayName(String sourceFileName) {
+    public static String normalizeDisplayName(String sourceFileName) {
         String sanitized = sanitizeDisplayName(sourceFileName);
         if (sanitized == null) {
             return "Imported font";
@@ -713,14 +700,14 @@ public final class FontLibraryStore {
         return "'" + value.replace("'", "'\\''") + "'";
     }
 
-    enum DeleteResult {
+    public enum DeleteResult {
         DELETED,
         NOT_FOUND,
         IN_USE,
         DELETE_FAILED
     }
 
-    enum RenameResult {
+    public enum RenameResult {
         RENAMED,
         NOT_FOUND,
         INVALID_NAME,

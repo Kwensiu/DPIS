@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontLibraryEntry;
+import com.dpis.module.fonts.FontLibraryStore;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -13,7 +16,7 @@ public class SystemServerSettingsActivityFontLibrarySourceTest {
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
         String manifest = read("src/main/AndroidManifest.xml");
         String factory = read("src/main/java/com/dpis/module/ConfigStoreFactory.java");
-        String store = read("src/main/java/com/dpis/module/FontLibraryStore.java");
+        String store = read("src/main/java/com/dpis/module/fonts/FontLibraryStore.java");
 
         assertTrue(source.contains("row_font_library"));
         assertTrue(source.contains("new Intent(activity, FontLibraryActivity.class)"));

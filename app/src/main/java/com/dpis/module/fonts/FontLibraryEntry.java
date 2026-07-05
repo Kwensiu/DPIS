@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.fonts;
 
 import java.util.Objects;
 

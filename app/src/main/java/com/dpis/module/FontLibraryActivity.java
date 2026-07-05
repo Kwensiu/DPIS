@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontLibraryEntry;
+import com.dpis.module.fonts.FontLibraryStore;
+
 import com.dpis.module.ui.TouchFeedbackBinder;
 
 import com.dpis.module.ui.DialogWindowSizer;
@@ -475,7 +478,8 @@ public final class FontLibraryActivity extends LocalizedActivity {
                 .setMessage(getString(R.string.font_library_delete_message, resolveFontTitle(entry)))
                 .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
                 .setPositiveButton(R.string.font_library_delete_action, (unusedDialog, which) -> {
-                    FontLibraryStore.DeleteResult result = fontLibraryStore.deleteFont(entry.id, configStore);
+                    FontLibraryStore.DeleteResult result =
+                            fontLibraryStore.deleteFont(entry.id, this::isFontReferenced);
                     handleDeleteResult(result);
                     if (result == FontLibraryStore.DeleteResult.DELETED) {
                         RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
@@ -524,7 +528,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
             clearedPackages.add(reference.packageName);
         }
 
-        FontLibraryStore.DeleteResult result = fontLibraryStore.deleteFont(entry.id, configStore);
+        FontLibraryStore.DeleteResult result = fontLibraryStore.deleteFont(entry.id, unused -> false);
         if (result != FontLibraryStore.DeleteResult.DELETED) {
             restoreTypefaceReferences(clearedPackages, entry.id);
             publishTypefaceReferences(clearedPackages, entry.id);
@@ -973,6 +977,10 @@ public final class FontLibraryActivity extends LocalizedActivity {
         }
         references.sort((left, right) -> left.label.compareToIgnoreCase(right.label));
         return references;
+    }
+
+    private boolean isFontReferenced(String fontId) {
+        return !findReferences(fontId).isEmpty();
     }
 
     private String resolveAppLabel(String packageName) {

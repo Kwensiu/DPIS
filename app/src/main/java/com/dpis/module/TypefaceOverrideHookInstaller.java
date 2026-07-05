@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontLibraryEntry;
+import com.dpis.module.fonts.FontLibraryStore;
+
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
 
 import com.dpis.module.fonts.PublishedFontFileResolver;
