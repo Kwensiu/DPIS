@@ -58,7 +58,7 @@ public final class DpisLog {
         );
     }
 
-    static boolean isLoggingEnabled() {
+    public static boolean isLoggingEnabled() {
         return loggingEnabled;
     }
 

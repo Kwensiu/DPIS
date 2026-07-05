@@ -1,15 +1,16 @@
-package com.dpis.module;
+package com.dpis.module.quirks;
 
+import com.dpis.module.DpisConfigStore;
 import com.dpis.module.appconfig.WechatDpiConfig;
 import com.dpis.module.runtime.WechatDpiPropertyBridge;
 
 import com.dpis.module.runtime.RootCommandRunner;
 
-final class WechatDpiPropertySyncer {
+public final class WechatDpiPropertySyncer {
     private WechatDpiPropertySyncer() {
     }
 
-    static void publishDpiAsync(String packageName, Integer dpi) {
+    public static void publishDpiAsync(String packageName, Integer dpi) {
         if (!WechatDpiConfig.appliesTo(packageName)) {
             return;
         }
@@ -20,7 +21,7 @@ final class WechatDpiPropertySyncer {
         publisherThread.start();
     }
 
-    static void syncConfiguredTargetsAsync(DpisConfigStore store) {
+    public static void syncConfiguredTargetsAsync(DpisConfigStore store) {
         if (store == null) {
             return;
         }
@@ -34,11 +35,11 @@ final class WechatDpiPropertySyncer {
         syncThread.start();
     }
 
-    static String buildSyncCommandForTest(DpisConfigStore store) {
+    public static String buildSyncCommandForTest(DpisConfigStore store) {
         return buildSyncCommand(store);
     }
 
-    static String buildDpiCommandForTest(String packageName, Integer dpi) {
+    public static String buildDpiCommandForTest(String packageName, Integer dpi) {
         return buildDpiCommand(packageName, dpi);
     }
 

@@ -71,7 +71,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         notifyServiceStateChanged();
     }
 
-    static DpisConfigStore getConfigStore() {
+    public static DpisConfigStore getConfigStore() {
         return configStore;
     }
 

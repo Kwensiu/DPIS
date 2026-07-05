@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.fonts;
+
+import com.dpis.module.*;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -10,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-final class FontDebugLogcatBridge {
+public final class FontDebugLogcatBridge {
     private static final int MAX_LINES = 300;
     private static final int TOP_LIMIT = 20;
     private static final String[] MARKERS = {

@@ -1,13 +1,13 @@
-package com.dpis.module;
+package com.dpis.module.fonts;
 
-import com.dpis.module.fonts.FontDebugStatsSchema;
+import com.dpis.module.*;
 
 import android.content.SharedPreferences;
 
 import java.util.Set;
 
-final class FontDebugDataDiagnostics {
-    enum NoDataReason {
+public final class FontDebugDataDiagnostics {
+    public enum NoDataReason {
         NONE,
         SCOPE_MISSING,
         NOT_INJECTED,
@@ -17,7 +17,7 @@ final class FontDebugDataDiagnostics {
     private FontDebugDataDiagnostics() {
     }
 
-    static NoDataReason resolveNoDataReason(DpisConfigStore store, SharedPreferences preferences) {
+    public static NoDataReason resolveNoDataReason(DpisConfigStore store, SharedPreferences preferences) {
         if (preferences == null) {
             return NoDataReason.NOT_INJECTED;
         }

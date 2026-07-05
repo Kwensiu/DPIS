@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.quirks.WechatDpiMethodLocator;
+
 import static org.junit.Assert.assertEquals;
 
 import android.content.res.Configuration;

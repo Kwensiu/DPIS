@@ -1,9 +1,9 @@
-package com.dpis.module;
+package com.dpis.module.quirks;
 
 import java.util.ArrayList;
 import java.util.List;
 
-final class WechatDpiRoutes {
+public final class WechatDpiRoutes {
     private static final Route[] ROUTES = {
             wechat8074Route(),
             route(3100L, "8.0.72", "w45.f"),
@@ -16,7 +16,7 @@ final class WechatDpiRoutes {
     private WechatDpiRoutes() {
     }
 
-    static Route forVersionCode(long versionCode) {
+    public static Route forVersionCode(long versionCode) {
         if (versionCode <= 0L) {
             return null;
         }
@@ -28,11 +28,11 @@ final class WechatDpiRoutes {
         return null;
     }
 
-    static boolean supportsVersionCode(long versionCode) {
+    public static boolean supportsVersionCode(long versionCode) {
         return forVersionCode(versionCode) != null;
     }
 
-    static List<Route> all() {
+    public static List<Route> all() {
         ArrayList<Route> routes = new ArrayList<>(ROUTES.length);
         for (Route route : ROUTES) {
             routes.add(route);
@@ -40,7 +40,7 @@ final class WechatDpiRoutes {
         return routes;
     }
 
-    static boolean matchesClassName(String className) {
+    public static boolean matchesClassName(String className) {
         if (className == null || className.isBlank()) {
             return false;
         }
@@ -72,12 +72,12 @@ final class WechatDpiRoutes {
         return new Route(versionCode, versionName, className, true, densityMethodTargets);
     }
 
-    static final class Route {
-        final long versionCode;
-        final String versionName;
-        final String className;
-        final boolean bottomTabIconScaleEnabled;
-        final MethodTarget[] densityMethodTargets;
+    public static final class Route {
+        public final long versionCode;
+        public final String versionName;
+        public final String className;
+        public final boolean bottomTabIconScaleEnabled;
+        public final MethodTarget[] densityMethodTargets;
 
         private Route(long versionCode, String versionName, String className,
                 boolean bottomTabIconScaleEnabled,
@@ -91,7 +91,7 @@ final class WechatDpiRoutes {
                     : new MethodTarget[0];
         }
 
-        String routeKey() {
+        public String routeKey() {
             return className;
         }
 
@@ -100,9 +100,9 @@ final class WechatDpiRoutes {
         }
     }
 
-    static final class MethodTarget {
-        final String methodName;
-        final Kind kind;
+    public static final class MethodTarget {
+        public final String methodName;
+        public final Kind kind;
 
         private MethodTarget(String methodName, Kind kind) {
             this.methodName = methodName;
@@ -125,7 +125,7 @@ final class WechatDpiRoutes {
             return new MethodTarget(methodName, Kind.TARGET_FIELD_SETTER);
         }
 
-        enum Kind {
+        public enum Kind {
             DISPLAY_METRICS_GETTER,
             DISPLAY_METRICS_MUTATOR,
             TARGET_FIELD_GETTER,

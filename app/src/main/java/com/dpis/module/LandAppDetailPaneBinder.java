@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.quirks.WechatDpiSheetBinder;
+
 import com.dpis.module.ui.TouchFeedbackBinder;
 
 import com.dpis.module.fonts.SystemFontEntry;
@@ -123,7 +125,7 @@ final class LandAppDetailPaneBinder {
 
         bindViewportEditor(root, item, state);
         bindFontEditor(root, item);
-        WechatDpiSheetBinder.bind(root, item, ()
+        WechatDpiSheetBinder.bind(root, item.packageName, ()
                 -> updateSaveButtonState(root, saveButton)
         );
         FormInputFocusBinder.bindDismissOnOutsideTouch(

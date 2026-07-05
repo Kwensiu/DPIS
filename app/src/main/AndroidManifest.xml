@@ -67,7 +67,7 @@
             android:name=".LogActivity"
             android:exported="false" />
         <activity
-            android:name=".FontDebugStatsIngestActivity"
+            android:name=".fonts.FontDebugStatsIngestActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:finishOnTaskLaunch="true"
@@ -102,7 +102,7 @@
         </activity-alias>
 
         <receiver
-            android:name=".FontDebugStatsReceiver"
+            android:name=".fonts.FontDebugStatsReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
@@ -121,12 +121,12 @@
         </receiver>
 
         <service
-            android:name=".FontDebugOverlayService"
+            android:name=".fonts.FontDebugOverlayService"
             android:enabled="true"
             android:exported="false" />
 
         <service
-            android:name=".FontDebugStatsIngestService"
+            android:name=".fonts.FontDebugStatsIngestService"
             android:enabled="true"
             android:exported="false" />
 
@@ -146,7 +146,7 @@
         </service>
 
         <provider
-            android:name=".FontDebugStatsProvider"
+            android:name=".fonts.FontDebugStatsProvider"
             android:authorities="${applicationId}.fontdebugstats"
             android:enabled="true"
             android:exported="false" />

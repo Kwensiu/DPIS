@@ -1,5 +1,6 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontDebugStatsReporter;
 import com.dpis.module.fonts.TextViewFontProvenanceTracker;
 
 import com.dpis.module.fonts.FontFieldRewriteMath;

@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.quirks.WechatDpiPropertySyncer;
+import com.dpis.module.quirks.WechatDpiSheetBinder;
+
 import com.dpis.module.appconfig.WechatDpiConfig;
 
 import com.dpis.module.appconfig.UnsavedBadgeBinder;
@@ -89,11 +92,11 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void wechatDpiUsesSingleOfficialInput() throws IOException {
-        String binder = read("src/main/java/com/dpis/module/WechatDpiSheetBinder.java");
+        String binder = read("src/main/java/com/dpis/module/quirks/WechatDpiSheetBinder.java");
         String strings = read("src/main/res/values/strings.xml");
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
-        assertTrue(binder.contains("WechatDpiConfig.appliesTo(item.packageName)"));
+        assertTrue(binder.contains("WechatDpiConfig.appliesTo(packageName)"));
         assertTrue(binder.contains("HapticFeedbackConstants.VIRTUAL_KEY"));
         assertTrue(binder.contains("MaterialAlertDialogBuilder"));
         assertTrue(binder.contains("R.string.dialog_wechat_dpi_help_title"));
@@ -112,7 +115,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void wechatDpiSaveDoesNotClearViewportConfig() throws IOException {
-        String binder = read("src/main/java/com/dpis/module/WechatDpiSheetBinder.java");
+        String binder = read("src/main/java/com/dpis/module/quirks/WechatDpiSheetBinder.java");
         int saveStart = binder.indexOf("static boolean save(");
         int saveEnd = binder.indexOf("static void clearDraft", saveStart);
         String saveBlock = binder.substring(saveStart, saveEnd);

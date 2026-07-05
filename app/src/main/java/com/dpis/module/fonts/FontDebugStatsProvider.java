@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.fonts;
+
+import com.dpis.module.*;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;

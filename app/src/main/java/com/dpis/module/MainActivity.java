@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.quirks.WechatDpiSheetBinder;
+
 import com.dpis.module.templates.QuickTemplateSortDialog;
 
 import com.dpis.module.templates.GlobalPrefillStore;

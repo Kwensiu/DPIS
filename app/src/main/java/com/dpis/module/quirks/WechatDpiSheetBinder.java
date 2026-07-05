@@ -1,5 +1,8 @@
-package com.dpis.module;
+package com.dpis.module.quirks;
 
+import com.dpis.module.DpisApplication;
+import com.dpis.module.DpisConfigStore;
+import com.dpis.module.R;
 import com.dpis.module.appconfig.WechatDpiConfig;
 
 import com.dpis.module.ui.DialogWindowSizer;
@@ -14,18 +17,18 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
-final class WechatDpiSheetBinder {
+public final class WechatDpiSheetBinder {
     private WechatDpiSheetBinder() {
     }
 
-    static void bind(View dialogView, AppListItem item, Runnable onValidationChanged) {
+    public static void bind(View dialogView, String packageName, Runnable onValidationChanged) {
         View row = row(dialogView);
         TextInputLayout inputLayout = inputLayout(dialogView);
         TextInputEditText inputView = inputView(dialogView);
         if (row == null || inputLayout == null || inputView == null) {
             return;
         }
-        if (!WechatDpiConfig.appliesTo(item.packageName)) {
+        if (!WechatDpiConfig.appliesTo(packageName)) {
             row.setVisibility(View.GONE);
             return;
         }
@@ -39,7 +42,7 @@ final class WechatDpiSheetBinder {
         }
         DpisConfigStore store = DpisApplication.getActiveHookConfigStore(
                 dialogView.getContext());
-        Integer initial = store != null ? store.getWechatDpi(item.packageName) : null;
+        Integer initial = store != null ? store.getWechatDpi(packageName) : null;
         inputView.setText(initial != null ? String.valueOf(initial) : "");
         inputView.addTextChangedListener(new TextWatcher() {
             @Override
@@ -61,7 +64,7 @@ final class WechatDpiSheetBinder {
         updateValidationState(inputLayout, inputView);
     }
 
-    static boolean isInputValid(View dialogView) {
+    public static boolean isInputValid(View dialogView) {
         TextInputEditText inputView = inputView(dialogView);
         if (inputView == null || inputView.getText() == null) {
             return true;
@@ -69,7 +72,7 @@ final class WechatDpiSheetBinder {
         return WechatDpiConfig.isInputValid(inputView.getText().toString());
     }
 
-    static void bindDoneAction(android.widget.TextView.OnEditorActionListener listener,
+    public static void bindDoneAction(android.widget.TextView.OnEditorActionListener listener,
             View dialogView) {
         TextInputEditText inputView = inputView(dialogView);
         if (inputView != null) {
@@ -77,11 +80,11 @@ final class WechatDpiSheetBinder {
         }
     }
 
-    static TextInputEditText inputViewForFocus(View dialogView) {
+    public static TextInputEditText inputViewForFocus(View dialogView) {
         return inputView(dialogView);
     }
 
-    static boolean save(View dialogView, String packageName, boolean dpisEnabled,
+    public static boolean save(View dialogView, String packageName, boolean dpisEnabled,
             DpisConfigStore store) {
         if (!WechatDpiConfig.appliesTo(packageName)) {
             return true;
@@ -97,7 +100,7 @@ final class WechatDpiSheetBinder {
         return saved;
     }
 
-    static void publishForDpisState(String packageName, boolean dpisEnabled) {
+    public static void publishForDpisState(String packageName, boolean dpisEnabled) {
         if (!WechatDpiConfig.appliesTo(packageName)) {
             return;
         }
@@ -106,14 +109,14 @@ final class WechatDpiSheetBinder {
         WechatDpiPropertySyncer.publishDpiAsync(packageName, dpi);
     }
 
-    static void clearDraft(View dialogView) {
+    public static void clearDraft(View dialogView) {
         TextInputEditText inputView = inputView(dialogView);
         if (inputView != null) {
             inputView.setText("");
         }
     }
 
-    static String captureDraft(View dialogView) {
+    public static String captureDraft(View dialogView) {
         TextInputEditText inputView = inputView(dialogView);
         if (inputView == null || inputView.getText() == null) {
             return null;
@@ -121,7 +124,7 @@ final class WechatDpiSheetBinder {
         return inputView.getText().toString();
     }
 
-    static void applyDraft(View dialogView, String rawValue) {
+    public static void applyDraft(View dialogView, String rawValue) {
         if (rawValue == null) {
             return;
         }

@@ -1,12 +1,12 @@
-package com.dpis.module;
+package com.dpis.module.fonts;
 
-import com.dpis.module.fonts.FontDebugStatsSchema;
+import com.dpis.module.*;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
-final class FontDebugStatsUpdateWriter {
+public final class FontDebugStatsUpdateWriter {
     private FontDebugStatsUpdateWriter() {
     }
 

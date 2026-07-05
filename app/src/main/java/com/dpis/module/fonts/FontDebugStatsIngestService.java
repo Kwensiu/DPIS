@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.fonts;
+
+import com.dpis.module.*;
 
 import android.app.Service;
 import android.content.Intent;

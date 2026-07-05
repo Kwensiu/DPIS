@@ -1,6 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.fonts;
 
-import com.dpis.module.fonts.FontDebugStatsSchema;
+import com.dpis.module.*;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -13,7 +13,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-final class FontDebugStatsFileBridge {
+public final class FontDebugStatsFileBridge {
     private static final String DIR_NAME = "font_debug_stats";
     private static final String FILE_NAME = "font_debug_stats.properties";
 
@@ -47,7 +47,7 @@ final class FontDebugStatsFileBridge {
         importIfNewer(preferences, legacyFile);
     }
 
-    static void importIfNewer(SharedPreferences preferences, Properties properties) {
+    public static void importIfNewer(SharedPreferences preferences, Properties properties) {
         if (preferences == null || properties == null || properties.isEmpty()) {
             return;
         }
@@ -61,22 +61,22 @@ final class FontDebugStatsFileBridge {
         editor.apply();
     }
 
-    static void importIfNewer(SharedPreferences preferences, File file) {
+    public static void importIfNewer(SharedPreferences preferences, File file) {
         Properties properties = loadProperties(file);
         if (properties != null) {
             importIfNewer(preferences, properties);
         }
     }
 
-    static File resolveAppSpecificStatsFile(Context context) {
+    public static File resolveAppSpecificStatsFile(Context context) {
         return resolveFile(context);
     }
 
-    static File resolveAppSpecificStatsFile(File baseDir) {
+    public static File resolveAppSpecificStatsFile(File baseDir) {
         return resolveFile(baseDir);
     }
 
-    static File resolveLegacyPublicStatsFile(File downloads) {
+    public static File resolveLegacyPublicStatsFile(File downloads) {
         return resolveLegacyPublicFile(downloads);
     }
 

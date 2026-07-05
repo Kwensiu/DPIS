@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.quirks.WechatDpiMethodLocator;
+import com.dpis.module.quirks.WechatDpiRoutes;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -12,7 +15,7 @@ public class WechatDpiMethodLocatorSourceTest {
     @Test
     public void locatorUsesStaticRouteBeforeDexKitForKnownVersions() throws Exception {
         String source = SourceSmokeTestPaths.read(
-                "src/main/java/com/dpis/module/WechatDpiMethodLocator.java");
+                "src/main/java/com/dpis/module/quirks/WechatDpiMethodLocator.java");
 
         assertTrue(source.contains("WechatDpiRoutes.forVersionCode(versionCode)"));
         assertTrue(source.contains("Class.forName(route.className, false, classLoader)"));
@@ -44,9 +47,9 @@ public class WechatDpiMethodLocatorSourceTest {
     @Test
     public void locatorKeepsWechatDisplayMetricsRouteOnly() throws Exception {
         String source = SourceSmokeTestPaths.read(
-                "src/main/java/com/dpis/module/WechatDpiMethodLocator.java");
+                "src/main/java/com/dpis/module/quirks/WechatDpiMethodLocator.java");
         String routes = SourceSmokeTestPaths.read(
-                "src/main/java/com/dpis/module/WechatDpiRoutes.java");
+                "src/main/java/com/dpis/module/quirks/WechatDpiRoutes.java");
 
         assertFalse(source.contains("resourcesClassName"));
         assertFalse(source.contains("TabIconView"));

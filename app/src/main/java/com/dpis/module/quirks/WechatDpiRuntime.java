@@ -1,15 +1,17 @@
-package com.dpis.module;
+package com.dpis.module.quirks;
+
+import com.dpis.module.DensityOverride;
 
 import android.util.DisplayMetrics;
 
-final class WechatDpiRuntime {
+public final class WechatDpiRuntime {
     private static final float BOTTOM_TAB_ICON_SCALE_NUMERATOR = 1.1666666f;
     private static final float BOTTOM_TAB_ICON_SCALE_BASE_DPI = 400.0f;
 
     private WechatDpiRuntime() {
     }
 
-    static boolean apply(DisplayMetrics metrics, int dpi) {
+    public static boolean apply(DisplayMetrics metrics, int dpi) {
         if (dpi <= 0 || metrics == null || metrics.density <= 0f) {
             return false;
         }
@@ -22,7 +24,7 @@ final class WechatDpiRuntime {
         return true;
     }
 
-    static float bottomTabIconScale(int dpi) {
+    public static float bottomTabIconScale(int dpi) {
         return dpi * BOTTOM_TAB_ICON_SCALE_NUMERATOR / BOTTOM_TAB_ICON_SCALE_BASE_DPI;
     }
 }

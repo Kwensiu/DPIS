@@ -9,7 +9,7 @@ import org.junit.Test;
 public class FontDebugStatsTransportSourceTest {
     @Test
     public void targetProcessTransportDoesNotStartNonExportedModuleComponents() throws IOException {
-        String source = read("src/main/java/com/dpis/module/FontDebugStatsTransport.java");
+        String source = read("src/main/java/com/dpis/module/fonts/FontDebugStatsTransport.java");
 
         assertTrue(source.contains("if (!isModuleContext(context))"));
         assertTrue(source.contains("FontDebugStatsFileBridge.write(context, extras);"));

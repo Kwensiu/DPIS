@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.quirks;
 
 import android.content.pm.ApplicationInfo;
 import android.content.res.Configuration;
@@ -21,11 +21,11 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-final class WechatDpiMethodLocator {
+public final class WechatDpiMethodLocator {
     private WechatDpiMethodLocator() {
     }
 
-    static Result locate(ClassLoader classLoader, ApplicationInfo applicationInfo,
+    public static Result locate(ClassLoader classLoader, ApplicationInfo applicationInfo,
             long versionCode) {
         Result routeResult = locateByStaticRoute(classLoader, versionCode);
         if (!routeResult.methods.isEmpty()) {
@@ -103,7 +103,7 @@ final class WechatDpiMethodLocator {
                 && method.getReturnType() == DisplayMetrics.class;
     }
 
-    static List<Method> densityManagerMethods(Class<?> densityManagerClass) {
+    public static List<Method> densityManagerMethods(Class<?> densityManagerClass) {
         if (densityManagerClass == null) {
             return Collections.emptyList();
         }
@@ -230,7 +230,7 @@ final class WechatDpiMethodLocator {
         return parseModuleApkPathForTest(classLoader.toString());
     }
 
-    static String parseModuleApkPathForTest(String classLoaderText) {
+    public static String parseModuleApkPathForTest(String classLoaderText) {
         if (classLoaderText == null || classLoaderText.isEmpty()) {
             return null;
         }
@@ -251,7 +251,7 @@ final class WechatDpiMethodLocator {
         return path.endsWith(".apk") ? path : null;
     }
 
-    static String[] nativeDirectoryNamesForAbi(String abi) {
+    public static String[] nativeDirectoryNamesForAbi(String abi) {
         if ("arm64-v8a".equals(abi)) {
             return new String[] {"arm64", "arm64-v8a"};
         }
@@ -261,21 +261,21 @@ final class WechatDpiMethodLocator {
         return new String[] {abi};
     }
 
-    enum Source {
+    public enum Source {
         DEXKIT("dexkit"),
         STATIC_ROUTE("static-route");
 
-        final String logName;
+        public final String logName;
 
         Source(String logName) {
             this.logName = logName;
         }
     }
 
-    static final class Result {
-        final Source source;
-        final List<Method> methods;
-        final String failure;
+    public static final class Result {
+        public final Source source;
+        public final List<Method> methods;
+        public final String failure;
 
         private Result(Source source, List<Method> methods, String failure) {
             this.source = source;

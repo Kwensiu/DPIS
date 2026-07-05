@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontDebugStatsStore;
+import com.dpis.module.fonts.FontDebugStatsTransport;
+
 import android.app.Application;
 import android.content.Context;
 import android.os.Bundle;

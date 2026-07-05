@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontDebugStatsReporter;
+
 import static org.junit.Assert.assertEquals;
 
 import org.junit.After;

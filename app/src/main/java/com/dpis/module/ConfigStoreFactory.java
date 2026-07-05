@@ -27,7 +27,7 @@ public final class ConfigStoreFactory {
         return store;
     }
 
-    static DpisConfigStore createLocalUiModuleConfigStore(Context context, XposedService service) {
+    public static DpisConfigStore createLocalUiModuleConfigStore(Context context, XposedService service) {
         File legacySharedPrefsFile = legacySharedPrefsFile(context);
         SharedPreferences localPreferences =
                 context.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE);

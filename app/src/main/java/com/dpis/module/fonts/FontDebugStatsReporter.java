@@ -1,6 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.fonts;
 
-import com.dpis.module.fonts.FontDebugStatsSchema;
+import com.dpis.module.*;
 
 import android.app.Application;
 import android.content.Context;
@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-final class FontDebugStatsReporter {
+public final class FontDebugStatsReporter {
     private static final Object LOCK = new Object();
     private static final long SNAPSHOT_INTERVAL_MS = 500L;
     private static final int WINDOW_5S = 5;
@@ -38,7 +38,7 @@ final class FontDebugStatsReporter {
 
     // --- test seams ---
 
-    static void resetForTest() {
+    public static void resetForTest() {
         synchronized (LOCK) {
             BUCKETS.clear();
             CUMULATIVE_CHAIN.clear();
@@ -50,13 +50,13 @@ final class FontDebugStatsReporter {
         CACHED_APP_CONTEXT = null;
     }
 
-    static int debugTotalEvents() {
+    public static int debugTotalEvents() {
         synchronized (LOCK) {
             return totalEvents;
         }
     }
 
-    static void record(String chain, String viewClass, Context context) {
+    public static void record(String chain, String viewClass, Context context) {
         if (!DpisLog.isLoggingEnabled()) {
             return;
         }
@@ -69,7 +69,7 @@ final class FontDebugStatsReporter {
     // Variant for the text-size-unit hot path: the chain string is only built
     // ("text-size-unit-" + unit) after the logging gate, so when diagnostics
     // are off the per-call String allocation is skipped entirely.
-    static void recordUnit(int unit, String viewClass, Context context) {
+    public static void recordUnit(int unit, String viewClass, Context context) {
         if (!DpisLog.isLoggingEnabled()) {
             return;
         }

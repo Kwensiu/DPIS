@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.quirks.WechatDpiPropertySyncer;
+
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;

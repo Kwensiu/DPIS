@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.quirks.WechatDpiSheetBinder;
+
 import com.dpis.module.ui.DialogWindowSizer;
 
 import com.dpis.module.fonts.SystemFontEntry;
@@ -127,7 +129,7 @@ public final class AppConfigDialogBinder {
         AppConfigDialogState state = bindDialogInitialState(item, views);
         dialogView.setTag(R.id.dialog_save_button, state);
         dialogView.setTag(R.id.dialog_font_hook_domains_button, views);
-        WechatDpiSheetBinder.bind(dialogView, item,
+        WechatDpiSheetBinder.bind(dialogView, item.packageName,
                 () -> updateSaveButtonState(dialogView, views));
         updateSaveButtonState(dialogView, views);
         state.captureSavedDraft(views, item != null && item.previewFromGlobalPrefill);

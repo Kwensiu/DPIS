@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.quirks.WechatDpiSheetBinder;
+
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;

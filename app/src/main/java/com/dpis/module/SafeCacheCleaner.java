@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontDebugStatsFileBridge;
+import com.dpis.module.fonts.FontDebugStatsStore;
+
 import com.dpis.module.updates.UpdatePackageInstaller;
 
 import com.dpis.module.updates.ReleaseNotesCacheStore;

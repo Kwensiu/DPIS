@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontDebugStatsStore;
+
 import com.dpis.module.templates.TemplateConfigValueAdapters;
 
 import com.dpis.module.templates.TemplateConfigValue;
@@ -227,7 +229,7 @@ public final class DpisConfigStore {
         this(preferences, fallbackPreferences, legacySharedPrefsMirrorFile, preferences);
     }
 
-    Set<String> getConfiguredPackages() {
+    public Set<String> getConfiguredPackages() {
         LinkedHashSet<String> packages = new LinkedHashSet<>();
         if (preferences.contains(KEY_TARGET_PACKAGES)) {
             Set<String> primaryPackages = preferences.getStringSet(KEY_TARGET_PACKAGES, Collections.emptySet());
@@ -376,7 +378,7 @@ public final class DpisConfigStore {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
-    Integer getWechatDpi(String packageName) {
+    public Integer getWechatDpi(String packageName) {
         if (!WechatDpiConfig.appliesTo(packageName)) {
             return null;
         }
@@ -399,7 +401,7 @@ public final class DpisConfigStore {
         return getWechatDpi(packageName) != null;
     }
 
-    String getTargetFontApplyMode(String packageName) {
+    public String getTargetFontApplyMode(String packageName) {
         String key = keyForFontMode(packageName);
         String packageKey = keyForPackageFontMode(packageName);
         if (containsPackageValue(key, packageKey)) {
@@ -442,7 +444,7 @@ public final class DpisConfigStore {
         return commitBoth(editor -> editor.putBoolean(KEY_SYSTEM_SERVER_SAFE_MODE_ENABLED, enabled));
     }
 
-    boolean isGlobalLogEnabled() {
+    public boolean isGlobalLogEnabled() {
         return getBoolean(KEY_GLOBAL_LOG_ENABLED, false);
     }
 
@@ -481,19 +483,19 @@ public final class DpisConfigStore {
         return commitBoth(editor -> editor.putBoolean(KEY_FONT_DEBUG_OVERLAY_ENABLED, enabled));
     }
 
-    int getFontDebugSelectedMode() {
+    public int getFontDebugSelectedMode() {
         return getInt(KEY_FONT_DEBUG_SELECTED_MODE, FontDebugStatsStore.MODE_CHAIN);
     }
 
-    boolean setFontDebugSelectedMode(int mode) {
+    public boolean setFontDebugSelectedMode(int mode) {
         return commitBoth(editor -> editor.putInt(KEY_FONT_DEBUG_SELECTED_MODE, mode));
     }
 
-    int getFontDebugSelectedWindow() {
+    public int getFontDebugSelectedWindow() {
         return getInt(KEY_FONT_DEBUG_SELECTED_WINDOW, FontDebugStatsStore.WINDOW_ALL);
     }
 
-    boolean setFontDebugSelectedWindow(int window) {
+    public boolean setFontDebugSelectedWindow(int window) {
         return commitBoth(editor -> editor.putInt(KEY_FONT_DEBUG_SELECTED_WINDOW, window));
     }
 
@@ -542,15 +544,15 @@ public final class DpisConfigStore {
         return commitBoth(editor -> editor.putBoolean(KEY_TTC_FONT_IMPORT_ENABLED, enabled));
     }
 
-    int getDebugInt(String key, int defaultValue) {
+    public int getDebugInt(String key, int defaultValue) {
         return getInt(key, defaultValue);
     }
 
-    boolean setDebugInt(String key, int value) {
+    public boolean setDebugInt(String key, int value) {
         return commitBoth(editor -> editor.putInt(key, value));
     }
 
-    String getDebugString(String key, String defaultValue) {
+    public String getDebugString(String key, String defaultValue) {
         return getString(key, defaultValue);
     }
 
@@ -800,7 +802,7 @@ public final class DpisConfigStore {
                 .putString(keyForPackageTypefaceId(packageName), normalizedTypefaceId));
     }
 
-    boolean setWechatDpi(String packageName, Integer dpi) {
+    public boolean setWechatDpi(String packageName, Integer dpi) {
         if (!WechatDpiConfig.appliesTo(packageName)) {
             return true;
         }
@@ -863,7 +865,7 @@ public final class DpisConfigStore {
                 .remove(keyForPackageTypefaceId(packageName)));
     }
 
-    boolean clearWechatDpi(String packageName) {
+    public boolean clearWechatDpi(String packageName) {
         if (!WechatDpiConfig.appliesTo(packageName)) {
             return true;
         }
@@ -948,7 +950,7 @@ public final class DpisConfigStore {
         return containsInPrimary(keyForFontMode(packageName));
     }
 
-    boolean isTargetDpisEnabled(String packageName) {
+    public boolean isTargetDpisEnabled(String packageName) {
         return getPackageBoolean(
                 keyForDpisEnabled(packageName),
                 keyForPackageDpisEnabled(packageName),
