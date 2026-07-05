@@ -1,5 +1,17 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontDebugStatsSchema;
+
+import com.dpis.module.runtime.RuntimeDebugPropertySyncer;
+
+import com.dpis.module.ui.DialogWindowSizer;
+
+import com.dpis.module.settings.AppLocaleManager;
+import com.dpis.module.settings.AppUiScaleManager;
+import com.dpis.module.settings.InterfaceScaleStore;
+import com.dpis.module.settings.LauncherIconVisibilityStore;
+import com.dpis.module.settings.SystemHookState;
+
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -25,6 +37,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.dpis.module.backup.ConfigBackupCodec;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;

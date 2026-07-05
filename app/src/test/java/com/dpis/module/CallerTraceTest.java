@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.CallerTrace;
+
 import org.junit.Test;
 
 import java.util.List;

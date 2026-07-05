@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.ComposeFontRuntimeClassifier;
+
 import org.junit.Test;
 
 import java.util.Arrays;

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.RuntimeDiagnosticLogFingerprint;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;

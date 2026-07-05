@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.updates.UpdatePackageInstaller;
+
+import com.dpis.module.updates.ReleaseNotesCacheStore;
+
 import android.content.Context;
 import android.os.Environment;
 

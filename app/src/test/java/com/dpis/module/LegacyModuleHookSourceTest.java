@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.appconfig.WechatDpiConfig;
+
+import com.dpis.module.fonts.PublishedFontFileResolver;
+
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 

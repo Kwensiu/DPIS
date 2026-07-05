@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.applist.AppListFilterState;
+
 import java.util.List;
 
 abstract class MainUiAction {

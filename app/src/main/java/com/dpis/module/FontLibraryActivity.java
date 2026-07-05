@@ -1,5 +1,12 @@
 package com.dpis.module;
 
+import com.dpis.module.ui.TouchFeedbackBinder;
+
+import com.dpis.module.ui.DialogWindowSizer;
+
+import com.dpis.module.fonts.FontTypefaceLoader;
+import com.dpis.module.ui.MaxHeightNestedScrollView;
+
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -22,6 +29,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.dpis.module.fonts.FontFileInspector;
+import com.dpis.module.fonts.FontFileKind;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;

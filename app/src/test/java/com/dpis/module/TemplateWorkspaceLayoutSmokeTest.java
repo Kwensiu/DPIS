@@ -1,5 +1,17 @@
 package com.dpis.module;
 
+import com.dpis.module.templates.TemplateTypefaceResolver;
+
+import com.dpis.module.templates.TemplateSummaryChipBinder;
+
+import com.dpis.module.templates.QuickTemplateSortDialog;
+
+import com.dpis.module.templates.QuickTemplateListAdapter;
+
+import com.dpis.module.templates.QuickTemplateStore;
+
+import com.dpis.module.templates.GlobalPrefillStore;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -94,35 +106,36 @@ public class TemplateWorkspaceLayoutSmokeTest {
 
     @Test
     public void binderAndAdapterReadStoresAndBindMissingFontHooks() throws IOException {
-        String binder = read("src/main/java/com/dpis/module/TemplateWorkspaceBinder.java");
-        String adapter = read("src/main/java/com/dpis/module/QuickTemplateListAdapter.java");
+        String binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.java");
+        String adapter = read("src/main/java/com/dpis/module/templates/QuickTemplateListAdapter.java");
 
         assertTrue(binder.contains("new GlobalPrefillStore(preferences).read()"));
         assertTrue(binder.contains("new QuickTemplateStore(preferences).readAll()"));
         assertTrue(binder.contains("ConfigStoreFactory.createLocalUiFontLibraryStore"));
         assertTrue(binder.contains("new TemplateTypefaceResolver("));
-        assertTrue(read("src/main/java/com/dpis/module/TemplateTypefaceResolver.java")
-                .contains("fontLibraryStore.resolveFontFile(typefaceId) != null"));
-        assertTrue(read("src/main/java/com/dpis/module/TemplateTypefaceResolver.java")
+        assertTrue(binder.contains("fontLibraryStore.resolveFontFile(typefaceId) != null"));
+        assertTrue(read("src/main/java/com/dpis/module/templates/TemplateTypefaceResolver.java")
+                .contains("importedTypefaceProvider.resolve(typefaceId)"));
+        assertTrue(read("src/main/java/com/dpis/module/templates/TemplateTypefaceResolver.java")
                 .contains("SystemFontRegistry.loadTypeface(typefaceId) != null"));
         assertTrue(binder.contains("R.id.global_prefill_summary_chips"));
         assertTrue(binder.contains("bindHeaderActions(workspaceView, templates)"));
         assertTrue(binder.contains("sortButton.setEnabled(sortEnabled);"));
         assertTrue(binder.contains("sortButton.setAlpha(sortEnabled ? 1f : DISABLED_ACTION_ALPHA);"));
-        assertTrue(read("src/main/java/com/dpis/module/TemplateSummaryChipBinder.java")
+        assertTrue(read("src/main/java/com/dpis/module/templates/TemplateSummaryChipBinder.java")
                 .contains("colorSurfaceContainerHighest"));
-        assertTrue(read("src/main/java/com/dpis/module/TemplateSummaryChipBinder.java")
+        assertTrue(read("src/main/java/com/dpis/module/templates/TemplateSummaryChipBinder.java")
                 .contains("chip.setChipStrokeWidth(0);"));
         assertTrue(adapter.contains("R.id.quick_template_summary_chips"));
         assertTrue(adapter.contains("TemplateSummaryChipBinder"));
         assertTrue(adapter.contains("R.id.quick_template_apply_button"));
         assertTrue(adapter.contains("R.id.quick_template_edit_button"));
         assertTrue(adapter.contains("R.id.quick_template_select_button"));
-        assertTrue(read("src/main/java/com/dpis/module/TemplateWorkspaceBinder.java")
+        assertTrue(read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.java")
                 .contains("quick_template_sort_button"));
-        assertTrue(read("src/main/java/com/dpis/module/QuickTemplateSortDialog.java")
+        assertTrue(read("src/main/java/com/dpis/module/templates/QuickTemplateSortDialog.java")
                 .contains("ItemTouchHelper"));
-        assertTrue(read("src/main/java/com/dpis/module/QuickTemplateSortDialog.java")
+        assertTrue(read("src/main/java/com/dpis/module/templates/QuickTemplateSortDialog.java")
                 .contains("DialogWindowSizer.applyLargeWidth(dialog, activity)"));
         assertFalse(adapter.contains("quick_template_updated"));
     }

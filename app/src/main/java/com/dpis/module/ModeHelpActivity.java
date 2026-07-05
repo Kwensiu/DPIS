@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.ui.TouchFeedbackBinder;
+
+import com.dpis.module.ui.WindowInsetsBinder;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;

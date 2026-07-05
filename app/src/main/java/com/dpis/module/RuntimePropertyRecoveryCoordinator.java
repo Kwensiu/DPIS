@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.RuntimeDebugPropertySyncer;
+
 /**
  * Replays the persisted per-package runtime mirrors into system properties.
  *

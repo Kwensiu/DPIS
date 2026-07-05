@@ -1,4 +1,13 @@
 package com.dpis.module;
+import com.dpis.module.templates.TemplateConfigValueAdapters;
+
+import com.dpis.module.templates.GlobalPrefillStore;
+
+import com.dpis.module.templates.QuickTemplateStore;
+
+import com.dpis.module.templates.TemplateConfigValue;
+
+import com.dpis.module.viewport.DpiConfig;
 
 import android.content.SharedPreferences;
 
@@ -1144,7 +1153,7 @@ public class DpisConfigStoreTest {
     @Test
     public void snapshotBackupIncludesPrefillAndTemplateKeysWithoutFontLibraryMetadata() {
         FakePrefs prefs = new FakePrefs();
-        assertTrue(new GlobalPrefillStore(prefs).write(new TemplateConfigValue(
+        assertTrue(new GlobalPrefillStore(prefs).write(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.absoluteDp(411),
                 ViewportApplyMode.AUTO,
                 120,
@@ -1156,7 +1165,7 @@ public class DpisConfigStoreTest {
                 "Compact",
                 1000L,
                 Set.of("com.example.app"),
-                new TemplateConfigValue(
+                TemplateConfigValueAdapters.fromViewportTargetSpec(
                         ViewportTargetSpec.relativeScale(110000),
                         ViewportApplyMode.COMPAT,
                         115,
@@ -1372,7 +1381,7 @@ public class DpisConfigStoreTest {
 
         assertEquals("font_abcd1234", store.getTargetTypefaceId("com.max.xiaoheihe"));
         TemplateConfigValue prefill = new GlobalPrefillStore(prefs).read();
-        assertEquals(ViewportTargetSpec.absoluteDp(411), prefill.viewportTargetSpec);
+        assertEquals(ViewportTargetSpec.absoluteDp(411), TemplateConfigValueAdapters.toViewportTargetSpec(prefill));
         assertEquals(ViewportApplyMode.AUTO, prefill.viewportApplyMode);
         assertEquals(Integer.valueOf(120), prefill.fontScalePercent);
         assertEquals(FontApplyMode.FIELD_REWRITE, prefill.fontApplyMode);
@@ -1386,7 +1395,7 @@ public class DpisConfigStoreTest {
         assertEquals(new LinkedHashSet<>(Set.of("com.example.app")),
                 template.selectedPackages);
         assertEquals(ViewportTargetSpec.relativeScale(110000),
-                template.configValue.viewportTargetSpec);
+                TemplateConfigValueAdapters.toViewportTargetSpec(template.configValue));
         assertEquals(ViewportApplyMode.COMPAT, template.configValue.viewportApplyMode);
         assertEquals(Integer.valueOf(115), template.configValue.fontScalePercent);
         assertEquals(FontApplyMode.SYSTEM_EMULATION, template.configValue.fontApplyMode);
@@ -1540,7 +1549,7 @@ public class DpisConfigStoreTest {
     public void packageTemplateConfigValueRoundTripsCopyableFieldsOnly() {
         FakePrefs prefs = new FakePrefs();
         DpisConfigStore store = new DpisConfigStore(prefs);
-        TemplateConfigValue value = new TemplateConfigValue(
+        TemplateConfigValue value = TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.relativeScale(110000),
                 ViewportApplyMode.AUTO,
                 140,
@@ -1599,7 +1608,7 @@ public class DpisConfigStoreTest {
                 false,
                 600)));
 
-        assertTrue(store.writePackageTemplateConfigValue("com.tencent.mm", new TemplateConfigValue(
+        assertTrue(store.writePackageTemplateConfigValue("com.tencent.mm", TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.relativeScale(115000),
                 ViewportApplyMode.AUTO,
                 125,

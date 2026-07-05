@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.settings.AppUiScaleManager;
+import com.dpis.module.settings.InterfaceScaleStore;
+
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;

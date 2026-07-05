@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.templates.TemplateConfigSummaryFormatter;
+import com.dpis.module.templates.TemplateTypefaceResolver;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -18,11 +21,11 @@ public final class TemplateTypefaceResolverTest {
 
     @Test
     public void resolvesKnownSystemFontIdWithoutImportedFile() {
-        String systemFontId = SystemFontRegistry.buildFamilyIdForTest("sans-serif");
+        String systemFontId = "system-family:sans-serif";
 
         TemplateConfigSummaryFormatter.TypefaceStatus status =
                 new TemplateTypefaceResolver(
-                        () -> null,
+                        typefaceId -> null,
                         new FakeSystemTypefaceProvider(systemFontId, "Sans Serif"))
                         .resolve(systemFontId);
 
@@ -32,12 +35,10 @@ public final class TemplateTypefaceResolverTest {
 
     @Test
     public void reportsStaleSystemFontIdMissing() {
-        String staleSystemFontId = SystemFontRegistry.buildFontIdForTest(
-                "/system/fonts/not-present-on-this-device.ttf",
-                0);
+        String staleSystemFontId = "system-font:not-present-on-this-device";
 
         TemplateConfigSummaryFormatter.TypefaceStatus status =
-                new TemplateTypefaceResolver(() -> null).resolve(staleSystemFontId);
+                new TemplateTypefaceResolver(typefaceId -> null).resolve(staleSystemFontId);
 
         assertTrue(status.missing);
         assertFalse(staleSystemFontId.isBlank());
@@ -54,7 +55,7 @@ public final class TemplateTypefaceResolverTest {
                 1234L);
 
         TemplateConfigSummaryFormatter.TypefaceStatus status =
-                new TemplateTypefaceResolver(() -> store).resolve(entry.id);
+                new TemplateTypefaceResolver(importedProvider(store)).resolve(entry.id);
 
         assertFalse(status.missing);
         assertNotNull(status.displayName);
@@ -72,7 +73,7 @@ public final class TemplateTypefaceResolverTest {
         assertTrue(new File(entry.storedPath).delete());
 
         TemplateConfigSummaryFormatter.TypefaceStatus status =
-                new TemplateTypefaceResolver(() -> store).resolve(entry.id);
+                new TemplateTypefaceResolver(importedProvider(store)).resolve(entry.id);
 
         assertTrue(status.missing);
         assertFalse(entry.id.isBlank());
@@ -84,6 +85,18 @@ public final class TemplateTypefaceResolverTest {
             output.write(content.getBytes(StandardCharsets.UTF_8));
         }
         return file;
+    }
+
+    private static TemplateTypefaceResolver.ImportedTypefaceProvider importedProvider(
+            FontLibraryStore store) {
+        return typefaceId -> {
+            FontLibraryEntry imported = store.findById(typefaceId);
+            if (imported != null && store.resolveFontFile(typefaceId) != null) {
+                return TemplateConfigSummaryFormatter.TypefaceStatus.resolved(
+                        typefaceId, imported.displayName);
+            }
+            return TemplateConfigSummaryFormatter.TypefaceStatus.missing(typefaceId);
+        };
     }
 
     private static final class FakeSystemTypefaceProvider

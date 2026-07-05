@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.DebugPackageOverride;
+import com.dpis.module.runtime.RuntimeDiagnosticLogFingerprint;
+
 import io.github.libxposed.api.XposedInterface;
 
 final class AppProcessHookInstaller {

@@ -69,7 +69,7 @@
                 android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
                 android:textColor="?attr/colorOnSurface" />
 
-            <com.dpis.module.MaxHeightNestedScrollView
+            <com.dpis.module.ui.MaxHeightNestedScrollView
                 android:id="@+id/update_dialog_release_notes_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -87,7 +87,7 @@
                     android:lineSpacingExtra="@dimen/dialog_text_line_spacing"
                     android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                     android:textColor="?attr/colorOnSurfaceVariant" />
-            </com.dpis.module.MaxHeightNestedScrollView>
+            </com.dpis.module.ui.MaxHeightNestedScrollView>
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 

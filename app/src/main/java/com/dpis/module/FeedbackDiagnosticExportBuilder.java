@@ -1,5 +1,13 @@
 package com.dpis.module;
 
+import com.dpis.module.diagnostics.DpisLogEntry;
+import com.dpis.module.diagnostics.FeedbackDiagnosticLsposedTimelineParser;
+import com.dpis.module.diagnostics.FeedbackDiagnosticSessionWindow;
+
+import com.dpis.module.diagnostics.LogReadResult;
+import com.dpis.module.diagnostics.LsposedLogReader;
+import com.dpis.module.root.RootAccessProbe;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -415,22 +423,22 @@ final class FeedbackDiagnosticExportBuilder {
         builder.append("source: ").append(valueOrDefault(result.sourceLabel, UNKNOWN)).append('\n');
         builder.append("code: ").append(result.code).append('\n');
         if (window != null) {
-            builder.append("windowStart: ").append(displayTime(window.startMillis)).append('\n');
-            builder.append("windowEnd: ").append(displayTime(window.endMillis)).append('\n');
+            builder.append("windowStart: ").append(displayTime(window.startMillis())).append('\n');
+            builder.append("windowEnd: ").append(displayTime(window.endMillis())).append('\n');
         }
-        builder.append("parsed: ").append(windowed.totalParsed).append('\n');
+        builder.append("parsed: ").append(windowed.totalParsed()).append('\n');
         builder.append("droppedOutsideWindow: ")
-                .append(windowed.droppedOutsideWindow)
+                .append(windowed.droppedOutsideWindow())
                 .append('\n');
-        builder.append("droppedNonDpis: ").append(windowed.droppedNonDpis).append('\n');
-        builder.append("droppedUnparsed: ").append(windowed.droppedUnparsed).append('\n');
+        builder.append("droppedNonDpis: ").append(windowed.droppedNonDpis()).append('\n');
+        builder.append("droppedUnparsed: ").append(windowed.droppedUnparsed()).append('\n');
         if (!result.error.isBlank()) {
             builder.append("error:\n").append(result.error).append('\n');
         }
-        if (windowed.output.isBlank()) {
+        if (windowed.output().isBlank()) {
             builder.append("LSPosed filtered log unavailable or empty in diagnostic window.\n");
         } else {
-            builder.append("output:\n").append(windowed.output).append('\n');
+            builder.append("output:\n").append(windowed.output()).append('\n');
         }
         return builder.toString();
     }
@@ -472,8 +480,8 @@ final class FeedbackDiagnosticExportBuilder {
         if (window == null) {
             return newestEntries(entries, limit);
         }
-        long fallbackStart = Math.max(0L, window.startMillis - RECENT_DPIS_LOG_FALLBACK_WINDOW_MS);
-        long fallbackEnd = window.endMillis + RECENT_DPIS_LOG_FALLBACK_WINDOW_MS;
+        long fallbackStart = Math.max(0L, window.startMillis() - RECENT_DPIS_LOG_FALLBACK_WINDOW_MS);
+        long fallbackEnd = window.endMillis() + RECENT_DPIS_LOG_FALLBACK_WINDOW_MS;
         List<DpisLogEntry> nearby = new ArrayList<>();
         for (DpisLogEntry entry : entries) {
             if (entry == null || entry.timestampMillis <= 0L) {
@@ -508,10 +516,24 @@ final class FeedbackDiagnosticExportBuilder {
             events.addAll(FeedbackDiagnosticLsposedTimelineParser.parse(
                     lsposedLog.output,
                     window,
-                    result.request
+                    timelineInput(result.request)
             ));
         }
         return events;
+    }
+
+    private static FeedbackDiagnosticLsposedTimelineParser.Input timelineInput(
+            FeedbackDiagnosticCoordinator.Request request
+    ) {
+        boolean appEnabled = request != null && request.inScope && request.dpisEnabled;
+        return new FeedbackDiagnosticLsposedTimelineParser.Input(
+                request != null ? request.packageName : "",
+                appEnabled,
+                appEnabled && request.viewportTargetSpec.isEnabled(),
+                appEnabled && request.fontScalePercent != null,
+                appEnabled && request.typefaceId != null,
+                appEnabled && request.wechatDpi != null
+        );
     }
 
     private static String formatDpisEntries(

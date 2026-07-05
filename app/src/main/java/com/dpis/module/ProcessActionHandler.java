@@ -1,5 +1,10 @@
 package com.dpis.module;
 
+import com.dpis.module.ui.DialogWindowSizer;
+
+import com.dpis.module.root.RootAccessProbe;
+import com.dpis.module.root.RootAppProcessLauncher;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.view.LayoutInflater;
@@ -87,17 +92,17 @@ final class ProcessActionHandler {
             if (action == Action.START) {
                 syncBeforeTargetLaunch(packageName);
                 result = rootLauncher.start(packageName);
-                if (result.code != 0) {
+                if (result.code() != 0) {
                     result = startPackage(packageName);
                 }
             } else if (action == Action.STOP) {
                 result = rootLauncher.forceStop(packageName);
             } else {
                 result = rootLauncher.forceStop(packageName);
-                if (result.code == 0) {
+                if (result.code() == 0) {
                     syncBeforeTargetLaunch(packageName);
                     result = rootLauncher.start(packageName);
-                    if (result.code != 0) {
+                    if (result.code() != 0) {
                         result = startPackage(packageName);
                     }
                 }
@@ -107,13 +112,13 @@ final class ProcessActionHandler {
                 if (!isActivityAlive()) {
                     return;
                 }
-                if (finalResult.code == 0) {
+                if (finalResult.code() == 0) {
                     showToast(R.string.dialog_process_action_success, actionLabel, appLabel);
                     return;
                 }
-                String reason = finalResult.output == null || finalResult.output.isEmpty()
+                String reason = finalResult.output().isEmpty()
                         ? "unknown error"
-                        : finalResult.output;
+                        : finalResult.output();
                 showToast(R.string.dialog_process_action_failed, actionLabel, appLabel, reason);
             });
         }, "dpis-process-action").start();

@@ -3,12 +3,14 @@ package com.dpis.module;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.dpis.module.runtime.XSharedPreferencesAdapter;
+
 import java.io.File;
 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.service.XposedService;
 
-final class ConfigStoreFactory {
+public final class ConfigStoreFactory {
     private static final File PUBLIC_FONT_DIRECTORY = new File("/data/local/tmp");
 
     private ConfigStoreFactory() {
@@ -83,7 +85,7 @@ final class ConfigStoreFactory {
                 PUBLIC_FONT_DIRECTORY);
     }
 
-    static FontLibraryStore createLocalUiFontLibraryStore(Context context, XposedService service) {
+    public static FontLibraryStore createLocalUiFontLibraryStore(Context context, XposedService service) {
         return createLocalFontLibraryStore(context);
     }
 

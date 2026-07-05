@@ -1,4 +1,34 @@
 package com.dpis.module;
+import com.dpis.module.templates.QuickTemplateTargetsBinder;
+
+import com.dpis.module.templates.QuickTemplateSortDialog;
+
+import com.dpis.module.templates.GlobalPrefillStore;
+
+import com.dpis.module.applist.AppListFilterState;
+
+import com.dpis.module.home.HomeUpdateUiState;
+import com.dpis.module.home.HomeWorkspaceBinder;
+
+import com.dpis.module.ui.DialogWindowSizer;
+
+import com.dpis.module.updates.UpdateStateStore;
+
+import com.dpis.module.updates.UpdateManifestFetcher;
+
+import com.dpis.module.updates.UpdateDownloadCoordinator;
+
+import com.dpis.module.updates.UpdateCoordinator;
+
+import com.dpis.module.updates.StartupUpdatePackageHandler;
+
+import com.dpis.module.updates.StartupUpdateManifest;
+
+import com.dpis.module.updates.StartupUpdateCheckOnce;
+
+import com.dpis.module.updates.StartupUpdateCheckCoordinator;
+
+import com.dpis.module.updates.ReleaseNotesController;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -23,7 +53,7 @@ public class MainActivitySourceSmokeTest {
 
     @Test
     public void formInputFocusCanMoveFocusToFallbackView() throws IOException {
-        String source = read("src/main/java/com/dpis/module/FormInputFocusBinder.java");
+        String source = read("src/main/java/com/dpis/module/ui/FormInputFocusBinder.java");
 
         assertTrue(source.contains("fallbackFocusView.setFocusable(true);"));
         assertTrue(source.contains("fallbackFocusView.setFocusableInTouchMode(true);"));
@@ -306,10 +336,10 @@ public class MainActivitySourceSmokeTest {
     @Test
     public void templateEditorDraftMigratesBetweenSheetAndPane() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
-        String globalBinder = read("src/main/java/com/dpis/module/GlobalPrefillEditorBinder.java");
-        String quickBinder = read("src/main/java/com/dpis/module/QuickTemplateEditorBinder.java");
-        String globalSheet = read("src/main/java/com/dpis/module/GlobalPrefillSheetDialog.java");
-        String quickSheet = read("src/main/java/com/dpis/module/QuickTemplateEditSheetDialog.java");
+        String globalBinder = read("src/main/java/com/dpis/module/templates/GlobalPrefillEditorBinder.java");
+        String quickBinder = read("src/main/java/com/dpis/module/templates/QuickTemplateEditorBinder.java");
+        String globalSheet = read("src/main/java/com/dpis/module/templates/GlobalPrefillSheetDialog.java");
+        String quickSheet = read("src/main/java/com/dpis/module/templates/QuickTemplateEditSheetDialog.java");
 
         assertTrue(source.contains("retainedGlobalPrefillDraft"));
         assertTrue(source.contains("retainedQuickTemplateDraft"));
@@ -483,7 +513,24 @@ public class MainActivitySourceSmokeTest {
                 "updatePromptDialogCoordinator().maybeShowStartupDisclaimerDialog("
             )
         );
+        assertTrue(
+            source.contains(
+                "new UpdatePromptDialogCoordinator.StartupDisclaimerAcceptance()"
+            )
+        );
         assertTrue(source.contains("new StartupDisclaimerStore(this)"));
+        assertTrue(source.contains("return store.isAccepted();"));
+        assertTrue(source.contains("return store.setAccepted(true);"));
+        assertTrue(
+            source.contains(
+                "void applyLargeDialogWidth(androidx.appcompat.app.AlertDialog dialog)"
+            )
+        );
+        assertTrue(
+            source.contains(
+                "DialogWindowSizer.applyLargeWidth(dialog, MainActivity.this);"
+            )
+        );
         String disclaimerBlock = source.substring(
             source.indexOf("private boolean maybeShowStartupDisclaimerDialog()"),
             source.indexOf("private boolean maybeShowModuleRuntimeReloadAdvice()")
@@ -495,7 +542,7 @@ public class MainActivitySourceSmokeTest {
     public void dialogWindowSizerUsesResponsivePresetConstraints()
         throws IOException {
         String source = read(
-            "src/main/java/com/dpis/module/DialogWindowSizer.java"
+            "src/main/java/com/dpis/module/ui/DialogWindowSizer.java"
         );
         String dimens = read("src/main/res/values/dimens.xml");
         String integers = read("src/main/res/values/integers.xml");
@@ -563,26 +610,26 @@ public class MainActivitySourceSmokeTest {
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String coordinatorSource = read(
-            "src/main/java/com/dpis/module/StartupUpdateCheckCoordinator.java"
+            "src/main/java/com/dpis/module/updates/StartupUpdateCheckCoordinator.java"
         );
         String homeBinderSource = read(
-            "src/main/java/com/dpis/module/HomeWorkspaceBinder.java"
+            "src/main/java/com/dpis/module/home/HomeWorkspaceBinder.java"
         );
         String homeActivationSource = read(
             "src/main/java/com/dpis/module/HomeActivationStateResolver.java"
         );
         String homeUpdateStateSource = read(
-            "src/main/java/com/dpis/module/HomeUpdateUiState.java"
+            "src/main/java/com/dpis/module/home/HomeUpdateUiState.java"
         );
         String homeLayout = read("src/main/res/layout/home_workspace.xml");
         String downloadCoordinatorSource = read(
-            "src/main/java/com/dpis/module/UpdateDownloadCoordinator.java"
+            "src/main/java/com/dpis/module/updates/UpdateDownloadCoordinator.java"
         );
         String manifestFetcherSource = read(
-            "src/main/java/com/dpis/module/UpdateManifestFetcher.java"
+            "src/main/java/com/dpis/module/updates/UpdateManifestFetcher.java"
         );
         String storeSource = read(
-            "src/main/java/com/dpis/module/UpdateStateStore.java"
+            "src/main/java/com/dpis/module/updates/UpdateStateStore.java"
         );
 
         assertTrue(source.contains("maybeCheckForUpdatesOnStartup();"));
@@ -646,7 +693,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(homeBinderSource.contains("bindUpdateActions("));
         assertTrue(homeBinderSource.contains("home_update_action_card"));
         assertTrue(!homeBinderSource.contains("bringToFront();"));
-        assertTrue(homeLayout.contains("com.dpis.module.HomePrimaryStatusClusterLayout"));
+        assertTrue(homeLayout.contains("com.dpis.module.home.HomePrimaryStatusClusterLayout"));
         assertTrue(!homeBinderSource.contains("bindPrimaryStatusShape("));
         assertTrue(!homeBinderSource.contains("setBottomLeftCornerSize("));
         assertTrue(homeLayout.contains("android:id=\"@+id/home_primary_status_cluster\""));
@@ -784,13 +831,13 @@ public class MainActivitySourceSmokeTest {
         );
 
         assertTrue(
-            layout.contains("com.dpis.module.MaxHeightNestedScrollView")
+            layout.contains("com.dpis.module.ui.MaxHeightNestedScrollView")
         );
         assertTrue(layout.contains("app:maxHeightFraction=\"0.45\""));
         assertTrue(layout.contains("startup_disclaimer_message"));
         assertTrue(layout.contains("startup_disclaimer_checkbox"));
         assertTrue(
-            layout.indexOf("</com.dpis.module.MaxHeightNestedScrollView>") <
+            layout.indexOf("</com.dpis.module.ui.MaxHeightNestedScrollView>") <
                 layout.indexOf(
                     "android:id=\"@+id/startup_disclaimer_checkbox\""
                 )
@@ -954,7 +1001,7 @@ public class MainActivitySourceSmokeTest {
     public void appConfigSheet_halfExpandedStateUsesDownwardOffset()
         throws IOException {
         String coordinatorSource = read(
-            "src/main/java/com/dpis/module/AppConfigDialogCoordinator.java"
+            "src/main/java/com/dpis/module/appconfig/AppConfigDialogCoordinator.java"
         );
 
         assertTrue(
@@ -1417,10 +1464,10 @@ public class MainActivitySourceSmokeTest {
     public void touchFeedbackBinderProvidesSharedHapticAndScaleBehavior()
         throws IOException {
         String source = read(
-            "src/main/java/com/dpis/module/TouchFeedbackBinder.java"
+            "src/main/java/com/dpis/module/ui/TouchFeedbackBinder.java"
         );
 
-        assertTrue(source.contains("final class TouchFeedbackBinder"));
+        assertTrue(source.contains("public final class TouchFeedbackBinder"));
         assertTrue(source.contains("bindPressScaleAndHaptic(View view)"));
         assertTrue(
             source.contains(
@@ -1475,7 +1522,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(receiver.contains("Intent.ACTION_MY_PACKAGE_REPLACED"));
         assertTrue(
             receiver.contains(
-                "HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(context)"
+                "HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(context, DpisLog::e)"
             )
         );
         assertTrue(

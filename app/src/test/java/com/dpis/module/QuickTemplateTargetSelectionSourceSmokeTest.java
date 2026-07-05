@@ -1,4 +1,7 @@
 package com.dpis.module;
+import com.dpis.module.templates.QuickTemplateTargetsBinder;
+
+import com.dpis.module.templates.QuickTemplateTargetCarrierState;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -11,27 +14,31 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
     @Test
     public void targetSelectionPagePersistsSelectedPackagesAndShowsConfiguredBadge() throws IOException {
         String manifest = read("src/main/AndroidManifest.xml");
-        String activity = read("src/main/java/com/dpis/module/QuickTemplateTargetSelectionActivity.java");
-        String targetsBinder = read("src/main/java/com/dpis/module/QuickTemplateTargetsBinder.java");
-        String carrierState = read("src/main/java/com/dpis/module/QuickTemplateTargetCarrierState.java");
-        String adapter = read("src/main/java/com/dpis/module/QuickTemplateTargetAdapter.java");
+        String activity = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetSelectionActivity.java");
+        String contract = read(
+                "src/main/java/com/dpis/module/templates/QuickTemplateTargetSelectionContract.java");
+        String targetsBinder = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetsBinder.java");
+        String carrierState = read(
+                "src/main/java/com/dpis/module/templates/QuickTemplateTargetCarrierState.java");
+        String adapter = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetAdapter.java");
         String layout = read("src/main/res/layout/activity_quick_template_targets.xml");
         String landLayout = read("src/main/res/layout/view_land_quick_template_targets_detail.xml");
         String filterLayout = read("src/main/res/layout/dialog_quick_template_target_filters.xml");
         String itemLayout = read("src/main/res/layout/item_quick_template_target_app.xml");
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
-        String binder = read("src/main/java/com/dpis/module/TemplateWorkspaceBinder.java");
+        String binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.java");
 
         assertTrue(manifest.contains(".QuickTemplateTargetSelectionActivity"));
-        assertTrue(activity.contains("EXTRA_TEMPLATE_ID = \"quick_template_targets.template_id\""));
-        assertTrue(activity.contains("EXTRA_CLOSE_REASON"));
-        assertTrue(activity.contains("CLOSE_REASON_ORIENTATION_MIGRATION"));
-        assertTrue(activity.contains("CLOSE_REASON_USER_BACK"));
-        assertTrue(activity.contains("CLOSE_REASON_SAVED"));
-        assertTrue(activity.contains("CLOSE_REASON_MISSING_TEMPLATE"));
+        assertTrue(contract.contains("EXTRA_TEMPLATE_ID = \"quick_template_targets.template_id\""));
+        assertTrue(contract.contains("EXTRA_CLOSE_REASON"));
+        assertTrue(contract.contains("CLOSE_REASON_ORIENTATION_MIGRATION"));
+        assertTrue(contract.contains("CLOSE_REASON_USER_BACK"));
+        assertTrue(contract.contains("CLOSE_REASON_SAVED"));
+        assertTrue(contract.contains("CLOSE_REASON_MISSING_TEMPLATE"));
         assertTrue(activity.contains("Configuration.ORIENTATION_LANDSCAPE"));
         assertTrue(activity.contains("shouldClosePortraitPageInLandscape()"));
-        assertTrue(activity.contains("finishWithReason(CLOSE_REASON_ORIENTATION_MIGRATION)"));
+        assertTrue(activity.contains(
+                "finishWithReason(QuickTemplateTargetSelectionContract.CLOSE_REASON_ORIENTATION_MIGRATION)"));
         assertTrue(activity.contains("new QuickTemplateTargetsBinder("));
         assertTrue(activity.contains("targetsBinder.dispose();"));
         assertTrue(activity.contains("finish();"));
@@ -107,12 +114,13 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(mainActivity.contains("QuickTemplateTargetCarrierState.shouldStartPortraitActivity("));
         assertTrue(mainActivity.contains("QuickTemplateTargetCarrierState.shouldClearPendingAfterResult("));
         assertTrue(mainActivity.contains("quickTemplateTargetCloseReason(data)"));
+        assertTrue(mainActivity.contains("QuickTemplateTargetSelectionContract.closeReasonFrom(reason)"));
         assertTrue(carrierState.contains("enum CloseReason"));
         assertTrue(carrierState.contains("ORIENTATION_MIGRATION"));
         assertTrue(mainActivity.contains("TemplateDetailKind.QUICK_TEMPLATE_TARGETS"));
         assertTrue(mainActivity.contains("R.layout.view_land_quick_template_targets_detail"));
         assertTrue(mainActivity.contains("new QuickTemplateTargetsBinder("));
-        assertTrue(mainActivity.contains("QuickTemplateTargetSelectionActivity.EXTRA_TEMPLATE_ID"));
+        assertTrue(mainActivity.contains("QuickTemplateTargetSelectionContract.EXTRA_TEMPLATE_ID"));
         String showTargetsMethod = mainActivity.substring(
                 mainActivity.indexOf("private void showQuickTemplateTargets("),
                 mainActivity.indexOf("private void startQuickTemplateTargetSelectionActivity("));

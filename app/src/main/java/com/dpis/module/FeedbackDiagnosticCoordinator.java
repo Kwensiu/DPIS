@@ -2,6 +2,11 @@ package com.dpis.module;
 
 import android.os.Handler;
 import android.os.Looper;
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticForegroundAppReader;
+import com.dpis.module.diagnostics.FeedbackDiagnosticSummaryBuilder;
+import com.dpis.module.root.RootAccessProbe;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -407,7 +412,7 @@ final class FeedbackDiagnosticCoordinator {
                 rootAccess,
                 systemHooksEnabled,
                 summaryBuilder.build(
-                        request,
+                        summaryInput(request),
                         startedAt,
                         finishedAt,
                         durationMs,
@@ -418,6 +423,41 @@ final class FeedbackDiagnosticCoordinator {
                 timelineEvents
         );
         host.onFeedbackDiagnosticFinished(result);
+    }
+
+    private static FeedbackDiagnosticSummaryBuilder.Input summaryInput(Request request) {
+        if (request == null) {
+            return null;
+        }
+        return new FeedbackDiagnosticSummaryBuilder.Input(
+                request.packageName,
+                request.label,
+                request.versionName,
+                request.scopeKnown,
+                request.inScope,
+                request.dpisEnabled,
+                request.previewFromGlobalPrefill,
+                viewportSummary(request),
+                request.viewportApplyMode,
+                request.fontScalePercent,
+                request.fontApplyMode,
+                request.typefaceId,
+                request.fontHookDomainsRaw
+        );
+    }
+
+    private static String viewportSummary(Request request) {
+        if (request == null || request.viewportTargetSpec == null) {
+            return "off";
+        }
+        if (request.viewportTargetSpec.isRelativeScale()) {
+            return "scale=" + AppConfigInputValidation.formatScaleMilliPercent(
+                    request.viewportTargetSpec.scaleMilliPercent());
+        }
+        if (request.viewportTargetSpec.isAbsoluteDp()) {
+            return "widthDp=" + request.viewportTargetSpec.absoluteWidthDp();
+        }
+        return "off";
     }
 
     private void clearRunningState() {

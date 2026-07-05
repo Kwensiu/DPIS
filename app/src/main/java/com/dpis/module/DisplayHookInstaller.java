@@ -8,6 +8,10 @@ import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
+import com.dpis.module.runtime.ProcessScopedInstallGate;
+import com.dpis.module.runtime.RuntimeDiagnosticLogFingerprint;
+import com.dpis.module.runtime.RuntimeHotPathEvidenceSampler;
+
 import io.github.libxposed.api.XposedInterface;
 
 final class DisplayHookInstaller {

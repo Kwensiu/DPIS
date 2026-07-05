@@ -3,14 +3,14 @@ package com.dpis.module;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-final class HookDomainOverrideStore {
+public final class HookDomainOverrideStore {
     private final DpisConfigStore configStore;
 
-    HookDomainOverrideStore(DpisConfigStore configStore) {
+    public HookDomainOverrideStore(DpisConfigStore configStore) {
         this.configStore = configStore;
     }
 
-    HookDomainOverride read(String packageName) {
+    public HookDomainOverride read(String packageName) {
         if (configStore == null || packageName == null || packageName.isBlank()) {
             return HookDomainOverride.automatic();
         }
@@ -48,7 +48,7 @@ final class HookDomainOverrideStore {
         return configStore.clearPackageFontHookDomainsRaw(packageName);
     }
 
-    static HookDomainOverride fromRaw(String raw) {
+    public static HookDomainOverride fromRaw(String raw) {
         if (raw == null) {
             return HookDomainOverride.automatic();
         }
@@ -60,7 +60,7 @@ final class HookDomainOverrideStore {
                 unknown);
     }
 
-    static String rawValueForSelection(Set<String> enabledKnownDomains,
+    public static String rawValueForSelection(Set<String> enabledKnownDomains,
             Set<String> automaticKnownDomains,
             Set<String> unknownDomains) {
         LinkedHashSet<String> normalizedSaved = normalizedCustomizableDomains(
@@ -71,7 +71,7 @@ final class HookDomainOverrideStore {
         return formatCsv(normalizedSaved, unknownDomains);
     }
 
-    static HookDomainOverride automaticIfSelectionMatchesAutomatic(
+    public static HookDomainOverride automaticIfSelectionMatchesAutomatic(
             HookDomainOverride override,
             Set<String> automaticKnownDomains) {
         if (override == null || !override.customPathEnabled) {
@@ -116,7 +116,7 @@ final class HookDomainOverrideStore {
         }
     }
 
-    static String formatCsv(Set<String> enabledKnownDomains, Set<String> unknownDomains) {
+    public static String formatCsv(Set<String> enabledKnownDomains, Set<String> unknownDomains) {
         LinkedHashSet<String> ordered = new LinkedHashSet<>(
                 FontHookDomainRegistry.orderedCustomizableSubset(enabledKnownDomains));
         if (unknownDomains != null) {

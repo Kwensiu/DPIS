@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontDebugStatsSchema;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;

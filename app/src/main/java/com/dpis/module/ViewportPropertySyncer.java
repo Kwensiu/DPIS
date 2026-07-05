@@ -1,20 +1,22 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.RootCommandRunner;
+
 import java.util.LinkedHashSet;
 
-final class ViewportPropertySyncer {
+public final class ViewportPropertySyncer {
     private ViewportPropertySyncer() {
     }
 
-    static void publishTargetAsync(String packageName, int widthDp) {
+    public static void publishTargetAsync(String packageName, int widthDp) {
         publishTargetAsync(packageName, widthDp, ViewportApplyMode.SYSTEM_EMULATION);
     }
 
-    static void publishTargetAsync(String packageName, int widthDp, String mode) {
+    public static void publishTargetAsync(String packageName, int widthDp, String mode) {
         publishTargetAsync(packageName, ViewportTargetSpec.absoluteDp(widthDp), mode);
     }
 
-    static void publishTargetAsync(String packageName, ViewportTargetSpec targetSpec, String mode) {
+    public static void publishTargetAsync(String packageName, ViewportTargetSpec targetSpec, String mode) {
         if (packageName == null || packageName.isBlank()) {
             return;
         }
@@ -28,7 +30,7 @@ final class ViewportPropertySyncer {
         publisherThread.start();
     }
 
-    static void clearTargetAsync(String packageName) {
+    public static void clearTargetAsync(String packageName) {
         if (packageName == null || packageName.isBlank()) {
             return;
         }
@@ -38,7 +40,7 @@ final class ViewportPropertySyncer {
         cleanerThread.start();
     }
 
-    static void syncConfiguredTargetsAsync(DpisConfigStore store) {
+    public static void syncConfiguredTargetsAsync(DpisConfigStore store) {
         if (store == null) {
             return;
         }
@@ -48,7 +50,7 @@ final class ViewportPropertySyncer {
         syncThread.start();
     }
 
-    static void syncConfiguredTargets(DpisConfigStore store) {
+    public static void syncConfiguredTargets(DpisConfigStore store) {
         if (store == null) {
             return;
         }
@@ -58,7 +60,7 @@ final class ViewportPropertySyncer {
         }
     }
 
-    static void syncTarget(String packageName, DpisConfigStore store) {
+    public static void syncTarget(String packageName, DpisConfigStore store) {
         if (packageName == null || packageName.isBlank() || store == null) {
             return;
         }

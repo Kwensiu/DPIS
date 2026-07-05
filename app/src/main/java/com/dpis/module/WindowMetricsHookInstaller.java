@@ -4,6 +4,10 @@ import android.graphics.Rect;
 
 import java.lang.reflect.Method;
 
+import com.dpis.module.runtime.ProcessScopedInstallGate;
+import com.dpis.module.runtime.RuntimeDiagnosticLogFingerprint;
+import com.dpis.module.runtime.RuntimeHotPathEvidenceSampler;
+
 import io.github.libxposed.api.XposedInterface;
 
 final class WindowMetricsHookInstaller {

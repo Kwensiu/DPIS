@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.root.RootAppProcessLauncher;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -44,9 +46,9 @@ final class FeedbackDiagnosticRuntimeTransport {
                 + " && printf %s " + shellQuote(eventPath)
                 + " > " + shellQuote(MARKER_FILE)
                 + " && chmod 644 " + shellQuote(MARKER_FILE));
-        if (result.code != 0) {
+        if (result.code() != 0) {
             activeSession = new Session("", false,
-                    "runtime transport unavailable: " + compact(result.output));
+                    "runtime transport unavailable: " + compact(result.output()));
             return Status.unavailable(activeSession.reason);
         }
         activeSession = new Session(eventPath, true, "");
@@ -77,11 +79,11 @@ final class FeedbackDiagnosticRuntimeTransport {
                 + shellQuote(session.eventPath)
                 + " "
                 + shellQuote(MARKER_FILE));
-        if (readResult.code != 0) {
+        if (readResult.code() != 0) {
             return Snapshot.unavailable(
-                    "runtime transport unavailable: " + compact(readResult.output));
+                    "runtime transport unavailable: " + compact(readResult.output()));
         }
-        return Snapshot.available(parseEvents(readResult.output));
+        return Snapshot.available(parseEvents(readResult.output()));
     }
 
     static Snapshot peekSnapshot(ShellRunner shellRunner) {
@@ -99,11 +101,11 @@ final class FeedbackDiagnosticRuntimeTransport {
                 + shellQuote(session.eventPath)
                 + " 2>/dev/null | head -c "
                 + MAX_EXPORT_BYTES);
-        if (readResult.code != 0) {
+        if (readResult.code() != 0) {
             return Snapshot.unavailable(
-                    "runtime transport unavailable: " + compact(readResult.output));
+                    "runtime transport unavailable: " + compact(readResult.output()));
         }
-        return Snapshot.available(parseEvents(readResult.output));
+        return Snapshot.available(parseEvents(readResult.output()));
     }
 
     static void cancel(ShellRunner shellRunner) {
@@ -179,7 +181,7 @@ final class FeedbackDiagnosticRuntimeTransport {
         RootAppProcessLauncher.ShellResult result = runner.run(
                 "printf %s\\\\n " + shellQuote(line) + " >> " + shellQuote(eventPath)
         );
-        return result.code == 0;
+        return result.code() == 0;
     }
 
     private static RemoteSession resolveRemoteSession() {

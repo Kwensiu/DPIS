@@ -1,11 +1,17 @@
 package com.dpis.module;
 
+import com.dpis.module.applist.InstalledAppCatalogItem;
+
+import com.dpis.module.fonts.HyperOsNativeAppDetector;
+
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.SystemClock;
 import android.view.View;
+
+import com.dpis.module.applist.AppIconMemoryCache;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,8 +25,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-final class InstalledAppCatalogCoordinator {
-    interface Host {
+public final class InstalledAppCatalogCoordinator {
+    public interface Host {
         PackageManager getPackageManager();
 
         String getSelfPackageName();
@@ -52,7 +58,7 @@ final class InstalledAppCatalogCoordinator {
     private boolean firstScreenIconWarmupFinished;
     private boolean iconRefreshQueued;
 
-    InstalledAppCatalogCoordinator(Host host,
+    public InstalledAppCatalogCoordinator(Host host,
             long installedAppCatalogTtlMs,
             int firstScreenIconWarmupLimit,
             long iconRefreshDebounceMs) {
@@ -62,11 +68,11 @@ final class InstalledAppCatalogCoordinator {
         this.iconRefreshDebounceMs = iconRefreshDebounceMs;
     }
 
-    void shutdown() {
+    public void shutdown() {
         appIconWarmupExecutor.shutdownNow();
     }
 
-    List<InstalledAppCatalogItem> loadInstalledAppCatalog(
+    public List<InstalledAppCatalogItem> loadInstalledAppCatalog(
             boolean forceInstalledAppCatalogReload) {
         PackageManager packageManager = host.getPackageManager();
         List<InstalledAppCatalogItem> catalog = getInstalledAppCatalog(
@@ -166,7 +172,7 @@ final class InstalledAppCatalogCoordinator {
                 || (store != null && store.hasUserVisiblePackageConfig(packageName));
     }
 
-    void onIconLoadRequested(String packageName) {
+    public void onIconLoadRequested(String packageName) {
         if (packageName == null || packageName.isEmpty()) {
             return;
         }

@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.diagnostics.DpisLogEntry;
+
+import com.dpis.module.diagnostics.LogReadResult;
+
+import com.dpis.module.root.RootAccessProbe;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;

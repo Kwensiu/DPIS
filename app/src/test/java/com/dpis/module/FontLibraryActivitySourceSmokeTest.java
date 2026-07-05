@@ -35,7 +35,7 @@ public final class FontLibraryActivitySourceSmokeTest {
     @Test
     public void fontDetailsUseScrollableContentWithLargeDialogWidth() throws IOException {
         String source = read("src/main/java/com/dpis/module/FontLibraryActivity.java");
-        String maxHeightScrollView = read("src/main/java/com/dpis/module/MaxHeightNestedScrollView.java");
+        String maxHeightScrollView = read("src/main/java/com/dpis/module/ui/MaxHeightNestedScrollView.java");
 
         assertTrue(source.contains("private void showFontDetails("));
         assertTrue(source.contains("FONT_DETAIL_DIALOG_MAX_HEIGHT_FRACTION"));

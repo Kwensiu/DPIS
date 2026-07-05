@@ -1,10 +1,10 @@
 package com.dpis.module;
 
-final class AppConfigInputValidation {
+public final class AppConfigInputValidation {
     private AppConfigInputValidation() {
     }
 
-    static Integer parsePositiveIntOrNull(String raw) {
+    public static Integer parsePositiveIntOrNull(String raw) {
         if (raw == null || raw.isBlank()) {
             return null;
         }
@@ -16,7 +16,7 @@ final class AppConfigInputValidation {
         }
     }
 
-    static Integer parseFontScalePercentOrNull(String raw) {
+    public static Integer parseFontScalePercentOrNull(String raw) {
         if (raw == null || raw.isBlank()) {
             return null;
         }
@@ -28,7 +28,7 @@ final class AppConfigInputValidation {
         }
     }
 
-    static Integer parseViewportScaleMilliPercentOrNull(String raw) {
+    public static Integer parseViewportScaleMilliPercentOrNull(String raw) {
         if (raw == null || raw.isBlank()) {
             return null;
         }
@@ -96,11 +96,11 @@ final class AppConfigInputValidation {
         return scaleMilliPercent;
     }
 
-    static String formatScaleMilliPercent(int scaleMilliPercent) {
+    public static String formatScaleMilliPercent(int scaleMilliPercent) {
         return formatScaleMilliPercentInput(scaleMilliPercent) + "%";
     }
 
-    static String formatScaleMilliPercentInput(int scaleMilliPercent) {
+    public static String formatScaleMilliPercentInput(int scaleMilliPercent) {
         int wholePercent = scaleMilliPercent / 1000;
         int fractional = scaleMilliPercent % 1000;
         if (fractional == 0) {
@@ -115,15 +115,15 @@ final class AppConfigInputValidation {
         return wholePercent + "." + fracStr.substring(0, end);
     }
 
-    static int toLegacyScalePermille(int scaleMilliPercent) {
+    public static int toLegacyScalePermille(int scaleMilliPercent) {
         return Math.round(scaleMilliPercent / 100.0f);
     }
 
-    static int fromLegacyScalePermille(int scalePermille) {
+    public static int fromLegacyScalePermille(int scalePermille) {
         return scalePermille * 100;
     }
 
-    static ViewportTargetSpec parseViewportTargetSpec(String raw, String viewportTargetType) {
+    public static ViewportTargetSpec parseViewportTargetSpec(String raw, String viewportTargetType) {
         if (ViewportTargetType.RELATIVE_SCALE.equals(
                 ViewportTargetType.normalize(viewportTargetType))) {
             Integer milliPercent = parseViewportScaleMilliPercentOrNull(raw);
@@ -139,7 +139,7 @@ final class AppConfigInputValidation {
         return ViewportTargetSpec.absoluteDp(value);
     }
 
-    static String formatViewportInput(ViewportTargetSpec spec) {
+    public static String formatViewportInput(ViewportTargetSpec spec) {
         if (spec == null || !spec.isEnabled()) {
             return "";
         }
@@ -149,20 +149,20 @@ final class AppConfigInputValidation {
         return String.valueOf(spec.absoluteWidthDp());
     }
 
-    static String initialViewportTargetType(ViewportTargetSpec spec) {
+    public static String initialViewportTargetType(ViewportTargetSpec spec) {
         return spec != null && spec.isAbsoluteDp()
                 ? ViewportTargetType.ABSOLUTE_DP
                 : ViewportTargetType.RELATIVE_SCALE;
     }
 
-    static String initialFontMode(String fontMode) {
+    public static String initialFontMode(String fontMode) {
         String normalized = FontApplyMode.normalize(fontMode);
         return FontApplyMode.isEnabled(normalized)
                 ? normalized
                 : FontApplyMode.SYSTEM_EMULATION;
     }
 
-    static boolean isViewportInputValid(String raw, String viewportTargetType) {
+    public static boolean isViewportInputValid(String raw, String viewportTargetType) {
         if (raw == null || raw.isBlank()) {
             return true;
         }
@@ -174,7 +174,7 @@ final class AppConfigInputValidation {
         return value != null;
     }
 
-    static boolean isFontScaleInputValid(String raw) {
+    public static boolean isFontScaleInputValid(String raw) {
         if (raw == null || raw.isBlank()) {
             return true;
         }

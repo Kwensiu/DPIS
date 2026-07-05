@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.updates.UpdateCoordinator;
+
+import com.dpis.module.updates.StartupUpdateManifest;
+
+import com.dpis.module.updates.StartupUpdateCheckCoordinator;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

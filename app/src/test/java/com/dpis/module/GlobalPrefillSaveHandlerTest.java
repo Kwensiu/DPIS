@@ -1,4 +1,11 @@
 package com.dpis.module;
+import com.dpis.module.templates.TemplateConfigValueAdapters;
+
+import com.dpis.module.templates.GlobalPrefillSaveHandler;
+
+import com.dpis.module.templates.GlobalPrefillStore;
+
+import com.dpis.module.templates.TemplateConfigValue;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -36,7 +43,7 @@ public class GlobalPrefillSaveHandlerTest {
 
         assertTrue(result.success);
         assertEquals(beforeNonDefault, nonDefaultEntries(prefs));
-        assertEquals(new TemplateConfigValue(
+        assertEquals(TemplateConfigValueAdapters.fromViewportTargetSpec(
                         ViewportTargetSpec.relativeScale(125000),
                         ViewportTargetType.RELATIVE_SCALE,
                         125000,
@@ -54,7 +61,7 @@ public class GlobalPrefillSaveHandlerTest {
     public void saveWithInvalidNumericInputDoesNotChangeStoredValues() {
         FakePrefs prefs = new FakePrefs();
         GlobalPrefillStore globalPrefillStore = new GlobalPrefillStore(prefs);
-        assertTrue(globalPrefillStore.write(new TemplateConfigValue(
+        assertTrue(globalPrefillStore.write(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.absoluteDp(480),
                 ViewportApplyMode.AUTO,
                 135,
@@ -86,7 +93,7 @@ public class GlobalPrefillSaveHandlerTest {
         assertTrue(store.setTargetFontScalePercent("com.example.app", 110));
         assertTrue(store.setTargetTypefaceId("com.example.app", "existing_font"));
         GlobalPrefillStore globalPrefillStore = new GlobalPrefillStore(prefs);
-        assertTrue(globalPrefillStore.write(new TemplateConfigValue(
+        assertTrue(globalPrefillStore.write(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.absoluteDp(540),
                 ViewportApplyMode.COMPAT,
                 180,
@@ -119,7 +126,7 @@ public class GlobalPrefillSaveHandlerTest {
 
         assertTrue(result.success);
         TemplateConfigValue value = new GlobalPrefillStore(prefs).read();
-        assertFalse(value.viewportTargetSpec.isEnabled());
+        assertFalse(TemplateConfigValueAdapters.toViewportTargetSpec(value).isEnabled());
         assertEquals(ViewportTargetType.ABSOLUTE_DP, value.viewportTargetType);
         assertEquals(ViewportApplyMode.COMPAT, value.viewportApplyMode);
         assertEquals(FontApplyMode.FIELD_REWRITE, value.fontApplyMode);
@@ -204,7 +211,7 @@ public class GlobalPrefillSaveHandlerTest {
 
         assertTrue(result.success);
         TemplateConfigValue value = new GlobalPrefillStore(prefs).read();
-        assertFalse(value.viewportTargetSpec.isEnabled());
+        assertFalse(TemplateConfigValueAdapters.toViewportTargetSpec(value).isEnabled());
         assertEquals(ViewportTargetType.OFF, value.viewportTargetType);
         assertEquals(ViewportApplyMode.SYSTEM, value.viewportApplyMode);
         assertEquals(FontApplyMode.OFF, value.fontApplyMode);
@@ -228,7 +235,7 @@ public class GlobalPrefillSaveHandlerTest {
 
         assertTrue(result.success);
         TemplateConfigValue value = new GlobalPrefillStore(prefs).read();
-        assertFalse(value.viewportTargetSpec.isEnabled());
+        assertFalse(TemplateConfigValueAdapters.toViewportTargetSpec(value).isEnabled());
         assertEquals(ViewportTargetType.ABSOLUTE_DP, value.initialViewportTargetType());
         assertEquals("", value.initialViewportInput());
         assertEquals("", value.initialViewportScaleInput());
@@ -254,7 +261,7 @@ public class GlobalPrefillSaveHandlerTest {
 
         assertTrue(result.success);
         TemplateConfigValue value = new GlobalPrefillStore(prefs).read();
-        assertEquals(ViewportTargetSpec.relativeScale(88000), value.viewportTargetSpec);
+        assertEquals(ViewportTargetSpec.relativeScale(88000), TemplateConfigValueAdapters.toViewportTargetSpec(value));
         assertEquals(Integer.valueOf(88000), value.viewportScaleMilliPercentDraft);
         assertEquals(Integer.valueOf(411), value.viewportWidthDpDraft);
         assertEquals(ViewportTargetType.RELATIVE_SCALE, value.initialViewportTargetType());

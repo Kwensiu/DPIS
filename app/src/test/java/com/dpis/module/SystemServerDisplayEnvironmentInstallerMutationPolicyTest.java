@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.DebugPackageOverride;
+
 import org.junit.Test;
 
 import java.io.IOException;
@@ -540,7 +542,7 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     public void debugSystemServerFontDisableIsDebugOnlyAndLoggedInSource()
             throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
-        String matcher = read("src/main/java/com/dpis/module/DebugPackageOverride.java");
+        String matcher = read("src/main/java/com/dpis/module/runtime/DebugPackageOverride.java");
 
         assertTrue(source.contains("debug.dpis.font.disable_system_server_package"));
         assertTrue(source.contains("isSystemServerFontDisabledByDebugOverride(config.packageName)"));
@@ -585,7 +587,7 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     public void debugSystemServerFontFallbackIsDebugOnlyAndLoggedInSource()
             throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
-        String matcher = read("src/main/java/com/dpis/module/DebugPackageOverride.java");
+        String matcher = read("src/main/java/com/dpis/module/runtime/DebugPackageOverride.java");
 
         assertTrue(source.contains("debug.dpis.font.system_server_fallback_package"));
         assertTrue(source.contains("shouldYieldSystemServerFontToAppProcessFallback(config)"));

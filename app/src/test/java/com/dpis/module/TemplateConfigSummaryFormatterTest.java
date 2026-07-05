@@ -1,4 +1,11 @@
 package com.dpis.module;
+import com.dpis.module.templates.TemplateConfigValueAdapters;
+
+import com.dpis.module.templates.TemplateCustomSemantics;
+
+import com.dpis.module.templates.TemplateConfigSummaryFormatter;
+
+import com.dpis.module.templates.TemplateConfigValue;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -11,7 +18,7 @@ public class TemplateConfigSummaryFormatterTest {
     public void formatsConfiguredTemplateSummary() {
         TemplateConfigSummaryFormatter formatter = newFormatter(id ->
                 TemplateConfigSummaryFormatter.TypefaceStatus.resolved(id, "Demo Font"));
-        TemplateConfigValue value = new TemplateConfigValue(
+        TemplateConfigValue value = TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.relativeScale(112500),
                 ViewportApplyMode.AUTO,
                 120,
@@ -36,7 +43,7 @@ public class TemplateConfigSummaryFormatterTest {
     public void surfacesMissingTypefaceWithoutDroppingOtherSummaryParts() {
         TemplateConfigSummaryFormatter formatter = newFormatter(id ->
                 TemplateConfigSummaryFormatter.TypefaceStatus.missing(id));
-        TemplateConfigValue value = new TemplateConfigValue(
+        TemplateConfigValue value = TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.absoluteDp(411),
                 ViewportApplyMode.COMPAT,
                 null,
@@ -55,7 +62,7 @@ public class TemplateConfigSummaryFormatterTest {
 
     @Test
     public void modeOnlyValuesShowNoValueSummaryParts() {
-        TemplateConfigValue value = new TemplateConfigValue(
+        TemplateConfigValue value = TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.off(),
                 ViewportTargetType.ABSOLUTE_DP,
                 ViewportApplyMode.COMPAT,
@@ -73,7 +80,7 @@ public class TemplateConfigSummaryFormatterTest {
 
     @Test
     public void viewportApplyModeOnlyShowsConfiguredStrategy() {
-        TemplateConfigValue value = new TemplateConfigValue(
+        TemplateConfigValue value = TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.off(),
                 ViewportTargetType.OFF,
                 ViewportApplyMode.SYSTEM,
@@ -90,7 +97,7 @@ public class TemplateConfigSummaryFormatterTest {
 
     @Test
     public void autoViewportApplyModeDoesNotShowAsCustomSummary() {
-        TemplateConfigValue value = new TemplateConfigValue(
+        TemplateConfigValue value = TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.relativeScale(100000),
                 ViewportApplyMode.AUTO,
                 null,
@@ -116,7 +123,7 @@ public class TemplateConfigSummaryFormatterTest {
 
     @Test
     public void customSemanticsDropsDefaultModesBeforeSummary() {
-        TemplateConfigValue rawValue = new TemplateConfigValue(
+        TemplateConfigValue rawValue = TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.off(),
                 ViewportTargetType.RELATIVE_SCALE,
                 ViewportApplyMode.AUTO,
@@ -136,7 +143,7 @@ public class TemplateConfigSummaryFormatterTest {
 
     @Test
     public void missingTypefaceOnlyDoesNotCreateConfiguredSummaryPart() {
-        TemplateConfigValue value = new TemplateConfigValue(
+        TemplateConfigValue value = TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.off(),
                 ViewportApplyMode.OFF,
                 null,

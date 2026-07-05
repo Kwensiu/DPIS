@@ -11,7 +11,8 @@ import org.junit.Test;
 public final class XSharedPreferencesAdapterSourceTest {
     @Test
     public void legacyPreferencesAreSnapshottedToAvoidHotPathReloads() throws IOException {
-        String source = readProjectFile("src/main/java/com/dpis/module/XSharedPreferencesAdapter.java");
+        String source = readProjectFile(
+                "src/main/java/com/dpis/module/runtime/XSharedPreferencesAdapter.java");
 
         assertTrue(source.contains("private volatile Map<String, Object> snapshot;"));
         assertTrue(source.contains("private final long reloadIntervalMs;"));

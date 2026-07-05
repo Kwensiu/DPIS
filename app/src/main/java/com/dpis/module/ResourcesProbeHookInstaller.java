@@ -3,6 +3,9 @@ package com.dpis.module;
 import android.content.res.Configuration;
 import android.util.DisplayMetrics;
 
+import com.dpis.module.runtime.CallerTrace;
+import com.dpis.module.runtime.ProcessScopedInstallGate;
+
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 

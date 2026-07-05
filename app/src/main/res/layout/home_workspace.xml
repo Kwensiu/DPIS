@@ -34,7 +34,7 @@
             android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
             android:textColor="?attr/colorPrimary" />
 
-            <com.dpis.module.HomePrimaryStatusClusterLayout
+            <com.dpis.module.home.HomePrimaryStatusClusterLayout
                 android:id="@+id/home_primary_status_cluster"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -166,7 +166,7 @@
                     </FrameLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-        </com.dpis.module.HomePrimaryStatusClusterLayout>
+        </com.dpis.module.home.HomePrimaryStatusClusterLayout>
 
         <GridLayout
             android:layout_width="match_parent"

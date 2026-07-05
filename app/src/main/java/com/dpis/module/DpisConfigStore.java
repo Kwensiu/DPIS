@@ -1,6 +1,14 @@
 package com.dpis.module;
 
+import com.dpis.module.templates.TemplateConfigValueAdapters;
+
+import com.dpis.module.templates.TemplateConfigValue;
+
+import com.dpis.module.appconfig.WechatDpiConfig;
+
 import android.content.SharedPreferences;
+
+import com.dpis.module.settings.AppUiScaleManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,7 +31,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-final class DpisConfigStore {
+public final class DpisConfigStore {
     private static final int MIN_VIEWPORT_WIDTH_DP = 1;
     private static final int MIN_VIEWPORT_SCALE_MILLI_PERCENT = ViewportTargetSpec.MIN_SCALE_MILLI_PERCENT;
     private static final int MAX_VIEWPORT_SCALE_MILLI_PERCENT = ViewportTargetSpec.MAX_SCALE_MILLI_PERCENT;
@@ -33,7 +41,7 @@ final class DpisConfigStore {
     private static final int MIN_FONT_SCALE_PERCENT = 50;
     private static final int MAX_FONT_SCALE_PERCENT = 300;
 
-    static final String GROUP = "dpi_config";
+    public static final String GROUP = "dpi_config";
     static final String KEY_TARGET_PACKAGES = "target_packages";
     static final String KEY_SYSTEM_SERVER_HOOKS_ENABLED = "system_server.hooks_enabled";
     static final String KEY_SYSTEM_SERVER_SAFE_MODE_ENABLED = "system_server.safe_mode_enabled";
@@ -189,7 +197,7 @@ final class DpisConfigStore {
     private final SharedPreferences localOnlyPreferences;
     private final File legacySharedPrefsMirrorFile;
 
-    DpisConfigStore(SharedPreferences preferences) {
+    public DpisConfigStore(SharedPreferences preferences) {
         this(preferences, null, null);
     }
 
@@ -1332,7 +1340,7 @@ final class DpisConfigStore {
     private static TemplateConfigValue templateConfigValueFromPackageConfig(
             PackageConfigValue value) {
         PackageConfigValue normalized = value != null ? value : PackageConfigValue.EMPTY;
-        return new TemplateConfigValue(
+        return TemplateConfigValueAdapters.fromViewportTargetSpec(
                 normalized.viewportTargetSpec,
                 normalized.viewportTargetType,
                 normalized.viewportApplyMode,
@@ -1345,16 +1353,7 @@ final class DpisConfigStore {
     private static PackageConfigValue packageConfigValueFromTemplateConfigValue(
             TemplateConfigValue value) {
         TemplateConfigValue normalized = value != null ? value : TemplateConfigValue.EMPTY;
-        return new PackageConfigValue(
-                normalized.viewportTargetSpec,
-                normalized.viewportTargetType,
-                normalized.viewportApplyMode,
-                normalized.fontScalePercent,
-                normalized.fontApplyMode,
-                normalized.typefaceId,
-                normalized.fontHookDomainsRaw,
-                null,
-                null);
+        return TemplateConfigValueAdapters.toPackageConfigValue(normalized);
     }
 
     private static void removePackageTemplateConfigKeys(

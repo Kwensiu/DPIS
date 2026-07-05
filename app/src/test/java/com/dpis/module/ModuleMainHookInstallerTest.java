@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.appconfig.WechatDpiConfig;
+
+import com.dpis.module.runtime.DebugPackageOverride;
+
 import org.junit.Test;
 
 import java.io.IOException;

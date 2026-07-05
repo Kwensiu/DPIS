@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.DebugPackageOverride;
+
 import android.app.Application;
 import android.content.pm.ApplicationInfo;
 import android.os.Build;

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.settings.SystemHookEffectiveView;
+
 import java.util.Collections;
 import java.util.List;
 

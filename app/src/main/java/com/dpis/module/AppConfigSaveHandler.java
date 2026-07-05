@@ -1,8 +1,12 @@
 package com.dpis.module;
 
+import com.dpis.module.templates.TemplateConfigValueAdapters;
+
+import com.dpis.module.templates.TemplateConfigValue;
+
 import com.google.android.material.textfield.TextInputEditText;
 
-final class AppConfigSaveHandler {
+public final class AppConfigSaveHandler {
     Result save(AppListItem item,
             TextInputEditText viewportInput,
             TextInputEditText fontScaleInput,
@@ -167,7 +171,7 @@ final class AppConfigSaveHandler {
         }
     }
 
-    static final class Result {
+    public static final class Result {
         final boolean success;
         final int messageResId;
 
@@ -176,11 +180,11 @@ final class AppConfigSaveHandler {
             this.messageResId = messageResId;
         }
 
-        static Result success(int messageResId) {
+        public static Result success(int messageResId) {
             return new Result(true, messageResId);
         }
 
-        static Result failure(int messageResId) {
+        public static Result failure(int messageResId) {
             return new Result(false, messageResId);
         }
     }
@@ -225,7 +229,7 @@ final class AppConfigSaveHandler {
         ViewportTargetSpec normalizedSpec = viewportTargetSpec != null
                 ? viewportTargetSpec
                 : ViewportTargetSpec.off();
-        TemplateConfigValue current = new TemplateConfigValue(
+        TemplateConfigValue current = TemplateConfigValueAdapters.fromViewportTargetSpec(
                 normalizedSpec,
                 ViewportTargetType.normalize(item.viewportTargetType),
                 normalizedSpec.isEnabled()
@@ -235,7 +239,7 @@ final class AppConfigSaveHandler {
                 ConfigDraftSaveSemantics.fontApplyModeForSave(fontMode),
                 selectedTypefaceId,
                 draftFontHookDomainsRaw);
-        TemplateConfigValue preview = new TemplateConfigValue(
+        TemplateConfigValue preview = TemplateConfigValueAdapters.fromViewportTargetSpec(
                 item.viewportTargetSpec,
                 item.viewportTargetType,
                 item.viewportTargetSpec.isEnabled()

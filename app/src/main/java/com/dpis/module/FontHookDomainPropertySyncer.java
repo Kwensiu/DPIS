@@ -1,13 +1,15 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.RootCommandRunner;
+
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-final class FontHookDomainPropertySyncer {
+public final class FontHookDomainPropertySyncer {
     private FontHookDomainPropertySyncer() {
     }
 
-    static void publishTargetAsync(String packageName, Set<String> enabledKnownDomains) {
+    public static void publishTargetAsync(String packageName, Set<String> enabledKnownDomains) {
         if (packageName == null || packageName.isBlank()) {
             return;
         }
@@ -18,7 +20,7 @@ final class FontHookDomainPropertySyncer {
         publisherThread.start();
     }
 
-    static void publishFromStoreAsync(String packageName, DpisConfigStore store) {
+    public static void publishFromStoreAsync(String packageName, DpisConfigStore store) {
         if (packageName == null || packageName.isBlank() || store == null) {
             return;
         }
@@ -30,7 +32,7 @@ final class FontHookDomainPropertySyncer {
         publishTargetAsync(packageName, override.enabledKnownDomains);
     }
 
-    static void clearTargetAsync(String packageName) {
+    public static void clearTargetAsync(String packageName) {
         if (packageName == null || packageName.isBlank()) {
             return;
         }
@@ -41,7 +43,7 @@ final class FontHookDomainPropertySyncer {
         cleanerThread.start();
     }
 
-    static void syncConfiguredTargetsAsync(DpisConfigStore store) {
+    public static void syncConfiguredTargetsAsync(DpisConfigStore store) {
         if (store == null) {
             return;
         }

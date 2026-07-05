@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.RuntimeDebugPropertyBridge;
+
 import android.content.SharedPreferences;
 
 import java.util.Collections;

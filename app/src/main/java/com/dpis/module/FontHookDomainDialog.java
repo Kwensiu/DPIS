@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.ui.DialogWindowSizer;
+
 import android.app.Activity;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -24,8 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-final class FontHookDomainDialog {
-    interface Host {
+public final class FontHookDomainDialog {
+    public interface Host {
         boolean saveCustom(String packageName,
                            Set<String> selectedKnownDomains,
                            Set<String> automaticKnownDomains,
@@ -39,7 +41,7 @@ final class FontHookDomainDialog {
     private FontHookDomainDialog() {
     }
 
-    static void show(Activity activity,
+    public static void show(Activity activity,
                      Host host,
                      String packageName,
                      Set<String> automaticKnownDomains,

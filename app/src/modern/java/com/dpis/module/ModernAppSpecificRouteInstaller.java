@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.appconfig.WechatDpiConfig;
+
 import android.app.Application;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;

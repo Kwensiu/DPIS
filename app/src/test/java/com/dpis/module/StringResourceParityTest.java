@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.settings.AppLocaleManager;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -58,7 +60,7 @@ public class StringResourceParityTest {
         String layout = read("src/main/res/layout/view_system_server_settings_content.xml");
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
         String dialogLayout = read("src/main/res/layout/dialog_language_selection.xml");
-        String localeManager = read("src/main/java/com/dpis/module/AppLocaleManager.java");
+        String localeManager = read("src/main/java/com/dpis/module/settings/AppLocaleManager.java");
 
         assertTrue(layout.contains("android:id=\"@+id/row_language\""));
         assertTrue(dialogLayout.contains("android:id=\"@+id/language_options_container\""));
@@ -85,7 +87,7 @@ public class StringResourceParityTest {
     @Test
     public void languageSwitchDoesNotUseSavedInstanceStateForPersistedSwitches() throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
-        String localeManager = read("src/main/java/com/dpis/module/AppLocaleManager.java");
+        String localeManager = read("src/main/java/com/dpis/module/settings/AppLocaleManager.java");
 
         assertTrue(!source.contains("STATE_HOOKS_SWITCH_CHECKED"));
         assertTrue(!source.contains("protected void onSaveInstanceState(Bundle outState)"));
@@ -99,7 +101,7 @@ public class StringResourceParityTest {
         String settingsSource = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
         String settingsBinderSource = read("src/main/java/com/dpis/module/SettingsWorkspaceBinder.java");
         String localizedSource = read("src/main/java/com/dpis/module/LocalizedActivity.java");
-        String localeManager = read("src/main/java/com/dpis/module/AppLocaleManager.java");
+        String localeManager = read("src/main/java/com/dpis/module/settings/AppLocaleManager.java");
         String mainSource = read("src/main/java/com/dpis/module/MainActivity.java");
         String aboutSource = read("src/main/java/com/dpis/module/AboutActivity.java");
         String licenseSource = read("src/main/java/com/dpis/module/OpenSourceLicenseActivity.java");

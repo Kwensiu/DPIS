@@ -2,6 +2,8 @@ package com.dpis.module;
 
 import android.view.View;
 
+import com.dpis.module.ui.FormInputFocusBinder;
+
 final class AppConfigSheetActionBinder {
     private final AppConfigDialogBinder binder;
     private final AppConfigDialogBinder.Host host;

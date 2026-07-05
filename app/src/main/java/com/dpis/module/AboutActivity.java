@@ -1,5 +1,27 @@
 package com.dpis.module;
 
+import com.dpis.module.ui.WindowInsetsBinder;
+
+import com.dpis.module.ui.DialogWindowSizer;
+
+import com.dpis.module.updates.UpdateManifestFetcher;
+
+import com.dpis.module.updates.UpdateDownloadCoordinator;
+
+import com.dpis.module.updates.UpdateCoordinator;
+
+import com.dpis.module.updates.UpdateAvailableDialog;
+
+import com.dpis.module.updates.StartupUpdatePackageHandler;
+
+import com.dpis.module.updates.StartupUpdateManifest;
+
+import com.dpis.module.updates.StartupUpdateDownloadExecutor;
+
+import com.dpis.module.updates.ReleaseNotesController;
+
+import com.dpis.module.updates.ReleaseNotesCacheStore;
+
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -11,6 +33,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
+import com.dpis.module.updates.GitHubReleaseNotesFetcher;
+import com.dpis.module.updates.ReleaseNotesMarkdownRenderer;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textview.MaterialTextView;

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.RuntimeDebugPropertySyncer;
+
 import android.content.Context;
 import android.widget.Toast;
 

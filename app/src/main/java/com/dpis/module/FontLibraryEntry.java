@@ -2,15 +2,15 @@ package com.dpis.module;
 
 import java.util.Objects;
 
-final class FontLibraryEntry {
-    final String id;
-    final String displayName;
-    final String sourceFileName;
-    final String storedFileName;
-    final String storedPath;
-    final String sha256;
-    final long importedAtEpochMs;
-    final int ttcIndex;
+public final class FontLibraryEntry {
+    public final String id;
+    public final String displayName;
+    public final String sourceFileName;
+    public final String storedFileName;
+    public final String storedPath;
+    public final String sha256;
+    public final long importedAtEpochMs;
+    public final int ttcIndex;
 
     FontLibraryEntry(String id,
                      String displayName,

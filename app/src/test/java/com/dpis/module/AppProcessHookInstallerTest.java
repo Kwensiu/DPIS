@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.DebugPackageOverride;
+
 import org.junit.Test;
 
 import java.io.IOException;
@@ -493,7 +495,7 @@ public class AppProcessHookInstallerTest {
         assertTrue(source.contains("debug.dpis.viewport.disable_resources_impl_package"));
         assertTrue(source.contains("debug.dpis.viewport.disable_resources_read_package"));
         assertTrue(source.contains("DebugPackageOverride.matches("));
-        assertTrue(readSource("src/main/java/com/dpis/module/DebugPackageOverride.java")
+        assertTrue(readSource("src/main/java/com/dpis/module/runtime/DebugPackageOverride.java")
                 .contains("if (!BuildConfig.DEBUG || packageName == null"));
         assertTrue(source.contains("DebugFontOverride.of("));
         assertTrue(source.contains("packagePlan.buildExecutionPlan("));

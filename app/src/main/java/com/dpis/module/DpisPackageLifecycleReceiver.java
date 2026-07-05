@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.HyperOsNativeProxyAssetExporter;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -10,7 +12,7 @@ public final class DpisPackageLifecycleReceiver extends BroadcastReceiver {
         if (context == null || intent == null || !isSupportedAction(intent.getAction())) {
             return;
         }
-        HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(context);
+        HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(context, DpisLog::e);
         DpisConfigStore store = DpisApplication.getConfigStore();
         if (store == null) {
             store = ConfigStoreFactory.createLocalModuleConfigStore(context);

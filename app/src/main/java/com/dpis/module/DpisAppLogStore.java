@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.diagnostics.DpisLogEntry;
+
 import android.app.Application;
 import android.content.Context;
 

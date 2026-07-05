@@ -3,6 +3,8 @@ package com.dpis.module;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.dpis.module.runtime.RuntimeClock;
+
 final class VirtualDisplayState {
     private static final int MAX_RECORDS = 24;
     private static final Map<String, ViewportRuntimeRecord> RECORDS =

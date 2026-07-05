@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.applist.AppListFilterState;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
@@ -302,10 +304,10 @@ public class AppListFilterTest {
     public void defaultFilterStateStartsWithEveryToggleOff() {
         AppListFilterState state = AppListFilterState.defaultState();
 
-        assertFalse(state.showSystemApps);
-        assertFalse(state.injectedOnly);
-        assertFalse(state.widthConfiguredOnly);
-        assertFalse(state.fontConfiguredOnly);
+        assertFalse(state.showSystemApps());
+        assertFalse(state.injectedOnly());
+        assertFalse(state.widthConfiguredOnly());
+        assertFalse(state.fontConfiguredOnly());
     }
 
     private static boolean matches(String query,

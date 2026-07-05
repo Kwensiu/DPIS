@@ -1,5 +1,17 @@
 package com.dpis.module;
 
+import com.dpis.module.updates.UpdateManifestFetcher;
+
+import com.dpis.module.updates.UpdateDownloadCoordinator;
+
+import com.dpis.module.updates.UpdateCoordinator;
+
+import com.dpis.module.updates.UpdateAvailableDialog;
+
+import com.dpis.module.updates.StartupUpdatePackageHandler;
+
+import com.dpis.module.updates.StartupUpdateManifest;
+
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -20,8 +32,8 @@ public class AboutActivitySourceSmokeTest {
     @Test
     public void aboutActivityUpdateFlowUsesSharedDownloadCoordinatorAndHttpsOnly() throws IOException {
         String source = read("src/main/java/com/dpis/module/AboutActivity.java");
-        String dialogSource = read("src/main/java/com/dpis/module/UpdateAvailableDialog.java");
-        String manifestFetcherSource = read("src/main/java/com/dpis/module/UpdateManifestFetcher.java");
+        String dialogSource = read("src/main/java/com/dpis/module/updates/UpdateAvailableDialog.java");
+        String manifestFetcherSource = read("src/main/java/com/dpis/module/updates/UpdateManifestFetcher.java");
         String dialogLayout = read("src/main/res/layout/dialog_update_available.xml");
 
         assertTrue(source.contains("String downloadUrl = manifest.apkUrl;"));
@@ -38,7 +50,7 @@ public class AboutActivitySourceSmokeTest {
         assertTrue(source.contains("UpdateAvailableDialog.create("));
         assertTrue(dialogSource.contains("R.id.update_dialog_cancel_button"));
         assertTrue(dialogLayout.contains("android:id=\"@+id/update_dialog_cancel_button\""));
-        assertTrue(dialogLayout.contains("com.dpis.module.MaxHeightNestedScrollView"));
+        assertTrue(dialogLayout.contains("com.dpis.module.ui.MaxHeightNestedScrollView"));
         assertTrue(dialogLayout.contains("android:scrollbars=\"vertical\""));
         assertTrue(dialogLayout.contains("android:fadeScrollbars=\"false\""));
         assertTrue(dialogLayout.contains("@dimen/dialog_surface_padding_horizontal"));
@@ -55,8 +67,8 @@ public class AboutActivitySourceSmokeTest {
     @Test
     public void aboutActivityDoesNotApplyLocalApkSignatureGate() throws IOException {
         String source = read("src/main/java/com/dpis/module/AboutActivity.java");
-        String coordinatorSource = read("src/main/java/com/dpis/module/UpdateDownloadCoordinator.java");
-        String packageHandlerSource = read("src/main/java/com/dpis/module/StartupUpdatePackageHandler.java");
+        String coordinatorSource = read("src/main/java/com/dpis/module/updates/UpdateDownloadCoordinator.java");
+        String packageHandlerSource = read("src/main/java/com/dpis/module/updates/StartupUpdatePackageHandler.java");
 
         assertTrue(!source.contains("extractSigningFingerprints"));
         assertTrue(!source.contains("about_update_download_untrusted"));

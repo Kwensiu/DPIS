@@ -1,4 +1,9 @@
 package com.dpis.module;
+import com.dpis.module.templates.QuickTemplateTargetsBinder;
+
+import com.dpis.module.templates.QuickTemplateStore;
+
+import com.dpis.module.templates.TemplateConfigValue;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

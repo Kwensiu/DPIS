@@ -1,4 +1,12 @@
 package com.dpis.module;
+import com.dpis.module.templates.QuickTemplateApplyAdapters;
+import com.dpis.module.templates.TemplateConfigValueAdapters;
+
+import com.dpis.module.templates.QuickTemplateStore;
+
+import com.dpis.module.templates.TemplateConfigValue;
+
+import com.dpis.module.templates.QuickTemplateApplyCoordinator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -18,8 +26,8 @@ public class QuickTemplateApplyCoordinatorTest {
     public void appliesTemplateToMultiplePackagesAndPublishesSuccessfulWrites() {
         FakeWriter writer = new FakeWriter();
         RecordingPublisher publisher = new RecordingPublisher();
-        QuickTemplateApplyCoordinator coordinator =
-                new QuickTemplateApplyCoordinator(writer, publisher);
+        QuickTemplateApplyCoordinator<TemplateConfigValue> coordinator =
+                new QuickTemplateApplyCoordinator<>(writer, publisher);
         TemplateConfigValue value = templateValue();
 
         QuickTemplateApplyCoordinator.Result result = coordinator.apply(template(
@@ -36,8 +44,8 @@ public class QuickTemplateApplyCoordinatorTest {
     public void overwritesConfiguredPackagesAndCountsThemInPlan() {
         FakeWriter writer = new FakeWriter();
         writer.configuredPackages.add("com.example.configured");
-        QuickTemplateApplyCoordinator coordinator =
-                new QuickTemplateApplyCoordinator(writer, new RecordingPublisher());
+        QuickTemplateApplyCoordinator<TemplateConfigValue> coordinator =
+                new QuickTemplateApplyCoordinator<>(writer, new RecordingPublisher());
 
         QuickTemplateApplyCoordinator.Plan plan = coordinator.plan(template(
                 orderedSet("com.example.configured", "com.example.new"), templateValue()));
@@ -51,8 +59,8 @@ public class QuickTemplateApplyCoordinatorTest {
         FakeWriter writer = new FakeWriter();
         writer.failedPackages.add("com.example.fail");
         RecordingPublisher publisher = new RecordingPublisher();
-        QuickTemplateApplyCoordinator coordinator =
-                new QuickTemplateApplyCoordinator(writer, publisher);
+        QuickTemplateApplyCoordinator<TemplateConfigValue> coordinator =
+                new QuickTemplateApplyCoordinator<>(writer, publisher);
 
         QuickTemplateApplyCoordinator.Result result = coordinator.apply(template(
                 orderedSet("com.example.ok", "com.example.fail"), templateValue()));
@@ -66,8 +74,8 @@ public class QuickTemplateApplyCoordinatorTest {
     @Test
     public void emptySelectionBlocksApplyBeforeWriting() {
         FakeWriter writer = new FakeWriter();
-        QuickTemplateApplyCoordinator coordinator =
-                new QuickTemplateApplyCoordinator(writer, new RecordingPublisher());
+        QuickTemplateApplyCoordinator<TemplateConfigValue> coordinator =
+                new QuickTemplateApplyCoordinator<>(writer, new RecordingPublisher());
 
         QuickTemplateApplyCoordinator.Result result = coordinator.apply(template(
                 Set.of(), templateValue()));
@@ -82,8 +90,8 @@ public class QuickTemplateApplyCoordinatorTest {
         writer.configuredPackages.add("com.example.installed");
         writer.configuredPackages.add("com.example.removed");
         RecordingPublisher publisher = new RecordingPublisher();
-        QuickTemplateApplyCoordinator coordinator =
-                new QuickTemplateApplyCoordinator(writer, publisher);
+        QuickTemplateApplyCoordinator<TemplateConfigValue> coordinator =
+                new QuickTemplateApplyCoordinator<>(writer, publisher);
         QuickTemplateApplyCoordinator.TargetPackageFilter installedOnly =
                 packageName -> !"com.example.removed".equals(packageName);
         QuickTemplateStore.QuickTemplate template = template(
@@ -115,8 +123,8 @@ public class QuickTemplateApplyCoordinatorTest {
                 "resources_font",
                 false,
                 600)));
-        QuickTemplateApplyCoordinator coordinator = new QuickTemplateApplyCoordinator(
-                store);
+        QuickTemplateApplyCoordinator<TemplateConfigValue> coordinator =
+                QuickTemplateApplyAdapters.from(store);
 
         QuickTemplateApplyCoordinator.Result result = coordinator.apply(template(
                 orderedSet("com.example.target"),
@@ -136,8 +144,8 @@ public class QuickTemplateApplyCoordinatorTest {
 
     @Test
     public void runtimePublishPlanMirrorsSingleAppSaveForEnabledTemplateValues() {
-        QuickTemplateApplyCoordinator.RuntimePublishPlan plan =
-                QuickTemplateApplyCoordinator.RuntimePublishPlan.from(
+        QuickTemplateApplyAdapters.RuntimePublishPlan plan =
+                QuickTemplateApplyAdapters.RuntimePublishPlan.from(
                         templateValue(),
                         new HookDomainOverride(
                                 true,
@@ -159,8 +167,8 @@ public class QuickTemplateApplyCoordinatorTest {
 
     @Test
     public void runtimePublishPlanClearsRuntimeStateForEmptyTemplateValues() {
-        QuickTemplateApplyCoordinator.RuntimePublishPlan plan =
-                QuickTemplateApplyCoordinator.RuntimePublishPlan.from(
+        QuickTemplateApplyAdapters.RuntimePublishPlan plan =
+                QuickTemplateApplyAdapters.RuntimePublishPlan.from(
                         TemplateConfigValue.EMPTY,
                         HookDomainOverride.automatic(),
                         false);
@@ -178,9 +186,9 @@ public class QuickTemplateApplyCoordinatorTest {
 
     @Test
     public void runtimePublishPlanIgnoresModeIntentWithoutRuntimeValues() {
-        QuickTemplateApplyCoordinator.RuntimePublishPlan plan =
-                QuickTemplateApplyCoordinator.RuntimePublishPlan.from(
-                        new TemplateConfigValue(
+        QuickTemplateApplyAdapters.RuntimePublishPlan plan =
+                QuickTemplateApplyAdapters.RuntimePublishPlan.from(
+                        TemplateConfigValueAdapters.fromViewportTargetSpec(
                                 ViewportTargetSpec.off(),
                                 ViewportTargetType.ABSOLUTE_DP,
                                 ViewportApplyMode.COMPAT,
@@ -211,7 +219,7 @@ public class QuickTemplateApplyCoordinatorTest {
     }
 
     private static TemplateConfigValue templateValue() {
-        return new TemplateConfigValue(
+        return TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.absoluteDp(411),
                 ViewportApplyMode.AUTO,
                 115,
@@ -224,7 +232,8 @@ public class QuickTemplateApplyCoordinatorTest {
         return new LinkedHashSet<>(Arrays.asList(values));
     }
 
-    private static final class FakeWriter implements QuickTemplateApplyCoordinator.ConfigWriter {
+    private static final class FakeWriter
+            implements QuickTemplateApplyCoordinator.ConfigWriter<TemplateConfigValue> {
         final LinkedHashSet<String> configuredPackages = new LinkedHashSet<>();
         final LinkedHashSet<String> failedPackages = new LinkedHashSet<>();
         final ArrayList<String> writes = new ArrayList<>();
@@ -242,7 +251,7 @@ public class QuickTemplateApplyCoordinatorTest {
     }
 
     private static final class RecordingPublisher
-            implements QuickTemplateApplyCoordinator.RuntimePublisher {
+            implements QuickTemplateApplyCoordinator.RuntimePublisher<TemplateConfigValue> {
         final ArrayList<String> publishedPackages = new ArrayList<>();
 
         @Override

@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.templates.QuickTemplateListAdapter;
+
+import com.dpis.module.templates.QuickTemplateSaveHandler;
+
+import com.dpis.module.templates.QuickTemplateStore;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -11,9 +17,9 @@ public class QuickTemplateEditSheetDialogSourceSmokeTest {
     @Test
     public void activityAndLayoutExposeDedicatedQuickTemplateEditPage() throws IOException {
         String manifest = read("src/main/AndroidManifest.xml");
-        String source = read("src/main/java/com/dpis/module/QuickTemplateEditSheetDialog.java");
-        String editorBinder = read("src/main/java/com/dpis/module/QuickTemplateEditorBinder.java");
-        String saveHandler = read("src/main/java/com/dpis/module/QuickTemplateSaveHandler.java");
+        String source = read("src/main/java/com/dpis/module/templates/QuickTemplateEditSheetDialog.java");
+        String editorBinder = read("src/main/java/com/dpis/module/templates/QuickTemplateEditorBinder.java");
+        String saveHandler = read("src/main/java/com/dpis/module/templates/QuickTemplateSaveHandler.java");
         String layout = read("src/main/res/layout/dialog_quick_template_edit_sheet.xml");
         String sharedTemplateFields = read("src/main/res/layout/view_template_config_sheet_fields.xml");
 
@@ -112,8 +118,8 @@ public class QuickTemplateEditSheetDialogSourceSmokeTest {
     @Test
     public void mainActivityAndTemplateWorkspaceWireQuickTemplateActions() throws IOException {
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
-        String binder = read("src/main/java/com/dpis/module/TemplateWorkspaceBinder.java");
-        String adapter = read("src/main/java/com/dpis/module/QuickTemplateListAdapter.java");
+        String binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.java");
+        String adapter = read("src/main/java/com/dpis/module/templates/QuickTemplateListAdapter.java");
         String layout = read("src/main/res/layout/template_workspace.xml");
 
         assertTrue(mainActivity.contains("createQuickTemplateActions()"));

@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.PublishedFontFileResolver;
+
+import com.dpis.module.fonts.SystemFontRegistry;
+
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Typeface;

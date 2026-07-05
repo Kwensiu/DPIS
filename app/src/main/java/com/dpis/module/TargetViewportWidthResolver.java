@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.RuntimeClock;
+
 final class TargetViewportWidthResolver {
 
     // --- single-entry TTL memoize (stage 2 perf optimization, issue #54 item 6) ---

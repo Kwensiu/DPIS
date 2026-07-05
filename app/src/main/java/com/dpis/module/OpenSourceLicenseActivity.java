@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.ui.DialogWindowSizer;
+
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.res.Resources;

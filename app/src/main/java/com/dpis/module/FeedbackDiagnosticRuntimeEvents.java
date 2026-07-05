@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import com.dpis.module.diagnostics.FeedbackDiagnosticTimelineClassifier;
+
 final class FeedbackDiagnosticRuntimeEvents {
     private static final long REPEAT_WARNING_WINDOW_MS = 300L;
     private static volatile Session activeSession;
@@ -33,6 +35,19 @@ final class FeedbackDiagnosticRuntimeEvents {
     static List<String> snapshotForTest() {
         Session session = activeSession;
         return session != null ? session.snapshot() : List.of();
+    }
+
+    private static FeedbackDiagnosticTimelineClassifier.Context classifierContext(
+            FeedbackDiagnosticCoordinator.Request request
+    ) {
+        boolean appEnabled = request != null && request.inScope && request.dpisEnabled;
+        return new FeedbackDiagnosticTimelineClassifier.Context(
+                appEnabled,
+                appEnabled && request.viewportTargetSpec.isEnabled(),
+                appEnabled && request.fontScalePercent != null,
+                appEnabled && request.typefaceId != null,
+                appEnabled && request.wechatDpi != null
+        );
     }
 
     static void recordDpisLog(String level, String message) {
@@ -78,7 +93,7 @@ final class FeedbackDiagnosticRuntimeEvents {
 
         Session(String packageName, FeedbackDiagnosticCoordinator.Request request) {
             targetPackage = valueOrEmpty(packageName);
-            classifierContext = FeedbackDiagnosticTimelineClassifier.Context.from(request);
+            classifierContext = classifierContext(request);
         }
 
         synchronized List<String> snapshot() {
@@ -101,7 +116,7 @@ final class FeedbackDiagnosticRuntimeEvents {
             if (event == null) {
                 return;
             }
-            append(event.category, event.route, event.stage, event.level, event.message);
+            append(event.category(), event.route(), event.stage(), event.level(), event.message());
             warnIfRepeated(event);
         }
 
@@ -127,23 +142,23 @@ final class FeedbackDiagnosticRuntimeEvents {
         }
 
         private void warnIfRepeated(FeedbackDiagnosticTimelineClassifier.Event event) {
-            if (!"mutation_applied".equals(event.stage)
-                    && !"unexpected_route_hit".equals(event.stage)) {
+            if (!"mutation_applied".equals(event.stage())
+                    && !"unexpected_route_hit".equals(event.stage())) {
                 return;
             }
             long now = System.currentTimeMillis();
-            String key = event.route + "|" + event.stage + "|" + event.message;
+            String key = event.route() + "|" + event.stage() + "|" + event.message();
             Long previous = lastEventByKey.put(key, now);
             if (previous != null && now - previous.longValue() <= REPEAT_WARNING_WINDOW_MS) {
                 append(
                         "warning",
-                        event.route,
+                        event.route(),
                         "repeated_write",
                         "W",
                         "same route event repeated within "
                                 + REPEAT_WARNING_WINDOW_MS
                                 + "ms: "
-                                + event.message
+                                + event.message()
                 );
             }
         }

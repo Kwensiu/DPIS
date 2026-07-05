@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.appconfig.WechatDpiConfig;
+
+import com.dpis.module.appconfig.UnsavedBadgeBinder;
+
+import com.dpis.module.appconfig.ConfigValueInputErrorBinder;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -459,7 +465,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void appConfigWizardHintUsesNamedDimensions() throws IOException {
-        String coordinator = read("src/main/java/com/dpis/module/AppConfigDialogCoordinator.java");
+        String coordinator = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogCoordinator.java");
         String appConfigLayout = read("src/main/res/layout/dialog_app_config.xml");
         String hintLayout = read("src/main/res/layout/view_app_config_wizard_hint.xml");
         String bubbleBackground = read("src/main/res/drawable/bg_app_config_wizard_bubble.xml");
@@ -488,7 +494,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void appConfigSheetUsesImeResizeAndScrollsFocusedInput() throws IOException {
-        String coordinator = read("src/main/java/com/dpis/module/AppConfigDialogCoordinator.java");
+        String coordinator = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogCoordinator.java");
         String appConfigLayout = read("src/main/res/layout/dialog_app_config.xml");
 
         assertTrue(appConfigLayout.contains("@+id/dialog_app_config_scroll"));
@@ -531,9 +537,9 @@ public class AppConfigDialogBinderSourceSmokeTest {
         String validation = read("src/main/java/com/dpis/module/AppConfigSheetModeValidationBinder.java");
         String actions = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
         String host = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
-        String focusBinder = read("src/main/java/com/dpis/module/FormInputFocusBinder.java");
+        String focusBinder = read("src/main/java/com/dpis/module/ui/FormInputFocusBinder.java");
 
-        assertTrue(focusBinder.contains("final class FormInputFocusBinder"));
+        assertTrue(focusBinder.contains("public final class FormInputFocusBinder"));
         assertTrue(interactions.contains("new AppConfigSheetModeValidationBinder(binder, host)"));
         assertTrue(validation.contains("FormInputFocusBinder.bindDismissOnOutsideTouch"));
         assertTrue(validation.contains("WechatDpiSheetBinder.inputViewForFocus(dialogView)"));
@@ -675,7 +681,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
                 "ConfigValueInputErrorBinder.bindFullMessage(viewportInputLayout, viewportValid);"));
         assertTrue(updateBlock.contains(
                 "ConfigValueInputErrorBinder.bindFullMessage(fontInputLayout, fontValid);"));
-        assertTrue(read("src/main/java/com/dpis/module/ConfigValueInputErrorBinder.java")
+        assertTrue(read("src/main/java/com/dpis/module/appconfig/ConfigValueInputErrorBinder.java")
                 .contains("R.string.status_save_invalid"));
         assertFalse(landBinder.contains("R.string.status_save_invalid"));
     }

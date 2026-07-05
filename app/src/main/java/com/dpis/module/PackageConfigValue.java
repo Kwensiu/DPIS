@@ -1,8 +1,10 @@
 package com.dpis.module;
 
+import com.dpis.module.appconfig.WechatDpiConfig;
+
 import java.util.Objects;
 
-final class PackageConfigValue {
+public final class PackageConfigValue {
     static final PackageConfigValue EMPTY = new PackageConfigValue(
             ViewportTargetSpec.off(),
             ViewportTargetType.OFF,
@@ -24,7 +26,7 @@ final class PackageConfigValue {
     final Boolean dpisEnabled;
     final Integer wechatDpi;
 
-    PackageConfigValue(
+    public PackageConfigValue(
             ViewportTargetSpec viewportTargetSpec,
             String viewportTargetType,
             String viewportApplyMode,

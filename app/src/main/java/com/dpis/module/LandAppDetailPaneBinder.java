@@ -1,5 +1,12 @@
 package com.dpis.module;
 
+import com.dpis.module.ui.TouchFeedbackBinder;
+
+import com.dpis.module.fonts.SystemFontEntry;
+import com.dpis.module.fonts.SystemFontRegistry;
+
+import com.dpis.module.ui.FormInputFocusBinder;
+
 import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.text.Editable;
@@ -1226,8 +1233,8 @@ final class LandAppDetailPaneBinder {
             return activity.getString(R.string.dialog_typeface_default);
         }
         for (SystemFontEntry entry : SystemFontRegistry.listRecommendedFonts()) {
-            if (typefaceId.equals(entry.id)) {
-                return entry.displayName;
+            if (typefaceId.equals(entry.id())) {
+                return entry.displayName();
             }
         }
         FontLibraryEntry imported

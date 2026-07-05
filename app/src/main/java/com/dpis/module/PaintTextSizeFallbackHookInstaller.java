@@ -2,9 +2,13 @@ package com.dpis.module;
 
 import android.graphics.Paint;
 
+import com.dpis.module.fonts.PaintProvenanceTracker;
+
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import com.dpis.module.runtime.ProcessScopedInstallGate;
 
 import io.github.libxposed.api.XposedInterface;
 

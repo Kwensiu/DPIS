@@ -1,5 +1,12 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.TextViewFontProvenanceTracker;
+
+import com.dpis.module.fonts.FontFieldRewriteMath;
+import com.dpis.module.fonts.PaintProvenanceTracker;
+
+import com.dpis.module.runtime.ProcessScopedInstallGate;
+
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.widget.TextView;
@@ -693,13 +700,13 @@ final class ForceTextSizeHookInstaller {
                 currentPx,
                 factor,
                 strongerDomainOwns);
-        if (resolution.action == PaintProvenanceTracker.Action.WRITE) {
-            return PaintFallbackDecision.write(resolution.adjustedPx);
+        if (resolution.action() == PaintProvenanceTracker.Action.WRITE) {
+            return PaintFallbackDecision.write(resolution.adjustedPx());
         }
-        if (resolution.action == PaintProvenanceTracker.Action.SKIP) {
-            return PaintFallbackDecision.skip(resolution.adjustedPx);
+        if (resolution.action() == PaintProvenanceTracker.Action.SKIP) {
+            return PaintFallbackDecision.skip(resolution.adjustedPx());
         }
-        return PaintFallbackDecision.observe(resolution.adjustedPx);
+        return PaintFallbackDecision.observe(resolution.adjustedPx());
     }
 
     static PaintFallbackDecision resolvePaintFallbackDecisionForTest(Object paint,

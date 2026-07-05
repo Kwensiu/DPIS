@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.ui.WindowInsetsBinder;
+
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,7 +12,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 public final class DonateActivity extends LocalizedActivity {
-    static Intent createIntent(Context context) {
+    public static Intent createIntent(Context context) {
         return new Intent(context, DonateActivity.class);
     }
 

@@ -1,10 +1,10 @@
 package com.dpis.module;
 
-final class FontHookDomainDecision {
+public final class FontHookDomainDecision {
     private FontHookDomainDecision() {
     }
 
-    static boolean isHyperOsNativeFlutterEnabled(DpisConfigStore store, String packageName) {
+    public static boolean isHyperOsNativeFlutterEnabled(DpisConfigStore store, String packageName) {
         if (store == null || packageName == null || packageName.isBlank()) {
             return false;
         }

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.RootCommandRunner;
+
 import java.util.LinkedHashSet;
 
 final class HyperOsNativeFontPropertySyncer {

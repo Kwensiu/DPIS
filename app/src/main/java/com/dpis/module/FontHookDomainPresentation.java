@@ -4,20 +4,20 @@ import android.content.Context;
 
 import java.util.Set;
 
-final class FontHookDomainPresentation {
+public final class FontHookDomainPresentation {
     private final HookDomainOverride override;
 
     private FontHookDomainPresentation(HookDomainOverride override) {
         this.override = override != null ? override : HookDomainOverride.automatic();
     }
 
-    static FontHookDomainPresentation forRecommendedTemplateRaw(String raw) {
+    public static FontHookDomainPresentation forRecommendedTemplateRaw(String raw) {
         return forOverride(
                 HookDomainOverrideStore.fromRaw(raw),
                 FontHookDomainRegistry.recommendedTemplateKnownDomains());
     }
 
-    static FontHookDomainPresentation forOverride(HookDomainOverride override,
+    public static FontHookDomainPresentation forOverride(HookDomainOverride override,
             Set<String> automaticKnownDomains) {
         return new FontHookDomainPresentation(
                 HookDomainOverrideStore.automaticIfSelectionMatchesAutomatic(
@@ -33,7 +33,7 @@ final class FontHookDomainPresentation {
         return !override.customPathEnabled;
     }
 
-    String normalizedRawOrNull() {
+    public String normalizedRawOrNull() {
         if (displaysAsAutomatic()) {
             return null;
         }
@@ -42,7 +42,7 @@ final class FontHookDomainPresentation {
                 override.unknownDomains);
     }
 
-    String buttonText(Context context) {
+    public String buttonText(Context context) {
         if (displaysAsAutomatic()) {
             return context.getString(R.string.dialog_font_hook_domains_title);
         }

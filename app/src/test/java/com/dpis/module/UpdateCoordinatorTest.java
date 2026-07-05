@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.updates.UpdateCoordinator;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

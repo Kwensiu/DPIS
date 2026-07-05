@@ -24,7 +24,7 @@ public class QuickConfigSourceSmokeTest {
     @Test
     public void quickConfigUsesAppConfigSheetForForegroundPackage() throws IOException {
         String activity = read("src/main/java/com/dpis/module/QuickConfigActivity.java");
-        String resolver = read("src/main/java/com/dpis/module/ForegroundPackageResolver.java");
+        String resolver = read("src/main/java/com/dpis/module/applist/ForegroundPackageResolver.java");
         String tile = read("src/main/java/com/dpis/module/QuickConfigTileService.java");
         String styles = read("src/main/res/values/styles.xml");
         String panelBackground = read("src/main/res/drawable/bg_quick_config_panel.xml");

@@ -8,6 +8,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.dpis.module.runtime.ProcessScopedInstallGate;
+
 import io.github.libxposed.api.XposedInterface;
 
 final class ViewRootProbeHookInstaller {

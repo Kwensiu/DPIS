@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.applist.AppListFilterState;
+
+import com.dpis.module.applist.AppLoadCoordinator;
+
 import java.util.Collections;
 import java.util.List;
 

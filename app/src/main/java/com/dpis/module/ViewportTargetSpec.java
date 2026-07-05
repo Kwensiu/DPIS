@@ -2,7 +2,7 @@ package com.dpis.module;
 
 import java.util.Objects;
 
-final class ViewportTargetSpec {
+public final class ViewportTargetSpec {
     static final int MIN_SCALE_PERCENT = 30;
     static final int MAX_SCALE_PERCENT = 300;
     static final int MIN_SCALE_MILLI_PERCENT = MIN_SCALE_PERCENT * 1000;
@@ -23,45 +23,45 @@ final class ViewportTargetSpec {
         this.absoluteWidthDp = absoluteWidthDp;
     }
 
-    static ViewportTargetSpec off() {
+    public static ViewportTargetSpec off() {
         return new ViewportTargetSpec(ViewportTargetType.OFF, 0, 0);
     }
 
-    static ViewportTargetSpec relativeScale(int scaleMilliPercent) {
+    public static ViewportTargetSpec relativeScale(int scaleMilliPercent) {
         if (scaleMilliPercent < MIN_SCALE_MILLI_PERCENT || scaleMilliPercent > MAX_SCALE_MILLI_PERCENT) {
             return off();
         }
         return new ViewportTargetSpec(ViewportTargetType.RELATIVE_SCALE, scaleMilliPercent, 0);
     }
 
-    static ViewportTargetSpec absoluteDp(int widthDp) {
+    public static ViewportTargetSpec absoluteDp(int widthDp) {
         if (widthDp < 1) {
             return off();
         }
         return new ViewportTargetSpec(ViewportTargetType.ABSOLUTE_DP, 0, widthDp);
     }
 
-    String type() {
+    public String type() {
         return type;
     }
 
-    int scaleMilliPercent() {
+    public int scaleMilliPercent() {
         return scaleMilliPercent;
     }
 
-    int absoluteWidthDp() {
+    public int absoluteWidthDp() {
         return absoluteWidthDp;
     }
 
-    boolean isRelativeScale() {
+    public boolean isRelativeScale() {
         return ViewportTargetType.RELATIVE_SCALE.equals(type);
     }
 
-    boolean isAbsoluteDp() {
+    public boolean isAbsoluteDp() {
         return ViewportTargetType.ABSOLUTE_DP.equals(type);
     }
 
-    boolean isEnabled() {
+    public boolean isEnabled() {
         return isRelativeScale() || isAbsoluteDp();
     }
 

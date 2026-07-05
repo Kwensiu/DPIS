@@ -1,5 +1,15 @@
 package com.dpis.module;
 
+import com.dpis.module.diagnostics.DpisLogEntry;
+import com.dpis.module.diagnostics.DpisLogParser;
+
+import com.dpis.module.diagnostics.LogReadResult;
+import com.dpis.module.diagnostics.LsposedLogReader;
+
+import com.dpis.module.ui.WindowInsetsBinder;
+
+import com.dpis.module.root.RootAccessProbe;
+
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;

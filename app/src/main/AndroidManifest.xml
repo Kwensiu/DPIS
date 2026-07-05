@@ -43,7 +43,7 @@
             android:name=".FontLibraryActivity"
             android:exported="false" />
         <activity
-            android:name=".QuickTemplateTargetSelectionActivity"
+            android:name=".templates.QuickTemplateTargetSelectionActivity"
             android:exported="false" />
         <activity
             android:name=".ModeHelpActivity"

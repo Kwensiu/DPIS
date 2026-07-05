@@ -6,22 +6,22 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-final class FontHookDomainRegistry {
-    static final String ID_RESOURCES_FONT = "resources_font";
-    static final String ID_SYSTEM_SERVER_FONT = "system_server_font";
-    static final String ID_ACTIVITY_THREAD_FONT = "activity_thread_font";
-    static final String ID_TEXTVIEW_SP_REWRITE = "textview_sp_rewrite";
-    static final String ID_TEXTVIEW_ABSOLUTE_REWRITE = "textview_absolute_rewrite";
-    static final String ID_TEXTVIEW_CURRENT_PX_FALLBACK = "textview_current_px_fallback";
-    static final String ID_PAINT_TEXT_SIZE_FALLBACK = "paint_text_size_fallback";
-    static final String ID_WEBVIEW_TEXT_ZOOM = "webview_text_zoom";
-    static final String ID_FLUTTER_SETTINGS = "flutter_settings";
-    static final String ID_HYPEROS_NATIVE_FLUTTER = "hyperos_native_flutter";
+public final class FontHookDomainRegistry {
+    public static final String ID_RESOURCES_FONT = "resources_font";
+    public static final String ID_SYSTEM_SERVER_FONT = "system_server_font";
+    public static final String ID_ACTIVITY_THREAD_FONT = "activity_thread_font";
+    public static final String ID_TEXTVIEW_SP_REWRITE = "textview_sp_rewrite";
+    public static final String ID_TEXTVIEW_ABSOLUTE_REWRITE = "textview_absolute_rewrite";
+    public static final String ID_TEXTVIEW_CURRENT_PX_FALLBACK = "textview_current_px_fallback";
+    public static final String ID_PAINT_TEXT_SIZE_FALLBACK = "paint_text_size_fallback";
+    public static final String ID_WEBVIEW_TEXT_ZOOM = "webview_text_zoom";
+    public static final String ID_FLUTTER_SETTINGS = "flutter_settings";
+    public static final String ID_HYPEROS_NATIVE_FLUTTER = "hyperos_native_flutter";
 
-    static final String GROUP_RESOURCES = "resources";
-    static final String GROUP_TEXT_VIEW_FALLBACK = "text_view_fallback";
-    static final String GROUP_WEB = "web";
-    static final String GROUP_CROSS_RUNTIME = "cross_runtime";
+    public static final String GROUP_RESOURCES = "resources";
+    public static final String GROUP_TEXT_VIEW_FALLBACK = "text_view_fallback";
+    public static final String GROUP_WEB = "web";
+    public static final String GROUP_CROSS_RUNTIME = "cross_runtime";
 
     private static final int NOT_CUSTOMIZABLE = -1;
 
@@ -60,15 +60,15 @@ final class FontHookDomainRegistry {
     private FontHookDomainRegistry() {
     }
 
-    static Set<String> knownDomainIds() {
+    public static Set<String> knownDomainIds() {
         return idsSortedByStableOrder(DOMAIN_SPECS);
     }
 
-    static boolean isKnown(String domainId) {
+    public static boolean isKnown(String domainId) {
         return specFor(domainId) != null;
     }
 
-    static Set<String> orderedKnownSubset(Set<String> domains) {
+    public static Set<String> orderedKnownSubset(Set<String> domains) {
         if (domains == null || domains.isEmpty()) {
             return new LinkedHashSet<>();
         }
@@ -81,31 +81,31 @@ final class FontHookDomainRegistry {
         return ordered;
     }
 
-    static List<String> orderedIdsList() {
+    public static List<String> orderedIdsList() {
         return knownDomainIds().stream().collect(Collectors.toList());
     }
 
-    static List<String> orderedDisplayIdsList() {
+    public static List<String> orderedDisplayIdsList() {
         return specsSortedByDisplayOrder(DOMAIN_SPECS).stream()
                 .map(spec -> spec.id)
                 .collect(Collectors.toList());
     }
 
-    static List<String> orderedCustomizableIdsList() {
+    public static List<String> orderedCustomizableIdsList() {
         return customizableSpecs().stream()
                 .sorted(Comparator.comparingInt(spec -> spec.customizableOrder))
                 .map(spec -> spec.id)
                 .collect(Collectors.toList());
     }
 
-    static List<String> orderedCustomizableDisplayIdsList() {
+    public static List<String> orderedCustomizableDisplayIdsList() {
         return customizableSpecs().stream()
                 .sorted(Comparator.comparingInt(spec -> spec.displayOrder))
                 .map(spec -> spec.id)
                 .collect(Collectors.toList());
     }
 
-    static Set<String> recommendedTemplateKnownDomains() {
+    public static Set<String> recommendedTemplateKnownDomains() {
         LinkedHashSet<String> recommended = new LinkedHashSet<>();
         for (DomainSpec spec : DOMAIN_SPECS) {
             if (spec.recommended) {
@@ -115,7 +115,7 @@ final class FontHookDomainRegistry {
         return orderedCustomizableDisplaySubset(recommended);
     }
 
-    static Set<String> orderedCustomizableSubset(Set<String> domains) {
+    public static Set<String> orderedCustomizableSubset(Set<String> domains) {
         if (domains == null || domains.isEmpty()) {
             return new LinkedHashSet<>();
         }
@@ -128,7 +128,7 @@ final class FontHookDomainRegistry {
         return ordered;
     }
 
-    static Set<String> orderedCustomizableDisplaySubset(Set<String> domains) {
+    public static Set<String> orderedCustomizableDisplaySubset(Set<String> domains) {
         if (domains == null || domains.isEmpty()) {
             return new LinkedHashSet<>();
         }
@@ -141,7 +141,7 @@ final class FontHookDomainRegistry {
         return ordered;
     }
 
-    static List<String> orderedGroups() {
+    public static List<String> orderedGroups() {
         return List.of(
                 GROUP_RESOURCES,
                 GROUP_TEXT_VIEW_FALLBACK,
@@ -149,12 +149,12 @@ final class FontHookDomainRegistry {
                 GROUP_CROSS_RUNTIME);
     }
 
-    static String groupFor(String domainId) {
+    public static String groupFor(String domainId) {
         DomainSpec spec = specFor(domainId);
         return spec != null ? spec.group : "";
     }
 
-    static int titleResFor(String domainId) {
+    public static int titleResFor(String domainId) {
         DomainSpec spec = specFor(domainId);
         if (spec == null) {
             throw new IllegalArgumentException("Unknown domain id: " + domainId);

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.applist.AppListFilterState;
+
 import java.util.Locale;
 
 final class AppListFilter {
@@ -49,16 +51,16 @@ final class AppListFilter {
         AppListFilterState effectiveState = state != null
                 ? state
                 : AppListFilterState.noAdditionalConstraints();
-        if (!effectiveState.showSystemApps && systemApp) {
+        if (!effectiveState.showSystemApps() && systemApp) {
             return false;
         }
-        if (effectiveState.injectedOnly && !inScope) {
+        if (effectiveState.injectedOnly() && !inScope) {
             return false;
         }
-        if (effectiveState.widthConfiguredOnly && viewportWidthDp == null) {
+        if (effectiveState.widthConfiguredOnly() && viewportWidthDp == null) {
             return false;
         }
-        return !effectiveState.fontConfiguredOnly || anyFontConfigured;
+        return !effectiveState.fontConfiguredOnly() || anyFontConfigured;
     }
 
 }

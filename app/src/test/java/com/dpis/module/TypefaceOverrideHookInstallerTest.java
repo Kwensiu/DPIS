@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.PublishedFontFileResolver;
+
+import com.dpis.module.fonts.FontTypefaceLoader;
+
 import android.graphics.Typeface;
 
 import org.junit.Test;

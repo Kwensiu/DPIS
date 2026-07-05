@@ -2,6 +2,8 @@ package com.dpis.module;
 
 import android.content.SharedPreferences;
 
+import com.dpis.module.fonts.FontFileKind;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -18,7 +20,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
-final class FontLibraryStore {
+public final class FontLibraryStore {
     private static final String KEY_ENTRIES = "font.library.entries";
     private static final String FONT_ID_PREFIX = "font_";
 
@@ -73,7 +75,7 @@ final class FontLibraryStore {
         }
     }
 
-    FontLibraryEntry findById(String id) {
+    public FontLibraryEntry findById(String id) {
         if (id == null || id.isBlank()) {
             return null;
         }
@@ -85,7 +87,7 @@ final class FontLibraryStore {
         return null;
     }
 
-    File resolveFontFile(String id) {
+    public File resolveFontFile(String id) {
         FontLibraryEntry entry = findById(id);
         if (entry == null) {
             return null;

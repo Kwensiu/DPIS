@@ -11,7 +11,7 @@ public class ProcessActionHandlerSourceSmokeTest {
     @Test
     public void processActionsDoNotUseMonkeyToLaunchApps() throws IOException {
         String source = read("src/main/java/com/dpis/module/ProcessActionHandler.java");
-        String rootLauncher = read("src/main/java/com/dpis/module/RootAppProcessLauncher.java");
+        String rootLauncher = read("src/main/java/com/dpis/module/root/RootAppProcessLauncher.java");
 
         assertFalse(source.contains("monkey -p"));
         assertTrue(source.contains("new RootAppProcessLauncher(activity)"));
@@ -28,7 +28,7 @@ public class ProcessActionHandlerSourceSmokeTest {
     @Test
     public void sharedRootLauncherDoesNotProbeOrCacheRootBeforeFallback() throws IOException {
         String source = read("src/main/java/com/dpis/module/ProcessActionHandler.java");
-        String rootLauncher = read("src/main/java/com/dpis/module/RootAppProcessLauncher.java");
+        String rootLauncher = read("src/main/java/com/dpis/module/root/RootAppProcessLauncher.java");
 
         assertFalse(source.contains("rootAccessCache"));
         assertTrue(source.contains("rootLauncher.start(packageName)"));

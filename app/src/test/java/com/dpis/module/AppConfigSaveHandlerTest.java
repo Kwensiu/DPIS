@@ -1,4 +1,7 @@
 package com.dpis.module;
+import com.dpis.module.templates.TemplateConfigValueAdapters;
+
+import com.dpis.module.templates.TemplateConfigValue;
 
 import org.junit.Test;
 
@@ -101,7 +104,7 @@ public class AppConfigSaveHandlerTest {
     @Test
     public void savingPreviewOnlyConfigConvertsHiddenPrefillDomainsToRealPackageConfig() {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
-        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.off(),
                 ViewportApplyMode.OFF,
                 null,
@@ -131,7 +134,7 @@ public class AppConfigSaveHandlerTest {
     @Test
     public void hookDomainOnlyPreviewSavePersistsRealPackageConfig() {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
-        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.off(),
                 ViewportApplyMode.OFF,
                 null,
@@ -149,7 +152,7 @@ public class AppConfigSaveHandlerTest {
     @Test
     public void clearedHookDomainPreviewDoesNotForcePackageConfig() {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
-        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.off(),
                 ViewportApplyMode.OFF,
                 null,
@@ -191,7 +194,7 @@ public class AppConfigSaveHandlerTest {
     @Test
     public void resetThenSaveDoesNotPersistHiddenPreviewHookDomains() {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
-        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.off(),
                 ViewportApplyMode.COMPAT,
                 null,
@@ -388,7 +391,7 @@ public class AppConfigSaveHandlerTest {
     @Test
     public void unchangedGlobalPrefillPreviewSaveDoesNotCreatePackageConfig() {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
-        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.relativeScale(87500),
                 ViewportApplyMode.AUTO,
                 125,
@@ -421,7 +424,7 @@ public class AppConfigSaveHandlerTest {
     @Test
     public void resetGlobalPrefillPreviewThenSaveDoesNotCreatePackageConfig() {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
-        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.relativeScale(87500),
                 ViewportApplyMode.AUTO,
                 125,
@@ -454,7 +457,7 @@ public class AppConfigSaveHandlerTest {
     @Test
     public void changedGlobalPrefillPreviewSaveCreatesPackageConfig() {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
-        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.relativeScale(87500),
                 ViewportApplyMode.AUTO,
                 125,

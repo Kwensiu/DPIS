@@ -1,12 +1,14 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.RootCommandRunner;
+
 import java.util.LinkedHashSet;
 
-final class FontRuntimePropertySyncer {
+public final class FontRuntimePropertySyncer {
     private FontRuntimePropertySyncer() {
     }
 
-    static void publishTargetAsync(String packageName,
+    public static void publishTargetAsync(String packageName,
                                    int fontScalePercent,
                                    String mode,
                                    boolean hyperOsNativeFontHookEnabled) {
@@ -21,7 +23,7 @@ final class FontRuntimePropertySyncer {
         publisherThread.start();
     }
 
-    static void publishTypefaceTargetAsync(String packageName, String typefaceId) {
+    public static void publishTypefaceTargetAsync(String packageName, String typefaceId) {
         if (packageName == null || packageName.isBlank()) {
             return;
         }
@@ -32,7 +34,7 @@ final class FontRuntimePropertySyncer {
         publisherThread.start();
     }
 
-    static void clearTargetAsync(String packageName) {
+    public static void clearTargetAsync(String packageName) {
         if (packageName == null || packageName.isBlank()) {
             return;
         }
@@ -43,7 +45,7 @@ final class FontRuntimePropertySyncer {
         cleanerThread.start();
     }
 
-    static void clearFontScaleTargetAsync(String packageName) {
+    public static void clearFontScaleTargetAsync(String packageName) {
         if (packageName == null || packageName.isBlank()) {
             return;
         }
@@ -54,7 +56,7 @@ final class FontRuntimePropertySyncer {
         cleanerThread.start();
     }
 
-    static void syncConfiguredTargetsAsync(DpisConfigStore store) {
+    public static void syncConfiguredTargetsAsync(DpisConfigStore store) {
         if (store == null) {
             return;
         }
@@ -64,7 +66,7 @@ final class FontRuntimePropertySyncer {
         syncThread.start();
     }
 
-    static void syncConfiguredTargets(DpisConfigStore store) {
+    public static void syncConfiguredTargets(DpisConfigStore store) {
         if (store == null) {
             return;
         }
@@ -74,7 +76,7 @@ final class FontRuntimePropertySyncer {
         }
     }
 
-    static void syncTarget(String packageName, DpisConfigStore store) {
+    public static void syncTarget(String packageName, DpisConfigStore store) {
         if (packageName == null || packageName.isBlank() || store == null) {
             return;
         }

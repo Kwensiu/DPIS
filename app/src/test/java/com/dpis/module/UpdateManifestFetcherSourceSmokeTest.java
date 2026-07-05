@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.updates.UpdateManifestFetcher;
+
+import com.dpis.module.updates.StartupUpdateManifest;
+
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -9,7 +13,7 @@ import org.junit.Test;
 public class UpdateManifestFetcherSourceSmokeTest {
     @Test
     public void manifestFetcherOwnsJsonParsingAndSharedHttpContract() throws IOException {
-        String source = read("src/main/java/com/dpis/module/UpdateManifestFetcher.java");
+        String source = read("src/main/java/com/dpis/module/updates/UpdateManifestFetcher.java");
 
         assertTrue(source.contains("final class UpdateManifestFetcher"));
         assertTrue(source.contains("static StartupUpdateManifest fetch("));

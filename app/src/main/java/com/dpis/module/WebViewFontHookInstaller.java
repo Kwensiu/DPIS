@@ -8,6 +8,8 @@ import java.lang.reflect.Modifier;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.dpis.module.runtime.ProcessScopedInstallGate;
+
 import io.github.libxposed.api.XposedInterface;
 
 final class WebViewFontHookInstaller {

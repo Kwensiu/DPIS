@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.HyperOsNativeProxyBindMounter;
+
 import android.content.Context;
 
 import java.util.LinkedHashSet;
@@ -56,16 +58,16 @@ final class HyperOsNativeProxyRefreshCoordinator {
         for (String packageName : packages) {
             HyperOsNativeProxyBindMounter.MountPlan plan =
                     HyperOsNativeProxyBindMounter.createPlan(context, packageName);
-            if (!plan.valid) {
+            if (!plan.valid()) {
                 DpisLog.i("HyperOS Native Proxy refresh skipped package=" + packageName
-                        + " reason=" + plan.reason);
+                        + " reason=" + plan.reason());
                 continue;
             }
             HyperOsNativeProxyBindMounter.MountResult result =
                     HyperOsNativeProxyBindMounter.apply(plan);
             DpisLog.i("HyperOS Native Proxy refresh package=" + packageName
-                    + " success=" + result.success
-                    + " output=" + result.output);
+                    + " success=" + result.success()
+                    + " output=" + result.output());
         }
     }
 }

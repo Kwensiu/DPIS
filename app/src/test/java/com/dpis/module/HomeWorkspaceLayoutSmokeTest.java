@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.home.HomeWorkspaceBinder;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -11,7 +13,7 @@ public class HomeWorkspaceLayoutSmokeTest {
     @Test
     public void statusMetricCardsUseStableDashboardLayout() throws IOException {
         String layout = read("src/main/res/layout/home_workspace.xml");
-        String binder = read("src/main/java/com/dpis/module/HomeWorkspaceBinder.java");
+        String binder = read("src/main/java/com/dpis/module/home/HomeWorkspaceBinder.java");
 
         assertTrue(layout.contains("android:id=\"@+id/home_configured_apps_card\""));
         assertTrue(layout.contains("android:id=\"@+id/home_imported_fonts_card\""));

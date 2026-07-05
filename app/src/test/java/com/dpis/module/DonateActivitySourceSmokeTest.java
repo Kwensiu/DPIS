@@ -18,7 +18,7 @@ public class DonateActivitySourceSmokeTest {
         String manifest = read("src/main/AndroidManifest.xml");
         String homeLayout = read("src/main/res/layout/home_workspace.xml");
         String homeEntryLayout = read("src/main/res/layout/view_home_donate.xml");
-        String homeBinder = read("src/main/java/com/dpis/module/HomeWorkspaceBinder.java");
+        String homeBinder = read("src/main/java/com/dpis/module/home/HomeWorkspaceBinder.java");
         String settingsController = read(
                 "src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
 

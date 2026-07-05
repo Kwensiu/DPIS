@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.os.Build;
 import android.service.quicksettings.TileService;
 
+import com.dpis.module.applist.ForegroundPackageResolver;
+
 public final class QuickConfigTileService extends TileService {
     @Override
     public void onClick() {

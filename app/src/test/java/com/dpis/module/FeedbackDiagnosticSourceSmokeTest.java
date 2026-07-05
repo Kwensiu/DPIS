@@ -36,7 +36,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         String coordinator = read(
                 "src/main/java/com/dpis/module/FeedbackDiagnosticCoordinator.java");
         String summary = read(
-                "src/main/java/com/dpis/module/FeedbackDiagnosticSummaryBuilder.java");
+                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticSummaryBuilder.java");
 
         assertTrue(main.contains("new FeedbackDiagnosticCoordinator(createFeedbackDiagnosticHost())"));
         assertTrue(main.contains("private FeedbackDiagnosticCoordinator.Host createFeedbackDiagnosticHost()"));
@@ -65,6 +65,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(coordinator.contains("FeedbackDiagnosticRuntimeTransport.stopSnapshot("));
         assertTrue(coordinator.contains("host.onFeedbackDiagnosticRootRequired();"));
         assertTrue(coordinator.contains("host.onFeedbackDiagnosticFinished(result);"));
+        assertTrue(coordinator.contains("summaryInput(request)"));
         assertTrue(coordinator.contains("static Request fromPersisted("));
         assertFalse(coordinator.contains("DEFAULT_DURATION_MS"));
         assertFalse(coordinator.contains("finish(true), DEFAULT_DURATION_MS"));
@@ -74,6 +75,8 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(summary.contains("previewFromGlobalPrefill: "));
         assertTrue(summary.contains("Diagnostic package includes diagnostic.txt"));
         assertTrue(summary.contains("DPIS app events, runtime transport"));
+        assertTrue(summary.contains("public static final class Input"));
+        assertFalse(summary.contains("FeedbackDiagnosticCoordinator.Request"));
         assertFalse(summary.contains("Runtime event capture is TODO"));
     }
 
@@ -117,8 +120,8 @@ public final class FeedbackDiagnosticSourceSmokeTest {
             throws IOException {
         String main = read("src/main/java/com/dpis/module/MainActivity.java");
         String launcher = read(
-                "src/main/java/com/dpis/module/FeedbackDiagnosticAppLauncher.java");
-        String rootLauncher = read("src/main/java/com/dpis/module/RootAppProcessLauncher.java");
+                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticAppLauncher.java");
+        String rootLauncher = read("src/main/java/com/dpis/module/root/RootAppProcessLauncher.java");
 
         assertTrue(main.contains("new FeedbackDiagnosticAppLauncher(this)"));
         assertTrue(main.contains("restartTargetAppForDiagnostic(String packageName)"));
@@ -126,7 +129,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertFalse(main.contains("public boolean launchTargetApp(String packageName)"));
 
         assertTrue(launcher.contains("new RootAppProcessLauncher(context)"));
-        assertTrue(launcher.contains("rootLauncher.restart(packageName).code == 0"));
+        assertTrue(launcher.contains("rootLauncher.restart(packageName).code() == 0"));
         assertTrue(rootLauncher.contains("am force-stop \" + packageName"));
         assertTrue(rootLauncher.contains("am start --user current"));
         assertTrue(rootLauncher.contains("-a android.intent.action.MAIN"));
@@ -141,7 +144,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
     public void feedbackDiagnosticForegroundObserverUsesRootTopAppSnapshot()
             throws IOException {
         String reader = read(
-                "src/main/java/com/dpis/module/FeedbackDiagnosticForegroundAppReader.java");
+                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticForegroundAppReader.java");
 
         assertTrue(reader.contains("new ProcessBuilder(\"su\", \"-c\", COMMAND)"));
         assertTrue(reader.contains("dumpsys activity activities"));

@@ -1,5 +1,77 @@
 package com.dpis.module;
 
+import com.dpis.module.templates.QuickTemplateSortDialog;
+
+import com.dpis.module.templates.GlobalPrefillStore;
+import com.dpis.module.templates.GlobalPrefillEditorBinder;
+import com.dpis.module.templates.GlobalPrefillSheetDialog;
+import com.dpis.module.templates.QuickTemplateApplyAdapters;
+import com.dpis.module.templates.QuickTemplateEditorBinder;
+import com.dpis.module.templates.QuickTemplateEditSheetDialog;
+import com.dpis.module.templates.QuickTemplateTargetSelectionActivity;
+import com.dpis.module.templates.QuickTemplateTargetsBinder;
+import com.dpis.module.templates.TemplateWorkspaceBinder;
+
+import com.dpis.module.templates.QuickTemplateStore;
+
+import com.dpis.module.templates.TemplateConfigValue;
+
+import com.dpis.module.applist.AppListFilterStateStore;
+
+import com.dpis.module.applist.AppListFilterState;
+
+import com.dpis.module.appconfig.WechatDpiConfig;
+
+import com.dpis.module.fonts.HyperOsNativeProxyBindMounter;
+import com.dpis.module.diagnostics.FeedbackDiagnosticAppLauncher;
+
+import com.dpis.module.ui.TouchFeedbackBinder;
+
+import com.dpis.module.ui.WindowInsetsBinder;
+
+import com.dpis.module.ui.DialogWindowSizer;
+
+import com.dpis.module.home.HomeUpdateUiState;
+import com.dpis.module.home.HomeWorkspaceBinder;
+
+import com.dpis.module.settings.ToolsWorkspaceBinder;
+import com.dpis.module.settings.StartupDisclaimerStore;
+
+import com.dpis.module.templates.QuickTemplateTargetCarrierState;
+
+import com.dpis.module.templates.QuickTemplateTargetSelectionContract;
+
+import com.dpis.module.templates.QuickTemplateApplyConfirmationMessage;
+import com.dpis.module.templates.QuickTemplateApplyCoordinator;
+
+import com.dpis.module.root.RootAccessProbe;
+
+import com.dpis.module.ui.MaxHeightNestedScrollView;
+
+import com.dpis.module.ui.FormInputFocusBinder;
+
+import com.dpis.module.updates.UpdateStateStore;
+
+import com.dpis.module.updates.UpdatePromptDialogCoordinator;
+
+import com.dpis.module.updates.UpdateDownloadCoordinator;
+
+import com.dpis.module.updates.UpdateCoordinator;
+
+import com.dpis.module.updates.StartupUpdatePackageHandler;
+
+import com.dpis.module.updates.StartupUpdateManifest;
+
+import com.dpis.module.updates.StartupUpdateDownloadExecutor;
+
+import com.dpis.module.updates.StartupUpdateCheckOnce;
+
+import com.dpis.module.updates.StartupUpdateCheckCoordinator;
+
+import com.dpis.module.updates.ReleaseNotesController;
+
+import com.dpis.module.updates.ReleaseNotesCacheStore;
+
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -36,6 +108,8 @@ import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.viewpager2.widget.ViewPager2;
+import com.dpis.module.appconfig.AppConfigDialogCoordinator;
+import com.dpis.module.updates.GitHubReleaseNotesFetcher;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
@@ -50,6 +124,7 @@ import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textview.MaterialTextView;
+import com.dpis.module.updates.ReleaseNotesMarkdownRenderer;
 import io.github.libxposed.service.XposedService;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -368,7 +443,33 @@ public final class MainActivity
                 createQuickTemplateActions()
         );
         homeWorkspaceBinder = new HomeWorkspaceBinder(this);
-        toolsWorkspaceBinder = new ToolsWorkspaceBinder(this);
+        toolsWorkspaceBinder = new ToolsWorkspaceBinder(new ToolsWorkspaceBinder.Host() {
+            @Override
+            public android.app.Activity activity() {
+                return MainActivity.this;
+            }
+
+            @Override
+            public void applyToolsToolbarInsets(View toolbar) {
+                WindowInsetsBinder.applySafeDrawingPadding(toolbar, false, true, false, false);
+            }
+
+            @Override
+            public void bindPressHaptic(View view) {
+                TouchFeedbackBinder.bindPressHaptic(view);
+            }
+
+            @Override
+            public void openLogsWhenDiagnosticLogsEnabled() {
+                if (DiagnosticLogGate.ensureEnabled(
+                        MainActivity.this,
+                        () -> startActivity(new Intent(MainActivity.this, LogActivity.class)),
+                        null
+                )) {
+                    startActivity(new Intent(MainActivity.this, LogActivity.class));
+                }
+            }
+        });
         settingsWorkspaceBinder = new SettingsWorkspaceBinder(this);
         workspaceSwitch = findViewById(R.id.workspace_switch);
         workspaceSwitch.setSaveFromParentEnabled(false);
@@ -621,22 +722,9 @@ public final class MainActivity
             Intent data
     ) {
         String reason = data != null
-                ? data.getStringExtra(QuickTemplateTargetSelectionActivity.EXTRA_CLOSE_REASON)
+                ? data.getStringExtra(QuickTemplateTargetSelectionContract.EXTRA_CLOSE_REASON)
                 : null;
-        if (QuickTemplateTargetSelectionActivity.CLOSE_REASON_ORIENTATION_MIGRATION.equals(
-                reason)) {
-            return QuickTemplateTargetCarrierState.CloseReason.ORIENTATION_MIGRATION;
-        }
-        if (QuickTemplateTargetSelectionActivity.CLOSE_REASON_USER_BACK.equals(reason)) {
-            return QuickTemplateTargetCarrierState.CloseReason.USER_BACK;
-        }
-        if (QuickTemplateTargetSelectionActivity.CLOSE_REASON_SAVED.equals(reason)) {
-            return QuickTemplateTargetCarrierState.CloseReason.SAVED;
-        }
-        if (QuickTemplateTargetSelectionActivity.CLOSE_REASON_MISSING_TEMPLATE.equals(reason)) {
-            return QuickTemplateTargetCarrierState.CloseReason.MISSING_TEMPLATE;
-        }
-        return QuickTemplateTargetCarrierState.CloseReason.UNKNOWN;
+        return QuickTemplateTargetSelectionContract.closeReasonFrom(reason);
     }
 
     @Override
@@ -648,19 +736,19 @@ public final class MainActivity
         outState.putString(STATE_WORKSPACE_MODE, state.workspaceMode.name());
         outState.putBoolean(
                 STATE_FILTER_SHOW_SYSTEM,
-                state.filterState.showSystemApps
+                state.filterState.showSystemApps()
         );
         outState.putBoolean(
                 STATE_FILTER_INJECTED_ONLY,
-                state.filterState.injectedOnly
+                state.filterState.injectedOnly()
         );
         outState.putBoolean(
                 STATE_FILTER_WIDTH_ONLY,
-                state.filterState.widthConfiguredOnly
+                state.filterState.widthConfiguredOnly()
         );
         outState.putBoolean(
                 STATE_FILTER_FONT_ONLY,
-                state.filterState.fontConfiguredOnly
+                state.filterState.fontConfiguredOnly()
         );
         if (appPager != null) {
             outState.putInt(STATE_CURRENT_PAGE, appPager.getCurrentItem());
@@ -1711,7 +1799,7 @@ public final class MainActivity
                 QuickTemplateTargetSelectionActivity.class
         );
         intent.putExtra(
-                QuickTemplateTargetSelectionActivity.EXTRA_TEMPLATE_ID,
+                QuickTemplateTargetSelectionContract.EXTRA_TEMPLATE_ID,
                 templateId
         );
         quickTemplateTargetSelectionActivityStarted = true;
@@ -2154,10 +2242,10 @@ public final class MainActivity
         );
         MainUiState state = requireUiState();
 
-        showSystemSwitch.setChecked(state.filterState.showSystemApps);
-        injectedOnlySwitch.setChecked(state.filterState.injectedOnly);
-        widthOnlySwitch.setChecked(state.filterState.widthConfiguredOnly);
-        fontOnlySwitch.setChecked(state.filterState.fontConfiguredOnly);
+        showSystemSwitch.setChecked(state.filterState.showSystemApps());
+        injectedOnlySwitch.setChecked(state.filterState.injectedOnly());
+        widthOnlySwitch.setChecked(state.filterState.widthConfiguredOnly());
+        fontOnlySwitch.setChecked(state.filterState.fontConfiguredOnly());
 
         android.widget.CompoundButton.OnCheckedChangeListener listener = (
                 buttonView,
@@ -2179,8 +2267,19 @@ public final class MainActivity
     }
 
     private boolean maybeShowStartupDisclaimerDialog() {
+        StartupDisclaimerStore store = new StartupDisclaimerStore(this);
         return updatePromptDialogCoordinator().maybeShowStartupDisclaimerDialog(
-                new StartupDisclaimerStore(this),
+                new UpdatePromptDialogCoordinator.StartupDisclaimerAcceptance() {
+                    @Override
+                    public boolean isAccepted() {
+                        return store.isAccepted();
+                    }
+
+                    @Override
+                    public boolean markAccepted() {
+                        return store.setAccepted(true);
+                    }
+                },
                 this::maybeCheckForUpdatesOnStartup
         );
     }
@@ -2637,6 +2736,11 @@ public final class MainActivity
             @Override
             public void showToast(int messageResId) {
                 MainActivity.this.showToast(messageResId);
+            }
+
+            @Override
+            public void applyLargeDialogWidth(androidx.appcompat.app.AlertDialog dialog) {
+                DialogWindowSizer.applyLargeWidth(dialog, MainActivity.this);
             }
 
             @Override
@@ -3483,10 +3587,8 @@ public final class MainActivity
             bindTemplateWorkspace();
             return;
         }
-        QuickTemplateApplyCoordinator coordinator
-                = new QuickTemplateApplyCoordinator(
-                        getHookConfigStore()
-                );
+        QuickTemplateApplyCoordinator<TemplateConfigValue> coordinator =
+                QuickTemplateApplyAdapters.from(getHookConfigStore());
         QuickTemplateApplyCoordinator.TargetPackageFilter installedPackageFilter
                 = this::isInstalledTemplateTargetPackage;
         QuickTemplateApplyCoordinator.Plan plan = coordinator.plan(
@@ -3563,14 +3665,14 @@ public final class MainActivity
     }
 
     private void finishQuickTemplateApply(
-            QuickTemplateApplyCoordinator coordinator,
+            QuickTemplateApplyCoordinator<TemplateConfigValue> coordinator,
             QuickTemplateStore.QuickTemplate template
     ) {
         finishQuickTemplateApply(coordinator, template, null);
     }
 
     private void finishQuickTemplateApply(
-            QuickTemplateApplyCoordinator coordinator,
+            QuickTemplateApplyCoordinator<TemplateConfigValue> coordinator,
             QuickTemplateStore.QuickTemplate template,
             QuickTemplateApplyCoordinator.TargetPackageFilter targetPackageFilter
     ) {
@@ -4452,19 +4554,19 @@ public final class MainActivity
                     + " package="
                     + item.packageName
                     + " success="
-                    + result.success
+                    + result.success()
                     + " output="
-                    + result.output
+                    + result.output()
             );
             int messageResId = apply
                     ? R.string.dialog_hyperos_native_proxy_apply_failed
                     : R.string.dialog_hyperos_native_proxy_unmount_failed;
             runOnUiThread(() -> {
-                if (!result.success) {
+                if (!result.success()) {
                     showToast(messageResId);
                 }
                 if (onFinished != null) {
-                    onFinished.onFinished(result.success);
+                    onFinished.onFinished(result.success());
                 }
             });
         }, "DPIS-HyperOsNativeProxyMount").start();

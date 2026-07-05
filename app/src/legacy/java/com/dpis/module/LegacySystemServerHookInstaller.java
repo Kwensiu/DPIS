@@ -4,6 +4,9 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.util.Log;
 
+import com.dpis.module.runtime.RuntimeClock;
+import com.dpis.module.runtime.systemserver.ConfigSnapshotRefreshPolicy;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

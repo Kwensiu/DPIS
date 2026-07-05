@@ -1,8 +1,12 @@
 package com.dpis.module;
 
+import com.dpis.module.templates.TemplateConfigValueAdapters;
+
+import com.dpis.module.templates.TemplateConfigValue;
+
 import android.graphics.drawable.Drawable;
 
-final class AppListItem {
+public final class AppListItem {
     final String label;
     final String packageName;
     final boolean inScope;
@@ -224,19 +228,21 @@ final class AppListItem {
 
     AppListItem withGlobalPrefillPreview(TemplateConfigValue prefill) {
         TemplateConfigValue normalized = prefill != null ? prefill : TemplateConfigValue.EMPTY;
+        ViewportTargetSpec viewportTargetSpec =
+                TemplateConfigValueAdapters.toViewportTargetSpec(normalized);
         return new AppListItem(label,
                 packageName,
                 inScope,
                 scopeKnown,
-                normalized.viewportTargetSpec.isAbsoluteDp()
-                        ? Integer.valueOf(normalized.viewportTargetSpec.absoluteWidthDp())
+                viewportTargetSpec.isAbsoluteDp()
+                        ? Integer.valueOf(viewportTargetSpec.absoluteWidthDp())
                         : viewportWidthDp,
-                normalized.viewportTargetSpec.isRelativeScale()
-                        ? Integer.valueOf(normalized.viewportTargetSpec.scaleMilliPercent())
+                viewportTargetSpec.isRelativeScale()
+                        ? Integer.valueOf(viewportTargetSpec.scaleMilliPercent())
                         : viewportScaleMilliPercent,
                 normalized.viewportApplyMode,
                 normalized.viewportTargetType,
-                normalized.viewportTargetSpec,
+                viewportTargetSpec,
                 normalized.fontScalePercent,
                 normalized.fontApplyMode,
                 normalized.typefaceId,

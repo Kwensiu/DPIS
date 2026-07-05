@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.templates.TemplateConfigValue;
+
 final class AppConfigPrefillPreview {
     private AppConfigPrefillPreview() {
     }

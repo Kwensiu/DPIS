@@ -1,17 +1,19 @@
 package com.dpis.module;
 
-final class PackageConfigRepository {
+import com.dpis.module.templates.TemplateConfigValue;
+
+public final class PackageConfigRepository {
     private final DpisConfigStore store;
 
-    PackageConfigRepository(DpisConfigStore store) {
+    public PackageConfigRepository(DpisConfigStore store) {
         this.store = store;
     }
 
-    boolean hasRealPackageConfig(String packageName) {
+    public boolean hasRealPackageConfig(String packageName) {
         return store != null && store.hasRealPackageConfig(packageName);
     }
 
-    boolean writePackageTemplateConfigValue(String packageName, TemplateConfigValue value) {
+    public boolean writePackageTemplateConfigValue(String packageName, TemplateConfigValue value) {
         return store != null && store.writePackageTemplateConfigValue(packageName, value);
     }
 }

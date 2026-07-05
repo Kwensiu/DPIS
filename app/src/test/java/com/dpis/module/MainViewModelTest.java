@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.applist.AppListFilterState;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -105,7 +107,7 @@ public class MainViewModelTest {
         assertEquals(MainWorkspaceMode.TEMPLATE, templateState.workspaceMode);
         assertEquals("", templateState.currentQuery());
         assertEquals("alpha", templateState.appQuery);
-        assertTrue(templateState.filterState.injectedOnly);
+        assertTrue(templateState.filterState.injectedOnly());
         assertEquals(1, templateState.visibleItems(AppListPage.ALL_APPS).size());
 
         viewModel.dispatch(MainUiAction.queryChanged("template"));
@@ -120,7 +122,7 @@ public class MainViewModelTest {
         assertEquals(MainWorkspaceMode.APP, appState.workspaceMode);
         assertEquals("alpha", appState.currentQuery());
         assertEquals("template", appState.templateQuery);
-        assertTrue(appState.filterState.injectedOnly);
+        assertTrue(appState.filterState.injectedOnly());
         assertEquals("com.example.alpha", appState.visibleItems(AppListPage.ALL_APPS).get(0).packageName);
     }
 

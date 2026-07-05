@@ -4,10 +4,10 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-final class HookDomainOverride {
-    final boolean customPathEnabled;
-    final Set<String> enabledKnownDomains;
-    final Set<String> unknownDomains;
+public final class HookDomainOverride {
+    public final boolean customPathEnabled;
+    public final Set<String> enabledKnownDomains;
+    public final Set<String> unknownDomains;
 
     HookDomainOverride(boolean customPathEnabled,
                        Set<String> enabledKnownDomains,
@@ -19,7 +19,7 @@ final class HookDomainOverride {
                 unknownDomains != null ? unknownDomains : Collections.emptySet()));
     }
 
-    static HookDomainOverride automatic() {
+    public static HookDomainOverride automatic() {
         return new HookDomainOverride(false, Collections.emptySet(), Collections.emptySet());
     }
 }
