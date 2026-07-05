@@ -1,5 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime.appprocess;
 
+import com.dpis.module.*;
 import com.dpis.module.runtime.font.FontScaleOverride;
 
 import com.dpis.module.runtime.font.ResourcesFontScheduler;
@@ -37,7 +38,7 @@ import com.dpis.module.runtime.RuntimeHotPathEvidenceSampler;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class ResourcesReadHookInstaller {
+public final class ResourcesReadHookInstaller {
     private static volatile boolean hookInstalled;
     private static volatile boolean viewportReadHandlingEnabled = true;
     private static volatile boolean configurationFontOverrideEnabled = true;
@@ -51,16 +52,16 @@ final class ResourcesReadHookInstaller {
     private ResourcesReadHookInstaller() {
     }
 
-    static void resetForHotReload() {
+    public static void resetForHotReload() {
         hookInstalled = false;
     }
 
-    static void install(XposedInterface xposed, String packageName, DpisConfigStore store)
+    public static void install(XposedInterface xposed, String packageName, DpisConfigStore store)
             throws ReflectiveOperationException {
         install(xposed, packageName, store, true, false);
     }
 
-    static void install(XposedInterface xposed,
+    public static void install(XposedInterface xposed,
                         String packageName,
                         DpisConfigStore store,
                         boolean viewportHandlingEnabled)
@@ -71,7 +72,7 @@ final class ResourcesReadHookInstaller {
                 false), ModernApiCapabilitiesResolver.fromXposed(xposed));
     }
 
-    static void install(XposedInterface xposed,
+    public static void install(XposedInterface xposed,
                         String packageName,
                         DpisConfigStore store,
                         boolean viewportHandlingEnabled,
@@ -83,7 +84,7 @@ final class ResourcesReadHookInstaller {
                 false), ModernApiCapabilitiesResolver.fromXposed(xposed));
     }
 
-    static void install(XposedInterface xposed,
+    public static void install(XposedInterface xposed,
                         String packageName,
                         DpisConfigStore store,
                         ResourcesReadHookPolicy policy,
@@ -93,7 +94,7 @@ final class ResourcesReadHookInstaller {
                 apiCapabilities);
     }
 
-    static void install(XposedInterface xposed,
+    public static void install(XposedInterface xposed,
                         String packageName,
                         DpisConfigStore store,
                         HookRuntimePolicy runtimePolicy,
@@ -235,14 +236,14 @@ final class ResourcesReadHookInstaller {
         }
     }
 
-    static void applyConfigurationOverride(Configuration config,
+    public static void applyConfigurationOverride(Configuration config,
                                            String packageName,
                                            DpisConfigStore store,
                                            String sourceTag) {
         applyConfigurationOverride(null, config, packageName, store, sourceTag);
     }
 
-    static void applyConfigurationOverride(Object resourceScope,
+    public static void applyConfigurationOverride(Object resourceScope,
                                            Configuration config,
                                            String packageName,
                                            DpisConfigStore store,
@@ -259,7 +260,7 @@ final class ResourcesReadHookInstaller {
                 HookRuntimePolicy.fromStore(store));
     }
 
-    static void applyConfigurationOverrideForTest(Object resourceScope,
+    public static void applyConfigurationOverrideForTest(Object resourceScope,
                                                   Configuration config,
                                                   String packageName,
                                                   DpisConfigStore store,
@@ -292,7 +293,7 @@ final class ResourcesReadHookInstaller {
                 HookRuntimePolicy.fromStore(store));
     }
 
-    static void applyConfigurationOverrideForTest(Object resourceScope,
+    public static void applyConfigurationOverrideForTest(Object resourceScope,
                                                   Configuration config,
                                                   String packageName,
                                                   DpisConfigStore store,
@@ -311,7 +312,7 @@ final class ResourcesReadHookInstaller {
                 HookRuntimePolicy.fromStore(store));
     }
 
-    static void applyConfigurationOverrideForTest(Object resourceScope,
+    public static void applyConfigurationOverrideForTest(Object resourceScope,
                                                   Configuration config,
                                                   String packageName,
                                                   DpisConfigStore store,
@@ -569,20 +570,20 @@ final class ResourcesReadHookInstaller {
                         + ", densityDpi " + originalDensityDpi + " -> " + config.densityDpi);
     }
 
-    static void applyMetricsOverride(DisplayMetrics metrics,
+    public static void applyMetricsOverride(DisplayMetrics metrics,
                                      Configuration config,
                                      String packageName) {
         applyMetricsOverride(null, metrics, config, packageName);
     }
 
-    static void applyMetricsOverride(Object resourceScope,
+    public static void applyMetricsOverride(Object resourceScope,
                                      DisplayMetrics metrics,
                                      Configuration config,
                                      String packageName) {
         applyMetricsOverride(resourceScope, metrics, config, packageName, null);
     }
 
-    static void applyMetricsOverride(Object resourceScope,
+    public static void applyMetricsOverride(Object resourceScope,
                                      DisplayMetrics metrics,
                                      Configuration config,
                                      String packageName,
@@ -614,7 +615,7 @@ final class ResourcesReadHookInstaller {
                 metricsTargetFontOverrideEnabled);
     }
 
-    static void applyMetricsOverrideForTest(Object resourceScope,
+    public static void applyMetricsOverrideForTest(Object resourceScope,
                                             DisplayMetrics metrics,
                                             Configuration config,
                                             String packageName,
@@ -622,7 +623,7 @@ final class ResourcesReadHookInstaller {
         applyMetricsOverride(resourceScope, metrics, config, packageName, windowScoped);
     }
 
-    static void applyMetricsOverrideForTest(Object resourceScope,
+    public static void applyMetricsOverrideForTest(Object resourceScope,
                                             DisplayMetrics metrics,
                                             Configuration config,
                                             String packageName,
@@ -639,7 +640,7 @@ final class ResourcesReadHookInstaller {
                 false);
     }
 
-    static void applyMetricsOverrideForTest(Object resourceScope,
+    public static void applyMetricsOverrideForTest(Object resourceScope,
                                             DisplayMetrics metrics,
                                             Configuration config,
                                             String packageName,
@@ -657,7 +658,7 @@ final class ResourcesReadHookInstaller {
                 false);
     }
 
-    static void applyMetricsOverrideForTest(Object resourceScope,
+    public static void applyMetricsOverrideForTest(Object resourceScope,
                                             DisplayMetrics metrics,
                                             Configuration config,
                                             String packageName,
@@ -892,7 +893,7 @@ final class ResourcesReadHookInstaller {
         }
     }
 
-    static void resetHotPathSamplerForTest() {
+    public static void resetHotPathSamplerForTest() {
         HOTPATH_SAMPLER.resetForTest();
     }
 

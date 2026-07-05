@@ -1,5 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime.appprocess;
 
+import com.dpis.module.*;
 import com.dpis.module.viewport.DensityOverride;
 
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
@@ -17,8 +18,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class WebApkRuntimeOwnerBridge {
-    static final String CHROME_PACKAGE = "com.android.chrome";
+public final class WebApkRuntimeOwnerBridge {
+    public static final String CHROME_PACKAGE = "com.android.chrome";
     private static final String ACTIVITY_THREAD_CLASS = "android.app.ActivityThread";
     private static final String WEBAPK_ACTIVITY_CLASS =
             "org.chromium.chrome.browser.webapps.SameTaskWebApkActivity";
@@ -37,7 +38,7 @@ final class WebApkRuntimeOwnerBridge {
     private WebApkRuntimeOwnerBridge() {
     }
 
-    static String resolveEffectivePackage(DpisConfigStore store, String carrierPackage) {
+    public static String resolveEffectivePackage(DpisConfigStore store, String carrierPackage) {
         if (!CHROME_PACKAGE.equals(carrierPackage) || store == null) {
             return carrierPackage;
         }
@@ -86,7 +87,7 @@ final class WebApkRuntimeOwnerBridge {
                 RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET));
     }
 
-    static void installLifecycleHooks(XposedInterface xposed,
+    public static void installLifecycleHooks(XposedInterface xposed,
                                       String carrierPackage,
                                       ModernApiCapabilities apiCapabilities) {
         if (WebApkCarrierResolver.isWebApkOwnerPackage(carrierPackage)) {
@@ -138,14 +139,14 @@ final class WebApkRuntimeOwnerBridge {
         }
     }
 
-    static String currentWebApkOwnerForTest(String activityText) {
+    public static String currentWebApkOwnerForTest(String activityText) {
         if (activityText == null || !activityText.contains(WEBAPK_ACTIVITY_CLASS)) {
             return null;
         }
         return WebApkCarrierResolver.ownerPackageFromText(activityText);
     }
 
-    static String observeActivityForTest(String activityClassName,
+    public static String observeActivityForTest(String activityClassName,
                                          String activityIntentText,
                                          String methodIntentText,
                                          String sourceTag) {
@@ -153,13 +154,13 @@ final class WebApkRuntimeOwnerBridge {
         return activeOwnerPackage;
     }
 
-    static void resetForTest() {
+    public static void resetForTest() {
         activeOwnerPackage = null;
         lifecycleHooksInstalled = false;
         LAST_MESSAGES.clear();
     }
 
-    static boolean hasActiveOwnerConfigForTest(DpisConfigStore store, String owner) {
+    public static boolean hasActiveOwnerConfigForTest(DpisConfigStore store, String owner) {
         return hasActiveOwnerConfig(store, owner);
     }
 

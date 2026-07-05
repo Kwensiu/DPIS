@@ -1,5 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime.appprocess;
 
+import com.dpis.module.*;
 import com.dpis.module.viewport.VirtualDisplayOverride;
 import com.dpis.module.viewport.VirtualDisplayState;
 
@@ -16,7 +17,7 @@ import com.dpis.module.runtime.RuntimeHotPathEvidenceSampler;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class WindowMetricsHookInstaller {
+public final class WindowMetricsHookInstaller {
     private static final String ROUTE_NAME = "window_metrics_bounds_override";
     private static final String HOOK_ID_WINDOW_METRICS_GET_BOUNDS = "window_metrics_get_bounds";
     private static volatile int installedPid = -1;
@@ -26,11 +27,11 @@ final class WindowMetricsHookInstaller {
     private WindowMetricsHookInstaller() {
     }
 
-    static void resetForHotReload() {
+    public static void resetForHotReload() {
         installedPid = -1;
     }
 
-    static void install(XposedInterface xposed, String packageName) throws ReflectiveOperationException {
+    public static void install(XposedInterface xposed, String packageName) throws ReflectiveOperationException {
         if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
         }
@@ -132,7 +133,7 @@ final class WindowMetricsHookInstaller {
         }
     }
 
-    static void resetHotPathSamplerForTest() {
+    public static void resetHotPathSamplerForTest() {
         HOTPATH_SAMPLER.resetForTest();
     }
 

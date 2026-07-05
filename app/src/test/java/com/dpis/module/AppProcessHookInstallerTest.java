@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.appprocess.ResourcesReadHookInstaller;
+
+import com.dpis.module.runtime.appprocess.AppProcessHookInstaller;
+
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
 
 import com.dpis.module.fonts.hookdomain.FontHookArbitration;
@@ -439,7 +443,7 @@ public class AppProcessHookInstallerTest {
 
     @Test
     public void typefaceInstallerIsIndependentFromResourcesHookGate() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+        String source = read("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.java");
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
         assertTrue(source.contains("TypefaceOverrideHookInstaller.install("));
@@ -505,7 +509,7 @@ public class AppProcessHookInstallerTest {
 
     @Test
     public void debugFlutterSettingsPropertiesAreDebugOnlyAndPackageScoped() throws Exception {
-        String source = readSource("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+        String source = readSource("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.java");
         String planner = readSource("src/main/java/com/dpis/module/hooks/HookExecutionPlanner.java");
         String packagePlan = readSource("src/main/java/com/dpis/module/ModulePackagePlan.java");
 
@@ -534,7 +538,7 @@ public class AppProcessHookInstallerTest {
 
     @Test
     public void composeDiagnosticsAreWiredOnlyThroughResourcesFontDomain() throws Exception {
-        String source = readSource("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+        String source = readSource("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.java");
         String installer = readSource(
                 "src/main/java/com/dpis/module/runtime/font/ComposeFontRuntimeDiagnosticsInstaller.java");
 

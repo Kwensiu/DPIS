@@ -1,5 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime.appprocess;
 
+import com.dpis.module.*;
 import com.dpis.module.runtime.font.FontScaleOverride;
 
 import com.dpis.module.viewport.DensityOverride;
@@ -31,18 +32,18 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class ResourcesImplHookInstaller {
+public final class ResourcesImplHookInstaller {
     private static volatile boolean hookInstalled;
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
 
     private ResourcesImplHookInstaller() {
     }
 
-    static void resetForHotReload() {
+    public static void resetForHotReload() {
         hookInstalled = false;
     }
 
-    static void install(XposedInterface xposed,
+    public static void install(XposedInterface xposed,
                         String packageName,
                         DpisConfigStore store,
                         HookRuntimePolicy policy,
@@ -78,12 +79,12 @@ final class ResourcesImplHookInstaller {
         }
     }
 
-    static void applyDensityOverride(String packageName, Configuration config, DisplayMetrics metrics,
+    public static void applyDensityOverride(String packageName, Configuration config, DisplayMetrics metrics,
                                      DpisConfigStore store) {
         applyDensityOverride(packageName, config, metrics, store, null);
     }
 
-    static void applyDensityOverride(String packageName,
+    public static void applyDensityOverride(String packageName,
                                      Configuration config,
                                      DisplayMetrics metrics,
                                      DpisConfigStore store,
@@ -91,7 +92,7 @@ final class ResourcesImplHookInstaller {
         applyDensityOverride(packageName, config, metrics, store, policy, null);
     }
 
-    static void applyDensityOverrideForTest(String packageName,
+    public static void applyDensityOverrideForTest(String packageName,
                                             Configuration config,
                                             DisplayMetrics metrics,
                                             DpisConfigStore store,
@@ -423,7 +424,7 @@ final class ResourcesImplHookInstaller {
         return true;
     }
 
-    static boolean shouldPublishResourcesImplResultForTest(String packageName,
+    public static boolean shouldPublishResourcesImplResultForTest(String packageName,
                                                            ViewportTargetResolution resolution,
                                                            boolean needsViewportUpdate) {
         return shouldPublishResourcesImplResult(packageName, resolution, needsViewportUpdate);

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.appconfig.AppConfigDialogBinder;
+
 import com.dpis.module.runtime.font.WebViewFontHookInstaller;
 
 import com.dpis.module.runtime.font.PaintTextSizeFallbackHookInstaller;
@@ -16,8 +18,8 @@ import org.junit.Test;
 public final class FeedbackDiagnosticSourceSmokeTest {
     @Test
     public void appConfigSheetExposesFeedbackDiagnosticEntry() throws IOException {
-        String binder = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
-        String actions = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
+        String binder = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
+        String actions = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java");
         String layout = read("src/main/res/layout/dialog_app_config.xml");
         String dimens = read("src/main/res/values/dimens.xml");
 

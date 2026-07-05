@@ -1,5 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime.appprocess;
 
+import com.dpis.module.*;
 import android.graphics.Rect;
 
 import com.dpis.module.runtime.CallerTrace;
@@ -12,18 +13,18 @@ import java.util.Set;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class WindowManagerProbeHookInstaller {
+public final class WindowManagerProbeHookInstaller {
     private static volatile String targetPackageName;
     private static volatile int installedPid = -1;
 
     private WindowManagerProbeHookInstaller() {
     }
 
-    static void resetForHotReload() {
+    public static void resetForHotReload() {
         installedPid = -1;
     }
 
-    static void install(XposedInterface xposed, String packageName) throws ReflectiveOperationException {
+    public static void install(XposedInterface xposed, String packageName) throws ReflectiveOperationException {
         if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
         }
@@ -50,14 +51,14 @@ final class WindowManagerProbeHookInstaller {
         return classes;
     }
 
-    static String buildProbeLog(String methodName, Object result) {
+    public static String buildProbeLog(String methodName, Object result) {
         if (result == null) {
             return buildProbeLog(methodName, "null", null);
         }
         return buildProbeLog(methodName, result.getClass().getName(), extractBoundsSummary(result));
     }
 
-    static String buildProbeLog(String methodName, String resultType, String boundsSummary) {
+    public static String buildProbeLog(String methodName, String resultType, String boundsSummary) {
         if (boundsSummary == null || boundsSummary.isEmpty()) {
             return "WindowManager probe(" + methodName + "): result=" + resultType;
         }

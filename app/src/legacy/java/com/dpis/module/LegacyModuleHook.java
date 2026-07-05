@@ -1,5 +1,13 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.appprocess.DisplayHookInstaller;
+
+import com.dpis.module.runtime.appprocess.ResourcesReadHookInstaller;
+
+import com.dpis.module.runtime.appprocess.ResourcesManagerHookInstaller;
+
+import com.dpis.module.runtime.appprocess.ResourcesImplHookInstaller;
+
 import com.dpis.module.runtime.font.PaintTextSizeFallbackHookInstaller;
 
 import com.dpis.module.viewport.DensityOverride;

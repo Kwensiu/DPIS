@@ -1,5 +1,10 @@
 package com.dpis.module;
 
+import com.dpis.module.applist.AppStatusFormatter;
+
+import com.dpis.module.appconfig.AppConfigDialogBinder;
+import com.dpis.module.appconfig.AppConfigInputValidation;
+
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation;

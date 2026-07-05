@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.appconfig.AppConfigSaveHandler;
+
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
 
 import com.dpis.module.fonts.FontLibraryStore;
@@ -18,7 +20,7 @@ public class RuntimeConfigDeliverySourceTest {
         String delivery = read("src/main/java/com/dpis/module/RuntimeConfigDelivery.java");
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
         String appConfigHost = hostBlock(mainActivity);
-        String sheetActions = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
+        String sheetActions = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java");
         String fontLibrary = read("src/main/java/com/dpis/module/FontLibraryActivity.java");
         String systemHooks = read("src/main/java/com/dpis/module/SystemHooksToggleController.java");
         String systemSettings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");

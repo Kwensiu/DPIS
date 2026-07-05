@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.appprocess.ResourcesImplHookInstaller;
+
+import com.dpis.module.runtime.appprocess.ResourcesManagerHookInstaller;
+
+import com.dpis.module.runtime.appprocess.WebApkRuntimeOwnerBridge;
+
 import com.dpis.module.viewport.DensityOverride;
 
 import com.dpis.module.viewport.ViewportTargetSpec;
@@ -98,7 +104,7 @@ public class WebApkRuntimeOwnerBridgeTest {
     @Test
     public void doesNotUsePendingOwnerPropertyBridge() throws IOException {
         String source = new String(Files.readAllBytes(Path.of(
-                "src/main/java/com/dpis/module/WebApkRuntimeOwnerBridge.java")),
+                "src/main/java/com/dpis/module/runtime/appprocess/WebApkRuntimeOwnerBridge.java")),
                 StandardCharsets.UTF_8);
 
         assertFalse(source.contains("debug.dpis.webapk.pending_owner"));
@@ -108,7 +114,7 @@ public class WebApkRuntimeOwnerBridgeTest {
     @Test
     public void ownerLifecycleTriggersActivityResourceSync() throws IOException {
         String source = new String(Files.readAllBytes(Path.of(
-                "src/main/java/com/dpis/module/WebApkRuntimeOwnerBridge.java")),
+                "src/main/java/com/dpis/module/runtime/appprocess/WebApkRuntimeOwnerBridge.java")),
                 StandardCharsets.UTF_8);
 
         assertContains(source, "syncActivityResources(activity, sourceTag)");

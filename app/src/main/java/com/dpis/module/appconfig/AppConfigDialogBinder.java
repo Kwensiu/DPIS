@@ -1,4 +1,12 @@
-package com.dpis.module;
+package com.dpis.module.appconfig;
+
+import com.dpis.module.applist.AppStatusFormatter;
+
+import com.dpis.module.R;
+import com.dpis.module.ConfigStoreFactory;
+import com.dpis.module.DpisConfigStore;
+import com.dpis.module.DpisApplication;
+import com.dpis.module.FontApplyMode;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation;
 
@@ -280,7 +288,7 @@ public final class AppConfigDialogBinder {
                 initialViewportAbsoluteInput);
     }
 
-    static AppConfigDialogActionStyle captureDialogActionStyle(MaterialButton baseButton) {
+    public static AppConfigDialogActionStyle captureDialogActionStyle(MaterialButton baseButton) {
         ColorStateList defaultActionBgTint = baseButton.getBackgroundTintList();
         int defaultActionStrokeWidth = baseButton.getStrokeWidth();
         int defaultActionTextColor = MaterialColors.getColor(
@@ -289,7 +297,7 @@ public final class AppConfigDialogBinder {
                 defaultActionStrokeWidth, defaultActionTextColor);
     }
 
-    void refreshDialogState(AppConfigDialogViews views,
+    public void refreshDialogState(AppConfigDialogViews views,
             AppConfigDialogState state,
             AppConfigDialogActionStyle style,
             boolean systemHooksEnabled,
@@ -686,7 +694,7 @@ public final class AppConfigDialogBinder {
         return typefaceId != null && !typefaceId.isBlank() ? typefaceId : null;
     }
 
-    static void showSaveButtonFeedback(MaterialButton saveButton) {
+    public static void showSaveButtonFeedback(MaterialButton saveButton) {
         if (saveButton == null) {
             return;
         }
@@ -710,7 +718,7 @@ public final class AppConfigDialogBinder {
         saveButton.postDelayed(restore, 1500);
     }
 
-    static boolean updateSaveButtonState(TextInputLayout viewportInputLayout,
+    public static boolean updateSaveButtonState(TextInputLayout viewportInputLayout,
             TextInputEditText viewportInputView,
             ModeToggle viewportModeToggle,
             TextInputLayout fontInputLayout,
@@ -732,7 +740,7 @@ public final class AppConfigDialogBinder {
         return valid;
     }
 
-    static boolean updateSaveButtonState(View dialogView, AppConfigDialogViews views) {
+    public static boolean updateSaveButtonState(View dialogView, AppConfigDialogViews views) {
         boolean genericValid = updateSaveButtonState(
                 views.viewportInputLayout,
                 views.viewportInputView,
@@ -796,7 +804,7 @@ public final class AppConfigDialogBinder {
         statusView.setText(dialogStatusText);
     }
 
-    void syncHyperOsNativeProxyAfterSave(
+    public void syncHyperOsNativeProxyAfterSave(
             AppListItem item, AppConfigDialogViews views, AppConfigDialogState state) {
         if (!item.hyperOsNativeProxyCandidate) {
             return;
@@ -814,7 +822,7 @@ public final class AppConfigDialogBinder {
 
     // State lifecycle is bound to the dialog instance; pending flag cleanup is
     // best-effort since the state object is discarded when the dialog closes.
-    void requestScopeAfterSuccessfulSave(View dialogView,
+    public void requestScopeAfterSuccessfulSave(View dialogView,
             AppListItem item,
             AppConfigDialogViews views,
             AppConfigDialogState state,
@@ -911,7 +919,7 @@ public final class AppConfigDialogBinder {
         updateModeToggleVisual(fontModeToggle, FontApplyMode.SYSTEM_EMULATION.equals(resolved), animate);
     }
 
-    static void toggleFontMode(ModeToggle fontModeToggle) {
+    public static void toggleFontMode(ModeToggle fontModeToggle) {
         String nextMode = FontApplyMode.FIELD_REWRITE.equals(resolveFontMode(fontModeToggle))
                 ? FontApplyMode.SYSTEM_EMULATION
                 : FontApplyMode.FIELD_REWRITE;
@@ -940,7 +948,7 @@ public final class AppConfigDialogBinder {
                         : R.string.dialog_viewport_hint_absolute);
     }
 
-    static void toggleViewportMode(ModeToggle viewportModeToggle,
+    public static void toggleViewportMode(ModeToggle viewportModeToggle,
             TextInputEditText viewportInputView,
             AppConfigDialogState state) {
         String nextMode = ViewportTargetType.ABSOLUTE_DP.equals(
@@ -1198,7 +1206,7 @@ public final class AppConfigDialogBinder {
             }
         }
 
-        static AppConfigDialogState fromItem(AppListItem item) {
+        public static AppConfigDialogState fromItem(AppListItem item) {
             String viewportInput = AppConfigInputValidation.formatViewportInput(item.viewportTargetSpec);
             String viewportTargetType = initialViewportTargetType(item);
             String viewportScaleInput = item.viewportScaleMilliPercent != null
@@ -1244,7 +1252,7 @@ public final class AppConfigDialogBinder {
             viewportAbsoluteInput = "";
         }
 
-        void clearHookChainStateForReset() {
+        public void clearHookChainStateForReset() {
             draftFontHookDomainsRaw = null;
             viewportApplyMode = ViewportApplyMode.OFF;
             fontHookDomainsResetRequested = true;
@@ -1309,7 +1317,7 @@ public final class AppConfigDialogBinder {
         }
     }
 
-    static final class AppConfigDialogActionStyle {
+    public static final class AppConfigDialogActionStyle {
         public final ColorStateList defaultActionBgTint;
         public final int defaultActionStrokeWidth;
         public final int defaultActionTextColor;

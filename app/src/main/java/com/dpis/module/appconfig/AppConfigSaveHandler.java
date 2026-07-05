@@ -1,4 +1,10 @@
-package com.dpis.module;
+package com.dpis.module.appconfig;
+
+import com.dpis.module.R;
+import com.dpis.module.DpisConfigStore;
+import com.dpis.module.EffectiveModeResolver;
+import com.dpis.module.PackageConfigValue;
+import com.dpis.module.FontApplyMode;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
 
@@ -19,7 +25,7 @@ import com.dpis.module.templates.TemplateConfigValue;
 import com.google.android.material.textfield.TextInputEditText;
 
 public final class AppConfigSaveHandler {
-    Result save(AppListItem item,
+    public Result save(AppListItem item,
             TextInputEditText viewportInput,
             TextInputEditText fontScaleInput,
             String viewportTargetType,
@@ -61,7 +67,7 @@ public final class AppConfigSaveHandler {
         }
     }
 
-    Result saveResolved(AppListItem item,
+    public Result saveResolved(AppListItem item,
             ViewportTargetSpec viewportTargetSpec,
             String viewportTargetType,
             String currentViewportApplyMode,
@@ -184,8 +190,8 @@ public final class AppConfigSaveHandler {
     }
 
     public static final class Result {
-        final boolean success;
-        final int messageResId;
+        public final boolean success;
+        public final int messageResId;
 
         private Result(boolean success, int messageResId) {
             this.success = success;
@@ -201,7 +207,7 @@ public final class AppConfigSaveHandler {
         }
     }
 
-    static boolean persistPreviewOnlyConfig(DpisConfigStore store,
+    public static boolean persistPreviewOnlyConfig(DpisConfigStore store,
             AppListItem item,
             String draftFontHookDomainsRaw,
             boolean fontHookDomainsResetRequested) {
@@ -321,9 +327,9 @@ public final class AppConfigSaveHandler {
                 expectedFontHookDomainsRawAfterSave(
                         draftFontHookDomainsRaw,
                         fontHookDomainsResetRequested,
-                        original.fontHookDomainsRaw),
-                original.dpisEnabled,
-                original.wechatDpi);
+                        original.fontHookDomainsRaw()),
+                original.dpisEnabled(),
+                original.wechatDpi());
     }
 
     private static String expectedFontHookDomainsRawAfterSave(
@@ -364,26 +370,26 @@ public final class AppConfigSaveHandler {
     private static PackageConfigValue normalizePersistedPackageConfigForVerification(
             PackageConfigValue value) {
         PackageConfigValue actual = value != null ? value : PackageConfigValue.EMPTY;
-        String viewportTargetType = ViewportTargetType.ABSOLUTE_DP.equals(actual.viewportTargetType)
-                ? actual.viewportTargetType
+        String viewportTargetType = ViewportTargetType.ABSOLUTE_DP.equals(actual.viewportTargetType())
+                ? actual.viewportTargetType()
                 : ViewportTargetType.OFF;
-        String viewportApplyMode = ViewportApplyMode.SYSTEM.equals(actual.viewportApplyMode)
-                || ViewportApplyMode.COMPAT.equals(actual.viewportApplyMode)
-                ? actual.viewportApplyMode
+        String viewportApplyMode = ViewportApplyMode.SYSTEM.equals(actual.viewportApplyMode())
+                || ViewportApplyMode.COMPAT.equals(actual.viewportApplyMode())
+                ? actual.viewportApplyMode()
                 : ViewportApplyMode.OFF;
-        String fontApplyMode = FontApplyMode.FIELD_REWRITE.equals(actual.fontApplyMode)
-                ? actual.fontApplyMode
+        String fontApplyMode = FontApplyMode.FIELD_REWRITE.equals(actual.fontApplyMode())
+                ? actual.fontApplyMode()
                 : FontApplyMode.OFF;
         return new PackageConfigValue(
-                actual.viewportTargetSpec,
+                actual.viewportTargetSpec(),
                 viewportTargetType,
                 viewportApplyMode,
-                actual.fontScalePercent,
+                actual.fontScalePercent(),
                 fontApplyMode,
-                actual.typefaceId,
-                actual.fontHookDomainsRaw,
-                actual.dpisEnabled,
-                actual.wechatDpi);
+                actual.typefaceId(),
+                actual.fontHookDomainsRaw(),
+                actual.dpisEnabled(),
+                actual.wechatDpi());
     }
 
     private static void publishFontHookDomainsAfterSave(String packageName, DpisConfigStore store) {
@@ -395,7 +401,7 @@ public final class AppConfigSaveHandler {
         FontHookDomainPropertySyncer.clearTargetAsync(packageName);
     }
 
-    static String resolveViewportApplyModeForSave(DpisConfigStore store,
+    public static String resolveViewportApplyModeForSave(DpisConfigStore store,
             String packageName,
             String itemViewportMode,
             boolean viewportApplyModeResetRequested,

@@ -1,14 +1,17 @@
-package com.dpis.module;
+package com.dpis.module.appconfig;
+
+import com.dpis.module.DpisConfigStore;
+import com.dpis.module.PackageConfigRepository;
 
 import com.dpis.module.applist.AppListItem;
 
 import com.dpis.module.templates.TemplateConfigValue;
 
-final class AppConfigPrefillPreview {
+public final class AppConfigPrefillPreview {
     private AppConfigPrefillPreview() {
     }
 
-    static AppListItem applyIfEligible(AppListItem item,
+    public static AppListItem applyIfEligible(AppListItem item,
             DpisConfigStore store,
             TemplateConfigValue globalPrefill) {
         if (store == null) {

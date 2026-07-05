@@ -107,7 +107,7 @@ public final class ConfigStoreFactory {
                 new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpisConfigStore.GROUP));
     }
 
-    static FontLibraryStore createFontLibraryForXposedHost(XposedInterface xposed) {
+    public static FontLibraryStore createFontLibraryForXposedHost(XposedInterface xposed) {
         SharedPreferences remotePreferences = null;
         if (xposed != null) {
             try {

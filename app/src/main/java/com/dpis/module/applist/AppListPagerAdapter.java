@@ -1,6 +1,5 @@
 package com.dpis.module.applist;
 
-import com.dpis.module.AppStatusFormatter;
 import com.dpis.module.R;
 
 import android.os.Parcelable;

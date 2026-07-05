@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.appprocess.ResourcesManagerHookInstaller;
+
+import com.dpis.module.runtime.appprocess.WebApkRuntimeOwnerBridge;
+
 import com.dpis.module.runtime.font.ResourcesFontScheduler;
 
 import com.dpis.module.viewport.VirtualDisplayOverride;
@@ -372,7 +376,7 @@ public class ResourcesManagerHookInstallerTest {
 
     @Test
     public void debugResourcesManagerKeyDisablePropertyIsPackageScoped() throws Exception {
-        String source = readSource("src/main/java/com/dpis/module/ResourcesManagerHookInstaller.java");
+        String source = readSource("src/main/java/com/dpis/module/runtime/appprocess/ResourcesManagerHookInstaller.java");
 
         assertTrue(source.contains(
                 "debug.dpis.viewport.disable_resources_manager_key_package"));

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.appprocess.WindowMetricsHookInstaller;
+
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -12,7 +14,7 @@ public final class WindowMetricsHookInstallerSourceSmokeTest {
     @Test
     public void runtimeHotpathEvidenceKeepsPackageRouteAndStages() throws Exception {
         String source = new String(
-                Files.readAllBytes(Path.of("src/main/java/com/dpis/module/WindowMetricsHookInstaller.java")),
+                Files.readAllBytes(Path.of("src/main/java/com/dpis/module/runtime/appprocess/WindowMetricsHookInstaller.java")),
                 StandardCharsets.UTF_8);
 
         assertTrue(source.contains("static void install(XposedInterface xposed, String packageName)"));

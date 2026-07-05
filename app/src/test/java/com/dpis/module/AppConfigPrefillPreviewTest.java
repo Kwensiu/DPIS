@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.appconfig.AppConfigPrefillPreview;
+
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;
 
@@ -22,7 +24,7 @@ public class AppConfigPrefillPreviewTest {
     @Test
     public void prefillEligibilityReadsPackageConfigThroughRepository() throws IOException {
         String source = SourceSmokeTestPaths.read(
-                "src/main/java/com/dpis/module/AppConfigPrefillPreview.java");
+                "src/main/java/com/dpis/module/appconfig/AppConfigPrefillPreview.java");
 
         assertTrue(source.contains("new PackageConfigRepository(store)"));
         assertTrue(source.contains("packageConfigRepository.hasRealPackageConfig("));

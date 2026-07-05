@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.appprocess.DisplayHookInstaller;
+
+import com.dpis.module.runtime.appprocess.ResourcesReadHookInstaller;
+
+import com.dpis.module.runtime.appprocess.ResourcesManagerHookInstaller;
+
 import com.dpis.module.HyperOsFlutterFontBridge;
 
 import com.dpis.module.fonts.FontLibraryStore;
@@ -170,7 +176,7 @@ public class LegacyModuleHookSourceTest {
                 < rustSource.indexOf("Object existingValue = args.get(ARG_ENVIRONMENTS);"));
         assertTrue(!rustSource.contains("HyperOsFlutterFontBridge.clearTarget(packageName);"));
 
-        String resourcesReadSource = read("src/main/java/com/dpis/module/ResourcesReadHookInstaller.java");
+        String resourcesReadSource = read("src/main/java/com/dpis/module/runtime/appprocess/ResourcesReadHookInstaller.java");
         assertTrue(resourcesReadSource.contains("DPIS_VIEWPORT legacy auto fallback success: package="));
         assertTrue(resourcesReadSource.contains("sourceTag.startsWith(\"LegacyResourcesRead(\")"));
         assertTrue(resourcesReadSource.contains("ViewportApplyMode.AUTO.equals("));

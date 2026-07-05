@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.appprocess.ResourcesImplHookInstaller;
+
+import com.dpis.module.runtime.appprocess.WebApkRuntimeOwnerBridge;
+
 import com.dpis.module.runtime.font.ResourcesFontScheduler;
 
 import com.dpis.module.viewport.DensityOverride;

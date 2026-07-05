@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.appprocess.AppProcessHookInstaller;
+
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;
 
@@ -9,22 +11,22 @@ import com.dpis.module.hooks.HookExecutionPlanner;
 import com.dpis.module.hooks.HookRuntimePolicy;
 
 public final class ModulePackagePlan {
-    final String packageName;
-    final ViewportTargetSpec targetViewportSpec;
-    final String targetViewportMode;
-    final Integer targetFontScalePercent;
-    final String targetFontMode;
-    final String targetTypefaceId;
-    final boolean targetDpisEnabled;
-    final boolean viewportConfigured;
-    final boolean viewportEnabled;
-    final boolean fontScaleActive;
-    final boolean fontEnabled;
-    final boolean typefaceActive;
-    final boolean typefaceEnabled;
-    final boolean flutterSettingsFontEnabled;
-    final boolean hyperOsNativeFlutterFontEnabled;
-    final HookDomainOverride hookDomainOverride;
+    public final String packageName;
+    public final ViewportTargetSpec targetViewportSpec;
+    public final String targetViewportMode;
+    public final Integer targetFontScalePercent;
+    public final String targetFontMode;
+    public final String targetTypefaceId;
+    public final boolean targetDpisEnabled;
+    public final boolean viewportConfigured;
+    public final boolean viewportEnabled;
+    public final boolean fontScaleActive;
+    public final boolean fontEnabled;
+    public final boolean typefaceActive;
+    public final boolean typefaceEnabled;
+    public final boolean flutterSettingsFontEnabled;
+    public final boolean hyperOsNativeFlutterFontEnabled;
+    public final HookDomainOverride hookDomainOverride;
 
     private ModulePackagePlan(String packageName,
                               ViewportTargetSpec targetViewportSpec,
@@ -175,7 +177,7 @@ public final class ModulePackagePlan {
                 hookDomainOverride);
     }
 
-    HookExecutionPlan buildExecutionPlan(HookRuntimePolicy policy, DebugFontOverride debugOverride) {
+    public HookExecutionPlan buildExecutionPlan(HookRuntimePolicy policy, DebugFontOverride debugOverride) {
         return HookExecutionPlanner.buildPlan(
                 policy,
                 packageName,

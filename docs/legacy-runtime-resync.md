@@ -82,6 +82,11 @@ The shared app-process font route implementation now lives under
 protocols; the move only classifies ActivityThread, Resources font scheduling,
 TextView/Paint field rewrite, WebView, typeface replacement, Flutter, and
 diagnostic font routes under their runtime owner package.
+The shared app-process viewport/window route implementation now lives under
+`runtime.appprocess`. Flavor entry points still call the same
+install/reset/apply protocols; the move is package classification only and does
+not change route selection, mutation policy, or evidence semantics.
+
 
 As of 2026-06-22, the Legacy WeChat DPI route participates in feedback
 diagnostics as `route=wechat_dpi` for WeChat targets. A saved WeChat DPI config
@@ -103,11 +108,11 @@ DPIS viewport target package
   |     |     +-- system_server route:
   |     |     |     SystemServerDisplayEnvironmentInstaller
   |     |     +-- app-process route:
-  |     |           AppProcessHookInstaller
-  |     |           ResourcesManagerHookInstaller
-  |     |           ResourcesImplHookInstaller
-  |     |           ResourcesReadHookInstaller
-  |     |           DisplayHookInstaller / WindowMetricsHookInstaller
+  |     |           runtime.appprocess.AppProcessHookInstaller
+  |     |           runtime.appprocess.ResourcesManagerHookInstaller
+  |     |           runtime.appprocess.ResourcesImplHookInstaller
+  |     |           runtime.appprocess.ResourcesReadHookInstaller
+  |     |           runtime.appprocess.DisplayHookInstaller / runtime.appprocess.WindowMetricsHookInstaller
   |     |
   |     +-- legacy
   |           |
@@ -289,7 +294,7 @@ chain returns only to the compat/field-rewrite recommended template.
   `ResourcesManager` override, `ResourcesImpl` observe/override/stable target,
   and `ResourcesRead` configuration/display-metrics overrides.
 - 2026-06-21: shared app-process viewport diagnostics now include first-hit plus
-  counted-sample `DisplayHookInstaller` and `WindowMetricsHookInstaller`
+  counted-sample `runtime.appprocess.DisplayHookInstaller` and `runtime.appprocess.WindowMetricsHookInstaller`
   runtime-hotpath evidence. Repeated callback evidence carries `hitCount` and
   `suppressedCount`, aimed at rapid-scrolling repros where callback hit versus
   skipped supplement behavior needs to be separated before drawing conclusions.

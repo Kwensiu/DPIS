@@ -1,5 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime.appprocess;
 
+import com.dpis.module.*;
 import com.dpis.module.fonts.hookdomain.FontHookArbitration;
 
 import com.dpis.module.runtime.font.ComposeFontRuntimeDiagnosticsInstaller;
@@ -31,7 +32,7 @@ import com.dpis.module.runtime.RuntimeDiagnosticLogFingerprint;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class AppProcessHookInstaller {
+public final class AppProcessHookInstaller {
     private static final String PROP_FORCE_FLUTTER_SETTINGS_PACKAGE =
             "debug.dpis.font.force_flutter_settings_package";
     private static final String PROP_FLUTTER_SETTINGS_ONLY_PACKAGE =
@@ -50,7 +51,7 @@ final class AppProcessHookInstaller {
     private AppProcessHookInstaller() {
     }
 
-    static void install(XposedInterface xposed,
+    public static void install(XposedInterface xposed,
                         DpisConfigStore store,
                         HookRuntimePolicy policy,
                         ModulePackagePlan packagePlan,
@@ -121,31 +122,31 @@ final class AppProcessHookInstaller {
                 + " for " + packageName);
     }
 
-    static boolean shouldInstallProbeHooks(HookRuntimePolicy policy) {
+    public static boolean shouldInstallProbeHooks(HookRuntimePolicy policy) {
         return policy != null && policy.probeHooksEnabled;
     }
 
-    static String resolveProbeInstallMode(HookRuntimePolicy policy) {
+    public static String resolveProbeInstallMode(HookRuntimePolicy policy) {
         return HookExecutionPlanner.resolveProbeInstallMode(policy);
     }
 
-    static boolean resolveViewportHookEnabled(HookRuntimePolicy policy,
+    public static boolean resolveViewportHookEnabled(HookRuntimePolicy policy,
                                               boolean viewportConfigured,
                                               String viewportMode) {
         return HookExecutionPlanner.resolveViewportHookEnabled(
                 policy, viewportConfigured, viewportMode);
     }
 
-    static FontHookArbitration.FontDomainPlan resolveFontDomainPlan(FontHookPlan fontHookPlan) {
+    public static FontHookArbitration.FontDomainPlan resolveFontDomainPlan(FontHookPlan fontHookPlan) {
         return resolveFontDomainPlan(fontHookPlan, false);
     }
 
-    static FontHookArbitration.FontDomainPlan resolveFontDomainPlan(FontHookPlan fontHookPlan,
+    public static FontHookArbitration.FontDomainPlan resolveFontDomainPlan(FontHookPlan fontHookPlan,
                                                                     boolean hyperOsNativeFlutterEnabled) {
         return resolveFontDomainPlan(fontHookPlan, false, hyperOsNativeFlutterEnabled);
     }
 
-    static FontHookArbitration.FontDomainPlan resolveFontDomainPlan(FontHookPlan fontHookPlan,
+    public static FontHookArbitration.FontDomainPlan resolveFontDomainPlan(FontHookPlan fontHookPlan,
                                                                     boolean flutterSettingsEnabled,
                                                                     boolean hyperOsNativeFlutterEnabled) {
         return FontHookArbitration.resolveDomainPlan(
@@ -156,7 +157,7 @@ final class AppProcessHookInstaller {
                 hyperOsNativeFlutterEnabled);
     }
 
-    static boolean resolveResourcesHooksEnabled(boolean viewportEnabled,
+    public static boolean resolveResourcesHooksEnabled(boolean viewportEnabled,
                                                 FontHookPlan fontHookPlan,
                                                 FontHookArbitration.FontDomainPlan domainPlan) {
         return viewportEnabled
@@ -164,7 +165,7 @@ final class AppProcessHookInstaller {
                 || (domainPlan != null && domainPlan.resourcesFontEnabled);
     }
 
-    static boolean isDebugPropertyPackageMatchForTest(String propertyName,
+    public static boolean isDebugPropertyPackageMatchForTest(String propertyName,
                                                       String packageName,
                                                       String propertyValue) {
         return DebugPackageOverride.matchesForTest(propertyName, packageName, propertyValue);
@@ -174,7 +175,7 @@ final class AppProcessHookInstaller {
         return DebugPackageOverride.matches(propertyName, packageName);
     }
 
-    static FontHookPlan resolveFontHookPlan(HookRuntimePolicy policy,
+    public static FontHookPlan resolveFontHookPlan(HookRuntimePolicy policy,
                                             boolean fontScaleActive,
                                             String fontMode) {
         FontMode resolved = HookExecutionPlanner.resolveFontMode(policy, fontScaleActive, fontMode);
@@ -183,7 +184,7 @@ final class AppProcessHookInstaller {
                 resolved == FontMode.FIELD_REWRITE);
     }
 
-    static DebugFontOverride resolveDebugFontOverrideForPackage(String packageName) {
+    public static DebugFontOverride resolveDebugFontOverrideForPackage(String packageName) {
         boolean debugFlutterSettingsOnly = isDebugPropertyPackageMatch(
                 PROP_FLUTTER_SETTINGS_ONLY_PACKAGE, packageName);
         boolean debugForceFlutterSettings = debugFlutterSettingsOnly
@@ -291,13 +292,13 @@ final class AppProcessHookInstaller {
         }
     }
 
-    static boolean shouldInstallAppProcessViewportSupplementHooksForTest(
+    public static boolean shouldInstallAppProcessViewportSupplementHooksForTest(
             HookExecutionPlan plan,
             ViewportTargetSpec targetViewportSpec) {
         return shouldInstallAppProcessViewportSupplementHooks(plan, targetViewportSpec);
     }
 
-    static boolean shouldInstallResourcesImplHookForTest(HookExecutionPlan plan) {
+    public static boolean shouldInstallResourcesImplHookForTest(HookExecutionPlan plan) {
         return shouldInstallResourcesImplHook(plan);
     }
 
@@ -320,7 +321,7 @@ final class AppProcessHookInstaller {
                 PROP_DISABLE_VIEWPORT_DISPLAY_SUPPLEMENT_PACKAGE, packageName);
     }
 
-    static void installTypefaceHooks(XposedInterface xposed,
+    public static void installTypefaceHooks(XposedInterface xposed,
                                      String packageName,
                                      DpisConfigStore store,
                                      String targetTypefaceId) {
@@ -339,11 +340,11 @@ final class AppProcessHookInstaller {
         }
     }
 
-    static final class FontHookPlan {
-        final boolean emulationEnabled;
-        final boolean fieldRewriteEnabled;
+    public static final class FontHookPlan {
+        public final boolean emulationEnabled;
+        public final boolean fieldRewriteEnabled;
 
-        FontHookPlan(boolean emulationEnabled,
+        public FontHookPlan(boolean emulationEnabled,
                      boolean fieldRewriteEnabled) {
             this.emulationEnabled = emulationEnabled;
             this.fieldRewriteEnabled = fieldRewriteEnabled;

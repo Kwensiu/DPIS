@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.appprocess.ResourcesImplHookInstaller;
+
 import com.dpis.module.viewport.DensityOverride;
 
 import static org.junit.Assert.assertFalse;

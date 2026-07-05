@@ -1,5 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime.appprocess;
 
+import com.dpis.module.*;
 import android.graphics.Rect;
 
 import java.lang.reflect.Field;
@@ -15,7 +16,7 @@ import com.dpis.module.runtime.ProcessScopedInstallGate;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class WindowSessionProbeHookInstaller {
+public final class WindowSessionProbeHookInstaller {
     private static final int MAX_LOGS = 12;
     private static final AtomicInteger LOG_COUNT = new AtomicInteger();
     private static volatile int installedPid = -1;
@@ -24,11 +25,11 @@ final class WindowSessionProbeHookInstaller {
     private WindowSessionProbeHookInstaller() {
     }
 
-    static void resetForHotReload() {
+    public static void resetForHotReload() {
         installedPid = -1;
     }
 
-    static void install(XposedInterface xposed) throws ReflectiveOperationException {
+    public static void install(XposedInterface xposed) throws ReflectiveOperationException {
         if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
         }
@@ -46,7 +47,7 @@ final class WindowSessionProbeHookInstaller {
         }
     }
 
-    static String buildLog(String methodName, String stage, int result, int frameWidth,
+    public static String buildLog(String methodName, String stage, int result, int frameWidth,
                            int frameHeight) {
         if ("before".equals(stage)) {
             return "WindowSession probe(" + methodName + ":" + stage + "): frame="
@@ -100,7 +101,7 @@ final class WindowSessionProbeHookInstaller {
         }
     }
 
-    static Rect findFrameForTest(List<Object> args) {
+    public static Rect findFrameForTest(List<Object> args) {
         return findFrame(args);
     }
 

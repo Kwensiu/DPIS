@@ -1,5 +1,14 @@
 package com.dpis.module;
 
+import com.dpis.module.appconfig.AppConfigDialogBinder;
+import com.dpis.module.appconfig.AppConfigInputValidation;
+import com.dpis.module.appconfig.AppConfigPrefillPreview;
+import com.dpis.module.appconfig.AppConfigSaveHandler;
+
+import com.dpis.module.runtime.appprocess.AppProcessHookInstaller;
+
+import com.dpis.module.applist.AppStatusFormatter;
+
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation;
@@ -1588,7 +1597,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("isFontHookDomainEditingEnabled()"));
         assertTrue(source.contains("AppConfigDialogBinder.resolveFontMode(findFontModeToggle(root))"));
         assertTrue(source.contains("this,"));
-        String saveSource = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        String saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.java");
         assertTrue(
             !saveSource.contains("FontRuntimePropertySyncer.publishTargetAsync(")
         );

@@ -1,5 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime.appprocess;
 
+import com.dpis.module.*;
 import com.dpis.module.viewport.DensityOverride;
 
 import com.dpis.module.viewport.VirtualDisplayOverride;
@@ -25,7 +26,7 @@ import com.dpis.module.runtime.RuntimeHotPathEvidenceSampler;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class DisplayHookInstaller {
+public final class DisplayHookInstaller {
     private static volatile int installedPid = -1;
     private static volatile String targetPackageName;
     private static volatile DpisConfigStore targetStore;
@@ -43,11 +44,11 @@ final class DisplayHookInstaller {
     private DisplayHookInstaller() {
     }
 
-    static void resetForHotReload() {
+    public static void resetForHotReload() {
         installedPid = -1;
     }
 
-    static void install(XposedInterface xposed, String packageName, DpisConfigStore store)
+    public static void install(XposedInterface xposed, String packageName, DpisConfigStore store)
             throws ReflectiveOperationException {
         if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return;
@@ -70,11 +71,11 @@ final class DisplayHookInstaller {
         }
     }
 
-    static void setTargetPackageNameForLegacy(String packageName) {
+    public static void setTargetPackageNameForLegacy(String packageName) {
         targetPackageName = packageName;
     }
 
-    static void setTargetStoreForLegacy(DpisConfigStore store) {
+    public static void setTargetStoreForLegacy(DpisConfigStore store) {
         targetStore = store;
     }
 
@@ -143,7 +144,7 @@ final class DisplayHookInstaller {
         }
     }
 
-    static void applyDisplayMetrics(DisplayMetrics metrics, String sourceTag) {
+    public static void applyDisplayMetrics(DisplayMetrics metrics, String sourceTag) {
         if (metrics == null) {
             return;
         }
@@ -223,7 +224,7 @@ final class DisplayHookInstaller {
         }
     }
 
-    static void applyPoint(Point point, String sourceTag) {
+    public static void applyPoint(Point point, String sourceTag) {
         if (point == null) {
             return;
         }
@@ -279,7 +280,7 @@ final class DisplayHookInstaller {
         }
     }
 
-    static void applyDisplayInfo(Object displayInfo, String sourceTag) {
+    public static void applyDisplayInfo(Object displayInfo, String sourceTag) {
         if (displayInfo == null) {
             return;
         }
@@ -344,11 +345,11 @@ final class DisplayHookInstaller {
         }
     }
 
-    static boolean shouldApplyOverrideForPackage(String packageName) {
+    public static boolean shouldApplyOverrideForPackage(String packageName) {
         return shouldApplyOverrideForPackage(packageName, resolveCurrentPackageName());
     }
 
-    static boolean shouldApplyOverrideForPackage(String packageName, String currentPackageName) {
+    public static boolean shouldApplyOverrideForPackage(String packageName, String currentPackageName) {
         if (packageName == null || packageName.isBlank()) {
             return false;
         }
@@ -358,7 +359,7 @@ final class DisplayHookInstaller {
         return packageName.equals(currentPackageName);
     }
 
-    static VirtualDisplayOverride.Result resolvePackageScopedOverrideForTest(String packageName,
+    public static VirtualDisplayOverride.Result resolvePackageScopedOverrideForTest(String packageName,
                                                                              DpisConfigStore store) {
         return resolvePackageScopedOverride(packageName, store);
     }
@@ -405,7 +406,7 @@ final class DisplayHookInstaller {
         return false;
     }
 
-    static void resetHotPathSamplerForTest() {
+    public static void resetHotPathSamplerForTest() {
         HOTPATH_SAMPLER.resetForTest();
     }
 

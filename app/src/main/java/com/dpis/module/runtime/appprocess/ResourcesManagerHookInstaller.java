@@ -1,5 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime.appprocess;
 
+import com.dpis.module.*;
 import com.dpis.module.runtime.font.FontScaleOverride;
 
 import com.dpis.module.viewport.VirtualDisplayPlan;
@@ -35,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class ResourcesManagerHookInstaller {
+public final class ResourcesManagerHookInstaller {
     private static final String HOOK_ID_APPLY_CONFIGURATION =
             "resources_manager_apply_configuration_to_resources";
     private static final String HOOK_ID_UPDATE_RESOURCES_FOR_ACTIVITY =
@@ -54,11 +55,11 @@ final class ResourcesManagerHookInstaller {
     private ResourcesManagerHookInstaller() {
     }
 
-    static void resetForHotReload() {
+    public static void resetForHotReload() {
         hookInstalled = false;
     }
 
-    static void install(XposedInterface xposed,
+    public static void install(XposedInterface xposed,
                         String packageName,
                         DpisConfigStore store,
                         ModernApiCapabilities apiCapabilities)
@@ -66,7 +67,7 @@ final class ResourcesManagerHookInstaller {
         install(xposed, packageName, store, HookRuntimePolicy.fromStore(store), apiCapabilities);
     }
 
-    static void install(XposedInterface xposed,
+    public static void install(XposedInterface xposed,
                         String packageName,
                         DpisConfigStore store,
                         HookRuntimePolicy policy,
@@ -197,7 +198,7 @@ final class ResourcesManagerHookInstaller {
         return hookedCount;
     }
 
-    static void maybeApplyKeyOverride(Object resourcesManager,
+    public static void maybeApplyKeyOverride(Object resourcesManager,
                                       Object key,
                                       DpisConfigStore store,
                                       String packageName,
@@ -206,7 +207,7 @@ final class ResourcesManagerHookInstaller {
                 HookRuntimePolicy.fromStore(store));
     }
 
-    static void maybeApplyKeyOverride(Object resourcesManager,
+    public static void maybeApplyKeyOverride(Object resourcesManager,
                                       Object key,
                                       DpisConfigStore store,
                                       String packageName,
@@ -412,13 +413,13 @@ final class ResourcesManagerHookInstaller {
                 || methodName.contains("createBaseTokenResources"));
     }
 
-    static void applyResourceOverrides(Configuration config, DpisConfigStore store,
+    public static void applyResourceOverrides(Configuration config, DpisConfigStore store,
                                        String packageName, String sourceTag) {
         applyResourceOverrides(config, store, packageName, sourceTag,
                 HookRuntimePolicy.fromStore(store));
     }
 
-    static void applyResourceOverrides(Configuration config,
+    public static void applyResourceOverrides(Configuration config,
                                        DpisConfigStore store,
                                        String packageName,
                                        String sourceTag,
@@ -619,7 +620,7 @@ final class ResourcesManagerHookInstaller {
         }
     }
 
-    static void resetHotPathSamplerForTest() {
+    public static void resetHotPathSamplerForTest() {
         HOTPATH_SAMPLER.resetForTest();
     }
 

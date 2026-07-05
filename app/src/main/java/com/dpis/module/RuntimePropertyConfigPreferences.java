@@ -22,14 +22,14 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-final class RuntimePropertyConfigPreferences implements SharedPreferences {
+public final class RuntimePropertyConfigPreferences implements SharedPreferences {
     private static final long SNAPSHOT_TTL_MILLIS = 2_000L;
     private final String packageName;
     private final AutoViewportRuntimeRoute autoViewportRuntimeRoute;
     private volatile Map<String, Object> cachedSnapshot;
     private volatile long cachedAtMillis;
 
-    RuntimePropertyConfigPreferences(String packageName) {
+    public RuntimePropertyConfigPreferences(String packageName) {
         this(packageName, AutoViewportRuntimeRoute.NONE);
     }
 
@@ -40,7 +40,7 @@ final class RuntimePropertyConfigPreferences implements SharedPreferences {
                 : AutoViewportRuntimeRoute.NONE);
     }
 
-    RuntimePropertyConfigPreferences(String packageName,
+    public RuntimePropertyConfigPreferences(String packageName,
                                      AutoViewportRuntimeRoute autoViewportRuntimeRoute) {
         this.packageName = packageName;
         this.autoViewportRuntimeRoute = autoViewportRuntimeRoute != null
@@ -208,7 +208,7 @@ final class RuntimePropertyConfigPreferences implements SharedPreferences {
         return mode;
     }
 
-    enum AutoViewportRuntimeRoute {
+    public enum AutoViewportRuntimeRoute {
         NONE {
             @Override
             boolean shouldUseAppProcessRoute(ViewportTargetSpec targetSpec) {

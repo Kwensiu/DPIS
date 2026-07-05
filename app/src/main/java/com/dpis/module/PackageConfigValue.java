@@ -11,7 +11,7 @@ import com.dpis.module.appconfig.WechatDpiConfig;
 import java.util.Objects;
 
 public final class PackageConfigValue {
-    static final PackageConfigValue EMPTY = new PackageConfigValue(
+    public static final PackageConfigValue EMPTY = new PackageConfigValue(
             ViewportTargetSpec.off(),
             ViewportTargetType.OFF,
             ViewportApplyMode.OFF,
@@ -57,7 +57,43 @@ public final class PackageConfigValue {
         this.wechatDpi = WechatDpiConfig.normalize(wechatDpi);
     }
 
-    boolean hasAnyValue() {
+    public ViewportTargetSpec viewportTargetSpec() {
+        return viewportTargetSpec;
+    }
+
+    public String viewportTargetType() {
+        return viewportTargetType;
+    }
+
+    public String viewportApplyMode() {
+        return viewportApplyMode;
+    }
+
+    public Integer fontScalePercent() {
+        return fontScalePercent;
+    }
+
+    public String fontApplyMode() {
+        return fontApplyMode;
+    }
+
+    public String typefaceId() {
+        return typefaceId;
+    }
+
+    public String fontHookDomainsRaw() {
+        return fontHookDomainsRaw;
+    }
+
+    public Boolean dpisEnabled() {
+        return dpisEnabled;
+    }
+
+    public Integer wechatDpi() {
+        return wechatDpi;
+    }
+
+    public boolean hasAnyValue() {
         return viewportTargetSpec.isEnabled()
                 || !ViewportTargetType.OFF.equals(viewportTargetType)
                 || isStoredViewportApplyMode(viewportApplyMode)

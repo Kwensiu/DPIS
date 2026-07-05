@@ -5,7 +5,7 @@ import java.util.Set;
 
 public final class WebApkCarrierResolver {
     static final String WEBAPK_PACKAGE_PREFIX = "org.chromium.webapk.";
-    static final String WEBAPK_PACKAGE_EXTRA =
+    public static final String WEBAPK_PACKAGE_EXTRA =
             "org.chromium.chrome.browser.webapk_package_name";
     private static final String WEBAPK_URI_PREFIX = "webapp://webapk-";
 
@@ -24,7 +24,7 @@ public final class WebApkCarrierResolver {
         return owners;
     }
 
-    static String ownerPackageFromText(String text) {
+    public static String ownerPackageFromText(String text) {
         for (String owner : collectOwnerPackagesFromText(text, 1)) {
             return owner;
         }

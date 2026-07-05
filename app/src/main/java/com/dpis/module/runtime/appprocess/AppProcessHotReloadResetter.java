@@ -1,5 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime.appprocess;
 
+import com.dpis.module.*;
 import com.dpis.module.runtime.font.WebViewFontHookInstaller;
 
 import com.dpis.module.runtime.font.TypefaceOverrideHookInstaller;
@@ -12,11 +13,11 @@ import com.dpis.module.runtime.font.ActivityThreadFontHookInstaller;
 
 import com.dpis.module.runtime.appprocess.ChromiumViewportProbeHookInstaller;
 
-final class AppProcessHotReloadResetter {
+public final class AppProcessHotReloadResetter {
     private AppProcessHotReloadResetter() {
     }
 
-    static void resetAll() {
+    public static void resetAll() {
         // Keep hot-reload reset ownership in one place so new app-process
         // installers have a single integration point instead of growing
         // ModuleMain replay with another handwritten call.

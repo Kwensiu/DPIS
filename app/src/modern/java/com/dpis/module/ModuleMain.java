@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.appprocess.WebApkRuntimeOwnerBridge;
+
+import com.dpis.module.runtime.appprocess.AppProcessHotReloadResetter;
+
+import com.dpis.module.runtime.appprocess.AppProcessHookInstaller;
+
 import com.dpis.module.runtime.font.FlutterSettingsFontHookInstaller;
 
 import com.dpis.module.runtime.appprocess.ChromiumViewportProbeHookInstaller;

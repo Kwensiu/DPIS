@@ -1,4 +1,11 @@
-package com.dpis.module;
+package com.dpis.module.applist;
+
+import com.dpis.module.R;
+
+import com.dpis.module.FontApplyMode;
+import com.dpis.module.EffectiveModeResolver;
+
+import com.dpis.module.appconfig.AppConfigInputValidation;
 
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;
@@ -106,7 +113,7 @@ public final class AppStatusFormatter {
         }
     }
 
-    static final class Labels {
+    public static final class Labels {
         public final String injected;
         public final String notInjected;
         public final String enabled;
@@ -122,7 +129,7 @@ public final class AppStatusFormatter {
         public final String wechatDpi;
         public final Locale locale;
 
-        Labels(String injected,
+        public Labels(String injected,
                 String notInjected,
                 String enabled,
                 String disabled,
@@ -469,7 +476,7 @@ public final class AppStatusFormatter {
         return styled;
     }
 
-    static int[][] resolveWarnSegmentRanges(String statusText,
+    public static int[][] resolveWarnSegmentRanges(String statusText,
             boolean warnViewport,
             boolean warnFont) {
         if (statusText == null || statusText.isEmpty() || (!warnViewport && !warnFont)) {

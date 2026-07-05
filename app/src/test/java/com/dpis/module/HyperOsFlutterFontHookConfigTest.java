@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.appprocess.AppProcessHookInstaller;
+
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertyBridge;
@@ -207,7 +209,7 @@ public class HyperOsFlutterFontHookConfigTest {
         String source = readSource("src/main/java/com/dpis/module/runtime/font/HyperOsFlutterFontHookInstaller.java");
         String nativeSource = readSource("src/main/cpp/dpis_native.cpp");
         String moduleMain = readSource("src/modern/java/com/dpis/module/ModuleMain.java");
-        String appProcessInstaller = readSource("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+        String appProcessInstaller = readSource("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.java");
 
         assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));
         assertTrue(moduleMain.contains("packagePlan.hyperOsNativeFlutterFontEnabled"));

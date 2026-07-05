@@ -1,5 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.runtime.appprocess;
 
+import com.dpis.module.*;
 import com.dpis.module.viewport.DensityOverride;
 
 import com.dpis.module.viewport.VirtualDisplayOverride;
@@ -21,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import io.github.libxposed.api.XposedInterface;
 
-final class ResourcesProbeHookInstaller {
+public final class ResourcesProbeHookInstaller {
     private static final int MAX_LOGS_PER_METHOD = 8;
     private static final AtomicInteger DISPLAY_METRICS_LOG_COUNT = new AtomicInteger();
     private static final AtomicInteger CONFIGURATION_LOG_COUNT = new AtomicInteger();
@@ -33,16 +34,16 @@ final class ResourcesProbeHookInstaller {
     private ResourcesProbeHookInstaller() {
     }
 
-    static void resetForHotReload() {
+    public static void resetForHotReload() {
         installedPid = -1;
     }
 
-    static void install(XposedInterface xposed, String packageName, DpisConfigStore store)
+    public static void install(XposedInterface xposed, String packageName, DpisConfigStore store)
             throws ReflectiveOperationException {
         install(xposed, packageName, store, HookRuntimePolicy.fromStore(store));
     }
 
-    static void install(XposedInterface xposed,
+    public static void install(XposedInterface xposed,
                         String packageName,
                         DpisConfigStore store,
                         HookRuntimePolicy policy)
@@ -102,7 +103,7 @@ final class ResourcesProbeHookInstaller {
         }
     }
 
-    static DisplayMetrics createOverriddenDisplayMetrics(DisplayMetrics metrics, int targetWidthDp,
+    public static DisplayMetrics createOverriddenDisplayMetrics(DisplayMetrics metrics, int targetWidthDp,
                                                          float fontScale) {
         if (metrics == null || targetWidthDp <= 0 || metrics.densityDpi <= 0) {
             return metrics;
@@ -127,7 +128,7 @@ final class ResourcesProbeHookInstaller {
         return copy;
     }
 
-    static Configuration createOverriddenConfiguration(Configuration configuration,
+    public static Configuration createOverriddenConfiguration(Configuration configuration,
                                                        int targetWidthDp) {
         if (configuration == null || targetWidthDp <= 0) {
             return configuration;
@@ -162,7 +163,7 @@ final class ResourcesProbeHookInstaller {
         return createOverriddenConfiguration(configuration, targetWidthDp);
     }
 
-    static String buildDisplayMetricsLog(DisplayMetrics metrics) {
+    public static String buildDisplayMetricsLog(DisplayMetrics metrics) {
         return "Resources probe(getDisplayMetrics): widthPx=" + metrics.widthPixels
                 + ", heightPx=" + metrics.heightPixels
                 + ", densityDpi=" + metrics.densityDpi
@@ -170,7 +171,7 @@ final class ResourcesProbeHookInstaller {
                 + ", scaledDensity=" + metrics.scaledDensity;
     }
 
-    static String buildConfigurationLog(Configuration configuration) {
+    public static String buildConfigurationLog(Configuration configuration) {
         return "Resources probe(getConfiguration): widthDp=" + configuration.screenWidthDp
                 + ", heightDp=" + configuration.screenHeightDp
                 + ", smallestWidthDp=" + configuration.smallestScreenWidthDp
