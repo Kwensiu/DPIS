@@ -83,6 +83,7 @@ import com.dpis.module.ui.DialogWindowSizer;
 
 import com.dpis.module.home.HomeUpdateUiState;
 import com.dpis.module.home.HomeWorkspaceBinder;
+import com.dpis.module.home.HomeActivationStateResolver;
 
 import com.dpis.module.settings.ToolsWorkspaceBinder;
 import com.dpis.module.settings.StartupDisclaimerStore;
@@ -3119,7 +3120,7 @@ public final class MainActivity
                 loadScopeState()
         );
         return new HomeWorkspaceBinder.State(
-                HomeActivationStateResolver.isActivatedForHome(),
+                isActivatedForHome(),
                 visibleConfiguredAppCount,
                 ConfigStoreFactory.createLocalUiFontLibraryStore(
                         this,
@@ -3135,6 +3136,19 @@ public final class MainActivity
                 homeUpdateUiState,
                 createHomeWorkspaceActions()
         );
+    }
+
+    private boolean isActivatedForHome() {
+        boolean libXposedService = HomeActivationStateResolver
+                .hasModernLibXposedService(DpisApplication.getXposedService());
+        boolean selfLoaded = DpisApplication.isXposedSelfLoaded();
+        boolean activated = HomeActivationStateResolver.isActivatedForHome(
+                libXposedService,
+                selfLoaded);
+        DpisLog.i("home activation resolved: libxposedService=" + libXposedService
+                + ", selfLoaded=" + selfLoaded
+                + ", activated=" + activated);
+        return activated;
     }
 
     private HomeWorkspaceBinder.Actions createHomeWorkspaceActions() {

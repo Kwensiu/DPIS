@@ -2,6 +2,7 @@ package com.dpis.module;
 
 
 import com.dpis.module.fonts.FontLibraryStore;
+import com.dpis.module.settings.ExperimentalSettingsStore;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -90,6 +91,23 @@ public final class ConfigStoreFactory {
 
     public static FontLibraryStore createLocalUiFontLibraryStore(Context context, XposedService service) {
         return createLocalFontLibraryStore(context);
+    }
+
+    public static ExperimentalSettingsStore createExperimentalSettingsStore(
+            Context context,
+            XposedService service) {
+        DpisConfigStore store = createLocalUiModuleConfigStore(context, service);
+        return new ExperimentalSettingsStore(new ExperimentalSettingsStore.Delegate() {
+            @Override
+            public boolean isTtcFontImportEnabled() {
+                return store.isTtcFontImportEnabled();
+            }
+
+            @Override
+            public boolean setTtcFontImportEnabled(boolean enabled) {
+                return store.setTtcFontImportEnabled(enabled);
+            }
+        });
     }
 
     public static DpisConfigStore createForXposedHost(XposedInterface xposed) {

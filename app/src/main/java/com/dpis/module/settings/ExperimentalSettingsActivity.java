@@ -1,5 +1,9 @@
-package com.dpis.module;
+package com.dpis.module.settings;
 
+import com.dpis.module.ConfigStoreFactory;
+import com.dpis.module.DpisApplication;
+import com.dpis.module.LocalizedActivity;
+import com.dpis.module.R;
 import com.dpis.module.ui.WindowInsetsBinder;
 
 import android.os.Bundle;
@@ -10,13 +14,13 @@ import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textview.MaterialTextView;
 
 public final class ExperimentalSettingsActivity extends LocalizedActivity {
-    private DpisConfigStore configStore;
+    private ExperimentalSettingsStore settingsStore;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_experimental_settings);
-        configStore = ConfigStoreFactory.createLocalUiModuleConfigStore(
+        settingsStore = ConfigStoreFactory.createExperimentalSettingsStore(
                 this, DpisApplication.getXposedService());
         bindToolbar();
         bindTtcImportSwitch();
@@ -42,10 +46,10 @@ public final class ExperimentalSettingsActivity extends LocalizedActivity {
         textColumn.setLayoutParams(textColumnLayoutParams);
         title.setText(R.string.settings_ttc_import_label);
         subtitle.setText(R.string.settings_ttc_import_hint);
-        toggle.setChecked(configStore.isTtcFontImportEnabled());
+        toggle.setChecked(settingsStore.isTtcFontImportEnabled());
         row.setOnClickListener(v -> toggle.setChecked(!toggle.isChecked()));
         toggle.setOnCheckedChangeListener((button, checked) ->
-                configStore.setTtcFontImportEnabled(checked));
+                settingsStore.setTtcFontImportEnabled(checked));
     }
 
     private void applyInsets() {

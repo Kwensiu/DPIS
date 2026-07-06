@@ -52,7 +52,7 @@
             android:name=".ModeGuideActivity"
             android:exported="false" />
         <activity
-            android:name=".ExperimentalSettingsActivity"
+            android:name=".settings.ExperimentalSettingsActivity"
             android:exported="false" />
         <activity
             android:name=".AboutActivity"

@@ -9,12 +9,20 @@ import static org.junit.Assert.assertTrue;
 public final class ExperimentalSettingsActivitySourceSmokeTest {
     @Test
     public void laboratoryExposesTtcImportSwitch() throws IOException {
-        String source = read("src/main/java/com/dpis/module/ExperimentalSettingsActivity.java");
+        String source = read(
+                "src/main/java/com/dpis/module/settings/ExperimentalSettingsActivity.java");
+        String store = read("src/main/java/com/dpis/module/settings/ExperimentalSettingsStore.java");
+        String factory = read("src/main/java/com/dpis/module/ConfigStoreFactory.java");
         String layout = read("src/main/res/layout/activity_experimental_settings.xml");
         String strings = read("src/main/res/values/strings.xml");
 
-        assertTrue(source.contains("isTtcFontImportEnabled()"));
-        assertTrue(source.contains("setTtcFontImportEnabled("));
+        assertTrue(source.contains("ExperimentalSettingsStore"));
+        assertTrue(source.contains("settingsStore.isTtcFontImportEnabled()"));
+        assertTrue(source.contains("settingsStore.setTtcFontImportEnabled("));
+        assertTrue(store.contains("interface Delegate"));
+        assertTrue(factory.contains("createExperimentalSettingsStore("));
+        assertTrue(factory.contains("store.isTtcFontImportEnabled()"));
+        assertTrue(factory.contains("store.setTtcFontImportEnabled(enabled)"));
         assertTrue(source.contains("bindToolbar();"));
         assertTrue(source.contains("R.id.experimental_settings_back_button"));
         assertTrue(source.contains("backButton.setOnClickListener"));
