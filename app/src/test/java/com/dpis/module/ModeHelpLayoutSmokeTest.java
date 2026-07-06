@@ -9,9 +9,9 @@ import org.junit.Test;
 public class ModeHelpLayoutSmokeTest {
     @Test
     public void modeHelpLayoutContainsRouteCardsAndToolbar() throws IOException {
-        String source = read("src/main/java/com/dpis/module/ModeHelpActivity.java");
+        String source = read("src/main/java/com/dpis/module/home/ModeHelpActivity.java");
         String layout = read("src/main/res/layout/activity_mode_help.xml");
-        String guideSource = read("src/main/java/com/dpis/module/ModeGuideActivity.java");
+        String guideSource = read("src/main/java/com/dpis/module/home/ModeGuideActivity.java");
         String guideLayout = read("src/main/res/layout/activity_mode_guide.xml");
         String manifest = read("src/main/AndroidManifest.xml");
         String strings = read("src/main/res/values/strings.xml");
@@ -38,7 +38,7 @@ public class ModeHelpLayoutSmokeTest {
         assertTrue(guideLayout.contains("android:id=\"@+id/mode_guide_back_button\""));
         assertTrue(guideLayout.contains("@layout/item_mode_help_system"));
         assertTrue(guideLayout.contains("@layout/item_mode_help_compat"));
-        assertTrue(manifest.contains("android:name=\".ModeGuideActivity\""));
+        assertTrue(manifest.contains("android:name=\".home.ModeGuideActivity\""));
         assertTrue(strings.contains("name=\"help_tutorial_system_badge\""));
         assertTrue(strings.contains("name=\"help_tutorial_compat_badge\""));
         assertTrue(strings.contains("name=\"mode_help_tip_font_lag_reason\""));

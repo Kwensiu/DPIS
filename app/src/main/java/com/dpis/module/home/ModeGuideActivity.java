@@ -1,5 +1,7 @@
-package com.dpis.module;
+package com.dpis.module.home;
 
+import com.dpis.module.LocalizedActivity;
+import com.dpis.module.R;
 import com.dpis.module.ui.TouchFeedbackBinder;
 
 import android.os.Bundle;

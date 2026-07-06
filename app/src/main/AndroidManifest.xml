@@ -46,10 +46,10 @@
             android:name=".templates.QuickTemplateTargetSelectionActivity"
             android:exported="false" />
         <activity
-            android:name=".ModeHelpActivity"
+            android:name=".home.ModeHelpActivity"
             android:exported="false" />
         <activity
-            android:name=".ModeGuideActivity"
+            android:name=".home.ModeGuideActivity"
             android:exported="false" />
         <activity
             android:name=".settings.ExperimentalSettingsActivity"
