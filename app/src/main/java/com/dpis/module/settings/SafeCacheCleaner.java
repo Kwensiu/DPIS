@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.settings;
 
 import com.dpis.module.fonts.FontDebugStatsFileBridge;
 import com.dpis.module.fonts.FontDebugStatsStore;
@@ -13,16 +13,16 @@ import android.os.Environment;
 import java.io.File;
 import java.util.Locale;
 
-final class SafeCacheCleaner {
+public final class SafeCacheCleaner {
     private SafeCacheCleaner() {
     }
 
-    static String formatCacheUsage(Context context) {
+    public static String formatCacheUsage(Context context) {
         long bytes = calculateCacheBytes(context);
         return formatBytes(bytes);
     }
 
-    static void clearAll(Context context) {
+    public static void clearAll(Context context) {
         if (context == null) {
             return;
         }
@@ -34,7 +34,7 @@ final class SafeCacheCleaner {
         clearReleaseNotesCache(context);
     }
 
-    static boolean hasLegacyPublicFontDebugCache() {
+    public static boolean hasLegacyPublicFontDebugCache() {
         File legacyFile = legacyFontDebugFile();
         return legacyFile != null && legacyFile.isFile();
     }

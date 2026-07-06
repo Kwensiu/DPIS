@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.settings;
 
 import static org.junit.Assert.assertEquals;
 

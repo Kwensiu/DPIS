@@ -14,6 +14,7 @@ import com.dpis.module.settings.AppLocaleManager;
 import com.dpis.module.settings.AppUiScaleManager;
 import com.dpis.module.settings.InterfaceScaleStore;
 import com.dpis.module.settings.LauncherIconVisibilityStore;
+import com.dpis.module.settings.SafeCacheCleaner;
 import com.dpis.module.settings.SystemHookState;
 
 import android.content.ActivityNotFoundException;
