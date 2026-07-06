@@ -1,10 +1,11 @@
-package com.dpis.module;
+package com.dpis.module.quickconfig;
 
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Build;
 import android.service.quicksettings.TileService;
 
+import com.dpis.module.QuickConfigActivity;
 import com.dpis.module.applist.ForegroundPackageResolver;
 
 public final class QuickConfigTileService extends TileService {

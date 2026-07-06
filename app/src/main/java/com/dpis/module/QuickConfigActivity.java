@@ -113,7 +113,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
     private FeedbackDiagnosticExportBuilder.DiagnosticPackage pendingFeedbackDiagnosticPackage;
     private AlertDialog activeFeedbackDiagnosticPackagingDialog;
 
-    static Intent createIntent(Context context, String packageName) {
+    public static Intent createIntent(Context context, String packageName) {
         Intent intent = new Intent(context, QuickConfigActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if (packageName != null && !packageName.isBlank()) {

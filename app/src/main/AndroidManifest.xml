@@ -131,7 +131,7 @@
             android:exported="false" />
 
         <service
-            android:name=".QuickConfigTileService"
+            android:name=".quickconfig.QuickConfigTileService"
             android:exported="true"
             android:icon="@drawable/ic_quick_config_24"
             android:label="@string/quick_config_tile_label"
