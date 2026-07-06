@@ -12,6 +12,17 @@ import java.util.List;
 
 final class MainViewModel {
 
+    static final class AppsLoadRequest {
+        final int requestId;
+        final boolean forceInstalledAppCatalogReload;
+
+        AppsLoadRequest(int requestId, boolean forceInstalledAppCatalogReload) {
+            this.requestId = requestId;
+            this.forceInstalledAppCatalogReload
+                    = forceInstalledAppCatalogReload;
+        }
+    }
+
     private final AppLoadCoordinator loadCoordinator = new AppLoadCoordinator();
     private MainUiState state;
     private boolean forceInstalledAppCatalogReloadRequested;
@@ -61,7 +72,7 @@ final class MainViewModel {
         return state;
     }
 
-    List<MainUiEffect> dispatch(MainUiAction action) {
+    List<AppsLoadRequest> dispatch(MainUiAction action) {
         if (action == null) {
             return Collections.emptyList();
         }
@@ -102,7 +113,7 @@ final class MainViewModel {
         return Collections.emptyList();
     }
 
-    private List<MainUiEffect> requestAppsLoad(
+    private List<AppsLoadRequest> requestAppsLoad(
             boolean forceInstalledAppCatalogReload
     ) {
         if (forceInstalledAppCatalogReload) {
@@ -113,14 +124,14 @@ final class MainViewModel {
             return Collections.emptyList();
         }
         return Collections.singletonList(
-                new MainUiEffect.StartAppsLoad(
+                new AppsLoadRequest(
                         requestId,
                         consumeForceInstalledAppCatalogReloadRequested()
                 )
         );
     }
 
-    private List<MainUiEffect> onAppsLoadFinished(
+    private List<AppsLoadRequest> onAppsLoadFinished(
             int requestId,
             List<AppListItem> loadedApps
     ) {
@@ -131,7 +142,7 @@ final class MainViewModel {
         }
         if (completion.nextRequestId != AppLoadCoordinator.NO_REQUEST) {
             return Collections.singletonList(
-                    new MainUiEffect.StartAppsLoad(
+                    new AppsLoadRequest(
                             completion.nextRequestId,
                             consumeForceInstalledAppCatalogReloadRequested()
                     )

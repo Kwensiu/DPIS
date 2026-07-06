@@ -1142,10 +1142,10 @@ public final class MainActivity
         }
     }
 
-    private void startAppsLoad(MainUiEffect.StartAppsLoad start) {
-        int requestId = start.requestId;
+    private void startAppsLoad(MainViewModel.AppsLoadRequest request) {
+        int requestId = request.requestId;
         boolean forceInstalledAppCatalogReload
-                = start.forceInstalledAppCatalogReload;
+                = request.forceInstalledAppCatalogReload;
         new Thread(() -> {
             List<AppListItem> loaded = null;
             try {
@@ -1375,9 +1375,9 @@ public final class MainActivity
         if (viewModel == null) {
             return;
         }
-        List<MainUiEffect> effects = viewModel.dispatch(action);
+        List<MainViewModel.AppsLoadRequest> requests = viewModel.dispatch(action);
         renderMainUiState(viewModel.getState());
-        handleMainUiEffects(effects);
+        handleAppsLoadRequests(requests);
     }
 
     private void renderMainUiState(MainUiState state) {
@@ -2258,14 +2258,12 @@ public final class MainActivity
         return MainWorkspaceMode.APP;
     }
 
-    private void handleMainUiEffects(List<MainUiEffect> effects) {
-        if (effects == null || effects.isEmpty()) {
+    private void handleAppsLoadRequests(List<MainViewModel.AppsLoadRequest> requests) {
+        if (requests == null || requests.isEmpty()) {
             return;
         }
-        for (MainUiEffect effect : effects) {
-            if (effect instanceof MainUiEffect.StartAppsLoad) {
-                startAppsLoad((MainUiEffect.StartAppsLoad) effect);
-            }
+        for (MainViewModel.AppsLoadRequest request : requests) {
+            startAppsLoad(request);
         }
     }
 
