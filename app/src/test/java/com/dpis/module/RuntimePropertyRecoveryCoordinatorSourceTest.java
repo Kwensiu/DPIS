@@ -22,7 +22,7 @@ public final class RuntimePropertyRecoveryCoordinatorSourceTest {
                 "src/main/java/com/dpis/module/runtime/RuntimePropertyRecoveryCoordinator.java");
         String app = readProjectFile("src/main/java/com/dpis/module/DpisApplication.java");
         String receiver = readProjectFile(
-                "src/main/java/com/dpis/module/DpisPackageLifecycleReceiver.java");
+                "src/main/java/com/dpis/module/runtime/DpisPackageLifecycleReceiver.java");
 
         assertTrue(source.contains("ViewportPropertySyncer.syncConfiguredTargetsAsync(store)"));
         assertTrue(source.contains("FontRuntimePropertySyncer.syncConfiguredTargetsAsync(store)"));

@@ -31,6 +31,10 @@ public final class ConfigStoreFactory {
         return store;
     }
 
+    public static DpisConfigStore createPackageLifecycleConfigStore(Context context) {
+        return createLocalModuleConfigStore(context);
+    }
+
     public static DpisConfigStore createLocalUiModuleConfigStore(Context context, XposedService service) {
         File legacySharedPrefsFile = legacySharedPrefsFile(context);
         SharedPreferences localPreferences =

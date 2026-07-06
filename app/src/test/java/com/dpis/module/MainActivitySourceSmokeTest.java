@@ -1547,10 +1547,10 @@ public class MainActivitySourceSmokeTest {
         throws IOException {
         String manifest = read("src/main/AndroidManifest.xml");
         String receiver = read(
-            "src/main/java/com/dpis/module/DpisPackageLifecycleReceiver.java"
+            "src/main/java/com/dpis/module/runtime/DpisPackageLifecycleReceiver.java"
         );
 
-        assertTrue(manifest.contains(".DpisPackageLifecycleReceiver"));
+        assertTrue(manifest.contains(".runtime.DpisPackageLifecycleReceiver"));
         assertTrue(
             manifest.contains("android.intent.action.MY_PACKAGE_REPLACED")
         );

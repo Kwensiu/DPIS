@@ -1,7 +1,10 @@
-package com.dpis.module;
+package com.dpis.module.runtime;
 
+import com.dpis.module.ConfigStoreFactory;
+import com.dpis.module.DpisApplication;
+import com.dpis.module.DpisConfigStore;
+import com.dpis.module.DpisLog;
 import com.dpis.module.fonts.HyperOsNativeProxyAssetExporter;
-import com.dpis.module.runtime.RuntimePropertyRecoveryCoordinator;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -16,7 +19,7 @@ public final class DpisPackageLifecycleReceiver extends BroadcastReceiver {
         HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(context, DpisLog::e);
         DpisConfigStore store = DpisApplication.getConfigStore();
         if (store == null) {
-            store = ConfigStoreFactory.createLocalModuleConfigStore(context);
+            store = ConfigStoreFactory.createPackageLifecycleConfigStore(context);
         }
         // BOOT_COMPLETED and MY_PACKAGE_REPLACED are only best-effort triggers on some ROMs.
         // The coordinator itself is idempotent and can be replayed safely from other entrypoints.
