@@ -1,5 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.process;
 
+import com.dpis.module.R;
 import com.dpis.module.applist.AppListItem;
 
 import com.dpis.module.ui.DialogWindowSizer;
@@ -19,8 +20,8 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textview.MaterialTextView;
 
-final class ProcessActionHandler {
-    enum Action {
+public final class ProcessActionHandler {
+    public enum Action {
         START,
         RESTART,
         STOP
@@ -30,17 +31,17 @@ final class ProcessActionHandler {
     private final RootAppProcessLauncher rootLauncher;
     private final BeforeTargetLaunch beforeTargetLaunch;
 
-    ProcessActionHandler(Activity activity) {
+    public ProcessActionHandler(Activity activity) {
         this(activity, null);
     }
 
-    ProcessActionHandler(Activity activity, BeforeTargetLaunch beforeTargetLaunch) {
+    public ProcessActionHandler(Activity activity, BeforeTargetLaunch beforeTargetLaunch) {
         this.activity = activity;
         this.rootLauncher = new RootAppProcessLauncher(activity);
         this.beforeTargetLaunch = beforeTargetLaunch;
     }
 
-    void execute(AppListItem item, Action action) {
+    public void execute(AppListItem item, Action action) {
         if (requiresRoot(action) && !hasRootAccess()) {
             showToast(rootRequiredMessageResId(action));
             return;
@@ -132,7 +133,7 @@ final class ProcessActionHandler {
         }
     }
 
-    interface BeforeTargetLaunch {
+    public interface BeforeTargetLaunch {
         void run(String packageName);
     }
 

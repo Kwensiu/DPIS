@@ -47,6 +47,8 @@ import com.dpis.module.hooks.HookDomainOverrideStore;
 
 import com.dpis.module.quirks.WechatDpiSheetBinder;
 
+import com.dpis.module.process.ProcessActionHandler;
+
 import com.dpis.module.templates.QuickTemplateSortDialog;
 
 import com.dpis.module.templates.GlobalPrefillStore;

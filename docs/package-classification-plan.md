@@ -52,6 +52,7 @@ the real dependency graph is inspected.
 | `templates` | `QuickTemplate*`, `Template*`, `GlobalPrefill*` | Watch for shared app-config summary and typeface resolution logic. |
 | `appconfig` | `AppConfig*`, config input binders, save semantics, dialog coordinators | Keep sheet draft semantics separate from persisted package state. |
 | `applist` | `AppList*`, installed catalog classes, app status formatting | Keep user-visible configured package semantics aligned across home and configured lists. |
+| `process` | process start/restart/stop UI actions and launch helpers | Keep user-triggered process actions separate from runtime hook routes. |
 | `home` | `Home*`, workspace status binders, activation state | Treat this as UI assembly, not package configuration ownership. |
 | `settings` | settings workspace, system hook toggles, launcher icon visibility, startup disclaimer | Split further if it starts mixing unrelated settings flows. |
 | `fonts` | `Font*`, `Typeface*`, `SystemFont*`, HyperOS font classes, font debug stats | Do not fold typeface replacement, font scale, and hook domains into one concept. |
@@ -84,6 +85,7 @@ the real dependency graph is inspected.
 | `viewport` | `DisplayOverridePipeline`, `EffectiveModeResolver`, `PerAppDisplayOverrideCalculator` | Viewport strategy and display-environment calculation helpers shared by UI planning, app-process routes, and system-server routes. |
 | `root` | `RootAccessProbe` | Shared root availability probe used by status UI, log page, process actions, and feedback diagnostics. |
 | `root` | `RootAppProcessLauncher` | Shared root app start/stop/restart launcher used by process actions and feedback diagnostics. The launcher API is public; `ShellResult` exposes immutable accessors instead of public fields. |
+| `process` | `ProcessActionHandler` | User-triggered app process start/restart/stop UI handler. Root activities wire the public handler/action protocol; root command execution remains behind `RootAppProcessLauncher`. |
 | `fonts` | `HyperOsNativeProxyStatus` | Small status/value object move for HyperOS native proxy detection. |
 | `fonts` | `FontFileInspector`, `FontFileKind`, `TtcFontCollectionParser` | Font-file identification cluster with no package-private root dependencies. |
 | `fonts` | `ComposeFontRuntimeClassifier`, `FontFieldRewriteMath`, `FontTypefaceLoader`, `PublishedFontFileResolver`, `TextViewFontProvenanceTracker`, `HyperOsNativeAppDetector` | Focused font runtime/file helpers. The package move did not change font route ownership or mode semantics. |
