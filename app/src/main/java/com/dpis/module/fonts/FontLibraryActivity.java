@@ -1,16 +1,16 @@
-package com.dpis.module;
+package com.dpis.module.fonts;
 
+import com.dpis.module.ConfigStoreFactory;
+import com.dpis.module.DpisApplication;
+import com.dpis.module.LocalizedActivity;
+import com.dpis.module.R;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
-
-import com.dpis.module.fonts.FontLibraryEntry;
-import com.dpis.module.fonts.FontLibraryStore;
 
 import com.dpis.module.ui.TouchFeedbackBinder;
 
 import com.dpis.module.ui.DialogWindowSizer;
 
-import com.dpis.module.fonts.FontTypefaceLoader;
 import com.dpis.module.ui.MaxHeightNestedScrollView;
 
 import android.content.ActivityNotFoundException;
@@ -35,8 +35,6 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.dpis.module.fonts.FontFileInspector;
-import com.dpis.module.fonts.FontFileKind;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -63,7 +61,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
     private LinearLayout listView;
     private MaterialTextView emptyView;
     private FontLibraryStore fontLibraryStore;
-    private DpisConfigStore configStore;
+    private FontLibraryConfigStore configStore;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,7 +70,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
         fontLibraryStore = ConfigStoreFactory.createLocalUiFontLibraryStore(
                 this, DpisApplication.getXposedService());
         fontLibraryStore.purgeOrphanedFiles();
-        configStore = ConfigStoreFactory.createLocalUiModuleConfigStore(
+        configStore = ConfigStoreFactory.createFontLibraryConfigStore(
                 this, DpisApplication.getXposedService());
         listView = findViewById(R.id.font_library_list);
         emptyView = findViewById(R.id.font_library_empty);

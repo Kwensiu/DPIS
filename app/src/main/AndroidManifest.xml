@@ -40,7 +40,7 @@
             android:resource="@array/xposedscope" />
 
         <activity
-            android:name=".FontLibraryActivity"
+            android:name=".fonts.FontLibraryActivity"
             android:exported="false" />
         <activity
             android:name=".templates.QuickTemplateTargetSelectionActivity"

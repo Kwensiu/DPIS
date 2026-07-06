@@ -2,6 +2,7 @@ package com.dpis.module;
 
 
 import com.dpis.module.fonts.FontLibraryStore;
+import com.dpis.module.fonts.FontLibraryConfigStore;
 import com.dpis.module.settings.ExperimentalSettingsStore;
 
 import android.content.Context;
@@ -95,6 +96,38 @@ public final class ConfigStoreFactory {
 
     public static FontLibraryStore createLocalUiFontLibraryStore(Context context, XposedService service) {
         return createLocalFontLibraryStore(context);
+    }
+
+    public static FontLibraryConfigStore createFontLibraryConfigStore(
+            Context context,
+            XposedService service) {
+        DpisConfigStore store = createLocalUiModuleConfigStore(context, service);
+        return new FontLibraryConfigStore(new FontLibraryConfigStore.Delegate() {
+            @Override
+            public boolean clearTargetTypefaceId(String packageName) {
+                return store.clearTargetTypefaceId(packageName);
+            }
+
+            @Override
+            public java.util.Set<String> getConfiguredPackages() {
+                return store.getConfiguredPackages();
+            }
+
+            @Override
+            public String getTargetTypefaceId(String packageName) {
+                return store.getTargetTypefaceId(packageName);
+            }
+
+            @Override
+            public boolean isTtcFontImportEnabled() {
+                return store.isTtcFontImportEnabled();
+            }
+
+            @Override
+            public boolean setTargetTypefaceId(String packageName, String typefaceId) {
+                return store.setTargetTypefaceId(packageName, typefaceId);
+            }
+        });
     }
 
     public static ExperimentalSettingsStore createExperimentalSettingsStore(

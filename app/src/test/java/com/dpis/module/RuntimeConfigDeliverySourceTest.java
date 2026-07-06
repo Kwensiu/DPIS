@@ -21,7 +21,7 @@ public class RuntimeConfigDeliverySourceTest {
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
         String appConfigHost = hostBlock(mainActivity);
         String sheetActions = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java");
-        String fontLibrary = read("src/main/java/com/dpis/module/FontLibraryActivity.java");
+        String fontLibrary = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
         String systemHooks = read("src/main/java/com/dpis/module/SystemHooksToggleController.java");
         String systemSettings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
 

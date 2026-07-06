@@ -4,6 +4,7 @@ import com.dpis.module.fonts.FontDebugDataDiagnostics;
 import com.dpis.module.fonts.FontDebugOverlayService;
 import com.dpis.module.fonts.FontDebugStatsStore;
 import com.dpis.module.fonts.FontDebugStatsSchema;
+import com.dpis.module.fonts.FontLibraryActivity;
 
 import com.dpis.module.runtime.RuntimeDebugPropertySyncer;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
