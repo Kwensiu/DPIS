@@ -340,7 +340,7 @@ public final class MainActivity
     private boolean installedAppsPermissionRequestInFlight;
     private boolean pendingInstalledAppsLoadAfterPermission;
     private boolean installedAppsPermissionRequestCompleted;
-    private MainWorkspaceMode renderedWorkspaceMode;
+    private MainUiState.WorkspaceMode renderedWorkspaceMode;
     private boolean rootAccessProbeInFlight;
     private HomeUpdateUiState homeUpdateUiState = HomeUpdateUiState.UP_TO_DATE;
     private volatile boolean startupUpdateCheckInProgress;
@@ -396,7 +396,7 @@ public final class MainActivity
         String initialQuery = "";
         String initialTemplateQuery = "";
         AppListFilterState initialFilterState = appListFilterStateStore.load();
-        MainWorkspaceMode initialWorkspaceMode = MainWorkspaceMode.HOME;
+        MainUiState.WorkspaceMode initialWorkspaceMode = MainUiState.WorkspaceMode.HOME;
         List<AppListItem> initialAppsSnapshot = Collections.emptyList();
         Set<AppListPage> initialRefreshingPages = EnumSet.noneOf(
                 AppListPage.class
@@ -437,7 +437,7 @@ public final class MainActivity
                     savedInstanceState.getBoolean(STATE_FILTER_WIDTH_ONLY, false),
                     savedInstanceState.getBoolean(STATE_FILTER_FONT_ONLY, false)
             );
-            initialWorkspaceMode = MainWorkspaceMode.fromName(
+            initialWorkspaceMode = MainUiState.WorkspaceMode.fromName(
                     savedInstanceState.getString(STATE_WORKSPACE_MODE)
             );
             restoredPageScrollStates
@@ -658,13 +658,13 @@ public final class MainActivity
         super.onStart();
         refreshSystemHookEffectiveEnabled();
         refreshVisibleAppListStatuses();
-        if (requireUiState().workspaceMode == MainWorkspaceMode.TEMPLATE) {
+        if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.TEMPLATE) {
             bindTemplateWorkspace();
-        } else if (requireUiState().workspaceMode == MainWorkspaceMode.HOME) {
+        } else if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
             bindHomeWorkspace();
-        } else if (requireUiState().workspaceMode == MainWorkspaceMode.TOOLS) {
+        } else if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.TOOLS) {
             bindToolsWorkspace();
-        } else if (requireUiState().workspaceMode == MainWorkspaceMode.SETTINGS) {
+        } else if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.SETTINGS) {
             bindSettingsWorkspace();
         }
         if (toolsWorkspaceBinder != null) {
@@ -720,7 +720,7 @@ public final class MainActivity
         runOnUiThread(() -> {
             refreshSystemHookEffectiveEnabled();
             refreshVisibleAppListStatuses();
-            if (requireUiState().workspaceMode == MainWorkspaceMode.HOME) {
+            if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
                 bindHomeWorkspace();
             }
             if (settingsWorkspaceBinder != null) {
@@ -1446,16 +1446,16 @@ public final class MainActivity
         }
     }
 
-    private void applyWorkspaceMode(MainWorkspaceMode workspaceMode) {
-        MainWorkspaceMode mode
-                = workspaceMode != null ? workspaceMode : MainWorkspaceMode.HOME;
-        boolean enteringToolsWorkspace = mode == MainWorkspaceMode.TOOLS
-                && renderedWorkspaceMode != MainWorkspaceMode.TOOLS;
-        boolean appWorkspace = mode == MainWorkspaceMode.APP;
-        boolean homeWorkspace = mode == MainWorkspaceMode.HOME;
-        boolean templateWorkspace = mode == MainWorkspaceMode.TEMPLATE;
-        boolean toolsWorkspace = mode == MainWorkspaceMode.TOOLS;
-        boolean settingsWorkspace = mode == MainWorkspaceMode.SETTINGS;
+    private void applyWorkspaceMode(MainUiState.WorkspaceMode workspaceMode) {
+        MainUiState.WorkspaceMode mode
+                = workspaceMode != null ? workspaceMode : MainUiState.WorkspaceMode.HOME;
+        boolean enteringToolsWorkspace = mode == MainUiState.WorkspaceMode.TOOLS
+                && renderedWorkspaceMode != MainUiState.WorkspaceMode.TOOLS;
+        boolean appWorkspace = mode == MainUiState.WorkspaceMode.APP;
+        boolean homeWorkspace = mode == MainUiState.WorkspaceMode.HOME;
+        boolean templateWorkspace = mode == MainUiState.WorkspaceMode.TEMPLATE;
+        boolean toolsWorkspace = mode == MainUiState.WorkspaceMode.TOOLS;
+        boolean settingsWorkspace = mode == MainUiState.WorkspaceMode.SETTINGS;
         setVisible(topContainer, appWorkspace || templateWorkspace);
         setVisible(filterTabs, appWorkspace);
         boolean floatingActionsVisible
@@ -1516,7 +1516,7 @@ public final class MainActivity
 
     private void restoreAppEditorForCurrentWorkspace() {
         if (mainViewModel == null
-                || requireUiState().workspaceMode != MainWorkspaceMode.APP) {
+                || requireUiState().workspaceMode != MainUiState.WorkspaceMode.APP) {
             return;
         }
         String editingPackage = mainViewModel.getEditingPackageName();
@@ -1857,7 +1857,7 @@ public final class MainActivity
     }
 
     private void restoreTemplateEditorForCurrentConfiguration() {
-        if (requireUiState().workspaceMode != MainWorkspaceMode.TEMPLATE
+        if (requireUiState().workspaceMode != MainUiState.WorkspaceMode.TEMPLATE
                 || templateDetailSelection == null
                 || templateDetailSelection.kind == TemplateDetailKind.NONE) {
             return;
@@ -2062,7 +2062,7 @@ public final class MainActivity
             retainedQuickTemplateDraft = null;
         }
         if (!isLandscapeDetailMode()
-                || requireUiState().workspaceMode != MainWorkspaceMode.TEMPLATE
+                || requireUiState().workspaceMode != MainUiState.WorkspaceMode.TEMPLATE
                 || templateDetailSelection == null
                 || templateDetailSelection.kind == TemplateDetailKind.NONE) {
             return;
@@ -2110,11 +2110,11 @@ public final class MainActivity
         updateSearchHint(requireUiState().workspaceMode);
     }
 
-    private void updateSearchHint(MainWorkspaceMode workspaceMode) {
+    private void updateSearchHint(MainUiState.WorkspaceMode workspaceMode) {
         if (searchInput == null) {
             return;
         }
-        boolean templateWorkspace = workspaceMode == MainWorkspaceMode.TEMPLATE;
+        boolean templateWorkspace = workspaceMode == MainUiState.WorkspaceMode.TEMPLATE;
         CharSequence current = searchInput.getText();
         boolean empty = current == null || current.length() == 0;
         if (templateWorkspace) {
@@ -2150,24 +2150,24 @@ public final class MainActivity
         }
     }
 
-    private void resetHiddenWorkspacePresentation(MainWorkspaceMode visibleMode) {
-        resetWorkspacePresentationUnlessMode(appPager, visibleMode, MainWorkspaceMode.APP);
+    private void resetHiddenWorkspacePresentation(MainUiState.WorkspaceMode visibleMode) {
+        resetWorkspacePresentationUnlessMode(appPager, visibleMode, MainUiState.WorkspaceMode.APP);
         resetWorkspacePresentationUnlessMode(
-                landListPageView, visibleMode, MainWorkspaceMode.APP);
+                landListPageView, visibleMode, MainUiState.WorkspaceMode.APP);
         resetWorkspacePresentationUnlessMode(
-                homeWorkspaceContainer, visibleMode, MainWorkspaceMode.HOME);
+                homeWorkspaceContainer, visibleMode, MainUiState.WorkspaceMode.HOME);
         resetWorkspacePresentationUnlessMode(
-                templateWorkspaceContainer, visibleMode, MainWorkspaceMode.TEMPLATE);
+                templateWorkspaceContainer, visibleMode, MainUiState.WorkspaceMode.TEMPLATE);
         resetWorkspacePresentationUnlessMode(
-                toolsWorkspaceContainer, visibleMode, MainWorkspaceMode.TOOLS);
+                toolsWorkspaceContainer, visibleMode, MainUiState.WorkspaceMode.TOOLS);
         resetWorkspacePresentationUnlessMode(
-                settingsWorkspaceContainer, visibleMode, MainWorkspaceMode.SETTINGS);
+                settingsWorkspaceContainer, visibleMode, MainUiState.WorkspaceMode.SETTINGS);
     }
 
     private static void resetWorkspacePresentationUnlessMode(
             View view,
-            MainWorkspaceMode visibleMode,
-            MainWorkspaceMode viewMode
+            MainUiState.WorkspaceMode visibleMode,
+            MainUiState.WorkspaceMode viewMode
     ) {
         if (visibleMode != viewMode) {
             resetWorkspacePresentation(view);
@@ -2184,7 +2184,7 @@ public final class MainActivity
         view.setScaleY(1f);
     }
 
-    private void animateVisibleWorkspaceContent(MainWorkspaceMode mode) {
+    private void animateVisibleWorkspaceContent(MainUiState.WorkspaceMode mode) {
         View target = workspaceViewForMode(mode);
         if (target == null) {
             return;
@@ -2207,55 +2207,55 @@ public final class MainActivity
                 .start();
     }
 
-    private View workspaceViewForMode(MainWorkspaceMode mode) {
-        if (mode == MainWorkspaceMode.APP) {
+    private View workspaceViewForMode(MainUiState.WorkspaceMode mode) {
+        if (mode == MainUiState.WorkspaceMode.APP) {
             return appPager != null ? appPager : landListPageView;
         }
-        if (mode == MainWorkspaceMode.HOME) {
+        if (mode == MainUiState.WorkspaceMode.HOME) {
             return homeWorkspaceContainer;
         }
-        if (mode == MainWorkspaceMode.TEMPLATE) {
+        if (mode == MainUiState.WorkspaceMode.TEMPLATE) {
             return templateWorkspaceContainer;
         }
-        if (mode == MainWorkspaceMode.TOOLS) {
+        if (mode == MainUiState.WorkspaceMode.TOOLS) {
             return toolsWorkspaceContainer;
         }
-        if (mode == MainWorkspaceMode.SETTINGS) {
+        if (mode == MainUiState.WorkspaceMode.SETTINGS) {
             return settingsWorkspaceContainer;
         }
         return null;
     }
 
-    private static int workspaceButtonId(MainWorkspaceMode workspaceMode) {
-        if (workspaceMode == MainWorkspaceMode.TEMPLATE) {
+    private static int workspaceButtonId(MainUiState.WorkspaceMode workspaceMode) {
+        if (workspaceMode == MainUiState.WorkspaceMode.TEMPLATE) {
             return R.id.workspace_template_button;
         }
-        if (workspaceMode == MainWorkspaceMode.HOME) {
+        if (workspaceMode == MainUiState.WorkspaceMode.HOME) {
             return R.id.workspace_home_button;
         }
-        if (workspaceMode == MainWorkspaceMode.TOOLS) {
+        if (workspaceMode == MainUiState.WorkspaceMode.TOOLS) {
             return R.id.workspace_tools_button;
         }
-        if (workspaceMode == MainWorkspaceMode.SETTINGS) {
+        if (workspaceMode == MainUiState.WorkspaceMode.SETTINGS) {
             return R.id.workspace_settings_button;
         }
         return R.id.workspace_app_button;
     }
 
-    private static MainWorkspaceMode workspaceModeForButtonId(int checkedId) {
+    private static MainUiState.WorkspaceMode workspaceModeForButtonId(int checkedId) {
         if (checkedId == R.id.workspace_template_button) {
-            return MainWorkspaceMode.TEMPLATE;
+            return MainUiState.WorkspaceMode.TEMPLATE;
         }
         if (checkedId == R.id.workspace_home_button) {
-            return MainWorkspaceMode.HOME;
+            return MainUiState.WorkspaceMode.HOME;
         }
         if (checkedId == R.id.workspace_tools_button) {
-            return MainWorkspaceMode.TOOLS;
+            return MainUiState.WorkspaceMode.TOOLS;
         }
         if (checkedId == R.id.workspace_settings_button) {
-            return MainWorkspaceMode.SETTINGS;
+            return MainUiState.WorkspaceMode.SETTINGS;
         }
-        return MainWorkspaceMode.APP;
+        return MainUiState.WorkspaceMode.APP;
     }
 
     private void handleAppsLoadRequests(List<MainViewModel.AppsLoadRequest> requests) {
@@ -2564,7 +2564,7 @@ public final class MainActivity
 
     private void bindHomeWorkspaceIfVisible() {
         if (mainViewModel != null
-                && requireUiState().workspaceMode == MainWorkspaceMode.HOME) {
+                && requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
             bindHomeWorkspace();
         }
     }
@@ -3160,7 +3160,7 @@ public final class MainActivity
             public void openConfiguredAppsWorkspace() {
                 setCurrentAppListPage(AppListPage.CONFIGURED_APPS, false);
                 dispatchMainUiAction(
-                        MainUiAction.workspaceModeChanged(MainWorkspaceMode.APP)
+                        MainUiAction.workspaceModeChanged(MainUiState.WorkspaceMode.APP)
                 );
             }
 
@@ -3172,7 +3172,7 @@ public final class MainActivity
             @Override
             public void openTemplateWorkspace() {
                 dispatchMainUiAction(
-                        MainUiAction.workspaceModeChanged(MainWorkspaceMode.TEMPLATE)
+                        MainUiAction.workspaceModeChanged(MainUiState.WorkspaceMode.TEMPLATE)
                 );
             }
         };
@@ -3224,7 +3224,7 @@ public final class MainActivity
             RootAccessProbe.Result result = RootAccessProbe.probe();
             runOnUiThread(() -> {
                 rootAccessProbeInFlight = false;
-                if (requireUiState().workspaceMode == MainWorkspaceMode.HOME) {
+                if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
                     bindHomeWorkspace();
                 }
             });
@@ -4975,7 +4975,7 @@ public final class MainActivity
         final String query;
         final String templateQuery;
         final AppListFilterState filterState;
-        final MainWorkspaceMode workspaceMode;
+        final MainUiState.WorkspaceMode workspaceMode;
         final int currentPage;
         final SparseArray<Parcelable> pageScrollStates;
         final int[] refreshingPagePositions;
@@ -4992,7 +4992,7 @@ public final class MainActivity
                 String query,
                 String templateQuery,
                 AppListFilterState filterState,
-                MainWorkspaceMode workspaceMode,
+                MainUiState.WorkspaceMode workspaceMode,
                 int currentPage,
                 SparseArray<Parcelable> pageScrollStates,
                 int[] refreshingPagePositions,
@@ -5012,7 +5012,7 @@ public final class MainActivity
                             ? filterState
                             : AppListFilterState.defaultState();
             this.workspaceMode
-                    = workspaceMode != null ? workspaceMode : MainWorkspaceMode.APP;
+                    = workspaceMode != null ? workspaceMode : MainUiState.WorkspaceMode.APP;
             this.currentPage = currentPage;
             this.pageScrollStates
                     = pageScrollStates != null ? pageScrollStates.clone() : null;

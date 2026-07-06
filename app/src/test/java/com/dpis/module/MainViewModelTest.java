@@ -111,10 +111,10 @@ public class MainViewModelTest {
                 Collections.emptySet());
         MainViewModel viewModel = new MainViewModel(initial);
 
-        viewModel.dispatch(MainUiAction.workspaceModeChanged(MainWorkspaceMode.TEMPLATE));
+        viewModel.dispatch(MainUiAction.workspaceModeChanged(MainUiState.WorkspaceMode.TEMPLATE));
         MainUiState templateState = viewModel.getState();
 
-        assertEquals(MainWorkspaceMode.TEMPLATE, templateState.workspaceMode);
+        assertEquals(MainUiState.WorkspaceMode.TEMPLATE, templateState.workspaceMode);
         assertEquals("", templateState.currentQuery());
         assertEquals("alpha", templateState.appQuery);
         assertTrue(templateState.filterState.injectedOnly());
@@ -126,10 +126,10 @@ public class MainViewModelTest {
         assertEquals("alpha", queriedTemplateState.appQuery);
         assertEquals("template", queriedTemplateState.templateQuery);
 
-        viewModel.dispatch(MainUiAction.workspaceModeChanged(MainWorkspaceMode.APP));
+        viewModel.dispatch(MainUiAction.workspaceModeChanged(MainUiState.WorkspaceMode.APP));
         MainUiState appState = viewModel.getState();
 
-        assertEquals(MainWorkspaceMode.APP, appState.workspaceMode);
+        assertEquals(MainUiState.WorkspaceMode.APP, appState.workspaceMode);
         assertEquals("alpha", appState.currentQuery());
         assertEquals("template", appState.templateQuery);
         assertTrue(appState.filterState.injectedOnly());

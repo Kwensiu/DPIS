@@ -168,7 +168,7 @@ public class MainActivitySourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(source.contains("STATE_WORKSPACE_MODE"));
-        assertTrue(source.contains("MainWorkspaceMode.fromName("));
+        assertTrue(source.contains("MainUiState.WorkspaceMode.fromName("));
         assertTrue(source.contains("bindWorkspaceSwitch()"));
         assertTrue(
             source.contains("workspaceSwitch.setOnItemSelectedListener")
@@ -183,7 +183,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("applyWorkspaceMode(state.workspaceMode);"));
         assertTrue(
             source.contains(
-                "boolean appWorkspace = mode == MainWorkspaceMode.APP;"
+                "boolean appWorkspace = mode == MainUiState.WorkspaceMode.APP;"
             )
         );
         assertTrue(source.contains("setVisible(filterTabs, appWorkspace);"));
@@ -340,7 +340,7 @@ public class MainActivitySourceSmokeTest {
 
         assertTrue(source.contains("restoreAppEditorForCurrentWorkspace();"));
         assertTrue(source.contains("private void restoreAppEditorForCurrentWorkspace()"));
-        assertTrue(source.contains("requireUiState().workspaceMode != MainWorkspaceMode.APP"));
+        assertTrue(source.contains("requireUiState().workspaceMode != MainUiState.WorkspaceMode.APP"));
         assertTrue(source.contains("showEditBottomSheet(appItem);"));
         assertTrue(source.contains("showEditDetailPane(appItem);"));
         assertTrue(source.contains("private BottomSheetDialog activeAppEditorDialog;"));

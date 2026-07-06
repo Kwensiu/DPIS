@@ -32,7 +32,7 @@ abstract class MainUiAction {
         return new MarkPageRefreshing(page);
     }
 
-    static MainUiAction workspaceModeChanged(MainWorkspaceMode workspaceMode) {
+    static MainUiAction workspaceModeChanged(MainUiState.WorkspaceMode workspaceMode) {
         return new WorkspaceModeChanged(workspaceMode);
     }
 
@@ -79,9 +79,9 @@ abstract class MainUiAction {
     }
 
     static final class WorkspaceModeChanged extends MainUiAction {
-        final MainWorkspaceMode workspaceMode;
+        final MainUiState.WorkspaceMode workspaceMode;
 
-        WorkspaceModeChanged(MainWorkspaceMode workspaceMode) {
+        WorkspaceModeChanged(MainUiState.WorkspaceMode workspaceMode) {
             this.workspaceMode = workspaceMode;
         }
     }
