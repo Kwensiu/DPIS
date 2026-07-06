@@ -16,6 +16,7 @@ import com.dpis.module.settings.InterfaceScaleStore;
 import com.dpis.module.settings.LauncherIconVisibilityStore;
 import com.dpis.module.settings.SafeCacheCleaner;
 import com.dpis.module.settings.SystemHookState;
+import com.dpis.module.home.DonateActivity;
 
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;

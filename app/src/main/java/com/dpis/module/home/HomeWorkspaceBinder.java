@@ -1,7 +1,6 @@
 package com.dpis.module.home;
 
 import com.dpis.module.BuildConfig;
-import com.dpis.module.DonateActivity;
 import com.dpis.module.ModeHelpActivity;
 import com.dpis.module.R;
 import com.dpis.module.ui.TouchFeedbackBinder;

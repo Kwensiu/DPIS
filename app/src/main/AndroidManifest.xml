@@ -58,7 +58,7 @@
             android:name=".AboutActivity"
             android:exported="false" />
         <activity
-            android:name=".DonateActivity"
+            android:name=".home.DonateActivity"
             android:exported="false" />
         <activity
             android:name=".OpenSourceLicenseActivity"
