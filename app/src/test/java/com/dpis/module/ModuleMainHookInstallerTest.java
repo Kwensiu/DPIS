@@ -91,7 +91,7 @@ public class ModuleMainHookInstallerTest {
         assertTrue(source.contains("String processName = resolveCurrentProcessName();"));
         assertTrue(source.contains("maybeInstallAppProcessFromPackageLoaded(store, processName, param.getPackageName())"));
         assertTrue(source.contains("Application.getProcessName()"));
-        assertTrue(source.contains("Path.of(\"/proc/self/cmdline\")"));
+        assertTrue(source.contains("new File(\"/proc/self/cmdline\").toPath()"));
         assertTrue(source.contains("package-loaded app hook install enter"));
         assertTrue(source.contains("package-loaded app hook install skipped system process"));
         assertTrue(source.contains("package-loaded app hook install failed"));

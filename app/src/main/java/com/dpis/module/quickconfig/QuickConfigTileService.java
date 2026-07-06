@@ -1,5 +1,6 @@
 package com.dpis.module.quickconfig;
 
+import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Build;
@@ -27,6 +28,7 @@ public class QuickConfigTileService extends TileService {
         }
     }
 
+    @SuppressLint("StartActivityAndCollapseDeprecated")
     @SuppressWarnings("deprecation")
     private void startActivityAndCollapseCompat(Intent intent) {
         startActivityAndCollapse(intent);
