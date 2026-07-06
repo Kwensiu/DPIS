@@ -18,6 +18,7 @@ import com.dpis.module.appconfig.AppConfigDialogBinder;
 import com.dpis.module.appconfig.AppConfigInputValidation;
 import com.dpis.module.appconfig.AppConfigPrefillPreview;
 import com.dpis.module.appconfig.AppConfigSaveHandler;
+import com.dpis.module.about.AboutActivity;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
 

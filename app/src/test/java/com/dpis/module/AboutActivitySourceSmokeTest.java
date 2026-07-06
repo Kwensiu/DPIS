@@ -21,7 +21,7 @@ import org.junit.Test;
 public class AboutActivitySourceSmokeTest {
     @Test
     public void aboutActivityWiresOpenSourceLicenseEntryToDedicatedPage() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AboutActivity.java");
+        String source = read("src/main/java/com/dpis/module/about/AboutActivity.java");
 
         assertTrue(source.contains("R.id.row_about_open_source_license"));
         assertTrue(source.contains("R.string.open_source_license"));
@@ -31,7 +31,7 @@ public class AboutActivitySourceSmokeTest {
 
     @Test
     public void aboutActivityUpdateFlowUsesSharedDownloadCoordinatorAndHttpsOnly() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AboutActivity.java");
+        String source = read("src/main/java/com/dpis/module/about/AboutActivity.java");
         String dialogSource = read("src/main/java/com/dpis/module/updates/UpdateAvailableDialog.java");
         String manifestFetcherSource = read("src/main/java/com/dpis/module/updates/UpdateManifestFetcher.java");
         String dialogLayout = read("src/main/res/layout/dialog_update_available.xml");
@@ -66,7 +66,7 @@ public class AboutActivitySourceSmokeTest {
 
     @Test
     public void aboutActivityDoesNotApplyLocalApkSignatureGate() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AboutActivity.java");
+        String source = read("src/main/java/com/dpis/module/about/AboutActivity.java");
         String coordinatorSource = read("src/main/java/com/dpis/module/updates/UpdateDownloadCoordinator.java");
         String packageHandlerSource = read("src/main/java/com/dpis/module/updates/StartupUpdatePackageHandler.java");
 
@@ -80,7 +80,7 @@ public class AboutActivitySourceSmokeTest {
 
     @Test
     public void aboutActivityTracksDownloadStateForCoordinatorCancelFlow() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AboutActivity.java");
+        String source = read("src/main/java/com/dpis/module/about/AboutActivity.java");
 
         assertTrue(source.contains("private volatile boolean updateDownloadInProgress = false;"));
         assertTrue(source.contains("private volatile boolean updateDownloadCancelRequested = false;"));
@@ -94,13 +94,13 @@ public class AboutActivitySourceSmokeTest {
     public void manifestDeclaresOpenSourceLicenseActivity() throws IOException {
         String manifest = read("src/main/AndroidManifest.xml");
 
-        assertTrue(manifest.contains("android:name=\".OpenSourceLicenseActivity\""));
+        assertTrue(manifest.contains("android:name=\".about.OpenSourceLicenseActivity\""));
     }
 
     @Test
     public void aboutLayoutUsesNamedDimensions() throws IOException {
         String layout = read("src/main/res/layout/activity_about.xml");
-        String source = read("src/main/java/com/dpis/module/AboutActivity.java");
+        String source = read("src/main/java/com/dpis/module/about/AboutActivity.java");
 
         assertTrue(layout.contains("android:id=\"@+id/about_toolbar\""));
         assertTrue(layout.contains("android:id=\"@+id/about_scroll\""));

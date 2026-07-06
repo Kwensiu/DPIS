@@ -102,8 +102,8 @@ public class StringResourceParityTest {
         String localizedSource = read("src/main/java/com/dpis/module/LocalizedActivity.java");
         String localeManager = read("src/main/java/com/dpis/module/settings/AppLocaleManager.java");
         String mainSource = read("src/main/java/com/dpis/module/MainActivity.java");
-        String aboutSource = read("src/main/java/com/dpis/module/AboutActivity.java");
-        String licenseSource = read("src/main/java/com/dpis/module/OpenSourceLicenseActivity.java");
+        String aboutSource = read("src/main/java/com/dpis/module/about/AboutActivity.java");
+        String licenseSource = read("src/main/java/com/dpis/module/about/OpenSourceLicenseActivity.java");
         String manifest = read("src/main/AndroidManifest.xml");
 
         assertTrue(localizedSource.contains("extends Activity"));

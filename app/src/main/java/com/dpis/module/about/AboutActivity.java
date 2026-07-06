@@ -1,5 +1,8 @@
-package com.dpis.module;
+package com.dpis.module.about;
 
+import com.dpis.module.BuildConfig;
+import com.dpis.module.LocalizedActivity;
+import com.dpis.module.R;
 import com.dpis.module.ui.WindowInsetsBinder;
 
 import com.dpis.module.ui.DialogWindowSizer;

@@ -55,13 +55,13 @@
             android:name=".settings.ExperimentalSettingsActivity"
             android:exported="false" />
         <activity
-            android:name=".AboutActivity"
+            android:name=".about.AboutActivity"
             android:exported="false" />
         <activity
             android:name=".home.DonateActivity"
             android:exported="false" />
         <activity
-            android:name=".OpenSourceLicenseActivity"
+            android:name=".about.OpenSourceLicenseActivity"
             android:exported="false" />
         <activity
             android:name=".LogActivity"
