@@ -283,7 +283,7 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(source.contains("importConfigBackup(uri);"));
         assertTrue(source.contains("relaunchDpisTask();"));
         assertTrue(source.contains("private void relaunchDpisTask()"));
-        assertTrue(source.contains("DpisApplication.reloadConfigStore();"));
+        assertTrue(source.contains("RuntimeConfigDelivery.publishLocalSnapshotAfterSave();"));
         assertTrue(source.contains("new Intent(activity, MainActivity.class)"));
         assertTrue(source.contains("Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK"));
         assertTrue(source.contains("startActivity(intent);"));

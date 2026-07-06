@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.RuntimeConfigDelivery;
+
 import com.dpis.module.settings.SystemHookState;
 import com.dpis.module.settings.SystemHookStateResolver;
 

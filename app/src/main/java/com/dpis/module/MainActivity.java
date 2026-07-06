@@ -6,6 +6,7 @@ import com.dpis.module.fonts.FontApplyMode;
 
 
 import com.dpis.module.runtime.ModuleRuntimeReloadAdvisor;
+import com.dpis.module.runtime.RuntimeConfigDelivery;
 
 import com.dpis.module.diagnostics.FeedbackDiagnosticResultSheet;
 

@@ -6,6 +6,7 @@ import com.dpis.module.fonts.FontDebugStatsStore;
 import com.dpis.module.fonts.FontDebugStatsSchema;
 
 import com.dpis.module.runtime.RuntimeDebugPropertySyncer;
+import com.dpis.module.runtime.RuntimeConfigDelivery;
 
 import com.dpis.module.ui.DialogWindowSizer;
 
@@ -847,7 +848,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void relaunchDpisTask() {
-        DpisApplication.reloadConfigStore();
+        RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
         Intent intent = new Intent(activity, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);

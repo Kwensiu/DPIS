@@ -3,6 +3,7 @@ package com.dpis.module;
 import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.diagnostics.DpisAppLogStore;
 import com.dpis.module.fonts.HyperOsNativeProxyAssetExporter;
+import com.dpis.module.runtime.RuntimeConfigDelivery;
 import com.dpis.module.runtime.RuntimePropertyRecoveryCoordinator;
 import com.dpis.module.updates.UpdatePackageInstaller;
 
@@ -19,6 +20,10 @@ import io.github.libxposed.service.XposedServiceHelper;
 
 public final class DpisApplication extends Application implements XposedServiceHelper.OnServiceListener {
     private static final long UPDATE_CACHE_STARTUP_MAX_AGE_MS = 24 * 60 * 60 * 1000L;
+
+    static {
+        RuntimeConfigDelivery.setLocalSnapshotReloader(DpisApplication::reloadConfigStore);
+    }
 
     interface ServiceStateListener {
         void onServiceStateChanged();
