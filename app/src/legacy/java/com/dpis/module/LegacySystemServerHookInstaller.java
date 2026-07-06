@@ -73,7 +73,7 @@ final class LegacySystemServerHookInstaller {
     static void install() {
         PerAppDisplayConfigSource source =
                 PerAppDisplayConfigSource.withLegacyRuntimePropertyFallback(
-                        new RefreshingConfigSnapshotProvider(
+                        new PerAppDisplayConfigSource.RefreshingSnapshotProvider(
                                 () -> ConfigSnapshotLoader.fromStore(
                                         ConfigStoreFactory.createForLegacySystemServerHost()),
                                 ConfigSnapshotRefreshPolicy.SYSTEM_SERVER_TTL_MILLIS));

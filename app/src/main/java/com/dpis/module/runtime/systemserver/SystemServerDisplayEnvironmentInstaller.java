@@ -204,7 +204,7 @@ public final class SystemServerDisplayEnvironmentInstaller {
                 }
                 PerAppDisplayConfigSource source =
                         PerAppDisplayConfigSource.withLegacyRuntimePropertyFallback(
-                                new RefreshingConfigSnapshotProvider(
+                                new PerAppDisplayConfigSource.RefreshingSnapshotProvider(
                                         () -> ConfigSnapshotLoader.fromStore(
                                                 ConfigStoreFactory.createForXposedHost(xposed)),
                                         ConfigSnapshotRefreshPolicy.SYSTEM_SERVER_TTL_MILLIS));

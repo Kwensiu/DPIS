@@ -137,7 +137,7 @@ public final class ConfigStoreFactory {
     }
 
     static DpisConfigStore createForLegacySystemServerHost() {
-        // Long-lived system_server refresh is owned by RefreshingConfigSnapshotProvider.
+        // Long-lived system_server refresh is owned by the display config source.
         return createForLegacyHost();
     }
 
