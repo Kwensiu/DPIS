@@ -324,7 +324,7 @@ public final class MainActivity
     private HomeWorkspaceBinder homeWorkspaceBinder;
     private TemplateWorkspaceBinder templateWorkspaceBinder;
     private ToolsWorkspaceBinder toolsWorkspaceBinder;
-    private SettingsWorkspaceBinder settingsWorkspaceBinder;
+    private SystemServerSettingsPageController settingsPageController;
     private NavigationBarView workspaceSwitch;
     private SparseArray<Parcelable> restoredPageScrollStates;
     private EditText searchInput;
@@ -520,7 +520,6 @@ public final class MainActivity
                 }
             }
         });
-        settingsWorkspaceBinder = new SettingsWorkspaceBinder(this);
         workspaceSwitch = findViewById(R.id.workspace_switch);
         workspaceSwitch.setSaveFromParentEnabled(false);
         bindLandscapeWorkspaceRailItemHeight();
@@ -670,8 +669,8 @@ public final class MainActivity
         if (toolsWorkspaceBinder != null) {
             toolsWorkspaceBinder.onStart();
         }
-        if (settingsWorkspaceBinder != null) {
-            settingsWorkspaceBinder.onStart();
+        if (settingsPageController != null) {
+            settingsPageController.onStart();
         }
         DpisApplication.addServiceStateListener(this, true);
     }
@@ -685,8 +684,8 @@ public final class MainActivity
         if (toolsWorkspaceBinder != null) {
             toolsWorkspaceBinder.onResume();
         }
-        if (settingsWorkspaceBinder != null) {
-            settingsWorkspaceBinder.onResume();
+        if (settingsPageController != null) {
+            settingsPageController.onResume();
         }
     }
 
@@ -696,8 +695,8 @@ public final class MainActivity
         if (toolsWorkspaceBinder != null) {
             toolsWorkspaceBinder.onStop();
         }
-        if (settingsWorkspaceBinder != null) {
-            settingsWorkspaceBinder.onStop();
+        if (settingsPageController != null) {
+            settingsPageController.onStop();
         }
         DpisApplication.removeServiceStateListener(this);
         super.onStop();
@@ -723,8 +722,8 @@ public final class MainActivity
             if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
                 bindHomeWorkspace();
             }
-            if (settingsWorkspaceBinder != null) {
-                settingsWorkspaceBinder.onServiceStateChanged();
+            if (settingsPageController != null) {
+                settingsPageController.onServiceStateChanged();
             }
             if (skipNextImmediateServiceReload) {
                 skipNextImmediateServiceReload = false;
@@ -738,8 +737,8 @@ public final class MainActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (settingsWorkspaceBinder != null) {
-            settingsWorkspaceBinder.onActivityResult(requestCode, resultCode, data);
+        if (settingsPageController != null) {
+            settingsPageController.onActivityResult(requestCode, resultCode, data);
         }
         if (toolsWorkspaceBinder != null) {
             toolsWorkspaceBinder.onActivityResult(requestCode, resultCode, data);
@@ -2101,9 +2100,13 @@ public final class MainActivity
     }
 
     private void bindSettingsWorkspace() {
-        if (settingsWorkspaceBinder != null) {
-            settingsWorkspaceBinder.bind(settingsWorkspaceContainer);
+        if (settingsWorkspaceContainer == null || settingsPageController != null) {
+            return;
         }
+        settingsPageController = new SystemServerSettingsPageController(
+                this,
+                settingsWorkspaceContainer);
+        settingsPageController.bind();
     }
 
     private void updateSearchHint() {

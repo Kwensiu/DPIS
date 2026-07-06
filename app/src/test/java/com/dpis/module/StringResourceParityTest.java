@@ -99,7 +99,6 @@ public class StringResourceParityTest {
     @Test
     public void localeSwitchUsesWrappedBaseContextAndExplicitRecreate() throws IOException {
         String settingsSource = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
-        String settingsBinderSource = read("src/main/java/com/dpis/module/SettingsWorkspaceBinder.java");
         String localizedSource = read("src/main/java/com/dpis/module/LocalizedActivity.java");
         String localeManager = read("src/main/java/com/dpis/module/settings/AppLocaleManager.java");
         String mainSource = read("src/main/java/com/dpis/module/MainActivity.java");
@@ -118,8 +117,7 @@ public class StringResourceParityTest {
         assertTrue(mainSource.contains("extends LocalizedActivity"));
         assertTrue(aboutSource.contains("extends LocalizedActivity"));
         assertTrue(licenseSource.contains("extends LocalizedActivity"));
-        assertTrue(settingsBinderSource.contains("private final LocalizedActivity activity;"));
-        assertTrue(settingsBinderSource.contains("new SystemServerSettingsPageController("));
+        assertTrue(mainSource.contains("new SystemServerSettingsPageController("));
         assertTrue(settingsSource.contains("SystemServerSettingsPageController(LocalizedActivity activity"));
         assertTrue(!manifest.contains("AppLocalesMetadataHolderService"));
     }
