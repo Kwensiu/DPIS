@@ -78,6 +78,7 @@
             android:excludeFromRecents="true"
             android:exported="false"
             android:finishOnTaskLaunch="true"
+            android:taskAffinity=""
             android:theme="@style/Theme.Dpis.QuickConfig" />
         <activity
             android:name=".MainActivity"
