@@ -8,7 +8,7 @@ import android.service.quicksettings.TileService;
 import com.dpis.module.QuickConfigActivity;
 import com.dpis.module.applist.ForegroundPackageResolver;
 
-public final class QuickConfigTileService extends TileService {
+public class QuickConfigTileService extends TileService {
     @Override
     public void onClick() {
         super.onClick();

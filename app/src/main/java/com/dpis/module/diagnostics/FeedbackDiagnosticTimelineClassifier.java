@@ -2,7 +2,7 @@ package com.dpis.module.diagnostics;
 
 import java.util.Locale;
 
-public final class FeedbackDiagnosticTimelineClassifier {
+final class FeedbackDiagnosticTimelineClassifier {
     private FeedbackDiagnosticTimelineClassifier() {
     }
 

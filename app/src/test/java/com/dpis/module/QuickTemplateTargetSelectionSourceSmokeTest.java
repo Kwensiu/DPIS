@@ -32,7 +32,8 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
         String binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.java");
 
-        assertTrue(manifest.contains(".QuickTemplateTargetSelectionActivity"));
+        assertTrue(manifest.contains("android:name=\".templates.QuickTemplateTargetSelectionActivity\""));
+        assertTrue(manifest.contains("android:exported=\"false\""));
         assertTrue(contract.contains("EXTRA_TEMPLATE_ID = \"quick_template_targets.template_id\""));
         assertTrue(contract.contains("EXTRA_CLOSE_REASON"));
         assertTrue(contract.contains("CLOSE_REASON_ORIENTATION_MIGRATION"));

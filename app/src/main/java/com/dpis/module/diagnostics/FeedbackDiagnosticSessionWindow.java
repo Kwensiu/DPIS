@@ -1,6 +1,6 @@
 package com.dpis.module.diagnostics;
 
-public final class FeedbackDiagnosticSessionWindow {
+final class FeedbackDiagnosticSessionWindow {
     static final long START_LOG_MARGIN_MS = 5_000L;
     static final long END_LOG_MARGIN_MS = 15_000L;
 

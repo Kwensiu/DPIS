@@ -8,7 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.concurrent.TimeUnit;
 
-public final class FeedbackDiagnosticForegroundAppReader {
+final class FeedbackDiagnosticForegroundAppReader {
     private static final long READ_TIMEOUT_MS = 1_500L;
     private static final Pattern COMPONENT_PATTERN = Pattern.compile(
             "([a-zA-Z][a-zA-Z0-9_]*(?:\\.[a-zA-Z0-9_]+)+)/"

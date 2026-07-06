@@ -3,7 +3,7 @@ package com.dpis.module.applist;
 import android.graphics.drawable.Drawable;
 import android.util.LruCache;
 
-public final class AppIconMemoryCache {
+final class AppIconMemoryCache {
     private final LruCache<String, Drawable> cache;
 
     public AppIconMemoryCache(int maxEntries) {

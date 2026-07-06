@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public final class FeedbackDiagnosticLsposedTimelineParser {
+final class FeedbackDiagnosticLsposedTimelineParser {
     private static final long REPEAT_WARNING_WINDOW_MS = 300L;
 
     private FeedbackDiagnosticLsposedTimelineParser() {

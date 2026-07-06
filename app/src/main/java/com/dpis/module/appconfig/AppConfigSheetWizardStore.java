@@ -3,7 +3,7 @@ package com.dpis.module.appconfig;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-public final class AppConfigSheetWizardStore {
+final class AppConfigSheetWizardStore {
     private static final String PREFS_NAME = "dpis.app_config_sheet_wizard";
     private static final String KEY_ADVANCED_HINT_DISMISSED = "advanced_hint_dismissed";
 
