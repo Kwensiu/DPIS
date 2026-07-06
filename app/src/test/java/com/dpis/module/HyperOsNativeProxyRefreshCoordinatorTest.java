@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.HyperOsNativeProxyRefreshCoordinator;
+
 import com.dpis.module.fonts.FontApplyMode;
 
 import static org.junit.Assert.assertFalse;
@@ -12,7 +14,7 @@ import org.junit.Test;
 public class HyperOsNativeProxyRefreshCoordinatorTest {
     @Test
     public void coordinatorDocumentsDormantAutomaticRefreshState() throws Exception {
-        String source = read("src/main/java/com/dpis/module/HyperOsNativeProxyRefreshCoordinator.java");
+        String source = read("src/main/java/com/dpis/module/fonts/HyperOsNativeProxyRefreshCoordinator.java");
 
         assertTrue(source.contains("Dormant helper"));
         assertTrue(source.contains("automatic startup/package-update proxy refresh is intentionally disabled"));

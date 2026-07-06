@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.config.PerAppDisplayConfigSource;
+
+import com.dpis.module.config.ConfigSnapshotLoader;
+
 
 import com.dpis.module.fonts.FontApplyMode;
 

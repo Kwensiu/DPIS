@@ -1,6 +1,10 @@
-package com.dpis.module;
+package com.dpis.module.settings;
 
-import com.dpis.module.settings.SystemHookEffectiveView;
+import com.dpis.module.BuildConfig;
+import com.dpis.module.DpisApplication;
+import com.dpis.module.DpisConfigStore;
+import com.dpis.module.DpisLog;
+import com.dpis.module.R;
 
 import java.util.Collections;
 import java.util.List;
@@ -10,7 +14,7 @@ import io.github.libxposed.service.XposedService;
 public final class SystemScopeCoordinator {
     private static final String SYSTEM_SCOPE_MODERN = "system";
 
-    interface Host {
+    public interface Host {
         void showToast(int messageResId, Object... formatArgs);
 
         void requestAppsLoad();
@@ -20,11 +24,11 @@ public final class SystemScopeCoordinator {
 
     private final Host host;
 
-    SystemScopeCoordinator(Host host) {
+    public SystemScopeCoordinator(Host host) {
         this.host = host;
     }
 
-    void toggleScope(String packageName,
+    public void toggleScope(String packageName,
             String appLabel,
             boolean currentlyInScope,
             Runnable onTurnedInScope,
@@ -49,14 +53,14 @@ public final class SystemScopeCoordinator {
         requestScope(packageName, appLabel, onTurnedInScope, null);
     }
 
-    boolean requestScope(String packageName,
+    public boolean requestScope(String packageName,
             String appLabel,
             Runnable onTurnedInScope,
             Runnable onRequestFinished) {
         return requestScope(packageName, appLabel, onTurnedInScope, onRequestFinished, true);
     }
 
-    boolean requestScope(String packageName,
+    public boolean requestScope(String packageName,
             String appLabel,
             Runnable onTurnedInScope,
             Runnable onRequestFinished,

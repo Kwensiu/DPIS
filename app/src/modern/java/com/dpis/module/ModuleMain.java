@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.settings.SystemScopeCoordinator;
+
+import com.dpis.module.config.ConfigSnapshot;
+import com.dpis.module.config.ConfigSnapshotLoader;
+import com.dpis.module.config.ModulePackagePlan;
+import com.dpis.module.config.RuntimePropertyConfigPreferences;
 
 
 import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;

@@ -1,5 +1,17 @@
-package com.dpis.module;
+package com.dpis.module.config;
 
+import com.dpis.module.config.RuntimePropertyConfigPreferences;
+
+import com.dpis.module.config.PerAppDisplayConfigSource;
+
+import com.dpis.module.config.PackageConfigSnapshot;
+
+import com.dpis.module.config.ConfigSnapshotLoader;
+
+import com.dpis.module.config.ConfigSnapshot;
+
+import com.dpis.module.DpisConfigStore;
+import com.dpis.module.DpisLog;
 import com.dpis.module.fonts.FontApplyMode;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainDecision;

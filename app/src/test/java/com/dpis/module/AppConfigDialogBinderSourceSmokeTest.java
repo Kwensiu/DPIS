@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.appconfig.LandAppDetailPaneBinder;
+
 import com.dpis.module.fonts.FontApplyMode;
 
 import com.dpis.module.appconfig.AppConfigDialogBinder;
@@ -699,7 +701,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
     @Test
     public void appConfigInputErrorsAreRenderedBySharedValidation() throws IOException {
         String binder = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
-        String landBinder = read("src/main/java/com/dpis/module/LandAppDetailPaneBinder.java");
+        String landBinder = read("src/main/java/com/dpis/module/appconfig/LandAppDetailPaneBinder.java");
         int updateStart = binder.indexOf("static boolean updateSaveButtonState(TextInputLayout");
         int updateEnd = binder.indexOf("static boolean updateSaveButtonState(View dialogView", updateStart);
         String updateBlock = binder.substring(updateStart, updateEnd);

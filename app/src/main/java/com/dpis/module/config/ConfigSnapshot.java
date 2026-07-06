@@ -1,4 +1,8 @@
-package com.dpis.module;
+package com.dpis.module.config;
+
+import com.dpis.module.config.PackageConfigSnapshot;
+
+import com.dpis.module.config.ConfigSnapshot;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -26,14 +30,14 @@ public final class ConfigSnapshot {
     private final boolean hasSystemServerSafeModeEnabled;
     private final boolean hasGlobalLogEnabled;
 
-    ConfigSnapshot(Set<String> configuredPackages,
-                   Map<String, PackageConfigSnapshot> packages,
-                   boolean systemServerHooksEnabled,
-                   boolean systemServerSafeModeEnabled,
-                   boolean globalLogEnabled,
-                   boolean hasSystemServerHooksEnabled,
-                   boolean hasSystemServerSafeModeEnabled,
-                   boolean hasGlobalLogEnabled) {
+    public ConfigSnapshot(Set<String> configuredPackages,
+                          Map<String, PackageConfigSnapshot> packages,
+                          boolean systemServerHooksEnabled,
+                          boolean systemServerSafeModeEnabled,
+                          boolean globalLogEnabled,
+                          boolean hasSystemServerHooksEnabled,
+                          boolean hasSystemServerSafeModeEnabled,
+                          boolean hasGlobalLogEnabled) {
         this.configuredPackages = Collections.unmodifiableSet(
                 new LinkedHashSet<>(configuredPackages != null
                         ? configuredPackages

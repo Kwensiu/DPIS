@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.HyperOsFlutterFontBridge;
+
+import com.dpis.module.runtime.systemserver.HyperOsRustProcessHookInstaller;
+
+import com.dpis.module.config.PerAppDisplayConfigSource;
+
 
 
 import com.dpis.module.fonts.FontApplyMode;
@@ -175,7 +181,7 @@ public class LegacyModuleHookSourceTest {
         String compatRustSource = read("src/legacy/java/com/dpis/module/LegacyRustProcessHookInstaller.java");
         assertTrue(compatRustSource.contains("XposedBridge.hookMethod(method"));
         assertTrue(compatRustSource.contains("param.args = updatedArgs"));
-        String rustSource = read("src/main/java/com/dpis/module/HyperOsRustProcessHookInstaller.java");
+        String rustSource = read("src/main/java/com/dpis/module/runtime/systemserver/HyperOsRustProcessHookInstaller.java");
         assertTrue(rustSource.contains("applyEnvironmentArgsForLegacy"));
         assertTrue(rustSource.indexOf("return null;")
                 < rustSource.indexOf("Object existingValue = args.get(ARG_ENVIRONMENTS);"));

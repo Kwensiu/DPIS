@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.config.ConfigPreferenceKeys;
+import com.dpis.module.config.ConfigSnapshotStore;
+import com.dpis.module.config.PackageConfigValue;
+
 import com.dpis.module.fonts.FontApplyMode;
 
 import com.dpis.module.appconfig.AppConfigInputValidation;
@@ -43,7 +47,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-public final class DpisConfigStore {
+public final class DpisConfigStore implements ConfigSnapshotStore {
     private static final int MIN_VIEWPORT_WIDTH_DP = 1;
     private static final int MIN_VIEWPORT_SCALE_MILLI_PERCENT = ViewportTargetSpec.MIN_SCALE_MILLI_PERCENT;
     private static final int MAX_VIEWPORT_SCALE_MILLI_PERCENT = ViewportTargetSpec.MAX_SCALE_MILLI_PERCENT;
@@ -54,11 +58,12 @@ public final class DpisConfigStore {
     private static final int MAX_FONT_SCALE_PERCENT = 300;
 
     public static final String GROUP = "dpi_config";
-    static final String KEY_TARGET_PACKAGES = "target_packages";
-    static final String KEY_SYSTEM_SERVER_HOOKS_ENABLED = "system_server.hooks_enabled";
-    static final String KEY_SYSTEM_SERVER_SAFE_MODE_ENABLED = "system_server.safe_mode_enabled";
-    static final String KEY_GLOBAL_LOG_ENABLED = "global.log_enabled";
-    static final String KEY_FONT_DEBUG_OVERLAY_ENABLED = "font.debug.overlay_enabled";
+    static final String KEY_TARGET_PACKAGES = ConfigPreferenceKeys.TARGET_PACKAGES;
+    static final String KEY_SYSTEM_SERVER_HOOKS_ENABLED = ConfigPreferenceKeys.SYSTEM_SERVER_HOOKS_ENABLED;
+    static final String KEY_SYSTEM_SERVER_SAFE_MODE_ENABLED =
+            ConfigPreferenceKeys.SYSTEM_SERVER_SAFE_MODE_ENABLED;
+    static final String KEY_GLOBAL_LOG_ENABLED = ConfigPreferenceKeys.GLOBAL_LOG_ENABLED;
+    static final String KEY_FONT_DEBUG_OVERLAY_ENABLED = ConfigPreferenceKeys.FONT_DEBUG_OVERLAY_ENABLED;
     static final String KEY_FONT_DEBUG_SELECTED_MODE = "font.debug.selected_mode";
     static final String KEY_FONT_DEBUG_SELECTED_WINDOW = "font.debug.selected_window";
     static final String KEY_FLUTTER_FONT_HOOK_ENABLED = "font.flutter_hook_enabled";
@@ -279,7 +284,7 @@ public final class DpisConfigStore {
         return normalizeViewportWidth(widthDp);
     }
 
-    Integer getTargetViewportScaleMilliPercent(String packageName) {
+    public Integer getTargetViewportScaleMilliPercent(String packageName) {
         String key = keyForViewportScaleMilliPercent(packageName);
         String packageKey = keyForPackageViewportScaleMilliPercent(packageName);
         if (containsPackageValue(key, packageKey)) {
@@ -296,7 +301,7 @@ public final class DpisConfigStore {
         return null;
     }
 
-    String getTargetViewportType(String packageName) {
+    public String getTargetViewportType(String packageName) {
         String key = keyForViewportTargetType(packageName);
         String packageKey = keyForPackageViewportTargetType(packageName);
         if (!containsPackageValue(key, packageKey)) {
@@ -407,7 +412,7 @@ public final class DpisConfigStore {
         return WechatDpiConfig.normalize(getNullableInt(LEGACY_WECHAT_DPI_KEY));
     }
 
-    boolean hasTargetAppSpecificConfig(String packageName) {
+    public boolean hasTargetAppSpecificConfig(String packageName) {
         return getWechatDpi(packageName) != null;
     }
 
@@ -434,7 +439,7 @@ public final class DpisConfigStore {
         return getBoolean(KEY_SYSTEM_SERVER_HOOKS_ENABLED, true);
     }
 
-    boolean hasSystemServerHooksEnabled() {
+    public boolean hasSystemServerHooksEnabled() {
         return containsInPrimary(KEY_SYSTEM_SERVER_HOOKS_ENABLED);
     }
 
@@ -442,11 +447,11 @@ public final class DpisConfigStore {
         return getBoolean(KEY_SYSTEM_SERVER_SAFE_MODE_ENABLED, true);
     }
 
-    boolean hasSystemServerSafeModeEnabled() {
+    public boolean hasSystemServerSafeModeEnabled() {
         return containsInPrimary(KEY_SYSTEM_SERVER_SAFE_MODE_ENABLED);
     }
 
-    boolean setSystemServerHooksEnabled(boolean enabled) {
+    public boolean setSystemServerHooksEnabled(boolean enabled) {
         return commitBoth(editor -> editor.putBoolean(KEY_SYSTEM_SERVER_HOOKS_ENABLED, enabled));
     }
 
@@ -458,7 +463,7 @@ public final class DpisConfigStore {
         return getBoolean(KEY_GLOBAL_LOG_ENABLED, false);
     }
 
-    boolean hasGlobalLogEnabled() {
+    public boolean hasGlobalLogEnabled() {
         return containsInPrimary(KEY_GLOBAL_LOG_ENABLED);
     }
 
@@ -513,7 +518,7 @@ public final class DpisConfigStore {
         return getBoolean(KEY_HYPEROS_FLUTTER_FONT_HOOK_ENABLED, false);
     }
 
-    boolean isFlutterFontHookEnabled() {
+    public boolean isFlutterFontHookEnabled() {
         return getBoolean(KEY_FLUTTER_FONT_HOOK_ENABLED, false);
     }
 
@@ -1054,7 +1059,7 @@ public final class DpisConfigStore {
         return hasAnyPackageConfigAfterRemoving(packageName);
     }
 
-    boolean hasUserVisiblePackageConfig(String packageName) {
+    public boolean hasUserVisiblePackageConfig(String packageName) {
         if (packageName == null || packageName.isBlank()) {
             return false;
         }
@@ -1160,7 +1165,7 @@ public final class DpisConfigStore {
                 : ViewportTargetSpec.off();
     }
 
-    boolean writePackageConfig(String packageName, PackageConfigValue value) {
+    public boolean writePackageConfig(String packageName, PackageConfigValue value) {
         if (packageName == null || packageName.isBlank()) {
             return false;
         }
@@ -1177,15 +1182,15 @@ public final class DpisConfigStore {
             editor.putStringSet(KEY_TARGET_PACKAGES, packages);
             removePackageConfigKeys(editor, packageName, PACKAGE_CONFIG_KEYS);
             removePackageConfigKeys(editor, packageName, PACKAGE_AGGREGATED_CONFIG_KEYS);
-            if (normalized.viewportTargetSpec.isEnabled()) {
+            if (normalized.viewportTargetSpec().isEnabled()) {
                 editor.putString(
                         keyForViewportTargetType(packageName),
-                        normalized.viewportTargetSpec.type());
+                        normalized.viewportTargetSpec().type());
                 editor.putString(
                         keyForPackageViewportTargetType(packageName),
-                        normalized.viewportTargetSpec.type());
-                if (normalized.viewportTargetSpec.isRelativeScale()) {
-                    int scaleMilliPercent = normalized.viewportTargetSpec.scaleMilliPercent();
+                        normalized.viewportTargetSpec().type());
+                if (normalized.viewportTargetSpec().isRelativeScale()) {
+                    int scaleMilliPercent = normalized.viewportTargetSpec().scaleMilliPercent();
                     editor.putInt(
                             keyForViewportScaleMilliPercent(packageName),
                             scaleMilliPercent);
@@ -1202,50 +1207,50 @@ public final class DpisConfigStore {
                 } else {
                     editor.putInt(
                             keyForViewportWidth(packageName),
-                            normalized.viewportTargetSpec.absoluteWidthDp());
+                            normalized.viewportTargetSpec().absoluteWidthDp());
                     editor.putInt(
                             keyForPackageViewportWidth(packageName),
-                            normalized.viewportTargetSpec.absoluteWidthDp());
+                            normalized.viewportTargetSpec().absoluteWidthDp());
                 }
-            } else if (!ViewportTargetType.OFF.equals(normalized.viewportTargetType)) {
+            } else if (!ViewportTargetType.OFF.equals(normalized.viewportTargetType())) {
                 editor.putString(
                         keyForViewportTargetType(packageName),
-                        normalized.viewportTargetType);
+                        normalized.viewportTargetType());
                 editor.putString(
                         keyForPackageViewportTargetType(packageName),
-                        normalized.viewportTargetType);
+                        normalized.viewportTargetType());
             }
-            if (isConfiguredViewportModeValue(normalized.viewportApplyMode)) {
-                editor.putString(keyForViewportMode(packageName), normalized.viewportApplyMode);
+            if (isConfiguredViewportModeValue(normalized.viewportApplyMode())) {
+                editor.putString(keyForViewportMode(packageName), normalized.viewportApplyMode());
                 editor.putString(
                         keyForPackageViewportMode(packageName),
-                        normalized.viewportApplyMode);
+                        normalized.viewportApplyMode());
             }
-            if (normalized.fontScalePercent != null) {
-                editor.putInt(keyForFontScale(packageName), normalized.fontScalePercent);
-                editor.putInt(keyForPackageFontScale(packageName), normalized.fontScalePercent);
+            if (normalized.fontScalePercent() != null) {
+                editor.putInt(keyForFontScale(packageName), normalized.fontScalePercent());
+                editor.putInt(keyForPackageFontScale(packageName), normalized.fontScalePercent());
             }
-            if (isConfiguredFontModeValue(normalized.fontApplyMode)) {
-                editor.putString(keyForFontMode(packageName), normalized.fontApplyMode);
-                editor.putString(keyForPackageFontMode(packageName), normalized.fontApplyMode);
+            if (isConfiguredFontModeValue(normalized.fontApplyMode())) {
+                editor.putString(keyForFontMode(packageName), normalized.fontApplyMode());
+                editor.putString(keyForPackageFontMode(packageName), normalized.fontApplyMode());
             }
-            if (normalized.typefaceId != null) {
-                editor.putString(keyForTypefaceId(packageName), normalized.typefaceId);
-                editor.putString(keyForPackageTypefaceId(packageName), normalized.typefaceId);
+            if (normalized.typefaceId() != null) {
+                editor.putString(keyForTypefaceId(packageName), normalized.typefaceId());
+                editor.putString(keyForPackageTypefaceId(packageName), normalized.typefaceId());
             }
-            if (normalized.fontHookDomainsRaw != null) {
-                editor.putString(keyForFontHookDomains(packageName), normalized.fontHookDomainsRaw);
+            if (normalized.fontHookDomainsRaw() != null) {
+                editor.putString(keyForFontHookDomains(packageName), normalized.fontHookDomainsRaw());
                 editor.putString(
                         keyForPackageFontHookDomains(packageName),
-                        normalized.fontHookDomainsRaw);
+                        normalized.fontHookDomainsRaw());
             }
-            if (Boolean.FALSE.equals(normalized.dpisEnabled)) {
+            if (Boolean.FALSE.equals(normalized.dpisEnabled())) {
                 editor.putBoolean(keyForDpisEnabled(packageName), false);
                 editor.putBoolean(keyForPackageDpisEnabled(packageName), false);
             }
-            if (normalized.wechatDpi != null && WechatDpiConfig.appliesTo(packageName)) {
-                editor.putInt(keyForWechatDpi(packageName), normalized.wechatDpi);
-                editor.putInt(keyForPackageWechatDpi(packageName), normalized.wechatDpi);
+            if (normalized.wechatDpi() != null && WechatDpiConfig.appliesTo(packageName)) {
+                editor.putInt(keyForWechatDpi(packageName), normalized.wechatDpi());
+                editor.putInt(keyForPackageWechatDpi(packageName), normalized.wechatDpi());
             }
         });
     }
@@ -1258,7 +1263,7 @@ public final class DpisConfigStore {
                 readPackageConfig(packageName));
     }
 
-    boolean writePackageTemplateConfigValue(String packageName, TemplateConfigValue value) {
+    public boolean writePackageTemplateConfigValue(String packageName, TemplateConfigValue value) {
         if (packageName == null || packageName.isBlank()) {
             return false;
         }
@@ -1285,15 +1290,15 @@ public final class DpisConfigStore {
             editor.putStringSet(KEY_TARGET_PACKAGES, packages);
             removePackageTemplateConfigKeys(editor, packageName);
             removePackageAggregatedTemplateConfigKeys(editor, packageName);
-            if (copyableConfig.viewportTargetSpec.isEnabled()) {
+            if (copyableConfig.viewportTargetSpec().isEnabled()) {
                 editor.putString(
                         keyForViewportTargetType(packageName),
-                        copyableConfig.viewportTargetSpec.type());
+                        copyableConfig.viewportTargetSpec().type());
                 editor.putString(
                         keyForPackageViewportTargetType(packageName),
-                        copyableConfig.viewportTargetSpec.type());
-                if (copyableConfig.viewportTargetSpec.isRelativeScale()) {
-                    int scaleMilliPercent = copyableConfig.viewportTargetSpec.scaleMilliPercent();
+                        copyableConfig.viewportTargetSpec().type());
+                if (copyableConfig.viewportTargetSpec().isRelativeScale()) {
+                    int scaleMilliPercent = copyableConfig.viewportTargetSpec().scaleMilliPercent();
                     editor.putInt(
                             keyForViewportScaleMilliPercent(packageName),
                             scaleMilliPercent);
@@ -1310,41 +1315,41 @@ public final class DpisConfigStore {
                 } else {
                     editor.putInt(
                             keyForViewportWidth(packageName),
-                            copyableConfig.viewportTargetSpec.absoluteWidthDp());
+                            copyableConfig.viewportTargetSpec().absoluteWidthDp());
                     editor.putInt(
                             keyForPackageViewportWidth(packageName),
-                            copyableConfig.viewportTargetSpec.absoluteWidthDp());
+                            copyableConfig.viewportTargetSpec().absoluteWidthDp());
                 }
             }
-            if (ViewportApplyMode.isEnabled(copyableConfig.viewportApplyMode)) {
+            if (ViewportApplyMode.isEnabled(copyableConfig.viewportApplyMode())) {
                 editor.putString(
                         keyForViewportMode(packageName),
-                        copyableConfig.viewportApplyMode);
+                        copyableConfig.viewportApplyMode());
                 editor.putString(
                         keyForPackageViewportMode(packageName),
-                        copyableConfig.viewportApplyMode);
+                        copyableConfig.viewportApplyMode());
             }
-            if (copyableConfig.fontScalePercent != null) {
-                editor.putInt(keyForFontScale(packageName), copyableConfig.fontScalePercent);
+            if (copyableConfig.fontScalePercent() != null) {
+                editor.putInt(keyForFontScale(packageName), copyableConfig.fontScalePercent());
                 editor.putInt(
                         keyForPackageFontScale(packageName),
-                        copyableConfig.fontScalePercent);
+                        copyableConfig.fontScalePercent());
             }
-            if (FontApplyMode.isEnabled(copyableConfig.fontApplyMode)) {
-                editor.putString(keyForFontMode(packageName), copyableConfig.fontApplyMode);
-                editor.putString(keyForPackageFontMode(packageName), copyableConfig.fontApplyMode);
+            if (FontApplyMode.isEnabled(copyableConfig.fontApplyMode())) {
+                editor.putString(keyForFontMode(packageName), copyableConfig.fontApplyMode());
+                editor.putString(keyForPackageFontMode(packageName), copyableConfig.fontApplyMode());
             }
-            if (copyableConfig.typefaceId != null) {
-                editor.putString(keyForTypefaceId(packageName), copyableConfig.typefaceId);
-                editor.putString(keyForPackageTypefaceId(packageName), copyableConfig.typefaceId);
+            if (copyableConfig.typefaceId() != null) {
+                editor.putString(keyForTypefaceId(packageName), copyableConfig.typefaceId());
+                editor.putString(keyForPackageTypefaceId(packageName), copyableConfig.typefaceId());
             }
-            if (copyableConfig.fontHookDomainsRaw != null) {
+            if (copyableConfig.fontHookDomainsRaw() != null) {
                 editor.putString(
                         keyForFontHookDomains(packageName),
-                        copyableConfig.fontHookDomainsRaw);
+                        copyableConfig.fontHookDomainsRaw());
                 editor.putString(
                         keyForPackageFontHookDomains(packageName),
-                        copyableConfig.fontHookDomainsRaw);
+                        copyableConfig.fontHookDomainsRaw());
             }
         });
     }
@@ -1353,13 +1358,13 @@ public final class DpisConfigStore {
             PackageConfigValue value) {
         PackageConfigValue normalized = value != null ? value : PackageConfigValue.EMPTY;
         return TemplateConfigValueAdapters.fromViewportTargetSpec(
-                normalized.viewportTargetSpec,
-                normalized.viewportTargetType,
-                normalized.viewportApplyMode,
-                normalized.fontScalePercent,
-                normalized.fontApplyMode,
-                normalized.typefaceId,
-                normalized.fontHookDomainsRaw);
+                normalized.viewportTargetSpec(),
+                normalized.viewportTargetType(),
+                normalized.viewportApplyMode(),
+                normalized.fontScalePercent(),
+                normalized.fontApplyMode(),
+                normalized.typefaceId(),
+                normalized.fontHookDomainsRaw());
     }
 
     private static PackageConfigValue packageConfigValueFromTemplateConfigValue(

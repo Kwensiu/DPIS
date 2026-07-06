@@ -1,5 +1,8 @@
-package com.dpis.module;
+package com.dpis.module.config;
 
+import com.dpis.module.runtime.font.HyperOsFlutterFontBridge;
+
+import com.dpis.module.config.RuntimePropertyConfigPreferences;
 
 import com.dpis.module.fonts.FontApplyMode;
 
@@ -102,9 +105,9 @@ public final class RuntimePropertyConfigPreferences implements SharedPreferences
             values.put(typefaceIdKey(), typefaceId);
         }
         boolean hasPackageRuntimeConfig = !values.isEmpty();
-        values.put(DpisConfigStore.KEY_GLOBAL_LOG_ENABLED,
+        values.put(ConfigPreferenceKeys.GLOBAL_LOG_ENABLED,
                 RuntimeDebugPropertyBridge.readGlobalLogEnabled());
-        values.put(DpisConfigStore.KEY_FONT_DEBUG_OVERLAY_ENABLED,
+        values.put(ConfigPreferenceKeys.FONT_DEBUG_OVERLAY_ENABLED,
                 RuntimeDebugPropertyBridge.readFontDebugOverlayEnabled());
         if (hasPackageRuntimeConfig) {
             HookDomainOverride override = FontHookDomainPropertyBridge.readOverride(packageName);
@@ -113,7 +116,7 @@ public final class RuntimePropertyConfigPreferences implements SharedPreferences
                         FontHookDomainRegistry.orderedCustomizableSubset(
                                 override.enabledKnownDomains)));
             }
-            values.put(DpisConfigStore.KEY_TARGET_PACKAGES,
+            values.put(ConfigPreferenceKeys.TARGET_PACKAGES,
                     new LinkedHashSet<>(Collections.singleton(packageName)));
         }
         cachedSnapshot = Collections.unmodifiableMap(values);

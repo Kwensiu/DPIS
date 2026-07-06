@@ -1,6 +1,7 @@
 package com.dpis.module;
 
 import com.dpis.module.settings.SystemHookState;
+import com.dpis.module.settings.SystemHooksToggleController;
 
 import org.junit.Test;
 

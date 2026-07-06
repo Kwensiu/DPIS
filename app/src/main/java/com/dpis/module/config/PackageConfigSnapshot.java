@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.config;
+
+import com.dpis.module.config.PackageConfigSnapshot;
 
 import com.dpis.module.fonts.FontApplyMode;
 
@@ -20,16 +22,16 @@ public final class PackageConfigSnapshot {
     public final boolean hyperOsFlutterFontHookEnabled;
     public final HookDomainOverride hookDomainOverride;
 
-    PackageConfigSnapshot(String packageName,
-                          boolean dpisEnabled,
-                          Integer targetViewportWidthDp,
-                          String targetViewportMode,
-                          Integer targetFontScalePercent,
-                          String targetFontMode,
-                          String targetTypefaceId,
-                          boolean flutterFontHookEnabled,
-                          boolean flutterSettingsFontHookEnabled,
-                          boolean hyperOsFlutterFontHookEnabled) {
+    public PackageConfigSnapshot(String packageName,
+                                 boolean dpisEnabled,
+                                 Integer targetViewportWidthDp,
+                                 String targetViewportMode,
+                                 Integer targetFontScalePercent,
+                                 String targetFontMode,
+                                 String targetTypefaceId,
+                                 boolean flutterFontHookEnabled,
+                                 boolean flutterSettingsFontHookEnabled,
+                                 boolean hyperOsFlutterFontHookEnabled) {
         this(packageName,
                 dpisEnabled,
                 targetViewportWidthDp != null
@@ -45,17 +47,17 @@ public final class PackageConfigSnapshot {
                 HookDomainOverride.automatic());
     }
 
-    PackageConfigSnapshot(String packageName,
-                          boolean dpisEnabled,
-                          Integer targetViewportWidthDp,
-                          String targetViewportMode,
-                          Integer targetFontScalePercent,
-                          String targetFontMode,
-                          String targetTypefaceId,
-                          boolean flutterFontHookEnabled,
-                          boolean flutterSettingsFontHookEnabled,
-                          boolean hyperOsFlutterFontHookEnabled,
-                          HookDomainOverride hookDomainOverride) {
+    public PackageConfigSnapshot(String packageName,
+                                 boolean dpisEnabled,
+                                 Integer targetViewportWidthDp,
+                                 String targetViewportMode,
+                                 Integer targetFontScalePercent,
+                                 String targetFontMode,
+                                 String targetTypefaceId,
+                                 boolean flutterFontHookEnabled,
+                                 boolean flutterSettingsFontHookEnabled,
+                                 boolean hyperOsFlutterFontHookEnabled,
+                                 HookDomainOverride hookDomainOverride) {
         this(packageName,
                 dpisEnabled,
                 targetViewportWidthDp != null
@@ -71,18 +73,18 @@ public final class PackageConfigSnapshot {
                 hookDomainOverride);
     }
 
-    PackageConfigSnapshot(String packageName,
-                          boolean dpisEnabled,
-                          ViewportTargetSpec targetViewportSpec,
-                          Integer targetViewportWidthDp,
-                          String targetViewportMode,
-                          Integer targetFontScalePercent,
-                          String targetFontMode,
-                          String targetTypefaceId,
-                          boolean flutterFontHookEnabled,
-                          boolean flutterSettingsFontHookEnabled,
-                          boolean hyperOsFlutterFontHookEnabled,
-                          HookDomainOverride hookDomainOverride) {
+    public PackageConfigSnapshot(String packageName,
+                                 boolean dpisEnabled,
+                                 ViewportTargetSpec targetViewportSpec,
+                                 Integer targetViewportWidthDp,
+                                 String targetViewportMode,
+                                 Integer targetFontScalePercent,
+                                 String targetFontMode,
+                                 String targetTypefaceId,
+                                 boolean flutterFontHookEnabled,
+                                 boolean flutterSettingsFontHookEnabled,
+                                 boolean hyperOsFlutterFontHookEnabled,
+                                 HookDomainOverride hookDomainOverride) {
         this(packageName,
                 dpisEnabled,
                 targetViewportSpec != null
@@ -100,17 +102,17 @@ public final class PackageConfigSnapshot {
                 hookDomainOverride);
     }
 
-    PackageConfigSnapshot(String packageName,
-                          boolean dpisEnabled,
-                          ViewportTargetSpec targetViewportSpec,
-                          String targetViewportMode,
-                          Integer targetFontScalePercent,
-                          String targetFontMode,
-                          String targetTypefaceId,
-                          boolean flutterFontHookEnabled,
-                          boolean flutterSettingsFontHookEnabled,
-                          boolean hyperOsFlutterFontHookEnabled,
-                          HookDomainOverride hookDomainOverride) {
+    public PackageConfigSnapshot(String packageName,
+                                 boolean dpisEnabled,
+                                 ViewportTargetSpec targetViewportSpec,
+                                 String targetViewportMode,
+                                 Integer targetFontScalePercent,
+                                 String targetFontMode,
+                                 String targetTypefaceId,
+                                 boolean flutterFontHookEnabled,
+                                 boolean flutterSettingsFontHookEnabled,
+                                 boolean hyperOsFlutterFontHookEnabled,
+                                 HookDomainOverride hookDomainOverride) {
         this.packageName = packageName;
         this.dpisEnabled = dpisEnabled;
         this.targetViewportSpec = targetViewportSpec != null

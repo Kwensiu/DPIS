@@ -1,4 +1,12 @@
-package com.dpis.module;
+package com.dpis.module.config;
+
+import com.dpis.module.config.ModulePackagePlan;
+
+import com.dpis.module.config.PackageConfigSnapshot;
+
+import com.dpis.module.config.ConfigSnapshotLoader;
+
+import com.dpis.module.config.ConfigSnapshot;
 
 import com.dpis.module.fonts.FontApplyMode;
 
@@ -69,11 +77,11 @@ public final class ModulePackagePlan {
                 : HookDomainOverride.automatic();
     }
 
-    static ModulePackagePlan resolve(DpisConfigStore store, String packageName) {
+    public static ModulePackagePlan resolve(ConfigSnapshotStore store, String packageName) {
         return resolve(ConfigSnapshotLoader.fromStore(store), packageName);
     }
 
-    static ModulePackagePlan resolve(ConfigSnapshot snapshot, String packageName) {
+    public static ModulePackagePlan resolve(ConfigSnapshot snapshot, String packageName) {
         if (snapshot == null || packageName == null || packageName.isBlank()
                 || !snapshot.isConfigured(packageName)) {
             return inactive(packageName);
@@ -142,13 +150,13 @@ public final class ModulePackagePlan {
                 packageConfig.hookDomainOverride);
     }
 
-    boolean shouldInstallHooks() {
+    public boolean shouldInstallHooks() {
         // Flutter supplements are currently attached only when a normal font route is active.
         // If they become standalone routes, include them in this predicate as well.
         return targetDpisEnabled && (viewportEnabled || fontEnabled || typefaceEnabled);
     }
 
-    boolean shouldInstallLegacyHooks() {
+    public boolean shouldInstallLegacyHooks() {
         return targetDpisEnabled
                 && (viewportEnabled
                 || typefaceEnabled
@@ -156,11 +164,11 @@ public final class ModulePackagePlan {
                 && FontApplyMode.isEnabled(targetFontMode)));
     }
 
-    boolean hasSecondaryProcessSafeRoute() {
+    public boolean hasSecondaryProcessSafeRoute() {
         return fontEnabled || typefaceEnabled;
     }
 
-    ModulePackagePlan withoutViewportRoute() {
+    public ModulePackagePlan withoutViewportRoute() {
         return new ModulePackagePlan(
                 packageName,
                 ViewportTargetSpec.off(),
@@ -194,7 +202,7 @@ public final class ModulePackagePlan {
                 debugOverride);
     }
 
-    Integer targetViewportWidthDp() {
+    public Integer targetViewportWidthDp() {
         return targetViewportSpec.isAbsoluteDp()
                 ? targetViewportSpec.absoluteWidthDp()
                 : null;

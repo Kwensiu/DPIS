@@ -6,7 +6,7 @@ import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
 
 import com.dpis.module.BuildConfig;
 
-import com.dpis.module.ModulePackagePlan;
+import com.dpis.module.config.ModulePackagePlan;
 
 
 import com.dpis.module.DpisLog;

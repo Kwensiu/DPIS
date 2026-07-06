@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.config.ModulePackagePlan;
+
+import com.dpis.module.config.ConfigSnapshotLoader;
+
+import com.dpis.module.config.ConfigSnapshot;
+
 import com.dpis.module.fonts.FontApplyMode;
 
 import com.dpis.module.runtime.systemserver.SystemServerProcess;

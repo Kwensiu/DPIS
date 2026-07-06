@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.applist.InstalledAppCatalogCoordinator;
+
 
 import com.dpis.module.diagnostics.FeedbackDiagnosticCoordinator;
 

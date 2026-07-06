@@ -1,4 +1,8 @@
-package com.dpis.module;
+package com.dpis.module.config;
+
+import com.dpis.module.config.PackageConfigRepository;
+
+import com.dpis.module.DpisConfigStore;
 
 import com.dpis.module.templates.TemplateConfigValue;
 

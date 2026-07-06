@@ -1,11 +1,9 @@
-package com.dpis.module;
+package com.dpis.module.runtime.font;
 
+import com.dpis.module.DpisLog;
 import com.dpis.module.fonts.FontApplyMode;
 
 import com.dpis.module.runtime.systemserver.PerAppDisplayConfig;
-
-
-import com.dpis.module.DpisLog;
 
 import java.lang.reflect.Method;
 import java.util.Locale;
@@ -63,12 +61,12 @@ public final class HyperOsFlutterFontBridge {
         return PERSIST_TYPEFACE_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    static Integer readForceFontScalePercent(String packageName) {
+    public static Integer readForceFontScalePercent(String packageName) {
         return readPositiveIntProperty(forcePropertyNameForPackage(packageName),
                 persistentForcePropertyNameForPackage(packageName));
     }
 
-    static Integer readCompatFontScalePercent(String packageName) {
+    public static Integer readCompatFontScalePercent(String packageName) {
         if (packageName == null || packageName.isEmpty()) {
             return null;
         }
@@ -163,7 +161,7 @@ public final class HyperOsFlutterFontBridge {
         return shouldClearOnPublishTargetSkip(packageName, config);
     }
 
-    static String[] clearTargetAssignmentsForTest(String packageName) {
+    public static String[] clearTargetAssignmentsForTest(String packageName) {
         return clearTargetAssignments(packageName);
     }
 

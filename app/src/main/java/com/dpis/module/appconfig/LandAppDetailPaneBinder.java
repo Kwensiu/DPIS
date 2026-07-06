@@ -1,11 +1,12 @@
-package com.dpis.module;
+package com.dpis.module.appconfig;
 
+import com.dpis.module.ConfigStoreFactory;
+import com.dpis.module.DpisConfigStore;
+import com.dpis.module.DpisApplication;
+import com.dpis.module.R;
 import com.dpis.module.fonts.FontApplyMode;
 
 import com.dpis.module.applist.AppStatusFormatter;
-
-import com.dpis.module.appconfig.AppConfigDialogBinder;
-import com.dpis.module.appconfig.AppConfigInputValidation;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
 
@@ -45,9 +46,9 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textview.MaterialTextView;
 import java.util.ArrayList;
 
-final class LandAppDetailPaneBinder {
+public final class LandAppDetailPaneBinder {
 
-    interface Actions {
+    public interface Actions {
 
         void saveDraft(
                 AppListItem item,
@@ -106,12 +107,12 @@ final class LandAppDetailPaneBinder {
     private final Activity activity;
     private final Actions actions;
 
-    LandAppDetailPaneBinder(Activity activity, Actions actions) {
+    public LandAppDetailPaneBinder(Activity activity, Actions actions) {
         this.activity = activity;
         this.actions = actions;
     }
 
-    void bind(View root, AppListItem item, boolean systemHooksEnabled) {
+    public void bind(View root, AppListItem item, boolean systemHooksEnabled) {
         ImageView iconView = root.findViewById(R.id.land_detail_app_icon);
         MaterialTextView titleView = root.findViewById(R.id.land_detail_title);
         MaterialTextView packageView = root.findViewById(
@@ -975,7 +976,7 @@ final class LandAppDetailPaneBinder {
         return valid;
     }
 
-    static void markDraftSaved(View root, MaterialButton saveButton) {
+    public static void markDraftSaved(View root, MaterialButton saveButton) {
         if (root == null) {
             return;
         }
@@ -997,7 +998,7 @@ final class LandAppDetailPaneBinder {
                 item != null ? item.viewportTargetSpec : null);
     }
 
-    static AppConfigDialogBinder.AppConfigDialogState stateFor(View root) {
+    public static AppConfigDialogBinder.AppConfigDialogState stateFor(View root) {
         Object tag = root != null
                 ? root.getTag(R.id.land_detail_hook_chain_row)
                 : null;
@@ -1006,7 +1007,7 @@ final class LandAppDetailPaneBinder {
                 : null;
     }
 
-    static void applyRetainedDraft(
+    public static void applyRetainedDraft(
             Activity activity,
             View root,
             AppListItem item,

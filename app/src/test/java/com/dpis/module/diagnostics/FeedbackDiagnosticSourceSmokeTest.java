@@ -1,5 +1,7 @@
 package com.dpis.module.diagnostics;
 
+import com.dpis.module.diagnostics.DiagnosticLogGate;
+
 import com.dpis.module.*;
 
 import com.dpis.module.appconfig.AppConfigDialogBinder;

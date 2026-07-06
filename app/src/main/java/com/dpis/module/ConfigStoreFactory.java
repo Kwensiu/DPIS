@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.config.RuntimePropertyConfigPreferences;
+
 
 import com.dpis.module.fonts.FontLibraryStore;
 import com.dpis.module.fonts.FontLibraryConfigStore;
@@ -34,6 +36,19 @@ public final class ConfigStoreFactory {
 
     public static DpisConfigStore createPackageLifecycleConfigStore(Context context) {
         return createLocalModuleConfigStore(context);
+    }
+
+    public static DpisConfigStore createDiagnosticLogGateConfigStore(Context context) {
+        return createLocalModuleConfigStore(context);
+    }
+
+    public static boolean enableDiagnosticLogs(Context context) {
+        DpisConfigStore store = createDiagnosticLogGateConfigStore(context);
+        if (store == null || !store.setGlobalLogEnabled(true)) {
+            return false;
+        }
+        DpisLog.setLoggingEnabled(true);
+        return true;
     }
 
     public static DpisConfigStore createLocalUiModuleConfigStore(Context context, XposedService service) {

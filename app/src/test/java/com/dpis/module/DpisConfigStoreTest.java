@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.config.PackageConfigValue;
+
 import com.dpis.module.fonts.FontApplyMode;
 
 import com.dpis.module.viewport.ViewportApplyMode;
@@ -1311,9 +1313,9 @@ public class DpisConfigStoreTest {
         assertTrue(store.replaceBackup(values));
 
         assertEquals(ViewportTargetSpec.relativeScale(125000),
-                store.readPackageConfig("com.tencent.mm").viewportTargetSpec);
+                store.readPackageConfig("com.tencent.mm").viewportTargetSpec());
         assertEquals("resources_font,textview_sp",
-                store.readPackageConfig("com.tencent.mm").fontHookDomainsRaw);
+                store.readPackageConfig("com.tencent.mm").fontHookDomainsRaw());
         assertFalse(store.isTargetDpisEnabled("com.tencent.mm"));
         assertEquals(Integer.valueOf(600), store.getWechatDpi("com.tencent.mm"));
         assertEquals(ViewportTargetType.RELATIVE_SCALE,
@@ -1341,7 +1343,7 @@ public class DpisConfigStoreTest {
         assertTrue(store.replaceBackup(values));
 
         assertEquals(ViewportTargetSpec.relativeScale(90000),
-                store.readPackageConfig("com.example.app").viewportTargetSpec);
+                store.readPackageConfig("com.example.app").viewportTargetSpec());
         assertFalse(prefs.contains("viewport.com.example.app.target_type"));
         assertFalse(prefs.contains("viewport.com.example.app.width_dp"));
         assertEquals(ViewportTargetType.RELATIVE_SCALE,
@@ -1736,9 +1738,9 @@ public class DpisConfigStoreTest {
         assertTrue(store.migrateLegacyPackageConfigToAggregated());
 
         assertEquals(ViewportTargetSpec.relativeScale(90000),
-                store.readPackageConfig("com.example.app").viewportTargetSpec);
+                store.readPackageConfig("com.example.app").viewportTargetSpec());
         assertEquals(Integer.valueOf(150),
-                store.readPackageConfig("com.example.app").fontScalePercent);
+                store.readPackageConfig("com.example.app").fontScalePercent());
         assertFalse(prefs.contains("viewport.com.example.app.target_type"));
         assertFalse(prefs.contains("viewport.com.example.app.width_dp"));
         assertFalse(prefs.contains("font.com.example.app.scale_percent"));
@@ -2185,4 +2187,3 @@ public class DpisConfigStoreTest {
         }
     }
 }
-

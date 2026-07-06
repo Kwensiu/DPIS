@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.HyperOsFlutterFontBridge;
+
 
 import com.dpis.module.fonts.FontApplyMode;
 

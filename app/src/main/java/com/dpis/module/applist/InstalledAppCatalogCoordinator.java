@@ -1,15 +1,12 @@
-package com.dpis.module;
+package com.dpis.module.applist;
 
+import com.dpis.module.DpisConfigStore;
 
 import com.dpis.module.fonts.FontApplyMode;
 
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;
 import com.dpis.module.viewport.ViewportTargetType;
-
-import com.dpis.module.applist.AppListItem;
-
-import com.dpis.module.applist.InstalledAppCatalogItem;
 
 import com.dpis.module.fonts.HyperOsNativeAppDetector;
 
@@ -19,8 +16,6 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.SystemClock;
 import android.view.View;
-
-import com.dpis.module.applist.AppIconMemoryCache;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -92,7 +87,7 @@ public final class InstalledAppCatalogCoordinator {
         return catalog;
     }
 
-    List<AppListItem> loadInstalledApps(boolean forceInstalledAppCatalogReload,
+    public List<AppListItem> loadInstalledApps(boolean forceInstalledAppCatalogReload,
             DpisConfigStore store,
             Set<String> scopePackages,
             boolean scopeKnown) {
@@ -122,7 +117,7 @@ public final class InstalledAppCatalogCoordinator {
         return result;
     }
 
-    static AppListItem createAppListItem(DpisConfigStore store,
+    public static AppListItem createAppListItem(DpisConfigStore store,
             Set<String> scopePackages,
             boolean scopeKnown,
             String label,
@@ -173,7 +168,7 @@ public final class InstalledAppCatalogCoordinator {
                 systemApp, hyperOsNativeProxyCandidate, icon);
     }
 
-    static boolean isUserVisibleConfiguredPackage(DpisConfigStore store,
+    public static boolean isUserVisibleConfiguredPackage(DpisConfigStore store,
             String packageName,
             boolean scopeKnown,
             boolean inScope) {

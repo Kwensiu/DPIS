@@ -1,5 +1,9 @@
-package com.dpis.module;
+package com.dpis.module.diagnostics;
 
+import com.dpis.module.ConfigStoreFactory;
+import com.dpis.module.DpisConfigStore;
+import com.dpis.module.LocalizedActivity;
+import com.dpis.module.R;
 import com.dpis.module.runtime.RuntimeDebugPropertySyncer;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
 
@@ -8,11 +12,11 @@ import android.widget.Toast;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
-final class DiagnosticLogGate {
+public final class DiagnosticLogGate {
     private DiagnosticLogGate() {
     }
 
-    static boolean ensureEnabled(
+    public static boolean ensureEnabled(
             LocalizedActivity activity,
             Runnable onEnabled,
             Runnable onCancelled
@@ -20,7 +24,7 @@ final class DiagnosticLogGate {
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return false;
         }
-        DpisConfigStore store = ConfigStoreFactory.createLocalModuleConfigStore(activity);
+        DpisConfigStore store = ConfigStoreFactory.createDiagnosticLogGateConfigStore(activity);
         if (store.isGlobalLogEnabled()) {
             return true;
         }
@@ -53,10 +57,9 @@ final class DiagnosticLogGate {
     }
 
     private static boolean enableLogs(Context context, DpisConfigStore store) {
-        if (store == null || !store.setGlobalLogEnabled(true)) {
+        if (!ConfigStoreFactory.enableDiagnosticLogs(context)) {
             return false;
         }
-        DpisLog.setLoggingEnabled(true);
         RuntimeDebugPropertySyncer.publishAsync(true, store.isFontDebugOverlayEnabled());
         RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
         return true;

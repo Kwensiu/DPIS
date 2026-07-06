@@ -1,5 +1,13 @@
 package com.dpis.module;
 
+import com.dpis.module.appconfig.LandAppDetailPaneBinder;
+
+import com.dpis.module.diagnostics.DiagnosticLogGate;
+
+import com.dpis.module.settings.SystemScopeCoordinator;
+
+import com.dpis.module.applist.InstalledAppCatalogCoordinator;
+
 
 import com.dpis.module.fonts.FontApplyMode;
 import com.dpis.module.fonts.FontLibraryActivity;

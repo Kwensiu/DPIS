@@ -7,7 +7,7 @@ import com.dpis.module.fonts.FontApplyMode;
 import com.dpis.module.viewport.EffectiveModeResolver;
 
 import com.dpis.module.R;
-import com.dpis.module.PackageConfigValue;
+import com.dpis.module.config.PackageConfigValue;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
 

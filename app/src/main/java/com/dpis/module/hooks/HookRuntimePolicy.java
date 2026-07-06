@@ -1,6 +1,6 @@
 package com.dpis.module.hooks;
 
-import com.dpis.module.ConfigSnapshot;
+import com.dpis.module.config.ConfigSnapshot;
 
 import com.dpis.module.DpisConfigStore;
 

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.config.ModulePackagePlan;
+
 import com.dpis.module.fonts.FontApplyMode;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;

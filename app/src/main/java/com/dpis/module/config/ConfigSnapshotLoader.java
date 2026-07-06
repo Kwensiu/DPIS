@@ -1,10 +1,11 @@
-package com.dpis.module;
+package com.dpis.module.config;
 
-import com.dpis.module.fonts.FontApplyMode;
+import com.dpis.module.config.PackageConfigSnapshot;
 
-import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.config.ConfigSnapshotLoader;
 
-import com.dpis.module.hooks.HookDomainOverride;
+import com.dpis.module.config.ConfigSnapshot;
+
 import com.dpis.module.hooks.HookDomainOverrideStore;
 
 import java.util.LinkedHashMap;
@@ -15,13 +16,12 @@ public final class ConfigSnapshotLoader {
     private ConfigSnapshotLoader() {
     }
 
-    public static ConfigSnapshot fromStore(DpisConfigStore store) {
+    public static ConfigSnapshot fromStore(ConfigSnapshotStore store) {
         if (store == null) {
             return ConfigSnapshot.empty();
         }
         Set<String> configuredPackages = store.getConfiguredPackages();
         Map<String, PackageConfigSnapshot> packages = new LinkedHashMap<>();
-        HookDomainOverrideStore overrideStore = new HookDomainOverrideStore(store);
         for (String packageName : configuredPackages) {
             if (packageName == null || packageName.isBlank()) {
                 continue;
@@ -37,7 +37,8 @@ public final class ConfigSnapshotLoader {
                     false,
                     false,
                     false,
-                    overrideStore.read(packageName)));
+                    HookDomainOverrideStore.fromRaw(
+                            store.getPackageFontHookDomainsRaw(packageName))));
         }
         return new ConfigSnapshot(
                 packages.keySet(),

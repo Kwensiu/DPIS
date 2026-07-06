@@ -1,10 +1,9 @@
-package com.dpis.module;
+package com.dpis.module.runtime.systemserver;
 
-import com.dpis.module.PerAppDisplayConfigSource;
-
-import com.dpis.module.runtime.systemserver.PerAppDisplayConfig;
+import com.dpis.module.runtime.font.HyperOsFlutterFontBridge;
 
 import com.dpis.module.DpisLog;
+import com.dpis.module.config.PerAppDisplayConfigSource;
 
 
 import java.lang.reflect.Method;
@@ -67,26 +66,28 @@ public final class HyperOsRustProcessHookInstaller {
         return hooked;
     }
 
-    static String appendEnvironmentForTest(String existing,
-                                           String packageName,
-                                           int targetFontScalePercent,
-                                           String binaryPath) {
+    public static String appendEnvironmentForTest(String existing,
+                                                  String packageName,
+                                                  int targetFontScalePercent,
+                                                  String binaryPath) {
         return appendEnvironment(existing, packageName, targetFontScalePercent, binaryPath);
     }
 
-    static String resolveProxyLibraryPathForTest(String originalBinaryPath) {
+    public static String resolveProxyLibraryPathForTest(String originalBinaryPath) {
         return resolveProxyLibraryPath(originalBinaryPath);
     }
 
-    static String buildArgumentProbeSummaryForTest(List<Object> args) {
+    public static String buildArgumentProbeSummaryForTest(List<Object> args) {
         return buildArgumentProbeSummary(args);
     }
 
-    static Object[] applyEnvironmentArgsForLegacy(PerAppDisplayConfigSource source, List<Object> args) {
+    public static Object[] applyEnvironmentArgsForLegacy(
+            PerAppDisplayConfigSource source,
+            List<Object> args) {
         return applyEnvironmentArgs(source, args);
     }
 
-    static void logTargetArgumentProbeForLegacy(List<Object> args) {
+    public static void logTargetArgumentProbeForLegacy(List<Object> args) {
         logTargetArgumentProbe(args);
     }
 

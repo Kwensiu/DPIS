@@ -1,5 +1,9 @@
 package com.dpis.module.templates;
 
+import com.dpis.module.applist.InstalledAppCatalogCoordinator;
+
+import com.dpis.module.config.PackageConfigRepository;
+
 import com.dpis.module.DpisConfigStore;
 
 

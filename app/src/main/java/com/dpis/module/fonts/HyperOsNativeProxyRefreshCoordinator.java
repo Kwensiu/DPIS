@@ -1,14 +1,14 @@
-package com.dpis.module;
+package com.dpis.module.fonts;
 
+import com.dpis.module.DpisConfigStore;
+import com.dpis.module.DpisLog;
 import com.dpis.module.fonts.FontApplyMode;
-
-import com.dpis.module.fonts.HyperOsNativeProxyBindMounter;
 
 import android.content.Context;
 
 import java.util.LinkedHashSet;
 
-final class HyperOsNativeProxyRefreshCoordinator {
+public final class HyperOsNativeProxyRefreshCoordinator {
     private HyperOsNativeProxyRefreshCoordinator() {
     }
 
@@ -18,7 +18,7 @@ final class HyperOsNativeProxyRefreshCoordinator {
      * back into app startup, service binding, or MY_PACKAGE_REPLACED without revisiting the native
      * file side-effect scope.
      */
-    static void refreshConfiguredTargetsAsync(Context context, DpisConfigStore store) {
+    public static void refreshConfiguredTargetsAsync(Context context, DpisConfigStore store) {
         if (context == null || store == null) {
             return;
         }
@@ -32,7 +32,7 @@ final class HyperOsNativeProxyRefreshCoordinator {
         refreshThread.start();
     }
 
-    static LinkedHashSet<String> collectRefreshPackagesForTest(DpisConfigStore store) {
+    public static LinkedHashSet<String> collectRefreshPackagesForTest(DpisConfigStore store) {
         return collectRefreshPackages(store);
     }
 

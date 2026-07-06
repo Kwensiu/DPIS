@@ -1,9 +1,15 @@
-package com.dpis.module;
+package com.dpis.module.config;
+
+import com.dpis.module.hooks.HookDomainOverride;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -108,9 +114,27 @@ public class PerAppDisplayConfigSourceRefreshingSnapshotProviderTest {
     }
 
     private static ConfigSnapshot snapshotWithPackage(String packageName) {
-        FakePrefs prefs = new FakePrefs();
-        DpisConfigStore store = new DpisConfigStore(prefs);
-        store.setTargetViewportWidthDp(packageName, 360);
-        return ConfigSnapshotLoader.fromStore(store);
+        LinkedHashMap<String, PackageConfigSnapshot> packages = new LinkedHashMap<>();
+        packages.put(packageName, new PackageConfigSnapshot(
+                packageName,
+                true,
+                ViewportTargetSpec.absoluteDp(360),
+                ViewportApplyMode.AUTO,
+                null,
+                null,
+                null,
+                false,
+                false,
+                false,
+                HookDomainOverride.automatic()));
+        return new ConfigSnapshot(
+                Collections.singleton(packageName),
+                packages,
+                true,
+                true,
+                false,
+                false,
+                false,
+                false);
     }
 }

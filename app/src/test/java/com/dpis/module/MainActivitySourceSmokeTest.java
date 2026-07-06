@@ -1,5 +1,13 @@
 package com.dpis.module;
 
+import com.dpis.module.appconfig.LandAppDetailPaneBinder;
+
+import com.dpis.module.fonts.HyperOsNativeProxyRefreshCoordinator;
+
+import com.dpis.module.settings.SystemScopeCoordinator;
+
+import com.dpis.module.applist.InstalledAppCatalogCoordinator;
+
 
 import com.dpis.module.fonts.FontApplyMode;
 
@@ -99,7 +107,7 @@ public class MainActivitySourceSmokeTest {
     @Test
     public void landDetailSaveRequestsScopeAfterSuccessfulSave() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
-        String binder = read("src/main/java/com/dpis/module/LandAppDetailPaneBinder.java");
+        String binder = read("src/main/java/com/dpis/module/appconfig/LandAppDetailPaneBinder.java");
 
         assertTrue(binder.contains("void saveDraft("));
         assertTrue(binder.contains("AppConfigDialogBinder.AppConfigDialogState state,"));
@@ -401,7 +409,7 @@ public class MainActivitySourceSmokeTest {
     public void loadInstalledApps_usesIconCacheEntryPoint() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String coordinatorSource = read(
-            "src/main/java/com/dpis/module/InstalledAppCatalogCoordinator.java"
+            "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.java"
         );
 
         assertTrue(
@@ -999,7 +1007,7 @@ public class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/MainViewModel.java"
         );
         String coordinatorSource = read(
-            "src/main/java/com/dpis/module/InstalledAppCatalogCoordinator.java"
+            "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.java"
         );
 
         assertTrue(source.contains("INSTALLED_APP_CATALOG_TTL_MS"));
@@ -1111,7 +1119,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("void onDraftStateChanged("));
         assertTrue(source.contains("if (draft == null && mainViewModel != null)"));
         assertTrue(
-            read("src/main/java/com/dpis/module/LandAppDetailPaneBinder.java")
+            read("src/main/java/com/dpis/module/appconfig/LandAppDetailPaneBinder.java")
                 .contains("AppConfigDialogBinder.AppConfigDialogState.fromItem(item)")
         );
         assertTrue(
@@ -1191,7 +1199,7 @@ public class MainActivitySourceSmokeTest {
         throws IOException {
         String layout = read("src/main/res/layout/view_land_app_detail.xml");
         String binder = read(
-            "src/main/java/com/dpis/module/LandAppDetailPaneBinder.java"
+            "src/main/java/com/dpis/module/appconfig/LandAppDetailPaneBinder.java"
         );
         String dimens = read("src/main/res/values/dimens.xml");
         String strings = read("src/main/res/values/strings.xml");
@@ -1450,7 +1458,7 @@ public class MainActivitySourceSmokeTest {
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String coordinatorSource = read(
-            "src/main/java/com/dpis/module/InstalledAppCatalogCoordinator.java"
+            "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.java"
         );
 
         assertTrue(

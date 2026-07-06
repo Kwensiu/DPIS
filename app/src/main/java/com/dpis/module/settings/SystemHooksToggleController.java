@@ -1,12 +1,10 @@
-package com.dpis.module;
+package com.dpis.module.settings;
 
+import com.dpis.module.DpisConfigStore;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
 
-import com.dpis.module.settings.SystemHookState;
-import com.dpis.module.settings.SystemHookStateResolver;
-
-final class SystemHooksToggleController {
-    interface View {
+public final class SystemHooksToggleController {
+    public interface View {
         void render(SystemHookState state);
 
         void showInitRequired();
@@ -16,7 +14,7 @@ final class SystemHooksToggleController {
         void showScopeRequired();
     }
 
-    interface ScopeGateway {
+    public interface ScopeGateway {
         boolean isServiceAvailable();
 
         boolean hasSystemScopeSelected();
@@ -27,11 +25,11 @@ final class SystemHooksToggleController {
     private final View view;
     private final Runnable onConfigSaved;
 
-    SystemHooksToggleController(DpisConfigStore store, ScopeGateway scopeGateway, View view) {
+    public SystemHooksToggleController(DpisConfigStore store, ScopeGateway scopeGateway, View view) {
         this(store, scopeGateway, view, RuntimeConfigDelivery::publishLocalSnapshotAfterSave);
     }
 
-    SystemHooksToggleController(
+    public SystemHooksToggleController(
             DpisConfigStore store,
             ScopeGateway scopeGateway,
             View view,
@@ -42,11 +40,11 @@ final class SystemHooksToggleController {
         this.onConfigSaved = onConfigSaved;
     }
 
-    void syncFromStore() {
+    public void syncFromStore() {
         renderCurrentState();
     }
 
-    void onUserToggle(boolean enabled) {
+    public void onUserToggle(boolean enabled) {
         if (!store.setSystemServerHooksEnabled(enabled)) {
             renderCurrentState();
             view.showSaveFailed();

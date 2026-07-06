@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.config;
+
+import com.dpis.module.config.PackageConfigValue;
 
 import com.dpis.module.fonts.FontApplyMode;
 

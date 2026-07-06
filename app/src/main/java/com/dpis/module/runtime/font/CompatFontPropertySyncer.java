@@ -1,8 +1,8 @@
 package com.dpis.module.runtime.font;
 
-import com.dpis.module.DpisConfigStore;
+import com.dpis.module.runtime.font.HyperOsFlutterFontBridge;
 
-import com.dpis.module.HyperOsFlutterFontBridge;
+import com.dpis.module.DpisConfigStore;
 
 import com.dpis.module.fonts.FontApplyMode;
 

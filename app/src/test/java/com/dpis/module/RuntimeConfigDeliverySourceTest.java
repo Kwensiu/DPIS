@@ -22,7 +22,7 @@ public class RuntimeConfigDeliverySourceTest {
         String appConfigHost = hostBlock(mainActivity);
         String sheetActions = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java");
         String fontLibrary = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
-        String systemHooks = read("src/main/java/com/dpis/module/SystemHooksToggleController.java");
+        String systemHooks = read("src/main/java/com/dpis/module/settings/SystemHooksToggleController.java");
         String systemSettings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
 
         assertTrue(delivery.contains("public static void setLocalSnapshotReloader(Runnable reloader)"));
