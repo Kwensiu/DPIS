@@ -52,6 +52,7 @@ import com.dpis.module.templates.QuickTemplateSortDialog;
 import com.dpis.module.templates.GlobalPrefillStore;
 import com.dpis.module.templates.GlobalPrefillEditorBinder;
 import com.dpis.module.templates.GlobalPrefillSheetDialog;
+import com.dpis.module.templates.BatchScopeRequestCoordinator;
 import com.dpis.module.templates.QuickTemplateApplyAdapters;
 import com.dpis.module.templates.QuickTemplateEditorBinder;
 import com.dpis.module.templates.QuickTemplateEditSheetDialog;

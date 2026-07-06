@@ -1,4 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.templates;
+
+import com.dpis.module.R;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

@@ -1,4 +1,8 @@
-package com.dpis.module;
+package com.dpis.module.templates;
+
+import com.dpis.module.BuildConfig;
+import com.dpis.module.DpisApplication;
+import com.dpis.module.R;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,8 +11,8 @@ import java.util.List;
 
 import io.github.libxposed.service.XposedService;
 
-final class BatchScopeRequestCoordinator {
-    interface Host {
+public final class BatchScopeRequestCoordinator {
+    public interface Host {
         void showToast(int messageResId, Object... formatArgs);
 
         void requestAppsLoad();
@@ -26,7 +30,7 @@ final class BatchScopeRequestCoordinator {
     private final ScopeRequester scopeRequester;
     private final boolean modernFlavor;
 
-    BatchScopeRequestCoordinator(Host host) {
+    public BatchScopeRequestCoordinator(Host host) {
         this(host, fromService(DpisApplication.getXposedService()),
                 "modern".equals(BuildConfig.FLAVOR));
     }
@@ -37,7 +41,7 @@ final class BatchScopeRequestCoordinator {
         this.modernFlavor = modernFlavor;
     }
 
-    Result requestMissingScope(List<String> successfulPackages) {
+    public Result requestMissingScope(List<String> successfulPackages) {
         LinkedHashSet<String> packages = sanitizePackages(successfulPackages);
         if (packages.isEmpty()) {
             return Result.noRequest();
@@ -140,7 +144,7 @@ final class BatchScopeRequestCoordinator {
         return sanitized;
     }
 
-    static final class Result {
+    public static final class Result {
         final boolean requestStarted;
         final boolean manualRequired;
         final List<String> requestedPackages;
