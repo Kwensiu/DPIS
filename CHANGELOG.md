@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.15.0](https://github.com/Kwensiu/DPIS/compare/v1.14.0...v1.15.0) (2026-07-07)
+
+
+### Features
+
+* add quick config tile ([158cb62](https://github.com/Kwensiu/DPIS/commit/158cb62645ecf2f82d227f2542fe66f6b7b2a255))
+* **api:** support libxposed API 102 ([#94](https://github.com/Kwensiu/DPIS/issues/94)) ([d63a68d](https://github.com/Kwensiu/DPIS/commit/d63a68d518a4dff82e61bfd81700176f1a713ede))
+* support owner-scoped WebAPK scaling in Chrome ([eba4901](https://github.com/Kwensiu/DPIS/commit/eba49012fc242d01a9283c08f683a2dca959815f))
+
+
+### Bug Fixes
+
+* harden system window relayout routing ([e9e1ded](https://github.com/Kwensiu/DPIS/commit/e9e1ded3a4a00f6c3e76844115116e8b731835fd))
+* keep local UI state out of remote config ([eed862b](https://github.com/Kwensiu/DPIS/commit/eed862b7bebd455840ee549ad64f57ebbba3abdb))
+* polish main UI search state and scale setting ([b7075c6](https://github.com/Kwensiu/DPIS/commit/b7075c6075f6dffab350dd1d8a833982be9153e7))
+* stabilize modern package-loaded app hooks ([122ca0c](https://github.com/Kwensiu/DPIS/commit/122ca0ce0da258cc82750f16ec43e0f8c3fb3f2e))
+* stabilize viewport route fallback and Chrome launch-item scaling ([645cd91](https://github.com/Kwensiu/DPIS/commit/645cd91f9455ac6d4c28f6cc9c1826f19791277f))
+* unify auto viewport fallback to compat across legacy and modern runtime paths ([0b15608](https://github.com/Kwensiu/DPIS/commit/0b156080ed75a10570099e13fffe14ed39ccdad9))
+
+
+### Performance
+
+* cache viewport resolution on resources read hot path ([d9e2bb7](https://github.com/Kwensiu/DPIS/commit/d9e2bb7945c6bccc5630a1ae4295062acf9034ec))
+* reduce font hook hot-path allocations ([ad1b7bc](https://github.com/Kwensiu/DPIS/commit/ad1b7bc07d00dcfb3ff613071515c6057470713d))
+
+
+### Refactoring
+
+* **config:** support three-decimal viewport scale precision ([9e1cb93](https://github.com/Kwensiu/DPIS/commit/9e1cb93f64ccc2555e550fb8c3dede102910f430))
+* rename DpiConfigStore to DpisConfigStore ([072ee0e](https://github.com/Kwensiu/DPIS/commit/072ee0e2f6e703472605c504e1d5de5684712d6d))
+* split local ui preference stores ([1021005](https://github.com/Kwensiu/DPIS/commit/102100577e82ae2f820385511c44149d950b507d))
+
 ## [1.14.0](https://github.com/Kwensiu/DPIS/compare/v1.13.1...v1.14.0) (2026-06-23)
 
 
