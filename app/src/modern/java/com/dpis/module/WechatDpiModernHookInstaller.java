@@ -1,5 +1,16 @@
 package com.dpis.module;
 
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+
+import com.dpis.module.viewport.DpiConfig;
+
+import com.dpis.module.quirks.WechatDpiMethodLocator;
+import com.dpis.module.quirks.WechatDpiRoutes;
+import com.dpis.module.quirks.WechatDpiRuntime;
+
+import com.dpis.module.appconfig.WechatDpiConfig;
+import com.dpis.module.runtime.WechatDpiPropertyBridge;
+
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;

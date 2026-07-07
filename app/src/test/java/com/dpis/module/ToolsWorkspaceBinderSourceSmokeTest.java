@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.diagnostics.DiagnosticLogGate;
+
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -12,7 +14,12 @@ public class ToolsWorkspaceBinderSourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(source.contains("private ToolsWorkspaceBinder toolsWorkspaceBinder;"));
-        assertTrue(source.contains("toolsWorkspaceBinder = new ToolsWorkspaceBinder(this);"));
+        assertTrue(source.contains(
+                "toolsWorkspaceBinder = new ToolsWorkspaceBinder(new ToolsWorkspaceBinder.Host()"));
+        assertTrue(source.contains(
+                "WindowInsetsBinder.applySafeDrawingPadding(toolbar, false, true, false, false);"));
+        assertTrue(source.contains("TouchFeedbackBinder.bindPressHaptic(view);"));
+        assertTrue(source.contains("DiagnosticLogGate.ensureEnabled("));
         assertTrue(source.contains("bindToolsWorkspace();"));
         assertTrue(source.contains("toolsWorkspaceBinder.onStart();"));
         assertTrue(source.contains("toolsWorkspaceBinder.onResume();"));
@@ -22,19 +29,20 @@ public class ToolsWorkspaceBinderSourceSmokeTest {
 
     @Test
     public void toolsWorkspaceBinderOwnsSystemFontScaleToolBinder() throws IOException {
-        String source = read("src/main/java/com/dpis/module/ToolsWorkspaceBinder.java");
+        String source = read("src/main/java/com/dpis/module/settings/ToolsWorkspaceBinder.java");
 
         assertTrue(source.contains("private SystemFontScaleToolBinder fontScaleToolBinder;"));
-        assertTrue(source.contains("fontScaleToolBinder = new SystemFontScaleToolBinder(activity, workspaceView);"));
+        assertTrue(source.contains(
+                "fontScaleToolBinder = new SystemFontScaleToolBinder(host.activity(), workspaceView, host);"));
         assertTrue(source.contains("fontScaleToolBinder.refreshFromSystem();"));
         assertTrue(source.contains("fontScaleToolBinder.collapseAndRefreshFromSystem();"));
     }
 
     @Test
     public void systemFontScalePermissionPanelOwnsAuthorizationClick() throws IOException {
-        String source = read("src/main/java/com/dpis/module/SystemFontScaleToolBinder.java");
+        String source = read("src/main/java/com/dpis/module/settings/SystemFontScaleToolBinder.java");
 
-        assertTrue(source.contains("TouchFeedbackBinder.bindPressHaptic(permissionOverlay);"));
+        assertTrue(source.contains("host.bindPressHaptic(permissionOverlay);"));
         assertTrue(source.contains("permissionOverlay.setOnClickListener(v -> openWriteSettingsPermission());"));
         assertTrue(source.contains("setVisible(operationGroup, expanded && (state.canWrite || state.unavailable));"));
     }

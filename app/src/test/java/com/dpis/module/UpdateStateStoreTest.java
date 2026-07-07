@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.updates.UpdateStateStore;
+
+import com.dpis.module.updates.UpdateCoordinator;
+
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -9,7 +13,7 @@ import org.junit.Test;
 public class UpdateStateStoreTest {
     @Test
     public void storeDefinesSharedPreferencesKeysAndReadsWritesUpdateState() throws IOException {
-        String source = read("src/main/java/com/dpis/module/UpdateStateStore.java");
+        String source = read("src/main/java/com/dpis/module/updates/UpdateStateStore.java");
 
         assertTrue(source.contains("final class UpdateStateStore"));
         assertTrue(source.contains("static final String PREFS_NAME"));
@@ -29,8 +33,8 @@ public class UpdateStateStoreTest {
 
     @Test
     public void storeBuildsCoordinatorStateFromPersistedFields() throws IOException {
-        String storeSource = read("src/main/java/com/dpis/module/UpdateStateStore.java");
-        String coordinatorSource = read("src/main/java/com/dpis/module/UpdateCoordinator.java");
+        String storeSource = read("src/main/java/com/dpis/module/updates/UpdateStateStore.java");
+        String coordinatorSource = read("src/main/java/com/dpis/module/updates/UpdateCoordinator.java");
 
         assertTrue(storeSource.contains("getLastUpdateCheckTimestamp()"));
         assertTrue(storeSource.contains("wasLastUpdateCheckFailed()"));
@@ -42,7 +46,7 @@ public class UpdateStateStoreTest {
 
     @Test
     public void storeApplyStartupCheckStatePersistsTimestampAndFailure() throws IOException {
-        String source = read("src/main/java/com/dpis/module/UpdateStateStore.java");
+        String source = read("src/main/java/com/dpis/module/updates/UpdateStateStore.java");
 
         assertTrue(source.contains("setLastUpdateCheckTimestamp(state.lastUpdateCheckTimestampMs)"));
         assertTrue(source.contains("setLastUpdateCheckFailed(state.lastUpdateCheckFailed)"));
@@ -50,14 +54,14 @@ public class UpdateStateStoreTest {
 
     @Test
     public void storeApplyPromptedVersionPersistsVersionCode() throws IOException {
-        String source = read("src/main/java/com/dpis/module/UpdateStateStore.java");
+        String source = read("src/main/java/com/dpis/module/updates/UpdateStateStore.java");
 
         assertTrue(source.contains("setLastPromptedUpdateVersionCode(state.lastPromptedUpdateVersionCode)"));
     }
 
     @Test
     public void storeNullGuardsAreInPlace() throws IOException {
-        String source = read("src/main/java/com/dpis/module/UpdateStateStore.java");
+        String source = read("src/main/java/com/dpis/module/updates/UpdateStateStore.java");
 
         assertTrue(source.contains("if (state == null) {"));
         assertTrue(source.contains("throw new IllegalArgumentException("));

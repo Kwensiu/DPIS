@@ -1,0 +1,53 @@
+package com.dpis.module.fonts;
+
+import com.dpis.module.DpisConfigStore;
+
+import com.dpis.module.*;
+
+import android.content.SharedPreferences;
+
+import java.util.Set;
+
+public final class FontDebugDataDiagnostics {
+    public enum NoDataReason {
+        NONE,
+        SCOPE_MISSING,
+        NOT_INJECTED,
+        NO_EVENTS
+    }
+
+    private FontDebugDataDiagnostics() {
+    }
+
+    public static NoDataReason resolveNoDataReason(DpisConfigStore store, SharedPreferences preferences) {
+        if (preferences == null) {
+            return NoDataReason.NOT_INJECTED;
+        }
+        if (!hasConfiguredTargets(store)) {
+            return NoDataReason.SCOPE_MISSING;
+        }
+        if (hasAnyFontEventSignal(preferences)) {
+            return NoDataReason.NONE;
+        }
+        if (hasViewportSignal(preferences)) {
+            return NoDataReason.NO_EVENTS;
+        }
+        return NoDataReason.NOT_INJECTED;
+    }
+
+    private static boolean hasConfiguredTargets(DpisConfigStore store) {
+        if (store == null) {
+            return false;
+        }
+        Set<String> targets = store.getConfiguredPackages();
+        return targets != null && !targets.isEmpty();
+    }
+
+    private static boolean hasAnyFontEventSignal(SharedPreferences preferences) {
+        return FontDebugStatsSchema.hasAnyFontEventSignal(preferences);
+    }
+
+    private static boolean hasViewportSignal(SharedPreferences preferences) {
+        return FontDebugStatsSchema.hasViewportSignal(preferences);
+    }
+}

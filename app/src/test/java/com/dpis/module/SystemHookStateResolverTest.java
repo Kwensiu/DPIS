@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.settings.SystemHookState;
+import com.dpis.module.settings.SystemHookStateResolver;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

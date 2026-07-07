@@ -1,5 +1,40 @@
 package com.dpis.module;
 
+import com.dpis.module.appconfig.LandAppDetailPaneBinder;
+
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.appconfig.AppConfigDialogBinder;
+import com.dpis.module.appconfig.AppConfigInputValidation;
+import com.dpis.module.appconfig.AppConfigSaveHandler;
+
+import com.dpis.module.applist.AppStatusFormatter;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainDialog;
+
+import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
+
+import com.dpis.module.viewport.DpiConfig;
+
+import com.dpis.module.viewport.ViewportPropertySyncer;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetType;
+
+import com.dpis.module.applist.AppListItem;
+
+import com.dpis.module.quirks.WechatDpiPropertySyncer;
+import com.dpis.module.quirks.WechatDpiSheetBinder;
+
+import com.dpis.module.appconfig.WechatDpiConfig;
+
+import com.dpis.module.appconfig.UnsavedBadgeBinder;
+
+import com.dpis.module.appconfig.ConfigValueInputErrorBinder;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -18,10 +53,10 @@ import javax.xml.parsers.ParserConfigurationException;
 public class AppConfigDialogBinderSourceSmokeTest {
     @Test
     public void binder_wiresExpectedActionButtons() throws IOException {
-        String binderSource = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
-        String interactionsSource = read("src/main/java/com/dpis/module/AppConfigSheetInteractions.java");
-        String source = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java")
-                + read("src/main/java/com/dpis/module/AppConfigSheetModeValidationBinder.java");
+        String binderSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
+        String interactionsSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetInteractions.java");
+        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java")
+                + read("src/main/java/com/dpis/module/appconfig/AppConfigSheetModeValidationBinder.java");
 
         assertTrue(binderSource.contains("new AppConfigSheetInteractions(this, host)"));
         assertTrue(binderSource.contains(".bind(dialogView, item, views, state, style, systemHooksEnabled);"));
@@ -69,9 +104,9 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void sheetModeAndInputChangesRefreshRetainedDraft() throws IOException {
-        String interactionsSource = read("src/main/java/com/dpis/module/AppConfigSheetInteractions.java");
+        String interactionsSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetInteractions.java");
         String modeValidationSource =
-                read("src/main/java/com/dpis/module/AppConfigSheetModeValidationBinder.java");
+                read("src/main/java/com/dpis/module/appconfig/AppConfigSheetModeValidationBinder.java");
         String mainActivitySource = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(interactionsSource.contains(
@@ -83,11 +118,11 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void wechatDpiUsesSingleOfficialInput() throws IOException {
-        String binder = read("src/main/java/com/dpis/module/WechatDpiSheetBinder.java");
+        String binder = read("src/main/java/com/dpis/module/quirks/WechatDpiSheetBinder.java");
         String strings = read("src/main/res/values/strings.xml");
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
-        assertTrue(binder.contains("WechatDpiConfig.appliesTo(item.packageName)"));
+        assertTrue(binder.contains("WechatDpiConfig.appliesTo(packageName)"));
         assertTrue(binder.contains("HapticFeedbackConstants.VIRTUAL_KEY"));
         assertTrue(binder.contains("MaterialAlertDialogBuilder"));
         assertTrue(binder.contains("R.string.dialog_wechat_dpi_help_title"));
@@ -106,7 +141,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void wechatDpiSaveDoesNotClearViewportConfig() throws IOException {
-        String binder = read("src/main/java/com/dpis/module/WechatDpiSheetBinder.java");
+        String binder = read("src/main/java/com/dpis/module/quirks/WechatDpiSheetBinder.java");
         int saveStart = binder.indexOf("static boolean save(");
         int saveEnd = binder.indexOf("static void clearDraft", saveStart);
         String saveBlock = binder.substring(saveStart, saveEnd);
@@ -121,7 +156,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void wechatDpiPublishFollowsSavedHostState() throws IOException {
-        String actionBinder = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
+        String actionBinder = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java");
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
 
         int toggleStart = actionBinder.indexOf("views.dpisToggleButton.setOnClickListener");
@@ -138,7 +173,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void appConfigSheetUsesUnsavedBadgeInsteadOfPreviewIndicator() throws IOException {
-        String binderSource = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String binderSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
         String layout = read("src/main/res/layout/dialog_app_config.xml");
 
         assertTrue(layout.contains("@layout/view_sheet_unsaved_badge_handle"));
@@ -160,7 +195,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void saveSuccessRequestsKnownMissingScopeOnce() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
         int methodStart = source.indexOf("void requestScopeAfterSuccessfulSave");
         int methodEnd = source.indexOf("private static boolean hasActiveDialogConfig", methodStart);
         String method = source.substring(methodStart, methodEnd);
@@ -175,7 +210,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void saveTimeScopeCallbacksOnlyRefreshAttachedSheet() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
         int methodStart = source.indexOf("void requestScopeAfterSuccessfulSave");
         int methodEnd = source.indexOf("private static boolean hasActiveDialogConfig", methodStart);
         String method = source.substring(methodStart, methodEnd);
@@ -188,8 +223,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void binder_wiresTypefaceSelector() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
-        String saveHandler = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
+        String saveHandler = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.java");
         String layout = read("src/main/res/layout/dialog_app_config.xml");
         String selectorLayout = read("src/main/res/layout/dialog_typeface_selection.xml");
 
@@ -225,7 +260,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void binderTreatsSelectedTypefaceAsNativeProxyConfig() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
         int activeStart = source.indexOf("private static boolean hasActiveDialogConfig");
         int activeEnd = source.indexOf("private static void setSaveAndResetButtonsEnabled", activeStart);
         String activeBlock = source.substring(activeStart, activeEnd);
@@ -235,7 +270,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void typefaceSelectorKeepsMissingCurrentChoiceChecked() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
         int selectorStart = source.indexOf("void showTypefaceSelector");
         int selectorEnd = source.indexOf("private String resolveTypefaceDisplayText", selectorStart);
         String selectorBlock = source.substring(selectorStart, selectorEnd);
@@ -248,9 +283,9 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void binder_validationWatcherUpdatesSaveStateAndStatus() throws IOException {
-        String binderSource = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
-        String source = read("src/main/java/com/dpis/module/AppConfigSheetModeValidationBinder.java")
-                + read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
+        String binderSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
+        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetModeValidationBinder.java")
+                + read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java");
 
         assertTrue(source.contains(
                 "views.viewportInputView.addTextChangedListener(viewportValidationWatcher)"));
@@ -267,7 +302,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void binderDoesNotShowHyperOsNativeProxyStatusTextInSheet() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
         String layout = read("src/main/res/layout/dialog_app_config.xml");
 
         assertFalse(source.contains("bindHyperOsNativeWarning("));
@@ -278,8 +313,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void binderWiresFontHookDomainButtonToHost() throws IOException {
-        String binderSource = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
-        String source = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
+        String binderSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
+        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java");
         String layout = read("src/main/res/layout/dialog_app_config.xml");
 
         assertTrue(layout.contains("android:id=\"@+id/dialog_font_hook_domains_button\""));
@@ -306,7 +341,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void fontHookDomainDialogUsesImmediateEditorLayout() throws IOException {
-        String source = read("src/main/java/com/dpis/module/FontHookDomainDialog.java");
+        String source = read("src/main/java/com/dpis/module/fonts/hookdomain/FontHookDomainDialog.java");
         String dialogLayout = read("src/main/res/layout/dialog_font_hook_domains.xml");
         String disabledHintBackground = read(
                 "src/main/res/drawable/bg_font_hook_domains_disabled_hint.xml");
@@ -390,9 +425,9 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void viewportTargetTypeControlsInputHintAndStackedLabels() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java")
-                + read("src/main/java/com/dpis/module/AppConfigSheetInteractions.java")
-                + read("src/main/java/com/dpis/module/AppConfigSheetModeValidationBinder.java");
+        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java")
+                + read("src/main/java/com/dpis/module/appconfig/AppConfigSheetInteractions.java")
+                + read("src/main/java/com/dpis/module/appconfig/AppConfigSheetModeValidationBinder.java");
         String layout = read("src/main/res/layout/dialog_app_config.xml");
         String strings = read("src/main/res/values/strings.xml");
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
@@ -416,7 +451,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void appConfigSheetDefaultsToScaleAndSystemFontMode() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
 
         assertTrue(source.contains("String initialViewportType = initialViewportTargetType(item)"));
         assertTrue(source.contains("bindViewportModeToggle(views.viewportModeToggle, initialViewportType, false)"));
@@ -430,10 +465,10 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void viewportModeSwitchKeepsSeparateInputValues() throws IOException {
-        String binderSource = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String binderSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
         String source = binderSource
-                + read("src/main/java/com/dpis/module/AppConfigSheetInteractions.java")
-                + read("src/main/java/com/dpis/module/AppConfigSheetModeValidationBinder.java");
+                + read("src/main/java/com/dpis/module/appconfig/AppConfigSheetInteractions.java")
+                + read("src/main/java/com/dpis/module/appconfig/AppConfigSheetModeValidationBinder.java");
         int switchStart = binderSource.indexOf("static void switchViewportTargetType");
         int visualStart = binderSource.indexOf("private static void updateModeToggleVisual", switchStart);
         String switchBlock = binderSource.substring(switchStart, visualStart);
@@ -459,7 +494,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void appConfigWizardHintUsesNamedDimensions() throws IOException {
-        String coordinator = read("src/main/java/com/dpis/module/AppConfigDialogCoordinator.java");
+        String coordinator = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogCoordinator.java");
         String appConfigLayout = read("src/main/res/layout/dialog_app_config.xml");
         String hintLayout = read("src/main/res/layout/view_app_config_wizard_hint.xml");
         String bubbleBackground = read("src/main/res/drawable/bg_app_config_wizard_bubble.xml");
@@ -488,7 +523,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void appConfigSheetUsesImeResizeAndScrollsFocusedInput() throws IOException {
-        String coordinator = read("src/main/java/com/dpis/module/AppConfigDialogCoordinator.java");
+        String coordinator = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogCoordinator.java");
         String appConfigLayout = read("src/main/res/layout/dialog_app_config.xml");
 
         assertTrue(appConfigLayout.contains("@+id/dialog_app_config_scroll"));
@@ -527,13 +562,13 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void appConfigSheetUsesSharedFormInputFocusBehavior() throws IOException {
-        String interactions = read("src/main/java/com/dpis/module/AppConfigSheetInteractions.java");
-        String validation = read("src/main/java/com/dpis/module/AppConfigSheetModeValidationBinder.java");
-        String actions = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
-        String host = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
-        String focusBinder = read("src/main/java/com/dpis/module/FormInputFocusBinder.java");
+        String interactions = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetInteractions.java");
+        String validation = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetModeValidationBinder.java");
+        String actions = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java");
+        String host = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
+        String focusBinder = read("src/main/java/com/dpis/module/ui/FormInputFocusBinder.java");
 
-        assertTrue(focusBinder.contains("final class FormInputFocusBinder"));
+        assertTrue(focusBinder.contains("public final class FormInputFocusBinder"));
         assertTrue(interactions.contains("new AppConfigSheetModeValidationBinder(binder, host)"));
         assertTrue(validation.contains("FormInputFocusBinder.bindDismissOnOutsideTouch"));
         assertTrue(validation.contains("WechatDpiSheetBinder.inputViewForFocus(dialogView)"));
@@ -544,7 +579,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void binderDoesNotKeepEmptyHyperOsSectionWrapper() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
+        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
 
         assertFalse(source.contains("bindHyperOsNativeSection"));
     }
@@ -568,7 +603,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void resetButtonOnlyClearsDialogInputsUntilSaved() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
+        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java");
         int resetStart = source.indexOf("views.disableButton.setOnClickListener");
         int saveStart = source.indexOf("views.saveButton.setOnClickListener");
         String resetBlock = source.substring(resetStart, saveStart);
@@ -578,7 +613,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void savingViewportConfigPublishesRuntimeViewportTarget() throws IOException {
-        String saveSource = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        String saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.java");
         String mainSource = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(saveSource.contains("ViewportApplyMode.SYSTEM.equals"));
@@ -592,9 +627,9 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void previewViewportApplyModeUsesMutableSheetStateForStatusAndSave() throws IOException {
-        String binderSource = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
-        String actionSource = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
-        String saveSource = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        String binderSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
+        String actionSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java");
+        String saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.java");
 
         assertTrue(binderSource.contains("String viewportApplyMode;"));
         assertTrue(binderSource.contains("this.viewportApplyMode = ViewportApplyMode.normalize(viewportApplyMode);"));
@@ -608,7 +643,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void savingEmptyFontScaleClearsOnlyFontScaleRuntimeTargets() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.java");
         int clearStart = source.indexOf("if (fontScalePercent == null)");
         int configuredStart = source.indexOf("} else {", clearStart);
         String clearBlock = source.substring(clearStart, configuredStart);
@@ -621,7 +656,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void savingPreviewHookDomainsIsIndependentFromFontScaleBranch() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.java");
         int persistCall = source.indexOf("persistPreviewOnlyConfig(");
         int fontScaleBranch = source.indexOf("if (fontScalePercent == null)");
 
@@ -643,7 +678,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void savingFontConfigPublishesUnifiedFontRuntimeTarget() throws IOException {
-        String saveSource = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        String saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.java");
         String mainSource = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(mainSource.contains("scheduleRuntimePropertiesForTargetLaunch(packageName);"));
@@ -655,7 +690,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void savingTypefaceConfigPublishesRuntimeTypefaceTarget() throws IOException {
-        String saveSource = read("src/main/java/com/dpis/module/AppConfigSaveHandler.java");
+        String saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.java");
         String mainSource = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(mainSource.contains("scheduleRuntimePropertiesForTargetLaunch(packageName);"));
@@ -665,8 +700,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void appConfigInputErrorsAreRenderedBySharedValidation() throws IOException {
-        String binder = read("src/main/java/com/dpis/module/AppConfigDialogBinder.java");
-        String landBinder = read("src/main/java/com/dpis/module/LandAppDetailPaneBinder.java");
+        String binder = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
+        String landBinder = read("src/main/java/com/dpis/module/appconfig/LandAppDetailPaneBinder.java");
         int updateStart = binder.indexOf("static boolean updateSaveButtonState(TextInputLayout");
         int updateEnd = binder.indexOf("static boolean updateSaveButtonState(View dialogView", updateStart);
         String updateBlock = binder.substring(updateStart, updateEnd);
@@ -675,7 +710,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
                 "ConfigValueInputErrorBinder.bindFullMessage(viewportInputLayout, viewportValid);"));
         assertTrue(updateBlock.contains(
                 "ConfigValueInputErrorBinder.bindFullMessage(fontInputLayout, fontValid);"));
-        assertTrue(read("src/main/java/com/dpis/module/ConfigValueInputErrorBinder.java")
+        assertTrue(read("src/main/java/com/dpis/module/appconfig/ConfigValueInputErrorBinder.java")
                 .contains("R.string.status_save_invalid"));
         assertFalse(landBinder.contains("R.string.status_save_invalid"));
     }

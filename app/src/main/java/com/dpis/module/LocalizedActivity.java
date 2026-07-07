@@ -1,10 +1,13 @@
 package com.dpis.module;
 
+import com.dpis.module.settings.AppLocaleManager;
+import com.dpis.module.settings.AppUiScaleManager;
+
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 
-abstract class LocalizedActivity extends Activity {
+public abstract class LocalizedActivity extends Activity {
     private String activeLanguageTag = AppLocaleManager.TAG_FOLLOW_SYSTEM;
     private int activeInterfaceScalePercent = AppUiScaleManager.DEFAULT_SCALE_PERCENT;
 

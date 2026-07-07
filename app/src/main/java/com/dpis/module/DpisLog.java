@@ -1,9 +1,13 @@
 package com.dpis.module;
 
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeTransport;
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
+
 import android.util.Log;
 
-final class DpisLog {
-    static final String TAG = "DPIS";
+public final class DpisLog {
+    public static final String TAG = "DPIS";
     private static volatile boolean loggingEnabled = true;
     private static volatile AppLogSink appLogSink;
 
@@ -14,7 +18,7 @@ final class DpisLog {
     private DpisLog() {
     }
 
-    static void i(String msg) {
+    public static void i(String msg) {
         if (!shouldLog()) {
             return;
         }
@@ -28,7 +32,7 @@ final class DpisLog {
         FeedbackDiagnosticRuntimeTransport.record("runtime", "dpis_log", "", msg);
     }
 
-    static void e(String msg, Throwable throwable) {
+    public static void e(String msg, Throwable throwable) {
         if (!shouldLog()) {
             return;
         }
@@ -58,7 +62,7 @@ final class DpisLog {
         );
     }
 
-    static boolean isLoggingEnabled() {
+    public static boolean isLoggingEnabled() {
         return loggingEnabled;
     }
 

@@ -1,8 +1,26 @@
 package com.dpis.module;
 
+import com.dpis.module.config.PerAppDisplayConfigSource;
+
+import com.dpis.module.config.ConfigSnapshotLoader;
+
+
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.viewport.PerAppDisplayEnvironment;
+import com.dpis.module.viewport.PerAppDisplayOverrideCalculator;
+
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
+
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.util.Log;
+
+import com.dpis.module.runtime.RuntimeClock;
+import com.dpis.module.runtime.systemserver.ConfigSnapshotRefreshPolicy;
+import com.dpis.module.runtime.systemserver.PerAppDisplayConfig;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -59,7 +77,7 @@ final class LegacySystemServerHookInstaller {
     static void install() {
         PerAppDisplayConfigSource source =
                 PerAppDisplayConfigSource.withLegacyRuntimePropertyFallback(
-                        new RefreshingConfigSnapshotProvider(
+                        new PerAppDisplayConfigSource.RefreshingSnapshotProvider(
                                 () -> ConfigSnapshotLoader.fromStore(
                                         ConfigStoreFactory.createForLegacySystemServerHost()),
                                 ConfigSnapshotRefreshPolicy.SYSTEM_SERVER_TTL_MILLIS));

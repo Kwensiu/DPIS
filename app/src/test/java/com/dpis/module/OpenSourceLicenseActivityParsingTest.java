@@ -9,7 +9,7 @@ import java.io.IOException;
 public class OpenSourceLicenseActivityParsingTest {
     @Test
     public void parserReadsCatalogAndStringLicenseReferences() throws IOException {
-        String source = read("src/main/java/com/dpis/module/OpenSourceLicenseActivity.java");
+        String source = read("src/main/java/com/dpis/module/about/OpenSourceLicenseActivity.java");
 
         assertTrue(source.contains("JSONObject licenseCatalog = root.optJSONObject(\"licenses\")"));
         assertTrue(source.contains("resolveLicenses(library.optJSONArray(\"licenses\"), licenseCatalog)"));
@@ -19,7 +19,7 @@ public class OpenSourceLicenseActivityParsingTest {
 
     @Test
     public void parserBuildsLicenseDetailWithResolvedContent() throws IOException {
-        String source = read("src/main/java/com/dpis/module/OpenSourceLicenseActivity.java");
+        String source = read("src/main/java/com/dpis/module/about/OpenSourceLicenseActivity.java");
 
         assertTrue(source.contains("static String buildLicenseDetail"));
         assertTrue(source.contains("detailBuilder.append(license.name)"));
@@ -28,7 +28,7 @@ public class OpenSourceLicenseActivityParsingTest {
 
     @Test
     public void licensePageIncludesDpisProjectLicense() throws IOException {
-        String source = read("src/main/java/com/dpis/module/OpenSourceLicenseActivity.java");
+        String source = read("src/main/java/com/dpis/module/about/OpenSourceLicenseActivity.java");
         String strings = read("src/main/res/values/strings.xml");
 
         assertTrue(source.contains("createProjectLicenseItem()"));
@@ -52,7 +52,7 @@ public class OpenSourceLicenseActivityParsingTest {
 
     @Test
     public void licenseDetailDialogUsesMaterialLargeWidth() throws IOException {
-        String source = read("src/main/java/com/dpis/module/OpenSourceLicenseActivity.java");
+        String source = read("src/main/java/com/dpis/module/about/OpenSourceLicenseActivity.java");
 
         assertTrue(source.contains("new MaterialAlertDialogBuilder(this)"));
         assertTrue(source.contains("androidx.appcompat.app.AlertDialog dialog = builder.create();"));
@@ -61,7 +61,7 @@ public class OpenSourceLicenseActivityParsingTest {
 
     @Test
     public void notFoundPathShowsMissingThirdPartyLicenseIndicator() throws IOException {
-        String source = read("src/main/java/com/dpis/module/OpenSourceLicenseActivity.java")
+        String source = read("src/main/java/com/dpis/module/about/OpenSourceLicenseActivity.java")
                 .replace("\r\n", "\n");
         int notFoundCatch = source.indexOf("} catch (Resources.NotFoundException e) {");
         int throwableCatch = source.indexOf("} catch (Throwable t) {", notFoundCatch);

@@ -1,5 +1,40 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.HyperOsFlutterFontBridge;
+
+import com.dpis.module.runtime.systemserver.HyperOsRustProcessHookInstaller;
+
+import com.dpis.module.config.PerAppDisplayConfigSource;
+
+
+
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.runtime.systemserver.SystemServerProcess;
+
+import com.dpis.module.runtime.appprocess.DisplayHookInstaller;
+
+import com.dpis.module.runtime.appprocess.ResourcesReadHookInstaller;
+
+import com.dpis.module.runtime.appprocess.ResourcesManagerHookInstaller;
+
+
+import com.dpis.module.fonts.FontLibraryStore;
+
+import com.dpis.module.viewport.DpiConfig;
+
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportOverride;
+
+import com.dpis.module.quirks.WechatDpiMethodLocator;
+import com.dpis.module.quirks.WechatDpiRoutes;
+import com.dpis.module.quirks.WechatDpiRuntime;
+
+import com.dpis.module.appconfig.WechatDpiConfig;
+
+import com.dpis.module.fonts.PublishedFontFileResolver;
+
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 
@@ -146,13 +181,13 @@ public class LegacyModuleHookSourceTest {
         String compatRustSource = read("src/legacy/java/com/dpis/module/LegacyRustProcessHookInstaller.java");
         assertTrue(compatRustSource.contains("XposedBridge.hookMethod(method"));
         assertTrue(compatRustSource.contains("param.args = updatedArgs"));
-        String rustSource = read("src/main/java/com/dpis/module/HyperOsRustProcessHookInstaller.java");
+        String rustSource = read("src/main/java/com/dpis/module/runtime/systemserver/HyperOsRustProcessHookInstaller.java");
         assertTrue(rustSource.contains("applyEnvironmentArgsForLegacy"));
         assertTrue(rustSource.indexOf("return null;")
                 < rustSource.indexOf("Object existingValue = args.get(ARG_ENVIRONMENTS);"));
         assertTrue(!rustSource.contains("HyperOsFlutterFontBridge.clearTarget(packageName);"));
 
-        String resourcesReadSource = read("src/main/java/com/dpis/module/ResourcesReadHookInstaller.java");
+        String resourcesReadSource = read("src/main/java/com/dpis/module/runtime/appprocess/ResourcesReadHookInstaller.java");
         assertTrue(resourcesReadSource.contains("DPIS_VIEWPORT legacy auto fallback success: package="));
         assertTrue(resourcesReadSource.contains("sourceTag.startsWith(\"LegacyResourcesRead(\")"));
         assertTrue(resourcesReadSource.contains("ViewportApplyMode.AUTO.equals("));

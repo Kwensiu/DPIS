@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.diagnostics.DpisLogEntry;
+import com.dpis.module.diagnostics.DpisLogParser;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -106,7 +109,7 @@ public final class DpisLogParserTest {
     @Test
     public void lsposedReaderUsesDirectCurrentLogFiles() throws IOException {
         String source = SourceSmokeTestPaths.read(
-                "src/main/java/com/dpis/module/LsposedLogReader.java");
+                "src/main/java/com/dpis/module/diagnostics/LsposedLogReader.java");
 
         assertTrue(source.contains("for file in /data/adb/lspd/log/modules_*.log"));
         assertTrue(source.contains("for file in /data/adb/lspd/log/verbose_*.log"));

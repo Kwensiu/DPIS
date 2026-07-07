@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.VirtualDisplayOverride;
+
+import com.dpis.module.viewport.ViewportOverride;
+
 import android.content.res.Configuration;
 
 import org.junit.Test;

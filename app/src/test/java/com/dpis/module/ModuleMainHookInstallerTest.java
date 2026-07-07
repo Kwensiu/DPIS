@@ -1,5 +1,65 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.systemserver.HyperOsRustProcessHookInstaller;
+
+import com.dpis.module.config.ModulePackagePlan;
+
+import com.dpis.module.config.RuntimePropertyConfigPreferences;
+
+
+import com.dpis.module.runtime.appprocess.WebApkCarrierResolver;
+
+import com.dpis.module.runtime.systemserver.SystemServerDisplayEnvironmentInstaller;
+import com.dpis.module.runtime.systemserver.SystemServerHookCatalog;
+import com.dpis.module.runtime.systemserver.SystemServerMutationPolicy;
+
+import com.dpis.module.runtime.appprocess.DisplayHookInstaller;
+
+import com.dpis.module.runtime.appprocess.WindowMetricsHookInstaller;
+
+import com.dpis.module.runtime.appprocess.ResourcesReadHookInstaller;
+
+import com.dpis.module.runtime.appprocess.ResourcesImplHookInstaller;
+
+import com.dpis.module.runtime.appprocess.ResourcesManagerHookInstaller;
+
+import com.dpis.module.runtime.appprocess.WebApkRuntimeOwnerBridge;
+
+import com.dpis.module.runtime.appprocess.AppProcessHotReloadResetter;
+
+import com.dpis.module.runtime.appprocess.AppProcessHookInstaller;
+
+import com.dpis.module.runtime.font.WebViewFontHookInstaller;
+
+import com.dpis.module.runtime.font.TypefaceOverrideHookInstaller;
+
+import com.dpis.module.runtime.font.HyperOsFlutterFontHookInstaller;
+
+import com.dpis.module.runtime.font.ForceTextSizeHookInstaller;
+
+import com.dpis.module.runtime.font.FlutterSettingsFontHookInstaller;
+
+import com.dpis.module.runtime.font.ActivityThreadFontHookInstaller;
+
+import com.dpis.module.viewport.DpiConfig;
+
+import com.dpis.module.runtime.appprocess.ChromiumViewportProbeHookInstaller;
+
+import com.dpis.module.hooks.HookExecutionPlan;
+import com.dpis.module.hooks.HookRuntimePolicy;
+import com.dpis.module.runtime.hookapi.ModernApi101Capabilities;
+import com.dpis.module.runtime.hookapi.ModernApi102Capabilities;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
+
+import com.dpis.module.quirks.WechatDpiMethodLocator;
+import com.dpis.module.quirks.WechatDpiRoutes;
+import com.dpis.module.quirks.WechatDpiRuntime;
+
+import com.dpis.module.appconfig.WechatDpiConfig;
+
+import com.dpis.module.runtime.DebugPackageOverride;
+
 import org.junit.Test;
 
 import java.io.IOException;
@@ -31,7 +91,7 @@ public class ModuleMainHookInstallerTest {
         assertTrue(source.contains("String processName = resolveCurrentProcessName();"));
         assertTrue(source.contains("maybeInstallAppProcessFromPackageLoaded(store, processName, param.getPackageName())"));
         assertTrue(source.contains("Application.getProcessName()"));
-        assertTrue(source.contains("Path.of(\"/proc/self/cmdline\")"));
+        assertTrue(source.contains("new File(\"/proc/self/cmdline\").toPath()"));
         assertTrue(source.contains("package-loaded app hook install enter"));
         assertTrue(source.contains("package-loaded app hook install skipped system process"));
         assertTrue(source.contains("package-loaded app hook install failed"));
@@ -154,8 +214,8 @@ public class ModuleMainHookInstallerTest {
     public void moduleMainConfiguresHyperOsFlutterNativeFontHook() throws IOException {
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
         String build = read("build.gradle.kts");
-        String flutterInstaller = read("src/main/java/com/dpis/module/HyperOsFlutterFontHookInstaller.java");
-        String appProcessInstaller = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+        String flutterInstaller = read("src/main/java/com/dpis/module/runtime/font/HyperOsFlutterFontHookInstaller.java");
+        String appProcessInstaller = read("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.java");
 
         assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));
         assertTrue(moduleMain.contains("packagePlan.hyperOsNativeFlutterFontEnabled"));
@@ -178,7 +238,7 @@ public class ModuleMainHookInstallerTest {
         assertTrue(moduleMain.contains("\"package-loaded\""));
         assertTrue(moduleMain.contains("\"module-loaded-fallback\""));
         assertTrue(moduleMain.contains("\"package-ready\""));
-        assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java")
                 .contains("HyperOsRustProcessHookInstaller.install("));
         assertFalse(SourceSmokeTestPaths.exists("src", "modern", "resources", "META-INF", "xposed", "native_init.list"));
         assertFalse(SourceSmokeTestPaths.exists("src", "main", "assets", "native_init"));
@@ -204,7 +264,7 @@ public class ModuleMainHookInstallerTest {
     @Test
     public void hyperOsNativeFlutterDoesNotBypassAppProcessInstaller() throws IOException {
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
-        String appProcessInstaller = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+        String appProcessInstaller = read("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.java");
 
         assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));
         assertTrue(moduleMain.contains("AppProcessHookInstaller.install("));
@@ -217,13 +277,13 @@ public class ModuleMainHookInstallerTest {
     @Test
     public void modernHotReloadUsesVersionedModernApiCapabilities() throws IOException {
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
-        String resourcesRead = read("src/main/java/com/dpis/module/ResourcesReadHookInstaller.java");
-        String resourcesImpl = read("src/main/java/com/dpis/module/ResourcesImplHookInstaller.java");
-        String resourcesManager = read("src/main/java/com/dpis/module/ResourcesManagerHookInstaller.java");
-        String capabilities = read("src/main/java/com/dpis/module/ModernApiCapabilities.java");
-        String api101 = read("src/main/java/com/dpis/module/ModernApi101Capabilities.java");
-        String api102 = read("src/main/java/com/dpis/module/ModernApi102Capabilities.java");
-        String resolver = read("src/main/java/com/dpis/module/ModernApiCapabilitiesResolver.java");
+        String resourcesRead = read("src/main/java/com/dpis/module/runtime/appprocess/ResourcesReadHookInstaller.java");
+        String resourcesImpl = read("src/main/java/com/dpis/module/runtime/appprocess/ResourcesImplHookInstaller.java");
+        String resourcesManager = read("src/main/java/com/dpis/module/runtime/appprocess/ResourcesManagerHookInstaller.java");
+        String capabilities = read("src/main/java/com/dpis/module/runtime/hookapi/ModernApiCapabilities.java");
+        String api101 = read("src/main/java/com/dpis/module/runtime/hookapi/ModernApi101Capabilities.java");
+        String api102 = read("src/main/java/com/dpis/module/runtime/hookapi/ModernApi102Capabilities.java");
+        String resolver = read("src/main/java/com/dpis/module/runtime/hookapi/ModernApiCapabilitiesResolver.java");
 
         assertTrue(moduleMain.contains("onHotReloaded(XposedModuleInterface.HotReloadedParam param)"));
         assertTrue(moduleMain.contains("lastPackageReadyPackageName"));
@@ -251,30 +311,30 @@ public class ModuleMainHookInstallerTest {
         assertTrue(resourcesRead.contains("apiCapabilities.applyStableHookId("));
         assertTrue(resourcesImpl.contains("apiCapabilities.applyStableHookId("));
         assertTrue(resourcesManager.contains("apiCapabilities.applyStableHookId("));
-        assertTrue(read("src/main/java/com/dpis/module/ActivityThreadFontHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/font/ActivityThreadFontHookInstaller.java")
                 .contains("HOOK_ID_HANDLE_BIND_APPLICATION"));
-        assertTrue(read("src/main/java/com/dpis/module/WebViewFontHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/font/WebViewFontHookInstaller.java")
                 .contains("HOOK_ID_WEBVIEW_GET_SETTINGS"));
-        assertTrue(read("src/main/java/com/dpis/module/WebViewFontHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/font/WebViewFontHookInstaller.java")
                 .contains("HOOK_ID_WEBSETTINGS_SET_TEXT_ZOOM"));
-        assertTrue(read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java")
                 .contains("HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_WITH_UNIT"));
-        assertTrue(read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java")
                 .contains("HOOK_ID_PAINT_SET_TEXT_SIZE"));
-        assertTrue(read("src/main/java/com/dpis/module/ForceTextSizeHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java")
                 .contains("bridgeMutationAppliedIfChanged("));
-        String typefaceInstaller = read("src/main/java/com/dpis/module/TypefaceOverrideHookInstaller.java");
+        String typefaceInstaller = read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.java");
         assertTrue(typefaceInstaller.contains("HOOK_ID_TEXTVIEW_SET_TYPEFACE"));
         assertTrue(typefaceInstaller.contains("HOOK_ID_PAINT_SET_TYPEFACE"));
         assertTrue(typefaceInstaller.contains("apiCapabilities.applyStableHookId("));
         assertTrue(typefaceInstaller.contains("bridgeOverrideAppliedIfChanged("));
-        String appProcessInstaller = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+        String appProcessInstaller = read("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.java");
         assertTrue(appProcessInstaller.contains("ForceTextSizeHookInstaller.install("));
         assertTrue(appProcessInstaller.contains("plan.fontDomainPlan,"));
         assertTrue(appProcessInstaller.contains("apiCapabilities);"));
-        assertTrue(read("src/main/java/com/dpis/module/DisplayHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/appprocess/DisplayHookInstaller.java")
                 .contains("HOOK_ID_DISPLAY_GET_DISPLAY_INFO"));
-        assertTrue(read("src/main/java/com/dpis/module/WindowMetricsHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/appprocess/WindowMetricsHookInstaller.java")
                 .contains("HOOK_ID_WINDOW_METRICS_GET_BOUNDS"));
         assertTrue(read("src/modern/java/com/dpis/module/ModernAppSpecificRouteInstaller.java")
                 .contains("handlePackageReadyReplay("));
@@ -284,19 +344,19 @@ public class ModuleMainHookInstallerTest {
         assertTrue(moduleMain.contains("system_server hot reload replay enter"));
         assertTrue(moduleMain.contains("SystemServerDisplayEnvironmentInstaller.resetForHotReload();"));
         assertTrue(moduleMain.contains("\"hot-reload\""));
-        assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java")
                 .contains("apiCapabilities.applyStableHookId("));
-        assertTrue(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java")
                 .contains("static void resetForHotReload()"));
-        assertTrue(read("src/main/java/com/dpis/module/AppProcessHotReloadResetter.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHotReloadResetter.java")
                 .contains("static void resetAll()"));
-        assertTrue(read("src/main/java/com/dpis/module/SystemServerHookCatalog.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerHookCatalog.java")
                 .contains("system_server_launch_activity_item"));
     }
 
     @Test
     public void systemServerHookDoesNotRetryOriginalAfterProceedThrows() throws IOException {
-        String installer = read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java");
+        String installer = read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java");
 
         assertTrue(installer.contains("boolean proceedAttempted = false;"));
         assertTrue(installer.contains("proceedAttempted = true;"));
@@ -311,14 +371,14 @@ public class ModuleMainHookInstallerTest {
                 .contains("DPIS_DIAG"));
         assertFalse(read("src/main/java/com/dpis/module/ConfigStoreFactory.java")
                 .contains("DPIS_DIAG"));
-        assertFalse(read("src/main/java/com/dpis/module/SystemServerDisplayEnvironmentInstaller.java")
+        assertFalse(read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java")
                 .contains("DPIS_DIAG"));
     }
 
     @Test
     public void temporaryProbesAndPackerReferencesDoNotRemainInRuntimeSources() throws IOException {
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
-        String flutterInstaller = read("src/main/java/com/dpis/module/FlutterSettingsFontHookInstaller.java");
+        String flutterInstaller = read("src/main/java/com/dpis/module/runtime/font/FlutterSettingsFontHookInstaller.java");
 
         // Temporary selftest/probe prefixes must not remain
         assertFalse("SELFTEST probe must be removed", moduleMain.contains("DPIS_HOOK_SELFTEST"));

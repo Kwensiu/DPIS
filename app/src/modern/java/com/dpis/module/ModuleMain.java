@@ -1,13 +1,52 @@
 package com.dpis.module;
 
+import com.dpis.module.settings.SystemScopeCoordinator;
+
+import com.dpis.module.config.ConfigSnapshot;
+import com.dpis.module.config.ConfigSnapshotLoader;
+import com.dpis.module.config.ModulePackagePlan;
+import com.dpis.module.config.RuntimePropertyConfigPreferences;
+
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
+
+import com.dpis.module.runtime.ModuleRuntimeStateReporter;
+import com.dpis.module.runtime.XposedSelfActivation;
+import com.dpis.module.runtime.systemserver.SystemServerDisplayDiagnostics;
+import com.dpis.module.runtime.systemserver.SystemServerDisplayEnvironmentInstaller;
+import com.dpis.module.runtime.systemserver.SystemServerMutationPolicy;
+import com.dpis.module.runtime.systemserver.SystemServerProcess;
+
+import com.dpis.module.runtime.appprocess.WebApkRuntimeOwnerBridge;
+
+import com.dpis.module.runtime.appprocess.AppProcessHotReloadResetter;
+
+import com.dpis.module.runtime.appprocess.AppProcessHookInstaller;
+
+import com.dpis.module.runtime.font.DebugFontOverride;
+import com.dpis.module.runtime.font.FlutterSettingsFontHookInstaller;
+
+import com.dpis.module.runtime.appprocess.ChromiumViewportProbeHookInstaller;
+
+import com.dpis.module.hooks.HookExecutionPlan;
+import com.dpis.module.hooks.HookRuntimePolicy;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
+
+import com.dpis.module.fonts.FontDebugStatsTransport;
+
+import com.dpis.module.runtime.DebugPackageOverride;
+
 import android.app.Application;
 import android.content.pm.ApplicationInfo;
 import android.os.Build;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 
 import io.github.libxposed.api.XposedModule;
 import io.github.libxposed.api.XposedModuleInterface;
@@ -374,7 +413,7 @@ public final class ModuleMain extends XposedModule {
 
     private static String readProcSelfCmdline() {
         try {
-            byte[] bytes = Files.readAllBytes(Path.of("/proc/self/cmdline"));
+            byte[] bytes = Files.readAllBytes(new File("/proc/self/cmdline").toPath());
             int length = 0;
             while (length < bytes.length && bytes[length] != 0) {
                 length++;

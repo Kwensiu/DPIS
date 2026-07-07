@@ -1,5 +1,13 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.HyperOsFlutterFontBridge;
+
+
+import com.dpis.module.fonts.FontApplyMode;
+
+
+import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
+
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;

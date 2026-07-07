@@ -10,7 +10,7 @@ import org.junit.Test;
 public class DonateActivitySourceSmokeTest {
     @Test
     public void donateEntrypointsShareOneLocalQrPage() throws IOException {
-        String source = read("src/main/java/com/dpis/module/DonateActivity.java");
+        String source = read("src/main/java/com/dpis/module/home/DonateActivity.java");
         String layout = read("src/main/res/layout/activity_donate.xml");
         String supportersSheet = read("src/main/res/layout/sheet_donate_supporters.xml");
         String strings = read("src/main/res/values/strings.xml");
@@ -18,7 +18,7 @@ public class DonateActivitySourceSmokeTest {
         String manifest = read("src/main/AndroidManifest.xml");
         String homeLayout = read("src/main/res/layout/home_workspace.xml");
         String homeEntryLayout = read("src/main/res/layout/view_home_donate.xml");
-        String homeBinder = read("src/main/java/com/dpis/module/HomeWorkspaceBinder.java");
+        String homeBinder = read("src/main/java/com/dpis/module/home/HomeWorkspaceBinder.java");
         String settingsController = read(
                 "src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
 
@@ -35,7 +35,7 @@ public class DonateActivitySourceSmokeTest {
         assertTrue(source.contains("R.layout.sheet_donate_supporters"));
         assertTrue(source.contains("setSkipCollapsed(true)"));
         assertTrue(source.contains("BottomSheetBehavior.STATE_EXPANDED"));
-        assertTrue(manifest.contains("android:name=\".DonateActivity\""));
+        assertTrue(manifest.contains("android:name=\".home.DonateActivity\""));
         assertTrue(manifest.contains("android:exported=\"false\""));
         assertTrue(homeLayout.contains("@layout/view_home_donate"));
         assertTrue(homeLayout.indexOf("@layout/view_home_feedback")

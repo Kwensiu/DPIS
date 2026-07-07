@@ -1,5 +1,15 @@
 package com.dpis.module;
 
+import com.dpis.module.updates.UpdatePackageInstaller;
+
+import com.dpis.module.updates.UpdateDownloadCoordinator;
+
+import com.dpis.module.updates.UpdateCoordinator;
+
+import com.dpis.module.updates.StartupUpdatePackageHandler;
+
+import com.dpis.module.updates.StartupUpdateDownloadExecutor;
+
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -9,7 +19,7 @@ import org.junit.Test;
 public class UpdateDownloadCoordinatorSourceSmokeTest {
     @Test
     public void coordinatorOwnsDownloadExecutionAndProgressUIContracts() throws IOException {
-        String source = read("src/main/java/com/dpis/module/UpdateDownloadCoordinator.java");
+        String source = read("src/main/java/com/dpis/module/updates/UpdateDownloadCoordinator.java");
 
         assertTrue(source.contains("final class UpdateDownloadCoordinator"));
         assertTrue(source.contains("interface Host"));
@@ -35,7 +45,7 @@ public class UpdateDownloadCoordinatorSourceSmokeTest {
 
     @Test
     public void coordinatorReusesUpdateCoordinatorForDownloadDecisions() throws IOException {
-        String source = read("src/main/java/com/dpis/module/UpdateDownloadCoordinator.java");
+        String source = read("src/main/java/com/dpis/module/updates/UpdateDownloadCoordinator.java");
 
         assertTrue(source.contains("updateCoordinator.requestDownloadStart("));
         assertTrue(source.contains("updateCoordinator.requestDownloadCancel("));
@@ -46,7 +56,7 @@ public class UpdateDownloadCoordinatorSourceSmokeTest {
 
     @Test
     public void coordinatorReusesStartupUpdateDownloadExecutorForHttpDownload() throws IOException {
-        String source = read("src/main/java/com/dpis/module/UpdateDownloadCoordinator.java");
+        String source = read("src/main/java/com/dpis/module/updates/UpdateDownloadCoordinator.java");
 
         assertTrue(source.contains("downloadExecutor.download("));
         assertTrue(source.contains("StartupUpdateDownloadExecutor.DownloadCanceledException"));
@@ -54,7 +64,7 @@ public class UpdateDownloadCoordinatorSourceSmokeTest {
 
     @Test
     public void coordinatorTreatsInterruptedExceptionPathAsCanceledWhenCancelRequested() throws IOException {
-        String source = read("src/main/java/com/dpis/module/UpdateDownloadCoordinator.java");
+        String source = read("src/main/java/com/dpis/module/updates/UpdateDownloadCoordinator.java");
 
         assertTrue(source.contains("boolean canceled = downloadCancelRequested"));
         assertTrue(source.contains("? R.string.about_update_download_canceled"));

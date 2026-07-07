@@ -1,5 +1,19 @@
 package com.dpis.module;
 
+import com.dpis.module.config.ModulePackagePlan;
+
+import com.dpis.module.config.PerAppDisplayConfigSource;
+
+import com.dpis.module.config.PackageConfigSnapshot;
+
+import com.dpis.module.config.ConfigSnapshotLoader;
+
+import com.dpis.module.config.ConfigSnapshot;
+
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.viewport.ViewportApplyMode;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;

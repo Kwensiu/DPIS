@@ -1,5 +1,16 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontApplyMode;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+import com.dpis.module.viewport.ViewportTargetType;
+
+import com.dpis.module.templates.TemplateConfigValueAdapters;
+
+import com.dpis.module.templates.QuickTemplateStore;
+
+import com.dpis.module.templates.TemplateConfigValue;
+
 import org.junit.Test;
 
 import java.util.LinkedHashSet;
@@ -16,7 +27,7 @@ public class QuickTemplateStoreTest {
     public void quickTemplateConfigAndSelectedPackagesRoundTrip() {
         FakePrefs prefs = new FakePrefs();
         QuickTemplateStore store = new QuickTemplateStore(prefs);
-        TemplateConfigValue configValue = new TemplateConfigValue(
+        TemplateConfigValue configValue = TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.absoluteDp(411),
                 ViewportApplyMode.COMPAT,
                 115,
@@ -63,7 +74,7 @@ public class QuickTemplateStoreTest {
     public void selectedPackagesCanChangeWithoutChangingTemplateIdOrConfig() {
         FakePrefs prefs = new FakePrefs();
         QuickTemplateStore store = new QuickTemplateStore(prefs);
-        TemplateConfigValue configValue = new TemplateConfigValue(
+        TemplateConfigValue configValue = TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.relativeScale(90000),
                 ViewportApplyMode.AUTO,
                 null,
@@ -214,7 +225,7 @@ public class QuickTemplateStoreTest {
 
         assertEquals("Broken", template.name);
         assertEquals(0L, template.updatedAt);
-        assertFalse(template.configValue.viewportTargetSpec.isEnabled());
+        assertFalse(TemplateConfigValueAdapters.toViewportTargetSpec(template.configValue).isEnabled());
         assertNull(template.configValue.fontScalePercent);
         assertEquals("missing_font_id", template.configValue.typefaceId);
         assertEquals(List.of(template), store.readAll());

@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontLibraryEntry;
+import com.dpis.module.fonts.FontLibraryStore;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -13,13 +16,13 @@ public class SystemServerSettingsActivityFontLibrarySourceTest {
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
         String manifest = read("src/main/AndroidManifest.xml");
         String factory = read("src/main/java/com/dpis/module/ConfigStoreFactory.java");
-        String store = read("src/main/java/com/dpis/module/FontLibraryStore.java");
+        String store = read("src/main/java/com/dpis/module/fonts/FontLibraryStore.java");
 
         assertTrue(source.contains("row_font_library"));
         assertTrue(source.contains("new Intent(activity, FontLibraryActivity.class)"));
         assertFalse(source.contains("showFontLibraryDialog"));
         assertFalse(source.contains("REQUEST_IMPORT_FONT"));
-        assertTrue(manifest.contains("android:name=\".FontLibraryActivity\""));
+        assertTrue(manifest.contains("android:name=\".fonts.FontLibraryActivity\""));
         assertTrue(factory.contains("/data/local/tmp"));
         assertTrue(store.contains("\"dpis_\" + stagingFile.getName()"));
         assertTrue(store.contains("publishFontFile"));
@@ -28,7 +31,7 @@ public class SystemServerSettingsActivityFontLibrarySourceTest {
 
     @Test
     public void fontLibraryActivityOwnsImportRenameDeleteAndUsageReferences() throws IOException {
-        String source = read("src/main/java/com/dpis/module/FontLibraryActivity.java");
+        String source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
         String importMethod = source.substring(
                 source.indexOf("private void promptImportName(Uri uri)"),
                 source.indexOf("private TextInputLayout createNameInput"));
@@ -58,7 +61,7 @@ public class SystemServerSettingsActivityFontLibrarySourceTest {
     @Test
     public void fontLibraryPageContainsToolbarListAndImportFab() throws IOException {
         String layout = read("src/main/res/layout/activity_font_library.xml");
-        String source = read("src/main/java/com/dpis/module/FontLibraryActivity.java");
+        String source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
 
         assertTrue(layout.contains("@string/font_library_page_title"));
         assertTrue(layout.contains("font_library_toolbar"));

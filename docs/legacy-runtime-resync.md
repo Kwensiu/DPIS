@@ -77,6 +77,17 @@ TextView span rewrite, Paint/TextPaint fallback, Android WebView textZoom, and
 X5 WebView textZoom. The events are diagnostic-only and gated by the active
 feedback-diagnostic marker.
 
+The shared app-process font route implementation now lives under
+`runtime.font`. Legacy flavor entry points still call the same install/reset
+protocols; the move only classifies ActivityThread, Resources font scheduling,
+TextView/Paint field rewrite, WebView, typeface replacement, Flutter, and
+diagnostic font routes under their runtime owner package.
+The shared app-process viewport/window route implementation now lives under
+`runtime.appprocess`. Flavor entry points still call the same
+install/reset/apply protocols; the move is package classification only and does
+not change route selection, mutation policy, or evidence semantics.
+
+
 As of 2026-06-22, the Legacy WeChat DPI route participates in feedback
 diagnostics as `route=wechat_dpi` for WeChat targets. A saved WeChat DPI config
 makes callback and mutation evidence expected; without that config, callback or
@@ -95,13 +106,13 @@ DPIS viewport target package
   |     |     |
   |     |     +-- entry: app/src/modern/java/com/dpis/module/ModuleMain.java
   |     |     +-- system_server route:
-  |     |     |     SystemServerDisplayEnvironmentInstaller
+  |     |     |     runtime.systemserver.SystemServerDisplayEnvironmentInstaller
   |     |     +-- app-process route:
-  |     |           AppProcessHookInstaller
-  |     |           ResourcesManagerHookInstaller
-  |     |           ResourcesImplHookInstaller
-  |     |           ResourcesReadHookInstaller
-  |     |           DisplayHookInstaller / WindowMetricsHookInstaller
+  |     |           runtime.appprocess.AppProcessHookInstaller
+  |     |           runtime.appprocess.ResourcesManagerHookInstaller
+  |     |           runtime.appprocess.ResourcesImplHookInstaller
+  |     |           runtime.appprocess.ResourcesReadHookInstaller
+  |     |           runtime.appprocess.DisplayHookInstaller / runtime.appprocess.WindowMetricsHookInstaller
   |     |
   |     +-- legacy
   |           |
@@ -199,7 +210,7 @@ compat projection route. This keeps relative-scale targets from falling back to
 off when system hooks are unavailable.
 
 legacy does not currently install the shared modern
-`SystemServerDisplayEnvironmentInstaller`, so `config-dispatch` and
+`runtime.systemserver.SystemServerDisplayEnvironmentInstaller`, so `config-dispatch` and
 `display-manager-info` are not active legacy system_server routes. The
 legacy system_server installer keeps only the launch-time Configuration
 route and the HyperOS Rust process environment route.
@@ -229,6 +240,11 @@ legacy system font mode
 `system_server_font` and `activity_thread_font` are internal scheduler domains.
 They are not saved in the custom hook-chain override, and restoring the hook
 chain returns only to the compat/field-rewrite recommended template.
+
+
+System-server route implementation classes now live under `runtime.systemserver`. Flavor entry points still use the same install,
+diagnostic, policy, and process-check protocols; this is package
+classification only, not a route behavior change.
 
 ## Experiment Ledger
 
@@ -283,7 +299,7 @@ chain returns only to the compat/field-rewrite recommended template.
   `ResourcesManager` override, `ResourcesImpl` observe/override/stable target,
   and `ResourcesRead` configuration/display-metrics overrides.
 - 2026-06-21: shared app-process viewport diagnostics now include first-hit plus
-  counted-sample `DisplayHookInstaller` and `WindowMetricsHookInstaller`
+  counted-sample `runtime.appprocess.DisplayHookInstaller` and `runtime.appprocess.WindowMetricsHookInstaller`
   runtime-hotpath evidence. Repeated callback evidence carries `hitCount` and
   `suppressedCount`, aimed at rapid-scrolling repros where callback hit versus
   skipped supplement behavior needs to be separated before drawing conclusions.

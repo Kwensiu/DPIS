@@ -1,5 +1,16 @@
 package com.dpis.module;
 
+import com.dpis.module.config.PackageConfigSnapshot;
+
+import com.dpis.module.config.ConfigSnapshotLoader;
+
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.viewport.ViewportApplyMode;
+
+import com.dpis.module.hooks.HookDomainOverride;
+import com.dpis.module.hooks.HookDomainOverrideStore;
+
 import org.junit.Test;
 
 import java.util.LinkedHashSet;

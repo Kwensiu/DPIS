@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.diagnostics.DiagnosticLogGate;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -51,16 +53,19 @@ public class SystemFontScaleToolLayoutSmokeTest {
     @Test
     public void toolsWorkspaceToolbarUsesSafeDrawingInsetsLikeSettingsPage()
             throws IOException {
-        String source = read("src/main/java/com/dpis/module/ToolsWorkspaceBinder.java");
+        String source = read("src/main/java/com/dpis/module/settings/ToolsWorkspaceBinder.java");
+        String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
         String settingsController = read(
                 "src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
 
         assertTrue(source.contains(
                 "View toolsToolbar = workspaceView.findViewById(R.id.tools_toolbar);"));
-        assertTrue(source.contains(
-                "WindowInsetsBinder.applySafeDrawingPadding(toolsToolbar, false, true, false, false);"));
-        assertTrue(source.contains("DiagnosticLogGate.ensureEnabled("));
-        assertTrue(source.contains("new Intent(activity, LogActivity.class)"));
+        assertTrue(source.contains("host.applyToolsToolbarInsets(toolsToolbar);"));
+        assertTrue(source.contains("host.openLogsWhenDiagnosticLogsEnabled()"));
+        assertTrue(mainActivity.contains(
+                "WindowInsetsBinder.applySafeDrawingPadding(toolbar, false, true, false, false);"));
+        assertTrue(mainActivity.contains("DiagnosticLogGate.ensureEnabled("));
+        assertTrue(mainActivity.contains("new Intent(MainActivity.this, LogActivity.class)"));
         assertTrue(settingsController.contains("View toolbar = findViewById(R.id.settings_toolbar);"));
         assertTrue(settingsController.contains("baseTopPadding + safeDrawing.top"));
     }

@@ -1,5 +1,64 @@
 package com.dpis.module;
 
+import com.dpis.module.diagnostics.DiagnosticLogGate;
+
+import com.dpis.module.settings.SystemScopeCoordinator;
+
+import com.dpis.module.applist.InstalledAppCatalogCoordinator;
+
+
+import com.dpis.module.fonts.FontApplyMode;
+import com.dpis.module.fonts.FontLibraryActivity;
+
+
+import com.dpis.module.runtime.RuntimeConfigDelivery;
+
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticResultSheet;
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticExportBuilder;
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticCoordinator;
+
+import com.dpis.module.appconfig.AppConfigDialogBinder;
+import com.dpis.module.appconfig.AppConfigPrefillPreview;
+import com.dpis.module.appconfig.AppConfigSaveHandler;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainDialog;
+
+import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
+
+import com.dpis.module.viewport.DpiConfig;
+
+import com.dpis.module.viewport.ViewportPropertySyncer;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
+import com.dpis.module.applist.AppListItem;
+import com.dpis.module.hooks.HookDomainOverride;
+import com.dpis.module.hooks.HookDomainOverrideStore;
+
+import com.dpis.module.quirks.WechatDpiSheetBinder;
+
+import com.dpis.module.process.ProcessActionHandler;
+
+import com.dpis.module.templates.GlobalPrefillStore;
+
+import com.dpis.module.appconfig.WechatDpiConfig;
+
+import com.dpis.module.ui.DialogWindowSizer;
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticAppLauncher;
+import com.dpis.module.fonts.HyperOsNativeProxyBindMounter;
+import com.dpis.module.fonts.HyperOsNativeAppDetector;
+import com.dpis.module.root.RootAccessProbe;
+
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -18,6 +77,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.FileProvider;
 
+import com.dpis.module.applist.ForegroundPackageResolver;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -59,7 +119,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
     private FeedbackDiagnosticExportBuilder.DiagnosticPackage pendingFeedbackDiagnosticPackage;
     private AlertDialog activeFeedbackDiagnosticPackagingDialog;
 
-    static Intent createIntent(Context context, String packageName) {
+    public static Intent createIntent(Context context, String packageName) {
         Intent intent = new Intent(context, QuickConfigActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if (packageName != null && !packageName.isBlank()) {
@@ -917,18 +977,18 @@ public final class QuickConfigActivity extends LocalizedActivity {
                     + " package="
                     + item.packageName
                     + " success="
-                    + result.success
+                    + result.success()
                     + " output="
-                    + result.output);
+                    + result.output());
             int messageResId = apply
                     ? R.string.dialog_hyperos_native_proxy_apply_failed
                     : R.string.dialog_hyperos_native_proxy_unmount_failed;
             runOnUiThread(() -> {
-                if (!result.success) {
+                if (!result.success()) {
                     showToast(messageResId);
                 }
                 if (onFinished != null) {
-                    onFinished.onFinished(result.success);
+                    onFinished.onFinished(result.success());
                 }
             });
         }, "DPIS-Quick-HyperOsNativeProxyMount").start();

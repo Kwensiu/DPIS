@@ -1,5 +1,10 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.AppProcessViewportStateSeeder;
+import com.dpis.module.viewport.ViewportRuntimeRecord;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
 import android.content.res.Configuration;
 import android.util.DisplayMetrics;
 

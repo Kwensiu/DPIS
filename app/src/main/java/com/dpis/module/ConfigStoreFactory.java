@@ -1,14 +1,23 @@
 package com.dpis.module;
 
+import com.dpis.module.config.RuntimePropertyConfigPreferences;
+
+
+import com.dpis.module.fonts.FontLibraryStore;
+import com.dpis.module.fonts.FontLibraryConfigStore;
+import com.dpis.module.settings.ExperimentalSettingsStore;
+
 import android.content.Context;
 import android.content.SharedPreferences;
+
+import com.dpis.module.runtime.XSharedPreferencesAdapter;
 
 import java.io.File;
 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.service.XposedService;
 
-final class ConfigStoreFactory {
+public final class ConfigStoreFactory {
     private static final File PUBLIC_FONT_DIRECTORY = new File("/data/local/tmp");
 
     private ConfigStoreFactory() {
@@ -25,7 +34,24 @@ final class ConfigStoreFactory {
         return store;
     }
 
-    static DpisConfigStore createLocalUiModuleConfigStore(Context context, XposedService service) {
+    public static DpisConfigStore createPackageLifecycleConfigStore(Context context) {
+        return createLocalModuleConfigStore(context);
+    }
+
+    public static DpisConfigStore createDiagnosticLogGateConfigStore(Context context) {
+        return createLocalModuleConfigStore(context);
+    }
+
+    public static boolean enableDiagnosticLogs(Context context) {
+        DpisConfigStore store = createDiagnosticLogGateConfigStore(context);
+        if (store == null || !store.setGlobalLogEnabled(true)) {
+            return false;
+        }
+        DpisLog.setLoggingEnabled(true);
+        return true;
+    }
+
+    public static DpisConfigStore createLocalUiModuleConfigStore(Context context, XposedService service) {
         File legacySharedPrefsFile = legacySharedPrefsFile(context);
         SharedPreferences localPreferences =
                 context.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE);
@@ -83,11 +109,60 @@ final class ConfigStoreFactory {
                 PUBLIC_FONT_DIRECTORY);
     }
 
-    static FontLibraryStore createLocalUiFontLibraryStore(Context context, XposedService service) {
+    public static FontLibraryStore createLocalUiFontLibraryStore(Context context, XposedService service) {
         return createLocalFontLibraryStore(context);
     }
 
-    static DpisConfigStore createForXposedHost(XposedInterface xposed) {
+    public static FontLibraryConfigStore createFontLibraryConfigStore(
+            Context context,
+            XposedService service) {
+        DpisConfigStore store = createLocalUiModuleConfigStore(context, service);
+        return new FontLibraryConfigStore(new FontLibraryConfigStore.Delegate() {
+            @Override
+            public boolean clearTargetTypefaceId(String packageName) {
+                return store.clearTargetTypefaceId(packageName);
+            }
+
+            @Override
+            public java.util.Set<String> getConfiguredPackages() {
+                return store.getConfiguredPackages();
+            }
+
+            @Override
+            public String getTargetTypefaceId(String packageName) {
+                return store.getTargetTypefaceId(packageName);
+            }
+
+            @Override
+            public boolean isTtcFontImportEnabled() {
+                return store.isTtcFontImportEnabled();
+            }
+
+            @Override
+            public boolean setTargetTypefaceId(String packageName, String typefaceId) {
+                return store.setTargetTypefaceId(packageName, typefaceId);
+            }
+        });
+    }
+
+    public static ExperimentalSettingsStore createExperimentalSettingsStore(
+            Context context,
+            XposedService service) {
+        DpisConfigStore store = createLocalUiModuleConfigStore(context, service);
+        return new ExperimentalSettingsStore(new ExperimentalSettingsStore.Delegate() {
+            @Override
+            public boolean isTtcFontImportEnabled() {
+                return store.isTtcFontImportEnabled();
+            }
+
+            @Override
+            public boolean setTtcFontImportEnabled(boolean enabled) {
+                return store.setTtcFontImportEnabled(enabled);
+            }
+        });
+    }
+
+    public static DpisConfigStore createForXposedHost(XposedInterface xposed) {
         SharedPreferences remotePreferences = null;
         if (xposed != null) {
             try {
@@ -103,7 +178,7 @@ final class ConfigStoreFactory {
                 new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpisConfigStore.GROUP));
     }
 
-    static FontLibraryStore createFontLibraryForXposedHost(XposedInterface xposed) {
+    public static FontLibraryStore createFontLibraryForXposedHost(XposedInterface xposed) {
         SharedPreferences remotePreferences = null;
         if (xposed != null) {
             try {
@@ -132,7 +207,7 @@ final class ConfigStoreFactory {
     }
 
     static DpisConfigStore createForLegacySystemServerHost() {
-        // Long-lived system_server refresh is owned by RefreshingConfigSnapshotProvider.
+        // Long-lived system_server refresh is owned by the display config source.
         return createForLegacyHost();
     }
 

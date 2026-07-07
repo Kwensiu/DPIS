@@ -1,5 +1,12 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
+
+import com.dpis.module.viewport.ViewportPropertySyncer;
+import com.dpis.module.viewport.ViewportApplyMode;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 

@@ -1,5 +1,38 @@
 package com.dpis.module;
 
+import com.dpis.module.config.ModulePackagePlan;
+
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.runtime.appprocess.ResourcesReadHookInstaller;
+
+import com.dpis.module.runtime.appprocess.AppProcessHookInstaller;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
+
+import com.dpis.module.fonts.hookdomain.FontHookArbitration;
+
+import com.dpis.module.runtime.font.ComposeFontRuntimeDiagnosticsInstaller;
+
+import com.dpis.module.runtime.font.TypefaceOverrideHookInstaller;
+
+import com.dpis.module.runtime.font.ForceTextSizeHookInstaller;
+
+import com.dpis.module.runtime.font.ComposeResourcesFontEvidence;
+import com.dpis.module.runtime.font.DebugFontOverride;
+
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
+import com.dpis.module.hooks.HookDomainOverride;
+import com.dpis.module.hooks.HookExecutionPlan;
+import com.dpis.module.hooks.HookExecutionPlanner;
+import com.dpis.module.hooks.HookRuntimePolicy;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
+
+import com.dpis.module.runtime.DebugPackageOverride;
+
 import org.junit.Test;
 
 import java.io.IOException;
@@ -415,7 +448,7 @@ public class AppProcessHookInstallerTest {
 
     @Test
     public void typefaceInstallerIsIndependentFromResourcesHookGate() throws IOException {
-        String source = read("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+        String source = read("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.java");
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
         assertTrue(source.contains("TypefaceOverrideHookInstaller.install("));
@@ -481,9 +514,9 @@ public class AppProcessHookInstallerTest {
 
     @Test
     public void debugFlutterSettingsPropertiesAreDebugOnlyAndPackageScoped() throws Exception {
-        String source = readSource("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
-        String planner = readSource("src/main/java/com/dpis/module/HookExecutionPlanner.java");
-        String packagePlan = readSource("src/main/java/com/dpis/module/ModulePackagePlan.java");
+        String source = readSource("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.java");
+        String planner = readSource("src/main/java/com/dpis/module/hooks/HookExecutionPlanner.java");
+        String packagePlan = readSource("src/main/java/com/dpis/module/config/ModulePackagePlan.java");
 
         assertTrue(source.contains("debug.dpis.font.force_flutter_settings_package"));
         assertTrue(source.contains("debug.dpis.font.flutter_settings_only_package"));
@@ -493,7 +526,7 @@ public class AppProcessHookInstallerTest {
         assertTrue(source.contains("debug.dpis.viewport.disable_resources_impl_package"));
         assertTrue(source.contains("debug.dpis.viewport.disable_resources_read_package"));
         assertTrue(source.contains("DebugPackageOverride.matches("));
-        assertTrue(readSource("src/main/java/com/dpis/module/DebugPackageOverride.java")
+        assertTrue(readSource("src/main/java/com/dpis/module/runtime/DebugPackageOverride.java")
                 .contains("if (!BuildConfig.DEBUG || packageName == null"));
         assertTrue(source.contains("DebugFontOverride.of("));
         assertTrue(source.contains("packagePlan.buildExecutionPlan("));
@@ -510,9 +543,9 @@ public class AppProcessHookInstallerTest {
 
     @Test
     public void composeDiagnosticsAreWiredOnlyThroughResourcesFontDomain() throws Exception {
-        String source = readSource("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+        String source = readSource("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.java");
         String installer = readSource(
-                "src/main/java/com/dpis/module/ComposeFontRuntimeDiagnosticsInstaller.java");
+                "src/main/java/com/dpis/module/runtime/font/ComposeFontRuntimeDiagnosticsInstaller.java");
 
         assertTrue(source.contains("ComposeFontRuntimeDiagnosticsInstaller.shouldInstall(plan)"));
         assertTrue(source.contains("ComposeFontRuntimeDiagnosticsInstaller.install("));
@@ -537,7 +570,7 @@ public class AppProcessHookInstallerTest {
     public void composeDiagnosticsDoNotSuppressGlobalTextViewOrResourceFontRoutes()
             throws Exception {
         String installer = readSource(
-                "src/main/java/com/dpis/module/ComposeFontRuntimeDiagnosticsInstaller.java");
+                "src/main/java/com/dpis/module/runtime/font/ComposeFontRuntimeDiagnosticsInstaller.java");
 
         assertFalse(installer.contains("textViewCurrentPxFallbackEnabled = false"));
         assertFalse(installer.contains("paintFallbackEnabled = false"));

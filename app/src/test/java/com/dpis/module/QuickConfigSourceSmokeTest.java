@@ -1,5 +1,19 @@
 package com.dpis.module;
 
+import com.dpis.module.applist.InstalledAppCatalogCoordinator;
+
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticCoordinator;
+
+import com.dpis.module.appconfig.AppConfigDialogBinder;
+
+import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
+
+import com.dpis.module.applist.AppListItem;
+import com.dpis.module.applist.ForegroundPackageResolver;
+
+import com.dpis.module.quirks.WechatDpiSheetBinder;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -14,6 +28,7 @@ public class QuickConfigSourceSmokeTest {
 
         assertTrue(manifest.contains("android.permission.PACKAGE_USAGE_STATS"));
         assertTrue(manifest.contains("android:name=\".QuickConfigActivity\""));
+        assertTrue(manifest.contains("android:taskAffinity=\"\""));
         assertTrue(manifest.contains("@style/Theme.Dpis.QuickConfig"));
         assertTrue(manifest.contains("android:name=\".QuickConfigTileService\""));
         assertTrue(manifest.contains("android:icon=\"@drawable/ic_quick_config_24\""));
@@ -24,8 +39,9 @@ public class QuickConfigSourceSmokeTest {
     @Test
     public void quickConfigUsesAppConfigSheetForForegroundPackage() throws IOException {
         String activity = read("src/main/java/com/dpis/module/QuickConfigActivity.java");
-        String resolver = read("src/main/java/com/dpis/module/ForegroundPackageResolver.java");
-        String tile = read("src/main/java/com/dpis/module/QuickConfigTileService.java");
+        String resolver = read("src/main/java/com/dpis/module/applist/ForegroundPackageResolver.java");
+        String manifestTile = read("src/main/java/com/dpis/module/QuickConfigTileService.java");
+        String tile = read("src/main/java/com/dpis/module/quickconfig/QuickConfigTileService.java");
         String styles = read("src/main/res/values/styles.xml");
         String panelBackground = read("src/main/res/drawable/bg_quick_config_panel.xml");
 
@@ -41,6 +57,7 @@ public class QuickConfigSourceSmokeTest {
         assertTrue(resolver.contains("UsageStatsManager"));
         assertTrue(resolver.contains("UsageEvents.Event.MOVE_TO_FOREGROUND"));
         assertTrue(resolver.contains("SYSTEM_UI_PACKAGE"));
+        assertTrue(manifestTile.contains("extends com.dpis.module.quickconfig.QuickConfigTileService"));
         assertTrue(tile.contains("QuickConfigActivity.createIntent("));
         assertTrue(tile.contains("startActivityAndCollapse"));
     }

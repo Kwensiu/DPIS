@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.hookdomain.FontHookArbitration;
+
+import com.dpis.module.runtime.font.ComposeResourcesFontEvidence;
+
+import com.dpis.module.fonts.ComposeFontRuntimeClassifier;
+
 import org.junit.Test;
 
 import java.util.Arrays;

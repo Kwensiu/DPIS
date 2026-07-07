@@ -1,5 +1,15 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.VirtualDisplayState;
+
+import com.dpis.module.viewport.TargetViewportWidthResolver;
+import com.dpis.module.viewport.ViewportRuntimeRecord;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
+import com.dpis.module.viewport.ViewportTargetResolution;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
 import org.junit.After;
 import org.junit.Test;
 

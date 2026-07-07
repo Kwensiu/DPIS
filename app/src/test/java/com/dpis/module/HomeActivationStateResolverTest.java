@@ -1,35 +1,21 @@
 package com.dpis.module;
 
+import com.dpis.module.home.HomeActivationStateResolver;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 public final class HomeActivationStateResolverTest {
-    @Before
-    public void setUp() {
-        DpisApplication.clearXposedSelfLoadedForTest();
-    }
-
-    @After
-    public void tearDown() {
-        HomeActivationStateResolver.setServiceApiResolverForTest(null);
-        HomeActivationStateResolver.setModernServiceProbeForTest(null);
-        DpisApplication.clearXposedSelfLoadedForTest();
-    }
-
     @Test
     public void missingServiceAndSelfLoadDoesNotActivateHome() {
-        assertFalse(HomeActivationStateResolver.isActivatedForHome());
+        assertFalse(HomeActivationStateResolver.isActivatedForHome(false, false));
     }
 
     @Test
     public void legacySelfLoadMarksHomeActivated() {
-        DpisApplication.markXposedSelfLoaded();
-
-        assertTrue(HomeActivationStateResolver.isActivatedForHome());
+        assertTrue(HomeActivationStateResolver.isActivatedForHome(false, true));
     }
 
     @Test
@@ -44,24 +30,11 @@ public final class HomeActivationStateResolverTest {
 
     @Test
     public void serviceApiBelow101DoesNotActivateHome() {
-        HomeActivationStateResolver.setModernServiceProbeForTest(() -> false);
-
-        assertFalse(HomeActivationStateResolver.isActivatedForHome());
+        assertFalse(HomeActivationStateResolver.isActivatedForHome(false, false));
     }
 
     @Test
     public void serviceApi101ActivatesHome() {
-        HomeActivationStateResolver.setModernServiceProbeForTest(() -> true);
-
-        assertTrue(HomeActivationStateResolver.isActivatedForHome());
-    }
-
-    @Test
-    public void serviceApiFailureDoesNotActivateHomeWithoutSelfLoad() {
-        HomeActivationStateResolver.setModernServiceProbeForTest(() -> {
-            throw new RuntimeException("boom");
-        });
-
-        assertFalse(HomeActivationStateResolver.isActivatedForHome());
+        assertTrue(HomeActivationStateResolver.isActivatedForHome(true, false));
     }
 }

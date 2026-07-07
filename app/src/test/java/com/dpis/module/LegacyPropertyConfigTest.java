@@ -1,4 +1,18 @@
-package com.dpis.module;
+package com.dpis.module.config;
+
+import com.dpis.module.DpisConfigStore;
+
+import com.dpis.module.config.RuntimePropertyConfigPreferences;
+
+import com.dpis.module.config.ConfigSnapshotLoader;
+
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.runtime.font.CompatFontPropertySyncer;
+
+import com.dpis.module.viewport.ViewportPropertySyncer;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

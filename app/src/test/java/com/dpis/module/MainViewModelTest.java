@@ -1,5 +1,15 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.viewport.ViewportApplyMode;
+
+import com.dpis.module.applist.AppListFilter;
+import com.dpis.module.applist.AppListItem;
+import com.dpis.module.applist.AppListPage;
+
+import com.dpis.module.applist.AppListFilterState;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -15,13 +25,13 @@ public class MainViewModelTest {
     public void requestLoad_emitsStartEffectWithForceReload() {
         MainViewModel viewModel = new MainViewModel(emptyState());
 
-        List<MainUiEffect> effects = viewModel.dispatch(MainUiAction.requestAppsLoad(true));
+        List<MainViewModel.AppsLoadRequest> requests = viewModel.dispatch(
+                MainUiAction.requestAppsLoad(true));
 
-        assertEquals(1, effects.size());
-        assertTrue(effects.get(0) instanceof MainUiEffect.StartAppsLoad);
-        MainUiEffect.StartAppsLoad start = (MainUiEffect.StartAppsLoad) effects.get(0);
-        assertEquals(1, start.requestId);
-        assertTrue(start.forceInstalledAppCatalogReload);
+        assertEquals(1, requests.size());
+        MainViewModel.AppsLoadRequest request = requests.get(0);
+        assertEquals(1, request.requestId);
+        assertTrue(request.forceInstalledAppCatalogReload);
     }
 
     @Test
@@ -33,38 +43,40 @@ public class MainViewModelTest {
                 Collections.emptySet());
         MainViewModel viewModel = new MainViewModel(restoredState);
 
-        List<MainUiEffect> effects = viewModel.dispatch(MainUiAction.requestAppsLoad(false));
+        List<MainViewModel.AppsLoadRequest> requests = viewModel.dispatch(
+                MainUiAction.requestAppsLoad(false));
 
-        assertEquals(1, effects.size());
-        assertTrue(effects.get(0) instanceof MainUiEffect.StartAppsLoad);
-        MainUiEffect.StartAppsLoad start = (MainUiEffect.StartAppsLoad) effects.get(0);
-        assertFalse(start.forceInstalledAppCatalogReload);
+        assertEquals(1, requests.size());
+        MainViewModel.AppsLoadRequest request = requests.get(0);
+        assertFalse(request.forceInstalledAppCatalogReload);
     }
 
     @Test
     public void queuedLoad_emitsFollowUpEffectAndAppliesLatestResult() {
         MainViewModel viewModel = new MainViewModel(emptyState());
 
-        List<MainUiEffect> first = viewModel.dispatch(MainUiAction.requestAppsLoad(false));
+        List<MainViewModel.AppsLoadRequest> first = viewModel.dispatch(
+                MainUiAction.requestAppsLoad(false));
         assertEquals(1, first.size());
-        MainUiEffect.StartAppsLoad firstStart = (MainUiEffect.StartAppsLoad) first.get(0);
+        MainViewModel.AppsLoadRequest firstRequest = first.get(0);
 
-        List<MainUiEffect> queued = viewModel.dispatch(MainUiAction.requestAppsLoad(true));
+        List<MainViewModel.AppsLoadRequest> queued = viewModel.dispatch(
+                MainUiAction.requestAppsLoad(true));
         assertTrue(queued.isEmpty());
 
         List<AppListItem> stale = List.of(app("Old", "com.example.old", true, false));
-        List<MainUiEffect> followUp = viewModel.dispatch(
-                MainUiAction.appsLoadFinished(firstStart.requestId, stale));
+        List<MainViewModel.AppsLoadRequest> followUp = viewModel.dispatch(
+                MainUiAction.appsLoadFinished(firstRequest.requestId, stale));
         assertEquals(1, followUp.size());
-        MainUiEffect.StartAppsLoad secondStart = (MainUiEffect.StartAppsLoad) followUp.get(0);
-        assertEquals(2, secondStart.requestId);
-        assertTrue(secondStart.forceInstalledAppCatalogReload);
+        MainViewModel.AppsLoadRequest secondRequest = followUp.get(0);
+        assertEquals(2, secondRequest.requestId);
+        assertTrue(secondRequest.forceInstalledAppCatalogReload);
         assertTrue(viewModel.getState().appsSnapshot().isEmpty());
 
         List<AppListItem> latest = List.of(app("Latest", "com.example.latest", true, false));
-        List<MainUiEffect> finalEffects = viewModel.dispatch(
-                MainUiAction.appsLoadFinished(secondStart.requestId, latest));
-        assertTrue(finalEffects.isEmpty());
+        List<MainViewModel.AppsLoadRequest> finalRequests = viewModel.dispatch(
+                MainUiAction.appsLoadFinished(secondRequest.requestId, latest));
+        assertTrue(finalRequests.isEmpty());
         assertEquals(1, viewModel.getState().appsSnapshot().size());
         assertEquals("com.example.latest", viewModel.getState().appsSnapshot().get(0).packageName);
     }
@@ -99,13 +111,13 @@ public class MainViewModelTest {
                 Collections.emptySet());
         MainViewModel viewModel = new MainViewModel(initial);
 
-        viewModel.dispatch(MainUiAction.workspaceModeChanged(MainWorkspaceMode.TEMPLATE));
+        viewModel.dispatch(MainUiAction.workspaceModeChanged(MainUiState.WorkspaceMode.TEMPLATE));
         MainUiState templateState = viewModel.getState();
 
-        assertEquals(MainWorkspaceMode.TEMPLATE, templateState.workspaceMode);
+        assertEquals(MainUiState.WorkspaceMode.TEMPLATE, templateState.workspaceMode);
         assertEquals("", templateState.currentQuery());
         assertEquals("alpha", templateState.appQuery);
-        assertTrue(templateState.filterState.injectedOnly);
+        assertTrue(templateState.filterState.injectedOnly());
         assertEquals(1, templateState.visibleItems(AppListPage.ALL_APPS).size());
 
         viewModel.dispatch(MainUiAction.queryChanged("template"));
@@ -114,13 +126,13 @@ public class MainViewModelTest {
         assertEquals("alpha", queriedTemplateState.appQuery);
         assertEquals("template", queriedTemplateState.templateQuery);
 
-        viewModel.dispatch(MainUiAction.workspaceModeChanged(MainWorkspaceMode.APP));
+        viewModel.dispatch(MainUiAction.workspaceModeChanged(MainUiState.WorkspaceMode.APP));
         MainUiState appState = viewModel.getState();
 
-        assertEquals(MainWorkspaceMode.APP, appState.workspaceMode);
+        assertEquals(MainUiState.WorkspaceMode.APP, appState.workspaceMode);
         assertEquals("alpha", appState.currentQuery());
         assertEquals("template", appState.templateQuery);
-        assertTrue(appState.filterState.injectedOnly);
+        assertTrue(appState.filterState.injectedOnly());
         assertEquals("com.example.alpha", appState.visibleItems(AppListPage.ALL_APPS).get(0).packageName);
     }
 
@@ -129,12 +141,15 @@ public class MainViewModelTest {
         MainViewModel viewModel = new MainViewModel(emptyState());
 
         viewModel.dispatch(MainUiAction.markPageRefreshing(AppListPage.ALL_APPS));
-        List<MainUiEffect> effects = viewModel.dispatch(MainUiAction.requestAppsLoad(true));
-        assertEquals(1, effects.size());
+        List<MainViewModel.AppsLoadRequest> requests = viewModel.dispatch(
+                MainUiAction.requestAppsLoad(true));
+        assertEquals(1, requests.size());
         assertTrue(viewModel.getState().isRefreshing(AppListPage.ALL_APPS));
 
-        MainUiEffect.StartAppsLoad start = (MainUiEffect.StartAppsLoad) effects.get(0);
-        viewModel.dispatch(MainUiAction.appsLoadFinished(start.requestId, Collections.emptyList()));
+        MainViewModel.AppsLoadRequest request = requests.get(0);
+        viewModel.dispatch(MainUiAction.appsLoadFinished(
+                request.requestId,
+                Collections.emptyList()));
         assertFalse(viewModel.getState().isRefreshing(AppListPage.ALL_APPS));
     }
 

@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.DensityOverride;
+
+import com.dpis.module.viewport.DpiConfig;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

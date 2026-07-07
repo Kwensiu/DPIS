@@ -32,6 +32,9 @@ requested font mode
   `off`.
 - The custom font hook-chain dialog configures only compat / field-rewrite
   routes.
+- Source ownership mirrors that semantic split: hook-domain planning lives under
+  `fonts.hookdomain`, while app-process font property delivery, resource-font
+  scheduling, and font hook installers live under `runtime.font`.
 - `system_server_font` and `activity_thread_font` are internal scheduler
   domains. They are not user-customizable hook-chain switches and are not saved
   in custom hook-chain overrides.

@@ -1,5 +1,15 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+import com.dpis.module.viewport.ViewportTargetType;
+
+import com.dpis.module.applist.AppListItem;
+import com.dpis.module.applist.AppListPage;
+import com.dpis.module.applist.AppListVisibleSections;
+
 import static org.junit.Assert.assertEquals;
 
 import java.util.List;

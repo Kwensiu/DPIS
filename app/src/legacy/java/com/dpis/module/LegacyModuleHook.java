@@ -1,5 +1,31 @@
 package com.dpis.module;
 
+import com.dpis.module.config.ModulePackagePlan;
+
+import com.dpis.module.config.ConfigSnapshotLoader;
+
+import com.dpis.module.config.ConfigSnapshot;
+
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.runtime.systemserver.SystemServerProcess;
+
+import com.dpis.module.runtime.appprocess.DisplayHookInstaller;
+
+import com.dpis.module.runtime.appprocess.ResourcesReadHookInstaller;
+
+import com.dpis.module.runtime.appprocess.ResourcesManagerHookInstaller;
+
+import com.dpis.module.runtime.appprocess.ResourcesImplHookInstaller;
+import com.dpis.module.runtime.appprocess.WindowFrameOverride;
+
+import com.dpis.module.runtime.font.PaintTextSizeFallbackHookInstaller;
+
+import com.dpis.module.viewport.DensityOverride;
+
+import com.dpis.module.viewport.VirtualDisplayOverride;
+import com.dpis.module.viewport.VirtualDisplayState;
+
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Paint;

@@ -1,5 +1,12 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.appconfig.AppConfigInputValidation;
+
+import com.dpis.module.viewport.ViewportTargetSpec;
+import com.dpis.module.viewport.ViewportTargetType;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;

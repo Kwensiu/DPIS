@@ -1,5 +1,8 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontDebugDataDiagnostics;
+import com.dpis.module.fonts.FontDebugStatsStore;
+
 import org.junit.Test;
 
 import java.util.Collections;

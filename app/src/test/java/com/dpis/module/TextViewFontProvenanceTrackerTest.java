@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.TextViewFontProvenanceTracker;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

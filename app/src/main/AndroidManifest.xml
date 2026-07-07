@@ -40,34 +40,34 @@
             android:resource="@array/xposedscope" />
 
         <activity
-            android:name=".FontLibraryActivity"
+            android:name=".fonts.FontLibraryActivity"
             android:exported="false" />
         <activity
-            android:name=".QuickTemplateTargetSelectionActivity"
+            android:name=".templates.QuickTemplateTargetSelectionActivity"
             android:exported="false" />
         <activity
-            android:name=".ModeHelpActivity"
+            android:name=".home.ModeHelpActivity"
             android:exported="false" />
         <activity
-            android:name=".ModeGuideActivity"
+            android:name=".home.ModeGuideActivity"
             android:exported="false" />
         <activity
-            android:name=".ExperimentalSettingsActivity"
+            android:name=".settings.ExperimentalSettingsActivity"
             android:exported="false" />
         <activity
-            android:name=".AboutActivity"
+            android:name=".about.AboutActivity"
             android:exported="false" />
         <activity
-            android:name=".DonateActivity"
+            android:name=".home.DonateActivity"
             android:exported="false" />
         <activity
-            android:name=".OpenSourceLicenseActivity"
+            android:name=".about.OpenSourceLicenseActivity"
             android:exported="false" />
         <activity
             android:name=".LogActivity"
             android:exported="false" />
         <activity
-            android:name=".FontDebugStatsIngestActivity"
+            android:name=".fonts.FontDebugStatsIngestActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:finishOnTaskLaunch="true"
@@ -78,6 +78,7 @@
             android:excludeFromRecents="true"
             android:exported="false"
             android:finishOnTaskLaunch="true"
+            android:taskAffinity=""
             android:theme="@style/Theme.Dpis.QuickConfig" />
         <activity
             android:name=".MainActivity"
@@ -102,7 +103,7 @@
         </activity-alias>
 
         <receiver
-            android:name=".FontDebugStatsReceiver"
+            android:name=".fonts.FontDebugStatsReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
@@ -111,7 +112,7 @@
         </receiver>
 
         <receiver
-            android:name=".DpisPackageLifecycleReceiver"
+            android:name=".runtime.DpisPackageLifecycleReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
@@ -121,12 +122,12 @@
         </receiver>
 
         <service
-            android:name=".FontDebugOverlayService"
+            android:name=".fonts.FontDebugOverlayService"
             android:enabled="true"
             android:exported="false" />
 
         <service
-            android:name=".FontDebugStatsIngestService"
+            android:name=".fonts.FontDebugStatsIngestService"
             android:enabled="true"
             android:exported="false" />
 
@@ -146,7 +147,7 @@
         </service>
 
         <provider
-            android:name=".FontDebugStatsProvider"
+            android:name=".fonts.FontDebugStatsProvider"
             android:authorities="${applicationId}.fontdebugstats"
             android:enabled="true"
             android:exported="false" />

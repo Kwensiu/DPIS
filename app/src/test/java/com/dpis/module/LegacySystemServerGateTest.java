@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.systemserver.LegacySystemServerGate;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

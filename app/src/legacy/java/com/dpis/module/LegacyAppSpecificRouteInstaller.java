@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+
+import com.dpis.module.viewport.DpiConfig;
+
+import com.dpis.module.appconfig.WechatDpiConfig;
+
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 final class LegacyAppSpecificRouteInstaller {

@@ -1,5 +1,19 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.hooks.FontMode;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
+import com.dpis.module.runtime.font.DebugFontOverride;
+
+import com.dpis.module.viewport.ViewportApplyMode;
+
+import com.dpis.module.hooks.HookDomainOverride;
+import com.dpis.module.hooks.HookExecutionPlan;
+import com.dpis.module.hooks.HookExecutionPlanner;
+import com.dpis.module.hooks.HookRuntimePolicy;
+
 import org.junit.Test;
 
 import java.util.Set;

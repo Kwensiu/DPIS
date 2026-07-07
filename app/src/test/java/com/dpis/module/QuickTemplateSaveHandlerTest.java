@@ -1,5 +1,18 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontApplyMode;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+import com.dpis.module.viewport.ViewportTargetType;
+
+import com.dpis.module.templates.TemplateConfigValueAdapters;
+
+import com.dpis.module.templates.QuickTemplateSaveHandler;
+
+import com.dpis.module.templates.QuickTemplateStore;
+
+import com.dpis.module.templates.TemplateConfigValue;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -34,7 +47,7 @@ public class QuickTemplateSaveHandlerTest {
         QuickTemplateStore.QuickTemplate template = store.read("template_a");
         assertNotNull(template);
         assertEquals("Compact", template.name);
-        assertEquals(ViewportTargetSpec.absoluteDp(411), template.configValue.viewportTargetSpec);
+        assertEquals(ViewportTargetSpec.absoluteDp(411), TemplateConfigValueAdapters.toViewportTargetSpec(template.configValue));
         assertEquals(ViewportApplyMode.COMPAT, template.configValue.viewportApplyMode);
         assertEquals(Integer.valueOf(115), template.configValue.fontScalePercent);
         assertEquals(FontApplyMode.FIELD_REWRITE, template.configValue.fontApplyMode);
@@ -50,7 +63,7 @@ public class QuickTemplateSaveHandlerTest {
                 "Old",
                 1000L,
                 new LinkedHashSet<>(Set.of("com.example.one", "com.example.two")),
-                new TemplateConfigValue(
+                TemplateConfigValueAdapters.fromViewportTargetSpec(
                         ViewportTargetSpec.absoluteDp(360),
                         ViewportApplyMode.AUTO,
                         null,
@@ -72,7 +85,7 @@ public class QuickTemplateSaveHandlerTest {
         assertTrue(result.success);
         QuickTemplateStore.QuickTemplate template = store.read("template_a");
         assertEquals("New", template.name);
-        assertEquals(ViewportTargetSpec.relativeScale(90000), template.configValue.viewportTargetSpec);
+        assertEquals(ViewportTargetSpec.relativeScale(90000), TemplateConfigValueAdapters.toViewportTargetSpec(template.configValue));
         assertEquals(new LinkedHashSet<>(Set.of("com.example.one", "com.example.two")),
                 template.selectedPackages);
     }
@@ -95,7 +108,7 @@ public class QuickTemplateSaveHandlerTest {
         assertTrue(result.success);
         QuickTemplateStore.QuickTemplate template = store.read("template_modes");
         assertNotNull(template);
-        assertFalse(template.configValue.viewportTargetSpec.isEnabled());
+        assertFalse(TemplateConfigValueAdapters.toViewportTargetSpec(template.configValue).isEnabled());
         assertEquals(ViewportTargetType.ABSOLUTE_DP, template.configValue.viewportTargetType);
         assertEquals(ViewportApplyMode.COMPAT, template.configValue.viewportApplyMode);
         assertNull(template.configValue.fontScalePercent);
@@ -120,7 +133,7 @@ public class QuickTemplateSaveHandlerTest {
         assertTrue(result.success);
         QuickTemplateStore.QuickTemplate template = store.read("template_viewport_strategy");
         assertNotNull(template);
-        assertFalse(template.configValue.viewportTargetSpec.isEnabled());
+        assertFalse(TemplateConfigValueAdapters.toViewportTargetSpec(template.configValue).isEnabled());
         assertEquals(ViewportTargetType.OFF, template.configValue.viewportTargetType);
         assertEquals(ViewportApplyMode.SYSTEM, template.configValue.viewportApplyMode);
         assertEquals(FontApplyMode.OFF, template.configValue.fontApplyMode);
@@ -190,7 +203,7 @@ public class QuickTemplateSaveHandlerTest {
         assertTrue(result.success);
         QuickTemplateStore.QuickTemplate template = store.read("template_drafts");
         assertNotNull(template);
-        assertEquals(ViewportTargetSpec.absoluteDp(411), template.configValue.viewportTargetSpec);
+        assertEquals(ViewportTargetSpec.absoluteDp(411), TemplateConfigValueAdapters.toViewportTargetSpec(template.configValue));
         assertEquals(Integer.valueOf(88000), template.configValue.viewportScaleMilliPercentDraft);
         assertEquals(Integer.valueOf(411), template.configValue.viewportWidthDpDraft);
     }

@@ -1,5 +1,10 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.runtime.font.CompatFontPropertySyncer;
+import com.dpis.module.runtime.font.HyperOsNativeFontPropertySyncer;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

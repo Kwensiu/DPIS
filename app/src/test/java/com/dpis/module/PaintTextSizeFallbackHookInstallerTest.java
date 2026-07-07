@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.runtime.font.PaintTextSizeFallbackHookInstaller;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

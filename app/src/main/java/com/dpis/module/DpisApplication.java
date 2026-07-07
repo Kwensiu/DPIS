@@ -1,5 +1,12 @@
 package com.dpis.module;
 
+import com.dpis.module.root.RootAccessProbe;
+import com.dpis.module.diagnostics.DpisAppLogStore;
+import com.dpis.module.fonts.HyperOsNativeProxyAssetExporter;
+import com.dpis.module.runtime.RuntimeConfigDelivery;
+import com.dpis.module.runtime.RuntimePropertyRecoveryCoordinator;
+import com.dpis.module.updates.UpdatePackageInstaller;
+
 import android.app.Application;
 import android.content.Context;
 import com.google.android.material.color.DynamicColors;
@@ -13,6 +20,10 @@ import io.github.libxposed.service.XposedServiceHelper;
 
 public final class DpisApplication extends Application implements XposedServiceHelper.OnServiceListener {
     private static final long UPDATE_CACHE_STARTUP_MAX_AGE_MS = 24 * 60 * 60 * 1000L;
+
+    static {
+        RuntimeConfigDelivery.setLocalSnapshotReloader(DpisApplication::reloadConfigStore);
+    }
 
     interface ServiceStateListener {
         void onServiceStateChanged();
@@ -31,11 +42,12 @@ public final class DpisApplication extends Application implements XposedServiceH
     public void onCreate() {
         super.onCreate();
         instance = this;
-        DpisLog.setAppLogSink(new DpisAppLogStore(this));
+        DpisAppLogStore appLogStore = new DpisAppLogStore(this);
+        DpisLog.setAppLogSink(appLogStore::record);
         DpisLog.i("app process started");
         RootAccessProbe.warmUpAsync();
         DynamicColors.applyToActivitiesIfAvailable(this);
-        HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(this);
+        HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(this, DpisLog::e);
         configStore = ConfigStoreFactory.createLocalModuleConfigStore(this);
         migrateLocalConfigStore(configStore);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
@@ -67,11 +79,11 @@ public final class DpisApplication extends Application implements XposedServiceH
         notifyServiceStateChanged();
     }
 
-    static DpisConfigStore getConfigStore() {
+    public static DpisConfigStore getConfigStore() {
         return configStore;
     }
 
-    static XposedService getXposedService() {
+    public static XposedService getXposedService() {
         return xposedService;
     }
 
@@ -94,7 +106,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         }
     }
 
-    static DpisConfigStore getActiveHookConfigStore(Context context) {
+    public static DpisConfigStore getActiveHookConfigStore(Context context) {
         DpisConfigStore sharedStore = configStore;
         if (sharedStore != null) {
             return sharedStore;

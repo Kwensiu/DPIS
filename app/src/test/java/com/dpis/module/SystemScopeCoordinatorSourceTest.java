@@ -8,7 +8,7 @@ import org.junit.Test;
 public class SystemScopeCoordinatorSourceTest {
     @Test
     public void legacyEffectiveStateFallsBackWhenServiceUnavailable() throws Exception {
-        String source = read("src/main/java/com/dpis/module/SystemScopeCoordinator.java");
+        String source = read("src/main/java/com/dpis/module/settings/SystemScopeCoordinator.java");
 
         assertTrue(source.contains("static boolean resolveSystemHookEffectiveEnabled(boolean desiredEnabled,"));
         assertTrue(source.contains("\"legacy\".equals(BuildConfig.FLAVOR)"));
@@ -17,7 +17,7 @@ public class SystemScopeCoordinatorSourceTest {
 
     @Test
     public void requestScopeReportsStartedAndClearsPendingOnAllOutcomes() throws Exception {
-        String source = read("src/main/java/com/dpis/module/SystemScopeCoordinator.java");
+        String source = read("src/main/java/com/dpis/module/settings/SystemScopeCoordinator.java");
         int methodStart = source.indexOf("boolean requestScope(String packageName,\n            String appLabel,\n            Runnable onTurnedInScope,\n            Runnable onRequestFinished,\n            boolean showNotice)");
         int methodEnd = source.indexOf("boolean resolveSystemHookEffectiveEnabled", methodStart);
         String method = source.substring(methodStart, methodEnd);

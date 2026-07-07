@@ -9,7 +9,7 @@ import static org.junit.Assert.assertTrue;
 public final class FontLibraryActivitySourceSmokeTest {
     @Test
     public void ttcImportIsGatedAndUsesFaceSelectionDialog() throws IOException {
-        String source = read("src/main/java/com/dpis/module/FontLibraryActivity.java");
+        String source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
         String strings = read("src/main/res/values/strings.xml");
 
         assertTrue(source.contains("configStore.isTtcFontImportEnabled()"));
@@ -25,7 +25,7 @@ public final class FontLibraryActivitySourceSmokeTest {
 
     @Test
     public void fontImportNameAndTtcSelectionUseLargeDialogWidth() throws IOException {
-        String source = read("src/main/java/com/dpis/module/FontLibraryActivity.java");
+        String source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
 
         assertTrue(source.contains("private void promptImportName("));
         assertTrue(source.contains("private void showTtcFaceSelectionDialog("));
@@ -34,8 +34,8 @@ public final class FontLibraryActivitySourceSmokeTest {
 
     @Test
     public void fontDetailsUseScrollableContentWithLargeDialogWidth() throws IOException {
-        String source = read("src/main/java/com/dpis/module/FontLibraryActivity.java");
-        String maxHeightScrollView = read("src/main/java/com/dpis/module/MaxHeightNestedScrollView.java");
+        String source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
+        String maxHeightScrollView = read("src/main/java/com/dpis/module/ui/MaxHeightNestedScrollView.java");
 
         assertTrue(source.contains("private void showFontDetails("));
         assertTrue(source.contains("FONT_DETAIL_DIALOG_MAX_HEIGHT_FRACTION"));
@@ -48,7 +48,7 @@ public final class FontLibraryActivitySourceSmokeTest {
 
     @Test
     public void deleteConfirmationsUseStandardDialogWidth() throws IOException {
-        String source = read("src/main/java/com/dpis/module/FontLibraryActivity.java");
+        String source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
 
         assertTrue(source.contains("private void confirmDelete("));
         assertTrue(source.contains("private void confirmForceDelete("));
@@ -57,7 +57,7 @@ public final class FontLibraryActivitySourceSmokeTest {
 
     @Test
     public void renameAndRestoreDialogsUseStandardDialogWidth() throws IOException {
-        String source = read("src/main/java/com/dpis/module/FontLibraryActivity.java");
+        String source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
 
         assertTrue(source.contains("private void promptRename("));
         assertTrue(source.contains("private void confirmClearAppTypeface("));

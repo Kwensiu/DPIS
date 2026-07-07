@@ -119,7 +119,7 @@ package:<当前包名>
 
 实现接入建议：
 
-- 新建 `ToolsWorkspaceBinder`，按 `SettingsWorkspaceBinder` 的模式接入 `bind`、`onStart`、`onResume`、`onStop` 和 `onActivityResult`。
+- 新建 `ToolsWorkspaceBinder`，按 settings page controller 的生命周期接入模式提供 `bind`、`onStart`、`onResume`、`onStop` 和 `onActivityResult`。
 - `ToolsWorkspaceBinder` 持有 `SystemFontScaleToolBinder`，由后者负责读取权限、读取系统值、写入系统值和刷新 UI。
 - `MainActivity` 持有 `ToolsWorkspaceBinder` 并转发生命周期，和现有 settings workspace 保持同类结构。
 - `WRITE_SETTINGS` 授权页返回后主要依靠 `onResume` 重读状态；如果实现使用 `startActivityForResult`，再分配独立 request code 并通过 `ToolsWorkspaceBinder.onActivityResult` 转发。

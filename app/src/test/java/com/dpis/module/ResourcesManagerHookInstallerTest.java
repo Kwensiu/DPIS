@@ -1,5 +1,34 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
+
+import com.dpis.module.diagnostics.FeedbackDiagnosticCoordinator;
+
+import com.dpis.module.runtime.appprocess.ResourcesManagerHookInstaller;
+
+import com.dpis.module.runtime.appprocess.WebApkRuntimeOwnerBridge;
+
+import com.dpis.module.runtime.font.ResourcesFontScheduler;
+
+import com.dpis.module.viewport.VirtualDisplayOverride;
+import com.dpis.module.viewport.VirtualDisplayState;
+
+import com.dpis.module.viewport.TargetViewportWidthResolver;
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;
+import com.dpis.module.viewport.ViewportRuntimeRecord;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportConfigurationScope;
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
+import com.dpis.module.viewport.ViewportTargetSpec;
+import com.dpis.module.viewport.ViewportTargetType;
+
+import com.dpis.module.runtime.DebugPackageOverride;
+
 import android.content.res.Configuration;
 
 import org.junit.Before;
@@ -355,7 +384,7 @@ public class ResourcesManagerHookInstallerTest {
 
     @Test
     public void debugResourcesManagerKeyDisablePropertyIsPackageScoped() throws Exception {
-        String source = readSource("src/main/java/com/dpis/module/ResourcesManagerHookInstaller.java");
+        String source = readSource("src/main/java/com/dpis/module/runtime/appprocess/ResourcesManagerHookInstaller.java");
 
         assertTrue(source.contains(
                 "debug.dpis.viewport.disable_resources_manager_key_package"));

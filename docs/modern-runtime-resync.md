@@ -70,7 +70,7 @@ Hot reload implementation notes:
 - when a hook is not yet id-stable, keep it on the restart-required path until
   the route has a proven reload owner;
 - start with the hot paths that already have stable ownership boundaries:
-  `ModuleMain`, `AppProcessHookInstaller`, and the system_server installer
+  `ModuleMain`, `runtime.appprocess.AppProcessHookInstaller`, and the system_server installer
   entry, then expand only when a real reload path is needed.
 - verify hot reload with LSPosed bridge logs first. A successful module-side
   reload should show `DPIS hot reload begin`, `DPIS hot reload replay`, and
@@ -123,6 +123,10 @@ Current structure note:
   anchors, but `system_server` still does not advertise replay/hot-reload
   support until install ownership is narrowed beyond the current process-scoped
   one-shot gate.
+- App-process font route support now lives under `runtime.font`: ActivityThread,
+  Resources font scheduling/evidence, TextView/Paint field rewrite, WebView,
+  Flutter, HyperOS Flutter, typeface replacement, and Compose diagnostics keep
+  the same install/reset semantics behind the moved package boundary.
 
 ## Route Map
 
@@ -134,19 +138,19 @@ Viewport mode
 
   system
     -> libxposed system_server route
-    -> SystemServerDisplayEnvironmentInstaller owns system-side viewport mutation
+    -> runtime.systemserver.SystemServerDisplayEnvironmentInstaller owns system-side viewport mutation
     -> target selection is field-aware for each system_server entry
     -> app-process Resources bridge remains installed for resource sync/fallback
     -> app-process Display / WindowMetrics supplement is skipped
 
   compat
     -> libxposed app-process route
-    -> AppProcessHookInstaller owns Resources / Display / WindowMetrics hooks
+    -> runtime.appprocess.AppProcessHookInstaller owns Resources / Display / WindowMetrics hooks
 
 Font mode
   system
     -> internal system_server_font domain
-    -> SystemServerDisplayEnvironmentInstaller writes Configuration.fontScale
+    -> runtime.systemserver.SystemServerDisplayEnvironmentInstaller writes Configuration.fontScale
        only at launch-activity-item
     -> internal app-process semantic supplements:
        activity_thread_font, resources_font, webview_text_zoom
@@ -225,10 +229,10 @@ DPIS modern target package
   +-- system_server route
   |     |
   |     +-- guard:
-  |     |     SystemServerMutationPolicy.shouldInstallSystemServerHooks
+  |     |     runtime.systemserver.SystemServerMutationPolicy.shouldInstallSystemServerHooks
   |     |
   |     +-- installer:
-  |     |     SystemServerDisplayEnvironmentInstaller.install
+  |     |     runtime.systemserver.SystemServerDisplayEnvironmentInstaller.install
   |     |
   |     +-- source:
   |     |     PerAppDisplayConfigSource
@@ -268,38 +272,38 @@ DPIS modern target package
         |     HookExecutionPlanner.buildPlan
         |
         +-- installer:
-              AppProcessHookInstaller.install
+              runtime.appprocess.AppProcessHookInstaller.install
                 |
-                +-- ResourcesManagerHookInstaller
+                +-- runtime.appprocess.ResourcesManagerHookInstaller
                 |     ResourcesManager.applyConfigurationToResources
                 |     ResourcesManager.updateResourcesForActivity
                 |     ResourcesManager create/get resource methods
                 |     ResourcesKey override fill
                 |
-                +-- ResourcesImplHookInstaller
+                +-- runtime.appprocess.ResourcesImplHookInstaller
                 |     ResourcesImpl.updateConfiguration
                 |
-                +-- ResourcesReadHookInstaller
+                +-- runtime.appprocess.ResourcesReadHookInstaller
                 |     Resources.getConfiguration
                 |     Resources.getDisplayMetrics
                 |     Resources.getSystem
                 |
-                +-- DisplayHookInstaller
+                +-- runtime.appprocess.DisplayHookInstaller
                 |     Display.getMetrics
                 |     Display.getRealMetrics
                 |     Display.getSize
                 |     Display.getRealSize
                 |     Display.getDisplayInfo
                 |
-                +-- WindowMetricsHookInstaller
+                +-- runtime.appprocess.WindowMetricsHookInstaller
                 |     WindowMetrics.getBounds
                 |
                 +-- system-font semantic supplements
                 |     ActivityThreadFontHookInstaller
                 |       ActivityThread.handleBindApplication
-                |     ResourcesManagerHookInstaller
-                |     ResourcesImplHookInstaller
-                |     ResourcesReadHookInstaller
+                |     runtime.appprocess.ResourcesManagerHookInstaller
+                |     runtime.appprocess.ResourcesImplHookInstaller
+                |     runtime.appprocess.ResourcesReadHookInstaller
                 |     WebViewFontHookInstaller
                 |
                 +-- compat-font field-rewrite routes
@@ -429,7 +433,7 @@ Detailed app-specific runtime evidence lives in
   |
   +-- app/src/modern/java/com/dpis/module/ModuleMain.java
   +-- libxposed XposedModule lifecycle
-  +-- SystemServerDisplayEnvironmentInstaller installation through XposedInterface
+  +-- runtime.systemserver.SystemServerDisplayEnvironmentInstaller installation through XposedInterface
   +-- 102 hot-reload callbacks are only enabled when the Modern entry is running
       on an API 102-capable framework
 
@@ -442,14 +446,19 @@ Detailed app-specific runtime evidence lives in
 
 shared
   |
-  +-- AppProcessHookInstaller
+  +-- runtime.appprocess.AppProcessHookInstaller
   +-- HookExecutionPlanner
-  +-- ResourcesManagerHookInstaller
-  +-- ResourcesImplHookInstaller
-  +-- ResourcesReadHookInstaller
-  +-- DisplayHookInstaller / WindowMetricsHookInstaller
+  +-- runtime.appprocess.ResourcesManagerHookInstaller
+  +-- runtime.appprocess.ResourcesImplHookInstaller
+  +-- runtime.appprocess.ResourcesReadHookInstaller
+  +-- runtime.appprocess.DisplayHookInstaller / runtime.appprocess.WindowMetricsHookInstaller
   +-- ViewportModePolicy / EffectiveModeResolver
 ```
+
+
+System-server route implementation classes now live under `runtime.systemserver`. Flavor entry points still use the same install,
+diagnostic, policy, and process-check protocols; this is package
+classification only, not a route behavior change.
 
 ## Experiment Ledger
 
@@ -484,9 +493,9 @@ superseded.
 
 - Changes under `app/src/main/java/` are shared and must be reviewed for both
   100 and 101.
-- Any change to `ResourcesManagerHookInstaller`, `ResourcesImplHookInstaller`,
-  `ResourcesReadHookInstaller`, `DisplayHookInstaller`,
-  `WindowMetricsHookInstaller`, `HookExecutionPlanner`, or
+- Any change to `runtime.appprocess.ResourcesManagerHookInstaller`, `runtime.appprocess.ResourcesImplHookInstaller`,
+  `runtime.appprocess.ResourcesReadHookInstaller`, `runtime.appprocess.DisplayHookInstaller`,
+  `runtime.appprocess.WindowMetricsHookInstaller`, `HookExecutionPlanner`, or
   `ViewportModePolicy` is a 101-impacting change.
 - For 101 system route, require system_server install evidence plus
   callback/mutation evidence. `hook ready` alone is not enough.
@@ -556,7 +565,7 @@ superseded.
   trade is deferred as not worth the risk of a visual double-apply regression
   on spanned text.
 
-- 2026-07-03: `ResourcesReadHookInstaller` viewport override hot path
+- 2026-07-03: `runtime.appprocess.ResourcesReadHookInstaller` viewport override hot path
   (`Resources.getConfiguration` / `getDisplayMetrics`) optimized via two
   caches addressing issue #54 item 6. (1) `ViewportConfigurationScope` now
   caches the `Configuration.windowConfiguration` `Field` and the
@@ -634,8 +643,8 @@ superseded.
   `ResourcesManager` config override, `ResourcesImpl` observe/override/stable
   target, and `ResourcesRead` configuration/display-metrics overrides.
 - 2026-06-21: shared app-process viewport diagnostics now also emit first-hit
-  plus counted-sample runtime-hotpath evidence from `DisplayHookInstaller` and
-  `WindowMetricsHookInstaller`. Repeated callback evidence includes `hitCount`
+  plus counted-sample runtime-hotpath evidence from `runtime.appprocess.DisplayHookInstaller` and
+  `runtime.appprocess.WindowMetricsHookInstaller`. Repeated callback evidence includes `hitCount`
   and `suppressedCount`, so rapid-scrolling repros can distinguish callback hit,
   stable-target/no-record skip, and actual display/window mutation without
   flooding LSPosed logs.
@@ -918,3 +927,8 @@ superseded.
   reintroduce that route. Product semantics should describe Chrome WebAPK as
   owner-aware through Android Resources and Chromium Java boundaries, with final
   renderer/device-scale impact still experimental until native evidence exists.
+
+The shared app-process viewport/window route implementation now lives under
+`runtime.appprocess`. Flavor entry points still call the same
+install/reset/apply protocols; the move is package classification only and does
+not change route selection, mutation policy, or evidence semantics.

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.systemserver.SystemServerPackageUidResolver;
+
 import static org.junit.Assert.assertEquals;
 
 import java.util.HashMap;

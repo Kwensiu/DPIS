@@ -1,5 +1,23 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.appconfig.AppConfigDialogBinder;
+import com.dpis.module.appconfig.AppConfigSaveHandler;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
+
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+import com.dpis.module.viewport.ViewportTargetType;
+
+import com.dpis.module.applist.AppListItem;
+import com.dpis.module.hooks.HookDomainOverride;
+import com.dpis.module.hooks.HookDomainOverrideStore;
+import com.dpis.module.templates.TemplateConfigValueAdapters;
+
+import com.dpis.module.templates.TemplateConfigValue;
+
 import org.junit.Test;
 
 import java.util.Set;
@@ -101,7 +119,7 @@ public class AppConfigSaveHandlerTest {
     @Test
     public void savingPreviewOnlyConfigConvertsHiddenPrefillDomainsToRealPackageConfig() {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
-        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.off(),
                 ViewportApplyMode.OFF,
                 null,
@@ -131,7 +149,7 @@ public class AppConfigSaveHandlerTest {
     @Test
     public void hookDomainOnlyPreviewSavePersistsRealPackageConfig() {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
-        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.off(),
                 ViewportApplyMode.OFF,
                 null,
@@ -149,7 +167,7 @@ public class AppConfigSaveHandlerTest {
     @Test
     public void clearedHookDomainPreviewDoesNotForcePackageConfig() {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
-        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.off(),
                 ViewportApplyMode.OFF,
                 null,
@@ -191,7 +209,7 @@ public class AppConfigSaveHandlerTest {
     @Test
     public void resetThenSaveDoesNotPersistHiddenPreviewHookDomains() {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
-        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.off(),
                 ViewportApplyMode.COMPAT,
                 null,
@@ -388,7 +406,7 @@ public class AppConfigSaveHandlerTest {
     @Test
     public void unchangedGlobalPrefillPreviewSaveDoesNotCreatePackageConfig() {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
-        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.relativeScale(87500),
                 ViewportApplyMode.AUTO,
                 125,
@@ -421,7 +439,7 @@ public class AppConfigSaveHandlerTest {
     @Test
     public void resetGlobalPrefillPreviewThenSaveDoesNotCreatePackageConfig() {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
-        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.relativeScale(87500),
                 ViewportApplyMode.AUTO,
                 125,
@@ -454,7 +472,7 @@ public class AppConfigSaveHandlerTest {
     @Test
     public void changedGlobalPrefillPreviewSaveCreatesPackageConfig() {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
-        AppListItem item = app("com.example.app").withGlobalPrefillPreview(new TemplateConfigValue(
+        AppListItem item = app("com.example.app").withGlobalPrefillPreview(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.relativeScale(87500),
                 ViewportApplyMode.AUTO,
                 125,

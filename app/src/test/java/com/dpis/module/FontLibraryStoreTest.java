@@ -1,5 +1,9 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontFileKind;
+import com.dpis.module.fonts.FontLibraryEntry;
+import com.dpis.module.fonts.FontLibraryStore;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -27,7 +31,7 @@ public final class FontLibraryStoreTest {
         FontLibraryStore store = new FontLibraryStore(prefs, dir);
         File source = writeFile("Example.ttf", "fake-font-data");
 
-        FontLibraryEntry entry = store.registerCopiedFontForTest(source, "Example.ttf", 1234L);
+        FontLibraryEntry entry = store.registerCopiedFont(source, "Example.ttf", 1234L);
 
         assertNotNull(entry);
         assertTrue(entry.id.startsWith("font_"));
@@ -52,8 +56,8 @@ public final class FontLibraryStoreTest {
         File first = writeFile("First.ttf", "same-font-data");
         File second = writeFile("Second.otf", "same-font-data");
 
-        FontLibraryEntry firstEntry = store.registerCopiedFontForTest(first, "First.ttf", 1000L);
-        FontLibraryEntry secondEntry = store.registerCopiedFontForTest(second, "Second.otf", 2000L);
+        FontLibraryEntry firstEntry = store.registerCopiedFont(first, "First.ttf", 1000L);
+        FontLibraryEntry secondEntry = store.registerCopiedFont(second, "Second.otf", 2000L);
 
         assertEquals(firstEntry, secondEntry);
         assertEquals(1, store.listFonts().size());
@@ -65,10 +69,10 @@ public final class FontLibraryStoreTest {
         FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
         File first = writeFile("First.ttf", "same-font-data");
         File second = writeFile("Second.otf", "same-font-data");
-        FontLibraryEntry staleEntry = store.registerCopiedFontForTest(first, "First.ttf", 1000L);
+        FontLibraryEntry staleEntry = store.registerCopiedFont(first, "First.ttf", 1000L);
         assertTrue(new File(staleEntry.storedPath).delete());
 
-        FontLibraryEntry replacement = store.registerCopiedFontForTest(second, "Second.otf", 2000L);
+        FontLibraryEntry replacement = store.registerCopiedFont(second, "Second.otf", 2000L);
 
         assertEquals(staleEntry.id, replacement.id);
         assertEquals("Second.otf", replacement.sourceFileName);
@@ -82,12 +86,12 @@ public final class FontLibraryStoreTest {
     public void deletesUnusedFont() throws Exception {
         FakePrefs prefs = new FakePrefs();
         FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
-        FontLibraryEntry entry = store.registerCopiedFontForTest(
+        FontLibraryEntry entry = store.registerCopiedFont(
                 writeFile("Example.ttf", "fake-font-data"),
                 "Example.ttf",
                 1234L);
 
-        FontLibraryStore.DeleteResult result = store.deleteFont(entry.id, new DpisConfigStore(new FakePrefs()));
+        FontLibraryStore.DeleteResult result = store.deleteFont(entry.id, unused -> false);
 
         assertSame(FontLibraryStore.DeleteResult.DELETED, result);
         assertNull(store.findById(entry.id));
@@ -99,13 +103,13 @@ public final class FontLibraryStoreTest {
     public void deleteFailureToWriteMetadataKeepsFileAndEntry() throws Exception {
         FakePrefs prefs = new FakePrefs();
         FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
-        FontLibraryEntry entry = store.registerCopiedFontForTest(
+        FontLibraryEntry entry = store.registerCopiedFont(
                 writeFile("Example.ttf", "fake-font-data"),
                 "Example.ttf",
                 1234L);
         prefs.setCommitResult(false);
 
-        FontLibraryStore.DeleteResult result = store.deleteFont(entry.id, new DpisConfigStore(new FakePrefs()));
+        FontLibraryStore.DeleteResult result = store.deleteFont(entry.id, unused -> false);
 
         assertSame(FontLibraryStore.DeleteResult.DELETE_FAILED, result);
         assertEquals(entry, store.findById(entry.id));
@@ -117,7 +121,7 @@ public final class FontLibraryStoreTest {
         FakePrefs prefs = new FakePrefs();
         File dir = temporaryFolder.newFolder("fonts");
         FontLibraryStore store = new FontLibraryStore(prefs, dir);
-        FontLibraryEntry entry = store.registerCopiedFontForTest(
+        FontLibraryEntry entry = store.registerCopiedFont(
                 writeFile("Example.ttf", "fake-font-data"),
                 "Example.ttf",
                 1234L);
@@ -126,7 +130,7 @@ public final class FontLibraryStoreTest {
         assertTrue(storedFile.mkdir());
         assertTrue(new File(storedFile, "child").createNewFile());
 
-        FontLibraryStore.DeleteResult result = store.deleteFont(entry.id, new DpisConfigStore(new FakePrefs()));
+        FontLibraryStore.DeleteResult result = store.deleteFont(entry.id, unused -> false);
 
         assertSame(FontLibraryStore.DeleteResult.DELETE_FAILED, result);
         assertEquals(entry, store.findById(entry.id));
@@ -141,7 +145,7 @@ public final class FontLibraryStoreTest {
         prefs.setCommitResult(false);
 
         try {
-            store.registerCopiedFontForTest(writeFile("Example.ttf", "fake-font-data"), "Example.ttf", 1234L);
+            store.registerCopiedFont(writeFile("Example.ttf", "fake-font-data"), "Example.ttf", 1234L);
         } catch (java.io.IOException expected) {
             assertEquals(0, dir.listFiles().length);
             return;
@@ -154,14 +158,11 @@ public final class FontLibraryStoreTest {
     public void refusesDeleteWhenFontIsReferenced() throws Exception {
         FakePrefs prefs = new FakePrefs();
         FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
-        FontLibraryEntry entry = store.registerCopiedFontForTest(
+        FontLibraryEntry entry = store.registerCopiedFont(
                 writeFile("Example.ttf", "fake-font-data"),
                 "Example.ttf",
                 1234L);
-        DpisConfigStore configStore = new DpisConfigStore(new FakePrefs());
-        configStore.setTargetTypefaceId("com.example.app", entry.id);
-
-        FontLibraryStore.DeleteResult result = store.deleteFont(entry.id, configStore);
+        FontLibraryStore.DeleteResult result = store.deleteFont(entry.id, fontId -> fontId.equals(entry.id));
 
         assertSame(FontLibraryStore.DeleteResult.IN_USE, result);
         assertEquals(entry, store.findById(entry.id));
@@ -173,7 +174,7 @@ public final class FontLibraryStoreTest {
         FontLibraryStore store = new FontLibraryStore(
                 new FakePrefs(),
                 temporaryFolder.newFolder("fonts"));
-        FontLibraryEntry entry = store.registerCopiedFontForTest(
+        FontLibraryEntry entry = store.registerCopiedFont(
                 writeFile("Example.otf", "fake-font-data"),
                 "Example.otf",
                 1234L);
@@ -227,7 +228,7 @@ public final class FontLibraryStoreTest {
         FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
         String sourceFileName = "Quote \"Mono\\One\".ttf";
 
-        FontLibraryEntry entry = store.registerCopiedFontForTest(
+        FontLibraryEntry entry = store.registerCopiedFont(
                 writeFile("Source.ttf", "fake-font-data"),
                 sourceFileName,
                 1234L);
@@ -245,7 +246,7 @@ public final class FontLibraryStoreTest {
         FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
         String sourceFileName = "  Display Font.ttf  ";
 
-        FontLibraryEntry entry = store.registerCopiedFontForTest(
+        FontLibraryEntry entry = store.registerCopiedFont(
                 writeFile("Source.ttf", "fake-font-data"),
                 sourceFileName,
                 1234L);
@@ -290,7 +291,7 @@ public final class FontLibraryStoreTest {
     public void renamesImportedFontWhenNameIsUnique() throws Exception {
         FakePrefs prefs = new FakePrefs();
         FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
-        FontLibraryEntry entry = store.registerCopiedFontForTest(
+        FontLibraryEntry entry = store.registerCopiedFont(
                 writeFile("Example.ttf", "fake-font-data"),
                 "Example.ttf",
                 1234L);
@@ -322,7 +323,7 @@ public final class FontLibraryStoreTest {
     public void renameRejectsBlankDisplayName() throws Exception {
         FakePrefs prefs = new FakePrefs();
         FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
-        FontLibraryEntry entry = store.registerCopiedFontForTest(
+        FontLibraryEntry entry = store.registerCopiedFont(
                 writeFile("Example.ttf", "fake-font-data"),
                 "Example.ttf",
                 1234L);
@@ -420,7 +421,7 @@ public final class FontLibraryStoreTest {
 
         FontLibraryStore.DeleteResult result = store.deleteFont(
                 entries.get(0).id,
-                new DpisConfigStore(new FakePrefs()));
+                unused -> false);
 
         assertSame(FontLibraryStore.DeleteResult.DELETED, result);
         assertNull(store.findById(entries.get(0).id));
@@ -441,11 +442,11 @@ public final class FontLibraryStoreTest {
                 1234L);
         File sharedFile = new File(entries.get(0).storedPath);
         assertSame(FontLibraryStore.DeleteResult.DELETED,
-                store.deleteFont(entries.get(0).id, new DpisConfigStore(new FakePrefs())));
+                store.deleteFont(entries.get(0).id, unused -> false));
 
         FontLibraryStore.DeleteResult result = store.deleteFont(
                 entries.get(1).id,
-                new DpisConfigStore(new FakePrefs()));
+                unused -> false);
 
         assertSame(FontLibraryStore.DeleteResult.DELETED, result);
         assertFalse(sharedFile.exists());

@@ -18,6 +18,7 @@ Thumbs.db
 /.codegraph/
 /.tmp/
 /tmp/
+/.worktree/
 /.worktrees/
 /.keystore/
 /InstallerX-Revived/

@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.viewport.ViewportDebugReporter;
+
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -11,20 +13,20 @@ public class FontDebugStatsProviderSourceSmokeTest {
     public void manifestDeclaresInternalFontDebugStatsFallbacks() throws IOException {
         String manifest = read("src/main/AndroidManifest.xml");
 
-        assertTrue(manifest.contains("android:name=\".FontDebugStatsProvider\""));
+        assertTrue(manifest.contains("android:name=\".fonts.FontDebugStatsProvider\""));
         assertTrue(manifest.contains("android:authorities=\"${applicationId}.fontdebugstats\""));
-        assertComponentExportedFalse(manifest, ".FontDebugStatsProvider");
-        assertTrue(manifest.contains("android:name=\".FontDebugStatsIngestService\""));
-        assertTrue(manifest.contains("android:name=\".FontDebugStatsIngestActivity\""));
-        assertComponentExportedFalse(manifest, ".FontDebugStatsIngestService");
-        assertComponentExportedFalse(manifest, ".FontDebugStatsIngestActivity");
-        assertComponentExportedFalse(manifest, ".FontDebugStatsReceiver");
+        assertComponentExportedFalse(manifest, ".fonts.FontDebugStatsProvider");
+        assertTrue(manifest.contains("android:name=\".fonts.FontDebugStatsIngestService\""));
+        assertTrue(manifest.contains("android:name=\".fonts.FontDebugStatsIngestActivity\""));
+        assertComponentExportedFalse(manifest, ".fonts.FontDebugStatsIngestService");
+        assertComponentExportedFalse(manifest, ".fonts.FontDebugStatsIngestActivity");
+        assertComponentExportedFalse(manifest, ".fonts.FontDebugStatsReceiver");
     }
 
     @Test
     public void fontStatsReportersUseProviderTransportInsteadOfDirectBroadcasts() throws IOException {
-        String fontReporter = read("src/main/java/com/dpis/module/FontDebugStatsReporter.java");
-        String viewportReporter = read("src/main/java/com/dpis/module/ViewportDebugReporter.java");
+        String fontReporter = read("src/main/java/com/dpis/module/fonts/FontDebugStatsReporter.java");
+        String viewportReporter = read("src/main/java/com/dpis/module/viewport/ViewportDebugReporter.java");
 
         assertTrue(fontReporter.contains("FontDebugStatsTransport.sendUpdate(context, extras)"));
         assertTrue(viewportReporter.contains("FontDebugStatsTransport.sendUpdate(context, extras)"));
@@ -34,8 +36,8 @@ public class FontDebugStatsProviderSourceSmokeTest {
 
     @Test
     public void receiverAndProviderShareSamePreferenceWriter() throws IOException {
-        String receiver = read("src/main/java/com/dpis/module/FontDebugStatsReceiver.java");
-        String provider = read("src/main/java/com/dpis/module/FontDebugStatsProvider.java");
+        String receiver = read("src/main/java/com/dpis/module/fonts/FontDebugStatsReceiver.java");
+        String provider = read("src/main/java/com/dpis/module/fonts/FontDebugStatsProvider.java");
 
         assertTrue(receiver.contains("FontDebugStatsUpdateWriter.applyExtras("));
         assertTrue(provider.contains("FontDebugStatsUpdateWriter.applyExtras("));
@@ -43,13 +45,13 @@ public class FontDebugStatsProviderSourceSmokeTest {
 
     @Test
     public void transportPrefersXposedRemotePreferencesBeforeProviderFallback() throws IOException {
-        String transport = read("src/main/java/com/dpis/module/FontDebugStatsTransport.java");
+        String transport = read("src/main/java/com/dpis/module/fonts/FontDebugStatsTransport.java");
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
         assertTrue(transport.contains("xposed.getRemotePreferences(DpisConfigStore.GROUP)"));
-        assertTrue(transport.contains("MODULE_CLASS_PACKAGE + \".FontDebugStatsReceiver\""));
-        assertTrue(transport.contains("MODULE_CLASS_PACKAGE + \".FontDebugStatsIngestService\""));
-        assertTrue(transport.contains("MODULE_CLASS_PACKAGE + \".FontDebugStatsIngestActivity\""));
+        assertTrue(transport.contains("MODULE_CLASS_PACKAGE + \".fonts.FontDebugStatsReceiver\""));
+        assertTrue(transport.contains("MODULE_CLASS_PACKAGE + \".fonts.FontDebugStatsIngestService\""));
+        assertTrue(transport.contains("MODULE_CLASS_PACKAGE + \".fonts.FontDebugStatsIngestActivity\""));
         assertTrue(transport.contains("FontDebugStatsUpdateWriter.applyExtras(preferences, extras)"));
         assertTrue(transport.contains("context.getContentResolver().call(buildUri()"));
         assertTrue(transport.contains("context.sendBroadcast(intent)"));
@@ -62,7 +64,7 @@ public class FontDebugStatsProviderSourceSmokeTest {
 
     @Test
     public void overlayImportsFileBridgeBeforeRendering() throws IOException {
-        String overlay = read("src/main/java/com/dpis/module/FontDebugOverlayService.java");
+        String overlay = read("src/main/java/com/dpis/module/fonts/FontDebugOverlayService.java");
 
         assertTrue(overlay.contains("HandlerThread"));
         assertTrue(overlay.contains("scheduleBridgeImportIfNeeded()"));

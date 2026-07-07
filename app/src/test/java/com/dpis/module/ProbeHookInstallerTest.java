@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.appprocess.ViewRootProbeHookInstaller;
+
+import com.dpis.module.runtime.appprocess.ResourcesProbeHookInstaller;
+
+import com.dpis.module.viewport.DensityOverride;
+
 import android.content.res.Configuration;
 import android.util.DisplayMetrics;
 

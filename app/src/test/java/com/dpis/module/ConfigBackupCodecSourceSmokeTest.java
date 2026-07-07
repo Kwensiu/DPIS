@@ -9,7 +9,7 @@ import static org.junit.Assert.assertTrue;
 public class ConfigBackupCodecSourceSmokeTest {
     @Test
     public void codecDefinesSchemaAndSupportedValueTypes() throws IOException {
-        String source = read("src/main/java/com/dpis/module/ConfigBackupCodec.java");
+        String source = read("src/main/java/com/dpis/module/backup/ConfigBackupCodec.java");
 
         assertTrue(source.contains("SCHEMA_VERSION = 3"));
         assertTrue(source.contains("KEY_PACKAGE_CONFIGS"));
@@ -32,7 +32,7 @@ public class ConfigBackupCodecSourceSmokeTest {
 
     @Test
     public void codecSupportsTypefaceIdStringEntries() throws IOException {
-        String codec = read("src/main/java/com/dpis/module/ConfigBackupCodec.java");
+        String codec = read("src/main/java/com/dpis/module/backup/ConfigBackupCodec.java");
         String store = read("src/main/java/com/dpis/module/DpisConfigStore.java");
         String settings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
 

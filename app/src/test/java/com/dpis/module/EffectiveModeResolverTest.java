@@ -1,5 +1,10 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.viewport.EffectiveModeResolver;
+import com.dpis.module.viewport.ViewportApplyMode;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

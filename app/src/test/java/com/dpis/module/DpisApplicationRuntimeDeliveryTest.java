@@ -1,5 +1,19 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontApplyMode;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
+import com.dpis.module.templates.TemplateConfigValueAdapters;
+
+import com.dpis.module.templates.GlobalPrefillStore;
+
+import com.dpis.module.templates.QuickTemplateStore;
+
+import com.dpis.module.templates.TemplateConfigValue;
+
+import com.dpis.module.settings.AppUiScaleManager;
+
 import org.junit.Test;
 
 import java.lang.reflect.Method;
@@ -17,7 +31,7 @@ public class DpisApplicationRuntimeDeliveryTest {
     public void publishRuntimeConfigKeepsTemplatesAndGlobalPrefillLocalOnly() throws Exception {
         FakePrefs localPrefs = new FakePrefs();
         DpisConfigStore local = new DpisConfigStore(localPrefs);
-        TemplateConfigValue globalPrefill = new TemplateConfigValue(
+        TemplateConfigValue globalPrefill = TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.absoluteDp(411),
                 ViewportApplyMode.AUTO,
                 120,
@@ -31,7 +45,7 @@ public class DpisApplicationRuntimeDeliveryTest {
                 "Compact",
                 1000L,
                 Set.of("com.example.one"),
-                new TemplateConfigValue(
+                TemplateConfigValueAdapters.fromViewportTargetSpec(
                         ViewportTargetSpec.relativeScale(110000),
                         ViewportApplyMode.COMPAT,
                         115,
@@ -65,7 +79,7 @@ public class DpisApplicationRuntimeDeliveryTest {
 
         FakePrefs deliveryPrefs = new FakePrefs();
         DpisConfigStore runtimeDelivery = new DpisConfigStore(deliveryPrefs);
-        assertTrue(new GlobalPrefillStore(deliveryPrefs).write(new TemplateConfigValue(
+        assertTrue(new GlobalPrefillStore(deliveryPrefs).write(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.absoluteDp(512),
                 ViewportApplyMode.SYSTEM,
                 null,
@@ -77,7 +91,7 @@ public class DpisApplicationRuntimeDeliveryTest {
                 "Remote",
                 2000L,
                 Set.of("com.example.remote"),
-                new TemplateConfigValue(
+                TemplateConfigValueAdapters.fromViewportTargetSpec(
                         ViewportTargetSpec.off(),
                         ViewportApplyMode.OFF,
                         null,

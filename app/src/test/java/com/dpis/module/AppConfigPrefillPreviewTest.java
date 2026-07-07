@@ -1,5 +1,19 @@
 package com.dpis.module;
 
+import com.dpis.module.config.PackageConfigRepository;
+
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.appconfig.AppConfigPrefillPreview;
+
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
+import com.dpis.module.applist.AppListItem;
+import com.dpis.module.templates.TemplateConfigValueAdapters;
+
+import com.dpis.module.templates.TemplateConfigValue;
+
 import org.junit.Test;
 
 import java.io.IOException;
@@ -14,7 +28,7 @@ public class AppConfigPrefillPreviewTest {
     @Test
     public void prefillEligibilityReadsPackageConfigThroughRepository() throws IOException {
         String source = SourceSmokeTestPaths.read(
-                "src/main/java/com/dpis/module/AppConfigPrefillPreview.java");
+                "src/main/java/com/dpis/module/appconfig/AppConfigPrefillPreview.java");
 
         assertTrue(source.contains("new PackageConfigRepository(store)"));
         assertTrue(source.contains("packageConfigRepository.hasRealPackageConfig("));
@@ -25,7 +39,7 @@ public class AppConfigPrefillPreviewTest {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
         store.setTargetFontScalePercent(item.packageName, 110);
-        TemplateConfigValue prefill = new TemplateConfigValue(
+        TemplateConfigValue prefill = TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.relativeScale(85000),
                 ViewportApplyMode.AUTO,
                 125,
@@ -45,7 +59,7 @@ public class AppConfigPrefillPreviewTest {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
         store.setTargetDpisEnabled(item.packageName, false);
-        TemplateConfigValue prefill = new TemplateConfigValue(
+        TemplateConfigValue prefill = TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.absoluteDp(411),
                 ViewportApplyMode.SYSTEM,
                 130,
@@ -63,7 +77,7 @@ public class AppConfigPrefillPreviewTest {
     public void unconfiguredAppsDisplayGlobalPrefillAsPreviewOnly() {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
-        TemplateConfigValue prefill = new TemplateConfigValue(
+        TemplateConfigValue prefill = TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.relativeScale(87500),
                 ViewportApplyMode.AUTO,
                 125,
@@ -89,7 +103,7 @@ public class AppConfigPrefillPreviewTest {
     public void advancedEnabledStateCanChangeWithoutSavingPrefillConfig() {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
-        TemplateConfigValue prefill = new TemplateConfigValue(
+        TemplateConfigValue prefill = TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.relativeScale(87500),
                 ViewportApplyMode.AUTO,
                 125,

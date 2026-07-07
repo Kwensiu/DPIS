@@ -1,5 +1,25 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.appprocess.ResourcesImplHookInstaller;
+
+import com.dpis.module.runtime.appprocess.WebApkRuntimeOwnerBridge;
+
+import com.dpis.module.runtime.font.ResourcesFontScheduler;
+
+import com.dpis.module.viewport.DensityOverride;
+
+import com.dpis.module.viewport.VirtualDisplayOverride;
+import com.dpis.module.viewport.VirtualDisplayState;
+
+import com.dpis.module.viewport.ViewportRuntimeRecord;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
+import com.dpis.module.viewport.ViewportTargetResolution;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
+import com.dpis.module.viewport.DpiConfig;
+
 import android.content.res.Configuration;
 import android.util.DisplayMetrics;
 

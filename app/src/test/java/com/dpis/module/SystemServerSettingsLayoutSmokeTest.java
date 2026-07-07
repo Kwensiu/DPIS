@@ -95,7 +95,8 @@ public class SystemServerSettingsLayoutSmokeTest {
 
     @Test
     public void experimentalSettingsActivityOnlySetsLayoutAndInsets() throws IOException {
-        String source = read("src/main/java/com/dpis/module/ExperimentalSettingsActivity.java");
+        String source = read(
+                "src/main/java/com/dpis/module/settings/ExperimentalSettingsActivity.java");
 
         assertTrue(source.contains("setContentView(R.layout.activity_experimental_settings);"));
         assertTrue(source.contains("bindToolbar();"));
@@ -115,7 +116,7 @@ public class SystemServerSettingsLayoutSmokeTest {
         String strings = read("src/main/res/values/strings.xml");
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
-        assertTrue(manifest.contains(".ExperimentalSettingsActivity"));
+        assertTrue(manifest.contains(".settings.ExperimentalSettingsActivity"));
         assertTrue(layout.contains("android:id=\"@+id/experimental_settings_toolbar\""));
         assertTrue(layout.contains("android:id=\"@+id/experimental_settings_back_button\""));
         assertTrue(layout.contains("android:id=\"@+id/experimental_settings_title\""));
@@ -283,7 +284,7 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(source.contains("importConfigBackup(uri);"));
         assertTrue(source.contains("relaunchDpisTask();"));
         assertTrue(source.contains("private void relaunchDpisTask()"));
-        assertTrue(source.contains("DpisApplication.reloadConfigStore();"));
+        assertTrue(source.contains("RuntimeConfigDelivery.publishLocalSnapshotAfterSave();"));
         assertTrue(source.contains("new Intent(activity, MainActivity.class)"));
         assertTrue(source.contains("Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK"));
         assertTrue(source.contains("startActivity(intent);"));

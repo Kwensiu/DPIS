@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.updates.ReleaseNotesCacheStore;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 

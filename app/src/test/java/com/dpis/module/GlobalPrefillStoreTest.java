@@ -1,5 +1,16 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontApplyMode;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+import com.dpis.module.viewport.ViewportTargetType;
+
+import com.dpis.module.templates.TemplateConfigValueAdapters;
+
+import com.dpis.module.templates.GlobalPrefillStore;
+
+import com.dpis.module.templates.TemplateConfigValue;
+
 import org.junit.Test;
 
 import java.util.Set;
@@ -14,7 +25,7 @@ public class GlobalPrefillStoreTest {
     public void globalPrefillRoundTripsWithoutWritingTargetPackages() {
         FakePrefs prefs = new FakePrefs();
         GlobalPrefillStore store = new GlobalPrefillStore(prefs);
-        TemplateConfigValue value = new TemplateConfigValue(
+        TemplateConfigValue value = TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.relativeScale(125000),
                 ViewportTargetType.RELATIVE_SCALE,
                 1250,
@@ -38,7 +49,7 @@ public class GlobalPrefillStoreTest {
         GlobalPrefillStore store = new GlobalPrefillStore(prefs);
         DpisConfigStore dpiConfigStore = new DpisConfigStore(prefs);
         assertTrue(dpiConfigStore.setTargetTypefaceId("com.example.app", "font_existing"));
-        assertTrue(store.write(new TemplateConfigValue(
+        assertTrue(store.write(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.absoluteDp(480),
                 ViewportApplyMode.SYSTEM,
                 120,
@@ -65,7 +76,7 @@ public class GlobalPrefillStoreTest {
 
         TemplateConfigValue value = new GlobalPrefillStore(prefs).read();
 
-        assertFalse(value.viewportTargetSpec.isEnabled());
+        assertFalse(TemplateConfigValueAdapters.toViewportTargetSpec(value).isEnabled());
         assertNull(value.fontScalePercent);
         assertEquals("missing_font_id", value.typefaceId);
         assertEquals("missing_font_id",
@@ -123,7 +134,7 @@ public class GlobalPrefillStoreTest {
 
         TemplateConfigValue value = new GlobalPrefillStore(prefs).read();
 
-        assertFalse(value.viewportTargetSpec.isEnabled());
+        assertFalse(TemplateConfigValueAdapters.toViewportTargetSpec(value).isEnabled());
         assertEquals(ViewportTargetType.ABSOLUTE_DP, value.viewportTargetType);
         assertEquals(FontApplyMode.FIELD_REWRITE, value.fontApplyMode);
         assertTrue(value.hasAnyValue());

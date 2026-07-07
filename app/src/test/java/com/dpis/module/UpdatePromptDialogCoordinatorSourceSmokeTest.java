@@ -1,5 +1,11 @@
 package com.dpis.module;
 
+import com.dpis.module.updates.UpdatePromptDialogCoordinator;
+
+import com.dpis.module.updates.UpdateAvailableDialog;
+
+import com.dpis.module.updates.ReleaseNotesController;
+
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -9,19 +15,23 @@ import org.junit.Test;
 public class UpdatePromptDialogCoordinatorSourceSmokeTest {
     @Test
     public void coordinatorOwnsDisclaimerAndManualUpdatePromptComposition() throws IOException {
-        String source = read("src/main/java/com/dpis/module/UpdatePromptDialogCoordinator.java");
-        String dialogSource = read("src/main/java/com/dpis/module/UpdateAvailableDialog.java");
+        String source = read("src/main/java/com/dpis/module/updates/UpdatePromptDialogCoordinator.java");
+        String dialogSource = read("src/main/java/com/dpis/module/updates/UpdateAvailableDialog.java");
 
         assertTrue(source.contains("final class UpdatePromptDialogCoordinator"));
         assertTrue(source.contains("boolean maybeShowStartupDisclaimerDialog("));
         assertTrue(source.contains("void showUpdateAvailableDialog("));
         assertTrue(source.contains("new MaterialAlertDialogBuilder(activity)"));
         assertTrue(source.contains("R.layout.dialog_startup_disclaimer"));
-        assertTrue(source.contains("StartupDisclaimerStore"));
-        assertTrue(source.contains("store.setAccepted(true)"));
+        assertTrue(source.contains("interface StartupDisclaimerAcceptance"));
+        assertTrue(source.contains("acceptance.isAccepted()"));
+        assertTrue(source.contains("acceptance.markAccepted()"));
+        assertTrue(!source.contains("StartupDisclaimerStore"));
         assertTrue(source.contains("UpdateAvailableDialog.create("));
-        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialogHandle.dialog, activity)"));
-        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialog, activity)"));
+        assertTrue(source.contains("void applyLargeDialogWidth(AlertDialog dialog);"));
+        assertTrue(source.contains("host.applyLargeDialogWidth(dialogHandle.dialog)"));
+        assertTrue(source.contains("host.applyLargeDialogWidth(dialog)"));
+        assertTrue(!source.contains("DialogWindowSizer"));
         assertTrue(source.contains("dialogHandle.cancelButton.setOnClickListener"));
         assertTrue(source.contains("if (host.isDownloadInProgress()) {"));
         int cancelStart = source.indexOf("dialogHandle.cancelButton.setOnClickListener(v -> {");

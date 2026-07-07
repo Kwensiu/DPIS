@@ -1,5 +1,12 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
+
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportPropertySyncer;
+
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;

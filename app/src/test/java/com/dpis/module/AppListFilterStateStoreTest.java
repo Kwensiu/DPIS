@@ -1,5 +1,10 @@
 package com.dpis.module;
 
+import com.dpis.module.applist.AppListFilter;
+
+import com.dpis.module.applist.AppListFilterState;
+import com.dpis.module.applist.AppListFilterStateStore;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
@@ -12,10 +17,10 @@ public class AppListFilterStateStoreTest {
 
         AppListFilterState state = store.load();
 
-        assertFalse(state.showSystemApps);
-        assertFalse(state.injectedOnly);
-        assertFalse(state.widthConfiguredOnly);
-        assertFalse(state.fontConfiguredOnly);
+        assertFalse(state.showSystemApps());
+        assertFalse(state.injectedOnly());
+        assertFalse(state.widthConfiguredOnly());
+        assertFalse(state.fontConfiguredOnly());
     }
 
     @Test
@@ -26,10 +31,10 @@ public class AppListFilterStateStoreTest {
         assertTrue(store.save(new AppListFilterState(true, true, true, true)));
 
         AppListFilterState restored = new AppListFilterStateStore(prefs).load();
-        assertTrue(restored.showSystemApps);
-        assertTrue(restored.injectedOnly);
-        assertTrue(restored.widthConfiguredOnly);
-        assertTrue(restored.fontConfiguredOnly);
+        assertTrue(restored.showSystemApps());
+        assertTrue(restored.injectedOnly());
+        assertTrue(restored.widthConfiguredOnly());
+        assertTrue(restored.fontConfiguredOnly());
     }
 
     @Test
@@ -41,9 +46,9 @@ public class AppListFilterStateStoreTest {
         assertTrue(store.save(null));
 
         AppListFilterState restored = store.load();
-        assertFalse(restored.showSystemApps);
-        assertFalse(restored.injectedOnly);
-        assertFalse(restored.widthConfiguredOnly);
-        assertFalse(restored.fontConfiguredOnly);
+        assertFalse(restored.showSystemApps());
+        assertFalse(restored.injectedOnly());
+        assertFalse(restored.widthConfiguredOnly());
+        assertFalse(restored.fontConfiguredOnly());
     }
 }

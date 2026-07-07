@@ -3,19 +3,13 @@ package com.dpis.module;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.After;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 public final class DpisLogTest {
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
     private final List<String> recorded = new ArrayList<>();
 
     @After
@@ -38,19 +32,4 @@ public final class DpisLogTest {
         assertTrue(recorded.get(1).contains("IllegalStateException: bad state"));
     }
 
-    @Test
-    public void appLogSinkCanPersistDpisLogEntries() {
-        File logFile = new File(temporaryFolder.getRoot(), "app_log.jsonl");
-        DpisAppLogStore store = new DpisAppLogStore(logFile, 10, 4096L);
-        DpisLog.setLoggingEnabled(true);
-        DpisLog.setAppLogSink(store);
-
-        DpisLog.i("persisted through sink");
-
-        List<DpisLogEntry> entries = store.readRecentEntries();
-        assertEquals(1, entries.size());
-        assertEquals("I", entries.get(0).level);
-        assertEquals("DPIS", entries.get(0).source);
-        assertEquals("persisted through sink", entries.get(0).message);
-    }
 }

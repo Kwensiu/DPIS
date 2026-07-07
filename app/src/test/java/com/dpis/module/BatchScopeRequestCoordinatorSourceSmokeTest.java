@@ -10,7 +10,8 @@ import java.io.IOException;
 public class BatchScopeRequestCoordinatorSourceSmokeTest {
     @Test
     public void batchScopeRequestUsesOneListRequestAndManualFallbacks() throws IOException {
-        String coordinator = read("src/main/java/com/dpis/module/BatchScopeRequestCoordinator.java");
+        String coordinator = read(
+                "src/main/java/com/dpis/module/templates/BatchScopeRequestCoordinator.java");
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(coordinator.contains("\"modern\".equals(BuildConfig.FLAVOR)"));
@@ -20,6 +21,8 @@ public class BatchScopeRequestCoordinatorSourceSmokeTest {
         assertTrue(coordinator.contains("quick_template_scope_manual_required"));
         assertTrue(coordinator.contains("onScopeRequestApproved(List<String> approved)"));
         assertTrue(coordinator.contains("host.requestAppsLoad()"));
+        assertTrue(mainActivity.contains(
+                "import com.dpis.module.templates.BatchScopeRequestCoordinator;"));
         assertTrue(mainActivity.contains("new BatchScopeRequestCoordinator("));
         assertTrue(mainActivity.contains("createBatchScopeRequestHost()"));
     }

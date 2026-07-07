@@ -1,5 +1,27 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontDebugDataDiagnostics;
+import com.dpis.module.fonts.FontDebugOverlayService;
+import com.dpis.module.fonts.FontDebugStatsStore;
+import com.dpis.module.fonts.FontDebugStatsSchema;
+import com.dpis.module.fonts.FontLibraryActivity;
+
+import com.dpis.module.runtime.RuntimeDebugPropertySyncer;
+import com.dpis.module.runtime.RuntimeConfigDelivery;
+
+import com.dpis.module.ui.DialogWindowSizer;
+
+import com.dpis.module.settings.AppLocaleManager;
+import com.dpis.module.settings.AppUiScaleManager;
+import com.dpis.module.settings.InterfaceScaleStore;
+import com.dpis.module.settings.LauncherIconVisibilityStore;
+import com.dpis.module.settings.SafeCacheCleaner;
+import com.dpis.module.settings.SystemHookState;
+import com.dpis.module.settings.SystemHooksToggleController;
+import com.dpis.module.settings.ExperimentalSettingsActivity;
+import com.dpis.module.about.AboutActivity;
+import com.dpis.module.home.DonateActivity;
+
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -25,6 +47,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.dpis.module.backup.ConfigBackupCodec;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
@@ -831,7 +854,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void relaunchDpisTask() {
-        DpisApplication.reloadConfigStore();
+        RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
         Intent intent = new Intent(activity, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);

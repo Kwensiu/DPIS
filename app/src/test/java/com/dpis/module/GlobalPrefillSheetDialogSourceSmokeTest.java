@@ -1,5 +1,17 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.appconfig.AppConfigDialogBinder;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainDialog;
+
+import com.dpis.module.templates.GlobalPrefillSaveHandler;
+
+import com.dpis.module.templates.GlobalPrefillStore;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -12,8 +24,8 @@ public class GlobalPrefillSheetDialogSourceSmokeTest {
     public void activityAndLayoutExposeDedicatedGlobalPrefillPageWithoutForbiddenControls()
             throws IOException {
         String manifest = read("src/main/AndroidManifest.xml");
-        String source = read("src/main/java/com/dpis/module/GlobalPrefillSheetDialog.java");
-        String editorBinder = read("src/main/java/com/dpis/module/GlobalPrefillEditorBinder.java");
+        String source = read("src/main/java/com/dpis/module/templates/GlobalPrefillSheetDialog.java");
+        String editorBinder = read("src/main/java/com/dpis/module/templates/GlobalPrefillEditorBinder.java");
         String layout = read("src/main/res/layout/dialog_global_prefill_sheet.xml");
         String sharedTemplateFields = read("src/main/res/layout/view_template_config_sheet_fields.xml");
 
@@ -73,7 +85,7 @@ public class GlobalPrefillSheetDialogSourceSmokeTest {
     @Test
     public void mainActivityAndTemplateWorkspaceWireGlobalPrefillActions() throws IOException {
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
-        String binder = read("src/main/java/com/dpis/module/TemplateWorkspaceBinder.java");
+        String binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.java");
 
         assertTrue(mainActivity.contains("new TemplateWorkspaceBinder("));
         assertTrue(mainActivity.contains("createTemplateWorkspaceActions()"));

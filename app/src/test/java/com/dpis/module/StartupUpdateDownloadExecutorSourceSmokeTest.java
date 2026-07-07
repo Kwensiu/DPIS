@@ -1,5 +1,7 @@
 package com.dpis.module;
 
+import com.dpis.module.updates.StartupUpdateDownloadExecutor;
+
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -9,7 +11,7 @@ import org.junit.Test;
 public class StartupUpdateDownloadExecutorSourceSmokeTest {
     @Test
     public void downloadExecutorDefinesCancellationAndProgressContracts() throws IOException {
-        String source = read("src/main/java/com/dpis/module/StartupUpdateDownloadExecutor.java");
+        String source = read("src/main/java/com/dpis/module/updates/StartupUpdateDownloadExecutor.java");
 
         assertTrue(source.contains("final class StartupUpdateDownloadExecutor"));
         assertTrue(source.contains("interface Cancellation"));

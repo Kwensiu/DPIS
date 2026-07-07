@@ -1,0 +1,81 @@
+package com.dpis.module.viewport;
+
+import com.dpis.module.DpisConfigStore;
+
+
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportOverride;
+
+import com.dpis.module.fonts.FontDebugStatsStore;
+import com.dpis.module.fonts.FontDebugStatsTransport;
+
+import android.app.Application;
+import android.content.Context;
+import android.os.Bundle;
+
+import java.lang.reflect.Method;
+
+public final class ViewportDebugReporter {
+    private static volatile String lastSummary;
+
+    private ViewportDebugReporter() {
+    }
+
+    public static void report(DpisConfigStore store,
+                       String packageName,
+                       String viewportMode,
+                       int sourceWidthDp,
+                       int sourceHeightDp,
+                       int sourceDensityDpi,
+                       ViewportOverride.Result result,
+                       VirtualDisplayOverride.Result sharedResult,
+                       boolean configurationApplied) {
+        if (result == null || packageName == null || packageName.isEmpty()) {
+            return;
+        }
+        boolean changed = result.widthDp != sourceWidthDp
+                || result.heightDp != sourceHeightDp
+                || result.densityDpi != sourceDensityDpi;
+        String modeText = ViewportApplyMode.FIELD_REWRITE.equals(viewportMode) ? "兼容" : "系统";
+        if (!changed) {
+            modeText = modeText + "(未变化)";
+        }
+        int targetWidthPx = sharedResult != null ? sharedResult.widthPx : -1;
+        int targetHeightPx = sharedResult != null ? sharedResult.heightPx : -1;
+        String summary = "视口 " + packageName
+                + " | " + modeText
+                + " | dp " + sourceWidthDp + "x" + sourceHeightDp + " -> "
+                + result.widthDp + "x" + result.heightDp
+                + " | dpi " + sourceDensityDpi + " -> " + result.densityDpi
+                + " | px " + targetWidthPx + "x" + targetHeightPx
+                + " | cfg=" + (configurationApplied ? "on" : "off");
+        String previous = lastSummary;
+        if (summary.equals(previous)) {
+            return;
+        }
+        Context context = resolveContext();
+        if (context == null) {
+            return;
+        }
+        Bundle extras = new Bundle();
+        extras.putString(FontDebugStatsStore.EXTRA_VIEWPORT_DEBUG_SUMMARY, summary);
+        try {
+            FontDebugStatsTransport.sendUpdate(context, extras);
+            lastSummary = summary;
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static Context resolveContext() {
+        try {
+            Class<?> activityThread = Class.forName("android.app.ActivityThread");
+            Method currentApplication = activityThread.getDeclaredMethod("currentApplication");
+            Object app = currentApplication.invoke(null);
+            if (app instanceof Application application) {
+                return application;
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
+    }
+}

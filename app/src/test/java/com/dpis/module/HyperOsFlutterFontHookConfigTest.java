@@ -1,5 +1,38 @@
 package com.dpis.module;
 
+import com.dpis.module.fonts.HyperOsNativeProxyRefreshCoordinator;
+
+import com.dpis.module.runtime.font.HyperOsFlutterFontBridge;
+
+import com.dpis.module.runtime.systemserver.HyperOsRustProcessHookInstaller;
+
+import com.dpis.module.config.RuntimePropertyConfigPreferences;
+
+import com.dpis.module.config.PerAppDisplayConfigSource;
+
+import com.dpis.module.config.PackageConfigSnapshot;
+
+import com.dpis.module.config.ConfigSnapshot;
+
+
+
+import com.dpis.module.fonts.FontApplyMode;
+
+import com.dpis.module.runtime.appprocess.AppProcessHookInstaller;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
+
+import com.dpis.module.fonts.hookdomain.FontHookDomainPropertyBridge;
+
+
+import com.dpis.module.runtime.font.HyperOsFlutterFontHookInstaller;
+import com.dpis.module.runtime.systemserver.PerAppDisplayConfig;
+
+import com.dpis.module.viewport.ViewportPropertyBridge;
+import com.dpis.module.viewport.ViewportApplyMode;
+
+import com.dpis.module.hooks.HookDomainOverride;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -54,7 +87,7 @@ public class HyperOsFlutterFontHookConfigTest {
     @Test
     public void legacyFactoryUsesPackageSystemPropertiesWithoutExportedProvider() throws Exception {
         String factory = readSource("src/main/java/com/dpis/module/ConfigStoreFactory.java");
-        String prefs = readSource("src/main/java/com/dpis/module/RuntimePropertyConfigPreferences.java");
+        String prefs = readSource("src/main/java/com/dpis/module/config/RuntimePropertyConfigPreferences.java");
         String app = readSource("src/main/java/com/dpis/module/DpisApplication.java");
 
         assertTrue(factory.contains("createForLegacyHost(String packageName)"));
@@ -174,7 +207,7 @@ public class HyperOsFlutterFontHookConfigTest {
 
     @Test
     public void nativeHookInstallerRequiresEnabledFontMode() throws Exception {
-        String source = readSource("src/main/java/com/dpis/module/HyperOsFlutterFontHookInstaller.java");
+        String source = readSource("src/main/java/com/dpis/module/runtime/font/HyperOsFlutterFontHookInstaller.java");
 
         assertTrue(source.contains("store.getTargetFontApplyMode(packageName)"));
         assertTrue(source.contains("FontApplyMode.isEnabled("));
@@ -183,7 +216,7 @@ public class HyperOsFlutterFontHookConfigTest {
 
     @Test
     public void nativeProxyRefreshRequiresFlutterMasterSwitch() throws Exception {
-        String source = readSource("src/main/java/com/dpis/module/HyperOsNativeProxyRefreshCoordinator.java");
+        String source = readSource("src/main/java/com/dpis/module/fonts/HyperOsNativeProxyRefreshCoordinator.java");
 
         assertTrue(source.contains("!store.isFlutterFontHookEnabled()"));
         assertTrue(source.contains("!store.isHyperOsFlutterFontHookEnabled()"));
@@ -191,10 +224,10 @@ public class HyperOsFlutterFontHookConfigTest {
 
     @Test
     public void nativeHookInstallerProbesGenericFlutterLibraryLoads() throws Exception {
-        String source = readSource("src/main/java/com/dpis/module/HyperOsFlutterFontHookInstaller.java");
+        String source = readSource("src/main/java/com/dpis/module/runtime/font/HyperOsFlutterFontHookInstaller.java");
         String nativeSource = readSource("src/main/cpp/dpis_native.cpp");
         String moduleMain = readSource("src/modern/java/com/dpis/module/ModuleMain.java");
-        String appProcessInstaller = readSource("src/main/java/com/dpis/module/AppProcessHookInstaller.java");
+        String appProcessInstaller = readSource("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.java");
 
         assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("));
         assertTrue(moduleMain.contains("packagePlan.hyperOsNativeFlutterFontEnabled"));

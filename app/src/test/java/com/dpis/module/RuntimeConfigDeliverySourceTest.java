@@ -1,5 +1,13 @@
 package com.dpis.module;
 
+import com.dpis.module.appconfig.AppConfigSaveHandler;
+
+import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
+
+import com.dpis.module.fonts.FontLibraryStore;
+
+import com.dpis.module.viewport.ViewportPropertySyncer;
+
 import org.junit.Test;
 
 import java.io.IOException;
@@ -9,16 +17,19 @@ import static org.junit.Assert.assertTrue;
 public class RuntimeConfigDeliverySourceTest {
     @Test
     public void centralizesRemoteDeliveryResyncAfterRealConfigSaves() throws IOException {
-        String delivery = read("src/main/java/com/dpis/module/RuntimeConfigDelivery.java");
+        String delivery = read("src/main/java/com/dpis/module/runtime/RuntimeConfigDelivery.java");
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
         String appConfigHost = hostBlock(mainActivity);
-        String sheetActions = read("src/main/java/com/dpis/module/AppConfigSheetActionBinder.java");
-        String fontLibrary = read("src/main/java/com/dpis/module/FontLibraryActivity.java");
-        String systemHooks = read("src/main/java/com/dpis/module/SystemHooksToggleController.java");
+        String sheetActions = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java");
+        String fontLibrary = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
+        String systemHooks = read("src/main/java/com/dpis/module/settings/SystemHooksToggleController.java");
         String systemSettings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
 
-        assertTrue(delivery.contains("static void publishLocalSnapshotAfterSave()"));
-        assertTrue(delivery.contains("DpisApplication.reloadConfigStore();"));
+        assertTrue(delivery.contains("public static void setLocalSnapshotReloader(Runnable reloader)"));
+        assertTrue(delivery.contains("public static void publishLocalSnapshotAfterSave()"));
+        assertTrue(delivery.contains("localSnapshotReloader.run();"));
+        assertTrue(read("src/main/java/com/dpis/module/DpisApplication.java")
+                .contains("RuntimeConfigDelivery.setLocalSnapshotReloader(DpisApplication::reloadConfigStore);"));
         assertTrue(mainActivity.contains("private void onRuntimeConfigSaved()"));
         assertTrue(mainActivity.contains("RuntimeConfigDelivery.publishLocalSnapshotAfterSave();"));
         assertTrue(mainActivity.contains("private AppConfigSaveHandler.Result finalizeAppConfigSaveWithWechatDpi("));
