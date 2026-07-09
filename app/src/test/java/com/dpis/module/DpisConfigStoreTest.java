@@ -372,6 +372,32 @@ public class DpisConfigStoreTest {
     }
 
     @Test
+    public void aggregatedRelativeTargetTypeOnlyIsUserVisibleConfig() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putString("package_config.org.chromium.webapk.test_v2.viewport.target_type",
+                        ViewportTargetType.RELATIVE_SCALE)
+                .commit();
+        DpisConfigStore store = new DpisConfigStore(prefs);
+
+        assertTrue(store.getConfiguredPackages().contains("org.chromium.webapk.test_v2"));
+        assertTrue(store.hasUserVisiblePackageConfig("org.chromium.webapk.test_v2"));
+    }
+
+    @Test
+    public void legacyRelativeTargetTypeOnlyRemainsDraftState() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putString("viewport.com.example.draft.target_type",
+                        ViewportTargetType.RELATIVE_SCALE)
+                .commit();
+        DpisConfigStore store = new DpisConfigStore(prefs);
+
+        assertFalse(store.getConfiguredPackages().contains("com.example.draft"));
+        assertFalse(store.hasUserVisiblePackageConfig("com.example.draft"));
+    }
+
+    @Test
     public void updatesFontScaleForConfiguredPackage() {
         FakePrefs prefs = new FakePrefs();
         DpisConfigStore store = new DpisConfigStore(prefs);

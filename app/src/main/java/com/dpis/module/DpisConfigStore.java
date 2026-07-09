@@ -127,7 +127,7 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
                     DpisConfigStore::keyForPackageViewportWidth),
             PackageConfigKeySpec.string("package_config.", ".viewport.target_type",
                     DpisConfigStore::keyForPackageViewportTargetType,
-                    DpisConfigStore::isConfiguredViewportTargetTypeValue),
+                    DpisConfigStore::isConfiguredPackageViewportTargetTypeValue),
             PackageConfigKeySpec.rangedInteger("package_config.", ".viewport.scale_permille",
                     MIN_VIEWPORT_SCALE_PERMILLE, MAX_VIEWPORT_SCALE_PERMILLE,
                     DpisConfigStore::keyForPackageViewportScalePermille),
@@ -632,10 +632,18 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
         }
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
         packages.add(packageName);
-        return commitBoth(editor -> editor
-                .putStringSet(KEY_TARGET_PACKAGES, packages)
-                .putString(keyForViewportTargetType(packageName), normalized)
-                .putString(keyForPackageViewportTargetType(packageName), normalized));
+        return commitBoth(editor -> {
+            editor.putStringSet(KEY_TARGET_PACKAGES, packages)
+                    .putString(keyForViewportTargetType(packageName), normalized);
+            if (ViewportTargetType.ABSOLUTE_DP.equals(normalized)) {
+                editor.putString(keyForPackageViewportTargetType(packageName), normalized);
+            } else {
+                // The relative target type is the editor's default draft; keep it
+                // out of aggregated package config unless it came from a real
+                // saved package config such as backup/import state.
+                editor.remove(keyForPackageViewportTargetType(packageName));
+            }
+        });
     }
 
     boolean clearTargetViewportTypeDraft(String packageName) {
@@ -1627,6 +1635,13 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
                 ? ViewportTargetType.normalize(stringValue)
                 : ViewportTargetType.OFF;
         return ViewportTargetType.ABSOLUTE_DP.equals(normalized);
+    }
+
+    private static boolean isConfiguredPackageViewportTargetTypeValue(Object value) {
+        String normalized = value instanceof String stringValue
+                ? ViewportTargetType.normalize(stringValue)
+                : ViewportTargetType.OFF;
+        return !ViewportTargetType.OFF.equals(normalized);
     }
 
     private static boolean isConfiguredViewportModeValue(Object value) {
