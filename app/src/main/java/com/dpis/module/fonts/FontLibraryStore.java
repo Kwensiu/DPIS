@@ -36,6 +36,7 @@ public final class FontLibraryStore {
     private static final String JSON_IMPORTED_AT_EPOCH_MS = "importedAtEpochMs";
     private static final String JSON_TTC_INDEX = "ttcIndex";
     private static final String JSON_COLLECTION_ID = "collectionId";
+    private static final String JSON_COLLECTION_DISPLAY_NAME = "collectionDisplayName";
     private static final String JSON_PUBLICATION_STATUS = "publicationStatus";
 
     private final SharedPreferences preferences;
@@ -66,6 +67,7 @@ public final class FontLibraryStore {
         this.publicFontDirectory = publicFontDirectory;
         this.legacyCatalogPreferences = legacyCatalogPreferences;
         migrateLegacyCatalogIfNecessary();
+        migrateLegacyTtcFaceLabelsIfNecessary();
     }
 
     private void migrateLegacyCatalogIfNecessary() {
@@ -81,6 +83,46 @@ public final class FontLibraryStore {
         if (preferences.edit().putString(KEY_ENTRIES, legacyCatalog).commit()) {
             legacyCatalogPreferences.edit().remove(KEY_ENTRIES).commit();
         }
+    }
+
+    private void migrateLegacyTtcFaceLabelsIfNecessary() {
+        List<FontLibraryEntry> entries = readEntries();
+        List<FontLibraryEntry> updated = new ArrayList<>(entries.size());
+        boolean changed = false;
+        for (FontLibraryEntry entry : entries) {
+            FontLibraryEntry replacement = entry;
+            if (isLegacyAutomaticTtcLabel(entry)) {
+                File file = resolveStoredFile(entry);
+                String resolved = FontFaceNameResolver.resolveTtcFaceLabel(
+                        file, entry.ttcIndex, entry.displayName);
+                if (!resolved.equals(entry.displayName)) {
+                    replacement = new FontLibraryEntry(
+                            entry.id,
+                            resolved,
+                            entry.sourceFileName,
+                            entry.storedFileName,
+                            entry.storedPath,
+                            entry.sha256,
+                            entry.importedAtEpochMs,
+                            entry.ttcIndex,
+                            entry.collectionId,
+                            defaultCollectionDisplayName(entry.sourceFileName),
+                            entry.publicationStatus);
+                    changed = true;
+                }
+            }
+            updated.add(replacement);
+        }
+        if (changed) {
+            writeEntries(updated);
+        }
+    }
+
+    private static boolean isLegacyAutomaticTtcLabel(FontLibraryEntry entry) {
+        if (entry == null || entry.ttcIndex < 0 || entry.sourceFileName == null) {
+            return false;
+        }
+        return entry.displayName.equals(entry.sourceFileName + " (TTC " + entry.ttcIndex + ")");
     }
 
     public List<FontLibraryEntry> listFonts() {
@@ -299,9 +341,10 @@ public final class FontLibraryStore {
         stagingFile.setReadable(true, false);
         FontPublicationStatus publicationStatus = publishFontFile(stagingFile);
 
+        String displayName = makeUniqueDisplayName(entries, requestedDisplayName, null);
         FontLibraryEntry entry = new FontLibraryEntry(
                 id,
-                makeUniqueDisplayName(entries, requestedDisplayName, null),
+                displayName,
                 sourceFileName,
                 stagingFile.getName(),
                 stagingFile.getAbsolutePath(),
@@ -309,6 +352,7 @@ public final class FontLibraryStore {
                 importedAtEpochMs,
                 0,
                 id,
+                displayName,
                 publicationStatus);
         entries.add(entry);
         if (!writeEntries(entries)) {
@@ -384,12 +428,23 @@ public final class FontLibraryStore {
             publicationStatus = publicationStatusForExistingFile(entries, targetFile);
         }
 
+        boolean usesDefaultAlias = normalizeDisplayName(requestedDisplayName)
+                .equals(normalizeDisplayName(sourceFileName));
+        String requestedCollectionDisplayName = usesDefaultAlias
+                ? defaultCollectionDisplayName(sourceFileName)
+                : normalizeDisplayName(requestedDisplayName);
+        FontLibraryEntry existingCollection = findByCollectionId(entries, baseId);
+        String collectionDisplayName = existingCollection != null
+                ? existingCollection.collectionDisplayName
+                : makeUniqueCollectionDisplayName(entries, requestedCollectionDisplayName, baseId);
         List<FontLibraryEntry> originalEntries = new ArrayList<>(entries);
         for (Integer index : missingIndexes) {
             String id = baseId + "_ttc_" + index;
+            String fallbackLabel = requestedDisplayName + " (TTC " + index + ")";
+            String faceLabel = FontFaceNameResolver.resolveTtcFaceLabel(targetFile, index, fallbackLabel);
             FontLibraryEntry entry = new FontLibraryEntry(
                     id,
-                    makeUniqueDisplayName(entries, requestedDisplayName + " (TTC " + index + ")", null),
+                    makeUniqueDisplayName(entries, faceLabel, null),
                     sourceFileName,
                     targetFile.getName(),
                     targetFile.getAbsolutePath(),
@@ -397,6 +452,7 @@ public final class FontLibraryStore {
                     importedAtEpochMs,
                     index,
                     baseId,
+                    collectionDisplayName,
                     publicationStatus);
             entries.add(entry);
             result.add(entry);
@@ -414,19 +470,33 @@ public final class FontLibraryStore {
             return RenameResult.INVALID_NAME;
         }
         List<FontLibraryEntry> entries = readEntries();
-        boolean found = false;
+        FontLibraryEntry selected = null;
         for (FontLibraryEntry entry : entries) {
-            if (!entry.id.equals(id) && displayName.equalsIgnoreCase(entry.displayName.trim())) {
+            if (entry.id.equals(id)) {
+                selected = entry;
+            }
+        }
+        if (selected == null) {
+            return RenameResult.NOT_FOUND;
+        }
+        for (FontLibraryEntry entry : entries) {
+            if (!selected.collectionId.equals(entry.collectionId)
+                    && displayName.equalsIgnoreCase(entry.collectionDisplayName.trim())) {
                 return RenameResult.DUPLICATE_NAME;
+            }
+        }
+        int faceCount = 0;
+        for (FontLibraryEntry entry : entries) {
+            if (selected.collectionId.equals(entry.collectionId)) {
+                faceCount++;
             }
         }
         List<FontLibraryEntry> updatedEntries = new ArrayList<>(entries.size());
         for (FontLibraryEntry entry : entries) {
-            if (entry.id.equals(id)) {
-                found = true;
+            if (selected.collectionId.equals(entry.collectionId)) {
                 updatedEntries.add(new FontLibraryEntry(
                         entry.id,
-                        displayName,
+                        faceCount == 1 ? displayName : entry.displayName,
                         entry.sourceFileName,
                         entry.storedFileName,
                         entry.storedPath,
@@ -434,13 +504,11 @@ public final class FontLibraryStore {
                         entry.importedAtEpochMs,
                         entry.ttcIndex,
                         entry.collectionId,
+                        displayName,
                         entry.publicationStatus));
             } else {
                 updatedEntries.add(entry);
             }
-        }
-        if (!found) {
-            return RenameResult.NOT_FOUND;
         }
         return writeEntries(updatedEntries) ? RenameResult.RENAMED : RenameResult.WRITE_FAILED;
     }
@@ -576,13 +644,20 @@ public final class FontLibraryStore {
                     ? inspection.ttc.offsets.size()
                     : 1;
             for (int ttcIndex = 0; ttcIndex < faceCount; ttcIndex++) {
+                if (inspection.kind == FontFileKind.TTC
+                        && FontTypefaceLoader.load(file, ttcIndex) == null) {
+                    continue;
+                }
                 String id = inspection.kind == FontFileKind.TTC
                         ? collectionId + "_ttc_" + ttcIndex
                         : collectionId;
                 if (!knownIds.add(id)) {
                     continue;
                 }
-                String displayName = recoveredDisplayName(file, ttcIndex, faceCount);
+                String displayName = inspection.kind == FontFileKind.TTC
+                        ? FontFaceNameResolver.resolveTtcFaceLabel(
+                                file, ttcIndex, recoveredDisplayName(file, ttcIndex, faceCount))
+                        : recoveredDisplayName(file, ttcIndex, faceCount);
                 FontLibraryEntry recovered = new FontLibraryEntry(
                         id,
                         makeUniqueDisplayName(entries, displayName, null),
@@ -593,6 +668,7 @@ public final class FontLibraryStore {
                         Math.max(0L, file.lastModified()),
                         ttcIndex,
                         collectionId,
+                        defaultCollectionDisplayName(file.getName()),
                         FontPublicationStatus.PRIVATE);
                 FontPublicationStatus publicationStatus = isPublishedFallbackPresent(recovered)
                         ? FontPublicationStatus.PUBLISHED
@@ -669,7 +745,7 @@ public final class FontLibraryStore {
             FontPublicationStatus publicationStatus) {
         return new FontLibraryEntry(entry.id, entry.displayName, entry.sourceFileName,
                 entry.storedFileName, entry.storedPath, entry.sha256, entry.importedAtEpochMs,
-                entry.ttcIndex, entry.collectionId, publicationStatus);
+                entry.ttcIndex, entry.collectionId, entry.collectionDisplayName, publicationStatus);
     }
 
     private boolean hasRemainingPathReference(List<FontLibraryEntry> entries, String storedPath) {
@@ -764,6 +840,12 @@ public final class FontLibraryStore {
         FontPublicationStatus publicationStatus = object.containsKey(JSON_PUBLICATION_STATUS)
                 ? FontPublicationStatus.fromStoredValue(object.get(JSON_PUBLICATION_STATUS))
                 : inferLegacyPublicationStatus(storedPath);
+        String collectionDisplayName = requiredString(object, JSON_COLLECTION_DISPLAY_NAME);
+        if (collectionDisplayName == null) {
+            collectionDisplayName = ttcIndex > 0 || (legacyFace != null && legacyFace.collectionFace)
+                    ? defaultCollectionDisplayName(sourceFileName)
+                    : displayName;
+        }
         return new FontLibraryEntry(
                 id,
                 displayName,
@@ -774,6 +856,7 @@ public final class FontLibraryStore {
                 importedAtEpochMs,
                 ttcIndex,
                 collectionId,
+                collectionDisplayName,
                 publicationStatus);
     }
 
@@ -794,6 +877,7 @@ public final class FontLibraryStore {
                 + quote(JSON_IMPORTED_AT_EPOCH_MS) + ":" + entry.importedAtEpochMs + ","
                 + quote(JSON_TTC_INDEX) + ":" + entry.ttcIndex + ","
                 + jsonPair(JSON_COLLECTION_ID, entry.collectionId) + ","
+                + jsonPair(JSON_COLLECTION_DISPLAY_NAME, entry.collectionDisplayName) + ","
                 + jsonPair(JSON_PUBLICATION_STATUS, entry.publicationStatus.name())
                 + "}";
     }
@@ -901,6 +985,20 @@ public final class FontLibraryStore {
         return candidate;
     }
 
+    private static String makeUniqueCollectionDisplayName(
+            List<FontLibraryEntry> entries,
+            String requestedDisplayName,
+            String collectionId) {
+        String baseName = normalizeDisplayName(requestedDisplayName);
+        String candidate = baseName;
+        int suffix = 2;
+        while (containsCollectionDisplayName(entries, candidate, collectionId)) {
+            candidate = baseName + " (" + suffix + ")";
+            suffix++;
+        }
+        return candidate;
+    }
+
     private static boolean containsDisplayName(
             List<FontLibraryEntry> entries,
             String displayName,
@@ -914,6 +1012,32 @@ public final class FontLibraryStore {
             }
         }
         return false;
+    }
+
+    private static boolean containsCollectionDisplayName(
+            List<FontLibraryEntry> entries,
+            String displayName,
+            String collectionId) {
+        for (FontLibraryEntry entry : entries) {
+            if (collectionId.equals(entry.collectionId)) {
+                continue;
+            }
+            if (displayName.equalsIgnoreCase(entry.collectionDisplayName.trim())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static FontLibraryEntry findByCollectionId(
+            List<FontLibraryEntry> entries,
+            String collectionId) {
+        for (FontLibraryEntry entry : entries) {
+            if (collectionId.equals(entry.collectionId)) {
+                return entry;
+            }
+        }
+        return null;
     }
 
     private static String sanitizeDisplayName(String displayName) {
@@ -1013,6 +1137,14 @@ public final class FontLibraryStore {
         INVALID_NAME,
         DUPLICATE_NAME,
         WRITE_FAILED
+    }
+
+    private static String defaultCollectionDisplayName(String sourceFileName) {
+        String normalized = normalizeDisplayName(sourceFileName);
+        String lower = normalized.toLowerCase(Locale.US);
+        return lower.endsWith(".ttf") || lower.endsWith(".otf") || lower.endsWith(".ttc")
+                ? normalized.substring(0, normalized.length() - 4)
+                : normalized;
     }
 
     private static String digestFile(File source) throws IOException {

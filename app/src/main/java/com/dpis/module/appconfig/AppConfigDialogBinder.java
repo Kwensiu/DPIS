@@ -509,7 +509,7 @@ public final class AppConfigDialogBinder {
             String label = faces.size() == 1
                     ? resolveFontOptionLabel(representative)
                     : activity.getString(R.string.dialog_typeface_collection_label,
-                            resolveFontOptionLabel(representative), faces.size());
+                            representative.collectionDisplayName, faces.size());
             Typeface preview = resolveTypefaceOptionPreview(
                     new TypefaceOption(representative.id, label), fontLibraryStore);
             boolean selected = containsTypefaceId(faces, state.selectedTypefaceId);

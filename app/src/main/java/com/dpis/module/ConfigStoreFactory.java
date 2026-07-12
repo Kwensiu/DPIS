@@ -5,7 +5,6 @@ import com.dpis.module.config.RuntimePropertyConfigPreferences;
 
 import com.dpis.module.fonts.FontLibraryStore;
 import com.dpis.module.fonts.FontLibraryConfigStore;
-import com.dpis.module.settings.ExperimentalSettingsStore;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -137,30 +136,8 @@ public final class ConfigStoreFactory {
             }
 
             @Override
-            public boolean isTtcFontImportEnabled() {
-                return store.isTtcFontImportEnabled();
-            }
-
-            @Override
             public boolean setTargetTypefaceId(String packageName, String typefaceId) {
                 return store.setTargetTypefaceId(packageName, typefaceId);
-            }
-        });
-    }
-
-    public static ExperimentalSettingsStore createExperimentalSettingsStore(
-            Context context,
-            XposedService service) {
-        DpisConfigStore store = createLocalUiModuleConfigStore(context, service);
-        return new ExperimentalSettingsStore(new ExperimentalSettingsStore.Delegate() {
-            @Override
-            public boolean isTtcFontImportEnabled() {
-                return store.isTtcFontImportEnabled();
-            }
-
-            @Override
-            public boolean setTtcFontImportEnabled(boolean enabled) {
-                return store.setTtcFontImportEnabled(enabled);
             }
         });
     }

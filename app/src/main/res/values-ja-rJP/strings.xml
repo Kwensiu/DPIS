@@ -388,8 +388,7 @@ Mini Programs はまだサポートされていません。</string>
     <string name="font_debug_reason_no_events_hint">Injected されていますが、フォント経路がヒットしていません。テキストページを開くか合計を表示してください。</string>
     <string name="settings_experimental_title">実験室</string>
     <string name="settings_experimental_hint">未検証機能を試す</string>
-    <string name="settings_ttc_import_label">TTC フォントコレクション</string>
-    <string name="settings_ttc_import_hint">TrueType Collection ファイルを個別の書体としてインポート</string>
+    <string name="settings_experimental_empty">実験的な機能はありません</string>
     <string name="settings_font_library_label">フォントライブラリ</string>
     <string name="settings_font_library_hint">アプリ別置換用のフォントをインポート、管理します。</string>
     <string name="settings_interface_scale_label">インターフェース倍率</string>
@@ -416,9 +415,6 @@ Mini Programs はまだサポートされていません。</string>
     <string name="font_library_archive_import_partial">%1$d 個のフォントコレクションをインポートし、無効な %2$d 個をスキップしました</string>
     <string name="font_library_empty">インポート済みフォントはありません</string>
     <string name="font_library_collection_label">%1$s（%2$d 個の書体）</string>
-    <string name="font_library_publication_private">プライベート・Provider 利用可能</string>
-    <string name="font_library_publication_published">公開済み・root フォールバック利用可能</string>
-    <string name="font_library_publication_fallback_failed">プライベート・root フォールバック利用不可</string>
     <string name="font_library_publication_retry_action">修復</string>
     <string name="font_library_publication_retry_success">Root フォールバックを修復しました</string>
     <string name="font_library_publication_retry_failed">Root フォールバックを修復できません</string>
@@ -431,14 +427,11 @@ Mini Programs はまだサポートされていません。</string>
     <string name="font_library_large_import_title">大きなフォントファイル</string>
     <string name="font_library_large_import_message">このフォントは %1$d MiB です。インポートには一時領域と解析時間が必要で、対象アプリのメモリ使用量が増えることがあります。</string>
     <string name="font_library_large_import_continue">続行してインポート</string>
-    <string name="font_library_ttc_select_title">インポートする書体を選択</string>
-    <string name="font_library_ttc_selected_count">%1$d 個を選択中</string>
-    <string name="font_library_ttc_failed_faces">%1$d 個の書体をインポートできませんでした</string>
-    <string name="font_library_ttc_select_all">すべて選択</string>
-    <string name="font_library_ttc_deselect_all">すべて解除</string>
     <string name="font_library_delete_action">削除</string>
     <string name="font_library_rename_action">名前変更</string>
     <string name="font_library_used_badge">使用中</string>
+    <string name="font_library_private_badge">プライベート</string>
+    <string name="font_library_public_badge">公開</string>
     <string name="font_library_used_by_title">使用元</string>
     <string name="font_library_unused">どのアプリでも使用されていません</string>
     <string name="font_library_name_title">フォント表示名</string>

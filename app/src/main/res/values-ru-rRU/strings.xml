@@ -388,8 +388,7 @@ Mini Programs are not supported yet.</string>
     <string name="font_debug_reason_no_events_hint">Текст вставлен, но пути шрифтов не найдены. Откройте текстовую страницу или просмотрите сводные данные.</string>
     <string name="settings_experimental_title">Лаборатория</string>
     <string name="settings_experimental_hint">Попробуйте непроверенные функции</string>
-    <string name="settings_ttc_import_label">Коллекции шрифтов TTC</string>
-    <string name="settings_ttc_import_hint">Импортировать файлы коллекции TrueType в виде отдельных начертаний</string>
+    <string name="settings_experimental_empty">Экспериментальные функции отсутствуют</string>
     <string name="settings_font_library_label">Библиотека шрифтов</string>
     <string name="settings_font_library_hint">Импортируйте шрифты и управляйте ими для замены в отдельных приложениях.</string>
     <string name="settings_interface_scale_label">Масштаб интерфейса</string>
@@ -416,9 +415,6 @@ Mini Programs are not supported yet.</string>
     <string name="font_library_archive_import_partial">Импортировано коллекций шрифтов: %1$d; пропущено недействительных: %2$d</string>
     <string name="font_library_empty">Нет импортированных шрифтов</string>
     <string name="font_library_collection_label">%1$s (%2$d граней)</string>
-    <string name="font_library_publication_private">Личный · Provider доступен</string>
-    <string name="font_library_publication_published">Опубликован · root-резерв доступен</string>
-    <string name="font_library_publication_fallback_failed">Личный · root-резерв недоступен</string>
     <string name="font_library_publication_retry_action">Исправить</string>
     <string name="font_library_publication_retry_success">Root-резерв восстановлен</string>
     <string name="font_library_publication_retry_failed">Не удалось восстановить root-резерв</string>
@@ -431,14 +427,11 @@ Mini Programs are not supported yet.</string>
     <string name="font_library_large_import_title">Большой файл шрифта</string>
     <string name="font_library_large_import_message">Этот шрифт занимает %1$d МиБ. Импорт может потребовать много временного места, занять время на разбор и увеличить расход памяти в целевых приложениях.</string>
     <string name="font_library_large_import_continue">Все равно импортировать</string>
-    <string name="font_library_ttc_select_title">Выберите файл для импорта</string>
-    <string name="font_library_ttc_selected_count">Выбрано %1$d</string>
-    <string name="font_library_ttc_failed_faces">%1$d не может быть импортирована</string>
-    <string name="font_library_ttc_select_all">Выделить всё</string>
-    <string name="font_library_ttc_deselect_all">Отменить выбор всех</string>
     <string name="font_library_delete_action">Удалить</string>
     <string name="font_library_rename_action">Переименовать</string>
     <string name="font_library_used_badge">В использовании</string>
+    <string name="font_library_private_badge">Личный</string>
+    <string name="font_library_public_badge">Общий</string>
     <string name="font_library_used_by_title">Используется</string>
     <string name="font_library_unused">Не используется ни одним приложением</string>
     <string name="font_library_name_title">Отображаемое название шрифта</string>

@@ -96,6 +96,19 @@ Font scale, typeface replacement, and hook domains are distinct concerns.
 - Typeface replacement changes font files or system-family selection.
 - Hook domains select which font compatibility hooks are enabled per app.
 
+Imported TTF, OTF, and TTC files are standard font-library formats. TTC import
+inspects the collection and registers every loadable face; the app configuration
+sheet owns the later face selection. Each face's saved `ttcIndex` is part of its
+identity and must be preserved through catalog recovery, archive import/export,
+and runtime loading. TTC support is not an experimental preference or a runtime
+gate. Catalog labels should use the face's embedded family/style name, with an
+index-based label only as a parsing fallback.
+
+A TTC collection alias is independent from its face labels. The font-library
+list, collection detail title, rename action, and archive metadata use the
+alias; the app configuration sheet uses embedded face labels when selecting a
+typeface. Renaming a collection must not rewrite its individual face labels.
+
 Do not fold typeface replacement into font scale mode. Do not reintroduce old
 global Flutter/HyperOS font switches; per-app hook domains own that decision.
 Custom font hook-chain overrides apply only to compat/field-rewrite font mode.

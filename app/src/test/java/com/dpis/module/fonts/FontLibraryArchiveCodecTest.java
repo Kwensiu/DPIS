@@ -46,6 +46,7 @@ public final class FontLibraryArchiveCodecTest {
         assertEquals(1, result.faceCount);
         assertEquals(0, result.failureCount);
         assertEquals(1, restoredStore.listFonts().size());
+        assertEquals("Example", restoredStore.listFonts().get(0).collectionDisplayName);
         assertTrue(restoredStore.resolveFontFile(restoredStore.listFonts().get(0).id).isFile());
     }
 

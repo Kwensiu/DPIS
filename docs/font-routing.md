@@ -106,6 +106,17 @@ Typeface replacement is independent from font-scale mode selection. A configured
 `FontFace` is loaded once when the target process installs its typeface hooks;
 the selected face is then retained for that process lifetime.
 
+TTF, OTF, and TTC are all supported font-library inputs. A TTC is inspected as
+a collection: every face that passes preflight is registered, with its embedded
+family/style name and original collection index. The app configuration sheet
+owns face selection. An invalid selected face must leave the target app's
+original Typeface in place; it must not fall back to face zero. This is stable
+font-library behavior, not a Laboratory feature.
+
+Collection aliases are collection metadata, not face names. They identify the
+imported file in library management and archives; face selection always uses
+the embedded face family/style label.
+
 - The primary transport is the exported DPIS font provider. It opens DPIS-private
   font files as read-only, seekable descriptors after proving that the Binder
   caller owns a package currently configured for that exact face.

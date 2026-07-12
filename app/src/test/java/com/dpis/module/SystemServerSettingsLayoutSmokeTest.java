@@ -55,8 +55,7 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(strings.contains("settings_section_other"));
         assertTrue(strings.contains("settings_section_about"));
         assertTrue(strings.contains("settings_experimental_title"));
-        assertTrue(strings.contains("settings_ttc_import_label"));
-        assertTrue(strings.contains("settings_ttc_import_hint"));
+        assertTrue(strings.contains("settings_experimental_empty"));
         assertTrue(strings.contains("settings_about_label"));
         assertTrue(strings.contains("settings_donate_label"));
         assertTrue(strings.contains("settings_config_backup_label"));
@@ -110,7 +109,7 @@ public class SystemServerSettingsLayoutSmokeTest {
     }
 
     @Test
-    public void experimentalSettingsPageShowsTtcImportSwitch() throws IOException {
+    public void experimentalSettingsPageShowsEmptyState() throws IOException {
         String manifest = read("src/main/AndroidManifest.xml");
         String layout = read("src/main/res/layout/activity_experimental_settings.xml");
         String strings = read("src/main/res/values/strings.xml");
@@ -130,18 +129,15 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(layout.contains("android:paddingTop=\"@dimen/experimental_settings_content_padding_top\""));
         assertTrue(layout.contains("android:paddingEnd=\"@dimen/experimental_settings_content_padding_horizontal\""));
         assertTrue(layout.contains("android:paddingBottom=\"@dimen/experimental_settings_content_padding_bottom\""));
-        assertTrue(layout.contains("android:id=\"@+id/experimental_ttc_import_row\""));
-        assertTrue(layout.contains("com.google.android.material.card.MaterialCardView"));
-        assertTrue(layout.contains("app:cardBackgroundColor=\"?attr/colorSurfaceContainerHigh\""));
-        assertTrue(layout.contains("app:cardCornerRadius=\"@dimen/page_card_corner_radius\""));
-        assertTrue(layout.contains("app:strokeColor=\"?attr/colorOutlineVariant\""));
-        assertTrue(layout.contains("app:strokeWidth=\"@dimen/page_card_stroke_width\""));
-        assertTrue(layout.contains("item_settings_switch"));
+        assertTrue(layout.contains("android:gravity=\"center\""));
+        assertTrue(layout.contains("@string/settings_experimental_empty"));
         assertTrue(!layout.contains("row_flutter_font_hook"));
         assertTrue(!layout.contains("row_flutter_settings_font_hook"));
         assertTrue(!layout.contains("row_hyperos_flutter_font_hook"));
-        assertTrue(strings.contains("<string name=\"settings_ttc_import_label\">TTC font collections</string>"));
-        assertTrue(zhStrings.contains("<string name=\"settings_ttc_import_label\">TTC 字体集合</string>"));
+        assertTrue(strings.contains("<string name=\"settings_experimental_empty\">No experimental features available</string>"));
+        assertTrue(zhStrings.contains("<string name=\"settings_experimental_empty\">暂无实验功能</string>"));
+        assertFalse(layout.contains("experimental_ttc_import_row"));
+        assertFalse(layout.contains("item_settings_switch"));
     }
 
     @Test

@@ -119,21 +119,21 @@ public final class FontDetailActivity extends LocalizedActivity {
         title.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_TitleLarge);
         title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         group.addView(title);
-        LinearLayout metadata = new LinearLayout(this);
-        metadata.setGravity(Gravity.CENTER_VERTICAL);
-        metadata.setOrientation(LinearLayout.HORIZONTAL);
         MaterialTextView subtitle = new MaterialTextView(this);
-        subtitle.setText(resolveFontSubtitle(entry));
+        subtitle.setText(entry.sourceFileName == null ? "" : entry.sourceFileName);
         subtitle.setSingleLine(true);
         subtitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
         subtitle.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
         subtitle.setTextColor(color(com.google.android.material.R.attr.colorOnSurfaceVariant));
-        metadata.addView(subtitle, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        group.addView(subtitle, topMarginParams(8));
+        LinearLayout badges = new LinearLayout(this);
+        badges.setGravity(Gravity.CENTER_VERTICAL);
+        badges.setOrientation(LinearLayout.HORIZONTAL);
         if (inUse) {
-            metadata.addView(createUsedBadge());
+            badges.addView(createUsedBadge());
         }
-        group.addView(metadata, topMarginParams(8));
+        badges.addView(createPublicationBadge(entry));
+        group.addView(badges, topMarginParams(6));
         return group;
     }
 
@@ -279,7 +279,7 @@ public final class FontDetailActivity extends LocalizedActivity {
     }
 
     private void promptRename(FontLibraryEntry entry) {
-        TextInputLayout inputLayout = createNameInput(entry.displayName);
+        TextInputLayout inputLayout = createNameInput(entry.collectionDisplayName);
         TextInputEditText input = (TextInputEditText) inputLayout.getEditText();
         androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.font_library_name_title).setView(inputLayout)
@@ -459,19 +459,40 @@ public final class FontDetailActivity extends LocalizedActivity {
     }
 
     private MaterialTextView createUsedBadge() {
+        return createBadge(
+                R.string.font_library_used_badge,
+                com.google.android.material.R.attr.colorSecondaryContainer,
+                androidx.appcompat.R.attr.colorPrimary);
+    }
+
+    private MaterialTextView createPublicationBadge(FontLibraryEntry entry) {
+        boolean isPublic = entry.publicationStatus == FontPublicationStatus.PUBLISHED;
+        return createBadge(
+                isPublic
+                        ? R.string.font_library_public_badge
+                        : R.string.font_library_private_badge,
+                isPublic
+                        ? com.google.android.material.R.attr.colorPrimaryContainer
+                        : com.google.android.material.R.attr.colorTertiaryContainer,
+                isPublic
+                        ? com.google.android.material.R.attr.colorOnPrimaryContainer
+                        : com.google.android.material.R.attr.colorOnTertiaryContainer);
+    }
+
+    private MaterialTextView createBadge(int textResId, int backgroundAttribute, int textAttribute) {
         MaterialTextView badge = new MaterialTextView(this);
-        badge.setText(R.string.font_library_used_badge);
+        badge.setText(textResId);
         badge.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelSmall);
-        badge.setTextColor(color(androidx.appcompat.R.attr.colorPrimary));
+        badge.setTextColor(color(textAttribute));
         badge.setPadding(dp(8), dp(3), dp(8), dp(3));
         android.graphics.drawable.GradientDrawable background = new android.graphics.drawable.GradientDrawable();
         background.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
         background.setCornerRadius(dp(999));
-        background.setColor(color(com.google.android.material.R.attr.colorSecondaryContainer));
+        background.setColor(color(backgroundAttribute));
         badge.setBackground(background);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.leftMargin = dp(8);
+        params.rightMargin = dp(8);
         badge.setLayoutParams(params);
         return badge;
     }
@@ -532,18 +553,7 @@ public final class FontDetailActivity extends LocalizedActivity {
     }
 
     private String resolveFontTitle(FontLibraryEntry entry) {
-        String source = entry.sourceFileName == null ? "" : entry.sourceFileName;
-        String display = entry.displayName == null ? "" : entry.displayName.trim();
-        return !display.isEmpty() && !display.equals(source.trim()) ? display : stripFontExtension(source);
-    }
-
-    private String resolveFontSubtitle(FontLibraryEntry entry) {
-        int label = switch (entry.publicationStatus) {
-            case PUBLISHED -> R.string.font_library_publication_published;
-            case PUBLISH_FAILED -> R.string.font_library_publication_fallback_failed;
-            case PRIVATE -> R.string.font_library_publication_private;
-        };
-        return (entry.sourceFileName == null ? "" : entry.sourceFileName) + " · " + getString(label);
+        return entry.collectionDisplayName;
     }
 
     private static String stripFontExtension(String value) {

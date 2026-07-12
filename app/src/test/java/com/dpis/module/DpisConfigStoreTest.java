@@ -734,23 +734,6 @@ public class DpisConfigStoreTest {
     }
 
     @Test
-    public void ttcImportExperimentDefaultsOff() {
-        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
-
-        assertFalse(store.isTtcFontImportEnabled());
-    }
-
-    @Test
-    public void ttcImportExperimentCanBeEnabledAndDisabled() {
-        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
-
-        assertTrue(store.setTtcFontImportEnabled(true));
-        assertTrue(store.isTtcFontImportEnabled());
-        assertTrue(store.setTtcFontImportEnabled(false));
-        assertFalse(store.isTtcFontImportEnabled());
-    }
-
-    @Test
     public void clearsFontScaleWhenDisabled() {
         FakePrefs prefs = new FakePrefs();
         DpisConfigStore store = new DpisConfigStore(prefs);

@@ -406,8 +406,7 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="font_debug_reason_no_events_hint">Injected, but no font paths hit. Open a text page or view totals.</string>
     <string name="settings_experimental_title">Laboratory</string>
     <string name="settings_experimental_hint">Try unverified features</string>
-    <string name="settings_ttc_import_label">TTC font collections</string>
-    <string name="settings_ttc_import_hint">Import TrueType Collection files as separate faces</string>
+    <string name="settings_experimental_empty">No experimental features available</string>
     <string name="settings_font_library_label">Font library</string>
     <string name="settings_font_library_hint">Import and manage fonts for per-app replacement.</string>
     <string name="settings_interface_scale_label">Interface scale</string>
@@ -435,9 +434,6 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="font_library_archive_import_partial">Imported %1$d font collections; skipped %2$d invalid collections</string>
     <string name="font_library_empty">No imported fonts</string>
     <string name="font_library_collection_label">%1$s (%2$d faces)</string>
-    <string name="font_library_publication_private">Private · Provider ready</string>
-    <string name="font_library_publication_published">Published · root fallback ready</string>
-    <string name="font_library_publication_fallback_failed">Private · root fallback unavailable</string>
     <string name="font_library_publication_retry_action">Repair</string>
     <string name="font_library_publication_retry_success">Root fallback repaired</string>
     <string name="font_library_publication_retry_failed">Unable to repair root fallback</string>
@@ -450,14 +446,11 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="font_library_large_import_title">Large font file</string>
     <string name="font_library_large_import_message">This font is %1$d MiB. Importing it may require substantial temporary storage, take longer to parse, and use more memory in target apps.</string>
     <string name="font_library_large_import_continue">Import anyway</string>
-    <string name="font_library_ttc_select_title">Select faces to import</string>
-    <string name="font_library_ttc_selected_count">%1$d selected</string>
-    <string name="font_library_ttc_failed_faces">%1$d faces could not be imported</string>
-    <string name="font_library_ttc_select_all">Select all</string>
-    <string name="font_library_ttc_deselect_all">Deselect all</string>
     <string name="font_library_delete_action">Delete</string>
     <string name="font_library_rename_action">Rename</string>
     <string name="font_library_used_badge">In use</string>
+    <string name="font_library_private_badge">Private</string>
+    <string name="font_library_public_badge">Public</string>
     <string name="font_library_used_by_title">Used by</string>
     <string name="font_library_unused">Not used by any app</string>
     <string name="font_library_name_title">Font display name</string>

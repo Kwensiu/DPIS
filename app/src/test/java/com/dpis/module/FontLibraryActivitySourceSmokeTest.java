@@ -9,28 +9,28 @@ import static org.junit.Assert.assertFalse;
 
 public final class FontLibraryActivitySourceSmokeTest {
     @Test
-    public void ttcImportIsGatedAndUsesFaceSelectionDialog() throws IOException {
+    public void ttcImportIsStandardAndRegistersAllLoadableFaces() throws IOException {
         String source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
         String strings = read("src/main/res/values/strings.xml");
 
-        assertTrue(source.contains("configStore.isTtcFontImportEnabled()"));
+        assertTrue(source.contains("lowerName.endsWith(\".ttc\")"));
+        assertTrue(source.contains("\"font/ttc\".equals(mimeType)"));
         assertTrue(source.contains("FontFileInspector.inspect(tempFile)"));
-        assertTrue(source.contains("showTtcFaceSelectionDialog("));
+        assertTrue(source.contains("findLoadableTtcFaceIndexes("));
         assertTrue(source.contains("fontLibraryStore.registerCopiedFontFaces("));
-        assertTrue(source.contains("font_library_ttc_select_title"));
-        assertTrue(source.contains("font_library_ttc_select_all"));
-        assertTrue(source.contains("font_library_ttc_deselect_all"));
-        assertTrue(strings.contains("font_library_ttc_select_title"));
-        assertTrue(strings.contains("font_library_ttc_failed_faces"));
+        assertTrue(source.contains("FontTypefaceLoader.load(file, index)"));
+        assertTrue(source.contains("font_library_import_count_success"));
+        assertFalse(source.contains("isTtcFontImportEnabled"));
+        assertFalse(source.contains("showTtcFaceSelectionDialog"));
+        assertFalse(strings.contains("font_library_ttc_select_title"));
     }
 
     @Test
-    public void fontImportNameAndTtcSelectionUseLargeDialogWidth() throws IOException {
+    public void fontImportNameUsesLargeDialogWidth() throws IOException {
         String source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
 
         assertTrue(source.contains("private void promptImportName("));
-        assertTrue(source.contains("private void showTtcFaceSelectionDialog("));
-        assertTrue(occurrences(source, "DialogWindowSizer.applyLargeWidth(dialog, this);") >= 2);
+        assertTrue(occurrences(source, "DialogWindowSizer.applyLargeWidth(dialog, this);") >= 1);
     }
 
     @Test
@@ -53,16 +53,17 @@ public final class FontLibraryActivitySourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.java");
         String strings = read("src/main/res/values/strings.xml");
 
-        assertTrue(source.contains("resolveFontSubtitle(entry)"));
-        assertTrue(strings.contains("font_library_publication_private"));
-        assertTrue(strings.contains("font_library_publication_published"));
-        assertTrue(strings.contains("font_library_publication_fallback_failed"));
+        assertTrue(source.contains("createPublicationBadge(entry)"));
+        assertTrue(source.contains("entry.sourceFileName == null ? \"\" : entry.sourceFileName"));
+        assertTrue(strings.contains("font_library_private_badge"));
+        assertTrue(strings.contains("font_library_public_badge"));
         assertTrue(source.contains("font_detail_fallback_button"));
         assertTrue(source.contains("showFallbackExplanationDialog"));
         assertTrue(source.contains("FontPublicationStatus.PUBLISH_FAILED"));
         assertTrue(source.contains("retryPublishedFallbacks"));
         assertTrue(strings.contains("font_library_publication_retry_action"));
         assertTrue(strings.contains("font_library_fallback_dialog_message"));
+        assertFalse(source.contains("resolveFontSubtitle(entry)"));
     }
 
     @Test
@@ -132,6 +133,7 @@ public final class FontLibraryActivitySourceSmokeTest {
         assertTrue(manifest.contains("android:name=\".fonts.FontDetailActivity\""));
         assertTrue(detail.contains("restoreTypefaceReferences(cleared)"));
         assertTrue(detail.contains("runtime state was not restored"));
+        assertTrue(detail.contains("createNameInput(entry.collectionDisplayName)"));
     }
 
     @Test

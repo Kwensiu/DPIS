@@ -470,6 +470,53 @@ public final class FontLibraryStoreTest {
 
         assertSame(FontLibraryStore.RenameResult.RENAMED, result);
         assertEquals("Display Name", store.findById(entry.id).displayName);
+        assertEquals("Display Name", store.findById(entry.id).collectionDisplayName);
+    }
+
+    @Test
+    public void renamesTtcCollectionWithoutOverwritingFaceLabels() throws Exception {
+        FontLibraryStore store = new FontLibraryStore(new FakePrefs(),
+                temporaryFolder.newFolder("fonts"));
+        List<FontLibraryEntry> faces = store.registerCopiedFontFaces(
+                writeFile("Collection.ttc", "same-ttc-data"),
+                "Collection.ttc",
+                "Collection.ttc",
+                FontFileKind.TTC,
+                List.of(0, 1),
+                1234L);
+        String firstFaceLabel = faces.get(0).displayName;
+        String secondFaceLabel = faces.get(1).displayName;
+
+        assertSame(FontLibraryStore.RenameResult.RENAMED,
+                store.renameFont(faces.get(0).id, "Collection Alias"));
+
+        assertEquals(firstFaceLabel, store.findById(faces.get(0).id).displayName);
+        assertEquals(secondFaceLabel, store.findById(faces.get(1).id).displayName);
+        assertEquals("Collection Alias", store.findById(faces.get(0).id).collectionDisplayName);
+        assertEquals("Collection Alias", store.findById(faces.get(1).id).collectionDisplayName);
+    }
+
+    @Test
+    public void disambiguatesTtcCollectionAliasesAcrossDifferentFiles() throws Exception {
+        FontLibraryStore store = new FontLibraryStore(new FakePrefs(),
+                temporaryFolder.newFolder("fonts"));
+        List<FontLibraryEntry> first = store.registerCopiedFontFaces(
+                writeFile("First.ttc", "first-ttc-data"),
+                "First.ttc",
+                "Shared collection",
+                FontFileKind.TTC,
+                List.of(0),
+                1234L);
+        List<FontLibraryEntry> second = store.registerCopiedFontFaces(
+                writeFile("Second.ttc", "second-ttc-data"),
+                "Second.ttc",
+                "Shared collection",
+                FontFileKind.TTC,
+                List.of(0),
+                1235L);
+
+        assertEquals("Shared collection", first.get(0).collectionDisplayName);
+        assertEquals("Shared collection (2)", second.get(0).collectionDisplayName);
     }
 
     @Test

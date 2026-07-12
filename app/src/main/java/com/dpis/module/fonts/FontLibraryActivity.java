@@ -201,8 +201,9 @@ public final class FontLibraryActivity extends LocalizedActivity {
 
         MaterialTextView title = new MaterialTextView(this);
         title.setText(faceCount > 1
-                ? getString(R.string.font_library_collection_label, resolveFontTitle(entry), faceCount)
-                : resolveFontTitle(entry));
+                ? getString(R.string.font_library_collection_label,
+                        entry.collectionDisplayName, faceCount)
+                : entry.collectionDisplayName);
         configureSingleLine(title);
         title.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_TitleMedium);
         title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
@@ -283,11 +284,9 @@ public final class FontLibraryActivity extends LocalizedActivity {
         mimeTypes.add("font/otf");
         mimeTypes.add("application/x-font-ttf");
         mimeTypes.add("application/vnd.ms-opentype");
-        if (configStore.isTtcFontImportEnabled()) {
-            mimeTypes.add("font/collection");
-            mimeTypes.add("font/ttc");
-            mimeTypes.add("application/x-font-ttc");
-        }
+        mimeTypes.add("font/collection");
+        mimeTypes.add("font/ttc");
+        mimeTypes.add("application/x-font-ttc");
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT)
                 .addCategory(Intent.CATEGORY_OPENABLE)
                 .setType("*/*")
@@ -492,6 +491,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
         new Thread(() -> {
             File tempFile = null;
             FontLibraryEntry importedEntry = null;
+            int importedFaceCount = 0;
             try {
                 tempFile = File.createTempFile(
                         "dpis-font-import-",
@@ -500,303 +500,63 @@ public final class FontLibraryActivity extends LocalizedActivity {
                 copyUriToFile(uri, tempFile);
                 FontFileInspector.Result inspection = FontFileInspector.inspect(tempFile);
                 if (inspection.kind == FontFileKind.TTC) {
-                    if (!configStore.isTtcFontImportEnabled()) {
-                        throw new IOException("TTC import disabled");
-                    }
-                    File ttcTempFile = tempFile;
-                    tempFile = null;
-                    int faceCount = inspection.ttc.offsets.size();
-                    List<TtcFaceOption> options = findLoadableTtcFaces(
-                            ttcTempFile, sourceName, faceCount);
-                    runOnUiThread(() -> showTtcFaceSelectionDialog(
-                            ttcTempFile,
+                    List<Integer> loadableIndexes = findLoadableTtcFaceIndexes(
+                            tempFile, inspection.ttc.offsets.size());
+                    List<FontLibraryEntry> importedFaces = fontLibraryStore.registerCopiedFontFaces(
+                            tempFile,
                             sourceName,
                             displayName,
-                            options,
-                            faceCount));
-                    return;
-                }
-                if (!isSupportedSingleFontFile(tempFile, inspection.kind)) {
+                            FontFileKind.TTC,
+                            loadableIndexes,
+                            System.currentTimeMillis());
+                    if (importedFaces.isEmpty()) {
+                        throw new IOException("No TTC face could be loaded");
+                    }
+                    importedFaceCount = importedFaces.size();
+                } else if (!isSupportedSingleFontFile(tempFile, inspection.kind)) {
                     throw new IOException("Unable to parse font");
+                } else {
+                    importedEntry = fontLibraryStore.registerCopiedFont(
+                            tempFile,
+                            sourceName,
+                            displayName,
+                            System.currentTimeMillis(),
+                            inspection.kind);
                 }
-                importedEntry = fontLibraryStore.registerCopiedFont(
-                        tempFile,
-                        sourceName,
-                        displayName,
-                        System.currentTimeMillis(),
-                        inspection.kind);
             } catch (IOException | RuntimeException error) {
                 importedEntry = null;
+                importedFaceCount = 0;
             } finally {
                 if (tempFile != null && tempFile.exists()) {
                     tempFile.delete();
                 }
             }
             FontLibraryEntry finalImportedEntry = importedEntry;
+            int finalImportedFaceCount = importedFaceCount;
             runOnUiThread(() -> {
-                if (finalImportedEntry == null) {
+                if (finalImportedEntry == null && finalImportedFaceCount == 0) {
                     showToast(R.string.font_library_import_failed);
                     return;
                 }
-                showToast(R.string.font_library_import_success, finalImportedEntry.displayName);
+                if (finalImportedFaceCount > 0) {
+                    showToast(R.string.font_library_import_count_success, finalImportedFaceCount);
+                } else {
+                    showToast(R.string.font_library_import_success, finalImportedEntry.displayName);
+                }
                 RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
                 refreshFontList();
             });
         }, "dpis-font-import").start();
     }
 
-    private void showTtcFaceSelectionDialog(
-            File tempFile,
-            String sourceName,
-            String displayName,
-            List<TtcFaceOption> options,
-            int faceCount) {
-        int failedCount = Math.max(0, faceCount - options.size());
-        if (options.isEmpty()) {
-            tempFile.delete();
-            showToast(R.string.font_library_import_failed);
-            return;
-        }
-
-        LinearLayout content = new LinearLayout(this);
-        content.setOrientation(LinearLayout.VERTICAL);
-        int padding = dp(20);
-        content.setPadding(padding, dp(16), padding, 0);
-
-        MaterialTextView subtitle = new MaterialTextView(this);
-        subtitle.setText(sourceName);
-        configureSingleLine(subtitle);
-        subtitle.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-        subtitle.setTextColor(MaterialColors.getColor(
-                listView, com.google.android.material.R.attr.colorOnSurfaceVariant));
-        content.addView(subtitle);
-
-        LinearLayout statusRow = new LinearLayout(this);
-        statusRow.setOrientation(LinearLayout.HORIZONTAL);
-        statusRow.setGravity(Gravity.CENTER_VERTICAL);
-        MaterialTextView selectedBadge = createTtcStatusBadge(
-                getString(R.string.font_library_ttc_selected_count, 0));
-        MaterialTextView failedBadge = createTtcStatusBadge(
-                getString(R.string.font_library_ttc_failed_faces, failedCount));
-        statusRow.addView(selectedBadge);
-        statusRow.addView(failedBadge);
-        content.addView(statusRow, topMarginParams(10));
-
-        LinearLayout actions = new LinearLayout(this);
-        actions.setOrientation(LinearLayout.HORIZONTAL);
-        actions.setGravity(Gravity.END);
-        MaterialTextView selectAll = createTtcTextAction(R.string.font_library_ttc_select_all);
-        MaterialTextView deselectAll = createTtcTextAction(R.string.font_library_ttc_deselect_all);
-        actions.addView(selectAll);
-        actions.addView(deselectAll);
-        content.addView(actions, topMarginParams(8));
-
-        boolean[] checked = new boolean[options.size()];
-        LinearLayout rows = new LinearLayout(this);
-        rows.setOrientation(LinearLayout.VERTICAL);
-        content.addView(rows, topMarginParams(8));
-        List<MaterialTextView> rowViews = new ArrayList<>();
-        for (TtcFaceOption option : options) {
-            MaterialTextView row = createTtcFaceRow(option.label, false);
-            rowViews.add(row);
-            rows.addView(row, topMarginParams(6));
-        }
-
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.font_library_ttc_select_title)
-                .setView(content)
-                .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
-                .setPositiveButton(R.string.font_library_import_action, null)
-                .create();
-        dialog.setOnCancelListener(unused -> tempFile.delete());
-        dialog.setOnDismissListener(unused -> {
-            if (tempFile.exists()) {
-                tempFile.delete();
-            }
-        });
-        dialog.setOnShowListener(unused -> {
-            bindDialogButtonHaptics(dialog);
-            android.widget.Button importButton =
-                    dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE);
-            importButton.setEnabled(false);
-            selectAll.setOnClickListener(v -> {
-                setAllTtcFaceRows(options, checked, rowViews, true);
-                selectedBadge.setText(getString(
-                        R.string.font_library_ttc_selected_count,
-                        countSelected(checked)));
-                importButton.setEnabled(true);
-            });
-            deselectAll.setOnClickListener(v -> {
-                setAllTtcFaceRows(options, checked, rowViews, false);
-                selectedBadge.setText(getString(R.string.font_library_ttc_selected_count, 0));
-                importButton.setEnabled(false);
-            });
-            for (int i = 0; i < rowViews.size(); i++) {
-                int rowIndex = i;
-                MaterialTextView row = rowViews.get(i);
-                row.setOnClickListener(v -> {
-                    checked[rowIndex] = !checked[rowIndex];
-                    updateTtcFaceRow(row, options.get(rowIndex).label, checked[rowIndex]);
-                    int selected = countSelected(checked);
-                    selectedBadge.setText(getString(
-                            R.string.font_library_ttc_selected_count,
-                            selected));
-                    importButton.setEnabled(selected > 0);
-                });
-            }
-            importButton.setOnClickListener(v -> importSelectedTtcFaces(
-                    dialog, tempFile, sourceName, displayName, options, checked));
-        });
-        dialog.show();
-        DialogWindowSizer.applyLargeWidth(dialog, this);
-    }
-
-    private void importSelectedTtcFaces(
-            androidx.appcompat.app.AlertDialog dialog,
-            File tempFile,
-            String sourceName,
-            String displayName,
-            List<TtcFaceOption> options,
-            boolean[] checked) {
-        List<Integer> indexes = new ArrayList<>();
-        for (int i = 0; i < checked.length; i++) {
-            if (checked[i]) {
-                indexes.add(options.get(i).index);
-            }
-        }
-        if (indexes.isEmpty()) {
-            return;
-        }
-        new Thread(() -> {
-            List<FontLibraryEntry> imported = List.of();
-            try {
-                imported = fontLibraryStore.registerCopiedFontFaces(
-                        tempFile,
-                        sourceName,
-                        displayName,
-                        FontFileKind.TTC,
-                        indexes,
-                        System.currentTimeMillis());
-            } catch (IOException | RuntimeException ignored) {
-                imported = List.of();
-            } finally {
-                if (tempFile.exists()) {
-                    tempFile.delete();
-                }
-            }
-            List<FontLibraryEntry> finalImported = imported;
-            runOnUiThread(() -> {
-                if (finalImported.isEmpty()) {
-                    showToast(R.string.font_library_import_failed);
-                    return;
-                }
-                dialog.dismiss();
-                showToast(R.string.font_library_import_count_success, finalImported.size());
-                RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
-                refreshFontList();
-            });
-        }, "dpis-ttc-font-import").start();
-    }
-
-    private List<TtcFaceOption> findLoadableTtcFaces(File file, String sourceName, int faceCount) {
-        List<TtcFaceOption> result = new ArrayList<>();
+    private List<Integer> findLoadableTtcFaceIndexes(File file, int faceCount) {
+        List<Integer> result = new ArrayList<>();
         for (int index = 0; index < faceCount; index++) {
             if (FontTypefaceLoader.load(file, index) != null) {
-                result.add(new TtcFaceOption(index, sourceName + " (TTC " + index + ")"));
+                result.add(index);
             }
         }
         return result;
-    }
-
-    private MaterialTextView createTtcStatusBadge(String text) {
-        MaterialTextView badge = new MaterialTextView(this);
-        badge.setText(text);
-        badge.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelSmall);
-        badge.setTextColor(MaterialColors.getColor(
-                listView, com.google.android.material.R.attr.colorOnSecondaryContainer));
-        badge.setGravity(Gravity.CENTER);
-        badge.setPadding(dp(10), dp(5), dp(10), dp(5));
-        android.graphics.drawable.GradientDrawable background = new android.graphics.drawable.GradientDrawable();
-        background.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
-        background.setCornerRadius(dp(999));
-        background.setColor(MaterialColors.getColor(
-                listView, com.google.android.material.R.attr.colorSecondaryContainer));
-        badge.setBackground(background);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.rightMargin = dp(8);
-        badge.setLayoutParams(params);
-        return badge;
-    }
-
-    private MaterialTextView createTtcTextAction(int textResId) {
-        MaterialTextView action = new MaterialTextView(this);
-        action.setText(textResId);
-        action.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelLarge);
-        action.setTextColor(MaterialColors.getColor(
-                listView, androidx.appcompat.R.attr.colorPrimary));
-        action.setGravity(Gravity.CENTER);
-        action.setPadding(dp(10), dp(6), dp(10), dp(6));
-        action.setClickable(true);
-        action.setFocusable(true);
-        action.setBackgroundResource(resolveSelectableItemBackground());
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.leftMargin = dp(8);
-        action.setLayoutParams(params);
-        return action;
-    }
-
-    private MaterialTextView createTtcFaceRow(String label, boolean selected) {
-        MaterialTextView row = new MaterialTextView(this);
-        row.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setMinHeight(dp(48));
-        row.setPadding(dp(14), dp(10), dp(14), dp(10));
-        row.setClickable(true);
-        row.setFocusable(true);
-        updateTtcFaceRow(row, label, selected);
-        return row;
-    }
-
-    private void updateTtcFaceRow(MaterialTextView row, String label, boolean selected) {
-        row.setText(selected ? label + "  ✓" : label);
-        row.setTypeface(Typeface.DEFAULT, selected ? Typeface.BOLD : Typeface.NORMAL);
-        android.graphics.drawable.GradientDrawable background = new android.graphics.drawable.GradientDrawable();
-        background.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
-        background.setCornerRadius(dp(14));
-        background.setColor(MaterialColors.getColor(
-                listView,
-                selected
-                        ? com.google.android.material.R.attr.colorSecondaryContainer
-                        : com.google.android.material.R.attr.colorSurfaceContainerHigh));
-
-        background.setStroke(dp(1), MaterialColors.getColor(
-                listView, com.google.android.material.R.attr.colorOutlineVariant));
-        row.setBackground(background);
-    }
-
-    private void setAllTtcFaceRows(
-            List<TtcFaceOption> options,
-            boolean[] checked,
-            List<MaterialTextView> rows,
-            boolean selected) {
-        for (int i = 0; i < checked.length; i++) {
-            checked[i] = selected;
-            updateTtcFaceRow(rows.get(i), options.get(i).label, selected);
-        }
-    }
-
-    private int countSelected(boolean[] checked) {
-        int count = 0;
-        for (boolean selected : checked) {
-            if (selected) {
-                count++;
-            }
-        }
-        return count;
     }
 
     private void copyUriToFile(Uri uri, File targetFile) throws IOException {
@@ -899,13 +659,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
     }
 
     private String resolveFontSubtitle(FontLibraryEntry entry) {
-        String source = entry.sourceFileName != null ? entry.sourceFileName : "";
-        int publicationLabel = switch (entry.publicationStatus) {
-            case PUBLISHED -> R.string.font_library_publication_published;
-            case PUBLISH_FAILED -> R.string.font_library_publication_fallback_failed;
-            case PRIVATE -> R.string.font_library_publication_private;
-        };
-        return source + " · " + getString(publicationLabel);
+        return entry.sourceFileName != null ? entry.sourceFileName : "";
     }
 
     private static String stripFontExtension(String sourceFileName) {
@@ -949,17 +703,16 @@ public final class FontLibraryActivity extends LocalizedActivity {
         if (lowerName.endsWith(".ttf") || lowerName.endsWith(".otf")) {
             return true;
         }
-        if (configStore.isTtcFontImportEnabled() && lowerName.endsWith(".ttc")) {
+        if (lowerName.endsWith(".ttc")) {
             return true;
         }
         return "font/ttf".equals(mimeType)
                 || "font/otf".equals(mimeType)
                 || "application/x-font-ttf".equals(mimeType)
                 || "application/vnd.ms-opentype".equals(mimeType)
-                || (configStore.isTtcFontImportEnabled()
-                && ("font/ttc".equals(mimeType)
+                || ("font/ttc".equals(mimeType)
                 || "font/collection".equals(mimeType)
-                || "application/x-font-ttc".equals(mimeType)));
+                || "application/x-font-ttc".equals(mimeType));
     }
 
     private static boolean isSupportedSingleFontFile(File file, FontFileKind kind) {
@@ -998,13 +751,4 @@ public final class FontLibraryActivity extends LocalizedActivity {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
-    private static final class TtcFaceOption {
-        final int index;
-        final String label;
-
-        TtcFaceOption(int index, String label) {
-            this.index = index;
-            this.label = label;
-        }
-    }
 }

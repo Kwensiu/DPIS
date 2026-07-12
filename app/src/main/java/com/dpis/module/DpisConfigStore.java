@@ -70,7 +70,6 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
     static final String KEY_FLUTTER_SETTINGS_FONT_HOOK_ENABLED =
             "font.flutter_settings_hook_enabled";
     static final String KEY_HYPEROS_FLUTTER_FONT_HOOK_ENABLED = "font.hyperos_flutter_hook_enabled";
-    static final String KEY_TTC_FONT_IMPORT_ENABLED = "font.ttc_import_enabled";
     static final String KEY_HIDE_LAUNCHER_ICON = "ui.hide_launcher_icon";
     static final String KEY_INTERFACE_SCALE_PERCENT = "ui.interface_scale_percent";
     static final String KEY_STARTUP_DISCLAIMER_ACCEPTED = "ui.startup_disclaimer_accepted";
@@ -549,14 +548,6 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
 
     boolean setHyperOsFlutterFontHookEnabled(boolean enabled) {
         return commitBoth(editor -> editor.putBoolean(KEY_HYPEROS_FLUTTER_FONT_HOOK_ENABLED, enabled));
-    }
-
-    boolean isTtcFontImportEnabled() {
-        return getBoolean(KEY_TTC_FONT_IMPORT_ENABLED, false);
-    }
-
-    boolean setTtcFontImportEnabled(boolean enabled) {
-        return commitBoth(editor -> editor.putBoolean(KEY_TTC_FONT_IMPORT_ENABLED, enabled));
     }
 
     public int getDebugInt(String key, int defaultValue) {

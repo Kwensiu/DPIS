@@ -10,8 +10,6 @@ public final class FontLibraryConfigStore {
 
         String getTargetTypefaceId(String packageName);
 
-        boolean isTtcFontImportEnabled();
-
         boolean setTargetTypefaceId(String packageName, String typefaceId);
     }
 
@@ -31,10 +29,6 @@ public final class FontLibraryConfigStore {
 
     public String getTargetTypefaceId(String packageName) {
         return delegate != null ? delegate.getTargetTypefaceId(packageName) : null;
-    }
-
-    public boolean isTtcFontImportEnabled() {
-        return delegate != null && delegate.isTtcFontImportEnabled();
     }
 
     public boolean setTargetTypefaceId(String packageName, String typefaceId) {

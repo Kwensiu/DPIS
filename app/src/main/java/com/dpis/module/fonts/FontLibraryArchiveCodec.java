@@ -29,7 +29,8 @@ public final class FontLibraryArchiveCodec {
     private static final long RESTORE_FREE_SPACE_MARGIN_BYTES = 64L * 1024L * 1024L;
     private static final String MANIFEST_ENTRY = "font-library.tsv";
     private static final String FONT_DIRECTORY = "fonts/";
-    private static final String FORMAT_HEADER = "dpis-font-library\t1";
+    private static final String FORMAT_HEADER_V1 = "dpis-font-library\t1";
+    private static final String FORMAT_HEADER_V2 = "dpis-font-library\t2";
 
     private FontLibraryArchiveCodec() {
     }
@@ -42,7 +43,7 @@ public final class FontLibraryArchiveCodec {
         int exportedCollections = 0;
         int skippedCollections = 0;
         try (ZipOutputStream zip = new ZipOutputStream(output, StandardCharsets.UTF_8)) {
-            StringBuilder manifest = new StringBuilder(FORMAT_HEADER).append('\n');
+            StringBuilder manifest = new StringBuilder(FORMAT_HEADER_V2).append('\n');
             for (Map.Entry<String, List<FontLibraryEntry>> collection : collections.entrySet()) {
                 FontLibraryEntry first = collection.getValue().get(0);
                 File file = store.resolveFontFile(first.id);
@@ -54,7 +55,7 @@ public final class FontLibraryArchiveCodec {
                 writeFile(zip, archiveName, file);
                 manifest.append(first.collectionId).append('\t')
                         .append(encode(first.sourceFileName)).append('\t')
-                        .append(encode(first.displayName)).append('\t')
+                        .append(encode(first.collectionDisplayName)).append('\t')
                         .append(archiveName).append('\t')
                         .append(faceIndexes(collection.getValue())).append('\n');
                 exportedCollections++;
@@ -197,9 +198,11 @@ public final class FontLibraryArchiveCodec {
 
     private static List<ArchiveCollection> parseManifest(String manifest) throws IOException {
         String[] lines = manifest.split("\\n");
-        if (lines.length == 0 || !FORMAT_HEADER.equals(lines[0])) {
+        if (lines.length == 0
+                || (!FORMAT_HEADER_V1.equals(lines[0]) && !FORMAT_HEADER_V2.equals(lines[0]))) {
             throw new IOException("Unsupported font archive format");
         }
+        boolean legacyManifest = FORMAT_HEADER_V1.equals(lines[0]);
         List<ArchiveCollection> collections = new ArrayList<>();
         for (int index = 1; index < lines.length; index++) {
             if (lines[index].isBlank()) {
@@ -209,7 +212,9 @@ public final class FontLibraryArchiveCodec {
             if (fields.length != 5 || fields[0].isBlank() || !fields[3].startsWith(FONT_DIRECTORY)) {
                 throw new IOException("Invalid font archive manifest entry");
             }
-            collections.add(new ArchiveCollection(decode(fields[1]), decode(fields[2]), fields[3],
+            String sourceFileName = decode(fields[1]);
+            String collectionDisplayName = legacyManifest ? sourceFileName : decode(fields[2]);
+            collections.add(new ArchiveCollection(sourceFileName, collectionDisplayName, fields[3],
                     parseIndexes(fields[4])));
         }
         return collections;

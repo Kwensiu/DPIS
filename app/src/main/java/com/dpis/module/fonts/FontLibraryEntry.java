@@ -12,6 +12,7 @@ public final class FontLibraryEntry {
     public final long importedAtEpochMs;
     public final int ttcIndex;
     public final String collectionId;
+    public final String collectionDisplayName;
     public final FontPublicationStatus publicationStatus;
 
     FontLibraryEntry(String id,
@@ -33,7 +34,8 @@ public final class FontLibraryEntry {
                      long importedAtEpochMs,
                      int ttcIndex) {
         this(id, displayName, sourceFileName, storedFileName, storedPath, sha256, importedAtEpochMs,
-                ttcIndex, FontFace.fromLegacyId(id).collectionId, FontPublicationStatus.PRIVATE);
+                ttcIndex, FontFace.fromLegacyId(id).collectionId, displayName,
+                FontPublicationStatus.PRIVATE);
     }
 
     FontLibraryEntry(String id,
@@ -46,6 +48,21 @@ public final class FontLibraryEntry {
                      int ttcIndex,
                      String collectionId,
                      FontPublicationStatus publicationStatus) {
+        this(id, displayName, sourceFileName, storedFileName, storedPath, sha256, importedAtEpochMs,
+                ttcIndex, collectionId, displayName, publicationStatus);
+    }
+
+    FontLibraryEntry(String id,
+                     String displayName,
+                     String sourceFileName,
+                     String storedFileName,
+                     String storedPath,
+                     String sha256,
+                     long importedAtEpochMs,
+                     int ttcIndex,
+                     String collectionId,
+                     String collectionDisplayName,
+                     FontPublicationStatus publicationStatus) {
         this.id = id;
         this.displayName = displayName;
         this.sourceFileName = sourceFileName;
@@ -57,6 +74,9 @@ public final class FontLibraryEntry {
         this.collectionId = collectionId != null && !collectionId.isBlank()
                 ? collectionId
                 : FontFace.fromLegacyId(id).collectionId;
+        this.collectionDisplayName = collectionDisplayName != null && !collectionDisplayName.isBlank()
+                ? collectionDisplayName
+                : displayName;
         this.publicationStatus = publicationStatus != null
                 ? publicationStatus
                 : FontPublicationStatus.PRIVATE;
@@ -79,6 +99,7 @@ public final class FontLibraryEntry {
                 && Objects.equals(storedPath, other.storedPath)
                 && Objects.equals(sha256, other.sha256)
                 && Objects.equals(collectionId, other.collectionId)
+                && Objects.equals(collectionDisplayName, other.collectionDisplayName)
                 && publicationStatus == other.publicationStatus;
     }
 
@@ -94,6 +115,7 @@ public final class FontLibraryEntry {
                 importedAtEpochMs,
                 ttcIndex,
                 collectionId,
+                collectionDisplayName,
                 publicationStatus);
     }
 }
