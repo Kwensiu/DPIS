@@ -125,6 +125,14 @@ public class LegacyModuleHookSourceTest {
         assertTrue(typefaceSource.contains("DPIS_FONT_STYLE "));
         assertTrue(typefaceSource.contains("FontLibraryStore fontLibraryStore"));
         assertTrue(typefaceSource.contains("PublishedFontFileResolver.resolve(typefaceId)"));
+        assertTrue(typefaceSource.contains("FontProviderTypefaceLoader.load(typefaceId, ttcIndex)"));
+        assertTrue(typefaceSource.contains("FontTypefaceLoader.load(file, ttcIndex)"));
+        assertTrue(typefaceSource.contains("FeedbackDiagnosticRuntimeEvents.recordTypeface("));
+        assertTrue(typefaceSource.contains("\"source_provider_loaded\""));
+        assertTrue(typefaceSource.contains("\"source_fallback_loaded\""));
+        assertTrue(typefaceSource.contains("\"hook_installed\""));
+        assertTrue(typefaceSource.contains("\"replacement_hit\""));
+        assertTrue(typefaceSource.contains("\"load_failed\""));
 
         String systemServerSource = read("src/legacy/java/com/dpis/module/LegacySystemServerHookInstaller.java");
         assertTrue(systemServerSource.contains("android.app.servertransaction.LaunchActivityItem"));

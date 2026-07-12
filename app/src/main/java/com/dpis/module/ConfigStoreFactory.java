@@ -19,6 +19,7 @@ import io.github.libxposed.service.XposedService;
 
 public final class ConfigStoreFactory {
     private static final File PUBLIC_FONT_DIRECTORY = new File("/data/local/tmp");
+    private static final String FONT_LIBRARY_GROUP = "font_library";
 
     private ConfigStoreFactory() {
     }
@@ -103,10 +104,12 @@ public final class ConfigStoreFactory {
     }
 
     static FontLibraryStore createLocalFontLibraryStore(Context context) {
-        SharedPreferences preferences =
+        SharedPreferences fontLibraryPreferences =
+                context.getSharedPreferences(FONT_LIBRARY_GROUP, Context.MODE_PRIVATE);
+        SharedPreferences legacyPreferences =
                 context.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE);
-        return new FontLibraryStore(preferences, new File(context.getFilesDir(), "fonts"),
-                PUBLIC_FONT_DIRECTORY);
+        return new FontLibraryStore(fontLibraryPreferences, new File(context.getFilesDir(), "fonts"),
+                PUBLIC_FONT_DIRECTORY, legacyPreferences);
     }
 
     public static FontLibraryStore createLocalUiFontLibraryStore(Context context, XposedService service) {

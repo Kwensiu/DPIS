@@ -60,6 +60,22 @@ public final class FeedbackDiagnosticRuntimeEventsTest {
     }
 
     @Test
+    public void typefaceEventsUseStableRouteAndOnlyRecordTheTargetPackage() {
+        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request(true, true, true, true));
+
+        FeedbackDiagnosticRuntimeEvents.recordTypeface(
+                "com.example.app", "source_provider_loaded", "typefaceId=font_demo_ttc_1");
+        FeedbackDiagnosticRuntimeEvents.recordTypeface(
+                "com.other.app", "replacement_hit", "source=Paint.setTypeface");
+
+        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        assertEquals(1, events.size());
+        assertTrue(events.get(0).contains("route=typeface"));
+        assertTrue(events.get(0).contains("stage=source_provider_loaded"));
+        assertTrue(events.get(0).contains("typefaceId=font_demo_ttc_1"));
+    }
+
+    @Test
     public void disabledViewportConfigMarksViewportHitUnexpected() {
         FeedbackDiagnosticRuntimeEvents.start("com.example.app", request(true, true, false, true));
 

@@ -87,6 +87,11 @@ The shared app-process viewport/window route implementation now lives under
 install/reset/apply protocols; the move is package classification only and does
 not change route selection, mutation policy, or evidence semantics.
 
+- 2026-07-12: Legacy imported typeface diagnostics now match Modern: Provider
+  or fallback source, hook installation, first replacement hit per source, and
+  load failure are emitted as stable `typeface` timeline stages. This is
+  observational only and preserves Legacy hook behavior.
+
 
 As of 2026-06-22, the Legacy WeChat DPI route participates in feedback
 diagnostics as `route=wechat_dpi` for WeChat targets. A saved WeChat DPI config

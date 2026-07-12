@@ -48,6 +48,8 @@ public final class DpisApplication extends Application implements XposedServiceH
         RootAccessProbe.warmUpAsync();
         DynamicColors.applyToActivitiesIfAvailable(this);
         HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(this, DpisLog::e);
+        // Migrate the private catalog before remote config mirroring can touch the old XML.
+        ConfigStoreFactory.createLocalFontLibraryStore(this);
         configStore = ConfigStoreFactory.createLocalModuleConfigStore(this);
         migrateLocalConfigStore(configStore);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());

@@ -11,6 +11,8 @@ public final class FontLibraryEntry {
     public final String sha256;
     public final long importedAtEpochMs;
     public final int ttcIndex;
+    public final String collectionId;
+    public final FontPublicationStatus publicationStatus;
 
     FontLibraryEntry(String id,
                      String displayName,
@@ -30,6 +32,20 @@ public final class FontLibraryEntry {
                      String sha256,
                      long importedAtEpochMs,
                      int ttcIndex) {
+        this(id, displayName, sourceFileName, storedFileName, storedPath, sha256, importedAtEpochMs,
+                ttcIndex, FontFace.fromLegacyId(id).collectionId, FontPublicationStatus.PRIVATE);
+    }
+
+    FontLibraryEntry(String id,
+                     String displayName,
+                     String sourceFileName,
+                     String storedFileName,
+                     String storedPath,
+                     String sha256,
+                     long importedAtEpochMs,
+                     int ttcIndex,
+                     String collectionId,
+                     FontPublicationStatus publicationStatus) {
         this.id = id;
         this.displayName = displayName;
         this.sourceFileName = sourceFileName;
@@ -38,6 +54,12 @@ public final class FontLibraryEntry {
         this.sha256 = sha256;
         this.importedAtEpochMs = importedAtEpochMs;
         this.ttcIndex = Math.max(0, ttcIndex);
+        this.collectionId = collectionId != null && !collectionId.isBlank()
+                ? collectionId
+                : FontFace.fromLegacyId(id).collectionId;
+        this.publicationStatus = publicationStatus != null
+                ? publicationStatus
+                : FontPublicationStatus.PRIVATE;
     }
 
     @Override
@@ -55,7 +77,9 @@ public final class FontLibraryEntry {
                 && Objects.equals(sourceFileName, other.sourceFileName)
                 && Objects.equals(storedFileName, other.storedFileName)
                 && Objects.equals(storedPath, other.storedPath)
-                && Objects.equals(sha256, other.sha256);
+                && Objects.equals(sha256, other.sha256)
+                && Objects.equals(collectionId, other.collectionId)
+                && publicationStatus == other.publicationStatus;
     }
 
     @Override
@@ -68,6 +92,8 @@ public final class FontLibraryEntry {
                 storedPath,
                 sha256,
                 importedAtEpochMs,
-                ttcIndex);
+                ttcIndex,
+                collectionId,
+                publicationStatus);
     }
 }

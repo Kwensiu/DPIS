@@ -102,6 +102,25 @@ Custom font hook-chain overrides apply only to compat/field-rewrite font mode.
 `system_server_font` and `activity_thread_font` are internal scheduler domains,
 not user-customizable chain switches. See `docs/font-routing.md`.
 
+### Font Storage Ownership
+
+The font catalog and imported font files are local-only user data. The catalog
+is stored in the dedicated `font_library` preference store and is owned solely
+by `FontLibraryStore`; imported files are owned by that same store under the
+app-private font directory.
+
+`dpi_config` is for package configuration and its Legacy XML mirror only. Do
+not add `font.library.*` keys to `DpisConfigStore`, remote preference snapshots,
+backup payloads, runtime delivery, or whole-store mirror/replace logic. The
+only permitted cross-store operation is the one-time upgrade migration from the
+old `dpi_config` catalog into `font_library`, after which the old catalog key is
+removed.
+
+When adding persistent state, first state its owner, authoritative source, and
+whether it may cross a process boundary. A writer must only replace data in its
+own store; cross-store migration must be explicit, one-way, and regression
+tested against unrelated-store loss.
+
 ## App Config Sheet
 
 The app config sheet stores viewport scale and width drafts independently. The

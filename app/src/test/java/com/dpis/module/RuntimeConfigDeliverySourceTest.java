@@ -22,6 +22,7 @@ public class RuntimeConfigDeliverySourceTest {
         String appConfigHost = hostBlock(mainActivity);
         String sheetActions = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java");
         String fontLibrary = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
+        String fontDetail = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.java");
         String systemHooks = read("src/main/java/com/dpis/module/settings/SystemHooksToggleController.java");
         String systemSettings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
 
@@ -45,7 +46,8 @@ public class RuntimeConfigDeliverySourceTest {
         assertTrue(sheetActions.contains("AppConfigSaveHandler.Result result = host.saveAppConfig("));
         assertTrue(mainActivity.contains("if (result.successCount() > 0)"));
         assertTrue(mainActivity.contains("onRuntimeConfigSaved();"));
-        assertTrue(occurrences(fontLibrary, "RuntimeConfigDelivery.publishLocalSnapshotAfterSave();") >= 4);
+        assertTrue(occurrences(fontLibrary, "RuntimeConfigDelivery.publishLocalSnapshotAfterSave();") >= 3);
+        assertTrue(occurrences(fontDetail, "RuntimeConfigDelivery.publishLocalSnapshotAfterSave();") >= 3);
         assertTrue(systemHooks.contains("RuntimeConfigDelivery::publishLocalSnapshotAfterSave"));
         assertTrue(systemSettings.contains("RuntimeConfigDelivery.publishLocalSnapshotAfterSave();"));
     }

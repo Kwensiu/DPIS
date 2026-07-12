@@ -59,7 +59,9 @@ import com.google.android.material.textview.MaterialTextView;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class AppConfigDialogBinder {
     private static final long MODE_TOGGLE_ANIM_DURATION_MS = 200L;
@@ -364,14 +366,12 @@ public final class AppConfigDialogBinder {
                 onSelectionChanged,
                 dialogHolder,
                 false);
-        Runnable showImportedFonts = () -> bindTypefaceOptionRows(
+        Runnable showImportedFonts = () -> bindImportedTypefaceCollectionRows(
                 listView,
-                buildImportedTypefaceOptions(listFontLibraryEntries(), state.selectedTypefaceId),
+                listFontLibraryEntries(),
                 selectorButton,
                 state,
-                onSelectionChanged,
-                dialogHolder,
-                true);
+                onSelectionChanged);
         tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
@@ -477,6 +477,109 @@ public final class AppConfigDialogBinder {
             options.add(new TypefaceOption(entry.id, resolveFontOptionLabel(entry)));
         }
         return options;
+    }
+
+    /**
+     * A TTC is one imported collection with multiple selectable faces. Keep the first picker
+     * focused on collections so users do not need to import the same file repeatedly.
+     */
+    private void bindImportedTypefaceCollectionRows(LinearLayout listView,
+            List<FontLibraryEntry> entries,
+            MaterialButton selectorButton,
+            AppConfigDialogState state,
+            Runnable onSelectionChanged) {
+        listView.removeAllViews();
+        if (entries.isEmpty()) {
+            listView.addView(createTypefaceOptionRow(
+                    listView,
+                    new TypefaceOption(TypefaceOption.DISABLED_ID,
+                            activity.getString(R.string.dialog_typeface_imported_empty)),
+                    null,
+                    false,
+                    () -> { }));
+            return;
+        }
+        Map<String, List<FontLibraryEntry>> collections = new LinkedHashMap<>();
+        for (FontLibraryEntry entry : entries) {
+            collections.computeIfAbsent(entry.collectionId, unused -> new ArrayList<>()).add(entry);
+        }
+        FontLibraryStore fontLibraryStore = createFontLibraryStore();
+        for (List<FontLibraryEntry> faces : collections.values()) {
+            FontLibraryEntry representative = faces.get(0);
+            String label = faces.size() == 1
+                    ? resolveFontOptionLabel(representative)
+                    : activity.getString(R.string.dialog_typeface_collection_label,
+                            resolveFontOptionLabel(representative), faces.size());
+            Typeface preview = resolveTypefaceOptionPreview(
+                    new TypefaceOption(representative.id, label), fontLibraryStore);
+            boolean selected = containsTypefaceId(faces, state.selectedTypefaceId);
+            listView.addView(createTypefaceOptionRow(listView,
+                    new TypefaceOption(representative.id, label), preview, selected,
+                    () -> {
+                        if (faces.size() == 1) {
+                            selectImportedTypeface(faces.get(0), selectorButton, state,
+                                    onSelectionChanged);
+                            bindImportedTypefaceCollectionRows(listView, listFontLibraryEntries(),
+                                    selectorButton, state, onSelectionChanged);
+                            return;
+                        }
+                        showTypefaceFaceSelection(faces, selectorButton, state, onSelectionChanged,
+                                () -> bindImportedTypefaceCollectionRows(listView,
+                                        listFontLibraryEntries(), selectorButton, state,
+                                        onSelectionChanged));
+                    }));
+        }
+    }
+
+    private void showTypefaceFaceSelection(List<FontLibraryEntry> faces,
+            MaterialButton selectorButton,
+            AppConfigDialogState state,
+            Runnable onSelectionChanged,
+            Runnable onSelectionApplied) {
+        String[] labels = new String[faces.size()];
+        int selectedIndex = -1;
+        for (int index = 0; index < faces.size(); index++) {
+            FontLibraryEntry face = faces.get(index);
+            labels[index] = resolveFontOptionLabel(face);
+            if (face.id.equals(state.selectedTypefaceId)) {
+                selectedIndex = index;
+            }
+        }
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
+                .setTitle(R.string.dialog_typeface_face_select_title)
+                .setSingleChoiceItems(labels, selectedIndex, (dialogInterface, which) -> {
+                    selectImportedTypeface(faces.get(which), selectorButton, state, onSelectionChanged);
+                    dialogInterface.dismiss();
+                    if (onSelectionApplied != null) {
+                        onSelectionApplied.run();
+                    }
+                })
+                .create();
+        dialog.show();
+        DialogWindowSizer.applyStandardWidth(dialog, activity);
+    }
+
+    private void selectImportedTypeface(FontLibraryEntry entry,
+            MaterialButton selectorButton,
+            AppConfigDialogState state,
+            Runnable onSelectionChanged) {
+        state.selectedTypefaceId = entry.id;
+        selectorButton.setText(formatTypefaceSelectorText(resolveFontOptionLabel(entry)));
+        if (onSelectionChanged != null) {
+            onSelectionChanged.run();
+        }
+    }
+
+    private static boolean containsTypefaceId(List<FontLibraryEntry> entries, String typefaceId) {
+        if (typefaceId == null) {
+            return false;
+        }
+        for (FontLibraryEntry entry : entries) {
+            if (typefaceId.equals(entry.id)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void applyTypefaceDialogListHeight(View root) {

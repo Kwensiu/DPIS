@@ -34,13 +34,25 @@
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/font_library_title"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:layout_marginStart="@dimen/page_title_spacing_start"
                 android:includeFontPadding="false"
                 android:text="@string/font_library_page_title"
                 android:textAppearance="@style/TextAppearance.Material3.HeadlineLarge"
                 android:textStyle="bold" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/font_library_archive_menu_button"
+                android:layout_width="@dimen/page_back_button_size"
+                android:layout_height="@dimen/page_back_button_size"
+                android:background="@drawable/bg_round_button_surface"
+                android:contentDescription="@string/font_library_archive_menu_action"
+                android:padding="@dimen/page_back_button_padding"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_more_vert_24"
+                app:tint="?attr/colorOnSurface" />
         </LinearLayout>
 
         <ScrollView

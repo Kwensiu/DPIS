@@ -932,3 +932,8 @@ The shared app-process viewport/window route implementation now lives under
 `runtime.appprocess`. Flavor entry points still call the same
 install/reset/apply protocols; the move is package classification only and does
 not change route selection, mutation policy, or evidence semantics.
+
+- 2026-07-12: Imported typeface diagnostics now record the actual source
+  (Provider or published-file fallback), hook installation, first replacement
+  hit per source, and load failure as stable `typeface` timeline stages. These
+  records are observational only and do not change hook selection or loading.

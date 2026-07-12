@@ -14,12 +14,14 @@ import com.dpis.module.DpisLog;
 
 import com.dpis.module.fonts.FontLibraryEntry;
 import com.dpis.module.fonts.FontLibraryStore;
+import com.dpis.module.fonts.FontFace;
 
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
 
 import com.dpis.module.fonts.PublishedFontFileResolver;
 
 import com.dpis.module.fonts.FontTypefaceLoader;
+import com.dpis.module.fonts.FontProviderTypefaceLoader;
 
 import com.dpis.module.fonts.SystemFontRegistry;
 
@@ -178,10 +180,9 @@ public final class TypefaceOverrideHookInstaller {
                     + HOOK_ID_PAINT_SET_TYPEFACE + ","
                     + HOOK_ID_TEXTVIEW_ON_ATTACHED_TO_WINDOW + ","
                     + HOOK_ID_TEXTVIEW_ON_DRAW);
-            FeedbackDiagnosticRuntimeEvents.recordHotReload(
+            FeedbackDiagnosticRuntimeEvents.recordTypeface(
                     packageName,
-                    "typeface",
-                    "installed",
+                    "hook_installed",
                     "typeface hook ready: id=" + targetTypefaceId);
         }
     }
@@ -206,15 +207,30 @@ public final class TypefaceOverrideHookInstaller {
                             + ", typefaceId=" + typefaceId);
             return systemTypeface;
         }
-        if (SystemFontRegistry.isSystemFontId(typefaceId) || fontLibraryStore == null) {
+        if (SystemFontRegistry.isSystemFontId(typefaceId)) {
             logIfChanged(packageName + ":system-load-failed:" + typefaceId,
                     LOG_PREFIX + "system typeface unavailable: package=" + packageName
                             + ", typefaceId=" + typefaceId);
             return null;
         }
+        FontFace selectedFace = FontFace.fromLegacyId(typefaceId);
+        int ttcIndex = selectedFace != null ? selectedFace.ttcIndex : 0;
+        Typeface providerTypeface = FontProviderTypefaceLoader.load(typefaceId, ttcIndex);
+        if (providerTypeface != null) {
+            logTypefaceIfChanged(packageName, "source_provider_loaded", typefaceId,
+                    packageName + ":loaded-provider:" + typefaceId,
+                    LOG_PREFIX + "target typeface loaded through provider: package=" + packageName
+                            + ", typefaceId=" + typefaceId);
+            return providerTypeface;
+        }
+        if (fontLibraryStore == null) {
+            logIfChanged(packageName + ":provider-load-failed:" + typefaceId,
+                    LOG_PREFIX + "font provider unavailable and no fallback catalog: package="
+                            + packageName + ", typefaceId=" + typefaceId);
+            return null;
+        }
         FontLibraryEntry entry = fontLibraryStore.findById(typefaceId);
         File file = null;
-        int ttcIndex = 0;
         if (entry != null) {
             file = fontLibraryStore.resolveFontFile(typefaceId);
             ttcIndex = entry.ttcIndex;
@@ -233,8 +249,14 @@ public final class TypefaceOverrideHookInstaller {
         }
         Typeface loaded = FontTypefaceLoader.load(file, ttcIndex);
         if (loaded == null) {
-            logIfChanged(packageName + ":load-failed:" + typefaceId,
+            logTypefaceIfChanged(packageName, "load_failed", typefaceId,
+                    packageName + ":load-failed:" + typefaceId,
                     LOG_PREFIX + "font load failed: package=" + packageName
+                            + ", typefaceId=" + typefaceId);
+        } else {
+            logTypefaceIfChanged(packageName, "source_fallback_loaded", typefaceId,
+                    packageName + ":loaded-fallback:" + typefaceId,
+                    LOG_PREFIX + "target typeface loaded through fallback: package=" + packageName
                             + ", typefaceId=" + typefaceId);
         }
         return loaded;
@@ -315,10 +337,25 @@ public final class TypefaceOverrideHookInstaller {
         }
     }
 
-    private static void logIfChanged(String key, String message) {
+    private static boolean logIfChanged(String key, String message) {
         String previous = LAST_MESSAGES.put(key, message);
         if (!message.equals(previous)) {
             DpisLog.i(message);
+            return true;
+        }
+        return false;
+    }
+
+    private static void logTypefaceIfChanged(
+            String packageName,
+            String stage,
+            String typefaceId,
+            String key,
+            String message
+    ) {
+        if (logIfChanged(key, message)) {
+            FeedbackDiagnosticRuntimeEvents.recordTypeface(
+                    packageName, stage, "typefaceId=" + typefaceId);
         }
     }
 
@@ -409,9 +446,12 @@ public final class TypefaceOverrideHookInstaller {
     }
 
     private static void logReplacementHit(String packageName, String source) {
-        logIfChanged(packageName + ":replacement-hit:" + source,
+        if (logIfChanged(packageName + ":replacement-hit:" + source,
                 LOG_PREFIX + "replacement hit: package=" + packageName
-                        + ", source=" + source);
+                        + ", source=" + source)) {
+            FeedbackDiagnosticRuntimeEvents.recordTypeface(
+                    packageName, "replacement_hit", "source=" + source);
+        }
     }
 
     private static void bridgeLog(XposedInterface xposed, String message) {

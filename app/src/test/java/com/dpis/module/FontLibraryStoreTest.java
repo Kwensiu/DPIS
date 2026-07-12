@@ -1,8 +1,10 @@
 package com.dpis.module;
 
 import com.dpis.module.fonts.FontFileKind;
+import com.dpis.module.fonts.FontFace;
 import com.dpis.module.fonts.FontLibraryEntry;
 import com.dpis.module.fonts.FontLibraryStore;
+import com.dpis.module.fonts.FontPublicationStatus;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -61,6 +63,140 @@ public final class FontLibraryStoreTest {
 
         assertEquals(firstEntry, secondEntry);
         assertEquals(1, store.listFonts().size());
+    }
+
+    @Test
+    public void keepsPrivateFontWhenRootPublicationFails() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        File privateDirectory = temporaryFolder.newFolder("private-fonts");
+        File unavailablePublicDirectory = new File(privateDirectory, "missing/public-fonts");
+        FontLibraryStore store = new FontLibraryStore(prefs, privateDirectory,
+                unavailablePublicDirectory);
+
+        FontLibraryEntry entry = store.registerCopiedFont(
+                writeFile("Example.ttf", "private-font-data"), "Example.ttf", 1234L);
+
+        assertSame(FontPublicationStatus.PUBLISH_FAILED, entry.publicationStatus);
+        assertEquals(entry.id, entry.collectionId);
+        assertTrue(new File(entry.storedPath).isFile());
+        assertEquals(entry.storedPath, store.resolveFontFile(entry.id).getAbsolutePath());
+    }
+
+    @Test
+    public void rebuildsCatalogForAuthoritativePrivateFontWhenCatalogWasOverwritten()
+            throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        File directory = temporaryFolder.newFolder("fonts");
+        FontLibraryStore originalStore = new FontLibraryStore(prefs, directory);
+        File source = temporaryFolder.newFile("Example.ttf");
+        try (FileOutputStream output = new FileOutputStream(source)) {
+            output.write(new byte[] { 0, 1, 0, 0 });
+        }
+        FontLibraryEntry original = originalStore.registerCopiedFont(
+                source, "Example.ttf", 1234L);
+        prefs.edit().remove("font.library.entries").commit();
+
+        FontLibraryStore.RecoveryResult result = new FontLibraryStore(prefs, directory)
+                .recoverMissingCatalogEntries();
+
+        assertTrue(result.catalogUpdated);
+        assertEquals(1, result.recoveredEntryCount);
+        FontLibraryEntry recovered = new FontLibraryStore(prefs, directory).findById(original.id);
+        assertNotNull(recovered);
+        assertEquals(original.storedPath, recovered.storedPath);
+        assertEquals(original.sha256, recovered.sha256);
+    }
+
+    @Test
+    public void migratesLegacyCatalogIntoDedicatedLocalPreferencesExactlyOnce() throws Exception {
+        FakePrefs dedicatedPrefs = new FakePrefs();
+        FakePrefs legacyPrefs = new FakePrefs();
+        legacyPrefs.edit().putString("font.library.entries", "[]").commit();
+
+        new FontLibraryStore(dedicatedPrefs, temporaryFolder.newFolder("fonts"), null, legacyPrefs);
+
+        assertEquals("[]", dedicatedPrefs.getString("font.library.entries", null));
+        assertFalse(legacyPrefs.contains("font.library.entries"));
+    }
+
+    @Test
+    public void writesPublicationStatusWithCatalogEntry() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
+
+        store.registerCopiedFont(writeFile("Example.ttf", "font-data"), "Example.ttf", 1234L);
+
+        assertTrue(prefs.getString("font.library.entries", "").contains("publicationStatus"));
+        assertTrue(prefs.getString("font.library.entries", "").contains("collectionId"));
+    }
+
+    @Test
+    public void derivesCollectionAndFaceFromLegacyTtcId() {
+        FontFace face = FontFace.fromLegacyId("font_abcdef_ttc_7");
+
+        assertNotNull(face);
+        assertEquals("font_abcdef", face.collectionId);
+        assertEquals(7, face.ttcIndex);
+        assertEquals("font_abcdef_ttc_7", face.toLegacyId());
+    }
+
+    @Test
+    public void preservesLegacyTtcFaceZeroId() {
+        FontFace face = FontFace.fromLegacyId("font_abcdef_ttc_0");
+
+        assertNotNull(face);
+        assertEquals(0, face.ttcIndex);
+        assertTrue(face.collectionFace);
+        assertEquals("font_abcdef_ttc_0", face.toLegacyId());
+    }
+
+    @Test
+    public void deletesAllFacesWhenDeletingOneTtcFace() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
+        List<FontLibraryEntry> faces = store.registerCopiedFontFaces(
+                writeFile("Collection.ttc", "ttc-data"), "Collection.ttc", "Collection",
+                FontFileKind.TTC, List.of(0, 1), 1234L);
+
+        assertSame(FontLibraryStore.DeleteResult.DELETED,
+                store.deleteFont(faces.get(0).id, unused -> false));
+        assertTrue(store.listFonts().isEmpty());
+    }
+
+    @Test
+    public void healthReportSeparatesMissingAndOrphanedPrivateFiles() throws Exception {
+        File directory = temporaryFolder.newFolder("fonts");
+        FontLibraryStore store = new FontLibraryStore(new FakePrefs(), directory);
+        FontLibraryEntry entry = store.registerCopiedFont(
+                writeFile("Example.ttf", "font-data"), "Example.ttf", 1234L);
+        assertTrue(new File(entry.storedPath).delete());
+        writeFileIn(directory, "orphan.ttf", "orphan-data");
+
+        FontLibraryStore.HealthReport health = store.inspectHealth();
+
+        assertEquals(1, health.catalogEntryCount);
+        assertEquals(1, health.missingPrivateFileCount);
+        assertEquals(0, health.missingPublishedFallbackCount);
+        assertEquals(1, health.orphanedPrivateFileCount);
+    }
+
+    @Test
+    public void healthReportTreatsHashMismatchedPublishedFallbackAsMissing() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        File privateDirectory = temporaryFolder.newFolder("private-fonts");
+        File publicDirectory = temporaryFolder.newFolder("public-fonts");
+        FontLibraryStore store = new FontLibraryStore(prefs, privateDirectory, publicDirectory);
+        FontLibraryEntry entry = store.registerCopiedFont(
+                writeFile("Example.ttf", "private-font-data"), "Example.ttf", 1234L);
+        writeFileIn(publicDirectory, "dpis_" + entry.storedFileName, "different-public-data");
+        String catalog = prefs.getString("font.library.entries", "")
+                .replace("PUBLISH_FAILED", "PUBLISHED")
+                .replace("PRIVATE", "PUBLISHED");
+        prefs.edit().putString("font.library.entries", catalog).commit();
+
+        FontLibraryStore.HealthReport health = store.inspectHealth();
+
+        assertEquals(1, health.missingPublishedFallbackCount);
     }
 
     @Test
@@ -193,6 +329,40 @@ public final class FontLibraryStoreTest {
         FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
 
         assertTrue(store.listFonts().isEmpty());
+    }
+
+    @Test
+    public void deletesPrivateFontWhenPublishedFallbackCleanupCannotUseRoot() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        File privateDirectory = temporaryFolder.newFolder("private-fonts");
+        FontLibraryStore store = new FontLibraryStore(prefs, privateDirectory,
+                temporaryFolder.newFolder("public-fonts"));
+        FontLibraryEntry entry = store.registerCopiedFont(
+                writeFile("Example.ttf", "fake-font-data"), "Example.ttf", 1234L);
+        String catalog = prefs.getString("font.library.entries", "")
+                .replace("PUBLISH_FAILED", "PUBLISHED");
+        prefs.edit().putString("font.library.entries", catalog).commit();
+
+        FontLibraryStore.DeleteResult result = store.deleteFont(entry.id, unused -> false);
+
+        assertSame(FontLibraryStore.DeleteResult.DELETED, result);
+        assertFalse(new File(entry.storedPath).exists());
+        assertTrue(store.listFonts().isEmpty());
+    }
+
+    @Test
+    public void purgeKeepsFontFilesWhenCatalogIsUnreadable() throws Exception {
+        FakePrefs prefs = new FakePrefs();
+        File directory = temporaryFolder.newFolder("fonts");
+        File fontFile = writeFileIn(directory, "font_preserve.ttf", "font-data");
+        File stagingFile = writeFileIn(directory, "font_import_stale.ttf", "temporary-data");
+        prefs.edit().putString("font.library.entries", "{not-json").commit();
+        FontLibraryStore store = new FontLibraryStore(prefs, directory);
+
+        store.purgeOrphanedFiles();
+
+        assertTrue(fontFile.isFile());
+        assertFalse(stagingFile.exists());
     }
 
     @Test
@@ -407,7 +577,7 @@ public final class FontLibraryStoreTest {
     }
 
     @Test
-    public void deletingOneTtcFaceKeepsSharedFileForOtherFaces() throws Exception {
+    public void deletingOneTtcFaceDeletesTheWholeCollection() throws Exception {
         FakePrefs prefs = new FakePrefs();
         FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
         List<FontLibraryEntry> entries = store.registerCopiedFontFaces(
@@ -425,12 +595,12 @@ public final class FontLibraryStoreTest {
 
         assertSame(FontLibraryStore.DeleteResult.DELETED, result);
         assertNull(store.findById(entries.get(0).id));
-        assertNotNull(store.findById(entries.get(1).id));
-        assertTrue(sharedFile.isFile());
+        assertNull(store.findById(entries.get(1).id));
+        assertFalse(sharedFile.exists());
     }
 
     @Test
-    public void deletingLastTtcFaceDeletesSharedFile() throws Exception {
+    public void deletingACollectionTwiceReportsNotFound() throws Exception {
         FakePrefs prefs = new FakePrefs();
         FontLibraryStore store = new FontLibraryStore(prefs, temporaryFolder.newFolder("fonts"));
         List<FontLibraryEntry> entries = store.registerCopiedFontFaces(
@@ -448,7 +618,7 @@ public final class FontLibraryStoreTest {
                 entries.get(1).id,
                 unused -> false);
 
-        assertSame(FontLibraryStore.DeleteResult.DELETED, result);
+        assertSame(FontLibraryStore.DeleteResult.NOT_FOUND, result);
         assertFalse(sharedFile.exists());
     }
 
@@ -477,6 +647,14 @@ public final class FontLibraryStoreTest {
 
     private File writeFile(String name, String content) throws Exception {
         File file = temporaryFolder.newFile(name);
+        return writeFile(file, content);
+    }
+
+    private File writeFileIn(File directory, String name, String content) throws Exception {
+        return writeFile(new File(directory, name), content);
+    }
+
+    private static File writeFile(File file, String content) throws Exception {
         try (FileOutputStream output = new FileOutputStream(file)) {
             output.write(content.getBytes(StandardCharsets.UTF_8));
         }

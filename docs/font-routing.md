@@ -100,6 +100,37 @@ DPIS route fixes should prefer this order:
 4. Add a new independent route only when the existing route model cannot safely
    represent the behavior.
 
+## Imported Typeface Transport
+
+Typeface replacement is independent from font-scale mode selection. A configured
+`FontFace` is loaded once when the target process installs its typeface hooks;
+the selected face is then retained for that process lifetime.
+
+- The primary transport is the exported DPIS font provider. It opens DPIS-private
+  font files as read-only, seekable descriptors after proving that the Binder
+  caller owns a package currently configured for that exact face.
+- Provider authorization reads the per-app `typefaceId` configuration source;
+  it must not use catalog metadata as an authorization fallback. The catalog is
+  local-only data in the dedicated `font_library` preference store. Older
+  catalog data in `dpi_config` is a one-time migration source only and is
+  removed after a successful copy.
+- The provider exposes one face URI only. It must not expose catalog enumeration,
+  arbitrary paths, or write operations.
+- The root-published `/data/local/tmp` copy is a fallback for Provider failure,
+  not the catalog authority. Private catalog storage remains authoritative. A
+  failed cleanup of that optional copy must be recorded, but must not prevent
+  the user from deleting the private font and its catalog entry.
+- Both Modern and Legacy use the same descriptor/file loader and pass the TTC
+  index. A failed requested TTC face keeps the app's original Typeface; it must
+  not silently use face zero.
+- Saving a different face affects the next target process creation. Do not add
+  cross-process config reads to TextView or Paint hot paths.
+- Feedback diagnostics record the typeface route as stable boundaries:
+  `source_provider_loaded`, `source_fallback_loaded`, `hook_installed`,
+  `replacement_hit`, and `load_failed`. Loading and replacement events reuse
+  the existing per-process log deduplication, so TextView/Paint hot paths do
+  not repeatedly append diagnostic records.
+
 ## Resources Font Event Gate
 
 The app-process `resources_font` route may see two different runtime meanings

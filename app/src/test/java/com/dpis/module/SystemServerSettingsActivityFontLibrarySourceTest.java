@@ -30,8 +30,9 @@ public class SystemServerSettingsActivityFontLibrarySourceTest {
     }
 
     @Test
-    public void fontLibraryActivityOwnsImportRenameDeleteAndUsageReferences() throws IOException {
+    public void fontLibraryAndDetailActivitiesOwnTheirSeparateWorkflows() throws IOException {
         String source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
+        String detail = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.java");
         String importMethod = source.substring(
                 source.indexOf("private void promptImportName(Uri uri)"),
                 source.indexOf("private TextInputLayout createNameInput"));
@@ -39,11 +40,13 @@ public class SystemServerSettingsActivityFontLibrarySourceTest {
         assertTrue(source.contains("Intent.ACTION_OPEN_DOCUMENT"));
         assertTrue(source.contains("font/ttf"));
         assertTrue(source.contains("font/otf"));
-        assertTrue(source.contains("promptRename"));
-        assertTrue(source.contains("confirmDelete"));
-        assertTrue(source.contains("findReferences"));
-        assertTrue(source.contains("configStore.getConfiguredPackages()"));
-        assertTrue(source.contains("configStore.getTargetTypefaceId(packageName)"));
+        assertTrue(source.contains("FontDetailActivity.EXTRA_FONT_ID"));
+        assertFalse(source.contains("showFontDetails("));
+        assertTrue(detail.contains("promptRename"));
+        assertTrue(detail.contains("confirmDelete"));
+        assertTrue(detail.contains("findReferences"));
+        assertTrue(detail.contains("configStore.getConfiguredPackages()"));
+        assertTrue(detail.contains("configStore.getTargetTypefaceId(packageName)"));
         int tryIndex = importMethod.indexOf("try {");
         assertTrue(tryIndex >= 0);
         assertTrue(tryIndex < importMethod.indexOf("resolveDisplayName(uri)"));

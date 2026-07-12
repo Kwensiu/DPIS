@@ -86,6 +86,14 @@ public final class FeedbackDiagnosticRuntimeEvents {
         session.recordStructured(route, "hot_reload_" + valueOrDefault(stage, "event"), "I", message);
     }
 
+    /**
+     * Records a stable typeface-route boundary without treating it as a hot-reload event.
+     * Callers must deduplicate hot-path events before reaching this method.
+     */
+    public static void recordTypeface(String packageName, String stage, String message) {
+        recordStructured(packageName, "typeface", stage, "I", message);
+    }
+
     private static final class Session {
         private final String targetPackage;
         private final FeedbackDiagnosticTimelineClassifier.Context classifierContext;

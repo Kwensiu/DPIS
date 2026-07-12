@@ -1,5 +1,7 @@
 package com.dpis.module.fonts;
 
+import com.dpis.module.DpisLog;
+
 import android.content.SharedPreferences;
 
 import java.io.File;
@@ -12,11 +14,13 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public final class FontLibraryStore {
@@ -31,19 +35,52 @@ public final class FontLibraryStore {
     private static final String JSON_SHA256 = "sha256";
     private static final String JSON_IMPORTED_AT_EPOCH_MS = "importedAtEpochMs";
     private static final String JSON_TTC_INDEX = "ttcIndex";
+    private static final String JSON_COLLECTION_ID = "collectionId";
+    private static final String JSON_PUBLICATION_STATUS = "publicationStatus";
 
     private final SharedPreferences preferences;
     private final File fontDirectory;
     private final File publicFontDirectory;
+    private final SharedPreferences legacyCatalogPreferences;
 
     public FontLibraryStore(SharedPreferences preferences, File fontDirectory) {
-        this(preferences, fontDirectory, null);
+        this(preferences, fontDirectory, null, null);
     }
 
     public FontLibraryStore(SharedPreferences preferences, File fontDirectory, File publicFontDirectory) {
+        this(preferences, fontDirectory, publicFontDirectory, null);
+    }
+
+    /**
+     * Creates the local font catalog and migrates the pre-1.15 catalog once when supplied.
+     * The legacy preference is intentionally only a migration source, never a live fallback.
+     */
+    public FontLibraryStore(
+            SharedPreferences preferences,
+            File fontDirectory,
+            File publicFontDirectory,
+            SharedPreferences legacyCatalogPreferences
+    ) {
         this.preferences = Objects.requireNonNull(preferences, "preferences");
         this.fontDirectory = fontDirectory;
         this.publicFontDirectory = publicFontDirectory;
+        this.legacyCatalogPreferences = legacyCatalogPreferences;
+        migrateLegacyCatalogIfNecessary();
+    }
+
+    private void migrateLegacyCatalogIfNecessary() {
+        if (preferences.contains(KEY_ENTRIES)
+                || legacyCatalogPreferences == null
+                || legacyCatalogPreferences == preferences) {
+            return;
+        }
+        String legacyCatalog = legacyCatalogPreferences.getString(KEY_ENTRIES, null);
+        if (legacyCatalog == null || legacyCatalog.isBlank()) {
+            return;
+        }
+        if (preferences.edit().putString(KEY_ENTRIES, legacyCatalog).commit()) {
+            legacyCatalogPreferences.edit().remove(KEY_ENTRIES).commit();
+        }
     }
 
     public List<FontLibraryEntry> listFonts() {
@@ -54,6 +91,74 @@ public final class FontLibraryStore {
         return entries;
     }
 
+    /**
+     * Performs a read-only catalog health scan. It never invokes root or changes metadata.
+     */
+    public synchronized HealthReport inspectHealth() {
+        List<FontLibraryEntry> entries = readEntries();
+        java.util.Set<String> knownPaths = new java.util.HashSet<>();
+        int missingPrivateFiles = 0;
+        int missingPublishedFallbacks = 0;
+        for (FontLibraryEntry entry : entries) {
+            knownPaths.add(entry.storedPath);
+            if (resolveStoredFile(entry) == null) {
+                missingPrivateFiles++;
+            }
+            if (entry.publicationStatus == FontPublicationStatus.PUBLISHED
+                    && !isPublishedFallbackPresent(entry)) {
+                missingPublishedFallbacks++;
+            }
+        }
+        int orphanedPrivateFiles = 0;
+        if (fontDirectory != null && fontDirectory.isDirectory()) {
+            File[] files = fontDirectory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (!knownPaths.contains(file.getAbsolutePath())) {
+                        orphanedPrivateFiles++;
+                    }
+                }
+            }
+        }
+        return new HealthReport(entries.size(), missingPrivateFiles, missingPublishedFallbacks,
+                orphanedPrivateFiles);
+    }
+
+    /**
+     * Retries root publication for collections with a healthy private file. Call only from an
+     * explicit user action; importing and health scanning must not unexpectedly request root.
+     */
+    public synchronized RepairResult retryPublishedFallbacks() {
+        List<FontLibraryEntry> entries = readEntries();
+        Map<String, FontPublicationStatus> statusesByPath = new LinkedHashMap<>();
+        int attemptedCollections = 0;
+        int publishedCollections = 0;
+        for (FontLibraryEntry entry : entries) {
+            if (statusesByPath.containsKey(entry.storedPath) || resolveStoredFile(entry) == null) {
+                continue;
+            }
+            attemptedCollections++;
+            FontPublicationStatus status = publishFontFile(new File(entry.storedPath));
+            statusesByPath.put(entry.storedPath, status);
+            if (status == FontPublicationStatus.PUBLISHED) {
+                publishedCollections++;
+            }
+        }
+        if (statusesByPath.isEmpty()) {
+            return new RepairResult(0, 0, false);
+        }
+        List<FontLibraryEntry> updated = new ArrayList<>(entries.size());
+        for (FontLibraryEntry entry : entries) {
+            FontPublicationStatus status = statusesByPath.get(entry.storedPath);
+            updated.add(status == null ? entry : copyWithPublicationStatus(entry, status));
+        }
+        return new RepairResult(attemptedCollections, publishedCollections, writeEntries(updated));
+    }
+
+    /**
+     * Only removes import staging files. A missing or malformed catalog must never turn a
+     * recoverable metadata problem into permanent user-font data loss.
+     */
     public void purgeOrphanedFiles() {
         if (fontDirectory == null || !fontDirectory.isDirectory()) {
             return;
@@ -62,13 +167,8 @@ public final class FontLibraryStore {
         if (files == null) {
             return;
         }
-        List<FontLibraryEntry> entries = readEntries();
-        java.util.Set<String> knownPaths = new java.util.HashSet<>();
-        for (FontLibraryEntry entry : entries) {
-            knownPaths.add(entry.storedPath);
-        }
         for (File file : files) {
-            if (!knownPaths.contains(file.getAbsolutePath())) {
+            if (isImportStagingFile(file)) {
                 file.delete();
             }
         }
@@ -100,21 +200,34 @@ public final class FontLibraryStore {
         if (entry == null) {
             return DeleteResult.NOT_FOUND;
         }
-        if (isFontReferenced != null && isFontReferenced.test(entry.id)) {
-            return DeleteResult.IN_USE;
-        }
         List<FontLibraryEntry> originalEntries = readEntries();
+        List<FontLibraryEntry> collectionEntries = new ArrayList<>();
+        for (FontLibraryEntry candidate : originalEntries) {
+            if (entry.collectionId.equals(candidate.collectionId)) {
+                if (isFontReferenced != null && isFontReferenced.test(candidate.id)) {
+                    return DeleteResult.IN_USE;
+                }
+                collectionEntries.add(candidate);
+            }
+        }
         List<FontLibraryEntry> remainingEntries = new ArrayList<>(originalEntries);
-        remainingEntries.removeIf(candidate -> entry.id.equals(candidate.id));
+        remainingEntries.removeAll(collectionEntries);
         if (!writeEntries(remainingEntries)) {
             return DeleteResult.DELETE_FAILED;
         }
-        File file = new File(entry.storedPath);
-        if (file.exists()
-                && !hasRemainingPathReference(remainingEntries, entry.storedPath)
-                && !deleteStoredFile(file)) {
-            writeEntries(originalEntries);
-            return DeleteResult.DELETE_FAILED;
+        for (FontLibraryEntry candidate : collectionEntries) {
+            File file = new File(candidate.storedPath);
+            if (file.exists()
+                    && !hasRemainingPathReference(remainingEntries, candidate.storedPath)
+                    && !deleteStoredFile(file)) {
+                writeEntries(originalEntries);
+                return DeleteResult.DELETE_FAILED;
+            }
+        }
+        if (!removePublishedFallbacks(collectionEntries)) {
+            // The private source and catalog are already gone. Do not make deletion depend on an
+            // optional compatibility copy that may need a root grant no longer available.
+            DpisLog.i("FONT_LIBRARY_AUDIT published fallback cleanup deferred after font deletion");
         }
         return DeleteResult.DELETED;
     }
@@ -184,26 +297,23 @@ public final class FontLibraryStore {
             tempFile.delete();
         }
         stagingFile.setReadable(true, false);
-        File targetFile = publishFontFile(stagingFile);
+        FontPublicationStatus publicationStatus = publishFontFile(stagingFile);
 
         FontLibraryEntry entry = new FontLibraryEntry(
                 id,
                 makeUniqueDisplayName(entries, requestedDisplayName, null),
                 sourceFileName,
-                targetFile.getName(),
-                targetFile.getAbsolutePath(),
+                stagingFile.getName(),
+                stagingFile.getAbsolutePath(),
                 sha256,
-                importedAtEpochMs);
+                importedAtEpochMs,
+                0,
+                id,
+                publicationStatus);
         entries.add(entry);
         if (!writeEntries(entries)) {
-            targetFile.delete();
-            if (!targetFile.equals(stagingFile)) {
-                stagingFile.delete();
-            }
-            throw new IOException("Unable to persist font library metadata");
-        }
-        if (!targetFile.equals(stagingFile)) {
             stagingFile.delete();
+            throw new IOException("Unable to persist font library metadata");
         }
         return entry;
     }
@@ -255,6 +365,7 @@ public final class FontLibraryStore {
         String baseId = FONT_ID_PREFIX + sha256.substring(0, 16);
         File targetFile = findExistingStoredFileForHash(entries, sha256);
         File stagingFile = null;
+        FontPublicationStatus publicationStatus = FontPublicationStatus.PRIVATE;
         if (targetFile == null) {
             stagingFile = new File(fontDirectory, baseId + FontFileKind.TTC.extension);
             if (stagingFile.exists() && !stagingFile.delete()) {
@@ -266,9 +377,11 @@ public final class FontLibraryStore {
                 tempFile.delete();
             }
             stagingFile.setReadable(true, false);
-            targetFile = publishFontFile(stagingFile);
+            targetFile = stagingFile;
+            publicationStatus = publishFontFile(stagingFile);
         } else {
             tempFile.delete();
+            publicationStatus = publicationStatusForExistingFile(entries, targetFile);
         }
 
         List<FontLibraryEntry> originalEntries = new ArrayList<>(entries);
@@ -282,19 +395,15 @@ public final class FontLibraryStore {
                     targetFile.getAbsolutePath(),
                     sha256,
                     importedAtEpochMs,
-                    index);
+                    index,
+                    baseId,
+                    publicationStatus);
             entries.add(entry);
             result.add(entry);
         }
         if (!writeEntries(entries)) {
             deleteStoredFileIfUnreferenced(targetFile, originalEntries);
-            if (stagingFile != null && !targetFile.equals(stagingFile)) {
-                stagingFile.delete();
-            }
             throw new IOException("Unable to persist font library metadata");
-        }
-        if (stagingFile != null && !targetFile.equals(stagingFile)) {
-            stagingFile.delete();
         }
         return result;
     }
@@ -323,7 +432,9 @@ public final class FontLibraryStore {
                         entry.storedPath,
                         entry.sha256,
                         entry.importedAtEpochMs,
-                        entry.ttcIndex));
+                        entry.ttcIndex,
+                        entry.collectionId,
+                        entry.publicationStatus));
             } else {
                 updatedEntries.add(entry);
             }
@@ -334,25 +445,31 @@ public final class FontLibraryStore {
         return writeEntries(updatedEntries) ? RenameResult.RENAMED : RenameResult.WRITE_FAILED;
     }
 
-    private File publishFontFile(File stagingFile) throws IOException {
+    private FontPublicationStatus publishFontFile(File stagingFile) {
         if (publicFontDirectory == null) {
-            return stagingFile;
+            return FontPublicationStatus.PRIVATE;
         }
         File publicFile = new File(publicFontDirectory, "dpis_" + stagingFile.getName());
+        File publicTempFile = new File(publicFontDirectory,
+                "." + publicFile.getName() + ".tmp");
         File publicParent = publicFontDirectory.getParentFile();
         StringBuilder command = new StringBuilder();
         command.append("mkdir -p ").append(shellQuote(publicFontDirectory.getAbsolutePath()));
         if (publicParent != null) {
             command.append(" && chmod 755 ").append(shellQuote(publicParent.getAbsolutePath()));
         }
-        command.append(" && cp ").append(shellQuote(stagingFile.getAbsolutePath()))
-                .append(" ").append(shellQuote(publicFile.getAbsolutePath()))
+        // Publish by rename so a target process never observes a partially copied font file.
+        command.append(" && rm -f ").append(shellQuote(publicTempFile.getAbsolutePath()))
+                .append(" && cp ").append(shellQuote(stagingFile.getAbsolutePath()))
+                .append(" ").append(shellQuote(publicTempFile.getAbsolutePath()))
                 .append(" && chmod 755 ").append(shellQuote(publicFontDirectory.getAbsolutePath()))
-                .append(" && chmod 644 ").append(shellQuote(publicFile.getAbsolutePath()));
+                .append(" && chmod 644 ").append(shellQuote(publicTempFile.getAbsolutePath()))
+                .append(" && mv -f ").append(shellQuote(publicTempFile.getAbsolutePath()))
+                .append(" ").append(shellQuote(publicFile.getAbsolutePath()));
         if (!runRootCommand(command.toString())) {
-            throw new IOException("Unable to publish font file: " + publicFile);
+            return FontPublicationStatus.PUBLISH_FAILED;
         }
-        return publicFile;
+        return FontPublicationStatus.PUBLISHED;
     }
 
     private void ensureFontDirectory() throws IOException {
@@ -396,6 +513,165 @@ public final class FontLibraryStore {
         return null;
     }
 
+    /**
+     * Removes optional published compatibility copies after their private authoritative catalog
+     * entry is deleted. A revoked root grant must not make local font deletion unavailable.
+     */
+    private boolean removePublishedFallbacks(List<FontLibraryEntry> entries) {
+        if (publicFontDirectory == null) {
+            return true;
+        }
+        java.util.Set<String> removedNames = new java.util.HashSet<>();
+        for (FontLibraryEntry entry : entries) {
+            if (entry.publicationStatus != FontPublicationStatus.PUBLISHED
+                    || entry.storedFileName == null
+                    || !removedNames.add(entry.storedFileName)) {
+                continue;
+            }
+            File publicFile = new File(publicFontDirectory, "dpis_" + entry.storedFileName);
+            if (!runRootCommand("rm -f " + shellQuote(publicFile.getAbsolutePath()))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Rebuilds catalog records for authoritative private files that survived a historical catalog
+     * overwrite. It only accepts files produced by DPIS's content-addressed naming scheme and
+     * never deletes or replaces an existing catalog entry.
+     */
+    public synchronized RecoveryResult recoverMissingCatalogEntries() {
+        if (fontDirectory == null || !fontDirectory.isDirectory()) {
+            return new RecoveryResult(0, false);
+        }
+        List<FontLibraryEntry> entries = readEntries();
+        Set<String> knownPaths = new HashSet<>();
+        Set<String> knownIds = new HashSet<>();
+        for (FontLibraryEntry entry : entries) {
+            knownPaths.add(entry.storedPath);
+            knownIds.add(entry.id);
+        }
+        File[] files = fontDirectory.listFiles();
+        if (files == null) {
+            return new RecoveryResult(0, false);
+        }
+        int recoveredEntries = 0;
+        for (File file : files) {
+            if (!isCatalogRecoveryCandidate(file) || knownPaths.contains(file.getAbsolutePath())) {
+                continue;
+            }
+            FontFileInspector.Result inspection = FontFileInspector.inspect(file);
+            if (inspection.kind == FontFileKind.UNSUPPORTED) {
+                continue;
+            }
+            String sha256;
+            try {
+                sha256 = digestFile(file);
+            } catch (IOException ignored) {
+                continue;
+            }
+            String collectionId = FONT_ID_PREFIX + sha256.substring(0, 16);
+            int faceCount = inspection.kind == FontFileKind.TTC
+                    ? inspection.ttc.offsets.size()
+                    : 1;
+            for (int ttcIndex = 0; ttcIndex < faceCount; ttcIndex++) {
+                String id = inspection.kind == FontFileKind.TTC
+                        ? collectionId + "_ttc_" + ttcIndex
+                        : collectionId;
+                if (!knownIds.add(id)) {
+                    continue;
+                }
+                String displayName = recoveredDisplayName(file, ttcIndex, faceCount);
+                FontLibraryEntry recovered = new FontLibraryEntry(
+                        id,
+                        makeUniqueDisplayName(entries, displayName, null),
+                        file.getName(),
+                        file.getName(),
+                        file.getAbsolutePath(),
+                        sha256,
+                        Math.max(0L, file.lastModified()),
+                        ttcIndex,
+                        collectionId,
+                        FontPublicationStatus.PRIVATE);
+                FontPublicationStatus publicationStatus = isPublishedFallbackPresent(recovered)
+                        ? FontPublicationStatus.PUBLISHED
+                        : FontPublicationStatus.PRIVATE;
+                entries.add(copyWithPublicationStatus(recovered, publicationStatus));
+                recoveredEntries++;
+            }
+            knownPaths.add(file.getAbsolutePath());
+        }
+        if (recoveredEntries == 0) {
+            return new RecoveryResult(0, false);
+        }
+        return new RecoveryResult(recoveredEntries, writeEntries(entries));
+    }
+
+    private static boolean isCatalogRecoveryCandidate(File file) {
+        if (file == null || !file.isFile()) {
+            return false;
+        }
+        String name = file.getName();
+        int extensionIndex = name.lastIndexOf('.');
+        if (!name.startsWith(FONT_ID_PREFIX) || extensionIndex != FONT_ID_PREFIX.length() + 16) {
+            return false;
+        }
+        for (int index = FONT_ID_PREFIX.length(); index < extensionIndex; index++) {
+            if (Character.digit(name.charAt(index), 16) < 0) {
+                return false;
+            }
+        }
+        String extension = name.substring(extensionIndex).toLowerCase(Locale.US);
+        return FontFileKind.TTF.extension.equals(extension)
+                || FontFileKind.OTF.extension.equals(extension)
+                || FontFileKind.TTC.extension.equals(extension);
+    }
+
+    private static String recoveredDisplayName(File file, int ttcIndex, int faceCount) {
+        String baseName = file.getName();
+        int extensionIndex = baseName.lastIndexOf('.');
+        if (extensionIndex > 0) {
+            baseName = baseName.substring(0, extensionIndex);
+        }
+        return faceCount > 1 ? baseName + " (TTC " + ttcIndex + ")" : baseName;
+    }
+
+    private boolean isPublishedFallbackPresent(FontLibraryEntry entry) {
+        if (publicFontDirectory == null || entry == null || entry.storedFileName == null) {
+            return false;
+        }
+        File publicFile = new File(publicFontDirectory, "dpis_" + entry.storedFileName);
+        if (!publicFile.isFile() || entry.sha256 == null || entry.sha256.isBlank()) {
+            return false;
+        }
+        try {
+            return entry.sha256.equalsIgnoreCase(digestFile(publicFile));
+        } catch (IOException ignored) {
+            return false;
+        }
+    }
+
+    private static FontPublicationStatus publicationStatusForExistingFile(
+            List<FontLibraryEntry> entries, File file) {
+        if (file == null) {
+            return FontPublicationStatus.PUBLISH_FAILED;
+        }
+        for (FontLibraryEntry entry : entries) {
+            if (file.getAbsolutePath().equals(entry.storedPath)) {
+                return entry.publicationStatus;
+            }
+        }
+        return FontPublicationStatus.PRIVATE;
+    }
+
+    private static FontLibraryEntry copyWithPublicationStatus(FontLibraryEntry entry,
+            FontPublicationStatus publicationStatus) {
+        return new FontLibraryEntry(entry.id, entry.displayName, entry.sourceFileName,
+                entry.storedFileName, entry.storedPath, entry.sha256, entry.importedAtEpochMs,
+                entry.ttcIndex, entry.collectionId, publicationStatus);
+    }
+
     private boolean hasRemainingPathReference(List<FontLibraryEntry> entries, String storedPath) {
         for (FontLibraryEntry entry : entries) {
             if (storedPath.equals(entry.storedPath)) {
@@ -417,6 +693,7 @@ public final class FontLibraryStore {
         String rawJson = preferences.getString(KEY_ENTRIES, "[]");
         List<Map<String, String>> objects = parseJsonObjectArray(rawJson);
         if (objects == null) {
+            DpisLog.i("FONT_LIBRARY_AUDIT catalog unreadable; preserving all private font files");
             return new ArrayList<>();
         }
 
@@ -428,6 +705,11 @@ public final class FontLibraryStore {
             }
         }
         return entries;
+    }
+
+    private static boolean isImportStagingFile(File file) {
+        String name = file != null ? file.getName() : "";
+        return name.startsWith("font_import_") || name.startsWith(".font_import_");
     }
 
     private boolean writeEntries(List<FontLibraryEntry> entries) {
@@ -474,6 +756,14 @@ public final class FontLibraryStore {
                 return null;
             }
         }
+        FontFace legacyFace = FontFace.fromLegacyId(id);
+        String collectionId = requiredString(object, JSON_COLLECTION_ID);
+        if (collectionId == null && legacyFace != null) {
+            collectionId = legacyFace.collectionId;
+        }
+        FontPublicationStatus publicationStatus = object.containsKey(JSON_PUBLICATION_STATUS)
+                ? FontPublicationStatus.fromStoredValue(object.get(JSON_PUBLICATION_STATUS))
+                : inferLegacyPublicationStatus(storedPath);
         return new FontLibraryEntry(
                 id,
                 displayName,
@@ -482,7 +772,15 @@ public final class FontLibraryStore {
                 storedPath,
                 sha256,
                 importedAtEpochMs,
-                ttcIndex);
+                ttcIndex,
+                collectionId,
+                publicationStatus);
+    }
+
+    private static FontPublicationStatus inferLegacyPublicationStatus(String storedPath) {
+        return storedPath != null && storedPath.startsWith("/data/local/tmp/")
+                ? FontPublicationStatus.PUBLISHED
+                : FontPublicationStatus.PRIVATE;
     }
 
     private static String toJson(FontLibraryEntry entry) {
@@ -494,7 +792,9 @@ public final class FontLibraryStore {
                 + jsonPair(JSON_STORED_PATH, entry.storedPath) + ","
                 + jsonPair(JSON_SHA256, entry.sha256) + ","
                 + quote(JSON_IMPORTED_AT_EPOCH_MS) + ":" + entry.importedAtEpochMs + ","
-                + quote(JSON_TTC_INDEX) + ":" + entry.ttcIndex
+                + quote(JSON_TTC_INDEX) + ":" + entry.ttcIndex + ","
+                + jsonPair(JSON_COLLECTION_ID, entry.collectionId) + ","
+                + jsonPair(JSON_PUBLICATION_STATUS, entry.publicationStatus.name())
                 + "}";
     }
 
@@ -713,6 +1013,65 @@ public final class FontLibraryStore {
         INVALID_NAME,
         DUPLICATE_NAME,
         WRITE_FAILED
+    }
+
+    private static String digestFile(File source) throws IOException {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            try (InputStream in = new FileInputStream(source)) {
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    digest.update(buffer, 0, read);
+                }
+            }
+            byte[] hashed = digest.digest();
+            StringBuilder builder = new StringBuilder(hashed.length * 2);
+            for (byte value : hashed) {
+                builder.append(String.format(Locale.US, "%02x", value & 0xff));
+            }
+            return builder.toString();
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is unavailable", exception);
+        }
+    }
+
+    public static final class HealthReport {
+        public final int catalogEntryCount;
+        public final int missingPrivateFileCount;
+        public final int missingPublishedFallbackCount;
+        public final int orphanedPrivateFileCount;
+
+        HealthReport(int catalogEntryCount, int missingPrivateFileCount,
+                int missingPublishedFallbackCount, int orphanedPrivateFileCount) {
+            this.catalogEntryCount = catalogEntryCount;
+            this.missingPrivateFileCount = missingPrivateFileCount;
+            this.missingPublishedFallbackCount = missingPublishedFallbackCount;
+            this.orphanedPrivateFileCount = orphanedPrivateFileCount;
+        }
+    }
+
+    public static final class RepairResult {
+        public final int attemptedCollectionCount;
+        public final int publishedCollectionCount;
+        public final boolean catalogUpdated;
+
+        RepairResult(int attemptedCollectionCount, int publishedCollectionCount,
+                boolean catalogUpdated) {
+            this.attemptedCollectionCount = attemptedCollectionCount;
+            this.publishedCollectionCount = publishedCollectionCount;
+            this.catalogUpdated = catalogUpdated;
+        }
+    }
+
+    public static final class RecoveryResult {
+        public final int recoveredEntryCount;
+        public final boolean catalogUpdated;
+
+        RecoveryResult(int recoveredEntryCount, boolean catalogUpdated) {
+            this.recoveredEntryCount = recoveredEntryCount;
+            this.catalogUpdated = catalogUpdated;
+        }
     }
 
     private static final class JsonCursor {

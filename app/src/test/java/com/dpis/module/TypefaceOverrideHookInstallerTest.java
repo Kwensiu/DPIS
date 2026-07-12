@@ -67,6 +67,7 @@ public final class TypefaceOverrideHookInstallerTest {
         assertTrue(source.contains("PublishedFontFileResolver.resolve(typefaceId)"));
         assertTrue(source.contains("SystemFontRegistry.loadTypeface(typefaceId)"));
         assertTrue(source.contains("fontLibraryStore.findById(typefaceId)"));
+        assertTrue(source.contains("FontProviderTypefaceLoader.load(typefaceId, ttcIndex)"));
         assertTrue(source.contains("FontTypefaceLoader.load(file, ttcIndex)"));
     }
 
@@ -98,6 +99,18 @@ public final class TypefaceOverrideHookInstallerTest {
         assertTrue(source.contains("TextView.setTypeface(Typeface)"));
         assertTrue(source.contains("TextView.setTypeface(Typeface,int)"));
         assertTrue(source.contains("Paint.setTypeface"));
+    }
+
+    @Test
+    public void modernInstallerRecordsStableTypefaceDiagnosticStages() throws Exception {
+        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.java");
+
+        assertTrue(source.contains("FeedbackDiagnosticRuntimeEvents.recordTypeface("));
+        assertTrue(source.contains("\"source_provider_loaded\""));
+        assertTrue(source.contains("\"source_fallback_loaded\""));
+        assertTrue(source.contains("\"hook_installed\""));
+        assertTrue(source.contains("\"replacement_hit\""));
+        assertTrue(source.contains("\"load_failed\""));
     }
 
     @Test

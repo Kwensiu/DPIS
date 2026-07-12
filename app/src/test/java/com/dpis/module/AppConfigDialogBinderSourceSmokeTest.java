@@ -240,6 +240,10 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialogHolder[0], activity)"));
         assertTrue(source.contains("R.string.dialog_typeface_tab_system"));
         assertTrue(source.contains("R.string.dialog_typeface_tab_imported"));
+        assertTrue(source.contains("bindImportedTypefaceCollectionRows"));
+        assertTrue(source.contains("showTypefaceFaceSelection"));
+        assertTrue(source.contains("R.string.dialog_typeface_collection_label"));
+        assertTrue(source.contains("R.string.dialog_typeface_face_select_title"));
         assertTrue(source.contains("host.openTypefaceLibrary"));
         assertTrue(selectorLayout.contains("@string/dialog_typeface_manage_action"));
         assertTrue(selectorLayout.contains("@string/dialog_typeface_done_action"));

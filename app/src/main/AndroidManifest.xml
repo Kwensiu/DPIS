@@ -43,6 +43,9 @@
             android:name=".fonts.FontLibraryActivity"
             android:exported="false" />
         <activity
+            android:name=".fonts.FontDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".templates.QuickTemplateTargetSelectionActivity"
             android:exported="false" />
         <activity
@@ -151,6 +154,12 @@
             android:authorities="${applicationId}.fontdebugstats"
             android:enabled="true"
             android:exported="false" />
+
+        <provider
+            android:name=".fonts.FontFileProvider"
+            android:authorities="${applicationId}.fonts"
+            android:enabled="true"
+            android:exported="true" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
