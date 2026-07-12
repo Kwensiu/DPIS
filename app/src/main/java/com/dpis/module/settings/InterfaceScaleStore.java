@@ -38,9 +38,16 @@ public final class InterfaceScaleStore {
         return AppUiScaleManager.DEFAULT_SCALE_PERCENT;
     }
 
+    public boolean hasExplicitPercent() {
+        return preferences.contains(KEY_PERCENT)
+                || (legacyPreferences != null
+                && legacyPreferences.contains(LegacyUiPreferenceKeys.KEY_INTERFACE_SCALE_PERCENT));
+    }
+
     public boolean setPercent(int percent) {
         return preferences.edit()
                 .putInt(KEY_PERCENT, AppUiScaleManager.normalizeScalePercent(percent))
                 .commit();
     }
+
 }

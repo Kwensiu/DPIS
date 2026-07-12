@@ -52,6 +52,7 @@ import com.dpis.module.applist.AppListFilter;
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;
 import com.dpis.module.applist.AppListPagerAdapter;
+import com.dpis.module.applist.AppListTabsChromeController;
 import com.dpis.module.hooks.HookDomainOverride;
 import com.dpis.module.hooks.HookDomainOverrideStore;
 
@@ -108,6 +109,9 @@ import com.dpis.module.templates.QuickTemplateApplyCoordinator;
 import com.dpis.module.root.RootAccessProbe;
 
 import com.dpis.module.ui.MaxHeightNestedScrollView;
+import com.dpis.module.ui.WatchWorkspaceNavigationController;
+import com.dpis.module.ui.WatchWorkspaceChromeBinder;
+import com.dpis.module.ui.WatchUiMode;
 
 import com.dpis.module.ui.FormInputFocusBinder;
 
@@ -312,6 +316,7 @@ public final class MainActivity
 
     private MainViewModel mainViewModel;
     private AppListPagerAdapter pagerAdapter;
+    private AppListTabsChromeController appListTabsChromeController;
     private ViewPager2 appPager;
     private TabLayout filterTabs;
     private View topContainer;
@@ -337,6 +342,7 @@ public final class MainActivity
     private ToolsWorkspaceBinder toolsWorkspaceBinder;
     private SystemServerSettingsPageController settingsPageController;
     private NavigationBarView workspaceSwitch;
+    private WatchWorkspaceNavigationController watchWorkspaceNavigationController;
     private SparseArray<Parcelable> restoredPageScrollStates;
     private EditText searchInput;
     private ImageButton searchClearButton;
@@ -491,6 +497,11 @@ public final class MainActivity
         );
         toolsWorkspaceContainer = findViewById(R.id.tools_workspace_container);
         settingsWorkspaceContainer = findViewById(R.id.settings_workspace_container);
+        WatchWorkspaceChromeBinder.applyIfSupported(
+                this,
+                homeWorkspaceContainer,
+                settingsWorkspaceContainer
+        );
         landListPageView = findViewById(R.id.land_app_list_page);
         landDetailPane = findViewById(R.id.land_detail_pane);
         landDetailDivider = findViewById(R.id.land_detail_divider);
@@ -512,7 +523,7 @@ public final class MainActivity
 
             @Override
             public void applyToolsToolbarInsets(View toolbar) {
-                WindowInsetsBinder.applySafeDrawingPadding(toolbar, false, true, false, false);
+                WindowInsetsBinder.applySystemBarPadding(toolbar, false, true, false, false);
             }
 
             @Override
@@ -534,6 +545,15 @@ public final class MainActivity
         workspaceSwitch = findViewById(R.id.workspace_switch);
         workspaceSwitch.setSaveFromParentEnabled(false);
         bindLandscapeWorkspaceRailItemHeight();
+        watchWorkspaceNavigationController = WatchWorkspaceNavigationController.attachIfSupported(
+                this,
+                findViewById(R.id.root_container),
+                workspaceSwitch,
+                findViewById(R.id.workspace_switch_scroll),
+                itemId -> dispatchMainUiAction(
+                        MainUiAction.workspaceModeChanged(workspaceModeForButtonId(itemId))
+                )
+        );
         if (appPager != null) {
             pagerAdapter = new AppListPagerAdapter(
                     this::showEditDialog,
@@ -548,6 +568,13 @@ public final class MainActivity
             restoreLandscapeScrollStates(restoredPageScrollStates);
         }
         bindLandscapeListController();
+        appListTabsChromeController = new AppListTabsChromeController(
+                this,
+                filterTabs,
+                pagerAdapter,
+                landListController
+        );
+        appListTabsChromeController.bind();
         applyRefreshingStatesToPager();
         if (savedInstanceState != null) {
             setCurrentAppListPage(
@@ -628,6 +655,9 @@ public final class MainActivity
                 -> updateSearchHint()
         );
         renderMainUiState(requireUiState());
+        // The service state callback is not guaranteed to fire on every Wear image.
+        // Request the catalog explicitly; MainViewModel coalesces any later service reload.
+        requestAppsLoad();
         if (retainedState != null && retainedState.editingPackageName != null) {
             mainViewModel.setEditingPackageName(
                     retainedState.editingPackageName
@@ -684,6 +714,15 @@ public final class MainActivity
             settingsPageController.onStart();
         }
         DpisApplication.addServiceStateListener(this, true);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (watchWorkspaceNavigationController != null
+                && watchWorkspaceNavigationController.closeMenuIfExpanded()) {
+            return;
+        }
+        super.onBackPressed();
     }
 
     @Override
@@ -910,6 +949,13 @@ public final class MainActivity
     }
 
     private void onPageListScrolled(AppListPage page, int dy) {
+        if (appListTabsChromeController != null
+                && appListTabsChromeController.onPageListScrolled(dy)) {
+            return;
+        }
+        if (!WatchUiMode.shouldUseFloatingAppSearch(this)) {
+            return;
+        }
         if (dy >= SEARCH_FAB_SCROLL_TRIGGER_DY) {
             hideSearchFocusFab();
             return;
@@ -1174,9 +1220,16 @@ public final class MainActivity
 
     private void applyInsets() {
         View topContainer = findViewById(R.id.top_container);
-        WindowInsetsBinder.applySafeDrawingPadding(topContainer, false, true, false, false);
+        WatchWorkspaceChromeBinder.applyTopContainerInsets(topContainer);
         View homeWorkspace = findViewById(R.id.home_workspace_container);
-        WindowInsetsBinder.applySafeDrawingPadding(homeWorkspace, true, true, true, true);
+        WindowInsetsBinder.applySafeDrawingPadding(
+                homeWorkspace,
+                false,
+                true,
+                false,
+                true,
+                R.dimen.home_workspace_round_safe_padding
+        );
         WindowInsetsBinder.applyNavigationBarMargins(searchFocusFab);
     }
 
@@ -1235,7 +1288,9 @@ public final class MainActivity
     }
 
     private void showSearchFocusFab() {
-        if (searchFocusFab == null || !searchFabHidden) {
+        if (searchFocusFab == null
+                || !WatchUiMode.shouldUseFloatingAppSearch(this)
+                || !searchFabHidden) {
             return;
         }
         searchFabHidden = false;
@@ -1423,33 +1478,20 @@ public final class MainActivity
         if (!(workspaceSwitch instanceof NavigationRailView)) {
             return;
         }
-        workspaceSwitch.addOnLayoutChangeListener((view, left, top, right, bottom,
-                oldLeft, oldTop, oldRight, oldBottom) ->
-                syncLandscapeWorkspaceRailItemHeight());
-        workspaceSwitch.post(this::syncLandscapeWorkspaceRailItemHeight);
+        applyCompactLandscapeWorkspaceRailItemHeight();
     }
 
-    private void syncLandscapeWorkspaceRailItemHeight() {
+    private void applyCompactLandscapeWorkspaceRailItemHeight() {
         if (!(workspaceSwitch instanceof NavigationRailView)
                 || workspaceSwitch.getMenu() == null
                 || workspaceSwitch.getMenu().size() == 0) {
             return;
         }
         NavigationRailView railView = (NavigationRailView) workspaceSwitch;
-        View railViewport = (View) workspaceSwitch.getParent();
-        int railViewportHeight = railViewport != null
-                ? railViewport.getHeight()
-                : workspaceSwitch.getHeight();
-        if (railViewportHeight <= 0) {
-            return;
-        }
-        int availableHeight = Math.max(
-                1,
-                railViewportHeight - railView.getPaddingTop() - railView.getPaddingBottom()
-        );
-        int itemHeight = Math.max(
-                1,
-                availableHeight / railView.getMenu().size()
+        // Keep destinations at a Material-style touch height instead of stretching five items
+        // across the whole landscape edge. Round screens override this value for tighter spacing.
+        int itemHeight = getResources().getDimensionPixelSize(
+                R.dimen.main_land_workspace_rail_item_min_height
         );
         if (railView.getItemMinimumHeight() != itemHeight) {
             railView.setItemMinimumHeight(itemHeight);
@@ -1466,10 +1508,17 @@ public final class MainActivity
         boolean templateWorkspace = mode == MainUiState.WorkspaceMode.TEMPLATE;
         boolean toolsWorkspace = mode == MainUiState.WorkspaceMode.TOOLS;
         boolean settingsWorkspace = mode == MainUiState.WorkspaceMode.SETTINGS;
+        if (appListTabsChromeController != null) {
+            appListTabsChromeController.onWorkspaceChanged(appWorkspace);
+        }
         setVisible(topContainer, appWorkspace || templateWorkspace);
         setVisible(filterTabs, appWorkspace);
-        boolean floatingActionsVisible
-                = appWorkspace && !isLandscapeDetailMode();
+        if (appListTabsChromeController != null) {
+            filterTabs.post(appListTabsChromeController::syncListInsets);
+        }
+        boolean floatingActionsVisible = appWorkspace
+                && !isLandscapeDetailMode()
+                && WatchUiMode.shouldUseFloatingAppSearch(this);
         setSearchFocusFabVisible(floatingActionsVisible);
         if (searchFilterButton != null) {
             searchFilterButton.setEnabled(appWorkspace);
@@ -1495,6 +1544,9 @@ public final class MainActivity
         if (workspaceSwitch != null
                 && workspaceSwitch.getSelectedItemId() != workspaceButtonId(mode)) {
             selectWorkspaceItem(workspaceButtonId(mode));
+        }
+        if (watchWorkspaceNavigationController != null) {
+            watchWorkspaceNavigationController.setSelectedItem(workspaceButtonId(mode));
         }
         updateSearchHint(mode);
         if (homeWorkspace) {

@@ -1,9 +1,12 @@
 package com.dpis.module.settings;
 
 import android.content.Intent;
+import android.view.Gravity;
 import android.view.View;
+import android.widget.LinearLayout;
 
 import com.dpis.module.R;
+import com.dpis.module.ui.WatchUiMode;
 
 public final class ToolsWorkspaceBinder {
     public interface Host {
@@ -29,6 +32,10 @@ public final class ToolsWorkspaceBinder {
         }
         View toolsToolbar = workspaceView.findViewById(R.id.tools_toolbar);
         host.applyToolsToolbarInsets(toolsToolbar);
+        if (WatchUiMode.shouldUseCompactUi(host.activity())
+                && toolsToolbar instanceof LinearLayout) {
+            ((LinearLayout) toolsToolbar).setGravity(Gravity.CENTER);
+        }
         bindLogEntry(workspaceView);
         fontScaleToolBinder = new SystemFontScaleToolBinder(host.activity(), workspaceView, host);
         fontScaleToolBinder.bind();

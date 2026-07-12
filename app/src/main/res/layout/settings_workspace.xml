@@ -20,6 +20,7 @@
         android:paddingBottom="@dimen/page_toolbar_padding_bottom">
 
         <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/settings_workspace_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:includeFontPadding="false"

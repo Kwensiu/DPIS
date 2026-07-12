@@ -436,7 +436,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                 saveInterfaceScalePercent(Math.round(slider.getValue()));
             }
         });
-        setInterfaceScalePercentSilently(AppUiScaleManager.getScalePercent(activity));
+        setInterfaceScalePercentSilently(AppUiScaleManager.getEffectiveScalePercent(activity));
     }
 
     private void setInterfaceScalePercentSilently(int percent) {
@@ -462,7 +462,8 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
 
     private void saveInterfaceScalePercent(int percent) {
         int normalized = AppUiScaleManager.normalizeScalePercent(percent);
-        if (normalized == interfaceScaleStore.getPercent()) {
+        if (normalized == interfaceScaleStore.getPercent()
+                && interfaceScaleStore.hasExplicitPercent()) {
             setInterfaceScalePercentSilently(normalized);
             return;
         }
@@ -483,7 +484,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         MaterialButton cancelButton = dialogView.findViewById(R.id.interface_scale_cancel_button);
         MaterialButton saveButton = dialogView.findViewById(R.id.interface_scale_save_button);
 
-        inputView.setText(String.valueOf(interfaceScaleStore.getPercent()));
+        inputView.setText(String.valueOf(AppUiScaleManager.getEffectiveScalePercent(activity)));
         inputView.setSelection(inputView.length());
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
@@ -875,7 +876,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                 store.isGlobalLogEnabled(),
                 this::onGlobalLogChanged);
         DpisLog.setLoggingEnabled(store.isGlobalLogEnabled());
-        setInterfaceScalePercentSilently(interfaceScaleStore.getPercent());
+        setInterfaceScalePercentSilently(AppUiScaleManager.getEffectiveScalePercent(activity));
 
         applyLauncherIconVisibilityFromStore();
         syncHooksSwitchWithScope();

@@ -19,7 +19,7 @@ public abstract class LocalizedActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         activeLanguageTag = AppLocaleManager.getLanguageTag(this);
-        activeInterfaceScalePercent = AppUiScaleManager.getScalePercent(this);
+        activeInterfaceScalePercent = AppUiScaleManager.getEffectiveScalePercent(this);
         super.onCreate(savedInstanceState);
     }
 
@@ -27,7 +27,7 @@ public abstract class LocalizedActivity extends Activity {
     protected void onResume() {
         super.onResume();
         String currentLanguageTag = AppLocaleManager.getLanguageTag(this);
-        int currentInterfaceScalePercent = AppUiScaleManager.getScalePercent(this);
+        int currentInterfaceScalePercent = AppUiScaleManager.getEffectiveScalePercent(this);
         if (!currentLanguageTag.equals(activeLanguageTag)
                 || currentInterfaceScalePercent != activeInterfaceScalePercent) {
             activeLanguageTag = currentLanguageTag;

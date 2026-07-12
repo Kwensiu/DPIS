@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="main_land_workspace_rail_item_min_height">56dp</dimen>
+    <dimen name="round_screen_safe_padding">32dp</dimen>
+    <dimen name="home_workspace_round_safe_padding">6dp</dimen>
+    <dimen name="home_workspace_header_safe_padding">6dp</dimen>
+    <dimen name="main_toolbar_padding_horizontal">8dp</dimen>
+    <dimen name="main_toolbar_padding_top">4dp</dimen>
+    <dimen name="main_toolbar_padding_bottom">4dp</dimen>
+    <dimen name="main_search_card_height">48dp</dimen>
+    <dimen name="main_search_card_corner_radius">20dp</dimen>
+    <dimen name="main_search_icon_padding_start">12dp</dimen>
+    <dimen name="main_search_icon_padding_end">8dp</dimen>
+    <dimen name="main_search_action_icon_padding_start">8dp</dimen>
+    <dimen name="main_search_action_icon_padding_end">12dp</dimen>
+    <dimen name="main_search_action_icon_padding_vertical">12dp</dimen>
+    <dimen name="page_toolbar_padding_top">28dp</dimen>
+    <dimen name="dialog_round_surface_padding_horizontal">12dp</dimen>
+    <dimen name="dialog_round_surface_padding_vertical">12dp</dimen>
+    <dimen name="dialog_round_body_spacing">8dp</dimen>
+    <dimen name="dialog_round_text_line_spacing">0dp</dimen>
+    <dimen name="dialog_round_action_spacing_top">8dp</dimen>
+</resources>

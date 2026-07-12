@@ -53,6 +53,7 @@ public final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPager
     private final OnIconResolveRequestListener onIconResolveRequestListener;
     private final BooleanSupplier systemScopeSelectedSupplier;
     private boolean swipeRefreshEnabled = true;
+    private int topContentInset;
 
     public AppListPagerAdapter(OnAppClickListener onAppClickListener,
             OnRefreshListener onRefreshListener,
@@ -129,6 +130,14 @@ public final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPager
         }
     }
 
+    /** Reserves space under an overlaying app-page chrome element such as the watch tab strip. */
+    public void setTopContentInset(int inset) {
+        topContentInset = Math.max(0, inset);
+        for (PageHolder holder : activeHolders.values()) {
+            holder.setTopContentInset(topContentInset);
+        }
+    }
+
     @Override
     public PageHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
@@ -153,6 +162,7 @@ public final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPager
                 pageScrollStates.get(page),
                 Boolean.TRUE.equals(refreshingStates.get(page)));
         holder.setSwipeRefreshEnabled(swipeRefreshEnabled);
+        holder.setTopContentInset(topContentInset);
         pageScrollStates.remove(page);
     }
 
@@ -214,6 +224,10 @@ public final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPager
             controller.setSwipeRefreshEnabled(enabled);
         }
 
+        public void setTopContentInset(int inset) {
+            controller.setTopContentInset(inset);
+        }
+
         public void refreshStatuses() {
             controller.refreshStatuses();
         }
@@ -231,6 +245,10 @@ public final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPager
         private final SwipeRefreshLayout swipeRefreshLayout;
         private final RecyclerView recyclerView;
         private final PageListAdapter adapter;
+        private final int basePaddingLeft;
+        private final int basePaddingTop;
+        private final int basePaddingRight;
+        private final int basePaddingBottom;
         private AppListPage boundPage;
 
         public AppListPageController(SwipeRefreshLayout swipeRefreshLayout,
@@ -242,6 +260,10 @@ public final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPager
                 BooleanSupplier systemScopeSelectedSupplier) {
             this.swipeRefreshLayout = swipeRefreshLayout;
             this.recyclerView = recyclerView;
+            basePaddingLeft = recyclerView.getPaddingLeft();
+            basePaddingTop = recyclerView.getPaddingTop();
+            basePaddingRight = recyclerView.getPaddingRight();
+            basePaddingBottom = recyclerView.getPaddingBottom();
             recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
             adapter = new PageListAdapter(
                     onAppClickListener,
@@ -295,6 +317,15 @@ public final class AppListPagerAdapter extends RecyclerView.Adapter<AppListPager
 
         public void setSwipeRefreshEnabled(boolean enabled) {
             swipeRefreshLayout.setEnabled(enabled);
+        }
+
+        public void setTopContentInset(int inset) {
+            recyclerView.setPadding(
+                    basePaddingLeft,
+                    basePaddingTop + Math.max(0, inset),
+                    basePaddingRight,
+                    basePaddingBottom
+            );
         }
 
         public void refreshStatuses() {

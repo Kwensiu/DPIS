@@ -18,21 +18,32 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <com.google.android.material.textview.MaterialTextView
+        <!-- The scrollable page header owns the round-screen shoulder inset; cards stay full-width. -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/home_workspace_title"
-            android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium"
-            android:textColor="?attr/colorOnSurface"
-            android:textStyle="bold" />
+            android:orientation="vertical"
+            android:paddingStart="@dimen/home_workspace_header_safe_padding"
+            android:paddingEnd="@dimen/home_workspace_header_safe_padding">
 
-        <com.google.android.material.textview.MaterialTextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/home_workspace_text_spacing_top"
-            android:text="@string/home_workspace_subtitle"
-            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
-            android:textColor="?attr/colorPrimary" />
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/home_workspace_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/home_workspace_title"
+                android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium"
+                android:textColor="?attr/colorOnSurface"
+                android:textStyle="bold" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/home_workspace_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/home_workspace_text_spacing_top"
+                android:text="@string/home_workspace_subtitle"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                android:textColor="?attr/colorPrimary" />
+        </LinearLayout>
 
             <com.dpis.module.home.HomePrimaryStatusClusterLayout
                 android:id="@+id/home_primary_status_cluster"

@@ -3,6 +3,7 @@ package com.dpis.module.settings;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.provider.Settings;
@@ -14,6 +15,7 @@ import android.widget.Toast;
 import androidx.appcompat.widget.AppCompatImageButton;
 
 import com.dpis.module.R;
+import com.dpis.module.ui.WatchUiMode;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.slider.Slider;
@@ -97,6 +99,9 @@ final class SystemFontScaleToolBinder {
             card.setOnClickListener(v -> {
                 expanded = !expanded;
                 render();
+                if (expanded) {
+                    revealExpandedPanel();
+                }
             });
         }
         if (applyButton != null) {
@@ -242,6 +247,10 @@ final class SystemFontScaleToolBinder {
                 textRes = R.string.system_font_scale_badge_unavailable;
                 break;
             case PERMISSION_REQUIRED:
+                if (WatchUiMode.shouldUseCompactUi(activity)) {
+                    badgeView.setVisibility(View.GONE);
+                    return;
+                }
                 textRes = R.string.system_font_scale_badge_permission_required;
                 break;
             case OUT_OF_RANGE:
@@ -308,6 +317,27 @@ final class SystemFontScaleToolBinder {
         float density = activity.getResources().getDisplayMetrics().density;
         view.setTextSize(TypedValue.COMPLEX_UNIT_PX, baseSp * density * scale);
         view.setTypeface(Typeface.DEFAULT, bold ? Typeface.BOLD : Typeface.NORMAL);
+    }
+
+    private void revealExpandedPanel() {
+        View target = visibleExpandedPanel();
+        if (target == null) {
+            return;
+        }
+        target.post(() -> {
+            Rect bounds = new Rect(0, 0, target.getWidth(), target.getHeight());
+            target.requestRectangleOnScreen(bounds, true);
+        });
+    }
+
+    private View visibleExpandedPanel() {
+        if (permissionOverlay != null && permissionOverlay.getVisibility() == View.VISIBLE) {
+            return permissionOverlay;
+        }
+        if (operationGroup != null && operationGroup.getVisibility() == View.VISIBLE) {
+            return operationGroup;
+        }
+        return null;
     }
 
     private static void setVisible(View view, boolean visible) {

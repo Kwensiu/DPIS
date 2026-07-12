@@ -35,4 +35,5 @@ public final class InterfaceScaleStoreTest {
         store.setPercent(500);
         assertEquals(AppUiScaleManager.MAX_SCALE_PERCENT, store.getPercent());
     }
+
 }

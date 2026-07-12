@@ -88,6 +88,29 @@ public class MainActivityLayoutSmokeTest {
         assertTrue(source.contains("workspaceSwitch.setSaveFromParentEnabled(false);"));
     }
 
+    @Test
+    public void toolsWorkspaceKeepsExpandedCardsInsideScrollableContent()
+            throws IOException {
+        String layout = read("src/main/res/layout/tools_workspace.xml");
+        String dimensions = read("src/main/res/values/dimens.xml");
+        String source = read("src/main/java/com/dpis/module/settings/SystemFontScaleToolBinder.java");
+
+        assertTrue(layout.contains("android:id=\"@+id/tools_toolbar\""));
+        assertTrue(layout.contains("android:id=\"@+id/tools_workspace_scroll\""));
+        assertTrue(layout.contains("android:layout_height=\"0dp\""));
+        assertTrue(layout.contains("android:layout_weight=\"1\""));
+        assertTrue(layout.contains("android:clipToPadding=\"false\""));
+        assertTrue(layout.contains("android:id=\"@+id/tools_workspace_content\""));
+        assertTrue(layout.contains("android:paddingStart=\"@dimen/template_workspace_padding_horizontal\""));
+        assertTrue(layout.contains("android:paddingBottom=\"@dimen/tools_workspace_content_padding_bottom\""));
+        assertTrue(layout.contains("android:id=\"@+id/system_font_scale_card\""));
+        assertTrue(layout.contains("android:id=\"@+id/system_font_scale_operation_group\""));
+        assertTrue(layout.contains("android:id=\"@+id/system_font_scale_permission_overlay\""));
+        assertTrue(dimensions.contains("tools_workspace_content_padding_bottom"));
+        assertTrue(source.contains("revealExpandedPanel();"));
+        assertTrue(source.contains("requestRectangleOnScreen"));
+    }
+
     private static String read(String relativePath) throws IOException {
         return SourceSmokeTestPaths.read(relativePath);
     }

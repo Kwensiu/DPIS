@@ -4,6 +4,7 @@ import com.dpis.module.diagnostics.DiagnosticLogGate;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import java.io.IOException;
 
@@ -60,10 +61,11 @@ public class SystemFontScaleToolLayoutSmokeTest {
 
         assertTrue(source.contains(
                 "View toolsToolbar = workspaceView.findViewById(R.id.tools_toolbar);"));
-        assertTrue(source.contains("host.applyToolsToolbarInsets(toolsToolbar);"));
+        assertTrue(source.contains("WatchUiMode.shouldUseCompactUi(host.activity())"));
+        assertTrue(source.contains("((LinearLayout) toolsToolbar).setGravity(Gravity.CENTER);"));
         assertTrue(source.contains("host.openLogsWhenDiagnosticLogsEnabled()"));
         assertTrue(mainActivity.contains(
-                "WindowInsetsBinder.applySafeDrawingPadding(toolbar, false, true, false, false);"));
+                "WindowInsetsBinder.applySystemBarPadding(toolbar, false, true, false, false);"));
         assertTrue(mainActivity.contains("DiagnosticLogGate.ensureEnabled("));
         assertTrue(mainActivity.contains("new Intent(MainActivity.this, LogActivity.class)"));
         assertTrue(settingsController.contains("View toolbar = findViewById(R.id.settings_toolbar);"));

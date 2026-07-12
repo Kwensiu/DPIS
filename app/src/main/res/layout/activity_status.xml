@@ -30,8 +30,6 @@
             </LinearLayout>
         </com.google.android.material.appbar.MaterialToolbar>
 
-        <com.google.android.material.tabs.TabLayout android:id="@+id/filter_tabs" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/main_tabs_spacing_top" app:tabGravity="fill" app:tabIndicatorAnimationMode="elastic" app:tabIndicatorColor="?attr/colorPrimary" app:tabIndicatorFullWidth="false" app:tabIndicatorHeight="@dimen/main_tabs_indicator_height" app:tabInlineLabel="true" app:tabMaxWidth="0dp" app:tabMinWidth="0dp" app:tabMode="fixed" app:tabRippleColor="@android:color/transparent" />
-
         <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
 
             <include layout="@layout/home_workspace" />
@@ -43,6 +41,8 @@
             <include layout="@layout/tools_workspace" />
 
             <include layout="@layout/settings_workspace" />
+
+            <com.google.android.material.tabs.TabLayout android:id="@+id/filter_tabs" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="top" app:tabGravity="fill" app:tabIndicatorAnimationMode="elastic" app:tabIndicatorColor="?attr/colorPrimary" app:tabIndicatorFullWidth="false" app:tabIndicatorHeight="@dimen/main_tabs_indicator_height" app:tabInlineLabel="true" app:tabMaxWidth="0dp" app:tabMinWidth="0dp" app:tabMode="fixed" app:tabRippleColor="@android:color/transparent" />
         </FrameLayout>
 
         <com.google.android.material.bottomnavigation.BottomNavigationView android:id="@+id/workspace_switch" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/colorSurfaceContainer" android:minHeight="@dimen/main_workspace_navigation_height" android:saveEnabled="false" app:itemIconTint="@color/workspace_navigation_item_color" app:itemTextColor="@color/workspace_navigation_item_color" app:labelVisibilityMode="selected" app:menu="@menu/main_workspace_navigation" />

@@ -3,6 +3,7 @@ package com.dpis.module;
 import com.dpis.module.diagnostics.DiagnosticLogGate;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import java.io.IOException;
 
@@ -17,7 +18,7 @@ public class ToolsWorkspaceBinderSourceSmokeTest {
         assertTrue(source.contains(
                 "toolsWorkspaceBinder = new ToolsWorkspaceBinder(new ToolsWorkspaceBinder.Host()"));
         assertTrue(source.contains(
-                "WindowInsetsBinder.applySafeDrawingPadding(toolbar, false, true, false, false);"));
+                "WindowInsetsBinder.applySystemBarPadding(toolbar, false, true, false, false);"));
         assertTrue(source.contains("TouchFeedbackBinder.bindPressHaptic(view);"));
         assertTrue(source.contains("DiagnosticLogGate.ensureEnabled("));
         assertTrue(source.contains("bindToolsWorkspace();"));

@@ -194,6 +194,11 @@ public class MainActivitySourceSmokeTest {
             )
         );
         assertTrue(source.contains("setVisible(filterTabs, appWorkspace);"));
+        assertTrue(source.contains("new AppListTabsChromeController("));
+        assertTrue(source.contains("appListTabsChromeController.onPageListScrolled(dy)"));
+        assertTrue(source.contains("appListTabsChromeController.onWorkspaceChanged(appWorkspace);"));
+        assertTrue(source.contains("filterTabs.post(appListTabsChromeController::syncListInsets);"));
+        assertFalse(source.contains("private void updateWatchFilterTabsScrollOffset(int dy)"));
         assertTrue(source.contains("setVisible(appPager, appWorkspace);"));
         assertTrue(source.contains("setVisible(landListPageView, appWorkspace);"));
         assertTrue(source.contains(
@@ -206,7 +211,9 @@ public class MainActivitySourceSmokeTest {
                 "boolean floatingActionsVisible"
             )
         );
-        assertTrue(source.contains("appWorkspace && !isLandscapeDetailMode()"));
+        assertTrue(source.contains("appWorkspace\n                && !isLandscapeDetailMode()"));
+        assertTrue(source.contains("&& WatchUiMode.shouldUseFloatingAppSearch(this);"));
+        assertTrue(source.contains("if (!WatchUiMode.shouldUseFloatingAppSearch(this))"));
         assertTrue(
             source.contains(
                 "setSearchFocusFabVisible(floatingActionsVisible);"
@@ -357,10 +364,12 @@ public class MainActivitySourceSmokeTest {
     }
 
     @Test
-    public void landscapeWorkspaceRailDistributesLikeBottomNavigationAndScrollsWhenNeeded()
+    public void landscapeWorkspaceRailUsesCompactMaterialItemHeightAndScrollsWhenNeeded()
             throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String landLayout = read("src/main/res/layout-land/activity_status.xml");
+        String dimensions = read("src/main/res/values/dimens.xml");
+        String roundDimensions = read("src/main/res/values-round/dimens.xml");
 
         assertTrue(landLayout.contains("com.google.android.material.navigationrail.NavigationRailView"));
         assertTrue(landLayout.contains("android:id=\"@+id/workspace_switch_scroll\""));
@@ -368,10 +377,12 @@ public class MainActivitySourceSmokeTest {
         assertTrue(landLayout.contains("app:labelVisibilityMode=\"selected\""));
         assertTrue(source.contains("bindLandscapeWorkspaceRailItemHeight();"));
         assertTrue(source.contains("workspaceSwitch instanceof NavigationRailView"));
-        assertTrue(source.contains("View railViewport = (View) workspaceSwitch.getParent();"));
-        assertTrue(source.contains("availableHeight / railView.getMenu().size()"));
+        assertTrue(source.contains("applyCompactLandscapeWorkspaceRailItemHeight();"));
+        assertTrue(source.contains("R.dimen.main_land_workspace_rail_item_min_height"));
         assertTrue(source.contains("railView.setItemMinimumHeight(itemHeight);"));
-        assertTrue(!source.contains("main_land_workspace_rail_item_min_height"));
+        assertTrue(!source.contains("availableHeight / railView.getMenu().size()"));
+        assertTrue(dimensions.contains("main_land_workspace_rail_item_min_height\">64dp"));
+        assertTrue(roundDimensions.contains("main_land_workspace_rail_item_min_height\">56dp"));
         assertTrue(!source.contains("NavigationRailMenuView"));
     }
 
@@ -871,6 +882,9 @@ public class MainActivitySourceSmokeTest {
         String layout = read(
             "src/main/res/layout/dialog_startup_disclaimer.xml"
         );
+        String roundLayout = read(
+            "src/main/res/layout-round/dialog_startup_disclaimer.xml"
+        );
 
         assertTrue(
             layout.contains("com.dpis.module.ui.MaxHeightNestedScrollView")
@@ -891,6 +905,12 @@ public class MainActivitySourceSmokeTest {
         assertTrue(layout.contains("@dimen/dialog_text_line_spacing"));
         assertTrue(layout.contains("@dimen/dialog_action_spacing_top"));
         assertTrue(!layout.contains("@dimen/dialog_action_spacing_between"));
+        assertTrue(roundLayout.contains("@style/TextAppearance.Material3.TitleSmall"));
+        assertTrue(roundLayout.contains("android:maxLines=\"2\""));
+        assertTrue(roundLayout.contains("app:maxHeightFraction=\"0.25\""));
+        assertTrue(roundLayout.contains("@style/TextAppearance.Material3.BodySmall"));
+        assertTrue(roundLayout.contains("startup_disclaimer_checkbox"));
+        assertTrue(roundLayout.contains("startup_disclaimer_accept_button"));
     }
 
     @Test
