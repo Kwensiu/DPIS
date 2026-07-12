@@ -211,7 +211,8 @@ public class MainActivitySourceSmokeTest {
                 "boolean floatingActionsVisible"
             )
         );
-        assertTrue(source.contains("appWorkspace\n                && !isLandscapeDetailMode()"));
+        assertTrue(compact(source).contains(
+                "boolean floatingActionsVisible = appWorkspace && !isLandscapeDetailMode()"));
         assertTrue(source.contains("&& WatchUiMode.shouldUseFloatingAppSearch(this);"));
         assertTrue(source.contains("if (!WatchUiMode.shouldUseFloatingAppSearch(this))"));
         assertTrue(
@@ -885,6 +886,7 @@ public class MainActivitySourceSmokeTest {
         String roundLayout = read(
             "src/main/res/layout-round/dialog_startup_disclaimer.xml"
         );
+        String dimensions = read("src/main/res/values/dimens.xml");
 
         assertTrue(
             layout.contains("com.dpis.module.ui.MaxHeightNestedScrollView")
@@ -911,6 +913,11 @@ public class MainActivitySourceSmokeTest {
         assertTrue(roundLayout.contains("@style/TextAppearance.Material3.BodySmall"));
         assertTrue(roundLayout.contains("startup_disclaimer_checkbox"));
         assertTrue(roundLayout.contains("startup_disclaimer_accept_button"));
+        assertTrue(dimensions.contains("dialog_round_surface_padding_horizontal"));
+        assertTrue(dimensions.contains("dialog_round_surface_padding_vertical"));
+        assertTrue(dimensions.contains("dialog_round_body_spacing"));
+        assertTrue(dimensions.contains("dialog_round_text_line_spacing"));
+        assertTrue(dimensions.contains("dialog_round_action_spacing_top"));
     }
 
     @Test

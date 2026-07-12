@@ -19,6 +19,12 @@
     <dimen name="page_card_stroke_width">1dp</dimen>
     <dimen name="dialog_sheet_header_subtitle_spacing_top">1dp</dimen>
     <dimen name="quick_config_panel_corner_radius">28dp</dimen>
+    <!-- Defaults keep round-dialog resources resolvable when a device misses the round qualifier. -->
+    <dimen name="dialog_round_surface_padding_horizontal">12dp</dimen>
+    <dimen name="dialog_round_surface_padding_vertical">12dp</dimen>
+    <dimen name="dialog_round_body_spacing">8dp</dimen>
+    <dimen name="dialog_round_text_line_spacing">0dp</dimen>
+    <dimen name="dialog_round_action_spacing_top">8dp</dimen>
 
     <!-- Main app screen. -->
     <dimen name="main_toolbar_padding_horizontal">16dp</dimen>
