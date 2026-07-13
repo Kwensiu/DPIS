@@ -143,18 +143,6 @@
     <dimen name="home_workspace_card_spacing_top">12dp</dimen>
     <dimen name="home_workspace_card_padding">12dp</dimen>
     <dimen name="home_workspace_card_corner_radius">12dp</dimen>
-    <dimen name="mode_help_intro_spacing_top">2dp</dimen>
-    <dimen name="mode_help_section_spacing_top">18dp</dimen>
-    <dimen name="mode_help_content_spacing_top">12dp</dimen>
-    <dimen name="mode_help_tip_item_padding_vertical">4dp</dimen>
-    <dimen name="mode_help_tip_marker_width">3dp</dimen>
-    <dimen name="mode_help_tip_marker_spacing_end">14dp</dimen>
-    <dimen name="mode_help_card_padding_vertical">12dp</dimen>
-    <dimen name="mode_help_card_padding_horizontal">14dp</dimen>
-    <dimen name="mode_help_card_corner_radius">10dp</dimen>
-    <dimen name="mode_help_text_spacing_top">10dp</dimen>
-    <dimen name="mode_help_reason_spacing_top">12dp</dimen>
-    <dimen name="mode_help_entry_min_height">64dp</dimen>
     <dimen name="home_workspace_connected_row_inner_radius">3dp</dimen>
     <dimen name="home_workspace_connected_row_gap">2dp</dimen>
     <dimen name="home_workspace_primary_status_min_height">82dp</dimen>
@@ -303,22 +291,9 @@
     <dimen name="donate_card_padding">20dp</dimen>
     <dimen name="donate_note_spacing_top">12dp</dimen>
     <dimen name="donate_qr_card_gap">12dp</dimen>
-    <dimen name="donate_qr_title_pill_margin">12dp</dimen>
-    <dimen name="donate_qr_title_pill_padding_horizontal">12dp</dimen>
-    <dimen name="donate_qr_title_pill_padding_vertical">6dp</dimen>
-    <dimen name="donate_qr_title_pill_corner_radius">18dp</dimen>
-    <dimen name="donate_qr_title_pill_elevation">4dp</dimen>
     <dimen name="donate_supporters_summary_spacing_top">4dp</dimen>
     <dimen name="donate_supporters_chevron_size">24dp</dimen>
     <dimen name="donate_supporters_chevron_spacing_start">12dp</dimen>
-    <dimen name="donate_supporters_sheet_min_height">512dp</dimen>
-    <dimen name="donate_supporters_sheet_summary_spacing_top">8dp</dimen>
-    <dimen name="donate_supporters_sheet_list_spacing_top">12dp</dimen>
-    <dimen name="donate_supporters_sheet_card_spacing_top">8dp</dimen>
-    <dimen name="donate_supporters_sheet_row_min_height">48dp</dimen>
-    <dimen name="donate_supporters_sheet_row_padding">16dp</dimen>
-    <dimen name="donate_supporters_sheet_note_spacing_top">12dp</dimen>
-    <dimen name="donate_supporters_amount_spacing_start">16dp</dimen>
 
     <!-- App config bottom sheet. -->
     <dimen name="dialog_mode_toggle_row_height">56dp</dimen>
