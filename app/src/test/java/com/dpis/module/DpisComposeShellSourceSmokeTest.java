@@ -45,7 +45,7 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(shell.contains("WindowInsetsSides.Start + WindowInsetsSides.Vertical"));
         assertTrue(shell.contains("legacyWorkspaceInsetsFor(selectedDestination)"));
         assertTrue(shell.contains("legacyBottomNavigationPadding(scaffoldPadding)"));
-        assertTrue(shell.contains("DpisWorkspaceDestination.SETTINGS -> PaddingValues()"));
+        assertTrue(shell.contains("DpisWorkspaceDestination.SETTINGS -> PaddingValues(end = endPadding)"));
         assertTrue(shell.contains("stringResource(R.string.app_name)"));
         assertTrue(shell.contains("DpisWorkspaceDestination.HOME"));
         assertTrue(shell.contains("DpisWorkspaceDestination.TOOLS"));
@@ -74,6 +74,36 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(localizedActivity.contains("extends ComponentActivity"));
         assertTrue(legacyHost.contains("ViewCompat.getRootWindowInsets(view)"));
         assertTrue(legacyHost.contains("ViewCompat.dispatchApplyWindowInsets(view, rootInsets)"));
+    }
+
+    @Test
+    public void interfaceScaleSliderShowsOnlyEndpointMarkers() throws IOException {
+        String settings = read("src/main/java/com/dpis/module/ui/compose/SettingsWorkspaceContent.kt");
+        String home = read("src/main/java/com/dpis/module/ui/compose/HomeWorkspaceContent.kt");
+        String tools = read("src/main/java/com/dpis/module/ui/compose/ToolsWorkspaceContent.kt");
+
+        assertTrue(settings.contains("steps = 0"));
+        assertTrue(settings.contains("SliderDefaults.Track"));
+        assertTrue(settings.contains("latestGestureValue.floatValue"));
+        assertTrue(settings.contains("onClick = onDetails"));
+        assertTrue(settings.contains("Surface owns the entire-card ripple"));
+        assertTrue(settings.contains(
+                "state?.languageLabel ?: stringResource(R.string.settings_language_follow_system),\n"
+                        + "                    enabled = state?.storeAvailable == true"));
+        assertTrue(settings.contains(
+                "enabled = state?.storeAvailable == true && state.cacheClearInProgress != true"));
+        assertTrue(home.contains("Card(\n        onClick = onClick"));
+        assertTrue(home.contains(".clip(CircleShape)"));
+        assertTrue(home.contains("Spacer(Modifier.height(24.dp))"));
+        assertTrue(tools.contains("Card(\n                onClick = onExpandedChanged"));
+        assertTrue(tools.contains("Card(\n                onClick = onOpenLogs"));
+        assertTrue(tools.contains("SystemFontScaleBadge(state)"));
+        assertTrue(tools.contains("if (!state.canWrite && !state.unavailable)"));
+        assertTrue(tools.contains("else if (state.unavailable)"));
+        assertTrue(tools.contains("state.canDecrement()"));
+        assertTrue(tools.contains("state.canRestore()"));
+        assertTrue(tools.contains("SystemFontScaleToolState.normalizeSliderPercent(it)"));
+        assertTrue(tools.contains("LocalDensity provides Density(displayDensity.density, fontScale = 1f)"));
     }
 
     private static String read(String relativePath) throws IOException {

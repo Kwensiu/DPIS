@@ -1,11 +1,13 @@
 package com.dpis.module.settings;
 
-final class SystemFontScaleToolState {
-    static final int MIN_PERCENT = 50;
-    static final int MAX_PERCENT = 200;
-    static final int DEFAULT_PERCENT = 100;
+public final class SystemFontScaleToolState {
+    public static final int MIN_PERCENT = 50;
+    public static final int MAX_PERCENT = 200;
+    public static final int DEFAULT_PERCENT = 100;
+    public static final int PREVIEW_TITLE_SP = 18;
+    public static final int PREVIEW_BODY_SP = 14;
 
-    enum Badge {
+    public enum Badge {
         NONE,
         UNAVAILABLE,
         PERMISSION_REQUIRED,
@@ -13,11 +15,11 @@ final class SystemFontScaleToolState {
         MODIFIED
     }
 
-    final boolean canWrite;
-    final Integer currentPercent;
-    final int pendingPercent;
-    final boolean userSelectedPending;
-    final boolean unavailable;
+    public final boolean canWrite;
+    public final Integer currentPercent;
+    public final int pendingPercent;
+    public final boolean userSelectedPending;
+    public final boolean unavailable;
 
     SystemFontScaleToolState(boolean canWrite,
                              Integer currentPercent,
@@ -43,6 +45,20 @@ final class SystemFontScaleToolState {
         return Math.max(MIN_PERCENT, Math.min(MAX_PERCENT, percent));
     }
 
+    /** Converts continuous Compose slider input back to the tool's 1% domain. */
+    public static int normalizeSliderPercent(float value) {
+        return clampPercent(Math.round(value));
+    }
+
+    /**
+     * Returns the requested preview size in sp before the preview's fixed font scale is applied.
+     * The Compose preview supplies a Density with fontScale=1 so this remains independent of the
+     * device's currently applied system font size, matching the legacy pixel calculation.
+     */
+    public static float previewTextSp(int baseSp, int pendingPercent) {
+        return baseSp * clampPercent(pendingPercent) / 100f;
+    }
+
     static boolean isInRange(Integer percent) {
         return percent != null && percent >= MIN_PERCENT && percent <= MAX_PERCENT;
     }
@@ -54,7 +70,7 @@ final class SystemFontScaleToolState {
         return clampPercent(currentPercent);
     }
 
-    Badge badge() {
+    public Badge badge() {
         if (unavailable || currentPercent == null) {
             return Badge.UNAVAILABLE;
         }
@@ -70,7 +86,7 @@ final class SystemFontScaleToolState {
         return Badge.NONE;
     }
 
-    boolean canApply() {
+    public boolean canApply() {
         return canWrite
                 && !unavailable
                 && currentPercent != null
@@ -79,7 +95,7 @@ final class SystemFontScaleToolState {
                 && pendingPercent != currentPercent;
     }
 
-    boolean canRestore() {
+    public boolean canRestore() {
         return canWrite
                 && !unavailable
                 && currentPercent != null
@@ -92,11 +108,11 @@ final class SystemFontScaleToolState {
                 && pendingPercent != DEFAULT_PERCENT;
     }
 
-    boolean canDecrement() {
+    public boolean canDecrement() {
         return canWrite && !unavailable && pendingPercent > MIN_PERCENT;
     }
 
-    boolean canIncrement() {
+    public boolean canIncrement() {
         return canWrite && !unavailable && pendingPercent < MAX_PERCENT;
     }
 

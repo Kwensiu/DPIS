@@ -132,7 +132,8 @@ android {
     // a single-module app. If more Android modules appear, move these shared
     // defaults into a small convention plugin instead of duplicating them.
     namespace = "com.dpis.module"
-    compileSdk = 36
+    // Compose Material3 1.5 alpha is built against API 37; runtime targeting remains API 36.
+    compileSdk = 37
     buildToolsVersion = "36.1.0"
     ndkVersion = resolvedNdkVersion
 

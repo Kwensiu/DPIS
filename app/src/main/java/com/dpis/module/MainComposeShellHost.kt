@@ -29,6 +29,7 @@ internal class MainComposeShellHost(
     private val legacyWorkspaceRoot: View,
     initialState: MainUiState,
     private val isCompactUi: Boolean,
+    private val workspacePresentation: MainWorkspacePresentationCoordinator,
     private val onContentBottomPaddingChanged: (Int) -> Unit,
     private val dispatch: (MainUiAction) -> Unit
 ) {
@@ -43,16 +44,21 @@ internal class MainComposeShellHost(
                     isCompactUi = isCompactUi,
                     dispatch = dispatch
                 ) { padding ->
-                    val contentBottomPadding = (
-                        padding.calculateBottomPadding().value * LocalDensity.current.density
-                    ).roundToInt()
-                    SideEffect {
-                        onContentBottomPaddingChanged(contentBottomPadding)
+                    if (workspacePresentation.render(state.workspaceMode, padding)) {
+                        // Home domain state lives in MainActivity. This revision only invalidates
+                        // the Compose presentation after its existing coordinator updates it.
+                    } else {
+                        val contentBottomPadding = (
+                            padding.calculateBottomPadding().value * LocalDensity.current.density
+                        ).roundToInt()
+                        SideEffect {
+                            onContentBottomPaddingChanged(contentBottomPadding)
+                        }
+                        DpisLegacyWorkspaceHost(
+                            createView = { legacyWorkspaceRoot },
+                            modifier = Modifier.padding(padding)
+                        )
                     }
-                    DpisLegacyWorkspaceHost(
-                        createView = { legacyWorkspaceRoot },
-                        modifier = Modifier.padding(padding)
-                    )
                 }
             }
         }
@@ -62,11 +68,23 @@ internal class MainComposeShellHost(
         state = nextState
     }
 
+    fun refreshHome() = workspacePresentation.refreshHome()
+
+    @JvmOverloads
+    fun refreshTools(collapse: Boolean = false) {
+        workspacePresentation.refreshTools(collapse)
+    }
+
+    fun refreshSettings() = workspacePresentation.refreshSettings()
+
     /**
      * Replays raw window insets after a lazily bound legacy workspace becomes visible.
      * Its View listeners are the system-bar owners until that workspace is migrated.
      */
     fun replayLegacyWorkspaceInsets(workspaceMode: MainUiState.WorkspaceMode) {
+        if (workspacePresentation.owns(workspaceMode)) {
+            return
+        }
         if (lastInsetsReplayWorkspace == workspaceMode) {
             return
         }

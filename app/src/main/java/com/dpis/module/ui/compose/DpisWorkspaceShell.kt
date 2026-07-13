@@ -193,8 +193,8 @@ private fun navigationSurfaceInsets(): WindowInsets = safeDrawingInsets().only(
  * The navigation rail/drawer owns the start-side cutout. Content only consumes
  * the end side so a left camera cutout cannot create a second empty gutter.
  * Every legacy workspace owns its own top system-bar inset; Compose only keeps
- * App and Template clear of the bottom gesture/navigation boundary. Settings
- * already owns both horizontal safe sides through its legacy View listener.
+ * App and Template clear of the bottom gesture/navigation boundary. Compose
+ * workspaces use the same end-side rule; compact Watch keeps its View route.
  */
 @Composable
 private fun legacyWorkspaceInsetsFor(destination: DpisWorkspaceDestination): PaddingValues {
@@ -209,10 +209,8 @@ private fun legacyWorkspaceInsetsFor(destination: DpisWorkspaceDestination): Pad
         )
 
         DpisWorkspaceDestination.HOME,
-        DpisWorkspaceDestination.TOOLS -> PaddingValues(end = endPadding)
-
-        DpisWorkspaceDestination.SETTINGS -> PaddingValues() // TODO(Compose Theme 3): Remove
-        // this bridge exception when Settings content is Compose-native and owns both safe sides.
+        DpisWorkspaceDestination.TOOLS,
+        DpisWorkspaceDestination.SETTINGS -> PaddingValues(end = endPadding)
     }
 }
 

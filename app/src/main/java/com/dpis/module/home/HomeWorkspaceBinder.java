@@ -25,13 +25,14 @@ public final class HomeWorkspaceBinder {
     private int statusCardEqualizationGeneration = 0;
 
     public static final class State {
-        final boolean xposedModuleActivated;
-        final int configuredAppCount;
-        final int importedFontCount;
-        final int templateCount;
-        final RootAccessProbe.Result rootAccess;
-        final HomeUpdateUiState updateState;
-        final Actions actions;
+        /** Immutable domain snapshot shared by the legacy binder and Compose presenter. */
+        public final boolean xposedModuleActivated;
+        public final int configuredAppCount;
+        public final int importedFontCount;
+        public final int templateCount;
+        public final RootAccessProbe.Result rootAccess;
+        public final HomeUpdateUiState updateState;
+        public final Actions actions;
 
         public State(boolean xposedModuleActivated,
                 int configuredAppCount,

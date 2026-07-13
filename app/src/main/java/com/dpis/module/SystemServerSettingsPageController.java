@@ -88,6 +88,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     private final View root;
     private final LauncherIconVisibilityStore launcherIconVisibilityStore;
     private final InterfaceScaleStore interfaceScaleStore;
+    private final SettingsPresentationController presentationController;
     private DpisConfigStore store;
     private MaterialSwitch hooksEnabledSwitch;
     private MaterialSwitch safeModeSwitch;
@@ -106,6 +107,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     private int lastInterfaceScaleFeedbackPercent = AppUiScaleManager.DEFAULT_SCALE_PERCENT;
     private boolean suppressInterfaceScaleSliderChange;
     private volatile boolean clearCacheInProgress;
+    private String lastCacheUsage = "0 B";
     private SharedPreferences statsPreferences;
     private int selectedMode = FontDebugStatsStore.MODE_CHAIN;
     private int selectedWindow = FontDebugStatsStore.WINDOW_ALL;
@@ -132,6 +134,64 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         this.root = root;
         this.launcherIconVisibilityStore = new LauncherIconVisibilityStore(activity);
         this.interfaceScaleStore = new InterfaceScaleStore(activity);
+        this.presentationController = new SettingsPresentationController(
+                new SettingsPresentationController.Port() {
+                    @Override
+                    public SettingsUiState snapshot() {
+                        return presentationState();
+                    }
+
+                    @Override
+                    public void setSafeModeEnabled(boolean enabled) {
+                        if (enabled) {
+                            onSafeModeChanged(null, true);
+                        } else {
+                            showDisableSafeModeConfirmationDialog();
+                        }
+                    }
+
+                    @Override
+                    public void setGlobalLogEnabled(boolean enabled) {
+                        onGlobalLogChanged(null, enabled);
+                    }
+
+                    @Override
+                    public void setLauncherIconHidden(boolean hidden) {
+                        if (hidden) {
+                            showHideLauncherIconConfirmationDialog();
+                        } else {
+                            onHideLauncherIconChanged(null, false);
+                        }
+                    }
+
+                    @Override
+                    public void refresh() {
+                        if (root == null) {
+                            refreshComposeStoreState();
+                        } else {
+                            refreshStoreState(false);
+                        }
+                        publishPresentationState();
+                    }
+                });
+    }
+
+    /** The sole state/action boundary for a future Compose Settings workspace. */
+    SettingsPresentationController presentationController() { return presentationController; }
+
+    SettingsUiState presentationState() {
+        boolean available = store != null;
+        return new SettingsUiState(available,
+                available && store.isSystemServerHooksEnabled(),
+                available && store.isSystemServerSafeModeEnabled(),
+                available && store.isGlobalLogEnabled(),
+                launcherIconVisibilityStore.isHidden(), interfaceScaleStore.getPercent(),
+                clearCacheInProgress, lastCacheUsage,
+                getString(AppLocaleManager.selectedLabelResId(activity)));
+    }
+
+    private void publishPresentationState() {
+        presentationController.publishState();
     }
 
     void bind() {
@@ -213,7 +273,36 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         globalLogSwitch.setOnCheckedChangeListener(this::onGlobalLogChanged);
         hideLauncherIconSwitch.setOnCheckedChangeListener(this::onHideLauncherIconChanged);
         refreshStoreState(true);
+        publishPresentationState();
     }
+
+    /** Initializes the same Java-owned workflows when Settings is Compose-native. */
+    void initializeComposePresentation() {
+        refreshComposeStoreState();
+        statsPreferences = FontDebugStatsStore.getPreferences(activity);
+        updateCacheEntrySubtitle();
+        publishPresentationState();
+    }
+
+    void addPresentationListener(SettingsPresentationController.Listener listener) {
+        presentationController.addListener(listener);
+    }
+
+    void removePresentationListener(SettingsPresentationController.Listener listener) {
+        presentationController.removeListener(listener);
+    }
+
+    void setHooksEnabledFromPresentation(boolean enabled) { onHooksEnabledChanged(null, enabled); }
+    void showFontDebugFromPresentation() { showFontDebugDialog(null); }
+    void showExperimentalSettingsFromPresentation() { startActivity(new Intent(activity, ExperimentalSettingsActivity.class)); }
+    void showFontLibraryFromPresentation() { startActivity(new Intent(activity, FontLibraryActivity.class)); }
+    void showLanguageFromPresentation() { showLanguageDialog(null); }
+    void saveInterfaceScaleFromPresentation(int percent) { saveInterfaceScalePercent(percent); }
+    void showInterfaceScaleFromPresentation() { showInterfaceScaleDialog(); }
+    void showConfigBackupFromPresentation() { showConfigBackupDialog(null); }
+    void clearCacheFromPresentation() { clearCache(null); }
+    void showAboutFromPresentation() { startActivity(new Intent(activity, AboutActivity.class)); }
+    void showDonateFromPresentation() { startActivity(DonateActivity.createIntent(activity)); }
 
     void onStart() {
         DpisApplication.addServiceStateListener(this, true);
@@ -226,6 +315,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         if (store != null && store.isFontDebugOverlayEnabled() && canDrawOverlays()) {
             startFontDebugOverlayService();
         }
+        publishPresentationState();
     }
 
     void onStop() {
@@ -236,7 +326,14 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
 
     @Override
     public void onServiceStateChanged() {
-        runOnUiThread(() -> refreshStoreState(false));
+        runOnUiThread(() -> {
+            if (root == null) {
+                refreshComposeStoreState();
+            } else {
+                refreshStoreState(false);
+            }
+            publishPresentationState();
+        });
     }
 
     @SuppressWarnings("deprecation")
@@ -247,10 +344,12 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         Uri uri = data.getData();
         if (requestCode == REQUEST_EXPORT_CONFIG_BACKUP) {
             exportConfigBackup(uri);
+            publishPresentationState();
             return;
         }
         if (requestCode == REQUEST_IMPORT_CONFIG_BACKUP) {
             showImportBackupConfirmDialog(uri);
+            publishPresentationState();
             return;
         }
     }
@@ -473,6 +572,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             return;
         }
         setInterfaceScalePercentSilently(normalized);
+        publishPresentationState();
         recreate();
     }
 
@@ -647,15 +747,13 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void updateCacheEntrySubtitle() {
-        if (clearCacheEntryRow == null) {
-            return;
-        }
         android.content.Context appContext = getApplicationContext();
         new Thread(() -> {
             String usage = SafeCacheCleaner.formatCacheUsage(appContext);
             runOnUiThread(() -> {
                 if (!isFinishing() && !isDestroyed() && !clearCacheInProgress) {
                     setCacheEntrySubtitle(usage);
+                    publishPresentationState();
                 }
             });
         }, "dpis-cache-size").start();
@@ -668,6 +766,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         clearCacheInProgress = true;
         setRowEnabled(clearCacheEntryRow, false);
         setCacheEntrySubtitle(getString(R.string.settings_clear_cache_cleaning));
+        publishPresentationState();
         android.content.Context appContext = getApplicationContext();
         new Thread(() -> {
             long startedAt = System.currentTimeMillis();
@@ -690,6 +789,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                     clearCacheInProgress = false;
                     setRowEnabled(clearCacheEntryRow, true);
                     updateCacheEntrySubtitle();
+                    publishPresentationState();
                     if (finalLegacyCacheStillNeedsManualDelete) {
                         showToast(R.string.settings_clear_cache_legacy_public_file_blocked);
                         return;
@@ -716,6 +816,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void setCacheEntrySubtitle(String usage) {
+        lastCacheUsage = usage != null ? usage : "";
         if (clearCacheEntryRow == null) {
             return;
         }
@@ -795,8 +896,10 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         proceedButton.setOnClickListener(v -> {
             dialog.dismiss();
             importConfigBackup(uri);
+            publishPresentationState();
         });
-        cancelButton.setOnClickListener(v -> dialog.dismiss());
+        cancelButton.setOnClickListener(v -> { dialog.dismiss(); publishPresentationState(); });
+        dialog.setOnCancelListener(unused -> publishPresentationState());
         dialog.show();
         DialogWindowSizer.applyLargeWidth(dialog, activity);
     }
@@ -821,9 +924,11 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             runOnUiThread(() -> {
                 if (finalSuccess) {
                     showToast(R.string.config_backup_export_success);
+                    publishPresentationState();
                     return;
                 }
                 showToast(R.string.config_backup_export_failed);
+                publishPresentationState();
             });
         }, "dpis-config-backup-export").start();
     }
@@ -840,15 +945,16 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                 String payload = readUtf8(uri);
                 entries = ConfigBackupCodec.decode(payload);
             } catch (IOException | JSONException | IllegalArgumentException ignored) {
-                runOnUiThread(() -> showToast(R.string.config_backup_import_invalid));
+                runOnUiThread(() -> { showToast(R.string.config_backup_import_invalid); publishPresentationState(); });
                 return;
             }
             if (!localStore.replaceBackup(entries)) {
-                runOnUiThread(() -> showToast(R.string.config_backup_import_failed));
+                runOnUiThread(() -> { showToast(R.string.config_backup_import_failed); publishPresentationState(); });
                 return;
             }
             runOnUiThread(() -> {
                 showToast(R.string.config_backup_import_success);
+                publishPresentationState();
                 relaunchDpisTask();
             });
         }, "dpis-config-backup-import").start();
@@ -899,6 +1005,21 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         applyAvailableStoreState();
     }
 
+    private void refreshComposeStoreState() {
+        store = DpisApplication.getConfigStore();
+        if (store == null) {
+            hooksToggleController = null;
+            return;
+        }
+        selectedMode = store.getFontDebugSelectedMode();
+        selectedWindow = store.getFontDebugSelectedWindow();
+        hooksToggleController = new SystemHooksToggleController(
+                store,
+                new ActivitySystemScopeGateway(),
+                new ActivitySystemHooksToggleView(),
+                this::publishPresentationState);
+    }
+
     private void applyAvailableStoreState() {
         hooksEnabledSwitch.setEnabled(true);
         safeModeSwitch.setEnabled(true);
@@ -913,7 +1034,8 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         hooksToggleController = new SystemHooksToggleController(
                 store,
                 new ActivitySystemScopeGateway(),
-                new ActivitySystemHooksToggleView());
+                new ActivitySystemHooksToggleView(),
+                this::publishPresentationState);
         applyRestoredStoreState();
         setPrimarySwitchRowsVisible(true);
     }
@@ -1017,11 +1139,13 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                 requestOverlayPermission();
                 showToast(R.string.font_debug_overlay_permission_needed);
                 updateDialogButtons();
+                publishPresentationState();
                 return;
             }
             if (!store.setFontDebugOverlayEnabled(requestedEnabled)) {
                 showToast(R.string.system_settings_save_failed);
                 updateDialogButtons();
+                publishPresentationState();
                 return;
             }
             RuntimeDebugPropertySyncer.publishAsync(
@@ -1033,6 +1157,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                 stopService(new Intent(activity, FontDebugOverlayService.class));
             }
             updateDialogButtons();
+            publishPresentationState();
         });
 
         modeButton.setOnClickListener(v -> {
@@ -1042,6 +1167,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             store.setFontDebugSelectedMode(selectedMode);
             updateDialogButtons();
             refreshStatsPanel();
+            publishPresentationState();
         });
 
         windowButton.setOnClickListener(v -> {
@@ -1055,6 +1181,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             store.setFontDebugSelectedWindow(selectedWindow);
             updateDialogButtons();
             refreshStatsPanel();
+            publishPresentationState();
         });
 
         closeButton.setOnClickListener(v -> dismissFontDebugDialog());
@@ -1062,6 +1189,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             clearDebugStatsData();
             refreshStatsPanel();
             showToast(R.string.font_debug_clear_done);
+            publishPresentationState();
         });
 
         BottomSheetDialog dialog = new BottomSheetDialog(activity);
@@ -1073,6 +1201,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             dialogStatsLastUpdatedView = null;
             dialogStatsContentView = null;
             fontDebugDialog = null;
+            publishPresentationState();
         });
         fontDebugDialog = dialog;
         dialogOverlayActionButton = overlayActionButton;
@@ -1191,6 +1320,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             return;
         }
         hooksToggleController.onUserToggle(isChecked);
+        publishPresentationState();
     }
 
     private void applySystemHooksRowVisibility() {
@@ -1215,6 +1345,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             return;
         }
         RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
+        publishPresentationState();
     }
 
     private void showDisableSafeModeConfirmationDialog() {
@@ -1236,16 +1367,21 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             if (!store.setSystemServerSafeModeEnabled(false)) {
                 setCheckedSilently(safeModeSwitch, true, this::onSafeModeChanged);
                 showToast(R.string.system_settings_save_failed);
+                publishPresentationState();
                 return;
             }
             RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
+            publishPresentationState();
         });
         cancelButton.setOnClickListener(v -> {
             dialog.dismiss();
             setCheckedSilently(safeModeSwitch, true, this::onSafeModeChanged);
+            publishPresentationState();
         });
-        dialog.setOnCancelListener(unused -> setCheckedSilently(safeModeSwitch, true,
-                this::onSafeModeChanged));
+        dialog.setOnCancelListener(unused -> {
+            setCheckedSilently(safeModeSwitch, true, this::onSafeModeChanged);
+            publishPresentationState();
+        });
         dialog.show();
         DialogWindowSizer.applyStandardWidth(dialog, activity);
     }
@@ -1264,6 +1400,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                 isChecked,
                 store.isFontDebugOverlayEnabled());
         RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
+        publishPresentationState();
     }
 
     private void onHideLauncherIconChanged(CompoundButton buttonView, boolean isChecked) {
@@ -1274,6 +1411,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         if (!persistLauncherIconState(false)) {
             setCheckedSilently(hideLauncherIconSwitch, true, this::onHideLauncherIconChanged);
         }
+        publishPresentationState();
     }
 
     private void showHideLauncherIconConfirmationDialog() {
@@ -1296,14 +1434,19 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                 setCheckedSilently(hideLauncherIconSwitch, false,
                         this::onHideLauncherIconChanged);
             }
+            publishPresentationState();
         });
         cancelButton.setOnClickListener(v -> {
             dialog.dismiss();
             setCheckedSilently(hideLauncherIconSwitch, false,
                     this::onHideLauncherIconChanged);
+            publishPresentationState();
         });
-        dialog.setOnCancelListener(unused -> setCheckedSilently(hideLauncherIconSwitch, false,
-                this::onHideLauncherIconChanged));
+        dialog.setOnCancelListener(unused -> {
+            setCheckedSilently(hideLauncherIconSwitch, false,
+                    this::onHideLauncherIconChanged);
+            publishPresentationState();
+        });
         dialog.show();
         DialogWindowSizer.applyStandardWidth(dialog, activity);
     }
@@ -1316,6 +1459,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 Uri.parse("package:" + getPackageName()));
         startActivity(intent);
+        publishPresentationState();
     }
 
     private void startFontDebugOverlayService() {
