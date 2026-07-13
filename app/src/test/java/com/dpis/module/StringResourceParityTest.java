@@ -106,7 +106,7 @@ public class StringResourceParityTest {
         String licenseSource = read("src/main/java/com/dpis/module/about/OpenSourceLicenseActivity.java");
         String manifest = read("src/main/AndroidManifest.xml");
 
-        assertTrue(localizedSource.contains("extends Activity"));
+        assertTrue(localizedSource.contains("extends ComponentActivity"));
         assertTrue(localeManager.contains("Context wrap(Context context)"));
         assertTrue(localeManager.contains("createConfigurationContext(configuration)"));
         assertTrue(localeManager.contains("Context.MODE_PRIVATE"));

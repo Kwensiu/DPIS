@@ -11,6 +11,7 @@ import org.gradle.api.tasks.testing.Test
 
 plugins {
     alias(libs.plugins.agp.app)
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.aboutlibraries)
 }
 
@@ -220,6 +221,7 @@ android {
 
     buildFeatures {
         buildConfig = true
+        compose = true
     }
 
     lint {
@@ -326,6 +328,13 @@ dependencies {
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.material)
     implementation(libs.markwon.core)
+    implementation(platform(libs.compose.bom))
+    implementation(libs.androidx.activity)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    debugImplementation(libs.compose.ui.tooling)
     testImplementation(libs.junit4)
     testRuntimeOnly(libs.legacy.xposed.api)
     androidTestImplementation(libs.androidx.test.ext.junit)

@@ -15,6 +15,8 @@
     <dimen name="main_search_action_icon_padding_end">12dp</dimen>
     <dimen name="main_search_action_icon_padding_vertical">12dp</dimen>
     <dimen name="page_toolbar_padding_top">28dp</dimen>
+    <!-- Preserve round-display shoulder clearance independently from standalone pages. -->
+    <dimen name="workspace_toolbar_padding_top">28dp</dimen>
     <dimen name="dialog_round_surface_padding_horizontal">12dp</dimen>
     <dimen name="dialog_round_surface_padding_vertical">12dp</dimen>
     <dimen name="dialog_round_body_spacing">8dp</dimen>

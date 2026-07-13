@@ -11,7 +11,9 @@
     <dimen name="floating_actions_hovered_focused_translation_z">8dp</dimen>
     <dimen name="floating_actions_pressed_translation_z">10dp</dimen>
     <dimen name="page_toolbar_padding_horizontal">16dp</dimen>
-    <dimen name="page_toolbar_padding_top">18dp</dimen>
+    <dimen name="page_toolbar_padding_top">8dp</dimen>
+    <!-- Main workspace chrome shares the phone rhythm but remains independently tunable. -->
+    <dimen name="workspace_toolbar_padding_top">8dp</dimen>
     <dimen name="page_toolbar_padding_bottom">8dp</dimen>
     <dimen name="page_back_button_padding">8dp</dimen>
     <dimen name="page_title_spacing_start">12dp</dimen>

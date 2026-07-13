@@ -1,0 +1,85 @@
+package com.dpis.module;
+
+import static org.junit.Assert.assertTrue;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import org.junit.Test;
+
+/** Guards the Theme 1 baseline while individual XML workspaces migrate later. */
+public final class DpisComposeShellSourceSmokeTest {
+    @Test
+    public void composeThemeAndShellKeepTheRequiredBoundaries() throws IOException {
+        String theme = read("src/main/java/com/dpis/module/ui/compose/DpisTheme.kt");
+        String shell = read("src/main/java/com/dpis/module/ui/compose/DpisWorkspaceShell.kt");
+        String adapter = read("src/main/java/com/dpis/module/MainComposeWorkspaceAdapter.java");
+        String mainShell = read("src/main/java/com/dpis/module/MainComposeWorkspaceShell.kt");
+        String previews = read("src/main/java/com/dpis/module/ui/compose/DpisWorkspaceShellPreviews.kt");
+        String legacyHost = read("src/main/java/com/dpis/module/ui/compose/DpisLegacyWorkspaceHost.kt");
+        String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
+        String localizedActivity = read("src/main/java/com/dpis/module/LocalizedActivity.java");
+
+        assertTrue(theme.contains("fun DpisTheme("));
+        assertTrue(theme.contains("dynamicLightColorScheme"));
+        assertTrue(theme.contains("dynamicDarkColorScheme"));
+        assertTrue(shell.contains("APP(R.string.workspace_app"));
+        assertTrue(shell.contains("TEMPLATE(R.string.workspace_template"));
+        assertTrue(shell.contains("HOME(R.string.workspace_home"));
+        assertTrue(shell.contains("TOOLS(R.string.workspace_tools"));
+        assertTrue(shell.contains("SETTINGS(R.string.workspace_settings"));
+        assertTrue(shell.contains("stringResource(destination.labelRes)"));
+        assertTrue(shell.contains("R.drawable.ic_apps_24"));
+        assertTrue(shell.contains("R.drawable.ic_template_24"));
+        assertTrue(shell.contains("R.drawable.ic_home_24"));
+        assertTrue(shell.contains("R.drawable.ic_build_24"));
+        assertTrue(shell.contains("R.drawable.ic_settings_24"));
+        assertTrue(shell.contains("painterResource(destination.iconRes)"));
+        assertTrue(!shell.contains("Icons.Outlined"));
+        assertTrue(shell.contains("alwaysShowLabel = false"));
+        assertTrue(shell.contains("NavigationBar(windowInsets = WindowInsets.navigationBars)"));
+        assertTrue(shell.contains("containerColor = MaterialTheme.colorScheme.surfaceContainer"));
+        assertTrue(shell.contains("drawerContainerColor = MaterialTheme.colorScheme.surfaceContainer"));
+        assertTrue(shell.contains("windowInsets = navigationSurfaceInsets()"));
+        assertTrue(shell.contains("WindowInsetsSides.Start + WindowInsetsSides.Vertical"));
+        assertTrue(shell.contains("legacyWorkspaceInsetsFor(selectedDestination)"));
+        assertTrue(shell.contains("legacyBottomNavigationPadding(scaffoldPadding)"));
+        assertTrue(shell.contains("DpisWorkspaceDestination.SETTINGS -> PaddingValues()"));
+        assertTrue(shell.contains("stringResource(R.string.app_name)"));
+        assertTrue(shell.contains("DpisWorkspaceDestination.HOME"));
+        assertTrue(shell.contains("DpisWorkspaceDestination.TOOLS"));
+        assertTrue(shell.contains("DpisWorkspaceDestination.SETTINGS"));
+        assertTrue(shell.contains("BOTTOM_BAR"));
+        assertTrue(shell.contains("NAVIGATION_RAIL"));
+        assertTrue(shell.contains("NAVIGATION_DRAWER"));
+        assertTrue(shell.contains("isCompactUi -> DpisWorkspaceNavigationLayout.BOTTOM_BAR"));
+        assertTrue(shell.contains("selectedDestination: DpisWorkspaceDestination"));
+        assertTrue(shell.contains("onDestinationSelected: (DpisWorkspaceDestination) -> Unit"));
+        assertTrue(adapter.contains("MainUiState.WorkspaceMode"));
+        assertTrue(mainShell.contains("MainUiAction.workspaceModeChanged"));
+        assertTrue(mainShell.contains("MainComposeWorkspaceAdapter.destinationFor(state.workspaceMode)"));
+        assertTrue(previews.contains("Phone"));
+        assertTrue(previews.contains("Tablet"));
+        assertTrue(previews.contains("Desktop"));
+        assertTrue(mainActivity.contains("installComposeWorkspaceShell();"));
+        assertTrue(mainActivity.contains("new MainComposeShellHost("));
+        assertTrue(mainActivity.contains("composeShellContentBottomPadding"));
+        assertTrue(mainActivity.contains("composeShellHost.replayLegacyWorkspaceInsets(mode)"));
+        assertTrue(mainActivity.contains("WindowInsetsBinder.refreshNavigationBarMargins(searchFocusFab)"));
+        assertTrue(mainActivity.contains("if (WatchUiMode.shouldUseCompactUi(this))"));
+        assertTrue(mainActivity.contains("getLastCustomNonConfigurationInstance()"));
+        assertTrue(mainActivity.contains("onRetainCustomNonConfigurationInstance()"));
+        assertTrue(localizedActivity.contains("import androidx.activity.ComponentActivity;"));
+        assertTrue(localizedActivity.contains("extends ComponentActivity"));
+        assertTrue(legacyHost.contains("ViewCompat.getRootWindowInsets(view)"));
+        assertTrue(legacyHost.contains("ViewCompat.dispatchApplyWindowInsets(view, rootInsets)"));
+    }
+
+    private static String read(String relativePath) throws IOException {
+        return new String(
+                Files.readAllBytes(new File(relativePath).toPath()),
+                StandardCharsets.UTF_8
+        );
+    }
+}

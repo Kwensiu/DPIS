@@ -170,6 +170,7 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 import androidx.core.content.FileProvider;
 import androidx.core.view.ViewCompat;
+import androidx.compose.ui.platform.ComposeView;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.viewpager2.widget.ViewPager2;
@@ -205,6 +206,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import kotlin.Unit;
 
 public final class MainActivity
         extends LocalizedActivity
@@ -315,6 +317,8 @@ public final class MainActivity
     private AppListFilterStateStore appListFilterStateStore;
 
     private MainViewModel mainViewModel;
+    private MainComposeShellHost composeShellHost;
+    private int composeShellContentBottomPadding;
     private AppListPagerAdapter pagerAdapter;
     private AppListTabsChromeController appListTabsChromeController;
     private ViewPager2 appPager;
@@ -409,7 +413,7 @@ public final class MainActivity
         appListFilterStateStore = new AppListFilterStateStore(this);
 
         RetainedState retainedState
-                = (RetainedState) getLastNonConfigurationInstance();
+                = (RetainedState) getLastCustomNonConfigurationInstance();
         String initialQuery = "";
         String initialTemplateQuery = "";
         AppListFilterState initialFilterState = appListFilterStateStore.load();
@@ -655,6 +659,7 @@ public final class MainActivity
                 -> updateSearchHint()
         );
         renderMainUiState(requireUiState());
+        installComposeWorkspaceShell();
         // The service state callback is not guaranteed to fire on every Wear image.
         // Request the catalog explicitly; MainViewModel coalesces any later service reload.
         requestAppsLoad();
@@ -909,7 +914,7 @@ public final class MainActivity
     }
 
     @Override
-    public Object onRetainNonConfigurationInstance() {
+    public Object onRetainCustomNonConfigurationInstance() {
         MainUiState state = requireUiState();
         List<AppListItem> snapshot = state.appsSnapshot();
         int currentPage
@@ -1230,7 +1235,10 @@ public final class MainActivity
                 true,
                 R.dimen.home_workspace_round_safe_padding
         );
-        WindowInsetsBinder.applyNavigationBarMargins(searchFocusFab);
+        WindowInsetsBinder.applyNavigationBarMargins(
+                searchFocusFab,
+                () -> composeShellContentBottomPadding
+        );
     }
 
     private void applyLandDetailContentInsets(View detailView) {
@@ -1449,11 +1457,66 @@ public final class MainActivity
         if (state == null) {
             return;
         }
+        if (composeShellHost != null) {
+            composeShellHost.render(state);
+        }
         syncSearchInputWithState(state);
         applyWorkspaceMode(state.workspaceMode);
         applyFilter();
         applyRefreshingStatesToPager();
         restoreAppEditorForCurrentWorkspace();
+    }
+
+    /**
+     * Theme 1 keeps the existing workspace root alive inside Compose while later
+     * themes replace individual View workspaces. Navigation itself now belongs
+     * to the stateless Compose shell and still dispatches through MainUiAction.
+     */
+    private void installComposeWorkspaceShell() {
+        // Compact watch chrome already owns scrolling and round-safe behavior.
+        // Keep that proven path until its dedicated workspace migration replaces it.
+        if (WatchUiMode.shouldUseCompactUi(this)) {
+            return;
+        }
+        ViewGroup activityContent = findViewById(android.R.id.content);
+        if (activityContent == null || activityContent.getChildCount() == 0) {
+            return;
+        }
+        View legacyWorkspaceRoot = activityContent.getChildAt(0);
+        if (legacyWorkspaceRoot == null) {
+            return;
+        }
+        if (workspaceSwitch != null) {
+            workspaceSwitch.setVisibility(View.GONE);
+        }
+        activityContent.removeView(legacyWorkspaceRoot);
+        ComposeView composeRoot = new ComposeView(this);
+        activityContent.addView(
+                composeRoot,
+                new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                )
+        );
+        composeShellHost = new MainComposeShellHost(
+                composeRoot,
+                legacyWorkspaceRoot,
+                requireUiState(),
+                false,
+                contentBottomPadding -> {
+                    if (composeShellContentBottomPadding != contentBottomPadding) {
+                        composeShellContentBottomPadding = contentBottomPadding;
+                        if (searchFocusFab != null) {
+                            WindowInsetsBinder.refreshNavigationBarMargins(searchFocusFab);
+                        }
+                    }
+                    return Unit.INSTANCE;
+                },
+                action -> {
+                    dispatchMainUiAction(action);
+                    return Unit.INSTANCE;
+                }
+        );
     }
 
     private void bindWorkspaceSwitch() {
@@ -1558,6 +1621,9 @@ public final class MainActivity
             bindToolsWorkspace(enteringToolsWorkspace);
         } else if (settingsWorkspace) {
             bindSettingsWorkspace();
+        }
+        if (composeShellHost != null) {
+            composeShellHost.replayLegacyWorkspaceInsets(mode);
         }
     }
 

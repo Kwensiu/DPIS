@@ -3,11 +3,19 @@ package com.dpis.module;
 import com.dpis.module.settings.AppLocaleManager;
 import com.dpis.module.settings.AppUiScaleManager;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 
-public abstract class LocalizedActivity extends Activity {
+import androidx.activity.ComponentActivity;
+
+/**
+ * Shared localized Activity base.
+ *
+ * ComponentActivity installs lifecycle, saved-state, and ViewModel owners on
+ * the content view tree. ComposeView needs those owners when it is attached
+ * beneath an existing Android View hierarchy.
+ */
+public abstract class LocalizedActivity extends ComponentActivity {
     private String activeLanguageTag = AppLocaleManager.TAG_FOLLOW_SYSTEM;
     private int activeInterfaceScalePercent = AppUiScaleManager.DEFAULT_SCALE_PERCENT;
 

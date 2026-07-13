@@ -11,6 +11,8 @@ import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 
+import java.util.function.IntSupplier;
+
 import androidx.core.graphics.Insets;
 import androidx.annotation.DimenRes;
 import androidx.core.view.ViewCompat;
@@ -174,6 +176,15 @@ public final class WindowInsetsBinder {
     }
 
     public static void applyNavigationBarMargins(FloatingActionButton fab) {
+        applyNavigationBarMargins(fab, () -> 0);
+    }
+
+    /**
+     * Preserves the legacy physical FAB clearance when an enclosing Compose
+     * Scaffold has already reserved bottom navigation content.
+     */
+    public static void applyNavigationBarMargins(FloatingActionButton fab,
+            IntSupplier contentBottomPaddingSupplier) {
         if (fab == null) {
             return;
         }
@@ -187,11 +198,41 @@ public final class WindowInsetsBinder {
             int sideInset = Math.max(navigationBars.left, navigationBars.right);
             ViewGroup.MarginLayoutParams params
                     = (ViewGroup.MarginLayoutParams) fab.getLayoutParams();
-            params.bottomMargin = baseBottom + navigationBars.bottom;
+            int contentBottomPadding = contentBottomPaddingSupplier != null
+                    ? contentBottomPaddingSupplier.getAsInt()
+                    : 0;
+            params.bottomMargin = resolveNavigationBarBottomMargin(
+                    baseBottom,
+                    navigationBars.bottom,
+                    contentBottomPadding
+            );
             params.setMarginEnd(baseEnd + sideInset);
             fab.setLayoutParams(params);
             return windowInsets;
         });
         ViewCompat.requestApplyInsets(fab);
+    }
+
+    /** Reapplies the latest root insets after Compose changes its reserved content area. */
+    public static void refreshNavigationBarMargins(FloatingActionButton fab) {
+        if (fab == null) {
+            return;
+        }
+        WindowInsetsCompat rootInsets = ViewCompat.getRootWindowInsets(fab);
+        if (rootInsets != null) {
+            ViewCompat.dispatchApplyWindowInsets(fab, rootInsets);
+            return;
+        }
+        ViewCompat.requestApplyInsets(fab);
+    }
+
+    static int resolveNavigationBarBottomMargin(int baseBottom,
+            int navigationBarBottomInset,
+            int contentBottomPadding) {
+        int safeBaseBottom = Math.max(0, baseBottom);
+        int safeNavigationBarInset = Math.max(0, navigationBarBottomInset);
+        int safeContentBottomPadding = Math.max(0, contentBottomPadding);
+        int legacyPhysicalBottomClearance = safeBaseBottom + safeNavigationBarInset;
+        return Math.max(0, legacyPhysicalBottomClearance - safeContentBottomPadding);
     }
 }
