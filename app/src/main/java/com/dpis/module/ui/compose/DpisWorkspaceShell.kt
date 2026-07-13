@@ -92,9 +92,14 @@ fun DpisWorkspaceShell(
                     NavigationBar(windowInsets = WindowInsets.navigationBars) {
                         DpisWorkspaceDestination.entries.forEach { destination ->
                             val label = stringResource(destination.labelRes)
+                            val onDestinationClick = rememberDpisConfirmAction {
+                                if (destination != selectedDestination) {
+                                    onDestinationSelected(destination)
+                                }
+                            }
                             NavigationBarItem(
                                 selected = destination == selectedDestination,
-                                onClick = { onDestinationSelected(destination) },
+                                onClick = onDestinationClick,
                                 icon = {
                                     Icon(
                                         painter = painterResource(destination.iconRes),
@@ -123,9 +128,14 @@ fun DpisWorkspaceShell(
                 ) {
                     DpisWorkspaceDestination.entries.forEach { destination ->
                         val label = stringResource(destination.labelRes)
+                        val onDestinationClick = rememberDpisConfirmAction {
+                            if (destination != selectedDestination) {
+                                onDestinationSelected(destination)
+                            }
+                        }
                         NavigationRailItem(
                             selected = destination == selectedDestination,
-                            onClick = { onDestinationSelected(destination) },
+                            onClick = onDestinationClick,
                             icon = {
                                 Icon(
                                     painter = painterResource(destination.iconRes),
@@ -154,9 +164,14 @@ fun DpisWorkspaceShell(
                         )
                         DpisWorkspaceDestination.entries.forEach { destination ->
                             val label = stringResource(destination.labelRes)
+                            val onDestinationClick = rememberDpisConfirmAction {
+                                if (destination != selectedDestination) {
+                                    onDestinationSelected(destination)
+                                }
+                            }
                             NavigationDrawerItem(
                                 selected = destination == selectedDestination,
-                                onClick = { onDestinationSelected(destination) },
+                                onClick = onDestinationClick,
                                 icon = {
                                     Icon(
                                         painter = painterResource(destination.iconRes),

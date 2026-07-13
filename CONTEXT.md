@@ -9,6 +9,29 @@ DPIS is an LSPosed/Xposed module for per-app display and font behavior. A change
 should stay package-scoped unless the code is explicitly part of `system_server`
 route installation, runtime property recovery, or debug tooling.
 
+## Compose Workspace Baseline
+
+Themes 1-3 established the Compose-first shell plus native Home, Tools, and
+Settings workspaces. The shell remains the only workspace-navigation owner;
+`MainUiState` / `MainUiAction` remain authoritative for destination selection.
+Compose presentation must call focused Java/Kotlin controller or presenter
+boundaries for persistence, permissions, system operations, activity results,
+and runtime-facing work. Do not recreate a hidden View tree only to render a
+Compose workspace.
+
+Compact watch and round layouts remain on the existing `WatchUiMode` View route
+until an equivalent Compose treatment is explicitly implemented and verified.
+Later workspace migrations must preserve one inset owner per surface and use
+the Theme 1 shell's content padding rather than applying legacy insets again.
+See `docs/compose-workspace-migration.md` for the migration and interaction
+baseline.
+
+Discrete user actions in Compose migrated surfaces use confirmation haptic
+feedback through `rememberDpisConfirmAction`; disabled actions do not emit it.
+Continuous controls keep their domain-specific feedback: the interface-scale
+slider snaps to whole percentages and emits a clock tick only when crossing a
+percentage. Do not replace slider step feedback with generic click feedback.
+
 ## Viewport Model
 
 `ViewportTargetSpec` is the authoritative viewport target representation.

@@ -22,7 +22,7 @@ public class ModeHelpLayoutSmokeTest {
         assertTrue(compose.contains("fun ModeGuidePage(onBack: () -> Unit)"));
         assertTrue(compose.contains("Modifier.height(IntrinsicSize.Min)"));
         assertTrue(compose.contains(".fillMaxHeight()"));
-        assertTrue(compose.contains("HapticFeedbackType.Confirm"));
+        assertTrue(compose.contains("rememberDpisConfirmAction"));
         assertTrue(compose.contains("R.string.mode_help_tip_font_lag_question"));
         assertTrue(compose.contains("R.string.mode_help_tip_font_lag_steps"));
         assertTrue(compose.contains("R.string.mode_help_tip_font_lag_reason"));

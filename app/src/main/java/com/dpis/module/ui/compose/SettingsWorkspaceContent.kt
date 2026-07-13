@@ -1,5 +1,6 @@
 package com.dpis.module.ui.compose
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,10 +29,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -242,8 +246,13 @@ private fun SettingsSwitchRow(
     total: Int,
     onChanged: (Boolean) -> Unit
 ) {
+    val hapticFeedback = LocalHapticFeedback.current
+    val hapticChanged = { value: Boolean ->
+        hapticFeedback.performDpisConfirm()
+        onChanged(value)
+    }
     SegmentedListItem(
-        onClick = { onChanged(!checked) },
+        onClick = { hapticChanged(!checked) },
         enabled = enabled,
         shapes = ListItemDefaults.segmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
@@ -258,7 +267,7 @@ private fun SettingsSwitchRow(
         trailingContent = {
             Switch(
                 checked = checked,
-                onCheckedChange = onChanged,
+                onCheckedChange = hapticChanged,
                 enabled = enabled
             )
         }
@@ -277,11 +286,12 @@ private fun SettingsScaleRow(
     onScaleChanged: (Int) -> Unit,
     onDetails: () -> Unit
 ) {
+    val hapticDetails = rememberDpisConfirmAction(onDetails)
     // A SegmentedListItem reserves the trailing slot across every content line. The scale
     // control must instead span the full card width, as a separate control beneath its label.
     // Surface owns the entire-card ripple and clips it to the segmented card shape.
     Surface(
-        onClick = onDetails,
+        onClick = hapticDetails,
         modifier = Modifier.fillMaxWidth(),
         enabled = enabled,
         shape = ListItemDefaults.segmentedShapes(index, total).shape,
@@ -340,13 +350,22 @@ private fun CenteredScaleSlider(
     val coercedValue = value.coerceIn(valueRange.start, valueRange.endInclusive)
     val interactionSource = remember { MutableInteractionSource() }
     val latestGestureValue = remember { mutableFloatStateOf(coercedValue) }
+    val view = LocalView.current
+    var lastFeedbackPercent by remember(value) {
+        mutableIntStateOf(AppUiScaleManager.normalizeSliderPercent(coercedValue))
+    }
     Slider(
         value = coercedValue,
         onValueChange = { changedValue ->
+            val normalizedValue = AppUiScaleManager.normalizeSliderPercent(changedValue)
             // Store the event value before publishing UI state, avoiding a stale Compose
             // snapshot when a track tap changes and completes the gesture in one frame.
-            latestGestureValue.floatValue = changedValue
-            onValueChange(changedValue)
+            latestGestureValue.floatValue = normalizedValue.toFloat()
+            if (normalizedValue != lastFeedbackPercent) {
+                lastFeedbackPercent = normalizedValue
+                view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+            }
+            onValueChange(normalizedValue.toFloat())
         },
         onValueChangeFinished = { onValueChangeFinished(latestGestureValue.floatValue) },
         valueRange = valueRange,
@@ -379,8 +398,9 @@ private fun SettingsEntry(
     total: Int,
     onClick: () -> Unit
 ) {
+    val hapticClick = rememberDpisConfirmAction(onClick)
     SegmentedListItem(
-        onClick = onClick,
+        onClick = hapticClick,
         enabled = enabled,
         shapes = ListItemDefaults.segmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(

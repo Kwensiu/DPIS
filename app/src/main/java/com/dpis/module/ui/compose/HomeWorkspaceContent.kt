@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -93,6 +94,7 @@ fun HomeWorkspaceContent(state: HomeWorkspaceBinder.State, padding: PaddingValue
 
 @Composable
 private fun HomePrimaryStatus(state: HomeWorkspaceBinder.State) {
+    val hapticFeedback = LocalHapticFeedback.current
     val disabled = !state.xposedModuleActivated
     val container = when {
         disabled -> MaterialTheme.colorScheme.errorContainer
@@ -111,7 +113,12 @@ private fun HomePrimaryStatus(state: HomeWorkspaceBinder.State) {
                 Text(stringResource(if (disabled) R.string.home_workspace_status_enable_in_lsposed else R.string.home_workspace_status_enabled), style = MaterialTheme.typography.titleMedium, color = content, fontWeight = FontWeight.Bold)
                 Text(
                     state.updateState.subtitle(LocalContext.current),
-                    modifier = if (state.updateState.status == HomeUpdateUiState.Status.FAILED) Modifier.clickable { state.actions.retryUpdateCheck() } else Modifier,
+                    modifier = if (state.updateState.status == HomeUpdateUiState.Status.FAILED) {
+                        Modifier.clickable {
+                            hapticFeedback.performDpisConfirm()
+                            state.actions.retryUpdateCheck()
+                        }
+                    } else Modifier,
                     style = MaterialTheme.typography.bodyMedium,
                     color = content
                 )
@@ -122,6 +129,14 @@ private fun HomePrimaryStatus(state: HomeWorkspaceBinder.State) {
 
 @Composable
 private fun HomeUpdateActions(state: HomeWorkspaceBinder.State) {
+    val showReleaseNotes = rememberDpisConfirmAction(state.actions::showReleaseNotes)
+    val applyUpdate = rememberDpisConfirmAction {
+        if (state.updateState.status == HomeUpdateUiState.Status.INSTALL_READY) {
+            state.actions.installDownloadedUpdate()
+        } else {
+            state.actions.startUpdateDownload()
+        }
+    }
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text(stringResource(R.string.home_update_available, state.updateState.versionName), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -129,11 +144,9 @@ private fun HomeUpdateActions(state: HomeWorkspaceBinder.State) {
                 LinearProgressIndicator(progress = { state.updateState.downloadProgress / 100f }, modifier = Modifier.fillMaxWidth().padding(top = 12.dp))
             }
             Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = state.actions::showReleaseNotes) { Text(stringResource(R.string.home_update_action_release_notes)) }
+                Button(onClick = showReleaseNotes) { Text(stringResource(R.string.home_update_action_release_notes)) }
                 Button(
-                    onClick = {
-                        if (state.updateState.status == HomeUpdateUiState.Status.INSTALL_READY) state.actions.installDownloadedUpdate() else state.actions.startUpdateDownload()
-                    },
+                    onClick = applyUpdate,
                     enabled = state.updateState.status != HomeUpdateUiState.Status.DOWNLOADING
                 ) {
                     Text(stringResource(when (state.updateState.status) {
@@ -149,8 +162,9 @@ private fun HomeUpdateActions(state: HomeWorkspaceBinder.State) {
 
 @Composable
 private fun HomeCountCard(modifier: Modifier, titleRes: Int, count: Int, onClick: () -> Unit) {
+    val hapticClick = rememberDpisConfirmAction(onClick)
     Card(
-        onClick = onClick,
+        onClick = hapticClick,
         modifier = modifier,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
     ) {
@@ -203,8 +217,9 @@ private fun HomeInfoRow(titleRes: Int, value: String, shape: RoundedCornerShape)
 
 @Composable
 private fun HomeNavigationEntry(titleRes: Int, summaryRes: Int, onClick: () -> Unit) {
+    val hapticClick = rememberDpisConfirmAction(onClick)
     Card(
-        onClick = onClick,
+        onClick = hapticClick,
         modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
@@ -242,12 +257,15 @@ private fun HomeFeedbackEntry(context: android.content.Context) {
 
 @Composable
 private fun HomeFeedbackAction(@androidx.annotation.DrawableRes iconRes: Int, @androidx.annotation.StringRes descriptionRes: Int, url: String, context: android.content.Context) {
+    val openFeedbackTarget = rememberDpisConfirmAction {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+    }
     Box(
         Modifier
             .size(40.dp)
             .clip(CircleShape)
             .clickable(role = Role.Button) {
-            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+            openFeedbackTarget()
         },
         contentAlignment = Alignment.Center
     ) {

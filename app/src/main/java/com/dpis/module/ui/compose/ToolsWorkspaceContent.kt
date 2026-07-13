@@ -67,7 +67,7 @@ fun ToolsWorkspaceContent(
         item { androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 4.dp)) }
         item {
             Card(
-                onClick = onExpandedChanged,
+                onClick = rememberDpisConfirmAction(onExpandedChanged),
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
             ) {
@@ -80,13 +80,13 @@ fun ToolsWorkspaceContent(
                             }
                             Text(stringResource(R.string.system_font_scale_subtitle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        IconButton(onClick = onApply, enabled = state?.canApply() == true) {
+                        IconButton(onClick = rememberDpisConfirmAction(onApply), enabled = state?.canApply() == true) {
                             Icon(painterResource(R.drawable.ic_save_24dp), stringResource(R.string.system_font_scale_apply))
                         }
                     }
                     if (expanded && state != null) {
                         if (!state.canWrite && !state.unavailable) {
-                            Button(onClick = onRequestPermission, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) { Text(stringResource(R.string.system_font_scale_permission_button)) }
+                            Button(onClick = rememberDpisConfirmAction(onRequestPermission), modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) { Text(stringResource(R.string.system_font_scale_permission_button)) }
                         } else if (state.unavailable) {
                             Text(stringResource(R.string.system_font_scale_unavailable_message), modifier = Modifier.padding(top = 16.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                         } else {
@@ -96,12 +96,12 @@ fun ToolsWorkspaceContent(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 IconButton(
-                                    onClick = { onPendingChanged(state.pendingPercent - 1) },
+                                    onClick = rememberDpisConfirmAction { onPendingChanged(state.pendingPercent - 1) },
                                     enabled = state.canDecrement()
                                 ) { Icon(painterResource(R.drawable.ic_remove_24), stringResource(R.string.system_font_scale_decrement)) }
                                 Text("${state.pendingPercent}%", modifier = Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                                 IconButton(
-                                    onClick = { onPendingChanged(state.pendingPercent + 1) },
+                                    onClick = rememberDpisConfirmAction { onPendingChanged(state.pendingPercent + 1) },
                                     enabled = state.canIncrement()
                                 ) { Icon(painterResource(R.drawable.ic_add_24), stringResource(R.string.system_font_scale_increment)) }
                             }
@@ -147,7 +147,7 @@ fun ToolsWorkspaceContent(
                                 }
                             }
                             TextButton(
-                                onClick = onRestore,
+                                onClick = rememberDpisConfirmAction(onRestore),
                                 enabled = state.canRestore(),
                                 modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp)
                             ) { Text(stringResource(R.string.system_font_scale_restore_default)) }
@@ -158,7 +158,7 @@ fun ToolsWorkspaceContent(
         }
         item {
             Card(
-                onClick = onOpenLogs,
+                onClick = rememberDpisConfirmAction(onOpenLogs),
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
             ) {

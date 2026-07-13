@@ -45,9 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -81,7 +79,9 @@ fun DonateSupportPage(onBack: () -> Unit) {
             }
             item {
                 SupportCard(
-                    modifier = Modifier.clickable { supportersVisible = true }
+                    modifier = Modifier.clickable(
+                        onClick = rememberDpisConfirmAction { supportersVisible = true }
+                    )
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
@@ -118,11 +118,9 @@ fun DonateSupportPage(onBack: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModeHelpPage(onBack: () -> Unit, onOpenModeGuide: () -> Unit) {
-    val hapticFeedback = LocalHapticFeedback.current
     SupportScaffold(
         titleRes = R.string.mode_help_title,
-        onBack = onBack,
-        hapticBackPress = true
+        onBack = onBack
     ) { padding ->
         LazyColumn(
             modifier = Modifier.padding(padding),
@@ -147,10 +145,9 @@ fun ModeHelpPage(onBack: () -> Unit, onOpenModeGuide: () -> Unit) {
             item { Text(stringResource(R.string.mode_help_more_title), modifier = Modifier.padding(top = 6.dp), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold) }
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth().clickable {
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.Confirm)
-                        onOpenModeGuide()
-                    },
+                    modifier = Modifier.fillMaxWidth().clickable(
+                        onClick = rememberDpisConfirmAction(onOpenModeGuide)
+                    ),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
                     border = CardDefaults.outlinedCardBorder()
                 ) {
@@ -172,8 +169,7 @@ fun ModeHelpPage(onBack: () -> Unit, onOpenModeGuide: () -> Unit) {
 fun ModeGuidePage(onBack: () -> Unit) {
     SupportScaffold(
         titleRes = R.string.mode_guide_title,
-        onBack = onBack,
-        hapticBackPress = true
+        onBack = onBack
     ) { padding ->
         LazyColumn(
             modifier = Modifier.padding(padding),
@@ -205,20 +201,13 @@ fun ModeGuidePage(onBack: () -> Unit) {
 private fun SupportScaffold(
     @StringRes titleRes: Int,
     onBack: () -> Unit,
-    hapticBackPress: Boolean = false,
     content: @Composable (PaddingValues) -> Unit
 ) {
-    val hapticFeedback = LocalHapticFeedback.current
     Scaffold(
         topBar = {
             SecondaryPageTopBar(
                 titleRes = titleRes,
-                onBack = {
-                    if (hapticBackPress) {
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.Confirm)
-                    }
-                    onBack()
-                }
+                onBack = rememberDpisConfirmAction(onBack)
             )
         },
         content = content

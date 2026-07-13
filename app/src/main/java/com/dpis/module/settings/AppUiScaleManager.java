@@ -67,4 +67,12 @@ public final class AppUiScaleManager {
         }
         return percent;
     }
+
+    /**
+     * Keeps the settings slider on whole-percent choices while allowing Compose to render a
+     * continuous-looking track without dense visual ticks.
+     */
+    public static int normalizeSliderPercent(float percent) {
+        return normalizeScalePercent(Math.round(percent));
+    }
 }
