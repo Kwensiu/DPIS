@@ -53,23 +53,23 @@
 
             <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/quick_template_select_button"
-                android:layout_width="@dimen/template_workspace_icon_button_size"
-                android:layout_height="@dimen/template_workspace_icon_button_size"
-                android:background="@drawable/bg_round_button_surface"
+                android:layout_width="@dimen/template_workspace_card_action_button_size"
+                android:layout_height="@dimen/template_workspace_card_action_button_size"
+                android:background="@android:color/transparent"
                 android:contentDescription="@string/template_workspace_action_select_apps"
-                android:padding="@dimen/template_workspace_icon_button_padding"
+                android:padding="@dimen/template_workspace_card_action_icon_padding"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_checklist_rtl_24"
                 app:tint="?attr/colorOnSurfaceVariant" />
 
             <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/quick_template_edit_button"
-                android:layout_width="@dimen/template_workspace_icon_button_size"
-                android:layout_height="@dimen/template_workspace_icon_button_size"
+                android:layout_width="@dimen/template_workspace_card_action_button_size"
+                android:layout_height="@dimen/template_workspace_card_action_button_size"
                 android:layout_marginStart="@dimen/dialog_action_spacing_between"
-                android:background="@drawable/bg_round_button_surface"
+                android:background="@android:color/transparent"
                 android:contentDescription="@string/template_workspace_action_edit_template"
-                android:padding="@dimen/template_workspace_icon_button_padding"
+                android:padding="@dimen/template_workspace_card_action_icon_padding"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_edit_24"
                 app:tint="?attr/colorOnSurfaceVariant" />
@@ -79,14 +79,17 @@
                 android:layout_height="1dp"
                 android:layout_weight="1" />
 
-            <com.google.android.material.button.MaterialButton
+            <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/quick_template_apply_button"
-                style="@style/Widget.Dpis.TemplateWorkspace.ApplyButton"
-                android:layout_width="wrap_content"
-                android:layout_height="@dimen/template_workspace_action_button_height"
+                android:layout_width="@dimen/template_workspace_card_action_button_size"
+                android:layout_height="@dimen/template_workspace_card_action_button_size"
                 android:layout_marginStart="@dimen/dialog_action_spacing_between"
-                android:minWidth="0dp"
-                android:text="@string/template_workspace_action_apply" />
+                android:background="@drawable/bg_template_workspace_apply_button"
+                android:contentDescription="@string/template_workspace_action_apply"
+                android:padding="@dimen/template_workspace_card_action_icon_padding"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_done_all_24"
+                app:tint="?attr/colorOnPrimary" />
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

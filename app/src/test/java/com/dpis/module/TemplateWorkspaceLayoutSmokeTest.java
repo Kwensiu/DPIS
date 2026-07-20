@@ -91,7 +91,8 @@ public class TemplateWorkspaceLayoutSmokeTest {
         assertTrue(card.contains("android:scaleType=\"centerInside\""));
         assertTrue(card.contains("@drawable/ic_edit_24"));
         assertTrue(card.contains("@drawable/ic_checklist_rtl_24"));
-        assertTrue(card.contains("Widget.Dpis.TemplateWorkspace.ApplyButton"));
+        assertTrue(card.contains("@drawable/bg_template_workspace_apply_button"));
+        assertTrue(card.contains("@drawable/ic_done_all_24"));
         assertTrue(read("src/main/res/layout/dialog_quick_template_sort.xml")
                 .contains("@string/quick_template_sort_title"));
         assertTrue(read("src/main/res/layout/dialog_quick_template_sort.xml")

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Stores the single layout listener shared by each mode toggle view instance. -->
+    <item name="mode_toggle_layout_listener" type="id" />
+</resources>

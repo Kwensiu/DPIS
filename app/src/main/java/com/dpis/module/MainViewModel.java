@@ -110,6 +110,12 @@ final class MainViewModel {
                     = (MainUiAction.AppsLoadFinished) action;
             return onAppsLoadFinished(finished.requestId, finished.loadedApps);
         }
+        if (action instanceof MainUiAction.AppIconsLoaded) {
+            MainUiAction.AppIconsLoaded iconsLoaded
+                    = (MainUiAction.AppIconsLoaded) action;
+            state = state.withAppIcons(iconsLoaded.icons);
+            return Collections.emptyList();
+        }
         return Collections.emptyList();
     }
 

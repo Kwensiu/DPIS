@@ -170,6 +170,21 @@ public class MainActivitySourceSmokeTest {
     }
 
     @Test
+    public void searchFabPolicySurvivesListRefreshAndExcludesLandscapeDetail()
+        throws IOException {
+        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(source.contains("private Boolean searchFabPolicyVisible;"));
+        assertTrue(source.contains("private boolean shouldShowFloatingAppSearch("));
+        assertTrue(source.contains(
+                "if (!shouldShowFloatingAppSearch(requireUiState().workspaceMode))"));
+        assertTrue(source.contains(
+                "if (searchFabPolicyVisible != null && searchFabPolicyVisible == visible)"));
+        assertTrue(source.contains("searchFabPolicyVisible = visible;"));
+        assertTrue(source.contains("!isLandscapeDetailMode()"));
+    }
+
+    @Test
     public void workspaceSwitchHidesAppControlsInTemplateWorkspace()
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
@@ -214,7 +229,8 @@ public class MainActivitySourceSmokeTest {
         assertTrue(compact(source).contains(
                 "boolean floatingActionsVisible = appWorkspace && !isLandscapeDetailMode()"));
         assertTrue(source.contains("&& WatchUiMode.shouldUseFloatingAppSearch(this);"));
-        assertTrue(source.contains("if (!WatchUiMode.shouldUseFloatingAppSearch(this))"));
+        assertTrue(source.contains(
+                "if (!shouldShowFloatingAppSearch(requireUiState().workspaceMode)"));
         assertTrue(
             source.contains(
                 "setSearchFocusFabVisible(floatingActionsVisible);"
@@ -279,7 +295,7 @@ public class MainActivitySourceSmokeTest {
     }
 
     @Test
-    public void landscapeTemplateDetailUsesSeparatePaneAndHomeHidesDetail()
+    public void legacyLandscapeTemplateFallbackKeepsSeparatePaneAndHomeHidesDetail()
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String layout = read("src/main/res/layout-land/activity_status.xml");
@@ -1248,6 +1264,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(landScrollBlock.contains(
             "android:paddingTop=\"@dimen/main_land_detail_top_padding\""
         ));
+        assertTrue(layout.contains("android:id=\"@+id/land_detail_scroll_content\""));
         assertFalse(layout.contains("android:layout_height=\"@dimen/main_content_divider_height\""));
         assertFalse(layout.contains("@dimen/land_app_detail_input_group_padding_horizontal"));
         assertTrue(layout.contains("@dimen/land_app_detail_section_gap"));
@@ -1292,6 +1309,35 @@ public class MainActivitySourceSmokeTest {
         assertTrue(unsavedBadgeBlock.contains("android:layout_width=\"wrap_content\""));
         assertFalse(unsavedBadgeBlock.contains("android:layout_weight=\"1\""));
         assertTrue(layout.contains("android:id=\"@+id/land_detail_action_dock\""));
+        int actionDockIdStart = layout.indexOf("android:id=\"@+id/land_detail_action_dock\"");
+        int actionDockStart = layout.lastIndexOf("<FrameLayout", actionDockIdStart);
+        int actionDockTagEnd = layout.indexOf(">", actionDockStart);
+        String actionDockTag = layout.substring(actionDockStart, actionDockTagEnd);
+        assertTrue(actionDockTag.contains("<FrameLayout"));
+        assertFalse(actionDockTag.contains("cardBackgroundColor"));
+        int actionSurfaceStart = layout.indexOf(
+                "android:id=\"@+id/land_detail_action_surface\""
+        );
+        int actionSurfaceTagEnd = layout.indexOf(">", actionSurfaceStart);
+        String actionSurfaceTag = layout.substring(actionSurfaceStart, actionSurfaceTagEnd);
+        assertTrue(actionSurfaceTag.contains(
+                "app:cardBackgroundColor=\"?attr/colorSurfaceContainerHigh\""));
+        assertTrue(actionSurfaceTag.contains(
+                "app:cardCornerRadius=\"@dimen/land_app_detail_dock_corner_radius\""));
+        assertTrue(layout.contains(
+                "android:id=\"@+id/land_detail_process_action_group\""));
+        assertTrue(layout.contains(
+                "app:cardBackgroundColor=\"?attr/colorSurfaceContainer\""));
+        int clearanceStart = binder.indexOf("private void updateScrollContentClearance(");
+        int clearanceEnd = binder.indexOf(
+                "private static boolean updateSaveButtonState(",
+                clearanceStart
+        );
+        String clearanceBlock = binder.substring(clearanceStart, clearanceEnd);
+        assertTrue(clearanceBlock.contains("R.id.land_detail_scroll_content"));
+        assertTrue(clearanceBlock.contains("content.setPaddingRelative("));
+        assertFalse(clearanceBlock.contains("MarginLayoutParams"));
+        assertFalse(clearanceBlock.contains("bottomMargin"));
         assertTrue(layout.contains("android:id=\"@+id/land_detail_save_button\""));
         assertTrue(layout.contains("android:id=\"@+id/land_detail_scope_row\""));
         assertTrue(
@@ -1498,7 +1544,10 @@ public class MainActivitySourceSmokeTest {
         );
         assertTrue(coordinatorSource.contains("pendingOnDemandIconLoads"));
         assertTrue(coordinatorSource.contains("resolveDisplayIcon(item)"));
-        assertTrue(coordinatorSource.contains("scheduleIconRefresh();"));
+        assertTrue(coordinatorSource.contains(
+            "scheduleIconRefresh(Collections.singleton(packageName));"
+        ));
+        assertTrue(coordinatorSource.contains("onIconsLoaded("));
         assertTrue(!coordinatorSource.contains("getDefaultActivityIcon()"));
     }
 
@@ -1708,6 +1757,52 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("FontHookDomainPresentation"));
         assertTrue(method.contains("AppConfigDialogBinder.AppConfigDialogState state"));
         assertFalse(method.contains("item.previewFromGlobalPrefill"));
+    }
+
+    @Test
+    public void composeTemplateEditorBridgesSelectionDraftAndCloseLifecycle()
+        throws IOException {
+        String activity = read("src/main/java/com/dpis/module/MainActivity.java");
+        String coordinator = read(
+            "src/main/java/com/dpis/module/MainWorkspacePresentationCoordinator.kt");
+        String workspace = read(
+            "src/main/java/com/dpis/module/ui/compose/TemplateWorkspaceContent.kt");
+
+        assertTrue(activity.contains("onComposeTemplateEditorOpened(quickTemplate, templateId)"));
+        assertTrue(activity.contains("retainedGlobalPrefillDraft = form.globalDraft();"));
+        assertTrue(activity.contains("retainedQuickTemplateDraft = form.quickDraft();"));
+        assertTrue(activity.contains("private void onComposeTemplateEditorClosed()"));
+        assertTrue(activity.contains("clearTemplateDetailSelection();"));
+        assertTrue(coordinator.contains("onEditorOpened ="));
+        assertTrue(coordinator.contains("onEditorChanged = content::updateTemplateEditor"));
+        assertTrue(coordinator.contains("onEditorClosed = content::closeTemplateEditor"));
+        assertTrue(workspace.contains("onEditorOpened: (quickTemplate: Boolean, templateId: String?)"));
+        assertTrue(workspace.contains("onEditorChanged: (TemplateEditorForm) -> Unit"));
+        assertTrue(workspace.contains("onEditorClosed: () -> Unit"));
+        assertTrue(workspace.contains("onEditorOpened(kind == EDITOR_QUICK, templateId)"));
+        assertTrue(workspace.contains("onEditorChanged(editorDraft.form)"));
+        assertTrue(workspace.contains("onEditorClosed()"));
+        assertTrue(workspace.contains("closeEditor()"));
+        assertTrue(workspace.contains("@Preview(showBackground = true"));
+    }
+
+    @Test
+    public void composeTemplateRestorePublishesDetailBeforeLegacyFallback()
+        throws IOException {
+        String activity = read("src/main/java/com/dpis/module/MainActivity.java");
+        int methodStart = activity.indexOf(
+                "private void restoreTemplateEditorForCurrentConfiguration()");
+        int methodEnd = activity.indexOf(
+                "private void clearTemplateDetailSelection()", methodStart);
+        String method = activity.substring(methodStart, methodEnd);
+
+        int composeBranch = method.indexOf("if (composeShellHost != null)");
+        int legacyLandscapeBranch = method.indexOf("if (isLandscapeDetailMode())");
+        assertTrue(composeBranch >= 0);
+        assertTrue(legacyLandscapeBranch > composeBranch);
+        assertTrue(method.contains("closeActiveTemplateSheetForMigration();"));
+        assertTrue(method.contains("bindTemplateWorkspace();"));
+        assertTrue(method.contains("restoreTemplateDetailPane();"));
     }
 
     private static String read(String relativePath) throws IOException {

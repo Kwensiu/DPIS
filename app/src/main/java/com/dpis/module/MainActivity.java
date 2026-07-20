@@ -63,6 +63,7 @@ import com.dpis.module.process.ProcessActionHandler;
 import com.dpis.module.templates.QuickTemplateSortDialog;
 
 import com.dpis.module.templates.GlobalPrefillStore;
+import com.dpis.module.templates.GlobalPrefillSaveHandler;
 import com.dpis.module.templates.GlobalPrefillEditorBinder;
 import com.dpis.module.templates.GlobalPrefillSheetDialog;
 import com.dpis.module.templates.BatchScopeRequestCoordinator;
@@ -72,8 +73,12 @@ import com.dpis.module.templates.QuickTemplateEditSheetDialog;
 import com.dpis.module.templates.QuickTemplateTargetSelectionActivity;
 import com.dpis.module.templates.QuickTemplateTargetsBinder;
 import com.dpis.module.templates.TemplateWorkspaceBinder;
+import com.dpis.module.templates.TemplateWorkspacePresentation;
+import com.dpis.module.templates.TemplateWorkspacePresentationController;
 
 import com.dpis.module.templates.QuickTemplateStore;
+import com.dpis.module.templates.QuickTemplateSaveHandler;
+import com.dpis.module.templates.TemplateEditorForm;
 
 import com.dpis.module.templates.TemplateConfigValue;
 
@@ -345,6 +350,7 @@ public final class MainActivity
             = new SparseArray<>();
     private HomeWorkspaceBinder homeWorkspaceBinder;
     private TemplateWorkspaceBinder templateWorkspaceBinder;
+    private TemplateWorkspacePresentationController templateWorkspacePresentationController;
     private ToolsWorkspaceBinder toolsWorkspaceBinder;
     private SystemFontScaleToolPresenter composeToolsPresenter;
     private SystemServerSettingsPageController settingsPageController;
@@ -355,6 +361,7 @@ public final class MainActivity
     private ImageButton searchClearButton;
     private FloatingActionButton searchFocusFab;
     private boolean searchFabHidden;
+    private Boolean searchFabPolicyVisible;
     private boolean suppressSearchQueryChange;
     private boolean updatingWorkspaceSelection;
     private boolean updatingFilterTabSelection;
@@ -974,7 +981,7 @@ public final class MainActivity
                 && appListTabsChromeController.onPageListScrolled(dy)) {
             return;
         }
-        if (!WatchUiMode.shouldUseFloatingAppSearch(this)) {
+        if (!shouldShowFloatingAppSearch(requireUiState().workspaceMode)) {
             return;
         }
         if (dy >= SEARCH_FAB_SCROLL_TRIGGER_DY) {
@@ -1287,6 +1294,17 @@ public final class MainActivity
         TouchFeedbackBinder.bindPressScaleAndHaptic(fab);
     }
 
+    /**
+     * The app-list search FAB belongs only to the single-pane app workspace. Landscape uses the
+     * detail pane as a second surface, so scroll callbacks must not be able to resurrect the FAB
+     * after the workspace visibility policy hid it.
+     */
+    private boolean shouldShowFloatingAppSearch(MainUiState.WorkspaceMode workspaceMode) {
+        return workspaceMode == MainUiState.WorkspaceMode.APP
+                && !isLandscapeDetailMode()
+                && WatchUiMode.shouldUseFloatingAppSearch(this);
+    }
+
     private void hideSearchFocusFab() {
         if (searchFocusFab == null || searchFabHidden) {
             return;
@@ -1313,7 +1331,8 @@ public final class MainActivity
 
     private void showSearchFocusFab() {
         if (searchFocusFab == null
-                || !WatchUiMode.shouldUseFloatingAppSearch(this)
+                || !shouldShowFloatingAppSearch(requireUiState().workspaceMode)
+                || !Boolean.TRUE.equals(searchFabPolicyVisible)
                 || !searchFabHidden) {
             return;
         }
@@ -1336,6 +1355,10 @@ public final class MainActivity
         if (searchFocusFab == null) {
             return;
         }
+        if (searchFabPolicyVisible != null && searchFabPolicyVisible == visible) {
+            return;
+        }
+        searchFabPolicyVisible = visible;
         searchFocusFab.animate().cancel();
         searchFabHidden = false;
         searchFocusFab.setClickable(visible);
@@ -1538,6 +1561,27 @@ public final class MainActivity
                     @Override public void clearSettingsCache() { ensureComposeSettingsController().clearCacheFromPresentation(); }
                     @Override public void openSettingsAbout() { ensureComposeSettingsController().showAboutFromPresentation(); }
                     @Override public void openSettingsDonate() { ensureComposeSettingsController().showDonateFromPresentation(); }
+                    @Override public TemplateWorkspacePresentation.State templateState() {
+                        return ensureComposeTemplateWorkspacePresentation().state();
+                    }
+                    @Override public void changeTemplateQuery(String query) {
+                        dispatchMainUiAction(MainUiAction.queryChanged(query));
+                    }
+                    @Override public void openTemplateEditor(
+                            boolean quickTemplate,
+                            String templateId
+                    ) {
+                        onComposeTemplateEditorOpened(quickTemplate, templateId);
+                    }
+                    @Override public void updateTemplateEditor(TemplateEditorForm form) {
+                        onComposeTemplateEditorChanged(form);
+                    }
+                    @Override public void closeTemplateEditor() {
+                        onComposeTemplateEditorClosed();
+                    }
+                    @Override public boolean usesComposeTemplateWorkspace() {
+                        return true;
+                    }
                 });
         composeShellHost = new MainComposeShellHost(
                 composeRoot,
@@ -1737,6 +1781,17 @@ public final class MainActivity
     }
 
     private void bindTemplateWorkspace() {
+        if (composeShellHost != null) {
+            ensureComposeTemplateWorkspacePresentation().refresh(
+                    requireUiState().currentQuery(),
+                    composeTemplateDetailKind(),
+                    templateDetailSelection != null
+                            ? templateDetailSelection.templateId
+                            : null
+            );
+            composeShellHost.refreshTemplates();
+            return;
+        }
         if (templateWorkspaceBinder != null) {
             templateWorkspaceBinder.bind(
                     templateWorkspaceContainer,
@@ -1988,6 +2043,52 @@ public final class MainActivity
         }
     }
 
+    private TemplateWorkspacePresentation.DetailKind composeTemplateDetailKind() {
+        if (templateDetailSelection == null) {
+            return TemplateWorkspacePresentation.DetailKind.NONE;
+        }
+        return switch (templateDetailSelection.kind) {
+            case GLOBAL_PREFILL -> TemplateWorkspacePresentation.DetailKind.GLOBAL_PREFILL;
+            case QUICK_TEMPLATE -> TemplateWorkspacePresentation.DetailKind.QUICK_TEMPLATE;
+            case QUICK_TEMPLATE_TARGETS ->
+                    TemplateWorkspacePresentation.DetailKind.QUICK_TEMPLATE_TARGETS;
+            case NONE -> TemplateWorkspacePresentation.DetailKind.NONE;
+        };
+    }
+
+    /**
+     * Compose owns the visible portrait sheet, while this Activity owns the cross-configuration
+     * detail selection. Keep the two lifetimes linked at the editor boundary instead of making
+     * the Compose workspace reach into Activity fields directly.
+     */
+    private void onComposeTemplateEditorOpened(boolean quickTemplate, String templateId) {
+        if (quickTemplate) {
+            templateDetailSelection = TemplateDetailSelection.quickTemplate(templateId);
+            retainedGlobalPrefillDraft = null;
+        } else {
+            templateDetailSelection = TemplateDetailSelection.globalPrefill();
+            retainedQuickTemplateDraft = null;
+        }
+        disposeActiveQuickTemplateTargetsBinder();
+    }
+
+    private void onComposeTemplateEditorChanged(TemplateEditorForm form) {
+        if (form == null) {
+            return;
+        }
+        if (form.quickTemplate) {
+            retainedQuickTemplateDraft = form.quickDraft();
+            retainedGlobalPrefillDraft = null;
+        } else {
+            retainedGlobalPrefillDraft = form.globalDraft();
+            retainedQuickTemplateDraft = null;
+        }
+    }
+
+    private void onComposeTemplateEditorClosed() {
+        clearTemplateDetailSelection();
+    }
+
     private void showQuickTemplateEditor(String templateId) {
         templateDetailSelection = TemplateDetailSelection.quickTemplate(templateId);
         retainedGlobalPrefillDraft = null;
@@ -2038,6 +2139,13 @@ public final class MainActivity
             return;
         }
         TemplateDetailSelection selection = templateDetailSelection;
+        if (composeShellHost != null) {
+            // Compose owns both the portrait sheet and the expanded detail surface. Re-publish
+            // the route after a configuration change instead of inflating the retired XML pane.
+            closeActiveTemplateSheetForMigration();
+            bindTemplateWorkspace();
+            return;
+        }
         if (isLandscapeDetailMode()) {
             if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE_TARGETS) {
                 quickTemplateTargetSelectionActivityStarted = false;
@@ -2300,6 +2408,130 @@ public final class MainActivity
             });
         }
         return settingsPageController;
+    }
+
+    private TemplateWorkspacePresentationController ensureComposeTemplateWorkspacePresentation() {
+        if (templateWorkspacePresentationController == null) {
+            templateWorkspacePresentationController = new TemplateWorkspacePresentationController(
+                    this,
+                    new TemplateWorkspacePresentation.Actions() {
+                        @Override public void editGlobalPrefill() { showGlobalPrefillEditor(); }
+                        @Override public void createTemplate() { showQuickTemplateEditor(null); }
+                        @Override public void sortTemplates() {
+                            createQuickTemplateActions().sort(new QuickTemplateStore(
+                                    getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)
+                            ).readAll());
+                        }
+                        @Override public void applyTemplate(String id) { applyQuickTemplate(id); }
+                        @Override public void editTemplate(String id) { showQuickTemplateEditor(id); }
+                        @Override public void selectTargets(String id) { showQuickTemplateTargets(id); }
+                        @Override public void openEmbeddedTargets(String id) {
+                            templateDetailSelection =
+                                    TemplateDetailSelection.quickTemplateTargets(id);
+                            retainedGlobalPrefillDraft = null;
+                            retainedQuickTemplateDraft = null;
+                            disposeActiveQuickTemplateTargetsBinder();
+                            bindTemplateWorkspace();
+                        }
+                        @Override public TemplateWorkspacePresentation.EditorResult saveGlobalPrefill(
+                                TemplateEditorForm form) {
+                            GlobalPrefillSaveHandler.Result result = new GlobalPrefillSaveHandler().save(
+                                    new GlobalPrefillStore(getSharedPreferences(
+                                            DpisConfigStore.GROUP, Context.MODE_PRIVATE)),
+                                    new GlobalPrefillSaveHandler.Request(
+                                            form.viewportInput, form.viewportMode, form.viewportApplyMode,
+                                            form.viewportScaleInput, form.viewportAbsoluteInput,
+                                            form.fontInput, form.fontMode, form.selectedTypefaceId,
+                                            form.fontHookDomainsRaw));
+                            showToast(result.messageResId);
+                            if (result.success) bindTemplateWorkspace();
+                            return new TemplateWorkspacePresentation.EditorResult(
+                                    result.success, result.messageResId, null);
+                        }
+                        @Override public TemplateWorkspacePresentation.EditorResult saveQuickTemplate(
+                                TemplateEditorForm form) {
+                            QuickTemplateSaveHandler.Result result = new QuickTemplateSaveHandler().save(
+                                    new QuickTemplateStore(getSharedPreferences(
+                                            DpisConfigStore.GROUP, Context.MODE_PRIVATE)),
+                                    new QuickTemplateSaveHandler.Request(
+                                            form.templateId, form.nameInput, form.viewportInput,
+                                            form.viewportMode, form.viewportApplyMode,
+                                            form.viewportScaleInput, form.viewportAbsoluteInput,
+                                            form.fontInput, form.fontMode, form.selectedTypefaceId,
+                                            form.fontHookDomainsRaw));
+                            showToast(result.messageResId);
+                            if (result.success) bindTemplateWorkspace();
+                            return new TemplateWorkspacePresentation.EditorResult(
+                                    result.success, result.messageResId, result.templateId);
+                        }
+                        @Override public TemplateWorkspacePresentation.EditorResult deleteQuickTemplate(
+                                String id) {
+                            boolean deleted = new QuickTemplateStore(getSharedPreferences(
+                                    DpisConfigStore.GROUP, Context.MODE_PRIVATE)).delete(id);
+                            int messageResId = deleted
+                                    ? R.string.quick_template_delete_success
+                                    : R.string.quick_template_delete_failed;
+                            showToast(messageResId);
+                            if (deleted) bindTemplateWorkspace();
+                            return new TemplateWorkspacePresentation.EditorResult(deleted, messageResId, id);
+                        }
+                        @Override public void selectTypeface(
+                                TemplateEditorForm form, Runnable onChanged) {
+                            AppConfigDialogBinder.AppConfigDialogState state =
+                                    new AppConfigDialogBinder.AppConfigDialogState(
+                                            false, true, true, false,
+                                            form.quickTemplate ? "__quick_template__" : "__global_prefill__",
+                                            form.fontHookDomainsRaw, form.viewportApplyMode,
+                                            form.selectedTypefaceId, form.viewportMode,
+                                            form.viewportInput, form.viewportScaleInput,
+                                            form.viewportAbsoluteInput);
+                            MaterialButton anchor = new MaterialButton(MainActivity.this);
+                            new AppConfigDialogBinder(MainActivity.this, createAppConfigDialogHost())
+                                    .showTypefaceSelector(anchor, state, () -> {
+                                        form.selectedTypefaceId = state.selectedTypefaceId;
+                                        onChanged.run();
+                                    });
+                        }
+                        @Override public void editHookDomains(
+                                TemplateEditorForm form, Runnable onChanged) {
+                            FontHookDomainDialog.show(
+                                    MainActivity.this,
+                                    new FontHookDomainDialog.Host() {
+                                        @Override public boolean saveCustom(String packageName,
+                                                Set<String> selectedKnownDomains,
+                                                Set<String> automaticKnownDomains,
+                                                Set<String> unknownDomains) {
+                                            form.fontHookDomainsRaw = HookDomainOverrideStore
+                                                    .rawValueForSelection(selectedKnownDomains,
+                                                            automaticKnownDomains, unknownDomains);
+                                            onChanged.run();
+                                            return true;
+                                        }
+                                        @Override public boolean restoreRecommended(String packageName) {
+                                            form.fontHookDomainsRaw = null;
+                                            onChanged.run();
+                                            return true;
+                                        }
+                                        @Override public boolean saveViewportApplyMode(
+                                                String packageName, String mode) {
+                                            form.viewportApplyMode = ViewportApplyMode.normalize(mode);
+                                            onChanged.run();
+                                            return true;
+                                        }
+                                    },
+                                    form.quickTemplate ? "__quick_template__" : "__global_prefill__",
+                                    FontHookDomainRegistry.recommendedTemplateKnownDomains(),
+                                    HookDomainOverrideStore.fromRaw(form.fontHookDomainsRaw),
+                                    form.viewportApplyMode,
+                                    FontApplyMode.FIELD_REWRITE.equals(form.fontMode),
+                                    onChanged
+                            );
+                        }
+                    },
+                    requireUiState().currentQuery()
+            );
+        }
+        return templateWorkspacePresentationController;
     }
 
     private void updateSearchHint() {
@@ -2818,7 +3050,31 @@ public final class MainActivity
             public void requestAppsLoad() {
                 MainActivity.this.requestAppsLoad();
             }
+
+            @Override
+            public boolean onIconsLoaded(
+                    Map<String, android.graphics.drawable.Drawable> icons
+            ) {
+                boolean matched = hasMatchingAppIcon(requireUiState(), icons);
+                dispatchMainUiAction(MainUiAction.appIconsLoaded(icons));
+                return matched;
+            }
         };
+    }
+
+    private static boolean hasMatchingAppIcon(
+            MainUiState state,
+            Map<String, android.graphics.drawable.Drawable> icons
+    ) {
+        if (state == null || icons == null || icons.isEmpty()) {
+            return false;
+        }
+        for (AppListItem app : state.appsSnapshot()) {
+            if (app != null && icons.get(app.packageName) != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private SystemScopeCoordinator.Host createSystemScopeHost() {

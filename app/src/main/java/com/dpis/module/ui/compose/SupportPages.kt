@@ -217,7 +217,24 @@ private fun SupportScaffold(
 /** Shared Compose treatment for standalone secondary pages. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SecondaryPageTopBar(@StringRes titleRes: Int, onBack: () -> Unit) {
+internal fun SecondaryPageTopBar(@StringRes titleRes: Int, onBack: () -> Unit) {
+    SecondaryPageTopBar(
+        onBack = onBack,
+        title = {
+            Text(
+                text = stringResource(titleRes),
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    )
+}
+
+@Composable
+internal fun SecondaryPageTopBar(
+    onBack: () -> Unit,
+    title: @Composable () -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth()
             .windowInsetsPadding(WindowInsets.statusBars)
@@ -240,12 +257,7 @@ private fun SecondaryPageTopBar(@StringRes titleRes: Int, onBack: () -> Unit) {
                 modifier = Modifier.size(20.dp)
             )
         }
-        Text(
-            text = stringResource(titleRes),
-            modifier = Modifier.padding(start = 12.dp).weight(1f),
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold
-        )
+        Box(Modifier.padding(start = 12.dp).weight(1f)) { title() }
     }
 }
 

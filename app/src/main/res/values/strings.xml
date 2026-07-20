@@ -265,6 +265,7 @@ Mini Programs are not supported yet.</string>
     <string name="quick_template_targets_selected_count">%1$d apps selected</string>
     <string name="quick_template_targets_configured_badge">Configured</string>
     <string name="quick_template_targets_empty">No apps match.</string>
+    <string name="quick_template_targets_loading">Loading apps…</string>
     <string name="quick_template_targets_save_success">Template app selection saved</string>
     <string name="quick_template_targets_save_failed">Failed to save app selection</string>
     <string name="quick_template_target_missing">Template no longer exists</string>

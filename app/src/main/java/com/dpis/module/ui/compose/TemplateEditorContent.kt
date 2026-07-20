@@ -1,0 +1,674 @@
+package com.dpis.module.ui.compose
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
+import com.dpis.module.R
+import com.dpis.module.fonts.FontApplyMode
+import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation
+import com.dpis.module.templates.TemplateEditorForm
+import com.dpis.module.viewport.ViewportTargetType
+
+/**
+ * Shared editor body for the portrait sheet and the landscape detail pane.
+ *
+ * The caller owns [form]'s cross-surface lifetime. Every text mutation is written through to the
+ * same draft before requesting recomposition, so a form never depends on View widget state.
+ */
+@Composable
+fun TemplateEditorContent(
+    form: TemplateEditorForm,
+    draftRevision: Int = 0,
+    onFormChanged: () -> Unit,
+    onSelectTypeface: () -> Unit,
+    onEditHookDomains: () -> Unit,
+    onReset: () -> Unit,
+    onDelete: (() -> Unit)?,
+    onSave: () -> Unit,
+    modifier: Modifier = Modifier,
+    showSheetBadge: Boolean = true
+) {
+    // The revision is intentionally passed as a parameter. The form is a mutable Java draft and
+    // its stable object identity must not allow Compose to skip the updated editor subtree.
+    @Suppress("UNUSED_VARIABLE")
+    val observedDraftRevision = draftRevision
+    val inputErrorMessage = stringResource(R.string.status_save_invalid)
+    val nameErrorMessage = stringResource(R.string.quick_template_name_required)
+    val nameError = if (form.isNameValid()) null else nameErrorMessage
+    val viewportError = if (form.isViewportInputValid()) null else inputErrorMessage
+    val fontError = if (form.isFontInputValid()) null else inputErrorMessage
+    val hookDomainsButtonText = FontHookDomainPresentation
+        .forRecommendedTemplateRaw(form.fontHookDomainsRaw)
+        .buttonText(LocalContext.current)
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .imePadding()
+            .padding(
+                start = TemplateUiTokens.SheetHorizontalPadding,
+                top = TemplateUiTokens.SheetTopPadding,
+                end = TemplateUiTokens.SheetHorizontalPadding,
+                bottom = TemplateUiTokens.SheetBottomPadding
+            )
+    ) {
+        TemplateEditorSheetHeader(
+            form = form,
+            showInlineBadge = !showSheetBadge,
+            onReset = onReset,
+            onDelete = onDelete
+        )
+
+        if (form.quickTemplate) {
+            Spacer(Modifier.height(TemplateUiTokens.SheetInputGap))
+            Column(Modifier.fillMaxWidth()) {
+                TemplateCompactOutlinedTextField(
+                    value = form.nameInput,
+                    onValueChange = { form.nameInput = it; onFormChanged() },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(R.string.quick_template_name_hint)) },
+                    isError = nameError != null,
+                    trailingIcon = if (form.nameInput.isNotEmpty()) {
+                        {
+                            IconButton(onClick = {
+                                form.nameInput = ""
+                                onFormChanged()
+                            }) {
+                                Icon(
+                                    painterResource(R.drawable.ic_close_24),
+                                    stringResource(R.string.search_clear)
+                                )
+                            }
+                        }
+                    } else null,
+                )
+                nameError?.let { TemplateEditorErrorMessage(it) }
+            }
+        }
+
+        Spacer(Modifier.height(TemplateUiTokens.SheetInputGap))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = TemplateUiTokens.SheetModeRowMinHeight),
+            horizontalArrangement = Arrangement.spacedBy(TemplateUiTokens.SheetSelectorGap),
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(top = TemplateUiTokens.SheetControlTopOffset)
+            ) {
+                TemplateCompactOutlinedTextField(
+                    value = form.viewportInput,
+                    onValueChange = {
+                        form.viewportInput = it
+                        form.updateActiveViewportDraft()
+                        onFormChanged()
+                    },
+                    // The mode track is the row's 48dp alignment anchor. DecorationBox's label
+                    // can extend outside that outline, so move only the input surface down.
+                    modifier = Modifier.fillMaxWidth(),
+                    label = {
+                        Text(
+                            text = stringResource(
+                                if (ViewportTargetType.ABSOLUTE_DP == form.viewportMode) {
+                                    R.string.dialog_viewport_hint_absolute
+                                } else {
+                                    R.string.dialog_viewport_hint_scale
+                                }
+                            ),
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    isError = viewportError != null,
+                    trailingIcon = if (form.viewportInput.isNotEmpty()) {
+                        {
+                            EditorClearButton {
+                                form.viewportInput = ""
+                                form.updateActiveViewportDraft()
+                                onFormChanged()
+                            }
+                        }
+                    } else null,
+                )
+                viewportError?.let { TemplateEditorErrorMessage(it) }
+            }
+            TemplateModeSelector(
+                selected = form.viewportMode,
+                first = ViewportTargetType.RELATIVE_SCALE,
+                firstLabel = stringResource(R.string.dialog_viewport_mode_system),
+                second = ViewportTargetType.ABSOLUTE_DP,
+                secondLabel = stringResource(R.string.dialog_viewport_mode_compat),
+                onSelected = { form.switchViewportMode(it); onFormChanged() },
+                modifier = Modifier.padding(top = TemplateUiTokens.SheetControlTopOffset),
+                labelStyle = MaterialTheme.typography.labelSmall
+            )
+        }
+
+        Spacer(Modifier.height(TemplateUiTokens.SheetInputGap))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = TemplateUiTokens.SheetModeRowMinHeight),
+            horizontalArrangement = Arrangement.spacedBy(TemplateUiTokens.SheetSelectorGap),
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(top = TemplateUiTokens.SheetControlTopOffset)
+            ) {
+                TemplateCompactOutlinedTextField(
+                    value = form.fontInput,
+                    onValueChange = { form.fontInput = it; onFormChanged() },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = {
+                        Text(
+                            text = stringResource(R.string.dialog_font_scale_hint),
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    isError = fontError != null,
+                    trailingIcon = if (form.fontInput.isNotEmpty()) {
+                        {
+                            EditorClearButton {
+                                form.fontInput = ""
+                                onFormChanged()
+                            }
+                        }
+                    } else null,
+                )
+                fontError?.let { TemplateEditorErrorMessage(it) }
+            }
+            TemplateModeSelector(
+                selected = form.fontMode,
+                first = FontApplyMode.SYSTEM_EMULATION,
+                firstLabel = stringResource(R.string.dialog_font_mode_system),
+                second = FontApplyMode.FIELD_REWRITE,
+                secondLabel = stringResource(R.string.dialog_font_mode_compat),
+                onSelected = { form.fontMode = it; onFormChanged() },
+                modifier = Modifier.padding(top = TemplateUiTokens.SheetControlTopOffset),
+                labelStyle = MaterialTheme.typography.labelMedium
+            )
+        }
+
+        Spacer(Modifier.height(TemplateUiTokens.SheetSelectorTopGap))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = TemplateUiTokens.SheetModeRowMinHeight),
+            horizontalArrangement = Arrangement.spacedBy(TemplateUiTokens.SheetSelectorGap),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedButton(
+                onClick = onSelectTypeface,
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 48.dp),
+                shape = TemplateUiTokens.SheetInputShape,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                ),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+            ) {
+                Text(
+                    stringResource(
+                        R.string.dialog_typeface_selector_value,
+                        form.selectedTypefaceId
+                            ?: stringResource(R.string.dialog_typeface_default)
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            OutlinedButton(
+                onClick = onEditHookDomains,
+                modifier = Modifier
+                    .width(TemplateUiTokens.SheetSelectorWidth)
+                    .heightIn(min = 48.dp),
+                shape = TemplateUiTokens.SheetInputShape,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                ),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+            ) {
+                Text(
+                    hookDomainsButtonText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+
+        Spacer(Modifier.height(TemplateUiTokens.SheetSaveTopGap))
+        Button(
+            onClick = onSave,
+            enabled = form.isValid(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(TemplateUiTokens.SheetSaveButtonHeight),
+            shape = RoundedCornerShape(TemplateUiTokens.SheetButtonCornerRadius),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+        ) {
+            Text(stringResource(R.string.status_save_button))
+        }
+    }
+}
+
+/** Error text sits outside the fixed outline so it can wrap without clipping the input. */
+@Composable
+private fun TemplateEditorErrorMessage(message: String) {
+    Text(
+        text = message,
+        modifier = Modifier.padding(start = 16.dp, top = 4.dp, end = 8.dp),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.error
+    )
+}
+
+/** Compact M3 outlined input whose visual container matches the adjacent mode track. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TemplateCompactOutlinedTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    isError: Boolean = false,
+    trailingIcon: (@Composable (() -> Unit))? = null
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier.height(TemplateUiTokens.SheetInputHeight),
+        textStyle = MaterialTheme.typography.bodyLarge.copy(
+            color = MaterialTheme.colorScheme.onSurface
+        ),
+        singleLine = true,
+        keyboardOptions = keyboardOptions,
+        interactionSource = interactionSource,
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        decorationBox = { innerTextField ->
+            OutlinedTextFieldDefaults.DecorationBox(
+                value = value,
+                innerTextField = innerTextField,
+                enabled = true,
+                singleLine = true,
+                visualTransformation = VisualTransformation.None,
+                interactionSource = interactionSource,
+                isError = isError,
+                label = label,
+                trailingIcon = trailingIcon,
+                contentPadding = TemplateUiTokens.SheetInputContentPadding,
+                container = {
+                    OutlinedTextFieldDefaults.Container(
+                        enabled = true,
+                        isError = isError,
+                        interactionSource = interactionSource,
+                        shape = TemplateUiTokens.SheetInputShape
+                    )
+                }
+            )
+        }
+    )
+}
+
+@Composable
+private fun EditorClearButton(onClear: () -> Unit) {
+    IconButton(onClick = onClear) {
+        Icon(
+            painterResource(R.drawable.ic_close_24),
+            stringResource(R.string.search_clear)
+        )
+    }
+}
+
+@Composable
+private fun TemplateEditorSheetHeader(
+    form: TemplateEditorForm,
+    showInlineBadge: Boolean,
+    onReset: () -> Unit,
+    onDelete: (() -> Unit)?
+) {
+    val resetAction = rememberDpisConfirmAction(onReset)
+    val deleteAction = onDelete?.let { rememberDpisConfirmAction(it) }
+    val titleRes = when {
+        !form.quickTemplate -> R.string.template_workspace_global_prefill_title
+        form.newTemplate -> R.string.quick_template_edit_page_title_new
+        else -> R.string.quick_template_edit_page_title_edit
+    }
+    val subtitleRes = if (form.quickTemplate) {
+        R.string.quick_template_edit_sheet_subtitle
+    } else {
+        R.string.template_workspace_global_prefill_subtitle
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = TemplateUiTokens.SheetHeaderTopGap)
+            .heightIn(min = TemplateUiTokens.SheetHeaderMinHeight),
+        horizontalArrangement = Arrangement.spacedBy(TemplateUiTokens.HeaderActionSpacing),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(titleRes),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                if (showInlineBadge && form.isDirty()) {
+                    Spacer(Modifier.width(8.dp))
+                    UnsavedBadge()
+                }
+            }
+            Text(
+                stringResource(subtitleRes),
+                modifier = Modifier.padding(top = 1.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        EditorHeaderIconButton(
+            iconRes = R.drawable.ic_reset_settings_24,
+            contentDescription = stringResource(R.string.template_workspace_action_reset),
+            onClick = resetAction,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            borderColor = MaterialTheme.colorScheme.outlineVariant,
+            iconTint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        if (deleteAction != null) {
+            EditorHeaderIconButton(
+                iconRes = R.drawable.ic_delete_24,
+                contentDescription = stringResource(R.string.font_library_delete_action),
+                onClick = deleteAction,
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                borderColor = MaterialTheme.colorScheme.error,
+                iconTint = MaterialTheme.colorScheme.onErrorContainer
+            )
+        }
+    }
+}
+
+@Composable
+private fun EditorHeaderIconButton(
+    iconRes: Int,
+    contentDescription: String,
+    onClick: () -> Unit,
+    containerColor: androidx.compose.ui.graphics.Color,
+    borderColor: androidx.compose.ui.graphics.Color,
+    iconTint: androidx.compose.ui.graphics.Color
+) {
+    Box(
+        modifier = Modifier
+            .size(TemplateUiTokens.HeaderActionVisualSize)
+            .clip(CircleShape)
+            .background(containerColor)
+            .border(BorderStroke(1.dp, borderColor), CircleShape)
+            .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = contentDescription,
+            modifier = Modifier.size(20.dp),
+            tint = iconTint
+        )
+    }
+}
+
+@Composable
+private fun UnsavedBadge() {
+    Surface(
+        modifier = Modifier
+            .heightIn(min = TemplateUiTokens.UnsavedBadgeMinHeight)
+            .offset(y = (-2).dp),
+        shape = TemplateUiTokens.UnsavedBadgeShape,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f))
+    ) {
+        Text(
+            stringResource(R.string.sheet_unsaved_badge),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+            style = MaterialTheme.typography.labelSmall
+        )
+    }
+}
+
+@Composable
+fun TemplateSheetDragHandle(
+    showUnsaved: Boolean,
+    // Keep the mutable Java draft's revision in this slot so the sheet-owned handle cannot be
+    // skipped when Save, Reset, or a field mutation changes the dirty baseline.
+    @Suppress("UNUSED_PARAMETER") draftRevision: Int
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = TemplateUiTokens.SheetDragHandleContainerHeight),
+        contentAlignment = Alignment.Center
+    ) {
+        if (showUnsaved) {
+            Surface(
+                modifier = Modifier.offset(y = TemplateUiTokens.SheetDragHandleVisualOffset),
+                shape = RoundedCornerShape(14.dp),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+            ) {
+                Text(
+                    stringResource(R.string.sheet_unsaved_badge),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(
+                        width = TemplateUiTokens.SheetDragHandleWidth,
+                        height = TemplateUiTokens.SheetDragHandleHeight
+                    )
+                    .offset(y = TemplateUiTokens.SheetDragHandleVisualOffset)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(MaterialTheme.colorScheme.onSurfaceVariant)
+            )
+        }
+    }
+}
+
+@Composable
+private fun TemplateModeSelector(
+    selected: String,
+    first: String,
+    firstLabel: String,
+    second: String,
+    secondLabel: String,
+    onSelected: (String) -> Unit,
+    labelStyle: androidx.compose.ui.text.TextStyle,
+    modifier: Modifier = Modifier
+) {
+    val firstSelected = selected == first
+    val selectFirst = rememberDpisConfirmAction { onSelected(first) }
+    val selectSecond = rememberDpisConfirmAction { onSelected(second) }
+    val thumbOffset by animateDpAsState(
+        targetValue = if (firstSelected) {
+            0.dp
+        } else {
+            TemplateUiTokens.SheetSelectorWidth / 2
+        },
+        animationSpec = tween(TemplateUiTokens.ModeAnimationDurationMillis),
+        label = "template-mode-thumb"
+    )
+    val thumbWidth = TemplateUiTokens.SheetSelectorWidth / 2
+
+    Box(
+        modifier = modifier
+            .width(TemplateUiTokens.SheetSelectorWidth)
+            .height(TemplateUiTokens.SheetSelectorHeight)
+            .clip(TemplateUiTokens.ModeTrackShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            // Handle the physical tap once at the track boundary. The sheet's nested scroll and
+            // custom thumb make two child click nodes unreliable on the target device.
+            .pointerInput(selectFirst, selectSecond) {
+                detectTapGestures { position ->
+                    if (position.x < size.width / 2f) {
+                        selectFirst()
+                    } else {
+                        selectSecond()
+                    }
+                }
+            }
+            .selectableGroup()
+    ) {
+        Box(
+            modifier = Modifier
+                .offset(x = thumbOffset)
+                .size(width = thumbWidth, height = TemplateUiTokens.SheetSelectorHeight)
+                .background(
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    shape = TemplateUiTokens.ModeThumbShape
+                )
+                .border(
+                    BorderStroke(
+                        TemplateUiTokens.ModeThumbBorderWidth,
+                        MaterialTheme.colorScheme.outline
+                    ),
+                    TemplateUiTokens.ModeThumbShape
+                )
+        )
+        // The thumb is a visual layer only. Keep the selectable labels above it so the moving
+        // background can never consume the other option's pointer input.
+        Row(
+            Modifier
+                .fillMaxSize()
+                .zIndex(1f)
+        ) {
+            TemplateModeLabel(
+                label = firstLabel,
+                selected = firstSelected,
+                labelStyle = labelStyle,
+                onClick = selectFirst,
+                modifier = Modifier.weight(1f)
+            )
+            TemplateModeLabel(
+                label = secondLabel,
+                selected = !firstSelected,
+                labelStyle = labelStyle,
+                onClick = selectSecond,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun TemplateModeLabel(
+    label: String,
+    selected: Boolean,
+    labelStyle: androidx.compose.ui.text.TextStyle,
+    onClick: () -> Unit,
+    modifier: Modifier
+) {
+    val textColor = if (selected) {
+        MaterialTheme.colorScheme.onSecondaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.66f)
+    }
+    val textWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .semantics {
+                role = Role.RadioButton
+                this.selected = selected
+                onClick {
+                    onClick()
+                    true
+                }
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            label,
+            modifier = Modifier.scale(if (selected) 1.04f else 1f),
+            style = labelStyle.copy(
+                color = textColor,
+                fontWeight = textWeight
+            ),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}

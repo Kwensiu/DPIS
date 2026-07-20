@@ -45,7 +45,7 @@
 
                 <FrameLayout android:layout_width="match_parent" android:layout_height="@dimen/dialog_mode_toggle_track_height" android:layout_marginTop="@dimen/dialog_mode_toggle_content_offset_top" android:background="@drawable/bg_mode_toggle_track">
 
-                    <View android:id="@+id/dialog_viewport_mode_toggle_thumb" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_mode_toggle_thumb" />
+                    <View android:id="@+id/dialog_viewport_mode_toggle_thumb" android:layout_width="0dp" android:layout_height="match_parent" android:background="@drawable/bg_mode_toggle_thumb" />
 
                     <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal">
 
@@ -71,7 +71,7 @@
 
                 <FrameLayout android:layout_width="match_parent" android:layout_height="@dimen/dialog_mode_toggle_track_height" android:layout_marginTop="@dimen/dialog_mode_toggle_content_offset_top" android:background="@drawable/bg_mode_toggle_track">
 
-                    <View android:id="@+id/dialog_font_mode_toggle_thumb" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_mode_toggle_thumb" />
+                    <View android:id="@+id/dialog_font_mode_toggle_thumb" android:layout_width="0dp" android:layout_height="match_parent" android:background="@drawable/bg_mode_toggle_thumb" />
 
                     <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal">
 

@@ -544,4 +544,5 @@ Mini Programs はまだサポートされていません。</string>
     <string name="app_status_viewport_width">インターフェース</string>
     <string name="app_status_font_prefix">フォント</string>
     <string name="app_status_wechat_dpi">WeChat DPI</string>
+    <string name="quick_template_targets_loading">アプリを読み込んでいます…</string>
 </resources>

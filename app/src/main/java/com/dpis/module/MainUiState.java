@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 final class MainUiState {
@@ -104,6 +105,24 @@ final class MainUiState {
     MainUiState withApps(List<AppListItem> appsSnapshot) {
         return new MainUiState(appQuery, templateQuery, filterState, appsSnapshot,
                 refreshingPages, workspaceMode);
+    }
+
+    MainUiState withAppIcons(Map<String, android.graphics.drawable.Drawable> icons) {
+        if (icons == null || icons.isEmpty() || appsSnapshot.isEmpty()) {
+            return this;
+        }
+        List<AppListItem> updatedApps = new ArrayList<>(appsSnapshot.size());
+        boolean changed = false;
+        for (AppListItem app : appsSnapshot) {
+            android.graphics.drawable.Drawable icon = icons.get(app.packageName);
+            AppListItem updated = icon != null ? app.withIcon(icon) : app;
+            updatedApps.add(updated);
+            changed |= updated != app;
+        }
+        return changed
+                ? new MainUiState(appQuery, templateQuery, filterState, updatedApps,
+                        refreshingPages, workspaceMode)
+                : this;
     }
 
     MainUiState withWorkspaceMode(WorkspaceMode workspaceMode) {

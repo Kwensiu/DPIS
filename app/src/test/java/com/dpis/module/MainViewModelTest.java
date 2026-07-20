@@ -12,11 +12,15 @@ import com.dpis.module.applist.AppListFilterState;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+
+import android.graphics.drawable.ColorDrawable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -101,6 +105,28 @@ public class MainViewModelTest {
     }
 
     @Test
+    public void appIconsLoaded_updatesAllAndConfiguredSectionsFromOneSnapshot() {
+        AppListItem original = configuredInstalledApp(
+                "Configured Tool", "com.example.configured");
+        MainViewModel viewModel = new MainViewModel(MainUiState.initial(
+                "",
+                AppListFilterState.noAdditionalConstraints(),
+                List.of(original),
+                Collections.emptySet()));
+        ColorDrawable icon = new ColorDrawable(0xff123456);
+
+        List<MainViewModel.AppsLoadRequest> requests = viewModel.dispatch(
+                MainUiAction.appIconsLoaded(Map.of(original.packageName, icon)));
+
+        assertTrue(requests.isEmpty());
+        assertSame(icon, viewModel.getState().visibleItems(AppListPage.ALL_APPS).get(0).icon);
+        assertSame(icon, viewModel.getState()
+                .visibleItems(AppListPage.CONFIGURED_APPS).get(0).icon);
+        assertSame(original.viewportTargetSpec,
+                viewModel.getState().appsSnapshot().get(0).viewportTargetSpec);
+    }
+
+    @Test
     public void workspaceModeKeepsSeparateAppAndTemplateSearchQueries() {
         List<AppListItem> source = List.of(
                 app("Alpha Tool", "com.example.alpha", true, false),
@@ -173,5 +199,29 @@ public class MainViewModelTest {
                 systemApp,
                 false,
                 null);
+    }
+
+    private static AppListItem configuredInstalledApp(String label, String packageName) {
+        return new AppListItem(
+                label,
+                packageName,
+                true,
+                true,
+                null,
+                null,
+                ViewportApplyMode.OFF,
+                null,
+                com.dpis.module.viewport.ViewportTargetSpec.off(),
+                null,
+                FontApplyMode.OFF,
+                null,
+                false,
+                true,
+                true,
+                true,
+                false,
+                false,
+                null
+        );
     }
 }

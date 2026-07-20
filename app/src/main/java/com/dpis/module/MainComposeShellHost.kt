@@ -77,6 +77,8 @@ internal class MainComposeShellHost(
 
     fun refreshSettings() = workspacePresentation.refreshSettings()
 
+    fun refreshTemplates() = workspacePresentation.refreshTemplates()
+
     /**
      * Replays raw window insets after a lazily bound legacy workspace becomes visible.
      * Its View listeners are the system-bar owners until that workspace is migrated.

@@ -40,6 +40,14 @@ public final class InstalledAppCatalogCoordinator {
         View getIconRefreshAnchor();
 
         void requestAppsLoad();
+
+        /**
+         * Receives icons loaded without changing the installed-app catalog.
+         * Returning true means the host applied the update incrementally.
+         */
+        default boolean onIconsLoaded(Map<String, Drawable> icons) {
+            return false;
+        }
     }
 
     private final Object installedAppCatalogLock = new Object();
@@ -202,7 +210,7 @@ public final class InstalledAppCatalogCoordinator {
                 }
             }
             if (loaded) {
-                scheduleIconRefresh();
+                scheduleIconRefresh(Collections.singleton(packageName));
             }
         });
     }
@@ -301,6 +309,7 @@ public final class InstalledAppCatalogCoordinator {
         }
         appIconWarmupExecutor.execute(() -> {
             int warmedCount = 0;
+            Set<String> warmedPackages = new HashSet<>();
             int limit = Math.min(firstScreenIconWarmupLimit, catalog.size());
             for (int i = 0; i < limit; i++) {
                 String packageName = catalog.get(i).packageName;
@@ -314,6 +323,7 @@ public final class InstalledAppCatalogCoordinator {
                 Drawable warmed = loadAppIcon(packageManager, applicationInfo);
                 if (warmed != null) {
                     warmedCount++;
+                    warmedPackages.add(packageName);
                 }
             }
             synchronized (iconWarmupLock) {
@@ -321,13 +331,18 @@ public final class InstalledAppCatalogCoordinator {
                 firstScreenIconWarmupScheduled = false;
             }
             if (warmedCount > 0) {
-                scheduleIconRefresh();
+                scheduleIconRefresh(warmedPackages);
             }
         });
     }
 
-    private void scheduleIconRefresh() {
+    private final Set<String> pendingIconRefreshPackages = new HashSet<>();
+
+    private void scheduleIconRefresh(Set<String> packageNames) {
         synchronized (iconRequestLock) {
+            if (packageNames != null) {
+                pendingIconRefreshPackages.addAll(packageNames);
+            }
             if (iconRefreshQueued) {
                 return;
             }
@@ -336,19 +351,35 @@ public final class InstalledAppCatalogCoordinator {
         host.runOnUiThread(() -> {
             View anchor = host.getIconRefreshAnchor();
             if (anchor == null) {
-                synchronized (iconRequestLock) {
-                    iconRefreshQueued = false;
-                }
-                host.requestAppsLoad();
+                dispatchIconRefresh();
                 return;
             }
-            anchor.postDelayed(() -> {
-                synchronized (iconRequestLock) {
-                    iconRefreshQueued = false;
-                }
-                host.requestAppsLoad();
-            }, iconRefreshDebounceMs);
+            anchor.postDelayed(this::dispatchIconRefresh, iconRefreshDebounceMs);
         });
+    }
+
+    private void dispatchIconRefresh() {
+        Set<String> packageNames;
+        synchronized (iconRequestLock) {
+            iconRefreshQueued = false;
+            packageNames = new HashSet<>(pendingIconRefreshPackages);
+            pendingIconRefreshPackages.clear();
+        }
+        if (packageNames.isEmpty()) {
+            return;
+        }
+        Map<String, Drawable> icons = new HashMap<>();
+        for (String packageName : packageNames) {
+            Drawable icon = appIconCache.get(packageName);
+            if (icon != null) {
+                icons.put(packageName, icon);
+            }
+        }
+        if (icons.size() == packageNames.size()
+                && host.onIconsLoaded(Collections.unmodifiableMap(icons))) {
+            return;
+        }
+        host.requestAppsLoad();
     }
 
     private static ApplicationInfo findApplicationInfo(PackageManager packageManager, String packageName) {

@@ -22,6 +22,7 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         String contract = read(
                 "src/main/java/com/dpis/module/templates/QuickTemplateTargetSelectionContract.java");
         String targetsBinder = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetsBinder.java");
+        String presentation = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetsPresentationController.java");
         String carrierState = read(
                 "src/main/java/com/dpis/module/templates/QuickTemplateTargetCarrierState.java");
         String adapter = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetAdapter.java");
@@ -29,6 +30,10 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         String landLayout = read("src/main/res/layout/view_land_quick_template_targets_detail.xml");
         String filterLayout = read("src/main/res/layout/dialog_quick_template_target_filters.xml");
         String itemLayout = read("src/main/res/layout/item_quick_template_target_app.xml");
+        String composeContent = read(
+                "src/main/java/com/dpis/module/ui/compose/QuickTemplateTargetsContent.kt");
+        String composeHost = read(
+                "src/main/java/com/dpis/module/ui/compose/QuickTemplateTargetActivityContent.kt");
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
         String binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.java");
 
@@ -44,10 +49,33 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(activity.contains("shouldClosePortraitPageInLandscape()"));
         assertTrue(activity.contains(
                 "finishWithReason(QuickTemplateTargetSelectionContract.CLOSE_REASON_ORIENTATION_MIGRATION)"));
-        assertTrue(activity.contains("new QuickTemplateTargetsBinder("));
-        assertTrue(activity.contains("targetsBinder.dispose();"));
+        assertTrue(activity.contains("new QuickTemplateTargetsPresentationController(this)"));
+        assertTrue(activity.contains("targetsController.dispose();"));
         assertTrue(activity.contains("finish();"));
         assertFalse(activity.contains("quickTemplateStore.setSelectedPackages(template.id, selectedPackages)"));
+        assertTrue(composeHost.contains("controller::onIconVisible"));
+        assertTrue(composeHost.contains("result.messageResId"));
+        assertTrue(composeContent.contains("TargetSearchCard("));
+        assertTrue(composeContent.contains("R.drawable.ic_search_24"));
+        assertTrue(composeContent.contains("R.drawable.ic_close_24"));
+        assertTrue(composeContent.contains("R.drawable.ic_tune_24"));
+        assertTrue(composeContent.contains("onValueChange = onQueryChanged"));
+        assertTrue(composeContent.contains("onValueChange = onSelected"));
+        assertTrue(composeContent.contains("AndroidView("));
+        assertTrue(composeContent.contains("onIconVisible(app.packageName)"));
+        assertTrue(composeContent.contains("rememberModalBottomSheetState(skipPartiallyExpanded = true)"));
+        assertTrue(composeContent.contains("navigationBarsPadding()"));
+        assertTrue(composeContent.contains("SecondaryPageTopBar("));
+        assertFalse(composeContent.contains("TopAppBar("));
+        assertTrue(presentation.contains("templates.setSelectedPackages(templateId, selectedPackages)"));
+        assertTrue(presentation.contains("pruneSelection()"));
+        assertTrue(presentation.contains("catalog.loadInstalledAppCatalog(false)"));
+        assertTrue(presentation.contains("boolean matched = false;"));
+        assertTrue(presentation.contains("return matched;"));
+        assertTrue(presentation.contains("catch (Throwable throwable)"));
+        assertTrue(presentation.contains(
+                "quick template target presentation load failed"));
+        assertTrue(presentation.contains("loading = false;"));
         assertTrue(targetsBinder.contains("quickTemplateStore.setSelectedPackages(template.id, selectedPackages)"));
         assertTrue(targetsBinder.contains("pruneSelectedPackagesToInstalledApps(selectedPackages, allTargetItems)"));
         assertTrue(targetsBinder.contains("DpisApplication.getActiveHookConfigStore(activity)"));
@@ -115,6 +143,8 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(mainActivity.contains("quickTemplateTargetSelectionActivityStarted = true;"));
         assertTrue(mainActivity.contains("quickTemplateTargetSelectionActivityStarted = false;"));
         assertTrue(mainActivity.contains("startActivityForResult(intent, REQUEST_QUICK_TEMPLATE_TARGETS);"));
+        assertTrue(mainActivity.contains("hasMatchingAppIcon(requireUiState(), icons)"));
+        assertTrue(mainActivity.contains("private static boolean hasMatchingAppIcon("));
         assertTrue(mainActivity.contains("requestCode == REQUEST_QUICK_TEMPLATE_TARGETS"));
         assertTrue(mainActivity.contains("QuickTemplateTargetCarrierState.shouldStartPortraitActivity("));
         assertTrue(mainActivity.contains("QuickTemplateTargetCarrierState.shouldClearPendingAfterResult("));
