@@ -131,6 +131,14 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(tools.contains("state.canRestore()"));
         assertTrue(tools.contains("SystemFontScaleToolState.normalizeSliderPercent(it)"));
         assertTrue(tools.contains("LocalDensity provides Density(displayDensity.density, fontScale = 1f)"));
+        assertTrue(tools.contains(
+                "contentWindowInsets = WindowInsets.statusBars.only(WindowInsetsSides.Top)"));
+        assertTrue(tools.contains(
+                "windowInsets = WindowInsets.statusBars.only(WindowInsetsSides.Top)"));
+        assertTrue(settings.contains(
+                "contentWindowInsets = WindowInsets.statusBars.only(WindowInsetsSides.Top)"));
+        assertTrue(settings.contains(
+                "windowInsets = WindowInsets.statusBars.only(WindowInsetsSides.Top)"));
         assertTrue(support.contains("rememberDpisConfirmAction"));
     }
 
@@ -158,6 +166,8 @@ public final class DpisComposeShellSourceSmokeTest {
 
         assertTrue(template.contains("TemplateWorkspaceSearchCard("));
         assertTrue(template.contains("onQueryChanged = onQueryChanged"));
+        assertTrue(template.contains(
+                "cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)"));
         assertTrue(template.contains("R.drawable.ic_close_24"));
         assertTrue(template.contains("role = Role.Button"));
         assertTrue(template.contains("TemplateUiTokens.DisabledActionAlpha"));
