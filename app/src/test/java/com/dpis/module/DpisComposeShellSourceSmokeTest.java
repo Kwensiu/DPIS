@@ -26,6 +26,8 @@ public final class DpisComposeShellSourceSmokeTest {
                 "src/main/java/com/dpis/module/templates/TemplateWorkspacePresentation.kt");
         String coordinator = read(
                 "src/main/java/com/dpis/module/MainWorkspacePresentationCoordinator.kt");
+        String appWorkspace = read(
+                "src/main/java/com/dpis/module/ui/compose/AppWorkspaceContent.kt");
 
         assertTrue(theme.contains("fun DpisTheme("));
         assertTrue(theme.contains("dynamicLightColorScheme"));
@@ -80,6 +82,9 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(localizedActivity.contains("extends ComponentActivity"));
         assertTrue(legacyHost.contains("ViewCompat.getRootWindowInsets(view)"));
         assertTrue(legacyHost.contains("ViewCompat.dispatchApplyWindowInsets(view, rootInsets)"));
+        assertTrue(legacyHost.contains("private fun detachFromCurrentParent(view: View)"));
+        assertTrue(legacyHost.contains("detachFromCurrentParent(legacyRoot)"));
+        assertFalse(mainActivity.contains("removeView(landDetailPane)"));
         assertTrue(shell.contains("rememberDpisConfirmAction"));
         assertTrue(haptics.contains("HapticFeedbackType.Confirm"));
         assertTrue(presentation.contains("object TemplateWorkspacePresentation"));
@@ -95,6 +100,15 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(coordinator.contains("onEditorClosed = content::closeTemplateEditor"));
         assertTrue(coordinator.contains("fun changeTemplateQuery(query: String)"));
         assertTrue(coordinator.contains("content.usesComposeTemplateWorkspace()"));
+        assertTrue(appWorkspace.contains("fun AppWorkspaceContent("));
+        assertTrue(coordinator.contains("appRevision"));
+        assertTrue(coordinator.contains("fun refreshApps()"));
+        assertTrue(appWorkspace.contains("PullToRefreshBox("));
+        assertTrue(appWorkspace.contains("allAppsListState"));
+        assertTrue(appWorkspace.contains("configuredAppsListState"));
+        assertTrue(appWorkspace.contains("state.actions.openApp(item)"));
+        assertFalse(appWorkspace.contains("state.actions::requestIcon"));
+        assertTrue(appWorkspace.contains("@Preview(showBackground = true"));
         assertTrue(coordinator.contains("private fun ComposeWorkspaceSurface("));
         assertTrue(coordinator.contains("contentColor = MaterialTheme.colorScheme.onSurface"));
         assertTrue(coordinator.contains("ComposeWorkspaceSurface { HomeWorkspaceContent("));
@@ -154,7 +168,7 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(workspace.contains("val draftRevision = editorDraft.observe()"));
         assertTrue(workspace.contains("draftRevision = draftRevision"));
         assertTrue(editor.contains("draftRevision: Int"));
-        assertTrue(editor.contains("TemplateSheetDragHandle("));
+        assertTrue(editor.contains("TemplateSheetTopChrome("));
     }
 
     @Test
@@ -192,19 +206,97 @@ public final class DpisComposeShellSourceSmokeTest {
     public void templateEditorKeepsErrorsOutsideTheFixedInputOutline() throws IOException {
         String editor = read(
                 "src/main/java/com/dpis/module/ui/compose/TemplateEditorContent.kt");
+        String controls = read(
+                "src/main/java/com/dpis/module/ui/compose/DpisEditorControls.kt");
 
         assertTrue(editor.contains("val viewportError = if (form.isViewportInputValid())"));
         assertTrue(editor.contains("isError = viewportError != null"));
         assertTrue(editor.contains("isError = fontError != null"));
         assertTrue(editor.contains("TemplateEditorErrorMessage(it)"));
         assertTrue(editor.contains("modifier = Modifier.padding(start = 16.dp, top = 4.dp, end = 8.dp)"));
-        assertTrue(editor.contains("modifier = modifier.height(TemplateUiTokens.SheetInputHeight)"));
-        assertTrue(editor.contains("color = MaterialTheme.colorScheme.onSurface"));
-        assertTrue(editor.contains("cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)"));
+        assertTrue(controls.contains(".height(TemplateUiTokens.SheetInputHeight)"));
+        assertTrue(controls.contains("color = MaterialTheme.colorScheme.onSurface"));
+        assertTrue(controls.contains("cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)"));
         assertTrue(editor.contains("val hookDomainsButtonText = FontHookDomainPresentation"));
         assertTrue(editor.contains("forRecommendedTemplateRaw(form.fontHookDomainsRaw)"));
         assertTrue(editor.contains(".buttonText(LocalContext.current)"));
         assertFalse(editor.contains("dialog_font_hook_domains_title_with_count, 1, 1"));
+    }
+
+    @Test
+    public void composeAppEditorRestoreDoesNotOpenLegacySheet() throws IOException {
+        String activity = read("src/main/java/com/dpis/module/MainActivity.java");
+        int restoreStart = activity.indexOf(
+                "private void restoreAppEditorForCurrentWorkspace()");
+        int restoreEnd = activity.indexOf(
+                "private void applyLandscapeDetailVisibility", restoreStart);
+        String restore = activity.substring(restoreStart, restoreEnd);
+
+        int composeGuard = restore.indexOf("if (composeShellHost != null)");
+        int legacySheet = restore.indexOf("showEditBottomSheet(appItem)");
+        assertTrue(composeGuard >= 0);
+        assertTrue(legacySheet > composeGuard);
+        assertTrue(restore.substring(composeGuard, legacySheet).contains("return;"));
+    }
+
+    @Test
+    public void composeAppSheetPreservesPartialExpandAndLegacyChromeSemantics()
+            throws IOException {
+        String sheet = read("src/main/java/com/dpis/module/ui/compose/DpisEditorBottomSheet.kt");
+        String coordinator = read(
+                "src/main/java/com/dpis/module/MainWorkspacePresentationCoordinator.kt");
+        String overlay = read("src/main/java/com/dpis/module/ui/compose/AppConfigEditorOverlay.kt");
+        String appEditor = read(
+                "src/main/java/com/dpis/module/ui/compose/AppConfigEditorContent.kt");
+        String appWorkspace = read(
+                "src/main/java/com/dpis/module/ui/compose/AppWorkspaceContent.kt");
+        String controls = read(
+                "src/main/java/com/dpis/module/ui/compose/DpisEditorControls.kt");
+        String catalog = read(
+                "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.java");
+        String typefacePicker = read(
+                "src/main/java/com/dpis/module/ui/compose/AppTypefacePickerSheet.kt");
+        String activity = read("src/main/java/com/dpis/module/MainActivity.java");
+
+        assertTrue(sheet.contains("skipPartiallyExpanded: Boolean = true"));
+        assertTrue(sheet.contains("rememberModalBottomSheetState(skipPartiallyExpanded = skipPartiallyExpanded)"));
+        assertTrue(coordinator.contains("AppConfigSheetWizardStore.shouldShowAdvancedHint(context)"));
+        assertTrue(coordinator.contains("AppConfigEditorOverlay("));
+        assertTrue(coordinator.contains("renderAppEditorOverlay(mode: MainUiState.WorkspaceMode)"));
+        assertTrue(coordinator.contains("appRevision\n        if (mode != MainUiState.WorkspaceMode.APP) return"));
+        assertTrue(overlay.contains("initialValue = SheetValue.Hidden"));
+        assertTrue(overlay.contains("skipHiddenState = false"));
+        assertTrue(overlay.contains("bottomSheetState.partialExpand()"));
+        assertTrue(overlay.contains("targetValue == SheetValue.Hidden"));
+        assertTrue(overlay.contains("app-config-sheet-scrim"));
+        assertTrue(overlay.contains("LaunchedEffect(advancedAnchor)"));
+        assertTrue(overlay.contains("value == SheetValue.Hidden"));
+        assertTrue(overlay.contains("sheetDragHandle = null"));
+        assertTrue(overlay.contains("sheetPeekHeight = measuredPeekHeight"));
+        assertTrue(overlay.contains("advancedAnchor"));
+        assertTrue(overlay.contains("maxHeight * 0.75f"));
+        assertTrue(coordinator.contains("R.string.dialog_advanced_wizard_hint"));
+        assertTrue(coordinator.contains("R.string.feedback_diagnostic_action"));
+        assertTrue(coordinator.contains("TemplateUiTokens.SheetVisualIndicatorWidth"));
+        assertTrue(coordinator.contains("if (editorState.dirty)"));
+        assertTrue(coordinator.contains("R.string.sheet_unsaved_badge"));
+        assertTrue(coordinator.contains("showInlineUnsavedBadge = false"));
+        assertTrue(appEditor.contains("showInlineUnsavedBadge: Boolean = true"));
+        assertTrue(appEditor.contains("coordinates.positionInParent().y.toDp()"));
+        assertTrue(appWorkspace.contains("VerticalDivider("));
+        assertTrue(appWorkspace.contains("alwaysFloatInputLabels = true"));
+        assertTrue(controls.contains("alwaysFloatLabel: Boolean = false"));
+        assertTrue(controls.contains("label = if (alwaysFloatLabel) null else label"));
+        assertTrue(appEditor.contains("rememberInstalledAppIcon"));
+        int typefaceLibraryOpen = typefacePicker.indexOf(
+                "context.startActivity(Intent(context, FontLibraryActivity::class.java))");
+        assertTrue(typefaceLibraryOpen > 0);
+        assertTrue(typefacePicker.substring(0, typefaceLibraryOpen).contains("onDismissRequest()"));
+        int dpisToggleStart = activity.indexOf("@Override public void toggleDpisEnabled()");
+        int dpisToggleEnd = activity.indexOf("@Override public void startProcess()", dpisToggleStart);
+        assertTrue(dpisToggleStart > 0);
+        assertTrue(dpisToggleEnd > dpisToggleStart);
+        assertTrue(activity.substring(dpisToggleStart, dpisToggleEnd).contains("requestAppsLoad();"));
     }
 
     private static String read(String relativePath) throws IOException {

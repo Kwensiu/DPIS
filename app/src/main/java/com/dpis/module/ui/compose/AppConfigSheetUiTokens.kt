@@ -1,0 +1,60 @@
+package com.dpis.module.ui.compose
+
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.dp
+
+/**
+ * Layout contract for the per-app editor.
+ *
+ * The values preserve the established sheet's hierarchy while normalising controls to Material's
+ * 48dp minimum interactive height. Template tokens deliberately do not own this surface.
+ */
+internal object AppConfigSheetUiTokens {
+    // The app header begins directly after the chrome. Horizontal and bottom padding remain
+    // content-owned, while the chrome alone owns the vertical separation above it.
+    val ContentPadding = PaddingValues(start = 20.dp, top = 0.dp, end = 20.dp, bottom = 24.dp)
+    val HeaderToFirstInputGap = 12.dp
+    val AppIconSize = 56.dp
+    val AppIconGap = 16.dp
+    val AppIconShape = RoundedCornerShape(12.dp)
+    val FeedbackActionSize = 32.dp
+    // Both affordances use the chrome's real center line. Increasing the container moves them
+    // together without introducing child offsets or asymmetric internal layout bounds.
+    val TopChromeHeight = 64.dp
+    val WizardHintTopOffset = 40.dp
+    val FeedbackActionShape = CircleShape
+    val WizardHintShape = RoundedCornerShape(18.dp)
+    val WizardHintCloseSize = 28.dp
+
+    // 18dp is the sheet's dominant control radius. The mode thumb's legacy XML shape was 16dp,
+    // but Compose clips it inside the 18dp track; the shared control intentionally uses 18dp so
+    // its 1dp outline cannot be cropped at the outer corners.
+    val FieldAndActionShape = RoundedCornerShape(18.dp)
+    val LegacyModeThumbShape = RoundedCornerShape(16.dp)
+    val UnsavedBadgeShape = RoundedCornerShape(14.dp)
+    val TopChromeIndicatorShape = RoundedCornerShape(3.dp)
+
+    // A field row owns the space reserved for the floating label. Its input outline and mode
+    // selector share one bottom edge instead of relying on independent child offsets.
+    val FieldRowHeight = 56.dp
+    val FieldTopInset = 6.dp
+    // The visible input outline starts 8dp into each 56dp row. With the next row's matching
+    // inset, a 4dp layout gap produces the same 12dp visible gap as the other control groups.
+    val InputRowLayoutGap = 4.dp
+    val ControlGroupGap = 12.dp
+    // The legacy sheet keeps 28dp between the save outline and the advanced divider.
+    val SaveToAdvancedDividerGap = 28.dp
+    val CollapsedBottomClearance = 8.dp
+    val ProcessActionGap = 6.dp
+    val SaveRowBottomGap = 16.dp
+    val AdvancedDividerTopGap = 12.dp
+    val AdvancedTitleTopGap = 8.dp
+    val AdvancedRowTopGap = 8.dp
+    val DisableActionTopGap = 8.dp
+
+    val ActionHeight = 48.dp
+    val ActionShape = FieldAndActionShape
+    val SecondaryControlWidth = 132.dp
+}

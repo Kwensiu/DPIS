@@ -44,8 +44,7 @@ object QuickTemplateTargetActivityContent {
                         val result = controller.save()
                         Toast.makeText(activity, result.messageResId, Toast.LENGTH_SHORT).show()
                         if (result.success) onSaved.run()
-                    },
-                    onIconVisible = controller::onIconVisible
+                    }
                 )
             }
         }

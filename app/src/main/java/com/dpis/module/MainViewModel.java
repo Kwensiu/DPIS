@@ -27,7 +27,9 @@ final class MainViewModel {
     private MainUiState state;
     private boolean forceInstalledAppCatalogReloadRequested;
     private String editingPackageName;
-    private MainActivity.AppConfigDraft editingDraft;
+    private AppConfigEditorDraft editingDraft;
+    private AppConfigEditorDraft savedEditingDraft;
+    private boolean editingSaveFeedback;
 
     MainViewModel(MainUiState initialState) {
         state
@@ -56,17 +58,24 @@ final class MainViewModel {
         this.editingPackageName = null;
     }
 
-    MainActivity.AppConfigDraft getEditingDraft() {
+    AppConfigEditorDraft getEditingDraft() {
         return editingDraft;
     }
 
-    void setEditingDraft(MainActivity.AppConfigDraft draft) {
+    void setEditingDraft(AppConfigEditorDraft draft) {
         this.editingDraft = draft;
     }
 
     void clearEditingDraft() {
         this.editingDraft = null;
+        this.savedEditingDraft = null;
+        this.editingSaveFeedback = false;
     }
+
+    AppConfigEditorDraft getSavedEditingDraft() { return savedEditingDraft; }
+    void setSavedEditingDraft(AppConfigEditorDraft draft) { this.savedEditingDraft = draft; }
+    boolean isEditingSaveFeedback() { return editingSaveFeedback; }
+    void setEditingSaveFeedback(boolean value) { this.editingSaveFeedback = value; }
 
     MainUiState getState() {
         return state;
@@ -110,12 +119,6 @@ final class MainViewModel {
                     = (MainUiAction.AppsLoadFinished) action;
             return onAppsLoadFinished(finished.requestId, finished.loadedApps);
         }
-        if (action instanceof MainUiAction.AppIconsLoaded) {
-            MainUiAction.AppIconsLoaded iconsLoaded
-                    = (MainUiAction.AppIconsLoaded) action;
-            state = state.withAppIcons(iconsLoaded.icons);
-            return Collections.emptyList();
-        }
         return Collections.emptyList();
     }
 
@@ -129,12 +132,7 @@ final class MainViewModel {
         if (requestId == AppLoadCoordinator.NO_REQUEST) {
             return Collections.emptyList();
         }
-        return Collections.singletonList(
-                new AppsLoadRequest(
-                        requestId,
-                        consumeForceInstalledAppCatalogReloadRequested()
-                )
-        );
+        return Collections.singletonList(createAppsLoadRequest(requestId));
     }
 
     private List<AppsLoadRequest> onAppsLoadFinished(
@@ -147,15 +145,16 @@ final class MainViewModel {
             state = state.withApps(loadedApps);
         }
         if (completion.nextRequestId != AppLoadCoordinator.NO_REQUEST) {
-            return Collections.singletonList(
-                    new AppsLoadRequest(
-                            completion.nextRequestId,
-                            consumeForceInstalledAppCatalogReloadRequested()
-                    )
-            );
+            return Collections.singletonList(createAppsLoadRequest(completion.nextRequestId));
         }
         state = state.clearRefreshingPages();
         return Collections.emptyList();
+    }
+
+    private AppsLoadRequest createAppsLoadRequest(int requestId) {
+        return new AppsLoadRequest(
+                requestId,
+                consumeForceInstalledAppCatalogReloadRequested());
     }
 
     private boolean consumeForceInstalledAppCatalogReloadRequested() {

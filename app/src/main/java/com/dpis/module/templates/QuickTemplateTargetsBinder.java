@@ -104,9 +104,7 @@ public final class QuickTemplateTargetsBinder {
                 KEY_FILTER_HIDE_CONFIGURED_APPS, false);
         this.installedAppCatalogCoordinator = new InstalledAppCatalogCoordinator(
                 createInstalledAppCatalogHost(),
-                INSTALLED_APP_CATALOG_TTL_MS,
-                FIRST_SCREEN_ICON_WARMUP_LIMIT,
-                ICON_REFRESH_DEBOUNCE_MS);
+                INSTALLED_APP_CATALOG_TTL_MS);
     }
 
     public boolean bind(String templateId) {
@@ -197,7 +195,7 @@ public final class QuickTemplateTargetsBinder {
     private List<TargetAppItem> buildTargetItems() {
         ArrayList<TargetAppItem> loaded = new ArrayList<>();
         List<InstalledAppCatalogItem> catalog =
-                installedAppCatalogCoordinator.loadInstalledAppCatalog(false);
+                installedAppCatalogCoordinator.loadInstalledAppCatalogWithIcons(false);
         for (InstalledAppCatalogItem item : catalog) {
             loaded.add(new TargetAppItem(
                     item.label,
@@ -312,20 +310,6 @@ public final class QuickTemplateTargetsBinder {
                 return host.getSelfPackageName();
             }
 
-            @Override
-            public void runOnUiThread(Runnable runnable) {
-                host.runOnUiThread(runnable);
-            }
-
-            @Override
-            public View getIconRefreshAnchor() {
-                return host.getIconRefreshAnchor();
-            }
-
-            @Override
-            public void requestAppsLoad() {
-                QuickTemplateTargetsBinder.this.loadTargetApps();
-            }
         };
     }
 

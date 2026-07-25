@@ -1,6 +1,7 @@
 package com.dpis.module.ui.compose
 
 import android.view.View
+import android.view.ViewGroup
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.core.view.ViewCompat
@@ -21,6 +22,9 @@ fun DpisLegacyWorkspaceHost(
     AndroidView(
         factory = { context ->
             createView(context).also { legacyRoot ->
+                // AndroidView owns the View after this one-time factory handoff. Detaching here
+                // avoids mutating the View tree from composition during later recompositions.
+                detachFromCurrentParent(legacyRoot)
                 legacyRoot.addOnAttachStateChangeListener(
                     object : View.OnAttachStateChangeListener {
                         override fun onViewAttachedToWindow(view: View) {
@@ -42,6 +46,10 @@ fun DpisLegacyWorkspaceHost(
         },
         modifier = modifier
     )
+}
+
+private fun detachFromCurrentParent(view: View) {
+    (view.parent as? ViewGroup)?.removeView(view)
 }
 
 private fun dispatchRootInsets(view: View) {

@@ -260,13 +260,13 @@ fun TemplateWorkspaceContent(
                     sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
                     containerColor = MaterialTheme.colorScheme.surface,
                     tonalElevation = 0.dp,
-                    dragHandle = {
-                        TemplateSheetDragHandle(
+                    // The status badge/white line is visual chrome, not a drag-handle role.
+                    dragHandle = null
+                ) {
+                    TemplateSheetTopChrome(
                             showUnsaved = editorDraft.form.isDirty(),
                             draftRevision = draftRevision
-                        )
-                    }
-                ) {
+                    )
                     TemplateEditorContent(
                         form = editorDraft.form,
                         draftRevision = draftRevision,
@@ -360,18 +360,31 @@ private fun TemplateWorkspaceListPane(
             }
             if (state.templates.isEmpty()) {
                 item {
-                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+                    val searching = state.searching
+                    Box(
+                        modifier = if (searching) {
+                            Modifier.fillMaxWidth()
+                        } else {
+                            Modifier
+                                .fillParentMaxWidth()
+                                .fillParentMaxHeight(TemplateUiTokens.EmptyStateViewportFraction)
+                                .padding(bottom = TemplateUiTokens.EmptyStateBottomBias)
+                        },
+                        contentAlignment = if (searching) Alignment.CenterStart else Alignment.Center
+                    ) {
                         Text(
                             stringResource(
-                                if (state.searching) R.string.quick_template_search_empty
+                                if (searching) R.string.quick_template_search_empty
                                 else R.string.template_workspace_quick_templates_empty
                             ),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(
-                                top = TemplateUiTokens.EmptyStateTopGap,
-                                bottom = TemplateUiTokens.EmptyStatePadding,
-                                end = TemplateUiTokens.EmptyStatePadding
-                            )
+                            modifier = if (searching) {
+                                Modifier.padding(
+                                    top = TemplateUiTokens.EmptyStateTopGap,
+                                    bottom = TemplateUiTokens.EmptyStatePadding,
+                                    end = TemplateUiTokens.EmptyStatePadding
+                                )
+                            } else Modifier
                         )
                     }
                 }
@@ -437,8 +450,7 @@ private fun EmbeddedQuickTemplateTargets(
             val result = controller.save()
             Toast.makeText(context, result.messageResId, Toast.LENGTH_SHORT).show()
             if (result.success) onClose()
-        },
-        onIconVisible = controller::onIconVisible
+        }
     )
 }
 

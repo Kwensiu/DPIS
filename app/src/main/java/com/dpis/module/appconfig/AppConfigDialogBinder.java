@@ -88,6 +88,11 @@ public final class AppConfigDialogBinder {
 
         void unmountHyperOsNativeProxy(AppListItem item, Runnable onFinished);
 
+        /** Metadata is deliberately resolved only for an app about to use the proxy. */
+        default boolean isHyperOsNativeProxyCandidate(AppListItem item) {
+            return item != null && item.hyperOsNativeProxyCandidate;
+        }
+
         public boolean setDpisEnabled(String packageName, boolean enabled);
 
         void showFontHookDomains(AppListItem item,
@@ -331,8 +336,13 @@ public final class AppConfigDialogBinder {
 
     public void bindTypefaceSelector(MaterialButton selectorButton, String selectedTypefaceId) {
         configureTypefaceSelectorMarquee(selectorButton);
-        selectorButton.setText(formatTypefaceSelectorText(resolveTypefaceDisplayText(
-                selectedTypefaceId, listFontLibraryEntries())));
+        selectorButton.setText(typefaceSelectorText(selectedTypefaceId));
+    }
+
+    /** Shared display contract for View and Compose app editors. */
+    public String typefaceSelectorText(String selectedTypefaceId) {
+        return formatTypefaceSelectorText(resolveTypefaceDisplayText(
+                selectedTypefaceId, listFontLibraryEntries()));
     }
 
     private void configureTypefaceSelectorMarquee(MaterialButton selectorButton) {
@@ -910,7 +920,7 @@ public final class AppConfigDialogBinder {
 
     public void syncHyperOsNativeProxyAfterSave(
             AppListItem item, AppConfigDialogViews views, AppConfigDialogState state) {
-        if (!item.hyperOsNativeProxyCandidate) {
+        if (!host.isHyperOsNativeProxyCandidate(item)) {
             return;
         }
         setSaveAndResetButtonsEnabled(views, false);

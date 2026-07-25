@@ -1,0 +1,474 @@
+package com.dpis.module.ui.compose
+
+import android.widget.ImageView
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.tooling.preview.Preview
+import com.dpis.module.AppWorkspacePresentation
+import com.dpis.module.AppConfigEditorPresentation
+import com.dpis.module.R
+import com.dpis.module.applist.AppListItem
+import com.dpis.module.applist.AppListPage
+import com.dpis.module.applist.AppListFilterState
+import com.dpis.module.applist.AppStatusFormatter
+import kotlin.math.roundToInt
+import kotlin.math.floor
+
+private val AppListRowHeight = 72.dp
+private val AppListScrollbarThumbHeight = 36.dp
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppWorkspaceContent(
+    state: AppWorkspacePresentation.State,
+    padding: PaddingValues,
+    editorState: AppConfigEditorPresentation.State? = null,
+    detailContent: @Composable () -> Unit = {}
+) {
+    // Both catalogue pages remain alive as one workspace, but each owns its own
+    // restorable scroll position just as the former ViewPager pages did.
+    val allAppsListState = rememberLazyListState()
+    val configuredAppsListState = rememberLazyListState()
+    var filterSheetVisible by remember { mutableStateOf(false) }
+    val selectedListState = when (state.selectedPage) {
+        AppListPage.ALL_APPS -> allAppsListState
+        AppListPage.CONFIGURED_APPS -> configuredAppsListState
+    }
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val twoPane = maxWidth >= 600.dp
+        Row(Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .then(if (twoPane) Modifier.weight(1f) else Modifier.fillMaxWidth())
+                    .statusBarsPadding()
+                    .background(MaterialTheme.colorScheme.surface)
+            ) {
+                AppSearchCard(state, onFilterClick = { filterSheetVisible = true })
+                PrimaryTabRow(selectedTabIndex = state.selectedPage.position()) {
+                    AppListPage.entries.forEach { page ->
+                        Tab(
+                            selected = page == state.selectedPage,
+                            onClick = { state.actions.changePage(page) },
+                            selectedContentColor = MaterialTheme.colorScheme.primary,
+                            unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            text = { Text(stringResource(page.titleRes())) }
+                        )
+                    }
+                }
+                PullToRefreshBox(
+                    isRefreshing = state.refreshing,
+                    onRefresh = { state.actions.refresh(state.selectedPage) },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    if (state.visibleItems.isEmpty()) {
+                        Column(
+                            modifier = Modifier.fillMaxSize().offset(y = (-36).dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                stringResource(
+                                    R.string.quick_template_targets_empty
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else {
+                        Box(Modifier.fillMaxSize()) {
+                            LazyColumn(
+                                state = selectedListState,
+                                contentPadding = PaddingValues(
+                                    start = 12.dp,
+                                    top = 12.dp,
+                                    end = 12.dp,
+                                    bottom = padding.calculateBottomPadding() + 12.dp
+                                )
+                            ) {
+                                items(state.visibleItems, key = { it.packageName }) { item ->
+                                    AppRow(
+                                        item = item,
+                                        systemScopeSelected = state.systemScopeSelected,
+                                        onClick = { state.actions.openApp(item) }
+                                    )
+                                }
+                            }
+                            AppListScrollbar(
+                                listState = selectedListState,
+                                itemCount = state.visibleItems.size,
+                                // Keep the thumb track entirely above the workspace dock.
+                                modifier = Modifier
+                                    .align(Alignment.CenterEnd)
+                                    .padding(bottom = padding.calculateBottomPadding())
+                            )
+                        }
+                    }
+                }
+            }
+            if (twoPane) {
+                VerticalDivider(
+                    modifier = Modifier.fillMaxHeight(),
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+                Box(Modifier.weight(1f).fillMaxHeight()) {
+                    if (editorState != null) {
+                        AppConfigEditorContent(editorState, alwaysFloatInputLabels = true)
+                    } else {
+                        detailContent()
+                    }
+                }
+            }
+        }
+    }
+    if (filterSheetVisible) {
+        AppFilterSheet(
+            filterState = state.filterState,
+            onFilterChanged = state.actions::changeFilters,
+            onDismissRequest = { filterSheetVisible = false }
+        )
+    }
+}
+
+@Composable
+private fun AppListScrollbar(
+    listState: LazyListState,
+    itemCount: Int,
+    modifier: Modifier = Modifier
+) {
+    if (itemCount == 0) return
+    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
+    val density = LocalDensity.current
+    var pressed by remember(listState) { mutableStateOf(false) }
+    var trackHeightPx by remember { mutableStateOf(0) }
+    var requestedThumbTopPx by remember(listState) { mutableFloatStateOf(0f) }
+    val thumbWidth by animateDpAsState(
+        targetValue = if (pressed) 8.dp else 6.dp,
+        animationSpec = tween(150),
+        label = "app-list-scrollbar-width"
+    )
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .width(24.dp)
+            .padding(vertical = 8.dp)
+            .onSizeChanged { trackHeightPx = it.height }
+    ) {
+        val visibleCount = listState.layoutInfo.visibleItemsInfo.size
+        if (visibleCount >= itemCount || trackHeightPx == 0) return@Box
+        val rowHeightPx = with(density) { AppListRowHeight.toPx() }
+        val viewportHeightPx = listState.layoutInfo.viewportSize.height.toFloat()
+        val totalContentHeightPx = itemCount * rowHeightPx +
+            listState.layoutInfo.beforeContentPadding +
+            listState.layoutInfo.afterContentPadding
+        val maximumScrollOffsetPx = (totalContentHeightPx - viewportHeightPx).coerceAtLeast(1f)
+        // Match the legacy fast scroller: the thumb is a fixed physical control.
+        // List length changes its position mapping, never its visual length.
+        val thumbHeightPx = with(density) { AppListScrollbarThumbHeight.toPx() }
+            .coerceAtMost(trackHeightPx.toFloat())
+        val scrollableThumbRangePx = (trackHeightPx - thumbHeightPx).coerceAtLeast(0f)
+        if (scrollableThumbRangePx <= 0f) return@Box
+        val currentScrollOffsetPx = listState.firstVisibleItemIndex * rowHeightPx
+            + listState.firstVisibleItemScrollOffset
+        val scrollFraction = currentScrollOffsetPx / maximumScrollOffsetPx
+        val thumbTopPx = scrollableThumbRangePx * scrollFraction.coerceIn(0f, 1f)
+        // pointerInput intentionally survives ordinary list scrolling. Keep its drag-start
+        // position current without restarting the active gesture handler on every scroll frame.
+        val currentThumbTopPx = rememberUpdatedState(thumbTopPx)
+        val displayedThumbTopPx = if (pressed) requestedThumbTopPx else thumbTopPx
+        val visualThumbTopPx = displayedThumbTopPx.coerceIn(0f, trackHeightPx - thumbHeightPx)
+        LaunchedEffect(pressed, scrollableThumbRangePx, maximumScrollOffsetPx) {
+            if (!pressed) return@LaunchedEffect
+            while (pressed) {
+                // Compose receives pointer moves more often than it can render a LazyColumn.
+                // Coalesce them to the display frame, then jump to the requested row. Scrolling
+                // by the full pixel delta walks every skipped lazy item and causes a long measure
+                // pass; requestScrollToItem has the same direct-position semantics as AdClose's
+                // RecyclerView scrollToPositionWithOffset implementation.
+                withFrameNanos { }
+                val targetScrollOffsetPx = requestedThumbTopPx / scrollableThumbRangePx *
+                    maximumScrollOffsetPx
+                val targetIndex = floor(targetScrollOffsetPx / rowHeightPx)
+                    .toInt()
+                    .coerceIn(0, itemCount - 1)
+                val targetItemOffsetPx = (targetScrollOffsetPx - targetIndex * rowHeightPx)
+                    .roundToInt()
+                    .coerceAtLeast(0)
+                listState.requestScrollToItem(targetIndex, targetItemOffsetPx)
+            }
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(itemCount, trackHeightPx, thumbHeightPx) {
+                detectVerticalDragGestures(
+                    onDragStart = {
+                        pressed = true
+                        requestedThumbTopPx = currentThumbTopPx.value
+                    },
+                    onDragEnd = {
+                        pressed = false
+                    },
+                    onDragCancel = {
+                        pressed = false
+                    },
+                    onVerticalDrag = { change, dragAmount ->
+                        change.consume()
+                        requestedThumbTopPx = (requestedThumbTopPx + dragAmount)
+                            .coerceIn(0f, scrollableThumbRangePx)
+                    }
+                )
+            }
+        ) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .offset { IntOffset(0, visualThumbTopPx.roundToInt()) }
+                    .width(thumbWidth)
+                    .height(AppListScrollbarThumbHeight)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.62f))
+            )
+        }
+    }
+}
+
+@Composable
+private fun AppSearchCard(
+    state: AppWorkspacePresentation.State,
+    onFilterClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).height(52.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        )
+    ) {
+        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                painterResource(R.drawable.ic_search_24),
+                contentDescription = null,
+                modifier = Modifier.padding(start = 12.dp, end = 8.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            BasicTextField(
+                value = state.query,
+                onValueChange = state.actions::changeQuery,
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurface
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                decorationBox = { inner ->
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
+                        if (state.query.isEmpty()) {
+                            Text(
+                                stringResource(R.string.search_hint),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        inner()
+                    }
+                }
+            )
+            if (state.query.isNotEmpty()) {
+                IconButton(onClick = { state.actions.changeQuery("") }) {
+                    Icon(
+                        painterResource(R.drawable.ic_close_24),
+                        stringResource(R.string.search_clear)
+                    )
+                }
+            }
+            IconButton(onClick = onFilterClick) {
+                Icon(
+                    painterResource(R.drawable.ic_tune_24),
+                    stringResource(R.string.filter_button)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppRow(
+    item: AppListItem,
+    systemScopeSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val resources = context.resources
+    // This composable exists only for visible LazyColumn rows. Loading here keeps icon I/O out
+    // of the catalogue state, so an icon result cannot rebuild or re-filter every app row.
+    val icon = rememberInstalledAppIcon(item.packageName, item.icon)
+    val statusInput = AppStatusFormatter.StatusInput(
+        item.inScope,
+        item.scopeKnown,
+        item.installed,
+        item.viewportTargetSpec,
+        item.viewportMode,
+        item.fontScalePercent,
+        item.fontMode,
+        item.typefaceId,
+        item.dpisEnabled,
+        item.hasAppSpecificConfig(),
+        item.wechatDpi
+    )
+    val warn = item.scopeKnown && (
+        AppStatusFormatter.shouldWarnViewportEmulation(
+            item.viewportTargetSpec, item.viewportMode, systemScopeSelected, item.dpisEnabled
+        ) || AppStatusFormatter.shouldWarnFontEmulation(
+            item.fontScalePercent, item.fontMode, systemScopeSelected, item.dpisEnabled
+        )
+    )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(AppListRowHeight)
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier.size(50.dp).clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+            contentAlignment = Alignment.Center
+        ) {
+            if (icon != null) {
+                AndroidView(
+                    factory = { ImageView(it).apply { scaleType = ImageView.ScaleType.FIT_CENTER } },
+                    update = { it.setImageDrawable(icon) },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+        Column(
+            modifier = Modifier.weight(1f).padding(start = 12.dp),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                item.label,
+                // Trim only the boundary facing the package name. The row keeps its normal
+                // title line height and does not rely on a negative layout offset.
+                style = MaterialTheme.typography.titleMedium.copy(
+                    platformStyle = PlatformTextStyle(includeFontPadding = false),
+                    lineHeightStyle = LineHeightStyle(
+                        alignment = LineHeightStyle.Alignment.Center,
+                        trim = LineHeightStyle.Trim.LastLineBottom,
+                        mode = LineHeightStyle.Mode.Fixed
+                    )
+                ),
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                item.packageName,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    platformStyle = PlatformTextStyle(includeFontPadding = false),
+                    lineHeightStyle = LineHeightStyle(
+                        alignment = LineHeightStyle.Alignment.Center,
+                        trim = LineHeightStyle.Trim.FirstLineTop,
+                        mode = LineHeightStyle.Mode.Fixed
+                    )
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                AppStatusFormatter.formatCompact(resources, statusInput),
+                style = MaterialTheme.typography.bodySmall,
+                color = if (warn) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 360, heightDp = 720)
+@Composable
+private fun AppWorkspacePreview() {
+    val actions = object : AppWorkspacePresentation.Actions {
+        override fun changeQuery(query: String) = Unit
+        override fun changePage(page: AppListPage) = Unit
+        override fun changeFilters(filterState: AppListFilterState) = Unit
+        override fun refresh(page: AppListPage) = Unit
+        override fun openApp(item: AppListItem) = Unit
+    }
+    DpisTheme(darkTheme = false, dynamicColor = false) {
+        AppWorkspaceContent(
+            state = AppWorkspacePresentation.State(
+                "", AppListPage.ALL_APPS, emptyList(), 0, 0, false,
+                AppListFilterState.defaultState(), false, actions
+            ),
+            padding = PaddingValues()
+        )
+    }
+}

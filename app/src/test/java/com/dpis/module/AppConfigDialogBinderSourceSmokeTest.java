@@ -100,6 +100,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("dialogView, item, views, state, style, systemHooksEnabled);"));
         assertTrue(binderSource.contains("host.applyHyperOsNativeProxy(item, onFinished)"));
         assertTrue(binderSource.contains("host.unmountHyperOsNativeProxy(item"));
+        assertTrue(binderSource.contains("host.isHyperOsNativeProxyCandidate(item)"));
     }
 
     @Test
@@ -112,7 +113,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(interactionsSource.contains(
                 "new AppConfigSheetModeValidationBinder(binder, host)"));
         assertTrue(countOccurrences(modeValidationSource, "host.onDraftStateChanged(state);") >= 7);
-        assertTrue(mainActivitySource.contains("AppConfigDraft captured = captureAppConfigDraft();"));
+        assertTrue(mainActivitySource.contains("AppConfigEditorDraft captured = captureAppConfigDraft();"));
         assertTrue(mainActivitySource.contains("mainViewModel.setEditingDraft(captured);"));
     }
 

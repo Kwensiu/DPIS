@@ -2,6 +2,8 @@ package com.dpis.module
 
 import android.view.View
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -39,26 +41,29 @@ internal class MainComposeShellHost(
     init {
         composeView.setContent {
             DpisTheme(darkTheme = isSystemInDarkTheme()) {
-                MainComposeWorkspaceShell(
-                    state = state,
-                    isCompactUi = isCompactUi,
-                    dispatch = dispatch
-                ) { padding ->
-                    if (workspacePresentation.render(state.workspaceMode, padding)) {
-                        // Home domain state lives in MainActivity. This revision only invalidates
-                        // the Compose presentation after its existing coordinator updates it.
-                    } else {
-                        val contentBottomPadding = (
-                            padding.calculateBottomPadding().value * LocalDensity.current.density
-                        ).roundToInt()
-                        SideEffect {
-                            onContentBottomPaddingChanged(contentBottomPadding)
+                Box(Modifier.fillMaxSize()) {
+                    MainComposeWorkspaceShell(
+                        state = state,
+                        isCompactUi = isCompactUi,
+                        dispatch = dispatch
+                    ) { padding ->
+                        if (workspacePresentation.render(state.workspaceMode, padding)) {
+                            // Home domain state lives in MainActivity. This revision only invalidates
+                            // the Compose presentation after its existing coordinator updates it.
+                        } else {
+                            val contentBottomPadding = (
+                                padding.calculateBottomPadding().value * LocalDensity.current.density
+                            ).roundToInt()
+                            SideEffect {
+                                onContentBottomPaddingChanged(contentBottomPadding)
+                            }
+                            DpisLegacyWorkspaceHost(
+                                createView = { legacyWorkspaceRoot },
+                                modifier = Modifier.padding(padding)
+                            )
                         }
-                        DpisLegacyWorkspaceHost(
-                            createView = { legacyWorkspaceRoot },
-                            modifier = Modifier.padding(padding)
-                        )
                     }
+                    workspacePresentation.renderAppEditorOverlay(state.workspaceMode)
                 }
             }
         }
@@ -67,6 +72,8 @@ internal class MainComposeShellHost(
     fun render(nextState: MainUiState) {
         state = nextState
     }
+
+    fun refreshApps() = workspacePresentation.refreshApps()
 
     fun refreshHome() = workspacePresentation.refreshHome()
 

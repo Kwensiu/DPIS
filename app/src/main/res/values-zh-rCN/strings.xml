@@ -203,7 +203,7 @@
     <string name="template_workspace_global_prefill_title">全局预填</string>
     <string name="template_workspace_global_prefill_subtitle">调整未配置应用的默认填入值</string>
     <string name="template_workspace_quick_templates_title">快捷模板</string>
-    <string name="template_workspace_quick_templates_empty">暂无快捷模板。</string>
+    <string name="template_workspace_quick_templates_empty">暂无快捷模板</string>
     <string name="template_workspace_summary_empty">暂无自定义参数</string>
     <string name="template_workspace_summary_viewport_scale">界面 %1$s%%</string>
     <string name="template_workspace_summary_viewport_width">界面 %1$ddp</string>

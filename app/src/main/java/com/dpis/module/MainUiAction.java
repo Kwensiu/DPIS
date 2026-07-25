@@ -7,9 +7,6 @@ import com.dpis.module.applist.AppListPage;
 import com.dpis.module.applist.AppListFilterState;
 
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Collections;
 
 abstract class MainUiAction {
     private MainUiAction() {
@@ -29,10 +26,6 @@ abstract class MainUiAction {
 
     static MainUiAction appsLoadFinished(int requestId, List<AppListItem> loadedApps) {
         return new AppsLoadFinished(requestId, loadedApps);
-    }
-
-    static MainUiAction appIconsLoaded(Map<String, android.graphics.drawable.Drawable> icons) {
-        return new AppIconsLoaded(icons);
     }
 
     static MainUiAction markPageRefreshing(AppListPage page) {
@@ -74,16 +67,6 @@ abstract class MainUiAction {
         AppsLoadFinished(int requestId, List<AppListItem> loadedApps) {
             this.requestId = requestId;
             this.loadedApps = loadedApps;
-        }
-    }
-
-    static final class AppIconsLoaded extends MainUiAction {
-        final Map<String, android.graphics.drawable.Drawable> icons;
-
-        AppIconsLoaded(Map<String, android.graphics.drawable.Drawable> icons) {
-            this.icons = icons == null || icons.isEmpty()
-                    ? Collections.emptyMap()
-                    : Collections.unmodifiableMap(new HashMap<>(icons));
         }
     }
 

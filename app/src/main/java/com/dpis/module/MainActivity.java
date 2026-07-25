@@ -11,6 +11,7 @@ import com.dpis.module.applist.InstalledAppCatalogCoordinator;
 
 import com.dpis.module.fonts.FontApplyMode;
 import com.dpis.module.fonts.FontLibraryActivity;
+import com.dpis.module.fonts.HyperOsNativeAppDetector;
 
 
 
@@ -266,8 +267,6 @@ public final class MainActivity
     private static final int DOWNLOAD_BUFFER_SIZE = 16 * 1024;
     private static final long DOWNLOAD_PROGRESS_UPDATE_INTERVAL_MS = 180L;
     private static final long INSTALLED_APP_CATALOG_TTL_MS = 60_000L;
-    private static final int FIRST_SCREEN_ICON_WARMUP_LIMIT = 48;
-    private static final long ICON_REFRESH_DEBOUNCE_MS = 120L;
     private static final String XIAOMI_GET_INSTALLED_APPS_PERMISSION
             = "com.android.permission.GET_INSTALLED_APPS";
     private static final int REQUEST_XIAOMI_GET_INSTALLED_APPS = 10022;
@@ -307,9 +306,7 @@ public final class MainActivity
     private final InstalledAppCatalogCoordinator installedAppCatalogCoordinator
             = new InstalledAppCatalogCoordinator(
                     createInstalledAppCatalogHost(),
-                    INSTALLED_APP_CATALOG_TTL_MS,
-                    FIRST_SCREEN_ICON_WARMUP_LIMIT,
-                    ICON_REFRESH_DEBOUNCE_MS
+                    INSTALLED_APP_CATALOG_TTL_MS
             );
     private final StartupUpdateCheckCoordinator startupUpdateCheckCoordinator
             = new StartupUpdateCheckCoordinator(
@@ -685,6 +682,9 @@ public final class MainActivity
                     retainedState.editingPackageName
             );
             mainViewModel.setEditingDraft(retainedState.editingDraft);
+            mainViewModel.setSavedEditingDraft(retainedState.savedEditingDraft != null
+                    ? retainedState.savedEditingDraft
+                    : retainedState.editingDraft);
             restoreAppEditorForCurrentWorkspace();
         }
         restoreTemplateEditorForCurrentConfiguration();
@@ -945,7 +945,7 @@ public final class MainActivity
                         ? appPager.getCurrentItem()
                         : landCurrentPage.position();
         SparseArray<Parcelable> pageScrollStates = captureAppListScrollStates();
-        AppConfigDraft draft = captureAppConfigDraft();
+        AppConfigEditorDraft draft = captureAppConfigDraft();
         if (draft == null && mainViewModel != null) {
             draft = mainViewModel.getEditingDraft();
         }
@@ -963,6 +963,7 @@ public final class MainActivity
                         ? mainViewModel.getEditingPackageName()
                         : null,
                 draft,
+                mainViewModel != null ? mainViewModel.getSavedEditingDraft() : null,
                 templateDetailSelection,
                 quickTemplateTargetSelectionActivityStarted,
                 retainedGlobalPrefillDraft,
@@ -1422,9 +1423,7 @@ public final class MainActivity
         return true;
     }
 
-    private List<AppListItem> loadInstalledApps(
-            boolean forceInstalledAppCatalogReload
-    ) {
+    private List<AppListItem> loadInstalledApps(boolean forceInstalledAppCatalogReload) {
         ScopeState scopeState = loadScopeState();
         return installedAppCatalogCoordinator.loadInstalledApps(
                 forceInstalledAppCatalogReload,
@@ -1540,6 +1539,23 @@ public final class MainActivity
         workspacePresentationCoordinator = new MainWorkspacePresentationCoordinator(
                 new MainWorkspacePresentationCoordinator.Content() {
                     @Override public HomeWorkspaceBinder.State homeState() { return createHomeWorkspaceState(); }
+                    @Override public AppWorkspacePresentation.State appState() {
+                        AppListPage page = isLandscapeDetailMode()
+                                ? landCurrentPage
+                                : AppListPage.fromPosition(
+                                        appPager != null ? appPager.getCurrentItem() : 0);
+                        return AppWorkspacePresentation.create(
+                                requireUiState(),
+                                page,
+                                isSystemHookEnabledFromStore(),
+                                createComposeAppWorkspaceActions());
+                    }
+                    @Override public AppConfigEditorPresentation.State appEditorState() {
+                        return createComposeAppEditorState();
+                    }
+                    @Override public View appDetailPane() {
+                        return landDetailPane;
+                    }
                     @Override public com.dpis.module.settings.SystemFontScaleToolState toolsState() { return composeToolsPresenter != null ? composeToolsPresenter.state() : null; }
                     @Override public void changeToolsPending(int percent) { composeToolsPresenter.selectPendingPercent(percent); }
                     @Override public void applyTools() { composeToolsPresenter.apply(); }
@@ -1731,6 +1747,13 @@ public final class MainActivity
     private void restoreAppEditorForCurrentWorkspace() {
         if (mainViewModel == null
                 || requireUiState().workspaceMode != MainUiState.WorkspaceMode.APP) {
+            return;
+        }
+        // The Compose app workspace restores its editor directly from MainViewModel. Re-entering
+        // the legacy route here would stack a View BottomSheetDialog over the Compose sheet after
+        // any state render, including the catalog refresh triggered by a successful save.
+        if (composeShellHost != null) {
+            composeShellHost.refreshApps();
             return;
         }
         String editingPackage = mainViewModel.getEditingPackageName();
@@ -2410,6 +2433,372 @@ public final class MainActivity
         return settingsPageController;
     }
 
+    private AppWorkspacePresentation.Actions createComposeAppWorkspaceActions() {
+        return new AppWorkspacePresentation.Actions() {
+            @Override public void changeQuery(String query) {
+                dispatchMainUiAction(MainUiAction.queryChanged(query));
+            }
+
+            @Override public void changePage(AppListPage page) {
+                setCurrentAppListPage(page, true);
+                if (composeShellHost != null) {
+                    // Page selection remains adaptive presentation state, so it can change
+                    // without producing a new MainUiState domain snapshot.
+                    composeShellHost.refreshApps();
+                }
+            }
+
+            @Override public void changeFilters(AppListFilterState filterState) {
+                appListFilterStateStore.save(filterState);
+                dispatchMainUiAction(MainUiAction.filterChanged(filterState));
+            }
+
+            @Override public void refresh(AppListPage page) {
+                onPageRefreshRequested(page);
+            }
+
+            @Override public void openApp(AppListItem item) {
+                openComposeAppEditor(item);
+            }
+
+        };
+    }
+
+    private AppConfigEditorPresentation.State createComposeAppEditorState() {
+        if (mainViewModel == null || mainViewModel.getEditingPackageName() == null) {
+            return null;
+        }
+        String packageName = mainViewModel.getEditingPackageName();
+        AppListItem item = null;
+        for (AppListItem candidate : requireUiState().appsSnapshot()) {
+            if (packageName.equals(candidate.packageName)) {
+                item = candidate;
+                break;
+            }
+        }
+        if (item == null) {
+            return null;
+        }
+        TemplateConfigValue globalPrefill = new GlobalPrefillStore(
+                getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)
+        ).read();
+        AppListItem editorItem = AppConfigPrefillPreview.applyIfEligible(
+                item, getHookConfigStore(), globalPrefill);
+        AppConfigEditorDraft draft = mainViewModel.getEditingDraft();
+        if (draft == null || !editorItem.packageName.equals(draft.packageName)) {
+            draft = AppConfigEditorDraft.fromItem(editorItem);
+            mainViewModel.setEditingDraft(draft);
+            mainViewModel.setSavedEditingDraft(draft);
+        }
+        final AppConfigEditorDraft currentDraft = draft;
+        AppConfigDialogBinder.AppConfigDialogState composeDialogState = composeEditorDialogState(
+                editorItem, currentDraft);
+        String typefaceSelectorText = new AppConfigDialogBinder(
+                this, createAppConfigDialogHost()).typefaceSelectorText(
+                currentDraft.selectedTypefaceId);
+        String hookChainText = getFontHookDomainsButtonText(editorItem, composeDialogState);
+        boolean dirty = !currentDraft.hasSameSavedConfig(mainViewModel.getSavedEditingDraft());
+        return new AppConfigEditorPresentation.State(
+                editorItem,
+                currentDraft,
+                typefaceSelectorText,
+                hookChainText,
+                dirty,
+                mainViewModel.isEditingSaveFeedback(),
+                isSystemHookEnabledFromStore(),
+                recommendedTemplateFontHookDomains(),
+                new AppConfigEditorPresentation.Actions() {
+                    @Override public void updateViewportInput(String value) {
+                        updateComposeAppEditorDraft(currentDraft.withViewportInput(
+                                currentDraft.viewportMode, value));
+                    }
+
+                    @Override public void changeViewportMode(String targetType) {
+                        updateComposeAppEditorDraft(currentDraft.withViewportMode(targetType));
+                    }
+
+                    @Override public void updateFontInput(String value) {
+                        updateComposeAppEditorDraft(currentDraft.withFontInput(value));
+                    }
+
+                    @Override public void changeFontMode(String mode) {
+                        updateComposeAppEditorDraft(currentDraft.withFontMode(mode));
+                    }
+
+                    @Override public void updateWechatDpiInput(String value) {
+                        updateComposeAppEditorDraft(currentDraft.withWechatDpiInput(value));
+                    }
+
+                    @Override public void showWechatDpiHelp() {
+                        new MaterialAlertDialogBuilder(MainActivity.this)
+                                .setTitle(R.string.dialog_wechat_dpi_help_title)
+                                .setMessage(R.string.dialog_wechat_dpi_help_message)
+                                .setPositiveButton(R.string.dialog_close_button, null)
+                                .show();
+                    }
+
+                    @Override public void updateTypeface(String typefaceId) {
+                        updateComposeAppEditorDraft(currentDraft.withAdvancedConfig(
+                                typefaceId,
+                                currentDraft.draftFontHookDomainsRaw,
+                                currentDraft.viewportApplyMode,
+                                currentDraft.fontHookDomainsResetRequested,
+                                currentDraft.viewportApplyModeResetRequested));
+                    }
+
+                    @Override public void updateHookChain(
+                            String rawDomains,
+                            boolean resetDomains,
+                            String viewportApplyMode,
+                            boolean resetViewportApplyMode
+                    ) {
+                        updateComposeAppEditorDraft(currentDraft.withAdvancedConfig(
+                                currentDraft.selectedTypefaceId,
+                                rawDomains,
+                                viewportApplyMode,
+                                resetDomains,
+                                resetViewportApplyMode));
+                    }
+
+                    @Override public void reset() {
+                        updateComposeAppEditorDraft(currentDraft.cleared());
+                    }
+
+                    @Override public void toggleScope() {
+                        toggleLandDetailScope(editorItem, currentDraft.scopeSelected,
+                                () -> updateComposeAppEditorDraft(
+                                        currentDraft.withScopeSelected(true)),
+                                () -> updateComposeAppEditorDraft(
+                                        currentDraft.withScopeSelected(false)));
+                    }
+
+                    @Override public void toggleDpisEnabled() {
+                        boolean nextEnabled = !currentDraft.dpisEnabled;
+                        if (setDpisEnabled(editorItem.packageName, nextEnabled)) {
+                            WechatDpiSheetBinder.publishForDpisState(
+                                    editorItem.packageName, nextEnabled);
+                            // This value persists immediately and can change the active
+                            // catalogue filters, so refresh the same snapshot path as the
+                            // retained landscape detail implementation.
+                            requestAppsLoad();
+                            updateComposeAppEditorDraft(
+                                    currentDraft.withDpisEnabled(nextEnabled));
+                        }
+                    }
+
+                    @Override public void startProcess() {
+                        executeDialogProcessAction(editorItem,
+                                AppConfigDialogBinder.ProcessAction.START);
+                    }
+
+                    @Override public void restartProcess() {
+                        executeDialogProcessAction(editorItem,
+                                AppConfigDialogBinder.ProcessAction.RESTART);
+                    }
+
+                    @Override public void stopProcess() {
+                        executeDialogProcessAction(editorItem,
+                                AppConfigDialogBinder.ProcessAction.STOP);
+                    }
+
+                    @Override public void startFeedbackDiagnostic() {
+                        startComposeFeedbackDiagnostic(editorItem, currentDraft);
+                    }
+
+                    @Override public void save() {
+                        if (saveComposeAppEditor(editorItem, currentDraft)) {
+                            markComposeAppEditorSaved(currentDraft);
+                        }
+                    }
+
+                    @Override public void close() {
+                        closeComposeAppEditor();
+                    }
+                }
+        );
+    }
+
+    private AppConfigDialogBinder.AppConfigDialogState composeEditorDialogState(
+            AppListItem item,
+            AppConfigEditorDraft draft
+    ) {
+        AppConfigDialogBinder.AppConfigDialogState state
+                = AppConfigDialogBinder.AppConfigDialogState.fromItem(item);
+        state.selectedTypefaceId = draft.selectedTypefaceId;
+        state.draftFontHookDomainsRaw = draft.draftFontHookDomainsRaw;
+        state.viewportApplyMode = draft.viewportApplyMode;
+        state.fontHookDomainsResetRequested = draft.fontHookDomainsResetRequested;
+        state.viewportApplyModeResetRequested = draft.viewportApplyModeResetRequested;
+        state.viewportScaleInput = draft.viewportScaleInput;
+        state.viewportAbsoluteInput = draft.viewportAbsoluteInput;
+        state.scopeSelected = draft.scopeSelected;
+        state.dpisEnabled = draft.dpisEnabled;
+        return state;
+    }
+
+    private void updateComposeAdvancedDraft(
+            AppConfigEditorDraft draft,
+            AppConfigDialogBinder.AppConfigDialogState state
+    ) {
+        updateComposeAppEditorDraft(draft.withAdvancedConfig(
+                state.selectedTypefaceId,
+                state.draftFontHookDomainsRaw,
+                state.viewportApplyMode,
+                state.fontHookDomainsResetRequested,
+                state.viewportApplyModeResetRequested));
+    }
+
+    private void openComposeAppEditor(AppListItem item) {
+        if (item == null || mainViewModel == null) {
+            return;
+        }
+        mainViewModel.setEditingPackageName(item.packageName);
+        AppConfigEditorDraft draft = mainViewModel.getEditingDraft();
+        if (draft == null || !item.packageName.equals(draft.packageName)) {
+            mainViewModel.setEditingDraft(null);
+        }
+        if (composeShellHost != null) {
+            composeShellHost.refreshApps();
+        }
+    }
+
+    private void updateComposeAppEditorDraft(AppConfigEditorDraft draft) {
+        if (mainViewModel == null || draft == null) {
+            return;
+        }
+        mainViewModel.setEditingDraft(draft);
+        if (composeShellHost != null) {
+            composeShellHost.refreshApps();
+        }
+    }
+
+    private void refreshComposeAppEditor() {
+        requestAppsLoad();
+        if (composeShellHost != null) {
+            composeShellHost.refreshApps();
+        }
+    }
+
+    private void closeComposeAppEditor() {
+        if (mainViewModel != null) {
+            mainViewModel.clearEditingPackageName();
+            mainViewModel.clearEditingDraft();
+        }
+        if (composeShellHost != null) {
+            composeShellHost.refreshApps();
+        }
+    }
+
+    private boolean saveComposeAppEditor(AppListItem item, AppConfigEditorDraft draft) {
+        if (item == null || draft == null) {
+            return false;
+        }
+        String viewportInput = draft.viewportInputFor(draft.viewportMode);
+        ViewportTargetSpec spec = AppConfigInputValidation.parseViewportTargetSpec(
+                viewportInput, draft.viewportMode);
+        Integer fontScale = AppConfigInputValidation.parseFontScalePercentOrNull(draft.fontInput);
+        AppConfigSaveHandler.Result result = saveLandDetailResolvedConfig(
+                item, spec, draft.viewportMode, draft.viewportApplyMode, fontScale,
+                draft.fontMode, draft.selectedTypefaceId, draft.draftFontHookDomainsRaw,
+                draft.viewportApplyModeResetRequested, draft.fontHookDomainsResetRequested,
+                draft.viewportScaleInput, draft.viewportAbsoluteInput);
+        result = finalizeAppConfigSaveWithRuntimeSync(
+                result, draft.wechatDpiInput, item.packageName, draft.dpisEnabled,
+                getHookConfigStore());
+        if (result.messageResId != 0) {
+            showToast(result.messageResId);
+        }
+        if (result.success) {
+            showToast(R.string.status_save_success_inline);
+            requestLandDetailScopeAfterSuccessfulSave(
+                    item, composeEditorDialogState(item, draft));
+            syncComposeHyperOsNativeProxyAfterSave(item);
+            refreshComposeAppEditor();
+        }
+        return result.success;
+    }
+
+    private void markComposeAppEditorSaved(AppConfigEditorDraft draft) {
+        if (mainViewModel == null || draft == null) {
+            return;
+        }
+        AppConfigEditorDraft savedDraft = draft.afterSuccessfulSave();
+        mainViewModel.setEditingDraft(savedDraft);
+        mainViewModel.setSavedEditingDraft(savedDraft);
+        mainViewModel.setEditingSaveFeedback(true);
+        if (composeShellHost != null) {
+            composeShellHost.refreshApps();
+        }
+        getWindow().getDecorView().postDelayed(() -> {
+            if (mainViewModel != null && mainViewModel.isEditingSaveFeedback()) {
+                mainViewModel.setEditingSaveFeedback(false);
+                if (composeShellHost != null) {
+                    composeShellHost.refreshApps();
+                }
+            }
+        }, 1500L);
+    }
+
+    private void startComposeFeedbackDiagnostic(
+            AppListItem item,
+            AppConfigEditorDraft draft
+    ) {
+        if (item == null || draft == null) {
+            return;
+        }
+        if (!DiagnosticLogGate.ensureEnabled(
+                this,
+                () -> showComposeFeedbackDiagnosticConfirmation(item, draft),
+                null
+        )) {
+            return;
+        }
+        showComposeFeedbackDiagnosticConfirmation(item, draft);
+    }
+
+    private void showComposeFeedbackDiagnosticConfirmation(
+            AppListItem item,
+            AppConfigEditorDraft draft
+    ) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.feedback_diagnostic_action)
+                .setMessage(getString(
+                        R.string.feedback_diagnostic_confirm_message,
+                        item.label
+                ))
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.feedback_diagnostic_save_and_start_button,
+                        (dialog, which) -> {
+                    if (!saveComposeAppEditor(item, draft)) {
+                        return;
+                    }
+                    markComposeAppEditorSaved(draft);
+                    boolean started = feedbackDiagnosticCoordinator.start(
+                            FeedbackDiagnosticCoordinator.Request.fromPersisted(
+                                    item,
+                                    composeEditorDialogState(item, draft),
+                                    resolvePackageVersionName(item.packageName),
+                                    getHookConfigStore()
+                            )
+                    );
+                    if (!started) {
+                        showToast(R.string.feedback_diagnostic_unavailable);
+                    }
+                })
+                .show();
+    }
+
+    private void syncComposeHyperOsNativeProxyAfterSave(AppListItem item) {
+        if (!isHyperOsNativeProxyCandidate(item)) {
+            return;
+        }
+        if (shouldPrepareHyperOsNativeProxyForRestart(item)) {
+            executeHyperOsNativeProxyMount(item, true, success -> { });
+            return;
+        }
+        executeHyperOsNativeProxyMount(item, false, success -> { });
+    }
+
     private TemplateWorkspacePresentationController ensureComposeTemplateWorkspacePresentation() {
         if (templateWorkspacePresentationController == null) {
             templateWorkspacePresentationController = new TemplateWorkspacePresentationController(
@@ -3034,47 +3423,7 @@ public final class MainActivity
                 return MainActivity.this.getPackageName();
             }
 
-            @Override
-            public void runOnUiThread(Runnable runnable) {
-                MainActivity.this.runOnUiThread(runnable);
-            }
-
-            @Override
-            public View getIconRefreshAnchor() {
-                return appPager != null
-                        ? appPager
-                        : findViewById(android.R.id.content);
-            }
-
-            @Override
-            public void requestAppsLoad() {
-                MainActivity.this.requestAppsLoad();
-            }
-
-            @Override
-            public boolean onIconsLoaded(
-                    Map<String, android.graphics.drawable.Drawable> icons
-            ) {
-                boolean matched = hasMatchingAppIcon(requireUiState(), icons);
-                dispatchMainUiAction(MainUiAction.appIconsLoaded(icons));
-                return matched;
-            }
         };
-    }
-
-    private static boolean hasMatchingAppIcon(
-            MainUiState state,
-            Map<String, android.graphics.drawable.Drawable> icons
-    ) {
-        if (state == null || icons == null || icons.isEmpty()) {
-            return false;
-        }
-        for (AppListItem app : state.appsSnapshot()) {
-            if (app != null && icons.get(app.packageName) != null) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private SystemScopeCoordinator.Host createSystemScopeHost() {
@@ -3330,7 +3679,7 @@ public final class MainActivity
                 sheetItem,
                 systemHooksEnabled
         );
-        AppConfigDraft draft = mainViewModel != null
+        AppConfigEditorDraft draft = mainViewModel != null
                 ? mainViewModel.getEditingDraft()
                 : null;
         if (draft != null) {
@@ -3532,7 +3881,7 @@ public final class MainActivity
         activeEditorRoot = dialogView;
         activeEditorPackageName = item.packageName;
         if (mainViewModel != null && mainViewModel.getEditingDraft() != null) {
-            AppConfigDraft draft = mainViewModel.getEditingDraft();
+            AppConfigEditorDraft draft = mainViewModel.getEditingDraft();
             applyAppConfigDraft(dialogView, draft);
             LandAppDetailPaneBinder.applyRetainedDraft(
                     this,
@@ -3901,6 +4250,29 @@ public final class MainActivity
         }
         scheduleRuntimePropertiesForTargetLaunch(packageName);
         return result;
+    }
+
+    private AppConfigSaveHandler.Result finalizeAppConfigSaveWithRuntimeSync(
+            AppConfigSaveHandler.Result saveResult,
+            String wechatDpiInput,
+            String packageName,
+            boolean dpisEnabled,
+            DpisConfigStore store) {
+        if (saveResult == null) {
+            return AppConfigSaveHandler.Result.failure(R.string.system_settings_save_failed);
+        }
+        if (!saveResult.success) {
+            return saveResult;
+        }
+        if (!WechatDpiSheetBinder.save(wechatDpiInput, packageName, dpisEnabled, store)) {
+            return AppConfigSaveHandler.Result.failure(
+                    WechatDpiSheetBinder.isInputValid(wechatDpiInput)
+                            ? R.string.system_settings_save_failed
+                            : R.string.status_save_invalid);
+        }
+        onRuntimeConfigSaved();
+        scheduleRuntimePropertiesForTargetLaunch(packageName);
+        return saveResult;
     }
 
     private void onRuntimeConfigSaved() {
@@ -4317,6 +4689,11 @@ public final class MainActivity
                     Runnable onFinished
             ) {
                 executeHyperOsNativeProxyMount(item, false, onFinished);
+            }
+
+            @Override
+            public boolean isHyperOsNativeProxyCandidate(AppListItem item) {
+                return MainActivity.this.isHyperOsNativeProxyCandidate(item);
             }
 
             @Override
@@ -4905,6 +5282,15 @@ public final class MainActivity
             AppConfigDialogBinder.AppConfigDialogState state,
             Runnable onStateChanged
     ) {
+        showFontHookDomains(item, state, onStateChanged, isFontHookDomainEditingEnabled());
+    }
+
+    private void showFontHookDomains(
+            AppListItem item,
+            AppConfigDialogBinder.AppConfigDialogState state,
+            Runnable onStateChanged,
+            boolean fontDomainsEditable
+    ) {
         if (item == null
                 || item.packageName == null
                 || item.packageName.isBlank()) {
@@ -4973,7 +5359,7 @@ public final class MainActivity
                 state != null
                         ? state.viewportApplyMode
                         : store.getTargetViewportApplyMode(item.packageName),
-                isFontHookDomainEditingEnabled(),
+                fontDomainsEditable,
                 onStateChanged
         );
     }
@@ -5113,12 +5499,19 @@ public final class MainActivity
     private boolean shouldPrepareHyperOsNativeProxyForRestart(
             AppListItem item
     ) {
-        if (item == null || !item.hyperOsNativeProxyCandidate) {
+        if (!isHyperOsNativeProxyCandidate(item)) {
             return false;
         }
         DpisConfigStore store = getHookConfigStore();
         return (store.isTargetDpisEnabled(item.packageName)
                 && hasActiveStoredConfig(store, item.packageName));
+    }
+
+    /** The catalogue intentionally does not preload metadata for every installed package. */
+    private boolean isHyperOsNativeProxyCandidate(AppListItem item) {
+        return item != null && (item.hyperOsNativeProxyCandidate
+                || HyperOsNativeAppDetector.isNativeProxyCandidate(
+                        getPackageManager(), item.packageName));
     }
 
     private static boolean hasActiveStoredConfig(
@@ -5169,7 +5562,7 @@ public final class MainActivity
         return DpisApplication.getActiveHookConfigStore(this);
     }
 
-    private AppConfigDraft captureAppConfigDraft() {
+    private AppConfigEditorDraft captureAppConfigDraft() {
         View root = activeEditorRoot;
         String packageName = activeEditorPackageName;
         if (root == null
@@ -5214,15 +5607,19 @@ public final class MainActivity
         if ((packageName == null || packageName.isBlank()) && mainViewModel != null) {
             packageName = mainViewModel.getEditingPackageName();
         }
-        AppConfigDraft current = mainViewModel != null
+        AppConfigEditorDraft current = mainViewModel != null
                 ? mainViewModel.getEditingDraft()
                 : null;
         boolean useCurrentState = current != null
                 && current.packageName != null
                 && current.packageName.equals(packageName);
-        AppConfigDraft draft = new AppConfigDraft(
+        AppConfigEditorDraft draft = new AppConfigEditorDraft(
                 packageName,
                 viewportText,
+                state != null ? state.viewportScaleInput
+                        : useCurrentState ? current.viewportScaleInput : "",
+                state != null ? state.viewportAbsoluteInput
+                        : useCurrentState ? current.viewportAbsoluteInput : "",
                 viewportMode,
                 fontText,
                 fontMode,
@@ -5238,7 +5635,11 @@ public final class MainActivity
                 state != null
                         ? state.viewportApplyModeResetRequested
                         : useCurrentState && current.viewportApplyModeResetRequested,
-                WechatDpiSheetBinder.captureDraft(root)
+                WechatDpiSheetBinder.captureDraft(root),
+                state != null ? state.scopeSelected
+                        : useCurrentState && current.scopeSelected,
+                state != null ? state.dpisEnabled
+                        : useCurrentState && current.dpisEnabled
         );
         return draft;
     }
@@ -5247,18 +5648,20 @@ public final class MainActivity
         if (mainViewModel == null || state == null) {
             return;
         }
-        AppConfigDraft captured = captureAppConfigDraft();
+        AppConfigEditorDraft captured = captureAppConfigDraft();
         if (captured != null) {
             mainViewModel.setEditingDraft(captured);
             return;
         }
-        AppConfigDraft current = mainViewModel.getEditingDraft();
+        AppConfigEditorDraft current = mainViewModel.getEditingDraft();
         String packageName = state.packageName != null && !state.packageName.isBlank()
                 ? state.packageName
                 : mainViewModel.getEditingPackageName();
-        AppConfigDraft draft = new AppConfigDraft(
+        AppConfigEditorDraft draft = new AppConfigEditorDraft(
                 packageName,
                 current != null ? current.viewportInput : "",
+                current != null ? current.viewportScaleInput : "",
+                current != null ? current.viewportAbsoluteInput : "",
                 current != null ? current.viewportMode : ViewportTargetType.RELATIVE_SCALE,
                 current != null ? current.fontInput : "",
                 current != null ? current.fontMode : FontApplyMode.SYSTEM_EMULATION,
@@ -5267,12 +5670,14 @@ public final class MainActivity
                 state.viewportApplyMode,
                 state.fontHookDomainsResetRequested,
                 state.viewportApplyModeResetRequested,
-                current != null ? current.wechatDpiInput : null
+                current != null ? current.wechatDpiInput : null,
+                state.scopeSelected,
+                state.dpisEnabled
         );
         mainViewModel.setEditingDraft(draft);
     }
 
-    private void applyAppConfigDraft(View root, AppConfigDraft draft) {
+    private void applyAppConfigDraft(View root, AppConfigEditorDraft draft) {
         if (draft == null || root == null) {
             return;
         }
@@ -5397,47 +5802,6 @@ public final class MainActivity
                 : LandAppDetailPaneBinder.stateFor(root);
     }
 
-    static final class AppConfigDraft {
-
-        final String packageName;
-        final String viewportInput;
-        final String viewportMode;
-        final String fontInput;
-        final String fontMode;
-        final String selectedTypefaceId;
-        final String draftFontHookDomainsRaw;
-        final String viewportApplyMode;
-        final boolean fontHookDomainsResetRequested;
-        final boolean viewportApplyModeResetRequested;
-        final String wechatDpiInput;
-
-        AppConfigDraft(
-                String packageName,
-                String viewportInput,
-                String viewportMode,
-                String fontInput,
-                String fontMode,
-                String selectedTypefaceId,
-                String draftFontHookDomainsRaw,
-                String viewportApplyMode,
-                boolean fontHookDomainsResetRequested,
-                boolean viewportApplyModeResetRequested,
-                String wechatDpiInput
-        ) {
-            this.packageName = packageName;
-            this.viewportInput = viewportInput;
-            this.viewportMode = viewportMode;
-            this.fontInput = fontInput;
-            this.fontMode = fontMode;
-            this.selectedTypefaceId = selectedTypefaceId;
-            this.draftFontHookDomainsRaw = draftFontHookDomainsRaw;
-            this.viewportApplyMode = ViewportApplyMode.normalize(viewportApplyMode);
-            this.fontHookDomainsResetRequested = fontHookDomainsResetRequested;
-            this.viewportApplyModeResetRequested = viewportApplyModeResetRequested;
-            this.wechatDpiInput = wechatDpiInput;
-        }
-    }
-
     private static final class RetainedState {
 
         final List<AppListItem> appsSnapshot;
@@ -5449,7 +5813,8 @@ public final class MainActivity
         final SparseArray<Parcelable> pageScrollStates;
         final int[] refreshingPagePositions;
         final String editingPackageName;
-        final AppConfigDraft editingDraft;
+        final AppConfigEditorDraft editingDraft;
+        final AppConfigEditorDraft savedEditingDraft;
         final TemplateDetailSelection templateDetailSelection;
         final boolean quickTemplateTargetSelectionActivityStarted;
         final GlobalPrefillEditorBinder.Draft globalPrefillDraft;
@@ -5466,7 +5831,8 @@ public final class MainActivity
                 SparseArray<Parcelable> pageScrollStates,
                 int[] refreshingPagePositions,
                 String editingPackageName,
-                AppConfigDraft editingDraft,
+                AppConfigEditorDraft editingDraft,
+                AppConfigEditorDraft savedEditingDraft,
                 TemplateDetailSelection templateDetailSelection,
                 boolean quickTemplateTargetSelectionActivityStarted,
                 GlobalPrefillEditorBinder.Draft globalPrefillDraft,
@@ -5491,6 +5857,7 @@ public final class MainActivity
                             : new int[0];
             this.editingPackageName = editingPackageName;
             this.editingDraft = editingDraft;
+            this.savedEditingDraft = savedEditingDraft;
             this.templateDetailSelection = templateDetailSelection != null
                     ? templateDetailSelection
                     : TemplateDetailSelection.none();

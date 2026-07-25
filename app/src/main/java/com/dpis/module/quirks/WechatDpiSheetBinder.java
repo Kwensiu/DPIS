@@ -72,7 +72,12 @@ public final class WechatDpiSheetBinder {
         if (inputView == null || inputView.getText() == null) {
             return true;
         }
-        return WechatDpiConfig.isInputValid(inputView.getText().toString());
+        return isInputValid(inputView.getText().toString());
+    }
+
+    /** Validates the retained editor value without requiring a legacy View. */
+    public static boolean isInputValid(String rawValue) {
+        return WechatDpiConfig.isInputValid(rawValue);
     }
 
     public static void bindDoneAction(android.widget.TextView.OnEditorActionListener listener,
@@ -89,13 +94,25 @@ public final class WechatDpiSheetBinder {
 
     public static boolean save(View dialogView, String packageName, boolean dpisEnabled,
             DpisConfigStore store) {
+        TextInputEditText inputView = inputView(dialogView);
+        String rawValue = inputView != null && inputView.getText() != null
+                ? inputView.getText().toString()
+                : null;
+        return save(rawValue, packageName, dpisEnabled, store);
+    }
+
+    /**
+     * Saves the raw editor value shared by Compose and legacy editor surfaces.
+     */
+    public static boolean save(String rawValue, String packageName, boolean dpisEnabled,
+            DpisConfigStore store) {
         if (!WechatDpiConfig.appliesTo(packageName)) {
             return true;
         }
-        if (store == null || !isInputValid(dialogView)) {
+        if (store == null || !isInputValid(rawValue)) {
             return false;
         }
-        Integer dpi = readDpiOrNull(dialogView);
+        Integer dpi = WechatDpiConfig.parseOrNull(rawValue);
         boolean saved = store.setWechatDpi(packageName, dpi);
         if (saved) {
             WechatDpiPropertySyncer.publishDpiAsync(packageName, dpisEnabled ? dpi : null);

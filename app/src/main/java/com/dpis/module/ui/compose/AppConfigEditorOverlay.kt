@@ -1,0 +1,147 @@
+package com.dpis.module.ui.compose
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+
+/** Root-level app editor sheet whose collapsed edge stops at the advanced-section anchor. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppConfigEditorOverlay(
+    onDismissRequest: () -> Unit,
+    topChrome: @Composable () -> Unit,
+    content: @Composable ColumnScope.((Dp) -> Unit) -> Unit
+) {
+    @Suppress("DEPRECATION")
+    val bottomSheetState = rememberStandardBottomSheetState(
+        initialValue = SheetValue.Hidden,
+        skipHiddenState = false
+    )
+    val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = bottomSheetState)
+    val scrimInteractionSource = remember { MutableInteractionSource() }
+    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
+    var advancedAnchor by remember { mutableStateOf<Dp?>(null) }
+    var hasOpened by remember { mutableStateOf(false) }
+    var hasExpandedOnce by remember { mutableStateOf(false) }
+    var dismissalInProgress by remember { mutableStateOf(false) }
+    // BottomSheetScaffold has no modal scrim. Its target changes at the same instant as the
+    // standard show/hide animation begins, so use it as the shared visibility timeline.
+    val scrimAlpha by animateFloatAsState(
+        targetValue = if (bottomSheetState.targetValue == SheetValue.Hidden) 0f else 0.32f,
+        animationSpec = tween(durationMillis = 220),
+        label = "app-config-sheet-scrim"
+    )
+
+    fun dismissWithAnimation() {
+        if (dismissalInProgress) return
+        dismissalInProgress = true
+        coroutineScope.launch {
+            try {
+                bottomSheetState.hide()
+            } finally {
+                onDismissRequest()
+            }
+        }
+    }
+
+    // A downward gesture has the same meaning as dismissing the legacy BottomSheetDialog:
+    // terminate the editing session instead of leaving an invisible draft in Compose state.
+    LaunchedEffect(bottomSheetState) {
+        snapshotFlow { bottomSheetState.currentValue }.collectLatest { value ->
+            if (value == SheetValue.Expanded) {
+                hasExpandedOnce = true
+            }
+            if (value != SheetValue.Hidden) {
+                hasOpened = true
+            } else if (value == SheetValue.Hidden && hasOpened && !dismissalInProgress) {
+                dismissalInProgress = true
+                onDismissRequest()
+            }
+        }
+    }
+    BackHandler(onBack = ::dismissWithAnimation)
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val minPeekHeight = maxHeight * 0.3f
+        val maxPeekHeight = maxHeight * 0.75f
+        // The content report excludes the app-sheet chrome. Include its full slot and a small
+        // bottom clearance so the save action does not sit against the system gesture handle.
+        val measuredPeekHeight = advancedAnchor?.let {
+            (it + AppConfigSheetUiTokens.TopChromeHeight
+                + AppConfigSheetUiTokens.CollapsedBottomClearance)
+                .coerceIn(minPeekHeight, maxPeekHeight)
+        } ?: maxHeight * 0.5f
+
+        Box(Modifier.fillMaxSize()) {
+            Box(
+                Modifier.fillMaxSize()
+                    .background(Color.Black.copy(alpha = scrimAlpha))
+                    // A modal scrim is a dismissal surface, not a button; preserve its click
+                    // semantics without showing a ripple over the dimmed background.
+                    .clickable(
+                        interactionSource = scrimInteractionSource,
+                        indication = null,
+                        onClick = ::dismissWithAnimation
+                    )
+            )
+            BottomSheetScaffold(
+                modifier = Modifier.fillMaxSize(),
+                scaffoldState = scaffoldState,
+                containerColor = Color.Transparent,
+                sheetPeekHeight = measuredPeekHeight,
+                sheetContainerColor = MaterialTheme.colorScheme.surface,
+                sheetContentColor = MaterialTheme.colorScheme.onSurface,
+                sheetTonalElevation = 0.dp,
+                // Material assigns the "drag handle" accessibility role to this slot. The
+                // app's short line is visual-only, so render it in regular sheet content.
+                sheetDragHandle = null,
+                sheetContent = {
+                    topChrome()
+                    content { measuredAnchor ->
+                        // Before the user opens advanced actions, layout changes (for example,
+                        // validation text or a window resize) keep the collapsed edge aligned.
+                        // An expanded sheet remains under the user's control until dismissal.
+                        if (!hasExpandedOnce && measuredAnchor > 0.dp) {
+                            advancedAnchor = measuredAnchor
+                        }
+                    }
+                }
+            ) { }
+        }
+    }
+    // Do not animate from a provisional 50% peek height. The editor measures its advanced
+    // divider while hidden, then enters once the legacy collapsed edge is known and stable.
+    LaunchedEffect(advancedAnchor) {
+        if (advancedAnchor != null
+                && bottomSheetState.currentValue == SheetValue.Hidden
+                && bottomSheetState.targetValue == SheetValue.Hidden
+                && !dismissalInProgress) {
+            bottomSheetState.partialExpand()
+        }
+    }
+}

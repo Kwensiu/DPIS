@@ -53,7 +53,7 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(activity.contains("targetsController.dispose();"));
         assertTrue(activity.contains("finish();"));
         assertFalse(activity.contains("quickTemplateStore.setSelectedPackages(template.id, selectedPackages)"));
-        assertTrue(composeHost.contains("controller::onIconVisible"));
+        assertFalse(composeHost.contains("controller::onIconVisible"));
         assertTrue(composeHost.contains("result.messageResId"));
         assertTrue(composeContent.contains("TargetSearchCard("));
         assertTrue(composeContent.contains("R.drawable.ic_search_24"));
@@ -62,16 +62,15 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(composeContent.contains("onValueChange = onQueryChanged"));
         assertTrue(composeContent.contains("onValueChange = onSelected"));
         assertTrue(composeContent.contains("AndroidView("));
-        assertTrue(composeContent.contains("onIconVisible(app.packageName)"));
+        assertFalse(composeContent.contains("onIconVisible(app.packageName)"));
         assertTrue(composeContent.contains("rememberModalBottomSheetState(skipPartiallyExpanded = true)"));
         assertTrue(composeContent.contains("navigationBarsPadding()"));
         assertTrue(composeContent.contains("SecondaryPageTopBar("));
         assertFalse(composeContent.contains("TopAppBar("));
         assertTrue(presentation.contains("templates.setSelectedPackages(templateId, selectedPackages)"));
         assertTrue(presentation.contains("pruneSelection()"));
-        assertTrue(presentation.contains("catalog.loadInstalledAppCatalog(false)"));
-        assertTrue(presentation.contains("boolean matched = false;"));
-        assertTrue(presentation.contains("return matched;"));
+        assertTrue(presentation.contains("catalog.loadInstalledAppCatalogWithIcons(false)"));
+        assertTrue(presentation.contains("item.icon"));
         assertTrue(presentation.contains("catch (Throwable throwable)"));
         assertTrue(presentation.contains(
                 "quick template target presentation load failed"));
@@ -80,7 +79,7 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(targetsBinder.contains("pruneSelectedPackagesToInstalledApps(selectedPackages, allTargetItems)"));
         assertTrue(targetsBinder.contains("DpisApplication.getActiveHookConfigStore(activity)"));
         assertTrue(targetsBinder.contains("new PackageConfigRepository("));
-        assertTrue(targetsBinder.contains("installedAppCatalogCoordinator.loadInstalledAppCatalog(false)"));
+        assertTrue(targetsBinder.contains("installedAppCatalogCoordinator.loadInstalledAppCatalogWithIcons(false)"));
         assertTrue(targetsBinder.contains(
                 "packageConfigRepository.hasRealPackageConfig(item.packageName)"));
         assertTrue(targetsBinder.contains("FILTER_PREFS_NAME = \"quick_template_target_filters\""));
@@ -96,7 +95,7 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(targetsBinder.contains("applyTargetFilters()"));
         assertFalse(targetsBinder.contains("private void filterApps("));
         assertTrue(targetsBinder.contains("appLoadExecutor.execute("));
-        assertTrue(targetsBinder.contains("this::onIconLoadRequested"));
+        assertTrue(targetsBinder.contains("item.icon"));
         assertTrue(targetsBinder.contains("quick template target list load failed"));
         assertTrue(targetsBinder.contains("if (disposed)"));
         assertFalse(targetsBinder.contains("applicationInfo.loadIcon(packageManager)"));
@@ -143,8 +142,7 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(mainActivity.contains("quickTemplateTargetSelectionActivityStarted = true;"));
         assertTrue(mainActivity.contains("quickTemplateTargetSelectionActivityStarted = false;"));
         assertTrue(mainActivity.contains("startActivityForResult(intent, REQUEST_QUICK_TEMPLATE_TARGETS);"));
-        assertTrue(mainActivity.contains("hasMatchingAppIcon(requireUiState(), icons)"));
-        assertTrue(mainActivity.contains("private static boolean hasMatchingAppIcon("));
+        assertTrue(mainActivity.contains("new InstalledAppCatalogCoordinator("));
         assertTrue(mainActivity.contains("requestCode == REQUEST_QUICK_TEMPLATE_TARGETS"));
         assertTrue(mainActivity.contains("QuickTemplateTargetCarrierState.shouldStartPortraitActivity("));
         assertTrue(mainActivity.contains("QuickTemplateTargetCarrierState.shouldClearPendingAfterResult("));

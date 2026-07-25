@@ -433,21 +433,26 @@ public class MainActivitySourceSmokeTest {
     }
 
     @Test
-    public void loadInstalledApps_usesIconCacheEntryPoint() throws IOException {
+    public void loadInstalledApps_publishesRowsBeforeIcons() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String coordinatorSource = read(
             "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.java"
         );
+        String iconSource = read("src/main/java/com/dpis/module/ui/compose/InstalledAppIcon.kt");
+        String workspaceSource = read("src/main/java/com/dpis/module/ui/compose/AppWorkspaceContent.kt");
 
         assertTrue(
             source.contains("installedAppCatalogCoordinator.loadInstalledApps(")
         );
-        assertTrue(coordinatorSource.contains("AppIconMemoryCache"));
-        assertTrue(
-            coordinatorSource.contains(
-                "loadAppIcon(packageManager, applicationInfo)"
-            )
-        );
+        assertTrue(coordinatorSource.contains("item.hyperOsNativeProxyCandidate, true, null"));
+        assertTrue(coordinatorSource.contains("ApplicationInfoFlags.of(0L)"));
+        assertTrue(coordinatorSource.contains("getInstalledApplications(0)"));
+        assertFalse(coordinatorSource.contains("GET_META_DATA"));
+        assertTrue(source.contains("HyperOsNativeAppDetector.isNativeProxyCandidate("));
+        assertTrue(iconSource.contains("produceState<Drawable?>"));
+        assertTrue(iconSource.contains("InstalledAppIconCache.load"));
+        assertTrue(workspaceSource.contains("rememberInstalledAppIcon(item.packageName, item.icon)"));
+        assertFalse(workspaceSource.contains("preloadIcons("));
         assertTrue(!coordinatorSource.contains("getDefaultActivityIcon()"));
     }
 
@@ -1526,28 +1531,20 @@ public class MainActivitySourceSmokeTest {
     }
 
     @Test
-    public void firstScreen_loadUsesPlaceholderAndAsyncIconWarmup()
+    public void installedCatalog_defersIconsUntilRowsAreVisible()
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String coordinatorSource = read(
             "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.java"
         );
 
-        assertTrue(
-            source.contains(
-                "installedAppCatalogCoordinator.onIconLoadRequested(packageName);"
-            )
-        );
-        assertTrue(coordinatorSource.contains("firstScreenIconWarmupLimit"));
-        assertTrue(
-            coordinatorSource.contains("maybeScheduleFirstScreenIconWarmup(")
-        );
-        assertTrue(coordinatorSource.contains("pendingOnDemandIconLoads"));
-        assertTrue(coordinatorSource.contains("resolveDisplayIcon(item)"));
-        assertTrue(coordinatorSource.contains(
-            "scheduleIconRefresh(Collections.singleton(packageName));"
-        ));
-        assertTrue(coordinatorSource.contains("onIconsLoaded("));
+        assertTrue(source.contains("loadInstalledApps(forceInstalledAppCatalogReload)"));
+        assertTrue(coordinatorSource.contains("List<InstalledAppCatalogItem> catalog = loadInstalledAppCatalog("));
+        assertTrue(coordinatorSource.contains("return applicationInfo.loadIcon(packageManager);"));
+        assertFalse(coordinatorSource.contains("icon = loadApplicationIcon(packageManager, applicationInfo);"));
+        assertFalse(coordinatorSource.contains("maybeScheduleFirstScreenIconWarmup("));
+        assertFalse(coordinatorSource.contains("ExecutorService"));
+        assertFalse(coordinatorSource.contains("onIconsLoaded("));
         assertTrue(!coordinatorSource.contains("getDefaultActivityIcon()"));
     }
 

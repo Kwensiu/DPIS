@@ -122,39 +122,7 @@ public final class QuickTemplateTargetsPresentationController {
         catalog = new InstalledAppCatalogCoordinator(new InstalledAppCatalogCoordinator.Host() {
             @Override public PackageManager getPackageManager() { return context.getPackageManager(); }
             @Override public String getSelfPackageName() { return context.getPackageName(); }
-            @Override public void runOnUiThread(Runnable runnable) { mainHandler.post(runnable); }
-            @Override public android.view.View getIconRefreshAnchor() { return null; }
-            @Override public void requestAppsLoad() { reloadApps(); }
-            @Override public boolean onIconsLoaded(Map<String, Drawable> icons) {
-                if (disposed) {
-                    return true;
-                }
-                if (icons == null || icons.isEmpty()) {
-                    return false;
-                }
-                boolean matched = false;
-                boolean changed = false;
-                for (int i = 0; i < allApps.size(); i++) {
-                    RawTargetApp item = allApps.get(i);
-                    Drawable icon = icons.get(item.packageName);
-                    if (icon != null) {
-                        matched = true;
-                        if (icon != item.icon) {
-                            allApps.set(i, item.withIcon(icon));
-                            changed = true;
-                        }
-                    }
-                }
-                if (changed) {
-                    publish();
-                }
-                // A cache refresh is handled incrementally only when it matched an app that is
-                // actually present in this presentation. Returning false for an empty/stale
-                // presentation lets the catalog coordinator rebuild it once instead of marking
-                // the request handled and leaving icons permanently blank.
-                return matched;
-            }
-        }, 60_000L, 48, 120L);
+        }, 60_000L);
     }
 
     public void addListener(Listener listener) { if (listener != null) listeners.add(listener); }
@@ -199,8 +167,6 @@ public final class QuickTemplateTargetsPresentationController {
                 : R.string.quick_template_targets_save_failed);
     }
 
-    public void onIconVisible(String packageName) { catalog.onIconLoadRequested(packageName); }
-
     public void dispose() { disposed = true; loader.shutdownNow(); catalog.shutdown(); }
 
     private void reloadApps() {
@@ -212,7 +178,7 @@ public final class QuickTemplateTargetsPresentationController {
             List<RawTargetApp> loaded = null;
             try {
                 List<RawTargetApp> next = new ArrayList<>();
-                for (InstalledAppCatalogItem item : catalog.loadInstalledAppCatalog(false)) {
+                for (InstalledAppCatalogItem item : catalog.loadInstalledAppCatalogWithIcons(false)) {
                     next.add(new RawTargetApp(item.label, item.packageName,
                             packageConfigs.hasRealPackageConfig(item.packageName), item.systemApp,
                             item.icon));
@@ -265,8 +231,5 @@ public final class QuickTemplateTargetsPresentationController {
             this.systemApp = systemApp; this.icon = icon;
         }
 
-        RawTargetApp withIcon(Drawable updatedIcon) {
-            return new RawTargetApp(label, packageName, configured, systemApp, updatedIcon);
-        }
     }
 }

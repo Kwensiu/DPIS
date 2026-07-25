@@ -29,6 +29,8 @@ internal object TemplateUiTokens {
     val ListGap = 12.dp
     val EmptyStateTopGap = 8.dp
     val EmptyStatePadding = 20.dp
+    const val EmptyStateViewportFraction = 0.5f
+    val EmptyStateBottomBias = 32.dp
 
     val GlobalCardShape = RoundedCornerShape(24.dp)
     val TemplateCardShape = RoundedCornerShape(14.dp)
@@ -63,12 +65,11 @@ internal object TemplateUiTokens {
     // The legacy sheet had 24dp dialog bottom inset plus the template field reserve.
     // ModalBottomSheet does not inherit that View-dialog inset, so keep both parts here.
     val SheetBottomPadding = 32.dp
-    val SheetDragHandleWidth = 52.dp
-    val SheetDragHandleHeight = 5.dp
-    val SheetDragHandleContainerHeight = 28.dp
-    // ModalBottomSheet places the drag-handle slot at the sheet edge. The legacy sheet placed
-    // its handle container after the 14dp content inset, so move only the visual affordance down.
-    val SheetDragHandleVisualOffset = 14.dp
+    val SheetVisualIndicatorWidth = 52.dp
+    val SheetVisualIndicatorHeight = 5.dp
+    val SheetTopChromeHeight = 28.dp
+    // This is a content-level visual indicator, not a Material drag-handle slot.
+    val SheetVisualIndicatorOffset = 0.dp
     val SheetHeaderTopGap = 10.dp
     val SheetHeaderMinHeight = 52.dp
     val SheetInputGap = 8.dp

@@ -108,9 +108,13 @@ fun DonateSupportPage(onBack: () -> Unit) {
     if (supportersVisible) {
         ModalBottomSheet(
             onDismissRequest = { supportersVisible = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            dragHandle = null
         ) {
-            SupportersSheet()
+            Column(Modifier.fillMaxWidth()) {
+                DpisSheetVisualChrome()
+                SupportersSheet()
+            }
         }
     }
 }

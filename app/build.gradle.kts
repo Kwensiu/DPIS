@@ -13,6 +13,7 @@ plugins {
     alias(libs.plugins.agp.app)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.aboutlibraries)
+    alias(libs.plugins.androidx.baselineprofile)
 }
 
 private val appVersionName = "1.15.0" // x-release-please-version
@@ -319,6 +320,7 @@ if (releaseTasksRequested && !hasReleaseSigningConfig) {
 }
 
 dependencies {
+    baselineProfile(project(":baselineprofile"))
     compileOnly(libs.libxposed.api)
     compileOnly(libs.legacy.xposed.api)
     implementation(libs.libxposed.service)

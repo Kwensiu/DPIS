@@ -39,7 +39,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -67,8 +66,7 @@ fun QuickTemplateTargetsContent(
     onQueryChanged: (String) -> Unit,
     onFiltersChanged: (Boolean, Boolean) -> Unit,
     onSelectionChanged: (String, Boolean) -> Unit,
-    onSave: () -> Unit,
-    onIconVisible: (String) -> Unit = {}
+    onSave: () -> Unit
 ) {
     val current = state ?: return
     var filterSheetVisible by rememberSaveable { mutableStateOf(false) }
@@ -166,8 +164,7 @@ fun QuickTemplateTargetsContent(
                                     app = app,
                                     onSelected = { selected ->
                                         onSelectionChanged(app.packageName, selected)
-                                    },
-                                    onIconVisible = onIconVisible
+                                    }
                                 )
                             }
                         }
@@ -180,14 +177,16 @@ fun QuickTemplateTargetsContent(
     if (filterSheetVisible) {
         ModalBottomSheet(
             onDismissRequest = { filterSheetVisible = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            dragHandle = null
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp, vertical = 20.dp)
-                    .navigationBarsPadding()
+                .navigationBarsPadding()
             ) {
+                DpisSheetVisualChrome()
                 Text(
                     text = stringResource(R.string.filter_sheet_title),
                     style = MaterialTheme.typography.titleLarge
@@ -296,14 +295,8 @@ private fun TargetSearchCard(
 @Composable
 private fun TargetAppRow(
     app: QuickTemplateTargetsPresentationController.TargetApp,
-    onSelected: (Boolean) -> Unit,
-    onIconVisible: (String) -> Unit
+    onSelected: (Boolean) -> Unit
 ) {
-    if (app.icon == null) {
-        LaunchedEffect(app.packageName) {
-            onIconVisible(app.packageName)
-        }
-    }
     Row(
         modifier = Modifier
             .fillMaxWidth()

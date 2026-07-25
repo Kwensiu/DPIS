@@ -1,25 +1,63 @@
 package com.dpis.module
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import com.dpis.module.home.HomeWorkspaceBinder
 import com.dpis.module.settings.SystemFontScaleToolState
 import com.dpis.module.ui.compose.HomeWorkspaceContent
+import com.dpis.module.ui.compose.AppWorkspaceContent
+import com.dpis.module.ui.compose.AppConfigEditorOverlay
+import com.dpis.module.ui.compose.AppConfigEditorContent
+import com.dpis.module.ui.compose.AppConfigSheetUiTokens
+import com.dpis.module.ui.compose.DpisLegacyWorkspaceHost
 import com.dpis.module.ui.compose.ToolsWorkspaceContent
 import com.dpis.module.ui.compose.SettingsWorkspaceContent
 import com.dpis.module.ui.compose.TemplateWorkspaceContent
+import com.dpis.module.ui.compose.TemplateUiTokens
 import com.dpis.module.templates.TemplateWorkspacePresentation
+import com.dpis.module.appconfig.AppConfigSheetWizardStore
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 
 /** Compose workspace presentation boundary; domain actions remain in MainActivity. */
 internal class MainWorkspacePresentationCoordinator(private val content: Content) {
     interface Content {
         fun homeState(): HomeWorkspaceBinder.State
+        fun appState(): AppWorkspacePresentation.State
+        fun appEditorState(): AppConfigEditorPresentation.State?
+        fun appDetailPane(): android.view.View?
         fun toolsState(): SystemFontScaleToolState?
         fun changeToolsPending(percent: Int)
         fun applyTools()
@@ -42,12 +80,29 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         fun closeTemplateEditor()
         fun usesComposeTemplateWorkspace(): Boolean
     }
+    private var appRevision by mutableStateOf(0)
     private var homeRevision by mutableStateOf(0)
     private var toolsRevision by mutableStateOf(0)
     private var toolsExpanded by mutableStateOf(false)
     private var settingsRevision by mutableStateOf(0)
     private var templateRevision by mutableStateOf(0)
     @Composable fun render(mode: MainUiState.WorkspaceMode, padding: PaddingValues): Boolean = when (mode) {
+        MainUiState.WorkspaceMode.APP -> {
+            appRevision
+            ComposeWorkspaceSurface {
+                AppWorkspaceContent(
+                    state = content.appState(),
+                    padding = padding,
+                    editorState = content.appEditorState(),
+                    detailContent = {
+                        content.appDetailPane()?.let { pane ->
+                            DpisLegacyWorkspaceHost(createView = { pane })
+                        }
+                    }
+                )
+            }
+            true
+        }
         MainUiState.WorkspaceMode.HOME -> { homeRevision; ComposeWorkspaceSurface { HomeWorkspaceContent(content.homeState(), padding) }; true }
         MainUiState.WorkspaceMode.TOOLS -> { toolsRevision; ComposeWorkspaceSurface { ToolsWorkspaceContent(content.toolsState(), padding, toolsExpanded, { toolsExpanded = !toolsExpanded }, content::changeToolsPending, content::applyTools, content::restoreTools, content::requestToolsPermission, content::openToolsLogs) }; true }
         MainUiState.WorkspaceMode.SETTINGS -> { settingsRevision; ComposeWorkspaceSurface { SettingsWorkspaceContent(content.settingsState(), padding, content::setSettingsHooks, content::setSettingsSafeMode, content::setSettingsGlobalLog, content::setSettingsLauncherHidden, content::setSettingsScale, content::openSettingsScaleDetails, content::openSettingsFontDebug, content::openSettingsFontLibrary, content::openSettingsExperimental, content::openSettingsLanguage, content::openSettingsBackup, content::clearSettingsCache, content::openSettingsAbout, content::openSettingsDonate) }; true }
@@ -70,13 +125,151 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                 true
             }
         }
-        else -> false
     }
+    fun refreshApps() { appRevision++ }
     fun refreshHome() { homeRevision++ }
     fun refreshTools(collapse: Boolean = false) { if (collapse) toolsExpanded = false; toolsRevision++ }
     fun refreshSettings() { settingsRevision++ }
     fun refreshTemplates() { templateRevision++ }
-    fun owns(mode: MainUiState.WorkspaceMode): Boolean = mode == MainUiState.WorkspaceMode.HOME || mode == MainUiState.WorkspaceMode.TOOLS || mode == MainUiState.WorkspaceMode.SETTINGS || (mode == MainUiState.WorkspaceMode.TEMPLATE && content.usesComposeTemplateWorkspace())
+    @Composable fun renderAppEditorOverlay(mode: MainUiState.WorkspaceMode) {
+        // The editor session is Java-owned. Reading the same revision as the catalogue makes a
+        // list-row click invalidate this root-level sibling as well as the list itself.
+        appRevision
+        if (mode != MainUiState.WorkspaceMode.APP) return
+        BoxWithConstraints(androidx.compose.ui.Modifier.fillMaxSize()) {
+            if (maxWidth >= 600.dp) return@BoxWithConstraints
+            val editorState = content.appEditorState() ?: return@BoxWithConstraints
+            val context = LocalContext.current
+            var showAdvancedHint by remember(editorState.item.packageName) {
+                mutableStateOf(AppConfigSheetWizardStore.shouldShowAdvancedHint(context))
+            }
+            AppConfigEditorOverlay(
+                onDismissRequest = editorState.actions::close,
+                topChrome = {
+                    // This is deliberately visual-only chrome. The sheet owns its drag gesture;
+                    // the short bar switches to the legacy unsaved badge without becoming an
+                    // interactive state control.
+                    Box(
+                        modifier = androidx.compose.ui.Modifier
+                            .fillMaxWidth()
+                            .height(AppConfigSheetUiTokens.TopChromeHeight)
+                    ) {
+                        if (editorState.dirty) {
+                            Surface(
+                                modifier = androidx.compose.ui.Modifier.align(Alignment.Center),
+                                shape = AppConfigSheetUiTokens.UnsavedBadgeShape,
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ) {
+                                Text(
+                                    stringResource(R.string.sheet_unsaved_badge),
+                                    modifier = androidx.compose.ui.Modifier.padding(
+                                        horizontal = 12.dp,
+                                        vertical = 4.dp
+                                    ),
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
+                        } else {
+                            Box(
+                                modifier = androidx.compose.ui.Modifier
+                                    .align(Alignment.Center)
+                                    .width(TemplateUiTokens.SheetVisualIndicatorWidth)
+                                    .height(TemplateUiTokens.SheetVisualIndicatorHeight)
+                                    .clip(AppConfigSheetUiTokens.TopChromeIndicatorShape)
+                                    .background(MaterialTheme.colorScheme.onSurfaceVariant)
+                            )
+                        }
+                        Box(
+                            modifier = androidx.compose.ui.Modifier
+                                // Keep the diagnostic action on the same center line as the
+                                // visual white bar; it is not independently top-aligned chrome.
+                                .align(Alignment.CenterEnd)
+                                .padding(end = 20.dp)
+                                .size(AppConfigSheetUiTokens.FeedbackActionSize)
+                                .clip(AppConfigSheetUiTokens.FeedbackActionShape)
+                                .border(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.outlineVariant,
+                                    AppConfigSheetUiTokens.FeedbackActionShape
+                                )
+                                .clickable(
+                                    role = Role.Button,
+                                    onClick = editorState.actions::startFeedbackDiagnostic
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_bug_report_24),
+                                contentDescription = stringResource(R.string.feedback_diagnostic_action),
+                                modifier = androidx.compose.ui.Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                        if (showAdvancedHint) {
+                            Column(
+                                modifier = androidx.compose.ui.Modifier
+                                    .align(Alignment.TopCenter)
+                                    .offset(y = AppConfigSheetUiTokens.WizardHintTopOffset),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.bg_app_config_wizard_arrow),
+                                    contentDescription = null,
+                                    modifier = androidx.compose.ui.Modifier.size(width = 14.dp, height = 7.dp),
+                                    tint = Color.Unspecified
+                                )
+                                Surface(
+                                    shape = AppConfigSheetUiTokens.WizardHintShape,
+                                    color = colorResource(R.color.app_config_wizard_bubble_container),
+                                    contentColor = colorResource(R.color.app_config_wizard_bubble_text)
+                                ) {
+                                    Row(
+                                        modifier = androidx.compose.ui.Modifier.padding(
+                                            start = 14.dp, top = 6.dp, end = 6.dp, bottom = 6.dp
+                                        ),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            stringResource(R.string.dialog_advanced_wizard_hint),
+                                            style = MaterialTheme.typography.labelMedium
+                                        )
+                                        Box(
+                                            modifier = androidx.compose.ui.Modifier
+                                                .padding(start = 8.dp)
+                                                .size(AppConfigSheetUiTokens.WizardHintCloseSize)
+                                                .clip(CircleShape)
+                                                .background(Color.White.copy(alpha = 0.15f))
+                                                .clickable(role = Role.Button, onClick = {
+                                                    AppConfigSheetWizardStore.markAdvancedHintDismissed(context)
+                                                    showAdvancedHint = false
+                                                }),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.ic_close_24),
+                                                contentDescription = stringResource(
+                                                    R.string.dialog_advanced_wizard_close
+                                                ),
+                                                modifier = androidx.compose.ui.Modifier.size(14.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            ) { onAdvancedAnchorMeasured ->
+                AppConfigEditorContent(
+                    editorState,
+                    onAdvancedAnchorMeasured = onAdvancedAnchorMeasured,
+                    showInlineUnsavedBadge = false
+                )
+            }
+        }
+    }
+    fun owns(mode: MainUiState.WorkspaceMode): Boolean = mode == MainUiState.WorkspaceMode.APP || mode == MainUiState.WorkspaceMode.HOME || mode == MainUiState.WorkspaceMode.TOOLS || mode == MainUiState.WorkspaceMode.SETTINGS || (mode == MainUiState.WorkspaceMode.TEMPLATE && content.usesComposeTemplateWorkspace())
 }
 
 /** Supplies the Material content color for unframed workspace titles and empty states. */
