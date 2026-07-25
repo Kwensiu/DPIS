@@ -200,7 +200,8 @@ fun TemplateWorkspaceContent(
                 { deleteConfirmationVisible = true }
             } else null,
             onSave = ::saveEditor,
-            showSheetBadge = false
+            showSheetBadge = false,
+            extraTopPadding = topSafePadding
         )
     }
 
@@ -240,9 +241,7 @@ fun TemplateWorkspaceContent(
                         .padding(bottom = padding.calculateBottomPadding())
                 ) {
                     when {
-                        targetsTemplateId != null -> Box(
-                            Modifier.padding(top = topSafePadding)
-                        ) {
+                        targetsTemplateId != null -> Box {
                             EmbeddedQuickTemplateTargets(
                                 templateId = targetsTemplateId.orEmpty(),
                                 onClose = {
@@ -251,9 +250,7 @@ fun TemplateWorkspaceContent(
                                 }
                             )
                         }
-                        editorKind != null -> Box(Modifier.padding(top = topSafePadding)) {
-                            editorBody()
-                        }
+                        editorKind != null -> editorBody()
                         else -> TemplateDetailEmptyState(
                             modifier = Modifier.padding(top = topSafePadding)
                         )

@@ -87,7 +87,8 @@ fun TemplateEditorContent(
     onDelete: (() -> Unit)?,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
-    showSheetBadge: Boolean = true
+    showSheetBadge: Boolean = true,
+    extraTopPadding: androidx.compose.ui.unit.Dp = 0.dp
 ) {
     // The revision is intentionally passed as a parameter. The form is a mutable Java draft and
     // its stable object identity must not allow Compose to skip the updated editor subtree.
@@ -108,7 +109,7 @@ fun TemplateEditorContent(
             .imePadding()
             .padding(
                 start = TemplateUiTokens.SheetHorizontalPadding,
-                top = TemplateUiTokens.SheetTopPadding,
+                top = TemplateUiTokens.SheetTopPadding + extraTopPadding,
                 end = TemplateUiTokens.SheetHorizontalPadding,
                 bottom = TemplateUiTokens.SheetBottomPadding
             )
