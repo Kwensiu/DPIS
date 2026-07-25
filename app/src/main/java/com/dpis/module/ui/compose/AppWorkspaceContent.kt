@@ -85,7 +85,6 @@ fun AppWorkspaceContent(
     state: AppWorkspacePresentation.State,
     padding: PaddingValues,
     editorState: AppConfigEditorPresentation.State? = null,
-    detailContent: @Composable () -> Unit = {}
 ) {
     // Both catalogue pages remain alive as one workspace, but each owns its own
     // restorable scroll position just as the former ViewPager pages did.
@@ -176,7 +175,7 @@ fun AppWorkspaceContent(
                     if (editorState != null) {
                         AppConfigEditorContent(editorState, alwaysFloatInputLabels = true)
                     } else {
-                        detailContent()
+                        AppWorkspaceEmptyDetail()
                     }
                 }
             }
@@ -187,6 +186,34 @@ fun AppWorkspaceContent(
             filterState = state.filterState,
             onFilterChanged = state.actions::changeFilters,
             onDismissRequest = { filterSheetVisible = false }
+        )
+    }
+}
+
+@Composable
+private fun AppWorkspaceEmptyDetail() {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_apps_24),
+            contentDescription = null,
+            modifier = Modifier.size(48.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = stringResource(R.string.land_detail_empty_title),
+            modifier = Modifier.padding(top = 16.dp),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = stringResource(R.string.land_detail_empty_message),
+            modifier = Modifier.padding(top = 6.dp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }
 }

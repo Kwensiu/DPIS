@@ -41,7 +41,6 @@ import com.dpis.module.ui.compose.AppWorkspaceContent
 import com.dpis.module.ui.compose.AppConfigEditorOverlay
 import com.dpis.module.ui.compose.AppConfigEditorContent
 import com.dpis.module.ui.compose.AppConfigSheetUiTokens
-import com.dpis.module.ui.compose.DpisLegacyWorkspaceHost
 import com.dpis.module.ui.compose.ToolsWorkspaceContent
 import com.dpis.module.ui.compose.SettingsWorkspaceContent
 import com.dpis.module.ui.compose.TemplateWorkspaceContent
@@ -57,7 +56,6 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         fun homeState(): HomeWorkspaceBinder.State
         fun appState(): AppWorkspacePresentation.State
         fun appEditorState(): AppConfigEditorPresentation.State?
-        fun appDetailPane(): android.view.View?
         fun toolsState(): SystemFontScaleToolState?
         fun changeToolsPending(percent: Int)
         fun applyTools()
@@ -93,12 +91,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                 AppWorkspaceContent(
                     state = content.appState(),
                     padding = padding,
-                    editorState = content.appEditorState(),
-                    detailContent = {
-                        content.appDetailPane()?.let { pane ->
-                            DpisLegacyWorkspaceHost(createView = { pane })
-                        }
-                    }
+                    editorState = content.appEditorState()
                 )
             }
             true

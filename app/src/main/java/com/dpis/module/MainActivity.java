@@ -116,7 +116,6 @@ import com.dpis.module.templates.QuickTemplateApplyCoordinator;
 import com.dpis.module.root.RootAccessProbe;
 
 import com.dpis.module.ui.MaxHeightNestedScrollView;
-import com.dpis.module.ui.WatchWorkspaceNavigationController;
 import com.dpis.module.ui.WatchWorkspaceChromeBinder;
 import com.dpis.module.ui.WatchUiMode;
 
@@ -352,7 +351,6 @@ public final class MainActivity
     private SystemFontScaleToolPresenter composeToolsPresenter;
     private SystemServerSettingsPageController settingsPageController;
     private NavigationBarView workspaceSwitch;
-    private WatchWorkspaceNavigationController watchWorkspaceNavigationController;
     private SparseArray<Parcelable> restoredPageScrollStates;
     private EditText searchInput;
     private ImageButton searchClearButton;
@@ -563,15 +561,8 @@ public final class MainActivity
         workspaceSwitch = findViewById(R.id.workspace_switch);
         workspaceSwitch.setSaveFromParentEnabled(false);
         bindLandscapeWorkspaceRailItemHeight();
-        watchWorkspaceNavigationController = WatchWorkspaceNavigationController.attachIfSupported(
-                this,
-                findViewById(R.id.root_container),
-                workspaceSwitch,
-                findViewById(R.id.workspace_switch_scroll),
-                itemId -> dispatchMainUiAction(
-                        MainUiAction.workspaceModeChanged(workspaceModeForButtonId(itemId))
-                )
-        );
+        // Workspace navigation is now rendered by the Compose shell in every
+        // form factor, including the compact watch radial selector.
         if (appPager != null) {
             pagerAdapter = new AppListPagerAdapter(
                     this::showEditDialog,
@@ -742,10 +733,6 @@ public final class MainActivity
 
     @Override
     public void onBackPressed() {
-        if (watchWorkspaceNavigationController != null
-                && watchWorkspaceNavigationController.closeMenuIfExpanded()) {
-            return;
-        }
         super.onBackPressed();
     }
 
@@ -1511,11 +1498,6 @@ public final class MainActivity
      * to the stateless Compose shell and still dispatches through MainUiAction.
      */
     private void installComposeWorkspaceShell() {
-        // Compact watch chrome already owns scrolling and round-safe behavior.
-        // Keep that proven path until its dedicated workspace migration replaces it.
-        if (WatchUiMode.shouldUseCompactUi(this)) {
-            return;
-        }
         ViewGroup activityContent = findViewById(android.R.id.content);
         if (activityContent == null || activityContent.getChildCount() == 0) {
             return;
@@ -1552,9 +1534,6 @@ public final class MainActivity
                     }
                     @Override public AppConfigEditorPresentation.State appEditorState() {
                         return createComposeAppEditorState();
-                    }
-                    @Override public View appDetailPane() {
-                        return landDetailPane;
                     }
                     @Override public com.dpis.module.settings.SystemFontScaleToolState toolsState() { return composeToolsPresenter != null ? composeToolsPresenter.state() : null; }
                     @Override public void changeToolsPending(int percent) { composeToolsPresenter.selectPendingPercent(percent); }
@@ -1603,7 +1582,7 @@ public final class MainActivity
                 composeRoot,
                 legacyWorkspaceRoot,
                 requireUiState(),
-                false,
+                WatchUiMode.shouldUseCompactUi(this),
                 workspacePresentationCoordinator,
                 contentBottomPadding -> {
                     if (composeShellContentBottomPadding != contentBottomPadding) {
@@ -1709,9 +1688,6 @@ public final class MainActivity
         if (workspaceSwitch != null
                 && workspaceSwitch.getSelectedItemId() != workspaceButtonId(mode)) {
             selectWorkspaceItem(workspaceButtonId(mode));
-        }
-        if (watchWorkspaceNavigationController != null) {
-            watchWorkspaceNavigationController.setSelectedItem(workspaceButtonId(mode));
         }
         updateSearchHint(mode);
         if (homeWorkspace) {

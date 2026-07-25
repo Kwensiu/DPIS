@@ -61,7 +61,14 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(shell.contains("BOTTOM_BAR"));
         assertTrue(shell.contains("NAVIGATION_RAIL"));
         assertTrue(shell.contains("NAVIGATION_DRAWER"));
-        assertTrue(shell.contains("isCompactUi -> DpisWorkspaceNavigationLayout.BOTTOM_BAR"));
+        assertTrue(shell.contains("isCompactUi -> DpisWorkspaceNavigationLayout.COMPACT_RADIAL"));
+        assertTrue(shell.contains("COMPACT_MAIN_BUTTON_SIZE_DP = 56"));
+        assertTrue(shell.contains("COMPACT_MENU_BUTTON_SIZE_DP = 48"));
+        assertTrue(shell.contains("COMPACT_MENU_ARC_RADIUS_DP = 104"));
+        assertTrue(shell.contains("COMPACT_MENU_START_ANGLE_DEGREES = 210"));
+        assertTrue(shell.contains("COMPACT_MENU_ANGLE_STEP_DEGREES = 30"));
+        assertTrue(shell.contains("Color.Black.copy(alpha = 0.30f)"));
+        assertTrue(shell.contains("padding(bottom = navigationBarPadding)"));
         assertTrue(shell.contains("selectedDestination: DpisWorkspaceDestination"));
         assertTrue(shell.contains("onDestinationSelected: (DpisWorkspaceDestination) -> Unit"));
         assertTrue(adapter.contains("MainUiState.WorkspaceMode"));
@@ -75,7 +82,7 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(mainActivity.contains("composeShellContentBottomPadding"));
         assertTrue(mainActivity.contains("composeShellHost.replayLegacyWorkspaceInsets(mode)"));
         assertTrue(mainActivity.contains("WindowInsetsBinder.refreshNavigationBarMargins(searchFocusFab)"));
-        assertTrue(mainActivity.contains("if (WatchUiMode.shouldUseCompactUi(this))"));
+        assertTrue(mainActivity.contains("WatchUiMode.shouldUseCompactUi(this),"));
         assertTrue(mainActivity.contains("getLastCustomNonConfigurationInstance()"));
         assertTrue(mainActivity.contains("onRetainCustomNonConfigurationInstance()"));
         assertTrue(localizedActivity.contains("import androidx.activity.ComponentActivity;"));
