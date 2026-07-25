@@ -52,7 +52,6 @@ import com.dpis.module.viewport.ViewportTargetType;
 import com.dpis.module.applist.AppListFilter;
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;
-import com.dpis.module.applist.AppListPagerAdapter;
 import com.dpis.module.hooks.HookDomainOverride;
 import com.dpis.module.hooks.HookDomainOverrideStore;
 
@@ -176,8 +175,6 @@ import android.widget.Toast;
 import androidx.core.content.FileProvider;
 import androidx.core.view.ViewCompat;
 import androidx.compose.ui.platform.ComposeView;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.viewpager2.widget.ViewPager2;
 import com.dpis.module.appconfig.AppConfigDialogCoordinator;
 import com.dpis.module.updates.GitHubReleaseNotesFetcher;
@@ -191,7 +188,6 @@ import com.google.android.material.navigation.NavigationBarView;
 import com.google.android.material.navigationrail.NavigationRailView;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.tabs.TabLayout;
-import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textview.MaterialTextView;
@@ -321,7 +317,6 @@ public final class MainActivity
     private MainComposeShellHost composeShellHost;
     private MainWorkspacePresentationCoordinator workspacePresentationCoordinator;
     private int composeShellContentBottomPadding;
-    private AppListPagerAdapter pagerAdapter;
     private ViewPager2 appPager;
     private TabLayout filterTabs;
     private View topContainer;
@@ -338,10 +333,7 @@ public final class MainActivity
     private FrameLayout templateDetailContent;
     private TemplateDetailSelection templateDetailSelection
             = TemplateDetailSelection.none();
-    private AppListPagerAdapter.AppListPageController landListController;
     private AppListPage landCurrentPage = AppListPage.ALL_APPS;
-    private final SparseArray<Parcelable> landScrollStates
-            = new SparseArray<>();
     private HomeWorkspaceBinder homeWorkspaceBinder;
     private TemplateWorkspaceBinder templateWorkspaceBinder;
     private TemplateWorkspacePresentationController templateWorkspacePresentationController;
@@ -349,7 +341,6 @@ public final class MainActivity
     private SystemFontScaleToolPresenter composeToolsPresenter;
     private SystemServerSettingsPageController settingsPageController;
     private NavigationBarView workspaceSwitch;
-    private SparseArray<Parcelable> restoredPageScrollStates;
     private EditText searchInput;
     private ImageButton searchClearButton;
     private FloatingActionButton searchFocusFab;
@@ -357,7 +348,6 @@ public final class MainActivity
     private Boolean searchFabPolicyVisible;
     private boolean suppressSearchQueryChange;
     private boolean updatingWorkspaceSelection;
-    private boolean updatingFilterTabSelection;
     private ImageButton searchFilterButton;
     private boolean cachedSystemHookEffectiveEnabled;
     private boolean skipNextImmediateServiceReload;
@@ -436,7 +426,6 @@ public final class MainActivity
             retainedGlobalPrefillDraft = retainedState.globalPrefillDraft;
             retainedQuickTemplateDraft = retainedState.quickTemplateDraft;
             homeUpdateUiState = retainedState.homeUpdateUiState;
-            restoredPageScrollStates = retainedState.pageScrollStates;
             initialRefreshingPages = decodeRefreshingPages(
                     retainedState.refreshingPagePositions
             );
@@ -464,10 +453,6 @@ public final class MainActivity
             initialWorkspaceMode = MainUiState.WorkspaceMode.fromName(
                     savedInstanceState.getString(STATE_WORKSPACE_MODE)
             );
-            restoredPageScrollStates
-                    = savedInstanceState.getSparseParcelableArray(
-                            STATE_PAGE_SCROLL_STATES
-                    );
             initialRefreshingPages = decodeRefreshingPages(
                     savedInstanceState.getIntArray(STATE_REFRESHING_PAGES)
             );
@@ -561,21 +546,6 @@ public final class MainActivity
         bindLandscapeWorkspaceRailItemHeight();
         // Workspace navigation is now rendered by the Compose shell in every
         // form factor, including the compact watch radial selector.
-        if (appPager != null) {
-            pagerAdapter = new AppListPagerAdapter(
-                    this::showEditDialog,
-                    this::onPageRefreshRequested,
-                    this::onPageListScrolled,
-                    this::onIconLoadRequested,
-                    this::isSystemHookEnabledFromStore
-            );
-            pagerAdapter.restorePageScrollStates(restoredPageScrollStates);
-            appPager.setAdapter(pagerAdapter);
-        } else {
-            restoreLandscapeScrollStates(restoredPageScrollStates);
-        }
-        bindLandscapeListController();
-        applyRefreshingStatesToPager();
         if (savedInstanceState != null) {
             setCurrentAppListPage(
                     AppListPage.fromPosition(
@@ -590,7 +560,6 @@ public final class MainActivity
             );
         }
 
-        bindFilterTabs();
         bindWorkspaceSwitch();
         searchFilterButton.setOnClickListener(v -> showFilterDialog());
         bindFabTouchFeedback(searchFocusFab);
@@ -855,11 +824,7 @@ public final class MainActivity
                 STATE_FILTER_FONT_ONLY,
                 state.filterState.fontConfiguredOnly()
         );
-        if (appPager != null) {
-            outState.putInt(STATE_CURRENT_PAGE, appPager.getCurrentItem());
-        } else {
-            outState.putInt(STATE_CURRENT_PAGE, landCurrentPage.position());
-        }
+        outState.putInt(STATE_CURRENT_PAGE, landCurrentPage.position());
         SparseArray<Parcelable> pageScrollStates = captureAppListScrollStates();
         if (pageScrollStates != null) {
             outState.putSparseParcelableArray(
@@ -918,10 +883,7 @@ public final class MainActivity
     public Object onRetainCustomNonConfigurationInstance() {
         MainUiState state = requireUiState();
         List<AppListItem> snapshot = state.appsSnapshot();
-        int currentPage
-                = appPager != null
-                        ? appPager.getCurrentItem()
-                        : landCurrentPage.position();
+        int currentPage = landCurrentPage.position();
         SparseArray<Parcelable> pageScrollStates = captureAppListScrollStates();
         AppConfigEditorDraft draft = captureAppConfigDraft();
         if (draft == null && mainViewModel != null) {
@@ -955,61 +917,14 @@ public final class MainActivity
         requestAppsLoad(true);
     }
 
-    private void onPageListScrolled(AppListPage page, int dy) {
-        if (!shouldShowFloatingAppSearch(requireUiState().workspaceMode)) {
-            return;
-        }
-        if (dy >= SEARCH_FAB_SCROLL_TRIGGER_DY) {
-            hideSearchFocusFab();
-            return;
-        }
-        if (dy <= -SEARCH_FAB_SCROLL_TRIGGER_DY) {
-            showSearchFocusFab();
-        }
-    }
-
-    private void onIconLoadRequested(String packageName) {
-        installedAppCatalogCoordinator.onIconLoadRequested(packageName);
-    }
-
     private void refreshVisibleAppListStatuses() {
-        if (pagerAdapter != null) {
-            pagerAdapter.refreshVisibleStatuses();
-        }
-        if (landListController != null) {
-            landListController.refreshStatuses();
-        }
     }
 
     private SparseArray<Parcelable> captureAppListScrollStates() {
-        if (pagerAdapter != null) {
-            return pagerAdapter.capturePageScrollStates();
-        }
-        captureCurrentLandscapeScrollState();
-        SparseArray<Parcelable> states = new SparseArray<>();
-        for (int i = 0; i < landScrollStates.size(); i++) {
-            states.put(landScrollStates.keyAt(i), landScrollStates.valueAt(i));
-        }
-        return states;
-    }
-
-    private void restoreLandscapeScrollStates(SparseArray<Parcelable> states) {
-        landScrollStates.clear();
-        if (states == null) {
-            return;
-        }
-        for (int i = 0; i < states.size(); i++) {
-            landScrollStates.put(states.keyAt(i), states.valueAt(i));
-        }
+        return new SparseArray<>();
     }
 
     private void captureCurrentLandscapeScrollState() {
-        if (landListController != null) {
-            Parcelable landState = landListController.captureScrollState();
-            if (landState != null) {
-                landScrollStates.put(landCurrentPage.position(), landState);
-            }
-        }
     }
 
     private static Set<AppListPage> decodeRefreshingPages(int[] pagePositions) {
@@ -1035,116 +950,15 @@ public final class MainActivity
         return positions;
     }
 
-    private void bindLandscapeListController() {
-        if (landListPageView == null) {
-            return;
-        }
-        SwipeRefreshLayout swipeRefreshLayout = landListPageView.findViewById(
-                R.id.page_swipe_refresh
-        );
-        RecyclerView recyclerView = landListPageView.findViewById(
-                R.id.page_list
-        );
-        landListController = new AppListPagerAdapter.AppListPageController(
-                swipeRefreshLayout,
-                recyclerView,
-                this::showEditDialog,
-                this::onPageRefreshRequested,
-                this::onPageListScrolled,
-                this::onIconLoadRequested,
-                this::isSystemHookEnabledFromStore
-        );
-        landListController.setSwipeRefreshEnabled(false);
-    }
-
-    private void bindFilterTabs() {
-        if (filterTabs == null) {
-            return;
-        }
-        if (appPager != null) {
-            new TabLayoutMediator(filterTabs, appPager, (tab, position)
-                    -> tab.setText(
-                            getString(AppListPage.fromPosition(position).titleRes())
-                    )
-            ).attach();
-            return;
-        }
-        filterTabs.removeAllTabs();
-        for (AppListPage page : AppListPage.values()) {
-            TabLayout.Tab tab = filterTabs
-                    .newTab()
-                    .setText(getString(page.titleRes()));
-            filterTabs.addTab(tab, page == landCurrentPage);
-        }
-        filterTabs.addOnTabSelectedListener(
-                new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                if (updatingFilterTabSelection) {
-                    return;
-                }
-                setCurrentAppListPage(
-                        AppListPage.fromPosition(tab.getPosition()),
-                        true
-                );
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-            }
-        }
-        );
-    }
-
     private void setCurrentAppListPage(AppListPage page, boolean submit) {
         AppListPage nextPage = page != null ? page : AppListPage.ALL_APPS;
-        if (appPager != null) {
-            appPager.setCurrentItem(nextPage.position(), false);
-            if (submit) {
-                applyFilter();
-                applyRefreshingStatesToPager();
-            }
-            return;
-        }
-        if (landCurrentPage != nextPage) {
-            captureCurrentLandscapeScrollState();
-        }
         landCurrentPage = nextPage;
-        if (filterTabs != null) {
-            TabLayout.Tab selectedTab = filterTabs.getTabAt(
-                    nextPage.position()
-            );
-            if (selectedTab != null && !selectedTab.isSelected()) {
-                updatingFilterTabSelection = true;
-                try {
-                    selectedTab.select();
-                } finally {
-                    updatingFilterTabSelection = false;
-                }
-            }
-        }
-        if (submit) {
-            applyFilter();
-            applyRefreshingStatesToPager();
+        if (submit && composeShellHost != null) {
+            composeShellHost.refreshApps();
         }
     }
 
     private void applyRefreshingStatesToPager() {
-        MainUiState state = requireUiState();
-        if (pagerAdapter != null) {
-            for (AppListPage page : AppListPage.values()) {
-                pagerAdapter.setRefreshing(page, state.isRefreshing(page));
-            }
-        }
-        if (landListController != null) {
-            landListController.setRefreshing(
-                    state.isRefreshing(landCurrentPage)
-            );
-        }
     }
 
     private void requestAppsLoad() {
@@ -1426,20 +1240,6 @@ public final class MainActivity
     }
 
     private void applyFilter() {
-        MainUiState state = requireUiState();
-        if (pagerAdapter != null) {
-            for (AppListPage page : AppListPage.values()) {
-                pagerAdapter.submitPage(page, state.visibleItems(page));
-            }
-        }
-        if (landListController != null) {
-            landListController.bind(
-                    landCurrentPage,
-                    state.visibleItems(landCurrentPage),
-                    landScrollStates.get(landCurrentPage.position()),
-                    state.isRefreshing(landCurrentPage)
-            );
-        }
     }
 
     private MainUiState requireUiState() {

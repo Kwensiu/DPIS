@@ -174,7 +174,6 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent">
 
-                        <include layout="@layout/item_app_list_page" />
                     </FrameLayout>
 
                     <include layout="@layout/template_workspace" />

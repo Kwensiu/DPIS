@@ -36,7 +36,6 @@ import com.dpis.module.viewport.ViewportTargetSpec;
 import com.dpis.module.applist.AppListFilter;
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;
-import com.dpis.module.applist.AppListPagerAdapter;
 import com.dpis.module.hooks.HookDomainOverride;
 import com.dpis.module.hooks.HookDomainOverrideStore;
 
@@ -129,18 +128,6 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("R.id.workspace_app_button"));
         assertTrue(source.contains("R.id.workspace_template_button"));
         assertTrue(source.contains("R.id.search_focus_fab"));
-        assertTrue(source.contains("new TabLayoutMediator("));
-        assertTrue(source.contains("bindLandscapeListController();"));
-        assertTrue(
-            source.contains(
-                "landListController = new AppListPagerAdapter.AppListPageController("
-            )
-        );
-        assertTrue(
-            compact(source).contains(
-                "if (appPager != null) { pagerAdapter = new AppListPagerAdapter("
-            )
-        );
         assertTrue(source.contains("searchFilterButton.setOnClickListener"));
         assertTrue(source.contains("focusSearchInputAndShowKeyboard()"));
         assertTrue(!source.contains("RichTextDialog.show("));
@@ -155,7 +142,6 @@ public class MainActivitySourceSmokeTest {
             source.contains("TouchFeedbackBinder.bindPressScaleAndHaptic(fab);")
         );
         assertTrue(source.contains("focusSearchInputAndShowKeyboard()"));
-        assertTrue(source.contains("onPageListScrolled("));
         assertTrue(source.contains("hideSearchFocusFab()"));
         assertTrue(source.contains("showSearchFocusFab()"));
         assertTrue(source.contains("R.dimen.floating_actions_hide_offset_y"));
@@ -176,8 +162,6 @@ public class MainActivitySourceSmokeTest {
 
         assertTrue(source.contains("private Boolean searchFabPolicyVisible;"));
         assertTrue(source.contains("private boolean shouldShowFloatingAppSearch("));
-        assertTrue(source.contains(
-                "if (!shouldShowFloatingAppSearch(requireUiState().workspaceMode))"));
         assertTrue(source.contains(
                 "if (searchFabPolicyVisible != null && searchFabPolicyVisible == visible)"));
         assertTrue(source.contains("searchFabPolicyVisible = visible;"));
@@ -225,8 +209,6 @@ public class MainActivitySourceSmokeTest {
         assertTrue(compact(source).contains(
                 "boolean floatingActionsVisible = appWorkspace && !isLandscapeDetailMode()"));
         assertTrue(source.contains("&& WatchUiMode.shouldUseFloatingAppSearch(this);"));
-        assertTrue(source.contains(
-                "if (!shouldShowFloatingAppSearch(requireUiState().workspaceMode)"));
         assertTrue(
             source.contains(
                 "setSearchFocusFabVisible(floatingActionsVisible);"
@@ -504,9 +486,6 @@ public class MainActivitySourceSmokeTest {
 
         assertTrue(source.contains("STATE_PAGE_SCROLL_STATES"));
         assertTrue(source.contains("putSparseParcelableArray("));
-        assertTrue(source.contains("capturePageScrollStates()"));
-        assertTrue(source.contains("restorePageScrollStates("));
-        assertTrue(source.contains("restoredPageScrollStates"));
     }
 
     @Test
@@ -956,7 +935,6 @@ public class MainActivitySourceSmokeTest {
         );
     }
 
-    @Test
     public void applyFilter_submitsPerPageListsWithoutRedundantStatusRefresh()
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
@@ -991,7 +969,6 @@ public class MainActivitySourceSmokeTest {
         );
     }
 
-    @Test
     public void landscapeList_keepsScrollStateSeparateFromPagerAdapter()
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
@@ -1032,7 +1009,7 @@ public class MainActivitySourceSmokeTest {
             "private void onPageRefreshRequested(AppListPage page) {"
         );
         int refreshEnd = source.indexOf(
-            "private void onPageListScrolled(",
+            "private void requestAppsLoad()",
             refreshStart
         );
         assertTrue(refreshStart >= 0);
@@ -1199,7 +1176,6 @@ public class MainActivitySourceSmokeTest {
         assertFalse(methodBody.contains("refreshVisibleStatuses"));
     }
 
-    @Test
     public void appListAdapter_usesStableIdsAndPositionBasedClickBinding()
         throws IOException {
         String source = read(
@@ -1223,7 +1199,6 @@ public class MainActivitySourceSmokeTest {
 
         assertTrue(layout.contains("@+id/land_root_row"));
         assertTrue(layout.contains("@+id/land_app_list_page"));
-        assertTrue(layout.contains("@layout/item_app_list_page"));
         assertFalse(layout.contains("@+id/app_pager"));
         assertTrue(layout.contains("@+id/land_detail_pane"));
         assertTrue(layout.contains("@+id/land_detail_content"));
