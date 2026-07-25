@@ -103,6 +103,10 @@ fun TemplateWorkspaceContent(
     }
     var deleteConfirmationVisible by rememberSaveable { mutableStateOf(false) }
     val topSafePadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    // The editor already owns SheetTopPadding; only add the remaining status-bar inset here so
+    // its first row aligns with the app editor instead of receiving two top gaps.
+    val editorTopSafePadding = (topSafePadding - TemplateUiTokens.SheetTopPadding - 8.dp)
+        .coerceAtLeast(0.dp)
 
     LaunchedEffect(state.detailKind, state.detailTemplateId) {
         when (state.detailKind) {
@@ -201,7 +205,7 @@ fun TemplateWorkspaceContent(
             } else null,
             onSave = ::saveEditor,
             showSheetBadge = false,
-            extraTopPadding = topSafePadding
+            extraTopPadding = editorTopSafePadding
         )
     }
 
