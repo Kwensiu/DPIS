@@ -173,7 +173,16 @@ fun AppWorkspaceContent(
                 )
                 Box(Modifier.weight(1f).fillMaxHeight()) {
                     if (editorState != null) {
-                        AppConfigEditorContent(editorState, alwaysFloatInputLabels = true)
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .padding(bottom = padding.calculateBottomPadding())
+                        ) {
+                            AppConfigEditorContent(
+                                editorState,
+                                alwaysFloatInputLabels = true
+                            )
+                        }
                     } else {
                         AppWorkspaceEmptyDetail()
                     }

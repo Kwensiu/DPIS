@@ -203,7 +203,6 @@ fun TemplateWorkspaceContent(
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .statusBarsPadding()
     ) {
         val twoPane = maxWidth >= TemplateUiTokens.TwoPaneMinWidth
         val openTargets: (String) -> Unit = { templateId ->
@@ -225,13 +224,17 @@ fun TemplateWorkspaceContent(
                     onQueryChanged = onQueryChanged,
                     onEditorOpened = ::openEditor,
                     onTargetsOpened = openTargets,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .statusBarsPadding()
                 )
                 VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
+                        .statusBarsPadding()
+                        .padding(bottom = padding.calculateBottomPadding())
                 ) {
                     when {
                         targetsTemplateId != null -> EmbeddedQuickTemplateTargets(
@@ -252,7 +255,8 @@ fun TemplateWorkspaceContent(
                 padding = padding,
                 onQueryChanged = onQueryChanged,
                 onEditorOpened = ::openEditor,
-                onTargetsOpened = openTargets
+                onTargetsOpened = openTargets,
+                modifier = Modifier.statusBarsPadding()
             )
             if (editorKind != null) {
                 ModalBottomSheet(
