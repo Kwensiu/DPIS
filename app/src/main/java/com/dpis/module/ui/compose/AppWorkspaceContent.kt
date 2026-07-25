@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -86,6 +89,7 @@ fun AppWorkspaceContent(
     padding: PaddingValues,
     editorState: AppConfigEditorPresentation.State? = null,
 ) {
+    val topSafePadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     // Both catalogue pages remain alive as one workspace, but each owns its own
     // restorable scroll position just as the former ViewPager pages did.
     val allAppsListState = rememberLazyListState()
@@ -180,11 +184,12 @@ fun AppWorkspaceContent(
                         ) {
                             AppConfigEditorContent(
                                 editorState,
-                                alwaysFloatInputLabels = true
+                                alwaysFloatInputLabels = true,
+                                extraTopPadding = topSafePadding
                             )
                         }
                     } else {
-                        AppWorkspaceEmptyDetail()
+                        AppWorkspaceEmptyDetail(Modifier.padding(top = topSafePadding))
                     }
                 }
             }
@@ -200,9 +205,9 @@ fun AppWorkspaceContent(
 }
 
 @Composable
-private fun AppWorkspaceEmptyDetail() {
+private fun AppWorkspaceEmptyDetail(modifier: Modifier = Modifier) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {

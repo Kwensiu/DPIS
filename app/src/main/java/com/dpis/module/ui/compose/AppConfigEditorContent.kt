@@ -80,7 +80,8 @@ fun AppConfigEditorContent(
     contentPadding: PaddingValues = AppConfigSheetUiTokens.ContentPadding,
     onAdvancedAnchorMeasured: ((androidx.compose.ui.unit.Dp) -> Unit)? = null,
     showInlineUnsavedBadge: Boolean = true,
-    alwaysFloatInputLabels: Boolean = false
+    alwaysFloatInputLabels: Boolean = false,
+    extraTopPadding: androidx.compose.ui.unit.Dp = 0.dp
 ) {
     val draft = state.draft
     val appIcon = rememberInstalledAppIcon(state.item.packageName, state.item.icon)
@@ -158,6 +159,7 @@ fun AppConfigEditorContent(
             .verticalScroll(rememberScrollState())
             .imePadding()
             .padding(contentPadding)
+            .padding(top = extraTopPadding)
     ) {
         Column {
             Row(
