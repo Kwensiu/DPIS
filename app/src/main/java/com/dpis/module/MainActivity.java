@@ -175,7 +175,6 @@ import android.widget.Toast;
 import androidx.core.content.FileProvider;
 import androidx.core.view.ViewCompat;
 import androidx.compose.ui.platform.ComposeView;
-import androidx.viewpager2.widget.ViewPager2;
 import com.dpis.module.appconfig.AppConfigDialogCoordinator;
 import com.dpis.module.updates.GitHubReleaseNotesFetcher;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -187,7 +186,6 @@ import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.navigation.NavigationBarView;
 import com.google.android.material.navigationrail.NavigationRailView;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
-import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textview.MaterialTextView;
@@ -317,14 +315,11 @@ public final class MainActivity
     private MainComposeShellHost composeShellHost;
     private MainWorkspacePresentationCoordinator workspacePresentationCoordinator;
     private int composeShellContentBottomPadding;
-    private ViewPager2 appPager;
-    private TabLayout filterTabs;
     private View topContainer;
     private View homeWorkspaceContainer;
     private View templateWorkspaceContainer;
     private View toolsWorkspaceContainer;
     private View settingsWorkspaceContainer;
-    private View landListPageView;
     private View landDetailPane;
     private View landDetailDivider;
     private View landDetailEmptyView;
@@ -480,8 +475,6 @@ public final class MainActivity
         );
 
         searchFilterButton = findViewById(R.id.search_filter_button);
-        appPager = findViewById(R.id.app_pager);
-        filterTabs = findViewById(R.id.filter_tabs);
         topContainer = findViewById(R.id.top_container);
         homeWorkspaceContainer = findViewById(R.id.home_workspace_container);
         templateWorkspaceContainer = findViewById(
@@ -494,7 +487,6 @@ public final class MainActivity
                 homeWorkspaceContainer,
                 settingsWorkspaceContainer
         );
-        landListPageView = findViewById(R.id.land_app_list_page);
         landDetailPane = findViewById(R.id.land_detail_pane);
         landDetailDivider = findViewById(R.id.land_detail_divider);
         landDetailEmptyView = findViewById(R.id.land_detail_empty);
@@ -1311,8 +1303,7 @@ public final class MainActivity
                     @Override public AppWorkspacePresentation.State appState() {
                         AppListPage page = isLandscapeDetailMode()
                                 ? landCurrentPage
-                                : AppListPage.fromPosition(
-                                        appPager != null ? appPager.getCurrentItem() : 0);
+                                : landCurrentPage;
                         return AppWorkspacePresentation.create(
                                 requireUiState(),
                                 page,
@@ -1440,7 +1431,6 @@ public final class MainActivity
         boolean toolsWorkspace = mode == MainUiState.WorkspaceMode.TOOLS;
         boolean settingsWorkspace = mode == MainUiState.WorkspaceMode.SETTINGS;
         setVisible(topContainer, appWorkspace || templateWorkspace);
-        setVisible(filterTabs, appWorkspace);
         boolean floatingActionsVisible = appWorkspace
                 && !isLandscapeDetailMode()
                 && WatchUiMode.shouldUseFloatingAppSearch(this);
@@ -1455,8 +1445,6 @@ public final class MainActivity
         boolean animateWorkspace = renderedWorkspaceMode != null
                 && renderedWorkspaceMode != mode;
         renderedWorkspaceMode = mode;
-        setVisible(appPager, appWorkspace);
-        setVisible(landListPageView, appWorkspace);
         setVisible(homeWorkspaceContainer, homeWorkspace);
         setVisible(templateWorkspaceContainer, templateWorkspace);
         setVisible(toolsWorkspaceContainer, toolsWorkspace);
@@ -2725,9 +2713,6 @@ public final class MainActivity
     }
 
     private void resetHiddenWorkspacePresentation(MainUiState.WorkspaceMode visibleMode) {
-        resetWorkspacePresentationUnlessMode(appPager, visibleMode, MainUiState.WorkspaceMode.APP);
-        resetWorkspacePresentationUnlessMode(
-                landListPageView, visibleMode, MainUiState.WorkspaceMode.APP);
         resetWorkspacePresentationUnlessMode(
                 homeWorkspaceContainer, visibleMode, MainUiState.WorkspaceMode.HOME);
         resetWorkspacePresentationUnlessMode(
@@ -2783,7 +2768,7 @@ public final class MainActivity
 
     private View workspaceViewForMode(MainUiState.WorkspaceMode mode) {
         if (mode == MainUiState.WorkspaceMode.APP) {
-            return appPager != null ? appPager : landListPageView;
+            return null;
         }
         if (mode == MainUiState.WorkspaceMode.HOME) {
             return homeWorkspaceContainer;

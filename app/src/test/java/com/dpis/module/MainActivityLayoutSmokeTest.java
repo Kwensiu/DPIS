@@ -40,11 +40,9 @@ public class MainActivityLayoutSmokeTest {
         assertTrue(layout.contains("@dimen/main_search_action_icon_padding_start"));
         assertTrue(layout.contains("@dimen/main_search_action_icon_padding_end"));
         assertTrue(layout.contains("@dimen/main_search_action_icon_padding_vertical"));
-        assertTrue(layout.contains("@dimen/main_tabs_indicator_height"));
         assertTrue(layout.contains("android:src=\"@drawable/ic_search_24\""));
         assertTrue(layout.contains("android:src=\"@drawable/ic_tune_24\""));
         assertTrue(layout.contains("<include layout=\"@layout/settings_workspace\""));
-        assertTrue(layout.contains("android:id=\"@+id/app_pager\""));
         assertTrue(layout.contains("<include layout=\"@layout/template_workspace\""));
         assertTrue(layout.contains("<include layout=\"@layout/tools_workspace\""));
         assertTrue(layout.contains("android:id=\"@+id/workspace_switch\""));

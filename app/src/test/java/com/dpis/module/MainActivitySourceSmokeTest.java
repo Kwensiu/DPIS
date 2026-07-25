@@ -122,8 +122,6 @@ public class MainActivitySourceSmokeTest {
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
-        assertTrue(source.contains("R.id.app_pager"));
-        assertTrue(source.contains("R.id.land_app_list_page"));
         assertTrue(source.contains("R.id.workspace_switch"));
         assertTrue(source.contains("R.id.workspace_app_button"));
         assertTrue(source.contains("R.id.workspace_template_button"));
@@ -192,10 +190,7 @@ public class MainActivitySourceSmokeTest {
                 "boolean appWorkspace = mode == MainUiState.WorkspaceMode.APP;"
             )
         );
-        assertTrue(source.contains("setVisible(filterTabs, appWorkspace);"));
         assertFalse(source.contains("private void updateWatchFilterTabsScrollOffset(int dy)"));
-        assertTrue(source.contains("setVisible(appPager, appWorkspace);"));
-        assertTrue(source.contains("setVisible(landListPageView, appWorkspace);"));
         assertTrue(source.contains(
                 "setVisible(templateWorkspaceContainer, templateWorkspace);"
         ));
@@ -1198,7 +1193,6 @@ public class MainActivitySourceSmokeTest {
         String layout = read("src/main/res/layout-land/activity_status.xml");
 
         assertTrue(layout.contains("@+id/land_root_row"));
-        assertTrue(layout.contains("@+id/land_app_list_page"));
         assertFalse(layout.contains("@+id/app_pager"));
         assertTrue(layout.contains("@+id/land_detail_pane"));
         assertTrue(layout.contains("@+id/land_detail_content"));
