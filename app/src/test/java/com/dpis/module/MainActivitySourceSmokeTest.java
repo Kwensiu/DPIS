@@ -209,10 +209,6 @@ public class MainActivitySourceSmokeTest {
             )
         );
         assertTrue(source.contains("setVisible(filterTabs, appWorkspace);"));
-        assertTrue(source.contains("new AppListTabsChromeController("));
-        assertTrue(source.contains("appListTabsChromeController.onPageListScrolled(dy)"));
-        assertTrue(source.contains("appListTabsChromeController.onWorkspaceChanged(appWorkspace);"));
-        assertTrue(source.contains("filterTabs.post(appListTabsChromeController::syncListInsets);"));
         assertFalse(source.contains("private void updateWatchFilterTabsScrollOffset(int dy)"));
         assertTrue(source.contains("setVisible(appPager, appWorkspace);"));
         assertTrue(source.contains("setVisible(landListPageView, appWorkspace);"));

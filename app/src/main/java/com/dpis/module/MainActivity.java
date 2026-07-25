@@ -53,7 +53,6 @@ import com.dpis.module.applist.AppListFilter;
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;
 import com.dpis.module.applist.AppListPagerAdapter;
-import com.dpis.module.applist.AppListTabsChromeController;
 import com.dpis.module.hooks.HookDomainOverride;
 import com.dpis.module.hooks.HookDomainOverrideStore;
 
@@ -323,7 +322,6 @@ public final class MainActivity
     private MainWorkspacePresentationCoordinator workspacePresentationCoordinator;
     private int composeShellContentBottomPadding;
     private AppListPagerAdapter pagerAdapter;
-    private AppListTabsChromeController appListTabsChromeController;
     private ViewPager2 appPager;
     private TabLayout filterTabs;
     private View topContainer;
@@ -577,13 +575,6 @@ public final class MainActivity
             restoreLandscapeScrollStates(restoredPageScrollStates);
         }
         bindLandscapeListController();
-        appListTabsChromeController = new AppListTabsChromeController(
-                this,
-                filterTabs,
-                pagerAdapter,
-                landListController
-        );
-        appListTabsChromeController.bind();
         applyRefreshingStatesToPager();
         if (savedInstanceState != null) {
             setCurrentAppListPage(
@@ -965,10 +956,6 @@ public final class MainActivity
     }
 
     private void onPageListScrolled(AppListPage page, int dy) {
-        if (appListTabsChromeController != null
-                && appListTabsChromeController.onPageListScrolled(dy)) {
-            return;
-        }
         if (!shouldShowFloatingAppSearch(requireUiState().workspaceMode)) {
             return;
         }
@@ -1652,14 +1639,8 @@ public final class MainActivity
         boolean templateWorkspace = mode == MainUiState.WorkspaceMode.TEMPLATE;
         boolean toolsWorkspace = mode == MainUiState.WorkspaceMode.TOOLS;
         boolean settingsWorkspace = mode == MainUiState.WorkspaceMode.SETTINGS;
-        if (appListTabsChromeController != null) {
-            appListTabsChromeController.onWorkspaceChanged(appWorkspace);
-        }
         setVisible(topContainer, appWorkspace || templateWorkspace);
         setVisible(filterTabs, appWorkspace);
-        if (appListTabsChromeController != null) {
-            filterTabs.post(appListTabsChromeController::syncListInsets);
-        }
         boolean floatingActionsVisible = appWorkspace
                 && !isLandscapeDetailMode()
                 && WatchUiMode.shouldUseFloatingAppSearch(this);
