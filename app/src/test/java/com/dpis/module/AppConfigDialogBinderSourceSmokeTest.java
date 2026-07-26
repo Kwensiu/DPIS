@@ -238,7 +238,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("SystemFontRegistry.listRecommendedFonts()"));
         assertTrue(source.contains("TabLayout"));
         assertTrue(source.contains("R.layout.dialog_typeface_selection"));
-        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialogHolder[0], activity)"));
+        assertTrue(source.contains("DialogWindowSizer.applyConfigurationWidth(dialogHolder[0], activity)"));
         assertTrue(source.contains("R.string.dialog_typeface_tab_system"));
         assertTrue(source.contains("R.string.dialog_typeface_tab_imported"));
         assertTrue(source.contains("bindImportedTypefaceCollectionRows"));
@@ -355,7 +355,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
         assertTrue(source.contains("setTitle(R.string.dialog_font_hook_domains_dialog_title)"));
-        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialog, activity)"));
+        assertTrue(source.contains("DialogWindowSizer.applyConfigurationWidth(dialog, activity)"));
         assertTrue(source.contains("dialog_hook_chain_tab_interface"));
         assertTrue(source.contains("dialog_hook_chain_tab_font"));
         assertTrue(source.contains("normalizeViewportApplyModeForDisplay(currentViewportApplyMode)"));
@@ -724,7 +724,6 @@ public class AppConfigDialogBinderSourceSmokeTest {
     public void modeToggleThumbUsesHalfOfMeasuredTrackAfterRelayout() throws IOException {
         String binder = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
         String dialogLayout = read("src/main/res/layout/dialog_app_config.xml");
-        String templateLayout = read("src/main/res/layout/view_template_config_sheet_fields.xml");
         String landLayout = read("src/main/res/layout/view_land_app_detail.xml");
 
         assertTrue(binder.contains("private static int updateModeToggleThumbLayout(ModeToggle toggle)"));
@@ -738,8 +737,6 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
         assertThumbStartsAtZeroWidth(dialogLayout, "dialog_viewport_mode_toggle_thumb");
         assertThumbStartsAtZeroWidth(dialogLayout, "dialog_font_mode_toggle_thumb");
-        assertThumbStartsAtZeroWidth(templateLayout, "template_config_viewport_mode_toggle_thumb");
-        assertThumbStartsAtZeroWidth(templateLayout, "template_config_font_mode_toggle_thumb");
         assertThumbStartsAtZeroWidth(landLayout, "land_detail_viewport_mode_toggle_thumb");
         assertThumbStartsAtZeroWidth(landLayout, "land_detail_font_mode_toggle_thumb");
     }

@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.dpis.module.templates.TemplateConfigValue;
 import com.dpis.module.templates.TemplateEditorForm;
+import com.dpis.module.templates.TemplateEditorDraft;
 import com.dpis.module.templates.QuickTemplateStore;
 import com.dpis.module.fonts.FontApplyMode;
 import com.dpis.module.viewport.ViewportTargetType;
@@ -138,5 +139,32 @@ public final class TemplateEditorFormTest {
 
         assertTrue(restored.isDirty());
         assertEquals("125", restored.viewportInput);
+    }
+
+    @Test
+    public void retainedGlobalDraftRestoresBothViewportInputsAndRemainsDirty() {
+        TemplateEditorForm form = TemplateEditorForm.global(TemplateConfigValue.EMPTY);
+        form.applyDraft(new TemplateEditorDraft(false, "",
+                "411", ViewportTargetType.ABSOLUTE_DP, "system", "125", "411",
+                "130", FontApplyMode.SYSTEM_EMULATION, null, null));
+
+        assertTrue(form.isDirty());
+        assertEquals("411", form.viewportInput);
+        assertEquals("125", form.viewportScaleInput);
+        assertEquals("411", form.viewportAbsoluteInput);
+        assertEquals("130", form.fontInput);
+    }
+
+    @Test
+    public void retainedQuickDraftRestoresNewTemplateIdentityAndContent() {
+        TemplateEditorForm form = TemplateEditorForm.quick(null, "new-id");
+        form.applyDraft(new TemplateEditorDraft(true,
+                "Draft", "120", ViewportTargetType.RELATIVE_SCALE, "off",
+                "120", "411", "", FontApplyMode.SYSTEM_EMULATION, null, null));
+
+        assertTrue(form.newTemplate);
+        assertTrue(form.isDirty());
+        assertEquals("Draft", form.nameInput);
+        assertEquals("411", form.viewportAbsoluteInput);
     }
 }

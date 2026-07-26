@@ -22,6 +22,7 @@ public final class AppConfigEditorPresentation {
         void updateTypeface(String typefaceId);
         void updateHookChain(String rawDomains, boolean resetDomains,
                 String viewportApplyMode, boolean resetViewportApplyMode);
+        void navigate(ConfigEditorDestination destination);
         void reset();
         void toggleScope();
         void toggleDpisEnabled();
@@ -46,11 +47,13 @@ public final class AppConfigEditorPresentation {
         public final boolean saveEnabled;
         public final boolean systemHooksEnabled;
         public final Set<String> automaticFontHookDomains;
+        public final ConfigEditorDestination destination;
         public final Actions actions;
 
         public State(AppListItem item, AppConfigEditorDraft draft, String typefaceSelectorText,
                 String hookChainText, boolean dirty, boolean saveFeedbackVisible,
-                boolean systemHooksEnabled, Set<String> automaticFontHookDomains, Actions actions) {
+                boolean systemHooksEnabled, Set<String> automaticFontHookDomains,
+                ConfigEditorDestination destination, Actions actions) {
             this.item = item;
             this.draft = draft;
             this.typefaceSelectorText = typefaceSelectorText;
@@ -59,6 +62,9 @@ public final class AppConfigEditorPresentation {
             this.saveFeedbackVisible = saveFeedbackVisible;
             this.systemHooksEnabled = systemHooksEnabled;
             this.automaticFontHookDomains = Set.copyOf(automaticFontHookDomains);
+            this.destination = destination != null
+                    ? destination
+                    : ConfigEditorDestination.MAIN;
             this.actions = actions;
             viewportInputValid = AppConfigInputValidation.isViewportInputValid(
                     draft.viewportInputFor(draft.viewportMode), draft.viewportMode);

@@ -29,6 +29,7 @@ final class MainViewModel {
     private String editingPackageName;
     private AppConfigEditorDraft editingDraft;
     private AppConfigEditorDraft savedEditingDraft;
+    private ConfigEditorDestination editingDestination = ConfigEditorDestination.MAIN;
     private boolean editingSaveFeedback;
 
     MainViewModel(MainUiState initialState) {
@@ -69,7 +70,33 @@ final class MainViewModel {
     void clearEditingDraft() {
         this.editingDraft = null;
         this.savedEditingDraft = null;
+        this.editingDestination = ConfigEditorDestination.MAIN;
         this.editingSaveFeedback = false;
+    }
+
+    void restoreEditingSession(
+            String packageName,
+            AppConfigEditorDraft draft,
+            AppConfigEditorDraft savedDraft,
+            ConfigEditorDestination destination
+    ) {
+        this.editingPackageName = packageName;
+        this.editingDraft = draft;
+        this.savedEditingDraft = savedDraft != null ? savedDraft : draft;
+        this.editingDestination = destination != null
+                ? destination
+                : ConfigEditorDestination.MAIN;
+        this.editingSaveFeedback = false;
+    }
+
+    ConfigEditorDestination getEditingDestination() {
+        return editingDestination;
+    }
+
+    void setEditingDestination(ConfigEditorDestination destination) {
+        editingDestination = destination != null
+                ? destination
+                : ConfigEditorDestination.MAIN;
     }
 
     AppConfigEditorDraft getSavedEditingDraft() { return savedEditingDraft; }

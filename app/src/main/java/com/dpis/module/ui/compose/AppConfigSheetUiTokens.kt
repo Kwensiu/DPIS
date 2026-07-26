@@ -14,7 +14,9 @@ import androidx.compose.ui.unit.dp
 internal object AppConfigSheetUiTokens {
     // The app header begins directly after the chrome. Horizontal and bottom padding remain
     // content-owned, while the chrome alone owns the vertical separation above it.
-    val ContentPadding = PaddingValues(start = 20.dp, top = 0.dp, end = 20.dp, bottom = 24.dp)
+    // The editor keeps a single bottom reserve for the save action and the system gesture handle
+    // on both the app sheet and the template sheet.
+    val ContentPadding = PaddingValues(start = 20.dp, top = 0.dp, end = 20.dp, bottom = 20.dp)
     val HeaderToFirstInputGap = 12.dp
     val AppIconSize = 56.dp
     val AppIconGap = 16.dp
@@ -22,7 +24,11 @@ internal object AppConfigSheetUiTokens {
     val FeedbackActionSize = 32.dp
     // Both affordances use the chrome's real center line. Increasing the container moves them
     // together without introducing child offsets or asymmetric internal layout bounds.
-    val TopChromeHeight = 64.dp
+    // The shared chrome reserves one compact 56dp slot for the centered indicator, optional
+    // unsaved badge, and app-only trailing action without inflating the editor's visible height.
+    val TopChromeHeight = 56.dp
+    val TopChromeIndicatorWidth = 52.dp
+    val TopChromeIndicatorHeight = 5.dp
     val WizardHintTopOffset = 40.dp
     val FeedbackActionShape = CircleShape
     val WizardHintShape = RoundedCornerShape(18.dp)
@@ -33,6 +39,7 @@ internal object AppConfigSheetUiTokens {
     // its 1dp outline cannot be cropped at the outer corners.
     val FieldAndActionShape = RoundedCornerShape(18.dp)
     val LegacyModeThumbShape = RoundedCornerShape(16.dp)
+    val ModeThumbBorderWidth = 1.dp
     val UnsavedBadgeShape = RoundedCornerShape(14.dp)
     val TopChromeIndicatorShape = RoundedCornerShape(3.dp)
 
@@ -46,8 +53,9 @@ internal object AppConfigSheetUiTokens {
     val ControlGroupGap = 12.dp
     // The legacy sheet keeps 28dp between the save outline and the advanced divider.
     val SaveToAdvancedDividerGap = 28.dp
-    val CollapsedBottomClearance = 8.dp
+    val CollapsedBottomClearance = 20.dp
     val ProcessActionGap = 6.dp
+    val TypefaceHookGap = 10.dp
     val SaveRowBottomGap = 16.dp
     val AdvancedDividerTopGap = 12.dp
     val AdvancedTitleTopGap = 8.dp

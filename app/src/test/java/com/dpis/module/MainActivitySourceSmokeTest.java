@@ -268,12 +268,10 @@ public class MainActivitySourceSmokeTest {
     }
 
     @Test
-    public void legacyLandscapeTemplateFallbackKeepsSeparatePaneAndHomeHidesDetail()
+    public void composeTemplateWorkspaceKeepsTargetSelectionFallbackOnly()
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String layout = read("src/main/res/layout-land/activity_status.xml");
-        String globalDetail = read("src/main/res/layout/view_land_global_prefill_detail.xml");
-        String templateDetail = read("src/main/res/layout/view_land_quick_template_detail.xml");
         String targetsDetail = read("src/main/res/layout/view_land_quick_template_targets_detail.xml");
 
         assertTrue(layout.contains("android:id=\"@+id/land_detail_content\""));
@@ -291,35 +289,17 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("showQuickTemplateEditor(String templateId)"));
         assertTrue(source.contains("TemplateDetailSelection.quickTemplate(templateId)"));
         assertTrue(source.contains("showQuickTemplateEditor(null);"));
-        assertTrue(source.contains("GlobalPrefillEditorBinder.bind("));
-        assertTrue(source.contains("QuickTemplateEditorBinder.bind("));
-        assertTrue(source.contains("activeQuickTemplateEditorBinder.currentTemplateId()"));
-        assertTrue(source.contains("templateId != null && templateId.isBlank()"));
-        assertTrue(source.contains("applyTemplateDetailInsets("));
-        assertFalse(source.contains("GlobalPrefillSheetDialog.bindInto("));
-        assertFalse(source.contains("QuickTemplateEditSheetDialog.bindInto("));
+        assertFalse(source.contains("GlobalPrefillEditorBinder"));
+        assertFalse(source.contains("QuickTemplateEditorBinder"));
+        assertFalse(source.contains("GlobalPrefillSheetDialog"));
+        assertFalse(source.contains("QuickTemplateEditSheetDialog"));
         assertTrue(source.contains("templateDetailSelection = TemplateDetailSelection.none();"));
-        assertTrue(source.contains("R.layout.view_land_global_prefill_detail"));
-        assertTrue(source.contains("R.layout.view_land_quick_template_detail"));
         assertTrue(source.contains("R.layout.view_land_quick_template_targets_detail"));
         assertTrue(source.contains("TemplateDetailKind.QUICK_TEMPLATE_TARGETS"));
         assertTrue(source.contains("TemplateDetailSelection.quickTemplateTargets(templateId)"));
         assertTrue(source.contains("activeQuickTemplateTargetsBinder.dispose();"));
         assertFalse(source.contains("? R.layout.dialog_global_prefill_sheet"));
         assertFalse(source.contains(": R.layout.dialog_quick_template_edit_sheet"));
-        assertTrue(globalDetail.contains("android:layout_height=\"match_parent\""));
-        assertTrue(globalDetail.contains("android:clipToPadding=\"false\""));
-        assertTrue(globalDetail.contains("android:fillViewport=\"true\""));
-        assertTrue(globalDetail.contains("@layout/view_template_config_sheet_fields"));
-        assertTrue(globalDetail.contains("android:baselineAligned=\"false\""));
-        assertTrue(globalDetail.contains("android:layout_gravity=\"center_vertical\""));
-        assertTrue(globalDetail.contains("android:translationY=\"@dimen/template_detail_inline_badge_visual_offset_top\""));
-        assertTrue(globalDetail.contains("@dimen/land_template_detail_subtitle_spacing_top"));
-        assertFalse(globalDetail.contains("@dimen/land_app_identity_secondary_spacing_top"));
-        assertFalse(globalDetail.contains("@layout/view_sheet_unsaved_badge_handle"));
-        assertFalse(globalDetail.contains("sheet_drag_handle"));
-        assertTrue(templateDetail.contains("android:layout_height=\"match_parent\""));
-        assertTrue(templateDetail.contains("android:clipToPadding=\"false\""));
         assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_detail_root\""));
         assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_list\""));
         assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_save_button\""));
@@ -327,15 +307,7 @@ public class MainActivitySourceSmokeTest {
         assertFalse(targetsDetail.contains("@dimen/land_app_identity_secondary_spacing_top"));
         assertFalse(targetsDetail.contains("quick_template_targets_back_button"));
         assertFalse(targetsDetail.contains("@layout/activity_quick_template_targets"));
-        assertTrue(templateDetail.contains("android:fillViewport=\"true\""));
-        assertTrue(templateDetail.contains("@layout/view_template_config_sheet_fields"));
-        assertTrue(templateDetail.contains("android:baselineAligned=\"false\""));
-        assertTrue(templateDetail.contains("android:layout_gravity=\"center_vertical\""));
-        assertTrue(templateDetail.contains("android:translationY=\"@dimen/template_detail_inline_badge_visual_offset_top\""));
-        assertTrue(templateDetail.contains("@dimen/land_template_detail_subtitle_spacing_top"));
-        assertFalse(templateDetail.contains("@dimen/land_app_identity_secondary_spacing_top"));
-        assertFalse(templateDetail.contains("@layout/view_sheet_unsaved_badge_handle"));
-        assertFalse(templateDetail.contains("sheet_drag_handle"));
+        assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_detail_root\""));
     }
 
     @Test
@@ -379,30 +351,24 @@ public class MainActivitySourceSmokeTest {
     @Test
     public void templateEditorDraftMigratesBetweenSheetAndPane() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
-        String globalBinder = read("src/main/java/com/dpis/module/templates/GlobalPrefillEditorBinder.java");
-        String quickBinder = read("src/main/java/com/dpis/module/templates/QuickTemplateEditorBinder.java");
-        String globalSheet = read("src/main/java/com/dpis/module/templates/GlobalPrefillSheetDialog.java");
-        String quickSheet = read("src/main/java/com/dpis/module/templates/QuickTemplateEditSheetDialog.java");
+        String draft = read("src/main/java/com/dpis/module/templates/TemplateEditorDraft.java");
+        String workspace = read(
+                "src/main/java/com/dpis/module/templates/TemplateWorkspacePresentation.kt");
 
         assertTrue(source.contains("retainedGlobalPrefillDraft"));
         assertTrue(source.contains("retainedQuickTemplateDraft"));
-        assertTrue(source.contains("captureTemplateEditorDraft();"));
-        assertTrue(source.contains("activeGlobalPrefillEditorBinder.snapshotDraft()"));
-        assertTrue(source.contains("activeQuickTemplateEditorBinder.snapshotDraft()"));
-        assertTrue(source.contains("closeActiveTemplateSheetForMigration();"));
-        assertTrue(source.contains("templateSheetMigrationInProgress"));
         assertTrue(source.contains("retainedState.globalPrefillDraft"));
         assertTrue(source.contains("retainedState.quickTemplateDraft"));
         assertTrue(source.contains("retainedGlobalPrefillDraft"));
         assertTrue(source.contains("retainedQuickTemplateDraft"));
-        assertTrue(globalBinder.contains("Draft snapshotDraft()"));
-        assertTrue(globalBinder.contains("private void applyDraft(Draft draft)"));
-        assertTrue(quickBinder.contains("Draft snapshotDraft()"));
-        assertTrue(quickBinder.contains("private void applyDraft(Draft draft)"));
-        assertTrue(globalSheet.contains("GlobalPrefillEditorBinder.Draft initialDraft"));
-        assertTrue(globalSheet.contains("GlobalPrefillEditorBinder.Draft snapshotDraft()"));
-        assertTrue(quickSheet.contains("QuickTemplateEditorBinder.Draft initialDraft"));
-        assertTrue(quickSheet.contains("QuickTemplateEditorBinder.Draft snapshotDraft()"));
+        assertTrue(source.contains("TemplateEditorDraft globalPrefillDraft"));
+        assertTrue(source.contains("TemplateEditorDraft quickTemplateDraft"));
+        assertTrue(draft.contains("viewportScaleInput"));
+        assertTrue(draft.contains("viewportAbsoluteInput"));
+        assertTrue(workspace.contains("globalPrefillDraft: TemplateEditorDraft?"));
+        assertTrue(workspace.contains("quickTemplateDraft: TemplateEditorDraft?"));
+        assertFalse(source.contains("GlobalPrefillEditorBinder"));
+        assertFalse(source.contains("QuickTemplateEditorBinder"));
     }
 
     @Test
@@ -1731,10 +1697,16 @@ public class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/ui/compose/TemplateWorkspaceContent.kt");
 
         assertTrue(activity.contains("onComposeTemplateEditorOpened(quickTemplate, templateId)"));
-        assertTrue(activity.contains("retainedGlobalPrefillDraft = form.globalDraft();"));
-        assertTrue(activity.contains("retainedQuickTemplateDraft = form.quickDraft();"));
+        assertTrue(activity.contains("boolean dirty = form.isDirty();"));
+        assertTrue(activity.contains("retainedGlobalPrefillDraft = dirty ? form.globalDraft() : null;"));
+        assertTrue(activity.contains("retainedQuickTemplateDraft = dirty ? form.quickDraft() : null;"));
         assertTrue(activity.contains("private void onComposeTemplateEditorClosed()"));
         assertTrue(activity.contains("clearTemplateDetailSelection();"));
+        int closeStart = activity.indexOf("private void onComposeTemplateEditorClosed()");
+        int closeEnd = activity.indexOf("private void showQuickTemplateEditor", closeStart);
+        String closeMethod = activity.substring(closeStart, closeEnd);
+        assertTrue(closeMethod.indexOf("clearTemplateDetailSelection();")
+                < closeMethod.indexOf("bindTemplateWorkspace();"));
         assertTrue(coordinator.contains("onEditorOpened ="));
         assertTrue(coordinator.contains("onEditorChanged = content::updateTemplateEditor"));
         assertTrue(coordinator.contains("onEditorClosed = content::closeTemplateEditor"));
@@ -1744,12 +1716,16 @@ public class MainActivitySourceSmokeTest {
         assertTrue(workspace.contains("onEditorOpened(kind == EDITOR_QUICK, templateId)"));
         assertTrue(workspace.contains("onEditorChanged(editorDraft.form)"));
         assertTrue(workspace.contains("onEditorClosed()"));
+        int workspaceCloseStart = workspace.indexOf("fun closeEditor()");
+        int workspaceCloseEnd = workspace.indexOf("fun saveEditor()", workspaceCloseStart);
+        String workspaceClose = workspace.substring(workspaceCloseStart, workspaceCloseEnd);
+        assertFalse(workspaceClose.contains("onEditorDestinationChanged"));
         assertTrue(workspace.contains("closeEditor()"));
         assertTrue(workspace.contains("@Preview(showBackground = true"));
     }
 
     @Test
-    public void composeTemplateRestorePublishesDetailBeforeLegacyFallback()
+    public void composeTemplateRestorePublishesDetailWithoutLegacyEditorFallback()
         throws IOException {
         String activity = read("src/main/java/com/dpis/module/MainActivity.java");
         int methodStart = activity.indexOf(
@@ -1759,12 +1735,11 @@ public class MainActivitySourceSmokeTest {
         String method = activity.substring(methodStart, methodEnd);
 
         int composeBranch = method.indexOf("if (composeShellHost != null)");
-        int legacyLandscapeBranch = method.indexOf("if (isLandscapeDetailMode())");
         assertTrue(composeBranch >= 0);
-        assertTrue(legacyLandscapeBranch > composeBranch);
-        assertTrue(method.contains("closeActiveTemplateSheetForMigration();"));
         assertTrue(method.contains("bindTemplateWorkspace();"));
-        assertTrue(method.contains("restoreTemplateDetailPane();"));
+        assertFalse(method.contains("showGlobalPrefillSheet"));
+        assertFalse(method.contains("showQuickTemplateSheet"));
+        assertFalse(method.contains("closeActiveTemplateSheetForMigration"));
     }
 
     private static String read(String relativePath) throws IOException {

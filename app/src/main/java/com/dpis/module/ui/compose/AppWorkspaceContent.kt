@@ -100,7 +100,7 @@ fun AppWorkspaceContent(
         AppListPage.CONFIGURED_APPS -> configuredAppsListState
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        val twoPane = maxWidth >= 600.dp
+        val twoPane = maxWidth >= WorkspaceTwoPaneMinWidth
         Row(Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
@@ -177,15 +177,22 @@ fun AppWorkspaceContent(
                 )
                 Box(Modifier.weight(1f).fillMaxHeight()) {
                     if (editorState != null) {
-                        Box(
-                            Modifier
-                                .fillMaxSize()
-                                .padding(bottom = padding.calculateBottomPadding())
-                        ) {
-                            AppConfigEditorContent(
-                                editorState,
-                                alwaysFloatInputLabels = true,
-                                extraTopPadding = topSafePadding
+                        Box(Modifier.fillMaxSize()) {
+                            ConfigEditorAnimatedContent(
+                                destination = editorState.destination,
+                                mainContent = {
+                                    AppConfigEditorContent(
+                                        editorState,
+                                        extraTopPadding = topSafePadding
+                                    )
+                                },
+                                hookContent = {
+                                    AppHookChainEditorPage(
+                                        state = editorState,
+                                        modifier = Modifier.padding(top = topSafePadding),
+                                        bottomPadding = padding.calculateBottomPadding()
+                                    )
+                                }
                             )
                         }
                     } else {

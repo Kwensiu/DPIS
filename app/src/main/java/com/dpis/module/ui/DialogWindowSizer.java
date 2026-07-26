@@ -23,6 +23,14 @@ public final class DialogWindowSizer {
         applyWidth(dialog, context, Preset.LARGE);
     }
 
+    /**
+     * Keeps the font configuration dialogs readable without making their
+     * compact-screen surface feel wider than the surrounding settings UI.
+     */
+    public static void applyConfigurationWidth(AlertDialog dialog, Context context) {
+        applyWidth(dialog, context, Preset.CONFIGURATION);
+    }
+
     private static void applyWidth(AlertDialog dialog, Context context, Preset preset) {
         if (dialog == null || context == null || dialog.getWindow() == null) {
             return;
@@ -63,7 +71,8 @@ public final class DialogWindowSizer {
     private enum Preset {
         COMPACT(R.dimen.dialog_window_compact_max_width, 0.88f),
         STANDARD(R.dimen.dialog_window_standard_max_width, 0.90f),
-        LARGE(R.dimen.dialog_window_large_max_width, 0.92f);
+        LARGE(R.dimen.dialog_window_large_max_width, 0.92f),
+        CONFIGURATION(R.dimen.dialog_window_configuration_max_width, 0.80f);
 
         final int maxWidthRes;
         final float widthFraction;

@@ -40,6 +40,8 @@ import com.dpis.module.ui.compose.HomeWorkspaceContent
 import com.dpis.module.ui.compose.AppWorkspaceContent
 import com.dpis.module.ui.compose.AppConfigEditorOverlay
 import com.dpis.module.ui.compose.AppConfigEditorContent
+import com.dpis.module.ui.compose.AppHookChainEditorPage
+import com.dpis.module.ui.compose.ConfigEditorAnimatedContent
 import com.dpis.module.ui.compose.AppConfigSheetUiTokens
 import com.dpis.module.ui.compose.ToolsWorkspaceContent
 import com.dpis.module.ui.compose.SettingsWorkspaceContent
@@ -48,6 +50,8 @@ import com.dpis.module.ui.compose.TemplateUiTokens
 import com.dpis.module.templates.TemplateWorkspacePresentation
 import com.dpis.module.appconfig.AppConfigSheetWizardStore
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 
 /** Compose workspace presentation boundary; domain actions remain in MainActivity. */
@@ -75,6 +79,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         fun changeTemplateQuery(query: String)
         fun openTemplateEditor(quickTemplate: Boolean, templateId: String?)
         fun updateTemplateEditor(form: com.dpis.module.templates.TemplateEditorForm)
+        fun updateTemplateEditorDestination(destination: ConfigEditorDestination)
         fun closeTemplateEditor()
         fun usesComposeTemplateWorkspace(): Boolean
     }
@@ -112,6 +117,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                             content.openTemplateEditor(quickTemplate, templateId)
                         },
                         onEditorChanged = content::updateTemplateEditor,
+                        onEditorDestinationChanged = content::updateTemplateEditorDestination,
                         onEditorClosed = content::closeTemplateEditor
                     )
                 }
@@ -133,11 +139,16 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
             if (maxWidth >= 600.dp) return@BoxWithConstraints
             val editorState = content.appEditorState() ?: return@BoxWithConstraints
             val context = LocalContext.current
+            val density = LocalDensity.current
             var showAdvancedHint by remember(editorState.item.packageName) {
                 mutableStateOf(AppConfigSheetWizardStore.shouldShowAdvancedHint(context))
             }
             AppConfigEditorOverlay(
                 onDismissRequest = editorState.actions::close,
+                destination = editorState.destination,
+                onReturnToMain = {
+                    editorState.actions.navigate(editorState.destination.backDestination())
+                },
                 topChrome = {
                     // This is deliberately visual-only chrome. The sheet owns its drag gesture;
                     // the short bar switches to the legacy unsaved badge without becoming an
@@ -167,13 +178,13 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                             Box(
                                 modifier = androidx.compose.ui.Modifier
                                     .align(Alignment.Center)
-                                    .width(TemplateUiTokens.SheetVisualIndicatorWidth)
-                                    .height(TemplateUiTokens.SheetVisualIndicatorHeight)
+                                    .width(AppConfigSheetUiTokens.TopChromeIndicatorWidth)
+                                    .height(AppConfigSheetUiTokens.TopChromeIndicatorHeight)
                                     .clip(AppConfigSheetUiTokens.TopChromeIndicatorShape)
                                     .background(MaterialTheme.colorScheme.onSurfaceVariant)
                             )
                         }
-                        Box(
+                        if (!editorState.destination.isHookChain()) Box(
                             modifier = androidx.compose.ui.Modifier
                                 // Keep the diagnostic action on the same center line as the
                                 // visual white bar; it is not independently top-aligned chrome.
@@ -199,7 +210,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                                 tint = MaterialTheme.colorScheme.onSecondaryContainer
                             )
                         }
-                        if (showAdvancedHint) {
+                        if (showAdvancedHint && !editorState.destination.isHookChain()) {
                             Column(
                                 modifier = androidx.compose.ui.Modifier
                                     .align(Alignment.TopCenter)
@@ -253,11 +264,39 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                         }
                     }
                 }
-            ) { onAdvancedAnchorMeasured ->
-                AppConfigEditorContent(
-                    editorState,
-                    onAdvancedAnchorMeasured = onAdvancedAnchorMeasured,
-                    showInlineUnsavedBadge = false
+            ) { onAdvancedAnchorMeasured, destinationContentOwnsHeight, onReturnFromHook ->
+                ConfigEditorAnimatedContent(
+                    destination = editorState.destination,
+                    // Expanded sheets ignore the peek anchor, so their destination content owns
+                    // height. Partially expanded sheets keep that ownership in the peek anchor.
+                    animateSize = destinationContentOwnsHeight,
+                    // A full-width Sheet has no adjacent pane, so its outgoing editor may remain
+                    // drawable until the horizontal transition completes.
+                    clipContentToAnimatedBounds = false,
+                    mainContent = {
+                        AppConfigEditorContent(
+                            editorState,
+                            onAdvancedAnchorMeasured = onAdvancedAnchorMeasured,
+                            showInlineUnsavedBadge = false
+                        )
+                    },
+                    hookContent = {
+                        AppHookChainEditorPage(
+                            state = editorState,
+                            // Hook content owns its internal size changes. The sheet mirrors the
+                            // height it reports instead of adding a second competing tween.
+                            animateTabSize = true,
+                            onBack = onReturnFromHook,
+                            modifier = androidx.compose.ui.Modifier.onSizeChanged { size ->
+                                val contentHeight = with(density) { size.height.toDp() }
+                                onAdvancedAnchorMeasured(
+                                    contentHeight +
+                                        AppConfigSheetUiTokens.SaveToAdvancedDividerGap -
+                                        AppConfigSheetUiTokens.CollapsedBottomClearance
+                                )
+                            }
+                        )
+                    }
                 )
             }
         }

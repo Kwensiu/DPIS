@@ -87,6 +87,20 @@ public final class TemplateEditorForm {
         fontHookDomainsRaw = value.fontHookDomainsRaw;
     }
 
+    public void applyDraft(TemplateEditorDraft draft) {
+        if (draft == null || draft.quickTemplate != quickTemplate) return;
+        nameInput = text(draft.nameInput);
+        viewportInput = text(draft.viewportInput);
+        viewportMode = ViewportTargetType.normalize(draft.viewportMode);
+        viewportApplyMode = ViewportApplyMode.normalize(draft.viewportApplyMode);
+        viewportScaleInput = text(draft.viewportScaleInput);
+        viewportAbsoluteInput = text(draft.viewportAbsoluteInput);
+        fontInput = text(draft.fontInput);
+        fontMode = AppConfigInputValidation.initialFontMode(draft.fontMode);
+        selectedTypefaceId = draft.selectedTypefaceId;
+        fontHookDomainsRaw = draft.draftFontHookDomainsRaw;
+    }
+
     public void switchViewportMode(String mode) {
         String next = ViewportTargetType.normalize(mode);
         updateActiveViewportDraft();
@@ -148,14 +162,16 @@ public final class TemplateEditorForm {
         return initialSignature;
     }
 
-    public GlobalPrefillEditorBinder.Draft globalDraft() {
-        return new GlobalPrefillEditorBinder.Draft(viewportInput, viewportMode,
-                viewportApplyMode, fontInput, fontMode, selectedTypefaceId, fontHookDomainsRaw);
+    public TemplateEditorDraft globalDraft() {
+        return new TemplateEditorDraft(false, "", viewportInput, viewportMode,
+                viewportApplyMode, viewportScaleInput, viewportAbsoluteInput, fontInput,
+                fontMode, selectedTypefaceId, fontHookDomainsRaw);
     }
 
-    public QuickTemplateEditorBinder.Draft quickDraft() {
-        return new QuickTemplateEditorBinder.Draft(nameInput, viewportInput, viewportMode,
-                viewportApplyMode, fontInput, fontMode, selectedTypefaceId, fontHookDomainsRaw);
+    public TemplateEditorDraft quickDraft() {
+        return new TemplateEditorDraft(true, nameInput, viewportInput, viewportMode,
+                viewportApplyMode, viewportScaleInput, viewportAbsoluteInput, fontInput,
+                fontMode, selectedTypefaceId, fontHookDomainsRaw);
     }
 
     private String signature() {

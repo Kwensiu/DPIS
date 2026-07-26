@@ -2,6 +2,7 @@ package com.dpis.module.templates
 
 import android.content.Context
 import com.dpis.module.ConfigStoreFactory
+import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.DpisApplication
 import com.dpis.module.DpisConfigStore
 import com.dpis.module.R
@@ -30,6 +31,9 @@ object TemplateWorkspacePresentation {
         val searching: Boolean,
         val detailKind: DetailKind,
         val detailTemplateId: String?,
+        val editorDestination: ConfigEditorDestination,
+        val globalPrefillDraft: TemplateEditorDraft?,
+        val quickTemplateDraft: TemplateEditorDraft?,
         val actions: Actions
     )
 
@@ -65,7 +69,10 @@ object TemplateWorkspacePresentation {
         query: String?,
         actions: Actions,
         detailKind: DetailKind = DetailKind.NONE,
-        detailTemplateId: String? = null
+        detailTemplateId: String? = null,
+        editorDestination: ConfigEditorDestination = ConfigEditorDestination.MAIN,
+        globalPrefillDraft: TemplateEditorDraft? = null,
+        quickTemplateDraft: TemplateEditorDraft? = null
     ): State {
         val formatter = TemplateConfigSummaryFormatter(Text(context)) { typefaceId ->
             val store: FontLibraryStore = ConfigStoreFactory.createLocalUiFontLibraryStore(
@@ -100,6 +107,9 @@ object TemplateWorkspacePresentation {
             normalizedQuery.isNotEmpty(),
             detailKind,
             detailTemplateId,
+            editorDestination,
+            globalPrefillDraft,
+            quickTemplateDraft,
             actions
         )
     }

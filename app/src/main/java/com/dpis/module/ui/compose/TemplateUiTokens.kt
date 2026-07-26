@@ -12,7 +12,6 @@ import androidx.compose.ui.unit.dp
  * rather than a general application spacing scale.
  */
 internal object TemplateUiTokens {
-    val TwoPaneMinWidth = 600.dp
     val WorkspaceHorizontalPadding = 16.dp
     // The shell is edge-to-edge; this reserve reproduces the old workspace's visible top gutter
     // without stacking the full status-bar inset on top of the shell boundary.
@@ -37,6 +36,7 @@ internal object TemplateUiTokens {
     val CardBorderWidth = 1.dp
     val CardPadding = 18.dp
     val TextSpacingTop = 6.dp
+    val EditorNameToFirstInputGap = 8.dp
 
     val SummaryTopGap = 12.dp
     val SummaryHorizontalGap = 7.dp
@@ -60,41 +60,8 @@ internal object TemplateUiTokens {
 
     val CircularActionShape = CircleShape
 
-    val SheetHorizontalPadding = 20.dp
-    val SheetTopPadding = 14.dp
-    // The legacy sheet had 24dp dialog bottom inset plus the template field reserve.
-    // ModalBottomSheet does not inherit that View-dialog inset, so keep both parts here.
-    val SheetBottomPadding = 32.dp
-    val SheetVisualIndicatorWidth = 52.dp
-    val SheetVisualIndicatorHeight = 5.dp
-    val SheetTopChromeHeight = 28.dp
-    // This is a content-level visual indicator, not a Material drag-handle slot.
-    val SheetVisualIndicatorOffset = 0.dp
-    val SheetHeaderTopGap = 10.dp
-    val SheetHeaderMinHeight = 52.dp
-    val SheetInputGap = 8.dp
-    val SheetSelectorGap = 10.dp
-    val SheetSelectorTopGap = 12.dp
-    // The mode track is the visual row anchor; the outlined input moves down to align its
-    // 48dp container while leaving its floating label outside the measured outline.
-    val SheetControlTopOffset = 6.dp
-    val SheetSelectorWidth = 132.dp
-    val SheetSelectorHeight = 48.dp
-    val SheetModeRowMinHeight = 56.dp
-    // The outline matches the adjacent 48dp mode track. DecorationBox owns the compact inset so
-    // the editor content remains visible instead of being clipped by a forced height.
-    val SheetInputHeight = 48.dp
-    val SheetInputContentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
-    val SheetInputShape = RoundedCornerShape(18.dp)
-    val SheetSaveTopGap = 12.dp
-    val SheetSaveButtonHeight = 48.dp
-    val SheetButtonCornerRadius = 18.dp
     val UnsavedBadgeMinHeight = 22.dp
     val UnsavedBadgeShape = RoundedCornerShape(14.dp)
 
-    val ModeTrackShape = RoundedCornerShape(18.dp)
-    // Match the outer track radius so the parent clip never cuts the thumb outline corners.
-    val ModeThumbShape = RoundedCornerShape(18.dp)
-    val ModeThumbBorderWidth = 1.dp
     val ModeAnimationDurationMillis = 200
 }

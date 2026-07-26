@@ -15,9 +15,6 @@ public final class TemplateWorkspacePresentationController {
     private final TemplateWorkspacePresentation.Actions actions;
     private final Set<Listener> listeners = new LinkedHashSet<>();
     private TemplateWorkspacePresentation.State state;
-    private TemplateWorkspacePresentation.DetailKind detailKind
-            = TemplateWorkspacePresentation.DetailKind.NONE;
-    private String detailTemplateId;
 
     public TemplateWorkspacePresentationController(
             Context context,
@@ -33,25 +30,27 @@ public final class TemplateWorkspacePresentationController {
         return state;
     }
 
-    public void refresh(String query) {
-        refresh(query, detailKind, detailTemplateId);
-    }
-
+    /** Republishes one complete editor session snapshot; callers may not drop route or draft state. */
     public void refresh(
             String query,
             TemplateWorkspacePresentation.DetailKind nextDetailKind,
-            String nextDetailTemplateId
+            String nextDetailTemplateId,
+            com.dpis.module.ConfigEditorDestination editorDestination,
+            TemplateEditorDraft globalPrefillDraft,
+            TemplateEditorDraft quickTemplateDraft
     ) {
-        detailKind = nextDetailKind != null
+        TemplateWorkspacePresentation.DetailKind detailKind = nextDetailKind != null
                 ? nextDetailKind
                 : TemplateWorkspacePresentation.DetailKind.NONE;
-        detailTemplateId = nextDetailTemplateId;
         state = TemplateWorkspacePresentation.create(
                 context,
                 query,
                 actions,
                 detailKind,
-                detailTemplateId
+                nextDetailTemplateId,
+                editorDestination,
+                globalPrefillDraft,
+                quickTemplateDraft
         );
         for (Listener listener : new LinkedHashSet<>(listeners)) {
             listener.onStateChanged(state);

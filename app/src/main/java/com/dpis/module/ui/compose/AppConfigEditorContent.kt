@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -67,6 +68,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.dpis.module.AppConfigEditorPresentation
+import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.R
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.applist.AppStatusFormatter
@@ -80,7 +82,6 @@ fun AppConfigEditorContent(
     contentPadding: PaddingValues = AppConfigSheetUiTokens.ContentPadding,
     onAdvancedAnchorMeasured: ((androidx.compose.ui.unit.Dp) -> Unit)? = null,
     showInlineUnsavedBadge: Boolean = true,
-    alwaysFloatInputLabels: Boolean = false,
     extraTopPadding: androidx.compose.ui.unit.Dp = 0.dp
 ) {
     val draft = state.draft
@@ -92,7 +93,6 @@ fun AppConfigEditorContent(
     val fontBringIntoView = remember { BringIntoViewRequester() }
     val wechatBringIntoView = remember { BringIntoViewRequester() }
     var typefacePickerVisible by remember { androidx.compose.runtime.mutableStateOf(false) }
-    var hookChainEditorVisible by remember { androidx.compose.runtime.mutableStateOf(false) }
     val viewportTargetSpec = AppConfigInputValidation.parseViewportTargetSpec(
         draft.viewportInputFor(draft.viewportMode),
         draft.viewportMode
@@ -158,6 +158,7 @@ fun AppConfigEditorContent(
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
             .imePadding()
+            .navigationBarsPadding()
             .padding(contentPadding)
             .padding(top = extraTopPadding)
     ) {
@@ -239,14 +240,15 @@ fun AppConfigEditorContent(
                     onValueChange = state.actions::updateViewportInput,
                     modifier = Modifier.fillMaxWidth().bringIntoViewRequester(viewportBringIntoView),
                     isError = !state.viewportInputValid,
-                    label = {
-                        Text(stringResource(if (state.usesAbsoluteViewport()) {
+                    label = stringResource(
+                        if (state.usesAbsoluteViewport()) {
                             R.string.dialog_viewport_hint_absolute
-                        } else R.string.dialog_viewport_hint_scale))
-                    },
+                        } else {
+                            R.string.dialog_viewport_hint_scale
+                        }
+                    ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     onFocused = { coroutineScope.launch { viewportBringIntoView.bringIntoView() } },
-                    alwaysFloatLabel = alwaysFloatInputLabels,
                     trailingIcon = if (draft.viewportInputFor(draft.viewportMode).isNotEmpty()) {
                         { DpisEditorClearButton { state.actions.updateViewportInput("") } }
                     } else null
@@ -275,10 +277,9 @@ fun AppConfigEditorContent(
                     onValueChange = state.actions::updateFontInput,
                     modifier = Modifier.fillMaxWidth().bringIntoViewRequester(fontBringIntoView),
                     isError = !state.fontInputValid,
-                    label = { Text(stringResource(R.string.dialog_font_scale_hint)) },
+                    label = stringResource(R.string.dialog_font_scale_hint),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     onFocused = { coroutineScope.launch { fontBringIntoView.bringIntoView() } },
-                    alwaysFloatLabel = alwaysFloatInputLabels,
                     trailingIcon = if (draft.fontInput.isNotEmpty()) {
                         { DpisEditorClearButton { state.actions.updateFontInput("") } }
                     } else null
@@ -311,10 +312,9 @@ fun AppConfigEditorContent(
                     onValueChange = state.actions::updateWechatDpiInput,
                     modifier = Modifier.weight(1f).bringIntoViewRequester(wechatBringIntoView),
                     isError = !state.wechatDpiInputValid,
-                    label = { Text(stringResource(R.string.dialog_wechat_dpi_hint)) },
+                    label = stringResource(R.string.dialog_wechat_dpi_hint),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     onFocused = { coroutineScope.launch { wechatBringIntoView.bringIntoView() } },
-                    alwaysFloatLabel = alwaysFloatInputLabels,
                     trailingIcon = if (!draft.wechatDpiInput.isNullOrEmpty()) {
                         { DpisEditorClearButton { state.actions.updateWechatDpiInput("") } }
                     } else null
@@ -341,39 +341,41 @@ fun AppConfigEditorContent(
             }
         }
         Spacer(Modifier.height(AppConfigSheetUiTokens.ControlGroupGap))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedButton(
-                onClick = { typefacePickerVisible = true },
-                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
-                shape = AppConfigSheetUiTokens.FieldAndActionShape,
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary
-                ),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
-            ) {
-                Text(
-                    state.typefaceSelectorText,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+        DpisEditorTypefaceHookRow(
+            primary = {
+                OutlinedButton(
+                    onClick = { typefacePickerVisible = true },
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    shape = AppConfigSheetUiTokens.FieldAndActionShape,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    ),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+                ) {
+                    Text(
+                        state.typefaceSelectorText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            },
+            secondary = {
+                OutlinedButton(
+                    onClick = {
+                        state.actions.navigate(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)
+                    },
+                    modifier = Modifier.width(AppConfigSheetUiTokens.SecondaryControlWidth)
+                        .heightIn(min = 48.dp),
+                    shape = AppConfigSheetUiTokens.FieldAndActionShape,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                ) {
+                    Text(state.hookChainText, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
             }
-            OutlinedButton(
-                onClick = { hookChainEditorVisible = true },
-                modifier = Modifier.width(AppConfigSheetUiTokens.SecondaryControlWidth)
-                    .heightIn(min = 48.dp),
-                shape = AppConfigSheetUiTokens.FieldAndActionShape,
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary
-                ),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
-            ) {
-                Text(state.hookChainText, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-        }
+        )
         Spacer(Modifier.height(AppConfigSheetUiTokens.ControlGroupGap))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -509,24 +511,13 @@ fun AppConfigEditorContent(
         Spacer(Modifier.height(4.dp))
     }
     if (typefacePickerVisible) {
-        AppTypefacePickerSheet(
+        AppTypefacePickerDialog(
             selectedTypefaceId = draft.selectedTypefaceId,
             onTypefaceSelected = { typefaceId ->
                 state.actions.updateTypeface(typefaceId)
                 typefacePickerVisible = false
             },
             onDismissRequest = { typefacePickerVisible = false }
-        )
-    }
-    if (hookChainEditorVisible) {
-        AppHookChainEditorSheet(
-            rawDomains = draft.draftFontHookDomainsRaw,
-            fontDomainsResetRequested = draft.fontHookDomainsResetRequested,
-            automaticDomains = state.automaticFontHookDomains,
-            fontDomainsEditable = draft.fontHookDomainsEditable(),
-            viewportApplyMode = draft.viewportApplyMode,
-            onHookChainChanged = state.actions::updateHookChain,
-            onDismissRequest = { hookChainEditorVisible = false }
         )
     }
 }

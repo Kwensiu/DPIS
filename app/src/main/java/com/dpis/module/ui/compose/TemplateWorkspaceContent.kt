@@ -35,9 +35,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -74,6 +72,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import com.dpis.module.R
+import com.dpis.module.ConfigEditorDestination
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.templates.QuickTemplateStore
 import com.dpis.module.templates.QuickTemplateTargetsPresentationController
 import com.dpis.module.templates.TemplateConfigSummaryFormatter
@@ -88,6 +88,7 @@ fun TemplateWorkspaceContent(
     onQueryChanged: (String) -> Unit,
     onEditorOpened: (quickTemplate: Boolean, templateId: String?) -> Unit = { _, _ -> },
     onEditorChanged: (TemplateEditorForm) -> Unit = {},
+    onEditorDestinationChanged: (ConfigEditorDestination) -> Unit = {},
     onEditorClosed: () -> Unit = {}
 ) {
     var editorKind by rememberSaveable {
@@ -102,12 +103,9 @@ fun TemplateWorkspaceContent(
         )
     }
     var deleteConfirmationVisible by rememberSaveable { mutableStateOf(false) }
+    var typefaceDialogVisible by rememberSaveable { mutableStateOf(false) }
+    val editorDestination = state.editorDestination
     val topSafePadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    // Match the app editor's effective top inset. The editor owns SheetTopPadding, so only the
-    // remaining status-bar inset is passed into its scroll content.
-    val editorTopSafePadding = (topSafePadding - TemplateUiTokens.SheetTopPadding)
-        .coerceAtLeast(0.dp)
-
     LaunchedEffect(state.detailKind, state.detailTemplateId) {
         when (state.detailKind) {
             TemplateWorkspacePresentation.DetailKind.GLOBAL_PREFILL -> {
@@ -135,6 +133,7 @@ fun TemplateWorkspaceContent(
         editorKind = kind
         editorTemplateId = templateId
         targetsTemplateId = null
+        onEditorDestinationChanged(ConfigEditorDestination.MAIN)
         onEditorOpened(kind == EDITOR_QUICK, templateId)
     }
 
@@ -142,7 +141,9 @@ fun TemplateWorkspaceContent(
     val editorKey = "${editorKind.orEmpty()}:${editorTemplateId.orEmpty()}"
     val editorDraft = rememberTemplateEditorDraftState(editorKey) {
         when (editorKind) {
-            EDITOR_GLOBAL -> TemplateEditorForm.global(state.globalPrefill)
+            EDITOR_GLOBAL -> TemplateEditorForm.global(state.globalPrefill).also {
+                it.applyDraft(state.globalPrefillDraft)
+            }
             EDITOR_QUICK -> {
                 val template = selectedTemplate
                 TemplateEditorForm.quick(
@@ -152,9 +153,11 @@ fun TemplateWorkspaceContent(
                         )
                     },
                     ""
-                )
+                ).also { it.applyDraft(state.quickTemplateDraft) }
             }
-            else -> TemplateEditorForm.global(state.globalPrefill)
+            else -> TemplateEditorForm.global(state.globalPrefill).also {
+                it.applyDraft(state.globalPrefillDraft)
+            }
         }
     }
 
@@ -167,6 +170,7 @@ fun TemplateWorkspaceContent(
         if (editorKind == null) return
         editorKind = null
         editorTemplateId = null
+        typefaceDialogVisible = false
         deleteConfirmationVisible = false
         onEditorClosed()
     }
@@ -188,24 +192,56 @@ fun TemplateWorkspaceContent(
     }
 
     val draftRevision = editorDraft.observe()
+    @Composable fun hookChainPage(
+        bottomPadding: androidx.compose.ui.unit.Dp,
+        modifier: Modifier = Modifier
+    ) {
+        HookChainEditorPage(
+            destination = editorDestination,
+            rawDomains = editorDraft.form.fontHookDomainsRaw,
+            fontDomainsResetRequested = editorDraft.form.fontHookDomainsRaw == null,
+            automaticDomains = FontHookDomainRegistry.recommendedTemplateKnownDomains(),
+            fontDomainsEditable = editorDraft.form.fontMode ==
+                com.dpis.module.fonts.FontApplyMode.FIELD_REWRITE,
+            viewportApplyMode = editorDraft.form.viewportApplyMode,
+            onHookChainChanged = { raw, reset, mode, _ ->
+                editorDraft.form.fontHookDomainsRaw = if (reset) null else raw
+                editorDraft.form.viewportApplyMode = mode
+                notifyEditorChanged()
+            },
+            onDestinationChanged = onEditorDestinationChanged,
+            onBack = { onEditorDestinationChanged(editorDestination.backDestination()) },
+            modifier = modifier,
+            bottomPadding = bottomPadding
+        )
+    }
     val editorBody: @Composable () -> Unit = {
-        TemplateEditorContent(
+        TemplateEditorSurface(
             form = editorDraft.form,
+            surface = TemplateEditorSurfaceKind.LANDSCAPE_DETAIL,
             draftRevision = draftRevision,
+            topSafePadding = topSafePadding,
+            bottomSafePadding = padding.calculateBottomPadding(),
             onFormChanged = ::notifyEditorChanged,
             onSelectTypeface = {
-                state.actions.selectTypeface(editorDraft.form, ::notifyEditorChanged)
+                typefaceDialogVisible = true
             },
             onEditHookDomains = {
-                state.actions.editHookDomains(editorDraft.form, ::notifyEditorChanged)
+                onEditorDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)
             },
             onReset = { editorDraft.form.reset(); notifyEditorChanged() },
+            onDismissRequest = ::closeEditor,
             onDelete = if (editorDraft.form.quickTemplate && !editorDraft.form.newTemplate) {
                 { deleteConfirmationVisible = true }
             } else null,
             onSave = ::saveEditor,
-            showSheetBadge = false,
-            extraTopPadding = editorTopSafePadding
+            destination = editorDestination,
+            hookContent = {
+                hookChainPage(
+                    padding.calculateBottomPadding(),
+                    Modifier.padding(top = topSafePadding)
+                )
+            }
         )
     }
 
@@ -213,7 +249,7 @@ fun TemplateWorkspaceContent(
         modifier = Modifier
             .fillMaxSize()
     ) {
-        val twoPane = maxWidth >= TemplateUiTokens.TwoPaneMinWidth
+        val twoPane = maxWidth >= WorkspaceTwoPaneMinWidth
         val openTargets: (String) -> Unit = { templateId ->
             if (twoPane) {
                 editorKind = null
@@ -242,10 +278,11 @@ fun TemplateWorkspaceContent(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .padding(bottom = padding.calculateBottomPadding())
                 ) {
                     when {
-                        targetsTemplateId != null -> Box {
+                        targetsTemplateId != null -> Box(
+                            Modifier.padding(bottom = padding.calculateBottomPadding())
+                        ) {
                             EmbeddedQuickTemplateTargets(
                                 templateId = targetsTemplateId.orEmpty(),
                                 onClose = {
@@ -271,39 +308,40 @@ fun TemplateWorkspaceContent(
             modifier = Modifier.statusBarsPadding()
             )
             if (editorKind != null) {
-                ModalBottomSheet(
+                TemplateEditorSurface(
+                    form = editorDraft.form,
+                    surface = TemplateEditorSurfaceKind.PORTRAIT_SHEET,
+                    draftRevision = draftRevision,
+                     onFormChanged = ::notifyEditorChanged,
+                     onSelectTypeface = {
+                        typefaceDialogVisible = true
+                     },
+                     onEditHookDomains = {
+                        onEditorDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)
+                    },
+                    onReset = { editorDraft.form.reset(); notifyEditorChanged() },
                     onDismissRequest = ::closeEditor,
-                    sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 0.dp,
-                    // The status badge/white line is visual chrome, not a drag-handle role.
-                    dragHandle = null
-                ) {
-                    TemplateSheetTopChrome(
-                            showUnsaved = editorDraft.form.isDirty(),
-                            draftRevision = draftRevision
-                    )
-                    TemplateEditorContent(
-                        form = editorDraft.form,
-                        draftRevision = draftRevision,
-                        onFormChanged = ::notifyEditorChanged,
-                        onSelectTypeface = {
-                            state.actions.selectTypeface(editorDraft.form, ::notifyEditorChanged)
-                        },
-                        onEditHookDomains = {
-                            state.actions.editHookDomains(editorDraft.form, ::notifyEditorChanged)
-                        },
-                        onReset = { editorDraft.form.reset(); notifyEditorChanged() },
-                        onDelete = if (
-                            editorDraft.form.quickTemplate && !editorDraft.form.newTemplate
-                        ) {
-                            { deleteConfirmationVisible = true }
-                        } else null,
-                        onSave = ::saveEditor
-                    )
-                }
+                    onDelete = if (
+                        editorDraft.form.quickTemplate && !editorDraft.form.newTemplate
+                    ) {
+                        { deleteConfirmationVisible = true }
+                    } else null,
+                    onSave = ::saveEditor,
+                    destination = editorDestination,
+                    hookContent = { hookChainPage(padding.calculateBottomPadding()) }
+                )
             }
         }
+    }
+    if (typefaceDialogVisible && editorKind != null) {
+        AppTypefacePickerDialog(
+            selectedTypefaceId = editorDraft.form.selectedTypefaceId,
+            onTypefaceSelected = {
+                editorDraft.form.selectedTypefaceId = it
+                notifyEditorChanged()
+            },
+            onDismissRequest = { typefaceDialogVisible = false }
+        )
     }
     if (deleteConfirmationVisible) {
         AlertDialog(
@@ -482,13 +520,13 @@ private fun TemplateDetailEmptyState(modifier: Modifier = Modifier) {
         Icon(
             painter = painterResource(R.drawable.ic_template_24),
             contentDescription = null,
-            modifier = Modifier.size(56.dp),
+            modifier = Modifier.size(48.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(16.dp))
         Text(
             text = stringResource(R.string.template_detail_empty_title),
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
         Spacer(Modifier.height(8.dp))

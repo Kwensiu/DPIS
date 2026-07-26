@@ -229,7 +229,7 @@
     <string name="global_prefill_save_failed">保存全局预填失败</string>
     <string name="quick_template_edit_page_title_new">新建模板</string>
     <string name="quick_template_edit_page_title_edit">编辑模板</string>
-    <string name="quick_template_edit_sheet_subtitle">自定义批量配置模板，不绑定应用</string>
+    <string name="quick_template_edit_sheet_subtitle">自定义批量配置模板</string>
     <string name="quick_template_name_hint">模板名称</string>
     <string name="quick_template_name_required">模板名称不能为空</string>
     <string name="quick_template_name_duplicate">模板名称已存在</string>
@@ -290,7 +290,7 @@
     <string name="dialog_font_hook_domains_dialog_title">自定义 Hook 链路</string>
     <string name="dialog_hook_chain_tab_interface">界面</string>
     <string name="dialog_hook_chain_tab_font">字体</string>
-    <string name="dialog_viewport_apply_strategy_title">界面比例应用策略</string>
+    <string name="dialog_viewport_apply_strategy_title">界面缩放策略</string>
     <string name="dialog_viewport_apply_auto">自动</string>
     <string name="dialog_viewport_apply_auto_subtitle">系统路线可用时使用。</string>
     <string name="dialog_viewport_apply_system">系统</string>

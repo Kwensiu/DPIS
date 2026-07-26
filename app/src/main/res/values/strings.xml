@@ -304,7 +304,7 @@ Mini Programs are not supported yet.</string>
     <string name="dialog_font_hook_domains_dialog_title">Custom Hook Chain</string>
     <string name="dialog_hook_chain_tab_interface">Interface</string>
     <string name="dialog_hook_chain_tab_font">Font</string>
-    <string name="dialog_viewport_apply_strategy_title">Interface scale apply strategy</string>
+    <string name="dialog_viewport_apply_strategy_title">Interface scaling strategy</string>
     <string name="dialog_viewport_apply_auto">Auto</string>
     <string name="dialog_viewport_apply_auto_subtitle">Use system route when available.</string>
     <string name="dialog_viewport_apply_system">System</string>

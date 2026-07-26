@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.animation.core.animateDpAsState
@@ -65,10 +64,90 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.dpis.module.R
+import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation
 import com.dpis.module.templates.TemplateEditorForm
 import com.dpis.module.viewport.ViewportTargetType
+
+enum class TemplateEditorSurfaceKind {
+    PORTRAIT_SHEET,
+    LANDSCAPE_DETAIL
+}
+
+/**
+ * Shared editor surface for the portrait sheet and landscape detail pane.
+ *
+ * The field body and callbacks are identical. Only the outer presentation contract differs:
+ * portrait owns a bottom sheet chrome/inset, while landscape reserves the status-bar gap inline.
+ */
+@Composable
+fun TemplateEditorSurface(
+    form: TemplateEditorForm,
+    surface: TemplateEditorSurfaceKind,
+    draftRevision: Int = 0,
+    topSafePadding: androidx.compose.ui.unit.Dp = 0.dp,
+    bottomSafePadding: androidx.compose.ui.unit.Dp = 0.dp,
+    onFormChanged: () -> Unit,
+    onSelectTypeface: () -> Unit,
+    onEditHookDomains: () -> Unit,
+    onReset: () -> Unit,
+    onDismissRequest: () -> Unit = {},
+    onDelete: (() -> Unit)?,
+    onSave: () -> Unit,
+    destination: ConfigEditorDestination = ConfigEditorDestination.MAIN,
+    hookContent: (@Composable () -> Unit)? = null
+) {
+    val mainEditor: @Composable () -> Unit = {
+        TemplateEditorContent(
+            form = form,
+            draftRevision = draftRevision,
+            onFormChanged = onFormChanged,
+            onSelectTypeface = onSelectTypeface,
+            onEditHookDomains = onEditHookDomains,
+            onReset = onReset,
+            onDelete = onDelete,
+            onSave = onSave,
+            showSheetBadge = surface == TemplateEditorSurfaceKind.PORTRAIT_SHEET,
+            extraTopPadding = if (surface == TemplateEditorSurfaceKind.LANDSCAPE_DETAIL) {
+                topSafePadding
+            } else {
+                0.dp
+            },
+            extraBottomPadding = if (surface == TemplateEditorSurfaceKind.LANDSCAPE_DETAIL) {
+                bottomSafePadding
+            } else {
+                0.dp
+            }
+        )
+    }
+    val editor: @Composable () -> Unit = {
+        if (hookContent == null) {
+            mainEditor()
+        } else {
+            ConfigEditorAnimatedContent(
+                destination = destination,
+                clipContentToAnimatedBounds =
+                    surface == TemplateEditorSurfaceKind.LANDSCAPE_DETAIL,
+                mainContent = mainEditor,
+                hookContent = hookContent
+            )
+        }
+    }
+
+    if (surface == TemplateEditorSurfaceKind.PORTRAIT_SHEET) {
+        DpisEditorBottomSheet(
+            onDismissRequest = onDismissRequest,
+            topChrome = { DpisSheetVisualChrome(showUnsaved = form.isDirty()) },
+            // The editor body owns the shared bottom reserve. Do not add a second navigation inset.
+            contentWindowInsets = { androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0) }
+        ) {
+            editor()
+        }
+    } else {
+        editor()
+    }
+}
 
 /**
  * Shared editor body for the portrait sheet and the landscape detail pane.
@@ -88,7 +167,8 @@ fun TemplateEditorContent(
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
     showSheetBadge: Boolean = true,
-    extraTopPadding: androidx.compose.ui.unit.Dp = 0.dp
+    extraTopPadding: androidx.compose.ui.unit.Dp = 0.dp,
+    extraBottomPadding: androidx.compose.ui.unit.Dp = 0.dp
 ) {
     // The revision is intentionally passed as a parameter. The form is a mutable Java draft and
     // its stable object identity must not allow Compose to skip the updated editor subtree.
@@ -107,12 +187,9 @@ fun TemplateEditorContent(
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
             .imePadding()
-            .padding(
-                start = TemplateUiTokens.SheetHorizontalPadding,
-                top = TemplateUiTokens.SheetTopPadding + extraTopPadding,
-                end = TemplateUiTokens.SheetHorizontalPadding,
-                bottom = TemplateUiTokens.SheetBottomPadding
-            )
+            .padding(AppConfigSheetUiTokens.ContentPadding)
+            .padding(top = extraTopPadding)
+            .padding(bottom = extraBottomPadding)
     ) {
         TemplateEditorSheetHeader(
             form = form,
@@ -122,13 +199,13 @@ fun TemplateEditorContent(
         )
 
         if (form.quickTemplate) {
-            Spacer(Modifier.height(TemplateUiTokens.SheetInputGap))
+            Spacer(Modifier.height(AppConfigSheetUiTokens.HeaderToFirstInputGap))
             Column(Modifier.fillMaxWidth()) {
                 DpisCompactEditorTextField(
                     value = form.nameInput,
                     onValueChange = { form.nameInput = it; onFormChanged() },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text(stringResource(R.string.quick_template_name_hint)) },
+                    label = stringResource(R.string.quick_template_name_hint),
                     isError = nameError != null,
                     trailingIcon = if (form.nameInput.isNotEmpty()) {
                         {
@@ -148,18 +225,26 @@ fun TemplateEditorContent(
             }
         }
 
-        Spacer(Modifier.height(TemplateUiTokens.SheetInputGap))
+        Spacer(
+            Modifier.height(
+                if (form.quickTemplate) {
+                    TemplateUiTokens.EditorNameToFirstInputGap
+                } else {
+                    AppConfigSheetUiTokens.HeaderToFirstInputGap
+                }
+            )
+        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = TemplateUiTokens.SheetModeRowMinHeight),
-            horizontalArrangement = Arrangement.spacedBy(TemplateUiTokens.SheetSelectorGap),
+                .height(AppConfigSheetUiTokens.FieldRowHeight),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.Top
         ) {
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(top = TemplateUiTokens.SheetControlTopOffset)
+                    .padding(top = AppConfigSheetUiTokens.FieldTopInset)
             ) {
                 DpisCompactEditorTextField(
                     value = form.viewportInput,
@@ -171,19 +256,13 @@ fun TemplateEditorContent(
                     // The mode track is the row's 48dp alignment anchor. DecorationBox's label
                     // can extend outside that outline, so move only the input surface down.
                     modifier = Modifier.fillMaxWidth(),
-                    label = {
-                        Text(
-                            text = stringResource(
-                                if (ViewportTargetType.ABSOLUTE_DP == form.viewportMode) {
-                                    R.string.dialog_viewport_hint_absolute
-                                } else {
-                                    R.string.dialog_viewport_hint_scale
-                                }
-                            ),
-                            maxLines = 1,
-                            softWrap = false
-                        )
-                    },
+                    label = stringResource(
+                        if (ViewportTargetType.ABSOLUTE_DP == form.viewportMode) {
+                            R.string.dialog_viewport_hint_absolute
+                        } else {
+                            R.string.dialog_viewport_hint_scale
+                        }
+                    ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     isError = viewportError != null,
                     trailingIcon = if (form.viewportInput.isNotEmpty()) {
@@ -204,35 +283,29 @@ fun TemplateEditorContent(
                 secondLabel = stringResource(R.string.dialog_viewport_mode_compat),
                 onFirstSelected = { form.switchViewportMode(ViewportTargetType.RELATIVE_SCALE); onFormChanged() },
                 onSecondSelected = { form.switchViewportMode(ViewportTargetType.ABSOLUTE_DP); onFormChanged() },
-                modifier = Modifier.padding(top = TemplateUiTokens.SheetControlTopOffset),
+                modifier = Modifier.padding(top = AppConfigSheetUiTokens.FieldTopInset),
                 labelStyle = MaterialTheme.typography.labelSmall
             )
         }
 
-        Spacer(Modifier.height(TemplateUiTokens.SheetInputGap))
+        Spacer(Modifier.height(AppConfigSheetUiTokens.InputRowLayoutGap))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = TemplateUiTokens.SheetModeRowMinHeight),
-            horizontalArrangement = Arrangement.spacedBy(TemplateUiTokens.SheetSelectorGap),
+                .height(AppConfigSheetUiTokens.FieldRowHeight),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.Top
         ) {
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(top = TemplateUiTokens.SheetControlTopOffset)
+                    .padding(top = AppConfigSheetUiTokens.FieldTopInset)
             ) {
                 DpisCompactEditorTextField(
                     value = form.fontInput,
                     onValueChange = { form.fontInput = it; onFormChanged() },
                     modifier = Modifier.fillMaxWidth(),
-                    label = {
-                        Text(
-                            text = stringResource(R.string.dialog_font_scale_hint),
-                            maxLines = 1,
-                            softWrap = false
-                        )
-                    },
+                    label = stringResource(R.string.dialog_font_scale_hint),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     isError = fontError != null,
                     trailingIcon = if (form.fontInput.isNotEmpty()) {
@@ -252,67 +325,62 @@ fun TemplateEditorContent(
                 secondLabel = stringResource(R.string.dialog_font_mode_compat),
                 onFirstSelected = { form.fontMode = FontApplyMode.SYSTEM_EMULATION; onFormChanged() },
                 onSecondSelected = { form.fontMode = FontApplyMode.FIELD_REWRITE; onFormChanged() },
-                modifier = Modifier.padding(top = TemplateUiTokens.SheetControlTopOffset),
+                modifier = Modifier.padding(top = AppConfigSheetUiTokens.FieldTopInset),
                 labelStyle = MaterialTheme.typography.labelMedium
             )
         }
 
-        Spacer(Modifier.height(TemplateUiTokens.SheetSelectorTopGap))
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = TemplateUiTokens.SheetModeRowMinHeight),
-            horizontalArrangement = Arrangement.spacedBy(TemplateUiTokens.SheetSelectorGap),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedButton(
-                onClick = onSelectTypeface,
-                modifier = Modifier
-                    .weight(1f)
-                    .heightIn(min = 48.dp),
-                shape = TemplateUiTokens.SheetInputShape,
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary
-                ),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
-            ) {
-                Text(
-                    stringResource(
-                        R.string.dialog_typeface_selector_value,
-                        form.selectedTypefaceId
-                            ?: stringResource(R.string.dialog_typeface_default)
+        Spacer(Modifier.height(AppConfigSheetUiTokens.ControlGroupGap))
+        DpisEditorTypefaceHookRow(
+            primary = {
+                OutlinedButton(
+                    onClick = onSelectTypeface,
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    shape = AppConfigSheetUiTokens.FieldAndActionShape,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
                     ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+                ) {
+                    Text(
+                        stringResource(
+                            R.string.dialog_typeface_selector_value,
+                            form.selectedTypefaceId
+                                ?: stringResource(R.string.dialog_typeface_default)
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            },
+            secondary = {
+                OutlinedButton(
+                    onClick = onEditHookDomains,
+                    modifier = Modifier.width(AppConfigSheetUiTokens.SecondaryControlWidth)
+                        .heightIn(min = AppConfigSheetUiTokens.ActionHeight),
+                    shape = AppConfigSheetUiTokens.FieldAndActionShape,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                ) {
+                    Text(
+                        hookDomainsButtonText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
-            OutlinedButton(
-                onClick = onEditHookDomains,
-                modifier = Modifier
-                    .width(TemplateUiTokens.SheetSelectorWidth)
-                    .heightIn(min = 48.dp),
-                shape = TemplateUiTokens.SheetInputShape,
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary
-                ),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
-            ) {
-                Text(
-                    hookDomainsButtonText,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
+        )
 
-        Spacer(Modifier.height(TemplateUiTokens.SheetSaveTopGap))
+        Spacer(Modifier.height(AppConfigSheetUiTokens.ControlGroupGap))
         Button(
             onClick = onSave,
             enabled = form.isValid(),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(TemplateUiTokens.SheetSaveButtonHeight),
-            shape = RoundedCornerShape(TemplateUiTokens.SheetButtonCornerRadius),
+                .height(AppConfigSheetUiTokens.ActionHeight),
+            shape = AppConfigSheetUiTokens.ActionShape,
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
         ) {
             Text(stringResource(R.string.status_save_button))
@@ -354,8 +422,7 @@ private fun TemplateEditorSheetHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = TemplateUiTokens.SheetHeaderTopGap)
-            .heightIn(min = TemplateUiTokens.SheetHeaderMinHeight),
+            .height(AppConfigSheetUiTokens.FieldRowHeight),
         horizontalArrangement = Arrangement.spacedBy(TemplateUiTokens.HeaderActionSpacing),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -443,47 +510,5 @@ private fun UnsavedBadge() {
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
             style = MaterialTheme.typography.labelSmall
         )
-    }
-}
-
-@Composable
-fun TemplateSheetTopChrome(
-    showUnsaved: Boolean,
-    // Keep the mutable Java draft's revision in this visual slot so Save, Reset, or a field
-    // mutation always refreshes the white line versus the unsaved badge.
-    @Suppress("UNUSED_PARAMETER") draftRevision: Int
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = TemplateUiTokens.SheetTopChromeHeight),
-        contentAlignment = Alignment.Center
-    ) {
-        if (showUnsaved) {
-            Surface(
-                modifier = Modifier.offset(y = TemplateUiTokens.SheetVisualIndicatorOffset),
-                shape = RoundedCornerShape(14.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
-            ) {
-                Text(
-                    stringResource(R.string.sheet_unsaved_badge),
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                    style = MaterialTheme.typography.labelMedium
-                )
-            }
-        } else {
-            Box(
-                modifier = Modifier
-                    .size(
-                        width = TemplateUiTokens.SheetVisualIndicatorWidth,
-                        height = TemplateUiTokens.SheetVisualIndicatorHeight
-                    )
-                    .offset(y = TemplateUiTokens.SheetVisualIndicatorOffset)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(MaterialTheme.colorScheme.onSurfaceVariant)
-            )
-        }
     }
 }

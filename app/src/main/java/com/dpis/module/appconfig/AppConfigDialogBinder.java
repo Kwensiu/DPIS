@@ -416,7 +416,7 @@ public final class AppConfigDialogBinder {
         dialogHolder[0].setCanceledOnTouchOutside(true);
         applyTypefaceDialogListHeight(root);
         dialogHolder[0].show();
-        DialogWindowSizer.applyLargeWidth(dialogHolder[0], activity);
+        DialogWindowSizer.applyConfigurationWidth(dialogHolder[0], activity);
         TabLayout.Tab initialTab = tabs.getTabAt(selectedImported ? 1 : 0);
         if (initialTab != null) {
             initialTab.select();

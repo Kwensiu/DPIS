@@ -63,12 +63,9 @@ import com.dpis.module.templates.QuickTemplateSortDialog;
 
 import com.dpis.module.templates.GlobalPrefillStore;
 import com.dpis.module.templates.GlobalPrefillSaveHandler;
-import com.dpis.module.templates.GlobalPrefillEditorBinder;
-import com.dpis.module.templates.GlobalPrefillSheetDialog;
 import com.dpis.module.templates.BatchScopeRequestCoordinator;
 import com.dpis.module.templates.QuickTemplateApplyAdapters;
-import com.dpis.module.templates.QuickTemplateEditorBinder;
-import com.dpis.module.templates.QuickTemplateEditSheetDialog;
+import com.dpis.module.templates.TemplateEditorDraft;
 import com.dpis.module.templates.QuickTemplateTargetSelectionActivity;
 import com.dpis.module.templates.QuickTemplateTargetsBinder;
 import com.dpis.module.templates.TemplateWorkspaceBinder;
@@ -240,6 +237,8 @@ public final class MainActivity
             = "state.template_detail.kind";
     private static final String STATE_TEMPLATE_DETAIL_ID
             = "state.template_detail.id";
+    private static final String STATE_TEMPLATE_EDITOR_DESTINATION
+            = "state.template_editor.destination";
     private static final String STATE_QUICK_TEMPLATE_TARGETS_ACTIVITY_STARTED
             = "state.quick_template.targets_activity_started";
     private static final String STATE_GLOBAL_PREFILL_DRAFT
@@ -250,6 +249,8 @@ public final class MainActivity
     private static final String STATE_DRAFT_VIEWPORT_INPUT = "viewport_input";
     private static final String STATE_DRAFT_VIEWPORT_MODE = "viewport_mode";
     private static final String STATE_DRAFT_VIEWPORT_APPLY_MODE = "viewport_apply_mode";
+    private static final String STATE_DRAFT_VIEWPORT_SCALE_INPUT = "viewport_scale_input";
+    private static final String STATE_DRAFT_VIEWPORT_ABSOLUTE_INPUT = "viewport_absolute_input";
     private static final String STATE_DRAFT_FONT_INPUT = "font_input";
     private static final String STATE_DRAFT_FONT_MODE = "font_mode";
     private static final String STATE_DRAFT_TYPEFACE_ID = "typeface_id";
@@ -328,6 +329,8 @@ public final class MainActivity
     private FrameLayout templateDetailContent;
     private TemplateDetailSelection templateDetailSelection
             = TemplateDetailSelection.none();
+    private ConfigEditorDestination templateEditorDestination
+            = ConfigEditorDestination.MAIN;
     private AppListPage landCurrentPage = AppListPage.ALL_APPS;
     private HomeWorkspaceBinder homeWorkspaceBinder;
     private TemplateWorkspaceBinder templateWorkspaceBinder;
@@ -358,19 +361,14 @@ public final class MainActivity
     private View activeEditorRoot;
     private String activeEditorPackageName;
     private BottomSheetDialog activeAppEditorDialog;
-    private GlobalPrefillSheetDialog activeGlobalPrefillSheetDialog;
-    private QuickTemplateEditSheetDialog activeQuickTemplateEditSheetDialog;
-    private GlobalPrefillEditorBinder activeGlobalPrefillEditorBinder;
-    private QuickTemplateEditorBinder activeQuickTemplateEditorBinder;
     private QuickTemplateTargetsBinder activeQuickTemplateTargetsBinder;
     private FeedbackDiagnosticCoordinator.Result pendingFeedbackDiagnosticResult;
     private FeedbackDiagnosticExportBuilder.DiagnosticPackage pendingFeedbackDiagnosticPackage;
     private androidx.appcompat.app.AlertDialog activeFeedbackDiagnosticPackagingDialog;
     private final Map<String, Integer> pendingRuntimePropertyGenerations = new HashMap<>();
     private boolean mainActivityResumed;
-    private GlobalPrefillEditorBinder.Draft retainedGlobalPrefillDraft;
-    private QuickTemplateEditorBinder.Draft retainedQuickTemplateDraft;
-    private boolean templateSheetMigrationInProgress;
+    private TemplateEditorDraft retainedGlobalPrefillDraft;
+    private TemplateEditorDraft retainedQuickTemplateDraft;
     // TODO: Promote quick-template target carrier decisions into a full state machine.
     private boolean quickTemplateTargetSelectionActivityStarted;
 
@@ -416,6 +414,7 @@ public final class MainActivity
             initialFilterState = retainedState.filterState;
             initialWorkspaceMode = retainedState.workspaceMode;
             templateDetailSelection = retainedState.templateDetailSelection;
+            templateEditorDestination = retainedState.templateEditorDestination;
             quickTemplateTargetSelectionActivityStarted =
                     retainedState.quickTemplateTargetSelectionActivityStarted;
             retainedGlobalPrefillDraft = retainedState.globalPrefillDraft;
@@ -452,6 +451,9 @@ public final class MainActivity
                     savedInstanceState.getIntArray(STATE_REFRESHING_PAGES)
             );
             templateDetailSelection = restoreTemplateDetailSelection(savedInstanceState);
+            templateEditorDestination = ConfigEditorDestination.fromName(
+                    savedInstanceState.getString(STATE_TEMPLATE_EDITOR_DESTINATION)
+            );
             quickTemplateTargetSelectionActivityStarted = savedInstanceState.getBoolean(
                     STATE_QUICK_TEMPLATE_TARGETS_ACTIVITY_STARTED,
                     false
@@ -621,13 +623,12 @@ public final class MainActivity
         // Request the catalog explicitly; MainViewModel coalesces any later service reload.
         requestAppsLoad();
         if (retainedState != null && retainedState.editingPackageName != null) {
-            mainViewModel.setEditingPackageName(
-                    retainedState.editingPackageName
+            mainViewModel.restoreEditingSession(
+                    retainedState.editingPackageName,
+                    retainedState.editingDraft,
+                    retainedState.savedEditingDraft,
+                    retainedState.editingDestination
             );
-            mainViewModel.setEditingDraft(retainedState.editingDraft);
-            mainViewModel.setSavedEditingDraft(retainedState.savedEditingDraft != null
-                    ? retainedState.savedEditingDraft
-                    : retainedState.editingDraft);
             restoreAppEditorForCurrentWorkspace();
         }
         restoreTemplateEditorForCurrentConfiguration();
@@ -828,8 +829,11 @@ public final class MainActivity
                 STATE_REFRESHING_PAGES,
                 captureRefreshingPagePositions()
         );
-        captureTemplateEditorDraft();
         saveTemplateDetailSelection(outState, templateDetailSelection);
+        outState.putString(
+                STATE_TEMPLATE_EDITOR_DESTINATION,
+                templateEditorDestination.name()
+        );
         outState.putBoolean(
                 STATE_QUICK_TEMPLATE_TARGETS_ACTIVITY_STARTED,
                 quickTemplateTargetSelectionActivityStarted
@@ -881,7 +885,6 @@ public final class MainActivity
         if (draft == null && mainViewModel != null) {
             draft = mainViewModel.getEditingDraft();
         }
-        captureTemplateEditorDraft();
         return new RetainedState(
                 snapshot,
                 state.appQuery,
@@ -896,7 +899,11 @@ public final class MainActivity
                         : null,
                 draft,
                 mainViewModel != null ? mainViewModel.getSavedEditingDraft() : null,
+                mainViewModel != null
+                        ? mainViewModel.getEditingDestination()
+                        : ConfigEditorDestination.MAIN,
                 templateDetailSelection,
+                templateEditorDestination,
                 quickTemplateTargetSelectionActivityStarted,
                 retainedGlobalPrefillDraft,
                 retainedQuickTemplateDraft,
@@ -1349,6 +1356,14 @@ public final class MainActivity
                     @Override public void updateTemplateEditor(TemplateEditorForm form) {
                         onComposeTemplateEditorChanged(form);
                     }
+                    @Override public void updateTemplateEditorDestination(
+                            ConfigEditorDestination destination
+                    ) {
+                        templateEditorDestination = destination != null
+                                ? destination
+                                : ConfigEditorDestination.MAIN;
+                        bindTemplateWorkspace();
+                    }
                     @Override public void closeTemplateEditor() {
                         onComposeTemplateEditorClosed();
                     }
@@ -1555,7 +1570,10 @@ public final class MainActivity
                     composeTemplateDetailKind(),
                     templateDetailSelection != null
                             ? templateDetailSelection.templateId
-                            : null
+                            : null,
+                    templateEditorDestination,
+                    retainedGlobalPrefillDraft,
+                    retainedQuickTemplateDraft
             );
             composeShellHost.refreshTemplates();
             return;
@@ -1621,72 +1639,7 @@ public final class MainActivity
         templateDetailSelection = TemplateDetailSelection.globalPrefill();
         retainedQuickTemplateDraft = null;
         disposeActiveQuickTemplateTargetsBinder();
-        if (!isLandscapeDetailMode()) {
-            showGlobalPrefillSheet();
-            return;
-        }
-        showTemplateDetailPane(templateDetailSelection);
-    }
-
-    private void showGlobalPrefillSheet() {
-        if (activeGlobalPrefillSheetDialog != null
-                && activeGlobalPrefillSheetDialog.isShowing()) {
-            return;
-        }
-        activeGlobalPrefillSheetDialog = new GlobalPrefillSheetDialog(
-                this,
-                this::onTemplateEditorUpdated,
-                () -> {
-                    if (activeGlobalPrefillSheetDialog != null) {
-                        retainedGlobalPrefillDraft = activeGlobalPrefillSheetDialog.snapshotDraft();
-                    }
-                    activeGlobalPrefillSheetDialog = null;
-                    if (!templateSheetMigrationInProgress) {
-                        clearTemplateDetailSelection();
-                    }
-                },
-                retainedGlobalPrefillDraft
-        );
-        activeGlobalPrefillSheetDialog.show();
-    }
-
-    private void showQuickTemplateSheet(String templateId) {
-        if (activeQuickTemplateEditSheetDialog != null
-                && activeQuickTemplateEditSheetDialog.isShowing()) {
-            return;
-        }
-        activeQuickTemplateEditSheetDialog = new QuickTemplateEditSheetDialog(
-                this,
-                templateId,
-                this::onTemplateEditorUpdated,
-                () -> {
-                    if (activeQuickTemplateEditSheetDialog != null) {
-                        retainedQuickTemplateDraft =
-                                activeQuickTemplateEditSheetDialog.snapshotDraft();
-                    }
-                    activeQuickTemplateEditSheetDialog = null;
-                    if (!templateSheetMigrationInProgress) {
-                        clearTemplateDetailSelection();
-                    }
-                },
-                retainedQuickTemplateDraft
-        );
-        activeQuickTemplateEditSheetDialog.show();
-    }
-
-    private void captureTemplateEditorDraft() {
-        if (activeGlobalPrefillSheetDialog != null) {
-            retainedGlobalPrefillDraft = activeGlobalPrefillSheetDialog.snapshotDraft();
-        }
-        if (activeQuickTemplateEditSheetDialog != null) {
-            retainedQuickTemplateDraft = activeQuickTemplateEditSheetDialog.snapshotDraft();
-        }
-        if (activeGlobalPrefillEditorBinder != null) {
-            retainedGlobalPrefillDraft = activeGlobalPrefillEditorBinder.snapshotDraft();
-        }
-        if (activeQuickTemplateEditorBinder != null) {
-            retainedQuickTemplateDraft = activeQuickTemplateEditorBinder.snapshotDraft();
-        }
+        bindTemplateWorkspace();
     }
 
     private static void saveTemplateDetailSelection(
@@ -1727,7 +1680,7 @@ public final class MainActivity
 
     // Saved-instance recovery must keep unsaved template editor input, not just
     // reopen the same detail page after process recreation.
-    private static Bundle saveGlobalPrefillDraft(GlobalPrefillEditorBinder.Draft draft) {
+    private static Bundle saveGlobalPrefillDraft(TemplateEditorDraft draft) {
         Bundle bundle = new Bundle();
         if (draft == null) {
             return bundle;
@@ -1735,6 +1688,8 @@ public final class MainActivity
         bundle.putString(STATE_DRAFT_VIEWPORT_INPUT, draft.viewportInput);
         bundle.putString(STATE_DRAFT_VIEWPORT_MODE, draft.viewportMode);
         bundle.putString(STATE_DRAFT_VIEWPORT_APPLY_MODE, draft.viewportApplyMode);
+        bundle.putString(STATE_DRAFT_VIEWPORT_SCALE_INPUT, draft.viewportScaleInput);
+        bundle.putString(STATE_DRAFT_VIEWPORT_ABSOLUTE_INPUT, draft.viewportAbsoluteInput);
         bundle.putString(STATE_DRAFT_FONT_INPUT, draft.fontInput);
         bundle.putString(STATE_DRAFT_FONT_MODE, draft.fontMode);
         bundle.putString(STATE_DRAFT_TYPEFACE_ID, draft.selectedTypefaceId);
@@ -1742,14 +1697,18 @@ public final class MainActivity
         return bundle;
     }
 
-    private static GlobalPrefillEditorBinder.Draft restoreGlobalPrefillDraft(Bundle bundle) {
+    private static TemplateEditorDraft restoreGlobalPrefillDraft(Bundle bundle) {
         if (bundle == null || bundle.isEmpty()) {
             return null;
         }
-        return new GlobalPrefillEditorBinder.Draft(
+        return new TemplateEditorDraft(
+                false,
+                "",
                 bundle.getString(STATE_DRAFT_VIEWPORT_INPUT),
                 bundle.getString(STATE_DRAFT_VIEWPORT_MODE),
                 bundle.getString(STATE_DRAFT_VIEWPORT_APPLY_MODE),
+                bundle.getString(STATE_DRAFT_VIEWPORT_SCALE_INPUT),
+                bundle.getString(STATE_DRAFT_VIEWPORT_ABSOLUTE_INPUT),
                 bundle.getString(STATE_DRAFT_FONT_INPUT),
                 bundle.getString(STATE_DRAFT_FONT_MODE),
                 bundle.getString(STATE_DRAFT_TYPEFACE_ID),
@@ -1757,7 +1716,7 @@ public final class MainActivity
         );
     }
 
-    private static Bundle saveQuickTemplateDraft(QuickTemplateEditorBinder.Draft draft) {
+    private static Bundle saveQuickTemplateDraft(TemplateEditorDraft draft) {
         Bundle bundle = new Bundle();
         if (draft == null) {
             return bundle;
@@ -1766,6 +1725,8 @@ public final class MainActivity
         bundle.putString(STATE_DRAFT_VIEWPORT_INPUT, draft.viewportInput);
         bundle.putString(STATE_DRAFT_VIEWPORT_MODE, draft.viewportMode);
         bundle.putString(STATE_DRAFT_VIEWPORT_APPLY_MODE, draft.viewportApplyMode);
+        bundle.putString(STATE_DRAFT_VIEWPORT_SCALE_INPUT, draft.viewportScaleInput);
+        bundle.putString(STATE_DRAFT_VIEWPORT_ABSOLUTE_INPUT, draft.viewportAbsoluteInput);
         bundle.putString(STATE_DRAFT_FONT_INPUT, draft.fontInput);
         bundle.putString(STATE_DRAFT_FONT_MODE, draft.fontMode);
         bundle.putString(STATE_DRAFT_TYPEFACE_ID, draft.selectedTypefaceId);
@@ -1773,35 +1734,23 @@ public final class MainActivity
         return bundle;
     }
 
-    private static QuickTemplateEditorBinder.Draft restoreQuickTemplateDraft(Bundle bundle) {
+    private static TemplateEditorDraft restoreQuickTemplateDraft(Bundle bundle) {
         if (bundle == null || bundle.isEmpty()) {
             return null;
         }
-        return new QuickTemplateEditorBinder.Draft(
+        return new TemplateEditorDraft(
+                true,
                 bundle.getString(STATE_DRAFT_NAME),
                 bundle.getString(STATE_DRAFT_VIEWPORT_INPUT),
                 bundle.getString(STATE_DRAFT_VIEWPORT_MODE),
                 bundle.getString(STATE_DRAFT_VIEWPORT_APPLY_MODE),
+                bundle.getString(STATE_DRAFT_VIEWPORT_SCALE_INPUT),
+                bundle.getString(STATE_DRAFT_VIEWPORT_ABSOLUTE_INPUT),
                 bundle.getString(STATE_DRAFT_FONT_INPUT),
                 bundle.getString(STATE_DRAFT_FONT_MODE),
                 bundle.getString(STATE_DRAFT_TYPEFACE_ID),
                 bundle.getString(STATE_DRAFT_FONT_HOOK_DOMAINS)
         );
-    }
-
-    private void closeActiveTemplateSheetForMigration() {
-        templateSheetMigrationInProgress = true;
-        if (activeGlobalPrefillSheetDialog != null) {
-            retainedGlobalPrefillDraft = activeGlobalPrefillSheetDialog.snapshotDraft();
-            activeGlobalPrefillSheetDialog.dismiss();
-            activeGlobalPrefillSheetDialog = null;
-        }
-        if (activeQuickTemplateEditSheetDialog != null) {
-            retainedQuickTemplateDraft = activeQuickTemplateEditSheetDialog.snapshotDraft();
-            activeQuickTemplateEditSheetDialog.dismiss();
-            activeQuickTemplateEditSheetDialog = null;
-        }
-        templateSheetMigrationInProgress = false;
     }
 
     private void disposeActiveQuickTemplateTargetsBinder() {
@@ -1830,6 +1779,7 @@ public final class MainActivity
      * the Compose workspace reach into Activity fields directly.
      */
     private void onComposeTemplateEditorOpened(boolean quickTemplate, String templateId) {
+        templateEditorDestination = ConfigEditorDestination.MAIN;
         if (quickTemplate) {
             templateDetailSelection = TemplateDetailSelection.quickTemplate(templateId);
             retainedGlobalPrefillDraft = null;
@@ -1844,28 +1794,34 @@ public final class MainActivity
         if (form == null) {
             return;
         }
+        boolean dirty = form.isDirty();
         if (form.quickTemplate) {
-            retainedQuickTemplateDraft = form.quickDraft();
+            retainedQuickTemplateDraft = dirty ? form.quickDraft() : null;
             retainedGlobalPrefillDraft = null;
         } else {
-            retainedGlobalPrefillDraft = form.globalDraft();
+            retainedGlobalPrefillDraft = dirty ? form.globalDraft() : null;
             retainedQuickTemplateDraft = null;
+        }
+        if (!dirty) {
+            // A successful save adopts the store as the only new-editor baseline. Clear the
+            // presentation seed immediately so a later route/configuration refresh cannot
+            // resurrect the just-saved pre-normalized draft.
+            bindTemplateWorkspace();
         }
     }
 
     private void onComposeTemplateEditorClosed() {
+        // Closing is one Activity-owned session transition. Publish only after selection,
+        // destination, and retained drafts are all cleared so Compose cannot re-open stale state.
         clearTemplateDetailSelection();
+        bindTemplateWorkspace();
     }
 
     private void showQuickTemplateEditor(String templateId) {
         templateDetailSelection = TemplateDetailSelection.quickTemplate(templateId);
         retainedGlobalPrefillDraft = null;
         disposeActiveQuickTemplateTargetsBinder();
-        if (!isLandscapeDetailMode()) {
-            showQuickTemplateSheet(templateId);
-            return;
-        }
-        showTemplateDetailPane(templateDetailSelection);
+        bindTemplateWorkspace();
     }
 
     private void showQuickTemplateTargets(String templateId) {
@@ -1909,34 +1865,20 @@ public final class MainActivity
         TemplateDetailSelection selection = templateDetailSelection;
         if (composeShellHost != null) {
             // Compose owns both the portrait sheet and the expanded detail surface. Re-publish
-            // the route after a configuration change instead of inflating the retired XML pane.
-            closeActiveTemplateSheetForMigration();
+            // the route after a configuration change without reviving the retired XML editor.
             bindTemplateWorkspace();
             return;
         }
-        if (isLandscapeDetailMode()) {
-            if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE_TARGETS) {
-                quickTemplateTargetSelectionActivityStarted = false;
-            }
-            closeActiveTemplateSheetForMigration();
-            restoreTemplateDetailPane();
-            return;
-        }
-        if (selection.kind == TemplateDetailKind.GLOBAL_PREFILL) {
-            showGlobalPrefillSheet();
-            return;
-        }
-        if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE) {
-            showQuickTemplateSheet(selection.templateId);
-            return;
-        }
         if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE_TARGETS) {
+            quickTemplateTargetSelectionActivityStarted = false;
+            restoreTemplateDetailPane();
             startQuickTemplateTargetSelectionActivity(selection.templateId);
         }
     }
 
     private void clearTemplateDetailSelection() {
         templateDetailSelection = TemplateDetailSelection.none();
+        templateEditorDestination = ConfigEditorDestination.MAIN;
         retainedGlobalPrefillDraft = null;
         retainedQuickTemplateDraft = null;
         quickTemplateTargetSelectionActivityStarted = false;
@@ -1944,8 +1886,6 @@ public final class MainActivity
         if (templateDetailContent != null) {
             templateDetailContent.removeAllViews();
         }
-        activeGlobalPrefillEditorBinder = null;
-        activeQuickTemplateEditorBinder = null;
     }
 
     private void showTemplateDetailPane(TemplateDetailSelection selection) {
@@ -1976,16 +1916,11 @@ public final class MainActivity
     }
 
     private View inflateTemplateDetailView(TemplateDetailSelection selection) {
-        int layoutRes;
-        if (selection.kind == TemplateDetailKind.GLOBAL_PREFILL) {
-            layoutRes = R.layout.view_land_global_prefill_detail;
-        } else if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE_TARGETS) {
-            layoutRes = R.layout.view_land_quick_template_targets_detail;
-        } else {
-            layoutRes = R.layout.view_land_quick_template_detail;
+        if (selection.kind != TemplateDetailKind.QUICK_TEMPLATE_TARGETS) {
+            return null;
         }
         return LayoutInflater.from(this).inflate(
-                layoutRes,
+                R.layout.view_land_quick_template_targets_detail,
                 templateDetailContent,
                 false
         );
@@ -1995,39 +1930,6 @@ public final class MainActivity
             TemplateDetailSelection selection,
             View detailView
     ) {
-        if (selection.kind == TemplateDetailKind.GLOBAL_PREFILL) {
-            applyTemplateDetailInsets(
-                    detailView,
-                    R.id.global_prefill_scroll
-            );
-            activeGlobalPrefillEditorBinder = GlobalPrefillEditorBinder.bind(
-                    this,
-                    detailView,
-                    this::onTemplateEditorUpdated,
-                    null,
-                    false,
-                    retainedGlobalPrefillDraft
-            );
-            activeQuickTemplateEditorBinder = null;
-            return activeGlobalPrefillEditorBinder != null;
-        }
-        if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE) {
-            applyTemplateDetailInsets(
-                    detailView,
-                    R.id.quick_template_edit_scroll
-            );
-            activeQuickTemplateEditorBinder = QuickTemplateEditorBinder.bind(
-                    this,
-                    detailView,
-                    selection.templateId,
-                    this::onTemplateEditorUpdated,
-                    null,
-                    false,
-                    retainedQuickTemplateDraft
-            );
-            activeGlobalPrefillEditorBinder = null;
-            return activeQuickTemplateEditorBinder != null;
-        }
         if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE_TARGETS) {
             WindowInsetsBinder.applySafeDrawingPadding(
                     detailView,
@@ -2041,8 +1943,6 @@ public final class MainActivity
                     detailView,
                     createQuickTemplateTargetsHost()
             );
-            activeGlobalPrefillEditorBinder = null;
-            activeQuickTemplateEditorBinder = null;
             return activeQuickTemplateTargetsBinder.bind(selection.templateId);
         }
         return false;
@@ -2088,67 +1988,6 @@ public final class MainActivity
                 MainActivity.this.showToast(messageResId);
             }
         };
-    }
-
-    private void applyTemplateDetailInsets(View detailView, int scrollViewId) {
-        View scrollView = detailView != null
-                ? detailView.findViewById(scrollViewId)
-                : null;
-        WindowInsetsBinder.applySafeDrawingPadding(
-                scrollView,
-                false,
-                true,
-                false,
-                true
-        );
-    }
-
-    private void onTemplateEditorUpdated() {
-        bindTemplateWorkspace();
-        if (templateDetailSelection != null
-                && templateDetailSelection.kind == TemplateDetailKind.GLOBAL_PREFILL) {
-            retainedGlobalPrefillDraft = null;
-        } else if (templateDetailSelection != null
-                && templateDetailSelection.kind == TemplateDetailKind.QUICK_TEMPLATE) {
-            retainedQuickTemplateDraft = null;
-        }
-        if (!isLandscapeDetailMode()
-                || requireUiState().workspaceMode != MainUiState.WorkspaceMode.TEMPLATE
-                || templateDetailSelection == null
-                || templateDetailSelection.kind == TemplateDetailKind.NONE) {
-            return;
-        }
-        TemplateDetailSelection selection = templateDetailSelection;
-        if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE
-                && selection.templateId == null
-                && activeQuickTemplateEditorBinder != null) {
-            String savedTemplateId = activeQuickTemplateEditorBinder.currentTemplateId();
-            if (savedTemplateId != null && !savedTemplateId.isBlank()) {
-                templateDetailSelection = TemplateDetailSelection.quickTemplate(savedTemplateId);
-                selection = templateDetailSelection;
-            }
-        }
-        if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE
-                && selection.templateId == null) {
-            templateDetailSelection = TemplateDetailSelection.none();
-            templateDetailContent.removeAllViews();
-            applyLandscapeDetailVisibility(false, true);
-            return;
-        }
-        if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE
-                && selection.templateId != null
-                && new QuickTemplateStore(
-                        getSharedPreferences(
-                                DpisConfigStore.GROUP,
-                                Context.MODE_PRIVATE
-                        )
-                ).read(selection.templateId) == null) {
-            templateDetailSelection = TemplateDetailSelection.none();
-            templateDetailContent.removeAllViews();
-            applyLandscapeDetailVisibility(false, true);
-            return;
-        }
-        showTemplateDetailPane(selection);
     }
 
     private void bindSettingsWorkspace() {
@@ -2252,6 +2091,7 @@ public final class MainActivity
                 mainViewModel.isEditingSaveFeedback(),
                 isSystemHookEnabledFromStore(),
                 recommendedTemplateFontHookDomains(),
+                mainViewModel.getEditingDestination(),
                 new AppConfigEditorPresentation.Actions() {
                     @Override public void updateViewportInput(String value) {
                         updateComposeAppEditorDraft(currentDraft.withViewportInput(
@@ -2303,6 +2143,13 @@ public final class MainActivity
                                 viewportApplyMode,
                                 resetDomains,
                                 resetViewportApplyMode));
+                    }
+
+                    @Override public void navigate(ConfigEditorDestination destination) {
+                        mainViewModel.setEditingDestination(destination);
+                        if (composeShellHost != null) {
+                            composeShellHost.refreshApps();
+                        }
                     }
 
                     @Override public void reset() {
@@ -2398,6 +2245,7 @@ public final class MainActivity
             return;
         }
         mainViewModel.setEditingPackageName(item.packageName);
+        mainViewModel.setEditingDestination(ConfigEditorDestination.MAIN);
         AppConfigEditorDraft draft = mainViewModel.getEditingDraft();
         if (draft == null || !item.packageName.equals(draft.packageName)) {
             mainViewModel.setEditingDraft(null);
@@ -5557,10 +5405,12 @@ public final class MainActivity
         final String editingPackageName;
         final AppConfigEditorDraft editingDraft;
         final AppConfigEditorDraft savedEditingDraft;
+        final ConfigEditorDestination editingDestination;
         final TemplateDetailSelection templateDetailSelection;
+        final ConfigEditorDestination templateEditorDestination;
         final boolean quickTemplateTargetSelectionActivityStarted;
-        final GlobalPrefillEditorBinder.Draft globalPrefillDraft;
-        final QuickTemplateEditorBinder.Draft quickTemplateDraft;
+        final TemplateEditorDraft globalPrefillDraft;
+        final TemplateEditorDraft quickTemplateDraft;
         final HomeUpdateUiState homeUpdateUiState;
 
         RetainedState(
@@ -5575,10 +5425,12 @@ public final class MainActivity
                 String editingPackageName,
                 AppConfigEditorDraft editingDraft,
                 AppConfigEditorDraft savedEditingDraft,
+                ConfigEditorDestination editingDestination,
                 TemplateDetailSelection templateDetailSelection,
+                ConfigEditorDestination templateEditorDestination,
                 boolean quickTemplateTargetSelectionActivityStarted,
-                GlobalPrefillEditorBinder.Draft globalPrefillDraft,
-                QuickTemplateEditorBinder.Draft quickTemplateDraft,
+                TemplateEditorDraft globalPrefillDraft,
+                TemplateEditorDraft quickTemplateDraft,
                 HomeUpdateUiState homeUpdateUiState
         ) {
             this.appsSnapshot = appsSnapshot;
@@ -5600,9 +5452,15 @@ public final class MainActivity
             this.editingPackageName = editingPackageName;
             this.editingDraft = editingDraft;
             this.savedEditingDraft = savedEditingDraft;
+            this.editingDestination = editingDestination != null
+                    ? editingDestination
+                    : ConfigEditorDestination.MAIN;
             this.templateDetailSelection = templateDetailSelection != null
                     ? templateDetailSelection
                     : TemplateDetailSelection.none();
+            this.templateEditorDestination = templateEditorDestination != null
+                    ? templateEditorDestination
+                    : ConfigEditorDestination.MAIN;
             this.quickTemplateTargetSelectionActivityStarted =
                     quickTemplateTargetSelectionActivityStarted;
             this.globalPrefillDraft = globalPrefillDraft;

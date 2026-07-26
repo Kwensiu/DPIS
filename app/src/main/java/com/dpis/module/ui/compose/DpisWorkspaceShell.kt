@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.offset
@@ -19,6 +21,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -72,6 +77,15 @@ enum class DpisWorkspaceNavigationLayout {
     NAVIGATION_DRAWER
 }
 
+// Side navigation is allowed only when its explicit width leaves enough room for the shared
+// App/Template list-detail contract. Keeping these equations centralized prevents shell navigation
+// changes from silently forcing either workspace back into its compact Sheet presentation.
+internal val WorkspaceTwoPaneMinWidth = 600.dp
+internal val WorkspaceRailWidth = 80.dp
+internal val WorkspaceDrawerWidth = 240.dp
+internal val WorkspaceRailMinWindowWidth = WorkspaceTwoPaneMinWidth + WorkspaceRailWidth
+internal val WorkspaceDrawerMinWindowWidth = WorkspaceTwoPaneMinWidth + WorkspaceDrawerWidth
+
 /** Pure policy so adaptive navigation remains independently testable. */
 fun resolveDpisWorkspaceNavigationLayout(
     maxWidth: Dp,
@@ -79,8 +93,8 @@ fun resolveDpisWorkspaceNavigationLayout(
 ): DpisWorkspaceNavigationLayout = when {
     // WatchUiMode owns classification. Its compact decision must win over width.
     isCompactUi -> DpisWorkspaceNavigationLayout.COMPACT_RADIAL
-    maxWidth < 600.dp -> DpisWorkspaceNavigationLayout.BOTTOM_BAR
-    maxWidth < 840.dp -> DpisWorkspaceNavigationLayout.NAVIGATION_RAIL
+    maxWidth < WorkspaceRailMinWindowWidth -> DpisWorkspaceNavigationLayout.BOTTOM_BAR
+    maxWidth < WorkspaceDrawerMinWindowWidth -> DpisWorkspaceNavigationLayout.NAVIGATION_RAIL
     else -> DpisWorkspaceNavigationLayout.NAVIGATION_DRAWER
 }
 
@@ -143,27 +157,30 @@ fun DpisWorkspaceShell(
 
             DpisWorkspaceNavigationLayout.NAVIGATION_RAIL -> Row(Modifier.fillMaxSize()) {
                 NavigationRail(
+                    modifier = Modifier.width(WorkspaceRailWidth),
                     containerColor = MaterialTheme.colorScheme.surfaceContainer,
                     windowInsets = navigationSurfaceInsets()
                 ) {
-                    DpisWorkspaceDestination.entries.forEach { destination ->
-                        val label = stringResource(destination.labelRes)
-                        val onDestinationClick = rememberDpisConfirmAction {
-                            if (destination != selectedDestination) {
-                                onDestinationSelected(destination)
+                    Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
+                        DpisWorkspaceDestination.entries.forEach { destination ->
+                            val label = stringResource(destination.labelRes)
+                            val onDestinationClick = rememberDpisConfirmAction {
+                                if (destination != selectedDestination) {
+                                    onDestinationSelected(destination)
+                                }
                             }
+                            NavigationRailItem(
+                                selected = destination == selectedDestination,
+                                onClick = onDestinationClick,
+                                icon = {
+                                    Icon(
+                                        painter = painterResource(destination.iconRes),
+                                        contentDescription = label
+                                    )
+                                },
+                                label = { Text(label) }
+                            )
                         }
-                        NavigationRailItem(
-                            selected = destination == selectedDestination,
-                            onClick = onDestinationClick,
-                            icon = {
-                                Icon(
-                                    painter = painterResource(destination.iconRes),
-                                    contentDescription = label
-                                )
-                            },
-                            label = { Text(label) }
-                        )
                     }
                 }
                 Box(Modifier.weight(1f)) {
@@ -174,33 +191,38 @@ fun DpisWorkspaceShell(
             DpisWorkspaceNavigationLayout.NAVIGATION_DRAWER -> PermanentNavigationDrawer(
                 drawerContent = {
                     PermanentDrawerSheet(
+                        modifier = Modifier.width(WorkspaceDrawerWidth),
                         drawerContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                         windowInsets = navigationSurfaceInsets()
                     ) {
-                        Text(
-                            text = stringResource(R.string.app_name),
-                            modifier = Modifier.padding(LocalDpisTokens.current.spaceMd),
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        DpisWorkspaceDestination.entries.forEach { destination ->
-                            val label = stringResource(destination.labelRes)
-                            val onDestinationClick = rememberDpisConfirmAction {
-                                if (destination != selectedDestination) {
-                                    onDestinationSelected(destination)
-                                }
-                            }
-                            NavigationDrawerItem(
-                                selected = destination == selectedDestination,
-                                onClick = onDestinationClick,
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(destination.iconRes),
-                                        contentDescription = label
-                                    )
-                                },
-                                label = { Text(label) },
-                                modifier = Modifier.padding(horizontal = LocalDpisTokens.current.spaceSm)
+                        Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
+                            Text(
+                                text = stringResource(R.string.app_name),
+                                modifier = Modifier.padding(LocalDpisTokens.current.spaceMd),
+                                style = MaterialTheme.typography.titleLarge
                             )
+                            DpisWorkspaceDestination.entries.forEach { destination ->
+                                val label = stringResource(destination.labelRes)
+                                val onDestinationClick = rememberDpisConfirmAction {
+                                    if (destination != selectedDestination) {
+                                        onDestinationSelected(destination)
+                                    }
+                                }
+                                NavigationDrawerItem(
+                                    selected = destination == selectedDestination,
+                                    onClick = onDestinationClick,
+                                    icon = {
+                                        Icon(
+                                            painter = painterResource(destination.iconRes),
+                                            contentDescription = label
+                                        )
+                                    },
+                                    label = { Text(label) },
+                                    modifier = Modifier.padding(
+                                        horizontal = LocalDpisTokens.current.spaceSm
+                                    )
+                                )
+                            }
                         }
                     }
                 }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.selectable
@@ -22,7 +24,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
@@ -45,7 +46,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import androidx.compose.runtime.CompositionLocalProvider
 import com.dpis.module.R
 
 /**
@@ -59,16 +59,15 @@ import com.dpis.module.R
 internal fun DpisCompactEditorTextField(
     value: String,
     onValueChange: (String) -> Unit,
-    label: @Composable () -> Unit,
+    label: String,
     modifier: Modifier = Modifier,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     isError: Boolean = false,
     onFocused: (() -> Unit)? = null,
-    trailingIcon: (@Composable (() -> Unit))? = null,
-    alwaysFloatLabel: Boolean = false
+    trailingIcon: (@Composable (() -> Unit))? = null
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    Box(modifier = modifier.height(TemplateUiTokens.SheetInputHeight)) {
+    Box(modifier = modifier.height(AppConfigSheetUiTokens.ActionHeight)) {
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
@@ -89,34 +88,27 @@ internal fun DpisCompactEditorTextField(
                     visualTransformation = VisualTransformation.None,
                     interactionSource = interactionSource,
                     isError = isError,
-                    label = if (alwaysFloatLabel) null else label,
+                    label = {
+                        Text(
+                            text = label,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
                     trailingIcon = trailingIcon,
-                    contentPadding = TemplateUiTokens.SheetInputContentPadding,
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                     container = {
                         OutlinedTextFieldDefaults.Container(
                             enabled = true,
                             isError = isError,
                             interactionSource = interactionSource,
-                            shape = TemplateUiTokens.SheetInputShape
+                            shape = AppConfigSheetUiTokens.FieldAndActionShape
                         )
                     }
                 )
             }
         )
-        if (alwaysFloatLabel) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .offset(y = (-8).dp)
-                    .padding(start = 12.dp)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(horizontal = 4.dp)
-            ) {
-                CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodySmall) {
-                    label()
-                }
-            }
-        }
     }
 }
 
@@ -124,6 +116,24 @@ internal fun DpisCompactEditorTextField(
 internal fun DpisEditorClearButton(onClear: () -> Unit) {
     IconButton(onClick = onClear) {
         Icon(painterResource(R.drawable.ic_close_24), stringResource(R.string.search_clear))
+    }
+}
+
+/** Shared two-action row used by the app and template editors. */
+@Composable
+internal fun DpisEditorTypefaceHookRow(
+    primary: @Composable RowScope.() -> Unit,
+    secondary: @Composable RowScope.() -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(
+            AppConfigSheetUiTokens.TypefaceHookGap
+        ),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        primary()
+        secondary()
     }
 }
 
@@ -145,29 +155,29 @@ internal fun DpisModeSelector(
 ) {
     val modeInteractionSource = remember { MutableInteractionSource() }
     val thumbOffset by animateDpAsState(
-        targetValue = if (selectedFirst) 0.dp else TemplateUiTokens.SheetSelectorWidth / 2,
+        targetValue = if (selectedFirst) 0.dp else AppConfigSheetUiTokens.SecondaryControlWidth / 2,
         animationSpec = tween(TemplateUiTokens.ModeAnimationDurationMillis),
         label = "dpis-mode-thumb"
     )
-    val thumbWidth = TemplateUiTokens.SheetSelectorWidth / 2
+    val thumbWidth = AppConfigSheetUiTokens.SecondaryControlWidth / 2
     Box(
         modifier = modifier
-            .width(TemplateUiTokens.SheetSelectorWidth)
-            .height(TemplateUiTokens.SheetSelectorHeight)
-            .clip(TemplateUiTokens.ModeTrackShape)
+            .width(AppConfigSheetUiTokens.SecondaryControlWidth)
+            .height(AppConfigSheetUiTokens.ActionHeight)
+            .clip(AppConfigSheetUiTokens.FieldAndActionShape)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .selectableGroup()
     ) {
         Box(
             modifier = Modifier
                 .offset(x = thumbOffset)
-                .size(width = thumbWidth, height = TemplateUiTokens.SheetSelectorHeight)
-                .clip(TemplateUiTokens.ModeThumbShape)
-                .background(MaterialTheme.colorScheme.secondaryContainer, TemplateUiTokens.ModeThumbShape)
+                .size(width = thumbWidth, height = AppConfigSheetUiTokens.ActionHeight)
+                .clip(AppConfigSheetUiTokens.FieldAndActionShape)
+                .background(MaterialTheme.colorScheme.secondaryContainer, AppConfigSheetUiTokens.FieldAndActionShape)
                 .border(
-                    TemplateUiTokens.ModeThumbBorderWidth,
+                    AppConfigSheetUiTokens.ModeThumbBorderWidth,
                     MaterialTheme.colorScheme.outline,
-                    TemplateUiTokens.ModeThumbShape
+                    AppConfigSheetUiTokens.FieldAndActionShape
                 )
                 // The two halves own hit testing, but press feedback belongs to the animated
                 // thumb. Sharing this source prevents a rectangular half-track ripple.

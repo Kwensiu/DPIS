@@ -146,7 +146,7 @@ android {
         targetSdk = 36
         versionName = resolvedVersionName
         versionCode = resolvedVersionCode
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.dpis.module.DpisTestRunner"
         buildConfigField(
             "String",
             "GITHUB_RELEASES_API_URL",
@@ -338,8 +338,12 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     debugImplementation(libs.compose.ui.tooling)
+    debugImplementation(libs.compose.ui.test.manifest)
     testImplementation(libs.junit4)
     testRuntimeOnly(libs.legacy.xposed.api)
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.runner)
 }

@@ -61,6 +61,10 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(shell.contains("BOTTOM_BAR"));
         assertTrue(shell.contains("NAVIGATION_RAIL"));
         assertTrue(shell.contains("NAVIGATION_DRAWER"));
+        assertTrue(shell.contains("WorkspaceDrawerMinWindowWidth ="
+                + " WorkspaceTwoPaneMinWidth + WorkspaceDrawerWidth"));
+        assertTrue(shell.contains("Modifier.width(WorkspaceDrawerWidth)"));
+        assertTrue(shell.contains("verticalScroll(rememberScrollState())"));
         assertTrue(shell.contains("isCompactUi -> DpisWorkspaceNavigationLayout.COMPACT_RADIAL"));
         assertTrue(shell.contains("COMPACT_MAIN_BUTTON_SIZE_DP = 56"));
         assertTrue(shell.contains("COMPACT_MENU_BUTTON_SIZE_DP = 48"));
@@ -171,11 +175,16 @@ public final class DpisComposeShellSourceSmokeTest {
                 "src/main/java/com/dpis/module/ui/compose/TemplateEditorContent.kt");
 
         assertTrue(workspace.contains(
-                "rememberModalBottomSheetState(skipPartiallyExpanded = true)"));
+                "TemplateEditorSurface("));
+        assertTrue(workspace.contains(
+                "surface = TemplateEditorSurfaceKind.PORTRAIT_SHEET"));
+        assertTrue(workspace.contains("onDismissRequest = ::closeEditor"));
         assertTrue(workspace.contains("val draftRevision = editorDraft.observe()"));
         assertTrue(workspace.contains("draftRevision = draftRevision"));
         assertTrue(editor.contains("draftRevision: Int"));
-        assertTrue(editor.contains("TemplateSheetTopChrome("));
+        assertTrue(editor.contains("DpisEditorBottomSheet("));
+        assertTrue(editor.contains("DpisSheetVisualChrome(showUnsaved = form.isDirty())"));
+        assertTrue(editor.contains("contentWindowInsets = { androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0) }"));
     }
 
     @Test
@@ -221,7 +230,7 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(editor.contains("isError = fontError != null"));
         assertTrue(editor.contains("TemplateEditorErrorMessage(it)"));
         assertTrue(editor.contains("modifier = Modifier.padding(start = 16.dp, top = 4.dp, end = 8.dp)"));
-        assertTrue(controls.contains(".height(TemplateUiTokens.SheetInputHeight)"));
+        assertTrue(controls.contains(".height(AppConfigSheetUiTokens.ActionHeight)"));
         assertTrue(controls.contains("color = MaterialTheme.colorScheme.onSurface"));
         assertTrue(controls.contains("cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)"));
         assertTrue(editor.contains("val hookDomainsButtonText = FontHookDomainPresentation"));
@@ -262,7 +271,7 @@ public final class DpisComposeShellSourceSmokeTest {
         String catalog = read(
                 "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.java");
         String typefacePicker = read(
-                "src/main/java/com/dpis/module/ui/compose/AppTypefacePickerSheet.kt");
+                "src/main/java/com/dpis/module/ui/compose/AppTypefacePickerDialog.kt");
         String activity = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(sheet.contains("skipPartiallyExpanded: Boolean = true"));
@@ -284,26 +293,95 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(overlay.contains("maxHeight * 0.75f"));
         assertTrue(coordinator.contains("R.string.dialog_advanced_wizard_hint"));
         assertTrue(coordinator.contains("R.string.feedback_diagnostic_action"));
-        assertTrue(coordinator.contains("TemplateUiTokens.SheetVisualIndicatorWidth"));
+        assertTrue(coordinator.contains("AppConfigSheetUiTokens.TopChromeIndicatorWidth"));
         assertTrue(coordinator.contains("if (editorState.dirty)"));
         assertTrue(coordinator.contains("R.string.sheet_unsaved_badge"));
         assertTrue(coordinator.contains("showInlineUnsavedBadge = false"));
         assertTrue(appEditor.contains("showInlineUnsavedBadge: Boolean = true"));
         assertTrue(appEditor.contains("coordinates.positionInParent().y.toDp()"));
+        assertTrue(appEditor.contains("navigationBarsPadding()"));
         assertTrue(appWorkspace.contains("VerticalDivider("));
-        assertTrue(appWorkspace.contains("alwaysFloatInputLabels = true"));
-        assertTrue(controls.contains("alwaysFloatLabel: Boolean = false"));
-        assertTrue(controls.contains("label = if (alwaysFloatLabel) null else label"));
+        assertFalse(appWorkspace.contains("alwaysFloatInputLabels"));
+        assertTrue(controls.contains("label: String"));
+        assertTrue(controls.contains("maxLines = 1"));
+        assertTrue(controls.contains("softWrap = false"));
+        assertTrue(controls.contains("overflow = TextOverflow.Ellipsis"));
         assertTrue(appEditor.contains("rememberInstalledAppIcon"));
+        assertTrue(appEditor.contains("AppConfigSheetUiTokens.ContentPadding"));
         int typefaceLibraryOpen = typefacePicker.indexOf(
                 "context.startActivity(Intent(context, FontLibraryActivity::class.java))");
         assertTrue(typefaceLibraryOpen > 0);
         assertTrue(typefacePicker.substring(0, typefaceLibraryOpen).contains("onDismissRequest()"));
+        assertTrue(typefacePicker.contains("DialogProperties(usePlatformDefaultWidth = false)"));
+        assertTrue(typefacePicker.contains("LegacyDialogUiTokens.TypefaceOptionHeight"));
         int dpisToggleStart = activity.indexOf("@Override public void toggleDpisEnabled()");
         int dpisToggleEnd = activity.indexOf("@Override public void startProcess()", dpisToggleStart);
         assertTrue(dpisToggleStart > 0);
         assertTrue(dpisToggleEnd > dpisToggleStart);
         assertTrue(activity.substring(dpisToggleStart, dpisToggleEnd).contains("requestAppsLoad();"));
+    }
+
+    @Test
+    public void hookChainIsARecoverableChildPageOfBothEditorSessions() throws IOException {
+        String page = read("src/main/java/com/dpis/module/ui/compose/HookChainEditorPage.kt");
+        String destination = read("src/main/java/com/dpis/module/ConfigEditorDestination.java");
+        String appEditor = read(
+                "src/main/java/com/dpis/module/ui/compose/AppConfigEditorContent.kt");
+        String appWorkspace = read(
+                "src/main/java/com/dpis/module/ui/compose/AppWorkspaceContent.kt");
+        String coordinator = read(
+                "src/main/java/com/dpis/module/MainWorkspacePresentationCoordinator.kt");
+        String viewModel = read("src/main/java/com/dpis/module/MainViewModel.java");
+        String activity = read("src/main/java/com/dpis/module/MainActivity.java");
+        String templates = read(
+                "src/main/java/com/dpis/module/ui/compose/TemplateWorkspaceContent.kt");
+        String templatePresentation = read(
+                "src/main/java/com/dpis/module/templates/TemplateWorkspacePresentation.kt");
+
+        assertTrue(page.contains("fun HookChainEditorPage("));
+        assertTrue(page.contains("BackHandler(onBack = onBack)"));
+        assertTrue(page.contains("RadioButton("));
+        assertTrue(page.contains("SegmentedListItem("));
+        assertTrue(page.contains("Switch("));
+        assertFalse(page.contains("Dialog("));
+        assertFalse(page.contains("Scaffold("));
+        assertTrue(page.contains("fun ConfigEditorAnimatedContent("));
+        assertTrue(page.contains("clipContentToAnimatedBounds"));
+        assertTrue(page.contains("slideInHorizontally("));
+        assertTrue(page.contains("if (animateSize)"));
+        assertTrue(page.contains("EditorDestinationHeightDurationMillis = 180"));
+        assertTrue(page.contains("HookTabHeightDurationMillis = 180"));
+        assertTrue(page.contains("verticalScroll(rememberScrollState())"));
+        assertTrue(destination.contains("HOOK_CHAIN_INTERFACE"));
+        assertTrue(destination.contains("HOOK_CHAIN_FONT"));
+        assertTrue(appEditor.contains("state.actions.navigate("));
+        assertFalse(appEditor.contains("hookChainEditorVisible"));
+        assertTrue(appWorkspace.contains("ConfigEditorAnimatedContent("));
+        assertTrue(appWorkspace.contains(
+                "bottomPadding = padding.calculateBottomPadding()"));
+        assertTrue(coordinator.contains("ConfigEditorAnimatedContent("));
+        assertTrue(coordinator.contains("animateTabSize = true"));
+        assertTrue(coordinator.contains("clipContentToAnimatedBounds = false"));
+        String appOverlay = read(
+                "src/main/java/com/dpis/module/ui/compose/AppConfigEditorOverlay.kt");
+        assertTrue(appOverlay.contains("mainCollapsedAnchor"));
+        assertTrue(appOverlay.contains("fun returnToMainCollapsed()"));
+        assertTrue(appOverlay.contains("bottomSheetState.partialExpand()"));
+        assertTrue(viewModel.contains("ConfigEditorDestination editingDestination"));
+        assertTrue(activity.contains("mainViewModel.getEditingDestination()"));
+        assertTrue(activity.contains("retainedState.editingDestination"));
+        assertTrue(templates.contains("val editorDestination = state.editorDestination"));
+        assertTrue(templatePresentation.contains(
+                "val editorDestination: ConfigEditorDestination"));
+        assertTrue(activity.contains("retainedState.templateEditorDestination"));
+        assertTrue(activity.contains("STATE_TEMPLATE_EDITOR_DESTINATION"));
+        assertTrue(templates.contains("HookChainEditorPage("));
+        assertTrue(templates.contains("destination = editorDestination"));
+        assertTrue(templates.contains(
+                "bottomSafePadding = padding.calculateBottomPadding()"));
+        assertFalse(templates.contains("hookChainDialogVisible"));
+        assertFalse(new File(
+                "src/main/java/com/dpis/module/ui/compose/AppHookChainEditorDialog.kt").exists());
     }
 
     private static String read(String relativePath) throws IOException {

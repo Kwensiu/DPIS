@@ -23,6 +23,48 @@ import org.junit.Test;
 
 public class MainViewModelTest {
     @Test
+    public void restoredEditorSessionRetainsDraftBaselineAndDestination() {
+        MainViewModel viewModel = new MainViewModel(emptyState());
+        AppConfigEditorDraft draft = editorDraft("com.example.app", "125");
+        AppConfigEditorDraft savedDraft = editorDraft("com.example.app", "110");
+
+        viewModel.restoreEditingSession(
+                "com.example.app",
+                draft,
+                savedDraft,
+                ConfigEditorDestination.HOOK_CHAIN_FONT
+        );
+
+        assertEquals("com.example.app", viewModel.getEditingPackageName());
+        assertSame(draft, viewModel.getEditingDraft());
+        assertSame(savedDraft, viewModel.getSavedEditingDraft());
+        assertEquals(ConfigEditorDestination.HOOK_CHAIN_FONT,
+                viewModel.getEditingDestination());
+    }
+
+    @Test
+    public void closingEditorSessionClearsDraftBaselineAndChildDestination() {
+        MainViewModel viewModel = new MainViewModel(emptyState());
+        AppConfigEditorDraft draft = editorDraft("com.example.app", "125");
+        viewModel.restoreEditingSession(
+                "com.example.app",
+                draft,
+                null,
+                ConfigEditorDestination.HOOK_CHAIN_INTERFACE
+        );
+        viewModel.setEditingSaveFeedback(true);
+
+        viewModel.clearEditingPackageName();
+        viewModel.clearEditingDraft();
+
+        assertEquals(null, viewModel.getEditingPackageName());
+        assertEquals(null, viewModel.getEditingDraft());
+        assertEquals(null, viewModel.getSavedEditingDraft());
+        assertEquals(ConfigEditorDestination.MAIN, viewModel.getEditingDestination());
+        assertFalse(viewModel.isEditingSaveFeedback());
+    }
+
+    @Test
     public void requestLoad_emitsStartEffectWithForceReload() {
         MainViewModel viewModel = new MainViewModel(emptyState());
 
@@ -156,6 +198,26 @@ public class MainViewModelTest {
         assertFalse(viewModel.getState().isRefreshing(AppListPage.ALL_APPS));
     }
 
+
+    private static AppConfigEditorDraft editorDraft(String packageName, String viewportInput) {
+        return new AppConfigEditorDraft(
+                packageName,
+                viewportInput,
+                viewportInput,
+                "",
+                "relative_scale",
+                "",
+                FontApplyMode.SYSTEM_EMULATION,
+                null,
+                null,
+                ViewportApplyMode.OFF,
+                false,
+                false,
+                "",
+                true,
+                true
+        );
+    }
 
     private static MainUiState emptyState() {
         return MainUiState.initial("",
