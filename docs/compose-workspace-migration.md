@@ -19,6 +19,10 @@ standalone and compact-device work; it is not a new product design proposal.
 - Standalone log page, including virtualized entries, expansion/copy actions,
   source switching, sort/refresh controls, and export presentation while log
   reads, Root probing, ZIP creation, and Activity results remain Java-owned.
+- Quick Config's translucent bottom-anchored editor now reuses the same Compose
+  app editor and Hook-chain destinations as the main workspace while foreground
+  package resolution, persistence, process actions, and diagnostics remain
+  Activity/controller-owned.
 
 The Compose shell owns phone bottom navigation and expanded navigation chrome.
 `MainUiState` and `MainUiAction` remain the sole source of truth for workspace
@@ -90,8 +94,8 @@ Before migrating a remaining standalone Activity or compact-device workflow:
 ## Remaining Scope
 
 The Themes 1-5 milestone does not mean every DPIS UI is Compose-only. Remaining
-View surfaces include standalone activities and dialogs such as Quick Config,
-About update and license-detail dialogs, font-management confirmation
+View surfaces include dialogs such as About update and license-detail dialogs,
+font-management confirmation
 dialogs, and system-server settings dialogs. Migrate these in focused feature
 batches rather than mixing them with the main-workspace navigation work.
 

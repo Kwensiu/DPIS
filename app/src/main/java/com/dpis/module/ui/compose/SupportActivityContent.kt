@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
 import com.dpis.module.home.ModeGuideActivity
 import com.dpis.module.LogActivity
+import com.dpis.module.QuickConfigActivity
 import com.dpis.module.about.OpenSourceLicenseActivity
 import com.dpis.module.fonts.FontDetailActivity
 import com.dpis.module.fonts.FontLibraryActivity
@@ -13,6 +14,18 @@ import java.util.function.Consumer
 
 /** Type-safe Compose entry points for Java-owned standalone Activity contracts. */
 object SupportActivityContent {
+    @JvmStatic
+    fun installQuickConfig(
+        activity: QuickConfigActivity,
+        presentation: QuickConfigPresentation
+    ) {
+        activity.setContent {
+            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+                QuickConfigContent(presentation = presentation, onDismiss = activity::finish)
+            }
+        }
+    }
+
     @JvmStatic
     fun installDonate(activity: ComponentActivity) {
         activity.setContent {

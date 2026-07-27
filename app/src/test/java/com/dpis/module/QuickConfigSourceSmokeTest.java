@@ -43,17 +43,18 @@ public class QuickConfigSourceSmokeTest {
         String manifestTile = read("src/main/java/com/dpis/module/QuickConfigTileService.java");
         String tile = read("src/main/java/com/dpis/module/quickconfig/QuickConfigTileService.java");
         String styles = read("src/main/res/values/styles.xml");
-        String panelBackground = read("src/main/res/drawable/bg_quick_config_panel.xml");
+        String content = read("src/main/java/com/dpis/module/ui/compose/QuickConfigContent.kt");
 
         assertTrue(activity.contains("EXTRA_PACKAGE_NAME"));
-        assertTrue(activity.contains("new FrameLayout(this)"));
-        assertTrue(activity.contains("R.layout.dialog_app_config"));
-        assertTrue(activity.contains("panel.setBackgroundResource(R.drawable.bg_quick_config_panel);"));
-        assertTrue(activity.contains("new AppConfigDialogBinder(this, appConfigDialogHost)"));
+        assertTrue(activity.contains("SupportActivityContent.installQuickConfig(this, presentation)"));
+        assertTrue(activity.contains("new AppConfigEditorPresentation.State("));
+        assertTrue(content.contains("AppConfigEditorContent(state)"));
+        assertTrue(content.contains("AppHookChainEditorPage(state = state)"));
+        assertTrue(content.contains("contentAlignment = Alignment.BottomCenter"));
+        assertTrue(content.contains("RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)"));
         assertTrue(activity.contains("InstalledAppCatalogCoordinator.createAppListItem("));
         assertTrue(styles.contains("Theme.Dpis.QuickConfig"));
         assertTrue(styles.contains("android:windowIsTranslucent"));
-        assertTrue(panelBackground.contains("quick_config_panel_corner_radius"));
         assertTrue(resolver.contains("UsageStatsManager"));
         assertTrue(resolver.contains("UsageEvents.Event.MOVE_TO_FOREGROUND"));
         assertTrue(resolver.contains("SYSTEM_UI_PACKAGE"));
@@ -66,9 +67,8 @@ public class QuickConfigSourceSmokeTest {
     public void quickConfigRoutesSheetActionsToExistingRuntimeSemantics() throws IOException {
         String activity = read("src/main/java/com/dpis/module/QuickConfigActivity.java");
 
-        assertTrue(activity.contains("appConfigSaveHandler.save("));
-        assertTrue(activity.contains("return finalizeSave(result, dialogView, item.packageName, dpisEnabled);"));
-        assertTrue(activity.contains("WechatDpiSheetBinder.save(dialogView, packageName, dpisEnabled, store)"));
+        assertTrue(activity.contains("appConfigSaveHandler.saveResolved("));
+        assertTrue(activity.contains("WechatDpiSheetBinder.save(\n                draft.wechatDpiInput"));
         assertTrue(activity.contains("systemScopeCoordinator.requestScope("));
         assertTrue(activity.contains("executeHyperOsNativeProxyMount(item, true, onFinished);"));
         assertTrue(activity.contains("executeDialogProcessAction(item, action);"));
@@ -83,11 +83,11 @@ public class QuickConfigSourceSmokeTest {
         String activity = read("src/main/java/com/dpis/module/QuickConfigActivity.java");
 
         assertTrue(activity.contains("new FeedbackDiagnosticCoordinator(createFeedbackDiagnosticHost())"));
-        assertTrue(activity.contains("QuickConfigActivity.this.startFeedbackDiagnostic(item, state);"));
+        assertTrue(activity.contains("QuickConfigActivity.this.startFeedbackDiagnostic("));
         assertTrue(activity.contains("FeedbackDiagnosticCoordinator.Request.fromPersisted("));
         assertTrue(activity.contains("showFeedbackDiagnosticPackagingDialog();"));
         assertTrue(activity.contains("showFeedbackDiagnosticResultSheet(finalBuilt);"));
-        assertTrue(activity.contains("appConfigDialogHost.saveAppConfig("));
+        assertTrue(activity.contains("saveComposeEditor(item, editingDraft)"));
         assertFalse(activity.contains("dialog_feedback_diagnostic_button);\n        if (feedbackDiagnosticButton != null)"));
     }
 
