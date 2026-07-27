@@ -275,10 +275,6 @@
     <dimen name="open_source_license_item_padding_horizontal">16dp</dimen>
     <dimen name="open_source_license_item_padding_vertical">10dp</dimen>
     <dimen name="open_source_license_item_summary_spacing_top">2dp</dimen>
-    <dimen name="font_library_list_padding_horizontal">16dp</dimen>
-    <dimen name="font_library_list_padding_top">12dp</dimen>
-    <dimen name="font_library_list_padding_bottom">120dp</dimen>
-    <dimen name="font_library_empty_padding">24dp</dimen>
     <dimen name="about_content_padding_horizontal">16dp</dimen>
     <dimen name="about_content_padding_top">18dp</dimen>
     <dimen name="about_content_padding_bottom">24dp</dimen>

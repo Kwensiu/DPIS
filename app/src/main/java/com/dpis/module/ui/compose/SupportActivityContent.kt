@@ -6,6 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
 import com.dpis.module.home.ModeGuideActivity
 import com.dpis.module.about.OpenSourceLicenseActivity
+import com.dpis.module.fonts.FontDetailActivity
+import com.dpis.module.fonts.FontLibraryActivity
 import java.util.function.Consumer
 
 /** Type-safe Compose entry points for Java-owned standalone Activity contracts. */
@@ -90,6 +92,52 @@ object SupportActivityContent {
                     items = items,
                     onBack = activity::finish,
                     onItemSelected = onItemSelected::accept
+                )
+            }
+        }
+    }
+
+    @JvmStatic
+    fun installFontLibrary(
+        activity: FontLibraryActivity,
+        presentation: FontLibraryPresentation,
+        onImportFont: Runnable,
+        onExportArchive: Runnable,
+        onImportArchive: Runnable,
+        onFontSelected: Consumer<String>
+    ) {
+        activity.setContent {
+            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+                FontLibraryContent(
+                    presentation = presentation,
+                    onBack = activity::finish,
+                    onImportFont = onImportFont::run,
+                    onExportArchive = onExportArchive::run,
+                    onImportArchive = onImportArchive::run,
+                    onFontSelected = onFontSelected::accept
+                )
+            }
+        }
+    }
+
+    @JvmStatic
+    fun installFontDetail(
+        activity: FontDetailActivity,
+        presentation: FontDetailPresentation,
+        onRetryPublication: Runnable,
+        onRename: Runnable,
+        onDelete: Runnable,
+        onRemoveReference: Consumer<String>
+    ) {
+        activity.setContent {
+            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+                FontDetailContent(
+                    presentation = presentation,
+                    onBack = activity::finish,
+                    onRetryPublication = onRetryPublication::run,
+                    onRename = onRename::run,
+                    onDelete = onDelete::run,
+                    onRemoveReference = onRemoveReference::accept
                 )
             }
         }

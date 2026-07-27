@@ -62,22 +62,17 @@ public class SystemServerSettingsActivityFontLibrarySourceTest {
     }
 
     @Test
-    public void fontLibraryPageContainsToolbarListAndImportFab() throws IOException {
-        String layout = read("src/main/res/layout/activity_font_library.xml");
+    public void fontLibraryPageUsesComposeToolbarListAndImportFab() throws IOException {
+        String content = read("src/main/java/com/dpis/module/ui/compose/FontLibraryContent.kt");
         String source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
 
-        assertTrue(layout.contains("@string/font_library_page_title"));
-        assertTrue(layout.contains("font_library_toolbar"));
-        assertTrue(layout.contains("android:layout_height=\"0dp\""));
-        assertTrue(layout.contains("android:layout_weight=\"1\""));
-        assertTrue(layout.contains("font_library_back_button"));
-        assertTrue(layout.contains("font_library_import_fab"));
-        assertTrue(layout.contains("font_library_list"));
-        assertTrue(layout.contains("@dimen/page_toolbar_padding_horizontal"));
-        assertTrue(layout.contains("@dimen/font_library_list_padding_bottom"));
-        assertTrue(layout.contains("@dimen/font_library_empty_padding"));
-        assertTrue(layout.contains("@dimen/floating_actions_elevation"));
-        assertTrue(source.contains("R.id.font_library_toolbar"));
+        assertTrue(content.contains("font_library_page_title"));
+        assertTrue(content.contains("SecondaryPageTopBar"));
+        assertTrue(content.contains("FloatingActionButton"));
+        assertTrue(content.contains("LazyColumn"));
+        assertTrue(content.contains("font_library_empty"));
+        assertTrue(source.contains("SupportActivityContent.installFontLibrary"));
+        assertFalse(source.contains("setContentView(R.layout.activity_font_library)"));
     }
 
     private static String read(String relativePath) throws IOException {

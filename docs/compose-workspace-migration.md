@@ -13,6 +13,9 @@ standalone and compact-device work; it is not a new product design proposal.
 - Theme 5: App configuration plus Template and global-prefill editors.
 - Standalone About and open-source-license pages, with update and license
   workflows still owned by their existing Java coordinators.
+- Standalone font library and font-detail pages, including Compose-native font
+  previews and app-reference presentation while import, repair, rename, and
+  deletion workflows remain Java-owned.
 
 The Compose shell owns phone bottom navigation and expanded navigation chrome.
 `MainUiState` and `MainUiAction` remain the sole source of truth for workspace
@@ -84,8 +87,8 @@ Before migrating a remaining standalone Activity or compact-device workflow:
 ## Remaining Scope
 
 The Themes 1-5 milestone does not mean every DPIS UI is Compose-only. Remaining
-View surfaces include standalone activities and dialogs such as the font
-library, font detail, logs, Quick Config, About update and license-detail
+View surfaces include standalone activities and dialogs such as logs, Quick
+Config, About update and license-detail dialogs, font-management confirmation
 dialogs, and system-server settings dialogs. Migrate these in focused feature
 batches rather than mixing them with the main-workspace navigation work.
 

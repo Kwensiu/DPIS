@@ -9,28 +9,19 @@ import com.dpis.module.runtime.RuntimeConfigDelivery;
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
 import com.dpis.module.ui.DialogWindowSizer;
 import com.dpis.module.ui.TouchFeedbackBinder;
-import com.dpis.module.ui.WindowInsetsBinder;
+import com.dpis.module.ui.compose.FontDetailPresentation;
+import com.dpis.module.ui.compose.FontDetailUiState;
+import com.dpis.module.ui.compose.FontReferenceUiItem;
+import com.dpis.module.ui.compose.SupportActivityContent;
 
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.graphics.Typeface;
 import android.os.Bundle;
-import android.util.TypedValue;
-import android.view.Gravity;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import androidx.appcompat.widget.AppCompatImageButton;
-
-import com.google.android.material.button.MaterialButton;
-import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.google.android.material.textview.MaterialTextView;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -40,19 +31,14 @@ import java.util.Locale;
 /** Full-screen management view for one imported font collection. */
 public final class FontDetailActivity extends LocalizedActivity {
     public static final String EXTRA_FONT_ID = "com.dpis.module.fonts.extra.FONT_ID";
-    private static final String FONT_PREVIEW_PRIMARY_TEXT = "AaBbCc 你好世界 123";
-    private static final String FONT_PREVIEW_SECONDARY_TEXT = "The quick brown fox jumps over the lazy dog";
-
-    private LinearLayout content;
     private FontLibraryStore fontLibraryStore;
     private FontLibraryConfigStore configStore;
     private String fontId;
-    private MaterialButton fallbackButton;
+    private FontDetailPresentation presentation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_font_detail);
         fontId = getIntent().getStringExtra(EXTRA_FONT_ID);
         if (fontId == null || fontId.isBlank()) {
             finish();
@@ -62,31 +48,26 @@ public final class FontDetailActivity extends LocalizedActivity {
                 this, DpisApplication.getXposedService());
         configStore = ConfigStoreFactory.createFontLibraryConfigStore(
                 this, DpisApplication.getXposedService());
-        content = findViewById(R.id.font_detail_content);
-        AppCompatImageButton back = findViewById(R.id.font_detail_back_button);
-        TouchFeedbackBinder.bindPressHaptic(back);
-        back.setOnClickListener(v -> finish());
-        fallbackButton = findViewById(R.id.font_detail_fallback_button);
-        bindToolbarIcon(fallbackButton, unused -> showFallbackExplanationDialog());
-        MaterialButton renameButton = findViewById(R.id.font_detail_rename_button);
-        bindToolbarIcon(renameButton, unused -> {
+        presentation = new FontDetailPresentation();
+        SupportActivityContent.installFontDetail(
+                this,
+                presentation,
+                this::showFallbackExplanationDialog,
+                () -> {
             FontLibraryEntry entry = fontLibraryStore.findById(fontId);
             if (entry != null) {
                 promptRename(entry);
             }
-        });
-        MaterialButton deleteButton = findViewById(R.id.font_detail_delete_button);
-        bindToolbarIcon(deleteButton, unused -> confirmDeleteForCurrentEntry());
-        WindowInsetsBinder.applySafeDrawingPadding(
-                findViewById(R.id.font_detail_toolbar), false, true, false, false);
-        WindowInsetsBinder.applySafeDrawingPadding(content, false, false, false, true);
+                },
+                this::confirmDeleteForCurrentEntry,
+                this::confirmClearAppTypefaceByPackage);
         refreshDetails();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (content != null) {
+        if (presentation != null) {
             refreshDetails();
         }
     }
@@ -98,157 +79,33 @@ public final class FontDetailActivity extends LocalizedActivity {
             return;
         }
         List<FontReference> references = findReferences(entry);
-        fallbackButton.setVisibility(entry.publicationStatus == FontPublicationStatus.PUBLISH_FAILED
-                ? View.VISIBLE : View.GONE);
-        content.removeAllViews();
-        content.addView(createHeader(entry, !references.isEmpty()));
         File file = fontLibraryStore.resolveFontFile(entry.id);
-        if (file != null) {
-            content.addView(createPreviewSection(file, entry.ttcIndex), topMarginParams(20));
+        List<FontReferenceUiItem> referenceItems = new ArrayList<>();
+        for (FontReference reference : references) {
+            referenceItems.add(new FontReferenceUiItem(reference.packageName, reference.label));
         }
-        content.addView(createReferenceSection(entry, references), topMarginParams(28));
+        presentation.show(new FontDetailUiState(
+                resolveFontTitle(entry),
+                entry.sourceFileName == null ? "" : entry.sourceFileName,
+                !references.isEmpty(),
+                entry.publicationStatus == FontPublicationStatus.PUBLISHED,
+                entry.publicationStatus == FontPublicationStatus.PUBLISH_FAILED,
+                file != null ? FontTypefaceLoader.load(file, entry.ttcIndex) : null,
+                referenceItems));
     }
 
-    private View createHeader(FontLibraryEntry entry, boolean inUse) {
-        LinearLayout group = new LinearLayout(this);
-        group.setOrientation(LinearLayout.VERTICAL);
-        MaterialTextView title = new MaterialTextView(this);
-        title.setText(resolveFontTitle(entry));
-        title.setMaxLines(2);
-        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        title.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_TitleLarge);
-        title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        group.addView(title);
-        MaterialTextView subtitle = new MaterialTextView(this);
-        subtitle.setText(entry.sourceFileName == null ? "" : entry.sourceFileName);
-        subtitle.setSingleLine(true);
-        subtitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        subtitle.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-        subtitle.setTextColor(color(com.google.android.material.R.attr.colorOnSurfaceVariant));
-        group.addView(subtitle, topMarginParams(8));
-        LinearLayout badges = new LinearLayout(this);
-        badges.setGravity(Gravity.CENTER_VERTICAL);
-        badges.setOrientation(LinearLayout.HORIZONTAL);
-        if (inUse) {
-            badges.addView(createUsedBadge());
+    private void confirmClearAppTypefaceByPackage(String packageName) {
+        FontLibraryEntry entry = fontLibraryStore.findById(fontId);
+        if (entry == null) {
+            finish();
+            return;
         }
-        badges.addView(createPublicationBadge(entry));
-        group.addView(badges, topMarginParams(6));
-        return group;
-    }
-
-    private View createPreviewSection(File fontFile, int ttcIndex) {
-        LinearLayout section = new LinearLayout(this);
-        section.setOrientation(LinearLayout.VERTICAL);
-        section.addView(createSectionTitle(R.string.font_library_preview_title));
-        MaterialCardView card = new MaterialCardView(this);
-        card.setCardBackgroundColor(color(com.google.android.material.R.attr.colorSurfaceContainer));
-        card.setCardElevation(0f);
-        card.setRadius(dp(12));
-        int padding = dp(16);
-        card.setContentPadding(padding, padding, padding, padding);
-        card.addView(createFontPreview(fontFile, ttcIndex));
-        section.addView(card, topMarginParams(10));
-        return section;
-    }
-
-    private View createFontPreview(File fontFile, int ttcIndex) {
-        LinearLayout preview = new LinearLayout(this);
-        preview.setOrientation(LinearLayout.VERTICAL);
-        Typeface typeface = FontTypefaceLoader.load(fontFile, ttcIndex);
-        MaterialTextView primary = new MaterialTextView(this);
-        primary.setText(FONT_PREVIEW_PRIMARY_TEXT);
-        primary.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
-        primary.setSingleLine(true);
-        primary.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        if (typeface != null) primary.setTypeface(typeface);
-        preview.addView(primary);
-        MaterialTextView secondary = new MaterialTextView(this);
-        secondary.setText(FONT_PREVIEW_SECONDARY_TEXT);
-        secondary.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-        secondary.setSingleLine(true);
-        secondary.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        secondary.setTextColor(color(com.google.android.material.R.attr.colorOnSurfaceVariant));
-        if (typeface != null) secondary.setTypeface(typeface);
-        preview.addView(secondary, topMarginParams(8));
-        return preview;
-    }
-
-    private View createReferenceSection(FontLibraryEntry entry, List<FontReference> references) {
-        LinearLayout section = new LinearLayout(this);
-        section.setOrientation(LinearLayout.VERTICAL);
-        section.addView(createSectionTitle(R.string.font_library_active_apps_title));
-        if (references.isEmpty()) {
-            MaterialTextView empty = new MaterialTextView(this);
-            empty.setText(R.string.font_library_unused);
-            empty.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-            empty.setTextColor(color(com.google.android.material.R.attr.colorOnSurfaceVariant));
-            section.addView(empty, topMarginParams(8));
-            return section;
-        }
-        for (int index = 0; index < references.size(); index++) {
-            View row = createReferenceRow(entry, references.get(index), index, references.size());
-            if (index == 0) {
-                section.addView(row, topMarginParams(10));
-            } else {
-                section.addView(row, topMarginParams(2));
+        for (FontReference reference : findReferences(entry)) {
+            if (reference.packageName.equals(packageName)) {
+                confirmClearAppTypeface(entry, reference);
+                return;
             }
         }
-        return section;
-    }
-
-    private View createReferenceRow(FontLibraryEntry entry, FontReference reference,
-            int index, int count) {
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        // Match the connected sibling surfaces used by the home page's basic-information rows.
-        row.setBackgroundResource(referenceRowBackground(index, count));
-        row.setMinimumHeight(dp(64));
-        row.setPadding(dp(12), dp(8), dp(12), dp(8));
-        LinearLayout labels = new LinearLayout(this);
-        labels.setOrientation(LinearLayout.VERTICAL);
-        MaterialTextView label = new MaterialTextView(this);
-        label.setText(reference.label);
-        label.setSingleLine(true);
-        label.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        label.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
-        label.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        labels.addView(label);
-        MaterialTextView packageName = new MaterialTextView(this);
-        packageName.setText(reference.packageName);
-        packageName.setSingleLine(true);
-        packageName.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        packageName.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall);
-        packageName.setTextColor(color(com.google.android.material.R.attr.colorOnSurfaceVariant));
-        labels.addView(packageName, topMarginParams(2));
-        row.addView(labels, new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        MaterialTextView remove = createReferenceRemoveAction();
-        remove.setOnClickListener(v -> confirmClearAppTypeface(entry, reference));
-        LinearLayout.LayoutParams removeParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        removeParams.leftMargin = dp(8);
-        removeParams.gravity = Gravity.CENTER_VERTICAL;
-        row.addView(remove, removeParams);
-        return row;
-    }
-
-    private static int referenceRowBackground(int index, int count) {
-        if (count <= 1) {
-            return R.drawable.bg_font_detail_reference_row_single;
-        }
-        if (index == 0) {
-            return R.drawable.bg_home_info_row_top;
-        }
-        return index == count - 1
-                ? R.drawable.bg_home_info_row_bottom
-                : R.drawable.bg_home_info_row_middle;
-    }
-
-    private void bindToolbarIcon(MaterialButton button, View.OnClickListener listener) {
-        TouchFeedbackBinder.bindPressHaptic(button);
-        button.setOnClickListener(listener);
     }
 
     private void confirmDeleteForCurrentEntry() {
@@ -458,92 +315,6 @@ public final class FontDetailActivity extends LocalizedActivity {
         return layout;
     }
 
-    private MaterialTextView createUsedBadge() {
-        return createBadge(
-                R.string.font_library_used_badge,
-                com.google.android.material.R.attr.colorSecondaryContainer,
-                androidx.appcompat.R.attr.colorPrimary);
-    }
-
-    private MaterialTextView createPublicationBadge(FontLibraryEntry entry) {
-        boolean isPublic = entry.publicationStatus == FontPublicationStatus.PUBLISHED;
-        return createBadge(
-                isPublic
-                        ? R.string.font_library_public_badge
-                        : R.string.font_library_private_badge,
-                isPublic
-                        ? com.google.android.material.R.attr.colorPrimaryContainer
-                        : com.google.android.material.R.attr.colorTertiaryContainer,
-                isPublic
-                        ? com.google.android.material.R.attr.colorOnPrimaryContainer
-                        : com.google.android.material.R.attr.colorOnTertiaryContainer);
-    }
-
-    private MaterialTextView createBadge(int textResId, int backgroundAttribute, int textAttribute) {
-        MaterialTextView badge = new MaterialTextView(this);
-        badge.setText(textResId);
-        badge.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelSmall);
-        badge.setTextColor(color(textAttribute));
-        badge.setPadding(dp(8), dp(3), dp(8), dp(3));
-        android.graphics.drawable.GradientDrawable background = new android.graphics.drawable.GradientDrawable();
-        background.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
-        background.setCornerRadius(dp(999));
-        background.setColor(color(backgroundAttribute));
-        badge.setBackground(background);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.rightMargin = dp(8);
-        badge.setLayoutParams(params);
-        return badge;
-    }
-
-    private MaterialTextView createSectionTitle(int textResId) {
-        MaterialTextView title = new MaterialTextView(this);
-        title.setText(textResId);
-        title.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_TitleMedium);
-        return title;
-    }
-
-    private MaterialTextView createReferenceRemoveAction() {
-        MaterialTextView action = new MaterialTextView(this);
-        action.setText(R.string.font_library_remove_app_action);
-        action.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelMedium);
-        action.setTextColor(color(com.google.android.material.R.attr.colorOnSecondaryContainer));
-        action.setGravity(Gravity.CENTER);
-        action.setMinWidth(dp(48));
-        action.setMinHeight(dp(28));
-        action.setIncludeFontPadding(false);
-        action.setPadding(dp(8), 0, dp(8), 0);
-        action.setClickable(true);
-        action.setFocusable(true);
-        android.graphics.drawable.GradientDrawable background =
-                new android.graphics.drawable.GradientDrawable();
-        background.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
-        background.setCornerRadius(dp(999));
-        background.setColor(color(com.google.android.material.R.attr.colorSecondaryContainer));
-        action.setBackground(background);
-        int selectableBackground = resolveSelectableItemBackground();
-        if (selectableBackground != 0) {
-            action.setForeground(getDrawable(selectableBackground));
-        }
-        TouchFeedbackBinder.bindPressHaptic(action);
-        return action;
-    }
-
-    private LinearLayout.LayoutParams topMarginParams(int marginTopDp) {
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.topMargin = dp(marginTopDp);
-        return params;
-    }
-
-    private int resolveSelectableItemBackground() {
-        TypedValue outValue = new TypedValue();
-        getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
-        return outValue.resourceId;
-    }
-
-    private int color(int attribute) { return MaterialColors.getColor(content, attribute); }
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
     private void showToast(int id) { Toast.makeText(this, id, Toast.LENGTH_SHORT).show(); }
 
