@@ -3,25 +3,15 @@ package com.dpis.module.about;
 import com.dpis.module.LocalizedActivity;
 import com.dpis.module.R;
 import com.dpis.module.ui.DialogWindowSizer;
+import com.dpis.module.ui.compose.SupportActivityContent;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.res.Resources;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ImageButton;
-import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -38,13 +28,13 @@ import java.util.List;
 import java.util.Set;
 
 public final class OpenSourceLicenseActivity extends LocalizedActivity {
-    private static final class LicenseItem {
-        final String name;
-        final String summary;
-        final String detail;
-        final String website;
+    public static final class LicenseItem {
+        public final String name;
+        public final String summary;
+        public final String detail;
+        public final String website;
 
-        LicenseItem(String name, String summary, String detail, String website) {
+        public LicenseItem(String name, String summary, String detail, String website) {
             this.name = name;
             this.summary = summary;
             this.detail = detail;
@@ -69,34 +59,11 @@ public final class OpenSourceLicenseActivity extends LocalizedActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_open_source_license);
-        applyInsets();
-
-        ImageButton backButton = findViewById(R.id.open_source_license_back_button);
-        backButton.setOnClickListener(v -> finish());
-
         List<LicenseItem> licenseItems = loadLicenseItems();
-        ListView listView = findViewById(R.id.open_source_license_list);
-        listView.setSelector(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        listView.setAdapter(new LicenseAdapter(LayoutInflater.from(this), licenseItems));
-        listView.setOnItemClickListener((parent, view, position, id) -> {
-            view.setPressed(false);
-            listView.clearChoices();
-            LicenseItem item = licenseItems.get(position);
-            showLicenseDetailDialog(item);
-        });
-    }
-
-    private void applyInsets() {
-        View content = findViewById(R.id.open_source_license_content);
-        final int baseTopPadding = content.getPaddingTop();
-        ViewCompat.setOnApplyWindowInsetsListener(content, (view, insets) -> {
-            Insets statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
-            view.setPadding(view.getPaddingLeft(), baseTopPadding + statusBars.top,
-                    view.getPaddingRight(), view.getPaddingBottom());
-            return insets;
-        });
-        ViewCompat.requestApplyInsets(content);
+        SupportActivityContent.installOpenSourceLicenses(
+                this,
+                licenseItems,
+                this::showLicenseDetailDialog);
     }
 
     private List<LicenseItem> loadLicenseItems() {
@@ -407,45 +374,4 @@ public final class OpenSourceLicenseActivity extends LocalizedActivity {
         return new String(outputStream.toByteArray(), StandardCharsets.UTF_8);
     }
 
-    private static final class LicenseAdapter extends BaseAdapter {
-        private final LayoutInflater inflater;
-        private final List<LicenseItem> items;
-
-        LicenseAdapter(LayoutInflater inflater, List<LicenseItem> items) {
-            this.inflater = inflater;
-            this.items = items;
-        }
-
-        @Override
-        public int getCount() {
-            return items.size();
-        }
-
-        @Override
-        public Object getItem(int position) {
-            return items.get(position);
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return position;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View root = convertView;
-            if (root == null) {
-                root = inflater.inflate(R.layout.item_open_source_license, parent, false);
-            }
-            LicenseItem item = items.get(position);
-            TextView nameView = root.findViewById(R.id.license_item_name);
-            TextView summaryView = root.findViewById(R.id.license_item_summary);
-            nameView.setText(item.name);
-            String summary = item.summary.isEmpty()
-                    ? root.getResources().getString(R.string.open_source_license_item_fallback)
-                    : item.summary;
-            summaryView.setText(summary);
-            return root;
-        }
-    }
 }

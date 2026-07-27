@@ -3,7 +3,7 @@ package com.dpis.module.about;
 import com.dpis.module.BuildConfig;
 import com.dpis.module.LocalizedActivity;
 import com.dpis.module.R;
-import com.dpis.module.ui.WindowInsetsBinder;
+import com.dpis.module.ui.compose.SupportActivityContent;
 
 import com.dpis.module.ui.DialogWindowSizer;
 
@@ -29,9 +29,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -70,9 +67,6 @@ public final class AboutActivity extends LocalizedActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_about);
-        applyInsets();
-
         updateDownloadCoordinator = new UpdateDownloadCoordinator(
                 createUpdateDownloadHost(),
                 updateCoordinator,
@@ -87,33 +81,16 @@ public final class AboutActivity extends LocalizedActivity {
                 UPDATE_CONNECT_TIMEOUT_MS,
                 UPDATE_READ_TIMEOUT_MS);
 
-        ImageButton backButton = findViewById(R.id.about_back_button);
-        backButton.setOnClickListener(v -> finish());
-
-        MaterialTextView versionView = findViewById(R.id.about_version);
-        versionView.setText(getString(R.string.about_version_format,
-                BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE));
-
-        bindEntryRow(
-                R.id.row_about_source,
-                R.drawable.ic_code_24,
-                R.string.about_link_source_title,
-                R.string.about_link_source_desc,
-                getString(R.string.about_source_url));
-        bindUpdateRow();
-        bindEntryRow(
-                R.id.row_about_feedback,
-                R.drawable.ic_adjust_24,
-                R.string.about_link_feedback_title,
-                R.string.about_link_feedback_desc,
-                getString(R.string.about_issues_url));
-        bindDebugOnlyUpdateDialogRow();
-        bindIntentEntryRow(
-                R.id.row_about_open_source_license,
-                R.drawable.ic_license_24,
-                R.string.open_source_license,
-                R.string.open_source_license_settings_description,
-                new Intent(this, OpenSourceLicenseActivity.class));
+        SupportActivityContent.installAbout(
+                this,
+                getString(R.string.about_version_format,
+                        BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
+                BuildConfig.DEBUG,
+                () -> checkForUpdates(false),
+                () -> checkForUpdates(true),
+                () -> openUrl(getString(R.string.about_source_url)),
+                () -> openUrl(getString(R.string.about_issues_url)),
+                () -> startActivity(new Intent(this, OpenSourceLicenseActivity.class)));
     }
 
     @Override
@@ -122,74 +99,6 @@ public final class AboutActivity extends LocalizedActivity {
             updateDownloadCoordinator.shutdown();
         }
         super.onDestroy();
-    }
-
-    private void applyInsets() {
-        View toolbar = findViewById(R.id.about_toolbar);
-        WindowInsetsBinder.applySafeDrawingPadding(toolbar, false, true, false, false);
-        View content = findViewById(R.id.about_content);
-        WindowInsetsBinder.applySafeDrawingPadding(content, false, false, false, true);
-    }
-
-    private void bindEntryRow(int rowId,
-            int iconRes,
-            int titleRes,
-            int subtitleRes,
-            String url) {
-        View row = findViewById(rowId);
-        ImageView iconView = row.findViewById(R.id.setting_icon);
-        MaterialTextView titleView = row.findViewById(R.id.setting_title);
-        MaterialTextView subtitleView = row.findViewById(R.id.setting_subtitle);
-        iconView.setImageResource(iconRes);
-        titleView.setText(titleRes);
-        subtitleView.setText(subtitleRes);
-        row.setOnClickListener(v -> openUrl(url));
-    }
-
-    private void bindIntentEntryRow(int rowId,
-            int iconRes,
-            int titleRes,
-            int subtitleRes,
-            Intent intent) {
-        View row = findViewById(rowId);
-        ImageView iconView = row.findViewById(R.id.setting_icon);
-        MaterialTextView titleView = row.findViewById(R.id.setting_title);
-        MaterialTextView subtitleView = row.findViewById(R.id.setting_subtitle);
-        iconView.setImageResource(iconRes);
-        titleView.setText(titleRes);
-        subtitleView.setText(subtitleRes);
-        row.setOnClickListener(v -> startActivity(intent));
-    }
-
-    private void bindUpdateRow() {
-        View row = findViewById(R.id.row_about_update);
-        ImageView iconView = row.findViewById(R.id.setting_icon);
-        MaterialTextView titleView = row.findViewById(R.id.setting_title);
-        MaterialTextView subtitleView = row.findViewById(R.id.setting_subtitle);
-        iconView.setImageResource(R.drawable.ic_refresh_24);
-        titleView.setText(R.string.about_link_update_title);
-        subtitleView.setText(R.string.about_link_update_desc);
-        row.setOnClickListener(v -> checkForUpdates(false));
-    }
-
-    private void bindDebugOnlyUpdateDialogRow() {
-        View group = findViewById(R.id.group_about_update_dialog_debug_only);
-        View row = findViewById(R.id.row_about_update_dialog_debug_only);
-        if (group == null || row == null) {
-            return;
-        }
-        if (!BuildConfig.DEBUG) {
-            group.setVisibility(View.GONE);
-            return;
-        }
-        group.setVisibility(View.VISIBLE);
-        ImageView iconView = row.findViewById(R.id.setting_icon);
-        MaterialTextView titleView = row.findViewById(R.id.setting_title);
-        MaterialTextView subtitleView = row.findViewById(R.id.setting_subtitle);
-        iconView.setImageResource(R.drawable.ic_refresh_24);
-        titleView.setText(R.string.about_link_update_dialog_debug_only_title);
-        subtitleView.setText(R.string.about_link_update_dialog_debug_only_desc);
-        row.setOnClickListener(v -> checkForUpdates(true));
     }
 
     private void checkForUpdates(boolean forceShow) {

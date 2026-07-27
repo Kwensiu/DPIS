@@ -11,6 +11,8 @@ standalone and compact-device work; it is not a new product design proposal.
 - Theme 3: Home, Tools, and Settings workspaces.
 - Theme 4: App workspace list/detail presentation.
 - Theme 5: App configuration plus Template and global-prefill editors.
+- Standalone About and open-source-license pages, with update and license
+  workflows still owned by their existing Java coordinators.
 
 The Compose shell owns phone bottom navigation and expanded navigation chrome.
 `MainUiState` and `MainUiAction` remain the sole source of truth for workspace
@@ -83,9 +85,9 @@ Before migrating a remaining standalone Activity or compact-device workflow:
 
 The Themes 1-5 milestone does not mean every DPIS UI is Compose-only. Remaining
 View surfaces include standalone activities and dialogs such as the font
-library, font detail, logs, About/update presentation, and system-server
-settings. Migrate these in focused feature batches rather than mixing them with
-the main-workspace navigation work.
+library, font detail, logs, Quick Config, About update and license-detail
+dialogs, and system-server settings dialogs. Migrate these in focused feature
+batches rather than mixing them with the main-workspace navigation work.
 
 Phone and tablet standalone pages should reuse the established DPIS Compose
 theme, token set, haptic behavior, support-page conventions, and focused

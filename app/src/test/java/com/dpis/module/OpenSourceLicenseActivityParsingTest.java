@@ -38,16 +38,17 @@ public class OpenSourceLicenseActivityParsingTest {
     }
 
     @Test
-    public void licenseLayoutsUseNamedDimensions() throws IOException {
-        String pageLayout = read("src/main/res/layout/activity_open_source_license.xml");
-        String itemLayout = read("src/main/res/layout/item_open_source_license.xml");
+    public void licenseComposePageUsesLazyListAndPreview() throws IOException {
+        String content = read(
+                "src/main/java/com/dpis/module/ui/compose/OpenSourceLicenseContent.kt");
 
-        assertTrue(pageLayout.contains("@dimen/open_source_license_padding_horizontal"));
-        assertTrue(pageLayout.contains("@dimen/page_card_corner_radius"));
-        assertTrue(pageLayout.contains("@dimen/open_source_license_divider_height"));
-        assertTrue(itemLayout.contains("@dimen/open_source_license_item_min_height"));
-        assertTrue(itemLayout.contains("@dimen/open_source_license_item_padding_vertical"));
-        assertTrue(itemLayout.contains("@dimen/open_source_license_item_summary_spacing_top"));
+        assertTrue(content.contains("fun OpenSourceLicenseContent("));
+        assertTrue(content.contains("LazyColumn("));
+        assertTrue(content.contains("items("));
+        assertTrue(content.contains("SecondaryPageTopBar("));
+        assertTrue(content.contains("SegmentedListItem("));
+        assertTrue(content.contains("rememberDpisConfirmAction"));
+        assertTrue(content.contains("OpenSourceLicenseContentPreview"));
     }
 
     @Test

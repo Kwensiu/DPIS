@@ -36,15 +36,15 @@ public class SystemServerSettingsLayoutSmokeTest {
     }
 
     @Test
-    public void aboutLayoutContainsHeaderAndFourNavigationRows() throws IOException {
-        String layout = read("src/main/res/layout/activity_about.xml");
+    public void aboutComposeContentContainsHeaderAndNavigationActions() throws IOException {
+        String content = read("src/main/java/com/dpis/module/ui/compose/AboutContent.kt");
 
-        assertTrue(layout.contains("android:id=\"@+id/about_back_button\""));
-        assertTrue(layout.contains("android:id=\"@+id/about_version\""));
-        assertTrue(layout.contains("android:id=\"@+id/row_about_source\""));
-        assertTrue(layout.contains("android:id=\"@+id/row_about_update\""));
-        assertTrue(layout.contains("android:id=\"@+id/row_about_feedback\""));
-        assertTrue(layout.contains("android:id=\"@+id/row_about_open_source_license\""));
+        assertTrue(content.contains("R.string.about_title"));
+        assertTrue(content.contains("versionText"));
+        assertTrue(content.contains("onOpenSource"));
+        assertTrue(content.contains("onCheckUpdates"));
+        assertTrue(content.contains("onOpenFeedback"));
+        assertTrue(content.contains("onOpenLicenses"));
     }
 
     @Test

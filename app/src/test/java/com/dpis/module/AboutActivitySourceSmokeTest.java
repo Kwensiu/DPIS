@@ -22,10 +22,11 @@ public class AboutActivitySourceSmokeTest {
     @Test
     public void aboutActivityWiresOpenSourceLicenseEntryToDedicatedPage() throws IOException {
         String source = read("src/main/java/com/dpis/module/about/AboutActivity.java");
+        String content = read("src/main/java/com/dpis/module/ui/compose/AboutContent.kt");
 
-        assertTrue(source.contains("R.id.row_about_open_source_license"));
-        assertTrue(source.contains("R.string.open_source_license"));
-        assertTrue(source.contains("R.string.open_source_license_settings_description"));
+        assertTrue(source.contains("SupportActivityContent.installAbout("));
+        assertTrue(content.contains("R.string.open_source_license"));
+        assertTrue(content.contains("R.string.open_source_license_settings_description"));
         assertTrue(source.contains("new Intent(this, OpenSourceLicenseActivity.class)"));
     }
 
@@ -98,22 +99,20 @@ public class AboutActivitySourceSmokeTest {
     }
 
     @Test
-    public void aboutLayoutUsesNamedDimensions() throws IOException {
-        String layout = read("src/main/res/layout/activity_about.xml");
+    public void aboutComposePageUsesSharedThemeAndSemanticActions() throws IOException {
+        String content = read("src/main/java/com/dpis/module/ui/compose/AboutContent.kt");
         String source = read("src/main/java/com/dpis/module/about/AboutActivity.java");
 
-        assertTrue(layout.contains("android:id=\"@+id/about_toolbar\""));
-        assertTrue(layout.contains("android:id=\"@+id/about_scroll\""));
-        assertTrue(layout.contains("android:layout_height=\"0dp\""));
-        assertTrue(layout.contains("android:layout_weight=\"1\""));
-        assertTrue(layout.contains("@dimen/page_toolbar_padding_horizontal"));
-        assertTrue(layout.contains("@dimen/about_content_padding_horizontal"));
-        assertTrue(layout.contains("@dimen/page_card_corner_radius"));
-        assertTrue(layout.contains("@dimen/about_app_card_padding"));
-        assertTrue(layout.contains("@dimen/about_divider_margin_horizontal"));
-        assertTrue(source.contains("R.id.about_toolbar"));
-        assertTrue(source.contains("WindowInsetsBinder.applySafeDrawingPadding(toolbar, false, true, false, false);"));
-        assertTrue(source.contains("WindowInsetsBinder.applySafeDrawingPadding(content, false, false, false, true);"));
+        assertTrue(content.contains("fun AboutContent("));
+        assertTrue(content.contains("SecondaryPageTopBar("));
+        assertTrue(content.contains("SegmentedListItem("));
+        assertTrue(content.contains("ListItemDefaults.segmentedShapes(index, total)"));
+        assertTrue(content.contains("LazyColumn("));
+        assertTrue(content.contains("rememberDpisConfirmAction"));
+        assertTrue(content.contains("showDebugUpdateEntry"));
+        assertTrue(content.contains("AboutContentPreview"));
+        assertTrue(source.contains("BuildConfig.DEBUG"));
+        assertTrue(!source.contains("setContentView(R.layout.activity_about)"));
     }
 
     private static String read(String relativePath) throws IOException {
