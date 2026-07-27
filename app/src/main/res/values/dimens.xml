@@ -221,11 +221,6 @@
     <dimen name="log_entry_text_spacing">4dp</dimen>
     <dimen name="log_entry_time_spacing_start">12dp</dimen>
     <dimen name="log_entry_divider_height">1dp</dimen>
-    <dimen name="log_page_switch_padding_horizontal">16dp</dimen>
-    <dimen name="log_page_switch_padding_bottom">8dp</dimen>
-    <dimen name="log_page_switch_button_height">34dp</dimen>
-    <dimen name="log_page_switch_button_spacing">8dp</dimen>
-    <dimen name="log_page_switch_button_radius">10dp</dimen>
     <dimen name="template_target_content_padding_horizontal">16dp</dimen>
     <dimen name="template_target_search_spacing_top">8dp</dimen>
     <dimen name="template_target_list_container_spacing_top">8dp</dimen>

@@ -20,6 +20,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -152,6 +153,9 @@ private fun AboutEntry(
     val confirm = rememberDpisConfirmAction(onClick)
     SegmentedListItem(
         onClick = confirm,
+        // The leading icon follows the full row, not the first text baseline. A wrapped
+        // supporting line may increase row height without pulling the icon upward.
+        verticalAlignment = Alignment.CenterVertically,
         shapes = ListItemDefaults.segmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,

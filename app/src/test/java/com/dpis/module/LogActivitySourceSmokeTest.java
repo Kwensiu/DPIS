@@ -14,17 +14,22 @@ public final class LogActivitySourceSmokeTest {
     public void logPageUsesVirtualizedListForLargeLsposedLogs() throws IOException {
         String source = SourceSmokeTestPaths.read(
                 "src/main/java/com/dpis/module/LogActivity.java");
-        String layout = SourceSmokeTestPaths.read(
-                "src/main/res/layout/activity_log.xml");
+        String content = SourceSmokeTestPaths.read(
+                "src/main/java/com/dpis/module/ui/compose/LogContent.kt");
 
-        assertTrue(source.contains("RecyclerView logList"));
-        assertTrue(source.contains("extends RecyclerView.Adapter"));
-        assertTrue(layout.contains("androidx.recyclerview.widget.RecyclerView"));
-        assertTrue(layout.contains("@+id/log_state_message"));
-        assertTrue(layout.contains("android:gravity=\"center\""));
-        assertTrue(source.contains("logAdapter.setEntries(new ArrayList<>());"));
-        assertFalse(layout.contains("<ScrollView"));
-        assertFalse(source.contains("logList.removeAllViews()"));
+        assertTrue(source.contains("LogPresentation presentation"));
+        assertTrue(source.contains("SupportActivityContent.installLog("));
+        assertTrue(content.contains("LazyColumn("));
+        assertTrue(content.contains("items(state.entries.size"));
+        assertTrue(content.contains("private fun LogEntryCard("));
+        assertTrue(content.contains("combinedClickable("));
+        assertTrue(content.contains("snapshotFlow"));
+        assertTrue(content.contains("presentation::updateAtLatestEdge"));
+        assertTrue(content.contains("SingleChoiceSegmentedButtonRow("));
+        assertTrue(content.contains("color = MaterialTheme.colorScheme.background"));
+        assertTrue(content.contains("containerColor = MaterialTheme.colorScheme.background"));
+        assertTrue(content.contains("horizontalArrangement = Arrangement.End"));
+        assertFalse(source.contains("RecyclerView"));
     }
 
     @Test
@@ -62,7 +67,7 @@ public final class LogActivitySourceSmokeTest {
         String source = SourceSmokeTestPaths.read(
                 "src/main/java/com/dpis/module/LogActivity.java");
         int autoRefreshStart = source.indexOf("private final Runnable autoRefreshRunnable");
-        int autoRefreshEnd = source.indexOf("private RecyclerView logList;");
+        int autoRefreshEnd = source.indexOf("private LogPresentation presentation;");
         String autoRefreshBlock = source.substring(autoRefreshStart, autoRefreshEnd);
 
         assertTrue(autoRefreshBlock.contains(
@@ -75,17 +80,17 @@ public final class LogActivitySourceSmokeTest {
     public void logExportUsesSystemFilePickerForDiagnosticZip() throws IOException {
         String source = SourceSmokeTestPaths.read(
                 "src/main/java/com/dpis/module/LogActivity.java");
-        String layout = SourceSmokeTestPaths.read(
-                "src/main/res/layout/activity_log.xml");
+        String content = SourceSmokeTestPaths.read(
+                "src/main/java/com/dpis/module/ui/compose/LogContent.kt");
         String strings = SourceSmokeTestPaths.read(
                 "src/main/res/values/strings.xml");
         String providerPaths = SourceSmokeTestPaths.read(
                 "src/main/res/xml/file_provider_paths.xml");
 
-        assertTrue(layout.contains("@+id/log_export_button"));
-        assertTrue(layout.contains("@string/log_action_export"));
+        assertTrue(content.contains("R.string.log_action_export"));
+        assertTrue(content.contains("R.string.log_action_save_logs"));
+        assertTrue(content.contains("R.string.log_action_share_logs"));
         assertTrue(providerPaths.contains("<cache-path"));
-        assertTrue(source.contains("R.string.log_action_save_logs"));
         assertTrue(source.contains("R.string.log_action_share_logs"));
         assertTrue(source.contains("Intent.ACTION_CREATE_DOCUMENT"));
         assertTrue(source.contains("Intent.ACTION_SEND"));

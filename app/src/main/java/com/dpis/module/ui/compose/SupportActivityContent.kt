@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
 import com.dpis.module.home.ModeGuideActivity
+import com.dpis.module.LogActivity
 import com.dpis.module.about.OpenSourceLicenseActivity
 import com.dpis.module.fonts.FontDetailActivity
 import com.dpis.module.fonts.FontLibraryActivity
@@ -138,6 +139,37 @@ object SupportActivityContent {
                     onRename = onRename::run,
                     onDelete = onDelete::run,
                     onRemoveReference = onRemoveReference::accept
+                )
+            }
+        }
+    }
+
+    @JvmStatic
+    fun installLog(
+        activity: LogActivity,
+        presentation: LogPresentation,
+        onSelectPage: Consumer<Int>,
+        onToggleSort: Runnable,
+        onToggleAutoRefresh: Runnable,
+        onSaveLogs: Runnable,
+        onShareLogs: Runnable,
+        onRefresh: Runnable,
+        onToggleExpanded: Consumer<String>,
+        onCopyEntry: Consumer<String>
+    ) {
+        activity.setContent {
+            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+                LogContent(
+                    presentation = presentation,
+                    onBack = activity::finish,
+                    onSelectPage = onSelectPage::accept,
+                    onToggleSort = onToggleSort::run,
+                    onToggleAutoRefresh = onToggleAutoRefresh::run,
+                    onSaveLogs = onSaveLogs::run,
+                    onShareLogs = onShareLogs::run,
+                    onRefresh = onRefresh::run,
+                    onToggleExpanded = onToggleExpanded::accept,
+                    onCopyEntry = onCopyEntry::accept
                 )
             }
         }

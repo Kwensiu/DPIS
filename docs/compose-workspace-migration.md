@@ -16,6 +16,9 @@ standalone and compact-device work; it is not a new product design proposal.
 - Standalone font library and font-detail pages, including Compose-native font
   previews and app-reference presentation while import, repair, rename, and
   deletion workflows remain Java-owned.
+- Standalone log page, including virtualized entries, expansion/copy actions,
+  source switching, sort/refresh controls, and export presentation while log
+  reads, Root probing, ZIP creation, and Activity results remain Java-owned.
 
 The Compose shell owns phone bottom navigation and expanded navigation chrome.
 `MainUiState` and `MainUiAction` remain the sole source of truth for workspace
@@ -87,8 +90,8 @@ Before migrating a remaining standalone Activity or compact-device workflow:
 ## Remaining Scope
 
 The Themes 1-5 milestone does not mean every DPIS UI is Compose-only. Remaining
-View surfaces include standalone activities and dialogs such as logs, Quick
-Config, About update and license-detail dialogs, font-management confirmation
+View surfaces include standalone activities and dialogs such as Quick Config,
+About update and license-detail dialogs, font-management confirmation
 dialogs, and system-server settings dialogs. Migrate these in focused feature
 batches rather than mixing them with the main-workspace navigation work.
 
