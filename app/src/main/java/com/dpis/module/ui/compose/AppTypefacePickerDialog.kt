@@ -51,6 +51,7 @@ internal fun AppTypefacePickerDialog(
     onDismissRequest: () -> Unit
 ) {
     val context = LocalContext.current
+    val defaultTypefaceLabel = stringResource(R.string.dialog_typeface_default)
     // Match the legacy editor: an already selected imported font opens its own catalogue.
     var selectedTab by remember(selectedTypefaceId) {
         mutableIntStateOf(
@@ -98,45 +99,43 @@ internal fun AppTypefacePickerDialog(
                 PrimaryTabRow(
                     selectedTabIndex = selectedTab,
                 ) {
-                Tab(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    text = { Text(stringResource(R.string.dialog_typeface_tab_system)) }
-                )
-                Tab(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    text = { Text(stringResource(R.string.dialog_typeface_tab_imported)) }
-                )
+                    Tab(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        text = { Text(stringResource(R.string.dialog_typeface_tab_system)) }
+                    )
+                    Tab(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        text = { Text(stringResource(R.string.dialog_typeface_tab_imported)) }
+                    )
                 }
                 Spacer(Modifier.height(12.dp))
                 val listHeight = typefaceListHeight()
                 if (selectedTab == 0) {
-                TypefaceOptionList(
-                    options = listOf(TypefaceOption(null, context.getString(R.string.dialog_typeface_default), null))
-                        + systemEntries,
-                    selectedTypefaceId = selectedTypefaceId,
-                    onTypefaceSelected = onTypefaceSelected,
-                    modifier = Modifier.height(listHeight)
-                )
-            } else if (importedEntries.isEmpty()) {
-                Box(Modifier.height(listHeight)) {
-                    ListItem(
-                        modifier = Modifier.clickable {
-                            onDismissRequest()
-                            context.startActivity(Intent(context, FontLibraryActivity::class.java))
-                        }
-                    ) { Text(stringResource(R.string.dialog_typeface_imported_empty)) }
+                    TypefaceOptionList(
+                        options = listOf(TypefaceOption(null, defaultTypefaceLabel, null)) + systemEntries,
+                        selectedTypefaceId = selectedTypefaceId,
+                        onTypefaceSelected = onTypefaceSelected,
+                        modifier = Modifier.height(listHeight)
+                    )
+                } else if (importedEntries.isEmpty()) {
+                    Box(Modifier.height(listHeight)) {
+                        ListItem(
+                            modifier = Modifier.clickable {
+                                onDismissRequest()
+                                context.startActivity(Intent(context, FontLibraryActivity::class.java))
+                            }
+                        ) { Text(stringResource(R.string.dialog_typeface_imported_empty)) }
+                    }
+                } else {
+                    TypefaceOptionList(
+                        options = listOf(TypefaceOption(null, defaultTypefaceLabel, null)) + importedEntries,
+                        selectedTypefaceId = selectedTypefaceId,
+                        onTypefaceSelected = onTypefaceSelected,
+                        modifier = Modifier.height(listHeight)
+                    )
                 }
-            } else {
-                TypefaceOptionList(
-                    options = listOf(TypefaceOption(null, context.getString(R.string.dialog_typeface_default), null))
-                        + importedEntries,
-                    selectedTypefaceId = selectedTypefaceId,
-                    onTypefaceSelected = onTypefaceSelected,
-                    modifier = Modifier.height(listHeight)
-                )
-            }
                 Row(
                     Modifier.fillMaxWidth().padding(top = LegacyDialogUiTokens.FooterTopGap),
                     horizontalArrangement = Arrangement.spacedBy(LegacyDialogUiTokens.FooterButtonGap)

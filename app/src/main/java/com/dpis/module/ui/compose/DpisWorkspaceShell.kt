@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.offset
@@ -25,6 +26,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
+import androidx.activity.compose.BackHandler
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -54,6 +56,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
+import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
+import androidx.wear.compose.material3.AppScaffold
+import androidx.wear.compose.material3.ButtonDefaults as WearButtonDefaults
+import androidx.wear.compose.material3.CompactButton as WearCompactButton
+import androidx.wear.compose.material3.Button as WearButton
+import androidx.wear.compose.material3.Icon as WearIcon
+import androidx.wear.compose.material3.MaterialTheme as WearMaterialTheme
+import androidx.wear.compose.material3.ScreenScaffold
+import androidx.wear.compose.material3.SurfaceTransformation
+import androidx.wear.compose.material3.Text as WearText
+import androidx.wear.compose.material3.lazy.rememberTransformationSpec
+import androidx.wear.compose.material3.lazy.transformedHeight
 import com.dpis.module.R
 
 /** Mirrors MainUiState.WorkspaceMode without introducing a second mutable selection state. */
@@ -115,7 +130,7 @@ fun DpisWorkspaceShell(
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         when (resolveDpisWorkspaceNavigationLayout(maxWidth, isCompactUi)) {
-            DpisWorkspaceNavigationLayout.COMPACT_RADIAL -> CompactRadialWorkspaceNavigation(
+            DpisWorkspaceNavigationLayout.COMPACT_RADIAL -> CompactWearWorkspaceNavigation(
                 selectedDestination = selectedDestination,
                 onDestinationSelected = onDestinationSelected,
                 content = content
@@ -235,102 +250,78 @@ fun DpisWorkspaceShell(
     }
 }
 
-private const val COMPACT_MAIN_BUTTON_SIZE_DP = 56
-private const val COMPACT_MENU_BUTTON_SIZE_DP = 48
-private const val COMPACT_MENU_ARC_RADIUS_DP = 104
-private const val COMPACT_MENU_START_ANGLE_DEGREES = 210
-private const val COMPACT_MENU_ANGLE_STEP_DEGREES = 30
-private const val COMPACT_MAIN_BUTTON_MARGIN_DP = 12
-
-/** Keeps the established compact-watch radial workspace selector and its touch targets. */
+/** Dedicated Wear OS navigation surface; phone navigation components do not fit round screens. */
 @Composable
-private fun CompactRadialWorkspaceNavigation(
+private fun CompactWearWorkspaceNavigation(
     selectedDestination: DpisWorkspaceDestination,
     onDestinationSelected: (DpisWorkspaceDestination) -> Unit,
     content: @Composable (PaddingValues) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val navigationBarPadding = WindowInsets.navigationBars.asPaddingValues()
-        .calculateBottomPadding()
+    BackHandler(enabled = expanded) { expanded = false }
 
-    Box(Modifier.fillMaxSize()) {
-        content(legacyWorkspaceInsetsFor(selectedDestination))
-
-        if (expanded) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.30f))
-                    .clickable { expanded = false }
-            )
-        }
-
-        Box(
-            Modifier
-                .fillMaxSize()
-                .padding(bottom = navigationBarPadding)
-        ) {
+    WearMaterialTheme {
+        AppScaffold {
             if (expanded) {
-                DpisWorkspaceDestination.entries.forEachIndexed { index, destination ->
-                    val angle = Math.toRadians(
-                        (COMPACT_MENU_START_ANGLE_DEGREES
-                            + index * COMPACT_MENU_ANGLE_STEP_DEGREES).toDouble()
-                    )
-                    val horizontalOffset = (kotlin.math.cos(angle)
-                        * COMPACT_MENU_ARC_RADIUS_DP).toInt().dp
-                    val verticalOffset = (kotlin.math.sin(angle)
-                        * COMPACT_MENU_ARC_RADIUS_DP).toInt().dp
-                    val bottomMargin = (
-                        COMPACT_MAIN_BUTTON_MARGIN_DP + COMPACT_MAIN_BUTTON_SIZE_DP / 2
-                            - verticalOffset.value - COMPACT_MENU_BUTTON_SIZE_DP / 2
-                        ).dp
-                    val select = rememberDpisConfirmAction {
-                        expanded = false
-                        onDestinationSelected(destination)
-                    }
-                    Surface(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .offset(x = horizontalOffset, y = -bottomMargin)
-                            .size(COMPACT_MENU_BUTTON_SIZE_DP.dp)
-                            .shadow(3.dp, CircleShape)
-                            .clickable(onClick = select),
-                        shape = CircleShape,
-                        color = if (destination == selectedDestination) {
-                            MaterialTheme.colorScheme.secondaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.surfaceContainerHigh
-                        }
+                val listState = rememberTransformingLazyColumnState()
+                val transformationSpec = rememberTransformationSpec()
+                ScreenScaffold(scrollState = listState) { contentPadding ->
+                    TransformingLazyColumn(
+                        state = listState,
+                        contentPadding = contentPadding,
+                        modifier = Modifier.fillMaxSize()
                     ) {
-                        Icon(
-                            painter = painterResource(destination.iconRes),
-                            contentDescription = stringResource(destination.labelRes),
-                            tint = if (destination == selectedDestination) {
-                                MaterialTheme.colorScheme.onSecondaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.onSurface
-                            },
-                            modifier = Modifier.padding(12.dp)
-                        )
+                        items(
+                            count = DpisWorkspaceDestination.entries.size,
+                            key = { index -> DpisWorkspaceDestination.entries[index].name }
+                        ) { index ->
+                            val destination = DpisWorkspaceDestination.entries[index]
+                            val label = stringResource(destination.labelRes)
+                            val select = rememberDpisConfirmAction {
+                                expanded = false
+                                if (destination != selectedDestination) {
+                                    onDestinationSelected(destination)
+                                }
+                            }
+                            WearButton(
+                                onClick = select,
+                                label = { WearText(label) },
+                                icon = {
+                                    WearIcon(
+                                        painter = painterResource(destination.iconRes),
+                                        contentDescription = label,
+                                        modifier = Modifier.size(WearButtonDefaults.IconSize)
+                                    )
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .transformedHeight(this, transformationSpec)
+                                    .minimumVerticalContentPadding(
+                                        WearButtonDefaults.minimumVerticalListContentPadding
+                                    ),
+                                transformation = SurfaceTransformation(transformationSpec)
+                            )
+                        }
                     }
                 }
-            }
-
-            val toggleMenu = rememberDpisConfirmAction { expanded = !expanded }
-            FloatingActionButton(
-                onClick = toggleMenu,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .offset(y = -COMPACT_MAIN_BUTTON_MARGIN_DP.dp)
-                    .size(COMPACT_MAIN_BUTTON_SIZE_DP.dp),
-                shape = CircleShape,
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-            ) {
-                Icon(
-                    painter = painterResource(selectedDestination.iconRes),
-                    contentDescription = stringResource(selectedDestination.labelRes)
-                )
+            } else {
+                Box(Modifier.fillMaxSize()) {
+                    content(legacyWorkspaceInsetsFor(selectedDestination))
+                    val openNavigation = rememberDpisConfirmAction { expanded = true }
+                    WearCompactButton(
+                        onClick = openNavigation,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 28.dp),
+                        icon = {
+                            WearIcon(
+                                painter = painterResource(selectedDestination.iconRes),
+                                contentDescription = stringResource(selectedDestination.labelRes),
+                                modifier = Modifier.size(WearButtonDefaults.ExtraSmallIconSize)
+                            )
+                        }
+                    )
+                }
             }
         }
     }

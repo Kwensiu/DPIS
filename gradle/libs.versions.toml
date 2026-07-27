@@ -3,6 +3,7 @@ agp = "9.2.1"
 kotlin = "2.3.20"
 composeBom = "2026.06.01"
 composeMaterial3 = "1.5.0-alpha23"
+wearComposeMaterial3 = "1.6.2"
 activity = "1.10.1"
 ksp = "2.2.0-2.0.2"
 xposed-api = "102.0.0"
@@ -60,6 +61,8 @@ compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "composeMaterial3" }
+wear-compose-foundation = { group = "androidx.wear.compose", name = "compose-foundation", version.ref = "wearComposeMaterial3" }
+wear-compose-material3 = { group = "androidx.wear.compose", name = "compose-material3", version.ref = "wearComposeMaterial3" }
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestExtJunit" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestCore" }

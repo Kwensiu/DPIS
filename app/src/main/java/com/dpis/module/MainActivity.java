@@ -685,11 +685,6 @@ public final class MainActivity
     }
 
     @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-    }
-
-    @Override
     protected void onResume() {
         super.onResume();
         mainActivityResumed = true;

@@ -277,8 +277,10 @@ private fun AppListScrollbar(
             .coerceAtMost(trackHeightPx.toFloat())
         val scrollableThumbRangePx = (trackHeightPx - thumbHeightPx).coerceAtLeast(0f)
         if (scrollableThumbRangePx <= 0f) return@Box
-        val currentScrollOffsetPx = listState.firstVisibleItemIndex * rowHeightPx
-            + listState.firstVisibleItemScrollOffset
+        val currentScrollOffsetPx = (
+            listState.firstVisibleItemIndex * rowHeightPx +
+                listState.firstVisibleItemScrollOffset
+            )
         val scrollFraction = currentScrollOffsetPx / maximumScrollOffsetPx
         val thumbTopPx = scrollableThumbRangePx * scrollFraction.coerceIn(0f, 1f)
         // pointerInput intentionally survives ordinary list scrolling. Keep its drag-start

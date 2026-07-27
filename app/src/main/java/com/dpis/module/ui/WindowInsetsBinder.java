@@ -15,6 +15,7 @@ import java.util.function.IntSupplier;
 
 import androidx.core.graphics.Insets;
 import androidx.annotation.DimenRes;
+import androidx.annotation.RequiresApi;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
@@ -159,7 +160,9 @@ public final class WindowInsetsBinder {
 
     private static boolean hasFullyRoundCorners(View view, WindowInsets windowInsets) {
         int diameter = Math.min(view.getWidth(), view.getHeight());
-        if (windowInsets == null || diameter <= 0) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S
+                || windowInsets == null
+                || diameter <= 0) {
             return false;
         }
         int minimumRoundRadius = diameter / 2;
@@ -169,6 +172,7 @@ public final class WindowInsetsBinder {
                 && hasRoundedCorner(windowInsets, RoundedCorner.POSITION_BOTTOM_RIGHT, minimumRoundRadius);
     }
 
+    @RequiresApi(Build.VERSION_CODES.S)
     private static boolean hasRoundedCorner(WindowInsets windowInsets, int position,
             int minimumRoundRadius) {
         RoundedCorner corner = windowInsets.getRoundedCorner(position);

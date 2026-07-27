@@ -96,3 +96,9 @@ Wear and compact-round UI is a separate product surface. It may use Wear OS
 Compose Material3 components and round-screen layouts instead of imitating the
 phone shell, but it must retain `WatchUiMode` classification until the new route
 has equivalent navigation, inset, accessibility, and device-test coverage.
+
+The compact workspace selector now uses Wear Compose Material3 `AppScaffold`,
+`ScreenScaffold`, and `TransformingLazyColumn`. Compact workspace content still
+uses the existing View binders; `MainComposeShellHost` must not route compact
+devices into the phone/tablet Compose presentations until each workspace has a
+dedicated Wear implementation and round-AVD coverage.

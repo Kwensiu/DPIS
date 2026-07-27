@@ -337,6 +337,8 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
+    implementation(libs.wear.compose.foundation)
+    implementation(libs.wear.compose.material3)
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
     testImplementation(libs.junit4)

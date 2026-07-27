@@ -66,13 +66,16 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(shell.contains("Modifier.width(WorkspaceDrawerWidth)"));
         assertTrue(shell.contains("verticalScroll(rememberScrollState())"));
         assertTrue(shell.contains("isCompactUi -> DpisWorkspaceNavigationLayout.COMPACT_RADIAL"));
-        assertTrue(shell.contains("COMPACT_MAIN_BUTTON_SIZE_DP = 56"));
-        assertTrue(shell.contains("COMPACT_MENU_BUTTON_SIZE_DP = 48"));
-        assertTrue(shell.contains("COMPACT_MENU_ARC_RADIUS_DP = 104"));
-        assertTrue(shell.contains("COMPACT_MENU_START_ANGLE_DEGREES = 210"));
-        assertTrue(shell.contains("COMPACT_MENU_ANGLE_STEP_DEGREES = 30"));
-        assertTrue(shell.contains("Color.Black.copy(alpha = 0.30f)"));
-        assertTrue(shell.contains("padding(bottom = navigationBarPadding)"));
+        assertTrue(shell.contains("CompactWearWorkspaceNavigation("));
+        assertTrue(shell.contains("WearMaterialTheme"));
+        assertTrue(shell.contains("AppScaffold"));
+        assertTrue(shell.contains("ScreenScaffold(scrollState = listState)"));
+        assertTrue(shell.contains("TransformingLazyColumn("));
+        assertTrue(shell.contains("transformedHeight(this, transformationSpec)"));
+        assertTrue(shell.contains("WearButtonDefaults.minimumVerticalListContentPadding"));
+        assertTrue(shell.contains("WearCompactButton("));
+        assertTrue(shell.contains("BackHandler(enabled = expanded)"));
+        assertFalse(shell.contains("COMPACT_MENU_ARC_RADIUS_DP"));
         assertTrue(shell.contains("selectedDestination: DpisWorkspaceDestination"));
         assertTrue(shell.contains("onDestinationSelected: (DpisWorkspaceDestination) -> Unit"));
         assertTrue(adapter.contains("MainUiState.WorkspaceMode"));
@@ -87,6 +90,8 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(mainActivity.contains("composeShellHost.replayLegacyWorkspaceInsets(mode)"));
         assertTrue(mainActivity.contains("WindowInsetsBinder.refreshNavigationBarMargins(searchFocusFab)"));
         assertTrue(mainActivity.contains("WatchUiMode.shouldUseCompactUi(this),"));
+        assertTrue(read("src/main/java/com/dpis/module/MainComposeShellHost.kt")
+                .contains("if (!isCompactUi && workspacePresentation.render"));
         assertTrue(mainActivity.contains("getLastCustomNonConfigurationInstance()"));
         assertTrue(mainActivity.contains("onRetainCustomNonConfigurationInstance()"));
         assertTrue(localizedActivity.contains("import androidx.activity.ComponentActivity;"));

@@ -9,6 +9,8 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Bundle;
 
+import androidx.activity.OnBackPressedCallback;
+
 public final class QuickTemplateTargetSelectionActivity extends LocalizedActivity {
     private QuickTemplateTargetsPresentationController targetsController;
 
@@ -23,6 +25,12 @@ public final class QuickTemplateTargetSelectionActivity extends LocalizedActivit
                 ? getIntent().getStringExtra(QuickTemplateTargetSelectionContract.EXTRA_TEMPLATE_ID)
                 : null;
         targetsController = new QuickTemplateTargetsPresentationController(this);
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                finishWithReason(QuickTemplateTargetSelectionContract.CLOSE_REASON_USER_BACK);
+            }
+        });
         QuickTemplateTargetActivityContent.install(
                 this,
                 targetsController,
@@ -60,10 +68,5 @@ public final class QuickTemplateTargetSelectionActivity extends LocalizedActivit
         result.putExtra(QuickTemplateTargetSelectionContract.EXTRA_CLOSE_REASON, closeReason);
         setResult(RESULT_OK, result);
         finish();
-    }
-
-    @Override
-    public void onBackPressed() {
-        finishWithReason(QuickTemplateTargetSelectionContract.CLOSE_REASON_USER_BACK);
     }
 }

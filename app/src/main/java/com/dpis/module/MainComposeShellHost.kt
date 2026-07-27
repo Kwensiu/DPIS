@@ -47,7 +47,10 @@ internal class MainComposeShellHost(
                         isCompactUi = isCompactUi,
                         dispatch = dispatch
                     ) { padding ->
-                        if (workspacePresentation.render(state.workspaceMode, padding)) {
+                        // Phone/tablet Compose workspaces are not valid Wear layouts. Compact
+                        // devices retain their dedicated View binders until each workspace has
+                        // an equivalent Wear Compose implementation and round-device coverage.
+                        if (!isCompactUi && workspacePresentation.render(state.workspaceMode, padding)) {
                             // Home domain state lives in MainActivity. This revision only invalidates
                             // the Compose presentation after its existing coordinator updates it.
                         } else {
