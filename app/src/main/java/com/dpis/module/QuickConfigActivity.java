@@ -59,6 +59,7 @@ import com.dpis.module.diagnostics.FeedbackDiagnosticAppLauncher;
 import com.dpis.module.fonts.HyperOsNativeProxyBindMounter;
 import com.dpis.module.fonts.HyperOsNativeAppDetector;
 import com.dpis.module.root.RootAccessProbe;
+import com.dpis.module.quickconfig.QuickConfigTargetDecision;
 import com.dpis.module.ui.compose.QuickConfigPresentation;
 import com.dpis.module.ui.compose.SupportActivityContent;
 
@@ -70,6 +71,7 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Toast;
@@ -140,10 +142,18 @@ public final class QuickConfigActivity extends LocalizedActivity {
         presentation = new QuickConfigPresentation();
         SupportActivityContent.installQuickConfig(this, presentation);
 
-        String packageName = getIntent().getStringExtra(EXTRA_PACKAGE_NAME);
-        if (packageName == null || packageName.isBlank()) {
-            packageName = ForegroundPackageResolver.resolve(this);
+        String explicitPackageName = getIntent().getStringExtra(EXTRA_PACKAGE_NAME);
+        boolean usageAccessGranted = ForegroundPackageResolver.hasUsageAccess(this);
+        QuickConfigTargetDecision.Result targetDecision = QuickConfigTargetDecision.decide(
+                explicitPackageName,
+                usageAccessGranted,
+                usageAccessGranted ? ForegroundPackageResolver.resolve(this) : null);
+        if (targetDecision.kind() == QuickConfigTargetDecision.Kind.REQUEST_USAGE_ACCESS) {
+            openUsageAccessSettings();
+            finish();
+            return;
         }
+        String packageName = targetDecision.packageName();
         AppListItem item = packageName != null ? createItem(packageName) : null;
         if (item == null) {
             Toast.makeText(this, R.string.quick_config_target_unavailable, Toast.LENGTH_SHORT)
@@ -159,6 +169,22 @@ public final class QuickConfigActivity extends LocalizedActivity {
         editingDraft = AppConfigEditorDraft.fromItem(editingItem);
         savedEditingDraft = editingDraft;
         refreshComposeEditor();
+    }
+
+    private void openUsageAccessSettings() {
+        Intent packageSettings = new Intent(
+                Settings.ACTION_USAGE_ACCESS_SETTINGS,
+                Uri.parse("package:" + getPackageName()));
+        try {
+            startActivity(packageSettings);
+        } catch (ActivityNotFoundException packagePageUnavailable) {
+            try {
+                startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
+            } catch (ActivityNotFoundException settingsUnavailable) {
+                Toast.makeText(this, R.string.quick_config_target_unavailable, Toast.LENGTH_SHORT)
+                        .show();
+            }
+        }
     }
 
     private void refreshComposeEditor() {

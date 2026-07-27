@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -61,10 +62,14 @@ fun QuickConfigContent(
             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
             color = MaterialTheme.colorScheme.surface
         ) {
-            if (state.destination == ConfigEditorDestination.MAIN) {
-                AppConfigEditorContent(state)
-            } else {
-                AppHookChainEditorPage(state = state)
+            Column {
+                // Keep the same visual-only sheet indicator and header spacing as the main editor.
+                DpisSheetVisualChrome()
+                if (state.destination == ConfigEditorDestination.MAIN) {
+                    AppConfigEditorContent(state = state)
+                } else {
+                    AppHookChainEditorPage(state = state)
+                }
             }
         }
     }
