@@ -134,7 +134,7 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(source.contains("R.string.system_safe_mode_disable_confirm_message"));
         assertTrue(source.contains("if (!store.setSystemServerSafeModeEnabled(false))"));
         assertTrue(source.contains("setCheckedSilently(safeModeSwitch, true"));
-        assertTrue(source.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"));
+        assertTrue(source.contains("ComposeConfirmDialog.show("));
         assertTrue(strings.contains("system_safe_mode_disable_confirm_title"));
         assertTrue(strings.contains("system_safe_mode_disable_confirm_message"));
     }
@@ -162,13 +162,16 @@ public class SystemServerSettingsLayoutSmokeTest {
     @Test
     public void settingsDialogsUseSharedWindowSizer() throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
+        String composeDialog = read(
+                "src/main/java/com/dpis/module/ui/compose/ComposeConfirmDialog.kt");
 
         assertTrue(source.contains("R.layout.dialog_interface_scale"));
         assertTrue(source.contains("R.layout.dialog_language_selection"));
         assertTrue(source.contains("R.layout.dialog_config_backup"));
         assertTrue(source.contains("R.layout.dialog_config_backup_confirm"));
         assertTrue(occurrences(source, "DialogWindowSizer.applyLargeWidth(dialog, activity)") >= 4);
-        assertTrue(occurrences(source, "DialogWindowSizer.applyStandardWidth(dialog, activity)") >= 2);
+        assertTrue(composeDialog.contains(
+                "DialogWindowSizer.applyStandardWidth(dialog, activity)"));
     }
 
     @Test
@@ -235,21 +238,17 @@ public class SystemServerSettingsLayoutSmokeTest {
     }
 
     @Test
-    public void hideLauncherIconConfirmationUsesCustomCenteredDialogLayout() throws IOException {
+    public void hideLauncherIconConfirmationUsesSharedComposeDialog() throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
 
         assertTrue(source.contains("private void showHideLauncherIconConfirmationDialog()"));
-        assertTrue(source.contains("R.layout.dialog_process_action_confirm"));
-        assertTrue(source.contains("R.id.process_action_confirm_title"));
-        assertTrue(source.contains("R.id.process_action_confirm_message"));
-        assertTrue(source.contains("R.id.process_action_confirm_proceed_button"));
-        assertTrue(source.contains("R.id.process_action_confirm_cancel_button"));
-        assertTrue(source.contains("new MaterialAlertDialogBuilder(activity)"));
+        assertTrue(source.contains("ComposeConfirmDialog.show("));
+        assertTrue(source.contains("R.string.settings_hide_launcher_icon_confirm_title"));
+        assertTrue(source.contains("R.string.settings_hide_launcher_icon_confirm_message"));
+        assertTrue(!source.contains("R.layout.dialog_process_action_confirm"));
         assertTrue(!source.contains("new AlertDialog.Builder(this)"));
         assertTrue(source.contains("if (!persistLauncherIconState(true))"));
         assertTrue(source.contains("setCheckedSilently(hideLauncherIconSwitch, false"));
-        assertTrue(source.contains("dialog.setOnCancelListener"));
-        assertTrue(source.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"));
     }
 
     @Test

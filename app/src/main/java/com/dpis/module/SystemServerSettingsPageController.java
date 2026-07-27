@@ -10,6 +10,7 @@ import com.dpis.module.runtime.RuntimeDebugPropertySyncer;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
 
 import com.dpis.module.ui.DialogWindowSizer;
+import com.dpis.module.ui.compose.ComposeConfirmDialog;
 
 import com.dpis.module.settings.AppLocaleManager;
 import com.dpis.module.settings.AppUiScaleManager;
@@ -1349,41 +1350,24 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void showDisableSafeModeConfirmationDialog() {
-        View dialogView = LayoutInflater.from(activity)
-                .inflate(R.layout.dialog_process_action_confirm, null, false);
-        MaterialTextView titleView = dialogView.findViewById(R.id.process_action_confirm_title);
-        MaterialTextView messageView = dialogView.findViewById(R.id.process_action_confirm_message);
-        MaterialButton proceedButton = dialogView.findViewById(R.id.process_action_confirm_proceed_button);
-        MaterialButton cancelButton = dialogView.findViewById(R.id.process_action_confirm_cancel_button);
-
-        titleView.setText(R.string.system_safe_mode_disable_confirm_title);
-        messageView.setText(R.string.system_safe_mode_disable_confirm_message);
-
-        AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
-                .setView(dialogView)
-                .create();
-        proceedButton.setOnClickListener(v -> {
-            dialog.dismiss();
-            if (!store.setSystemServerSafeModeEnabled(false)) {
-                setCheckedSilently(safeModeSwitch, true, this::onSafeModeChanged);
-                showToast(R.string.system_settings_save_failed);
-                publishPresentationState();
-                return;
-            }
-            RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
-            publishPresentationState();
-        });
-        cancelButton.setOnClickListener(v -> {
-            dialog.dismiss();
-            setCheckedSilently(safeModeSwitch, true, this::onSafeModeChanged);
-            publishPresentationState();
-        });
-        dialog.setOnCancelListener(unused -> {
-            setCheckedSilently(safeModeSwitch, true, this::onSafeModeChanged);
-            publishPresentationState();
-        });
-        dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, activity);
+        ComposeConfirmDialog.show(
+                activity,
+                activity.getString(R.string.system_safe_mode_disable_confirm_title),
+                activity.getString(R.string.system_safe_mode_disable_confirm_message),
+                () -> {
+                    if (!store.setSystemServerSafeModeEnabled(false)) {
+                        setCheckedSilently(safeModeSwitch, true, this::onSafeModeChanged);
+                        showToast(R.string.system_settings_save_failed);
+                        publishPresentationState();
+                        return;
+                    }
+                    RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
+                    publishPresentationState();
+                },
+                () -> {
+                    setCheckedSilently(safeModeSwitch, true, this::onSafeModeChanged);
+                    publishPresentationState();
+                });
     }
 
     private void onGlobalLogChanged(CompoundButton buttonView, boolean isChecked) {
@@ -1415,40 +1399,22 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void showHideLauncherIconConfirmationDialog() {
-        View dialogView = LayoutInflater.from(activity)
-                .inflate(R.layout.dialog_process_action_confirm, null, false);
-        MaterialTextView titleView = dialogView.findViewById(R.id.process_action_confirm_title);
-        MaterialTextView messageView = dialogView.findViewById(R.id.process_action_confirm_message);
-        MaterialButton proceedButton = dialogView.findViewById(R.id.process_action_confirm_proceed_button);
-        MaterialButton cancelButton = dialogView.findViewById(R.id.process_action_confirm_cancel_button);
-
-        titleView.setText(R.string.settings_hide_launcher_icon_confirm_title);
-        messageView.setText(R.string.settings_hide_launcher_icon_confirm_message);
-
-        AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
-                .setView(dialogView)
-                .create();
-        proceedButton.setOnClickListener(v -> {
-            dialog.dismiss();
-            if (!persistLauncherIconState(true)) {
-                setCheckedSilently(hideLauncherIconSwitch, false,
-                        this::onHideLauncherIconChanged);
-            }
-            publishPresentationState();
-        });
-        cancelButton.setOnClickListener(v -> {
-            dialog.dismiss();
-            setCheckedSilently(hideLauncherIconSwitch, false,
-                    this::onHideLauncherIconChanged);
-            publishPresentationState();
-        });
-        dialog.setOnCancelListener(unused -> {
-            setCheckedSilently(hideLauncherIconSwitch, false,
-                    this::onHideLauncherIconChanged);
-            publishPresentationState();
-        });
-        dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, activity);
+        ComposeConfirmDialog.show(
+                activity,
+                activity.getString(R.string.settings_hide_launcher_icon_confirm_title),
+                activity.getString(R.string.settings_hide_launcher_icon_confirm_message),
+                () -> {
+                    if (!persistLauncherIconState(true)) {
+                        setCheckedSilently(hideLauncherIconSwitch, false,
+                                this::onHideLauncherIconChanged);
+                    }
+                    publishPresentationState();
+                },
+                () -> {
+                    setCheckedSilently(hideLauncherIconSwitch, false,
+                            this::onHideLauncherIconChanged);
+                    publishPresentationState();
+                });
     }
 
     private boolean canDrawOverlays() {

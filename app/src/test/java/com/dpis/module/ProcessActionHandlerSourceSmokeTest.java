@@ -76,20 +76,21 @@ public class ProcessActionHandlerSourceSmokeTest {
     }
 
     @Test
-    public void processActionConfirmationUsesCustomDialogLayout() throws IOException {
+    public void processActionConfirmationUsesSharedComposeDialog() throws IOException {
         String source = read(PROCESS_ACTION_HANDLER_SOURCE);
-        String layout = read("src/main/res/layout/dialog_process_action_confirm.xml");
+        String dialog = read("src/main/java/com/dpis/module/ui/compose/ComposeConfirmDialog.kt");
 
-        assertTrue(source.contains("R.layout.dialog_process_action_confirm"));
-        assertTrue(source.contains("process_action_confirm_title"));
-        assertTrue(source.contains("process_action_confirm_message"));
-        assertTrue(source.contains("process_action_confirm_proceed_button"));
-        assertTrue(source.contains("process_action_confirm_cancel_button"));
-        assertTrue(source.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"));
-        assertTrue(layout.contains("@dimen/dialog_surface_padding_horizontal"));
-        assertTrue(layout.contains("@dimen/dialog_body_spacing"));
-        assertTrue(layout.contains("@dimen/dialog_action_spacing_top"));
-        assertTrue(layout.contains("@dimen/dialog_action_spacing_between"));
+        assertTrue(source.contains("ComposeConfirmDialog.show("));
+        assertTrue(source.contains("R.string.dialog_process_action_confirm_title"));
+        assertTrue(source.contains("R.string.dialog_process_action_confirm_message"));
+        assertFalse(source.contains("R.layout.dialog_process_action_confirm"));
+        assertTrue(dialog.contains("fun ConfirmDialogContent("));
+        assertTrue(dialog.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"));
+        assertTrue(dialog.contains("R.dimen.dialog_surface_padding_horizontal"));
+        assertTrue(dialog.contains("R.dimen.dialog_body_spacing"));
+        assertTrue(dialog.contains("R.dimen.dialog_action_spacing_top"));
+        assertTrue(dialog.contains("R.dimen.dialog_action_spacing_between"));
+        assertTrue(dialog.contains("R.color.dpis_warn_container"));
     }
 
     @Test
@@ -97,8 +98,8 @@ public class ProcessActionHandlerSourceSmokeTest {
         String source = read(PROCESS_ACTION_HANDLER_SOURCE);
         String strings = read("src/main/res/values/strings.xml");
 
-        assertTrue(source.contains("actionLabel,\r\n                item.label")
-                || source.contains("actionLabel,\n                item.label"));
+        assertTrue(source.contains("actionLabel,"));
+        assertTrue(source.contains("item.label)"));
         assertTrue(strings.contains("%2$s\\n"));
         assertFalse(strings.contains("%3$s\\n"));
     }
