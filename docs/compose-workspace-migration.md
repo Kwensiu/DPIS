@@ -1,19 +1,23 @@
 # Compose Workspace Migration Baseline
 
-Themes 1-3 established the baseline for migrating the remaining DPIS workspaces
-to Compose Material3. This document defines the boundary that Themes 4 and 5
-must preserve; it is not a new product design proposal.
+Themes 1-5 establish the baseline for the DPIS phone and tablet main-workspace
+migration to Compose Material3. This document defines the boundary for later
+standalone and compact-device work; it is not a new product design proposal.
 
 ## Completed Scope
 
 - Theme 1: DPIS Compose design system and adaptive shell.
 - Theme 2: standalone support pages and shared support-sheet presentation.
 - Theme 3: Home, Tools, and Settings workspaces.
+- Theme 4: App workspace list/detail presentation.
+- Theme 5: App configuration plus Template and global-prefill editors.
 
 The Compose shell owns phone bottom navigation and expanded navigation chrome.
 `MainUiState` and `MainUiAction` remain the sole source of truth for workspace
-selection. The legacy View root remains only for App and Template destinations
-until their dedicated themes migrate them.
+selection. App and Template content now render through their Compose
+presentations; the `MainComposeShellHost` / `DpisLegacyWorkspaceHost` interop
+boundary remains only as an assembly compatibility boundary, not as an excuse
+to add new View implementations to migrated main workspaces.
 
 ## Ownership Rules
 
@@ -27,8 +31,11 @@ needs observable controller state. Do not read stores directly from a composable
 or make a composable the owner of a persisted draft.
 
 Compact watch and round devices continue to use the existing `WatchUiMode` View
-route. Do not broaden a phone/tablet Compose migration into a watch migration
-without equivalent layout and device verification.
+route until their dedicated migration. Do not broaden phone/tablet work into a
+watch migration incidentally. When that migration begins, treat it as a
+separate Wear OS Compose Material3 design: use Wear-specific scaffolds and
+scrolling components, preserve the existing domain/controller ownership, and
+validate on a round Wear OS AVD in addition to phone/tablet verification.
 
 ## Insets And Interaction
 
@@ -58,15 +65,34 @@ The interface-scale settings slider uses the 60-120% range with one-percent
 choices. It may hide dense visual tick marks, but interaction values must still
 snap to whole percentages and emit feedback only on a choice transition.
 
-## Future Theme Checklist
+## Follow-up Migration Checklist
 
-Before migrating a Theme 4 or 5 workflow:
+Before migrating a remaining standalone Activity or compact-device workflow:
 
 1. Identify the existing domain owner and every activity/dialog/result contract.
 2. Decide which state is transient Compose state and which must remain in a
    controller/presenter because it survives a surface, save, restore, or rotation.
-3. Preserve compact-watch routing and establish exactly one inset owner.
+3. Preserve compact-watch routing, or explicitly replace it with an equivalent
+   Wear OS route, and establish exactly one inset owner.
 4. Carry over action availability, haptics, slider/value semantics, and dialog
    confirmation behavior before visual polish.
 5. Add behavior tests for extracted state rules and source smoke tests only for
    Compose wiring; run the full two-flavor unit suite before committing.
+
+## Remaining Scope
+
+The Themes 1-5 milestone does not mean every DPIS UI is Compose-only. Remaining
+View surfaces include standalone activities and dialogs such as the font
+library, font detail, logs, About/update presentation, and system-server
+settings. Migrate these in focused feature batches rather than mixing them with
+the main-workspace navigation work.
+
+Phone and tablet standalone pages should reuse the established DPIS Compose
+theme, token set, haptic behavior, support-page conventions, and focused
+Java/Kotlin controller boundaries. Preserve their existing user-visible
+semantics before visual cleanup.
+
+Wear and compact-round UI is a separate product surface. It may use Wear OS
+Compose Material3 components and round-screen layouts instead of imitating the
+phone shell, but it must retain `WatchUiMode` classification until the new route
+has equivalent navigation, inset, accessibility, and device-test coverage.

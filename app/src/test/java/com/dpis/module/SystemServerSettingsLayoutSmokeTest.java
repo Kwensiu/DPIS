@@ -93,51 +93,35 @@ public class SystemServerSettingsLayoutSmokeTest {
     }
 
     @Test
-    public void experimentalSettingsActivityOnlySetsLayoutAndInsets() throws IOException {
+    public void experimentalSettingsActivityUsesComposeContentWithoutRestoringOldFeatureFlags() throws IOException {
         String source = read(
                 "src/main/java/com/dpis/module/settings/ExperimentalSettingsActivity.java");
 
-        assertTrue(source.contains("setContentView(R.layout.activity_experimental_settings);"));
-        assertTrue(source.contains("bindToolbar();"));
-        assertTrue(source.contains("R.id.experimental_settings_back_button"));
-        assertTrue(source.contains("backButton.setOnClickListener"));
-        assertTrue(source.contains("finish()"));
-        assertTrue(source.contains("applyInsets();"));
+        assertTrue(source.contains("SupportActivityContent.installExperimentalSettings(this);"));
         assertTrue(!source.contains("setFlutterFontHookEnabled"));
         assertTrue(!source.contains("setFlutterSettingsFontHookEnabled"));
         assertTrue(!source.contains("setHyperOsFlutterFontHookEnabled"));
     }
 
     @Test
-    public void experimentalSettingsPageShowsEmptyState() throws IOException {
+    public void experimentalSettingsPageKeepsManifestAndLocalizedEmptyState() throws IOException {
         String manifest = read("src/main/AndroidManifest.xml");
-        String layout = read("src/main/res/layout/activity_experimental_settings.xml");
+        String content = read("src/main/java/com/dpis/module/ui/compose/ExperimentalSettingsContent.kt");
         String strings = read("src/main/res/values/strings.xml");
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
         assertTrue(manifest.contains(".settings.ExperimentalSettingsActivity"));
-        assertTrue(layout.contains("android:id=\"@+id/experimental_settings_toolbar\""));
-        assertTrue(layout.contains("android:id=\"@+id/experimental_settings_back_button\""));
-        assertTrue(layout.contains("android:id=\"@+id/experimental_settings_title\""));
-        assertTrue(layout.contains("android:contentDescription=\"@string/system_settings_back\""));
-        assertTrue(layout.contains("android:text=\"@string/settings_experimental_title\""));
-        assertTrue(layout.contains("android:src=\"@drawable/ic_arrow_back_24\""));
-        assertTrue(layout.contains("@dimen/page_toolbar_padding_horizontal"));
-        assertTrue(layout.contains("@dimen/page_title_spacing_start"));
-        assertTrue(layout.contains("android:id=\"@+id/experimental_settings_content\""));
-        assertTrue(layout.contains("android:paddingStart=\"@dimen/experimental_settings_content_padding_horizontal\""));
-        assertTrue(layout.contains("android:paddingTop=\"@dimen/experimental_settings_content_padding_top\""));
-        assertTrue(layout.contains("android:paddingEnd=\"@dimen/experimental_settings_content_padding_horizontal\""));
-        assertTrue(layout.contains("android:paddingBottom=\"@dimen/experimental_settings_content_padding_bottom\""));
-        assertTrue(layout.contains("android:gravity=\"center\""));
-        assertTrue(layout.contains("@string/settings_experimental_empty"));
-        assertTrue(!layout.contains("row_flutter_font_hook"));
-        assertTrue(!layout.contains("row_flutter_settings_font_hook"));
-        assertTrue(!layout.contains("row_hyperos_flutter_font_hook"));
+        assertTrue(content.contains("R.string.system_settings_back"));
+        assertTrue(content.contains("R.string.settings_experimental_title"));
+        assertTrue(content.contains("R.drawable.ic_arrow_back_24"));
+        assertTrue(content.contains("R.string.settings_experimental_empty"));
+        assertTrue(!content.contains("row_flutter_font_hook"));
+        assertTrue(!content.contains("row_flutter_settings_font_hook"));
+        assertTrue(!content.contains("row_hyperos_flutter_font_hook"));
         assertTrue(strings.contains("<string name=\"settings_experimental_empty\">No experimental features available</string>"));
         assertTrue(zhStrings.contains("<string name=\"settings_experimental_empty\">暂无实验功能</string>"));
-        assertFalse(layout.contains("experimental_ttc_import_row"));
-        assertFalse(layout.contains("item_settings_switch"));
+        assertFalse(content.contains("experimental_ttc_import_row"));
+        assertFalse(content.contains("item_settings_switch"));
     }
 
     @Test

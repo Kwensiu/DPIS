@@ -39,4 +39,13 @@ object SupportActivityContent {
             }
         }
     }
+
+    @JvmStatic
+    fun installExperimentalSettings(activity: ComponentActivity) {
+        activity.setContent {
+            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+                ExperimentalSettingsContent(onBack = activity::finish)
+            }
+        }
+    }
 }
