@@ -155,8 +155,10 @@ public final class LegacyModuleManifestMetadataTest {
         assertTrue(workflow.contains(":app:assembleModernDebug"));
         assertTrue(workflow.contains(":app:assembleLegacyDebug"));
         assertTrue(workflow.contains(":app:testAllDebugUnitTests"));
-        assertTrue(workflow.contains(":app:testDebugUnitTest --tests"));
+        assertTrue(workflow.contains(":app:testModernDebugUnitTest :app:testLegacyDebugUnitTest"));
+        assertTrue(workflow.contains("--tests \"${TEST_FILTER}\""));
         assertTrue(workflow.contains(":app:lintModernDebug"));
+        assertTrue(workflow.contains("--no-daemon --no-configuration-cache"));
         assertFalse(workflow.contains(":app:assembleDebug"));
         assertFalse(workflow.contains(":app:lintDebug"));
         assertTrue(workflow.contains("app/build/reports/lint-results-modernDebug.html"));

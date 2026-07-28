@@ -3,10 +3,8 @@ package com.dpis.module.ui.compose
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 
-/** Dimensions mirrored from the pre-migration XML dialog surfaces. */
-internal object LegacyDialogUiTokens {
-    val TypefaceDialogWidthFraction = 0.88f
-    val TypefaceDialogMaxWidth = 520.dp
+/** Stable dimensions shared by the embedded typeface picker pages. */
+internal object TypefacePickerUiTokens {
     val TypefaceSurfacePadding = 20.dp
     val TypefaceListHeight = 360.dp
     val TypefaceOptionHeight = 48.dp

@@ -4,10 +4,15 @@ package com.dpis.module;
 public enum ConfigEditorDestination {
     MAIN,
     HOOK_CHAIN_INTERFACE,
-    HOOK_CHAIN_FONT;
+    HOOK_CHAIN_FONT,
+    TYPEFACE;
+
+    public boolean isChildPage() {
+        return this != MAIN;
+    }
 
     public boolean isHookChain() {
-        return this != MAIN;
+        return this == HOOK_CHAIN_INTERFACE || this == HOOK_CHAIN_FONT;
     }
 
     public int hookChainTabIndex() {

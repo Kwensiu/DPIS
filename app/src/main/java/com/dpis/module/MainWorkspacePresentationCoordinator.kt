@@ -41,6 +41,7 @@ import com.dpis.module.ui.compose.AppWorkspaceContent
 import com.dpis.module.ui.compose.AppConfigEditorOverlay
 import com.dpis.module.ui.compose.AppConfigEditorContent
 import com.dpis.module.ui.compose.AppHookChainEditorPage
+import com.dpis.module.ui.compose.AppTypefacePickerPage
 import com.dpis.module.ui.compose.ConfigEditorAnimatedContent
 import com.dpis.module.ui.compose.AppConfigSheetUiTokens
 import com.dpis.module.ui.compose.ToolsWorkspaceContent
@@ -184,7 +185,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                                     .background(MaterialTheme.colorScheme.onSurfaceVariant)
                             )
                         }
-                        if (!editorState.destination.isHookChain()) Box(
+                        if (!editorState.destination.isChildPage()) Box(
                             modifier = androidx.compose.ui.Modifier
                                 // Keep the diagnostic action on the same center line as the
                                 // visual white bar; it is not independently top-aligned chrome.
@@ -210,7 +211,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                                 tint = MaterialTheme.colorScheme.onSecondaryContainer
                             )
                         }
-                        if (showAdvancedHint && !editorState.destination.isHookChain()) {
+                        if (showAdvancedHint && !editorState.destination.isChildPage()) {
                             Column(
                                 modifier = androidx.compose.ui.Modifier
                                     .align(Alignment.TopCenter)
@@ -264,7 +265,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                         }
                     }
                 }
-            ) { onAdvancedAnchorMeasured, destinationContentOwnsHeight, onReturnFromHook ->
+            ) { onAdvancedAnchorMeasured, destinationContentOwnsHeight, onReturnFromChild ->
                 ConfigEditorAnimatedContent(
                     destination = editorState.destination,
                     // Expanded sheets ignore the peek anchor, so their destination content owns
@@ -286,7 +287,25 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                             // Hook content owns its internal size changes. The sheet mirrors the
                             // height it reports instead of adding a second competing tween.
                             animateTabSize = true,
-                            onBack = onReturnFromHook,
+                            onBack = onReturnFromChild,
+                            modifier = androidx.compose.ui.Modifier.onSizeChanged { size ->
+                                val contentHeight = with(density) { size.height.toDp() }
+                                onAdvancedAnchorMeasured(
+                                    contentHeight +
+                                        AppConfigSheetUiTokens.SaveToAdvancedDividerGap -
+                                        AppConfigSheetUiTokens.CollapsedBottomClearance
+                                )
+                            }
+                        )
+                    },
+                    typefaceContent = {
+                        AppTypefacePickerPage(
+                            selectedTypefaceId = editorState.draft.selectedTypefaceId,
+                            onTypefaceSelected = { typefaceId ->
+                                editorState.actions.updateTypeface(typefaceId)
+                                onReturnFromChild()
+                            },
+                            onBack = onReturnFromChild,
                             modifier = androidx.compose.ui.Modifier.onSizeChanged { size ->
                                 val contentHeight = with(density) { size.height.toDp() }
                                 onAdvancedAnchorMeasured(

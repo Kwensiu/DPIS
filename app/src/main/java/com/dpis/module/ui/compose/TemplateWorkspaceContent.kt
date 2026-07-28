@@ -103,7 +103,6 @@ fun TemplateWorkspaceContent(
         )
     }
     var deleteConfirmationVisible by rememberSaveable { mutableStateOf(false) }
-    var typefaceDialogVisible by rememberSaveable { mutableStateOf(false) }
     val editorDestination = state.editorDestination
     val topSafePadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     LaunchedEffect(state.detailKind, state.detailTemplateId) {
@@ -170,7 +169,6 @@ fun TemplateWorkspaceContent(
         if (editorKind == null) return
         editorKind = null
         editorTemplateId = null
-        typefaceDialogVisible = false
         deleteConfirmationVisible = false
         onEditorClosed()
     }
@@ -215,6 +213,19 @@ fun TemplateWorkspaceContent(
             bottomPadding = bottomPadding
         )
     }
+    @Composable fun typefacePage(modifier: Modifier = Modifier) {
+        AppTypefacePickerPage(
+            selectedTypefaceId = editorDraft.form.selectedTypefaceId,
+            onTypefaceSelected = {
+                editorDraft.form.selectedTypefaceId = it
+                notifyEditorChanged()
+            },
+            onBack = {
+                onEditorDestinationChanged(editorDestination.backDestination())
+            },
+            modifier = modifier
+        )
+    }
     val editorBody: @Composable () -> Unit = {
         TemplateEditorSurface(
             form = editorDraft.form,
@@ -224,7 +235,7 @@ fun TemplateWorkspaceContent(
             bottomSafePadding = padding.calculateBottomPadding(),
             onFormChanged = ::notifyEditorChanged,
             onSelectTypeface = {
-                typefaceDialogVisible = true
+                onEditorDestinationChanged(ConfigEditorDestination.TYPEFACE)
             },
             onEditHookDomains = {
                 onEditorDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)
@@ -241,6 +252,9 @@ fun TemplateWorkspaceContent(
                     padding.calculateBottomPadding(),
                     Modifier.padding(top = topSafePadding)
                 )
+            },
+            typefaceContent = {
+                typefacePage(Modifier.padding(top = topSafePadding))
             }
         )
     }
@@ -314,7 +328,7 @@ fun TemplateWorkspaceContent(
                     draftRevision = draftRevision,
                      onFormChanged = ::notifyEditorChanged,
                      onSelectTypeface = {
-                        typefaceDialogVisible = true
+                        onEditorDestinationChanged(ConfigEditorDestination.TYPEFACE)
                      },
                      onEditHookDomains = {
                         onEditorDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)
@@ -328,20 +342,11 @@ fun TemplateWorkspaceContent(
                     } else null,
                     onSave = ::saveEditor,
                     destination = editorDestination,
-                    hookContent = { hookChainPage(padding.calculateBottomPadding()) }
+                    hookContent = { hookChainPage(padding.calculateBottomPadding()) },
+                    typefaceContent = { typefacePage() }
                 )
             }
         }
-    }
-    if (typefaceDialogVisible && editorKind != null) {
-        AppTypefacePickerDialog(
-            selectedTypefaceId = editorDraft.form.selectedTypefaceId,
-            onTypefaceSelected = {
-                editorDraft.form.selectedTypefaceId = it
-                notifyEditorChanged()
-            },
-            onDismissRequest = { typefaceDialogVisible = false }
-        )
     }
     if (deleteConfirmationVisible) {
         AlertDialog(
@@ -368,13 +373,15 @@ fun TemplateWorkspaceContent(
                         val result = state.actions.deleteQuickTemplate(editorDraft.form.templateId)
                         if (result.success) closeEditor()
                     },
-                    shape = AppConfigSheetUiTokens.ActionShape
+                    modifier = Modifier.height(DpisConfirmDialogUiTokens.ActionHeight),
+                    shape = DpisConfirmDialogUiTokens.ActionShape
                 ) { Text(stringResource(R.string.font_library_delete_action)) }
             },
             dismissButton = {
                 TextButton(
                     onClick = { deleteConfirmationVisible = false },
-                    shape = AppConfigSheetUiTokens.ActionShape
+                    modifier = Modifier.height(DpisConfirmDialogUiTokens.ActionHeight),
+                    shape = DpisConfirmDialogUiTokens.ActionShape
                 ) {
                     Text(stringResource(R.string.dialog_cancel_button))
                 }

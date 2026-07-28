@@ -79,15 +79,21 @@ internal fun ConfigEditorAnimatedContent(
     animateSize: Boolean = true,
     clipContentToAnimatedBounds: Boolean = true,
     mainContent: @Composable () -> Unit,
-    hookContent: @Composable () -> Unit
+    hookContent: @Composable () -> Unit,
+    typefaceContent: (@Composable () -> Unit)? = null
 ) {
+    val editorPage = when {
+        destination == ConfigEditorDestination.TYPEFACE -> ConfigEditorPage.TYPEFACE
+        destination.isHookChain() -> ConfigEditorPage.HOOK_CHAIN
+        else -> ConfigEditorPage.MAIN
+    }
     AnimatedContent(
-        targetState = destination.isHookChain(),
+        targetState = editorPage,
         modifier = modifier
             .fillMaxWidth()
             .then(if (clipContentToAnimatedBounds) Modifier.clipToBounds() else Modifier),
         transitionSpec = {
-            val direction = if (targetState) 1 else -1
+            val direction = if (targetState != ConfigEditorPage.MAIN) 1 else -1
             (slideInHorizontally(
                 animationSpec = tween(EditorDestinationAnimationDurationMillis),
                 initialOffsetX = { direction * it }
@@ -109,10 +115,20 @@ internal fun ConfigEditorAnimatedContent(
         },
         contentKey = { it },
         label = "config-editor-destination"
-    ) { showingHook ->
-        if (showingHook) hookContent() else mainContent()
+    ) { targetPage ->
+        when (targetPage) {
+            ConfigEditorPage.TYPEFACE -> if (typefaceContent != null) {
+                typefaceContent()
+            } else {
+                mainContent()
+            }
+            ConfigEditorPage.HOOK_CHAIN -> hookContent()
+            ConfigEditorPage.MAIN -> mainContent()
+        }
     }
 }
+
+private enum class ConfigEditorPage { MAIN, HOOK_CHAIN, TYPEFACE }
 
 /** Child content of an existing configuration session; it edits the caller-owned draft directly. */
 @OptIn(ExperimentalMaterial3Api::class)

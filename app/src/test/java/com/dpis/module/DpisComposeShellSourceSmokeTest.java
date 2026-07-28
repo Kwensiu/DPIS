@@ -276,7 +276,7 @@ public final class DpisComposeShellSourceSmokeTest {
         String catalog = read(
                 "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.java");
         String typefacePicker = read(
-                "src/main/java/com/dpis/module/ui/compose/AppTypefacePickerDialog.kt");
+                "src/main/java/com/dpis/module/ui/compose/AppTypefacePickerPage.kt");
         String activity = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(sheet.contains("skipPartiallyExpanded: Boolean = true"));
@@ -316,9 +316,10 @@ public final class DpisComposeShellSourceSmokeTest {
         int typefaceLibraryOpen = typefacePicker.indexOf(
                 "context.startActivity(Intent(context, FontLibraryActivity::class.java))");
         assertTrue(typefaceLibraryOpen > 0);
-        assertTrue(typefacePicker.substring(0, typefaceLibraryOpen).contains("onDismissRequest()"));
-        assertTrue(typefacePicker.contains("DialogProperties(usePlatformDefaultWidth = false)"));
-        assertTrue(typefacePicker.contains("LegacyDialogUiTokens.TypefaceOptionHeight"));
+        assertTrue(typefacePicker.substring(0, typefaceLibraryOpen).contains("onBack()"));
+        assertTrue(typefacePicker.contains("fun AppTypefacePickerPage("));
+        assertFalse(typefacePicker.contains("Dialog("));
+        assertTrue(typefacePicker.contains("TypefacePickerUiTokens.TypefaceOptionHeight"));
         int dpisToggleStart = activity.indexOf("@Override public void toggleDpisEnabled()");
         int dpisToggleEnd = activity.indexOf("@Override public void startProcess()", dpisToggleStart);
         assertTrue(dpisToggleStart > 0);
@@ -359,7 +360,10 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(page.contains("verticalScroll(rememberScrollState())"));
         assertTrue(destination.contains("HOOK_CHAIN_INTERFACE"));
         assertTrue(destination.contains("HOOK_CHAIN_FONT"));
+        assertTrue(destination.contains("TYPEFACE"));
+        assertTrue(destination.contains("isChildPage()"));
         assertTrue(appEditor.contains("state.actions.navigate("));
+        assertTrue(appEditor.contains("ConfigEditorDestination.TYPEFACE"));
         assertFalse(appEditor.contains("hookChainEditorVisible"));
         assertTrue(appWorkspace.contains("ConfigEditorAnimatedContent("));
         assertTrue(appWorkspace.contains(
@@ -372,6 +376,7 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(appOverlay.contains("mainCollapsedAnchor"));
         assertTrue(appOverlay.contains("fun returnToMainCollapsed()"));
         assertTrue(appOverlay.contains("bottomSheetState.partialExpand()"));
+        assertTrue(appOverlay.contains("bottomSheetState.currentValue == SheetValue.PartiallyExpanded"));
         assertTrue(viewModel.contains("ConfigEditorDestination editingDestination"));
         assertTrue(activity.contains("mainViewModel.getEditingDestination()"));
         assertTrue(activity.contains("retainedState.editingDestination"));
@@ -381,6 +386,7 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(activity.contains("retainedState.templateEditorDestination"));
         assertTrue(activity.contains("STATE_TEMPLATE_EDITOR_DESTINATION"));
         assertTrue(templates.contains("HookChainEditorPage("));
+        assertTrue(templates.contains("AppTypefacePickerPage("));
         assertTrue(templates.contains("destination = editorDestination"));
         assertTrue(templates.contains(
                 "bottomSafePadding = padding.calculateBottomPadding()"));

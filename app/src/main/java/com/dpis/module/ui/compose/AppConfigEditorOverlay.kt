@@ -59,7 +59,7 @@ fun AppConfigEditorOverlay(
     var hasExpandedOnce by remember { mutableStateOf(false) }
     var dismissalInProgress by remember { mutableStateOf(false) }
     var previousDestination by remember { mutableStateOf(destination) }
-    var hookContentOwnsHeightTransition by remember { mutableStateOf(false) }
+    var childContentOwnsHeightTransition by remember { mutableStateOf(false) }
     var mainCollapsedAnchor by remember { mutableStateOf<Dp?>(null) }
     var returnToMainPending by remember { mutableStateOf(false) }
     // BottomSheetScaffold has no modal scrim. Its target changes at the same instant as the
@@ -83,7 +83,7 @@ fun AppConfigEditorOverlay(
     }
 
     fun returnToMainCollapsed() {
-        if (!destination.isHookChain() || returnToMainPending) return
+        if (!destination.isChildPage() || returnToMainPending) return
         returnToMainPending = true
         hasExpandedOnce = false
         mainCollapsedAnchor?.let { retainedMainAnchor ->
@@ -91,7 +91,7 @@ fun AppConfigEditorOverlay(
             // main destination together so resizing and horizontal navigation run together.
             advancedAnchor = retainedMainAnchor
         }
-        // Landscape can enter Hook without ever measuring the portrait main content. In that
+        // Landscape can enter a child page without ever measuring the portrait main content. In that
         // case MAIN must render once before the portrait collapsed anchor can be established.
         onReturnToMain()
     }
@@ -113,10 +113,10 @@ fun AppConfigEditorOverlay(
     }
     BackHandler(onBack = ::dismissWithAnimation)
     LaunchedEffect(destination) {
-        val wasHook = previousDestination.isHookChain()
-        val isHook = destination.isHookChain()
-        hookContentOwnsHeightTransition = wasHook && isHook
-        if (wasHook && !isHook) {
+        val wasChild = previousDestination.isChildPage()
+        val isChild = destination.isChildPage()
+        childContentOwnsHeightTransition = wasChild && isChild
+        if (wasChild && !isChild) {
             // The return action has already moved the sheet to the retained main anchor.
             hasExpandedOnce = false
         }
@@ -139,7 +139,7 @@ fun AppConfigEditorOverlay(
             animationSpec = when {
                 !hasOpened -> snap()
                 returnToMainPending -> tween(durationMillis = 180)
-                hookContentOwnsHeightTransition -> snap()
+                childContentOwnsHeightTransition -> snap()
                 else -> tween(durationMillis = 180)
             },
             label = "app-config-sheet-peek-height"
@@ -176,9 +176,9 @@ fun AppConfigEditorOverlay(
                         // validation text or a window resize) keep the collapsed edge aligned.
                         // An expanded sheet remains under the user's control until dismissal.
                         if (measuredAnchor > 0.dp &&
-                            (destination.isHookChain() || !hasExpandedOnce)) {
+                            (destination.isChildPage() || !hasExpandedOnce)) {
                             advancedAnchor = measuredAnchor
-                            if (!destination.isHookChain()) {
+                            if (!destination.isChildPage()) {
                                 mainCollapsedAnchor = measuredAnchor
                             }
                         }
@@ -189,10 +189,19 @@ fun AppConfigEditorOverlay(
             ) { }
         }
 
-        LaunchedEffect(returnToMainPending, measuredPeekHeight, targetPeekHeight) {
+        LaunchedEffect(
+            returnToMainPending,
+            measuredPeekHeight,
+            targetPeekHeight,
+            bottomSheetState.currentValue
+        ) {
             if (returnToMainPending &&
                 mainCollapsedAnchor != null &&
-                measuredPeekHeight == targetPeekHeight) {
+                measuredPeekHeight == targetPeekHeight &&
+                bottomSheetState.currentValue == SheetValue.PartiallyExpanded) {
+                // Keep MAIN in its return transition until both the retained anchor and the
+                // sheet state agree. Clearing this after height alone lets an Expanded sheet
+                // briefly reclaim the main content and reveal advanced actions.
                 returnToMainPending = false
             }
         }

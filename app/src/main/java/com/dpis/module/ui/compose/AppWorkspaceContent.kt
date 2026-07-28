@@ -71,6 +71,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.tooling.preview.Preview
 import com.dpis.module.AppWorkspacePresentation
 import com.dpis.module.AppConfigEditorPresentation
+import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.R
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
@@ -191,6 +192,19 @@ fun AppWorkspaceContent(
                                         state = editorState,
                                         modifier = Modifier.padding(top = topSafePadding),
                                         bottomPadding = padding.calculateBottomPadding()
+                                    )
+                                },
+                                typefaceContent = {
+                                    AppTypefacePickerPage(
+                                        selectedTypefaceId = editorState.draft.selectedTypefaceId,
+                                        onTypefaceSelected = { typefaceId ->
+                                            editorState.actions.updateTypeface(typefaceId)
+                                            editorState.actions.navigate(ConfigEditorDestination.MAIN)
+                                        },
+                                        onBack = {
+                                            editorState.actions.navigate(ConfigEditorDestination.MAIN)
+                                        },
+                                        modifier = Modifier.padding(top = topSafePadding)
                                     )
                                 }
                             )

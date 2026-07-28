@@ -96,7 +96,8 @@ fun TemplateEditorSurface(
     onDelete: (() -> Unit)?,
     onSave: () -> Unit,
     destination: ConfigEditorDestination = ConfigEditorDestination.MAIN,
-    hookContent: (@Composable () -> Unit)? = null
+    hookContent: (@Composable () -> Unit)? = null,
+    typefaceContent: (@Composable () -> Unit)? = null
 ) {
     val mainEditor: @Composable () -> Unit = {
         TemplateEditorContent(
@@ -122,7 +123,7 @@ fun TemplateEditorSurface(
         )
     }
     val editor: @Composable () -> Unit = {
-        if (hookContent == null) {
+        if (hookContent == null && typefaceContent == null) {
             mainEditor()
         } else {
             ConfigEditorAnimatedContent(
@@ -130,7 +131,8 @@ fun TemplateEditorSurface(
                 clipContentToAnimatedBounds =
                     surface == TemplateEditorSurfaceKind.LANDSCAPE_DETAIL,
                 mainContent = mainEditor,
-                hookContent = hookContent
+                hookContent = hookContent ?: mainEditor,
+                typefaceContent = typefaceContent
             )
         }
     }

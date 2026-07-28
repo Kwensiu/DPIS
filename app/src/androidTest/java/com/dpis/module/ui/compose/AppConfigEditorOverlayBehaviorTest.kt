@@ -1,7 +1,11 @@
 package com.dpis.module.ui.compose
 
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -11,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
@@ -44,8 +49,38 @@ class AppConfigEditorOverlayBehaviorTest {
     }
 
     @Test
+    fun directHookBackRestoresCollapsedMainWithoutAdvancedContent() {
+        val destination = showOverlayStartingInHook(ConfigEditorDestination.MAIN)
+        composeRule.onNodeWithTag(MainEditorTag).assertExists()
+
+        composeRule.runOnIdle {
+            destination.value = ConfigEditorDestination.HOOK_CHAIN_INTERFACE
+        }
+        composeRule.onNodeWithContentDescription(
+            composeRule.activity.getString(R.string.system_settings_back)
+        ).performClick()
+
+        composeRule.onNodeWithTag(MainEditorTag).assertExists()
+        composeRule.onNodeWithTag(AdvancedEditorTag).assertIsNotDisplayed()
+    }
+
+    @Test
     fun systemBackReturnsFromHookToMainEditorContent() {
         val destination = showOverlayStartingInHook(ConfigEditorDestination.HOOK_CHAIN_FONT)
+
+        composeRule.runOnUiThread {
+            composeRule.activity.onBackPressedDispatcher.onBackPressed()
+        }
+
+        composeRule.onNodeWithTag(MainEditorTag).assertExists()
+        composeRule.runOnIdle {
+            assertEquals(ConfigEditorDestination.MAIN, destination.value)
+        }
+    }
+
+    @Test
+    fun systemBackReturnsFromTypefaceToMainEditorContent() {
+        val destination = showOverlayStartingInHook(ConfigEditorDestination.TYPEFACE)
 
         composeRule.runOnUiThread {
             composeRule.activity.onBackPressedDispatcher.onBackPressed()
@@ -95,9 +130,16 @@ class AppConfigEditorOverlayBehaviorTest {
                             onBack = returnToMain,
                             animateTabSize = false
                         )
+                    } else if (currentDestination.isChildPage) {
+                        BackHandler(onBack = returnToMain)
+                        Text("Typeface editor", Modifier.testTag(TypefaceEditorTag))
                     } else {
                         LaunchedEffect(Unit) { reportAdvancedAnchor(320.dp) }
-                        Text("Main editor", Modifier.testTag(MainEditorTag))
+                        Column {
+                            Text("Main editor", Modifier.testTag(MainEditorTag))
+                            Spacer(Modifier.height(400.dp))
+                            Text("Advanced editor", Modifier.testTag(AdvancedEditorTag))
+                        }
                     }
                 }
             }
@@ -107,5 +149,7 @@ class AppConfigEditorOverlayBehaviorTest {
 
     private companion object {
         const val MainEditorTag = "app-editor-main"
+        const val TypefaceEditorTag = "app-editor-typeface"
+        const val AdvancedEditorTag = "app-editor-advanced"
     }
 }

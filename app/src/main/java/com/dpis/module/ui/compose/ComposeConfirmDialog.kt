@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -31,6 +32,12 @@ import androidx.appcompat.app.AlertDialog
 import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowSizer
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+
+/** Visual contract shared by ordinary phone/tablet dialogs with cancel/confirm actions. */
+internal object DpisConfirmDialogUiTokens {
+    val ActionHeight = 44.dp
+    val ActionShape = RoundedCornerShape(16.dp)
+}
 
 /** Shared Compose replacement for the legacy full-width confirmation dialog layout. */
 object ComposeConfirmDialog {
@@ -121,11 +128,11 @@ internal fun ConfirmDialogContent(
         ) {
             // Standard two-action dialogs keep the reversible action on the left and the
             // advancing/destructive action on the right. Both actions share the editor's
-            // rounded-rectangle control language instead of using pill-shaped full-width rows.
+            // compact rounded-rectangle control language instead of pill-shaped full-width rows.
             OutlinedButton(
                 onClick = onCancel,
-                modifier = Modifier.weight(1f),
-                shape = AppConfigSheetUiTokens.ActionShape,
+                modifier = Modifier.weight(1f).height(DpisConfirmDialogUiTokens.ActionHeight),
+                shape = DpisConfirmDialogUiTokens.ActionShape,
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
             ) {
                 Text(text = androidx.compose.ui.res.stringResource(
@@ -133,8 +140,8 @@ internal fun ConfirmDialogContent(
             }
             OutlinedButton(
                 onClick = onConfirm,
-                modifier = Modifier.weight(1f),
-                shape = AppConfigSheetUiTokens.ActionShape,
+                modifier = Modifier.weight(1f).height(DpisConfirmDialogUiTokens.ActionHeight),
+                shape = DpisConfirmDialogUiTokens.ActionShape,
                 colors = ButtonDefaults.outlinedButtonColors(
                     containerColor = colorResource(R.color.dpis_warn_container),
                     contentColor = colorResource(R.color.dpis_on_warn_container)

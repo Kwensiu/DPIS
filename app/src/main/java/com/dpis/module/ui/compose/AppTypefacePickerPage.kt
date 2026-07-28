@@ -1,6 +1,7 @@
 package com.dpis.module.ui.compose
 
 import android.content.Intent
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,45 +11,59 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.ConfigStoreFactory
 import com.dpis.module.R
 import com.dpis.module.fonts.FontLibraryActivity
-import com.dpis.module.fonts.FontLibraryEntry
-import com.dpis.module.fonts.SystemFontEntry
 import com.dpis.module.fonts.SystemFontRegistry
 
-/** Compose version of the former centered typeface dialog. */
+/** Typeface selection rendered as a child page inside an existing configuration editor. */
 @Composable
-internal fun AppTypefacePickerDialog(
+internal fun AppTypefacePickerPage(
     selectedTypefaceId: String?,
     onTypefaceSelected: (String?) -> Unit,
-    onDismissRequest: () -> Unit
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    BackHandler(onBack = onBack)
+    TypefacePickerContent(
+        selectedTypefaceId = selectedTypefaceId,
+        onTypefaceSelected = onTypefaceSelected,
+        onBack = onBack,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun TypefacePickerContent(
+    selectedTypefaceId: String?,
+    onTypefaceSelected: (String?) -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val defaultTypefaceLabel = stringResource(R.string.dialog_typeface_default)
@@ -76,26 +91,27 @@ internal fun AppTypefacePickerDialog(
             )
         }
     }
-    Dialog(
-        onDismissRequest = onDismissRequest,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+    Column(
+        modifier.fillMaxWidth().padding(
+            start = TypefacePickerUiTokens.TypefaceSurfacePadding,
+            top = 8.dp,
+            end = TypefacePickerUiTokens.TypefaceSurfacePadding,
+            bottom = 16.dp
+        )
     ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth(LegacyDialogUiTokens.TypefaceDialogWidthFraction)
-                .widthIn(max = LegacyDialogUiTokens.TypefaceDialogMaxWidth),
-            shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 6.dp
-        ) {
-            Column(
-                Modifier.fillMaxWidth().padding(
-                    start = LegacyDialogUiTokens.TypefaceSurfacePadding,
-                    top = 8.dp,
-                    end = LegacyDialogUiTokens.TypefaceSurfacePadding,
-                    bottom = 16.dp
+        Box(Modifier.fillMaxWidth()) {
+            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
+                Icon(
+                    painterResource(R.drawable.ic_arrow_back_24),
+                    contentDescription = stringResource(R.string.system_settings_back)
                 )
-            ) {
+            }
+            Text(
+                stringResource(R.string.dialog_typeface_dialog_title),
+                modifier = Modifier.align(Alignment.Center),
+                style = MaterialTheme.typography.titleLarge
+            )
+        }
                 PrimaryTabRow(
                     selectedTabIndex = selectedTab,
                 ) {
@@ -123,7 +139,7 @@ internal fun AppTypefacePickerDialog(
                     Box(Modifier.height(listHeight)) {
                         ListItem(
                             modifier = Modifier.clickable {
-                                onDismissRequest()
+                                onBack()
                                 context.startActivity(Intent(context, FontLibraryActivity::class.java))
                             }
                         ) { Text(stringResource(R.string.dialog_typeface_imported_empty)) }
@@ -137,25 +153,23 @@ internal fun AppTypefacePickerDialog(
                     )
                 }
                 Row(
-                    Modifier.fillMaxWidth().padding(top = LegacyDialogUiTokens.FooterTopGap),
-                    horizontalArrangement = Arrangement.spacedBy(LegacyDialogUiTokens.FooterButtonGap)
+                    Modifier.fillMaxWidth().padding(top = TypefacePickerUiTokens.FooterTopGap),
+                    horizontalArrangement = Arrangement.spacedBy(TypefacePickerUiTokens.FooterButtonGap)
                 ) {
                     Button(
-                        onClick = onDismissRequest,
-                        modifier = Modifier.weight(1f).height(LegacyDialogUiTokens.FooterButtonHeight),
+                        onClick = onBack,
+                        modifier = Modifier.weight(1f).height(TypefacePickerUiTokens.FooterButtonHeight),
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
                     ) { Text(stringResource(R.string.dialog_typeface_done_action)) }
                     OutlinedButton(
                         onClick = {
-                            onDismissRequest()
+                            onBack()
                             context.startActivity(Intent(context, FontLibraryActivity::class.java))
                         },
-                        modifier = Modifier.height(LegacyDialogUiTokens.FooterButtonHeight),
+                        modifier = Modifier.height(TypefacePickerUiTokens.FooterButtonHeight),
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 0.dp)
                     ) { Text(stringResource(R.string.dialog_typeface_manage_action)) }
                 }
-            }
-        }
     }
 }
 
@@ -171,9 +185,9 @@ private fun TypefaceOptionList(
             Button(
                 onClick = { onTypefaceSelected(option.id) },
                 modifier = Modifier.fillMaxWidth()
-                    .padding(vertical = LegacyDialogUiTokens.TypefaceOptionRowPadding)
-                    .height(LegacyDialogUiTokens.TypefaceOptionHeight),
-                shape = LegacyDialogUiTokens.TypefaceOptionShape,
+                    .padding(vertical = TypefacePickerUiTokens.TypefaceOptionRowPadding)
+                    .height(TypefacePickerUiTokens.TypefaceOptionHeight),
+                shape = TypefacePickerUiTokens.TypefaceOptionShape,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (option.id == selectedTypefaceId) {
                         MaterialTheme.colorScheme.secondaryContainer
@@ -187,7 +201,7 @@ private fun TypefaceOptionList(
                     }
                 ),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    horizontal = LegacyDialogUiTokens.TypefaceOptionPadding,
+                    horizontal = TypefacePickerUiTokens.TypefaceOptionPadding,
                     vertical = 0.dp
                 )
             ) {
@@ -213,5 +227,5 @@ private fun typefaceListHeight(): androidx.compose.ui.unit.Dp {
     // The legacy dialog reduced its fixed 360dp list on short landscape windows so the footer
     // remained visible. Keep that contract while reserving space for the tab row and actions.
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-    return (screenHeight * 0.82f - 220.dp).coerceIn(120.dp, LegacyDialogUiTokens.TypefaceListHeight)
+    return (screenHeight * 0.82f - 220.dp).coerceIn(120.dp, TypefacePickerUiTokens.TypefaceListHeight)
 }

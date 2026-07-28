@@ -92,7 +92,6 @@ fun AppConfigEditorContent(
     val viewportBringIntoView = remember { BringIntoViewRequester() }
     val fontBringIntoView = remember { BringIntoViewRequester() }
     val wechatBringIntoView = remember { BringIntoViewRequester() }
-    var typefacePickerVisible by remember { androidx.compose.runtime.mutableStateOf(false) }
     val viewportTargetSpec = AppConfigInputValidation.parseViewportTargetSpec(
         draft.viewportInputFor(draft.viewportMode),
         draft.viewportMode
@@ -344,7 +343,7 @@ fun AppConfigEditorContent(
         DpisEditorTypefaceHookRow(
             primary = {
                 OutlinedButton(
-                    onClick = { typefacePickerVisible = true },
+                    onClick = { state.actions.navigate(ConfigEditorDestination.TYPEFACE) },
                     modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                     shape = AppConfigSheetUiTokens.FieldAndActionShape,
                     colors = ButtonDefaults.outlinedButtonColors(
@@ -509,16 +508,6 @@ fun AppConfigEditorContent(
             Text(stringResource(R.string.dialog_disable_button))
         }
         Spacer(Modifier.height(4.dp))
-    }
-    if (typefacePickerVisible) {
-        AppTypefacePickerDialog(
-            selectedTypefaceId = draft.selectedTypefaceId,
-            onTypefaceSelected = { typefaceId ->
-                state.actions.updateTypeface(typefaceId)
-                typefacePickerVisible = false
-            },
-            onDismissRequest = { typefacePickerVisible = false }
-        )
     }
 }
 
