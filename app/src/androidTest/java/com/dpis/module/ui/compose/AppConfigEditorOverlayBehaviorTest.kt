@@ -93,6 +93,22 @@ class AppConfigEditorOverlayBehaviorTest {
     }
 
     @Test
+    fun enteringTypefaceExpandsTheSheet() {
+        val expandedContentOwnsHeight = AtomicBoolean(false)
+        val destination = showOverlayStartingInHook(
+            ConfigEditorDestination.MAIN,
+            expandedContentOwnsHeight = expandedContentOwnsHeight
+        )
+        composeRule.onNodeWithTag(MainEditorTag).assertExists()
+
+        composeRule.runOnIdle {
+            destination.value = ConfigEditorDestination.TYPEFACE
+        }
+
+        composeRule.waitUntil(timeoutMillis = 3_000) { expandedContentOwnsHeight.get() }
+    }
+
+    @Test
     fun scrimDismissClosesTheWholeEditorSession() {
         val dismissed = AtomicBoolean(false)
         showOverlayStartingInHook(ConfigEditorDestination.MAIN, dismissed)
@@ -103,7 +119,8 @@ class AppConfigEditorOverlayBehaviorTest {
 
     private fun showOverlayStartingInHook(
         initialDestination: ConfigEditorDestination,
-        dismissed: AtomicBoolean = AtomicBoolean(false)
+        dismissed: AtomicBoolean = AtomicBoolean(false),
+        expandedContentOwnsHeight: AtomicBoolean? = null
     ): androidx.compose.runtime.MutableState<ConfigEditorDestination> {
         val destination = mutableStateOf(initialDestination)
         composeRule.setContent {
@@ -116,7 +133,8 @@ class AppConfigEditorOverlayBehaviorTest {
                         currentDestination = currentDestination.backDestination()
                     },
                     topChrome = { Text("Editor") }
-                ) { reportAdvancedAnchor, _, returnToMain ->
+                ) { reportAdvancedAnchor, contentOwnsHeight, returnToMain ->
+                    expandedContentOwnsHeight?.set(contentOwnsHeight)
                     if (currentDestination.isHookChain) {
                         HookChainEditorPage(
                             destination = currentDestination,

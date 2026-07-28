@@ -121,6 +121,12 @@ fun AppConfigEditorOverlay(
             hasExpandedOnce = false
         }
         previousDestination = destination
+        if (destination == ConfigEditorDestination.TYPEFACE &&
+            bottomSheetState.currentValue != SheetValue.Hidden) {
+            // Typeface selection owns a persistent bottom management action, so it always uses
+            // the sheet's maximum anchor instead of inheriting MAIN's partial anchor.
+            bottomSheetState.expand()
+        }
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val minPeekHeight = maxHeight * 0.3f
@@ -218,7 +224,11 @@ fun AppConfigEditorOverlay(
                 && bottomSheetState.currentValue == SheetValue.Hidden
                 && bottomSheetState.targetValue == SheetValue.Hidden
                 && !dismissalInProgress) {
-            bottomSheetState.partialExpand()
+            if (destination == ConfigEditorDestination.TYPEFACE) {
+                bottomSheetState.expand()
+            } else {
+                bottomSheetState.partialExpand()
+            }
         }
     }
 }

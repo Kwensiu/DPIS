@@ -3,14 +3,15 @@ package com.dpis.module.ui.compose
 import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.OutlinedButton
@@ -18,20 +19,19 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
@@ -40,6 +40,10 @@ import com.dpis.module.ConfigStoreFactory
 import com.dpis.module.R
 import com.dpis.module.fonts.FontLibraryActivity
 import com.dpis.module.fonts.SystemFontRegistry
+import kotlinx.coroutines.launch
+
+internal const val TypefacePickerPagerTestTag = "typeface-picker-pager"
+internal const val TypefacePickerManageTestTag = "typeface-picker-manage"
 
 /** Typeface selection rendered as a child page inside an existing configuration editor. */
 @Composable
@@ -68,12 +72,10 @@ private fun TypefacePickerContent(
     val context = LocalContext.current
     val defaultTypefaceLabel = stringResource(R.string.dialog_typeface_default)
     // Match the legacy editor: an already selected imported font opens its own catalogue.
-    var selectedTab by remember(selectedTypefaceId) {
-        mutableIntStateOf(
-            if (!selectedTypefaceId.isNullOrBlank()
-                    && !SystemFontRegistry.isSystemFontId(selectedTypefaceId)) 1 else 0
-        )
-    }
+    val initialPage = if (!selectedTypefaceId.isNullOrBlank()
+            && !SystemFontRegistry.isSystemFontId(selectedTypefaceId)) 1 else 0
+    val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { 2 })
+    val pagerScope = rememberCoroutineScope()
     val systemEntries = remember {
         SystemFontRegistry.listRecommendedFonts().map {
             TypefaceOption(it.id(), it.displayName(), SystemFontRegistry.loadTypeface(it.id()))
@@ -92,7 +94,7 @@ private fun TypefacePickerContent(
         }
     }
     Column(
-        modifier.fillMaxWidth().padding(
+        modifier.fillMaxWidth().height(typefacePageHeight()).padding(
             start = TypefacePickerUiTokens.TypefaceSurfacePadding,
             top = 8.dp,
             end = TypefacePickerUiTokens.TypefaceSurfacePadding,
@@ -112,64 +114,65 @@ private fun TypefacePickerContent(
                 style = MaterialTheme.typography.titleLarge
             )
         }
-                PrimaryTabRow(
-                    selectedTabIndex = selectedTab,
-                ) {
-                    Tab(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        text = { Text(stringResource(R.string.dialog_typeface_tab_system)) }
-                    )
-                    Tab(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        text = { Text(stringResource(R.string.dialog_typeface_tab_imported)) }
-                    )
-                }
-                Spacer(Modifier.height(12.dp))
-                val listHeight = typefaceListHeight()
-                if (selectedTab == 0) {
-                    TypefaceOptionList(
-                        options = listOf(TypefaceOption(null, defaultTypefaceLabel, null)) + systemEntries,
-                        selectedTypefaceId = selectedTypefaceId,
-                        onTypefaceSelected = onTypefaceSelected,
-                        modifier = Modifier.height(listHeight)
-                    )
-                } else if (importedEntries.isEmpty()) {
-                    Box(Modifier.height(listHeight)) {
-                        ListItem(
-                            modifier = Modifier.clickable {
-                                onBack()
-                                context.startActivity(Intent(context, FontLibraryActivity::class.java))
-                            }
-                        ) { Text(stringResource(R.string.dialog_typeface_imported_empty)) }
-                    }
-                } else {
-                    TypefaceOptionList(
-                        options = listOf(TypefaceOption(null, defaultTypefaceLabel, null)) + importedEntries,
-                        selectedTypefaceId = selectedTypefaceId,
-                        onTypefaceSelected = onTypefaceSelected,
-                        modifier = Modifier.height(listHeight)
-                    )
-                }
-                Row(
-                    Modifier.fillMaxWidth().padding(top = TypefacePickerUiTokens.FooterTopGap),
-                    horizontalArrangement = Arrangement.spacedBy(TypefacePickerUiTokens.FooterButtonGap)
-                ) {
-                    Button(
-                        onClick = onBack,
-                        modifier = Modifier.weight(1f).height(TypefacePickerUiTokens.FooterButtonHeight),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
-                    ) { Text(stringResource(R.string.dialog_typeface_done_action)) }
-                    OutlinedButton(
-                        onClick = {
+        SecondaryTabRow(selectedTabIndex = pagerState.currentPage) {
+            listOf(
+                R.string.dialog_typeface_tab_system,
+                R.string.dialog_typeface_tab_imported
+            ).forEachIndexed { page, titleRes ->
+                Tab(
+                    selected = pagerState.currentPage == page,
+                    onClick = {
+                        pagerScope.launch { pagerState.animateScrollToPage(page) }
+                    },
+                    text = { Text(stringResource(titleRes)) }
+                )
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxWidth().weight(1f).testTag(TypefacePickerPagerTestTag),
+            verticalAlignment = Alignment.Top
+        ) { page ->
+            if (page == 0) {
+                TypefaceOptionList(
+                    options = listOf(TypefaceOption(null, defaultTypefaceLabel, null)) + systemEntries,
+                    selectedTypefaceId = selectedTypefaceId,
+                    onTypefaceSelected = onTypefaceSelected,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else if (importedEntries.isEmpty()) {
+                Box(Modifier.fillMaxSize()) {
+                    ListItem(
+                        modifier = Modifier.clickable {
                             onBack()
                             context.startActivity(Intent(context, FontLibraryActivity::class.java))
-                        },
-                        modifier = Modifier.height(TypefacePickerUiTokens.FooterButtonHeight),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 0.dp)
-                    ) { Text(stringResource(R.string.dialog_typeface_manage_action)) }
+                        }
+                    ) { Text(stringResource(R.string.dialog_typeface_imported_empty)) }
                 }
+            } else {
+                TypefaceOptionList(
+                    options = listOf(TypefaceOption(null, defaultTypefaceLabel, null)) + importedEntries,
+                    selectedTypefaceId = selectedTypefaceId,
+                    onTypefaceSelected = onTypefaceSelected,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+        Spacer(Modifier.height(TypefacePickerUiTokens.FooterTopGap))
+        OutlinedButton(
+            onClick = {
+                onBack()
+                context.startActivity(Intent(context, FontLibraryActivity::class.java))
+            },
+            modifier = Modifier.fillMaxWidth()
+                .height(TypefacePickerUiTokens.FooterButtonHeight)
+                .testTag(TypefacePickerManageTestTag),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                horizontal = 14.dp,
+                vertical = 0.dp
+            )
+        ) { Text(stringResource(R.string.dialog_typeface_manage_action)) }
     }
 }
 
@@ -223,9 +226,9 @@ private data class TypefaceOption(
 )
 
 @Composable
-private fun typefaceListHeight(): androidx.compose.ui.unit.Dp {
-    // The legacy dialog reduced its fixed 360dp list on short landscape windows so the footer
-    // remained visible. Keep that contract while reserving space for the tab row and actions.
+private fun typefacePageHeight(): androidx.compose.ui.unit.Dp {
+    // The expanded editor sheet keeps the management action visible while the pager owns the
+    // remaining bounded list space on both portrait and short landscape windows.
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-    return (screenHeight * 0.82f - 220.dp).coerceIn(120.dp, TypefacePickerUiTokens.TypefaceListHeight)
+    return (screenHeight * 0.82f - AppConfigSheetUiTokens.TopChromeHeight).coerceAtLeast(280.dp)
 }
