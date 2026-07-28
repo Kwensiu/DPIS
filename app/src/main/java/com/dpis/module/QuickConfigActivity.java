@@ -15,6 +15,7 @@ import com.dpis.module.runtime.RuntimeConfigDelivery;
 
 
 import com.dpis.module.diagnostics.FeedbackDiagnosticResultSheet;
+import com.dpis.module.diagnostics.FeedbackDiagnosticPackagingDialog;
 
 import com.dpis.module.diagnostics.FeedbackDiagnosticExportBuilder;
 
@@ -884,15 +885,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
 
     private void showFeedbackDiagnosticPackagingDialog() {
         dismissFeedbackDiagnosticPackagingDialog();
-        View dialogView = LayoutInflater.from(this)
-                .inflate(R.layout.dialog_feedback_diagnostic_packaging, null, false);
-        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setView(dialogView)
-                .setCancelable(false)
-                .create();
-        dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, this);
-        activeFeedbackDiagnosticPackagingDialog = dialog;
+        activeFeedbackDiagnosticPackagingDialog = FeedbackDiagnosticPackagingDialog.show(this);
     }
 
     private void dismissFeedbackDiagnosticPackagingDialog() {
