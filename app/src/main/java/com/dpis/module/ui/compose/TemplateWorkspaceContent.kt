@@ -346,22 +346,36 @@ fun TemplateWorkspaceContent(
     if (deleteConfirmationVisible) {
         AlertDialog(
             onDismissRequest = { deleteConfirmationVisible = false },
-            title = { Text(stringResource(R.string.quick_template_delete_title)) },
+            title = {
+                Text(
+                    stringResource(R.string.quick_template_delete_title),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
             text = {
-                Text(stringResource(
-                    R.string.quick_template_delete_message,
-                    editorDraft.form.nameInput
-                ))
+                Text(
+                    stringResource(
+                        R.string.quick_template_delete_message,
+                        editorDraft.form.nameInput
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             },
             confirmButton = {
-                TextButton(onClick = {
-                    deleteConfirmationVisible = false
-                    val result = state.actions.deleteQuickTemplate(editorDraft.form.templateId)
-                    if (result.success) closeEditor()
-                }) { Text(stringResource(R.string.font_library_delete_action)) }
+                TextButton(
+                    onClick = {
+                        deleteConfirmationVisible = false
+                        val result = state.actions.deleteQuickTemplate(editorDraft.form.templateId)
+                        if (result.success) closeEditor()
+                    },
+                    shape = AppConfigSheetUiTokens.ActionShape
+                ) { Text(stringResource(R.string.font_library_delete_action)) }
             },
             dismissButton = {
-                TextButton(onClick = { deleteConfirmationVisible = false }) {
+                TextButton(
+                    onClick = { deleteConfirmationVisible = false },
+                    shape = AppConfigSheetUiTokens.ActionShape
+                ) {
                     Text(stringResource(R.string.dialog_cancel_button))
                 }
             }

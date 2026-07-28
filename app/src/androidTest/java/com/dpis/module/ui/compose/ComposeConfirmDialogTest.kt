@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.dpis.module.R
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -34,13 +35,20 @@ class ComposeConfirmDialogTest {
 
         composeRule.onNodeWithText("High-risk action").assertIsDisplayed()
         composeRule.onNodeWithText("This may crash the system.").assertIsDisplayed()
-        composeRule.onNodeWithText(
+        val confirm = composeRule.onNodeWithText(
             composeRule.activity.getString(R.string.dialog_process_action_confirm_positive)
-        ).performClick()
-        composeRule.runOnIdle { assertTrue(confirmed) }
-        composeRule.onNodeWithText(
+        )
+        val cancel = composeRule.onNodeWithText(
             composeRule.activity.getString(R.string.dialog_process_action_confirm_negative)
-        ).performClick()
+        )
+        val confirmBounds = confirm.fetchSemanticsNode().boundsInRoot
+        val cancelBounds = cancel.fetchSemanticsNode().boundsInRoot
+        assertTrue("Cancel must be left of confirm", cancelBounds.center.x < confirmBounds.center.x)
+        assertEquals(cancelBounds.width, confirmBounds.width, 1f)
+
+        confirm.performClick()
+        composeRule.runOnIdle { assertTrue(confirmed) }
+        cancel.performClick()
         composeRule.runOnIdle { assertTrue(canceled) }
     }
 

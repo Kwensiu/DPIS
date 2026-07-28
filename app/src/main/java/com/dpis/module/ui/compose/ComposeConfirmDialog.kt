@@ -2,8 +2,10 @@ package com.dpis.module.ui.compose
 
 import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -99,6 +101,7 @@ internal fun ConfirmDialogContent(
             modifier = Modifier.fillMaxWidth(),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(dimensionResource(R.dimen.dialog_body_spacing)))
@@ -110,26 +113,37 @@ internal fun ConfirmDialogContent(
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
-        OutlinedButton(
-            onClick = onConfirm,
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.outlinedButtonColors(
-                containerColor = colorResource(R.color.dpis_warn_container),
-                contentColor = colorResource(R.color.dpis_on_warn_container)
-            ),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+            horizontalArrangement = Arrangement.spacedBy(
+                dimensionResource(R.dimen.dialog_action_spacing_between)
+            )
         ) {
-            Text(text = androidx.compose.ui.res.stringResource(
-                R.string.dialog_process_action_confirm_positive))
-        }
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_between)))
-        OutlinedButton(
-            onClick = onCancel,
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
-        ) {
-            Text(text = androidx.compose.ui.res.stringResource(
-                R.string.dialog_process_action_confirm_negative))
+            // Standard two-action dialogs keep the reversible action on the left and the
+            // advancing/destructive action on the right. Both actions share the editor's
+            // rounded-rectangle control language instead of using pill-shaped full-width rows.
+            OutlinedButton(
+                onClick = onCancel,
+                modifier = Modifier.weight(1f),
+                shape = AppConfigSheetUiTokens.ActionShape,
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+            ) {
+                Text(text = androidx.compose.ui.res.stringResource(
+                    R.string.dialog_process_action_confirm_negative))
+            }
+            OutlinedButton(
+                onClick = onConfirm,
+                modifier = Modifier.weight(1f),
+                shape = AppConfigSheetUiTokens.ActionShape,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = colorResource(R.color.dpis_warn_container),
+                    contentColor = colorResource(R.color.dpis_on_warn_container)
+                ),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+            ) {
+                Text(text = androidx.compose.ui.res.stringResource(
+                    R.string.dialog_process_action_confirm_positive))
+            }
         }
     }
 }
@@ -139,6 +153,21 @@ internal fun ConfirmDialogContent(
 private fun ConfirmDialogContentPreview() {
     DpisTheme(darkTheme = false, dynamicColor = false) {
         Surface(color = Color.White) {
+            ConfirmDialogContent(
+                title = "Confirm action",
+                message = "This operation affects a system application.",
+                onConfirm = {},
+                onCancel = {}
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF121212)
+@Composable
+private fun ConfirmDialogContentDarkPreview() {
+    DpisTheme(darkTheme = true, dynamicColor = false) {
+        Surface(color = MaterialTheme.colorScheme.surface) {
             ConfirmDialogContent(
                 title = "Confirm action",
                 message = "This operation affects a system application.",
