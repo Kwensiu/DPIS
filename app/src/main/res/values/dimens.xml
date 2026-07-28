@@ -386,13 +386,6 @@
     <dimen name="dialog_typeface_footer_spacing_top">14dp</dimen>
     <dimen name="dialog_typeface_footer_button_height">48dp</dimen>
     <dimen name="dialog_typeface_footer_button_spacing">10dp</dimen>
-    <dimen name="dialog_template_sort_list_height">320dp</dimen>
-    <dimen name="dialog_template_sort_title_inset_start">8dp</dimen>
-    <dimen name="dialog_template_sort_row_spacing">6dp</dimen>
-    <dimen name="dialog_template_sort_row_padding_horizontal">12dp</dimen>
-    <dimen name="dialog_template_sort_row_padding_vertical">10dp</dimen>
-    <dimen name="dialog_template_sort_drag_icon_size">24dp</dimen>
-    <dimen name="dialog_template_sort_drag_icon_spacing_end">8dp</dimen>
 
     <!-- Debug and filter sheets. -->
     <dimen name="font_debug_dialog_surface_padding_horizontal">20dp</dimen>

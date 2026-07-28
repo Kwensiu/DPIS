@@ -93,12 +93,11 @@ public class TemplateWorkspaceLayoutSmokeTest {
         assertTrue(card.contains("@drawable/ic_checklist_rtl_24"));
         assertTrue(card.contains("@drawable/bg_template_workspace_apply_button"));
         assertTrue(card.contains("@drawable/ic_done_all_24"));
-        assertTrue(read("src/main/res/layout/dialog_quick_template_sort.xml")
-                .contains("@string/quick_template_sort_title"));
-        assertTrue(read("src/main/res/layout/dialog_quick_template_sort.xml")
-                .contains("@dimen/dialog_template_sort_title_inset_start"));
-        assertTrue(read("src/main/res/layout/item_quick_template_sort.xml")
-                .contains("@drawable/ic_drag_indicator_24"));
+        String sortDialog = read(
+                "src/main/java/com/dpis/module/templates/QuickTemplateSortDialog.kt");
+        assertTrue(sortDialog.contains("QuickTemplateSortContent("));
+        assertTrue(sortDialog.contains("detectDragGesturesAfterLongPress"));
+        assertTrue(sortDialog.contains("R.drawable.ic_drag_indicator_24"));
         assertTrue(strings.contains("<string name=\"template_workspace_action_apply\">Apply</string>"));
         assertTrue(strings.contains("<string name=\"template_workspace_summary_empty\">No custom values.</string>"));
         assertTrue(strings.contains("<string name=\"template_workspace_action_edit_template\">Edit template</string>"));
@@ -136,9 +135,7 @@ public class TemplateWorkspaceLayoutSmokeTest {
         assertTrue(adapter.contains("R.id.quick_template_select_button"));
         assertTrue(read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.java")
                 .contains("quick_template_sort_button"));
-        assertTrue(read("src/main/java/com/dpis/module/templates/QuickTemplateSortDialog.java")
-                .contains("ItemTouchHelper"));
-        assertTrue(read("src/main/java/com/dpis/module/templates/QuickTemplateSortDialog.java")
+        assertTrue(read("src/main/java/com/dpis/module/templates/QuickTemplateSortDialog.kt")
                 .contains("DialogWindowSizer.applyLargeWidth(dialog, activity)"));
         assertFalse(adapter.contains("quick_template_updated"));
     }
