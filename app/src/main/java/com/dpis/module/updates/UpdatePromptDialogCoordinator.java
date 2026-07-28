@@ -7,6 +7,8 @@ import android.view.View;
 import androidx.appcompat.app.AlertDialog;
 
 import com.dpis.module.R;
+import com.dpis.module.ui.WatchUiMode;
+import com.dpis.module.ui.compose.StartupDisclaimerDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -72,7 +74,11 @@ public final class UpdatePromptDialogCoordinator {
                 || activity.isDestroyed()) {
             return false;
         }
-        showStartupDisclaimerDialog(acceptance, onAccepted);
+        if (WatchUiMode.shouldUseCompactUi(activity)) {
+            showLegacyStartupDisclaimerDialog(acceptance, onAccepted);
+        } else {
+            showComposeStartupDisclaimerDialog(acceptance, onAccepted);
+        }
         return true;
     }
 
@@ -198,7 +204,23 @@ public final class UpdatePromptDialogCoordinator {
                 });
     }
 
-    private void showStartupDisclaimerDialog(
+    private void showComposeStartupDisclaimerDialog(
+            StartupDisclaimerAcceptance acceptance,
+            Runnable onAccepted) {
+        StartupDisclaimerDialog.show(
+                activity,
+                acceptance::markAccepted,
+                () -> host.showToast(R.string.startup_disclaimer_save_failed),
+                () -> {
+                    if (onAccepted != null) {
+                        onAccepted.run();
+                    }
+                },
+                host::finishActivity);
+    }
+
+    /** Compact Wear devices retain the layout-qualified View implementation. */
+    private void showLegacyStartupDisclaimerDialog(
             StartupDisclaimerAcceptance acceptance,
             Runnable onAccepted) {
         View dialogView = LayoutInflater.from(activity)

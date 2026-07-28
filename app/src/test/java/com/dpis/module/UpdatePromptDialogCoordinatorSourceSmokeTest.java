@@ -17,12 +17,21 @@ public class UpdatePromptDialogCoordinatorSourceSmokeTest {
     public void coordinatorOwnsDisclaimerAndManualUpdatePromptComposition() throws IOException {
         String source = read("src/main/java/com/dpis/module/updates/UpdatePromptDialogCoordinator.java");
         String dialogSource = read("src/main/java/com/dpis/module/updates/UpdateAvailableDialog.java");
+        String disclaimerSource = read(
+                "src/main/java/com/dpis/module/ui/compose/StartupDisclaimerDialog.kt");
 
         assertTrue(source.contains("final class UpdatePromptDialogCoordinator"));
         assertTrue(source.contains("boolean maybeShowStartupDisclaimerDialog("));
         assertTrue(source.contains("void showUpdateAvailableDialog("));
         assertTrue(source.contains("new MaterialAlertDialogBuilder(activity)"));
         assertTrue(source.contains("R.layout.dialog_startup_disclaimer"));
+        assertTrue(source.contains("WatchUiMode.shouldUseCompactUi(activity)"));
+        assertTrue(source.contains("showLegacyStartupDisclaimerDialog(acceptance, onAccepted)"));
+        assertTrue(source.contains("showComposeStartupDisclaimerDialog(acceptance, onAccepted)"));
+        assertTrue(source.contains("StartupDisclaimerDialog.show("));
+        assertTrue(disclaimerSource.contains("fun StartupDisclaimerContent("));
+        assertTrue(disclaimerSource.contains("dialog.setCancelable(false)"));
+        assertTrue(disclaimerSource.contains("KeyEvent.KEYCODE_BACK"));
         assertTrue(source.contains("interface StartupDisclaimerAcceptance"));
         assertTrue(source.contains("acceptance.isAccepted()"));
         assertTrue(source.contains("acceptance.markAccepted()"));
