@@ -293,7 +293,8 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(overlay.contains("LaunchedEffect(advancedAnchor)"));
         assertTrue(overlay.contains("value == SheetValue.Hidden"));
         assertTrue(overlay.contains("sheetDragHandle = null"));
-        assertTrue(overlay.contains("sheetPeekHeight = measuredPeekHeight"));
+        assertTrue(overlay.contains(
+                "sheetPeekHeight = if (destination == ConfigEditorDestination.TYPEFACE)"));
         assertTrue(overlay.contains("advancedAnchor"));
         assertTrue(overlay.contains("maxHeight * 0.75f"));
         assertTrue(coordinator.contains("R.string.dialog_advanced_wizard_hint"));

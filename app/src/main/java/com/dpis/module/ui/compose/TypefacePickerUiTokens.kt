@@ -5,7 +5,8 @@ import androidx.compose.ui.unit.dp
 
 /** Stable dimensions shared by the embedded typeface picker pages. */
 internal object TypefacePickerUiTokens {
-    val TypefaceSurfacePadding = 20.dp
+    val HorizontalContentPadding = 20.dp
+    val PageSpacing = 8.dp
     val TypefaceOptionHeight = 48.dp
     val TypefaceOptionPadding = 14.dp
     val TypefaceOptionShape = RoundedCornerShape(16.dp)

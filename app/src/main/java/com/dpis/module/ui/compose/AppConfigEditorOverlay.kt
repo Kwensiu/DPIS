@@ -168,7 +168,14 @@ fun AppConfigEditorOverlay(
                 modifier = Modifier.fillMaxSize(),
                 scaffoldState = scaffoldState,
                 containerColor = Color.Transparent,
-                sheetPeekHeight = measuredPeekHeight,
+                // Typeface is an expanded-or-dismissed child page. A zero peek removes its
+                // visible partial anchor while keeping sheet gestures available outside the
+                // font lists; MAIN restores its measured advanced-section anchor.
+                sheetPeekHeight = if (destination == ConfigEditorDestination.TYPEFACE) {
+                    0.dp
+                } else {
+                    measuredPeekHeight
+                },
                 sheetContainerColor = MaterialTheme.colorScheme.surface,
                 sheetContentColor = MaterialTheme.colorScheme.onSurface,
                 sheetTonalElevation = 0.dp,

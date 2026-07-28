@@ -14,6 +14,10 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Icon
@@ -36,6 +40,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Velocity
 import com.dpis.module.ConfigStoreFactory
 import com.dpis.module.R
 import com.dpis.module.fonts.FontLibraryActivity
@@ -44,6 +49,19 @@ import kotlinx.coroutines.launch
 
 internal const val TypefacePickerPagerTestTag = "typeface-picker-pager"
 internal const val TypefacePickerManageTestTag = "typeface-picker-manage"
+internal const val TypefacePickerTabRowTestTag = "typeface-picker-tab-row"
+internal const val TypefacePickerSystemListTestTag = "typeface-picker-system-list"
+
+private val ContainTypefaceListVerticalScroll = object : NestedScrollConnection {
+    override fun onPostScroll(
+        consumed: Offset,
+        available: Offset,
+        source: NestedScrollSource
+    ): Offset = Offset(x = 0f, y = available.y)
+
+    override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity =
+        Velocity(x = 0f, y = available.y)
+}
 
 /** Typeface selection rendered as a child page inside an existing configuration editor. */
 @Composable
@@ -95,13 +113,15 @@ private fun TypefacePickerContent(
     }
     Column(
         modifier.fillMaxWidth().height(typefacePageHeight()).padding(
-            start = TypefacePickerUiTokens.TypefaceSurfacePadding,
             top = 8.dp,
-            end = TypefacePickerUiTokens.TypefaceSurfacePadding,
             bottom = 16.dp
         )
     ) {
-        Box(Modifier.fillMaxWidth()) {
+        Box(
+            Modifier.fillMaxWidth().padding(
+                horizontal = TypefacePickerUiTokens.HorizontalContentPadding
+            )
+        ) {
             IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
                 Icon(
                     painterResource(R.drawable.ic_arrow_back_24),
@@ -114,7 +134,10 @@ private fun TypefacePickerContent(
                 style = MaterialTheme.typography.titleLarge
             )
         }
-        SecondaryTabRow(selectedTabIndex = pagerState.currentPage) {
+        SecondaryTabRow(
+            selectedTabIndex = pagerState.currentPage,
+            modifier = Modifier.testTag(TypefacePickerTabRowTestTag)
+        ) {
             listOf(
                 R.string.dialog_typeface_tab_system,
                 R.string.dialog_typeface_tab_imported
@@ -132,6 +155,10 @@ private fun TypefacePickerContent(
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxWidth().weight(1f).testTag(TypefacePickerPagerTestTag),
+            pageSpacing = TypefacePickerUiTokens.PageSpacing,
+            // A page snap must end at rest. Android 12's stretch overscroll otherwise treats
+            // residual horizontal fling as an edge pull and distorts the font cards on release.
+            overscrollEffect = null,
             verticalAlignment = Alignment.Top
         ) { page ->
             if (page == 0) {
@@ -139,10 +166,17 @@ private fun TypefacePickerContent(
                     options = listOf(TypefaceOption(null, defaultTypefaceLabel, null)) + systemEntries,
                     selectedTypefaceId = selectedTypefaceId,
                     onTypefaceSelected = onTypefaceSelected,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize().padding(
+                        horizontal = TypefacePickerUiTokens.HorizontalContentPadding
+                    ).nestedScroll(ContainTypefaceListVerticalScroll)
+                        .testTag(TypefacePickerSystemListTestTag)
                 )
             } else if (importedEntries.isEmpty()) {
-                Box(Modifier.fillMaxSize()) {
+                Box(
+                    Modifier.fillMaxSize().padding(
+                        horizontal = TypefacePickerUiTokens.HorizontalContentPadding
+                    )
+                ) {
                     ListItem(
                         modifier = Modifier.clickable {
                             onBack()
@@ -155,7 +189,9 @@ private fun TypefacePickerContent(
                     options = listOf(TypefaceOption(null, defaultTypefaceLabel, null)) + importedEntries,
                     selectedTypefaceId = selectedTypefaceId,
                     onTypefaceSelected = onTypefaceSelected,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize().padding(
+                        horizontal = TypefacePickerUiTokens.HorizontalContentPadding
+                    ).nestedScroll(ContainTypefaceListVerticalScroll)
                 )
             }
         }
@@ -165,7 +201,10 @@ private fun TypefacePickerContent(
                 onBack()
                 context.startActivity(Intent(context, FontLibraryActivity::class.java))
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.padding(
+                    horizontal = TypefacePickerUiTokens.HorizontalContentPadding
+                )
+                .fillMaxWidth()
                 .height(TypefacePickerUiTokens.FooterButtonHeight)
                 .testTag(TypefacePickerManageTestTag),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(

@@ -12,6 +12,7 @@ import androidx.compose.ui.test.swipeLeft
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.dpis.module.R
 import org.junit.Rule
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -34,7 +35,16 @@ class AppTypefacePickerPageTest {
         }
 
         val importedTab = composeRule.activity.getString(R.string.dialog_typeface_tab_imported)
-        composeRule.onNodeWithTag(TypefacePickerManageTestTag).assertIsDisplayed()
+        val tabBounds = composeRule.onNodeWithTag(TypefacePickerTabRowTestTag)
+            .fetchSemanticsNode().boundsInRoot
+        val listBounds = composeRule.onNodeWithTag(TypefacePickerSystemListTestTag)
+            .fetchSemanticsNode().boundsInRoot
+        val manageBounds = composeRule.onNodeWithTag(TypefacePickerManageTestTag)
+            .assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        assertTrue(tabBounds.left < listBounds.left)
+        assertTrue(tabBounds.right > listBounds.right)
+        assertTrue(tabBounds.left < manageBounds.left)
+        assertTrue(tabBounds.right > manageBounds.right)
         composeRule.onNodeWithText(
             composeRule.activity.getString(R.string.dialog_typeface_done_action)
         ).assertDoesNotExist()

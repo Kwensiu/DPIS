@@ -1,7 +1,6 @@
 package com.dpis.module.ui.compose
 
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -17,6 +16,9 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipe
+import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -25,6 +27,7 @@ import com.dpis.module.R
 import com.dpis.module.viewport.ViewportApplyMode
 import java.util.concurrent.atomic.AtomicBoolean
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -106,6 +109,36 @@ class AppConfigEditorOverlayBehaviorTest {
         }
 
         composeRule.waitUntil(timeoutMillis = 3_000) { expandedContentOwnsHeight.get() }
+        composeRule.onNodeWithTag(TypefacePickerSystemListTestTag).performTouchInput { swipeDown() }
+        composeRule.runOnIdle {
+            assertTrue(expandedContentOwnsHeight.get())
+        }
+    }
+
+    @Test
+    fun draggingOutsideTypefaceListClosesTheSheetWithoutAVisiblePartialStop() {
+        val dismissed = AtomicBoolean(false)
+        val expandedContentOwnsHeight = AtomicBoolean(false)
+        val destination = showOverlayStartingInHook(
+            ConfigEditorDestination.MAIN,
+            dismissed,
+            expandedContentOwnsHeight
+        )
+        composeRule.onNodeWithTag(MainEditorTag).assertExists()
+
+        composeRule.runOnIdle {
+            destination.value = ConfigEditorDestination.TYPEFACE
+        }
+
+        composeRule.waitUntil(timeoutMillis = 3_000) { expandedContentOwnsHeight.get() }
+        composeRule.onNodeWithTag(SheetChromeTag).performTouchInput {
+            swipe(
+                start = center,
+                end = center.copy(y = center.y + 1_000f),
+                durationMillis = 500
+            )
+        }
+        composeRule.waitUntil(timeoutMillis = 3_000) { dismissed.get() }
     }
 
     @Test
@@ -132,7 +165,7 @@ class AppConfigEditorOverlayBehaviorTest {
                     onReturnToMain = {
                         currentDestination = currentDestination.backDestination()
                     },
-                    topChrome = { Text("Editor") }
+                    topChrome = { Text("Editor", Modifier.testTag(SheetChromeTag)) }
                 ) { reportAdvancedAnchor, contentOwnsHeight, returnToMain ->
                     expandedContentOwnsHeight?.set(contentOwnsHeight)
                     if (currentDestination.isHookChain) {
@@ -149,8 +182,11 @@ class AppConfigEditorOverlayBehaviorTest {
                             animateTabSize = false
                         )
                     } else if (currentDestination.isChildPage) {
-                        BackHandler(onBack = returnToMain)
-                        Text("Typeface editor", Modifier.testTag(TypefaceEditorTag))
+                        AppTypefacePickerPage(
+                            selectedTypefaceId = null,
+                            onTypefaceSelected = { },
+                            onBack = returnToMain
+                        )
                     } else {
                         LaunchedEffect(Unit) { reportAdvancedAnchor(320.dp) }
                         Column {
@@ -167,7 +203,7 @@ class AppConfigEditorOverlayBehaviorTest {
 
     private companion object {
         const val MainEditorTag = "app-editor-main"
-        const val TypefaceEditorTag = "app-editor-typeface"
+        const val SheetChromeTag = "app-editor-sheet-chrome"
         const val AdvancedEditorTag = "app-editor-advanced"
     }
 }
