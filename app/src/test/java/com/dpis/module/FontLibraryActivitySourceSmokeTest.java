@@ -30,7 +30,7 @@ public final class FontLibraryActivitySourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
 
         assertTrue(source.contains("private void promptImportName("));
-        assertTrue(occurrences(source, "DialogWindowSizer.applyLargeWidth(dialog, this);") >= 1);
+        assertTrue(source.contains("ComposeTextInputDialog.showLarge(this"));
     }
 
     @Test
@@ -126,7 +126,7 @@ public final class FontLibraryActivitySourceSmokeTest {
         assertTrue(manifest.contains("android:name=\".fonts.FontDetailActivity\""));
         assertTrue(detail.contains("restoreTypefaceReferences(cleared)"));
         assertTrue(detail.contains("runtime state was not restored"));
-        assertTrue(detail.contains("createNameInput(entry.collectionDisplayName)"));
+        assertTrue(detail.contains("ComposeTextInputDialog.show(this"));
     }
 
     @Test
@@ -135,7 +135,8 @@ public final class FontLibraryActivitySourceSmokeTest {
 
         assertTrue(source.contains("private void confirmDelete("));
         assertTrue(source.contains("private void confirmForceDelete("));
-        assertTrue(occurrences(source, "DialogWindowSizer.applyStandardWidth(dialog, this);") >= 2);
+        assertTrue(source.contains("showFontConfirmation(R.string.font_library_delete_title"));
+        assertTrue(source.contains("ComposeConfirmDialog.showWithLabels"));
     }
 
     @Test
@@ -144,7 +145,8 @@ public final class FontLibraryActivitySourceSmokeTest {
 
         assertTrue(source.contains("private void promptRename("));
         assertTrue(source.contains("private void confirmClearAppTypeface("));
-        assertTrue(occurrences(source, "DialogWindowSizer.applyStandardWidth(dialog, this);") >= 4);
+        assertTrue(source.contains("ComposeTextInputDialog.show(this"));
+        assertTrue(source.contains("R.string.font_library_restore_default_action"));
     }
 
     private static String read(String relativePath) throws IOException {

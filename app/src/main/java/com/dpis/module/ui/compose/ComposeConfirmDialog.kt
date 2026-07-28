@@ -48,6 +48,22 @@ object ComposeConfirmDialog {
         message: CharSequence,
         onConfirm: Runnable,
         onCancel: Runnable
+    ): AlertDialog = showWithLabels(
+        activity, title, message,
+        activity.getString(R.string.dialog_process_action_confirm_negative),
+        activity.getString(R.string.dialog_process_action_confirm_positive),
+        onConfirm, onCancel
+    )
+
+    @JvmStatic
+    fun showWithLabels(
+        activity: Activity,
+        title: CharSequence,
+        message: CharSequence,
+        cancelLabel: CharSequence,
+        confirmLabel: CharSequence,
+        onConfirm: Runnable,
+        onCancel: Runnable
     ): AlertDialog {
         val composeView = ComposeView(activity).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
@@ -62,6 +78,8 @@ object ComposeConfirmDialog {
                 ConfirmDialogContent(
                     title = title.toString(),
                     message = message.toString(),
+                    cancelLabel = cancelLabel.toString(),
+                    confirmLabel = confirmLabel.toString(),
                     onConfirm = {
                         actionHandled = true
                         dialog.dismiss()
@@ -92,7 +110,9 @@ internal fun ConfirmDialogContent(
     title: String,
     message: String,
     onConfirm: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    cancelLabel: String? = null,
+    confirmLabel: String? = null
 ) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(
@@ -135,7 +155,7 @@ internal fun ConfirmDialogContent(
                 shape = DpisConfirmDialogUiTokens.ActionShape,
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
             ) {
-                Text(text = androidx.compose.ui.res.stringResource(
+                Text(text = cancelLabel ?: androidx.compose.ui.res.stringResource(
                     R.string.dialog_process_action_confirm_negative))
             }
             OutlinedButton(
@@ -148,7 +168,7 @@ internal fun ConfirmDialogContent(
                 ),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
             ) {
-                Text(text = androidx.compose.ui.res.stringResource(
+                Text(text = confirmLabel ?: androidx.compose.ui.res.stringResource(
                     R.string.dialog_process_action_confirm_positive))
             }
         }

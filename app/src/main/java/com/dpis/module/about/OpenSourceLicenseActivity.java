@@ -2,7 +2,7 @@ package com.dpis.module.about;
 
 import com.dpis.module.LocalizedActivity;
 import com.dpis.module.R;
-import com.dpis.module.ui.DialogWindowSizer;
+import com.dpis.module.ui.compose.LicenseDetailDialog;
 import com.dpis.module.ui.compose.SupportActivityContent;
 
 import android.content.ActivityNotFoundException;
@@ -13,7 +13,6 @@ import android.os.Bundle;
 import android.widget.Toast;
 
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -170,17 +169,8 @@ public final class OpenSourceLicenseActivity extends LocalizedActivity {
     }
 
     private void showLicenseDetailDialog(LicenseItem item) {
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
-                .setTitle(item.name)
-                .setMessage(item.detail)
-                .setPositiveButton(R.string.dialog_close_button, null);
-        if (!item.website.isEmpty()) {
-            builder.setNeutralButton(R.string.about_link_source_title,
-                    (dialog, which) -> openUrl(item.website));
-        }
-        androidx.appcompat.app.AlertDialog dialog = builder.create();
-        dialog.show();
-        DialogWindowSizer.applyLargeWidth(dialog, this);
+        LicenseDetailDialog.show(this, item.name, item.detail, !item.website.isEmpty(),
+                () -> openUrl(item.website));
     }
 
     private void openUrl(String url) {

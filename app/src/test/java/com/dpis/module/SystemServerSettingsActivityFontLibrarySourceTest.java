@@ -35,7 +35,7 @@ public class SystemServerSettingsActivityFontLibrarySourceTest {
         String detail = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.java");
         String importMethod = source.substring(
                 source.indexOf("private void promptImportName(Uri uri)"),
-                source.indexOf("private TextInputLayout createNameInput"));
+                source.indexOf("private void openFontLibraryExportPicker"));
 
         assertTrue(source.contains("Intent.ACTION_OPEN_DOCUMENT"));
         assertTrue(source.contains("font/ttf"));

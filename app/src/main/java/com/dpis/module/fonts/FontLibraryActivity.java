@@ -8,6 +8,8 @@ import com.dpis.module.runtime.RuntimeConfigDelivery;
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
 import com.dpis.module.ui.compose.FontLibraryPresentation;
 import com.dpis.module.ui.compose.FontLibraryUiItem;
+import com.dpis.module.ui.compose.ComposeConfirmDialog;
+import com.dpis.module.ui.compose.ComposeTextInputDialog;
 import com.dpis.module.ui.compose.SupportActivityContent;
 
 import com.dpis.module.ui.TouchFeedbackBinder;
@@ -174,21 +176,14 @@ public final class FontLibraryActivity extends LocalizedActivity {
             showToast(R.string.font_library_import_failed);
             return;
         }
-        TextInputLayout inputLayout = createNameInput(FontLibraryStore.normalizeDisplayName(sourceName));
-        TextInputEditText input = (TextInputEditText) inputLayout.getEditText();
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.font_library_name_title)
-                .setView(inputLayout)
-                .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
-                .setPositiveButton(R.string.dialog_confirm_button, (unusedDialog, which) -> {
-                    String displayName = input != null && input.getText() != null
-                            ? input.getText().toString()
-                            : "";
+        ComposeTextInputDialog.showLarge(this,
+                getString(R.string.font_library_name_title),
+                getString(R.string.font_library_name_hint),
+                FontLibraryStore.normalizeDisplayName(sourceName),
+                displayName -> {
                     confirmLargeFontImport(uri, sourceName, mimeType, displayName);
-                })
-                .create();
-        dialog.show();
-        DialogWindowSizer.applyLargeWidth(dialog, this);
+                    return true;
+                });
     }
 
     @SuppressWarnings("deprecation")
@@ -282,28 +277,12 @@ public final class FontLibraryActivity extends LocalizedActivity {
             return;
         }
         long sizeMiB = (sizeBytes + 1024L * 1024L - 1L) / (1024L * 1024L);
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.font_library_large_import_title)
-                .setMessage(getString(R.string.font_library_large_import_message, sizeMiB))
-                .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
-                .setPositiveButton(R.string.font_library_large_import_continue,
-                        (unusedDialog, which) -> importFont(uri, sourceName, mimeType, displayName))
-                .create();
-        dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, this);
-    }
-
-    private TextInputLayout createNameInput(String initialName) {
-        TextInputLayout inputLayout = new TextInputLayout(this);
-        inputLayout.setHint(getString(R.string.font_library_name_hint));
-        int padding = dp(20);
-        inputLayout.setPadding(padding, 0, padding, 0);
-        TextInputEditText input = new TextInputEditText(inputLayout.getContext());
-        input.setSingleLine(true);
-        input.setText(initialName);
-        input.selectAll();
-        inputLayout.addView(input);
-        return inputLayout;
+        ComposeConfirmDialog.showWithLabels(this,
+                getString(R.string.font_library_large_import_title),
+                getString(R.string.font_library_large_import_message, sizeMiB),
+                getString(R.string.dialog_process_action_confirm_negative),
+                getString(R.string.font_library_large_import_continue),
+                () -> importFont(uri, sourceName, mimeType, displayName), () -> {});
     }
 
     private long resolveDocumentSize(Uri uri) {
@@ -429,16 +408,13 @@ public final class FontLibraryActivity extends LocalizedActivity {
     }
 
     private void showPublishedFallbackRepairPrompt(FontLibraryStore.HealthReport report) {
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.font_library_publication_repair_title)
-                .setMessage(getString(R.string.font_library_publication_repair_message,
-                        report.missingPublishedFallbackCount))
-                .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
-                .setPositiveButton(R.string.font_library_publication_retry_action,
-                        (unused, which) -> retryPublishedFallbacks())
-                .create();
-        dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, this);
+        ComposeConfirmDialog.showWithLabels(this,
+                getString(R.string.font_library_publication_repair_title),
+                getString(R.string.font_library_publication_repair_message,
+                        report.missingPublishedFallbackCount),
+                getString(R.string.dialog_process_action_confirm_negative),
+                getString(R.string.font_library_publication_retry_action),
+                this::retryPublishedFallbacks, () -> {});
     }
 
     private void retryPublishedFallbacks() {

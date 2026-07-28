@@ -13,6 +13,8 @@ import com.dpis.module.ui.compose.FontDetailPresentation;
 import com.dpis.module.ui.compose.FontDetailUiState;
 import com.dpis.module.ui.compose.FontReferenceUiItem;
 import com.dpis.module.ui.compose.SupportActivityContent;
+import com.dpis.module.ui.compose.ComposeConfirmDialog;
+import com.dpis.module.ui.compose.ComposeTextInputDialog;
 
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -123,69 +125,45 @@ public final class FontDetailActivity extends LocalizedActivity {
     }
 
     private void showFallbackExplanationDialog() {
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.font_library_fallback_dialog_title)
-                .setMessage(R.string.font_library_fallback_dialog_message)
-                .setNegativeButton(R.string.dialog_close_button, null)
-                .setPositiveButton(R.string.font_library_publication_retry_action,
-                        (unused, which) -> retryPublishedFallbacks())
-                .create();
-        dialog.setOnShowListener(ignored -> bindDialogButtonHaptics(dialog));
-        dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, this);
+        ComposeConfirmDialog.showWithLabels(this,
+                getString(R.string.font_library_fallback_dialog_title),
+                getString(R.string.font_library_fallback_dialog_message),
+                getString(R.string.dialog_close_button),
+                getString(R.string.font_library_publication_retry_action),
+                this::retryPublishedFallbacks, () -> {});
     }
 
     private void promptRename(FontLibraryEntry entry) {
-        TextInputLayout inputLayout = createNameInput(entry.collectionDisplayName);
-        TextInputEditText input = (TextInputEditText) inputLayout.getEditText();
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.font_library_name_title).setView(inputLayout)
-                .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
-                .setPositiveButton(R.string.dialog_confirm_button, null).create();
-        dialog.setOnShowListener(ignored -> {
-            bindDialogButtonHaptics(dialog);
-            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-                String name = input != null && input.getText() != null ? input.getText().toString() : "";
+        ComposeTextInputDialog.show(this,
+                getString(R.string.font_library_name_title),
+                getString(R.string.font_library_name_hint),
+                entry.collectionDisplayName,
+                name -> {
                 FontLibraryStore.RenameResult result = fontLibraryStore.renameFont(entry.id, name);
                 if (result != FontLibraryStore.RenameResult.RENAMED) {
                     showToast(result == FontLibraryStore.RenameResult.DUPLICATE_NAME
                             ? R.string.font_library_name_duplicate : R.string.font_library_name_invalid);
-                    return;
+                    return false;
                 }
                 RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
-                dialog.dismiss();
                 refreshDetails();
-            });
-        });
-        dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, this);
+                return true;
+                });
     }
 
     private void confirmDelete(FontLibraryEntry entry) {
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.font_library_delete_title)
-                .setMessage(getString(R.string.font_library_delete_message, resolveFontTitle(entry)))
-                .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
-                .setPositiveButton(R.string.font_library_delete_action, (unused, which) -> {
-                    handleDeleteResult(fontLibraryStore.deleteFont(entry.id, this::isFontReferenced));
-                }).create();
-        dialog.setOnShowListener(ignored -> bindDialogButtonHaptics(dialog));
-        dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, this);
+        showFontConfirmation(R.string.font_library_delete_title,
+                getString(R.string.font_library_delete_message, resolveFontTitle(entry)),
+                R.string.font_library_delete_action,
+                () -> handleDeleteResult(fontLibraryStore.deleteFont(entry.id, this::isFontReferenced)));
     }
 
     private void confirmForceDelete(FontLibraryEntry entry, List<FontReference> references) {
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.font_library_delete_title)
-                .setMessage(getString(R.string.font_library_delete_in_use_message,
-                        resolveFontTitle(entry), references.size()))
-                .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
-                .setPositiveButton(R.string.font_library_delete_action, (unused, which) -> {
-                    handleDeleteResult(forceDeleteFont(entry, references));
-                }).create();
-        dialog.setOnShowListener(ignored -> bindDialogButtonHaptics(dialog));
-        dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, this);
+        showFontConfirmation(R.string.font_library_delete_title,
+                getString(R.string.font_library_delete_in_use_message,
+                        resolveFontTitle(entry), references.size()),
+                R.string.font_library_delete_action,
+                () -> handleDeleteResult(forceDeleteFont(entry, references)));
     }
 
     private void handleDeleteResult(FontLibraryStore.DeleteResult result) {
@@ -225,11 +203,9 @@ public final class FontDetailActivity extends LocalizedActivity {
     }
 
     private void confirmClearAppTypeface(FontLibraryEntry entry, FontReference reference) {
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.font_library_restore_app_font_title)
-                .setMessage(getString(R.string.font_library_restore_app_font_message, reference.label))
-                .setNegativeButton(R.string.dialog_process_action_confirm_negative, null)
-                .setPositiveButton(R.string.font_library_restore_default_action, (unused, which) -> {
+        showFontConfirmation(R.string.font_library_restore_app_font_title,
+                getString(R.string.font_library_restore_app_font_message, reference.label),
+                R.string.font_library_restore_default_action, () -> {
                     if (!configStore.clearTargetTypefaceId(reference.packageName)) {
                         showToast(R.string.font_library_restore_app_font_failed);
                         return;
@@ -237,10 +213,7 @@ public final class FontDetailActivity extends LocalizedActivity {
                     FontRuntimePropertySyncer.publishTypefaceTargetAsync(reference.packageName, null);
                     RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
                     refreshDetails();
-                }).create();
-        dialog.setOnShowListener(ignored -> bindDialogButtonHaptics(dialog));
-        dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, this);
+                });
     }
 
     private void retryPublishedFallbacks() {
@@ -302,17 +275,11 @@ public final class FontDetailActivity extends LocalizedActivity {
         return packageName;
     }
 
-    private TextInputLayout createNameInput(String name) {
-        TextInputLayout layout = new TextInputLayout(this);
-        layout.setHint(R.string.font_library_name_hint);
-        int padding = dp(20);
-        layout.setPadding(padding, 0, padding, 0);
-        TextInputEditText input = new TextInputEditText(layout.getContext());
-        input.setSingleLine(true);
-        input.setText(name);
-        input.selectAll();
-        layout.addView(input);
-        return layout;
+    private void showFontConfirmation(int titleResId, String message, int confirmResId,
+            Runnable onConfirm) {
+        ComposeConfirmDialog.showWithLabels(this, getString(titleResId), message,
+                getString(R.string.dialog_process_action_confirm_negative),
+                getString(confirmResId), onConfirm, () -> {});
     }
 
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }

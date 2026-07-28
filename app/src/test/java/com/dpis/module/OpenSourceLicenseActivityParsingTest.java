@@ -55,9 +55,10 @@ public class OpenSourceLicenseActivityParsingTest {
     public void licenseDetailDialogUsesMaterialLargeWidth() throws IOException {
         String source = read("src/main/java/com/dpis/module/about/OpenSourceLicenseActivity.java");
 
-        assertTrue(source.contains("new MaterialAlertDialogBuilder(this)"));
-        assertTrue(source.contains("androidx.appcompat.app.AlertDialog dialog = builder.create();"));
-        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialog, this);"));
+        assertTrue(source.contains("LicenseDetailDialog.show(this"));
+        String dialog = read("src/main/java/com/dpis/module/ui/compose/LicenseDetailDialog.kt");
+        assertTrue(dialog.contains("verticalScroll(rememberScrollState())"));
+        assertTrue(dialog.contains("DialogWindowSizer.applyLargeWidth(dialog, activity)"));
     }
 
     @Test
