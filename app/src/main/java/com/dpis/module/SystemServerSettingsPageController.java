@@ -11,6 +11,8 @@ import com.dpis.module.runtime.RuntimeConfigDelivery;
 
 import com.dpis.module.ui.DialogWindowSizer;
 import com.dpis.module.ui.compose.ComposeConfirmDialog;
+import com.dpis.module.ui.compose.LanguageDialogOption;
+import com.dpis.module.ui.compose.SettingsComposeDialogs;
 
 import com.dpis.module.settings.AppLocaleManager;
 import com.dpis.module.settings.AppUiScaleManager;
@@ -38,7 +40,6 @@ import android.view.LayoutInflater;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -56,8 +57,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.slider.Slider;
 import com.google.android.material.textview.MaterialTextView;
-import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
 
 import org.json.JSONException;
 
@@ -578,62 +577,12 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void showInterfaceScaleDialog() {
-        View dialogView = LayoutInflater.from(activity).inflate(
-                R.layout.dialog_interface_scale, null, false);
-        TextInputLayout inputLayout = dialogView.findViewById(R.id.interface_scale_input_layout);
-        TextInputEditText inputView = dialogView.findViewById(R.id.interface_scale_input);
-        MaterialButton cancelButton = dialogView.findViewById(R.id.interface_scale_cancel_button);
-        MaterialButton saveButton = dialogView.findViewById(R.id.interface_scale_save_button);
-
-        inputView.setText(String.valueOf(AppUiScaleManager.getEffectiveScalePercent(activity)));
-        inputView.setSelection(inputView.length());
-
-        AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
-                .setView(dialogView)
-                .create();
-        dialog.setOnShowListener(unused -> {
-            inputView.requestFocus();
-            inputView.postDelayed(() -> {
-                InputMethodManager imm = getSystemService(InputMethodManager.class);
-                if (imm != null) {
-                    imm.showSoftInput(inputView, InputMethodManager.SHOW_IMPLICIT);
-                }
-            }, 120L);
-        });
-        cancelButton.setOnClickListener(v -> dialog.dismiss());
-        saveButton.setOnClickListener(v -> {
-            Integer parsed = parseInterfaceScaleInput(inputView);
-            if (parsed == null
-                    || parsed < AppUiScaleManager.MIN_SCALE_PERCENT
-                    || parsed > AppUiScaleManager.MAX_SCALE_PERCENT) {
-                inputLayout.setError(getString(R.string.settings_interface_scale_input_error));
-                return;
-            }
-            inputLayout.setError(null);
-            dialog.dismiss();
-            saveInterfaceScalePercent(parsed);
-        });
-        inputView.setOnEditorActionListener((view, actionId, event) -> {
-            saveButton.performClick();
-            return true;
-        });
-        dialog.show();
-        DialogWindowSizer.applyLargeWidth(dialog, activity);
-    }
-
-    private Integer parseInterfaceScaleInput(TextInputEditText inputView) {
-        if (inputView == null || inputView.getText() == null) {
-            return null;
-        }
-        String value = inputView.getText().toString().trim();
-        if (value.isEmpty()) {
-            return null;
-        }
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException ignored) {
-            return null;
-        }
+        SettingsComposeDialogs.showInterfaceScale(
+                activity,
+                AppUiScaleManager.getEffectiveScalePercent(activity),
+                AppUiScaleManager.MIN_SCALE_PERCENT,
+                AppUiScaleManager.MAX_SCALE_PERCENT,
+                this::saveInterfaceScalePercent);
     }
 
     private void performInterfaceScaleStepFeedback(int percent) {
@@ -657,86 +606,23 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void showLanguageDialog(View anchor) {
-        View dialogView = LayoutInflater.from(activity).inflate(
-                R.layout.dialog_language_selection, null, false);
-        ViewGroup optionsContainer = dialogView.findViewById(R.id.language_options_container);
-        MaterialButton cancelButton = dialogView.findViewById(R.id.language_dialog_cancel_button);
         List<AppLocaleManager.LanguageOption> languageOptions = AppLocaleManager.supportedLanguages();
-        List<MaterialButton> optionButtons = new ArrayList<>(languageOptions.size());
-        String selectedLanguageTag = AppLocaleManager.getLanguageTag(activity);
-
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
-                .setView(dialogView)
-                .create();
-        dialog.setCanceledOnTouchOutside(true);
-
-        int selectedIndex = 0;
-        for (int i = 0; i < languageOptions.size(); i++) {
-            AppLocaleManager.LanguageOption option = languageOptions.get(i);
-            int optionIndex = i;
-            MaterialButton optionButton = createLanguageOptionButton(optionsContainer, option.labelResId);
-            optionButton.setOnClickListener(
-                    v -> onLanguageOptionSelected(dialog, optionButtons, languageOptions, optionIndex));
-            optionsContainer.addView(optionButton);
-            optionButtons.add(optionButton);
-            if (option.tag.equals(selectedLanguageTag)) {
-                selectedIndex = i;
-            }
+        List<LanguageDialogOption> options = new ArrayList<>(languageOptions.size());
+        for (AppLocaleManager.LanguageOption option : languageOptions) {
+            options.add(new LanguageDialogOption(option.tag, getString(option.labelResId)));
         }
-        updateLanguageOptionButtonStyles(optionButtons, selectedIndex);
-        cancelButton.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
-        DialogWindowSizer.applyLargeWidth(dialog, activity);
-    }
-
-    private void onLanguageOptionSelected(androidx.appcompat.app.AlertDialog dialog,
-            List<MaterialButton> optionButtons,
-            List<AppLocaleManager.LanguageOption> languageOptions,
-            int selectedIndex) {
-        if (selectedIndex < 0 || selectedIndex >= languageOptions.size()) {
-            return;
-        }
-        updateLanguageOptionButtonStyles(optionButtons, selectedIndex);
+        SettingsComposeDialogs.showLanguage(activity, options,
+                AppLocaleManager.getLanguageTag(activity), selectedTag -> {
         String previousTag = AppLocaleManager.getLanguageTag(activity);
-        String selectedTag = languageOptions.get(selectedIndex).tag;
         if (!AppLocaleManager.setLanguageTag(activity, selectedTag)) {
             showToast(R.string.system_settings_save_failed);
             return;
         }
         updateLanguageEntrySubtitle();
-        dialog.dismiss();
         if (!selectedTag.equals(previousTag)) {
             recreate();
         }
-    }
-
-    private MaterialButton createLanguageOptionButton(ViewGroup parent, int labelResId) {
-        MaterialButton button = (MaterialButton) LayoutInflater.from(activity).inflate(
-                R.layout.item_language_option_button,
-                parent,
-                false);
-        button.setText(labelResId);
-        return button;
-    }
-
-    private void updateLanguageOptionButtonStyles(List<MaterialButton> optionButtons, int selectedIndex) {
-        for (int i = 0; i < optionButtons.size(); i++) {
-            MaterialButton button = optionButtons.get(i);
-            boolean selected = i == selectedIndex;
-            int backgroundColor = selected
-                    ? MaterialColors.getColor(
-                            activity,
-                            com.google.android.material.R.attr.colorSecondaryContainer, 0)
-                    : 0;
-            int textColor = MaterialColors.getColor(
-                    activity,
-                    selected ? androidx.appcompat.R.attr.colorPrimary
-                            : com.google.android.material.R.attr.colorOnSurface,
-                    0);
-            button.setBackgroundTintList(ColorStateList.valueOf(backgroundColor));
-            button.setTextColor(textColor);
-            button.setStrokeWidth(0);
-        }
+        });
     }
 
     private void updateLanguageEntrySubtitle() {
@@ -830,28 +716,8 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             showToast(R.string.status_save_requires_init);
             return;
         }
-        View dialogView = LayoutInflater.from(activity).inflate(
-                R.layout.dialog_config_backup, null, false);
-        MaterialButton exportButton = dialogView.findViewById(R.id.config_backup_export_button);
-        MaterialButton importButton = dialogView.findViewById(R.id.config_backup_import_button);
-        MaterialButton closeButton = dialogView.findViewById(R.id.config_backup_close_button);
-
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
-                .setView(dialogView)
-                .create();
-        dialog.setCanceledOnTouchOutside(true);
-
-        exportButton.setOnClickListener(v -> {
-            dialog.dismiss();
-            launchExportBackupPicker();
-        });
-        importButton.setOnClickListener(v -> {
-            dialog.dismiss();
-            launchImportBackupPicker();
-        });
-        closeButton.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
-        DialogWindowSizer.applyLargeWidth(dialog, activity);
+        SettingsComposeDialogs.showBackupActions(
+                activity, this::launchExportBackupPicker, this::launchImportBackupPicker);
     }
 
     @SuppressWarnings("deprecation")
@@ -884,25 +750,12 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void showImportBackupConfirmDialog(Uri uri) {
-        View dialogView = LayoutInflater.from(activity).inflate(
-                R.layout.dialog_config_backup_confirm, null, false);
-        MaterialButton proceedButton = dialogView.findViewById(R.id.config_backup_confirm_proceed_button);
-        MaterialButton cancelButton = dialogView.findViewById(R.id.config_backup_confirm_cancel_button);
-
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
-                .setView(dialogView)
-                .create();
-        dialog.setCanceledOnTouchOutside(true);
-
-        proceedButton.setOnClickListener(v -> {
-            dialog.dismiss();
-            importConfigBackup(uri);
-            publishPresentationState();
-        });
-        cancelButton.setOnClickListener(v -> { dialog.dismiss(); publishPresentationState(); });
-        dialog.setOnCancelListener(unused -> publishPresentationState());
-        dialog.show();
-        DialogWindowSizer.applyLargeWidth(dialog, activity);
+        ComposeConfirmDialog.show(
+                activity,
+                getString(R.string.config_backup_import_confirm_title),
+                getString(R.string.config_backup_import_confirm_message),
+                () -> { importConfigBackup(uri); publishPresentationState(); },
+                this::publishPresentationState);
     }
 
     private void exportConfigBackup(Uri uri) {

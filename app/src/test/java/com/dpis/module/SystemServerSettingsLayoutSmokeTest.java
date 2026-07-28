@@ -140,38 +140,30 @@ public class SystemServerSettingsLayoutSmokeTest {
     }
 
     @Test
-    public void configBackupDialogsUseCustomLayoutStructure() throws IOException {
-        String actionDialog = read("src/main/res/layout/dialog_config_backup.xml");
-        String confirmDialog = read("src/main/res/layout/dialog_config_backup_confirm.xml");
+    public void configBackupDialogsUseComposeActionAndConfirmationSurfaces() throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
+        String dialogs = read("src/main/java/com/dpis/module/ui/compose/SettingsComposeDialogs.kt");
 
-        assertTrue(actionDialog.contains("android:id=\"@+id/config_backup_export_button\""));
-        assertTrue(actionDialog.contains("android:id=\"@+id/config_backup_import_button\""));
-        assertTrue(actionDialog.contains("android:id=\"@+id/config_backup_close_button\""));
-        assertTrue(actionDialog.contains("@dimen/dialog_surface_padding_horizontal"));
-        assertTrue(actionDialog.contains("@dimen/dialog_action_spacing_top"));
-        assertTrue(actionDialog.contains("@dimen/dialog_action_spacing_between"));
-        assertTrue(actionDialog.contains("@dimen/dialog_footer_spacing_top"));
-        assertTrue(confirmDialog.contains("android:id=\"@+id/config_backup_confirm_proceed_button\""));
-        assertTrue(confirmDialog.contains("android:id=\"@+id/config_backup_confirm_cancel_button\""));
-        assertTrue(confirmDialog.contains("@dimen/dialog_surface_padding_horizontal"));
-        assertTrue(confirmDialog.contains("@dimen/dialog_body_spacing"));
-        assertTrue(confirmDialog.contains("@dimen/dialog_action_spacing_top"));
-        assertTrue(confirmDialog.contains("@dimen/dialog_action_spacing_between"));
+        assertTrue(source.contains("SettingsComposeDialogs.showBackupActions("));
+        assertTrue(source.contains("ComposeConfirmDialog.show("));
+        assertTrue(dialogs.contains("BackupActionsDialogContent("));
+        assertTrue(dialogs.contains("R.string.config_backup_export_action"));
+        assertTrue(dialogs.contains("R.string.config_backup_import_action"));
+        assertTrue(dialogs.contains("R.dimen.dialog_surface_padding_horizontal"));
+        assertTrue(dialogs.contains("R.dimen.dialog_action_spacing_between"));
+        assertTrue(dialogs.contains("R.dimen.dialog_footer_spacing_top"));
     }
 
     @Test
     public void settingsDialogsUseSharedWindowSizer() throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
-        String composeDialog = read(
-                "src/main/java/com/dpis/module/ui/compose/ComposeConfirmDialog.kt");
+        String settingsDialogs = read(
+                "src/main/java/com/dpis/module/ui/compose/SettingsComposeDialogs.kt");
 
-        assertTrue(source.contains("R.layout.dialog_interface_scale"));
-        assertTrue(source.contains("R.layout.dialog_language_selection"));
-        assertTrue(source.contains("R.layout.dialog_config_backup"));
-        assertTrue(source.contains("R.layout.dialog_config_backup_confirm"));
-        assertTrue(occurrences(source, "DialogWindowSizer.applyLargeWidth(dialog, activity)") >= 4);
-        assertTrue(composeDialog.contains(
-                "DialogWindowSizer.applyStandardWidth(dialog, activity)"));
+        assertTrue(source.contains("SettingsComposeDialogs.showInterfaceScale("));
+        assertTrue(source.contains("SettingsComposeDialogs.showLanguage("));
+        assertTrue(source.contains("SettingsComposeDialogs.showBackupActions("));
+        assertTrue(settingsDialogs.contains("DialogWindowSizer.applyLargeWidth(dialog, activity)"));
     }
 
     @Test
@@ -256,8 +248,8 @@ public class SystemServerSettingsLayoutSmokeTest {
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
         String application = read("src/main/java/com/dpis/module/DpisApplication.java");
 
-        assertTrue(source.contains("importButton.setOnClickListener(v -> {"));
-        assertTrue(source.contains("launchImportBackupPicker();"));
+        assertTrue(source.contains("SettingsComposeDialogs.showBackupActions("));
+        assertTrue(source.contains("this::launchImportBackupPicker"));
         assertTrue(source.contains("private void showImportBackupConfirmDialog(Uri uri)"));
         assertTrue(source.contains("showImportBackupConfirmDialog(uri);"));
         assertTrue(source.contains("importConfigBackup(uri);"));
