@@ -84,16 +84,39 @@ jobs:
       - name: Ensure gradlew is executable
         run: chmod +x gradlew
 
-      - name: Build and verify
+      # Keep build, test, and lint in separate Gradle processes. On Linux runners the combined
+      # invocation can finish every task but leave Gradle workers alive indefinitely after lint.
+      # CI does not need a persistent daemon or configuration cache between these boundaries.
+      - name: Build debug APKs
+        shell: bash
+        run: |
+          ./gradlew :app:assembleModernDebug :app:assembleLegacyDebug \
+            --no-daemon --no-configuration-cache --stacktrace
+
+      - name: Run unit tests
         shell: bash
         env:
           TEST_FILTER: ${{ github.event.inputs.test_filter }}
         run: |
           if [[ -n "${TEST_FILTER}" ]]; then
-            ./gradlew :app:assembleModernDebug :app:assembleLegacyDebug :app:testDebugUnitTest --tests "${TEST_FILTER}" :app:lintModernDebug --stacktrace
+            ./gradlew :app:testModernDebugUnitTest :app:testLegacyDebugUnitTest \
+              --tests "${TEST_FILTER}" \
+              --no-daemon --no-configuration-cache --stacktrace
           else
-            ./gradlew :app:assembleModernDebug :app:assembleLegacyDebug :app:testAllDebugUnitTests :app:lintModernDebug --stacktrace
+            ./gradlew :app:testAllDebugUnitTests \
+              --no-daemon --no-configuration-cache --stacktrace
           fi
+
+      - name: Run Modern lint
+        shell: bash
+        run: |
+          ./gradlew :app:lintModernDebug \
+            --no-daemon --no-configuration-cache --stacktrace
+
+      - name: Show native cache statistics
+        if: always()
+        shell: bash
+        run: |
           ccache -s
 
       - name: Summarize PR debug APK checksums
