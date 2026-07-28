@@ -9,23 +9,22 @@ import org.junit.Test;
 public class FilterSheetLayoutSmokeTest {
     @Test
     public void filterSheetContainsOnlyCompactInteractiveSwitches() throws IOException {
-        String layout = read("src/main/res/layout/dialog_list_filters.xml");
+        String layout = read("src/main/java/com/dpis/module/ui/compose/LocalToolDialogs.kt");
         String strings = read("src/main/res/values/strings.xml");
 
-        assertTrue(layout.contains("android:id=\"@+id/filter_show_system_switch\""));
-        assertTrue(layout.contains("android:id=\"@+id/filter_injected_only_switch\""));
-        assertTrue(layout.contains("android:id=\"@+id/filter_width_only_switch\""));
-        assertTrue(layout.contains("android:id=\"@+id/filter_font_only_switch\""));
-        assertTrue(layout.contains("@dimen/filter_sheet_drag_handle_width"));
-        assertTrue(layout.contains("@dimen/filter_sheet_drag_handle_height"));
-        assertTrue(layout.contains("@dimen/filter_sheet_padding_horizontal"));
-        assertTrue(layout.contains("android:layout_gravity=\"center_horizontal\""));
-        assertTrue(layout.contains("android:background=\"?attr/colorOutlineVariant\""));
+        assertTrue(layout.contains("R.string.filter_show_system_apps"));
+        assertTrue(layout.contains("R.string.filter_injected_only"));
+        assertTrue(layout.contains("R.string.filter_width_only"));
+        assertTrue(layout.contains("R.string.filter_font_only"));
+        assertTrue(layout.contains("R.dimen.filter_sheet_drag_handle_width"));
+        assertTrue(layout.contains("R.dimen.filter_sheet_drag_handle_height"));
+        assertTrue(layout.contains("R.dimen.filter_sheet_padding_horizontal"));
+        assertTrue(layout.contains("contentAlignment = Alignment.Center"));
+        assertTrue(layout.contains("MaterialTheme.colorScheme.outlineVariant"));
         assertTrue(!layout.contains("filter_sheet_subtitle"));
         assertTrue(!layout.contains("android:id=\"@+id/filter_reset_button\""));
         assertTrue(!layout.contains("android:id=\"@+id/filter_apply_button\""));
-        assertTrue(layout.contains("@dimen/filter_sheet_first_switch_spacing_top"));
-        assertTrue(layout.contains("@dimen/filter_sheet_switch_spacing_top"));
+        assertTrue(layout.contains("R.dimen.filter_sheet_first_switch_spacing_top"));
         assertTrue(strings.contains("filter_show_system_apps"));
         assertTrue(strings.contains("filter_injected_only"));
         assertTrue(strings.contains("filter_width_only"));

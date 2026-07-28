@@ -93,6 +93,8 @@ import com.dpis.module.ui.TouchFeedbackBinder;
 import com.dpis.module.ui.WindowInsetsBinder;
 
 import com.dpis.module.ui.DialogWindowSizer;
+import com.dpis.module.ui.compose.AppFilterComposeSheet;
+import com.dpis.module.ui.compose.ModuleRuntimeReloadComposeDialog;
 
 import com.dpis.module.home.HomeUpdateUiState;
 import com.dpis.module.home.HomeWorkspaceBinder;
@@ -2671,50 +2673,19 @@ public final class MainActivity
     }
 
     private void showFilterDialog() {
-        ViewGroup root = findViewById(android.R.id.content);
-        View dialogView = LayoutInflater.from(this).inflate(
-                R.layout.dialog_list_filters,
-                root,
-                false
-        );
-        BottomSheetDialog dialog = new BottomSheetDialog(this);
-        dialog.setContentView(dialogView);
-        MaterialSwitch showSystemSwitch = dialogView.findViewById(
-                R.id.filter_show_system_switch
-        );
-        MaterialSwitch injectedOnlySwitch = dialogView.findViewById(
-                R.id.filter_injected_only_switch
-        );
-        MaterialSwitch widthOnlySwitch = dialogView.findViewById(
-                R.id.filter_width_only_switch
-        );
-        MaterialSwitch fontOnlySwitch = dialogView.findViewById(
-                R.id.filter_font_only_switch
-        );
         MainUiState state = requireUiState();
-
-        showSystemSwitch.setChecked(state.filterState.showSystemApps());
-        injectedOnlySwitch.setChecked(state.filterState.injectedOnly());
-        widthOnlySwitch.setChecked(state.filterState.widthConfiguredOnly());
-        fontOnlySwitch.setChecked(state.filterState.fontConfiguredOnly());
-
-        android.widget.CompoundButton.OnCheckedChangeListener listener = (
-                buttonView,
-                isChecked) -> {
+        AppFilterComposeSheet.show(this,
+                state.filterState.showSystemApps(),
+                state.filterState.injectedOnly(),
+                state.filterState.widthConfiguredOnly(),
+                state.filterState.fontConfiguredOnly(),
+                (showSystem, injectedOnly, widthOnly, fontOnly) -> {
             AppListFilterState filterState = new AppListFilterState(
-                    showSystemSwitch.isChecked(),
-                    injectedOnlySwitch.isChecked(),
-                    widthOnlySwitch.isChecked(),
-                    fontOnlySwitch.isChecked()
+                    showSystem, injectedOnly, widthOnly, fontOnly
             );
             appListFilterStateStore.save(filterState);
             dispatchMainUiAction(MainUiAction.filterChanged(filterState));
-        };
-        showSystemSwitch.setOnCheckedChangeListener(listener);
-        injectedOnlySwitch.setOnCheckedChangeListener(listener);
-        widthOnlySwitch.setOnCheckedChangeListener(listener);
-        fontOnlySwitch.setOnCheckedChangeListener(listener);
-        dialog.show();
+        });
     }
 
     private boolean maybeShowStartupDisclaimerDialog() {
@@ -2739,24 +2710,10 @@ public final class MainActivity
         if (!ModuleRuntimeReloadAdvisor.shouldShowReloadAdvice(this)) {
             return false;
         }
-        View dialogView = LayoutInflater.from(this).inflate(
-                R.layout.dialog_module_runtime_reload_advice,
-                null,
-                false
-        );
-        MaterialButton ackButton = dialogView.findViewById(
-                R.id.module_runtime_reload_ack_button
-        );
-        androidx.appcompat.app.AlertDialog dialog
-                = new MaterialAlertDialogBuilder(this).setView(dialogView).create();
-        dialog.setCanceledOnTouchOutside(true);
-        ackButton.setOnClickListener(v -> {
+        ModuleRuntimeReloadComposeDialog.show(this, () -> {
             ModuleRuntimeReloadAdvisor.markReloadAdviceAcknowledged(this);
-            dialog.dismiss();
             continueStartupDialogsAfterRuntimeReloadAdvice();
         });
-        dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, this);
         return true;
     }
 

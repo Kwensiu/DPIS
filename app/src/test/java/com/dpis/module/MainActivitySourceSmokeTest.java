@@ -148,7 +148,7 @@ public class MainActivitySourceSmokeTest {
         assertFalse(source.contains("searchFocusFab.getHeight() +"));
         assertTrue(source.contains("showFilterDialog()"));
         assertTrue(source.contains("new AppListFilterState("));
-        assertTrue(source.contains("setOnCheckedChangeListener"));
+        assertTrue(source.contains("AppFilterComposeSheet.show(this"));
         assertTrue(!source.contains("R.id.filter_apply_button"));
         assertTrue(!source.contains("R.id.filter_reset_button"));
     }
@@ -454,7 +454,7 @@ public class MainActivitySourceSmokeTest {
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String runtimeLayout = read(
-            "src/main/res/layout/dialog_module_runtime_reload_advice.xml"
+            "src/main/java/com/dpis/module/ui/compose/LocalToolDialogs.kt"
         );
         String strings = read("src/main/res/values/strings.xml");
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
@@ -471,30 +471,22 @@ public class MainActivitySourceSmokeTest {
             )
         );
         assertTrue(
-            source.contains("R.layout.dialog_module_runtime_reload_advice")
+            source.contains("ModuleRuntimeReloadComposeDialog.show(this")
         );
-        assertTrue(source.contains("new MaterialAlertDialogBuilder(this)"));
-        assertTrue(
-            source.contains(
-                "DialogWindowSizer.applyStandardWidth(dialog, this)"
-            )
-        );
-        assertTrue(source.contains("module_runtime_reload_ack_button"));
+        assertTrue(runtimeLayout.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"));
         assertTrue(!source.contains("ModuleRuntimeReloader.softReloadAsync("));
         assertTrue(!source.contains("module_runtime_reload_now_button"));
         assertTrue(!source.contains("module_runtime_reload_later_button"));
-        assertTrue(runtimeLayout.contains("@drawable/ic_error_outline_24"));
+        assertTrue(runtimeLayout.contains("R.drawable.ic_error_outline_24"));
         assertTrue(runtimeLayout.contains("module_runtime_reload_title"));
         assertTrue(runtimeLayout.contains("module_runtime_reload_message"));
         assertTrue(runtimeLayout.contains("module_runtime_reload_ack_button"));
-        assertTrue(runtimeLayout.contains("@dimen/dialog_status_icon_size"));
-        assertTrue(runtimeLayout.contains("@dimen/dialog_status_icon_padding"));
+        assertTrue(runtimeLayout.contains("R.dimen.dialog_status_icon_padding"));
         assertTrue(
-            runtimeLayout.contains("@dimen/dialog_surface_padding_horizontal")
+            runtimeLayout.contains("R.dimen.dialog_surface_padding_horizontal")
         );
-        assertTrue(runtimeLayout.contains("@dimen/dialog_body_spacing"));
-        assertTrue(runtimeLayout.contains("@dimen/dialog_text_line_spacing"));
-        assertTrue(runtimeLayout.contains("@dimen/dialog_action_spacing_top"));
+        assertTrue(runtimeLayout.contains("R.dimen.dialog_body_spacing"));
+        assertTrue(runtimeLayout.contains("R.dimen.dialog_action_spacing_top"));
         String runtimeMessage = stringEntry(
             strings,
             "module_runtime_reload_message"
