@@ -317,7 +317,6 @@ public final class MainActivity
     private MainViewModel mainViewModel;
     private MainComposeShellHost composeShellHost;
     private MainWorkspacePresentationCoordinator workspacePresentationCoordinator;
-    private int composeShellContentBottomPadding;
     private View topContainer;
     private View homeWorkspaceContainer;
     private View templateWorkspaceContainer;
@@ -1045,7 +1044,7 @@ public final class MainActivity
         );
         WindowInsetsBinder.applyNavigationBarMargins(
                 searchFocusFab,
-                () -> composeShellContentBottomPadding
+                () -> 0
         );
     }
 
@@ -1364,25 +1363,12 @@ public final class MainActivity
                     @Override public void closeTemplateEditor() {
                         onComposeTemplateEditorClosed();
                     }
-                    @Override public boolean usesComposeTemplateWorkspace() {
-                        return true;
-                    }
                 });
         composeShellHost = new MainComposeShellHost(
                 composeRoot,
-                legacyWorkspaceRoot,
                 requireUiState(),
                 WatchUiMode.shouldUseCompactUi(this),
                 workspacePresentationCoordinator,
-                contentBottomPadding -> {
-                    if (composeShellContentBottomPadding != contentBottomPadding) {
-                        composeShellContentBottomPadding = contentBottomPadding;
-                        if (searchFocusFab != null) {
-                            WindowInsetsBinder.refreshNavigationBarMargins(searchFocusFab);
-                        }
-                    }
-                    return Unit.INSTANCE;
-                },
                 action -> {
                     dispatchMainUiAction(action);
                     return Unit.INSTANCE;
@@ -1480,9 +1466,6 @@ public final class MainActivity
             bindToolsWorkspace(enteringToolsWorkspace);
         } else if (settingsWorkspace) {
             bindSettingsWorkspace();
-        }
-        if (composeShellHost != null) {
-            composeShellHost.replayLegacyWorkspaceInsets(mode);
         }
     }
 

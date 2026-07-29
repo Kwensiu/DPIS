@@ -19,7 +19,6 @@ public final class DpisComposeShellSourceSmokeTest {
         String mainShell = read("src/main/java/com/dpis/module/MainComposeWorkspaceShell.kt");
         String haptics = read("src/main/java/com/dpis/module/ui/compose/DpisComposeHaptics.kt");
         String previews = read("src/main/java/com/dpis/module/ui/compose/DpisWorkspaceShellPreviews.kt");
-        String legacyHost = read("src/main/java/com/dpis/module/ui/compose/DpisLegacyWorkspaceHost.kt");
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
         String localizedActivity = read("src/main/java/com/dpis/module/LocalizedActivity.java");
         String presentation = read(
@@ -88,12 +87,12 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(previews.contains("Desktop"));
         assertTrue(mainActivity.contains("installComposeWorkspaceShell();"));
         assertTrue(mainActivity.contains("new MainComposeShellHost("));
-        assertTrue(mainActivity.contains("composeShellContentBottomPadding"));
-        assertTrue(mainActivity.contains("composeShellHost.replayLegacyWorkspaceInsets(mode)"));
-        assertTrue(mainActivity.contains("WindowInsetsBinder.refreshNavigationBarMargins(searchFocusFab)"));
+        assertFalse(read("src/main/java/com/dpis/module/MainComposeShellHost.kt")
+                .contains("DpisLegacyWorkspaceHost"));
         assertTrue(mainActivity.contains("WatchUiMode.shouldUseCompactUi(this),"));
         String shellHost = read("src/main/java/com/dpis/module/MainComposeShellHost.kt");
-        assertTrue(shellHost.contains("isCompactUi && workspacePresentation.renderWear"));
+        assertTrue(shellHost.contains("if (isCompactUi)"));
+        assertTrue(shellHost.contains("workspacePresentation.renderWear(state.workspaceMode)"));
         assertTrue(coordinator.contains("@Composable fun renderWear"));
         assertTrue(wearWorkspace.contains("TransformingLazyColumn("));
         assertTrue(wearWorkspace.contains("ScreenScaffold("));
@@ -112,10 +111,6 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(mainActivity.contains("onRetainCustomNonConfigurationInstance()"));
         assertTrue(localizedActivity.contains("import androidx.activity.ComponentActivity;"));
         assertTrue(localizedActivity.contains("extends ComponentActivity"));
-        assertTrue(legacyHost.contains("ViewCompat.getRootWindowInsets(view)"));
-        assertTrue(legacyHost.contains("ViewCompat.dispatchApplyWindowInsets(view, rootInsets)"));
-        assertTrue(legacyHost.contains("private fun detachFromCurrentParent(view: View)"));
-        assertTrue(legacyHost.contains("detachFromCurrentParent(legacyRoot)"));
         assertFalse(mainActivity.contains("removeView(landDetailPane)"));
         assertTrue(shell.contains("rememberDpisConfirmAction"));
         assertTrue(haptics.contains("HapticFeedbackType.Confirm"));
@@ -131,7 +126,7 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(coordinator.contains("onEditorChanged = content::updateTemplateEditor"));
         assertTrue(coordinator.contains("onEditorClosed = content::closeTemplateEditor"));
         assertTrue(coordinator.contains("fun changeTemplateQuery(query: String)"));
-        assertTrue(coordinator.contains("content.usesComposeTemplateWorkspace()"));
+        assertFalse(coordinator.contains("usesComposeTemplateWorkspace"));
         assertTrue(appWorkspace.contains("fun AppWorkspaceContent("));
         assertTrue(coordinator.contains("appRevision"));
         assertTrue(coordinator.contains("fun refreshApps()"));
@@ -144,7 +139,7 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(coordinator.contains("private fun ComposeWorkspaceSurface("));
         assertTrue(coordinator.contains("contentColor = MaterialTheme.colorScheme.onSurface"));
         assertTrue(coordinator.contains("ComposeWorkspaceSurface { HomeWorkspaceContent("));
-        assertTrue(coordinator.contains("ComposeWorkspaceSurface {\n                    TemplateWorkspaceContent("));
+        assertTrue(coordinator.contains("TemplateWorkspaceContent("));
     }
 
     @Test

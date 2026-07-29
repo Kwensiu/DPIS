@@ -31,9 +31,9 @@ standalone and compact-device work; it is not a new product design proposal.
 The Compose shell owns phone bottom navigation and expanded navigation chrome.
 `MainUiState` and `MainUiAction` remain the sole source of truth for workspace
 selection. App and Template content now render through their Compose
-presentations; the `MainComposeShellHost` / `DpisLegacyWorkspaceHost` interop
-boundary remains only as an assembly compatibility boundary, not as an excuse
-to add new View implementations to migrated main workspaces.
+presentations. `MainComposeShellHost` no longer has an `AndroidView` fallback;
+the inflated Activity layout is retained only as the Java coordinator assembly
+source while that wiring is incrementally extracted.
 
 ## Ownership Rules
 

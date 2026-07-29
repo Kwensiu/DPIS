@@ -88,7 +88,6 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         fun updateTemplateEditor(form: com.dpis.module.templates.TemplateEditorForm)
         fun updateTemplateEditorDestination(destination: ConfigEditorDestination)
         fun closeTemplateEditor()
-        fun usesComposeTemplateWorkspace(): Boolean
     }
     private var appRevision by mutableStateOf(0)
     private var homeRevision by mutableStateOf(0)
@@ -112,24 +111,21 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         MainUiState.WorkspaceMode.TOOLS -> { toolsRevision; ComposeWorkspaceSurface { ToolsWorkspaceContent(content.toolsState(), padding, toolsExpanded, { toolsExpanded = !toolsExpanded }, content::changeToolsPending, content::applyTools, content::restoreTools, content::requestToolsPermission, content::openToolsLogs) }; true }
         MainUiState.WorkspaceMode.SETTINGS -> { settingsRevision; ComposeWorkspaceSurface { SettingsWorkspaceContent(content.settingsState(), padding, content::setSettingsHooks, content::setSettingsSafeMode, content::setSettingsGlobalLog, content::setSettingsLauncherHidden, content::setSettingsScale, content::openSettingsScaleDetails, content::openSettingsFontDebug, content::openSettingsFontLibrary, content::openSettingsExperimental, content::openSettingsLanguage, content::openSettingsBackup, content::clearSettingsCache, content::openSettingsAbout, content::openSettingsDonate) }; true }
         MainUiState.WorkspaceMode.TEMPLATE -> {
-            if (!content.usesComposeTemplateWorkspace()) false
-            else {
-                templateRevision
-                ComposeWorkspaceSurface {
-                    TemplateWorkspaceContent(
-                        state = content.templateState(),
-                        padding = padding,
-                        onQueryChanged = content::changeTemplateQuery,
-                        onEditorOpened = { quickTemplate, templateId ->
-                            content.openTemplateEditor(quickTemplate, templateId)
-                        },
-                        onEditorChanged = content::updateTemplateEditor,
-                        onEditorDestinationChanged = content::updateTemplateEditorDestination,
-                        onEditorClosed = content::closeTemplateEditor
-                    )
-                }
-                true
+            templateRevision
+            ComposeWorkspaceSurface {
+                TemplateWorkspaceContent(
+                    state = content.templateState(),
+                    padding = padding,
+                    onQueryChanged = content::changeTemplateQuery,
+                    onEditorOpened = { quickTemplate, templateId ->
+                        content.openTemplateEditor(quickTemplate, templateId)
+                    },
+                    onEditorChanged = content::updateTemplateEditor,
+                    onEditorDestinationChanged = content::updateTemplateEditorDestination,
+                    onEditorClosed = content::closeTemplateEditor
+                )
             }
+            true
         }
     }
     @Composable fun renderWear(mode: MainUiState.WorkspaceMode): Boolean = when (mode) {
@@ -362,7 +358,6 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
             }
         }
     }
-    fun owns(mode: MainUiState.WorkspaceMode): Boolean = mode == MainUiState.WorkspaceMode.APP || mode == MainUiState.WorkspaceMode.HOME || mode == MainUiState.WorkspaceMode.TOOLS || mode == MainUiState.WorkspaceMode.SETTINGS || (mode == MainUiState.WorkspaceMode.TEMPLATE && content.usesComposeTemplateWorkspace())
 }
 
 /** Supplies the Material content color for unframed workspace titles and empty states. */
