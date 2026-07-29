@@ -218,6 +218,13 @@ android {
     testOptions {
         unitTests.all {
             it.useJUnit()
+            if (System.getenv("CI") == "true") {
+                // Linux runners can retain enough Android test state to stall a long-lived worker.
+                // Bound each worker's class count, while logging starts for actionable timeout evidence.
+                it.forkEvery = 40
+                it.maxHeapSize = "1024m"
+                it.testLogging.events("started", "failed")
+            }
         }
     }
 
