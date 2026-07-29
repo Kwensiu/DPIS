@@ -74,28 +74,12 @@ public final class FontHookDomainPropertySyncer {
         syncThread.start();
     }
 
-    public static String buildPublishCommandForTest(String packageName, Set<String> enabledKnownDomains) {
-        return buildPublishCommand(packageName, enabledKnownDomains);
-    }
-
-    public static String buildClearCommandForTest(String packageName) {
-        return buildClearCommand(packageName);
-    }
-
     private static String buildPublishCommand(String packageName, Set<String> enabledKnownDomains) {
-        String value = FontHookDomainPropertyBridge.encodeOverrideValue(
-                packageName, enabledKnownDomains);
-        return buildSetCommand(FontHookDomainPropertyBridge.propertyNameForPackage(packageName), value)
-                + "; " + buildSetCommand(
-                        FontHookDomainPropertyBridge.persistentPropertyNameForPackage(packageName),
-                        value);
+        return FontHookDomainPropertyCommands.buildPublish(packageName, enabledKnownDomains);
     }
 
     private static String buildClearCommand(String packageName) {
-        return buildSetCommand(FontHookDomainPropertyBridge.propertyNameForPackage(packageName), "0")
-                + "; " + buildSetCommand(
-                        FontHookDomainPropertyBridge.persistentPropertyNameForPackage(packageName),
-                        "0");
+        return FontHookDomainPropertyCommands.buildClear(packageName);
     }
 
     private static void appendCommand(StringBuilder command, String fragment) {
@@ -108,18 +92,7 @@ public final class FontHookDomainPropertySyncer {
         command.append(fragment);
     }
 
-    private static String buildSetCommand(String property, String value) {
-        return "setprop " + shellQuote(property) + " " + shellQuote(value);
-    }
-
     private static void runRootCommand(String command) {
         RootCommandRunner.run(command);
-    }
-
-    private static String shellQuote(String value) {
-        if (value == null || value.isEmpty()) {
-            return "''";
-        }
-        return "'" + value.replace("'", "'\\''") + "'";
     }
 }
