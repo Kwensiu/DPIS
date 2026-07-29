@@ -46,12 +46,14 @@ Use a focused immutable UI state plus action boundary when a Compose workspace
 needs observable controller state. Do not read stores directly from a composable
 or make a composable the owner of a persisted draft.
 
-Compact watch and round devices continue to use the existing `WatchUiMode` View
-route until their dedicated migration. Do not broaden phone/tablet work into a
-watch migration incidentally. When that migration begins, treat it as a
-separate Wear OS Compose Material3 design: use Wear-specific scaffolds and
-scrolling components, preserve the existing domain/controller ownership, and
-validate on a round Wear OS AVD in addition to phone/tablet verification.
+Compact watch and round devices use a dedicated Wear OS Compose Material3
+presentation. `MainWorkspacePresentationCoordinator.renderWear` reuses the same
+Java-owned state and action boundaries as phone/tablet while the Wear layer owns
+round-screen layout. Wear lists use `ScreenScaffold`, `TransformingLazyColumn`,
+transformed item height, and Wear buttons/switches. The Wear color scheme is
+derived from the active DPIS light or dark theme instead of accepting the Wear
+library's black default background. Validate both theme modes on a round Wear OS
+AVD in addition to phone/tablet verification.
 
 ## Insets And Interaction
 

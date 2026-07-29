@@ -28,6 +28,8 @@ public final class DpisComposeShellSourceSmokeTest {
                 "src/main/java/com/dpis/module/MainWorkspacePresentationCoordinator.kt");
         String appWorkspace = read(
                 "src/main/java/com/dpis/module/ui/compose/AppWorkspaceContent.kt");
+        String wearWorkspace = read(
+                "src/main/java/com/dpis/module/ui/compose/WearWorkspaceContent.kt");
 
         assertTrue(theme.contains("fun DpisTheme("));
         assertTrue(theme.contains("dynamicLightColorScheme"));
@@ -90,8 +92,15 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(mainActivity.contains("composeShellHost.replayLegacyWorkspaceInsets(mode)"));
         assertTrue(mainActivity.contains("WindowInsetsBinder.refreshNavigationBarMargins(searchFocusFab)"));
         assertTrue(mainActivity.contains("WatchUiMode.shouldUseCompactUi(this),"));
-        assertTrue(read("src/main/java/com/dpis/module/MainComposeShellHost.kt")
-                .contains("if (!isCompactUi && workspacePresentation.render"));
+        String shellHost = read("src/main/java/com/dpis/module/MainComposeShellHost.kt");
+        assertTrue(shellHost.contains("isCompactUi && workspacePresentation.renderWear"));
+        assertTrue(coordinator.contains("@Composable fun renderWear"));
+        assertTrue(wearWorkspace.contains("TransformingLazyColumn("));
+        assertTrue(wearWorkspace.contains("ScreenScaffold("));
+        assertTrue(wearWorkspace.contains("SwitchButton("));
+        assertTrue(wearWorkspace.contains("SurfaceTransformation(transformationSpec)"));
+        assertTrue(shell.contains("WearMaterialTheme(colorScheme = wearColors)"));
+        assertTrue(shell.contains("background = phoneColors.background"));
         assertTrue(mainActivity.contains("getLastCustomNonConfigurationInstance()"));
         assertTrue(mainActivity.contains("onRetainCustomNonConfigurationInstance()"));
         assertTrue(localizedActivity.contains("import androidx.activity.ComponentActivity;"));

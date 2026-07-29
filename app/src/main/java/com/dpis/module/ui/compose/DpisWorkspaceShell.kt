@@ -259,9 +259,37 @@ private fun CompactWearWorkspaceNavigation(
 ) {
     var expanded by remember { mutableStateOf(false) }
     BackHandler(enabled = expanded) { expanded = false }
+    val phoneColors = MaterialTheme.colorScheme
+    val wearColors = WearMaterialTheme.colorScheme.copy(
+        primary = phoneColors.primary,
+        primaryContainer = phoneColors.primaryContainer,
+        onPrimary = phoneColors.onPrimary,
+        onPrimaryContainer = phoneColors.onPrimaryContainer,
+        secondary = phoneColors.secondary,
+        secondaryContainer = phoneColors.secondaryContainer,
+        onSecondary = phoneColors.onSecondary,
+        onSecondaryContainer = phoneColors.onSecondaryContainer,
+        tertiary = phoneColors.tertiary,
+        tertiaryContainer = phoneColors.tertiaryContainer,
+        onTertiary = phoneColors.onTertiary,
+        onTertiaryContainer = phoneColors.onTertiaryContainer,
+        surfaceContainerLow = phoneColors.surfaceContainerLow,
+        surfaceContainer = phoneColors.surfaceContainer,
+        surfaceContainerHigh = phoneColors.surfaceContainerHigh,
+        onSurface = phoneColors.onSurface,
+        onSurfaceVariant = phoneColors.onSurfaceVariant,
+        outline = phoneColors.outline,
+        outlineVariant = phoneColors.outlineVariant,
+        background = phoneColors.background,
+        onBackground = phoneColors.onBackground,
+        error = phoneColors.error,
+        errorContainer = phoneColors.errorContainer,
+        onError = phoneColors.onError,
+        onErrorContainer = phoneColors.onErrorContainer
+    )
 
-    WearMaterialTheme {
-        AppScaffold {
+    WearMaterialTheme(colorScheme = wearColors) {
+        AppScaffold(modifier = Modifier.background(wearColors.background)) {
             if (expanded) {
                 val listState = rememberTransformingLazyColumnState()
                 val transformationSpec = rememberTransformationSpec()

@@ -48,6 +48,11 @@ import com.dpis.module.ui.compose.ToolsWorkspaceContent
 import com.dpis.module.ui.compose.SettingsWorkspaceContent
 import com.dpis.module.ui.compose.TemplateWorkspaceContent
 import com.dpis.module.ui.compose.TemplateUiTokens
+import com.dpis.module.ui.compose.WearAppWorkspaceContent
+import com.dpis.module.ui.compose.WearHomeWorkspaceContent
+import com.dpis.module.ui.compose.WearSettingsWorkspaceContent
+import com.dpis.module.ui.compose.WearTemplateWorkspaceContent
+import com.dpis.module.ui.compose.WearToolsWorkspaceContent
 import com.dpis.module.templates.TemplateWorkspacePresentation
 import com.dpis.module.appconfig.AppConfigSheetWizardStore
 import androidx.compose.ui.platform.LocalContext
@@ -124,6 +129,25 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                 }
                 true
             }
+        }
+    }
+    @Composable fun renderWear(mode: MainUiState.WorkspaceMode): Boolean = when (mode) {
+        MainUiState.WorkspaceMode.APP -> { appRevision; WearAppWorkspaceContent(content.appState()); true }
+        MainUiState.WorkspaceMode.HOME -> { homeRevision; WearHomeWorkspaceContent(content.homeState()); true }
+        MainUiState.WorkspaceMode.TOOLS -> {
+            toolsRevision
+            WearToolsWorkspaceContent(content.toolsState(), content::changeToolsPending, content::applyTools, content::restoreTools, content::requestToolsPermission, content::openToolsLogs)
+            true
+        }
+        MainUiState.WorkspaceMode.SETTINGS -> {
+            settingsRevision
+            WearSettingsWorkspaceContent(content.settingsState(), content::setSettingsHooks, content::setSettingsSafeMode, content::setSettingsGlobalLog, content::setSettingsLauncherHidden, content::openSettingsFontDebug, content::openSettingsFontLibrary, content::openSettingsExperimental, content::openSettingsLanguage, content::openSettingsBackup, content::clearSettingsCache, content::openSettingsAbout, content::openSettingsDonate)
+            true
+        }
+        MainUiState.WorkspaceMode.TEMPLATE -> {
+            templateRevision
+            WearTemplateWorkspaceContent(content.templateState())
+            true
         }
     }
     fun refreshApps() { appRevision++ }
