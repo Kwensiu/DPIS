@@ -62,6 +62,8 @@ import com.dpis.module.fonts.HyperOsNativeAppDetector;
 import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.quickconfig.QuickConfigTargetDecision;
 import com.dpis.module.ui.compose.QuickConfigPresentation;
+import com.dpis.module.ui.compose.ComposeConfirmDialog;
+import com.dpis.module.ui.compose.ComposeMessageDialog;
 import com.dpis.module.ui.compose.SupportActivityContent;
 
 import android.content.ActivityNotFoundException;
@@ -81,7 +83,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.FileProvider;
 
 import com.dpis.module.applist.ForegroundPackageResolver;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
@@ -237,11 +238,12 @@ public final class QuickConfigActivity extends LocalizedActivity {
             }
 
             @Override public void showWechatDpiHelp() {
-                new MaterialAlertDialogBuilder(QuickConfigActivity.this)
-                        .setTitle(R.string.dialog_wechat_dpi_help_title)
-                        .setMessage(R.string.dialog_wechat_dpi_help_message)
-                        .setPositiveButton(R.string.dialog_close_button, null)
-                        .show();
+                ComposeMessageDialog.show(
+                        QuickConfigActivity.this,
+                        getString(R.string.dialog_wechat_dpi_help_title),
+                        getString(R.string.dialog_wechat_dpi_help_message),
+                        getString(R.string.dialog_close_button)
+                );
             }
 
             @Override public void updateTypeface(String typefaceId) {
@@ -729,14 +731,16 @@ public final class QuickConfigActivity extends LocalizedActivity {
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.feedback_diagnostic_action)
-                .setMessage(getString(
+        ComposeConfirmDialog.showWithLabels(
+                this,
+                getString(R.string.feedback_diagnostic_action),
+                getString(
                         R.string.feedback_diagnostic_confirm_message,
                         item.label
-                ))
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.feedback_diagnostic_save_and_start_button, (dialog, which) -> {
+                ),
+                getString(android.R.string.cancel),
+                getString(R.string.feedback_diagnostic_save_and_start_button),
+                () -> {
                     AppListItem diagnosticItem = saveCurrentConfigForDiagnostic(item);
                     if (diagnosticItem == null) {
                         return;
@@ -752,8 +756,9 @@ public final class QuickConfigActivity extends LocalizedActivity {
                     if (!started) {
                         showToast(R.string.feedback_diagnostic_unavailable);
                     }
-                })
-                .show();
+                },
+                () -> { }
+        );
     }
 
     private AppListItem saveCurrentConfigForDiagnostic(AppListItem item) {

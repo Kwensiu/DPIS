@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.text.AnnotatedString
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.dpis.module.R
 import org.junit.Assert.assertEquals
@@ -72,5 +73,43 @@ class ComposeConfirmDialogTest {
             composeRule.activity.getString(R.string.dialog_process_action_confirm_positive)
         ).performClick()
         composeRule.runOnIdle { assertTrue(confirmed) }
+    }
+
+    @Test
+    fun messageDialogUsesThemeColorsAndDispatchesClose() {
+        var closed = false
+        composeRule.setContent {
+            DpisTheme(darkTheme = true, dynamicColor = false) {
+                MessageDialogContent(
+                    title = "Release notes",
+                    message = AnnotatedString("Changes in this version."),
+                    closeLabel = "Close",
+                    onClose = { closed = true }
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Release notes").assertIsDisplayed()
+        composeRule.onNodeWithText("Changes in this version.").assertIsDisplayed()
+        composeRule.onNodeWithText("Close").performClick()
+        composeRule.runOnIdle { assertTrue(closed) }
+    }
+
+    @Test
+    fun messageDialogHandleUpdatesControllerOwnedBody() {
+        lateinit var handle: ComposeMessageDialog.Handle
+        composeRule.activityRule.scenario.onActivity { activity ->
+            activity.setTheme(R.style.Theme_Dpis)
+            handle = ComposeMessageDialog.showLarge(
+                activity,
+                "Release notes",
+                "Loading",
+                "Close"
+            )
+        }
+
+        composeRule.onNodeWithText("Loading").assertIsDisplayed()
+        composeRule.runOnUiThread { handle.setMessage("Loaded changes") }
+        composeRule.onNodeWithText("Loaded changes").assertIsDisplayed()
     }
 }

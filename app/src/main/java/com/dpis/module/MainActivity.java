@@ -95,6 +95,8 @@ import com.dpis.module.ui.WindowInsetsBinder;
 
 import com.dpis.module.ui.DialogWindowSizer;
 import com.dpis.module.ui.compose.AppFilterComposeSheet;
+import com.dpis.module.ui.compose.ComposeConfirmDialog;
+import com.dpis.module.ui.compose.ComposeMessageDialog;
 import com.dpis.module.ui.compose.ModuleRuntimeReloadComposeDialog;
 
 import com.dpis.module.home.HomeUpdateUiState;
@@ -114,7 +116,6 @@ import com.dpis.module.templates.QuickTemplateApplyCoordinator;
 
 import com.dpis.module.root.RootAccessProbe;
 
-import com.dpis.module.ui.MaxHeightNestedScrollView;
 import com.dpis.module.ui.WatchWorkspaceChromeBinder;
 import com.dpis.module.ui.WatchUiMode;
 
@@ -180,8 +181,6 @@ import com.dpis.module.appconfig.AppConfigDialogCoordinator;
 import com.dpis.module.updates.GitHubReleaseNotesFetcher;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.color.MaterialColors;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.navigation.NavigationBarView;
@@ -189,7 +188,6 @@ import com.google.android.material.navigationrail.NavigationRailView;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.google.android.material.textview.MaterialTextView;
 import com.dpis.module.updates.ReleaseNotesMarkdownRenderer;
 import io.github.libxposed.service.XposedService;
 import java.io.File;
@@ -2114,11 +2112,12 @@ public final class MainActivity
                     }
 
                     @Override public void showWechatDpiHelp() {
-                        new MaterialAlertDialogBuilder(MainActivity.this)
-                                .setTitle(R.string.dialog_wechat_dpi_help_title)
-                                .setMessage(R.string.dialog_wechat_dpi_help_message)
-                                .setPositiveButton(R.string.dialog_close_button, null)
-                                .show();
+                        ComposeMessageDialog.show(
+                                MainActivity.this,
+                                getString(R.string.dialog_wechat_dpi_help_title),
+                                getString(R.string.dialog_wechat_dpi_help_message),
+                                getString(R.string.dialog_close_button)
+                        );
                     }
 
                     @Override public void updateTypeface(String typefaceId) {
@@ -2352,15 +2351,16 @@ public final class MainActivity
             AppListItem item,
             AppConfigEditorDraft draft
     ) {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.feedback_diagnostic_action)
-                .setMessage(getString(
+        ComposeConfirmDialog.showWithLabels(
+                this,
+                getString(R.string.feedback_diagnostic_action),
+                getString(
                         R.string.feedback_diagnostic_confirm_message,
                         item.label
-                ))
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.feedback_diagnostic_save_and_start_button,
-                        (dialog, which) -> {
+                ),
+                getString(android.R.string.cancel),
+                getString(R.string.feedback_diagnostic_save_and_start_button),
+                () -> {
                     if (!saveComposeAppEditor(item, draft)) {
                         return;
                     }
@@ -2376,8 +2376,9 @@ public final class MainActivity
                     if (!started) {
                         showToast(R.string.feedback_diagnostic_unavailable);
                     }
-                })
-                .show();
+                },
+                () -> { }
+        );
     }
 
     private void syncComposeHyperOsNativeProxyAfterSave(AppListItem item) {
@@ -2807,48 +2808,25 @@ public final class MainActivity
         if (current == null || !current.showsUpdateActionCard()) {
             return;
         }
-        MaxHeightNestedScrollView scrollView = new MaxHeightNestedScrollView(this);
-        scrollView.setMaxHeightFraction(0.62f);
-        MaterialTextView textView = new MaterialTextView(this);
-        textView.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-        textView.setTextColor(MaterialColors.getColor(
-                this,
-                com.google.android.material.R.attr.colorOnSurfaceVariant,
-                getColor(android.R.color.black)));
-        textView.setLineSpacing(
-                getResources().getDimension(R.dimen.dialog_text_line_spacing),
-                1f);
-        int padding = getResources().getDimensionPixelSize(
-                R.dimen.dialog_surface_padding_horizontal);
-        scrollView.setPadding(padding, padding / 2, padding, 0);
-        scrollView.addView(textView, new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        androidx.appcompat.app.AlertDialog dialog =
-                new MaterialAlertDialogBuilder(this)
-                        .setTitle(R.string.about_update_release_notes_title)
-                        .setView(scrollView)
-                        .setPositiveButton(R.string.about_update_action_cancel_dialog, null)
-                        .create();
         String embedded = current.releaseNotes;
-        if (!embedded.isEmpty()) {
-            textView.setText(ReleaseNotesMarkdownRenderer.render(
-                    this,
-                    embedded,
-                    getResources().getConfiguration().getLocales().get(0)));
-        } else {
-            textView.setText(R.string.about_update_release_notes_loading);
-        }
-        dialog.show();
-        DialogWindowSizer.applyLargeWidth(dialog, this);
+        CharSequence initialMessage = embedded.isEmpty()
+                ? getString(R.string.about_update_release_notes_loading)
+                : ReleaseNotesMarkdownRenderer.render(
+                        this,
+                        embedded,
+                        getResources().getConfiguration().getLocales().get(0));
+        ComposeMessageDialog.Handle dialogHandle = ComposeMessageDialog.showLarge(
+                this,
+                getString(R.string.about_update_release_notes_title),
+                initialMessage,
+                getString(R.string.about_update_action_cancel_dialog)
+        );
         if (embedded.isEmpty()) {
-            loadHomeReleaseNotes(textView, dialog, current.versionName);
+            loadHomeReleaseNotes(dialogHandle, current.versionName);
         }
     }
 
-    private void loadHomeReleaseNotes(MaterialTextView textView,
-            androidx.appcompat.app.AlertDialog dialog,
+    private void loadHomeReleaseNotes(ComposeMessageDialog.Handle dialogHandle,
             String versionName) {
         releaseNotesController.load(versionName, false,
                 new ReleaseNotesController.Listener() {
@@ -2856,12 +2834,12 @@ public final class MainActivity
                     public boolean isAlive() {
                         return !isFinishing()
                                 && !isDestroyed()
-                                && dialog.isShowing();
+                                && dialogHandle.isShowing();
                     }
 
                     @Override
                     public void onBody(String body) {
-                        textView.setText(ReleaseNotesMarkdownRenderer.render(
+                        dialogHandle.setMessage(ReleaseNotesMarkdownRenderer.render(
                                 MainActivity.this,
                                 body,
                                 getResources().getConfiguration().getLocales().get(0)));
@@ -2869,12 +2847,12 @@ public final class MainActivity
 
                     @Override
                     public void onEmptyBody() {
-                        textView.setText(R.string.about_update_release_notes_empty);
+                        dialogHandle.setMessage(getString(R.string.about_update_release_notes_empty));
                     }
 
                     @Override
                     public void onFailure() {
-                        textView.setText(R.string.about_update_release_notes_failed);
+                        dialogHandle.setMessage(getString(R.string.about_update_release_notes_failed));
                     }
                 });
     }
@@ -4027,43 +4005,19 @@ public final class MainActivity
                         return getString(R.string.quick_template_apply_scope_note);
                     }
                 });
-        androidx.appcompat.app.AlertDialog dialog
-                = new MaterialAlertDialogBuilder(this)
-                        .setTitle(
-                                getString(
-                                        R.string.quick_template_apply_confirm_title,
-                                        template.name
-                                )
-                        )
-                        .setMessage(message)
-                        .setNegativeButton(
-                                R.string.dialog_process_action_confirm_negative,
-                                null
-                        )
-                        .setPositiveButton(
-                                R.string.template_workspace_action_apply,
-                                (unusedDialog, which)
-                                -> finishQuickTemplateApply(
-                                        coordinator,
-                                        template,
-                                        installedPackageFilter
-                                )
-                        )
-                        .create();
-        dialog.setOnShowListener(d -> {
-            TouchFeedbackBinder.bindPressHaptic(
-                    dialog.getButton(
-                            androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE
-                    )
-            );
-            TouchFeedbackBinder.bindPressHaptic(
-                    dialog.getButton(
-                            androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE
-                    )
-            );
-        });
-        dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, this);
+        ComposeConfirmDialog.showWithLabels(
+                this,
+                getString(R.string.quick_template_apply_confirm_title, template.name),
+                message,
+                getString(R.string.dialog_process_action_confirm_negative),
+                getString(R.string.template_workspace_action_apply),
+                () -> finishQuickTemplateApply(
+                        coordinator,
+                        template,
+                        installedPackageFilter
+                ),
+                () -> { }
+        );
     }
 
     private void finishQuickTemplateApply(
@@ -4404,14 +4358,16 @@ public final class MainActivity
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.feedback_diagnostic_action)
-                .setMessage(getString(
+        ComposeConfirmDialog.showWithLabels(
+                this,
+                getString(R.string.feedback_diagnostic_action),
+                getString(
                         R.string.feedback_diagnostic_confirm_message,
                         item.label
-                ))
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.feedback_diagnostic_save_and_start_button, (dialog, which) -> {
+                ),
+                getString(android.R.string.cancel),
+                getString(R.string.feedback_diagnostic_save_and_start_button),
+                () -> {
                     AppListItem diagnosticItem = saveCurrentEditorConfigForDiagnostic(item, state);
                     if (diagnosticItem == null) {
                         return;
@@ -4427,8 +4383,9 @@ public final class MainActivity
                     if (!started) {
                         showToast(R.string.feedback_diagnostic_unavailable);
                     }
-                })
-                .show();
+                },
+                () -> { }
+        );
     }
 
     private AppListItem saveCurrentEditorConfigForDiagnostic(

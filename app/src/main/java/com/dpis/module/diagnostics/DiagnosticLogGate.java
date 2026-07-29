@@ -6,11 +6,10 @@ import com.dpis.module.LocalizedActivity;
 import com.dpis.module.R;
 import com.dpis.module.runtime.RuntimeDebugPropertySyncer;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
+import com.dpis.module.ui.compose.ComposeConfirmDialog;
 
 import android.content.Context;
 import android.widget.Toast;
-
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public final class DiagnosticLogGate {
     private DiagnosticLogGate() {
@@ -28,20 +27,13 @@ public final class DiagnosticLogGate {
         if (store.isGlobalLogEnabled()) {
             return true;
         }
-        new MaterialAlertDialogBuilder(activity)
-                .setTitle(R.string.diagnostic_log_required_title)
-                .setMessage(R.string.diagnostic_log_required_message)
-                .setNegativeButton(android.R.string.cancel, (dialog, which) -> {
-                    if (onCancelled != null) {
-                        onCancelled.run();
-                    }
-                })
-                .setOnCancelListener(dialog -> {
-                    if (onCancelled != null) {
-                        onCancelled.run();
-                    }
-                })
-                .setPositiveButton(R.string.diagnostic_log_enable_action, (dialog, which) -> {
+        ComposeConfirmDialog.showWithLabels(
+                activity,
+                activity.getString(R.string.diagnostic_log_required_title),
+                activity.getString(R.string.diagnostic_log_required_message),
+                activity.getString(android.R.string.cancel),
+                activity.getString(R.string.diagnostic_log_enable_action),
+                () -> {
                     if (enableLogs(activity, store) && onEnabled != null) {
                         onEnabled.run();
                     } else {
@@ -51,8 +43,13 @@ public final class DiagnosticLogGate {
                                 Toast.LENGTH_SHORT
                         ).show();
                     }
-                })
-                .show();
+                },
+                () -> {
+                    if (onCancelled != null) {
+                        onCancelled.run();
+                    }
+                }
+        );
         return false;
     }
 

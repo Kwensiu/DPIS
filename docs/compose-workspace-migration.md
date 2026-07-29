@@ -23,6 +23,10 @@ standalone and compact-device work; it is not a new product design proposal.
   app editor and Hook-chain destinations as the main workspace while foreground
   package resolution, persistence, process actions, and diagnostics remain
   Activity/controller-owned.
+- Phone/tablet settings, support, local-tool, font-management, diagnostics,
+  update, release-notes, and ordinary confirmation/message dialogs now use the
+  shared DPIS Compose dialog language. Their Java coordinators continue to own
+  persistence, downloads, export, and lifecycle-sensitive callbacks.
 
 The Compose shell owns phone bottom navigation and expanded navigation chrome.
 `MainUiState` and `MainUiAction` remain the sole source of truth for workspace
@@ -93,16 +97,11 @@ Before migrating a remaining standalone Activity or compact-device workflow:
 
 ## Remaining Scope
 
-The Themes 1-5 milestone does not mean every DPIS UI is Compose-only. Remaining
-View surfaces include dialogs such as About update and license-detail dialogs,
-font-management confirmation
-dialogs, and system-server settings dialogs. Migrate these in focused feature
-batches rather than mixing them with the main-workspace navigation work.
-
-Phone and tablet standalone pages should reuse the established DPIS Compose
-theme, token set, haptic behavior, support-page conventions, and focused
-Java/Kotlin controller boundaries. Preserve their existing user-visible
-semantics before visual cleanup.
+The active phone/tablet presentation routes are Compose-owned. `activity_status`
+and the legacy workspace binders remain temporarily because compact Wear routes
+still consume them; they are not the active phone/tablet content implementation.
+Do not remove that interop assembly boundary until the compact migration has
+equivalent navigation, editor, inset, and lifecycle behavior.
 
 Wear and compact-round UI is a separate product surface. It may use Wear OS
 Compose Material3 components and round-screen layouts instead of imitating the
@@ -110,7 +109,9 @@ phone shell, but it must retain `WatchUiMode` classification until the new route
 has equivalent navigation, inset, accessibility, and device-test coverage.
 
 The compact workspace selector now uses Wear Compose Material3 `AppScaffold`,
-`ScreenScaffold`, and `TransformingLazyColumn`. Compact workspace content still
-uses the existing View binders; `MainComposeShellHost` must not route compact
-devices into the phone/tablet Compose presentations until each workspace has a
+`ScreenScaffold`, and `TransformingLazyColumn`. Compact workspace content,
+configuration editors, template targets, typeface selection, Hook-chain editing,
+and the startup disclaimer still use the existing View binders. These are the
+remaining UI migration scope. `MainComposeShellHost` must not route compact
+devices into the phone/tablet Compose presentations until each workflow has a
 dedicated Wear implementation and round-AVD coverage.

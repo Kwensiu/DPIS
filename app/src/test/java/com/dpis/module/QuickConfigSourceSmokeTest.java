@@ -92,6 +92,9 @@ public class QuickConfigSourceSmokeTest {
         assertTrue(activity.contains("new FeedbackDiagnosticCoordinator(createFeedbackDiagnosticHost())"));
         assertTrue(activity.contains("QuickConfigActivity.this.startFeedbackDiagnostic("));
         assertTrue(activity.contains("FeedbackDiagnosticCoordinator.Request.fromPersisted("));
+        assertTrue(activity.contains("ComposeConfirmDialog.showWithLabels("));
+        assertTrue(activity.contains("ComposeMessageDialog.show("));
+        assertFalse(activity.contains("MaterialAlertDialogBuilder"));
         assertTrue(activity.contains("showFeedbackDiagnosticPackagingDialog();"));
         assertTrue(activity.contains("showFeedbackDiagnosticResultSheet(finalBuilt);"));
         assertTrue(activity.contains("saveComposeEditor(item, editingDraft)"));

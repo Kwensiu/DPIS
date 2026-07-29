@@ -34,6 +34,8 @@ public class AboutActivitySourceSmokeTest {
     public void aboutActivityUpdateFlowUsesSharedDownloadCoordinatorAndHttpsOnly() throws IOException {
         String source = read("src/main/java/com/dpis/module/about/AboutActivity.java");
         String dialogSource = read("src/main/java/com/dpis/module/updates/UpdateAvailableDialog.kt");
+        String textInteropSource = read(
+                "src/main/java/com/dpis/module/ui/compose/AndroidTextInterop.kt");
         String manifestFetcherSource = read("src/main/java/com/dpis/module/updates/UpdateManifestFetcher.java");
 
         assertTrue(source.contains("String downloadUrl = manifest.apkUrl;"));
@@ -49,7 +51,8 @@ public class AboutActivitySourceSmokeTest {
         assertTrue(manifestFetcherSource.contains("final class UpdateManifestFetcher"));
         assertTrue(source.contains("UpdateAvailableDialog.create("));
         assertTrue(dialogSource.contains("class DialogHandle"));
-        assertTrue(dialogSource.contains("LinkAnnotation.Url(span.url)"));
+        assertTrue(dialogSource.contains("toComposeAnnotatedString()"));
+        assertTrue(textInteropSource.contains("LinkAnnotation.Url(span.url)"));
         assertTrue(dialogSource.contains("AnimatedVisibility(expanded)"));
         assertTrue(dialogSource.contains("verticalScroll(rememberScrollState())"));
         assertTrue(dialogSource.contains("R.dimen.dialog_surface_padding_horizontal"));

@@ -49,11 +49,14 @@ public final class FeedbackDiagnosticSourceSmokeTest {
                 "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticCoordinator.java");
         String summary = read(
                 "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticSummaryBuilder.java");
+        String logGate = read(
+                "src/main/java/com/dpis/module/diagnostics/DiagnosticLogGate.java");
 
         assertTrue(main.contains("new FeedbackDiagnosticCoordinator(createFeedbackDiagnosticHost())"));
         assertTrue(main.contains("private FeedbackDiagnosticCoordinator.Host createFeedbackDiagnosticHost()"));
         assertTrue(main.contains("DiagnosticLogGate.ensureEnabled("));
         assertTrue(main.contains("showFeedbackDiagnosticConfirmation(item, state)"));
+        assertTrue(main.contains("ComposeConfirmDialog.showWithLabels("));
         assertTrue(main.contains("resolvePackageVersionName(item.packageName)"));
         assertTrue(main.contains("feedbackDiagnosticCoordinator.start("));
         assertTrue(main.contains("FeedbackDiagnosticCoordinator.Request.fromPersisted("));
@@ -63,6 +66,8 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(main.contains("showFeedbackDiagnosticResultSheet(finalBuilt);"));
         assertFalse(main.contains("postDelayed(() -> finish("));
         assertFalse(main.contains("summaryBuilder.build("));
+        assertTrue(logGate.contains("ComposeConfirmDialog.showWithLabels("));
+        assertFalse(logGate.contains("MaterialAlertDialogBuilder"));
 
         assertTrue(coordinator.contains("handler.postDelayed("));
         assertTrue(coordinator.contains("RootAccessProbe.probe()"));

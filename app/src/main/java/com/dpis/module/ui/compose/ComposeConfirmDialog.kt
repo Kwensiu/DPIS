@@ -114,6 +114,8 @@ internal fun ConfirmDialogContent(
     cancelLabel: String? = null,
     confirmLabel: String? = null
 ) {
+    val cancelAction = rememberDpisConfirmAction(onCancel)
+    val confirmAction = rememberDpisConfirmAction(onConfirm)
     Column(
         modifier = Modifier.fillMaxWidth().padding(
             start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
@@ -150,7 +152,7 @@ internal fun ConfirmDialogContent(
             // advancing/destructive action on the right. Both actions share the editor's
             // compact rounded-rectangle control language instead of pill-shaped full-width rows.
             OutlinedButton(
-                onClick = onCancel,
+                onClick = cancelAction,
                 modifier = Modifier.weight(1f).height(DpisConfirmDialogUiTokens.ActionHeight),
                 shape = DpisConfirmDialogUiTokens.ActionShape,
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
@@ -159,7 +161,7 @@ internal fun ConfirmDialogContent(
                     R.string.dialog_process_action_confirm_negative))
             }
             OutlinedButton(
-                onClick = onConfirm,
+                onClick = confirmAction,
                 modifier = Modifier.weight(1f).height(DpisConfirmDialogUiTokens.ActionHeight),
                 shape = DpisConfirmDialogUiTokens.ActionShape,
                 colors = ButtonDefaults.outlinedButtonColors(

@@ -17,6 +17,8 @@ public class UpdatePromptDialogCoordinatorSourceSmokeTest {
     public void coordinatorOwnsDisclaimerAndManualUpdatePromptComposition() throws IOException {
         String source = read("src/main/java/com/dpis/module/updates/UpdatePromptDialogCoordinator.java");
         String dialogSource = read("src/main/java/com/dpis/module/updates/UpdateAvailableDialog.kt");
+        String textInteropSource = read(
+                "src/main/java/com/dpis/module/ui/compose/AndroidTextInterop.kt");
         String disclaimerSource = read(
                 "src/main/java/com/dpis/module/ui/compose/StartupDisclaimerDialog.kt");
 
@@ -58,7 +60,8 @@ public class UpdatePromptDialogCoordinatorSourceSmokeTest {
         assertTrue(source.contains("R.string.about_update_release_notes_loading"));
         assertTrue(source.contains("ReleaseNotesMarkdownRenderer.render("));
         assertTrue(dialogSource.contains("AnimatedVisibility(expanded)"));
-        assertTrue(dialogSource.contains("addLink(LinkAnnotation.Url(span.url)"));
+        assertTrue(dialogSource.contains("toComposeAnnotatedString()"));
+        assertTrue(textInteropSource.contains("addLink(LinkAnnotation.Url(span.url)"));
     }
 
     private static String read(String relativePath) throws IOException {

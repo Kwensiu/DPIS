@@ -1,8 +1,6 @@
 package com.dpis.module.updates
 
 import android.app.Activity
-import android.text.Spanned
-import android.text.style.URLSpan
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
@@ -35,13 +33,12 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.LinkAnnotation
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.ui.compose.DpisTheme
+import com.dpis.module.ui.compose.toComposeAnnotatedString
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 data class UpdateDialogState(
@@ -79,7 +76,7 @@ object UpdateAvailableDialog {
         internal var cancelAction: Runnable = Runnable { dialog.dismiss() }
 
         fun setReleaseNotes(value: CharSequence?) {
-            state = state.copy(releaseNotes = spannedToAnnotated(value ?: ""))
+            state = state.copy(releaseNotes = (value ?: "").toComposeAnnotatedString())
         }
         fun setPrimary(label: CharSequence, action: Runnable) {
             primaryAction = action
@@ -111,18 +108,6 @@ object UpdateAvailableDialog {
         }
         fun setOnDismissListener(listener: Runnable) {
             dialog.setOnDismissListener { listener.run() }
-        }
-    }
-}
-
-private fun spannedToAnnotated(value: CharSequence): AnnotatedString {
-    if (value !is Spanned) return AnnotatedString(value.toString())
-    return buildAnnotatedString {
-        append(value.toString())
-        value.getSpans(0, value.length, URLSpan::class.java).forEach { span ->
-            val start = value.getSpanStart(span).coerceAtLeast(0)
-            val end = value.getSpanEnd(span).coerceAtMost(value.length)
-            if (start < end) addLink(LinkAnnotation.Url(span.url), start, end)
         }
     }
 }
