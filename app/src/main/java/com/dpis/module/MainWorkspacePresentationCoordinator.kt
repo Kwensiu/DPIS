@@ -53,6 +53,7 @@ import com.dpis.module.ui.compose.WearHomeWorkspaceContent
 import com.dpis.module.ui.compose.WearSettingsWorkspaceContent
 import com.dpis.module.ui.compose.WearTemplateWorkspaceContent
 import com.dpis.module.ui.compose.WearToolsWorkspaceContent
+import com.dpis.module.ui.compose.WearAppConfigEditorContent
 import com.dpis.module.templates.TemplateWorkspacePresentation
 import com.dpis.module.appconfig.AppConfigSheetWizardStore
 import androidx.compose.ui.platform.LocalContext
@@ -141,12 +142,17 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         }
         MainUiState.WorkspaceMode.SETTINGS -> {
             settingsRevision
-            WearSettingsWorkspaceContent(content.settingsState(), content::setSettingsHooks, content::setSettingsSafeMode, content::setSettingsGlobalLog, content::setSettingsLauncherHidden, content::openSettingsFontDebug, content::openSettingsFontLibrary, content::openSettingsExperimental, content::openSettingsLanguage, content::openSettingsBackup, content::clearSettingsCache, content::openSettingsAbout, content::openSettingsDonate)
+            WearSettingsWorkspaceContent(content.settingsState(), content::setSettingsHooks, content::setSettingsSafeMode, content::setSettingsGlobalLog, content::setSettingsLauncherHidden, content::setSettingsScale, content::openSettingsScaleDetails, content::openSettingsFontDebug, content::openSettingsFontLibrary, content::openSettingsExperimental, content::openSettingsLanguage, content::openSettingsBackup, content::clearSettingsCache, content::openSettingsAbout, content::openSettingsDonate)
             true
         }
         MainUiState.WorkspaceMode.TEMPLATE -> {
             templateRevision
-            WearTemplateWorkspaceContent(content.templateState())
+            WearTemplateWorkspaceContent(
+                state = content.templateState(),
+                onEditorChanged = content::updateTemplateEditor,
+                onDestinationChanged = content::updateTemplateEditorDestination,
+                onEditorClosed = content::closeTemplateEditor
+            )
             true
         }
     }
@@ -155,11 +161,23 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
     fun refreshTools(collapse: Boolean = false) { if (collapse) toolsExpanded = false; toolsRevision++ }
     fun refreshSettings() { settingsRevision++ }
     fun refreshTemplates() { templateRevision++ }
-    @Composable fun renderAppEditorOverlay(mode: MainUiState.WorkspaceMode) {
+    @Composable fun hasWearDetail(mode: MainUiState.WorkspaceMode): Boolean = when (mode) {
+        MainUiState.WorkspaceMode.APP -> { appRevision; content.appEditorState() != null }
+        MainUiState.WorkspaceMode.TEMPLATE -> {
+            templateRevision
+            content.templateState().detailKind != TemplateWorkspacePresentation.DetailKind.NONE
+        }
+        else -> false
+    }
+    @Composable fun renderAppEditorOverlay(mode: MainUiState.WorkspaceMode, wear: Boolean = false) {
         // The editor session is Java-owned. Reading the same revision as the catalogue makes a
         // list-row click invalidate this root-level sibling as well as the list itself.
         appRevision
         if (mode != MainUiState.WorkspaceMode.APP) return
+        if (wear) {
+            content.appEditorState()?.let { WearAppConfigEditorContent(it) }
+            return
+        }
         BoxWithConstraints(androidx.compose.ui.Modifier.fillMaxSize()) {
             if (maxWidth >= 600.dp) return@BoxWithConstraints
             val editorState = content.appEditorState() ?: return@BoxWithConstraints

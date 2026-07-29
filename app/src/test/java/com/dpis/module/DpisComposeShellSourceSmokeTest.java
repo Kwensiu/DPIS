@@ -99,6 +99,13 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(wearWorkspace.contains("ScreenScaffold("));
         assertTrue(wearWorkspace.contains("SwitchButton("));
         assertTrue(wearWorkspace.contains("SurfaceTransformation(transformationSpec)"));
+        assertTrue(wearWorkspace.contains("WearAppConfigEditorContent"));
+        assertTrue(wearWorkspace.contains("WearTemplateEditorContent"));
+        assertTrue(wearWorkspace.contains("WearTypefacePickerPage"));
+        assertTrue(wearWorkspace.contains("WearHookChainEditorPage"));
+        assertTrue(wearWorkspace.contains("OutlinedTextField("));
+        assertFalse(wearWorkspace.contains("                AppConfigEditorContent("));
+        assertFalse(wearWorkspace.contains("TemplateEditorSurface("));
         assertTrue(shell.contains("WearMaterialTheme(colorScheme = wearColors)"));
         assertTrue(shell.contains("background = phoneColors.background"));
         assertTrue(mainActivity.contains("getLastCustomNonConfigurationInstance()"));
@@ -292,7 +299,8 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(sheet.contains("rememberModalBottomSheetState(skipPartiallyExpanded = skipPartiallyExpanded)"));
         assertTrue(coordinator.contains("AppConfigSheetWizardStore.shouldShowAdvancedHint(context)"));
         assertTrue(coordinator.contains("AppConfigEditorOverlay("));
-        assertTrue(coordinator.contains("renderAppEditorOverlay(mode: MainUiState.WorkspaceMode)"));
+        assertTrue(coordinator.contains("renderAppEditorOverlay(mode: MainUiState.WorkspaceMode, wear: Boolean = false)"));
+        assertTrue(coordinator.contains("WearAppConfigEditorContent(it)"));
         assertTrue(coordinator.contains("appRevision\n        if (mode != MainUiState.WorkspaceMode.APP) return"));
         assertTrue(overlay.contains("initialValue = SheetValue.Hidden"));
         assertTrue(overlay.contains("skipHiddenState = false"));

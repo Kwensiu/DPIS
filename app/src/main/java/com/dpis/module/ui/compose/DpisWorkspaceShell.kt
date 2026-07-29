@@ -125,6 +125,7 @@ fun DpisWorkspaceShell(
     selectedDestination: DpisWorkspaceDestination,
     onDestinationSelected: (DpisWorkspaceDestination) -> Unit,
     isCompactUi: Boolean,
+    showCompactNavigation: Boolean = true,
     modifier: Modifier = Modifier,
     content: @Composable (PaddingValues) -> Unit
 ) {
@@ -133,6 +134,7 @@ fun DpisWorkspaceShell(
             DpisWorkspaceNavigationLayout.COMPACT_RADIAL -> CompactWearWorkspaceNavigation(
                 selectedDestination = selectedDestination,
                 onDestinationSelected = onDestinationSelected,
+                showNavigation = showCompactNavigation,
                 content = content
             )
 
@@ -255,6 +257,7 @@ fun DpisWorkspaceShell(
 private fun CompactWearWorkspaceNavigation(
     selectedDestination: DpisWorkspaceDestination,
     onDestinationSelected: (DpisWorkspaceDestination) -> Unit,
+    showNavigation: Boolean,
     content: @Composable (PaddingValues) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -335,8 +338,9 @@ private fun CompactWearWorkspaceNavigation(
             } else {
                 Box(Modifier.fillMaxSize()) {
                     content(legacyWorkspaceInsetsFor(selectedDestination))
-                    val openNavigation = rememberDpisConfirmAction { expanded = true }
-                    WearCompactButton(
+                    if (showNavigation) {
+                        val openNavigation = rememberDpisConfirmAction { expanded = true }
+                        WearCompactButton(
                         onClick = openNavigation,
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
@@ -348,7 +352,8 @@ private fun CompactWearWorkspaceNavigation(
                                 modifier = Modifier.size(WearButtonDefaults.ExtraSmallIconSize)
                             )
                         }
-                    )
+                        )
+                    }
                 }
             }
         }

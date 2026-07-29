@@ -19,10 +19,10 @@ boundaries for persistence, permissions, system operations, activity results,
 and runtime-facing work. Do not recreate a hidden View tree only to render a
 Compose workspace.
 
-Compact watch and round layouts remain on the existing `WatchUiMode` View route
-until an equivalent Compose treatment is explicitly implemented and verified.
-Later workspace migrations must preserve one inset owner per surface and use
-the Theme 1 shell's content padding rather than applying legacy insets again.
+Compact watch and round layouts use the dedicated Wear Compose presentation
+selected by `WatchUiMode`. Wear screens preserve one inset owner per surface,
+reuse the same Java/Kotlin domain actions as phone/tablet, and map the active
+DPIS light/dark scheme into Wear Material3 instead of hard-coding black.
 See `docs/compose-workspace-migration.md` for the migration and interaction
 baseline.
 

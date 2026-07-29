@@ -45,6 +45,8 @@ internal class MainComposeShellHost(
                     MainComposeWorkspaceShell(
                         state = state,
                         isCompactUi = isCompactUi,
+                        showCompactNavigation = !isCompactUi ||
+                            !workspacePresentation.hasWearDetail(state.workspaceMode),
                         dispatch = dispatch
                     ) { padding ->
                         // Phone/tablet Compose workspaces are not valid Wear layouts. Compact
@@ -68,7 +70,7 @@ internal class MainComposeShellHost(
                             )
                         }
                     }
-                    workspacePresentation.renderAppEditorOverlay(state.workspaceMode)
+                    workspacePresentation.renderAppEditorOverlay(state.workspaceMode, isCompactUi)
                 }
             }
         }

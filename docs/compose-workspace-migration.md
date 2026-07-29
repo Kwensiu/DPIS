@@ -99,21 +99,18 @@ Before migrating a remaining standalone Activity or compact-device workflow:
 
 ## Remaining Scope
 
-The active phone/tablet presentation routes are Compose-owned. `activity_status`
-and the legacy workspace binders remain temporarily because compact Wear routes
-still consume them; they are not the active phone/tablet content implementation.
-Do not remove that interop assembly boundary until the compact migration has
-equivalent navigation, editor, inset, and lifecycle behavior.
+The active phone/tablet and compact Wear presentation routes are Compose-owned.
+`activity_status` and legacy workspace binders remain as the current Activity
+assembly and wide-layout compatibility boundary; compact Wear does not consume
+them.
 
 Wear and compact-round UI is a separate product surface. It may use Wear OS
 Compose Material3 components and round-screen layouts instead of imitating the
 phone shell, but it must retain `WatchUiMode` classification until the new route
 has equivalent navigation, inset, accessibility, and device-test coverage.
 
-The compact workspace selector now uses Wear Compose Material3 `AppScaffold`,
-`ScreenScaffold`, and `TransformingLazyColumn`. Compact workspace content,
-configuration editors, template targets, typeface selection, Hook-chain editing,
-and the startup disclaimer still use the existing View binders. These are the
-remaining UI migration scope. `MainComposeShellHost` must not route compact
-devices into the phone/tablet Compose presentations until each workflow has a
-dedicated Wear implementation and round-AVD coverage.
+The compact workspace selector and workspace content use Wear Compose Material3
+`AppScaffold`, `ScreenScaffold`, `TransformingLazyColumn`, Wear buttons, and Wear
+switches. App and template editors are full-screen Wear routes; their typeface
+and Hook-chain child pages remain in the same draft session. The startup
+disclaimer is Compose-owned on every form factor.

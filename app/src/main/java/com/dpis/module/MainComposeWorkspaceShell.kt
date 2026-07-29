@@ -13,6 +13,7 @@ import com.dpis.module.ui.compose.DpisWorkspaceShell
 internal fun MainComposeWorkspaceShell(
     state: MainUiState,
     isCompactUi: Boolean,
+    showCompactNavigation: Boolean = true,
     dispatch: (MainUiAction) -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable (PaddingValues) -> Unit
@@ -27,6 +28,7 @@ internal fun MainComposeWorkspaceShell(
             )
         },
         isCompactUi = isCompactUi,
+        showCompactNavigation = showCompactNavigation,
         modifier = modifier,
         content = content
     )
