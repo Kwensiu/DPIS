@@ -279,17 +279,17 @@ public class SystemServerSettingsLayoutSmokeTest {
     @Test
     public void settingsDebugSwitchesPublishRuntimeMirrors() throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
-        String layout = read("src/main/res/layout/dialog_font_debug_stats.xml");
+        String layout = read("src/main/java/com/dpis/module/ui/compose/FontDebugComposeSheet.kt");
 
         assertTrue(source.contains("RuntimeDebugPropertySyncer.publishAsync("));
         assertTrue(source.contains("isChecked,"));
         assertTrue(source.contains("store.isFontDebugOverlayEnabled()"));
         assertTrue(source.contains("requestedEnabled"));
-        assertTrue(source.contains("R.layout.dialog_font_debug_stats"));
-        assertTrue(layout.contains("@dimen/font_debug_dialog_surface_padding_horizontal"));
-        assertTrue(layout.contains("@dimen/font_debug_dialog_stats_panel_height"));
-        assertTrue(layout.contains("@dimen/font_debug_dialog_action_button_height"));
-        assertTrue(layout.contains("@dimen/font_debug_dialog_filter_button_corner_radius"));
+        assertTrue(source.contains("FontDebugComposeSheet.show(activity"));
+        assertTrue(source.contains("handle.update("));
+        assertTrue(layout.contains("R.dimen.font_debug_dialog_surface_padding_horizontal"));
+        assertTrue(layout.contains("MaterialTheme.colorScheme.surfaceContainer"));
+        assertTrue(layout.contains("MaterialTheme.colorScheme.errorContainer"));
     }
 
     private static String read(String relativePath) throws IOException {

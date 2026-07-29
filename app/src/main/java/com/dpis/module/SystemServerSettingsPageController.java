@@ -13,6 +13,7 @@ import com.dpis.module.ui.DialogWindowSizer;
 import com.dpis.module.ui.compose.ComposeConfirmDialog;
 import com.dpis.module.ui.compose.LanguageDialogOption;
 import com.dpis.module.ui.compose.SettingsComposeDialogs;
+import com.dpis.module.ui.compose.FontDebugComposeSheet;
 
 import com.dpis.module.settings.AppLocaleManager;
 import com.dpis.module.settings.AppUiScaleManager;
@@ -30,13 +31,11 @@ import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
-import android.view.LayoutInflater;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,9 +49,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.dpis.module.backup.ConfigBackupCodec;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.slider.Slider;
@@ -112,12 +109,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     private int selectedMode = FontDebugStatsStore.MODE_CHAIN;
     private int selectedWindow = FontDebugStatsStore.WINDOW_ALL;
 
-    private BottomSheetDialog fontDebugDialog;
-    private MaterialButton dialogOverlayActionButton;
-    private MaterialButton dialogStatsModeButton;
-    private MaterialButton dialogStatsWindowButton;
-    private MaterialTextView dialogStatsLastUpdatedView;
-    private MaterialTextView dialogStatsContentView;
+    private FontDebugComposeSheet.Handle fontDebugDialog;
     private SystemHooksToggleController hooksToggleController;
 
     private final Handler statsHandler = new Handler(Looper.getMainLooper());
@@ -975,18 +967,26 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             return;
         }
         dismissFontDebugDialog();
-        ViewGroup root = findViewById(android.R.id.content);
-        View dialogView = LayoutInflater.from(activity).inflate(
-                R.layout.dialog_font_debug_stats, root, false);
-        MaterialButton overlayActionButton = dialogView.findViewById(R.id.dialog_overlay_action);
-        MaterialButton modeButton = dialogView.findViewById(R.id.dialog_stats_mode_button);
-        MaterialButton windowButton = dialogView.findViewById(R.id.dialog_stats_window_button);
-        MaterialButton clearButton = dialogView.findViewById(R.id.dialog_stats_clear);
-        MaterialTextView lastUpdatedView = dialogView.findViewById(R.id.dialog_stats_last_updated);
-        MaterialTextView contentView = dialogView.findViewById(R.id.dialog_stats_content);
-        View closeButton = dialogView.findViewById(R.id.dialog_stats_close);
-
-        overlayActionButton.setOnClickListener(v -> {
+        fontDebugDialog = FontDebugComposeSheet.show(activity,
+                () -> {
+            selectedMode = selectedMode == FontDebugStatsStore.MODE_CHAIN
+                    ? FontDebugStatsStore.MODE_CHAIN_VIEW
+                    : FontDebugStatsStore.MODE_CHAIN;
+            store.setFontDebugSelectedMode(selectedMode);
+            refreshStatsPanel();
+            publishPresentationState();
+        }, () -> {
+            if (selectedWindow == FontDebugStatsStore.WINDOW_5S) {
+                selectedWindow = FontDebugStatsStore.WINDOW_30S;
+            } else if (selectedWindow == FontDebugStatsStore.WINDOW_30S) {
+                selectedWindow = FontDebugStatsStore.WINDOW_ALL;
+            } else {
+                selectedWindow = FontDebugStatsStore.WINDOW_5S;
+            }
+            store.setFontDebugSelectedWindow(selectedWindow);
+            refreshStatsPanel();
+            publishPresentationState();
+        }, () -> {
             boolean currentEnabled = store.isFontDebugOverlayEnabled();
             boolean requestedEnabled = !currentEnabled;
             if (requestedEnabled && !canDrawOverlays()) {
@@ -1012,60 +1012,16 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             }
             updateDialogButtons();
             publishPresentationState();
-        });
-
-        modeButton.setOnClickListener(v -> {
-            selectedMode = selectedMode == FontDebugStatsStore.MODE_CHAIN
-                    ? FontDebugStatsStore.MODE_CHAIN_VIEW
-                    : FontDebugStatsStore.MODE_CHAIN;
-            store.setFontDebugSelectedMode(selectedMode);
-            updateDialogButtons();
-            refreshStatsPanel();
-            publishPresentationState();
-        });
-
-        windowButton.setOnClickListener(v -> {
-            if (selectedWindow == FontDebugStatsStore.WINDOW_5S) {
-                selectedWindow = FontDebugStatsStore.WINDOW_30S;
-            } else if (selectedWindow == FontDebugStatsStore.WINDOW_30S) {
-                selectedWindow = FontDebugStatsStore.WINDOW_ALL;
-            } else {
-                selectedWindow = FontDebugStatsStore.WINDOW_5S;
-            }
-            store.setFontDebugSelectedWindow(selectedWindow);
-            updateDialogButtons();
-            refreshStatsPanel();
-            publishPresentationState();
-        });
-
-        closeButton.setOnClickListener(v -> dismissFontDebugDialog());
-        clearButton.setOnClickListener(v -> {
+        }, () -> {
             clearDebugStatsData();
             refreshStatsPanel();
             showToast(R.string.font_debug_clear_done);
             publishPresentationState();
-        });
-
-        BottomSheetDialog dialog = new BottomSheetDialog(activity);
-        dialog.setContentView(dialogView);
-        dialog.setOnDismissListener(d -> {
-            dialogOverlayActionButton = null;
-            dialogStatsModeButton = null;
-            dialogStatsWindowButton = null;
-            dialogStatsLastUpdatedView = null;
-            dialogStatsContentView = null;
+        }, () -> {
             fontDebugDialog = null;
             publishPresentationState();
         });
-        fontDebugDialog = dialog;
-        dialogOverlayActionButton = overlayActionButton;
-        dialogStatsModeButton = modeButton;
-        dialogStatsWindowButton = windowButton;
-        dialogStatsLastUpdatedView = lastUpdatedView;
-        dialogStatsContentView = contentView;
-        updateDialogButtons();
         refreshStatsPanel();
-        dialog.show();
     }
 
     private void dismissFontDebugDialog() {
@@ -1075,9 +1031,8 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void refreshStatsPanel() {
-        if (statsPreferences == null
-                || dialogStatsLastUpdatedView == null
-                || dialogStatsContentView == null) {
+        FontDebugComposeSheet.Handle handle = fontDebugDialog;
+        if (statsPreferences == null || handle == null) {
             return;
         }
         String key = FontDebugStatsSchema.statsKeyFor(selectedMode, selectedWindow);
@@ -1085,28 +1040,42 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         long updatedAt = statsPreferences.getLong(FontDebugStatsStore.KEY_UPDATED_AT, 0L);
         int eventTotal = statsPreferences.getInt(FontDebugStatsStore.KEY_EVENT_TOTAL, 0);
 
+        String contentText;
         if (statsText == null || statsText.trim().isEmpty()) {
             FontDebugDataDiagnostics.NoDataReason reason = FontDebugDataDiagnostics.resolveNoDataReason(store,
                     statsPreferences);
             if (reason == FontDebugDataDiagnostics.NoDataReason.NONE) {
-                dialogStatsContentView.setText(getString(R.string.font_debug_not_updated));
+                contentText = getString(R.string.font_debug_not_updated);
             } else {
-                dialogStatsContentView.setText(getString(
+                contentText = getString(
                         R.string.font_debug_no_data_with_reason,
                         reasonTitleText(reason),
-                        reasonHintText(reason)));
+                        reasonHintText(reason));
             }
         } else {
-            dialogStatsContentView.setText(statsText);
+            contentText = statsText;
         }
-
-        if (updatedAt <= 0L) {
-            dialogStatsLastUpdatedView.setText(getString(R.string.font_debug_not_updated));
-            return;
+        String updatedText = getString(R.string.font_debug_not_updated);
+        if (updatedAt > 0L) {
+            DateFormat format = DateFormat.getTimeInstance(DateFormat.MEDIUM, Locale.getDefault());
+            updatedText = getString(R.string.font_debug_last_updated,
+                    format.format(new Date(updatedAt)), eventTotal);
         }
-        DateFormat format = DateFormat.getTimeInstance(DateFormat.MEDIUM, Locale.getDefault());
-        String timeText = format.format(new Date(updatedAt));
-        dialogStatsLastUpdatedView.setText(getString(R.string.font_debug_last_updated, timeText, eventTotal));
+        int windowLabelRes = switch (selectedWindow) {
+            case FontDebugStatsStore.WINDOW_5S -> R.string.font_debug_window_button_5s;
+            case FontDebugStatsStore.WINDOW_30S -> R.string.font_debug_window_button_30s;
+            default -> R.string.font_debug_window_button_all;
+        };
+        boolean overlayEnabled = store.isFontDebugOverlayEnabled();
+        handle.update(
+                getString(selectedMode == FontDebugStatsStore.MODE_CHAIN
+                        ? R.string.font_debug_mode_button_chain
+                        : R.string.font_debug_mode_button_chain_view),
+                getString(windowLabelRes), updatedText, contentText,
+                getString(overlayEnabled
+                        ? R.string.font_debug_overlay_disable_button
+                        : R.string.font_debug_overlay_enable_button),
+                overlayEnabled);
     }
 
     private String reasonTitleText(FontDebugDataDiagnostics.NoDataReason reason) {
@@ -1132,38 +1101,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void updateDialogButtons() {
-        if (store == null) {
-            return;
-        }
-        if (dialogStatsModeButton != null) {
-            dialogStatsModeButton.setText(selectedMode == FontDebugStatsStore.MODE_CHAIN
-                    ? R.string.font_debug_mode_button_chain
-                    : R.string.font_debug_mode_button_chain_view);
-        }
-        if (dialogStatsWindowButton != null) {
-            int windowLabelRes = switch (selectedWindow) {
-                case FontDebugStatsStore.WINDOW_5S -> R.string.font_debug_window_button_5s;
-                case FontDebugStatsStore.WINDOW_30S -> R.string.font_debug_window_button_30s;
-                default -> R.string.font_debug_window_button_all;
-            };
-            dialogStatsWindowButton.setText(windowLabelRes);
-        }
-        if (dialogOverlayActionButton != null) {
-            boolean overlayEnabled = store.isFontDebugOverlayEnabled();
-            dialogOverlayActionButton.setText(overlayEnabled
-                    ? R.string.font_debug_overlay_disable_button
-                    : R.string.font_debug_overlay_enable_button);
-            int bgColor = MaterialColors.getColor(dialogOverlayActionButton,
-                    overlayEnabled
-                            ? com.google.android.material.R.attr.colorErrorContainer
-                            : com.google.android.material.R.attr.colorPrimaryContainer);
-            int fgColor = MaterialColors.getColor(dialogOverlayActionButton,
-                    overlayEnabled
-                            ? com.google.android.material.R.attr.colorOnErrorContainer
-                            : com.google.android.material.R.attr.colorOnPrimaryContainer);
-            dialogOverlayActionButton.setBackgroundTintList(ColorStateList.valueOf(bgColor));
-            dialogOverlayActionButton.setTextColor(fgColor);
-        }
+        refreshStatsPanel();
     }
 
     private void onHooksEnabledChanged(CompoundButton buttonView, boolean isChecked) {
