@@ -99,11 +99,16 @@ jobs:
           TEST_FILTER: ${{ github.event.inputs.test_filter }}
         run: |
           if [[ -n "${TEST_FILTER}" ]]; then
-            ./gradlew :app:testModernDebugUnitTest :app:testLegacyDebugUnitTest \
+            ./gradlew :app:testModernDebugUnitTest \
+              --tests "${TEST_FILTER}" \
+              --no-daemon --no-configuration-cache --stacktrace
+            ./gradlew :app:testLegacyDebugUnitTest \
               --tests "${TEST_FILTER}" \
               --no-daemon --no-configuration-cache --stacktrace
           else
-            ./gradlew :app:testAllDebugUnitTests \
+            ./gradlew :app:testModernDebugUnitTest \
+              --no-daemon --no-configuration-cache --stacktrace
+            ./gradlew :app:testLegacyDebugUnitTest \
               --no-daemon --no-configuration-cache --stacktrace
           fi
 
