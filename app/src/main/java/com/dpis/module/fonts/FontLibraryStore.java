@@ -43,6 +43,7 @@ public final class FontLibraryStore {
     private final File fontDirectory;
     private final File publicFontDirectory;
     private final SharedPreferences legacyCatalogPreferences;
+    private final Predicate<String> rootCommandExecutor;
 
     public FontLibraryStore(SharedPreferences preferences, File fontDirectory) {
         this(preferences, fontDirectory, null, null);
@@ -62,10 +63,24 @@ public final class FontLibraryStore {
             File publicFontDirectory,
             SharedPreferences legacyCatalogPreferences
     ) {
+        this(preferences, fontDirectory, publicFontDirectory, legacyCatalogPreferences,
+                FontLibraryStore::runRootCommand);
+    }
+
+    /** Creates a store with an explicit root executor for deterministic host-side validation. */
+    public FontLibraryStore(
+            SharedPreferences preferences,
+            File fontDirectory,
+            File publicFontDirectory,
+            SharedPreferences legacyCatalogPreferences,
+            Predicate<String> rootCommandExecutor
+    ) {
         this.preferences = Objects.requireNonNull(preferences, "preferences");
         this.fontDirectory = fontDirectory;
         this.publicFontDirectory = publicFontDirectory;
         this.legacyCatalogPreferences = legacyCatalogPreferences;
+        this.rootCommandExecutor = Objects.requireNonNull(rootCommandExecutor,
+                "rootCommandExecutor");
         migrateLegacyCatalogIfNecessary();
         migrateLegacyTtcFaceLabelsIfNecessary();
     }
@@ -276,7 +291,7 @@ public final class FontLibraryStore {
 
     private boolean deleteStoredFile(File file) {
         if (publicFontDirectory != null && isUnderPublicFontDirectory(file)) {
-            return runRootCommand("rm -f " + shellQuote(file.getAbsolutePath()));
+            return rootCommandExecutor.test("rm -f " + shellQuote(file.getAbsolutePath()));
         }
         return file.delete();
     }
@@ -534,7 +549,7 @@ public final class FontLibraryStore {
                 .append(" && chmod 644 ").append(shellQuote(publicTempFile.getAbsolutePath()))
                 .append(" && mv -f ").append(shellQuote(publicTempFile.getAbsolutePath()))
                 .append(" ").append(shellQuote(publicFile.getAbsolutePath()));
-        if (!runRootCommand(command.toString())) {
+        if (!rootCommandExecutor.test(command.toString())) {
             return FontPublicationStatus.PUBLISH_FAILED;
         }
         return FontPublicationStatus.PUBLISHED;
@@ -597,7 +612,7 @@ public final class FontLibraryStore {
                 continue;
             }
             File publicFile = new File(publicFontDirectory, "dpis_" + entry.storedFileName);
-            if (!runRootCommand("rm -f " + shellQuote(publicFile.getAbsolutePath()))) {
+            if (!rootCommandExecutor.test("rm -f " + shellQuote(publicFile.getAbsolutePath()))) {
                 return false;
             }
         }

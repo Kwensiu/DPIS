@@ -71,7 +71,7 @@ public final class FontLibraryStoreTest {
         File privateDirectory = temporaryFolder.newFolder("private-fonts");
         File unavailablePublicDirectory = new File(privateDirectory, "missing/public-fonts");
         FontLibraryStore store = new FontLibraryStore(prefs, privateDirectory,
-                unavailablePublicDirectory);
+                unavailablePublicDirectory, null, unused -> false);
 
         FontLibraryEntry entry = store.registerCopiedFont(
                 writeFile("Example.ttf", "private-font-data"), "Example.ttf", 1234L);
@@ -185,7 +185,8 @@ public final class FontLibraryStoreTest {
         FakePrefs prefs = new FakePrefs();
         File privateDirectory = temporaryFolder.newFolder("private-fonts");
         File publicDirectory = temporaryFolder.newFolder("public-fonts");
-        FontLibraryStore store = new FontLibraryStore(prefs, privateDirectory, publicDirectory);
+        FontLibraryStore store = new FontLibraryStore(
+                prefs, privateDirectory, publicDirectory, null, unused -> false);
         FontLibraryEntry entry = store.registerCopiedFont(
                 writeFile("Example.ttf", "private-font-data"), "Example.ttf", 1234L);
         writeFileIn(publicDirectory, "dpis_" + entry.storedFileName, "different-public-data");
@@ -336,7 +337,7 @@ public final class FontLibraryStoreTest {
         FakePrefs prefs = new FakePrefs();
         File privateDirectory = temporaryFolder.newFolder("private-fonts");
         FontLibraryStore store = new FontLibraryStore(prefs, privateDirectory,
-                temporaryFolder.newFolder("public-fonts"));
+                temporaryFolder.newFolder("public-fonts"), null, unused -> false);
         FontLibraryEntry entry = store.registerCopiedFont(
                 writeFile("Example.ttf", "fake-font-data"), "Example.ttf", 1234L);
         String catalog = prefs.getString("font.library.entries", "")
