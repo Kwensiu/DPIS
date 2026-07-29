@@ -12,18 +12,11 @@ import com.dpis.module.ui.compose.StartupDisclaimerDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.progressindicator.LinearProgressIndicator;
-import com.google.android.material.textview.MaterialTextView;
 
 import java.util.Locale;
 
 public final class UpdatePromptDialogCoordinator {
     public interface Host {
-        void showDialogIdleState(MaterialButton primaryButton,
-                MaterialButton cancelButton,
-                LinearProgressIndicator progressView,
-                MaterialTextView progressTextView);
-
         void markPromptedVersion(int versionCode);
 
         boolean isDownloadInProgress();
@@ -32,11 +25,7 @@ public final class UpdatePromptDialogCoordinator {
 
         void startStartupUpdateDownload(String targetVersionName,
                 String downloadUrl,
-                AlertDialog dialog,
-                MaterialButton primaryButton,
-                MaterialButton cancelButton,
-                LinearProgressIndicator progressView,
-                MaterialTextView progressTextView);
+                UpdateAvailableDialog.DialogHandle dialogHandle);
 
         void openUrl(String url);
 
@@ -102,29 +91,24 @@ public final class UpdatePromptDialogCoordinator {
                         localVersionCode,
                         remoteVersionName,
                         remoteVersionCode));
-        MaterialTextView releaseNotesText = dialogHandle.releaseNotesText;
         String embeddedReleaseNotes = remoteReleaseNotes == null ? "" : remoteReleaseNotes.trim();
         if (!embeddedReleaseNotes.isEmpty()) {
             Locale locale = activity.getResources().getConfiguration().getLocales().get(0);
-            releaseNotesText.setText(ReleaseNotesMarkdownRenderer.render(
+            dialogHandle.setReleaseNotes(ReleaseNotesMarkdownRenderer.render(
                     activity,
                     embeddedReleaseNotes,
                     locale));
         } else {
-            releaseNotesText.setText(R.string.about_update_release_notes_loading);
+            dialogHandle.setReleaseNotes(activity.getString(R.string.about_update_release_notes_loading));
         }
-        host.showDialogIdleState(
-                dialogHandle.primaryButton,
-                dialogHandle.cancelButton,
-                dialogHandle.progressView,
-                dialogHandle.progressTextView);
+        UpdateDownloadCoordinator.showDialogIdleState(dialogHandle);
 
-        dialogHandle.cancelButton.setOnClickListener(v -> {
+        dialogHandle.setCancel(activity.getString(R.string.about_update_action_cancel_dialog), () -> {
             if (host.isDownloadInProgress()) {
                 host.cancelActiveUpdateDownload();
                 return;
             }
-            dialogHandle.dialog.dismiss();
+            dialogHandle.dismiss();
         });
 
         String releasePageUrl = remoteReleasePage == null || remoteReleasePage.isEmpty()
@@ -132,46 +116,37 @@ public final class UpdatePromptDialogCoordinator {
                 : remoteReleasePage;
         boolean hasDirectDownload = remoteApkUrl != null && !remoteApkUrl.trim().isEmpty();
         if (!hasDirectDownload) {
-            dialogHandle.primaryButton.setText(R.string.about_update_action_view_release);
-            dialogHandle.primaryButton.setOnClickListener(v -> {
+            dialogHandle.setPrimary(activity.getString(R.string.about_update_action_view_release), () -> {
                 host.markPromptedVersion(remoteVersionCode);
-                dialogHandle.dialog.dismiss();
+                dialogHandle.dismiss();
                 host.openUrl(releasePageUrl);
             });
-            dialogHandle.dialog.show();
-            host.applyLargeDialogWidth(dialogHandle.dialog);
+            dialogHandle.show();
+            host.applyLargeDialogWidth(dialogHandle.getDialog());
             loadReleaseNotes(
-                    releaseNotesText,
-                    dialogHandle.dialog,
+                    dialogHandle,
                     remoteVersionName,
                     !embeddedReleaseNotes.isEmpty());
             return;
         }
 
-        dialogHandle.primaryButton.setText(R.string.about_update_action_download);
-        dialogHandle.primaryButton.setOnClickListener(v -> {
+        dialogHandle.setPrimary(activity.getString(R.string.about_update_action_download), () -> {
             host.markPromptedVersion(remoteVersionCode);
             host.startStartupUpdateDownload(
                     remoteVersionName,
                     remoteApkUrl,
-                    dialogHandle.dialog,
-                    dialogHandle.primaryButton,
-                    dialogHandle.cancelButton,
-                    dialogHandle.progressView,
-                    dialogHandle.progressTextView);
+                    dialogHandle);
         });
-        dialogHandle.dialog.setOnDismissListener(unused -> host.cancelActiveUpdateDownload());
-        dialogHandle.dialog.show();
-        host.applyLargeDialogWidth(dialogHandle.dialog);
+        dialogHandle.setOnDismissListener(host::cancelActiveUpdateDownload);
+        dialogHandle.show();
+        host.applyLargeDialogWidth(dialogHandle.getDialog());
         loadReleaseNotes(
-                releaseNotesText,
-                dialogHandle.dialog,
+                dialogHandle,
                 remoteVersionName,
                 !embeddedReleaseNotes.isEmpty());
     }
 
-    private void loadReleaseNotes(MaterialTextView releaseNotesText,
-            AlertDialog dialog,
+    private void loadReleaseNotes(UpdateAvailableDialog.DialogHandle dialogHandle,
             String targetVersionName,
             boolean hasEmbeddedReleaseNotes) {
         Locale locale = activity.getResources().getConfiguration().getLocales().get(0);
@@ -181,12 +156,12 @@ public final class UpdatePromptDialogCoordinator {
                     public boolean isAlive() {
                         return !activity.isFinishing()
                                 && !activity.isDestroyed()
-                                && dialog.isShowing();
+                                && dialogHandle.isShowing();
                     }
 
                     @Override
                     public void onBody(String body) {
-                        releaseNotesText.setText(ReleaseNotesMarkdownRenderer.render(
+                        dialogHandle.setReleaseNotes(ReleaseNotesMarkdownRenderer.render(
                                 activity,
                                 body,
                                 locale));
@@ -194,12 +169,12 @@ public final class UpdatePromptDialogCoordinator {
 
                     @Override
                     public void onEmptyBody() {
-                        releaseNotesText.setText(R.string.about_update_release_notes_empty);
+                        dialogHandle.setReleaseNotes(activity.getString(R.string.about_update_release_notes_empty));
                     }
 
                     @Override
                     public void onFailure() {
-                        releaseNotesText.setText(R.string.about_update_release_notes_failed);
+                        dialogHandle.setReleaseNotes(activity.getString(R.string.about_update_release_notes_failed));
                     }
                 });
     }

@@ -33,9 +33,8 @@ public class AboutActivitySourceSmokeTest {
     @Test
     public void aboutActivityUpdateFlowUsesSharedDownloadCoordinatorAndHttpsOnly() throws IOException {
         String source = read("src/main/java/com/dpis/module/about/AboutActivity.java");
-        String dialogSource = read("src/main/java/com/dpis/module/updates/UpdateAvailableDialog.java");
+        String dialogSource = read("src/main/java/com/dpis/module/updates/UpdateAvailableDialog.kt");
         String manifestFetcherSource = read("src/main/java/com/dpis/module/updates/UpdateManifestFetcher.java");
-        String dialogLayout = read("src/main/res/layout/dialog_update_available.xml");
 
         assertTrue(source.contains("String downloadUrl = manifest.apkUrl;"));
         assertTrue(source.contains("UpdateManifestFetcher.fetch("));
@@ -46,18 +45,16 @@ public class AboutActivitySourceSmokeTest {
         assertTrue(source.contains("showCenteredManualUpdatePromptDialog("));
         assertTrue(source.contains("ReleaseNotesMarkdownRenderer.render("));
         assertTrue(!source.contains("ReleaseNotesMarkdownLite.format("));
-        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialog, this)"));
+        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialogHandle.getDialog(), this)"));
         assertTrue(manifestFetcherSource.contains("final class UpdateManifestFetcher"));
         assertTrue(source.contains("UpdateAvailableDialog.create("));
-        assertTrue(dialogSource.contains("R.id.update_dialog_cancel_button"));
-        assertTrue(dialogLayout.contains("android:id=\"@+id/update_dialog_cancel_button\""));
-        assertTrue(dialogLayout.contains("com.dpis.module.ui.MaxHeightNestedScrollView"));
-        assertTrue(dialogLayout.contains("android:scrollbars=\"vertical\""));
-        assertTrue(dialogLayout.contains("android:fadeScrollbars=\"false\""));
-        assertTrue(dialogLayout.contains("@dimen/dialog_surface_padding_horizontal"));
-        assertTrue(dialogLayout.contains("@dimen/dialog_status_icon_size"));
-        assertTrue(dialogLayout.contains("@dimen/update_dialog_primary_button_spacing_top"));
-        assertTrue(dialogLayout.contains("@dimen/update_dialog_cancel_button_spacing_top"));
+        assertTrue(dialogSource.contains("class DialogHandle"));
+        assertTrue(dialogSource.contains("LinkAnnotation.Url(span.url)"));
+        assertTrue(dialogSource.contains("AnimatedVisibility(expanded)"));
+        assertTrue(dialogSource.contains("verticalScroll(rememberScrollState())"));
+        assertTrue(dialogSource.contains("R.dimen.dialog_surface_padding_horizontal"));
+        assertTrue(dialogSource.contains("R.dimen.update_dialog_primary_button_spacing_top"));
+        assertTrue(dialogSource.contains("R.dimen.update_dialog_cancel_button_spacing_top"));
         assertTrue(!source.contains("private void executeApkDownload("));
         assertTrue(!source.contains("private void verifyDownloadedApk("));
         assertTrue(!source.contains("private static StartupUpdateManifest fetchUpdateManifest("));

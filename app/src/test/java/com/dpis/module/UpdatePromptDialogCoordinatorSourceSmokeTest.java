@@ -16,7 +16,7 @@ public class UpdatePromptDialogCoordinatorSourceSmokeTest {
     @Test
     public void coordinatorOwnsDisclaimerAndManualUpdatePromptComposition() throws IOException {
         String source = read("src/main/java/com/dpis/module/updates/UpdatePromptDialogCoordinator.java");
-        String dialogSource = read("src/main/java/com/dpis/module/updates/UpdateAvailableDialog.java");
+        String dialogSource = read("src/main/java/com/dpis/module/updates/UpdateAvailableDialog.kt");
         String disclaimerSource = read(
                 "src/main/java/com/dpis/module/ui/compose/StartupDisclaimerDialog.kt");
 
@@ -38,12 +38,12 @@ public class UpdatePromptDialogCoordinatorSourceSmokeTest {
         assertTrue(!source.contains("StartupDisclaimerStore"));
         assertTrue(source.contains("UpdateAvailableDialog.create("));
         assertTrue(source.contains("void applyLargeDialogWidth(AlertDialog dialog);"));
-        assertTrue(source.contains("host.applyLargeDialogWidth(dialogHandle.dialog)"));
+        assertTrue(source.contains("host.applyLargeDialogWidth(dialogHandle.getDialog())"));
         assertTrue(source.contains("host.applyLargeDialogWidth(dialog)"));
         assertTrue(!source.contains("DialogWindowSizer"));
-        assertTrue(source.contains("dialogHandle.cancelButton.setOnClickListener"));
+        assertTrue(source.contains("dialogHandle.setCancel("));
         assertTrue(source.contains("if (host.isDownloadInProgress()) {"));
-        int cancelStart = source.indexOf("dialogHandle.cancelButton.setOnClickListener(v -> {");
+        int cancelStart = source.indexOf("dialogHandle.setCancel(");
         int cancelEnd = source.indexOf("});", cancelStart);
         assertTrue(cancelStart >= 0);
         assertTrue(cancelEnd > cancelStart);
@@ -54,11 +54,11 @@ public class UpdatePromptDialogCoordinatorSourceSmokeTest {
         assertTrue(source.contains("String remoteReleaseNotes"));
         assertTrue(source.contains("ReleaseNotesController releaseNotesController"));
         assertTrue(source.contains("releaseNotesController.load(targetVersionName"));
-        assertTrue(source.contains("dialog.isShowing()"));
+        assertTrue(source.contains("dialogHandle.isShowing()"));
         assertTrue(source.contains("R.string.about_update_release_notes_loading"));
         assertTrue(source.contains("ReleaseNotesMarkdownRenderer.render("));
-        assertTrue(dialogSource.contains("bindReleaseNotesToggle(releaseNotesHost, releaseNotesCard, releaseNotesContainer);"));
-        assertTrue(dialogSource.contains("releaseNotesCard.setOnClickListener"));
+        assertTrue(dialogSource.contains("AnimatedVisibility(expanded)"));
+        assertTrue(dialogSource.contains("addLink(LinkAnnotation.Url(span.url)"));
     }
 
     private static String read(String relativePath) throws IOException {

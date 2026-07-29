@@ -35,9 +35,6 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.dpis.module.updates.GitHubReleaseNotesFetcher;
 import com.dpis.module.updates.ReleaseNotesMarkdownRenderer;
-import com.google.android.material.button.MaterialButton;
-import com.google.android.material.progressindicator.LinearProgressIndicator;
-import com.google.android.material.textview.MaterialTextView;
 
 import java.io.File;
 import java.util.Locale;
@@ -167,38 +164,30 @@ public final class AboutActivity extends LocalizedActivity {
                         manifest.versionName,
                         manifest.versionCode));
 
-        AlertDialog dialog = dialogHandle.dialog;
-        MaterialButton primaryButton = dialogHandle.primaryButton;
-        MaterialButton cancelButton = dialogHandle.cancelButton;
-        LinearProgressIndicator progressView = dialogHandle.progressView;
-        MaterialTextView progressTextView = dialogHandle.progressTextView;
-        MaterialTextView releaseNotesText = dialogHandle.releaseNotesText;
-
-        UpdateDownloadCoordinator.showDialogIdleState(
-                primaryButton, cancelButton, progressView, progressTextView);
-        bindDialogCancelButton(dialog, cancelButton);
+        UpdateDownloadCoordinator.showDialogIdleState(dialogHandle);
+        bindDialogCancelButton(dialogHandle);
         String embeddedReleaseNotes = manifest.releaseNotes == null ? "" : manifest.releaseNotes.trim();
         Locale locale = getResources().getConfiguration().getLocales().get(0);
         if (!embeddedReleaseNotes.isEmpty()) {
-            releaseNotesText.setText(ReleaseNotesMarkdownRenderer.render(
+            dialogHandle.setReleaseNotes(ReleaseNotesMarkdownRenderer.render(
                     this,
                     embeddedReleaseNotes,
                     locale));
         } else {
-            releaseNotesText.setText(R.string.about_update_release_notes_loading);
+            dialogHandle.setReleaseNotes(getString(R.string.about_update_release_notes_loading));
         }
-        loadReleaseNotes(releaseNotesText, locale, manifest.versionName, !embeddedReleaseNotes.isEmpty());
+        loadReleaseNotes(dialogHandle, locale, manifest.versionName, !embeddedReleaseNotes.isEmpty());
 
         boolean hasDirectDownload = downloadUrl != null && !downloadUrl.trim().isEmpty();
         if (!hasDirectDownload) {
-            primaryButton.setText(R.string.about_update_action_view_release);
-            primaryButton.setOnClickListener(v -> openUrl(releasePageUrl));
-            dialog.show();
-            DialogWindowSizer.applyLargeWidth(dialog, this);
+            dialogHandle.setPrimary(getString(R.string.about_update_action_view_release),
+                    () -> openUrl(releasePageUrl));
+            dialogHandle.show();
+            DialogWindowSizer.applyLargeWidth(dialogHandle.getDialog(), this);
             return;
         }
 
-        primaryButton.setOnClickListener(v -> {
+        dialogHandle.setPrimary(getString(R.string.about_update_action_download), () -> {
             if (updateDownloadCoordinator.isDownloadInProgress()) {
                 updateDownloadCoordinator.cancelActiveDownload();
                 return;
@@ -206,19 +195,15 @@ public final class AboutActivity extends LocalizedActivity {
             updateDownloadCoordinator.startDownload(
                     manifest.versionName,
                     downloadUrl,
-                    dialog,
-                    primaryButton,
-                    cancelButton,
-                    progressView,
-                    progressTextView);
+                    dialogHandle);
         });
 
-        dialog.setOnDismissListener(unused -> updateDownloadCoordinator.cancelActiveDownload());
-        dialog.show();
-        DialogWindowSizer.applyLargeWidth(dialog, this);
+        dialogHandle.setOnDismissListener(updateDownloadCoordinator::cancelActiveDownload);
+        dialogHandle.show();
+        DialogWindowSizer.applyLargeWidth(dialogHandle.getDialog(), this);
     }
 
-    private void loadReleaseNotes(MaterialTextView releaseNotesText,
+    private void loadReleaseNotes(UpdateAvailableDialog.DialogHandle dialogHandle,
             Locale locale,
             String targetVersionName,
             boolean hasEmbeddedReleaseNotes) {
@@ -231,7 +216,7 @@ public final class AboutActivity extends LocalizedActivity {
 
                     @Override
                     public void onBody(String body) {
-                        releaseNotesText.setText(ReleaseNotesMarkdownRenderer.render(
+                        dialogHandle.setReleaseNotes(ReleaseNotesMarkdownRenderer.render(
                                 AboutActivity.this,
                                 body,
                                 locale));
@@ -239,22 +224,22 @@ public final class AboutActivity extends LocalizedActivity {
 
                     @Override
                     public void onEmptyBody() {
-                        releaseNotesText.setText(R.string.about_update_release_notes_empty);
+                        dialogHandle.setReleaseNotes(getString(R.string.about_update_release_notes_empty));
                     }
 
                     @Override
                     public void onFailure() {
-                        releaseNotesText.setText(R.string.about_update_release_notes_failed);
+                        dialogHandle.setReleaseNotes(getString(R.string.about_update_release_notes_failed));
                     }
                 });
     }
 
-    private void bindDialogCancelButton(AlertDialog dialog, MaterialButton cancelButton) {
-        cancelButton.setOnClickListener(v -> {
+    private void bindDialogCancelButton(UpdateAvailableDialog.DialogHandle dialogHandle) {
+        dialogHandle.setCancel(getString(R.string.about_update_action_cancel_dialog), () -> {
             if (updateDownloadCoordinator.isDownloadInProgress()) {
                 updateDownloadCoordinator.cancelActiveDownload();
             }
-            dialog.dismiss();
+            dialogHandle.dismiss();
         });
     }
 

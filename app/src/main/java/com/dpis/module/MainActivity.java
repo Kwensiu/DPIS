@@ -17,6 +17,7 @@ import com.dpis.module.fonts.HyperOsNativeAppDetector;
 
 import com.dpis.module.runtime.ModuleRuntimeReloadAdvisor;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
+import com.dpis.module.updates.UpdateAvailableDialog;
 
 import com.dpis.module.diagnostics.FeedbackDiagnosticResultSheet;
 import com.dpis.module.diagnostics.FeedbackDiagnosticPackagingDialog;
@@ -2737,20 +2738,12 @@ public final class MainActivity
     private void startStartupUpdateDownload(
             String targetVersionName,
             String downloadUrl,
-            androidx.appcompat.app.AlertDialog dialog,
-            MaterialButton primaryButton,
-            MaterialButton cancelButton,
-            LinearProgressIndicator progressView,
-            MaterialTextView progressTextView
+            UpdateAvailableDialog.DialogHandle dialogHandle
     ) {
         updateDownloadCoordinator.startDownload(
                 targetVersionName,
                 downloadUrl,
-                dialog,
-                primaryButton,
-                cancelButton,
-                progressView,
-                progressTextView
+                dialogHandle
         );
     }
 
@@ -3070,21 +3063,6 @@ public final class MainActivity
     private UpdatePromptDialogCoordinator.Host createUpdatePromptDialogHost() {
         return new UpdatePromptDialogCoordinator.Host() {
             @Override
-            public void showDialogIdleState(
-                    MaterialButton primaryButton,
-                    MaterialButton cancelButton,
-                    LinearProgressIndicator progressView,
-                    MaterialTextView progressTextView
-            ) {
-                UpdateDownloadCoordinator.showDialogIdleState(
-                        primaryButton,
-                        cancelButton,
-                        progressView,
-                        progressTextView
-                );
-            }
-
-            @Override
             public void markPromptedVersion(int versionCode) {
                 MainActivity.this.markPromptedVersion(versionCode);
             }
@@ -3103,20 +3081,12 @@ public final class MainActivity
             public void startStartupUpdateDownload(
                     String targetVersionName,
                     String downloadUrl,
-                    androidx.appcompat.app.AlertDialog dialog,
-                    MaterialButton primaryButton,
-                    MaterialButton cancelButton,
-                    LinearProgressIndicator progressView,
-                    MaterialTextView progressTextView
+                    UpdateAvailableDialog.DialogHandle dialogHandle
             ) {
                 MainActivity.this.startStartupUpdateDownload(
                         targetVersionName,
                         downloadUrl,
-                        dialog,
-                        primaryButton,
-                        cancelButton,
-                        progressView,
-                        progressTextView
+                        dialogHandle
                 );
             }
 
