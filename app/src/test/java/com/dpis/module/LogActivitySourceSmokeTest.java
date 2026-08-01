@@ -21,14 +21,21 @@ public final class LogActivitySourceSmokeTest {
         assertTrue(source.contains("SupportActivityContent.installLog("));
         assertTrue(content.contains("LazyColumn("));
         assertTrue(content.contains("items(state.entries.size"));
-        assertTrue(content.contains("private fun LogEntryCard("));
+        assertTrue(content.contains("private fun LogEntryRow("));
         assertTrue(content.contains("combinedClickable("));
         assertTrue(content.contains("snapshotFlow"));
         assertTrue(content.contains("presentation::updateAtLatestEdge"));
-        assertTrue(content.contains("SingleChoiceSegmentedButtonRow("));
+        assertTrue(content.contains("TopAppBar("));
+        assertTrue(content.contains("private fun LogTopBarAction("));
+        assertTrue(content.contains("IconButton(onClick"));
+        assertTrue(content.contains("TooltipBox("));
+        assertTrue(content.contains("PrimaryTabRow(selectedTabIndex = state.selectedPage)"));
+        assertTrue(content.contains("private fun LogLevelRail("));
+        assertTrue(content.contains("HorizontalDivider("));
         assertTrue(content.contains("color = MaterialTheme.colorScheme.background"));
         assertTrue(content.contains("containerColor = MaterialTheme.colorScheme.background"));
-        assertTrue(content.contains("horizontalArrangement = Arrangement.End"));
+        assertFalse(content.contains("SingleChoiceSegmentedButtonRow("));
+        assertFalse(content.contains("Modifier.size(34.dp)"));
         assertFalse(source.contains("RecyclerView"));
     }
 

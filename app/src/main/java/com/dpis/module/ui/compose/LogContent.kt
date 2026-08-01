@@ -2,30 +2,38 @@ package com.dpis.module.ui.compose
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,7 +43,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -82,6 +89,7 @@ class LogPresentation {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LogContent(
     presentation: LogPresentation,
@@ -106,78 +114,84 @@ fun LogContent(
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
             topBar = {
-                SecondaryPageTopBar(onBack = rememberDpisConfirmAction(onBack)) {
-                    Text(
-                        stringResource(R.string.log_page_title),
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                TopAppBar(
+                    title = {
+                        Text(
+                            stringResource(R.string.log_page_title),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = rememberDpisConfirmAction(onBack)) {
+                            Icon(
+                                painterResource(R.drawable.ic_arrow_back_24),
+                                contentDescription = stringResource(R.string.system_settings_back)
+                            )
+                        }
+                    },
+                    actions = {
+                        LogTopBarAction(
+                            R.drawable.ic_swap_vert_24,
+                            if (state.newestAtBottom) R.string.log_action_sort_newest_first
+                            else R.string.log_action_sort_oldest_first,
+                            onToggleSort
+                        )
+                        LogTopBarAction(
+                            if (state.autoRefreshEnabled) R.drawable.ic_pause_24
+                            else R.drawable.ic_play_arrow_24,
+                            if (state.autoRefreshEnabled) R.string.log_action_pause_auto_refresh
+                            else R.string.log_action_start_auto_refresh,
+                            onToggleAutoRefresh
+                        )
+                        Box {
+                            LogTopBarAction(
+                                R.drawable.ic_upload_file_24,
+                                R.string.log_action_export
+                            ) { exportMenuExpanded = true }
+                            DropdownMenu(
+                                expanded = exportMenuExpanded,
+                                onDismissRequest = { exportMenuExpanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.log_action_save_logs)) },
+                                    onClick = {
+                                        exportMenuExpanded = false
+                                        onSaveLogs()
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.log_action_share_logs)) },
+                                    onClick = {
+                                        exportMenuExpanded = false
+                                        onShareLogs()
+                                    }
+                                )
+                            }
+                        }
+                        LogTopBarAction(
+                            R.drawable.ic_refresh_24,
+                            R.string.log_action_refresh,
+                            onRefresh
+                        )
+                    }
+                )
             }
         ) { padding ->
             Column(Modifier.fillMaxSize().padding(padding)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    LogToolbarButton(
-                        R.drawable.ic_swap_vert_24,
-                        if (state.newestAtBottom) R.string.log_action_sort_newest_first
-                        else R.string.log_action_sort_oldest_first,
-                        onToggleSort
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    LogToolbarButton(
-                        if (state.autoRefreshEnabled) R.drawable.ic_pause_24
-                        else R.drawable.ic_play_arrow_24,
-                        if (state.autoRefreshEnabled) R.string.log_action_pause_auto_refresh
-                        else R.string.log_action_start_auto_refresh,
-                        onToggleAutoRefresh
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Box {
-                        LogToolbarButton(
-                            R.drawable.ic_upload_file_24,
-                            R.string.log_action_export
-                        ) { exportMenuExpanded = true }
-                        DropdownMenu(
-                            expanded = exportMenuExpanded,
-                            onDismissRequest = { exportMenuExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.log_action_save_logs)) },
-                                onClick = {
-                                    exportMenuExpanded = false
-                                    onSaveLogs()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.log_action_share_logs)) },
-                                onClick = {
-                                    exportMenuExpanded = false
-                                    onShareLogs()
-                                }
-                            )
-                        }
-                    }
-                    Spacer(Modifier.width(6.dp))
-                    LogToolbarButton(
-                        R.drawable.ic_refresh_24,
-                        R.string.log_action_refresh,
-                        onRefresh
-                    )
-                }
-                SingleChoiceSegmentedButtonRow(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
+                PrimaryTabRow(selectedTabIndex = state.selectedPage) {
                     listOf(R.string.log_page_dpis, R.string.log_page_lsposed_related)
                         .forEachIndexed { index, textRes ->
-                            SegmentedButton(
+                            Tab(
                                 selected = state.selectedPage == index,
                                 onClick = rememberDpisConfirmAction { onSelectPage(index) },
-                                shape = SegmentedButtonDefaults.itemShape(index, 2),
-                                label = { Text(stringResource(textRes), maxLines = 1) }
+                                text = {
+                                    Text(
+                                        stringResource(textRes),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                             )
                         }
                 }
@@ -230,18 +244,20 @@ private fun LogEntryList(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         state = listState,
-        contentPadding = PaddingValues(start = 16.dp, top = 4.dp, end = 16.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        contentPadding = PaddingValues(bottom = 24.dp)
     ) {
         items(state.entries.size, key = { state.entries[it].key }) { index ->
-            LogEntryCard(state.entries[index], onToggleExpanded, onCopyEntry)
+            LogEntryRow(state.entries[index], onToggleExpanded, onCopyEntry)
+            if (index < state.entries.lastIndex) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
         }
     }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun LogEntryCard(
+private fun LogEntryRow(
     entry: LogUiEntry,
     onToggleExpanded: (String) -> Unit,
     onCopyEntry: (String) -> Unit
@@ -251,12 +267,14 @@ private fun LogEntryCard(
             onClick = { onToggleExpanded(entry.key) },
             onLongClick = { onCopyEntry(entry.key) }
         ),
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh
+        color = MaterialTheme.colorScheme.surface
     ) {
-        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.Top) {
-            LogLevelBadge(entry.level)
-            Column(Modifier.weight(1f).padding(start = 10.dp)) {
+        Row(
+            Modifier.fillMaxWidth().height(IntrinsicSize.Min).heightIn(min = 64.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            LogLevelRail(entry.level)
+            Column(Modifier.weight(1f).padding(horizontal = 12.dp, vertical = 10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         entry.tag,
@@ -268,7 +286,7 @@ private fun LogEntryCard(
                     )
                     Text(
                         entry.time,
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -276,6 +294,7 @@ private fun LogEntryCard(
                     entry.message,
                     modifier = Modifier.padding(top = 4.dp),
                     style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = if (entry.expanded) 40 else 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -285,7 +304,7 @@ private fun LogEntryCard(
 }
 
 @Composable
-private fun LogLevelBadge(level: String) {
+private fun LogLevelRail(level: String) {
     val normalized = level.trim().uppercase().firstOrNull()?.toString() ?: "I"
     val (container, content) = when (normalized) {
         "E", "F" -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
@@ -293,27 +312,36 @@ private fun LogLevelBadge(level: String) {
         "D", "V" -> MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
         else -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
     }
-    Surface(shape = CircleShape, color = container) {
-        Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) {
-            Text(normalized, style = MaterialTheme.typography.labelMedium, color = content)
+    Surface(color = container) {
+        Box(
+            Modifier.fillMaxHeight().width(32.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                normalized,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = content
+            )
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LogToolbarButton(iconRes: Int, descriptionRes: Int, onClick: () -> Unit) {
-    Surface(
-        modifier = Modifier.size(34.dp),
-        shape = CircleShape,
-        color = Color.Transparent,
-        onClick = rememberDpisConfirmAction(onClick)
+private fun LogTopBarAction(iconRes: Int, descriptionRes: Int, onClick: () -> Unit) {
+    val description = stringResource(descriptionRes)
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+            TooltipAnchorPosition.Below
+        ),
+        tooltip = { PlainTooltip { Text(description) } },
+        state = rememberTooltipState()
     ) {
-        Box(contentAlignment = Alignment.Center) {
+        IconButton(onClick = rememberDpisConfirmAction(onClick)) {
             Icon(
                 painterResource(iconRes),
-                contentDescription = stringResource(descriptionRes),
-                modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                contentDescription = description
             )
         }
     }
