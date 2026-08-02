@@ -293,7 +293,8 @@ public final class DpisComposeShellSourceSmokeTest {
         String activity = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(sheet.contains("skipPartiallyExpanded: Boolean = true"));
-        assertTrue(sheet.contains("rememberModalBottomSheetState(skipPartiallyExpanded = skipPartiallyExpanded)"));
+        assertTrue(sheet.contains("rememberBottomSheetState("));
+        assertTrue(sheet.contains("SheetValue.PartiallyExpanded"));
         assertTrue(coordinator.contains("AppConfigSheetWizardStore.shouldShowAdvancedHint(context)"));
         assertTrue(coordinator.contains("AppConfigEditorOverlay("));
         assertTrue(coordinator.contains("renderAppEditorOverlay(mode: MainUiState.WorkspaceMode, wear: Boolean = false)"));

@@ -22,7 +22,8 @@ public class DonateActivitySourceSmokeTest {
         assertTrue(activityContent.contains("fun installDonate(activity: ComponentActivity)"));
         assertTrue(compose.contains("fun DonateSupportPage(onBack: () -> Unit)"));
         assertTrue(compose.contains("ModalBottomSheet("));
-        assertTrue(compose.contains("rememberModalBottomSheetState(skipPartiallyExpanded = true)"));
+        assertTrue(compose.contains("rememberBottomSheetState("));
+        assertTrue(compose.contains("enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)"));
         assertTrue(compose.contains(".heightIn(min = 512.dp)"));
         assertTrue(compose.contains("supporters.forEachIndexed"));
         assertTrue(compose.contains("R.drawable.donate_wechat"));
