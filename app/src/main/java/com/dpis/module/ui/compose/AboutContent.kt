@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -43,6 +44,7 @@ fun AboutContent(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             SecondaryPageTopBar(
                 titleRes = R.string.about_title,
@@ -56,7 +58,7 @@ fun AboutContent(
                 start = 16.dp,
                 top = contentPadding.calculateTopPadding() + 8.dp,
                 end = 16.dp,
-                bottom = 24.dp
+                bottom = edgeToEdgeContentBottomPadding(24.dp)
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {

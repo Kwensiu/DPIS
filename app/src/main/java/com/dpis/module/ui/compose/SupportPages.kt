@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,7 +64,12 @@ fun DonateSupportPage(onBack: () -> Unit) {
     SupportScaffold(titleRes = R.string.donate_title, onBack = onBack) { padding ->
         LazyColumn(
             modifier = Modifier.padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, top = 18.dp, end = 16.dp, bottom = 24.dp),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                top = 18.dp,
+                end = 16.dp,
+                bottom = edgeToEdgeContentBottomPadding(24.dp)
+            ),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
@@ -128,7 +134,12 @@ fun ModeHelpPage(onBack: () -> Unit, onOpenModeGuide: () -> Unit) {
     ) { padding ->
         LazyColumn(
             modifier = Modifier.padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 24.dp),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                top = 12.dp,
+                end = 16.dp,
+                bottom = edgeToEdgeContentBottomPadding(24.dp)
+            ),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item { Text(stringResource(R.string.mode_help_tips_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold) }
@@ -177,7 +188,12 @@ fun ModeGuidePage(onBack: () -> Unit) {
     ) { padding ->
         LazyColumn(
             modifier = Modifier.padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 24.dp),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                top = 8.dp,
+                end = 16.dp,
+                bottom = edgeToEdgeContentBottomPadding(24.dp)
+            ),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
@@ -208,6 +224,9 @@ private fun SupportScaffold(
     content: @Composable (PaddingValues) -> Unit
 ) {
     Scaffold(
+        // The header owns status bars. Keep the list viewport edge-to-edge and reserve
+        // the gesture area inside each scrollable page instead of outside this scaffold.
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             SecondaryPageTopBar(
                 titleRes = titleRes,
@@ -221,9 +240,14 @@ private fun SupportScaffold(
 /** Shared Compose treatment for standalone secondary pages. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun SecondaryPageTopBar(@StringRes titleRes: Int, onBack: () -> Unit) {
+internal fun SecondaryPageTopBar(
+    @StringRes titleRes: Int,
+    onBack: () -> Unit,
+    actions: @Composable RowScope.() -> Unit = {}
+) {
     SecondaryPageTopBar(
         onBack = onBack,
+        actions = actions,
         title = {
             Text(
                 text = stringResource(titleRes),
@@ -237,6 +261,7 @@ internal fun SecondaryPageTopBar(@StringRes titleRes: Int, onBack: () -> Unit) {
 @Composable
 internal fun SecondaryPageTopBar(
     onBack: () -> Unit,
+    actions: @Composable RowScope.() -> Unit = {},
     title: @Composable () -> Unit
 ) {
     Row(
@@ -262,6 +287,7 @@ internal fun SecondaryPageTopBar(
             )
         }
         Box(Modifier.padding(start = 12.dp).weight(1f)) { title() }
+        actions()
     }
 }
 

@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -98,6 +100,7 @@ fun FontLibraryContent(
 ) {
     var archiveMenuExpanded by remember { mutableStateOf(false) }
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             SecondaryPageTopBar(onBack = rememberDpisConfirmAction(onBack)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -137,7 +140,10 @@ fun FontLibraryContent(
             }
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = rememberDpisConfirmAction(onImportFont)) {
+            FloatingActionButton(
+                onClick = rememberDpisConfirmAction(onImportFont),
+                modifier = Modifier.navigationBarsPadding()
+            ) {
                 Icon(
                     painterResource(R.drawable.ic_upload_file_24),
                     contentDescription = stringResource(R.string.font_library_import_action)
@@ -162,7 +168,7 @@ fun FontLibraryContent(
                     start = 16.dp,
                     top = padding.calculateTopPadding() + 8.dp,
                     end = 16.dp,
-                    bottom = padding.calculateBottomPadding() + 88.dp
+                    bottom = edgeToEdgeContentBottomPadding(88.dp)
                 ),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
@@ -230,6 +236,7 @@ fun FontDetailContent(
 ) {
     val state = presentation.state ?: return
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             SecondaryPageTopBar(onBack = rememberDpisConfirmAction(onBack)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -268,7 +275,7 @@ fun FontDetailContent(
                 start = 16.dp,
                 top = padding.calculateTopPadding() + 8.dp,
                 end = 16.dp,
-                bottom = 24.dp
+                bottom = edgeToEdgeContentBottomPadding(24.dp)
             ),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {

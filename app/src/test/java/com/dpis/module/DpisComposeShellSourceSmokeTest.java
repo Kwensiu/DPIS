@@ -201,6 +201,8 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(editor.contains("DpisEditorBottomSheet("));
         assertTrue(editor.contains("DpisSheetVisualChrome(showUnsaved = form.isDirty())"));
         assertTrue(editor.contains("contentWindowInsets = { androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0) }"));
+        assertTrue(editor.contains(
+                "padding(bottom = edgeToEdgeContentBottomPadding(extraBottomPadding))"));
     }
 
     @Test
@@ -317,7 +319,9 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(coordinator.contains("showInlineUnsavedBadge = false"));
         assertTrue(appEditor.contains("showInlineUnsavedBadge: Boolean = true"));
         assertTrue(appEditor.contains("coordinates.positionInParent().y.toDp()"));
-        assertTrue(appEditor.contains("navigationBarsPadding()"));
+        assertTrue(appEditor.contains(
+                "padding(bottom = edgeToEdgeContentBottomPadding(0.dp))"));
+        assertFalse(appEditor.contains("navigationBarsPadding()"));
         assertTrue(appWorkspace.contains("VerticalDivider("));
         assertFalse(appWorkspace.contains("alwaysFloatInputLabels"));
         assertTrue(controls.contains("label: String"));

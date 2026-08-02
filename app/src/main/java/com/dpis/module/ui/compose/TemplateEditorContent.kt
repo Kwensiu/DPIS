@@ -187,11 +187,11 @@ fun TemplateEditorContent(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
             .imePadding()
+            .verticalScroll(rememberScrollState())
             .padding(AppConfigSheetUiTokens.ContentPadding)
             .padding(top = extraTopPadding)
-            .padding(bottom = extraBottomPadding)
+            .padding(bottom = edgeToEdgeContentBottomPadding(extraBottomPadding))
     ) {
         TemplateEditorSheetHeader(
             form = form,

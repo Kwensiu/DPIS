@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,7 +33,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -113,23 +113,11 @@ fun LogContent(
     ) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            stringResource(R.string.log_page_title),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = rememberDpisConfirmAction(onBack)) {
-                            Icon(
-                                painterResource(R.drawable.ic_arrow_back_24),
-                                contentDescription = stringResource(R.string.system_settings_back)
-                            )
-                        }
-                    },
+                SecondaryPageTopBar(
+                    titleRes = R.string.log_page_title,
+                    onBack = rememberDpisConfirmAction(onBack),
                     actions = {
                         LogTopBarAction(
                             R.drawable.ic_swap_vert_24,
@@ -244,7 +232,7 @@ private fun LogEntryList(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         state = listState,
-        contentPadding = PaddingValues(bottom = 24.dp)
+        contentPadding = PaddingValues(bottom = edgeToEdgeContentBottomPadding(24.dp))
     ) {
         items(state.entries.size, key = { state.entries[it].key }) { index ->
             LogEntryRow(state.entries[index], onToggleExpanded, onCopyEntry)
