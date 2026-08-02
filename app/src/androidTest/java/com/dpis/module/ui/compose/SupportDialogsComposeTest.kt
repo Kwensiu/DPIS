@@ -2,10 +2,10 @@ package com.dpis.module.ui.compose
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import com.dpis.module.R
 import org.junit.Assert.assertEquals
@@ -25,8 +25,7 @@ class SupportDialogsComposeTest {
                 TextInputDialogContent("Font display name", "Name", "Old", {}, { submitted = it })
             }
         }
-        composeRule.onNodeWithText("Old").performTextClearance()
-        composeRule.onNodeWithText("Name").performTextInput("New")
+        composeRule.onNodeWithText("Old").assertIsFocused().performTextInput("New")
         composeRule.onNodeWithText(composeRule.activity.getString(R.string.dialog_confirm_button)).performClick()
         assertEquals("New", submitted)
     }

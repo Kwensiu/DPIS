@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.appcompat.app.AlertDialog
 import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowSizer
@@ -173,6 +174,38 @@ internal fun ConfirmDialogContent(
                 Text(text = confirmLabel ?: androidx.compose.ui.res.stringResource(
                     R.string.dialog_process_action_confirm_positive))
             }
+        }
+    }
+}
+
+/**
+ * Compose-owned confirmation container for workflows that already keep visibility in Compose
+ * state. Its content intentionally reuses the same two-action visual contract as activity dialogs.
+ */
+@Composable
+internal fun DpisConfirmAlertDialog(
+    onDismissRequest: () -> Unit,
+    title: String,
+    message: String,
+    cancelLabel: String,
+    confirmLabel: String,
+    onConfirm: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismissRequest) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            ConfirmDialogContent(
+                title = title,
+                message = message,
+                cancelLabel = cancelLabel,
+                confirmLabel = confirmLabel,
+                onConfirm = onConfirm,
+                onCancel = onDismissRequest
+            )
         }
     }
 }

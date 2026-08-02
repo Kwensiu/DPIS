@@ -2,9 +2,13 @@ package com.dpis.module.ui.compose
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import com.dpis.module.R
@@ -26,6 +30,7 @@ class SettingsComposeDialogsTest {
             }
         }
 
+        composeRule.onNodeWithText("100").assertIsFocused()
         composeRule.onNodeWithText("100").performTextClearance()
         composeRule.onNodeWithText(composeRule.activity.getString(
             R.string.settings_interface_scale_input_hint)).performTextInput("121")
@@ -37,18 +42,25 @@ class SettingsComposeDialogsTest {
     @Test
     fun languageActionDispatchesSelectedTag() {
         var selected = ""
+        var done = false
+        val options = (0..12).map { LanguageDialogOption("tag-$it", "Language $it") }
         composeRule.setContent {
             DpisTheme(darkTheme = false, dynamicColor = false) {
                 LanguageDialogContent(
-                    listOf(LanguageDialogOption("en", "English"), LanguageDialogOption("zh", "Chinese")),
-                    "en",
-                    {},
-                    { selected = it }
+                    options,
+                    "tag-0",
+                    onDone = { done = true },
+                    onSelected = { selected = it }
                 )
             }
         }
-        composeRule.onNodeWithText("Chinese").performClick()
-        assertEquals("zh", selected)
+        composeRule.onNodeWithTag(LanguageDialogOptionsTestTag).performScrollToIndex(12)
+        composeRule.onNodeWithText("Language 12").assertIsDisplayed()
+        composeRule.onNodeWithText("Language 12").performClick()
+        assertEquals("tag-12", selected)
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.dialog_typeface_done_action))
+            .performClick()
+        assertTrue(done)
     }
 
     @Test

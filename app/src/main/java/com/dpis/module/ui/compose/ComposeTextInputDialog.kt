@@ -15,15 +15,21 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowSizer
@@ -83,7 +89,20 @@ internal fun TextInputDialogContent(
     onCancel: () -> Unit,
     onSubmit: (String) -> Unit
 ) {
-    var value by remember(initialValue) { mutableStateOf(initialValue) }
+    var value by remember(initialValue) {
+        mutableStateOf(
+            TextFieldValue(
+                text = initialValue,
+                selection = TextRange(0, initialValue.length)
+            )
+        )
+    }
+    val focusRequester = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    LaunchedEffect(focusRequester) {
+        focusRequester.requestFocus()
+        keyboard?.show()
+    }
     Column(
         Modifier.fillMaxWidth().padding(
             start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
@@ -100,7 +119,7 @@ internal fun TextInputDialogContent(
             onValueChange = { value = it },
             label = { Text(hint) },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
         )
         Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
         Row(Modifier.fillMaxWidth()) {
@@ -110,7 +129,7 @@ internal fun TextInputDialogContent(
                 Text(androidx.compose.ui.res.stringResource(R.string.dialog_process_action_confirm_negative))
             }
             Spacer(Modifier.weight(0.05f))
-            Button(onClick = { onSubmit(value) },
+            Button(onClick = { onSubmit(value.text) },
                 modifier = Modifier.weight(1f).height(DpisConfirmDialogUiTokens.ActionHeight),
                 shape = DpisConfirmDialogUiTokens.ActionShape) {
                 Text(androidx.compose.ui.res.stringResource(R.string.dialog_confirm_button))

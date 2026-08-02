@@ -3,6 +3,8 @@ package com.dpis.module.ui.compose
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -11,26 +13,38 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -43,6 +57,7 @@ import java.util.function.Consumer
 import java.util.function.IntConsumer
 
 data class LanguageDialogOption(val tag: String, val label: String)
+internal const val LanguageDialogOptionsTestTag = "language-dialog-options"
 
 /** Compose-owned phone/tablet settings dialogs; persistence remains controller-owned. */
 object SettingsComposeDialogs {
@@ -69,8 +84,18 @@ object SettingsComposeDialogs {
         options: List<LanguageDialogOption>,
         selectedTag: String,
         onSelected: Consumer<String>
+    ): AlertDialog = showLanguage(activity, options, selectedTag, true, onSelected)
+
+    /** Keeps haptic policy injectable for the planned click-feedback preference. */
+    @JvmStatic
+    fun showLanguage(
+        activity: Activity,
+        options: List<LanguageDialogOption>,
+        selectedTag: String,
+        hapticFeedbackEnabled: Boolean,
+        onSelected: Consumer<String>
     ): AlertDialog = showDialog(activity) { dismiss ->
-        LanguageDialogContent(options, selectedTag, dismiss) {
+        LanguageDialogContent(options, selectedTag, hapticFeedbackEnabled, dismiss) {
             dismiss()
             onSelected.accept(it)
         }
@@ -116,15 +141,21 @@ internal fun InterfaceScaleDialogContent(
     onSave: (Int) -> Unit
 ) {
     var value by remember(initialPercent) { mutableStateOf(initialPercent.toString()) }
+    val focusRequester = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
     val parsed = value.trim().toIntOrNull()
     val invalid = parsed == null || parsed !in minimumPercent..maximumPercent
+    LaunchedEffect(focusRequester) {
+        focusRequester.requestFocus()
+        keyboard?.show()
+    }
     DialogColumn {
         DialogTitle(stringResource(R.string.settings_interface_scale_dialog_title))
         Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
         OutlinedTextField(
             value = value,
             onValueChange = { if (it.length <= 3 && it.all(Char::isDigit)) value = it },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
             label = { Text(stringResource(R.string.settings_interface_scale_input_hint)) },
             isError = invalid,
             supportingText = if (invalid) {
@@ -132,10 +163,10 @@ internal fun InterfaceScaleDialogContent(
             } else null,
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { if (!invalid) parsed?.let(onSave) })
+            keyboardActions = KeyboardActions(onDone = { if (!invalid) onSave(parsed) })
         )
         Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
-        DialogActionRow(onCancel, { if (!invalid) parsed?.let(onSave) }, !invalid)
+        DialogActionRow(onCancel, { if (!invalid) onSave(parsed) }, !invalid)
     }
 }
 
@@ -143,32 +174,73 @@ internal fun InterfaceScaleDialogContent(
 internal fun LanguageDialogContent(
     options: List<LanguageDialogOption>,
     selectedTag: String,
-    onCancel: () -> Unit,
+    hapticFeedbackEnabled: Boolean = true,
+    onDone: () -> Unit,
     onSelected: (String) -> Unit
 ) {
     DialogColumn {
         DialogTitle(stringResource(R.string.settings_language_dialog_title))
         Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
-        Column(
-            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 320.dp)
+                .testTag(LanguageDialogOptionsTestTag),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            options.forEach { option ->
-                val selected = option.tag == selectedTag
-                if (selected) {
-                    Button(onClick = { onSelected(option.tag) }, modifier = Modifier.fillMaxWidth()) {
-                        Text(option.label)
-                    }
-                } else {
-                    OutlinedButton(onClick = { onSelected(option.tag) }, modifier = Modifier.fillMaxWidth()) {
-                        Text(option.label)
-                    }
-                }
+            items(options, key = LanguageDialogOption::tag) { option ->
+                LanguageDialogOptionRow(
+                    option = option,
+                    selected = option.tag == selectedTag,
+                    hapticFeedbackEnabled = hapticFeedbackEnabled,
+                    onSelected = { onSelected(option.tag) }
+                )
             }
         }
         Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
-        OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.dialog_process_action_confirm_negative))
+        Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.dialog_typeface_done_action))
+        }
+    }
+}
+
+@Composable
+private fun LanguageDialogOptionRow(
+    option: LanguageDialogOption,
+    selected: Boolean,
+    hapticFeedbackEnabled: Boolean,
+    onSelected: () -> Unit
+) {
+    val select = rememberDpisConfirmAction(hapticFeedbackEnabled, onSelected)
+    val shape = RoundedCornerShape(10.dp)
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .clickable(onClick = select, role = Role.RadioButton),
+        shape = shape,
+        color = if (selected) {
+            MaterialTheme.colorScheme.secondaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerHigh
+        },
+        contentColor = if (selected) {
+            MaterialTheme.colorScheme.onSecondaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSurface
+        }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 52.dp)
+                .padding(horizontal = 16.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            Text(
+                option.label,
+                style = MaterialTheme.typography.bodyLarge
+            )
         }
     }
 }
@@ -182,16 +254,63 @@ internal fun BackupActionsDialogContent(
     DialogColumn {
         DialogTitle(stringResource(R.string.config_backup_dialog_title), TextAlign.Start)
         Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
-        Button(onClick = onExport, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.config_backup_export_action))
-        }
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_between)))
-        OutlinedButton(onClick = onImport, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.config_backup_import_action))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            BackupActionTile(
+                label = stringResource(R.string.config_backup_export_action),
+                iconRes = R.drawable.ic_save_24dp,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                onClick = onExport,
+                modifier = Modifier.weight(1f)
+            )
+            BackupActionTile(
+                label = stringResource(R.string.config_backup_import_action),
+                iconRes = R.drawable.ic_upload_file_24,
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                onClick = onImport,
+                modifier = Modifier.weight(1f)
+            )
         }
         Spacer(Modifier.height(dimensionResource(R.dimen.dialog_footer_spacing_top)))
         OutlinedButton(onClick = onClose, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.dialog_close_button))
+        }
+    }
+}
+
+@Composable
+private fun BackupActionTile(
+    label: String,
+    @androidx.annotation.DrawableRes iconRes: Int,
+    containerColor: androidx.compose.ui.graphics.Color,
+    contentColor: androidx.compose.ui.graphics.Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val action = rememberDpisConfirmAction(onClick)
+    Surface(
+        onClick = action,
+        modifier = modifier.aspectRatio(1f),
+        shape = RoundedCornerShape(16.dp),
+        color = containerColor,
+        contentColor = contentColor
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+        ) {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                modifier = Modifier.height(28.dp)
+            )
+            Spacer(Modifier.height(10.dp))
+            Text(text = label, style = MaterialTheme.typography.titleSmall)
         }
     }
 }

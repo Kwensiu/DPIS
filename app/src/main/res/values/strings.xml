@@ -476,8 +476,8 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="settings_config_backup_label">Config backup</string>
     <string name="settings_config_backup_hint">Export or import configurations.</string>
     <string name="config_backup_dialog_title">Config backup</string>
-    <string name="config_backup_export_action">Export backup</string>
-    <string name="config_backup_import_action">Import backup</string>
+    <string name="config_backup_export_action">Export configuration</string>
+    <string name="config_backup_import_action">Import configuration</string>
     <string name="config_backup_import_confirm_title">Import backup</string>
     <string name="config_backup_import_confirm_message">Import overwrites current config. Continue?</string>
     <string name="config_backup_confirm_import_action">Import</string>

@@ -456,8 +456,8 @@ Mini Programs are not supported yet.</string>
     <string name="settings_config_backup_label">Настройки резервного копирования</string>
     <string name="settings_config_backup_hint">Экспорт или импорт настроек.</string>
     <string name="config_backup_dialog_title">Настройки резервного копирования</string>
-    <string name="config_backup_export_action">Экспорт резервной копии</string>
-    <string name="config_backup_import_action">Импорт резервной копии</string>
+    <string name="config_backup_export_action">Экспорт конфигурации</string>
+    <string name="config_backup_import_action">Импорт конфигурации</string>
     <string name="config_backup_import_confirm_title">Импорт резервной копии</string>
     <string name="config_backup_import_confirm_message">Импорт приведет к перезаписи текущей конфигурации. Продолжить?</string>
     <string name="config_backup_confirm_import_action">Импорт</string>

@@ -456,8 +456,8 @@ Mini Programs はまだサポートされていません。</string>
     <string name="settings_config_backup_label">設定バックアップ</string>
     <string name="settings_config_backup_hint">設定をエクスポートまたはインポートします。</string>
     <string name="config_backup_dialog_title">設定バックアップ</string>
-    <string name="config_backup_export_action">バックアップをエクスポート</string>
-    <string name="config_backup_import_action">バックアップをインポート</string>
+    <string name="config_backup_export_action">設定をエクスポート</string>
+    <string name="config_backup_import_action">設定をインポート</string>
     <string name="config_backup_import_confirm_title">バックアップをインポート</string>
     <string name="config_backup_import_confirm_message">インポートすると現在の設定が上書きされます。続行しますか?</string>
     <string name="config_backup_confirm_import_action">インポート</string>
