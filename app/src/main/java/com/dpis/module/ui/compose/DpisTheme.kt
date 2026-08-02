@@ -8,6 +8,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
@@ -25,6 +26,8 @@ private val DpisDarkColors = darkColorScheme(
     error = Color(0xFFFFB4AB)
 )
 
+internal val LocalDpisClickHapticsEnabled = staticCompositionLocalOf { true }
+
 /**
  * The Compose counterpart to the existing Material3 XML theme.
  *
@@ -35,6 +38,7 @@ private val DpisDarkColors = darkColorScheme(
 fun DpisTheme(
     darkTheme: Boolean,
     dynamicColor: Boolean = true,
+    clickHapticsEnabled: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
@@ -46,7 +50,10 @@ fun DpisTheme(
         else -> DpisLightColors
     }
 
-    CompositionLocalProvider(LocalDpisTokens provides DpisTokens()) {
+    CompositionLocalProvider(
+        LocalDpisTokens provides DpisTokens(),
+        LocalDpisClickHapticsEnabled provides clickHapticsEnabled
+    ) {
         MaterialTheme(
             colorScheme = colors,
             typography = DpisTypography,

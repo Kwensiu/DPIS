@@ -30,7 +30,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -94,7 +93,7 @@ fun HomeWorkspaceContent(state: HomeWorkspaceBinder.State, padding: PaddingValue
 
 @Composable
 private fun HomePrimaryStatus(state: HomeWorkspaceBinder.State) {
-    val hapticFeedback = LocalHapticFeedback.current
+    val confirmFeedback = rememberDpisConfirmFeedback()
     val disabled = !state.xposedModuleActivated
     val container = when {
         disabled -> MaterialTheme.colorScheme.errorContainer
@@ -115,7 +114,7 @@ private fun HomePrimaryStatus(state: HomeWorkspaceBinder.State) {
                     state.updateState.subtitle(LocalContext.current),
                     modifier = if (state.updateState.status == HomeUpdateUiState.Status.FAILED) {
                         Modifier.clickable {
-                            hapticFeedback.performDpisConfirm()
+                            confirmFeedback()
                             state.actions.retryUpdateCheck()
                         }
                     } else Modifier,

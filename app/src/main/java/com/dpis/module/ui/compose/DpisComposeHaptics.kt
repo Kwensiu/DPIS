@@ -2,7 +2,6 @@ package com.dpis.module.ui.compose
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 
@@ -20,17 +19,25 @@ fun rememberDpisConfirmAction(
     hapticFeedbackEnabled: Boolean,
     action: () -> Unit
 ): () -> Unit {
-    val hapticFeedback = LocalHapticFeedback.current
-    return remember(action, hapticFeedback, hapticFeedbackEnabled) {
+    val performFeedback = rememberDpisConfirmFeedback(hapticFeedbackEnabled)
+    return remember(action, performFeedback) {
         {
-            if (hapticFeedbackEnabled) {
-                hapticFeedback.performHapticFeedback(HapticFeedbackType.Confirm)
-            }
+            performFeedback()
             action()
         }
     }
 }
 
-fun HapticFeedback.performDpisConfirm() {
-    performHapticFeedback(HapticFeedbackType.Confirm)
+/** Shared policy-aware feedback hook for callbacks whose parameters must be preserved. */
+@Composable
+fun rememberDpisConfirmFeedback(hapticFeedbackEnabled: Boolean = true): () -> Unit {
+    val hapticFeedback = LocalHapticFeedback.current
+    val policyEnabled = LocalDpisClickHapticsEnabled.current
+    return remember(hapticFeedback, hapticFeedbackEnabled, policyEnabled) {
+        {
+            if (policyEnabled && hapticFeedbackEnabled) {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.Confirm)
+            }
+        }
+    }
 }

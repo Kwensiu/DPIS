@@ -95,10 +95,12 @@ internal fun AppFilterContent(showSystemInitial: Boolean, injectedInitial: Boole
 @Composable
 private fun FilterSwitch(label: Int, checked: Boolean, tag: String = "", onChecked: (Boolean) -> Unit) {
     androidx.compose.material3.ListItem(
-        headlineContent = { Text(stringResource(label)) },
         trailingContent = { Switch(checked = checked, onCheckedChange = onChecked,
             modifier = if (tag.isEmpty()) Modifier else Modifier.testTag(tag)) },
-        modifier = Modifier.fillMaxWidth())
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(stringResource(label))
+    }
 }
 
 object ModuleRuntimeReloadComposeDialog {
