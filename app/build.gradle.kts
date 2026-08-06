@@ -170,9 +170,11 @@ android {
     productFlavors {
         create("modern") {
             dimension = "xposedApi"
+            proguardFiles("proguard-rules-modern.pro")
         }
         create("legacy") {
             dimension = "xposedApi"
+            proguardFiles("proguard-rules-legacy.pro")
         }
     }
 
