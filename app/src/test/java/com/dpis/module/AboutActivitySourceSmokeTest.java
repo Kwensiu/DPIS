@@ -104,7 +104,7 @@ public class AboutActivitySourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/about/AboutActivity.java");
 
         assertTrue(content.contains("fun AboutContent("));
-        assertTrue(content.contains("SecondaryPageTopBar("));
+        assertTrue(content.contains("SecondaryPageScaffold("));
         assertTrue(content.contains("SegmentedListItem("));
         assertTrue(content.contains("verticalAlignment = Alignment.CenterVertically"));
         assertTrue(content.contains("ListItemDefaults.segmentedShapes(index, total)"));

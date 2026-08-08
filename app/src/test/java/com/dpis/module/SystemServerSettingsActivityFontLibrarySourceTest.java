@@ -67,7 +67,7 @@ public class SystemServerSettingsActivityFontLibrarySourceTest {
         String source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
 
         assertTrue(content.contains("font_library_page_title"));
-        assertTrue(content.contains("SecondaryPageTopBar"));
+        assertTrue(content.contains("SecondaryPageScaffold"));
         assertTrue(content.contains("FloatingActionButton"));
         assertTrue(content.contains("LazyColumn"));
         assertTrue(content.contains("font_library_empty"));

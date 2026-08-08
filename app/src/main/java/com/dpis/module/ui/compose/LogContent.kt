@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,7 +25,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -111,58 +109,52 @@ fun LogContent(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Scaffold(
-            containerColor = MaterialTheme.colorScheme.background,
-            contentWindowInsets = WindowInsets(0, 0, 0, 0),
-            topBar = {
-                SecondaryPageTopBar(
-                    titleRes = R.string.log_page_title,
-                    onBack = rememberDpisConfirmAction(onBack),
-                    actions = {
-                        LogTopBarAction(
-                            R.drawable.ic_swap_vert_24,
-                            if (state.newestAtBottom) R.string.log_action_sort_newest_first
-                            else R.string.log_action_sort_oldest_first,
-                            onToggleSort
-                        )
-                        LogTopBarAction(
-                            if (state.autoRefreshEnabled) R.drawable.ic_pause_24
-                            else R.drawable.ic_play_arrow_24,
-                            if (state.autoRefreshEnabled) R.string.log_action_pause_auto_refresh
-                            else R.string.log_action_start_auto_refresh,
-                            onToggleAutoRefresh
-                        )
-                        Box {
-                            LogTopBarAction(
-                                R.drawable.ic_upload_file_24,
-                                R.string.log_action_export
-                            ) { exportMenuExpanded = true }
-                            DropdownMenu(
-                                expanded = exportMenuExpanded,
-                                onDismissRequest = { exportMenuExpanded = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.log_action_save_logs)) },
-                                    onClick = {
-                                        exportMenuExpanded = false
-                                        onSaveLogs()
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.log_action_share_logs)) },
-                                    onClick = {
-                                        exportMenuExpanded = false
-                                        onShareLogs()
-                                    }
-                                )
+        SecondaryPageScaffold(
+            onBack = onBack,
+            titleRes = R.string.log_page_title,
+            actions = {
+                LogTopBarAction(
+                    R.drawable.ic_swap_vert_24,
+                    if (state.newestAtBottom) R.string.log_action_sort_newest_first
+                    else R.string.log_action_sort_oldest_first,
+                    onToggleSort
+                )
+                LogTopBarAction(
+                    if (state.autoRefreshEnabled) R.drawable.ic_pause_24
+                    else R.drawable.ic_play_arrow_24,
+                    if (state.autoRefreshEnabled) R.string.log_action_pause_auto_refresh
+                    else R.string.log_action_start_auto_refresh,
+                    onToggleAutoRefresh
+                )
+                Box {
+                    LogTopBarAction(
+                        R.drawable.ic_upload_file_24,
+                        R.string.log_action_export
+                    ) { exportMenuExpanded = true }
+                    DropdownMenu(
+                        expanded = exportMenuExpanded,
+                        onDismissRequest = { exportMenuExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.log_action_save_logs)) },
+                            onClick = {
+                                exportMenuExpanded = false
+                                onSaveLogs()
                             }
-                        }
-                        LogTopBarAction(
-                            R.drawable.ic_refresh_24,
-                            R.string.log_action_refresh,
-                            onRefresh
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.log_action_share_logs)) },
+                            onClick = {
+                                exportMenuExpanded = false
+                                onShareLogs()
+                            }
                         )
                     }
+                }
+                LogTopBarAction(
+                    R.drawable.ic_refresh_24,
+                    R.string.log_action_refresh,
+                    onRefresh
                 )
             }
         ) { padding ->

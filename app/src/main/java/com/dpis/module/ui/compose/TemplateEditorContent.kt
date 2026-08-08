@@ -88,6 +88,8 @@ fun TemplateEditorSurface(
     draftRevision: Int = 0,
     topSafePadding: androidx.compose.ui.unit.Dp = 0.dp,
     bottomSafePadding: androidx.compose.ui.unit.Dp = 0.dp,
+    sheetVisible: Boolean = true,
+    onSheetHidden: () -> Unit = {},
     onFormChanged: () -> Unit,
     onSelectTypeface: () -> Unit,
     onEditHookDomains: () -> Unit,
@@ -139,7 +141,9 @@ fun TemplateEditorSurface(
 
     if (surface == TemplateEditorSurfaceKind.PORTRAIT_SHEET) {
         DpisEditorBottomSheet(
+            visible = sheetVisible,
             onDismissRequest = onDismissRequest,
+            onHidden = onSheetHidden,
             topChrome = { DpisSheetVisualChrome(showUnsaved = form.isDirty()) },
             // The editor body owns the shared bottom reserve. Do not add a second navigation inset.
             contentWindowInsets = { androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0) }

@@ -9,13 +9,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
@@ -31,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -48,44 +51,61 @@ import com.dpis.module.root.RootAccessProbe
 @Composable
 fun HomeWorkspaceContent(state: HomeWorkspaceBinder.State, padding: PaddingValues) {
     val context = LocalContext.current
-    LazyColumn(
-        contentPadding = padding,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.padding(horizontal = 16.dp).statusBarsPadding()
-    ) {
-        item {
-            Column(Modifier.padding(top = 4.dp)) {
-                Text(stringResource(R.string.home_workspace_title), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                Text(stringResource(R.string.home_workspace_subtitle), modifier = Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
+    PrimaryPageScaffold(
+        modifier = Modifier.padding(padding),
+        title = {
+            Column {
+                Text(
+                    stringResource(R.string.home_workspace_title),
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    stringResource(R.string.home_workspace_subtitle),
+                    modifier = Modifier.padding(top = 4.dp),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
         }
-        item { HomePrimaryStatus(state) }
-        if (state.updateState.showsUpdateActionCard()) {
-            item { HomeUpdateActions(state) }
-        }
-        item {
-            Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                HomeCountCard(Modifier.weight(1f).fillMaxHeight(), R.string.home_workspace_status_configured_apps, state.configuredAppCount, state.actions::openConfiguredAppsWorkspace)
-                HomeCountCard(Modifier.weight(1f).fillMaxHeight(), R.string.home_workspace_status_imported_fonts, state.importedFontCount, state.actions::openFontLibrary)
-                HomeCountCard(Modifier.weight(1f).fillMaxHeight(), R.string.home_workspace_status_templates, state.templateCount, state.actions::openTemplateWorkspace)
+    ) { pagePadding ->
+        val layoutDirection = LocalLayoutDirection.current
+        LazyColumn(
+            contentPadding = PaddingValues(
+                start = pagePadding.calculateStartPadding(layoutDirection) + 16.dp,
+                top = pagePadding.calculateTopPadding() + 4.dp,
+                end = pagePadding.calculateEndPadding(layoutDirection) + 16.dp,
+                bottom = pagePadding.calculateBottomPadding() + LocalDpisTokens.current.spaceLg,
+            ),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            item { HomePrimaryStatus(state) }
+            if (state.updateState.showsUpdateActionCard()) {
+                item { HomeUpdateActions(state) }
+            }
+            item {
+                Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    HomeCountCard(Modifier.weight(1f).fillMaxHeight(), R.string.home_workspace_status_configured_apps, state.configuredAppCount, state.actions::openConfiguredAppsWorkspace)
+                    HomeCountCard(Modifier.weight(1f).fillMaxHeight(), R.string.home_workspace_status_imported_fonts, state.importedFontCount, state.actions::openFontLibrary)
+                    HomeCountCard(Modifier.weight(1f).fillMaxHeight(), R.string.home_workspace_status_templates, state.templateCount, state.actions::openTemplateWorkspace)
+                }
+            }
+            item { HomeInfoCard(state) }
+            item {
+                HomeNavigationEntry(R.string.home_mode_help_entry_title, R.string.home_mode_help_entry_summary) {
+                    state.actions.openModeHelp()
+                }
+            }
+            item {
+                HomeFeedbackEntry(context)
+            }
+            item {
+                HomeNavigationEntry(R.string.home_donate_title, R.string.home_donate_summary) {
+                    state.actions.openDonate()
+                }
             }
         }
-        item { HomeInfoCard(state) }
-        item {
-            HomeNavigationEntry(R.string.home_mode_help_entry_title, R.string.home_mode_help_entry_summary) {
-                state.actions.openModeHelp()
-            }
-        }
-        item {
-            HomeFeedbackEntry(context)
-        }
-        item {
-            HomeNavigationEntry(R.string.home_donate_title, R.string.home_donate_summary) {
-                state.actions.openDonate()
-            }
-        }
-        // Keep the final action clear of the workspace navigation surface.
-        item { androidx.compose.foundation.layout.Spacer(Modifier.height(24.dp)) }
     }
 }
 

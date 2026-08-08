@@ -28,7 +28,9 @@ import com.dpis.module.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DpisEditorBottomSheet(
+    visible: Boolean,
     onDismissRequest: () -> Unit,
+    onHidden: () -> Unit = {},
     skipPartiallyExpanded: Boolean = true,
     topChrome: @Composable () -> Unit = { DpisSheetVisualChrome() },
     contentWindowInsets: @Composable () -> WindowInsets = {
@@ -44,6 +46,18 @@ fun DpisEditorBottomSheet(
             setOf(SheetValue.Hidden, SheetValue.PartiallyExpanded, SheetValue.Expanded)
         }
     )
+    androidx.compose.runtime.LaunchedEffect(visible) {
+        if (visible) {
+            if (sheetState.currentValue == SheetValue.Hidden) {
+                sheetState.expand()
+            }
+        } else {
+            if (sheetState.currentValue != SheetValue.Hidden) {
+                sheetState.hide()
+            }
+            onHidden()
+        }
+    }
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,

@@ -9,7 +9,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,7 +28,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -99,43 +100,34 @@ fun FontLibraryContent(
     onFontSelected: (String) -> Unit
 ) {
     var archiveMenuExpanded by remember { mutableStateOf(false) }
-    Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = {
-            SecondaryPageTopBar(onBack = rememberDpisConfirmAction(onBack)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        stringResource(R.string.font_library_page_title),
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Box {
-                        DpisToolbarIconButton(
-                            iconRes = R.drawable.ic_more_vert_24,
-                            descriptionRes = R.string.font_library_archive_menu_action,
-                            onClick = { archiveMenuExpanded = true }
-                        )
-                        DropdownMenu(
-                            expanded = archiveMenuExpanded,
-                            onDismissRequest = { archiveMenuExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.font_library_export_archive_action)) },
-                                onClick = {
-                                    archiveMenuExpanded = false
-                                    onExportArchive()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.font_library_import_archive_action)) },
-                                onClick = {
-                                    archiveMenuExpanded = false
-                                    onImportArchive()
-                                }
-                            )
+    SecondaryPageScaffold(
+        onBack = onBack,
+        titleRes = R.string.font_library_page_title,
+        actions = {
+            Box {
+                DpisToolbarIconButton(
+                    iconRes = R.drawable.ic_more_vert_24,
+                    descriptionRes = R.string.font_library_archive_menu_action,
+                    onClick = { archiveMenuExpanded = true }
+                )
+                DropdownMenu(
+                    expanded = archiveMenuExpanded,
+                    onDismissRequest = { archiveMenuExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.font_library_export_archive_action)) },
+                        onClick = {
+                            archiveMenuExpanded = false
+                            onExportArchive()
                         }
-                    }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.font_library_import_archive_action)) },
+                        onClick = {
+                            archiveMenuExpanded = false
+                            onImportArchive()
+                        }
+                    )
                 }
             }
         },
@@ -151,6 +143,7 @@ fun FontLibraryContent(
             }
         }
     ) { padding ->
+        val layoutDirection = LocalLayoutDirection.current
         val items = presentation.items
         if (items.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
@@ -165,9 +158,9 @@ fun FontLibraryContent(
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    start = 16.dp,
+                    start = padding.calculateStartPadding(layoutDirection) + 16.dp,
                     top = padding.calculateTopPadding() + 8.dp,
-                    end = 16.dp,
+                    end = padding.calculateEndPadding(layoutDirection) + 16.dp,
                     bottom = edgeToEdgeContentBottomPadding(88.dp)
                 ),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -235,46 +228,38 @@ fun FontDetailContent(
     onRemoveReference: (String) -> Unit
 ) {
     val state = presentation.state ?: return
-    Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = {
-            SecondaryPageTopBar(onBack = rememberDpisConfirmAction(onBack)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        stringResource(R.string.font_library_detail_page_title),
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    if (state.publicationFailed) {
-                        DpisToolbarIconButton(
-                            R.drawable.ic_build_24,
-                            R.string.font_library_publication_retry_action,
-                            onRetryPublication
-                        )
-                        Spacer(Modifier.width(8.dp))
-                    }
-                    DpisToolbarIconButton(
-                        R.drawable.ic_edit_24,
-                        R.string.font_library_rename_action,
-                        onRename
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    DpisToolbarIconButton(
-                        R.drawable.ic_delete_24,
-                        R.string.font_library_delete_action,
-                        onDelete
-                    )
-                }
+    SecondaryPageScaffold(
+        onBack = onBack,
+        titleRes = R.string.font_library_detail_page_title,
+        actions = {
+            if (state.publicationFailed) {
+                DpisToolbarIconButton(
+                    R.drawable.ic_build_24,
+                    R.string.font_library_publication_retry_action,
+                    onRetryPublication
+                )
+                Spacer(Modifier.width(8.dp))
             }
+            DpisToolbarIconButton(
+                R.drawable.ic_edit_24,
+                R.string.font_library_rename_action,
+                onRename
+            )
+            Spacer(Modifier.width(8.dp))
+            DpisToolbarIconButton(
+                R.drawable.ic_delete_24,
+                R.string.font_library_delete_action,
+                onDelete
+            )
         }
     ) { padding ->
+        val layoutDirection = LocalLayoutDirection.current
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-                start = 16.dp,
+                start = padding.calculateStartPadding(layoutDirection) + 16.dp,
                 top = padding.calculateTopPadding() + 8.dp,
-                end = 16.dp,
+                end = padding.calculateEndPadding(layoutDirection) + 16.dp,
                 bottom = edgeToEdgeContentBottomPadding(24.dp)
             ),
             verticalArrangement = Arrangement.spacedBy(20.dp)

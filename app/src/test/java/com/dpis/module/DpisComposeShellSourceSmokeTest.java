@@ -134,6 +134,10 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(appWorkspace.contains("allAppsListState"));
         assertTrue(appWorkspace.contains("configuredAppsListState"));
         assertTrue(appWorkspace.contains("actions.openApp(item)"));
+        assertTrue(appWorkspace.contains(
+                "configuration.orientation == Configuration.ORIENTATION_LANDSCAPE"));
+        assertTrue(appWorkspace.contains(
+                "val twoPane = compactVerticalChrome && maxWidth >= WorkspaceTwoPaneMinWidth"));
         assertFalse(appWorkspace.contains("state.actions::requestIcon"));
         assertTrue(appWorkspace.contains("@Preview(showBackground = true"));
         assertTrue(coordinator.contains("private fun ComposeWorkspaceSurface("));
@@ -163,7 +167,8 @@ public final class DpisComposeShellSourceSmokeTest {
                 "enabled = state?.storeAvailable == true && state.cacheClearInProgress != true"));
         assertTrue(home.contains("rememberDpisConfirmAction"));
         assertTrue(home.contains(".clip(CircleShape)"));
-        assertTrue(home.contains("Spacer(Modifier.height(24.dp))"));
+        assertTrue(home.contains("PrimaryPageScaffold("));
+        assertTrue(home.contains("contentPadding = PaddingValues("));
         assertTrue(tools.contains("rememberDpisConfirmAction"));
         assertTrue(tools.contains("SystemFontScaleBadge(state)"));
         assertTrue(tools.contains("if (!state.canWrite && !state.unavailable)"));
@@ -172,14 +177,10 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(tools.contains("state.canRestore()"));
         assertTrue(tools.contains("SystemFontScaleToolState.normalizeSliderPercent(it)"));
         assertTrue(tools.contains("LocalDensity provides Density(displayDensity.density, fontScale = 1f)"));
-        assertTrue(tools.contains(
-                "contentWindowInsets = WindowInsets.statusBars.only(WindowInsetsSides.Top)"));
-        assertTrue(tools.contains(
-                "windowInsets = WindowInsets.statusBars.only(WindowInsetsSides.Top)"));
-        assertTrue(settings.contains(
-                "contentWindowInsets = WindowInsets.statusBars.only(WindowInsetsSides.Top)"));
-        assertTrue(settings.contains(
-                "windowInsets = WindowInsets.statusBars.only(WindowInsetsSides.Top)"));
+        assertTrue(tools.contains("PrimaryPageScaffold("));
+        assertFalse(tools.contains("TopAppBar("));
+        assertTrue(settings.contains("PrimaryPageScaffold("));
+        assertFalse(settings.contains("TopAppBar("));
         assertTrue(support.contains("rememberDpisConfirmAction"));
     }
 
@@ -191,6 +192,7 @@ public final class DpisComposeShellSourceSmokeTest {
                 "src/main/java/com/dpis/module/ui/compose/ExperimentalSettingsContent.kt");
 
         assertTrue(support.contains("internal fun SecondaryPageScaffold("));
+        assertTrue(support.contains("internal fun PrimaryPageScaffold("));
         assertTrue(support.contains("SecondaryPageTopBar("));
         assertTrue(theme.contains("SecondaryPageScaffold("));
         assertTrue(experimental.contains("SecondaryPageScaffold("));
@@ -248,6 +250,8 @@ public final class DpisComposeShellSourceSmokeTest {
 
         assertTrue(template.contains("TemplateWorkspaceSearchCard("));
         assertTrue(template.contains("onQueryChanged = onQueryChanged"));
+        assertTrue(template.contains(
+                "val twoPane = isLandscape && maxWidth >= WorkspaceTwoPaneMinWidth"));
         assertTrue(template.contains(
                 "cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)"));
         assertTrue(template.contains("R.drawable.ic_close_24"));
@@ -335,6 +339,9 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(coordinator.contains("WearAppConfigEditorContent(it)"));
         assertTrue(coordinator.contains("appRevision"));
         assertTrue(coordinator.contains("if (mode != MainUiState.WorkspaceMode.APP) return"));
+        assertTrue(coordinator.contains(
+                "configuration.orientation == Configuration.ORIENTATION_LANDSCAPE"));
+        assertTrue(coordinator.contains("if (twoPane) return@BoxWithConstraints"));
         assertTrue(overlay.contains("initialValue = SheetValue.Hidden"));
         assertTrue(overlay.contains("skipHiddenState = false"));
         assertTrue(overlay.contains("bottomSheetState.partialExpand()"));

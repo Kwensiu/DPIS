@@ -1,5 +1,6 @@
 package com.dpis.module
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -59,6 +60,7 @@ import com.dpis.module.ui.compose.WearAppConfigEditorContent
 import com.dpis.module.templates.TemplateWorkspacePresentation
 import com.dpis.module.appconfig.AppConfigSheetWizardStore
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
@@ -187,7 +189,10 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
             return
         }
         BoxWithConstraints(androidx.compose.ui.Modifier.fillMaxSize()) {
-            if (maxWidth >= 600.dp) return@BoxWithConstraints
+            val configuration = LocalConfiguration.current
+            val twoPane = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE &&
+                maxWidth >= 600.dp
+            if (twoPane) return@BoxWithConstraints
             val editorState = content.appEditorState() ?: return@BoxWithConstraints
             val context = LocalContext.current
             val density = LocalDensity.current

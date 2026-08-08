@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.background
@@ -50,6 +52,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -83,14 +86,17 @@ fun ThemeSettingsContent(
     var pendingScale by remember(interfaceScalePercent) {
         mutableFloatStateOf(interfaceScalePercent.toFloat())
     }
+    val layoutDirection = LocalLayoutDirection.current
     SecondaryPageScaffold(
         titleRes = R.string.settings_theme_settings_title,
         onBack = onBack,
     ) { topBarPadding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
+                start = topBarPadding.calculateStartPadding(layoutDirection) + 16.dp,
                 top = topBarPadding.calculateTopPadding() + 8.dp,
+                end = topBarPadding.calculateEndPadding(layoutDirection) + 16.dp,
                 bottom = 24.dp,
             ),
         ) {

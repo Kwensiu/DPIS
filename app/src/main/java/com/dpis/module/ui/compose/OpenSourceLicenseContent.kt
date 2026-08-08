@@ -2,26 +2,24 @@ package com.dpis.module.ui.compose
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.about.OpenSourceLicenseActivity
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OpenSourceLicenseContent(
     items: List<OpenSourceLicenseActivity.LicenseItem>,
@@ -29,20 +27,18 @@ fun OpenSourceLicenseContent(
     onItemSelected: (OpenSourceLicenseActivity.LicenseItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Scaffold(
+    SecondaryPageScaffold(
         modifier = modifier.fillMaxSize(),
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = {
-            SecondaryPageTopBar(
-                titleRes = R.string.open_source_license,
-                onBack = rememberDpisConfirmAction(onBack)
-            )
-        }
+        titleRes = R.string.open_source_license,
+        onBack = onBack,
     ) { contentPadding ->
+        val layoutDirection = LocalLayoutDirection.current
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
+                start = contentPadding.calculateStartPadding(layoutDirection) + 16.dp,
                 top = contentPadding.calculateTopPadding() + 8.dp,
+                end = contentPadding.calculateEndPadding(layoutDirection) + 16.dp,
                 bottom = edgeToEdgeContentBottomPadding(24.dp)
             ),
             verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)

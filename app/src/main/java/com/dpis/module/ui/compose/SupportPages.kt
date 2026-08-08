@@ -1,5 +1,6 @@
 package com.dpis.module.ui.compose
 
+import android.content.res.Configuration
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
@@ -24,14 +25,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -47,7 +55,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -63,12 +74,13 @@ import com.dpis.module.R
 fun DonateSupportPage(onBack: () -> Unit) {
     var supportersVisible by remember { mutableStateOf(false) }
     SecondaryPageScaffold(titleRes = R.string.donate_title, onBack = onBack) { padding ->
+        val layoutDirection = LocalLayoutDirection.current
         LazyColumn(
-            modifier = Modifier.padding(padding),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-                start = 16.dp,
-                top = 18.dp,
-                end = 16.dp,
+                start = padding.calculateStartPadding(layoutDirection) + 16.dp,
+                top = padding.calculateTopPadding() + 18.dp,
+                end = padding.calculateEndPadding(layoutDirection) + 16.dp,
                 bottom = edgeToEdgeContentBottomPadding(24.dp)
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -136,12 +148,13 @@ fun ModeHelpPage(onBack: () -> Unit, onOpenModeGuide: () -> Unit) {
         titleRes = R.string.mode_help_title,
         onBack = onBack
     ) { padding ->
+        val layoutDirection = LocalLayoutDirection.current
         LazyColumn(
-            modifier = Modifier.padding(padding),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-                start = 16.dp,
-                top = 12.dp,
-                end = 16.dp,
+                start = padding.calculateStartPadding(layoutDirection) + 16.dp,
+                top = padding.calculateTopPadding() + 12.dp,
+                end = padding.calculateEndPadding(layoutDirection) + 16.dp,
                 bottom = edgeToEdgeContentBottomPadding(24.dp)
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -190,12 +203,13 @@ fun ModeGuidePage(onBack: () -> Unit) {
         titleRes = R.string.mode_guide_title,
         onBack = onBack
     ) { padding ->
+        val layoutDirection = LocalLayoutDirection.current
         LazyColumn(
-            modifier = Modifier.padding(padding),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-                start = 16.dp,
-                top = 8.dp,
-                end = 16.dp,
+                start = padding.calculateStartPadding(layoutDirection) + 16.dp,
+                top = padding.calculateTopPadding() + 8.dp,
+                end = padding.calculateEndPadding(layoutDirection) + 16.dp,
                 bottom = edgeToEdgeContentBottomPadding(24.dp)
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -225,19 +239,113 @@ fun ModeGuidePage(onBack: () -> Unit) {
 internal fun SecondaryPageScaffold(
     @StringRes titleRes: Int,
     onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
+    floatingActionButton: @Composable () -> Unit = {},
+    content: @Composable (PaddingValues) -> Unit
+) {
+    SecondaryPageScaffold(
+        modifier = modifier,
+        onBack = onBack,
+        actions = actions,
+        bottomBar = bottomBar,
+        floatingActionButton = floatingActionButton,
+        title = {
+            Text(
+                text = stringResource(titleRes),
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        content = content
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun SecondaryPageScaffold(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
+    floatingActionButton: @Composable () -> Unit = {},
+    title: @Composable () -> Unit,
     content: @Composable (PaddingValues) -> Unit
 ) {
     Scaffold(
+        modifier = modifier,
         // The header owns status bars. Keep the list viewport edge-to-edge and reserve
         // the gesture area inside each scrollable page instead of outside this scaffold.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             SecondaryPageTopBar(
-                titleRes = titleRes,
-                onBack = rememberDpisConfirmAction(onBack)
+                onBack = rememberDpisConfirmAction(onBack),
+                actions = actions,
+                title = title
+            )
+        },
+        bottomBar = bottomBar,
+        floatingActionButton = floatingActionButton,
+        floatingActionButtonPosition = FabPosition.End,
+        content = { scaffoldPadding ->
+            content(secondaryPageContentPadding(scaffoldPadding))
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun PrimaryPageScaffold(
+    @StringRes titleRes: Int,
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
+    floatingActionButton: @Composable () -> Unit = {},
+    content: @Composable (PaddingValues) -> Unit
+) {
+    PrimaryPageScaffold(
+        modifier = modifier,
+        actions = actions,
+        bottomBar = bottomBar,
+        floatingActionButton = floatingActionButton,
+        title = {
+            Text(
+                text = stringResource(titleRes),
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold
             )
         },
         content = content
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun PrimaryPageScaffold(
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
+    floatingActionButton: @Composable () -> Unit = {},
+    title: @Composable () -> Unit,
+    content: @Composable (PaddingValues) -> Unit
+) {
+    Scaffold(
+        modifier = modifier,
+        // The header is a scrim overlay. Content owns its first-item breathing room.
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {
+            PrimaryPageTopBar(
+                actions = actions,
+                title = title
+            )
+        },
+        bottomBar = bottomBar,
+        floatingActionButton = floatingActionButton,
+        floatingActionButtonPosition = FabPosition.End,
+        content = { scaffoldPadding ->
+            content(primaryPageContentPadding(scaffoldPadding))
+        }
     )
 }
 
@@ -268,31 +376,131 @@ internal fun SecondaryPageTopBar(
     actions: @Composable RowScope.() -> Unit = {},
     title: @Composable () -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.statusBars)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // IconButton enforces a 48dp layout box, which shifts the following title
-        // relative to View secondary pages. The legacy button is a real 36dp box.
-        Box(
-            modifier = Modifier.size(36.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-                .clickable(onClick = onBack, role = Role.Button),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_arrow_back_24),
-                contentDescription = stringResource(R.string.system_settings_back),
-                modifier = Modifier.size(20.dp)
-            )
-        }
-        Box(Modifier.padding(start = 12.dp).weight(1f)) { title() }
-        actions()
+    PageTopBar(
+        onBack = rememberDpisConfirmAction(onBack),
+        actions = actions,
+        title = title
+    )
+}
+
+@Composable
+private fun PrimaryPageTopBar(
+    actions: @Composable RowScope.() -> Unit = {},
+    title: @Composable () -> Unit
+) {
+    PageTopBar(
+        actions = actions,
+        includeHorizontalSafeInsets = false,
+        title = title
+    )
+}
+
+@Composable
+private fun PageTopBar(
+    onBack: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {},
+    includeHorizontalSafeInsets: Boolean = true,
+    title: @Composable () -> Unit
+) {
+    val configuration = LocalConfiguration.current
+    val compactVerticalChrome = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val layoutDirection = LocalLayoutDirection.current
+    val safeTopInsets = WindowInsets.statusBars.union(WindowInsets.displayCutout)
+        .asPaddingValues()
+    val safeStartPadding = if (includeHorizontalSafeInsets) {
+        safeTopInsets.calculateStartPadding(layoutDirection)
+    } else {
+        0.dp
     }
+    val safeEndPadding = if (includeHorizontalSafeInsets) {
+        safeTopInsets.calculateEndPadding(layoutDirection)
+    } else {
+        0.dp
+    }
+    val extraTopPadding = if (compactVerticalChrome) 0.dp else 6.dp
+    val bottomPadding = if (compactVerticalChrome) 4.dp else 8.dp
+    Box(modifier = Modifier.fillMaxWidth()) {
+        SecondaryPageTopBarBackdrop()
+        Row(
+            modifier = Modifier.fillMaxWidth()
+                .padding(
+                    start = safeStartPadding + 16.dp,
+                    top = safeTopInsets.calculateTopPadding() + extraTopPadding,
+                    end = safeEndPadding + 16.dp,
+                    bottom = bottomPadding
+                ),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (onBack != null) {
+                // IconButton enforces a 48dp layout box, which shifts the following title
+                // relative to View secondary pages. The legacy button is a real 36dp box.
+                Box(
+                    modifier = Modifier.size(36.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                        .clickable(onClick = onBack, role = Role.Button),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_arrow_back_24),
+                        contentDescription = stringResource(R.string.system_settings_back),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+            Box(
+                Modifier
+                    .padding(start = if (onBack != null) 12.dp else 0.dp)
+                    .weight(1f)
+            ) { title() }
+            actions()
+        }
+    }
+}
+
+@Composable
+private fun secondaryPageContentPadding(scaffoldPadding: PaddingValues): PaddingValues {
+    return pageContentPadding(scaffoldPadding)
+}
+
+@Composable
+private fun primaryPageContentPadding(scaffoldPadding: PaddingValues): PaddingValues {
+    val layoutDirection = LocalLayoutDirection.current
+    return PaddingValues(
+        start = scaffoldPadding.calculateStartPadding(layoutDirection),
+        top = scaffoldPadding.calculateTopPadding(),
+        end = scaffoldPadding.calculateEndPadding(layoutDirection),
+        bottom = scaffoldPadding.calculateBottomPadding(),
+    )
+}
+
+@Composable
+private fun pageContentPadding(scaffoldPadding: PaddingValues): PaddingValues {
+    val layoutDirection = LocalLayoutDirection.current
+    val safeDrawingPadding = WindowInsets.safeDrawing.asPaddingValues()
+    return PaddingValues(
+        start = scaffoldPadding.calculateStartPadding(layoutDirection) +
+            safeDrawingPadding.calculateStartPadding(layoutDirection),
+        top = scaffoldPadding.calculateTopPadding(),
+        end = scaffoldPadding.calculateEndPadding(layoutDirection) +
+            safeDrawingPadding.calculateEndPadding(layoutDirection),
+        bottom = scaffoldPadding.calculateBottomPadding(),
+    )
+}
+
+@Composable
+private fun BoxScope.SecondaryPageTopBarBackdrop() {
+    Box(
+        modifier = Modifier.matchParentSize()
+            .background(
+                Brush.verticalGradient(
+                    0f to MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+                    0.72f to MaterialTheme.colorScheme.surface.copy(alpha = 0.74f),
+                    1f to MaterialTheme.colorScheme.surface.copy(alpha = 0.0f)
+                )
+            )
+    )
 }
 
 @Composable

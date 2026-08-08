@@ -66,7 +66,7 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(composeContent.contains("rememberBottomSheetState("));
         assertTrue(composeContent.contains("enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)"));
         assertTrue(composeContent.contains("navigationBarsPadding()"));
-        assertTrue(composeContent.contains("SecondaryPageTopBar("));
+        assertTrue(composeContent.contains("SecondaryPageScaffold("));
         assertFalse(composeContent.contains("TopAppBar("));
         assertTrue(presentation.contains("templates.setSelectedPackages(templateId, selectedPackages)"));
         assertTrue(presentation.contains("pruneSelection()"));

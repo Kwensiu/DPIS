@@ -1482,6 +1482,10 @@ public class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/MainWorkspacePresentationCoordinator.kt");
         String workspace = read(
             "src/main/java/com/dpis/module/ui/compose/TemplateWorkspaceContent.kt");
+        String editorSurface = read(
+            "src/main/java/com/dpis/module/ui/compose/TemplateEditorContent.kt");
+        String editorSheet = read(
+            "src/main/java/com/dpis/module/ui/compose/DpisEditorBottomSheet.kt");
 
         assertTrue(activity.contains("onComposeTemplateEditorOpened(quickTemplate, templateId)"));
         assertTrue(activity.contains("boolean dirty = form.isDirty();"));
@@ -1503,6 +1507,22 @@ public class MainActivitySourceSmokeTest {
         assertTrue(workspace.contains("onEditorOpened(kind == EDITOR_QUICK, templateId)"));
         assertTrue(workspace.contains("onEditorChanged(editorDraft.form)"));
         assertTrue(workspace.contains("onEditorClosed()"));
+        assertTrue(workspace.contains(
+                "val createdNewTemplate = editorDraft.form.quickTemplate && editorDraft.form.newTemplate"));
+        assertTrue(workspace.contains("if (createdNewTemplate)"));
+        assertTrue(workspace.contains("var editorSheetVisible"));
+        assertTrue(workspace.contains("var editorSheetClosing"));
+        assertTrue(workspace.contains("fun finishEditorClose()"));
+        assertTrue(workspace.contains("sheetVisible = editorSheetVisible"));
+        assertTrue(workspace.contains(
+                "onSheetHidden = { if (editorSheetClosing) finishEditorClose() }"));
+        assertTrue(editorSurface.contains("sheetVisible: Boolean = true"));
+        assertTrue(editorSurface.contains("onSheetHidden: () -> Unit = {}"));
+        assertTrue(editorSurface.contains("visible = sheetVisible"));
+        assertTrue(editorSurface.contains("onHidden = onSheetHidden"));
+        assertTrue(editorSheet.contains("if (visible)"));
+        assertTrue(editorSheet.contains("sheetState.hide()"));
+        assertTrue(editorSheet.contains("onHidden()"));
         int workspaceCloseStart = workspace.indexOf("fun closeEditor()");
         int workspaceCloseEnd = workspace.indexOf("fun saveEditor()", workspaceCloseStart);
         String workspaceClose = workspace.substring(workspaceCloseStart, workspaceCloseEnd);

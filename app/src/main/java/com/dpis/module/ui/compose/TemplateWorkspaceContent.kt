@@ -1,5 +1,6 @@
 package com.dpis.module.ui.compose
 
+import android.content.res.Configuration
 import android.widget.Toast
 
 import androidx.compose.foundation.BorderStroke
@@ -17,6 +18,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,7 +27,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -65,6 +67,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -101,8 +105,12 @@ fun TemplateWorkspaceContent(
         )
     }
     var deleteConfirmationVisible by rememberSaveable { mutableStateOf(false) }
+    var editorSheetVisible by rememberSaveable { mutableStateOf(false) }
+    var editorSheetClosing by remember { mutableStateOf(false) }
     val editorDestination = state.editorDestination
     val topSafePadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     LaunchedEffect(state.detailKind, state.detailTemplateId) {
         when (state.detailKind) {
             TemplateWorkspacePresentation.DetailKind.GLOBAL_PREFILL -> {
@@ -130,6 +138,8 @@ fun TemplateWorkspaceContent(
         editorKind = kind
         editorTemplateId = templateId
         targetsTemplateId = null
+        editorSheetVisible = true
+        editorSheetClosing = false
         onEditorDestinationChanged(ConfigEditorDestination.MAIN)
         onEditorOpened(kind == EDITOR_QUICK, templateId)
     }
@@ -163,15 +173,29 @@ fun TemplateWorkspaceContent(
         onEditorChanged(editorDraft.form)
     }
 
-    fun closeEditor() {
+    fun finishEditorClose() {
         if (editorKind == null) return
         editorKind = null
         editorTemplateId = null
         deleteConfirmationVisible = false
+        editorSheetVisible = false
+        editorSheetClosing = false
         onEditorClosed()
     }
 
+    fun closeEditor() {
+        if (editorKind == null) return
+        if (!isLandscape && editorSheetClosing) return
+        if (!isLandscape && editorSheetVisible) {
+            editorSheetClosing = true
+            editorSheetVisible = false
+            return
+        }
+        finishEditorClose()
+    }
+
     fun saveEditor() {
+        val createdNewTemplate = editorDraft.form.quickTemplate && editorDraft.form.newTemplate
         val result = if (editorDraft.form.quickTemplate) {
             state.actions.saveQuickTemplate(editorDraft.form)
         } else {
@@ -181,6 +205,10 @@ fun TemplateWorkspaceContent(
             editorDraft.form.markSaved(result.templateId)
             editorTemplateId = editorDraft.form.templateId
             notifyEditorChanged()
+            if (createdNewTemplate) {
+                closeEditor()
+                return
+            }
             if (editorDraft.form.quickTemplate) {
                 onEditorOpened(true, editorDraft.form.templateId)
             }
@@ -225,16 +253,17 @@ fun TemplateWorkspaceContent(
         )
     }
     val editorBody: @Composable () -> Unit = {
-        TemplateEditorSurface(
-            form = editorDraft.form,
-            surface = TemplateEditorSurfaceKind.LANDSCAPE_DETAIL,
-            draftRevision = draftRevision,
-            topSafePadding = topSafePadding,
-            bottomSafePadding = padding.calculateBottomPadding(),
-            onFormChanged = ::notifyEditorChanged,
-            onSelectTypeface = {
-                onEditorDestinationChanged(ConfigEditorDestination.TYPEFACE)
-            },
+            TemplateEditorSurface(
+                form = editorDraft.form,
+                surface = TemplateEditorSurfaceKind.LANDSCAPE_DETAIL,
+                draftRevision = draftRevision,
+                topSafePadding = topSafePadding,
+                bottomSafePadding = padding.calculateBottomPadding(),
+                sheetVisible = false,
+                onFormChanged = ::notifyEditorChanged,
+                onSelectTypeface = {
+                    onEditorDestinationChanged(ConfigEditorDestination.TYPEFACE)
+                },
             onEditHookDomains = {
                 onEditorDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)
             },
@@ -261,7 +290,7 @@ fun TemplateWorkspaceContent(
         modifier = Modifier
             .fillMaxSize()
     ) {
-        val twoPane = maxWidth >= WorkspaceTwoPaneMinWidth
+        val twoPane = isLandscape && maxWidth >= WorkspaceTwoPaneMinWidth
         val openTargets: (String) -> Unit = { templateId ->
             if (twoPane) {
                 editorKind = null
@@ -281,9 +310,7 @@ fun TemplateWorkspaceContent(
                     onQueryChanged = onQueryChanged,
                     onEditorOpened = ::openEditor,
                     onTargetsOpened = openTargets,
-                    modifier = Modifier
-                        .weight(1f)
-                        .statusBarsPadding()
+                    modifier = Modifier.weight(1f)
                 )
                 VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Box(
@@ -317,18 +344,20 @@ fun TemplateWorkspaceContent(
                 onQueryChanged = onQueryChanged,
             onEditorOpened = ::openEditor,
             onTargetsOpened = openTargets,
-            modifier = Modifier.statusBarsPadding()
+            modifier = Modifier
             )
             if (editorKind != null) {
                 TemplateEditorSurface(
                     form = editorDraft.form,
                     surface = TemplateEditorSurfaceKind.PORTRAIT_SHEET,
                     draftRevision = draftRevision,
-                     onFormChanged = ::notifyEditorChanged,
-                     onSelectTypeface = {
+                    sheetVisible = editorSheetVisible,
+                    onSheetHidden = { if (editorSheetClosing) finishEditorClose() },
+                    onFormChanged = ::notifyEditorChanged,
+                    onSelectTypeface = {
                         onEditorDestinationChanged(ConfigEditorDestination.TYPEFACE)
-                     },
-                     onEditHookDomains = {
+                    },
+                    onEditHookDomains = {
                         onEditorDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)
                     },
                     onReset = { editorDraft.form.reset(); notifyEditorChanged() },
@@ -380,21 +409,35 @@ private fun TemplateWorkspaceListPane(
     onTargetsOpened: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier.fillMaxSize()) {
-        Spacer(Modifier.height(TemplateUiTokens.SearchTopPadding))
-        TemplateWorkspaceSearchCard(query = state.query, onQueryChanged = onQueryChanged)
-        Spacer(Modifier.height(TemplateUiTokens.SearchBottomPadding))
+    PrimaryPageScaffold(
+        modifier = modifier.fillMaxSize(),
+        title = {
+            TemplateWorkspaceSearchCard(
+                query = state.query,
+                onQueryChanged = onQueryChanged,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(TemplateUiTokens.SearchCardHeight)
+            )
+        }
+    ) { pagePadding ->
+        val layoutDirection = LocalLayoutDirection.current
         LazyColumn(
             contentPadding = PaddingValues(
-                top = TemplateUiTokens.WorkspaceTopPadding,
-                bottom = padding.calculateBottomPadding() +
+                start = pagePadding.calculateStartPadding(layoutDirection) +
+                    TemplateUiTokens.WorkspaceHorizontalPadding,
+                top = pagePadding.calculateTopPadding() +
+                    TemplateUiTokens.SearchBottomPadding +
+                    TemplateUiTokens.WorkspaceTopPadding,
+                end = pagePadding.calculateEndPadding(layoutDirection) +
+                    TemplateUiTokens.WorkspaceHorizontalPadding,
+                bottom = pagePadding.calculateBottomPadding() +
+                    padding.calculateBottomPadding() +
                     TemplateUiTokens.WorkspaceBottomReserve
             ),
             verticalArrangement = Arrangement.spacedBy(TemplateUiTokens.ListGap),
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(horizontal = TemplateUiTokens.WorkspaceHorizontalPadding)
+                .fillMaxSize()
         ) {
             if (!state.searching) {
                 item {
@@ -545,13 +588,14 @@ private fun TemplateDetailEmptyStatePreview() {
 @Composable
 private fun TemplateWorkspaceSearchCard(
     query: String,
-    onQueryChanged: (String) -> Unit
+    onQueryChanged: (String) -> Unit,
+    modifier: Modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = TemplateUiTokens.WorkspaceHorizontalPadding)
+        .height(TemplateUiTokens.SearchCardHeight)
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = TemplateUiTokens.WorkspaceHorizontalPadding)
-            .height(TemplateUiTokens.SearchCardHeight),
+        modifier = modifier,
         shape = TemplateUiTokens.SearchCardShape,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh

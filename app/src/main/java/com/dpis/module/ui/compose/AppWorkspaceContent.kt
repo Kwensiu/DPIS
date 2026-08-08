@@ -1,5 +1,6 @@
 package com.dpis.module.ui.compose
 
+import android.content.res.Configuration
 import android.widget.ImageView
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -20,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
@@ -61,6 +61,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -98,6 +99,10 @@ fun AppWorkspaceContent(
     editorState: AppConfigEditorPresentation.State? = null,
 ) {
     val topSafePadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val configuration = LocalConfiguration.current
+    val compactVerticalChrome = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val searchTopPadding = if (compactVerticalChrome) 0.dp else 6.dp
+    val searchBottomPadding = if (compactVerticalChrome) 4.dp else 8.dp
     // MainActivity owns the session snapshot because the programmatic ComposeView is recreated
     // across orientation changes. Each catalogue page still keeps an independent position.
     val allAppsListState = rememberLazyListState(
@@ -140,16 +145,24 @@ fun AppWorkspaceContent(
             }
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        val twoPane = maxWidth >= WorkspaceTwoPaneMinWidth
+        val twoPane = compactVerticalChrome && maxWidth >= WorkspaceTwoPaneMinWidth
         Row(Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
                     .then(if (twoPane) Modifier.weight(1f) else Modifier.fillMaxWidth())
-                    .statusBarsPadding()
+                    .padding(top = topSafePadding)
                     .background(MaterialTheme.colorScheme.surface)
             ) {
-                AppSearchCard(state, onFilterClick = { filterSheetVisible = true })
+                AppSearchCard(
+                    state = state,
+                    onFilterClick = { filterSheetVisible = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(top = searchTopPadding, bottom = searchBottomPadding)
+                        .height(52.dp)
+                )
                 PrimaryTabRow(selectedTabIndex = pagerState.currentPage) {
                     AppListPage.entries.forEach { page ->
                         Tab(
@@ -449,10 +462,14 @@ private fun AppListScrollbar(
 @Composable
 private fun AppSearchCard(
     state: AppWorkspacePresentation.State,
-    onFilterClick: () -> Unit
+    onFilterClick: () -> Unit,
+    modifier: Modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 16.dp, vertical = 8.dp)
+        .height(52.dp)
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).height(52.dp),
+        modifier = modifier,
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh

@@ -45,7 +45,7 @@ public class OpenSourceLicenseActivityParsingTest {
         assertTrue(content.contains("fun OpenSourceLicenseContent("));
         assertTrue(content.contains("LazyColumn("));
         assertTrue(content.contains("items("));
-        assertTrue(content.contains("SecondaryPageTopBar("));
+        assertTrue(content.contains("SecondaryPageScaffold("));
         assertTrue(content.contains("SegmentedListItem("));
         assertTrue(content.contains("rememberDpisConfirmAction"));
         assertTrue(content.contains("OpenSourceLicenseContentPreview"));
