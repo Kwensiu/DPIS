@@ -12,3 +12,8 @@
 -keepclasseswithmembernames class * {
     native <methods>;
 }
+
+# AndroidX Window probes optional OEM extension and legacy sidecar APIs through reflection.
+# Those APIs are supplied by the device, not bundled in the app, so their absence is expected.
+-dontwarn androidx.window.extensions.**
+-dontwarn androidx.window.sidecar.**

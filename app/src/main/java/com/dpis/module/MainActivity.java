@@ -823,7 +823,10 @@ public final class MainActivity
     }
 
     private void requestAppsLoad(boolean forceInstalledAppCatalogReload) {
-        if (!ensureInstalledAppsPermissionBeforeLoad()) {
+        boolean permissionReady = ensureInstalledAppsPermissionBeforeLoad();
+        DpisLog.i("app list load permission gate: ready=" + permissionReady
+                + ", forceReload=" + forceInstalledAppCatalogReload);
+        if (!permissionReady) {
             pendingInstalledAppsLoadAfterPermission = true;
             return;
         }
@@ -833,20 +836,30 @@ public final class MainActivity
     }
 
     private boolean ensureInstalledAppsPermissionBeforeLoad() {
-        if (installedAppsPermissionRequestCompleted
-                || !isXiaomiInstalledAppsPermissionDeclared()) {
+        boolean xiaomiPermissionDeclared = isXiaomiInstalledAppsPermissionDeclared();
+        DpisLog.i("installed apps permission state: sdk=" + Build.VERSION.SDK_INT
+                + ", requestCompleted=" + installedAppsPermissionRequestCompleted
+                + ", requestInFlight=" + installedAppsPermissionRequestInFlight
+                + ", xiaomiPermissionDeclared=" + xiaomiPermissionDeclared);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M
+                || installedAppsPermissionRequestCompleted
+                || !xiaomiPermissionDeclared) {
             return true;
         }
         try {
-            if (checkPermission(
+            int permissionState = checkPermission(
                     XIAOMI_GET_INSTALLED_APPS_PERMISSION,
                     Process.myPid(),
                     Process.myUid()
-            ) == PackageManager.PERMISSION_GRANTED) {
+            );
+            DpisLog.i("installed apps permission check: granted="
+                    + (permissionState == PackageManager.PERMISSION_GRANTED));
+            if (permissionState == PackageManager.PERMISSION_GRANTED) {
                 return true;
             }
             if (!installedAppsPermissionRequestInFlight) {
                 installedAppsPermissionRequestInFlight = true;
+                DpisLog.i("installed apps permission request started");
                 requestPermissions(
                         new String[]{XIAOMI_GET_INSTALLED_APPS_PERMISSION},
                         REQUEST_XIAOMI_GET_INSTALLED_APPS
@@ -883,6 +896,9 @@ public final class MainActivity
                 DpisLog.e("list load failed", throwable);
             }
             List<AppListItem> finalLoaded = loaded;
+            DpisLog.i("app list load finished: requestId=" + requestId
+                    + ", loaded=" + (finalLoaded == null ? "null" : finalLoaded.size())
+                    + ", forceReload=" + forceInstalledAppCatalogReload);
             runOnUiThread(() -> onAppsLoadFinished(requestId, finalLoaded));
         }, "dpis-load-apps-" + requestId).start();
     }

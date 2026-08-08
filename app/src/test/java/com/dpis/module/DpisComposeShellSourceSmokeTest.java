@@ -286,7 +286,7 @@ public final class DpisComposeShellSourceSmokeTest {
         String controls = read(
                 "src/main/java/com/dpis/module/ui/compose/DpisEditorControls.kt");
         String catalog = read(
-                "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.java");
+                "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.kt");
         String typefacePicker = read(
                 "src/main/java/com/dpis/module/ui/compose/AppTypefacePickerPage.kt");
         String activity = read("src/main/java/com/dpis/module/MainActivity.java");

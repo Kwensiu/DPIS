@@ -15,6 +15,15 @@
         tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="com.android.permission.GET_INSTALLED_APPS" />
 
+    <queries>
+        <!-- RedMagicOS may ignore QUERY_ALL_PACKAGES for PackageManager listings.
+             Keep a launcher-query fallback for the user-visible app catalog. -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
     <application
         android:name=".DpisApplication"
         android:icon="@mipmap/ic_launcher"

@@ -1,11 +1,15 @@
 package com.dpis.module.applist;
 
+import android.content.pm.ApplicationInfo;
+
 import com.dpis.module.DpisConfigStore;
 import com.dpis.module.FakePrefs;
 
 
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
@@ -61,5 +65,27 @@ public class InstalledAppCatalogCoordinatorTest {
         assertTrue(item.dpisEnabled);
         assertFalse(item.viewportTargetSpec.isEnabled());
         assertFalse(item.hasAppSpecificConfig());
+    }
+
+    @Test
+    public void launcherFallbackIsUsedWhenPackageManagerReturnsOnlySelf() {
+        ApplicationInfo self = new ApplicationInfo();
+        self.packageName = "io.github.kwensiu.dpis";
+
+        assertTrue(InstalledAppCatalogCoordinator.shouldUseLauncherVisibilityFallback(
+                Collections.singletonList(self), self.packageName));
+        assertTrue(InstalledAppCatalogCoordinator.shouldUseLauncherVisibilityFallback(
+                Collections.emptyList(), self.packageName));
+    }
+
+    @Test
+    public void launcherFallbackIsNotUsedWhenPackageManagerReturnsAnotherApp() {
+        ApplicationInfo self = new ApplicationInfo();
+        self.packageName = "io.github.kwensiu.dpis";
+        ApplicationInfo other = new ApplicationInfo();
+        other.packageName = "com.example.launcher";
+
+        assertFalse(InstalledAppCatalogCoordinator.shouldUseLauncherVisibilityFallback(
+                Arrays.asList(self, other), self.packageName));
     }
 }

@@ -230,7 +230,7 @@ public class MainActivitySourceSmokeTest {
     public void loadInstalledApps_publishesRowsBeforeIcons() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String coordinatorSource = read(
-            "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.java"
+            "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.kt"
         );
         String iconSource = read("src/main/java/com/dpis/module/ui/compose/InstalledAppIcon.kt");
         String workspaceSource = read("src/main/java/com/dpis/module/ui/compose/AppWorkspaceContent.kt");
@@ -238,7 +238,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(
             source.contains("installedAppCatalogCoordinator.loadInstalledApps(")
         );
-        assertTrue(coordinatorSource.contains("item.hyperOsNativeProxyCandidate, true, null"));
+        assertTrue(coordinatorSource.contains("item.hyperOsNativeProxyCandidate,"));
         assertTrue(coordinatorSource.contains("ApplicationInfoFlags.of(0L)"));
         assertTrue(coordinatorSource.contains("getInstalledApplications(0)"));
         assertFalse(coordinatorSource.contains("GET_META_DATA"));
@@ -792,7 +792,7 @@ public class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/MainViewModel.java"
         );
         String coordinatorSource = read(
-            "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.java"
+            "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.kt"
         );
 
         assertTrue(source.contains("INSTALLED_APP_CATALOG_TTL_MS"));
@@ -801,7 +801,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(
             viewModelSource.contains("forceInstalledAppCatalogReloadRequested")
         );
-        assertTrue(coordinatorSource.contains("cacheFresh"));
+        assertTrue(coordinatorSource.contains("isCatalogCacheFresh"));
     }
 
     @Test
@@ -1253,12 +1253,12 @@ public class MainActivitySourceSmokeTest {
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String coordinatorSource = read(
-            "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.java"
+            "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.kt"
         );
 
         assertTrue(source.contains("loadInstalledApps(forceInstalledAppCatalogReload)"));
-        assertTrue(coordinatorSource.contains("List<InstalledAppCatalogItem> catalog = loadInstalledAppCatalog("));
-        assertTrue(coordinatorSource.contains("return applicationInfo.loadIcon(packageManager);"));
+        assertTrue(coordinatorSource.contains("val catalog = loadInstalledAppCatalog("));
+        assertTrue(coordinatorSource.contains("applicationInfo.loadIcon(packageManager)"));
         assertFalse(coordinatorSource.contains("icon = loadApplicationIcon(packageManager, applicationInfo);"));
         assertFalse(coordinatorSource.contains("maybeScheduleFirstScreenIconWarmup("));
         assertFalse(coordinatorSource.contains("ExecutorService"));
