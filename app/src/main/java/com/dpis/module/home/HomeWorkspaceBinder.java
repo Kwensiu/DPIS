@@ -15,6 +15,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 
+import java.util.Locale;
+
 import androidx.appcompat.widget.AppCompatImageView;
 
 import com.google.android.material.card.MaterialCardView;
@@ -99,6 +101,12 @@ public final class HomeWorkspaceBinder {
         void openFontLibrary();
 
         void openTemplateWorkspace();
+
+        default void openModeHelp() {
+        }
+
+        default void openDonate() {
+        }
     }
 
     private final Context context;
@@ -271,7 +279,7 @@ public final class HomeWorkspaceBinder {
                 targetHeight = Math.max(targetHeight, measuredHeight);
             }
         }
-        return Math.max(0, targetHeight);
+        return targetHeight;
     }
 
     private static void setLayoutHeight(View view, int height) {
@@ -597,7 +605,7 @@ public final class HomeWorkspaceBinder {
         if (manufacturer.isEmpty()) {
             return model;
         }
-        if (model.toLowerCase().startsWith(manufacturer.toLowerCase())) {
+        if (model.toLowerCase(Locale.ROOT).startsWith(manufacturer.toLowerCase(Locale.ROOT))) {
             return model;
         }
         return manufacturer + " " + model;

@@ -1,6 +1,7 @@
 package com.dpis.module;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import java.io.IOException;
 
@@ -53,7 +54,7 @@ public class MainActivityLayoutSmokeTest {
         assertTrue(layout.contains("app:menu=\"@menu/main_workspace_navigation\""));
         assertTrue(layout.contains("app:labelVisibilityMode=\"selected\""));
         assertTrue(layout.contains("android:background=\"?attr/colorSurfaceContainer\""));
-        assertTrue(!layout.contains("@drawable/bg_workspace_navigation"));
+        assertFalse(layout.contains("@drawable/bg_workspace_navigation"));
         String workspaceMenu = read("src/main/res/menu/main_workspace_navigation.xml");
         assertTrue(workspaceMenu.contains("android:id=\"@+id/workspace_app_button\""));
         assertTrue(workspaceMenu.contains("android:id=\"@+id/workspace_template_button\""));
@@ -83,7 +84,7 @@ public class MainActivityLayoutSmokeTest {
         assertTrue(landscapeLayout.contains("android:id=\"@+id/workspace_switch_scroll\""));
         assertTrue(portraitLayout.contains("android:saveEnabled=\"false\""));
         assertTrue(landscapeLayout.contains("android:saveEnabled=\"false\""));
-        assertTrue(source.contains("workspaceSwitch.setSaveFromParentEnabled(false);"));
+        assertFalse(source.contains("workspaceSwitch.setSaveFromParentEnabled(false);"));
     }
 
     @Test

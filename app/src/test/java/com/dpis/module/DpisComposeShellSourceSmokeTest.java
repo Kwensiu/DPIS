@@ -45,7 +45,7 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(shell.contains("R.drawable.ic_build_24"));
         assertTrue(shell.contains("R.drawable.ic_settings_24"));
         assertTrue(shell.contains("painterResource(destination.iconRes)"));
-        assertTrue(!shell.contains("Icons.Outlined"));
+        assertFalse(shell.contains("Icons.Outlined"));
         assertTrue(shell.contains("alwaysShowLabel = false"));
         assertTrue(shell.contains("NavigationBar(windowInsets = WindowInsets.navigationBars)"));
         assertTrue(shell.contains("containerColor = MaterialTheme.colorScheme.surfaceContainer"));
@@ -92,7 +92,7 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(mainActivity.contains("WatchUiMode.shouldUseCompactUi(this),"));
         String shellHost = read("src/main/java/com/dpis/module/MainComposeShellHost.kt");
         assertTrue(shellHost.contains("if (isCompactUi)"));
-        assertTrue(shellHost.contains("workspacePresentation.renderWear(state.workspaceMode)"));
+        assertTrue(shellHost.contains("workspacePresentation.renderWear(state.workspaceMode, padding)"));
         assertTrue(coordinator.contains("@Composable fun renderWear"));
         assertTrue(wearWorkspace.contains("TransformingLazyColumn("));
         assertTrue(wearWorkspace.contains("ScreenScaffold("));
@@ -102,7 +102,7 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(wearWorkspace.contains("WearTemplateEditorContent"));
         assertTrue(wearWorkspace.contains("WearTypefacePickerPage"));
         assertTrue(wearWorkspace.contains("WearHookChainEditorPage"));
-        assertTrue(wearWorkspace.contains("OutlinedTextField("));
+        assertTrue(wearWorkspace.contains("BasicTextField("));
         assertFalse(wearWorkspace.contains("                AppConfigEditorContent("));
         assertFalse(wearWorkspace.contains("TemplateEditorSurface("));
         assertTrue(shell.contains("WearMaterialTheme(colorScheme = wearColors)"));
@@ -133,7 +133,7 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(appWorkspace.contains("PullToRefreshBox("));
         assertTrue(appWorkspace.contains("allAppsListState"));
         assertTrue(appWorkspace.contains("configuredAppsListState"));
-        assertTrue(appWorkspace.contains("state.actions.openApp(item)"));
+        assertTrue(appWorkspace.contains("actions.openApp(item)"));
         assertFalse(appWorkspace.contains("state.actions::requestIcon"));
         assertTrue(appWorkspace.contains("@Preview(showBackground = true"));
         assertTrue(coordinator.contains("private fun ComposeWorkspaceSurface("));
@@ -297,7 +297,7 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(sheet.contains("SheetValue.PartiallyExpanded"));
         assertTrue(coordinator.contains("AppConfigSheetWizardStore.shouldShowAdvancedHint(context)"));
         assertTrue(coordinator.contains("AppConfigEditorOverlay("));
-        assertTrue(coordinator.contains("renderAppEditorOverlay(mode: MainUiState.WorkspaceMode, wear: Boolean = false)"));
+        assertTrue(coordinator.contains("RenderAppEditorOverlay(mode: MainUiState.WorkspaceMode, wear: Boolean = false)"));
         assertTrue(coordinator.contains("WearAppConfigEditorContent(it)"));
         assertTrue(coordinator.contains("appRevision\n        if (mode != MainUiState.WorkspaceMode.APP) return"));
         assertTrue(overlay.contains("initialValue = SheetValue.Hidden"));

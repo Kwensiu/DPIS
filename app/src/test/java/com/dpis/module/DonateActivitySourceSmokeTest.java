@@ -1,5 +1,6 @@
 package com.dpis.module;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -15,6 +16,7 @@ public class DonateActivitySourceSmokeTest {
         String manifest = read("src/main/AndroidManifest.xml");
         String homeBinder = read("src/main/java/com/dpis/module/home/HomeWorkspaceBinder.java");
         String settingsController = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
+        String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(source.contains("static Intent createIntent(Context context)"));
         assertTrue(source.contains("return new Intent(context, DonateActivity.class);"));
@@ -35,6 +37,8 @@ public class DonateActivitySourceSmokeTest {
         assertTrue(manifest.contains("android:name=\".home.DonateActivity\""));
         assertTrue(homeBinder.contains("DonateActivity.createIntent(context)"));
         assertTrue(settingsController.contains("DonateActivity.createIntent(activity)"));
+        assertTrue(mainActivity.contains("DonateActivity.createIntent(MainActivity.this)"));
+        assertFalse(mainActivity.contains("MainStandaloneRoute"));
     }
 
     private static String read(String relativePath) throws IOException {

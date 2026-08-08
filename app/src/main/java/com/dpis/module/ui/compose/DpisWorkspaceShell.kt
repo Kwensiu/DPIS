@@ -44,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.setValue
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -101,6 +102,9 @@ internal val WorkspaceDrawerWidth = 240.dp
 internal val WorkspaceRailMinWindowWidth = WorkspaceTwoPaneMinWidth + WorkspaceRailWidth
 internal val WorkspaceDrawerMinWindowWidth = WorkspaceTwoPaneMinWidth + WorkspaceDrawerWidth
 
+/** Compact Wear navigation is the single owner of space reserved for its floating selector. */
+internal val LocalWearWorkspaceContentPadding = compositionLocalOf { PaddingValues() }
+
 /** Pure policy so adaptive navigation remains independently testable. */
 fun resolveDpisWorkspaceNavigationLayout(
     maxWidth: Dp,
@@ -125,8 +129,8 @@ fun DpisWorkspaceShell(
     selectedDestination: DpisWorkspaceDestination,
     onDestinationSelected: (DpisWorkspaceDestination) -> Unit,
     isCompactUi: Boolean,
-    showCompactNavigation: Boolean = true,
     modifier: Modifier = Modifier,
+    showCompactNavigation: Boolean = true,
     content: @Composable (PaddingValues) -> Unit
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
@@ -201,7 +205,7 @@ fun DpisWorkspaceShell(
                     }
                 }
                 Box(Modifier.weight(1f)) {
-                    content(legacyWorkspaceInsetsFor(selectedDestination))
+                    content(compactWearWorkspacePadding(selectedDestination))
                 }
             }
 
@@ -394,6 +398,18 @@ private fun legacyWorkspaceInsetsFor(destination: DpisWorkspaceDestination): Pad
         DpisWorkspaceDestination.TOOLS,
         DpisWorkspaceDestination.SETTINGS -> PaddingValues(end = endPadding)
     }
+}
+
+@Composable
+private fun compactWearWorkspacePadding(
+    destination: DpisWorkspaceDestination
+): PaddingValues {
+    val base = legacyWorkspaceInsetsFor(destination)
+    val layoutDirection = LocalLayoutDirection.current
+    return PaddingValues(
+        end = base.calculateEndPadding(layoutDirection),
+        bottom = base.calculateBottomPadding() + 68.dp
+    )
 }
 
 /** Keeps legacy content above the Compose NavigationBar without claiming status-bar ownership. */

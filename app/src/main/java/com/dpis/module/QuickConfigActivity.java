@@ -75,7 +75,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Toast;
 
@@ -144,6 +143,17 @@ public final class QuickConfigActivity extends LocalizedActivity {
         presentation = new QuickConfigPresentation();
         SupportActivityContent.installQuickConfig(this, presentation);
 
+        QuickConfigEditorSession retainedSession
+                = (QuickConfigEditorSession) getLastCustomNonConfigurationInstance();
+        if (retainedSession != null) {
+            editingItem = retainedSession.item;
+            editingDraft = retainedSession.draft;
+            savedEditingDraft = retainedSession.savedDraft;
+            editingDestination = retainedSession.destination;
+            refreshComposeEditor();
+            return;
+        }
+
         String explicitPackageName = getIntent().getStringExtra(EXTRA_PACKAGE_NAME);
         boolean usageAccessGranted = ForegroundPackageResolver.hasUsageAccess(this);
         QuickConfigTargetDecision.Result targetDecision = QuickConfigTargetDecision.decide(
@@ -171,6 +181,19 @@ public final class QuickConfigActivity extends LocalizedActivity {
         editingDraft = AppConfigEditorDraft.fromItem(editingItem);
         savedEditingDraft = editingDraft;
         refreshComposeEditor();
+    }
+
+    @Override
+    public Object onRetainCustomNonConfigurationInstance() {
+        if (editingItem == null || editingDraft == null) {
+            return null;
+        }
+        return new QuickConfigEditorSession(
+                editingItem,
+                editingDraft,
+                savedEditingDraft,
+                editingDestination
+        );
     }
 
     private void openUsageAccessSettings() {
@@ -762,9 +785,10 @@ public final class QuickConfigActivity extends LocalizedActivity {
     }
 
     private AppListItem saveCurrentConfigForDiagnostic(AppListItem item) {
-        if (editingDraft != null
-                && item != null
-                && item.packageName.equals(editingDraft.packageName)) {
+        if (item == null) {
+            return null;
+        }
+        if (editingDraft != null && item.packageName.equals(editingDraft.packageName)) {
             if (!saveComposeEditor(item, editingDraft)) {
                 return null;
             }
@@ -843,7 +867,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
         pendingFeedbackDiagnosticResult = null;
         showFeedbackDiagnosticPackagingDialog();
         feedbackDiagnosticExportExecutor.execute(() -> {
-            FeedbackDiagnosticExportBuilder.DiagnosticPackage built = null;
+            FeedbackDiagnosticExportBuilder.DiagnosticPackage built;
             try {
                 built = feedbackDiagnosticExportBuilder.buildPackage(result);
             } catch (IOException | RuntimeException ignored) {
@@ -954,7 +978,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
         }
         feedbackDiagnosticExportExecutor.execute(() -> {
             Uri uri = null;
-            boolean success = false;
+            boolean success;
             try {
                 File file = writeSharedFeedbackDiagnosticZip(diagnosticPackage);
                 uri = FileProvider.getUriForFile(

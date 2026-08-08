@@ -27,20 +27,57 @@ public final class AppWorkspacePresentationTest {
                 List.of(allOnly, configured),
                 Collections.emptySet());
         Actions actions = new Actions();
+        AppWorkspaceScrollStateStore scrollStateStore = new AppWorkspaceScrollStateStore();
+        scrollStateStore.update(AppListPage.ALL_APPS, 8, 12);
+        scrollStateStore.update(AppListPage.CONFIGURED_APPS, 3, 24);
 
         AppWorkspacePresentation.State state = AppWorkspacePresentation.create(
                 mainState,
                 AppListPage.CONFIGURED_APPS,
                 true,
+                scrollStateStore,
                 actions);
 
         assertEquals("configured", state.query);
         assertEquals(AppListPage.CONFIGURED_APPS, state.selectedPage);
+        assertEquals(1, state.itemsFor(AppListPage.ALL_APPS).size());
+        assertEquals(1, state.itemsFor(AppListPage.CONFIGURED_APPS).size());
+        assertEquals("com.example.configured",
+                state.itemsFor(AppListPage.ALL_APPS).get(0).packageName);
         assertEquals(1, state.visibleItems.size());
         assertEquals("com.example.configured", state.visibleItems.get(0).packageName);
         assertFalse(state.refreshing);
+        assertFalse(state.isRefreshing(AppListPage.ALL_APPS));
+        assertFalse(state.isRefreshing(AppListPage.CONFIGURED_APPS));
         assertTrue(state.systemScopeSelected);
+        assertEquals(8, state.allAppsScrollPosition.index);
+        assertEquals(12, state.allAppsScrollPosition.scrollOffset);
+        assertEquals(3, state.configuredAppsScrollPosition.index);
+        assertEquals(24, state.configuredAppsScrollPosition.scrollOffset);
         assertSame(actions, state.actions);
+    }
+
+    @Test
+    public void createCarriesBothIndependentPageListsForHorizontalSwipe() {
+        AppListItem allOnly = app("All", "com.example.all", false);
+        AppListItem configured = app("Configured", "com.example.configured", true);
+        MainUiState mainState = MainUiState.initial(
+                "",
+                AppListFilterState.noAdditionalConstraints(),
+                List.of(allOnly, configured),
+                Collections.emptySet());
+
+        AppWorkspacePresentation.State state = AppWorkspacePresentation.create(
+                mainState,
+                AppListPage.ALL_APPS,
+                false,
+                new AppWorkspaceScrollStateStore(),
+                new Actions());
+
+        assertEquals(2, state.itemsFor(AppListPage.ALL_APPS).size());
+        assertEquals(1, state.itemsFor(AppListPage.CONFIGURED_APPS).size());
+        assertEquals("com.example.configured",
+                state.itemsFor(AppListPage.CONFIGURED_APPS).get(0).packageName);
     }
 
     private static AppListItem app(String label, String packageName, boolean configured) {
@@ -73,5 +110,7 @@ public final class AppWorkspacePresentationTest {
         @Override public void changeFilters(AppListFilterState filterState) {}
         @Override public void refresh(AppListPage page) {}
         @Override public void openApp(AppListItem item) {}
+        @Override public void updateScrollPosition(
+                AppListPage page, int index, int scrollOffset) {}
     }
 }

@@ -22,11 +22,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -46,8 +46,8 @@ import com.dpis.module.ui.compose.ConfigEditorAnimatedContent
 import com.dpis.module.ui.compose.AppConfigSheetUiTokens
 import com.dpis.module.ui.compose.ToolsWorkspaceContent
 import com.dpis.module.ui.compose.SettingsWorkspaceContent
+import com.dpis.module.ui.compose.LocalWearWorkspaceContentPadding
 import com.dpis.module.ui.compose.TemplateWorkspaceContent
-import com.dpis.module.ui.compose.TemplateUiTokens
 import com.dpis.module.ui.compose.WearAppWorkspaceContent
 import com.dpis.module.ui.compose.WearHomeWorkspaceContent
 import com.dpis.module.ui.compose.WearSettingsWorkspaceContent
@@ -89,13 +89,14 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         fun updateTemplateEditorDestination(destination: ConfigEditorDestination)
         fun closeTemplateEditor()
     }
-    private var appRevision by mutableStateOf(0)
-    private var homeRevision by mutableStateOf(0)
-    private var toolsRevision by mutableStateOf(0)
+    private var appRevision by mutableIntStateOf(0)
+    private var homeRevision by mutableIntStateOf(0)
+    private var toolsRevision by mutableIntStateOf(0)
     private var toolsExpanded by mutableStateOf(false)
-    private var settingsRevision by mutableStateOf(0)
-    private var templateRevision by mutableStateOf(0)
-    @Composable fun render(mode: MainUiState.WorkspaceMode, padding: PaddingValues): Boolean = when (mode) {
+    private var settingsRevision by mutableIntStateOf(0)
+    private var templateRevision by mutableIntStateOf(0)
+    @Composable fun render(mode: MainUiState.WorkspaceMode, padding: PaddingValues): Boolean {
+        return when (mode) {
         MainUiState.WorkspaceMode.APP -> {
             appRevision
             ComposeWorkspaceSurface {
@@ -127,8 +128,14 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
             }
             true
         }
+        }
     }
-    @Composable fun renderWear(mode: MainUiState.WorkspaceMode): Boolean = when (mode) {
+    @Composable fun renderWear(
+        mode: MainUiState.WorkspaceMode,
+        padding: PaddingValues
+    ): Boolean {
+        CompositionLocalProvider(LocalWearWorkspaceContentPadding provides padding) {
+        when (mode) {
         MainUiState.WorkspaceMode.APP -> { appRevision; WearAppWorkspaceContent(content.appState()); true }
         MainUiState.WorkspaceMode.HOME -> { homeRevision; WearHomeWorkspaceContent(content.homeState()); true }
         MainUiState.WorkspaceMode.TOOLS -> {
@@ -151,6 +158,9 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
             )
             true
         }
+        }
+        }
+        return true
     }
     fun refreshApps() { appRevision++ }
     fun refreshHome() { homeRevision++ }
@@ -165,7 +175,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         }
         else -> false
     }
-    @Composable fun renderAppEditorOverlay(mode: MainUiState.WorkspaceMode, wear: Boolean = false) {
+    @Composable fun RenderAppEditorOverlay(mode: MainUiState.WorkspaceMode, wear: Boolean = false) {
         // The editor session is Java-owned. Reading the same revision as the catalogue makes a
         // list-row click invalidate this root-level sibling as well as the list itself.
         appRevision

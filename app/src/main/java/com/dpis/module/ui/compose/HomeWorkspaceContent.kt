@@ -1,7 +1,6 @@
 package com.dpis.module.ui.compose
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,12 +37,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import com.dpis.module.R
 import com.dpis.module.BuildConfig
-import com.dpis.module.home.DonateActivity
 import com.dpis.module.home.HomeUpdateUiState
 import com.dpis.module.home.HomeWorkspaceBinder
-import com.dpis.module.home.ModeHelpActivity
 import com.dpis.module.root.RootAccessProbe
 
 /** Native Home workspace. Actions remain owned by MainActivity's existing coordinator. */
@@ -75,7 +73,7 @@ fun HomeWorkspaceContent(state: HomeWorkspaceBinder.State, padding: PaddingValue
         item { HomeInfoCard(state) }
         item {
             HomeNavigationEntry(R.string.home_mode_help_entry_title, R.string.home_mode_help_entry_summary) {
-                context.startActivity(Intent(context, ModeHelpActivity::class.java))
+                state.actions.openModeHelp()
             }
         }
         item {
@@ -83,7 +81,7 @@ fun HomeWorkspaceContent(state: HomeWorkspaceBinder.State, padding: PaddingValue
         }
         item {
             HomeNavigationEntry(R.string.home_donate_title, R.string.home_donate_summary) {
-                context.startActivity(DonateActivity.createIntent(context))
+                state.actions.openDonate()
             }
         }
         // Keep the final action clear of the workspace navigation surface.
@@ -257,7 +255,7 @@ private fun HomeFeedbackEntry(context: android.content.Context) {
 @Composable
 private fun HomeFeedbackAction(@androidx.annotation.DrawableRes iconRes: Int, @androidx.annotation.StringRes descriptionRes: Int, url: String, context: android.content.Context) {
     val openFeedbackTarget = rememberDpisConfirmAction {
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
     }
     Box(
         Modifier

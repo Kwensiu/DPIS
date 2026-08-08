@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.Surface
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -19,6 +21,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.SolidColor
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material3.Button
@@ -522,13 +525,31 @@ private class WearListScope(
 ) {
     fun wearTextField(key: Any, value: String, label: String, onValueChanged: (String) -> Unit) = with(scope) {
         item(key = key) {
-            OutlinedTextField(
-                value = value,
-                onValueChange = onValueChanged,
-                label = { androidx.compose.material3.Text(label, maxLines = 1) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
-            )
+            Surface(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                shape = RoundedCornerShape(18.dp),
+                color = androidx.wear.compose.material3.MaterialTheme.colorScheme.surfaceContainer
+            ) {
+                Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+                    Text(
+                        label,
+                        maxLines = 1,
+                        color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    BasicTextField(
+                        value = value,
+                        onValueChange = onValueChanged,
+                        singleLine = true,
+                        textStyle = androidx.wear.compose.material3.MaterialTheme.typography.bodyMedium.copy(
+                            color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurface
+                        ),
+                        cursorBrush = SolidColor(
+                            androidx.wear.compose.material3.MaterialTheme.colorScheme.primary
+                        ),
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                    )
+                }
+            }
         }
     }
 
@@ -577,9 +598,7 @@ private fun WearWorkspaceList(@StringRes title: Int, content: WearListScope.() -
     val transformationSpec = rememberTransformationSpec()
     ScreenScaffold(
         scrollState = state,
-        // The compact workspace switch floats at the bottom of the AppScaffold.
-        // Reserve its visual and touch area so the last row remains reachable.
-        contentPadding = PaddingValues(bottom = 68.dp)
+        contentPadding = LocalWearWorkspaceContentPadding.current
     ) { contentPadding: PaddingValues ->
         TransformingLazyColumn(
             state = state,

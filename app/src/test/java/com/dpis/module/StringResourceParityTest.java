@@ -119,6 +119,7 @@ public class StringResourceParityTest {
         assertTrue(licenseSource.contains("extends LocalizedActivity"));
         assertTrue(mainSource.contains("new SystemServerSettingsPageController("));
         assertTrue(settingsSource.contains("SystemServerSettingsPageController(LocalizedActivity activity"));
+        assertTrue(manifest.contains("android:supportsRtl=\"false\""));
         assertTrue(!manifest.contains("AppLocalesMetadataHolderService"));
     }
 

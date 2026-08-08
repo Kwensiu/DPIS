@@ -32,7 +32,7 @@ internal class MainComposeShellHost(
                         dispatch = dispatch
                     ) { padding ->
                         if (isCompactUi) {
-                            workspacePresentation.renderWear(state.workspaceMode)
+                            workspacePresentation.renderWear(state.workspaceMode, padding)
                             // Wear screens own their ScreenScaffold padding and round-screen shape.
                         } else {
                             workspacePresentation.render(state.workspaceMode, padding)
@@ -40,7 +40,7 @@ internal class MainComposeShellHost(
                             // the Compose presentation after its existing coordinator updates it.
                         }
                     }
-                    workspacePresentation.renderAppEditorOverlay(state.workspaceMode, isCompactUi)
+                    workspacePresentation.RenderAppEditorOverlay(state.workspaceMode, isCompactUi)
                 }
             }
         }

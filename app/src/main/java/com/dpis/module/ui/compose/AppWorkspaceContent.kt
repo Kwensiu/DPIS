@@ -28,6 +28,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -49,6 +51,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -79,6 +83,9 @@ import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppStatusFormatter
 import kotlin.math.roundToInt
 import kotlin.math.floor
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 
 private val AppListRowHeight = 72.dp
 private val AppListScrollbarThumbHeight = 36.dp
@@ -91,14 +98,46 @@ fun AppWorkspaceContent(
     editorState: AppConfigEditorPresentation.State? = null,
 ) {
     val topSafePadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    // Both catalogue pages remain alive as one workspace, but each owns its own
-    // restorable scroll position just as the former ViewPager pages did.
-    val allAppsListState = rememberLazyListState()
-    val configuredAppsListState = rememberLazyListState()
+    // MainActivity owns the session snapshot because the programmatic ComposeView is recreated
+    // across orientation changes. Each catalogue page still keeps an independent position.
+    val allAppsListState = rememberLazyListState(
+        initialFirstVisibleItemIndex = state.allAppsScrollPosition.index,
+        initialFirstVisibleItemScrollOffset = state.allAppsScrollPosition.scrollOffset
+    )
+    val configuredAppsListState = rememberLazyListState(
+        initialFirstVisibleItemIndex = state.configuredAppsScrollPosition.index,
+        initialFirstVisibleItemScrollOffset = state.configuredAppsScrollPosition.scrollOffset
+    )
+    PersistAppListScrollPosition(allAppsListState, AppListPage.ALL_APPS, state.actions)
+    PersistAppListScrollPosition(
+        configuredAppsListState,
+        AppListPage.CONFIGURED_APPS,
+        state.actions
+    )
     var filterSheetVisible by remember { mutableStateOf(false) }
-    val selectedListState = when (state.selectedPage) {
-        AppListPage.ALL_APPS -> allAppsListState
-        AppListPage.CONFIGURED_APPS -> configuredAppsListState
+    val pagerState = rememberPagerState(
+        initialPage = state.selectedPage.position(),
+        pageCount = { AppListPage.entries.size }
+    )
+    val pagerScope = rememberCoroutineScope()
+    val latestSelectedPage by rememberUpdatedState(state.selectedPage)
+    val latestActions by rememberUpdatedState(state.actions)
+    LaunchedEffect(state.selectedPage) {
+        val selectedPage = state.selectedPage.position()
+        if (pagerState.settledPage != selectedPage) {
+            pagerState.animateScrollToPage(selectedPage)
+        }
+    }
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }
+            .distinctUntilChanged()
+            .drop(1)
+            .collect { pageIndex ->
+                val page = AppListPage.fromPosition(pageIndex)
+                if (page != latestSelectedPage) {
+                    latestActions.changePage(page)
+                }
+            }
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val twoPane = maxWidth >= WorkspaceTwoPaneMinWidth
@@ -111,64 +150,39 @@ fun AppWorkspaceContent(
                     .background(MaterialTheme.colorScheme.surface)
             ) {
                 AppSearchCard(state, onFilterClick = { filterSheetVisible = true })
-                PrimaryTabRow(selectedTabIndex = state.selectedPage.position()) {
+                PrimaryTabRow(selectedTabIndex = pagerState.currentPage) {
                     AppListPage.entries.forEach { page ->
                         Tab(
-                            selected = page == state.selectedPage,
-                            onClick = { state.actions.changePage(page) },
+                            selected = page.position() == pagerState.currentPage,
+                            onClick = {
+                                pagerScope.launch {
+                                    pagerState.animateScrollToPage(page.position())
+                                }
+                            },
                             selectedContentColor = MaterialTheme.colorScheme.primary,
                             unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             text = { Text(stringResource(page.titleRes())) }
                         )
                     }
                 }
-                PullToRefreshBox(
-                    isRefreshing = state.refreshing,
-                    onRefresh = { state.actions.refresh(state.selectedPage) },
+                HorizontalPager(
+                    state = pagerState,
                     modifier = Modifier.weight(1f)
-                ) {
-                    if (state.visibleItems.isEmpty()) {
-                        Column(
-                            modifier = Modifier.fillMaxSize().offset(y = (-36).dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Text(
-                                stringResource(
-                                    R.string.quick_template_targets_empty
-                                ),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    } else {
-                        Box(Modifier.fillMaxSize()) {
-                            LazyColumn(
-                                state = selectedListState,
-                                contentPadding = PaddingValues(
-                                    start = 12.dp,
-                                    top = 12.dp,
-                                    end = 12.dp,
-                                    bottom = padding.calculateBottomPadding() + 12.dp
-                                )
-                            ) {
-                                items(state.visibleItems, key = { it.packageName }) { item ->
-                                    AppRow(
-                                        item = item,
-                                        systemScopeSelected = state.systemScopeSelected,
-                                        onClick = { state.actions.openApp(item) }
-                                    )
-                                }
-                            }
-                            AppListScrollbar(
-                                listState = selectedListState,
-                                itemCount = state.visibleItems.size,
-                                // Keep the thumb track entirely above the workspace dock.
-                                modifier = Modifier
-                                    .align(Alignment.CenterEnd)
-                                    .padding(bottom = padding.calculateBottomPadding())
-                            )
-                        }
+                ) { pageIndex ->
+                    val page = AppListPage.fromPosition(pageIndex)
+                    val listState = when (page) {
+                        AppListPage.ALL_APPS -> allAppsListState
+                        AppListPage.CONFIGURED_APPS -> configuredAppsListState
                     }
+                    AppListPageContent(
+                        page = page,
+                        pageItems = state.itemsFor(page),
+                        refreshing = state.isRefreshing(page),
+                        listState = listState,
+                        bottomPadding = padding.calculateBottomPadding(),
+                        systemScopeSelected = state.systemScopeSelected,
+                        actions = state.actions
+                    )
                 }
             }
             if (twoPane) {
@@ -222,6 +236,80 @@ fun AppWorkspaceContent(
             onFilterChanged = state.actions::changeFilters,
             onDismissRequest = { filterSheetVisible = false }
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AppListPageContent(
+    page: AppListPage,
+    pageItems: List<AppListItem>,
+    refreshing: Boolean,
+    listState: LazyListState,
+    bottomPadding: androidx.compose.ui.unit.Dp,
+    systemScopeSelected: Boolean,
+    actions: AppWorkspacePresentation.Actions
+) {
+    PullToRefreshBox(
+        isRefreshing = refreshing,
+        onRefresh = { actions.refresh(page) },
+        modifier = Modifier.fillMaxSize()
+    ) {
+        if (pageItems.isEmpty()) {
+            Column(
+                modifier = Modifier.fillMaxSize().offset(y = (-36).dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    stringResource(R.string.quick_template_targets_empty),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            Box(Modifier.fillMaxSize()) {
+                LazyColumn(
+                    state = listState,
+                    contentPadding = PaddingValues(
+                        start = 12.dp,
+                        top = 12.dp,
+                        end = 12.dp,
+                        bottom = bottomPadding + 12.dp
+                    )
+                ) {
+                    items(pageItems, key = { it.packageName }) { item ->
+                        AppRow(
+                            item = item,
+                            systemScopeSelected = systemScopeSelected,
+                            onClick = { actions.openApp(item) }
+                        )
+                    }
+                }
+                AppListScrollbar(
+                    listState = listState,
+                    itemCount = pageItems.size,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(bottom = bottomPadding)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PersistAppListScrollPosition(
+    listState: LazyListState,
+    page: AppListPage,
+    actions: AppWorkspacePresentation.Actions
+) {
+    val latestActions by rememberUpdatedState(actions)
+    LaunchedEffect(listState, page) {
+        snapshotFlow {
+            listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+        }.distinctUntilChanged().collect { (index, offset) ->
+            latestActions.updateScrollPosition(page, index, offset)
+        }
     }
 }
 
@@ -525,12 +613,16 @@ private fun AppWorkspacePreview() {
         override fun changeFilters(filterState: AppListFilterState) = Unit
         override fun refresh(page: AppListPage) = Unit
         override fun openApp(item: AppListItem) = Unit
+        override fun updateScrollPosition(page: AppListPage, index: Int, scrollOffset: Int) = Unit
     }
     DpisTheme(darkTheme = false, dynamicColor = false) {
         AppWorkspaceContent(
             state = AppWorkspacePresentation.State(
-                "", AppListPage.ALL_APPS, emptyList(), 0, 0, false,
-                AppListFilterState.defaultState(), false, actions
+                "", AppListPage.ALL_APPS, emptyList(), emptyList(), false, false,
+                AppListFilterState.defaultState(), false,
+                AppWorkspacePresentation.ScrollPosition(0, 0),
+                AppWorkspacePresentation.ScrollPosition(0, 0),
+                actions
             ),
             padding = PaddingValues()
         )

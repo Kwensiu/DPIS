@@ -1,5 +1,6 @@
 package com.dpis.module;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -14,6 +15,7 @@ public class ModeHelpLayoutSmokeTest {
         String activityContent = read("src/main/java/com/dpis/module/ui/compose/SupportActivityContent.kt");
         String compose = read("src/main/java/com/dpis/module/ui/compose/SupportPages.kt");
         String manifest = read("src/main/AndroidManifest.xml");
+        String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(helpSource.contains("SupportActivityContent.installModeHelp(this);"));
         assertTrue(guideSource.contains("SupportActivityContent.installModeGuide(this);"));
@@ -34,6 +36,9 @@ public class ModeHelpLayoutSmokeTest {
         assertTrue(compose.contains("R.string.help_tutorial_typeface_summary"));
         assertTrue(manifest.contains("android:name=\".home.ModeHelpActivity\""));
         assertTrue(manifest.contains("android:name=\".home.ModeGuideActivity\""));
+        assertTrue(mainActivity.contains(
+                "startActivity(new Intent(MainActivity.this, ModeHelpActivity.class));"));
+        assertFalse(mainActivity.contains("MainStandaloneRoute"));
     }
 
     private static String read(String relativePath) throws IOException {
