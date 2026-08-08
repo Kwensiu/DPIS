@@ -68,7 +68,7 @@ fun ToolsWorkspaceContent(
     ) { topBarPadding ->
     LazyColumn(
         modifier = Modifier.padding(horizontal = 16.dp),
-        contentPadding = topBarPadding,
+        contentPadding = workspaceContentPadding(topBarPadding),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item { androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 4.dp)) }

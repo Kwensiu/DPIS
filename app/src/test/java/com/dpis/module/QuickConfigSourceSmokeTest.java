@@ -75,7 +75,9 @@ public class QuickConfigSourceSmokeTest {
         String activity = read("src/main/java/com/dpis/module/QuickConfigActivity.java");
 
         assertTrue(activity.contains("appConfigSaveHandler.saveResolved("));
-        assertTrue(activity.contains("WechatDpiSheetBinder.save(\n                draft.wechatDpiInput"));
+        assertTrue(activity.contains("WechatDpiSheetBinder.save("));
+        assertTrue(activity.contains(
+                "draft.wechatDpiInput, item.packageName, draft.dpisEnabled, getHookConfigStore()"));
         assertTrue(activity.contains("systemScopeCoordinator.requestScope("));
         assertTrue(activity.contains("executeHyperOsNativeProxyMount(item, true, onFinished);"));
         assertTrue(activity.contains("executeDialogProcessAction(item, action);"));

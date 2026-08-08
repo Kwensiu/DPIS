@@ -29,11 +29,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.zIndex
 import com.dpis.module.home.HomeWorkspaceBinder
 import com.dpis.module.settings.SystemFontScaleToolState
 import com.dpis.module.ui.compose.HomeWorkspaceContent
@@ -259,61 +261,9 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                                 tint = MaterialTheme.colorScheme.onSecondaryContainer
                             )
                         }
-                        if (showAdvancedHint && !editorState.destination.isChildPage()) {
-                            Column(
-                                modifier = androidx.compose.ui.Modifier
-                                    .align(Alignment.TopCenter)
-                                    .offset(y = AppConfigSheetUiTokens.WizardHintTopOffset),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.bg_app_config_wizard_arrow),
-                                    contentDescription = null,
-                                    modifier = androidx.compose.ui.Modifier.size(width = 14.dp, height = 7.dp),
-                                    tint = Color.Unspecified
-                                )
-                                Surface(
-                                    shape = AppConfigSheetUiTokens.WizardHintShape,
-                                    color = colorResource(R.color.app_config_wizard_bubble_container),
-                                    contentColor = colorResource(R.color.app_config_wizard_bubble_text)
-                                ) {
-                                    Row(
-                                        modifier = androidx.compose.ui.Modifier.padding(
-                                            start = 14.dp, top = 6.dp, end = 6.dp, bottom = 6.dp
-                                        ),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            stringResource(R.string.dialog_advanced_wizard_hint),
-                                            style = MaterialTheme.typography.labelMedium
-                                        )
-                                        Box(
-                                            modifier = androidx.compose.ui.Modifier
-                                                .padding(start = 8.dp)
-                                                .size(AppConfigSheetUiTokens.WizardHintCloseSize)
-                                                .clip(CircleShape)
-                                                .background(Color.White.copy(alpha = 0.15f))
-                                                .clickable(role = Role.Button, onClick = {
-                                                    AppConfigSheetWizardStore.markAdvancedHintDismissed(context)
-                                                    showAdvancedHint = false
-                                                }),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.ic_close_24),
-                                                contentDescription = stringResource(
-                                                    R.string.dialog_advanced_wizard_close
-                                                ),
-                                                modifier = androidx.compose.ui.Modifier.size(14.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
                     }
-                }
-            ) { onAdvancedAnchorMeasured, destinationContentOwnsHeight, onReturnFromChild ->
+                },
+                content = { onAdvancedAnchorMeasured, destinationContentOwnsHeight, onReturnFromChild ->
                 ConfigEditorAnimatedContent(
                     destination = editorState.destination,
                     // Expanded sheets ignore the peek anchor, so their destination content owns
@@ -365,7 +315,67 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                         )
                     }
                 )
+            },
+            overlayContent = {
+                if (showAdvancedHint && !editorState.destination.isChildPage()) {
+                    Column(
+                        modifier = androidx.compose.ui.Modifier
+                            .align(Alignment.TopCenter)
+                            .offset(y = AppConfigSheetUiTokens.WizardHintTopOffset)
+                            .padding(horizontal = 20.dp)
+                            .zIndex(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.bg_app_config_wizard_arrow),
+                            contentDescription = null,
+                            modifier = androidx.compose.ui.Modifier
+                                .size(width = 14.dp, height = 7.dp)
+                                .rotate(180f),
+                            tint = Color.Unspecified
+                        )
+                        Surface(
+                            shape = AppConfigSheetUiTokens.WizardHintShape,
+                            color = colorResource(R.color.app_config_wizard_bubble_container),
+                            contentColor = colorResource(R.color.app_config_wizard_bubble_text)
+                        ) {
+                            Row(
+                                modifier = androidx.compose.ui.Modifier.padding(
+                                    start = 14.dp, top = 6.dp, end = 6.dp, bottom = 6.dp
+                                ),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    stringResource(R.string.dialog_advanced_wizard_hint),
+                                    modifier = androidx.compose.ui.Modifier.weight(1f, fill = false),
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                                Box(
+                                    modifier = androidx.compose.ui.Modifier
+                                        .padding(start = 8.dp)
+                                        .size(AppConfigSheetUiTokens.WizardHintCloseSize)
+                                        .clip(CircleShape)
+                                        .background(Color.White.copy(alpha = 0.15f))
+                                        .clickable(role = Role.Button, onClick = {
+                                            AppConfigSheetWizardStore.markAdvancedHintDismissed(context)
+                                            showAdvancedHint = false
+                                        }),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_close_24),
+                                        contentDescription = stringResource(
+                                            R.string.dialog_advanced_wizard_close
+                                        ),
+                                        modifier = androidx.compose.ui.Modifier.size(14.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
+            )
         }
     }
 }

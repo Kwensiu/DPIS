@@ -5,9 +5,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.dpis.module.ConfigEditorDestination
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -44,7 +48,8 @@ fun AppConfigEditorOverlay(
     destination: ConfigEditorDestination,
     onReturnToMain: () -> Unit,
     topChrome: @Composable () -> Unit,
-    content: @Composable ColumnScope.((Dp) -> Unit, Boolean, () -> Unit) -> Unit
+    content: @Composable ColumnScope.((Dp) -> Unit, Boolean, () -> Unit) -> Unit,
+    overlayContent: @Composable BoxScope.() -> Unit = {}
 ) {
     @Suppress("DEPRECATION")
     val bottomSheetState = rememberStandardBottomSheetState(
@@ -165,7 +170,10 @@ fun AppConfigEditorOverlay(
                     )
             )
             BottomSheetScaffold(
-                modifier = Modifier.fillMaxSize(),
+                // The wizard hint intentionally overflows above the sheet surface. Elevate the
+                // complete scaffold so its chrome and overflow are composited above workspace
+                // content, matching the legacy dialog's overlay elevation.
+                modifier = Modifier.fillMaxSize().zIndex(1f),
                 scaffoldState = scaffoldState,
                 containerColor = Color.Transparent,
                 // Typeface is an expanded-or-dismissed child page. A zero peek removes its
@@ -183,21 +191,28 @@ fun AppConfigEditorOverlay(
                 // app's short line is visual-only, so render it in regular sheet content.
                 sheetDragHandle = null,
                 sheetContent = {
-                    topChrome()
-                    content({ measuredAnchor ->
-                        // Before the user opens advanced actions, layout changes (for example,
-                        // validation text or a window resize) keep the collapsed edge aligned.
-                        // An expanded sheet remains under the user's control until dismissal.
-                        if (measuredAnchor > 0.dp &&
-                            (destination.isChildPage() || !hasExpandedOnce)) {
-                            advancedAnchor = measuredAnchor
-                            if (!destination.isChildPage()) {
-                                mainCollapsedAnchor = measuredAnchor
-                            }
+                    Box(Modifier.fillMaxWidth()) {
+                        Column {
+                            topChrome()
+                            content({ measuredAnchor ->
+                                // Before the user opens advanced actions, layout changes (for example,
+                                // validation text or a window resize) keep the collapsed edge aligned.
+                                // An expanded sheet remains under the user's control until dismissal.
+                                if (measuredAnchor > 0.dp &&
+                                    (destination.isChildPage() || !hasExpandedOnce)) {
+                                    advancedAnchor = measuredAnchor
+                                    if (!destination.isChildPage()) {
+                                        mainCollapsedAnchor = measuredAnchor
+                                    }
+                                }
+                            }, bottomSheetState.currentValue == SheetValue.Expanded &&
+                                bottomSheetState.targetValue == SheetValue.Expanded &&
+                                !returnToMainPending, ::returnToMainCollapsed)
                         }
-                    }, bottomSheetState.currentValue == SheetValue.Expanded &&
-                        bottomSheetState.targetValue == SheetValue.Expanded &&
-                        !returnToMainPending, ::returnToMainCollapsed)
+                        // Draw after the editor content while keeping the overlay out of the
+                        // measured column height, so it remains anchored to the sheet chrome.
+                        overlayContent()
+                    }
                 }
             ) { }
         }

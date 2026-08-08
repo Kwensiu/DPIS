@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -144,7 +145,9 @@ fun DpisWorkspaceShell(
 
             DpisWorkspaceNavigationLayout.BOTTOM_BAR -> Scaffold(
                 bottomBar = {
-                    NavigationBar(windowInsets = WindowInsets.navigationBars) {
+                    // Include horizontal display-cutout insets so the bar's colored surface
+                    // reaches the camera-safe edge in landscape instead of being clipped.
+                    NavigationBar(windowInsets = bottomNavigationSurfaceInsets()) {
                         DpisWorkspaceDestination.entries.forEach { destination ->
                             val label = stringResource(destination.labelRes)
                             val onDestinationClick = rememberDpisConfirmAction {
@@ -176,36 +179,53 @@ fun DpisWorkspaceShell(
                 }
             )
 
-            DpisWorkspaceNavigationLayout.NAVIGATION_RAIL -> Row(Modifier.fillMaxSize()) {
-                NavigationRail(
-                    modifier = Modifier.width(WorkspaceRailWidth),
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    windowInsets = navigationSurfaceInsets()
-                ) {
-                    Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
-                        DpisWorkspaceDestination.entries.forEach { destination ->
-                            val label = stringResource(destination.labelRes)
-                            val onDestinationClick = rememberDpisConfirmAction {
-                                if (destination != selectedDestination) {
-                                    onDestinationSelected(destination)
+            DpisWorkspaceNavigationLayout.NAVIGATION_RAIL -> {
+                val layoutDirection = LocalLayoutDirection.current
+                val startCutout = safeDrawingInsets().asPaddingValues()
+                    .calculateStartPadding(layoutDirection)
+                Row(Modifier.fillMaxSize()) {
+                    // Keep the cutout outside the rail's fixed content width. Applying it as
+                    // NavigationRail windowInsets shrinks the icon slot and clips the camera-side
+                    // navigation icons on landscape devices.
+                    Box(
+                        modifier = Modifier
+                            .width(WorkspaceRailWidth + startCutout)
+                            .fillMaxHeight()
+                            .background(MaterialTheme.colorScheme.surfaceContainer)
+                    ) {
+                        NavigationRail(
+                            modifier = Modifier
+                                .padding(start = startCutout)
+                                .width(WorkspaceRailWidth),
+                            containerColor = Color.Transparent,
+                            windowInsets = verticalNavigationSurfaceInsets()
+                        ) {
+                            Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
+                                DpisWorkspaceDestination.entries.forEach { destination ->
+                                    val label = stringResource(destination.labelRes)
+                                    val onDestinationClick = rememberDpisConfirmAction {
+                                        if (destination != selectedDestination) {
+                                            onDestinationSelected(destination)
+                                        }
+                                    }
+                                    NavigationRailItem(
+                                        selected = destination == selectedDestination,
+                                        onClick = onDestinationClick,
+                                        icon = {
+                                            Icon(
+                                                painter = painterResource(destination.iconRes),
+                                                contentDescription = label
+                                            )
+                                        },
+                                        label = { Text(label) }
+                                    )
                                 }
                             }
-                            NavigationRailItem(
-                                selected = destination == selectedDestination,
-                                onClick = onDestinationClick,
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(destination.iconRes),
-                                        contentDescription = label
-                                    )
-                                },
-                                label = { Text(label) }
-                            )
                         }
                     }
-                }
-                Box(Modifier.weight(1f)) {
-                    content(compactWearWorkspacePadding(selectedDestination))
+                    Box(Modifier.weight(1f)) {
+                        content(legacyWorkspaceInsetsFor(selectedDestination))
+                    }
                 }
             }
 
@@ -375,6 +395,18 @@ private fun navigationSurfaceInsets(): WindowInsets = safeDrawingInsets().only(
     WindowInsetsSides.Start + WindowInsetsSides.Vertical
 )
 
+/** Rail content keeps vertical bars but receives the camera cutout from its outer surface. */
+@Composable
+private fun verticalNavigationSurfaceInsets(): WindowInsets = safeDrawingInsets().only(
+    WindowInsetsSides.Vertical
+)
+
+/** Bottom navigation owns both the gesture boundary and horizontal camera cutouts. */
+@Composable
+private fun bottomNavigationSurfaceInsets(): WindowInsets = safeDrawingInsets().only(
+    WindowInsetsSides.Start + WindowInsetsSides.End + WindowInsetsSides.Bottom
+)
+
 /**
  * The navigation rail/drawer owns the start-side cutout. Content only consumes
  * the end side so a left camera cutout cannot create a second empty gutter.
@@ -398,18 +430,6 @@ private fun legacyWorkspaceInsetsFor(destination: DpisWorkspaceDestination): Pad
         DpisWorkspaceDestination.TOOLS,
         DpisWorkspaceDestination.SETTINGS -> PaddingValues(end = endPadding)
     }
-}
-
-@Composable
-private fun compactWearWorkspacePadding(
-    destination: DpisWorkspaceDestination
-): PaddingValues {
-    val base = legacyWorkspaceInsetsFor(destination)
-    val layoutDirection = LocalLayoutDirection.current
-    return PaddingValues(
-        end = base.calculateEndPadding(layoutDirection),
-        bottom = base.calculateBottomPadding() + 68.dp
-    )
 }
 
 /** Keeps legacy content above the Compose NavigationBar without claiming status-bar ownership. */

@@ -90,7 +90,7 @@ fun SettingsWorkspaceContent(
     ) { topBarPadding ->
     LazyColumn(
         modifier = Modifier.padding(horizontal = 16.dp),
-        contentPadding = topBarPadding,
+        contentPadding = workspaceContentPadding(topBarPadding),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {

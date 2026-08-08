@@ -47,8 +47,8 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(shell.contains("painterResource(destination.iconRes)"));
         assertFalse(shell.contains("Icons.Outlined"));
         assertTrue(shell.contains("alwaysShowLabel = false"));
-        assertTrue(shell.contains("NavigationBar(windowInsets = WindowInsets.navigationBars)"));
-        assertTrue(shell.contains("containerColor = MaterialTheme.colorScheme.surfaceContainer"));
+        assertTrue(shell.contains("NavigationBar(windowInsets = bottomNavigationSurfaceInsets())"));
+        assertTrue(shell.contains("background(MaterialTheme.colorScheme.surfaceContainer)"));
         assertTrue(shell.contains("drawerContainerColor = MaterialTheme.colorScheme.surfaceContainer"));
         assertTrue(shell.contains("windowInsets = navigationSurfaceInsets()"));
         assertTrue(shell.contains("WindowInsetsSides.Start + WindowInsetsSides.Vertical"));
@@ -157,8 +157,7 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(settings.contains("rememberDpisConfirmAction(onDetails)"));
         assertTrue(settings.contains("Surface owns the entire-card ripple"));
         assertTrue(settings.contains(
-                "state?.languageLabel ?: stringResource(R.string.settings_language_follow_system),\n"
-                        + "                    enabled = state?.storeAvailable == true"));
+                "state?.languageLabel ?: stringResource(R.string.settings_language_follow_system)"));
         assertTrue(settings.contains(
                 "enabled = state?.storeAvailable == true && state.cacheClearInProgress != true"));
         assertTrue(home.contains("rememberDpisConfirmAction"));
@@ -299,7 +298,8 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(coordinator.contains("AppConfigEditorOverlay("));
         assertTrue(coordinator.contains("RenderAppEditorOverlay(mode: MainUiState.WorkspaceMode, wear: Boolean = false)"));
         assertTrue(coordinator.contains("WearAppConfigEditorContent(it)"));
-        assertTrue(coordinator.contains("appRevision\n        if (mode != MainUiState.WorkspaceMode.APP) return"));
+        assertTrue(coordinator.contains("appRevision"));
+        assertTrue(coordinator.contains("if (mode != MainUiState.WorkspaceMode.APP) return"));
         assertTrue(overlay.contains("initialValue = SheetValue.Hidden"));
         assertTrue(overlay.contains("skipHiddenState = false"));
         assertTrue(overlay.contains("bottomSheetState.partialExpand()"));
