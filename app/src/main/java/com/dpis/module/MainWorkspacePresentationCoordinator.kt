@@ -74,11 +74,11 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         fun applyTools()
         fun restoreTools()
         fun requestToolsPermission()
-        fun openToolsLogs()
         fun settingsState(): SettingsUiState?
         fun setSettingsHooks(enabled: Boolean)
         fun setSettingsSafeMode(enabled: Boolean)
         fun setSettingsGlobalLog(enabled: Boolean)
+        fun openSettingsLogs()
         fun setSettingsLauncherHidden(hidden: Boolean)
         fun setSettingsScale(percent: Int)
         fun openSettingsScaleDetails()
@@ -111,8 +111,8 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
             true
         }
         MainUiState.WorkspaceMode.HOME -> { homeRevision; ComposeWorkspaceSurface { HomeWorkspaceContent(content.homeState(), padding) }; true }
-        MainUiState.WorkspaceMode.TOOLS -> { toolsRevision; ComposeWorkspaceSurface { ToolsWorkspaceContent(content.toolsState(), padding, toolsExpanded, { toolsExpanded = !toolsExpanded }, content::changeToolsPending, content::applyTools, content::restoreTools, content::requestToolsPermission, content::openToolsLogs) }; true }
-        MainUiState.WorkspaceMode.SETTINGS -> { settingsRevision; ComposeWorkspaceSurface { SettingsWorkspaceContent(content.settingsState(), padding, content::setSettingsHooks, content::setSettingsSafeMode, content::setSettingsGlobalLog, content::setSettingsLauncherHidden, content::setSettingsScale, content::openSettingsScaleDetails, content::openSettingsFontDebug, content::openSettingsFontLibrary, content::openSettingsExperimental, content::openSettingsLanguage, content::openSettingsBackup, content::clearSettingsCache, content::openSettingsAbout, content::openSettingsDonate) }; true }
+        MainUiState.WorkspaceMode.TOOLS -> { toolsRevision; ComposeWorkspaceSurface { ToolsWorkspaceContent(content.toolsState(), padding, toolsExpanded, { toolsExpanded = !toolsExpanded }, content::changeToolsPending, content::applyTools, content::restoreTools, content::requestToolsPermission) }; true }
+        MainUiState.WorkspaceMode.SETTINGS -> { settingsRevision; ComposeWorkspaceSurface { SettingsWorkspaceContent(content.settingsState(), padding, content::setSettingsHooks, content::setSettingsSafeMode, content::setSettingsGlobalLog, content::openSettingsLogs, content::setSettingsLauncherHidden, content::setSettingsScale, content::openSettingsScaleDetails, content::openSettingsFontDebug, content::openSettingsFontLibrary, content::openSettingsExperimental, content::openSettingsLanguage, content::openSettingsBackup, content::clearSettingsCache, content::openSettingsAbout, content::openSettingsDonate) }; true }
         MainUiState.WorkspaceMode.TEMPLATE -> {
             templateRevision
             ComposeWorkspaceSurface {
@@ -142,12 +142,12 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         MainUiState.WorkspaceMode.HOME -> { homeRevision; WearHomeWorkspaceContent(content.homeState()); true }
         MainUiState.WorkspaceMode.TOOLS -> {
             toolsRevision
-            WearToolsWorkspaceContent(content.toolsState(), content::changeToolsPending, content::applyTools, content::restoreTools, content::requestToolsPermission, content::openToolsLogs)
+            WearToolsWorkspaceContent(content.toolsState(), content::changeToolsPending, content::applyTools, content::restoreTools, content::requestToolsPermission)
             true
         }
         MainUiState.WorkspaceMode.SETTINGS -> {
             settingsRevision
-            WearSettingsWorkspaceContent(content.settingsState(), content::setSettingsHooks, content::setSettingsSafeMode, content::setSettingsGlobalLog, content::setSettingsLauncherHidden, content::setSettingsScale, content::openSettingsScaleDetails, content::openSettingsFontDebug, content::openSettingsFontLibrary, content::openSettingsExperimental, content::openSettingsLanguage, content::openSettingsBackup, content::clearSettingsCache, content::openSettingsAbout, content::openSettingsDonate)
+            WearSettingsWorkspaceContent(content.settingsState(), content::setSettingsHooks, content::setSettingsSafeMode, content::setSettingsGlobalLog, content::openSettingsLogs, content::setSettingsLauncherHidden, content::setSettingsScale, content::openSettingsScaleDetails, content::openSettingsFontDebug, content::openSettingsFontLibrary, content::openSettingsExperimental, content::openSettingsLanguage, content::openSettingsBackup, content::clearSettingsCache, content::openSettingsAbout, content::openSettingsDonate)
             true
         }
         MainUiState.WorkspaceMode.TEMPLATE -> {

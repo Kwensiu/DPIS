@@ -1039,11 +1039,11 @@ public final class MainActivity
                     @Override public void applyTools() { composeToolsPresenter.apply(); }
                     @Override public void restoreTools() { composeToolsPresenter.restoreDefault(); }
                     @Override public void requestToolsPermission() { startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS, android.net.Uri.parse("package:" + getPackageName()))); }
-                    @Override public void openToolsLogs() { if (DiagnosticLogGate.ensureEnabled(MainActivity.this, () -> startActivity(new Intent(MainActivity.this, LogActivity.class)), null)) startActivity(new Intent(MainActivity.this, LogActivity.class)); }
                     @Override public SettingsUiState settingsState() { return ensureComposeSettingsController().presentationState(); }
                     @Override public void setSettingsHooks(boolean enabled) { ensureComposeSettingsController().setHooksEnabledFromPresentation(enabled); }
                     @Override public void setSettingsSafeMode(boolean enabled) { ensureComposeSettingsController().presentationController().setSafeModeEnabled(enabled); }
                     @Override public void setSettingsGlobalLog(boolean enabled) { ensureComposeSettingsController().presentationController().setGlobalLogEnabled(enabled); }
+                    @Override public void openSettingsLogs() { startActivity(new Intent(MainActivity.this, LogActivity.class)); }
                     @Override public void setSettingsLauncherHidden(boolean hidden) { ensureComposeSettingsController().presentationController().setLauncherIconHidden(hidden); }
                     @Override public void setSettingsScale(int percent) { ensureComposeSettingsController().saveInterfaceScaleFromPresentation(percent); }
                     @Override public void openSettingsScaleDetails() { ensureComposeSettingsController().showInterfaceScaleFromPresentation(); }

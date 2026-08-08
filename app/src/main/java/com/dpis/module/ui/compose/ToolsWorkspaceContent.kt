@@ -46,8 +46,7 @@ fun ToolsWorkspaceContent(
     onPendingChanged: (Int) -> Unit,
     onApply: () -> Unit,
     onRestore: () -> Unit,
-    onRequestPermission: () -> Unit,
-    onOpenLogs: () -> Unit
+    onRequestPermission: () -> Unit
 ) {
     Scaffold(
         modifier = Modifier.padding(padding),
@@ -160,22 +159,6 @@ fun ToolsWorkspaceContent(
                             ) { Text(stringResource(R.string.system_font_scale_restore_default)) }
                         }
                     }
-                }
-            }
-        }
-        item {
-            Card(
-                onClick = rememberDpisConfirmAction(onOpenLogs),
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-            ) {
-                Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(painterResource(R.drawable.ic_notes_24), null, tint = MaterialTheme.colorScheme.primary)
-                    Column(Modifier.padding(start = 16.dp).weight(1f)) {
-                        Text(stringResource(R.string.tools_log_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text(stringResource(R.string.tools_log_subtitle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Icon(painterResource(R.drawable.ic_chevron_right_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }

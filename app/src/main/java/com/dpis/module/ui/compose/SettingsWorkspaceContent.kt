@@ -56,6 +56,7 @@ fun SettingsWorkspaceContent(
     onHooksChanged: (Boolean) -> Unit,
     onSafeModeChanged: (Boolean) -> Unit,
     onGlobalLogChanged: (Boolean) -> Unit,
+    onOpenLogs: () -> Unit,
     onLauncherHiddenChanged: (Boolean) -> Unit,
     onInterfaceScaleChanged: (Int) -> Unit,
     onInterfaceScaleDetails: () -> Unit,
@@ -68,6 +69,7 @@ fun SettingsWorkspaceContent(
     onAbout: () -> Unit,
     onDonate: () -> Unit
 ) {
+    val generalItemCount = if (state?.globalLogEnabled == true) 6 else 5
     var pendingScale by remember(state?.interfaceScalePercent) {
         mutableFloatStateOf((state?.interfaceScalePercent ?: 100).toFloat())
     }
@@ -101,7 +103,7 @@ fun SettingsWorkspaceContent(
                     R.string.system_hooks_enabled_hint,
                     state?.systemHooksEnabled == true,
                     state?.storeAvailable == true,
-                    index = 0, total = 6,
+                    index = 0, total = generalItemCount,
                     onHooksChanged
                 )
                 SettingsSwitchRow(
@@ -110,7 +112,7 @@ fun SettingsWorkspaceContent(
                     R.string.system_safe_mode_hint,
                     state?.safeModeEnabled == true,
                     state?.storeAvailable == true,
-                    index = 1, total = 6,
+                    index = 1, total = generalItemCount,
                     onSafeModeChanged
                 )
                 SettingsSwitchRow(
@@ -119,23 +121,26 @@ fun SettingsWorkspaceContent(
                     R.string.global_log_enabled_hint,
                     state?.globalLogEnabled == true,
                     state?.storeAvailable == true,
-                    index = 2, total = 6,
+                    index = 2, total = generalItemCount,
                     onGlobalLogChanged
                 )
-                SettingsEntry(
-                    R.drawable.ic_bug_report_24,
-                    R.string.font_debug_overlay_label,
-                    R.string.font_debug_entry_hint,
-                    state?.storeAvailable == true,
-                    index = 3, total = 6,
-                    onFontDebug
-                )
+                AnimatedConditionalItem(visible = state?.globalLogEnabled == true) {
+                    SettingsEntry(
+                        R.drawable.ic_overview_24,
+                        R.string.tools_log_title,
+                        R.string.tools_log_subtitle,
+                        state?.storeAvailable == true,
+                        index = 3, total = generalItemCount,
+                        onOpenLogs
+                    )
+                }
                 SettingsEntry(
                     R.drawable.ic_upload_file_24,
                     R.string.settings_font_library_label,
                     R.string.settings_font_library_hint,
                     state?.storeAvailable == true,
-                    index = 4, total = 6,
+                    index = if (state?.globalLogEnabled == true) 4 else 3,
+                    total = generalItemCount,
                     onFontLibrary
                 )
                 SettingsEntry(
@@ -143,7 +148,8 @@ fun SettingsWorkspaceContent(
                     R.string.settings_experimental_title,
                     R.string.settings_experimental_hint,
                     state?.storeAvailable == true,
-                    index = 5, total = 6,
+                    index = if (state?.globalLogEnabled == true) 5 else 4,
+                    total = generalItemCount,
                     onExperimental
                 )
             }

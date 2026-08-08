@@ -441,8 +441,7 @@ internal fun WearToolsWorkspaceContent(
     onPendingChanged: (Int) -> Unit,
     onApply: () -> Unit,
     onRestore: () -> Unit,
-    onRequestPermission: () -> Unit,
-    onOpenLogs: () -> Unit
+    onRequestPermission: () -> Unit
 ) {
     val context = LocalContext.current
     WearWorkspaceList(title = R.string.workspace_tools) {
@@ -470,7 +469,6 @@ internal fun WearToolsWorkspaceContent(
                 wearButton("restore", context.getString(R.string.system_font_scale_restore_default), icon = R.drawable.ic_refresh_24, enabled = state.canRestore(), onClick = onRestore)
             }
         }
-        wearButton("logs", context.getString(R.string.tools_log_title), context.getString(R.string.tools_log_subtitle), R.drawable.ic_notes_24, onClick = onOpenLogs)
     }
 }
 
@@ -480,6 +478,7 @@ internal fun WearSettingsWorkspaceContent(
     onHooksChanged: (Boolean) -> Unit,
     onSafeModeChanged: (Boolean) -> Unit,
     onGlobalLogChanged: (Boolean) -> Unit,
+    onOpenLogs: () -> Unit,
     onLauncherHiddenChanged: (Boolean) -> Unit,
     onInterfaceScaleChanged: (Int) -> Unit,
     onInterfaceScaleDetails: () -> Unit,
@@ -497,11 +496,11 @@ internal fun WearSettingsWorkspaceContent(
         wearSwitch("hooks", R.string.system_hooks_enabled_label, state?.systemHooksEnabled == true, state?.storeAvailable == true, onHooksChanged)
         wearSwitch("safe", R.string.system_safe_mode_label, state?.safeModeEnabled == true, state?.storeAvailable == true, onSafeModeChanged)
         wearSwitch("logs", R.string.global_log_enabled_label, state?.globalLogEnabled == true, state?.storeAvailable == true, onGlobalLogChanged)
+        if (state?.globalLogEnabled == true) wearButton("logs-page", context.getString(R.string.tools_log_title), context.getString(R.string.tools_log_subtitle), R.drawable.ic_overview_24, enabled = state.storeAvailable, onClick = onOpenLogs)
         val scale = state?.interfaceScalePercent ?: 100
         wearButton("scale-minus", context.getString(R.string.system_font_scale_decrement), "$scale%", R.drawable.ic_remove_24, enabled = state?.storeAvailable == true, onClick = { onInterfaceScaleChanged(scale - 5) })
         wearButton("scale-plus", context.getString(R.string.system_font_scale_increment), "$scale%", R.drawable.ic_add_24, enabled = state?.storeAvailable == true, onClick = { onInterfaceScaleChanged(scale + 5) })
         wearButton("scale-details", context.getString(R.string.settings_interface_scale_dialog_title), icon = R.drawable.ic_fit_width_24, enabled = state?.storeAvailable == true, onClick = onInterfaceScaleDetails)
-        wearButton("font-debug", context.getString(R.string.font_debug_overlay_label), icon = R.drawable.ic_bug_report_24, enabled = state?.storeAvailable == true, onClick = onFontDebug)
         wearButton("font-library", context.getString(R.string.settings_font_library_label), icon = R.drawable.ic_upload_file_24, enabled = state?.storeAvailable == true, onClick = onFontLibrary)
         wearButton("experimental", context.getString(R.string.settings_experimental_title), icon = R.drawable.ic_experiment_24, enabled = state?.storeAvailable == true, onClick = onExperimental)
         wearButton("language", context.getString(R.string.settings_language_label), state?.languageLabel, R.drawable.ic_language_24, state?.storeAvailable == true, onLanguage)
