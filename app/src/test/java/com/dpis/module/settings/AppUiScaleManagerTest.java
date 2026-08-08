@@ -23,4 +23,12 @@ public class AppUiScaleManagerTest {
     public void keepsTheStandardDefaultAwayFromCompactWatches() {
         assertEquals(100, AppUiScaleManager.resolveEffectiveScalePercent(100, false, false));
     }
+
+    @Test
+    public void sliderValuesSnapToNearestWholePercent() {
+        assertEquals(60, AppUiScaleManager.normalizeSliderPercent(59f));
+        assertEquals(66, AppUiScaleManager.normalizeSliderPercent(65.6f));
+        assertEquals(104, AppUiScaleManager.normalizeSliderPercent(103.6f));
+        assertEquals(120, AppUiScaleManager.normalizeSliderPercent(120.4f));
+    }
 }

@@ -283,6 +283,7 @@ public final class LandAppDetailPaneBinder {
                         root.findViewById(R.id.land_detail_viewport_mode_scale_label),
                         root.findViewById(R.id.land_detail_viewport_mode_width_label)
                 );
+        stabilizeModeToggleLayout(toggle.container);
         String initialType = initialViewportTargetType(item);
         AppConfigDialogBinder.bindViewportModeToggle(
                 toggle,
@@ -312,6 +313,7 @@ public final class LandAppDetailPaneBinder {
                         root.findViewById(R.id.land_detail_font_mode_system_label),
                         root.findViewById(R.id.land_detail_font_mode_compat_label)
                 );
+        stabilizeModeToggleLayout(toggle.container);
         AppConfigDialogBinder.bindFontModeToggle(
                 toggle,
                 AppConfigInputValidation.initialFontMode(item.fontMode),
@@ -325,6 +327,44 @@ public final class LandAppDetailPaneBinder {
         input.setText(initialText);
         bindFontInput(root, input);
         bindFontToggle(root, inputLayout, input, toggle);
+    }
+
+    /**
+     * Reassert the fixed mode-control contract whenever a landscape detail child is rebound.
+     * The detail pane can replace its child after an app switch, so relying only on the XML style
+     * leaves a stale/reused LayoutParams width capable of expanding the track to match the row.
+     */
+    private void stabilizeModeToggleLayout(View container) {
+        if (container == null) {
+            return;
+        }
+        ViewGroup.LayoutParams params = container.getLayoutParams();
+        if (params == null) {
+            return;
+        }
+        int expectedWidth = activity.getResources().getDimensionPixelSize(
+                R.dimen.dialog_mode_toggle_width
+        );
+        int expectedHeight = activity.getResources().getDimensionPixelSize(
+                R.dimen.dialog_mode_toggle_row_height
+        );
+        if (params.width != expectedWidth || params.height != expectedHeight) {
+            params.width = expectedWidth;
+            params.height = expectedHeight;
+            container.setLayoutParams(params);
+        }
+        // The detail child is attached after this binder runs. Reassert once after parent measure so
+        // a reused landscape row cannot expand the toggle during the app-switch relayout pass.
+        container.post(() -> {
+            ViewGroup.LayoutParams laidOutParams = container.getLayoutParams();
+            if (laidOutParams != null
+                    && (laidOutParams.width != expectedWidth
+                    || laidOutParams.height != expectedHeight)) {
+                laidOutParams.width = expectedWidth;
+                laidOutParams.height = expectedHeight;
+                container.setLayoutParams(laidOutParams);
+            }
+        });
     }
 
     private void bindViewportInput(
@@ -645,19 +685,12 @@ public final class LandAppDetailPaneBinder {
         if (root == null) {
             return;
         }
-        root.addOnLayoutChangeListener(
-                (
-                        view,
-                        left,
-                        top,
-                        right,
-                        bottom,
-                        oldLeft,
-                        oldTop,
-                        oldRight,
-                        oldBottom) -> updateAdvancedActionsLayout(view)
-        );
-        root.post(() -> updateAdvancedActionsLayout(root));
+        root.post(() -> {
+            root.getViewTreeObserver().addOnGlobalLayoutListener(
+                    () -> updateAdvancedActionsLayout(root)
+            );
+            updateAdvancedActionsLayout(root);
+        });
     }
 
     private void updateAdvancedActionsLayout(View root) {
@@ -676,6 +709,11 @@ public final class LandAppDetailPaneBinder {
         if (primaryRow == null || resetRow == null || resetButton == null) {
             return;
         }
+        // Reset wrapping is a width decision owned by this row. Do not make it while the row is
+        // still awaiting its first measure; the global-layout observer will retry after attach.
+        if (primaryRow.getWidth() <= 0) {
+            return;
+        }
         int buttonMinWidth = activity
                 .getResources()
                 .getDimensionPixelSize(
@@ -686,25 +724,29 @@ public final class LandAppDetailPaneBinder {
                 .getDimensionPixelSize(
                         R.dimen.land_app_detail_action_button_spacing
                 );
-        int contentHorizontalPadding
-                = activity
-                        .getResources()
-                        .getDimensionPixelSize(
-                                R.dimen.land_app_detail_padding_horizontal
-                        )
-                * 2
-                + activity
-                        .getResources()
-                        .getDimensionPixelSize(R.dimen.land_app_detail_card_padding)
-                * 2;
         int threeButtonRequiredWidth
-                = buttonMinWidth * 3 + spacing * 2 + contentHorizontalPadding;
-        boolean wrapReset = root.getWidth() < threeButtonRequiredWidth;
+                = buttonMinWidth * 3 + spacing * 2;
+        // Measure the row that owns the weighted buttons. Using the detail root here double-counts
+        // the outer/card padding and makes a narrow landscape pane wrap Reset too early.
+        boolean wrapReset = primaryRow.getWidth() < threeButtonRequiredWidth;
         int actionButtonHeight = activity
                 .getResources()
                 .getDimensionPixelSize(
                         R.dimen.land_app_detail_action_button_height
                 );
+        applyAdvancedPrimaryButtonLayout(
+                root.findViewById(R.id.land_detail_scope_row),
+                actionButtonHeight,
+                0
+        );
+        applyAdvancedPrimaryButtonLayout(
+                root.findViewById(R.id.land_detail_dpis_toggle_row),
+                actionButtonHeight,
+                spacing
+        );
+        // Once Reset moves to its own row, the primary row has exactly two weighted actions.
+        // Keep the weight sum explicit so a prior three-button measurement cannot leave a gap.
+        primaryRow.setWeightSum(wrapReset ? 2f : 3f);
         if (wrapReset && resetButton.getParent() != resetRow) {
             primaryRow.removeView(resetButton);
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
@@ -726,6 +768,24 @@ public final class LandAppDetailPaneBinder {
         } else {
             resetRow.setVisibility(wrapReset ? View.VISIBLE : View.GONE);
         }
+    }
+
+    /** Keeps the remaining weighted actions filling the row after Reset moves below it. */
+    private static void applyAdvancedPrimaryButtonLayout(
+            MaterialButton button,
+            int height,
+            int marginStart
+    ) {
+        if (button == null) {
+            return;
+        }
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                0,
+                height,
+                1f
+        );
+        params.setMarginStart(marginStart);
+        button.setLayoutParams(params);
     }
 
     private void bindEditorRow(View root, int rowId, Runnable action) {
@@ -823,21 +883,12 @@ public final class LandAppDetailPaneBinder {
             return;
         }
         View actionDock = root.findViewById(R.id.land_detail_action_dock);
-        root.addOnLayoutChangeListener(
-                (
-                        view,
-                        left,
-                        top,
-                        right,
-                        bottom,
-                        oldLeft,
-                        oldTop,
-                        oldRight,
-                        oldBottom) -> updateDockPresentation(
-                                view, actionDock, saveButton)
-        );
-        root.post(() -> updateDockPresentation(
-                root, actionDock, saveButton));
+        root.post(() -> {
+            root.getViewTreeObserver().addOnGlobalLayoutListener(
+                    () -> updateDockPresentation(root, actionDock, saveButton)
+            );
+            updateDockPresentation(root, actionDock, saveButton);
+        });
     }
 
     private void updateDockPresentation(
@@ -889,6 +940,7 @@ public final class LandAppDetailPaneBinder {
                 actionDock.setLayoutParams(dockParams);
             }
         }
+        updateScrollContentClearance(root, actionDock);
         int availableDockContentWidth = targetDockWidth - dockPadding;
         int expandedRequiredWidth
                 = saveExpandedWidth
@@ -914,6 +966,34 @@ public final class LandAppDetailPaneBinder {
         } else {
             saveButton.setIcon(null);
             saveButton.setText(R.string.status_save_button);
+        }
+    }
+
+    /** Adds scroll clearance without clipping content around the floating dock's rounded surface. */
+    private void updateScrollContentClearance(View root, View actionDock) {
+        if (root == null || actionDock == null || actionDock.getHeight() <= 0) {
+            return;
+        }
+        View content = root.findViewById(R.id.land_detail_scroll_content);
+        if (content == null) {
+            return;
+        }
+        int dockBottomMargin = activity.getResources().getDimensionPixelSize(
+                R.dimen.land_app_detail_dock_margin_bottom
+        );
+        int contentGap = activity.getResources().getDimensionPixelSize(
+                R.dimen.land_app_detail_card_gap
+        );
+        int requiredBottomPadding = actionDock.getHeight()
+                + dockBottomMargin
+                + contentGap;
+        if (content.getPaddingBottom() != requiredBottomPadding) {
+            content.setPaddingRelative(
+                    content.getPaddingStart(),
+                    content.getPaddingTop(),
+                    content.getPaddingEnd(),
+                    requiredBottomPadding
+            );
         }
     }
 

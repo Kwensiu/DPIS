@@ -12,6 +12,7 @@ import com.dpis.module.applist.AppListFilterState;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -21,6 +22,48 @@ import java.util.List;
 import org.junit.Test;
 
 public class MainViewModelTest {
+    @Test
+    public void restoredEditorSessionRetainsDraftBaselineAndDestination() {
+        MainViewModel viewModel = new MainViewModel(emptyState());
+        AppConfigEditorDraft draft = editorDraft("com.example.app", "125");
+        AppConfigEditorDraft savedDraft = editorDraft("com.example.app", "110");
+
+        viewModel.restoreEditingSession(
+                "com.example.app",
+                draft,
+                savedDraft,
+                ConfigEditorDestination.HOOK_CHAIN_FONT
+        );
+
+        assertEquals("com.example.app", viewModel.getEditingPackageName());
+        assertSame(draft, viewModel.getEditingDraft());
+        assertSame(savedDraft, viewModel.getSavedEditingDraft());
+        assertEquals(ConfigEditorDestination.HOOK_CHAIN_FONT,
+                viewModel.getEditingDestination());
+    }
+
+    @Test
+    public void closingEditorSessionClearsDraftBaselineAndChildDestination() {
+        MainViewModel viewModel = new MainViewModel(emptyState());
+        AppConfigEditorDraft draft = editorDraft("com.example.app", "125");
+        viewModel.restoreEditingSession(
+                "com.example.app",
+                draft,
+                null,
+                ConfigEditorDestination.HOOK_CHAIN_INTERFACE
+        );
+        viewModel.setEditingSaveFeedback(true);
+
+        viewModel.clearEditingPackageName();
+        viewModel.clearEditingDraft();
+
+        assertEquals(null, viewModel.getEditingPackageName());
+        assertEquals(null, viewModel.getEditingDraft());
+        assertEquals(null, viewModel.getSavedEditingDraft());
+        assertEquals(ConfigEditorDestination.MAIN, viewModel.getEditingDestination());
+        assertFalse(viewModel.isEditingSaveFeedback());
+    }
+
     @Test
     public void requestLoad_emitsStartEffectWithForceReload() {
         MainViewModel viewModel = new MainViewModel(emptyState());
@@ -66,7 +109,8 @@ public class MainViewModelTest {
 
         List<AppListItem> stale = List.of(app("Old", "com.example.old", true, false));
         List<MainViewModel.AppsLoadRequest> followUp = viewModel.dispatch(
-                MainUiAction.appsLoadFinished(firstRequest.requestId, stale));
+                MainUiAction.appsLoadFinished(
+                        firstRequest.requestId, stale));
         assertEquals(1, followUp.size());
         MainViewModel.AppsLoadRequest secondRequest = followUp.get(0);
         assertEquals(2, secondRequest.requestId);
@@ -75,7 +119,8 @@ public class MainViewModelTest {
 
         List<AppListItem> latest = List.of(app("Latest", "com.example.latest", true, false));
         List<MainViewModel.AppsLoadRequest> finalRequests = viewModel.dispatch(
-                MainUiAction.appsLoadFinished(secondRequest.requestId, latest));
+                MainUiAction.appsLoadFinished(
+                        secondRequest.requestId, latest));
         assertTrue(finalRequests.isEmpty());
         assertEquals(1, viewModel.getState().appsSnapshot().size());
         assertEquals("com.example.latest", viewModel.getState().appsSnapshot().get(0).packageName);
@@ -153,6 +198,27 @@ public class MainViewModelTest {
         assertFalse(viewModel.getState().isRefreshing(AppListPage.ALL_APPS));
     }
 
+
+    private static AppConfigEditorDraft editorDraft(String packageName, String viewportInput) {
+        return new AppConfigEditorDraft(
+                packageName,
+                viewportInput,
+                viewportInput,
+                "",
+                "relative_scale",
+                "",
+                FontApplyMode.SYSTEM_EMULATION,
+                null,
+                null,
+                ViewportApplyMode.OFF,
+                false,
+                false,
+                "",
+                true,
+                true
+        );
+    }
+
     private static MainUiState emptyState() {
         return MainUiState.initial("",
                 AppListFilterState.defaultState(),
@@ -173,5 +239,29 @@ public class MainViewModelTest {
                 systemApp,
                 false,
                 null);
+    }
+
+    private static AppListItem configuredInstalledApp(String label, String packageName) {
+        return new AppListItem(
+                label,
+                packageName,
+                true,
+                true,
+                null,
+                null,
+                ViewportApplyMode.OFF,
+                null,
+                com.dpis.module.viewport.ViewportTargetSpec.off(),
+                null,
+                FontApplyMode.OFF,
+                null,
+                false,
+                true,
+                true,
+                true,
+                false,
+                false,
+                null
+        );
     }
 }

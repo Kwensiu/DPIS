@@ -311,7 +311,11 @@ public final class FontLibraryArchiveCodec {
     private static void writeFile(ZipOutputStream zip, String name, File file) throws IOException {
         zip.putNextEntry(new ZipEntry(name));
         try (InputStream input = new java.io.FileInputStream(file)) {
-            input.transferTo(zip);
+            byte[] buffer = new byte[8192];
+            int count;
+            while ((count = input.read(buffer)) != -1) {
+                zip.write(buffer, 0, count);
+            }
         }
         zip.closeEntry();
     }

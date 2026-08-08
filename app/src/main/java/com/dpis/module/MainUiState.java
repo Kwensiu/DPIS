@@ -127,7 +127,8 @@ final class MainUiState {
         } else {
             next.remove(page);
         }
-        return new MainUiState(appQuery, templateQuery, filterState, appsSnapshot, next, workspaceMode);
+        return new MainUiState(appQuery, templateQuery, filterState, appsSnapshot, next,
+                workspaceMode);
     }
 
     MainUiState clearRefreshingPages() {

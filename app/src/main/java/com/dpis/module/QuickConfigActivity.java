@@ -15,12 +15,14 @@ import com.dpis.module.runtime.RuntimeConfigDelivery;
 
 
 import com.dpis.module.diagnostics.FeedbackDiagnosticResultSheet;
+import com.dpis.module.diagnostics.FeedbackDiagnosticPackagingDialog;
 
 import com.dpis.module.diagnostics.FeedbackDiagnosticExportBuilder;
 
 import com.dpis.module.diagnostics.FeedbackDiagnosticCoordinator;
 
 import com.dpis.module.appconfig.AppConfigDialogBinder;
+import com.dpis.module.appconfig.AppConfigInputValidation;
 import com.dpis.module.appconfig.AppConfigPrefillPreview;
 import com.dpis.module.appconfig.AppConfigSaveHandler;
 
@@ -58,6 +60,11 @@ import com.dpis.module.diagnostics.FeedbackDiagnosticAppLauncher;
 import com.dpis.module.fonts.HyperOsNativeProxyBindMounter;
 import com.dpis.module.fonts.HyperOsNativeAppDetector;
 import com.dpis.module.root.RootAccessProbe;
+import com.dpis.module.quickconfig.QuickConfigTargetDecision;
+import com.dpis.module.ui.compose.QuickConfigPresentation;
+import com.dpis.module.ui.compose.ComposeConfirmDialog;
+import com.dpis.module.ui.compose.ComposeMessageDialog;
+import com.dpis.module.ui.compose.SupportActivityContent;
 
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -67,18 +74,14 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.Gravity;
-import android.view.LayoutInflater;
+import android.provider.Settings;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.FileProvider;
 
 import com.dpis.module.applist.ForegroundPackageResolver;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
@@ -118,6 +121,12 @@ public final class QuickConfigActivity extends LocalizedActivity {
     private FeedbackDiagnosticCoordinator.Result pendingFeedbackDiagnosticResult;
     private FeedbackDiagnosticExportBuilder.DiagnosticPackage pendingFeedbackDiagnosticPackage;
     private AlertDialog activeFeedbackDiagnosticPackagingDialog;
+    private QuickConfigPresentation presentation;
+    private AppListItem editingItem;
+    private AppConfigEditorDraft editingDraft;
+    private AppConfigEditorDraft savedEditingDraft;
+    private ConfigEditorDestination editingDestination = ConfigEditorDestination.MAIN;
+    private boolean editingSaveFeedback;
 
     public static Intent createIntent(Context context, String packageName) {
         Intent intent = new Intent(context, QuickConfigActivity.class)
@@ -131,15 +140,32 @@ public final class QuickConfigActivity extends LocalizedActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        FrameLayout root = new FrameLayout(this);
-        root.setId(android.R.id.content);
-        root.setOnClickListener(view -> finish());
-        setContentView(root);
+        presentation = new QuickConfigPresentation();
+        SupportActivityContent.installQuickConfig(this, presentation);
 
-        String packageName = getIntent().getStringExtra(EXTRA_PACKAGE_NAME);
-        if (packageName == null || packageName.isBlank()) {
-            packageName = ForegroundPackageResolver.resolve(this);
+        QuickConfigEditorSession retainedSession
+                = (QuickConfigEditorSession) getLastCustomNonConfigurationInstance();
+        if (retainedSession != null) {
+            editingItem = retainedSession.item;
+            editingDraft = retainedSession.draft;
+            savedEditingDraft = retainedSession.savedDraft;
+            editingDestination = retainedSession.destination;
+            refreshComposeEditor();
+            return;
         }
+
+        String explicitPackageName = getIntent().getStringExtra(EXTRA_PACKAGE_NAME);
+        boolean usageAccessGranted = ForegroundPackageResolver.hasUsageAccess(this);
+        QuickConfigTargetDecision.Result targetDecision = QuickConfigTargetDecision.decide(
+                explicitPackageName,
+                usageAccessGranted,
+                usageAccessGranted ? ForegroundPackageResolver.resolve(this) : null);
+        if (targetDecision.kind() == QuickConfigTargetDecision.Kind.REQUEST_USAGE_ACCESS) {
+            openUsageAccessSettings();
+            finish();
+            return;
+        }
+        String packageName = targetDecision.packageName();
         AppListItem item = packageName != null ? createItem(packageName) : null;
         if (item == null) {
             Toast.makeText(this, R.string.quick_config_target_unavailable, Toast.LENGTH_SHORT)
@@ -147,35 +173,215 @@ public final class QuickConfigActivity extends LocalizedActivity {
             finish();
             return;
         }
-        showPanel(root, item);
+        editingItem = AppConfigPrefillPreview.applyIfEligible(
+                item,
+                getHookConfigStore(),
+                new GlobalPrefillStore(
+                        getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)).read());
+        editingDraft = AppConfigEditorDraft.fromItem(editingItem);
+        savedEditingDraft = editingDraft;
+        refreshComposeEditor();
     }
 
-    private void showPanel(FrameLayout root, AppListItem item) {
-        View panel = LayoutInflater.from(this).inflate(
-                R.layout.dialog_app_config,
-                root,
-                false);
-        panel.setBackgroundResource(R.drawable.bg_quick_config_panel);
-        panel.setClickable(true);
-        panel.setFocusable(true);
+    @Override
+    public Object onRetainCustomNonConfigurationInstance() {
+        if (editingItem == null || editingDraft == null) {
+            return null;
+        }
+        return new QuickConfigEditorSession(
+                editingItem,
+                editingDraft,
+                savedEditingDraft,
+                editingDestination
+        );
+    }
 
-        AppConfigDialogBinder binder = new AppConfigDialogBinder(this, appConfigDialogHost);
-        binder.bind(
-                panel,
-                AppConfigPrefillPreview.applyIfEligible(
-                        item,
-                        getHookConfigStore(),
-                        new GlobalPrefillStore(
-                                getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE))
-                                .read()),
-                isSystemHookEnabled());
-        activeEditorRoot = panel;
+    private void openUsageAccessSettings() {
+        Intent packageSettings = new Intent(
+                Settings.ACTION_USAGE_ACCESS_SETTINGS,
+                Uri.parse("package:" + getPackageName()));
+        try {
+            startActivity(packageSettings);
+        } catch (ActivityNotFoundException packagePageUnavailable) {
+            try {
+                startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
+            } catch (ActivityNotFoundException settingsUnavailable) {
+                Toast.makeText(this, R.string.quick_config_target_unavailable, Toast.LENGTH_SHORT)
+                        .show();
+            }
+        }
+    }
 
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                Gravity.BOTTOM);
-        root.addView(panel, params);
+    private void refreshComposeEditor() {
+        AppListItem item = editingItem;
+        AppConfigEditorDraft draft = editingDraft;
+        if (item == null || draft == null || presentation == null) {
+            return;
+        }
+        AppConfigDialogBinder.AppConfigDialogState dialogState = composeDialogState(item, draft);
+        presentation.show(new AppConfigEditorPresentation.State(
+                item,
+                draft,
+                new AppConfigDialogBinder(this, appConfigDialogHost)
+                        .typefaceSelectorText(draft.selectedTypefaceId),
+                FontHookDomainPresentation.forOverride(
+                        resolveFontHookDomainsForDraft(item, dialogState),
+                        recommendedTemplateFontHookDomains()).buttonText(this),
+                !draft.hasSameSavedConfig(savedEditingDraft),
+                editingSaveFeedback,
+                isSystemHookEnabled(),
+                recommendedTemplateFontHookDomains(),
+                editingDestination,
+                createComposeActions(item, draft)
+        ));
+    }
+
+    private AppConfigEditorPresentation.Actions createComposeActions(
+            AppListItem item,
+            AppConfigEditorDraft draft) {
+        return new AppConfigEditorPresentation.Actions() {
+            @Override public void updateViewportInput(String value) {
+                updateDraft(draft.withViewportInput(draft.viewportMode, value));
+            }
+
+            @Override public void changeViewportMode(String targetType) {
+                updateDraft(draft.withViewportMode(targetType));
+            }
+
+            @Override public void updateFontInput(String value) {
+                updateDraft(draft.withFontInput(value));
+            }
+
+            @Override public void changeFontMode(String mode) {
+                updateDraft(draft.withFontMode(mode));
+            }
+
+            @Override public void updateWechatDpiInput(String value) {
+                updateDraft(draft.withWechatDpiInput(value));
+            }
+
+            @Override public void showWechatDpiHelp() {
+                ComposeMessageDialog.show(
+                        QuickConfigActivity.this,
+                        getString(R.string.dialog_wechat_dpi_help_title),
+                        getString(R.string.dialog_wechat_dpi_help_message),
+                        getString(R.string.dialog_close_button)
+                );
+            }
+
+            @Override public void updateTypeface(String typefaceId) {
+                updateDraft(draft.withAdvancedConfig(typefaceId,
+                        draft.draftFontHookDomainsRaw, draft.viewportApplyMode,
+                        draft.fontHookDomainsResetRequested,
+                        draft.viewportApplyModeResetRequested));
+            }
+
+            @Override public void updateHookChain(String rawDomains, boolean resetDomains,
+                    String viewportApplyMode, boolean resetViewportApplyMode) {
+                updateDraft(draft.withAdvancedConfig(draft.selectedTypefaceId, rawDomains,
+                        viewportApplyMode, resetDomains, resetViewportApplyMode));
+            }
+
+            @Override public void navigate(ConfigEditorDestination destination) {
+                editingDestination = destination != null
+                        ? destination : ConfigEditorDestination.MAIN;
+                refreshComposeEditor();
+            }
+
+            @Override public void reset() { updateDraft(draft.cleared()); }
+
+            @Override public void toggleScope() {
+                systemScopeCoordinator.toggleScope(item.packageName, item.label,
+                        draft.scopeSelected,
+                        () -> updateDraft(draft.withScopeSelected(true)),
+                        () -> updateDraft(draft.withScopeSelected(false)));
+            }
+
+            @Override public void toggleDpisEnabled() {
+                boolean enabled = !draft.dpisEnabled;
+                if (appConfigDialogHost.setDpisEnabled(item.packageName, enabled)) {
+                    updateDraft(draft.withDpisEnabled(enabled));
+                }
+            }
+
+            @Override public void startProcess() {
+                executeDialogProcessAction(item, AppConfigDialogBinder.ProcessAction.START);
+            }
+
+            @Override public void restartProcess() {
+                executeDialogProcessAction(item, AppConfigDialogBinder.ProcessAction.RESTART);
+            }
+
+            @Override public void stopProcess() {
+                executeDialogProcessAction(item, AppConfigDialogBinder.ProcessAction.STOP);
+            }
+
+            @Override public void startFeedbackDiagnostic() {
+                QuickConfigActivity.this.startFeedbackDiagnostic(
+                        item, composeDialogState(item, draft));
+            }
+
+            @Override public void save() { saveComposeEditor(item, draft); }
+
+            @Override public void close() { finish(); }
+        };
+    }
+
+    private void updateDraft(AppConfigEditorDraft draft) {
+        editingDraft = draft;
+        refreshComposeEditor();
+    }
+
+    private AppConfigDialogBinder.AppConfigDialogState composeDialogState(
+            AppListItem item,
+            AppConfigEditorDraft draft) {
+        AppConfigDialogBinder.AppConfigDialogState state
+                = AppConfigDialogBinder.AppConfigDialogState.fromItem(item);
+        state.selectedTypefaceId = draft.selectedTypefaceId;
+        state.draftFontHookDomainsRaw = draft.draftFontHookDomainsRaw;
+        state.viewportApplyMode = draft.viewportApplyMode;
+        state.fontHookDomainsResetRequested = draft.fontHookDomainsResetRequested;
+        state.viewportApplyModeResetRequested = draft.viewportApplyModeResetRequested;
+        state.viewportScaleInput = draft.viewportScaleInput;
+        state.viewportAbsoluteInput = draft.viewportAbsoluteInput;
+        state.scopeSelected = draft.scopeSelected;
+        state.dpisEnabled = draft.dpisEnabled;
+        return state;
+    }
+
+    private boolean saveComposeEditor(AppListItem item, AppConfigEditorDraft draft) {
+        ViewportTargetSpec viewport = AppConfigInputValidation.parseViewportTargetSpec(
+                draft.viewportInputFor(draft.viewportMode), draft.viewportMode);
+        Integer fontScale = AppConfigInputValidation.parseFontScalePercentOrNull(draft.fontInput);
+        AppConfigSaveHandler.Result result = appConfigSaveHandler.saveResolved(
+                item, viewport, draft.viewportMode, draft.viewportApplyMode,
+                draft.viewportApplyModeResetRequested, fontScale, draft.fontMode,
+                draft.selectedTypefaceId, draft.draftFontHookDomainsRaw,
+                draft.fontHookDomainsResetRequested, draft.viewportScaleInput,
+                draft.viewportAbsoluteInput, isSystemHookEnabled(), getHookConfigStore(), null);
+        if (result.success && !WechatDpiSheetBinder.save(
+                draft.wechatDpiInput, item.packageName, draft.dpisEnabled, getHookConfigStore())) {
+            result = AppConfigSaveHandler.Result.failure(
+                    WechatDpiSheetBinder.isInputValid(draft.wechatDpiInput)
+                            ? R.string.system_settings_save_failed
+                            : R.string.status_save_invalid);
+        }
+        if (result.messageResId != 0) {
+            showToast(result.messageResId);
+        }
+        if (!result.success) {
+            return false;
+        }
+        publishAfterSave(item.packageName);
+        savedEditingDraft = draft.afterSuccessfulSave();
+        editingDraft = savedEditingDraft;
+        editingSaveFeedback = true;
+        refreshComposeEditor();
+        getWindow().getDecorView().postDelayed(() -> {
+            editingSaveFeedback = false;
+            refreshComposeEditor();
+        }, 1500L);
+        return true;
     }
 
     @Override
@@ -548,14 +754,16 @@ public final class QuickConfigActivity extends LocalizedActivity {
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.feedback_diagnostic_action)
-                .setMessage(getString(
+        ComposeConfirmDialog.showWithLabels(
+                this,
+                getString(R.string.feedback_diagnostic_action),
+                getString(
                         R.string.feedback_diagnostic_confirm_message,
                         item.label
-                ))
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.feedback_diagnostic_save_and_start_button, (dialog, which) -> {
+                ),
+                getString(android.R.string.cancel),
+                getString(R.string.feedback_diagnostic_save_and_start_button),
+                () -> {
                     AppListItem diagnosticItem = saveCurrentConfigForDiagnostic(item);
                     if (diagnosticItem == null) {
                         return;
@@ -571,11 +779,21 @@ public final class QuickConfigActivity extends LocalizedActivity {
                     if (!started) {
                         showToast(R.string.feedback_diagnostic_unavailable);
                     }
-                })
-                .show();
+                },
+                () -> { }
+        );
     }
 
     private AppListItem saveCurrentConfigForDiagnostic(AppListItem item) {
+        if (item == null) {
+            return null;
+        }
+        if (editingDraft != null && item.packageName.equals(editingDraft.packageName)) {
+            if (!saveComposeEditor(item, editingDraft)) {
+                return null;
+            }
+            return item.withWechatDpi(readPersistedWechatDpiForDiagnostic(item.packageName));
+        }
         View root = activeEditorRoot;
         AppConfigDialogBinder.AppConfigDialogViews views
                 = AppConfigDialogBinder.viewsFor(root);
@@ -649,7 +867,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
         pendingFeedbackDiagnosticResult = null;
         showFeedbackDiagnosticPackagingDialog();
         feedbackDiagnosticExportExecutor.execute(() -> {
-            FeedbackDiagnosticExportBuilder.DiagnosticPackage built = null;
+            FeedbackDiagnosticExportBuilder.DiagnosticPackage built;
             try {
                 built = feedbackDiagnosticExportBuilder.buildPackage(result);
             } catch (IOException | RuntimeException ignored) {
@@ -696,15 +914,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
 
     private void showFeedbackDiagnosticPackagingDialog() {
         dismissFeedbackDiagnosticPackagingDialog();
-        View dialogView = LayoutInflater.from(this)
-                .inflate(R.layout.dialog_feedback_diagnostic_packaging, null, false);
-        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setView(dialogView)
-                .setCancelable(false)
-                .create();
-        dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, this);
-        activeFeedbackDiagnosticPackagingDialog = dialog;
+        activeFeedbackDiagnosticPackagingDialog = FeedbackDiagnosticPackagingDialog.show(this);
     }
 
     private void dismissFeedbackDiagnosticPackagingDialog() {
@@ -768,7 +978,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
         }
         feedbackDiagnosticExportExecutor.execute(() -> {
             Uri uri = null;
-            boolean success = false;
+            boolean success;
             try {
                 File file = writeSharedFeedbackDiagnosticZip(diagnosticPackage);
                 uri = FileProvider.getUriForFile(

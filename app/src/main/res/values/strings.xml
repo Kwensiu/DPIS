@@ -108,8 +108,8 @@ Mini Programs are not supported yet.</string>
     <string name="home_feedback_telegram" translatable="false">TG</string>
     <string name="home_feedback_qq_url" translatable="false">https://qm.qq.com/q/N8Rr2Kp94a</string>
     <string name="home_feedback_telegram_url" translatable="false">https://t.me/dpis_channel</string>
-    <string name="home_donate_title">Support the author</string>
-    <string name="home_donate_summary">Donate to the developer to support future updates.</string>
+    <string name="home_donate_title">Buy me a coffee</string>
+    <string name="home_donate_summary">Your support helps keep DPIS moving forward.</string>
     <string name="dialog_confirm_button">Confirm</string>
     <string name="feedback_diagnostic_save_and_start_button">Save and start</string>
     <string name="feedback_diagnostic_action">Feedback diagnostic</string>
@@ -265,6 +265,7 @@ Mini Programs are not supported yet.</string>
     <string name="quick_template_targets_selected_count">%1$d apps selected</string>
     <string name="quick_template_targets_configured_badge">Configured</string>
     <string name="quick_template_targets_empty">No apps match.</string>
+    <string name="quick_template_targets_loading">Loading apps…</string>
     <string name="quick_template_targets_save_success">Template app selection saved</string>
     <string name="quick_template_targets_save_failed">Failed to save app selection</string>
     <string name="quick_template_target_missing">Template no longer exists</string>
@@ -303,7 +304,7 @@ Mini Programs are not supported yet.</string>
     <string name="dialog_font_hook_domains_dialog_title">Custom Hook Chain</string>
     <string name="dialog_hook_chain_tab_interface">Interface</string>
     <string name="dialog_hook_chain_tab_font">Font</string>
-    <string name="dialog_viewport_apply_strategy_title">Interface scale apply strategy</string>
+    <string name="dialog_viewport_apply_strategy_title">Interface scaling strategy</string>
     <string name="dialog_viewport_apply_auto">Auto</string>
     <string name="dialog_viewport_apply_auto_subtitle">Use system route when available.</string>
     <string name="dialog_viewport_apply_system">System</string>
@@ -470,13 +471,13 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="font_library_picker_failed">Unable to open file picker</string>
     <string name="settings_about_label">About</string>
     <string name="settings_about_hint">Version, source code, and feedback.</string>
-    <string name="settings_donate_label">Support the author</string>
-    <string name="settings_donate_hint">Donate to the developer to support future updates</string>
+    <string name="settings_donate_label">Buy me a coffee</string>
+    <string name="settings_donate_hint">Your support helps keep DPIS moving forward</string>
     <string name="settings_config_backup_label">Config backup</string>
     <string name="settings_config_backup_hint">Export or import configurations.</string>
     <string name="config_backup_dialog_title">Config backup</string>
-    <string name="config_backup_export_action">Export backup</string>
-    <string name="config_backup_import_action">Import backup</string>
+    <string name="config_backup_export_action">Export configuration</string>
+    <string name="config_backup_import_action">Import configuration</string>
     <string name="config_backup_import_confirm_title">Import backup</string>
     <string name="config_backup_import_confirm_message">Import overwrites current config. Continue?</string>
     <string name="config_backup_confirm_import_action">Import</string>
@@ -506,8 +507,8 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="about_link_update_dialog_debug_only_desc">Development entry. Opens the dialog without version gate.</string>
     <string name="about_link_feedback_title">Feedback</string>
     <string name="about_link_feedback_desc">Report issues or view known ones</string>
-    <string name="donate_title">Support the author</string>
-    <string name="donate_message">Thanks for supporting DPIS development.</string>
+    <string name="donate_title">Buy me a coffee</string>
+    <string name="donate_message">Thanks for helping keep DPIS moving forward.</string>
     <string name="donate_trust_note">Only QR codes in the official signed build should be trusted.</string>
     <string name="donate_supporters_title">Supporters</string>
     <string name="donate_supporters_summary">Thank you again. Wishing everyone good health and smooth days.</string>

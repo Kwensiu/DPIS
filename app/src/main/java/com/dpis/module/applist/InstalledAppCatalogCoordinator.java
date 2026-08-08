@@ -8,26 +8,19 @@ import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;
 import com.dpis.module.viewport.ViewportTargetType;
 
-import com.dpis.module.fonts.HyperOsNativeAppDetector;
-
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.SystemClock;
-import android.view.View;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public final class InstalledAppCatalogCoordinator {
     public interface Host {
@@ -35,45 +28,29 @@ public final class InstalledAppCatalogCoordinator {
 
         String getSelfPackageName();
 
-        void runOnUiThread(Runnable runnable);
-
-        View getIconRefreshAnchor();
-
-        void requestAppsLoad();
     }
 
     private final Object installedAppCatalogLock = new Object();
     private final Object installedAppCatalogBuildLock = new Object();
-    private final Object iconWarmupLock = new Object();
-    private final Object iconRequestLock = new Object();
-    private final AppIconMemoryCache appIconCache = new AppIconMemoryCache(256);
-    private final Set<String> pendingOnDemandIconLoads = new HashSet<>();
-    private final ExecutorService appIconWarmupExecutor = Executors.newSingleThreadExecutor();
 
     private final Host host;
     private final long installedAppCatalogTtlMs;
-    private final int firstScreenIconWarmupLimit;
-    private final long iconRefreshDebounceMs;
 
     private List<InstalledAppCatalogItem> installedAppCatalog = Collections.emptyList();
-    private Map<String, InstalledAppCatalogItem> installedAppCatalogIndex = Collections.emptyMap();
     private long installedAppCatalogLoadedAtMs;
-    private boolean firstScreenIconWarmupScheduled;
-    private boolean firstScreenIconWarmupFinished;
-    private boolean iconRefreshQueued;
 
     public InstalledAppCatalogCoordinator(Host host,
-            long installedAppCatalogTtlMs,
-            int firstScreenIconWarmupLimit,
-            long iconRefreshDebounceMs) {
+            long installedAppCatalogTtlMs) {
         this.host = host;
         this.installedAppCatalogTtlMs = installedAppCatalogTtlMs;
-        this.firstScreenIconWarmupLimit = firstScreenIconWarmupLimit;
-        this.iconRefreshDebounceMs = iconRefreshDebounceMs;
     }
 
+    /** Kept for legacy View binders that still notify visible icon rows. */
+    public void onIconLoadRequested(String packageName) {
+    }
+
+    /** No executor remains after moving icon resolution into the catalog build. */
     public void shutdown() {
-        appIconWarmupExecutor.shutdownNow();
     }
 
     public List<InstalledAppCatalogItem> loadInstalledAppCatalog(
@@ -83,7 +60,21 @@ public final class InstalledAppCatalogCoordinator {
                 packageManager,
                 host.getSelfPackageName(),
                 forceInstalledAppCatalogReload);
-        maybeScheduleFirstScreenIconWarmup(packageManager, catalog);
+        return catalog;
+    }
+
+    /**
+     * Legacy target pickers display the full list at once. Keep their rows complete while
+     * the Compose app workspace resolves icons only for the page it is about to show.
+     */
+    public List<InstalledAppCatalogItem> loadInstalledAppCatalogWithIcons(
+            boolean forceInstalledAppCatalogReload) {
+        List<InstalledAppCatalogItem> catalog = loadInstalledAppCatalog(
+                forceInstalledAppCatalogReload);
+        PackageManager packageManager = host.getPackageManager();
+        for (InstalledAppCatalogItem item : catalog) {
+            loadItemIcon(packageManager, item);
+        }
         return catalog;
     }
 
@@ -93,28 +84,86 @@ public final class InstalledAppCatalogCoordinator {
             boolean scopeKnown) {
         List<InstalledAppCatalogItem> catalog = loadInstalledAppCatalog(
                 forceInstalledAppCatalogReload);
+        Set<String> userVisibleConfiguredPackages = userVisibleConfiguredPackages(store);
         List<AppListItem> result = new ArrayList<>(catalog.size());
         for (InstalledAppCatalogItem item : catalog) {
-            Drawable icon = resolveDisplayIcon(item);
-            result.add(createAppListItem(store, scopePackages, scopeKnown,
-                    item.label, item.packageName, item.systemApp,
-                    item.hyperOsNativeProxyCandidate, true, icon));
-        }
-        if (store != null) {
-            Set<String> installedPackages = new HashSet<>();
-            for (InstalledAppCatalogItem item : catalog) {
-                installedPackages.add(item.packageName);
-            }
-            for (String packageName : store.getConfiguredPackages()) {
-                if (installedPackages.contains(packageName)
-                        || !store.hasUserVisiblePackageConfig(packageName)) {
-                    continue;
-                }
+            boolean inScope = scopePackages != null && scopePackages.contains(item.packageName);
+            if (userVisibleConfiguredPackages.contains(item.packageName)) {
+                // Configured rows retain the complete, compatibility-aware values used when
+                // reopening their editor. Most installed packages have no saved DPIS state.
                 result.add(createAppListItem(store, scopePackages, scopeKnown,
-                        packageName, packageName, false, false, false, null));
+                        item.label, item.packageName, item.systemApp,
+                        item.hyperOsNativeProxyCandidate, true, null));
+            } else {
+                result.add(createUnconfiguredAppListItem(
+                        item.label, item.packageName, inScope, scopeKnown,
+                        item.systemApp, item.hyperOsNativeProxyCandidate, true));
+            }
+        }
+        for (String packageName : configuredPackagesMissingFromCatalog(
+                userVisibleConfiguredPackages, catalog)) {
+            result.add(createAppListItem(store, scopePackages, scopeKnown,
+                    packageName, packageName, false, false, false, null));
+        }
+        return result;
+    }
+
+    private static List<String> configuredPackagesMissingFromCatalog(
+            Set<String> userVisibleConfiguredPackages,
+            List<InstalledAppCatalogItem> catalog) {
+        if (userVisibleConfiguredPackages == null || userVisibleConfiguredPackages.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Set<String> installedPackages = new HashSet<>();
+        for (InstalledAppCatalogItem item : catalog) {
+            installedPackages.add(item.packageName);
+        }
+        List<String> missing = new ArrayList<>();
+        for (String packageName : userVisibleConfiguredPackages) {
+            if (!installedPackages.contains(packageName)) {
+                missing.add(packageName);
+            }
+        }
+        Collections.sort(missing);
+        return missing;
+    }
+
+    /**
+     * Validates only candidate packages recovered from persistent state. This preserves imported
+     * and legacy configuration semantics without running every compatibility lookup for every
+     * ordinary installed app.
+     */
+    static Set<String> userVisibleConfiguredPackages(DpisConfigStore store) {
+        if (store == null) {
+            return Collections.emptySet();
+        }
+        Set<String> result = new HashSet<>();
+        for (String packageName : store.getConfiguredPackages()) {
+            if (store.hasUserVisiblePackageConfig(packageName)) {
+                result.add(packageName);
             }
         }
         return result;
+    }
+
+    /**
+     * An unconfigured row has no persisted package state to decode. Keep its explicit defaults
+     * here so a complete app catalogue does not turn into a full config-store scan.
+     */
+    static AppListItem createUnconfiguredAppListItem(String label,
+            String packageName,
+            boolean inScope,
+            boolean scopeKnown,
+            boolean systemApp,
+            boolean hyperOsNativeProxyCandidate,
+            boolean installed) {
+        return new AppListItem(label, packageName,
+                inScope, scopeKnown, null, null,
+                ViewportApplyMode.OFF, ViewportTargetType.OFF,
+                ViewportTargetSpec.off(), null, FontApplyMode.OFF, null,
+                false, null, true,
+                scopeKnown && inScope, installed,
+                systemApp, hyperOsNativeProxyCandidate, null);
     }
 
     public static AppListItem createAppListItem(DpisConfigStore store,
@@ -176,37 +225,6 @@ public final class InstalledAppCatalogCoordinator {
                 || (store != null && store.hasUserVisiblePackageConfig(packageName));
     }
 
-    public void onIconLoadRequested(String packageName) {
-        if (packageName == null || packageName.isEmpty()) {
-            return;
-        }
-        synchronized (iconRequestLock) {
-            if (appIconCache.get(packageName) != null) {
-                return;
-            }
-            if (!pendingOnDemandIconLoads.add(packageName)) {
-                return;
-            }
-        }
-        appIconWarmupExecutor.execute(() -> {
-            boolean loaded = false;
-            try {
-                PackageManager packageManager = host.getPackageManager();
-                ApplicationInfo applicationInfo = findApplicationInfo(packageManager, packageName);
-                if (applicationInfo != null) {
-                    loaded = loadAppIcon(packageManager, applicationInfo) != null;
-                }
-            } finally {
-                synchronized (iconRequestLock) {
-                    pendingOnDemandIconLoads.remove(packageName);
-                }
-            }
-            if (loaded) {
-                scheduleIconRefresh();
-            }
-        });
-    }
-
     private List<InstalledAppCatalogItem> getInstalledAppCatalog(PackageManager packageManager,
             String selfPackageName,
             boolean forceReload) {
@@ -228,22 +246,16 @@ public final class InstalledAppCatalogCoordinator {
                 }
             }
 
-            Map<String, Drawable> previousIcons = new HashMap<>();
-            synchronized (installedAppCatalogLock) {
-                for (Map.Entry<String, InstalledAppCatalogItem> entry : installedAppCatalogIndex.entrySet()) {
-                    Drawable icon = entry.getValue().icon;
-                    if (icon != null) {
-                        previousIcons.put(entry.getKey(), icon);
-                    }
-                }
-            }
-
             List<ApplicationInfo> installedApps;
+            // The catalogue needs only the package identity, base ApplicationInfo and label.
+            // Manifest metadata is substantially more expensive to marshal for every installed
+            // package, and the sole consumer (HyperOS proxy eligibility) is resolved later for
+            // the one package the user saves or restarts.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 installedApps = packageManager.getInstalledApplications(
-                        PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA));
+                        PackageManager.ApplicationInfoFlags.of(0L));
             } else {
-                installedApps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA);
+                installedApps = packageManager.getInstalledApplications(0);
             }
 
             List<InstalledAppCatalogItem> rebuilt = new ArrayList<>();
@@ -257,136 +269,42 @@ public final class InstalledAppCatalogCoordinator {
                         label,
                         applicationInfo.packageName,
                         systemApp,
-                        HyperOsNativeAppDetector.isNativeProxyCandidate(applicationInfo),
-                        previousIcons.get(applicationInfo.packageName)));
+                        false,
+                        applicationInfo,
+                        null));
             }
             rebuilt.sort(Comparator.comparing(
                     (InstalledAppCatalogItem item) -> item.label.toLowerCase(Locale.ROOT))
                     .thenComparing(item -> item.packageName));
             List<InstalledAppCatalogItem> snapshot = Collections.unmodifiableList(rebuilt);
-            Map<String, InstalledAppCatalogItem> index = new HashMap<>();
-            for (InstalledAppCatalogItem item : rebuilt) {
-                index.put(item.packageName, item);
-            }
             synchronized (installedAppCatalogLock) {
                 installedAppCatalog = snapshot;
-                installedAppCatalogIndex = index;
                 installedAppCatalogLoadedAtMs = now;
                 return installedAppCatalog;
             }
         }
     }
 
-    private Drawable resolveDisplayIcon(InstalledAppCatalogItem item) {
-        if (item.icon != null) {
-            return item.icon;
-        }
-        Drawable cached = appIconCache.get(item.packageName);
-        if (cached != null) {
-            rememberInstalledCatalogIcon(item.packageName, cached);
-        }
-        return cached;
-    }
-
-    private void maybeScheduleFirstScreenIconWarmup(PackageManager packageManager,
-            List<InstalledAppCatalogItem> catalog) {
-        if (catalog.isEmpty()) {
-            return;
-        }
-        synchronized (iconWarmupLock) {
-            if (firstScreenIconWarmupScheduled || firstScreenIconWarmupFinished) {
-                return;
-            }
-            firstScreenIconWarmupScheduled = true;
-        }
-        appIconWarmupExecutor.execute(() -> {
-            int warmedCount = 0;
-            int limit = Math.min(firstScreenIconWarmupLimit, catalog.size());
-            for (int i = 0; i < limit; i++) {
-                String packageName = catalog.get(i).packageName;
-                if (appIconCache.get(packageName) != null) {
-                    continue;
-                }
-                ApplicationInfo applicationInfo = findApplicationInfo(packageManager, packageName);
-                if (applicationInfo == null) {
-                    continue;
-                }
-                Drawable warmed = loadAppIcon(packageManager, applicationInfo);
-                if (warmed != null) {
-                    warmedCount++;
-                }
-            }
-            synchronized (iconWarmupLock) {
-                firstScreenIconWarmupFinished = true;
-                firstScreenIconWarmupScheduled = false;
-            }
-            if (warmedCount > 0) {
-                scheduleIconRefresh();
-            }
-        });
-    }
-
-    private void scheduleIconRefresh() {
-        synchronized (iconRequestLock) {
-            if (iconRefreshQueued) {
-                return;
-            }
-            iconRefreshQueued = true;
-        }
-        host.runOnUiThread(() -> {
-            View anchor = host.getIconRefreshAnchor();
-            if (anchor == null) {
-                synchronized (iconRequestLock) {
-                    iconRefreshQueued = false;
-                }
-                host.requestAppsLoad();
-                return;
-            }
-            anchor.postDelayed(() -> {
-                synchronized (iconRequestLock) {
-                    iconRefreshQueued = false;
-                }
-                host.requestAppsLoad();
-            }, iconRefreshDebounceMs);
-        });
-    }
-
-    private static ApplicationInfo findApplicationInfo(PackageManager packageManager, String packageName) {
+    private static Drawable loadApplicationIcon(PackageManager packageManager,
+            ApplicationInfo applicationInfo) {
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                return packageManager.getApplicationInfo(
-                        packageName,
-                        PackageManager.ApplicationInfoFlags.of(0));
-            }
-            return packageManager.getApplicationInfo(packageName, 0);
-        } catch (PackageManager.NameNotFoundException ignored) {
+            return applicationInfo.loadIcon(packageManager);
+        } catch (RuntimeException ignored) {
             return null;
         }
     }
 
-    private Drawable loadAppIcon(PackageManager packageManager, ApplicationInfo applicationInfo) {
-        String packageName = applicationInfo.packageName;
-        Drawable cachedIcon = appIconCache.get(packageName);
-        if (cachedIcon != null) {
-            rememberInstalledCatalogIcon(packageName, cachedIcon);
-            return cachedIcon;
+    private static Drawable loadItemIcon(PackageManager packageManager,
+            InstalledAppCatalogItem item) {
+        Drawable cached = item.icon;
+        if (cached != null) {
+            return cached;
         }
-        Drawable loadedIcon = applicationInfo.loadIcon(packageManager);
-        appIconCache.put(packageName, loadedIcon);
-        rememberInstalledCatalogIcon(packageName, loadedIcon);
-        return loadedIcon;
-    }
-
-    private void rememberInstalledCatalogIcon(String packageName, Drawable icon) {
-        if (packageName == null || packageName.isEmpty() || icon == null) {
-            return;
+        Drawable loaded = loadApplicationIcon(packageManager, item.applicationInfo);
+        if (loaded != null) {
+            item.icon = loaded;
         }
-        synchronized (installedAppCatalogLock) {
-            InstalledAppCatalogItem item = installedAppCatalogIndex.get(packageName);
-            if (item != null) {
-                item.icon = icon;
-            }
-        }
+        return loaded;
     }
 
     private static boolean isSystemApp(ApplicationInfo applicationInfo) {

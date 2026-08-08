@@ -9,9 +9,11 @@ import com.dpis.module.diagnostics.DpisLogParser;
 import com.dpis.module.diagnostics.LogReadResult;
 import com.dpis.module.diagnostics.LsposedLogReader;
 
-import com.dpis.module.ui.WindowInsetsBinder;
-
 import com.dpis.module.root.RootAccessProbe;
+import com.dpis.module.ui.compose.LogPresentation;
+import com.dpis.module.ui.compose.LogUiEntry;
+import com.dpis.module.ui.compose.LogUiState;
+import com.dpis.module.ui.compose.SupportActivityContent;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -20,26 +22,13 @@ import android.content.ClipboardManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageButton;
-import android.widget.PopupMenu;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.google.android.material.button.MaterialButton;
-import com.google.android.material.color.MaterialColors;
-import com.google.android.material.textview.MaterialTextView;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -62,12 +51,8 @@ import java.util.zip.ZipOutputStream;
 
 public final class LogActivity extends LocalizedActivity {
     private static final long AUTO_REFRESH_INTERVAL_MS = 5_000L;
-    private static final long SCROLL_IDLE_DELAY_MS = 180L;
     private static final int UI_ENTRY_WINDOW_LIMIT = 1_000;
-    private static final int EXPANDED_MESSAGE_MAX_LINES = 40;
     private static final int REQUEST_EXPORT_LOGS = 1101;
-    private static final int MENU_SAVE_LOGS = 1;
-    private static final int MENU_SHARE_LOGS = 2;
     private static final String SHARED_LOG_DIRECTORY_NAME = "shared_logs";
     private static final String LOG_PACKAGE_MIME_TYPE = "application/zip";
     private static final String DPIS_LOG_ENTRY_NAME = "dpis-log.txt";
@@ -79,7 +64,6 @@ public final class LogActivity extends LocalizedActivity {
     private final ExecutorService logExecutor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final Set<String> expandedEntryKeys = new HashSet<>();
-    private final Runnable scrollIdleRunnable = this::renderPendingIfNeeded;
     private final Runnable autoRefreshRunnable = new Runnable() {
         @Override
         public void run() {
@@ -91,12 +75,7 @@ public final class LogActivity extends LocalizedActivity {
             mainHandler.postDelayed(this, AUTO_REFRESH_INTERVAL_MS);
         }
     };
-    private RecyclerView logList;
-    private LinearLayoutManager logLayoutManager;
-    private EntryAdapter logAdapter;
-    private MaterialTextView logStateMessage;
-    private MaterialButton dpisPageButton;
-    private MaterialButton lsposedPageButton;
+    private LogPresentation presentation;
     private List<DpisLogEntry> dpisEntries = new ArrayList<>();
     private List<DpisLogEntry> lsposedEntries = new ArrayList<>();
     private LogReadResult dpisReadResult;
@@ -106,9 +85,8 @@ public final class LogActivity extends LocalizedActivity {
     private boolean autoRefreshEnabled = true;
     private boolean resumed;
     private boolean loadingLogs;
-    private boolean userScrolling;
-    private boolean pendingRender;
     private boolean scrollToLatestAfterNextRender;
+    private int scrollToLatestRevision;
     private boolean destroyed;
     private boolean waitingForDiagnosticLogEnable;
 
@@ -120,32 +98,18 @@ public final class LogActivity extends LocalizedActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_log);
-        WindowInsetsBinder.applySafeDrawingPadding(
-                findViewById(R.id.log_toolbar),
-                false,
-                true,
-                false,
-                false
-        );
-        WindowInsetsBinder.applySafeDrawingPadding(
-                findViewById(R.id.log_content),
-                false,
-                false,
-                false,
-                true
-        );
-        logList = findViewById(R.id.log_list);
-        logLayoutManager = new LinearLayoutManager(this);
-        logAdapter = new EntryAdapter();
-        logList.setLayoutManager(logLayoutManager);
-        logList.setAdapter(logAdapter);
-        logStateMessage = findViewById(R.id.log_state_message);
-        bindScrollState();
-        dpisPageButton = findViewById(R.id.log_page_dpis_button);
-        lsposedPageButton = findViewById(R.id.log_page_lsposed_button);
-        bindActions();
-        bindPageSwitch();
+        presentation = new LogPresentation();
+        SupportActivityContent.installLog(
+                this,
+                presentation,
+                this::selectPageIndex,
+                this::toggleSort,
+                this::toggleAutoRefresh,
+                this::launchExportLogPicker,
+                this::shareLogs,
+                this::refreshLogs,
+                this::toggleMessageExpansion,
+                this::copyEntryByKey);
         waitingForDiagnosticLogEnable = !DiagnosticLogGate.ensureEnabled(
                 this,
                 () -> {
@@ -160,84 +124,33 @@ public final class LogActivity extends LocalizedActivity {
         }
     }
 
-    private void bindActions() {
-        findViewById(R.id.log_back_button).setOnClickListener(view -> finish());
-        findViewById(R.id.log_sort_button).setOnClickListener(view -> {
-            scrollToLatestAfterNextRender = isAtLatestEdge();
-            newestAtBottom = !newestAtBottom;
-            updateSortButton();
-            renderSelectedPage();
-        });
-        findViewById(R.id.log_auto_refresh_button).setOnClickListener(view -> {
-            autoRefreshEnabled = !autoRefreshEnabled;
-            updateAutoRefreshButton();
-            if (autoRefreshEnabled) {
-                startAutoRefresh();
-                loadLogs(false, false, false);
-                Toast.makeText(this, R.string.log_auto_refresh_started, Toast.LENGTH_SHORT).show();
-            } else {
-                stopAutoRefresh();
-                Toast.makeText(this, R.string.log_auto_refresh_paused, Toast.LENGTH_SHORT).show();
-            }
-        });
-        findViewById(R.id.log_export_button).setOnClickListener(this::showLogExportActions);
-        findViewById(R.id.log_refresh_button).setOnClickListener(view -> {
-            boolean refreshLsposed = selectedPage == Page.LSPOSED_RELATED;
-            loadLogs(false, refreshLsposed, refreshLsposed);
-            Toast.makeText(this, R.string.log_refreshing, Toast.LENGTH_SHORT).show();
-        });
-        updateSortButton();
-        updateAutoRefreshButton();
+    private void toggleSort() {
+        scrollToLatestAfterNextRender = isAtLatestEdge();
+        newestAtBottom = !newestAtBottom;
+        renderSelectedPage();
     }
 
-    private void bindScrollState() {
-        if (logList == null) {
-            return;
+    private void toggleAutoRefresh() {
+        autoRefreshEnabled = !autoRefreshEnabled;
+        renderSelectedPage();
+        if (autoRefreshEnabled) {
+            startAutoRefresh();
+            loadLogs(false, false, false);
+            Toast.makeText(this, R.string.log_auto_refresh_started, Toast.LENGTH_SHORT).show();
+        } else {
+            stopAutoRefresh();
+            Toast.makeText(this, R.string.log_auto_refresh_paused, Toast.LENGTH_SHORT).show();
         }
-        logList.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                if (dy == 0) {
-                    return;
-                }
-                userScrolling = true;
-                mainHandler.removeCallbacks(scrollIdleRunnable);
-                mainHandler.postDelayed(scrollIdleRunnable, SCROLL_IDLE_DELAY_MS);
-            }
-        });
     }
 
-    private void updateSortButton() {
-        View sortButton = findViewById(R.id.log_sort_button);
-        if (sortButton == null) {
-            return;
-        }
-        sortButton.setContentDescription(getString(newestAtBottom
-                ? R.string.log_action_sort_newest_first
-                : R.string.log_action_sort_oldest_first));
+    private void refreshLogs() {
+        boolean refreshLsposed = selectedPage == Page.LSPOSED_RELATED;
+        loadLogs(false, refreshLsposed, refreshLsposed);
+        Toast.makeText(this, R.string.log_refreshing, Toast.LENGTH_SHORT).show();
     }
 
-    private void updateAutoRefreshButton() {
-        ImageButton button = findViewById(R.id.log_auto_refresh_button);
-        if (button == null) {
-            return;
-        }
-        button.setImageResource(autoRefreshEnabled
-                ? R.drawable.ic_pause_24
-                : R.drawable.ic_play_arrow_24);
-        button.setContentDescription(getString(autoRefreshEnabled
-                ? R.string.log_action_pause_auto_refresh
-                : R.string.log_action_start_auto_refresh));
-    }
-
-    private void bindPageSwitch() {
-        if (dpisPageButton != null) {
-            dpisPageButton.setOnClickListener(view -> selectPage(Page.DPIS));
-        }
-        if (lsposedPageButton != null) {
-            lsposedPageButton.setOnClickListener(view -> selectPage(Page.LSPOSED_RELATED));
-        }
-        updatePageSwitch();
+    private void selectPageIndex(Integer pageIndex) {
+        selectPage(pageIndex != null && pageIndex == 1 ? Page.LSPOSED_RELATED : Page.DPIS);
     }
 
     private void selectPage(Page page) {
@@ -245,7 +158,6 @@ public final class LogActivity extends LocalizedActivity {
             return;
         }
         selectedPage = page;
-        updatePageSwitch();
         if (selectedPage == Page.LSPOSED_RELATED
                 && lsposedReadResult == null
                 && !loadingLogs) {
@@ -253,30 +165,6 @@ public final class LogActivity extends LocalizedActivity {
             return;
         }
         renderSelectedPage();
-    }
-
-    private void updatePageSwitch() {
-        bindPageButton(dpisPageButton, selectedPage == Page.DPIS);
-        bindPageButton(lsposedPageButton, selectedPage == Page.LSPOSED_RELATED);
-    }
-
-    private void bindPageButton(MaterialButton button, boolean selected) {
-        if (button == null) {
-            return;
-        }
-        button.setSelected(selected);
-        button.setTextColor(themeColor(button, selected
-                ? com.google.android.material.R.attr.colorOnSecondaryContainer
-                : com.google.android.material.R.attr.colorOnSurfaceVariant));
-        button.setBackgroundTintList(ColorStateList.valueOf(themeColor(button, selected
-                ? com.google.android.material.R.attr.colorSecondaryContainer
-                : com.google.android.material.R.attr.colorSurfaceContainerHigh)));
-        button.setStrokeColor(ColorStateList.valueOf(themeColor(button,
-                com.google.android.material.R.attr.colorOutlineVariant)));
-    }
-
-    private static int themeColor(View view, int attr) {
-        return MaterialColors.getColor(view, attr);
     }
 
     private void loadLogs(boolean showInitialLoading,
@@ -341,25 +229,6 @@ public final class LogActivity extends LocalizedActivity {
                 }
             });
         });
-    }
-
-    @SuppressWarnings("deprecation")
-    private void showLogExportActions(View anchor) {
-        PopupMenu menu = new PopupMenu(this, anchor);
-        menu.getMenu().add(0, MENU_SAVE_LOGS, 0, R.string.log_action_save_logs);
-        menu.getMenu().add(0, MENU_SHARE_LOGS, 1, R.string.log_action_share_logs);
-        menu.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == MENU_SAVE_LOGS) {
-                launchExportLogPicker();
-                return true;
-            }
-            if (item.getItemId() == MENU_SHARE_LOGS) {
-                shareLogs();
-                return true;
-            }
-            return false;
-        });
-        menu.show();
     }
 
     @SuppressWarnings("deprecation")
@@ -628,7 +497,6 @@ public final class LogActivity extends LocalizedActivity {
     }
 
     private void renderSelectedPage() {
-        pendingRender = false;
         List<Entry> entries = toDisplayEntriesForCurrentSort(filterEntriesForSelectedPage());
         if (entries.isEmpty()) {
             LogReadResult result = selectedReadResult();
@@ -645,18 +513,7 @@ public final class LogActivity extends LocalizedActivity {
     }
 
     private void renderSelectedPageWhenIdle() {
-        if (userScrolling) {
-            pendingRender = true;
-            return;
-        }
         renderSelectedPage();
-    }
-
-    private void renderPendingIfNeeded() {
-        userScrolling = false;
-        if (pendingRender) {
-            renderSelectedPage();
-        }
     }
 
     private List<DpisLogEntry> filterEntriesForSelectedPage() {
@@ -670,16 +527,13 @@ public final class LogActivity extends LocalizedActivity {
     }
 
     private void renderStateEntry(String tag, String message, String time) {
-        if (logAdapter != null) {
-            logAdapter.setEntries(new ArrayList<>());
-        }
-        if (logList != null) {
-            logList.setVisibility(View.GONE);
-        }
-        if (logStateMessage != null) {
-            logStateMessage.setText(message);
-            logStateMessage.setVisibility(View.VISIBLE);
-        }
+        presentation.show(new LogUiState(
+                selectedPage == Page.DPIS ? 0 : 1,
+                newestAtBottom,
+                autoRefreshEnabled,
+                List.of(),
+                message,
+                scrollToLatestRevision));
     }
 
     private LogReadResult selectedReadResult() {
@@ -825,89 +679,32 @@ public final class LogActivity extends LocalizedActivity {
     }
 
     private void renderEntries(List<Entry> entries) {
-        if (logAdapter == null) {
-            return;
-        }
-        if (logStateMessage != null) {
-            logStateMessage.setVisibility(View.GONE);
-        }
-        if (logList != null) {
-            logList.setVisibility(View.VISIBLE);
-        }
         boolean stickToLatest = scrollToLatestAfterNextRender || isAtLatestEdge();
         scrollToLatestAfterNextRender = false;
-        logAdapter.setEntries(entries);
-        if (stickToLatest && logList != null) {
-            logList.post(this::scrollToLatestEdge);
+        if (stickToLatest) {
+            scrollToLatestRevision++;
         }
+        List<LogUiEntry> uiEntries = new ArrayList<>();
+        for (Entry entry : entries) {
+            uiEntries.add(new LogUiEntry(
+                    entry.key,
+                    entry.level,
+                    entry.tag,
+                    entry.message,
+                    entry.time,
+                    expandedEntryKeys.contains(entry.key)));
+        }
+        presentation.show(new LogUiState(
+                selectedPage == Page.DPIS ? 0 : 1,
+                newestAtBottom,
+                autoRefreshEnabled,
+                uiEntries,
+                null,
+                scrollToLatestRevision));
     }
 
-    private void bindEntry(View row, Entry entry) {
-        bindLevelIndicator(row, entry.level);
-        setText(row, R.id.log_entry_tag, entry.tag);
-        setText(row, R.id.log_entry_message, entry.message);
-        setText(row, R.id.log_entry_time, entry.time);
-        MaterialTextView messageView = row.findViewById(R.id.log_entry_message);
-        if (messageView != null) {
-            String key = entryKey(entry);
-            bindMessageExpansion(messageView, expandedEntryKeys.contains(key));
-            row.setOnClickListener(view -> toggleMessageExpansion(messageView, key));
-        }
-        row.setOnLongClickListener(view -> {
-            copyEntry(entry);
-            return true;
-        });
-    }
-
-    private void bindLevelIndicator(View row, String level) {
-        View container = row.findViewById(R.id.log_entry_level_container);
-        MaterialTextView label = row.findViewById(R.id.log_entry_level);
-        if (container == null || label == null) {
-            return;
-        }
-        String normalized = normalizeLevel(level);
-        label.setText(normalized);
-        int containerAttr = levelContainerColorAttr(normalized);
-        int labelAttr = levelTextColorAttr(normalized);
-        container.setBackgroundTintList(ColorStateList.valueOf(themeColor(container, containerAttr)));
-        label.setTextColor(themeColor(label, labelAttr));
-    }
-
-    private static String normalizeLevel(String level) {
-        if (level == null || level.isBlank()) {
-            return "I";
-        }
-        String normalized = level.trim().toUpperCase(Locale.US);
-        return normalized.length() > 1 ? normalized.substring(0, 1) : normalized;
-    }
-
-    private static int levelContainerColorAttr(String level) {
-        if ("E".equals(level) || "F".equals(level)) {
-            return com.google.android.material.R.attr.colorErrorContainer;
-        }
-        if ("W".equals(level)) {
-            return com.google.android.material.R.attr.colorTertiaryContainer;
-        }
-        if ("D".equals(level) || "V".equals(level)) {
-            return com.google.android.material.R.attr.colorSecondaryContainer;
-        }
-        return com.google.android.material.R.attr.colorPrimaryContainer;
-    }
-
-    private static int levelTextColorAttr(String level) {
-        if ("E".equals(level) || "F".equals(level)) {
-            return com.google.android.material.R.attr.colorOnErrorContainer;
-        }
-        if ("W".equals(level)) {
-            return com.google.android.material.R.attr.colorOnTertiaryContainer;
-        }
-        if ("D".equals(level) || "V".equals(level)) {
-            return com.google.android.material.R.attr.colorOnSecondaryContainer;
-        }
-        return com.google.android.material.R.attr.colorOnPrimaryContainer;
-    }
-
-    private void copyEntry(Entry entry) {
+    private void copyEntryByKey(String key) {
+        Entry entry = findVisibleEntry(key);
         ClipboardManager clipboard =
                 (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         if (clipboard == null || entry == null) {
@@ -919,49 +716,27 @@ public final class LogActivity extends LocalizedActivity {
         Toast.makeText(this, R.string.log_copied, Toast.LENGTH_SHORT).show();
     }
 
+    private Entry findVisibleEntry(String key) {
+        for (Entry entry : toDisplayEntriesForCurrentSort(filterEntriesForSelectedPage())) {
+            if (entry.key.equals(key)) {
+                return entry;
+            }
+        }
+        return null;
+    }
+
     private boolean isAtLatestEdge() {
-        if (logLayoutManager == null || logAdapter == null || logAdapter.getItemCount() == 0) {
-            return true;
-        }
-        if (!newestAtBottom) {
-            return logLayoutManager.findFirstVisibleItemPosition() <= 1;
-        }
-        return logLayoutManager.findLastVisibleItemPosition() >= logAdapter.getItemCount() - 2;
+        return presentation == null || presentation.getAtLatestEdge();
     }
 
-    private void scrollToLatestEdge() {
-        if (logList == null || logAdapter == null || logAdapter.getItemCount() == 0) {
-            return;
-        }
-        if (newestAtBottom) {
-            logList.scrollToPosition(logAdapter.getItemCount() - 1);
-        } else {
-            logList.scrollToPosition(0);
-        }
-    }
-
-    private void toggleMessageExpansion(MaterialTextView messageView, String key) {
-        if (messageView == null) {
-            return;
-        }
+    private void toggleMessageExpansion(String key) {
         boolean expanded = !expandedEntryKeys.contains(key);
-        bindMessageExpansion(messageView, expanded);
         if (expanded) {
             expandedEntryKeys.add(key);
         } else {
             expandedEntryKeys.remove(key);
         }
-    }
-
-    private static void bindMessageExpansion(MaterialTextView messageView, boolean expanded) {
-        messageView.setMaxLines(expanded ? EXPANDED_MESSAGE_MAX_LINES : 2);
-    }
-
-    private static void setText(View root, int id, String text) {
-        MaterialTextView view = root.findViewById(id);
-        if (view != null) {
-            view.setText(text);
-        }
+        renderSelectedPage();
     }
 
     private static String currentDisplayTime() {
@@ -992,7 +767,6 @@ public final class LogActivity extends LocalizedActivity {
 
     private void stopAutoRefresh() {
         mainHandler.removeCallbacks(autoRefreshRunnable);
-        mainHandler.removeCallbacks(scrollIdleRunnable);
     }
 
     @Override
@@ -1001,45 +775,6 @@ public final class LogActivity extends LocalizedActivity {
         stopAutoRefresh();
         logExecutor.shutdownNow();
         super.onDestroy();
-    }
-
-    private final class EntryAdapter extends RecyclerView.Adapter<EntryHolder> {
-        private final List<Entry> entries = new ArrayList<>();
-
-        void setEntries(List<Entry> newEntries) {
-            entries.clear();
-            if (newEntries != null) {
-                entries.addAll(newEntries);
-            }
-            notifyDataSetChanged();
-        }
-
-        @NonNull
-        @Override
-        public EntryHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View row = LayoutInflater.from(parent.getContext()).inflate(
-                    R.layout.item_log_entry,
-                    parent,
-                    false
-            );
-            return new EntryHolder(row);
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull EntryHolder holder, int position) {
-            bindEntry(holder.itemView, entries.get(position));
-        }
-
-        @Override
-        public int getItemCount() {
-            return entries.size();
-        }
-    }
-
-    private static final class EntryHolder extends RecyclerView.ViewHolder {
-        EntryHolder(@NonNull View itemView) {
-            super(itemView);
-        }
     }
 
     private static final class ExportPackage {

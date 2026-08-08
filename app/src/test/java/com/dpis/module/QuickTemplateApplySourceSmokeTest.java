@@ -36,7 +36,7 @@ public class QuickTemplateApplySourceSmokeTest {
         assertTrue(mainActivity.contains("QuickTemplateApplyConfirmationMessage.format("));
         assertTrue(mainActivity.contains("R.string.quick_template_apply_scope_note"));
         assertTrue(mainActivity.contains("finishQuickTemplateApply("));
-        assertTrue(mainActivity.contains("DialogWindowSizer.applyStandardWidth(dialog, this)"));
+        assertTrue(mainActivity.contains("ComposeConfirmDialog.showWithLabels("));
         assertTrue(mainActivity.contains("QuickTemplateApplyCoordinator<TemplateConfigValue> coordinator"));
         assertTrue(mainActivity.contains("QuickTemplateApplyAdapters.from(getHookConfigStore())"));
         assertTrue(mainActivity.contains("getHookConfigStore()"));

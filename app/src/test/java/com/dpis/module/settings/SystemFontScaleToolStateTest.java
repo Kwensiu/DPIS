@@ -149,4 +149,18 @@ public class SystemFontScaleToolStateTest {
         assertEquals(50, SystemFontScaleToolState.initialPendingPercent(40));
         assertEquals(100, SystemFontScaleToolState.initialPendingPercent(null));
     }
+
+    @Test
+    public void sliderInputRoundsToNearestSupportedWholePercent() {
+        assertEquals(50, SystemFontScaleToolState.normalizeSliderPercent(49.6f));
+        assertEquals(101, SystemFontScaleToolState.normalizeSliderPercent(100.5f));
+        assertEquals(200, SystemFontScaleToolState.normalizeSliderPercent(200.4f));
+    }
+
+    @Test
+    public void previewTextSizeDependsOnlyOnTargetPercent() {
+        assertEquals(18f, SystemFontScaleToolState.previewTextSp(18, 100), 0.001f);
+        assertEquals(21.6f, SystemFontScaleToolState.previewTextSp(18, 120), 0.001f);
+        assertEquals(7f, SystemFontScaleToolState.previewTextSp(14, 50), 0.001f);
+    }
 }

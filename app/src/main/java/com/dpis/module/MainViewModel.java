@@ -27,7 +27,10 @@ final class MainViewModel {
     private MainUiState state;
     private boolean forceInstalledAppCatalogReloadRequested;
     private String editingPackageName;
-    private MainActivity.AppConfigDraft editingDraft;
+    private AppConfigEditorDraft editingDraft;
+    private AppConfigEditorDraft savedEditingDraft;
+    private ConfigEditorDestination editingDestination = ConfigEditorDestination.MAIN;
+    private boolean editingSaveFeedback;
 
     MainViewModel(MainUiState initialState) {
         state
@@ -56,17 +59,50 @@ final class MainViewModel {
         this.editingPackageName = null;
     }
 
-    MainActivity.AppConfigDraft getEditingDraft() {
+    AppConfigEditorDraft getEditingDraft() {
         return editingDraft;
     }
 
-    void setEditingDraft(MainActivity.AppConfigDraft draft) {
+    void setEditingDraft(AppConfigEditorDraft draft) {
         this.editingDraft = draft;
     }
 
     void clearEditingDraft() {
         this.editingDraft = null;
+        this.savedEditingDraft = null;
+        this.editingDestination = ConfigEditorDestination.MAIN;
+        this.editingSaveFeedback = false;
     }
+
+    void restoreEditingSession(
+            String packageName,
+            AppConfigEditorDraft draft,
+            AppConfigEditorDraft savedDraft,
+            ConfigEditorDestination destination
+    ) {
+        this.editingPackageName = packageName;
+        this.editingDraft = draft;
+        this.savedEditingDraft = savedDraft != null ? savedDraft : draft;
+        this.editingDestination = destination != null
+                ? destination
+                : ConfigEditorDestination.MAIN;
+        this.editingSaveFeedback = false;
+    }
+
+    ConfigEditorDestination getEditingDestination() {
+        return editingDestination;
+    }
+
+    void setEditingDestination(ConfigEditorDestination destination) {
+        editingDestination = destination != null
+                ? destination
+                : ConfigEditorDestination.MAIN;
+    }
+
+    AppConfigEditorDraft getSavedEditingDraft() { return savedEditingDraft; }
+    void setSavedEditingDraft(AppConfigEditorDraft draft) { this.savedEditingDraft = draft; }
+    boolean isEditingSaveFeedback() { return editingSaveFeedback; }
+    void setEditingSaveFeedback(boolean value) { this.editingSaveFeedback = value; }
 
     MainUiState getState() {
         return state;
@@ -123,12 +159,7 @@ final class MainViewModel {
         if (requestId == AppLoadCoordinator.NO_REQUEST) {
             return Collections.emptyList();
         }
-        return Collections.singletonList(
-                new AppsLoadRequest(
-                        requestId,
-                        consumeForceInstalledAppCatalogReloadRequested()
-                )
-        );
+        return Collections.singletonList(createAppsLoadRequest(requestId));
     }
 
     private List<AppsLoadRequest> onAppsLoadFinished(
@@ -141,15 +172,16 @@ final class MainViewModel {
             state = state.withApps(loadedApps);
         }
         if (completion.nextRequestId != AppLoadCoordinator.NO_REQUEST) {
-            return Collections.singletonList(
-                    new AppsLoadRequest(
-                            completion.nextRequestId,
-                            consumeForceInstalledAppCatalogReloadRequested()
-                    )
-            );
+            return Collections.singletonList(createAppsLoadRequest(completion.nextRequestId));
         }
         state = state.clearRefreshingPages();
         return Collections.emptyList();
+    }
+
+    private AppsLoadRequest createAppsLoadRequest(int requestId) {
+        return new AppsLoadRequest(
+                requestId,
+                consumeForceInstalledAppCatalogReloadRequested());
     }
 
     private boolean consumeForceInstalledAppCatalogReloadRequested() {

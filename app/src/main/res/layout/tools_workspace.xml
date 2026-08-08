@@ -14,7 +14,7 @@
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingStart="@dimen/page_toolbar_padding_horizontal"
-        android:paddingTop="@dimen/page_toolbar_padding_top"
+        android:paddingTop="@dimen/workspace_toolbar_padding_top"
         android:paddingEnd="@dimen/page_toolbar_padding_horizontal"
         android:paddingBottom="@dimen/page_toolbar_padding_bottom">
 

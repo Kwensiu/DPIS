@@ -30,7 +30,7 @@ public final class FontLibraryActivitySourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
 
         assertTrue(source.contains("private void promptImportName("));
-        assertTrue(occurrences(source, "DialogWindowSizer.applyLargeWidth(dialog, this);") >= 1);
+        assertTrue(source.contains("ComposeTextInputDialog.showLarge(this"));
     }
 
     @Test
@@ -51,13 +51,16 @@ public final class FontLibraryActivitySourceSmokeTest {
     @Test
     public void fontDetailsDisplayPublicationStatus() throws IOException {
         String source = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.java");
+        String content = read("src/main/java/com/dpis/module/ui/compose/FontLibraryContent.kt");
         String strings = read("src/main/res/values/strings.xml");
 
-        assertTrue(source.contains("createPublicationBadge(entry)"));
+        assertTrue(source.contains("new FontDetailUiState("));
         assertTrue(source.contains("entry.sourceFileName == null ? \"\" : entry.sourceFileName"));
         assertTrue(strings.contains("font_library_private_badge"));
         assertTrue(strings.contains("font_library_public_badge"));
-        assertTrue(source.contains("font_detail_fallback_button"));
+        assertTrue(content.contains("state.publicationFailed"));
+        assertTrue(content.contains("font_library_private_badge"));
+        assertTrue(content.contains("font_library_public_badge"));
         assertTrue(source.contains("showFallbackExplanationDialog"));
         assertTrue(source.contains("FontPublicationStatus.PUBLISH_FAILED"));
         assertTrue(source.contains("retryPublishedFallbacks"));
@@ -71,21 +74,21 @@ public final class FontLibraryActivitySourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
 
         assertTrue(source.contains("LinkedHashMap<String, List<FontLibraryEntry>> collections"));
-        assertTrue(source.contains("createFontRow(faces.get(0), faces.size())"));
+        assertTrue(source.contains("new FontLibraryUiItem("));
+        assertTrue(source.contains("faces.size() > 1"));
         assertTrue(source.contains("font_library_collection_label"));
     }
 
     @Test
     public void fontLibraryImportsAndExportsSeparateArchives() throws IOException {
         String source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
-        String layout = read("src/main/res/layout/activity_font_library.xml");
+        String content = read("src/main/java/com/dpis/module/ui/compose/FontLibraryContent.kt");
 
-        assertTrue(layout.contains("font_library_archive_menu_button"));
-        assertTrue(layout.contains("ic_more_vert_24"));
+        assertTrue(content.contains("ic_more_vert_24"));
+        assertTrue(content.contains("font_library_export_archive_action"));
+        assertTrue(content.contains("font_library_import_archive_action"));
         assertTrue(source.contains("openFontLibraryExportPicker"));
         assertTrue(source.contains("openFontLibraryImportPicker"));
-        assertTrue(source.contains("showFontLibraryArchiveMenu"));
-        assertTrue(source.contains("PopupMenu menu"));
         assertTrue(source.contains("FontLibraryArchiveCodec.writeArchive"));
         assertTrue(source.contains("FontLibraryArchiveCodec.restoreArchive"));
         assertTrue(source.contains("REQUEST_EXPORT_FONT_LIBRARY"));
@@ -98,42 +101,32 @@ public final class FontLibraryActivitySourceSmokeTest {
     public void fontDetailsUseDedicatedActivityAndFullPageLayout() throws IOException {
         String library = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java");
         String detail = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.java");
-        String layout = read("src/main/res/layout/activity_font_detail.xml");
+        String content = read("src/main/java/com/dpis/module/ui/compose/FontLibraryContent.kt");
         String manifest = read("src/main/AndroidManifest.xml");
 
         assertTrue(library.contains("new Intent(this, FontDetailActivity.class)"));
         assertTrue(library.contains("FontDetailActivity.EXTRA_FONT_ID"));
         assertTrue(!library.contains("showFontDetails("));
         assertTrue(detail.contains("EXTRA_FONT_ID"));
-        assertTrue(detail.contains("font_detail_fallback_button"));
         assertTrue(detail.contains("showFallbackExplanationDialog"));
         assertTrue(detail.contains("confirmDeleteForCurrentEntry"));
-        assertTrue(detail.contains("font_library_active_apps_title"));
-        assertTrue(detail.contains("createReferenceRemoveAction"));
-        assertTrue(detail.contains("referenceRowBackground"));
-        assertTrue(detail.contains("bg_home_info_row_top"));
-        assertTrue(detail.contains("bg_home_info_row_bottom"));
-        assertTrue(detail.contains("font_library_remove_app_action"));
-        assertTrue(detail.contains("colorSecondaryContainer"));
-        assertTrue(detail.contains("action.setGravity(Gravity.CENTER)"));
-        assertTrue(detail.contains("action.setMinWidth(dp(48))"));
-        assertTrue(detail.contains("background.setCornerRadius(dp(999))"));
-        assertTrue(detail.contains("action.setForeground(getDrawable(selectableBackground))"));
-        assertTrue(detail.contains("topMarginParams(2)"));
+        assertTrue(detail.contains("confirmClearAppTypefaceByPackage"));
+        assertTrue(content.contains("FontReferenceSection("));
+        assertTrue(content.contains("font_library_active_apps_title"));
+        assertTrue(content.contains("font_library_remove_app_action"));
+        assertTrue(content.contains("ListItemDefaults.segmentedShapes"));
+        assertTrue(content.contains("FontFamily(typeface)"));
         assertFalse(detail.contains("createCompatibilitySection"));
         assertFalse(detail.contains("createManagementSection"));
-        assertTrue(layout.contains("font_detail_toolbar"));
-        assertTrue(layout.contains("font_detail_content"));
-        assertTrue(layout.contains("font_detail_fallback_button"));
-        assertTrue(layout.contains("font_detail_rename_button"));
-        assertTrue(layout.contains("font_detail_delete_button"));
-        assertTrue(layout.contains("Widget.Dpis.DialogIconButton.Outlined"));
-        assertTrue(layout.contains("@drawable/ic_build_24"));
-        assertFalse(layout.contains("ic_warning_24"));
+        assertTrue(content.contains("ic_build_24"));
+        assertTrue(content.contains("ic_edit_24"));
+        assertTrue(content.contains("ic_delete_24"));
+        assertTrue(content.contains("FontLibraryContentPreview"));
+        assertTrue(content.contains("FontDetailContentPreview"));
         assertTrue(manifest.contains("android:name=\".fonts.FontDetailActivity\""));
         assertTrue(detail.contains("restoreTypefaceReferences(cleared)"));
         assertTrue(detail.contains("runtime state was not restored"));
-        assertTrue(detail.contains("createNameInput(entry.collectionDisplayName)"));
+        assertTrue(detail.contains("ComposeTextInputDialog.show(this"));
     }
 
     @Test
@@ -142,7 +135,8 @@ public final class FontLibraryActivitySourceSmokeTest {
 
         assertTrue(source.contains("private void confirmDelete("));
         assertTrue(source.contains("private void confirmForceDelete("));
-        assertTrue(occurrences(source, "DialogWindowSizer.applyStandardWidth(dialog, this);") >= 2);
+        assertTrue(source.contains("showFontConfirmation(R.string.font_library_delete_title"));
+        assertTrue(source.contains("ComposeConfirmDialog.showWithLabels"));
     }
 
     @Test
@@ -151,7 +145,8 @@ public final class FontLibraryActivitySourceSmokeTest {
 
         assertTrue(source.contains("private void promptRename("));
         assertTrue(source.contains("private void confirmClearAppTypeface("));
-        assertTrue(occurrences(source, "DialogWindowSizer.applyStandardWidth(dialog, this);") >= 4);
+        assertTrue(source.contains("ComposeTextInputDialog.show(this"));
+        assertTrue(source.contains("R.string.font_library_restore_default_action"));
     }
 
     private static String read(String relativePath) throws IOException {

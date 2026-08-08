@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="?attr/colorSurfaceContainer" />
-    <corners
-        android:topLeftRadius="@dimen/quick_config_panel_corner_radius"
-        android:topRightRadius="@dimen/quick_config_panel_corner_radius" />
-</shape>

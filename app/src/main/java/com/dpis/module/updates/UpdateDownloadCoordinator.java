@@ -2,14 +2,7 @@ package com.dpis.module.updates;
 
 import android.content.Context;
 import android.net.Uri;
-import android.view.View;
-
-import androidx.appcompat.app.AlertDialog;
-
 import com.dpis.module.R;
-import com.google.android.material.button.MaterialButton;
-import com.google.android.material.progressindicator.LinearProgressIndicator;
-import com.google.android.material.textview.MaterialTextView;
 
 import java.io.File;
 import java.net.HttpURLConnection;
@@ -73,11 +66,7 @@ public final class UpdateDownloadCoordinator {
 
     public void startDownload(String targetVersionName,
             String downloadUrl,
-            AlertDialog dialog,
-            MaterialButton primaryButton,
-            MaterialButton cancelButton,
-            LinearProgressIndicator progressView,
-            MaterialTextView progressTextView) {
+            UpdateAvailableDialog.DialogHandle dialogHandle) {
         UpdateCoordinator.DownloadDecision downloadDecision = updateCoordinator.requestDownloadStart(
                 host.buildUpdateCoordinatorState(),
                 downloadUrl);
@@ -106,18 +95,13 @@ public final class UpdateDownloadCoordinator {
             return;
         }
 
-        dialog.setCancelable(false);
-        dialog.setCanceledOnTouchOutside(false);
-        showDownloadingState(primaryButton, cancelButton, progressView, progressTextView);
+        dialogHandle.setCancelable(false);
+        showDownloadingState(dialogHandle);
 
         activeDownloadFuture = executor.submit(() -> executeDownload(
                 downloadUri,
                 targetFile,
-                dialog,
-                primaryButton,
-                cancelButton,
-                progressView,
-                progressTextView));
+                dialogHandle));
     }
 
     public void startHomeDownload(String targetVersionName,
@@ -187,11 +171,7 @@ public final class UpdateDownloadCoordinator {
 
     private void executeDownload(Uri downloadUri,
             File targetFile,
-            AlertDialog dialog,
-            MaterialButton primaryButton,
-            MaterialButton cancelButton,
-            LinearProgressIndicator progressView,
-            MaterialTextView progressTextView) {
+            UpdateAvailableDialog.DialogHandle dialogHandle) {
         try {
             final int[] lastProgress = new int[] { -1 };
             downloadExecutor.download(
@@ -202,10 +182,7 @@ public final class UpdateDownloadCoordinator {
                         @Override
                         public void onConnectionOpened(HttpURLConnection connection, long totalBytes) {
                             activeDownloadConnection = connection;
-                            host.runOnUiThread(() -> prepareProgressView(
-                                    progressView,
-                                    progressTextView,
-                                    totalBytes));
+                            host.runOnUiThread(() -> prepareProgressView(dialogHandle, totalBytes));
                         }
 
                         @Override
@@ -216,18 +193,14 @@ public final class UpdateDownloadCoordinator {
                                     return;
                                 }
                                 lastProgress[0] = progress;
-                                host.runOnUiThread(() -> updateProgressView(
-                                        progressView,
-                                        progressTextView,
+                                host.runOnUiThread(() -> updateProgressView(dialogHandle,
                                         progress,
                                         downloadedBytes,
                                         totalBytes));
                                 return;
                             }
                             host.runOnUiThread(() -> updateProgressViewWithoutTotal(
-                                    progressView,
-                                    progressTextView,
-                                    downloadedBytes));
+                                    dialogHandle, downloadedBytes));
                         }
                     });
 
@@ -238,8 +211,8 @@ public final class UpdateDownloadCoordinator {
                 if (!host.isActivityAlive()) {
                     return;
                 }
-                if (dialog.isShowing()) {
-                    dialog.dismiss();
+                if (dialogHandle.isShowing()) {
+                    dialogHandle.dismiss();
                 }
                 host.onDownloadSuccess(targetFile);
             });
@@ -249,9 +222,8 @@ public final class UpdateDownloadCoordinator {
                 if (!host.isActivityAlive()) {
                     return;
                 }
-                showDialogIdleState(primaryButton, cancelButton, progressView, progressTextView);
-                dialog.setCancelable(true);
-                dialog.setCanceledOnTouchOutside(true);
+                showDialogIdleState(dialogHandle);
+                dialogHandle.setCancelable(true);
                 host.showToast(R.string.about_update_download_canceled);
             });
         } catch (Exception ignored) {
@@ -261,9 +233,8 @@ public final class UpdateDownloadCoordinator {
                 if (!host.isActivityAlive()) {
                     return;
                 }
-                showDialogIdleState(primaryButton, cancelButton, progressView, progressTextView);
-                dialog.setCancelable(true);
-                dialog.setCanceledOnTouchOutside(true);
+                showDialogIdleState(dialogHandle);
+                dialogHandle.setCancelable(true);
                 host.showToast(
                         canceled
                                 ? R.string.about_update_download_canceled
@@ -356,63 +327,41 @@ public final class UpdateDownloadCoordinator {
         host.applyDownloadState(state);
     }
 
-    public static void showDialogIdleState(MaterialButton primaryButton,
-            MaterialButton cancelButton,
-            LinearProgressIndicator progressView,
-            MaterialTextView progressTextView) {
-        primaryButton.setEnabled(true);
-        primaryButton.setText(R.string.about_update_action_download);
-        cancelButton.setText(R.string.about_update_action_cancel_dialog);
-        progressView.setVisibility(View.GONE);
-        progressTextView.setVisibility(View.GONE);
+    public static void showDialogIdleState(UpdateAvailableDialog.DialogHandle dialogHandle) {
+        dialogHandle.showIdle(
+                dialogHandle.getDialog().getContext().getString(R.string.about_update_action_download),
+                dialogHandle.getDialog().getContext().getString(R.string.about_update_action_cancel_dialog));
     }
 
-    static void showDownloadingState(MaterialButton primaryButton,
-            MaterialButton cancelButton,
-            LinearProgressIndicator progressView,
-            MaterialTextView progressTextView) {
-        primaryButton.setEnabled(false);
-        cancelButton.setText(R.string.about_update_action_cancel_download);
-        progressView.setVisibility(View.VISIBLE);
-        progressTextView.setVisibility(View.VISIBLE);
-        progressView.setIndeterminate(true);
-        progressTextView.setText(R.string.about_update_download_progress_preparing);
+    static void showDownloadingState(UpdateAvailableDialog.DialogHandle dialogHandle) {
+        android.content.Context context = dialogHandle.getDialog().getContext();
+        dialogHandle.showDownloading(
+                context.getString(R.string.about_update_action_cancel_download),
+                context.getString(R.string.about_update_download_progress_preparing));
     }
 
-    static void prepareProgressView(LinearProgressIndicator progressView,
-            MaterialTextView progressTextView,
-            long totalBytes) {
+    static void prepareProgressView(UpdateAvailableDialog.DialogHandle dialogHandle, long totalBytes) {
         if (totalBytes > 0L) {
-            progressView.setIndeterminate(false);
-            progressView.setProgress(0);
-            updateProgressView(progressView, progressTextView, 0, 0L, totalBytes);
+            updateProgressView(dialogHandle, 0, 0L, totalBytes);
             return;
         }
-        progressView.setIndeterminate(true);
-        updateProgressViewWithoutTotal(progressView, progressTextView, 0L);
+        updateProgressViewWithoutTotal(dialogHandle, 0L);
     }
 
-    static void updateProgressView(LinearProgressIndicator progressView,
-            MaterialTextView progressTextView,
+    static void updateProgressView(UpdateAvailableDialog.DialogHandle dialogHandle,
             int progress,
             long downloadedBytes,
             long totalBytes) {
-        if (progressView.isIndeterminate()) {
-            progressView.setIndeterminate(false);
-        }
-        progressView.setProgress(progress);
-        progressTextView.setText(progressView.getContext().getString(
+        dialogHandle.showProgress(false, progress, dialogHandle.getDialog().getContext().getString(
                 R.string.about_update_download_progress_with_percent,
                 progress,
                 StartupUpdatePackageHandler.formatBytesStatic(downloadedBytes),
                 StartupUpdatePackageHandler.formatBytesStatic(totalBytes)));
     }
 
-    static void updateProgressViewWithoutTotal(LinearProgressIndicator progressView,
-            MaterialTextView progressTextView,
+    static void updateProgressViewWithoutTotal(UpdateAvailableDialog.DialogHandle dialogHandle,
             long downloadedBytes) {
-        progressView.setIndeterminate(true);
-        progressTextView.setText(progressView.getContext().getString(
+        dialogHandle.showProgress(true, 0, dialogHandle.getDialog().getContext().getString(
                 R.string.about_update_download_progress_without_total,
                 StartupUpdatePackageHandler.formatBytesStatic(downloadedBytes)));
     }

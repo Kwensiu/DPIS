@@ -146,36 +146,12 @@
                     </LinearLayout>
                 </com.google.android.material.appbar.MaterialToolbar>
 
-                <com.google.android.material.tabs.TabLayout
-                    android:id="@+id/filter_tabs"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/main_tabs_spacing_top"
-                    app:tabGravity="fill"
-                    app:tabIndicatorAnimationMode="elastic"
-                    app:tabIndicatorColor="?attr/colorPrimary"
-                    app:tabIndicatorFullWidth="false"
-                    app:tabIndicatorHeight="@dimen/main_tabs_indicator_height"
-                    app:tabInlineLabel="true"
-                    app:tabMaxWidth="0dp"
-                    app:tabMinWidth="0dp"
-                    app:tabMode="fixed"
-                    app:tabRippleColor="?attr/colorControlHighlight" />
-
                 <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="1">
 
                     <include layout="@layout/home_workspace" />
-
-                    <FrameLayout
-                        android:id="@+id/land_app_list_page"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent">
-
-                        <include layout="@layout/item_app_list_page" />
-                    </FrameLayout>
 
                     <include layout="@layout/template_workspace" />
 

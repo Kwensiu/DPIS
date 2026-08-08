@@ -11,7 +11,9 @@ import org.gradle.api.tasks.testing.Test
 
 plugins {
     alias(libs.plugins.agp.app)
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.aboutlibraries)
+    alias(libs.plugins.androidx.baselineprofile)
 }
 
 private val appVersionName = "1.15.0" // x-release-please-version
@@ -131,7 +133,8 @@ android {
     // a single-module app. If more Android modules appear, move these shared
     // defaults into a small convention plugin instead of duplicating them.
     namespace = "com.dpis.module"
-    compileSdk = 36
+    // Compose Material3 1.5 alpha is built against API 37; runtime targeting remains API 36.
+    compileSdk = 37
     buildToolsVersion = "36.1.0"
     ndkVersion = resolvedNdkVersion
 
@@ -143,7 +146,7 @@ android {
         targetSdk = 36
         versionName = resolvedVersionName
         versionCode = resolvedVersionCode
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.dpis.module.DpisTestRunner"
         buildConfigField(
             "String",
             "GITHUB_RELEASES_API_URL",
@@ -167,9 +170,11 @@ android {
     productFlavors {
         create("modern") {
             dimension = "xposedApi"
+            proguardFiles("proguard-rules-modern.pro")
         }
         create("legacy") {
             dimension = "xposedApi"
+            proguardFiles("proguard-rules-legacy.pro")
         }
     }
 
@@ -215,11 +220,19 @@ android {
     testOptions {
         unitTests.all {
             it.useJUnit()
+            if (System.getenv("CI") == "true") {
+                // Linux runners can retain enough Android test state to stall a long-lived worker.
+                // Bound each worker's class count, while logging starts for actionable timeout evidence.
+                it.forkEvery = 40
+                it.maxHeapSize = "1024m"
+                it.testLogging.events("started", "failed")
+            }
         }
     }
 
     buildFeatures {
         buildConfig = true
+        compose = true
     }
 
     lint {
@@ -316,6 +329,7 @@ if (releaseTasksRequested && !hasReleaseSigningConfig) {
 }
 
 dependencies {
+    baselineProfile(project(":baselineprofile"))
     compileOnly(libs.libxposed.api)
     compileOnly(libs.legacy.xposed.api)
     implementation(libs.libxposed.service)
@@ -326,8 +340,21 @@ dependencies {
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.material)
     implementation(libs.markwon.core)
+    implementation(platform(libs.compose.bom))
+    implementation(libs.androidx.activity)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    implementation(libs.wear.compose.foundation)
+    implementation(libs.wear.compose.material3)
+    debugImplementation(libs.compose.ui.tooling)
+    debugImplementation(libs.compose.ui.test.manifest)
     testImplementation(libs.junit4)
     testRuntimeOnly(libs.legacy.xposed.api)
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.runner)
 }

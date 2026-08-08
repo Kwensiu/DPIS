@@ -16,6 +16,7 @@
     >
 
         <LinearLayout
+            android:id="@+id/land_detail_scroll_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -169,6 +170,8 @@
                         <FrameLayout
                             android:id="@+id/land_detail_viewport_mode_toggle_button"
                             style="@style/Widget.Dpis.ConfigValueModeToggleContainer"
+                            android:layout_width="@dimen/dialog_mode_toggle_width"
+                            android:layout_height="@dimen/dialog_mode_toggle_row_height"
                             android:clickable="true"
                             android:contentDescription="@string/dialog_viewport_mode_toggle_description"
                             android:focusable="true"
@@ -183,7 +186,7 @@
 
                                 <View
                                     android:id="@+id/land_detail_viewport_mode_toggle_thumb"
-                                    android:layout_width="match_parent"
+                                    android:layout_width="0dp"
                                     android:layout_height="match_parent"
                                     android:background="@drawable/bg_mode_toggle_thumb"
                                 />
@@ -259,6 +262,8 @@
                         <FrameLayout
                             android:id="@+id/land_detail_font_mode_toggle_button"
                             style="@style/Widget.Dpis.ConfigValueModeToggleContainer"
+                            android:layout_width="@dimen/dialog_mode_toggle_width"
+                            android:layout_height="@dimen/dialog_mode_toggle_row_height"
                             android:clickable="true"
                             android:contentDescription="@string/dialog_font_mode_toggle_description"
                             android:focusable="true"
@@ -273,7 +278,7 @@
 
                                 <View
                                     android:id="@+id/land_detail_font_mode_toggle_thumb"
-                                    android:layout_width="match_parent"
+                                    android:layout_width="0dp"
                                     android:layout_height="match_parent"
                                     android:background="@drawable/bg_mode_toggle_thumb"
                                 />
@@ -580,7 +585,8 @@
     </androidx.core.widget.NestedScrollView>
 
     <!-- Floating Action Dock -->
-    <com.google.android.material.card.MaterialCardView
+    <!-- Keep positioning and surface drawing separate so the area outside the rounded dock stays transparent. -->
+    <FrameLayout
         android:id="@+id/land_detail_action_dock"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -588,123 +594,129 @@
         android:layout_marginStart="@dimen/land_app_detail_dock_margin_horizontal"
         android:layout_marginEnd="@dimen/land_app_detail_dock_margin_horizontal"
         android:layout_marginBottom="@dimen/land_app_detail_dock_margin_bottom"
-        android:maxWidth="@dimen/land_app_detail_dock_max_width"
-        app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
-        app:cardCornerRadius="@dimen/land_app_detail_dock_corner_radius"
-        app:cardElevation="@dimen/land_app_detail_dock_elevation"
     >
 
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/land_detail_action_surface"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="@dimen/land_app_detail_dock_padding"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+            app:cardCornerRadius="@dimen/land_app_detail_dock_corner_radius"
+            app:cardElevation="@dimen/land_app_detail_dock_elevation"
         >
 
-            <!-- Save Capsule -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/land_detail_save_button"
-                style="@style/Widget.Dpis.DialogActionButton.Filled"
-                android:layout_width="wrap_content"
-                android:layout_height="@dimen/land_app_detail_dock_button_height"
-                android:ellipsize="end"
-                android:minWidth="@dimen/land_app_detail_dock_save_expanded_min_width"
-                android:maxLines="1"
-                android:text="@string/status_save_button"
-                app:cornerRadius="@dimen/land_app_detail_dock_capsule_corner_radius"
-            />
-
-            <Space
-                android:layout_width="@dimen/land_app_detail_dock_button_spacing"
-                android:layout_height="0dp"
-            />
-
-            <!-- Process Control Capsule Group -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/land_detail_process_action_group"
-                android:layout_width="0dp"
-                android:layout_height="@dimen/land_app_detail_dock_button_height"
-                android:layout_weight="1"
-                app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                app:cardCornerRadius="@dimen/land_app_detail_dock_capsule_corner_radius"
-                app:cardElevation="0dp"
-                app:strokeColor="?attr/colorOutlineVariant"
-                app:strokeWidth="1dp"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="@dimen/land_app_detail_dock_padding"
             >
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal"
+                <!-- Save Capsule -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/land_detail_save_button"
+                    style="@style/Widget.Dpis.DialogActionButton.Filled"
+                    android:layout_width="wrap_content"
+                    android:layout_height="@dimen/land_app_detail_dock_button_height"
+                    android:ellipsize="end"
+                    android:minWidth="@dimen/land_app_detail_dock_save_expanded_min_width"
+                    android:maxLines="1"
+                    android:text="@string/status_save_button"
+                    app:cornerRadius="@dimen/land_app_detail_dock_capsule_corner_radius"
+                />
+
+                <Space
+                    android:layout_width="@dimen/land_app_detail_dock_button_spacing"
+                    android:layout_height="0dp"
+                />
+
+                <!-- Process Control Capsule Group -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/land_detail_process_action_group"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/land_app_detail_dock_button_height"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                    app:cardCornerRadius="@dimen/land_app_detail_dock_capsule_corner_radius"
+                    app:cardElevation="0dp"
+                    app:strokeColor="?attr/colorOutlineVariant"
+                    app:strokeWidth="1dp"
                 >
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/land_detail_stop_button"
-                        style="@style/Widget.Dpis.LandDetailDockProcessButton"
-                        android:layout_width="0dp"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:ellipsize="end"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:maxLines="1"
-                        android:minWidth="@dimen/land_app_detail_dock_process_button_min_width"
-                        android:text="@string/dialog_stop_button"
-                        android:textColor="@color/land_detail_dock_stop_text"
-                        app:cornerRadius="0dp"
-                        app:iconTint="@color/land_detail_dock_stop_text"
-                    />
+                        android:orientation="horizontal"
+                    >
 
-                    <View
-                        android:layout_width="@dimen/land_app_detail_dock_process_divider_width"
-                        android:layout_height="@dimen/land_app_detail_dock_process_divider_height"
-                        android:layout_gravity="center_vertical"
-                        android:background="?attr/colorOutlineVariant"
-                    />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/land_detail_stop_button"
+                            style="@style/Widget.Dpis.LandDetailDockProcessButton"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:maxLines="1"
+                            android:minWidth="@dimen/land_app_detail_dock_process_button_min_width"
+                            android:text="@string/dialog_stop_button"
+                            android:textColor="@color/land_detail_dock_stop_text"
+                            app:cornerRadius="0dp"
+                            app:iconTint="@color/land_detail_dock_stop_text"
+                        />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/land_detail_restart_button"
-                        style="@style/Widget.Dpis.LandDetailDockProcessButton"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:ellipsize="end"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:maxLines="1"
-                        android:minWidth="@dimen/land_app_detail_dock_process_button_min_width"
-                        android:text="@string/dialog_restart_button"
-                        android:textColor="@color/land_detail_dock_warn_text"
-                        app:cornerRadius="0dp"
-                        app:iconTint="@color/land_detail_dock_warn_text"
-                    />
+                        <View
+                            android:layout_width="@dimen/land_app_detail_dock_process_divider_width"
+                            android:layout_height="@dimen/land_app_detail_dock_process_divider_height"
+                            android:layout_gravity="center_vertical"
+                            android:background="?attr/colorOutlineVariant"
+                        />
 
-                    <View
-                        android:layout_width="@dimen/land_app_detail_dock_process_divider_width"
-                        android:layout_height="@dimen/land_app_detail_dock_process_divider_height"
-                        android:layout_gravity="center_vertical"
-                        android:background="?attr/colorOutlineVariant"
-                    />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/land_detail_restart_button"
+                            style="@style/Widget.Dpis.LandDetailDockProcessButton"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:maxLines="1"
+                            android:minWidth="@dimen/land_app_detail_dock_process_button_min_width"
+                            android:text="@string/dialog_restart_button"
+                            android:textColor="@color/land_detail_dock_warn_text"
+                            app:cornerRadius="0dp"
+                            app:iconTint="@color/land_detail_dock_warn_text"
+                        />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/land_detail_start_button"
-                        style="@style/Widget.Dpis.LandDetailDockProcessButton"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:ellipsize="end"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:maxLines="1"
-                        android:minWidth="@dimen/land_app_detail_dock_process_button_min_width"
-                        android:text="@string/dialog_start_button"
-                        android:textColor="@color/land_detail_dock_success_text"
-                        app:cornerRadius="0dp"
-                        app:iconTint="@color/land_detail_dock_success_text"
-                    />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+                        <View
+                            android:layout_width="@dimen/land_app_detail_dock_process_divider_width"
+                            android:layout_height="@dimen/land_app_detail_dock_process_divider_height"
+                            android:layout_gravity="center_vertical"
+                            android:background="?attr/colorOutlineVariant"
+                        />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/land_detail_start_button"
+                            style="@style/Widget.Dpis.LandDetailDockProcessButton"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:maxLines="1"
+                            android:minWidth="@dimen/land_app_detail_dock_process_button_min_width"
+                            android:text="@string/dialog_start_button"
+                            android:textColor="@color/land_detail_dock_success_text"
+                            app:cornerRadius="0dp"
+                            app:iconTint="@color/land_detail_dock_success_text"
+                        />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </FrameLayout>
 
 </FrameLayout>

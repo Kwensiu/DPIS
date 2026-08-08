@@ -35,6 +35,10 @@ public class UpdateDownloadCoordinatorSourceSmokeTest {
         assertTrue(source.contains("static void prepareProgressView("));
         assertTrue(source.contains("static void updateProgressView("));
         assertTrue(source.contains("static void updateProgressViewWithoutTotal("));
+        assertTrue(source.contains("UpdateAvailableDialog.DialogHandle dialogHandle"));
+        assertTrue(!source.contains("MaterialButton"));
+        assertTrue(!source.contains("LinearProgressIndicator"));
+        assertTrue(!source.contains("MaterialTextView"));
         assertTrue(!source.contains("verifyDownloadedApk("));
         assertTrue(!source.contains("UntrustedUpdateException"));
         assertTrue(!source.contains("about_update_download_untrusted"));

@@ -10,6 +10,10 @@ import com.dpis.module.runtime.RuntimeDebugPropertySyncer;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
 
 import com.dpis.module.ui.DialogWindowSizer;
+import com.dpis.module.ui.compose.ComposeConfirmDialog;
+import com.dpis.module.ui.compose.LanguageDialogOption;
+import com.dpis.module.ui.compose.SettingsComposeDialogs;
+import com.dpis.module.ui.compose.FontDebugComposeSheet;
 
 import com.dpis.module.settings.AppLocaleManager;
 import com.dpis.module.settings.AppUiScaleManager;
@@ -27,17 +31,14 @@ import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
-import android.view.LayoutInflater;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -48,15 +49,11 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.dpis.module.backup.ConfigBackupCodec;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.slider.Slider;
 import com.google.android.material.textview.MaterialTextView;
-import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
 
 import org.json.JSONException;
 
@@ -88,6 +85,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     private final View root;
     private final LauncherIconVisibilityStore launcherIconVisibilityStore;
     private final InterfaceScaleStore interfaceScaleStore;
+    private final SettingsPresentationController presentationController;
     private DpisConfigStore store;
     private MaterialSwitch hooksEnabledSwitch;
     private MaterialSwitch safeModeSwitch;
@@ -106,16 +104,12 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     private int lastInterfaceScaleFeedbackPercent = AppUiScaleManager.DEFAULT_SCALE_PERCENT;
     private boolean suppressInterfaceScaleSliderChange;
     private volatile boolean clearCacheInProgress;
+    private String lastCacheUsage = "0 B";
     private SharedPreferences statsPreferences;
     private int selectedMode = FontDebugStatsStore.MODE_CHAIN;
     private int selectedWindow = FontDebugStatsStore.WINDOW_ALL;
 
-    private BottomSheetDialog fontDebugDialog;
-    private MaterialButton dialogOverlayActionButton;
-    private MaterialButton dialogStatsModeButton;
-    private MaterialButton dialogStatsWindowButton;
-    private MaterialTextView dialogStatsLastUpdatedView;
-    private MaterialTextView dialogStatsContentView;
+    private FontDebugComposeSheet.Handle fontDebugDialog;
     private SystemHooksToggleController hooksToggleController;
 
     private final Handler statsHandler = new Handler(Looper.getMainLooper());
@@ -132,6 +126,64 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         this.root = root;
         this.launcherIconVisibilityStore = new LauncherIconVisibilityStore(activity);
         this.interfaceScaleStore = new InterfaceScaleStore(activity);
+        this.presentationController = new SettingsPresentationController(
+                new SettingsPresentationController.Port() {
+                    @Override
+                    public SettingsUiState snapshot() {
+                        return presentationState();
+                    }
+
+                    @Override
+                    public void setSafeModeEnabled(boolean enabled) {
+                        if (enabled) {
+                            onSafeModeChanged(null, true);
+                        } else {
+                            showDisableSafeModeConfirmationDialog();
+                        }
+                    }
+
+                    @Override
+                    public void setGlobalLogEnabled(boolean enabled) {
+                        onGlobalLogChanged(null, enabled);
+                    }
+
+                    @Override
+                    public void setLauncherIconHidden(boolean hidden) {
+                        if (hidden) {
+                            showHideLauncherIconConfirmationDialog();
+                        } else {
+                            onHideLauncherIconChanged(null, false);
+                        }
+                    }
+
+                    @Override
+                    public void refresh() {
+                        if (root == null) {
+                            refreshComposeStoreState();
+                        } else {
+                            refreshStoreState(false);
+                        }
+                        publishPresentationState();
+                    }
+                });
+    }
+
+    /** The sole state/action boundary for a future Compose Settings workspace. */
+    SettingsPresentationController presentationController() { return presentationController; }
+
+    SettingsUiState presentationState() {
+        boolean available = store != null;
+        return new SettingsUiState(available,
+                available && store.isSystemServerHooksEnabled(),
+                available && store.isSystemServerSafeModeEnabled(),
+                available && store.isGlobalLogEnabled(),
+                launcherIconVisibilityStore.isHidden(), interfaceScaleStore.getPercent(),
+                clearCacheInProgress, lastCacheUsage,
+                getString(AppLocaleManager.selectedLabelResId(activity)));
+    }
+
+    private void publishPresentationState() {
+        presentationController.publishState();
     }
 
     void bind() {
@@ -213,7 +265,36 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         globalLogSwitch.setOnCheckedChangeListener(this::onGlobalLogChanged);
         hideLauncherIconSwitch.setOnCheckedChangeListener(this::onHideLauncherIconChanged);
         refreshStoreState(true);
+        publishPresentationState();
     }
+
+    /** Initializes the same Java-owned workflows when Settings is Compose-native. */
+    void initializeComposePresentation() {
+        refreshComposeStoreState();
+        statsPreferences = FontDebugStatsStore.getPreferences(activity);
+        updateCacheEntrySubtitle();
+        publishPresentationState();
+    }
+
+    void addPresentationListener(SettingsPresentationController.Listener listener) {
+        presentationController.addListener(listener);
+    }
+
+    void removePresentationListener(SettingsPresentationController.Listener listener) {
+        presentationController.removeListener(listener);
+    }
+
+    void setHooksEnabledFromPresentation(boolean enabled) { onHooksEnabledChanged(null, enabled); }
+    void showFontDebugFromPresentation() { showFontDebugDialog(null); }
+    void showExperimentalSettingsFromPresentation() { startActivity(new Intent(activity, ExperimentalSettingsActivity.class)); }
+    void showFontLibraryFromPresentation() { startActivity(new Intent(activity, FontLibraryActivity.class)); }
+    void showLanguageFromPresentation() { showLanguageDialog(null); }
+    void saveInterfaceScaleFromPresentation(int percent) { saveInterfaceScalePercent(percent); }
+    void showInterfaceScaleFromPresentation() { showInterfaceScaleDialog(); }
+    void showConfigBackupFromPresentation() { showConfigBackupDialog(null); }
+    void clearCacheFromPresentation() { clearCache(null); }
+    void showAboutFromPresentation() { startActivity(new Intent(activity, AboutActivity.class)); }
+    void showDonateFromPresentation() { startActivity(DonateActivity.createIntent(activity)); }
 
     void onStart() {
         DpisApplication.addServiceStateListener(this, true);
@@ -226,6 +307,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         if (store != null && store.isFontDebugOverlayEnabled() && canDrawOverlays()) {
             startFontDebugOverlayService();
         }
+        publishPresentationState();
     }
 
     void onStop() {
@@ -236,7 +318,14 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
 
     @Override
     public void onServiceStateChanged() {
-        runOnUiThread(() -> refreshStoreState(false));
+        runOnUiThread(() -> {
+            if (root == null) {
+                refreshComposeStoreState();
+            } else {
+                refreshStoreState(false);
+            }
+            publishPresentationState();
+        });
     }
 
     @SuppressWarnings("deprecation")
@@ -247,10 +336,12 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         Uri uri = data.getData();
         if (requestCode == REQUEST_EXPORT_CONFIG_BACKUP) {
             exportConfigBackup(uri);
+            publishPresentationState();
             return;
         }
         if (requestCode == REQUEST_IMPORT_CONFIG_BACKUP) {
             showImportBackupConfirmDialog(uri);
+            publishPresentationState();
             return;
         }
     }
@@ -473,66 +564,17 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             return;
         }
         setInterfaceScalePercentSilently(normalized);
+        publishPresentationState();
         recreate();
     }
 
     private void showInterfaceScaleDialog() {
-        View dialogView = LayoutInflater.from(activity).inflate(
-                R.layout.dialog_interface_scale, null, false);
-        TextInputLayout inputLayout = dialogView.findViewById(R.id.interface_scale_input_layout);
-        TextInputEditText inputView = dialogView.findViewById(R.id.interface_scale_input);
-        MaterialButton cancelButton = dialogView.findViewById(R.id.interface_scale_cancel_button);
-        MaterialButton saveButton = dialogView.findViewById(R.id.interface_scale_save_button);
-
-        inputView.setText(String.valueOf(AppUiScaleManager.getEffectiveScalePercent(activity)));
-        inputView.setSelection(inputView.length());
-
-        AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
-                .setView(dialogView)
-                .create();
-        dialog.setOnShowListener(unused -> {
-            inputView.requestFocus();
-            inputView.postDelayed(() -> {
-                InputMethodManager imm = getSystemService(InputMethodManager.class);
-                if (imm != null) {
-                    imm.showSoftInput(inputView, InputMethodManager.SHOW_IMPLICIT);
-                }
-            }, 120L);
-        });
-        cancelButton.setOnClickListener(v -> dialog.dismiss());
-        saveButton.setOnClickListener(v -> {
-            Integer parsed = parseInterfaceScaleInput(inputView);
-            if (parsed == null
-                    || parsed < AppUiScaleManager.MIN_SCALE_PERCENT
-                    || parsed > AppUiScaleManager.MAX_SCALE_PERCENT) {
-                inputLayout.setError(getString(R.string.settings_interface_scale_input_error));
-                return;
-            }
-            inputLayout.setError(null);
-            dialog.dismiss();
-            saveInterfaceScalePercent(parsed);
-        });
-        inputView.setOnEditorActionListener((view, actionId, event) -> {
-            saveButton.performClick();
-            return true;
-        });
-        dialog.show();
-        DialogWindowSizer.applyLargeWidth(dialog, activity);
-    }
-
-    private Integer parseInterfaceScaleInput(TextInputEditText inputView) {
-        if (inputView == null || inputView.getText() == null) {
-            return null;
-        }
-        String value = inputView.getText().toString().trim();
-        if (value.isEmpty()) {
-            return null;
-        }
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException ignored) {
-            return null;
-        }
+        SettingsComposeDialogs.showInterfaceScale(
+                activity,
+                AppUiScaleManager.getEffectiveScalePercent(activity),
+                AppUiScaleManager.MIN_SCALE_PERCENT,
+                AppUiScaleManager.MAX_SCALE_PERCENT,
+                this::saveInterfaceScalePercent);
     }
 
     private void performInterfaceScaleStepFeedback(int percent) {
@@ -556,86 +598,23 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void showLanguageDialog(View anchor) {
-        View dialogView = LayoutInflater.from(activity).inflate(
-                R.layout.dialog_language_selection, null, false);
-        ViewGroup optionsContainer = dialogView.findViewById(R.id.language_options_container);
-        MaterialButton cancelButton = dialogView.findViewById(R.id.language_dialog_cancel_button);
         List<AppLocaleManager.LanguageOption> languageOptions = AppLocaleManager.supportedLanguages();
-        List<MaterialButton> optionButtons = new ArrayList<>(languageOptions.size());
-        String selectedLanguageTag = AppLocaleManager.getLanguageTag(activity);
-
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
-                .setView(dialogView)
-                .create();
-        dialog.setCanceledOnTouchOutside(true);
-
-        int selectedIndex = 0;
-        for (int i = 0; i < languageOptions.size(); i++) {
-            AppLocaleManager.LanguageOption option = languageOptions.get(i);
-            int optionIndex = i;
-            MaterialButton optionButton = createLanguageOptionButton(optionsContainer, option.labelResId);
-            optionButton.setOnClickListener(
-                    v -> onLanguageOptionSelected(dialog, optionButtons, languageOptions, optionIndex));
-            optionsContainer.addView(optionButton);
-            optionButtons.add(optionButton);
-            if (option.tag.equals(selectedLanguageTag)) {
-                selectedIndex = i;
-            }
+        List<LanguageDialogOption> options = new ArrayList<>(languageOptions.size());
+        for (AppLocaleManager.LanguageOption option : languageOptions) {
+            options.add(new LanguageDialogOption(option.tag, getString(option.labelResId)));
         }
-        updateLanguageOptionButtonStyles(optionButtons, selectedIndex);
-        cancelButton.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
-        DialogWindowSizer.applyLargeWidth(dialog, activity);
-    }
-
-    private void onLanguageOptionSelected(androidx.appcompat.app.AlertDialog dialog,
-            List<MaterialButton> optionButtons,
-            List<AppLocaleManager.LanguageOption> languageOptions,
-            int selectedIndex) {
-        if (selectedIndex < 0 || selectedIndex >= languageOptions.size()) {
-            return;
-        }
-        updateLanguageOptionButtonStyles(optionButtons, selectedIndex);
+        SettingsComposeDialogs.showLanguage(activity, options,
+                AppLocaleManager.getLanguageTag(activity), selectedTag -> {
         String previousTag = AppLocaleManager.getLanguageTag(activity);
-        String selectedTag = languageOptions.get(selectedIndex).tag;
         if (!AppLocaleManager.setLanguageTag(activity, selectedTag)) {
             showToast(R.string.system_settings_save_failed);
             return;
         }
         updateLanguageEntrySubtitle();
-        dialog.dismiss();
         if (!selectedTag.equals(previousTag)) {
             recreate();
         }
-    }
-
-    private MaterialButton createLanguageOptionButton(ViewGroup parent, int labelResId) {
-        MaterialButton button = (MaterialButton) LayoutInflater.from(activity).inflate(
-                R.layout.item_language_option_button,
-                parent,
-                false);
-        button.setText(labelResId);
-        return button;
-    }
-
-    private void updateLanguageOptionButtonStyles(List<MaterialButton> optionButtons, int selectedIndex) {
-        for (int i = 0; i < optionButtons.size(); i++) {
-            MaterialButton button = optionButtons.get(i);
-            boolean selected = i == selectedIndex;
-            int backgroundColor = selected
-                    ? MaterialColors.getColor(
-                            activity,
-                            com.google.android.material.R.attr.colorSecondaryContainer, 0)
-                    : 0;
-            int textColor = MaterialColors.getColor(
-                    activity,
-                    selected ? androidx.appcompat.R.attr.colorPrimary
-                            : com.google.android.material.R.attr.colorOnSurface,
-                    0);
-            button.setBackgroundTintList(ColorStateList.valueOf(backgroundColor));
-            button.setTextColor(textColor);
-            button.setStrokeWidth(0);
-        }
+        });
     }
 
     private void updateLanguageEntrySubtitle() {
@@ -647,15 +626,13 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void updateCacheEntrySubtitle() {
-        if (clearCacheEntryRow == null) {
-            return;
-        }
         android.content.Context appContext = getApplicationContext();
         new Thread(() -> {
             String usage = SafeCacheCleaner.formatCacheUsage(appContext);
             runOnUiThread(() -> {
                 if (!isFinishing() && !isDestroyed() && !clearCacheInProgress) {
                     setCacheEntrySubtitle(usage);
+                    publishPresentationState();
                 }
             });
         }, "dpis-cache-size").start();
@@ -668,6 +645,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         clearCacheInProgress = true;
         setRowEnabled(clearCacheEntryRow, false);
         setCacheEntrySubtitle(getString(R.string.settings_clear_cache_cleaning));
+        publishPresentationState();
         android.content.Context appContext = getApplicationContext();
         new Thread(() -> {
             long startedAt = System.currentTimeMillis();
@@ -690,6 +668,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                     clearCacheInProgress = false;
                     setRowEnabled(clearCacheEntryRow, true);
                     updateCacheEntrySubtitle();
+                    publishPresentationState();
                     if (finalLegacyCacheStillNeedsManualDelete) {
                         showToast(R.string.settings_clear_cache_legacy_public_file_blocked);
                         return;
@@ -716,6 +695,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void setCacheEntrySubtitle(String usage) {
+        lastCacheUsage = usage != null ? usage : "";
         if (clearCacheEntryRow == null) {
             return;
         }
@@ -728,28 +708,8 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             showToast(R.string.status_save_requires_init);
             return;
         }
-        View dialogView = LayoutInflater.from(activity).inflate(
-                R.layout.dialog_config_backup, null, false);
-        MaterialButton exportButton = dialogView.findViewById(R.id.config_backup_export_button);
-        MaterialButton importButton = dialogView.findViewById(R.id.config_backup_import_button);
-        MaterialButton closeButton = dialogView.findViewById(R.id.config_backup_close_button);
-
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
-                .setView(dialogView)
-                .create();
-        dialog.setCanceledOnTouchOutside(true);
-
-        exportButton.setOnClickListener(v -> {
-            dialog.dismiss();
-            launchExportBackupPicker();
-        });
-        importButton.setOnClickListener(v -> {
-            dialog.dismiss();
-            launchImportBackupPicker();
-        });
-        closeButton.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
-        DialogWindowSizer.applyLargeWidth(dialog, activity);
+        SettingsComposeDialogs.showBackupActions(
+                activity, this::launchExportBackupPicker, this::launchImportBackupPicker);
     }
 
     @SuppressWarnings("deprecation")
@@ -782,23 +742,12 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void showImportBackupConfirmDialog(Uri uri) {
-        View dialogView = LayoutInflater.from(activity).inflate(
-                R.layout.dialog_config_backup_confirm, null, false);
-        MaterialButton proceedButton = dialogView.findViewById(R.id.config_backup_confirm_proceed_button);
-        MaterialButton cancelButton = dialogView.findViewById(R.id.config_backup_confirm_cancel_button);
-
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
-                .setView(dialogView)
-                .create();
-        dialog.setCanceledOnTouchOutside(true);
-
-        proceedButton.setOnClickListener(v -> {
-            dialog.dismiss();
-            importConfigBackup(uri);
-        });
-        cancelButton.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
-        DialogWindowSizer.applyLargeWidth(dialog, activity);
+        ComposeConfirmDialog.show(
+                activity,
+                getString(R.string.config_backup_import_confirm_title),
+                getString(R.string.config_backup_import_confirm_message),
+                () -> { importConfigBackup(uri); publishPresentationState(); },
+                this::publishPresentationState);
     }
 
     private void exportConfigBackup(Uri uri) {
@@ -821,9 +770,11 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             runOnUiThread(() -> {
                 if (finalSuccess) {
                     showToast(R.string.config_backup_export_success);
+                    publishPresentationState();
                     return;
                 }
                 showToast(R.string.config_backup_export_failed);
+                publishPresentationState();
             });
         }, "dpis-config-backup-export").start();
     }
@@ -840,15 +791,16 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                 String payload = readUtf8(uri);
                 entries = ConfigBackupCodec.decode(payload);
             } catch (IOException | JSONException | IllegalArgumentException ignored) {
-                runOnUiThread(() -> showToast(R.string.config_backup_import_invalid));
+                runOnUiThread(() -> { showToast(R.string.config_backup_import_invalid); publishPresentationState(); });
                 return;
             }
             if (!localStore.replaceBackup(entries)) {
-                runOnUiThread(() -> showToast(R.string.config_backup_import_failed));
+                runOnUiThread(() -> { showToast(R.string.config_backup_import_failed); publishPresentationState(); });
                 return;
             }
             runOnUiThread(() -> {
                 showToast(R.string.config_backup_import_success);
+                publishPresentationState();
                 relaunchDpisTask();
             });
         }, "dpis-config-backup-import").start();
@@ -899,6 +851,21 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         applyAvailableStoreState();
     }
 
+    private void refreshComposeStoreState() {
+        store = DpisApplication.getConfigStore();
+        if (store == null) {
+            hooksToggleController = null;
+            return;
+        }
+        selectedMode = store.getFontDebugSelectedMode();
+        selectedWindow = store.getFontDebugSelectedWindow();
+        hooksToggleController = new SystemHooksToggleController(
+                store,
+                new ActivitySystemScopeGateway(),
+                new ActivitySystemHooksToggleView(),
+                this::publishPresentationState);
+    }
+
     private void applyAvailableStoreState() {
         hooksEnabledSwitch.setEnabled(true);
         safeModeSwitch.setEnabled(true);
@@ -913,7 +880,8 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         hooksToggleController = new SystemHooksToggleController(
                 store,
                 new ActivitySystemScopeGateway(),
-                new ActivitySystemHooksToggleView());
+                new ActivitySystemHooksToggleView(),
+                this::publishPresentationState);
         applyRestoredStoreState();
         setPrimarySwitchRowsVisible(true);
     }
@@ -999,29 +967,39 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             return;
         }
         dismissFontDebugDialog();
-        ViewGroup root = findViewById(android.R.id.content);
-        View dialogView = LayoutInflater.from(activity).inflate(
-                R.layout.dialog_font_debug_stats, root, false);
-        MaterialButton overlayActionButton = dialogView.findViewById(R.id.dialog_overlay_action);
-        MaterialButton modeButton = dialogView.findViewById(R.id.dialog_stats_mode_button);
-        MaterialButton windowButton = dialogView.findViewById(R.id.dialog_stats_window_button);
-        MaterialButton clearButton = dialogView.findViewById(R.id.dialog_stats_clear);
-        MaterialTextView lastUpdatedView = dialogView.findViewById(R.id.dialog_stats_last_updated);
-        MaterialTextView contentView = dialogView.findViewById(R.id.dialog_stats_content);
-        View closeButton = dialogView.findViewById(R.id.dialog_stats_close);
-
-        overlayActionButton.setOnClickListener(v -> {
+        fontDebugDialog = FontDebugComposeSheet.show(activity,
+                () -> {
+            selectedMode = selectedMode == FontDebugStatsStore.MODE_CHAIN
+                    ? FontDebugStatsStore.MODE_CHAIN_VIEW
+                    : FontDebugStatsStore.MODE_CHAIN;
+            store.setFontDebugSelectedMode(selectedMode);
+            refreshStatsPanel();
+            publishPresentationState();
+        }, () -> {
+            if (selectedWindow == FontDebugStatsStore.WINDOW_5S) {
+                selectedWindow = FontDebugStatsStore.WINDOW_30S;
+            } else if (selectedWindow == FontDebugStatsStore.WINDOW_30S) {
+                selectedWindow = FontDebugStatsStore.WINDOW_ALL;
+            } else {
+                selectedWindow = FontDebugStatsStore.WINDOW_5S;
+            }
+            store.setFontDebugSelectedWindow(selectedWindow);
+            refreshStatsPanel();
+            publishPresentationState();
+        }, () -> {
             boolean currentEnabled = store.isFontDebugOverlayEnabled();
             boolean requestedEnabled = !currentEnabled;
             if (requestedEnabled && !canDrawOverlays()) {
                 requestOverlayPermission();
                 showToast(R.string.font_debug_overlay_permission_needed);
                 updateDialogButtons();
+                publishPresentationState();
                 return;
             }
             if (!store.setFontDebugOverlayEnabled(requestedEnabled)) {
                 showToast(R.string.system_settings_save_failed);
                 updateDialogButtons();
+                publishPresentationState();
                 return;
             }
             RuntimeDebugPropertySyncer.publishAsync(
@@ -1033,56 +1011,17 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                 stopService(new Intent(activity, FontDebugOverlayService.class));
             }
             updateDialogButtons();
-        });
-
-        modeButton.setOnClickListener(v -> {
-            selectedMode = selectedMode == FontDebugStatsStore.MODE_CHAIN
-                    ? FontDebugStatsStore.MODE_CHAIN_VIEW
-                    : FontDebugStatsStore.MODE_CHAIN;
-            store.setFontDebugSelectedMode(selectedMode);
-            updateDialogButtons();
-            refreshStatsPanel();
-        });
-
-        windowButton.setOnClickListener(v -> {
-            if (selectedWindow == FontDebugStatsStore.WINDOW_5S) {
-                selectedWindow = FontDebugStatsStore.WINDOW_30S;
-            } else if (selectedWindow == FontDebugStatsStore.WINDOW_30S) {
-                selectedWindow = FontDebugStatsStore.WINDOW_ALL;
-            } else {
-                selectedWindow = FontDebugStatsStore.WINDOW_5S;
-            }
-            store.setFontDebugSelectedWindow(selectedWindow);
-            updateDialogButtons();
-            refreshStatsPanel();
-        });
-
-        closeButton.setOnClickListener(v -> dismissFontDebugDialog());
-        clearButton.setOnClickListener(v -> {
+            publishPresentationState();
+        }, () -> {
             clearDebugStatsData();
             refreshStatsPanel();
             showToast(R.string.font_debug_clear_done);
-        });
-
-        BottomSheetDialog dialog = new BottomSheetDialog(activity);
-        dialog.setContentView(dialogView);
-        dialog.setOnDismissListener(d -> {
-            dialogOverlayActionButton = null;
-            dialogStatsModeButton = null;
-            dialogStatsWindowButton = null;
-            dialogStatsLastUpdatedView = null;
-            dialogStatsContentView = null;
+            publishPresentationState();
+        }, () -> {
             fontDebugDialog = null;
+            publishPresentationState();
         });
-        fontDebugDialog = dialog;
-        dialogOverlayActionButton = overlayActionButton;
-        dialogStatsModeButton = modeButton;
-        dialogStatsWindowButton = windowButton;
-        dialogStatsLastUpdatedView = lastUpdatedView;
-        dialogStatsContentView = contentView;
-        updateDialogButtons();
         refreshStatsPanel();
-        dialog.show();
     }
 
     private void dismissFontDebugDialog() {
@@ -1092,9 +1031,8 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void refreshStatsPanel() {
-        if (statsPreferences == null
-                || dialogStatsLastUpdatedView == null
-                || dialogStatsContentView == null) {
+        FontDebugComposeSheet.Handle handle = fontDebugDialog;
+        if (statsPreferences == null || handle == null) {
             return;
         }
         String key = FontDebugStatsSchema.statsKeyFor(selectedMode, selectedWindow);
@@ -1102,28 +1040,42 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         long updatedAt = statsPreferences.getLong(FontDebugStatsStore.KEY_UPDATED_AT, 0L);
         int eventTotal = statsPreferences.getInt(FontDebugStatsStore.KEY_EVENT_TOTAL, 0);
 
+        String contentText;
         if (statsText == null || statsText.trim().isEmpty()) {
             FontDebugDataDiagnostics.NoDataReason reason = FontDebugDataDiagnostics.resolveNoDataReason(store,
                     statsPreferences);
             if (reason == FontDebugDataDiagnostics.NoDataReason.NONE) {
-                dialogStatsContentView.setText(getString(R.string.font_debug_not_updated));
+                contentText = getString(R.string.font_debug_not_updated);
             } else {
-                dialogStatsContentView.setText(getString(
+                contentText = getString(
                         R.string.font_debug_no_data_with_reason,
                         reasonTitleText(reason),
-                        reasonHintText(reason)));
+                        reasonHintText(reason));
             }
         } else {
-            dialogStatsContentView.setText(statsText);
+            contentText = statsText;
         }
-
-        if (updatedAt <= 0L) {
-            dialogStatsLastUpdatedView.setText(getString(R.string.font_debug_not_updated));
-            return;
+        String updatedText = getString(R.string.font_debug_not_updated);
+        if (updatedAt > 0L) {
+            DateFormat format = DateFormat.getTimeInstance(DateFormat.MEDIUM, Locale.getDefault());
+            updatedText = getString(R.string.font_debug_last_updated,
+                    format.format(new Date(updatedAt)), eventTotal);
         }
-        DateFormat format = DateFormat.getTimeInstance(DateFormat.MEDIUM, Locale.getDefault());
-        String timeText = format.format(new Date(updatedAt));
-        dialogStatsLastUpdatedView.setText(getString(R.string.font_debug_last_updated, timeText, eventTotal));
+        int windowLabelRes = switch (selectedWindow) {
+            case FontDebugStatsStore.WINDOW_5S -> R.string.font_debug_window_button_5s;
+            case FontDebugStatsStore.WINDOW_30S -> R.string.font_debug_window_button_30s;
+            default -> R.string.font_debug_window_button_all;
+        };
+        boolean overlayEnabled = store.isFontDebugOverlayEnabled();
+        handle.update(
+                getString(selectedMode == FontDebugStatsStore.MODE_CHAIN
+                        ? R.string.font_debug_mode_button_chain
+                        : R.string.font_debug_mode_button_chain_view),
+                getString(windowLabelRes), updatedText, contentText,
+                getString(overlayEnabled
+                        ? R.string.font_debug_overlay_disable_button
+                        : R.string.font_debug_overlay_enable_button),
+                overlayEnabled);
     }
 
     private String reasonTitleText(FontDebugDataDiagnostics.NoDataReason reason) {
@@ -1149,38 +1101,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void updateDialogButtons() {
-        if (store == null) {
-            return;
-        }
-        if (dialogStatsModeButton != null) {
-            dialogStatsModeButton.setText(selectedMode == FontDebugStatsStore.MODE_CHAIN
-                    ? R.string.font_debug_mode_button_chain
-                    : R.string.font_debug_mode_button_chain_view);
-        }
-        if (dialogStatsWindowButton != null) {
-            int windowLabelRes = switch (selectedWindow) {
-                case FontDebugStatsStore.WINDOW_5S -> R.string.font_debug_window_button_5s;
-                case FontDebugStatsStore.WINDOW_30S -> R.string.font_debug_window_button_30s;
-                default -> R.string.font_debug_window_button_all;
-            };
-            dialogStatsWindowButton.setText(windowLabelRes);
-        }
-        if (dialogOverlayActionButton != null) {
-            boolean overlayEnabled = store.isFontDebugOverlayEnabled();
-            dialogOverlayActionButton.setText(overlayEnabled
-                    ? R.string.font_debug_overlay_disable_button
-                    : R.string.font_debug_overlay_enable_button);
-            int bgColor = MaterialColors.getColor(dialogOverlayActionButton,
-                    overlayEnabled
-                            ? com.google.android.material.R.attr.colorErrorContainer
-                            : com.google.android.material.R.attr.colorPrimaryContainer);
-            int fgColor = MaterialColors.getColor(dialogOverlayActionButton,
-                    overlayEnabled
-                            ? com.google.android.material.R.attr.colorOnErrorContainer
-                            : com.google.android.material.R.attr.colorOnPrimaryContainer);
-            dialogOverlayActionButton.setBackgroundTintList(ColorStateList.valueOf(bgColor));
-            dialogOverlayActionButton.setTextColor(fgColor);
-        }
+        refreshStatsPanel();
     }
 
     private void onHooksEnabledChanged(CompoundButton buttonView, boolean isChecked) {
@@ -1191,6 +1112,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             return;
         }
         hooksToggleController.onUserToggle(isChecked);
+        publishPresentationState();
     }
 
     private void applySystemHooksRowVisibility() {
@@ -1215,39 +1137,28 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             return;
         }
         RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
+        publishPresentationState();
     }
 
     private void showDisableSafeModeConfirmationDialog() {
-        View dialogView = LayoutInflater.from(activity)
-                .inflate(R.layout.dialog_process_action_confirm, null, false);
-        MaterialTextView titleView = dialogView.findViewById(R.id.process_action_confirm_title);
-        MaterialTextView messageView = dialogView.findViewById(R.id.process_action_confirm_message);
-        MaterialButton proceedButton = dialogView.findViewById(R.id.process_action_confirm_proceed_button);
-        MaterialButton cancelButton = dialogView.findViewById(R.id.process_action_confirm_cancel_button);
-
-        titleView.setText(R.string.system_safe_mode_disable_confirm_title);
-        messageView.setText(R.string.system_safe_mode_disable_confirm_message);
-
-        AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
-                .setView(dialogView)
-                .create();
-        proceedButton.setOnClickListener(v -> {
-            dialog.dismiss();
-            if (!store.setSystemServerSafeModeEnabled(false)) {
-                setCheckedSilently(safeModeSwitch, true, this::onSafeModeChanged);
-                showToast(R.string.system_settings_save_failed);
-                return;
-            }
-            RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
-        });
-        cancelButton.setOnClickListener(v -> {
-            dialog.dismiss();
-            setCheckedSilently(safeModeSwitch, true, this::onSafeModeChanged);
-        });
-        dialog.setOnCancelListener(unused -> setCheckedSilently(safeModeSwitch, true,
-                this::onSafeModeChanged));
-        dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, activity);
+        ComposeConfirmDialog.show(
+                activity,
+                activity.getString(R.string.system_safe_mode_disable_confirm_title),
+                activity.getString(R.string.system_safe_mode_disable_confirm_message),
+                () -> {
+                    if (!store.setSystemServerSafeModeEnabled(false)) {
+                        setCheckedSilently(safeModeSwitch, true, this::onSafeModeChanged);
+                        showToast(R.string.system_settings_save_failed);
+                        publishPresentationState();
+                        return;
+                    }
+                    RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
+                    publishPresentationState();
+                },
+                () -> {
+                    setCheckedSilently(safeModeSwitch, true, this::onSafeModeChanged);
+                    publishPresentationState();
+                });
     }
 
     private void onGlobalLogChanged(CompoundButton buttonView, boolean isChecked) {
@@ -1264,6 +1175,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                 isChecked,
                 store.isFontDebugOverlayEnabled());
         RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
+        publishPresentationState();
     }
 
     private void onHideLauncherIconChanged(CompoundButton buttonView, boolean isChecked) {
@@ -1274,38 +1186,26 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         if (!persistLauncherIconState(false)) {
             setCheckedSilently(hideLauncherIconSwitch, true, this::onHideLauncherIconChanged);
         }
+        publishPresentationState();
     }
 
     private void showHideLauncherIconConfirmationDialog() {
-        View dialogView = LayoutInflater.from(activity)
-                .inflate(R.layout.dialog_process_action_confirm, null, false);
-        MaterialTextView titleView = dialogView.findViewById(R.id.process_action_confirm_title);
-        MaterialTextView messageView = dialogView.findViewById(R.id.process_action_confirm_message);
-        MaterialButton proceedButton = dialogView.findViewById(R.id.process_action_confirm_proceed_button);
-        MaterialButton cancelButton = dialogView.findViewById(R.id.process_action_confirm_cancel_button);
-
-        titleView.setText(R.string.settings_hide_launcher_icon_confirm_title);
-        messageView.setText(R.string.settings_hide_launcher_icon_confirm_message);
-
-        AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
-                .setView(dialogView)
-                .create();
-        proceedButton.setOnClickListener(v -> {
-            dialog.dismiss();
-            if (!persistLauncherIconState(true)) {
-                setCheckedSilently(hideLauncherIconSwitch, false,
-                        this::onHideLauncherIconChanged);
-            }
-        });
-        cancelButton.setOnClickListener(v -> {
-            dialog.dismiss();
-            setCheckedSilently(hideLauncherIconSwitch, false,
-                    this::onHideLauncherIconChanged);
-        });
-        dialog.setOnCancelListener(unused -> setCheckedSilently(hideLauncherIconSwitch, false,
-                this::onHideLauncherIconChanged));
-        dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, activity);
+        ComposeConfirmDialog.show(
+                activity,
+                activity.getString(R.string.settings_hide_launcher_icon_confirm_title),
+                activity.getString(R.string.settings_hide_launcher_icon_confirm_message),
+                () -> {
+                    if (!persistLauncherIconState(true)) {
+                        setCheckedSilently(hideLauncherIconSwitch, false,
+                                this::onHideLauncherIconChanged);
+                    }
+                    publishPresentationState();
+                },
+                () -> {
+                    setCheckedSilently(hideLauncherIconSwitch, false,
+                            this::onHideLauncherIconChanged);
+                    publishPresentationState();
+                });
     }
 
     private boolean canDrawOverlays() {
@@ -1316,6 +1216,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 Uri.parse("package:" + getPackageName()));
         startActivity(intent);
+        publishPresentationState();
     }
 
     private void startFontDebugOverlayService() {

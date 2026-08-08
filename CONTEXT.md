@@ -9,6 +9,52 @@ DPIS is an LSPosed/Xposed module for per-app display and font behavior. A change
 should stay package-scoped unless the code is explicitly part of `system_server`
 route installation, runtime property recovery, or debug tooling.
 
+## Compose Workspace Baseline
+
+Themes 1-3 established the Compose-first shell plus native Home, Tools, and
+Settings workspaces. The shell remains the only workspace-navigation owner;
+`MainUiState` / `MainUiAction` remain authoritative for destination selection.
+Compose presentation must call focused Java/Kotlin controller or presenter
+boundaries for persistence, permissions, system operations, activity results,
+and runtime-facing work. Do not recreate a hidden View tree only to render a
+Compose workspace.
+
+Compact watch and round layouts use the dedicated Wear Compose presentation
+selected by `WatchUiMode`. Wear screens preserve one inset owner per surface,
+reuse the same Java/Kotlin domain actions as phone/tablet, and map the active
+DPIS light/dark scheme into Wear Material3 instead of hard-coding black.
+See `docs/compose-workspace-migration.md` for the migration and interaction
+baseline.
+
+Scrollable content in App and Template right-side editor panes may draw through
+the bottom gesture-navigation area while scrolling. The scroll viewport must
+remain edge-to-edge; apply the bottom system inset as internal scroll-content
+padding so the final item can still settle fully above the gesture handle. Do
+not put that inset on the outer editor viewport, which creates a hard clipping
+edge above the system area.
+
+Editor destination transitions inside a bottom Sheet must not clip outgoing
+content to the incoming page's animated bounds; controls that were fully visible
+before navigation remain drawable until their horizontal exit completes. A
+list-detail right pane may clip transitions to its own bounds so content cannot
+cross the pane divider.
+
+Repeated controls with minimum touch or content heights, including workspace
+navigation destinations and editor mode choices, must not shrink to fit a short
+window. Preserve each item's normal minimum height and make the containing item
+region vertically scrollable when the available height is insufficient.
+
+Side workspace navigation must not consume the width required by the shared
+App/Template two-pane layout. Enable a Navigation Rail or permanent Drawer only
+when the window can provide both that navigation surface's explicit width and
+the full minimum width of the remaining list-detail workspace.
+
+Discrete user actions in Compose migrated surfaces use confirmation haptic
+feedback through `rememberDpisConfirmAction`; disabled actions do not emit it.
+Continuous controls keep their domain-specific feedback: the interface-scale
+slider snaps to whole percentages and emits a clock tick only when crossing a
+percentage. Do not replace slider step feedback with generic click feedback.
+
 ## Viewport Model
 
 `ViewportTargetSpec` is the authoritative viewport target representation.

@@ -49,11 +49,14 @@ public final class FeedbackDiagnosticSourceSmokeTest {
                 "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticCoordinator.java");
         String summary = read(
                 "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticSummaryBuilder.java");
+        String logGate = read(
+                "src/main/java/com/dpis/module/diagnostics/DiagnosticLogGate.java");
 
         assertTrue(main.contains("new FeedbackDiagnosticCoordinator(createFeedbackDiagnosticHost())"));
         assertTrue(main.contains("private FeedbackDiagnosticCoordinator.Host createFeedbackDiagnosticHost()"));
         assertTrue(main.contains("DiagnosticLogGate.ensureEnabled("));
         assertTrue(main.contains("showFeedbackDiagnosticConfirmation(item, state)"));
+        assertTrue(main.contains("ComposeConfirmDialog.showWithLabels("));
         assertTrue(main.contains("resolvePackageVersionName(item.packageName)"));
         assertTrue(main.contains("feedbackDiagnosticCoordinator.start("));
         assertTrue(main.contains("FeedbackDiagnosticCoordinator.Request.fromPersisted("));
@@ -63,6 +66,8 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(main.contains("showFeedbackDiagnosticResultSheet(finalBuilt);"));
         assertFalse(main.contains("postDelayed(() -> finish("));
         assertFalse(main.contains("summaryBuilder.build("));
+        assertTrue(logGate.contains("ComposeConfirmDialog.showWithLabels("));
+        assertFalse(logGate.contains("MaterialAlertDialogBuilder"));
 
         assertTrue(coordinator.contains("handler.postDelayed("));
         assertTrue(coordinator.contains("RootAccessProbe.probe()"));
@@ -171,8 +176,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
                 "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticExportBuilder.java");
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
         String resultSheet = read(
-                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticResultSheet.java");
-        String layout = read("src/main/res/layout/dialog_feedback_diagnostic_result.xml");
+                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticResultSheet.kt");
         String forceTextSize = read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java");
         String paintFallback = read(
                 "src/main/java/com/dpis/module/runtime/font/PaintTextSizeFallbackHookInstaller.java");
@@ -245,26 +249,17 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertFalse(modernAppSpecific.contains("\"module_loaded_class\""));
         assertTrue(legacyWechat.contains("\"wechat_dpi\""));
         assertTrue(legacyAppSpecific.contains("\"legacy_load_package\""));
-        assertTrue(resultSheet.contains("new BottomSheetDialog(activity)"));
-        assertTrue(resultSheet.contains("bindEntry("));
-        assertTrue(resultSheet.contains("feedback_diagnostic_result_entry_meta"));
+        assertTrue(resultSheet.contains("BottomSheetDialog(activity)"));
+        assertTrue(resultSheet.contains("FeedbackDiagnosticResultContent("));
+        assertTrue(resultSheet.contains("R.string.feedback_diagnostic_result_entry_meta"));
         assertFalse(resultSheet.contains("bindStatusChips(statusChips, result);"));
-        assertTrue(resultSheet.contains("host.shareFeedbackDiagnostic(diagnosticPackage);"));
-        assertTrue(resultSheet.contains("host.saveFeedbackDiagnostic(diagnosticPackage);"));
-        assertTrue(layout.contains("feedback_diagnostic_result_file_0_name"));
-        assertTrue(layout.contains("feedback_diagnostic_result_file_1_name"));
-        assertTrue(layout.contains("feedback_diagnostic_result_file_2_name"));
-        assertTrue(layout.contains("feedback_diagnostic_result_version"));
-        assertTrue(layout.contains("feedback_diagnostic_result_privacy_hint"));
-        assertFalse(layout.contains("feedback_diagnostic_result_status_chips"));
-        assertFalse(layout.contains("feedback_diagnostic_result_diagnostic_body"));
-        assertFalse(layout.contains("feedback_diagnostic_result_package_hint"));
-        assertFalse(layout.contains("feedback_diagnostic_result_config_body"));
-        assertFalse(layout.contains("feedback_diagnostic_result_evidence_body"));
-        assertTrue(layout.contains("android:visibility=\"gone\""));
-        assertTrue(layout.contains("feedback_diagnostic_result_summary"));
-        assertTrue(layout.contains("feedback_diagnostic_save_button"));
-        assertTrue(layout.contains("feedback_diagnostic_share_button"));
+        assertTrue(resultSheet.contains("host.shareFeedbackDiagnostic(diagnosticPackage)"));
+        assertTrue(resultSheet.contains("host.saveFeedbackDiagnostic(diagnosticPackage)"));
+        assertTrue(resultSheet.contains("R.string.feedback_diagnostic_result_privacy_hint"));
+        assertFalse(resultSheet.contains("result.summary"));
+        assertTrue(resultSheet.contains("R.string.feedback_diagnostic_save_action"));
+        assertTrue(resultSheet.contains("R.string.feedback_diagnostic_share_action"));
+        assertTrue(resultSheet.contains("FeedbackDiagnosticPackagingDialog"));
     }
 
     private static String read(String relativePath) throws IOException {

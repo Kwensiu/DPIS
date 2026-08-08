@@ -15,6 +15,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 
+import java.util.Locale;
+
 import androidx.appcompat.widget.AppCompatImageView;
 
 import com.google.android.material.card.MaterialCardView;
@@ -25,13 +27,14 @@ public final class HomeWorkspaceBinder {
     private int statusCardEqualizationGeneration = 0;
 
     public static final class State {
-        final boolean xposedModuleActivated;
-        final int configuredAppCount;
-        final int importedFontCount;
-        final int templateCount;
-        final RootAccessProbe.Result rootAccess;
-        final HomeUpdateUiState updateState;
-        final Actions actions;
+        /** Immutable domain snapshot shared by the legacy binder and Compose presenter. */
+        public final boolean xposedModuleActivated;
+        public final int configuredAppCount;
+        public final int importedFontCount;
+        public final int templateCount;
+        public final RootAccessProbe.Result rootAccess;
+        public final HomeUpdateUiState updateState;
+        public final Actions actions;
 
         public State(boolean xposedModuleActivated,
                 int configuredAppCount,
@@ -98,6 +101,12 @@ public final class HomeWorkspaceBinder {
         void openFontLibrary();
 
         void openTemplateWorkspace();
+
+        default void openModeHelp() {
+        }
+
+        default void openDonate() {
+        }
     }
 
     private final Context context;
@@ -270,7 +279,7 @@ public final class HomeWorkspaceBinder {
                 targetHeight = Math.max(targetHeight, measuredHeight);
             }
         }
-        return Math.max(0, targetHeight);
+        return targetHeight;
     }
 
     private static void setLayoutHeight(View view, int height) {
@@ -596,7 +605,7 @@ public final class HomeWorkspaceBinder {
         if (manufacturer.isEmpty()) {
             return model;
         }
-        if (model.toLowerCase().startsWith(manufacturer.toLowerCase())) {
+        if (model.toLowerCase(Locale.ROOT).startsWith(manufacturer.toLowerCase(Locale.ROOT))) {
             return model;
         }
         return manufacturer + " " + model;

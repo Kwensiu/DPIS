@@ -11,13 +11,16 @@ import com.dpis.module.applist.InstalledAppCatalogCoordinator;
 
 import com.dpis.module.fonts.FontApplyMode;
 import com.dpis.module.fonts.FontLibraryActivity;
+import com.dpis.module.fonts.HyperOsNativeAppDetector;
 
 
 
 import com.dpis.module.runtime.ModuleRuntimeReloadAdvisor;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
+import com.dpis.module.updates.UpdateAvailableDialog;
 
 import com.dpis.module.diagnostics.FeedbackDiagnosticResultSheet;
+import com.dpis.module.diagnostics.FeedbackDiagnosticPackagingDialog;
 
 import com.dpis.module.diagnostics.FeedbackDiagnosticExportBuilder;
 
@@ -51,8 +54,6 @@ import com.dpis.module.viewport.ViewportTargetType;
 import com.dpis.module.applist.AppListFilter;
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;
-import com.dpis.module.applist.AppListPagerAdapter;
-import com.dpis.module.applist.AppListTabsChromeController;
 import com.dpis.module.hooks.HookDomainOverride;
 import com.dpis.module.hooks.HookDomainOverrideStore;
 
@@ -63,17 +64,19 @@ import com.dpis.module.process.ProcessActionHandler;
 import com.dpis.module.templates.QuickTemplateSortDialog;
 
 import com.dpis.module.templates.GlobalPrefillStore;
-import com.dpis.module.templates.GlobalPrefillEditorBinder;
-import com.dpis.module.templates.GlobalPrefillSheetDialog;
+import com.dpis.module.templates.GlobalPrefillSaveHandler;
 import com.dpis.module.templates.BatchScopeRequestCoordinator;
 import com.dpis.module.templates.QuickTemplateApplyAdapters;
-import com.dpis.module.templates.QuickTemplateEditorBinder;
-import com.dpis.module.templates.QuickTemplateEditSheetDialog;
+import com.dpis.module.templates.TemplateEditorDraft;
 import com.dpis.module.templates.QuickTemplateTargetSelectionActivity;
 import com.dpis.module.templates.QuickTemplateTargetsBinder;
 import com.dpis.module.templates.TemplateWorkspaceBinder;
+import com.dpis.module.templates.TemplateWorkspacePresentation;
+import com.dpis.module.templates.TemplateWorkspacePresentationController;
 
 import com.dpis.module.templates.QuickTemplateStore;
+import com.dpis.module.templates.QuickTemplateSaveHandler;
+import com.dpis.module.templates.TemplateEditorForm;
 
 import com.dpis.module.templates.TemplateConfigValue;
 
@@ -91,12 +94,19 @@ import com.dpis.module.ui.TouchFeedbackBinder;
 import com.dpis.module.ui.WindowInsetsBinder;
 
 import com.dpis.module.ui.DialogWindowSizer;
+import com.dpis.module.ui.compose.AppFilterComposeSheet;
+import com.dpis.module.ui.compose.ComposeConfirmDialog;
+import com.dpis.module.ui.compose.ComposeMessageDialog;
+import com.dpis.module.ui.compose.ModuleRuntimeReloadComposeDialog;
 
 import com.dpis.module.home.HomeUpdateUiState;
 import com.dpis.module.home.HomeWorkspaceBinder;
 import com.dpis.module.home.HomeActivationStateResolver;
+import com.dpis.module.home.DonateActivity;
+import com.dpis.module.home.ModeHelpActivity;
 
 import com.dpis.module.settings.ToolsWorkspaceBinder;
+import com.dpis.module.settings.SystemFontScaleToolPresenter;
 import com.dpis.module.settings.StartupDisclaimerStore;
 
 import com.dpis.module.templates.QuickTemplateTargetCarrierState;
@@ -108,12 +118,8 @@ import com.dpis.module.templates.QuickTemplateApplyCoordinator;
 
 import com.dpis.module.root.RootAccessProbe;
 
-import com.dpis.module.ui.MaxHeightNestedScrollView;
-import com.dpis.module.ui.WatchWorkspaceNavigationController;
 import com.dpis.module.ui.WatchWorkspaceChromeBinder;
 import com.dpis.module.ui.WatchUiMode;
-
-import com.dpis.module.ui.FormInputFocusBinder;
 
 import com.dpis.module.updates.UpdateStateStore;
 
@@ -146,49 +152,26 @@ import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.os.Process;
-import android.text.Editable;
-import android.text.SpannableString;
-import android.text.Spanned;
-import android.text.TextWatcher;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
-import android.util.SparseArray;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
 import android.widget.Toast;
 import androidx.core.content.FileProvider;
 import androidx.core.view.ViewCompat;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import androidx.viewpager2.widget.ViewPager2;
+import androidx.compose.ui.platform.ComposeView;
 import com.dpis.module.appconfig.AppConfigDialogCoordinator;
 import com.dpis.module.updates.GitHubReleaseNotesFetcher;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.color.MaterialColors;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.materialswitch.MaterialSwitch;
-import com.google.android.material.navigation.NavigationBarView;
-import com.google.android.material.navigationrail.NavigationRailView;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
-import com.google.android.material.tabs.TabLayout;
-import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.google.android.material.textview.MaterialTextView;
 import com.dpis.module.updates.ReleaseNotesMarkdownRenderer;
 import io.github.libxposed.service.XposedService;
 import java.io.File;
@@ -205,6 +188,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import kotlin.Unit;
 
 public final class MainActivity
         extends LocalizedActivity
@@ -216,9 +200,6 @@ public final class MainActivity
     private static final AccelerateDecelerateInterpolator
             WORKSPACE_CONTENT_ENTER_INTERPOLATOR =
                     new AccelerateDecelerateInterpolator();
-    private static final long SEARCH_FAB_ANIM_DURATION_MS = 160L;
-    private static final float SEARCH_FAB_HIDDEN_SCALE = 0.92f;
-    private static final int SEARCH_FAB_SCROLL_TRIGGER_DY = 8;
     private static final String STATE_CURRENT_QUERY = "state.current_query";
     private static final String STATE_TEMPLATE_QUERY = "state.template_query";
     private static final String STATE_CURRENT_PAGE = "state.current_page";
@@ -231,14 +212,14 @@ public final class MainActivity
             = "state.filter.width_only";
     private static final String STATE_FILTER_FONT_ONLY
             = "state.filter.font_only";
-    private static final String STATE_PAGE_SCROLL_STATES
-            = "state.page_scroll_states";
     private static final String STATE_REFRESHING_PAGES
             = "state.refreshing_pages";
     private static final String STATE_TEMPLATE_DETAIL_KIND
             = "state.template_detail.kind";
     private static final String STATE_TEMPLATE_DETAIL_ID
             = "state.template_detail.id";
+    private static final String STATE_TEMPLATE_EDITOR_DESTINATION
+            = "state.template_editor.destination";
     private static final String STATE_QUICK_TEMPLATE_TARGETS_ACTIVITY_STARTED
             = "state.quick_template.targets_activity_started";
     private static final String STATE_GLOBAL_PREFILL_DRAFT
@@ -249,6 +230,8 @@ public final class MainActivity
     private static final String STATE_DRAFT_VIEWPORT_INPUT = "viewport_input";
     private static final String STATE_DRAFT_VIEWPORT_MODE = "viewport_mode";
     private static final String STATE_DRAFT_VIEWPORT_APPLY_MODE = "viewport_apply_mode";
+    private static final String STATE_DRAFT_VIEWPORT_SCALE_INPUT = "viewport_scale_input";
+    private static final String STATE_DRAFT_VIEWPORT_ABSOLUTE_INPUT = "viewport_absolute_input";
     private static final String STATE_DRAFT_FONT_INPUT = "font_input";
     private static final String STATE_DRAFT_FONT_MODE = "font_mode";
     private static final String STATE_DRAFT_TYPEFACE_ID = "typeface_id";
@@ -258,8 +241,6 @@ public final class MainActivity
     private static final int DOWNLOAD_BUFFER_SIZE = 16 * 1024;
     private static final long DOWNLOAD_PROGRESS_UPDATE_INTERVAL_MS = 180L;
     private static final long INSTALLED_APP_CATALOG_TTL_MS = 60_000L;
-    private static final int FIRST_SCREEN_ICON_WARMUP_LIMIT = 48;
-    private static final long ICON_REFRESH_DEBOUNCE_MS = 120L;
     private static final String XIAOMI_GET_INSTALLED_APPS_PERMISSION
             = "com.android.permission.GET_INSTALLED_APPS";
     private static final int REQUEST_XIAOMI_GET_INSTALLED_APPS = 10022;
@@ -299,9 +280,7 @@ public final class MainActivity
     private final InstalledAppCatalogCoordinator installedAppCatalogCoordinator
             = new InstalledAppCatalogCoordinator(
                     createInstalledAppCatalogHost(),
-                    INSTALLED_APP_CATALOG_TTL_MS,
-                    FIRST_SCREEN_ICON_WARMUP_LIMIT,
-                    ICON_REFRESH_DEBOUNCE_MS
+                    INSTALLED_APP_CATALOG_TTL_MS
             );
     private final StartupUpdateCheckCoordinator startupUpdateCheckCoordinator
             = new StartupUpdateCheckCoordinator(
@@ -313,18 +292,17 @@ public final class MainActivity
     private UpdatePromptDialogCoordinator updatePromptDialogCoordinator;
     private ReleaseNotesController releaseNotesController;
     private AppListFilterStateStore appListFilterStateStore;
+    private final AppWorkspaceScrollStateStore appWorkspaceScrollStateStore
+            = new AppWorkspaceScrollStateStore();
 
     private MainViewModel mainViewModel;
-    private AppListPagerAdapter pagerAdapter;
-    private AppListTabsChromeController appListTabsChromeController;
-    private ViewPager2 appPager;
-    private TabLayout filterTabs;
+    private MainComposeShellHost composeShellHost;
+    private MainWorkspacePresentationCoordinator workspacePresentationCoordinator;
     private View topContainer;
     private View homeWorkspaceContainer;
     private View templateWorkspaceContainer;
     private View toolsWorkspaceContainer;
     private View settingsWorkspaceContainer;
-    private View landListPageView;
     private View landDetailPane;
     private View landDetailDivider;
     private View landDetailEmptyView;
@@ -333,25 +311,15 @@ public final class MainActivity
     private FrameLayout templateDetailContent;
     private TemplateDetailSelection templateDetailSelection
             = TemplateDetailSelection.none();
-    private AppListPagerAdapter.AppListPageController landListController;
+    private ConfigEditorDestination templateEditorDestination
+            = ConfigEditorDestination.MAIN;
     private AppListPage landCurrentPage = AppListPage.ALL_APPS;
-    private final SparseArray<Parcelable> landScrollStates
-            = new SparseArray<>();
     private HomeWorkspaceBinder homeWorkspaceBinder;
     private TemplateWorkspaceBinder templateWorkspaceBinder;
+    private TemplateWorkspacePresentationController templateWorkspacePresentationController;
     private ToolsWorkspaceBinder toolsWorkspaceBinder;
+    private SystemFontScaleToolPresenter composeToolsPresenter;
     private SystemServerSettingsPageController settingsPageController;
-    private NavigationBarView workspaceSwitch;
-    private WatchWorkspaceNavigationController watchWorkspaceNavigationController;
-    private SparseArray<Parcelable> restoredPageScrollStates;
-    private EditText searchInput;
-    private ImageButton searchClearButton;
-    private FloatingActionButton searchFocusFab;
-    private boolean searchFabHidden;
-    private boolean suppressSearchQueryChange;
-    private boolean updatingWorkspaceSelection;
-    private boolean updatingFilterTabSelection;
-    private ImageButton searchFilterButton;
     private boolean cachedSystemHookEffectiveEnabled;
     private boolean skipNextImmediateServiceReload;
     private boolean installedAppsPermissionRequestInFlight;
@@ -366,19 +334,14 @@ public final class MainActivity
     private View activeEditorRoot;
     private String activeEditorPackageName;
     private BottomSheetDialog activeAppEditorDialog;
-    private GlobalPrefillSheetDialog activeGlobalPrefillSheetDialog;
-    private QuickTemplateEditSheetDialog activeQuickTemplateEditSheetDialog;
-    private GlobalPrefillEditorBinder activeGlobalPrefillEditorBinder;
-    private QuickTemplateEditorBinder activeQuickTemplateEditorBinder;
     private QuickTemplateTargetsBinder activeQuickTemplateTargetsBinder;
     private FeedbackDiagnosticCoordinator.Result pendingFeedbackDiagnosticResult;
     private FeedbackDiagnosticExportBuilder.DiagnosticPackage pendingFeedbackDiagnosticPackage;
     private androidx.appcompat.app.AlertDialog activeFeedbackDiagnosticPackagingDialog;
     private final Map<String, Integer> pendingRuntimePropertyGenerations = new HashMap<>();
     private boolean mainActivityResumed;
-    private GlobalPrefillEditorBinder.Draft retainedGlobalPrefillDraft;
-    private QuickTemplateEditorBinder.Draft retainedQuickTemplateDraft;
-    private boolean templateSheetMigrationInProgress;
+    private TemplateEditorDraft retainedGlobalPrefillDraft;
+    private TemplateEditorDraft retainedQuickTemplateDraft;
     // TODO: Promote quick-template target carrier decisions into a full state machine.
     private boolean quickTemplateTargetSelectionActivityStarted;
 
@@ -386,8 +349,6 @@ public final class MainActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_status);
-        searchFocusFab = findViewById(R.id.search_focus_fab);
-        applyInsets();
         refreshSystemHookEffectiveEnabled();
 
         updateStateStore = new UpdateStateStore(this);
@@ -409,7 +370,7 @@ public final class MainActivity
         appListFilterStateStore = new AppListFilterStateStore(this);
 
         RetainedState retainedState
-                = (RetainedState) getLastNonConfigurationInstance();
+                = (RetainedState) getLastCustomNonConfigurationInstance();
         String initialQuery = "";
         String initialTemplateQuery = "";
         AppListFilterState initialFilterState = appListFilterStateStore.load();
@@ -424,12 +385,13 @@ public final class MainActivity
             initialFilterState = retainedState.filterState;
             initialWorkspaceMode = retainedState.workspaceMode;
             templateDetailSelection = retainedState.templateDetailSelection;
+            templateEditorDestination = retainedState.templateEditorDestination;
             quickTemplateTargetSelectionActivityStarted =
                     retainedState.quickTemplateTargetSelectionActivityStarted;
             retainedGlobalPrefillDraft = retainedState.globalPrefillDraft;
             retainedQuickTemplateDraft = retainedState.quickTemplateDraft;
             homeUpdateUiState = retainedState.homeUpdateUiState;
-            restoredPageScrollStates = retainedState.pageScrollStates;
+            appWorkspaceScrollStateStore.restore(retainedState.appListScrollPositions);
             initialRefreshingPages = decodeRefreshingPages(
                     retainedState.refreshingPagePositions
             );
@@ -457,14 +419,13 @@ public final class MainActivity
             initialWorkspaceMode = MainUiState.WorkspaceMode.fromName(
                     savedInstanceState.getString(STATE_WORKSPACE_MODE)
             );
-            restoredPageScrollStates
-                    = savedInstanceState.getSparseParcelableArray(
-                            STATE_PAGE_SCROLL_STATES
-                    );
             initialRefreshingPages = decodeRefreshingPages(
                     savedInstanceState.getIntArray(STATE_REFRESHING_PAGES)
             );
             templateDetailSelection = restoreTemplateDetailSelection(savedInstanceState);
+            templateEditorDestination = ConfigEditorDestination.fromName(
+                    savedInstanceState.getString(STATE_TEMPLATE_EDITOR_DESTINATION)
+            );
             quickTemplateTargetSelectionActivityStarted = savedInstanceState.getBoolean(
                     STATE_QUICK_TEMPLATE_TARGETS_ACTIVITY_STARTED,
                     false
@@ -487,9 +448,6 @@ public final class MainActivity
                 )
         );
 
-        searchFilterButton = findViewById(R.id.search_filter_button);
-        appPager = findViewById(R.id.app_pager);
-        filterTabs = findViewById(R.id.filter_tabs);
         topContainer = findViewById(R.id.top_container);
         homeWorkspaceContainer = findViewById(R.id.home_workspace_container);
         templateWorkspaceContainer = findViewById(
@@ -502,7 +460,6 @@ public final class MainActivity
                 homeWorkspaceContainer,
                 settingsWorkspaceContainer
         );
-        landListPageView = findViewById(R.id.land_app_list_page);
         landDetailPane = findViewById(R.id.land_detail_pane);
         landDetailDivider = findViewById(R.id.land_detail_divider);
         landDetailEmptyView = findViewById(R.id.land_detail_empty);
@@ -542,40 +499,15 @@ public final class MainActivity
                 }
             }
         });
-        workspaceSwitch = findViewById(R.id.workspace_switch);
-        workspaceSwitch.setSaveFromParentEnabled(false);
-        bindLandscapeWorkspaceRailItemHeight();
-        watchWorkspaceNavigationController = WatchWorkspaceNavigationController.attachIfSupported(
-                this,
-                findViewById(R.id.root_container),
-                workspaceSwitch,
-                findViewById(R.id.workspace_switch_scroll),
-                itemId -> dispatchMainUiAction(
-                        MainUiAction.workspaceModeChanged(workspaceModeForButtonId(itemId))
-                )
-        );
-        if (appPager != null) {
-            pagerAdapter = new AppListPagerAdapter(
-                    this::showEditDialog,
-                    this::onPageRefreshRequested,
-                    this::onPageListScrolled,
-                    this::onIconLoadRequested,
-                    this::isSystemHookEnabledFromStore
-            );
-            pagerAdapter.restorePageScrollStates(restoredPageScrollStates);
-            appPager.setAdapter(pagerAdapter);
-        } else {
-            restoreLandscapeScrollStates(restoredPageScrollStates);
-        }
-        bindLandscapeListController();
-        appListTabsChromeController = new AppListTabsChromeController(
-                this,
-                filterTabs,
-                pagerAdapter,
-                landListController
-        );
-        appListTabsChromeController.bind();
-        applyRefreshingStatesToPager();
+        composeToolsPresenter = new SystemFontScaleToolPresenter(this,
+                new SystemFontScaleToolPresenter.Listener() {
+                    @Override public void onStateChanged(com.dpis.module.settings.SystemFontScaleToolState state) {
+                        if (composeShellHost != null) composeShellHost.refreshTools();
+                    }
+                    @Override public void onWriteFailed() { showToast(R.string.system_settings_save_failed); }
+                });
+        // Workspace navigation is now rendered by the Compose shell in every
+        // form factor, including the compact watch radial selector.
         if (savedInstanceState != null) {
             setCurrentAppListPage(
                     AppListPage.fromPosition(
@@ -590,79 +522,18 @@ public final class MainActivity
             );
         }
 
-        bindFilterTabs();
-        bindWorkspaceSwitch();
-        searchFilterButton.setOnClickListener(v -> showFilterDialog());
-        bindFabTouchFeedback(searchFocusFab);
-        searchFocusFab.setOnClickListener(v
-                -> focusSearchInputAndShowKeyboard()
-        );
-
-        searchInput = findViewById(R.id.search_input);
-        searchInput.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_DONE
-                    || (event != null
-                    && event.getAction() == KeyEvent.ACTION_DOWN
-                    && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
-                clearSearchFocus();
-                return true;
-            }
-            return false;
-        });
-        searchClearButton = findViewById(R.id.search_clear_button);
-        searchInput.addTextChangedListener(
-                new TextWatcher() {
-            @Override
-            public void beforeTextChanged(
-                    CharSequence s,
-                    int start,
-                    int count,
-                    int after
-            ) {
-            }
-
-            @Override
-            public void onTextChanged(
-                    CharSequence s,
-                    int start,
-                    int before,
-                    int count
-            ) {
-                String query = s != null ? s.toString() : "";
-                if (!suppressSearchQueryChange) {
-                    dispatchMainUiAction(MainUiAction.queryChanged(query));
-                }
-                searchClearButton.setVisibility(
-                        query.isEmpty() ? View.GONE : View.VISIBLE
-                );
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-        }
-        );
-        searchClearButton.setOnClickListener(v -> {
-            searchInput.setText("");
-            searchInput.requestFocus();
-        });
-        String restoredQuery = requireUiState().currentQuery();
-        if (!restoredQuery.isEmpty()) {
-            searchInput.setText(restoredQuery);
-            searchInput.setSelection(restoredQuery.length());
-        }
-        searchInput.setOnFocusChangeListener((view, hasFocus)
-                -> updateSearchHint()
-        );
         renderMainUiState(requireUiState());
+        installComposeWorkspaceShell();
         // The service state callback is not guaranteed to fire on every Wear image.
         // Request the catalog explicitly; MainViewModel coalesces any later service reload.
         requestAppsLoad();
         if (retainedState != null && retainedState.editingPackageName != null) {
-            mainViewModel.setEditingPackageName(
-                    retainedState.editingPackageName
+            mainViewModel.restoreEditingSession(
+                    retainedState.editingPackageName,
+                    retainedState.editingDraft,
+                    retainedState.savedEditingDraft,
+                    retainedState.editingDestination
             );
-            mainViewModel.setEditingDraft(retainedState.editingDraft);
             restoreAppEditorForCurrentWorkspace();
         }
         restoreTemplateEditorForCurrentConfiguration();
@@ -675,29 +546,9 @@ public final class MainActivity
     }
 
     @Override
-    public boolean dispatchTouchEvent(MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_DOWN
-                && searchInput != null
-                && searchInput.hasFocus()) {
-            int rawX = (int) event.getRawX();
-            int rawY = (int) event.getRawY();
-            if (!FormInputFocusBinder.isInsideAny(
-                    rawX,
-                    rawY,
-                    searchInput,
-                    searchFocusFab
-            )) {
-                clearSearchFocus();
-            }
-        }
-        return super.dispatchTouchEvent(event);
-    }
-
-    @Override
     protected void onStart() {
         super.onStart();
         refreshSystemHookEffectiveEnabled();
-        refreshVisibleAppListStatuses();
         if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.TEMPLATE) {
             bindTemplateWorkspace();
         } else if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
@@ -707,7 +558,9 @@ public final class MainActivity
         } else if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.SETTINGS) {
             bindSettingsWorkspace();
         }
-        if (toolsWorkspaceBinder != null) {
+        if (composeShellHost != null && composeToolsPresenter != null) {
+            composeToolsPresenter.refresh();
+        } else if (toolsWorkspaceBinder != null) {
             toolsWorkspaceBinder.onStart();
         }
         if (settingsPageController != null) {
@@ -717,21 +570,14 @@ public final class MainActivity
     }
 
     @Override
-    public void onBackPressed() {
-        if (watchWorkspaceNavigationController != null
-                && watchWorkspaceNavigationController.closeMenuIfExpanded()) {
-            return;
-        }
-        super.onBackPressed();
-    }
-
-    @Override
     protected void onResume() {
         super.onResume();
         mainActivityResumed = true;
         feedbackDiagnosticCoordinator.onDpisResumed();
         maybeShowPendingFeedbackDiagnosticResult();
-        if (toolsWorkspaceBinder != null) {
+        if (composeShellHost != null && composeToolsPresenter != null) {
+            composeToolsPresenter.refresh();
+        } else if (toolsWorkspaceBinder != null) {
             toolsWorkspaceBinder.onResume();
         }
         if (settingsPageController != null) {
@@ -742,7 +588,7 @@ public final class MainActivity
     @Override
     protected void onStop() {
         mainActivityResumed = false;
-        if (toolsWorkspaceBinder != null) {
+        if (composeShellHost == null && toolsWorkspaceBinder != null) {
             toolsWorkspaceBinder.onStop();
         }
         if (settingsPageController != null) {
@@ -768,7 +614,6 @@ public final class MainActivity
     public void onServiceStateChanged() {
         runOnUiThread(() -> {
             refreshSystemHookEffectiveEnabled();
-            refreshVisibleAppListStatuses();
             if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
                 bindHomeWorkspace();
             }
@@ -790,7 +635,9 @@ public final class MainActivity
         if (settingsPageController != null) {
             settingsPageController.onActivityResult(requestCode, resultCode, data);
         }
-        if (toolsWorkspaceBinder != null) {
+        if (composeShellHost != null && composeToolsPresenter != null) {
+            composeToolsPresenter.refresh();
+        } else if (toolsWorkspaceBinder != null) {
             toolsWorkspaceBinder.onActivityResult(requestCode, resultCode, data);
         }
         if (requestCode == REQUEST_QUICK_TEMPLATE_TARGETS) {
@@ -849,24 +696,16 @@ public final class MainActivity
                 STATE_FILTER_FONT_ONLY,
                 state.filterState.fontConfiguredOnly()
         );
-        if (appPager != null) {
-            outState.putInt(STATE_CURRENT_PAGE, appPager.getCurrentItem());
-        } else {
-            outState.putInt(STATE_CURRENT_PAGE, landCurrentPage.position());
-        }
-        SparseArray<Parcelable> pageScrollStates = captureAppListScrollStates();
-        if (pageScrollStates != null) {
-            outState.putSparseParcelableArray(
-                    STATE_PAGE_SCROLL_STATES,
-                    pageScrollStates
-            );
-        }
+        outState.putInt(STATE_CURRENT_PAGE, landCurrentPage.position());
         outState.putIntArray(
                 STATE_REFRESHING_PAGES,
                 captureRefreshingPagePositions()
         );
-        captureTemplateEditorDraft();
         saveTemplateDetailSelection(outState, templateDetailSelection);
+        outState.putString(
+                STATE_TEMPLATE_EDITOR_DESTINATION,
+                templateEditorDestination.name()
+        );
         outState.putBoolean(
                 STATE_QUICK_TEMPLATE_TARGETS_ACTIVITY_STARTED,
                 quickTemplateTargetSelectionActivityStarted
@@ -909,19 +748,14 @@ public final class MainActivity
     }
 
     @Override
-    public Object onRetainNonConfigurationInstance() {
+    public Object onRetainCustomNonConfigurationInstance() {
         MainUiState state = requireUiState();
         List<AppListItem> snapshot = state.appsSnapshot();
-        int currentPage
-                = appPager != null
-                        ? appPager.getCurrentItem()
-                        : landCurrentPage.position();
-        SparseArray<Parcelable> pageScrollStates = captureAppListScrollStates();
-        AppConfigDraft draft = captureAppConfigDraft();
+        int currentPage = landCurrentPage.position();
+        AppConfigEditorDraft draft = captureAppConfigDraft();
         if (draft == null && mainViewModel != null) {
             draft = mainViewModel.getEditingDraft();
         }
-        captureTemplateEditorDraft();
         return new RetainedState(
                 snapshot,
                 state.appQuery,
@@ -929,13 +763,18 @@ public final class MainActivity
                 state.filterState,
                 state.workspaceMode,
                 currentPage,
-                pageScrollStates,
+                appWorkspaceScrollStateStore.snapshot(),
                 captureRefreshingPagePositions(),
                 mainViewModel != null
                         ? mainViewModel.getEditingPackageName()
                         : null,
                 draft,
+                mainViewModel != null ? mainViewModel.getSavedEditingDraft() : null,
+                mainViewModel != null
+                        ? mainViewModel.getEditingDestination()
+                        : ConfigEditorDestination.MAIN,
                 templateDetailSelection,
+                templateEditorDestination,
                 quickTemplateTargetSelectionActivityStarted,
                 retainedGlobalPrefillDraft,
                 retainedQuickTemplateDraft,
@@ -946,67 +785,6 @@ public final class MainActivity
     private void onPageRefreshRequested(AppListPage page) {
         dispatchMainUiAction(MainUiAction.markPageRefreshing(page));
         requestAppsLoad(true);
-    }
-
-    private void onPageListScrolled(AppListPage page, int dy) {
-        if (appListTabsChromeController != null
-                && appListTabsChromeController.onPageListScrolled(dy)) {
-            return;
-        }
-        if (!WatchUiMode.shouldUseFloatingAppSearch(this)) {
-            return;
-        }
-        if (dy >= SEARCH_FAB_SCROLL_TRIGGER_DY) {
-            hideSearchFocusFab();
-            return;
-        }
-        if (dy <= -SEARCH_FAB_SCROLL_TRIGGER_DY) {
-            showSearchFocusFab();
-        }
-    }
-
-    private void onIconLoadRequested(String packageName) {
-        installedAppCatalogCoordinator.onIconLoadRequested(packageName);
-    }
-
-    private void refreshVisibleAppListStatuses() {
-        if (pagerAdapter != null) {
-            pagerAdapter.refreshVisibleStatuses();
-        }
-        if (landListController != null) {
-            landListController.refreshStatuses();
-        }
-    }
-
-    private SparseArray<Parcelable> captureAppListScrollStates() {
-        if (pagerAdapter != null) {
-            return pagerAdapter.capturePageScrollStates();
-        }
-        captureCurrentLandscapeScrollState();
-        SparseArray<Parcelable> states = new SparseArray<>();
-        for (int i = 0; i < landScrollStates.size(); i++) {
-            states.put(landScrollStates.keyAt(i), landScrollStates.valueAt(i));
-        }
-        return states;
-    }
-
-    private void restoreLandscapeScrollStates(SparseArray<Parcelable> states) {
-        landScrollStates.clear();
-        if (states == null) {
-            return;
-        }
-        for (int i = 0; i < states.size(); i++) {
-            landScrollStates.put(states.keyAt(i), states.valueAt(i));
-        }
-    }
-
-    private void captureCurrentLandscapeScrollState() {
-        if (landListController != null) {
-            Parcelable landState = landListController.captureScrollState();
-            if (landState != null) {
-                landScrollStates.put(landCurrentPage.position(), landState);
-            }
-        }
     }
 
     private static Set<AppListPage> decodeRefreshingPages(int[] pagePositions) {
@@ -1032,115 +810,11 @@ public final class MainActivity
         return positions;
     }
 
-    private void bindLandscapeListController() {
-        if (landListPageView == null) {
-            return;
-        }
-        SwipeRefreshLayout swipeRefreshLayout = landListPageView.findViewById(
-                R.id.page_swipe_refresh
-        );
-        RecyclerView recyclerView = landListPageView.findViewById(
-                R.id.page_list
-        );
-        landListController = new AppListPagerAdapter.AppListPageController(
-                swipeRefreshLayout,
-                recyclerView,
-                this::showEditDialog,
-                this::onPageRefreshRequested,
-                this::onPageListScrolled,
-                this::onIconLoadRequested,
-                this::isSystemHookEnabledFromStore
-        );
-        landListController.setSwipeRefreshEnabled(false);
-    }
-
-    private void bindFilterTabs() {
-        if (filterTabs == null) {
-            return;
-        }
-        if (appPager != null) {
-            new TabLayoutMediator(filterTabs, appPager, (tab, position)
-                    -> tab.setText(
-                            getString(AppListPage.fromPosition(position).titleRes())
-                    )
-            ).attach();
-            return;
-        }
-        filterTabs.removeAllTabs();
-        for (AppListPage page : AppListPage.values()) {
-            TabLayout.Tab tab = filterTabs
-                    .newTab()
-                    .setText(getString(page.titleRes()));
-            filterTabs.addTab(tab, page == landCurrentPage);
-        }
-        filterTabs.addOnTabSelectedListener(
-                new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                if (updatingFilterTabSelection) {
-                    return;
-                }
-                setCurrentAppListPage(
-                        AppListPage.fromPosition(tab.getPosition()),
-                        true
-                );
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-            }
-        }
-        );
-    }
-
     private void setCurrentAppListPage(AppListPage page, boolean submit) {
         AppListPage nextPage = page != null ? page : AppListPage.ALL_APPS;
-        if (appPager != null) {
-            appPager.setCurrentItem(nextPage.position(), false);
-            if (submit) {
-                applyFilter();
-                applyRefreshingStatesToPager();
-            }
-            return;
-        }
-        if (landCurrentPage != nextPage) {
-            captureCurrentLandscapeScrollState();
-        }
         landCurrentPage = nextPage;
-        if (filterTabs != null) {
-            TabLayout.Tab selectedTab = filterTabs.getTabAt(
-                    nextPage.position()
-            );
-            if (selectedTab != null && !selectedTab.isSelected()) {
-                updatingFilterTabSelection = true;
-                try {
-                    selectedTab.select();
-                } finally {
-                    updatingFilterTabSelection = false;
-                }
-            }
-        }
-        if (submit) {
-            applyFilter();
-            applyRefreshingStatesToPager();
-        }
-    }
-
-    private void applyRefreshingStatesToPager() {
-        MainUiState state = requireUiState();
-        if (pagerAdapter != null) {
-            for (AppListPage page : AppListPage.values()) {
-                pagerAdapter.setRefreshing(page, state.isRefreshing(page));
-            }
-        }
-        if (landListController != null) {
-            landListController.setRefreshing(
-                    state.isRefreshing(landCurrentPage)
-            );
+        if (submit && composeShellHost != null) {
+            composeShellHost.refreshApps();
         }
     }
 
@@ -1159,8 +833,7 @@ public final class MainActivity
     }
 
     private boolean ensureInstalledAppsPermissionBeforeLoad() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M
-                || installedAppsPermissionRequestCompleted
+        if (installedAppsPermissionRequestCompleted
                 || !isXiaomiInstalledAppsPermissionDeclared()) {
             return true;
         }
@@ -1218,122 +891,9 @@ public final class MainActivity
         dispatchMainUiAction(MainUiAction.appsLoadFinished(requestId, loaded));
     }
 
-    private void applyInsets() {
-        View topContainer = findViewById(R.id.top_container);
-        WatchWorkspaceChromeBinder.applyTopContainerInsets(topContainer);
-        View homeWorkspace = findViewById(R.id.home_workspace_container);
-        WindowInsetsBinder.applySafeDrawingPadding(
-                homeWorkspace,
-                false,
-                true,
-                false,
-                true,
-                R.dimen.home_workspace_round_safe_padding
-        );
-        WindowInsetsBinder.applyNavigationBarMargins(searchFocusFab);
-    }
-
     private void applyLandDetailContentInsets(View detailView) {
         View scrollView = detailView.findViewById(R.id.land_detail_scroll);
         WindowInsetsBinder.applySafeDrawingPadding(scrollView, false, true, false, true);
-    }
-
-    private void focusSearchInputAndShowKeyboard() {
-        if (searchInput == null) {
-            return;
-        }
-        showSearchFocusFab();
-        searchInput.requestFocus();
-        Editable current = searchInput.getText();
-        if (current != null) {
-            searchInput.setSelection(current.length());
-        }
-        searchInput.setHint("");
-        InputMethodManager imm = (InputMethodManager) getSystemService(
-                Context.INPUT_METHOD_SERVICE
-        );
-        if (imm != null) {
-            searchInput.post(()
-                    -> imm.showSoftInput(searchInput, InputMethodManager.SHOW_IMPLICIT)
-            );
-        }
-    }
-
-    private void bindFabTouchFeedback(FloatingActionButton fab) {
-        TouchFeedbackBinder.bindPressScaleAndHaptic(fab);
-    }
-
-    private void hideSearchFocusFab() {
-        if (searchFocusFab == null || searchFabHidden) {
-            return;
-        }
-        searchFabHidden = true;
-        searchFocusFab.animate().cancel();
-        searchFocusFab.setClickable(false);
-        searchFocusFab
-                .animate()
-                .translationY(getResources().getDimensionPixelSize(
-                        R.dimen.floating_actions_hide_offset_y))
-                .alpha(0f)
-                .scaleX(SEARCH_FAB_HIDDEN_SCALE)
-                .scaleY(SEARCH_FAB_HIDDEN_SCALE)
-                .setDuration(SEARCH_FAB_ANIM_DURATION_MS)
-                .setInterpolator(new AccelerateDecelerateInterpolator())
-                .withEndAction(() -> {
-                    if (searchFabHidden) {
-                        searchFocusFab.setVisibility(View.INVISIBLE);
-                    }
-                })
-                .start();
-    }
-
-    private void showSearchFocusFab() {
-        if (searchFocusFab == null
-                || !WatchUiMode.shouldUseFloatingAppSearch(this)
-                || !searchFabHidden) {
-            return;
-        }
-        searchFabHidden = false;
-        searchFocusFab.animate().cancel();
-        searchFocusFab.setVisibility(View.VISIBLE);
-        searchFocusFab.setClickable(true);
-        searchFocusFab
-                .animate()
-                .translationY(0f)
-                .alpha(1f)
-                .scaleX(1f)
-                .scaleY(1f)
-                .setDuration(SEARCH_FAB_ANIM_DURATION_MS)
-                .setInterpolator(new AccelerateDecelerateInterpolator())
-                .start();
-    }
-
-    private void setSearchFocusFabVisible(boolean visible) {
-        if (searchFocusFab == null) {
-            return;
-        }
-        searchFocusFab.animate().cancel();
-        searchFabHidden = false;
-        searchFocusFab.setClickable(visible);
-        searchFocusFab.setAlpha(1f);
-        searchFocusFab.setScaleX(1f);
-        searchFocusFab.setScaleY(1f);
-        searchFocusFab.setTranslationY(0f);
-        searchFocusFab.setVisibility(visible ? View.VISIBLE : View.GONE);
-    }
-
-    private void clearSearchFocus() {
-        if (searchInput == null) {
-            return;
-        }
-        Editable current = searchInput.getText();
-        if (current == null || current.length() == 0) {
-            searchInput.setHint(getString(R.string.search_hint));
-        }
-        FormInputFocusBinder.clearFocusAndHideIme(
-                findViewById(android.R.id.content),
-                searchInput
-        );
     }
 
     private void showToast(int messageResId) {
@@ -1375,9 +935,7 @@ public final class MainActivity
         return true;
     }
 
-    private List<AppListItem> loadInstalledApps(
-            boolean forceInstalledAppCatalogReload
-    ) {
+    private List<AppListItem> loadInstalledApps(boolean forceInstalledAppCatalogReload) {
         ScopeState scopeState = loadScopeState();
         return installedAppCatalogCoordinator.loadInstalledApps(
                 forceInstalledAppCatalogReload,
@@ -1403,23 +961,6 @@ public final class MainActivity
             scopePackages.clear();
         }
         return new ScopeState(scopePackages, false);
-    }
-
-    private void applyFilter() {
-        MainUiState state = requireUiState();
-        if (pagerAdapter != null) {
-            for (AppListPage page : AppListPage.values()) {
-                pagerAdapter.submitPage(page, state.visibleItems(page));
-            }
-        }
-        if (landListController != null) {
-            landListController.bind(
-                    landCurrentPage,
-                    state.visibleItems(landCurrentPage),
-                    landScrollStates.get(landCurrentPage.position()),
-                    state.isRefreshing(landCurrentPage)
-            );
-        }
     }
 
     private MainUiState requireUiState() {
@@ -1449,53 +990,108 @@ public final class MainActivity
         if (state == null) {
             return;
         }
-        syncSearchInputWithState(state);
+        if (composeShellHost != null) {
+            composeShellHost.render(state);
+        }
         applyWorkspaceMode(state.workspaceMode);
-        applyFilter();
-        applyRefreshingStatesToPager();
         restoreAppEditorForCurrentWorkspace();
     }
 
-    private void bindWorkspaceSwitch() {
-        if (workspaceSwitch == null) {
+    /**
+     * Theme 1 keeps the existing workspace root alive inside Compose while later
+     * themes replace individual View workspaces. Navigation itself now belongs
+     * to the stateless Compose shell and still dispatches through MainUiAction.
+     */
+    private void installComposeWorkspaceShell() {
+        ViewGroup activityContent = findViewById(android.R.id.content);
+        if (activityContent == null || activityContent.getChildCount() == 0) {
             return;
         }
-        selectWorkspaceItem(workspaceButtonId(requireUiState().workspaceMode));
-        workspaceSwitch.setOnItemSelectedListener(item -> {
-            if (updatingWorkspaceSelection) {
-                return true;
-            }
-            dispatchMainUiAction(
-                    MainUiAction.workspaceModeChanged(
-                            workspaceModeForButtonId(item.getItemId())
-                    )
-            );
-            return true;
-        });
-    }
-
-    private void bindLandscapeWorkspaceRailItemHeight() {
-        if (!(workspaceSwitch instanceof NavigationRailView)) {
+        View legacyWorkspaceRoot = activityContent.getChildAt(0);
+        if (legacyWorkspaceRoot == null) {
             return;
         }
-        applyCompactLandscapeWorkspaceRailItemHeight();
-    }
-
-    private void applyCompactLandscapeWorkspaceRailItemHeight() {
-        if (!(workspaceSwitch instanceof NavigationRailView)
-                || workspaceSwitch.getMenu() == null
-                || workspaceSwitch.getMenu().size() == 0) {
-            return;
-        }
-        NavigationRailView railView = (NavigationRailView) workspaceSwitch;
-        // Keep destinations at a Material-style touch height instead of stretching five items
-        // across the whole landscape edge. Round screens override this value for tighter spacing.
-        int itemHeight = getResources().getDimensionPixelSize(
-                R.dimen.main_land_workspace_rail_item_min_height
+        activityContent.removeView(legacyWorkspaceRoot);
+        ComposeView composeRoot = new ComposeView(this);
+        activityContent.addView(
+                composeRoot,
+                new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                )
         );
-        if (railView.getItemMinimumHeight() != itemHeight) {
-            railView.setItemMinimumHeight(itemHeight);
-        }
+        workspacePresentationCoordinator = new MainWorkspacePresentationCoordinator(
+                new MainWorkspacePresentationCoordinator.Content() {
+                    @Override public HomeWorkspaceBinder.State homeState() { return createHomeWorkspaceState(); }
+                    @Override public AppWorkspacePresentation.State appState() {
+                        return AppWorkspacePresentation.create(
+                                requireUiState(),
+                                landCurrentPage,
+                                isSystemHookEnabledFromStore(),
+                                appWorkspaceScrollStateStore,
+                                createComposeAppWorkspaceActions());
+                    }
+                    @Override public AppConfigEditorPresentation.State appEditorState() {
+                        return createComposeAppEditorState();
+                    }
+                    @Override public com.dpis.module.settings.SystemFontScaleToolState toolsState() { return composeToolsPresenter != null ? composeToolsPresenter.state() : null; }
+                    @Override public void changeToolsPending(int percent) { composeToolsPresenter.selectPendingPercent(percent); }
+                    @Override public void applyTools() { composeToolsPresenter.apply(); }
+                    @Override public void restoreTools() { composeToolsPresenter.restoreDefault(); }
+                    @Override public void requestToolsPermission() { startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS, android.net.Uri.parse("package:" + getPackageName()))); }
+                    @Override public void openToolsLogs() { if (DiagnosticLogGate.ensureEnabled(MainActivity.this, () -> startActivity(new Intent(MainActivity.this, LogActivity.class)), null)) startActivity(new Intent(MainActivity.this, LogActivity.class)); }
+                    @Override public SettingsUiState settingsState() { return ensureComposeSettingsController().presentationState(); }
+                    @Override public void setSettingsHooks(boolean enabled) { ensureComposeSettingsController().setHooksEnabledFromPresentation(enabled); }
+                    @Override public void setSettingsSafeMode(boolean enabled) { ensureComposeSettingsController().presentationController().setSafeModeEnabled(enabled); }
+                    @Override public void setSettingsGlobalLog(boolean enabled) { ensureComposeSettingsController().presentationController().setGlobalLogEnabled(enabled); }
+                    @Override public void setSettingsLauncherHidden(boolean hidden) { ensureComposeSettingsController().presentationController().setLauncherIconHidden(hidden); }
+                    @Override public void setSettingsScale(int percent) { ensureComposeSettingsController().saveInterfaceScaleFromPresentation(percent); }
+                    @Override public void openSettingsScaleDetails() { ensureComposeSettingsController().showInterfaceScaleFromPresentation(); }
+                    @Override public void openSettingsFontDebug() { ensureComposeSettingsController().showFontDebugFromPresentation(); }
+                    @Override public void openSettingsFontLibrary() { ensureComposeSettingsController().showFontLibraryFromPresentation(); }
+                    @Override public void openSettingsExperimental() { ensureComposeSettingsController().showExperimentalSettingsFromPresentation(); }
+                    @Override public void openSettingsLanguage() { ensureComposeSettingsController().showLanguageFromPresentation(); }
+                    @Override public void openSettingsBackup() { ensureComposeSettingsController().showConfigBackupFromPresentation(); }
+                    @Override public void clearSettingsCache() { ensureComposeSettingsController().clearCacheFromPresentation(); }
+                    @Override public void openSettingsAbout() { ensureComposeSettingsController().showAboutFromPresentation(); }
+                    @Override public void openSettingsDonate() { ensureComposeSettingsController().showDonateFromPresentation(); }
+                    @Override public TemplateWorkspacePresentation.State templateState() {
+                        return ensureComposeTemplateWorkspacePresentation().state();
+                    }
+                    @Override public void changeTemplateQuery(String query) {
+                        dispatchMainUiAction(MainUiAction.queryChanged(query));
+                    }
+                    @Override public void openTemplateEditor(
+                            boolean quickTemplate,
+                            String templateId
+                    ) {
+                        onComposeTemplateEditorOpened(quickTemplate, templateId);
+                    }
+                    @Override public void updateTemplateEditor(TemplateEditorForm form) {
+                        onComposeTemplateEditorChanged(form);
+                    }
+                    @Override public void updateTemplateEditorDestination(
+                            ConfigEditorDestination destination
+                    ) {
+                        templateEditorDestination = destination != null
+                                ? destination
+                                : ConfigEditorDestination.MAIN;
+                        bindTemplateWorkspace();
+                    }
+                    @Override public void closeTemplateEditor() {
+                        onComposeTemplateEditorClosed();
+                    }
+                });
+        composeShellHost = new MainComposeShellHost(
+                composeRoot,
+                requireUiState(),
+                WatchUiMode.shouldUseCompactUi(this),
+                workspacePresentationCoordinator,
+                action -> {
+                    dispatchMainUiAction(action);
+                    return Unit.INSTANCE;
+                }
+        );
     }
 
     private void applyWorkspaceMode(MainUiState.WorkspaceMode workspaceMode) {
@@ -1508,30 +1104,10 @@ public final class MainActivity
         boolean templateWorkspace = mode == MainUiState.WorkspaceMode.TEMPLATE;
         boolean toolsWorkspace = mode == MainUiState.WorkspaceMode.TOOLS;
         boolean settingsWorkspace = mode == MainUiState.WorkspaceMode.SETTINGS;
-        if (appListTabsChromeController != null) {
-            appListTabsChromeController.onWorkspaceChanged(appWorkspace);
-        }
         setVisible(topContainer, appWorkspace || templateWorkspace);
-        setVisible(filterTabs, appWorkspace);
-        if (appListTabsChromeController != null) {
-            filterTabs.post(appListTabsChromeController::syncListInsets);
-        }
-        boolean floatingActionsVisible = appWorkspace
-                && !isLandscapeDetailMode()
-                && WatchUiMode.shouldUseFloatingAppSearch(this);
-        setSearchFocusFabVisible(floatingActionsVisible);
-        if (searchFilterButton != null) {
-            searchFilterButton.setEnabled(appWorkspace);
-            searchFilterButton.setVisibility(
-                    appWorkspace ? View.VISIBLE : View.GONE
-            );
-        }
-        applySearchClearButtonPosition(appWorkspace);
         boolean animateWorkspace = renderedWorkspaceMode != null
                 && renderedWorkspaceMode != mode;
         renderedWorkspaceMode = mode;
-        setVisible(appPager, appWorkspace);
-        setVisible(landListPageView, appWorkspace);
         setVisible(homeWorkspaceContainer, homeWorkspace);
         setVisible(templateWorkspaceContainer, templateWorkspace);
         setVisible(toolsWorkspaceContainer, toolsWorkspace);
@@ -1541,14 +1117,6 @@ public final class MainActivity
             animateVisibleWorkspaceContent(mode);
         }
         applyLandscapeDetailVisibility(appWorkspace, templateWorkspace);
-        if (workspaceSwitch != null
-                && workspaceSwitch.getSelectedItemId() != workspaceButtonId(mode)) {
-            selectWorkspaceItem(workspaceButtonId(mode));
-        }
-        if (watchWorkspaceNavigationController != null) {
-            watchWorkspaceNavigationController.setSelectedItem(workspaceButtonId(mode));
-        }
-        updateSearchHint(mode);
         if (homeWorkspace) {
             bindHomeWorkspace();
         } else if (templateWorkspace) {
@@ -1561,24 +1129,16 @@ public final class MainActivity
         }
     }
 
-    private void applySearchClearButtonPosition(boolean filterButtonVisible) {
-        if (searchClearButton == null) {
-            return;
-        }
-        int start = getResources().getDimensionPixelSize(filterButtonVisible
-                ? R.dimen.main_search_action_pair_padding
-                : R.dimen.main_search_action_icon_padding_start);
-        int end = getResources().getDimensionPixelSize(filterButtonVisible
-                ? R.dimen.main_search_action_pair_padding
-                : R.dimen.main_search_action_icon_padding_end);
-        int vertical = getResources().getDimensionPixelSize(
-                R.dimen.main_search_action_icon_padding_vertical);
-        ViewCompat.setPaddingRelative(searchClearButton, start, vertical, end, vertical);
-    }
-
     private void restoreAppEditorForCurrentWorkspace() {
         if (mainViewModel == null
                 || requireUiState().workspaceMode != MainUiState.WorkspaceMode.APP) {
+            return;
+        }
+        // The Compose app workspace restores its editor directly from MainViewModel. Re-entering
+        // the legacy route here would stack a View BottomSheetDialog over the Compose sheet after
+        // any state render, including the catalog refresh triggered by a successful save.
+        if (composeShellHost != null) {
+            composeShellHost.refreshApps();
             return;
         }
         String editingPackage = mainViewModel.getEditingPackageName();
@@ -1629,6 +1189,20 @@ public final class MainActivity
     }
 
     private void bindTemplateWorkspace() {
+        if (composeShellHost != null) {
+            ensureComposeTemplateWorkspacePresentation().refresh(
+                    requireUiState().currentQuery(),
+                    composeTemplateDetailKind(),
+                    templateDetailSelection != null
+                            ? templateDetailSelection.templateId
+                            : null,
+                    templateEditorDestination,
+                    retainedGlobalPrefillDraft,
+                    retainedQuickTemplateDraft
+            );
+            composeShellHost.refreshTemplates();
+            return;
+        }
         if (templateWorkspaceBinder != null) {
             templateWorkspaceBinder.bind(
                     templateWorkspaceContainer,
@@ -1637,27 +1211,16 @@ public final class MainActivity
         }
     }
 
-    private void syncSearchInputWithState(MainUiState state) {
-        if (searchInput == null || state == null) {
-            return;
-        }
-        String query = state.currentQuery();
-        Editable current = searchInput.getText();
-        String currentQuery = current != null ? current.toString() : "";
-        if (query.equals(currentQuery)) {
-            return;
-        }
-        suppressSearchQueryChange = true;
-        searchInput.setText(query);
-        suppressSearchQueryChange = false;
-        searchInput.setSelection(query.length());
-    }
-
     private void bindToolsWorkspace() {
         bindToolsWorkspace(false);
     }
 
     private void bindToolsWorkspace(boolean resetExpandedState) {
+        if (composeShellHost != null && composeToolsPresenter != null) {
+            composeToolsPresenter.refresh();
+            composeShellHost.refreshTools(resetExpandedState);
+            return;
+        }
         if (toolsWorkspaceBinder != null) {
             toolsWorkspaceBinder.bind(toolsWorkspaceContainer);
             if (resetExpandedState) {
@@ -1685,72 +1248,7 @@ public final class MainActivity
         templateDetailSelection = TemplateDetailSelection.globalPrefill();
         retainedQuickTemplateDraft = null;
         disposeActiveQuickTemplateTargetsBinder();
-        if (!isLandscapeDetailMode()) {
-            showGlobalPrefillSheet();
-            return;
-        }
-        showTemplateDetailPane(templateDetailSelection);
-    }
-
-    private void showGlobalPrefillSheet() {
-        if (activeGlobalPrefillSheetDialog != null
-                && activeGlobalPrefillSheetDialog.isShowing()) {
-            return;
-        }
-        activeGlobalPrefillSheetDialog = new GlobalPrefillSheetDialog(
-                this,
-                this::onTemplateEditorUpdated,
-                () -> {
-                    if (activeGlobalPrefillSheetDialog != null) {
-                        retainedGlobalPrefillDraft = activeGlobalPrefillSheetDialog.snapshotDraft();
-                    }
-                    activeGlobalPrefillSheetDialog = null;
-                    if (!templateSheetMigrationInProgress) {
-                        clearTemplateDetailSelection();
-                    }
-                },
-                retainedGlobalPrefillDraft
-        );
-        activeGlobalPrefillSheetDialog.show();
-    }
-
-    private void showQuickTemplateSheet(String templateId) {
-        if (activeQuickTemplateEditSheetDialog != null
-                && activeQuickTemplateEditSheetDialog.isShowing()) {
-            return;
-        }
-        activeQuickTemplateEditSheetDialog = new QuickTemplateEditSheetDialog(
-                this,
-                templateId,
-                this::onTemplateEditorUpdated,
-                () -> {
-                    if (activeQuickTemplateEditSheetDialog != null) {
-                        retainedQuickTemplateDraft =
-                                activeQuickTemplateEditSheetDialog.snapshotDraft();
-                    }
-                    activeQuickTemplateEditSheetDialog = null;
-                    if (!templateSheetMigrationInProgress) {
-                        clearTemplateDetailSelection();
-                    }
-                },
-                retainedQuickTemplateDraft
-        );
-        activeQuickTemplateEditSheetDialog.show();
-    }
-
-    private void captureTemplateEditorDraft() {
-        if (activeGlobalPrefillSheetDialog != null) {
-            retainedGlobalPrefillDraft = activeGlobalPrefillSheetDialog.snapshotDraft();
-        }
-        if (activeQuickTemplateEditSheetDialog != null) {
-            retainedQuickTemplateDraft = activeQuickTemplateEditSheetDialog.snapshotDraft();
-        }
-        if (activeGlobalPrefillEditorBinder != null) {
-            retainedGlobalPrefillDraft = activeGlobalPrefillEditorBinder.snapshotDraft();
-        }
-        if (activeQuickTemplateEditorBinder != null) {
-            retainedQuickTemplateDraft = activeQuickTemplateEditorBinder.snapshotDraft();
-        }
+        bindTemplateWorkspace();
     }
 
     private static void saveTemplateDetailSelection(
@@ -1791,7 +1289,7 @@ public final class MainActivity
 
     // Saved-instance recovery must keep unsaved template editor input, not just
     // reopen the same detail page after process recreation.
-    private static Bundle saveGlobalPrefillDraft(GlobalPrefillEditorBinder.Draft draft) {
+    private static Bundle saveGlobalPrefillDraft(TemplateEditorDraft draft) {
         Bundle bundle = new Bundle();
         if (draft == null) {
             return bundle;
@@ -1799,6 +1297,8 @@ public final class MainActivity
         bundle.putString(STATE_DRAFT_VIEWPORT_INPUT, draft.viewportInput);
         bundle.putString(STATE_DRAFT_VIEWPORT_MODE, draft.viewportMode);
         bundle.putString(STATE_DRAFT_VIEWPORT_APPLY_MODE, draft.viewportApplyMode);
+        bundle.putString(STATE_DRAFT_VIEWPORT_SCALE_INPUT, draft.viewportScaleInput);
+        bundle.putString(STATE_DRAFT_VIEWPORT_ABSOLUTE_INPUT, draft.viewportAbsoluteInput);
         bundle.putString(STATE_DRAFT_FONT_INPUT, draft.fontInput);
         bundle.putString(STATE_DRAFT_FONT_MODE, draft.fontMode);
         bundle.putString(STATE_DRAFT_TYPEFACE_ID, draft.selectedTypefaceId);
@@ -1806,14 +1306,18 @@ public final class MainActivity
         return bundle;
     }
 
-    private static GlobalPrefillEditorBinder.Draft restoreGlobalPrefillDraft(Bundle bundle) {
+    private static TemplateEditorDraft restoreGlobalPrefillDraft(Bundle bundle) {
         if (bundle == null || bundle.isEmpty()) {
             return null;
         }
-        return new GlobalPrefillEditorBinder.Draft(
+        return new TemplateEditorDraft(
+                false,
+                "",
                 bundle.getString(STATE_DRAFT_VIEWPORT_INPUT),
                 bundle.getString(STATE_DRAFT_VIEWPORT_MODE),
                 bundle.getString(STATE_DRAFT_VIEWPORT_APPLY_MODE),
+                bundle.getString(STATE_DRAFT_VIEWPORT_SCALE_INPUT),
+                bundle.getString(STATE_DRAFT_VIEWPORT_ABSOLUTE_INPUT),
                 bundle.getString(STATE_DRAFT_FONT_INPUT),
                 bundle.getString(STATE_DRAFT_FONT_MODE),
                 bundle.getString(STATE_DRAFT_TYPEFACE_ID),
@@ -1821,7 +1325,7 @@ public final class MainActivity
         );
     }
 
-    private static Bundle saveQuickTemplateDraft(QuickTemplateEditorBinder.Draft draft) {
+    private static Bundle saveQuickTemplateDraft(TemplateEditorDraft draft) {
         Bundle bundle = new Bundle();
         if (draft == null) {
             return bundle;
@@ -1830,6 +1334,8 @@ public final class MainActivity
         bundle.putString(STATE_DRAFT_VIEWPORT_INPUT, draft.viewportInput);
         bundle.putString(STATE_DRAFT_VIEWPORT_MODE, draft.viewportMode);
         bundle.putString(STATE_DRAFT_VIEWPORT_APPLY_MODE, draft.viewportApplyMode);
+        bundle.putString(STATE_DRAFT_VIEWPORT_SCALE_INPUT, draft.viewportScaleInput);
+        bundle.putString(STATE_DRAFT_VIEWPORT_ABSOLUTE_INPUT, draft.viewportAbsoluteInput);
         bundle.putString(STATE_DRAFT_FONT_INPUT, draft.fontInput);
         bundle.putString(STATE_DRAFT_FONT_MODE, draft.fontMode);
         bundle.putString(STATE_DRAFT_TYPEFACE_ID, draft.selectedTypefaceId);
@@ -1837,35 +1343,23 @@ public final class MainActivity
         return bundle;
     }
 
-    private static QuickTemplateEditorBinder.Draft restoreQuickTemplateDraft(Bundle bundle) {
+    private static TemplateEditorDraft restoreQuickTemplateDraft(Bundle bundle) {
         if (bundle == null || bundle.isEmpty()) {
             return null;
         }
-        return new QuickTemplateEditorBinder.Draft(
+        return new TemplateEditorDraft(
+                true,
                 bundle.getString(STATE_DRAFT_NAME),
                 bundle.getString(STATE_DRAFT_VIEWPORT_INPUT),
                 bundle.getString(STATE_DRAFT_VIEWPORT_MODE),
                 bundle.getString(STATE_DRAFT_VIEWPORT_APPLY_MODE),
+                bundle.getString(STATE_DRAFT_VIEWPORT_SCALE_INPUT),
+                bundle.getString(STATE_DRAFT_VIEWPORT_ABSOLUTE_INPUT),
                 bundle.getString(STATE_DRAFT_FONT_INPUT),
                 bundle.getString(STATE_DRAFT_FONT_MODE),
                 bundle.getString(STATE_DRAFT_TYPEFACE_ID),
                 bundle.getString(STATE_DRAFT_FONT_HOOK_DOMAINS)
         );
-    }
-
-    private void closeActiveTemplateSheetForMigration() {
-        templateSheetMigrationInProgress = true;
-        if (activeGlobalPrefillSheetDialog != null) {
-            retainedGlobalPrefillDraft = activeGlobalPrefillSheetDialog.snapshotDraft();
-            activeGlobalPrefillSheetDialog.dismiss();
-            activeGlobalPrefillSheetDialog = null;
-        }
-        if (activeQuickTemplateEditSheetDialog != null) {
-            retainedQuickTemplateDraft = activeQuickTemplateEditSheetDialog.snapshotDraft();
-            activeQuickTemplateEditSheetDialog.dismiss();
-            activeQuickTemplateEditSheetDialog = null;
-        }
-        templateSheetMigrationInProgress = false;
     }
 
     private void disposeActiveQuickTemplateTargetsBinder() {
@@ -1875,15 +1369,68 @@ public final class MainActivity
         }
     }
 
+    private TemplateWorkspacePresentation.DetailKind composeTemplateDetailKind() {
+        if (templateDetailSelection == null) {
+            return TemplateWorkspacePresentation.DetailKind.NONE;
+        }
+        return switch (templateDetailSelection.kind) {
+            case GLOBAL_PREFILL -> TemplateWorkspacePresentation.DetailKind.GLOBAL_PREFILL;
+            case QUICK_TEMPLATE -> TemplateWorkspacePresentation.DetailKind.QUICK_TEMPLATE;
+            case QUICK_TEMPLATE_TARGETS ->
+                    TemplateWorkspacePresentation.DetailKind.QUICK_TEMPLATE_TARGETS;
+            case NONE -> TemplateWorkspacePresentation.DetailKind.NONE;
+        };
+    }
+
+    /**
+     * Compose owns the visible portrait sheet, while this Activity owns the cross-configuration
+     * detail selection. Keep the two lifetimes linked at the editor boundary instead of making
+     * the Compose workspace reach into Activity fields directly.
+     */
+    private void onComposeTemplateEditorOpened(boolean quickTemplate, String templateId) {
+        templateEditorDestination = ConfigEditorDestination.MAIN;
+        if (quickTemplate) {
+            templateDetailSelection = TemplateDetailSelection.quickTemplate(templateId);
+            retainedGlobalPrefillDraft = null;
+        } else {
+            templateDetailSelection = TemplateDetailSelection.globalPrefill();
+            retainedQuickTemplateDraft = null;
+        }
+        disposeActiveQuickTemplateTargetsBinder();
+    }
+
+    private void onComposeTemplateEditorChanged(TemplateEditorForm form) {
+        if (form == null) {
+            return;
+        }
+        boolean dirty = form.isDirty();
+        if (form.quickTemplate) {
+            retainedQuickTemplateDraft = dirty ? form.quickDraft() : null;
+            retainedGlobalPrefillDraft = null;
+        } else {
+            retainedGlobalPrefillDraft = dirty ? form.globalDraft() : null;
+            retainedQuickTemplateDraft = null;
+        }
+        if (!dirty) {
+            // A successful save adopts the store as the only new-editor baseline. Clear the
+            // presentation seed immediately so a later route/configuration refresh cannot
+            // resurrect the just-saved pre-normalized draft.
+            bindTemplateWorkspace();
+        }
+    }
+
+    private void onComposeTemplateEditorClosed() {
+        // Closing is one Activity-owned session transition. Publish only after selection,
+        // destination, and retained drafts are all cleared so Compose cannot re-open stale state.
+        clearTemplateDetailSelection();
+        bindTemplateWorkspace();
+    }
+
     private void showQuickTemplateEditor(String templateId) {
         templateDetailSelection = TemplateDetailSelection.quickTemplate(templateId);
         retainedGlobalPrefillDraft = null;
         disposeActiveQuickTemplateTargetsBinder();
-        if (!isLandscapeDetailMode()) {
-            showQuickTemplateSheet(templateId);
-            return;
-        }
-        showTemplateDetailPane(templateDetailSelection);
+        bindTemplateWorkspace();
     }
 
     private void showQuickTemplateTargets(String templateId) {
@@ -1925,29 +1472,22 @@ public final class MainActivity
             return;
         }
         TemplateDetailSelection selection = templateDetailSelection;
-        if (isLandscapeDetailMode()) {
-            if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE_TARGETS) {
-                quickTemplateTargetSelectionActivityStarted = false;
-            }
-            closeActiveTemplateSheetForMigration();
-            restoreTemplateDetailPane();
-            return;
-        }
-        if (selection.kind == TemplateDetailKind.GLOBAL_PREFILL) {
-            showGlobalPrefillSheet();
-            return;
-        }
-        if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE) {
-            showQuickTemplateSheet(selection.templateId);
+        if (composeShellHost != null) {
+            // Compose owns both the portrait sheet and the expanded detail surface. Re-publish
+            // the route after a configuration change without reviving the retired XML editor.
+            bindTemplateWorkspace();
             return;
         }
         if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE_TARGETS) {
+            quickTemplateTargetSelectionActivityStarted = false;
+            restoreTemplateDetailPane();
             startQuickTemplateTargetSelectionActivity(selection.templateId);
         }
     }
 
     private void clearTemplateDetailSelection() {
         templateDetailSelection = TemplateDetailSelection.none();
+        templateEditorDestination = ConfigEditorDestination.MAIN;
         retainedGlobalPrefillDraft = null;
         retainedQuickTemplateDraft = null;
         quickTemplateTargetSelectionActivityStarted = false;
@@ -1955,8 +1495,6 @@ public final class MainActivity
         if (templateDetailContent != null) {
             templateDetailContent.removeAllViews();
         }
-        activeGlobalPrefillEditorBinder = null;
-        activeQuickTemplateEditorBinder = null;
     }
 
     private void showTemplateDetailPane(TemplateDetailSelection selection) {
@@ -1967,8 +1505,7 @@ public final class MainActivity
         disposeActiveQuickTemplateTargetsBinder();
         templateDetailContent.removeAllViews();
         View detailView = inflateTemplateDetailView(selection);
-        boolean bound = bindTemplateDetailView(selection, detailView);
-        if (!bound) {
+        if (detailView == null || !bindTemplateDetailView(selection, detailView)) {
             templateDetailSelection = TemplateDetailSelection.none();
             templateDetailContent.removeAllViews();
             bindTemplateWorkspace();
@@ -1987,16 +1524,11 @@ public final class MainActivity
     }
 
     private View inflateTemplateDetailView(TemplateDetailSelection selection) {
-        int layoutRes;
-        if (selection.kind == TemplateDetailKind.GLOBAL_PREFILL) {
-            layoutRes = R.layout.view_land_global_prefill_detail;
-        } else if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE_TARGETS) {
-            layoutRes = R.layout.view_land_quick_template_targets_detail;
-        } else {
-            layoutRes = R.layout.view_land_quick_template_detail;
+        if (selection.kind != TemplateDetailKind.QUICK_TEMPLATE_TARGETS) {
+            return null;
         }
         return LayoutInflater.from(this).inflate(
-                layoutRes,
+                R.layout.view_land_quick_template_targets_detail,
                 templateDetailContent,
                 false
         );
@@ -2006,39 +1538,6 @@ public final class MainActivity
             TemplateDetailSelection selection,
             View detailView
     ) {
-        if (selection.kind == TemplateDetailKind.GLOBAL_PREFILL) {
-            applyTemplateDetailInsets(
-                    detailView,
-                    R.id.global_prefill_scroll
-            );
-            activeGlobalPrefillEditorBinder = GlobalPrefillEditorBinder.bind(
-                    this,
-                    detailView,
-                    this::onTemplateEditorUpdated,
-                    null,
-                    false,
-                    retainedGlobalPrefillDraft
-            );
-            activeQuickTemplateEditorBinder = null;
-            return activeGlobalPrefillEditorBinder != null;
-        }
-        if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE) {
-            applyTemplateDetailInsets(
-                    detailView,
-                    R.id.quick_template_edit_scroll
-            );
-            activeQuickTemplateEditorBinder = QuickTemplateEditorBinder.bind(
-                    this,
-                    detailView,
-                    selection.templateId,
-                    this::onTemplateEditorUpdated,
-                    null,
-                    false,
-                    retainedQuickTemplateDraft
-            );
-            activeGlobalPrefillEditorBinder = null;
-            return activeQuickTemplateEditorBinder != null;
-        }
         if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE_TARGETS) {
             WindowInsetsBinder.applySafeDrawingPadding(
                     detailView,
@@ -2052,8 +1551,6 @@ public final class MainActivity
                     detailView,
                     createQuickTemplateTargetsHost()
             );
-            activeGlobalPrefillEditorBinder = null;
-            activeQuickTemplateEditorBinder = null;
             return activeQuickTemplateTargetsBinder.bind(selection.templateId);
         }
         return false;
@@ -2101,68 +1598,11 @@ public final class MainActivity
         };
     }
 
-    private void applyTemplateDetailInsets(View detailView, int scrollViewId) {
-        View scrollView = detailView != null
-                ? detailView.findViewById(scrollViewId)
-                : null;
-        WindowInsetsBinder.applySafeDrawingPadding(
-                scrollView,
-                false,
-                true,
-                false,
-                true
-        );
-    }
-
-    private void onTemplateEditorUpdated() {
-        bindTemplateWorkspace();
-        if (templateDetailSelection != null
-                && templateDetailSelection.kind == TemplateDetailKind.GLOBAL_PREFILL) {
-            retainedGlobalPrefillDraft = null;
-        } else if (templateDetailSelection != null
-                && templateDetailSelection.kind == TemplateDetailKind.QUICK_TEMPLATE) {
-            retainedQuickTemplateDraft = null;
-        }
-        if (!isLandscapeDetailMode()
-                || requireUiState().workspaceMode != MainUiState.WorkspaceMode.TEMPLATE
-                || templateDetailSelection == null
-                || templateDetailSelection.kind == TemplateDetailKind.NONE) {
-            return;
-        }
-        TemplateDetailSelection selection = templateDetailSelection;
-        if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE
-                && selection.templateId == null
-                && activeQuickTemplateEditorBinder != null) {
-            String savedTemplateId = activeQuickTemplateEditorBinder.currentTemplateId();
-            if (savedTemplateId != null && !savedTemplateId.isBlank()) {
-                templateDetailSelection = TemplateDetailSelection.quickTemplate(savedTemplateId);
-                selection = templateDetailSelection;
-            }
-        }
-        if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE
-                && selection.templateId == null) {
-            templateDetailSelection = TemplateDetailSelection.none();
-            templateDetailContent.removeAllViews();
-            applyLandscapeDetailVisibility(false, true);
-            return;
-        }
-        if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE
-                && selection.templateId != null
-                && new QuickTemplateStore(
-                        getSharedPreferences(
-                                DpisConfigStore.GROUP,
-                                Context.MODE_PRIVATE
-                        )
-                ).read(selection.templateId) == null) {
-            templateDetailSelection = TemplateDetailSelection.none();
-            templateDetailContent.removeAllViews();
-            applyLandscapeDetailVisibility(false, true);
-            return;
-        }
-        showTemplateDetailPane(selection);
-    }
-
     private void bindSettingsWorkspace() {
+        if (composeShellHost != null) {
+            ensureComposeSettingsController();
+            return;
+        }
         if (settingsWorkspaceContainer == null || settingsPageController != null) {
             return;
         }
@@ -2172,42 +1612,524 @@ public final class MainActivity
         settingsPageController.bind();
     }
 
-    private void updateSearchHint() {
-        updateSearchHint(requireUiState().workspaceMode);
+    private SystemServerSettingsPageController ensureComposeSettingsController() {
+        if (settingsPageController == null) {
+            settingsPageController = new SystemServerSettingsPageController(this, null);
+            settingsPageController.initializeComposePresentation();
+            settingsPageController.addPresentationListener(state -> {
+                if (composeShellHost != null) {
+                    composeShellHost.refreshSettings();
+                }
+            });
+        }
+        return settingsPageController;
     }
 
-    private void updateSearchHint(MainUiState.WorkspaceMode workspaceMode) {
-        if (searchInput == null) {
-            return;
-        }
-        boolean templateWorkspace = workspaceMode == MainUiState.WorkspaceMode.TEMPLATE;
-        CharSequence current = searchInput.getText();
-        boolean empty = current == null || current.length() == 0;
-        if (templateWorkspace) {
-            if (searchInput.hasFocus() || empty) {
-                searchInput.setHint(getString(R.string.template_search_hint));
+    private AppWorkspacePresentation.Actions createComposeAppWorkspaceActions() {
+        return new AppWorkspacePresentation.Actions() {
+            @Override public void changeQuery(String query) {
+                dispatchMainUiAction(MainUiAction.queryChanged(query));
             }
+
+            @Override public void changePage(AppListPage page) {
+                setCurrentAppListPage(page, true);
+                if (composeShellHost != null) {
+                    // Page selection remains adaptive presentation state, so it can change
+                    // without producing a new MainUiState domain snapshot.
+                    composeShellHost.refreshApps();
+                }
+            }
+
+            @Override public void changeFilters(AppListFilterState filterState) {
+                appListFilterStateStore.save(filterState);
+                dispatchMainUiAction(MainUiAction.filterChanged(filterState));
+            }
+
+            @Override public void refresh(AppListPage page) {
+                onPageRefreshRequested(page);
+            }
+
+            @Override public void openApp(AppListItem item) {
+                openComposeAppEditor(item);
+            }
+
+            @Override public void updateScrollPosition(
+                    AppListPage page, int index, int scrollOffset) {
+                appWorkspaceScrollStateStore.update(page, index, scrollOffset);
+            }
+
+        };
+    }
+
+    private AppConfigEditorPresentation.State createComposeAppEditorState() {
+        if (mainViewModel == null || mainViewModel.getEditingPackageName() == null) {
+            return null;
+        }
+        String packageName = mainViewModel.getEditingPackageName();
+        AppListItem item = null;
+        for (AppListItem candidate : requireUiState().appsSnapshot()) {
+            if (packageName.equals(candidate.packageName)) {
+                item = candidate;
+                break;
+            }
+        }
+        if (item == null) {
+            return null;
+        }
+        TemplateConfigValue globalPrefill = new GlobalPrefillStore(
+                getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)
+        ).read();
+        AppListItem editorItem = AppConfigPrefillPreview.applyIfEligible(
+                item, getHookConfigStore(), globalPrefill);
+        AppConfigEditorDraft draft = mainViewModel.getEditingDraft();
+        if (draft == null || !editorItem.packageName.equals(draft.packageName)) {
+            draft = AppConfigEditorDraft.fromItem(editorItem);
+            mainViewModel.setEditingDraft(draft);
+            mainViewModel.setSavedEditingDraft(draft);
+        }
+        final AppConfigEditorDraft currentDraft = draft;
+        AppConfigDialogBinder.AppConfigDialogState composeDialogState = composeEditorDialogState(
+                editorItem, currentDraft);
+        String typefaceSelectorText = new AppConfigDialogBinder(
+                this, createAppConfigDialogHost()).typefaceSelectorText(
+                currentDraft.selectedTypefaceId);
+        String hookChainText = getFontHookDomainsButtonText(editorItem, composeDialogState);
+        boolean dirty = !currentDraft.hasSameSavedConfig(mainViewModel.getSavedEditingDraft());
+        return new AppConfigEditorPresentation.State(
+                editorItem,
+                currentDraft,
+                typefaceSelectorText,
+                hookChainText,
+                dirty,
+                mainViewModel.isEditingSaveFeedback(),
+                isSystemHookEnabledFromStore(),
+                recommendedTemplateFontHookDomains(),
+                mainViewModel.getEditingDestination(),
+                new AppConfigEditorPresentation.Actions() {
+                    @Override public void updateViewportInput(String value) {
+                        updateComposeAppEditorDraft(currentDraft.withViewportInput(
+                                currentDraft.viewportMode, value));
+                    }
+
+                    @Override public void changeViewportMode(String targetType) {
+                        updateComposeAppEditorDraft(currentDraft.withViewportMode(targetType));
+                    }
+
+                    @Override public void updateFontInput(String value) {
+                        updateComposeAppEditorDraft(currentDraft.withFontInput(value));
+                    }
+
+                    @Override public void changeFontMode(String mode) {
+                        updateComposeAppEditorDraft(currentDraft.withFontMode(mode));
+                    }
+
+                    @Override public void updateWechatDpiInput(String value) {
+                        updateComposeAppEditorDraft(currentDraft.withWechatDpiInput(value));
+                    }
+
+                    @Override public void showWechatDpiHelp() {
+                        ComposeMessageDialog.show(
+                                MainActivity.this,
+                                getString(R.string.dialog_wechat_dpi_help_title),
+                                getString(R.string.dialog_wechat_dpi_help_message),
+                                getString(R.string.dialog_close_button)
+                        );
+                    }
+
+                    @Override public void updateTypeface(String typefaceId) {
+                        updateComposeAppEditorDraft(currentDraft.withAdvancedConfig(
+                                typefaceId,
+                                currentDraft.draftFontHookDomainsRaw,
+                                currentDraft.viewportApplyMode,
+                                currentDraft.fontHookDomainsResetRequested,
+                                currentDraft.viewportApplyModeResetRequested));
+                    }
+
+                    @Override public void updateHookChain(
+                            String rawDomains,
+                            boolean resetDomains,
+                            String viewportApplyMode,
+                            boolean resetViewportApplyMode
+                    ) {
+                        updateComposeAppEditorDraft(currentDraft.withAdvancedConfig(
+                                currentDraft.selectedTypefaceId,
+                                rawDomains,
+                                viewportApplyMode,
+                                resetDomains,
+                                resetViewportApplyMode));
+                    }
+
+                    @Override public void navigate(ConfigEditorDestination destination) {
+                        mainViewModel.setEditingDestination(destination);
+                        if (composeShellHost != null) {
+                            composeShellHost.refreshApps();
+                        }
+                    }
+
+                    @Override public void reset() {
+                        updateComposeAppEditorDraft(currentDraft.cleared());
+                    }
+
+                    @Override public void toggleScope() {
+                        toggleLandDetailScope(editorItem, currentDraft.scopeSelected,
+                                () -> updateComposeAppEditorDraft(
+                                        currentDraft.withScopeSelected(true)),
+                                () -> updateComposeAppEditorDraft(
+                                        currentDraft.withScopeSelected(false)));
+                    }
+
+                    @Override public void toggleDpisEnabled() {
+                        boolean nextEnabled = !currentDraft.dpisEnabled;
+                        if (setDpisEnabled(editorItem.packageName, nextEnabled)) {
+                            WechatDpiSheetBinder.publishForDpisState(
+                                    editorItem.packageName, nextEnabled);
+                            // This value persists immediately and can change the active
+                            // catalogue filters, so refresh the same snapshot path as the
+                            // retained landscape detail implementation.
+                            requestAppsLoad();
+                            updateComposeAppEditorDraft(
+                                    currentDraft.withDpisEnabled(nextEnabled));
+                        }
+                    }
+
+                    @Override public void startProcess() {
+                        executeDialogProcessAction(editorItem,
+                                AppConfigDialogBinder.ProcessAction.START);
+                    }
+
+                    @Override public void restartProcess() {
+                        executeDialogProcessAction(editorItem,
+                                AppConfigDialogBinder.ProcessAction.RESTART);
+                    }
+
+                    @Override public void stopProcess() {
+                        executeDialogProcessAction(editorItem,
+                                AppConfigDialogBinder.ProcessAction.STOP);
+                    }
+
+                    @Override public void startFeedbackDiagnostic() {
+                        startComposeFeedbackDiagnostic(editorItem, currentDraft);
+                    }
+
+                    @Override public void save() {
+                        if (saveComposeAppEditor(editorItem, currentDraft)) {
+                            markComposeAppEditorSaved(currentDraft);
+                        }
+                    }
+
+                    @Override public void close() {
+                        closeComposeAppEditor();
+                    }
+                }
+        );
+    }
+
+    private AppConfigDialogBinder.AppConfigDialogState composeEditorDialogState(
+            AppListItem item,
+            AppConfigEditorDraft draft
+    ) {
+        AppConfigDialogBinder.AppConfigDialogState state
+                = AppConfigDialogBinder.AppConfigDialogState.fromItem(item);
+        state.selectedTypefaceId = draft.selectedTypefaceId;
+        state.draftFontHookDomainsRaw = draft.draftFontHookDomainsRaw;
+        state.viewportApplyMode = draft.viewportApplyMode;
+        state.fontHookDomainsResetRequested = draft.fontHookDomainsResetRequested;
+        state.viewportApplyModeResetRequested = draft.viewportApplyModeResetRequested;
+        state.viewportScaleInput = draft.viewportScaleInput;
+        state.viewportAbsoluteInput = draft.viewportAbsoluteInput;
+        state.scopeSelected = draft.scopeSelected;
+        state.dpisEnabled = draft.dpisEnabled;
+        return state;
+    }
+
+    private void updateComposeAdvancedDraft(
+            AppConfigEditorDraft draft,
+            AppConfigDialogBinder.AppConfigDialogState state
+    ) {
+        updateComposeAppEditorDraft(draft.withAdvancedConfig(
+                state.selectedTypefaceId,
+                state.draftFontHookDomainsRaw,
+                state.viewportApplyMode,
+                state.fontHookDomainsResetRequested,
+                state.viewportApplyModeResetRequested));
+    }
+
+    private void openComposeAppEditor(AppListItem item) {
+        if (item == null || mainViewModel == null) {
             return;
         }
-        if (searchInput.hasFocus()) {
-            searchInput.setHint("");
-            return;
+        mainViewModel.setEditingPackageName(item.packageName);
+        mainViewModel.setEditingDestination(ConfigEditorDestination.MAIN);
+        AppConfigEditorDraft draft = mainViewModel.getEditingDraft();
+        if (draft == null || !item.packageName.equals(draft.packageName)) {
+            mainViewModel.setEditingDraft(null);
         }
-        if (empty) {
-            searchInput.setHint(getString(R.string.search_hint));
+        if (composeShellHost != null) {
+            composeShellHost.refreshApps();
         }
     }
 
-    private void selectWorkspaceItem(int itemId) {
-        if (workspaceSwitch == null) {
+    private void updateComposeAppEditorDraft(AppConfigEditorDraft draft) {
+        if (mainViewModel == null || draft == null) {
             return;
         }
-        updatingWorkspaceSelection = true;
-        try {
-            workspaceSwitch.setSelectedItemId(itemId);
-        } finally {
-            updatingWorkspaceSelection = false;
+        mainViewModel.setEditingDraft(draft);
+        if (composeShellHost != null) {
+            composeShellHost.refreshApps();
         }
+    }
+
+    private void refreshComposeAppEditor() {
+        requestAppsLoad();
+        if (composeShellHost != null) {
+            composeShellHost.refreshApps();
+        }
+    }
+
+    private void closeComposeAppEditor() {
+        if (mainViewModel != null) {
+            mainViewModel.clearEditingPackageName();
+            mainViewModel.clearEditingDraft();
+        }
+        if (composeShellHost != null) {
+            composeShellHost.refreshApps();
+        }
+    }
+
+    private boolean saveComposeAppEditor(AppListItem item, AppConfigEditorDraft draft) {
+        if (item == null || draft == null) {
+            return false;
+        }
+        String viewportInput = draft.viewportInputFor(draft.viewportMode);
+        ViewportTargetSpec spec = AppConfigInputValidation.parseViewportTargetSpec(
+                viewportInput, draft.viewportMode);
+        Integer fontScale = AppConfigInputValidation.parseFontScalePercentOrNull(draft.fontInput);
+        AppConfigSaveHandler.Result result = saveLandDetailResolvedConfig(
+                item, spec, draft.viewportMode, draft.viewportApplyMode, fontScale,
+                draft.fontMode, draft.selectedTypefaceId, draft.draftFontHookDomainsRaw,
+                draft.viewportApplyModeResetRequested, draft.fontHookDomainsResetRequested,
+                draft.viewportScaleInput, draft.viewportAbsoluteInput);
+        result = finalizeAppConfigSaveWithRuntimeSync(
+                result, draft.wechatDpiInput, item.packageName, draft.dpisEnabled,
+                getHookConfigStore());
+        if (result.messageResId != 0) {
+            showToast(result.messageResId);
+        }
+        if (result.success) {
+            showToast(R.string.status_save_success_inline);
+            requestLandDetailScopeAfterSuccessfulSave(
+                    item, composeEditorDialogState(item, draft));
+            syncComposeHyperOsNativeProxyAfterSave(item);
+            refreshComposeAppEditor();
+        }
+        return result.success;
+    }
+
+    private void markComposeAppEditorSaved(AppConfigEditorDraft draft) {
+        if (mainViewModel == null || draft == null) {
+            return;
+        }
+        AppConfigEditorDraft savedDraft = draft.afterSuccessfulSave();
+        mainViewModel.setEditingDraft(savedDraft);
+        mainViewModel.setSavedEditingDraft(savedDraft);
+        mainViewModel.setEditingSaveFeedback(true);
+        if (composeShellHost != null) {
+            composeShellHost.refreshApps();
+        }
+        getWindow().getDecorView().postDelayed(() -> {
+            if (mainViewModel != null && mainViewModel.isEditingSaveFeedback()) {
+                mainViewModel.setEditingSaveFeedback(false);
+                if (composeShellHost != null) {
+                    composeShellHost.refreshApps();
+                }
+            }
+        }, 1500L);
+    }
+
+    private void startComposeFeedbackDiagnostic(
+            AppListItem item,
+            AppConfigEditorDraft draft
+    ) {
+        if (item == null || draft == null) {
+            return;
+        }
+        if (!DiagnosticLogGate.ensureEnabled(
+                this,
+                () -> showComposeFeedbackDiagnosticConfirmation(item, draft),
+                null
+        )) {
+            return;
+        }
+        showComposeFeedbackDiagnosticConfirmation(item, draft);
+    }
+
+    private void showComposeFeedbackDiagnosticConfirmation(
+            AppListItem item,
+            AppConfigEditorDraft draft
+    ) {
+        ComposeConfirmDialog.showWithLabels(
+                this,
+                getString(R.string.feedback_diagnostic_action),
+                getString(
+                        R.string.feedback_diagnostic_confirm_message,
+                        item.label
+                ),
+                getString(android.R.string.cancel),
+                getString(R.string.feedback_diagnostic_save_and_start_button),
+                () -> {
+                    if (!saveComposeAppEditor(item, draft)) {
+                        return;
+                    }
+                    markComposeAppEditorSaved(draft);
+                    boolean started = feedbackDiagnosticCoordinator.start(
+                            FeedbackDiagnosticCoordinator.Request.fromPersisted(
+                                    item,
+                                    composeEditorDialogState(item, draft),
+                                    resolvePackageVersionName(item.packageName),
+                                    getHookConfigStore()
+                            )
+                    );
+                    if (!started) {
+                        showToast(R.string.feedback_diagnostic_unavailable);
+                    }
+                },
+                () -> { }
+        );
+    }
+
+    private void syncComposeHyperOsNativeProxyAfterSave(AppListItem item) {
+        if (!isHyperOsNativeProxyCandidate(item)) {
+            return;
+        }
+        if (shouldPrepareHyperOsNativeProxyForRestart(item)) {
+            executeHyperOsNativeProxyMount(item, true, success -> { });
+            return;
+        }
+        executeHyperOsNativeProxyMount(item, false, success -> { });
+    }
+
+    private TemplateWorkspacePresentationController ensureComposeTemplateWorkspacePresentation() {
+        if (templateWorkspacePresentationController == null) {
+            templateWorkspacePresentationController = new TemplateWorkspacePresentationController(
+                    this,
+                    new TemplateWorkspacePresentation.Actions() {
+                        @Override public void editGlobalPrefill() { showGlobalPrefillEditor(); }
+                        @Override public void createTemplate() { showQuickTemplateEditor(null); }
+                        @Override public void sortTemplates() {
+                            createQuickTemplateActions().sort(new QuickTemplateStore(
+                                    getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)
+                            ).readAll());
+                        }
+                        @Override public void applyTemplate(String id) { applyQuickTemplate(id); }
+                        @Override public void editTemplate(String id) { showQuickTemplateEditor(id); }
+                        @Override public void selectTargets(String id) { showQuickTemplateTargets(id); }
+                        @Override public void openEmbeddedTargets(String id) {
+                            templateDetailSelection =
+                                    TemplateDetailSelection.quickTemplateTargets(id);
+                            retainedGlobalPrefillDraft = null;
+                            retainedQuickTemplateDraft = null;
+                            disposeActiveQuickTemplateTargetsBinder();
+                            bindTemplateWorkspace();
+                        }
+                        @Override public TemplateWorkspacePresentation.EditorResult saveGlobalPrefill(
+                                TemplateEditorForm form) {
+                            GlobalPrefillSaveHandler.Result result = new GlobalPrefillSaveHandler().save(
+                                    new GlobalPrefillStore(getSharedPreferences(
+                                            DpisConfigStore.GROUP, Context.MODE_PRIVATE)),
+                                    new GlobalPrefillSaveHandler.Request(
+                                            form.viewportInput, form.viewportMode, form.viewportApplyMode,
+                                            form.viewportScaleInput, form.viewportAbsoluteInput,
+                                            form.fontInput, form.fontMode, form.selectedTypefaceId,
+                                            form.fontHookDomainsRaw));
+                            showToast(result.messageResId);
+                            if (result.success) bindTemplateWorkspace();
+                            return new TemplateWorkspacePresentation.EditorResult(
+                                    result.success, result.messageResId, null);
+                        }
+                        @Override public TemplateWorkspacePresentation.EditorResult saveQuickTemplate(
+                                TemplateEditorForm form) {
+                            QuickTemplateSaveHandler.Result result = new QuickTemplateSaveHandler().save(
+                                    new QuickTemplateStore(getSharedPreferences(
+                                            DpisConfigStore.GROUP, Context.MODE_PRIVATE)),
+                                    new QuickTemplateSaveHandler.Request(
+                                            form.templateId, form.nameInput, form.viewportInput,
+                                            form.viewportMode, form.viewportApplyMode,
+                                            form.viewportScaleInput, form.viewportAbsoluteInput,
+                                            form.fontInput, form.fontMode, form.selectedTypefaceId,
+                                            form.fontHookDomainsRaw));
+                            showToast(result.messageResId);
+                            if (result.success) bindTemplateWorkspace();
+                            return new TemplateWorkspacePresentation.EditorResult(
+                                    result.success, result.messageResId, result.templateId);
+                        }
+                        @Override public TemplateWorkspacePresentation.EditorResult deleteQuickTemplate(
+                                String id) {
+                            boolean deleted = new QuickTemplateStore(getSharedPreferences(
+                                    DpisConfigStore.GROUP, Context.MODE_PRIVATE)).delete(id);
+                            int messageResId = deleted
+                                    ? R.string.quick_template_delete_success
+                                    : R.string.quick_template_delete_failed;
+                            showToast(messageResId);
+                            if (deleted) bindTemplateWorkspace();
+                            return new TemplateWorkspacePresentation.EditorResult(deleted, messageResId, id);
+                        }
+                        @Override public void selectTypeface(
+                                TemplateEditorForm form, Runnable onChanged) {
+                            AppConfigDialogBinder.AppConfigDialogState state =
+                                    new AppConfigDialogBinder.AppConfigDialogState(
+                                            false, true, true, false,
+                                            form.quickTemplate ? "__quick_template__" : "__global_prefill__",
+                                            form.fontHookDomainsRaw, form.viewportApplyMode,
+                                            form.selectedTypefaceId, form.viewportMode,
+                                            form.viewportInput, form.viewportScaleInput,
+                                            form.viewportAbsoluteInput);
+                            MaterialButton anchor = new MaterialButton(MainActivity.this);
+                            new AppConfigDialogBinder(MainActivity.this, createAppConfigDialogHost())
+                                    .showTypefaceSelector(anchor, state, () -> {
+                                        form.selectedTypefaceId = state.selectedTypefaceId;
+                                        onChanged.run();
+                                    });
+                        }
+                        @Override public void editHookDomains(
+                                TemplateEditorForm form, Runnable onChanged) {
+                            FontHookDomainDialog.show(
+                                    MainActivity.this,
+                                    new FontHookDomainDialog.Host() {
+                                        @Override public boolean saveCustom(String packageName,
+                                                Set<String> selectedKnownDomains,
+                                                Set<String> automaticKnownDomains,
+                                                Set<String> unknownDomains) {
+                                            form.fontHookDomainsRaw = HookDomainOverrideStore
+                                                    .rawValueForSelection(selectedKnownDomains,
+                                                            automaticKnownDomains, unknownDomains);
+                                            onChanged.run();
+                                            return true;
+                                        }
+                                        @Override public boolean restoreRecommended(String packageName) {
+                                            form.fontHookDomainsRaw = null;
+                                            onChanged.run();
+                                            return true;
+                                        }
+                                        @Override public boolean saveViewportApplyMode(
+                                                String packageName, String mode) {
+                                            form.viewportApplyMode = ViewportApplyMode.normalize(mode);
+                                            onChanged.run();
+                                            return true;
+                                        }
+                                    },
+                                    form.quickTemplate ? "__quick_template__" : "__global_prefill__",
+                                    FontHookDomainRegistry.recommendedTemplateKnownDomains(),
+                                    HookDomainOverrideStore.fromRaw(form.fontHookDomainsRaw),
+                                    form.viewportApplyMode,
+                                    FontApplyMode.FIELD_REWRITE.equals(form.fontMode),
+                                    onChanged
+                            );
+                        }
+                    },
+                    requireUiState().currentQuery()
+            );
+        }
+        return templateWorkspacePresentationController;
     }
 
     private static void setVisible(View view, boolean visible) {
@@ -2217,9 +2139,6 @@ public final class MainActivity
     }
 
     private void resetHiddenWorkspacePresentation(MainUiState.WorkspaceMode visibleMode) {
-        resetWorkspacePresentationUnlessMode(appPager, visibleMode, MainUiState.WorkspaceMode.APP);
-        resetWorkspacePresentationUnlessMode(
-                landListPageView, visibleMode, MainUiState.WorkspaceMode.APP);
         resetWorkspacePresentationUnlessMode(
                 homeWorkspaceContainer, visibleMode, MainUiState.WorkspaceMode.HOME);
         resetWorkspacePresentationUnlessMode(
@@ -2275,7 +2194,7 @@ public final class MainActivity
 
     private View workspaceViewForMode(MainUiState.WorkspaceMode mode) {
         if (mode == MainUiState.WorkspaceMode.APP) {
-            return appPager != null ? appPager : landListPageView;
+            return null;
         }
         if (mode == MainUiState.WorkspaceMode.HOME) {
             return homeWorkspaceContainer;
@@ -2292,38 +2211,6 @@ public final class MainActivity
         return null;
     }
 
-    private static int workspaceButtonId(MainUiState.WorkspaceMode workspaceMode) {
-        if (workspaceMode == MainUiState.WorkspaceMode.TEMPLATE) {
-            return R.id.workspace_template_button;
-        }
-        if (workspaceMode == MainUiState.WorkspaceMode.HOME) {
-            return R.id.workspace_home_button;
-        }
-        if (workspaceMode == MainUiState.WorkspaceMode.TOOLS) {
-            return R.id.workspace_tools_button;
-        }
-        if (workspaceMode == MainUiState.WorkspaceMode.SETTINGS) {
-            return R.id.workspace_settings_button;
-        }
-        return R.id.workspace_app_button;
-    }
-
-    private static MainUiState.WorkspaceMode workspaceModeForButtonId(int checkedId) {
-        if (checkedId == R.id.workspace_template_button) {
-            return MainUiState.WorkspaceMode.TEMPLATE;
-        }
-        if (checkedId == R.id.workspace_home_button) {
-            return MainUiState.WorkspaceMode.HOME;
-        }
-        if (checkedId == R.id.workspace_tools_button) {
-            return MainUiState.WorkspaceMode.TOOLS;
-        }
-        if (checkedId == R.id.workspace_settings_button) {
-            return MainUiState.WorkspaceMode.SETTINGS;
-        }
-        return MainUiState.WorkspaceMode.APP;
-    }
-
     private void handleAppsLoadRequests(List<MainViewModel.AppsLoadRequest> requests) {
         if (requests == null || requests.isEmpty()) {
             return;
@@ -2334,50 +2221,19 @@ public final class MainActivity
     }
 
     private void showFilterDialog() {
-        ViewGroup root = findViewById(android.R.id.content);
-        View dialogView = LayoutInflater.from(this).inflate(
-                R.layout.dialog_list_filters,
-                root,
-                false
-        );
-        BottomSheetDialog dialog = new BottomSheetDialog(this);
-        dialog.setContentView(dialogView);
-        MaterialSwitch showSystemSwitch = dialogView.findViewById(
-                R.id.filter_show_system_switch
-        );
-        MaterialSwitch injectedOnlySwitch = dialogView.findViewById(
-                R.id.filter_injected_only_switch
-        );
-        MaterialSwitch widthOnlySwitch = dialogView.findViewById(
-                R.id.filter_width_only_switch
-        );
-        MaterialSwitch fontOnlySwitch = dialogView.findViewById(
-                R.id.filter_font_only_switch
-        );
         MainUiState state = requireUiState();
-
-        showSystemSwitch.setChecked(state.filterState.showSystemApps());
-        injectedOnlySwitch.setChecked(state.filterState.injectedOnly());
-        widthOnlySwitch.setChecked(state.filterState.widthConfiguredOnly());
-        fontOnlySwitch.setChecked(state.filterState.fontConfiguredOnly());
-
-        android.widget.CompoundButton.OnCheckedChangeListener listener = (
-                buttonView,
-                isChecked) -> {
+        AppFilterComposeSheet.show(this,
+                state.filterState.showSystemApps(),
+                state.filterState.injectedOnly(),
+                state.filterState.widthConfiguredOnly(),
+                state.filterState.fontConfiguredOnly(),
+                (showSystem, injectedOnly, widthOnly, fontOnly) -> {
             AppListFilterState filterState = new AppListFilterState(
-                    showSystemSwitch.isChecked(),
-                    injectedOnlySwitch.isChecked(),
-                    widthOnlySwitch.isChecked(),
-                    fontOnlySwitch.isChecked()
+                    showSystem, injectedOnly, widthOnly, fontOnly
             );
             appListFilterStateStore.save(filterState);
             dispatchMainUiAction(MainUiAction.filterChanged(filterState));
-        };
-        showSystemSwitch.setOnCheckedChangeListener(listener);
-        injectedOnlySwitch.setOnCheckedChangeListener(listener);
-        widthOnlySwitch.setOnCheckedChangeListener(listener);
-        fontOnlySwitch.setOnCheckedChangeListener(listener);
-        dialog.show();
+        });
     }
 
     private boolean maybeShowStartupDisclaimerDialog() {
@@ -2402,24 +2258,10 @@ public final class MainActivity
         if (!ModuleRuntimeReloadAdvisor.shouldShowReloadAdvice(this)) {
             return false;
         }
-        View dialogView = LayoutInflater.from(this).inflate(
-                R.layout.dialog_module_runtime_reload_advice,
-                null,
-                false
-        );
-        MaterialButton ackButton = dialogView.findViewById(
-                R.id.module_runtime_reload_ack_button
-        );
-        androidx.appcompat.app.AlertDialog dialog
-                = new MaterialAlertDialogBuilder(this).setView(dialogView).create();
-        dialog.setCanceledOnTouchOutside(true);
-        ackButton.setOnClickListener(v -> {
+        ModuleRuntimeReloadComposeDialog.show(this, () -> {
             ModuleRuntimeReloadAdvisor.markReloadAdviceAcknowledged(this);
-            dialog.dismiss();
             continueStartupDialogsAfterRuntimeReloadAdvice();
         });
-        dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, this);
         return true;
     }
 
@@ -2443,20 +2285,12 @@ public final class MainActivity
     private void startStartupUpdateDownload(
             String targetVersionName,
             String downloadUrl,
-            androidx.appcompat.app.AlertDialog dialog,
-            MaterialButton primaryButton,
-            MaterialButton cancelButton,
-            LinearProgressIndicator progressView,
-            MaterialTextView progressTextView
+            UpdateAvailableDialog.DialogHandle dialogHandle
     ) {
         updateDownloadCoordinator.startDownload(
                 targetVersionName,
                 downloadUrl,
-                dialog,
-                primaryButton,
-                cancelButton,
-                progressView,
-                progressTextView
+                dialogHandle
         );
     }
 
@@ -2520,48 +2354,25 @@ public final class MainActivity
         if (current == null || !current.showsUpdateActionCard()) {
             return;
         }
-        MaxHeightNestedScrollView scrollView = new MaxHeightNestedScrollView(this);
-        scrollView.setMaxHeightFraction(0.62f);
-        MaterialTextView textView = new MaterialTextView(this);
-        textView.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-        textView.setTextColor(MaterialColors.getColor(
-                this,
-                com.google.android.material.R.attr.colorOnSurfaceVariant,
-                getColor(android.R.color.black)));
-        textView.setLineSpacing(
-                getResources().getDimension(R.dimen.dialog_text_line_spacing),
-                1f);
-        int padding = getResources().getDimensionPixelSize(
-                R.dimen.dialog_surface_padding_horizontal);
-        scrollView.setPadding(padding, padding / 2, padding, 0);
-        scrollView.addView(textView, new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        androidx.appcompat.app.AlertDialog dialog =
-                new MaterialAlertDialogBuilder(this)
-                        .setTitle(R.string.about_update_release_notes_title)
-                        .setView(scrollView)
-                        .setPositiveButton(R.string.about_update_action_cancel_dialog, null)
-                        .create();
         String embedded = current.releaseNotes;
-        if (!embedded.isEmpty()) {
-            textView.setText(ReleaseNotesMarkdownRenderer.render(
-                    this,
-                    embedded,
-                    getResources().getConfiguration().getLocales().get(0)));
-        } else {
-            textView.setText(R.string.about_update_release_notes_loading);
-        }
-        dialog.show();
-        DialogWindowSizer.applyLargeWidth(dialog, this);
+        CharSequence initialMessage = embedded.isEmpty()
+                ? getString(R.string.about_update_release_notes_loading)
+                : ReleaseNotesMarkdownRenderer.render(
+                        this,
+                        embedded,
+                        getResources().getConfiguration().getLocales().get(0));
+        ComposeMessageDialog.Handle dialogHandle = ComposeMessageDialog.showLarge(
+                this,
+                getString(R.string.about_update_release_notes_title),
+                initialMessage,
+                getString(R.string.about_update_action_cancel_dialog)
+        );
         if (embedded.isEmpty()) {
-            loadHomeReleaseNotes(textView, dialog, current.versionName);
+            loadHomeReleaseNotes(dialogHandle, current.versionName);
         }
     }
 
-    private void loadHomeReleaseNotes(MaterialTextView textView,
-            androidx.appcompat.app.AlertDialog dialog,
+    private void loadHomeReleaseNotes(ComposeMessageDialog.Handle dialogHandle,
             String versionName) {
         releaseNotesController.load(versionName, false,
                 new ReleaseNotesController.Listener() {
@@ -2569,12 +2380,12 @@ public final class MainActivity
                     public boolean isAlive() {
                         return !isFinishing()
                                 && !isDestroyed()
-                                && dialog.isShowing();
+                                && dialogHandle.isShowing();
                     }
 
                     @Override
                     public void onBody(String body) {
-                        textView.setText(ReleaseNotesMarkdownRenderer.render(
+                        dialogHandle.setMessage(ReleaseNotesMarkdownRenderer.render(
                                 MainActivity.this,
                                 body,
                                 getResources().getConfiguration().getLocales().get(0)));
@@ -2582,12 +2393,12 @@ public final class MainActivity
 
                     @Override
                     public void onEmptyBody() {
-                        textView.setText(R.string.about_update_release_notes_empty);
+                        dialogHandle.setMessage(getString(R.string.about_update_release_notes_empty));
                     }
 
                     @Override
                     public void onFailure() {
-                        textView.setText(R.string.about_update_release_notes_failed);
+                        dialogHandle.setMessage(getString(R.string.about_update_release_notes_failed));
                     }
                 });
     }
@@ -2672,22 +2483,6 @@ public final class MainActivity
                 return MainActivity.this.getPackageName();
             }
 
-            @Override
-            public void runOnUiThread(Runnable runnable) {
-                MainActivity.this.runOnUiThread(runnable);
-            }
-
-            @Override
-            public View getIconRefreshAnchor() {
-                return appPager != null
-                        ? appPager
-                        : findViewById(android.R.id.content);
-            }
-
-            @Override
-            public void requestAppsLoad() {
-                MainActivity.this.requestAppsLoad();
-            }
         };
     }
 
@@ -2792,21 +2587,6 @@ public final class MainActivity
     private UpdatePromptDialogCoordinator.Host createUpdatePromptDialogHost() {
         return new UpdatePromptDialogCoordinator.Host() {
             @Override
-            public void showDialogIdleState(
-                    MaterialButton primaryButton,
-                    MaterialButton cancelButton,
-                    LinearProgressIndicator progressView,
-                    MaterialTextView progressTextView
-            ) {
-                UpdateDownloadCoordinator.showDialogIdleState(
-                        primaryButton,
-                        cancelButton,
-                        progressView,
-                        progressTextView
-                );
-            }
-
-            @Override
             public void markPromptedVersion(int versionCode) {
                 MainActivity.this.markPromptedVersion(versionCode);
             }
@@ -2825,20 +2605,12 @@ public final class MainActivity
             public void startStartupUpdateDownload(
                     String targetVersionName,
                     String downloadUrl,
-                    androidx.appcompat.app.AlertDialog dialog,
-                    MaterialButton primaryButton,
-                    MaterialButton cancelButton,
-                    LinearProgressIndicator progressView,
-                    MaterialTextView progressTextView
+                    UpdateAvailableDialog.DialogHandle dialogHandle
             ) {
                 MainActivity.this.startStartupUpdateDownload(
                         targetVersionName,
                         downloadUrl,
-                        dialog,
-                        primaryButton,
-                        cancelButton,
-                        progressView,
-                        progressTextView
+                        dialogHandle
                 );
             }
 
@@ -2944,7 +2716,7 @@ public final class MainActivity
                 sheetItem,
                 systemHooksEnabled
         );
-        AppConfigDraft draft = mainViewModel != null
+        AppConfigEditorDraft draft = mainViewModel != null
                 ? mainViewModel.getEditingDraft()
                 : null;
         if (draft != null) {
@@ -3146,7 +2918,7 @@ public final class MainActivity
         activeEditorRoot = dialogView;
         activeEditorPackageName = item.packageName;
         if (mainViewModel != null && mainViewModel.getEditingDraft() != null) {
-            AppConfigDraft draft = mainViewModel.getEditingDraft();
+            AppConfigEditorDraft draft = mainViewModel.getEditingDraft();
             applyAppConfigDraft(dialogView, draft);
             LandAppDetailPaneBinder.applyRetainedDraft(
                     this,
@@ -3166,8 +2938,12 @@ public final class MainActivity
     }
 
     private void bindHomeWorkspace() {
+        maybeStartRootAccessProbe();
+        if (composeShellHost != null) {
+            composeShellHost.refreshHome();
+            return;
+        }
         if (homeWorkspaceBinder != null) {
-            maybeStartRootAccessProbe();
             homeWorkspaceBinder.bind(
                     homeWorkspaceContainer,
                     createHomeWorkspaceState()
@@ -3253,6 +3029,16 @@ public final class MainActivity
                 dispatchMainUiAction(
                         MainUiAction.workspaceModeChanged(MainUiState.WorkspaceMode.TEMPLATE)
                 );
+            }
+
+            @Override
+            public void openModeHelp() {
+                startActivity(new Intent(MainActivity.this, ModeHelpActivity.class));
+            }
+
+            @Override
+            public void openDonate() {
+                startActivity(DonateActivity.createIntent(MainActivity.this));
             }
         };
     }
@@ -3513,6 +3299,29 @@ public final class MainActivity
         return result;
     }
 
+    private AppConfigSaveHandler.Result finalizeAppConfigSaveWithRuntimeSync(
+            AppConfigSaveHandler.Result saveResult,
+            String wechatDpiInput,
+            String packageName,
+            boolean dpisEnabled,
+            DpisConfigStore store) {
+        if (saveResult == null) {
+            return AppConfigSaveHandler.Result.failure(R.string.system_settings_save_failed);
+        }
+        if (!saveResult.success) {
+            return saveResult;
+        }
+        if (!WechatDpiSheetBinder.save(wechatDpiInput, packageName, dpisEnabled, store)) {
+            return AppConfigSaveHandler.Result.failure(
+                    WechatDpiSheetBinder.isInputValid(wechatDpiInput)
+                            ? R.string.system_settings_save_failed
+                            : R.string.status_save_invalid);
+        }
+        onRuntimeConfigSaved();
+        scheduleRuntimePropertiesForTargetLaunch(packageName);
+        return saveResult;
+    }
+
     private void onRuntimeConfigSaved() {
         RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
         requestAppsLoad();
@@ -3524,7 +3333,8 @@ public final class MainActivity
         }
         int generation;
         synchronized (pendingRuntimePropertyGenerations) {
-            generation = pendingRuntimePropertyGenerations.getOrDefault(packageName, 0) + 1;
+            Integer currentGeneration = pendingRuntimePropertyGenerations.get(packageName);
+            generation = (currentGeneration != null ? currentGeneration : 0) + 1;
             pendingRuntimePropertyGenerations.put(packageName, generation);
         }
         Thread syncThread = new Thread(
@@ -3752,43 +3562,19 @@ public final class MainActivity
                         return getString(R.string.quick_template_apply_scope_note);
                     }
                 });
-        androidx.appcompat.app.AlertDialog dialog
-                = new MaterialAlertDialogBuilder(this)
-                        .setTitle(
-                                getString(
-                                        R.string.quick_template_apply_confirm_title,
-                                        template.name
-                                )
-                        )
-                        .setMessage(message)
-                        .setNegativeButton(
-                                R.string.dialog_process_action_confirm_negative,
-                                null
-                        )
-                        .setPositiveButton(
-                                R.string.template_workspace_action_apply,
-                                (unusedDialog, which)
-                                -> finishQuickTemplateApply(
-                                        coordinator,
-                                        template,
-                                        installedPackageFilter
-                                )
-                        )
-                        .create();
-        dialog.setOnShowListener(d -> {
-            TouchFeedbackBinder.bindPressHaptic(
-                    dialog.getButton(
-                            androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE
-                    )
-            );
-            TouchFeedbackBinder.bindPressHaptic(
-                    dialog.getButton(
-                            androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE
-                    )
-            );
-        });
-        dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, this);
+        ComposeConfirmDialog.showWithLabels(
+                this,
+                getString(R.string.quick_template_apply_confirm_title, template.name),
+                message,
+                getString(R.string.dialog_process_action_confirm_negative),
+                getString(R.string.template_workspace_action_apply),
+                () -> finishQuickTemplateApply(
+                        coordinator,
+                        template,
+                        installedPackageFilter
+                ),
+                () -> { }
+        );
     }
 
     private void finishQuickTemplateApply(
@@ -3927,6 +3713,11 @@ public final class MainActivity
                     Runnable onFinished
             ) {
                 executeHyperOsNativeProxyMount(item, false, onFinished);
+            }
+
+            @Override
+            public boolean isHyperOsNativeProxyCandidate(AppListItem item) {
+                return MainActivity.this.isHyperOsNativeProxyCandidate(item);
             }
 
             @Override
@@ -4124,14 +3915,16 @@ public final class MainActivity
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.feedback_diagnostic_action)
-                .setMessage(getString(
+        ComposeConfirmDialog.showWithLabels(
+                this,
+                getString(R.string.feedback_diagnostic_action),
+                getString(
                         R.string.feedback_diagnostic_confirm_message,
                         item.label
-                ))
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.feedback_diagnostic_save_and_start_button, (dialog, which) -> {
+                ),
+                getString(android.R.string.cancel),
+                getString(R.string.feedback_diagnostic_save_and_start_button),
+                () -> {
                     AppListItem diagnosticItem = saveCurrentEditorConfigForDiagnostic(item, state);
                     if (diagnosticItem == null) {
                         return;
@@ -4147,8 +3940,9 @@ public final class MainActivity
                     if (!started) {
                         showToast(R.string.feedback_diagnostic_unavailable);
                     }
-                })
-                .show();
+                },
+                () -> { }
+        );
     }
 
     private AppListItem saveCurrentEditorConfigForDiagnostic(
@@ -4303,7 +4097,7 @@ public final class MainActivity
         pendingFeedbackDiagnosticResult = null;
         showFeedbackDiagnosticPackagingDialog();
         feedbackDiagnosticExportExecutor.execute(() -> {
-            FeedbackDiagnosticExportBuilder.DiagnosticPackage built = null;
+            FeedbackDiagnosticExportBuilder.DiagnosticPackage built;
             try {
                 built = feedbackDiagnosticExportBuilder.buildPackage(result);
             } catch (IOException | RuntimeException ignored) {
@@ -4354,15 +4148,7 @@ public final class MainActivity
 
     private void showFeedbackDiagnosticPackagingDialog() {
         dismissFeedbackDiagnosticPackagingDialog();
-        View dialogView = LayoutInflater.from(this)
-                .inflate(R.layout.dialog_feedback_diagnostic_packaging, null, false);
-        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setView(dialogView)
-                .setCancelable(false)
-                .create();
-        dialog.show();
-        DialogWindowSizer.applyStandardWidth(dialog, this);
-        activeFeedbackDiagnosticPackagingDialog = dialog;
+        activeFeedbackDiagnosticPackagingDialog = FeedbackDiagnosticPackagingDialog.show(this);
     }
 
     private void dismissFeedbackDiagnosticPackagingDialog() {
@@ -4449,7 +4235,7 @@ public final class MainActivity
         }
         feedbackDiagnosticExportExecutor.execute(() -> {
             Uri uri = null;
-            boolean success = false;
+            boolean success;
             try {
                 File file = writeSharedFeedbackDiagnosticZip(diagnosticPackage);
                 uri = FileProvider.getUriForFile(
@@ -4514,6 +4300,15 @@ public final class MainActivity
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state,
             Runnable onStateChanged
+    ) {
+        showFontHookDomains(item, state, onStateChanged, isFontHookDomainEditingEnabled());
+    }
+
+    private void showFontHookDomains(
+            AppListItem item,
+            AppConfigDialogBinder.AppConfigDialogState state,
+            Runnable onStateChanged,
+            boolean fontDomainsEditable
     ) {
         if (item == null
                 || item.packageName == null
@@ -4583,7 +4378,7 @@ public final class MainActivity
                 state != null
                         ? state.viewportApplyMode
                         : store.getTargetViewportApplyMode(item.packageName),
-                isFontHookDomainEditingEnabled(),
+                fontDomainsEditable,
                 onStateChanged
         );
     }
@@ -4723,12 +4518,19 @@ public final class MainActivity
     private boolean shouldPrepareHyperOsNativeProxyForRestart(
             AppListItem item
     ) {
-        if (item == null || !item.hyperOsNativeProxyCandidate) {
+        if (!isHyperOsNativeProxyCandidate(item)) {
             return false;
         }
         DpisConfigStore store = getHookConfigStore();
         return (store.isTargetDpisEnabled(item.packageName)
                 && hasActiveStoredConfig(store, item.packageName));
+    }
+
+    /** The catalogue intentionally does not preload metadata for every installed package. */
+    private boolean isHyperOsNativeProxyCandidate(AppListItem item) {
+        return item != null && (item.hyperOsNativeProxyCandidate
+                || HyperOsNativeAppDetector.isNativeProxyCandidate(
+                        getPackageManager(), item.packageName));
     }
 
     private static boolean hasActiveStoredConfig(
@@ -4779,7 +4581,7 @@ public final class MainActivity
         return DpisApplication.getActiveHookConfigStore(this);
     }
 
-    private AppConfigDraft captureAppConfigDraft() {
+    private AppConfigEditorDraft captureAppConfigDraft() {
         View root = activeEditorRoot;
         String packageName = activeEditorPackageName;
         if (root == null
@@ -4824,15 +4626,19 @@ public final class MainActivity
         if ((packageName == null || packageName.isBlank()) && mainViewModel != null) {
             packageName = mainViewModel.getEditingPackageName();
         }
-        AppConfigDraft current = mainViewModel != null
+        AppConfigEditorDraft current = mainViewModel != null
                 ? mainViewModel.getEditingDraft()
                 : null;
         boolean useCurrentState = current != null
                 && current.packageName != null
                 && current.packageName.equals(packageName);
-        AppConfigDraft draft = new AppConfigDraft(
+        AppConfigEditorDraft draft = new AppConfigEditorDraft(
                 packageName,
                 viewportText,
+                state != null ? state.viewportScaleInput
+                        : useCurrentState ? current.viewportScaleInput : "",
+                state != null ? state.viewportAbsoluteInput
+                        : useCurrentState ? current.viewportAbsoluteInput : "",
                 viewportMode,
                 fontText,
                 fontMode,
@@ -4848,7 +4654,11 @@ public final class MainActivity
                 state != null
                         ? state.viewportApplyModeResetRequested
                         : useCurrentState && current.viewportApplyModeResetRequested,
-                WechatDpiSheetBinder.captureDraft(root)
+                WechatDpiSheetBinder.captureDraft(root),
+                state != null ? state.scopeSelected
+                        : useCurrentState && current.scopeSelected,
+                state != null ? state.dpisEnabled
+                        : useCurrentState && current.dpisEnabled
         );
         return draft;
     }
@@ -4857,18 +4667,20 @@ public final class MainActivity
         if (mainViewModel == null || state == null) {
             return;
         }
-        AppConfigDraft captured = captureAppConfigDraft();
+        AppConfigEditorDraft captured = captureAppConfigDraft();
         if (captured != null) {
             mainViewModel.setEditingDraft(captured);
             return;
         }
-        AppConfigDraft current = mainViewModel.getEditingDraft();
+        AppConfigEditorDraft current = mainViewModel.getEditingDraft();
         String packageName = state.packageName != null && !state.packageName.isBlank()
                 ? state.packageName
                 : mainViewModel.getEditingPackageName();
-        AppConfigDraft draft = new AppConfigDraft(
+        AppConfigEditorDraft draft = new AppConfigEditorDraft(
                 packageName,
                 current != null ? current.viewportInput : "",
+                current != null ? current.viewportScaleInput : "",
+                current != null ? current.viewportAbsoluteInput : "",
                 current != null ? current.viewportMode : ViewportTargetType.RELATIVE_SCALE,
                 current != null ? current.fontInput : "",
                 current != null ? current.fontMode : FontApplyMode.SYSTEM_EMULATION,
@@ -4877,12 +4689,14 @@ public final class MainActivity
                 state.viewportApplyMode,
                 state.fontHookDomainsResetRequested,
                 state.viewportApplyModeResetRequested,
-                current != null ? current.wechatDpiInput : null
+                current != null ? current.wechatDpiInput : null,
+                state.scopeSelected,
+                state.dpisEnabled
         );
         mainViewModel.setEditingDraft(draft);
     }
 
-    private void applyAppConfigDraft(View root, AppConfigDraft draft) {
+    private void applyAppConfigDraft(View root, AppConfigEditorDraft draft) {
         if (draft == null || root == null) {
             return;
         }
@@ -5007,47 +4821,6 @@ public final class MainActivity
                 : LandAppDetailPaneBinder.stateFor(root);
     }
 
-    static final class AppConfigDraft {
-
-        final String packageName;
-        final String viewportInput;
-        final String viewportMode;
-        final String fontInput;
-        final String fontMode;
-        final String selectedTypefaceId;
-        final String draftFontHookDomainsRaw;
-        final String viewportApplyMode;
-        final boolean fontHookDomainsResetRequested;
-        final boolean viewportApplyModeResetRequested;
-        final String wechatDpiInput;
-
-        AppConfigDraft(
-                String packageName,
-                String viewportInput,
-                String viewportMode,
-                String fontInput,
-                String fontMode,
-                String selectedTypefaceId,
-                String draftFontHookDomainsRaw,
-                String viewportApplyMode,
-                boolean fontHookDomainsResetRequested,
-                boolean viewportApplyModeResetRequested,
-                String wechatDpiInput
-        ) {
-            this.packageName = packageName;
-            this.viewportInput = viewportInput;
-            this.viewportMode = viewportMode;
-            this.fontInput = fontInput;
-            this.fontMode = fontMode;
-            this.selectedTypefaceId = selectedTypefaceId;
-            this.draftFontHookDomainsRaw = draftFontHookDomainsRaw;
-            this.viewportApplyMode = ViewportApplyMode.normalize(viewportApplyMode);
-            this.fontHookDomainsResetRequested = fontHookDomainsResetRequested;
-            this.viewportApplyModeResetRequested = viewportApplyModeResetRequested;
-            this.wechatDpiInput = wechatDpiInput;
-        }
-    }
-
     private static final class RetainedState {
 
         final List<AppListItem> appsSnapshot;
@@ -5056,14 +4829,17 @@ public final class MainActivity
         final AppListFilterState filterState;
         final MainUiState.WorkspaceMode workspaceMode;
         final int currentPage;
-        final SparseArray<Parcelable> pageScrollStates;
+        final int[] appListScrollPositions;
         final int[] refreshingPagePositions;
         final String editingPackageName;
-        final AppConfigDraft editingDraft;
+        final AppConfigEditorDraft editingDraft;
+        final AppConfigEditorDraft savedEditingDraft;
+        final ConfigEditorDestination editingDestination;
         final TemplateDetailSelection templateDetailSelection;
+        final ConfigEditorDestination templateEditorDestination;
         final boolean quickTemplateTargetSelectionActivityStarted;
-        final GlobalPrefillEditorBinder.Draft globalPrefillDraft;
-        final QuickTemplateEditorBinder.Draft quickTemplateDraft;
+        final TemplateEditorDraft globalPrefillDraft;
+        final TemplateEditorDraft quickTemplateDraft;
         final HomeUpdateUiState homeUpdateUiState;
 
         RetainedState(
@@ -5073,14 +4849,17 @@ public final class MainActivity
                 AppListFilterState filterState,
                 MainUiState.WorkspaceMode workspaceMode,
                 int currentPage,
-                SparseArray<Parcelable> pageScrollStates,
+                int[] appListScrollPositions,
                 int[] refreshingPagePositions,
                 String editingPackageName,
-                AppConfigDraft editingDraft,
+                AppConfigEditorDraft editingDraft,
+                AppConfigEditorDraft savedEditingDraft,
+                ConfigEditorDestination editingDestination,
                 TemplateDetailSelection templateDetailSelection,
+                ConfigEditorDestination templateEditorDestination,
                 boolean quickTemplateTargetSelectionActivityStarted,
-                GlobalPrefillEditorBinder.Draft globalPrefillDraft,
-                QuickTemplateEditorBinder.Draft quickTemplateDraft,
+                TemplateEditorDraft globalPrefillDraft,
+                TemplateEditorDraft quickTemplateDraft,
                 HomeUpdateUiState homeUpdateUiState
         ) {
             this.appsSnapshot = appsSnapshot;
@@ -5093,17 +4872,25 @@ public final class MainActivity
             this.workspaceMode
                     = workspaceMode != null ? workspaceMode : MainUiState.WorkspaceMode.APP;
             this.currentPage = currentPage;
-            this.pageScrollStates
-                    = pageScrollStates != null ? pageScrollStates.clone() : null;
+            this.appListScrollPositions = appListScrollPositions != null
+                    ? appListScrollPositions.clone()
+                    : new int[0];
             this.refreshingPagePositions
                     = refreshingPagePositions != null
                             ? refreshingPagePositions.clone()
                             : new int[0];
             this.editingPackageName = editingPackageName;
             this.editingDraft = editingDraft;
+            this.savedEditingDraft = savedEditingDraft;
+            this.editingDestination = editingDestination != null
+                    ? editingDestination
+                    : ConfigEditorDestination.MAIN;
             this.templateDetailSelection = templateDetailSelection != null
                     ? templateDetailSelection
                     : TemplateDetailSelection.none();
+            this.templateEditorDestination = templateEditorDestination != null
+                    ? templateEditorDestination
+                    : ConfigEditorDestination.MAIN;
             this.quickTemplateTargetSelectionActivityStarted =
                     quickTemplateTargetSelectionActivityStarted;
             this.globalPrefillDraft = globalPrefillDraft;

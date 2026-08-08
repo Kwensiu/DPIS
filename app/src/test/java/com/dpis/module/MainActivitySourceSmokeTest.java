@@ -1,76 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.appconfig.LandAppDetailPaneBinder;
-
-import com.dpis.module.fonts.HyperOsNativeProxyRefreshCoordinator;
-
-import com.dpis.module.settings.SystemScopeCoordinator;
-
-import com.dpis.module.applist.InstalledAppCatalogCoordinator;
-
-
-import com.dpis.module.fonts.FontApplyMode;
-
-
-
-import com.dpis.module.appconfig.AppConfigDialogBinder;
-import com.dpis.module.appconfig.AppConfigInputValidation;
-import com.dpis.module.appconfig.AppConfigPrefillPreview;
-import com.dpis.module.appconfig.AppConfigSaveHandler;
-
-import com.dpis.module.runtime.appprocess.AppProcessHookInstaller;
-
-import com.dpis.module.applist.AppStatusFormatter;
-
-import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
-
-import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation;
-
-import com.dpis.module.fonts.hookdomain.FontHookDomainDialog;
-
-import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
-
-import com.dpis.module.viewport.ViewportApplyMode;
-import com.dpis.module.viewport.ViewportTargetSpec;
-
-import com.dpis.module.applist.AppListFilter;
-import com.dpis.module.applist.AppListItem;
-import com.dpis.module.applist.AppListPage;
-import com.dpis.module.applist.AppListPagerAdapter;
-import com.dpis.module.hooks.HookDomainOverride;
-import com.dpis.module.hooks.HookDomainOverrideStore;
-
-import com.dpis.module.quirks.WechatDpiSheetBinder;
-import com.dpis.module.templates.QuickTemplateTargetsBinder;
-
-import com.dpis.module.templates.QuickTemplateSortDialog;
-
-import com.dpis.module.templates.GlobalPrefillStore;
-
-import com.dpis.module.applist.AppListFilterState;
-
-import com.dpis.module.home.HomeUpdateUiState;
-import com.dpis.module.home.HomeWorkspaceBinder;
-
 import com.dpis.module.ui.DialogWindowSizer;
-
-import com.dpis.module.updates.UpdateStateStore;
-
-import com.dpis.module.updates.UpdateManifestFetcher;
-
-import com.dpis.module.updates.UpdateDownloadCoordinator;
-
-import com.dpis.module.updates.UpdateCoordinator;
-
-import com.dpis.module.updates.StartupUpdatePackageHandler;
-
-import com.dpis.module.updates.StartupUpdateManifest;
-
-import com.dpis.module.updates.StartupUpdateCheckOnce;
-
-import com.dpis.module.updates.StartupUpdateCheckCoordinator;
-
-import com.dpis.module.updates.ReleaseNotesController;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -81,16 +11,16 @@ import org.junit.Test;
 public class MainActivitySourceSmokeTest {
 
     @Test
-    public void mainActivityRetainsHelpFabWiring() throws IOException {
+    public void composeOwnsMainWorkspaceSearchAndNavigationControls() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
-        String layout = read("src/main/res/layout/activity_status.xml");
+        String composeWorkspace = read(
+                "src/main/java/com/dpis/module/ui/compose/AppWorkspaceContent.kt");
 
-        assertTrue(source.contains("searchFocusFab = findViewById(R.id.search_focus_fab);"));
-        assertTrue(source.contains("FormInputFocusBinder.isInsideAny("));
-        assertTrue(source.contains("clearSearchFocus();"));
-        assertTrue(source.contains("return true;"));
-        assertTrue(source.contains("searchFocusFab.setOnClickListener"));
-        assertTrue(layout.contains("@+id/search_focus_fab"));
+        assertFalse(source.contains("searchFocusFab = findViewById"));
+        assertFalse(source.contains("workspaceSwitch.setOnItemSelectedListener"));
+        assertFalse(source.contains("searchFilterButton.setOnClickListener"));
+        assertTrue(composeWorkspace.contains("BasicTextField("));
+        assertTrue(composeWorkspace.contains("AppFilterSheet("));
     }
 
     @Test
@@ -119,73 +49,29 @@ public class MainActivitySourceSmokeTest {
     }
 
     @Test
-    public void mainActivityWiresPagerMediatorAndFilterEntry()
+    public void composeWorkspaceOwnsFilterEntry()
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
+        String composeWorkspace = read(
+                "src/main/java/com/dpis/module/ui/compose/AppWorkspaceContent.kt");
 
-        assertTrue(source.contains("R.id.app_pager"));
-        assertTrue(source.contains("R.id.land_app_list_page"));
-        assertTrue(source.contains("R.id.workspace_switch"));
-        assertTrue(source.contains("R.id.workspace_app_button"));
-        assertTrue(source.contains("R.id.workspace_template_button"));
-        assertTrue(source.contains("R.id.search_focus_fab"));
-        assertTrue(source.contains("new TabLayoutMediator("));
-        assertTrue(source.contains("bindLandscapeListController();"));
-        assertTrue(
-            source.contains(
-                "landListController = new AppListPagerAdapter.AppListPageController("
-            )
-        );
-        assertTrue(
-            compact(source).contains(
-                "if (appPager != null) { pagerAdapter = new AppListPagerAdapter("
-            )
-        );
-        assertTrue(source.contains("searchFilterButton.setOnClickListener"));
-        assertTrue(source.contains("focusSearchInputAndShowKeyboard()"));
-        assertTrue(!source.contains("RichTextDialog.show("));
-        assertTrue(source.contains("searchFocusFab.setOnClickListener"));
-        assertTrue(source.contains("bindFabTouchFeedback(searchFocusFab);"));
-        assertTrue(
-            source.contains(
-                "private void bindFabTouchFeedback(FloatingActionButton fab)"
-            )
-        );
-        assertTrue(
-            source.contains("TouchFeedbackBinder.bindPressScaleAndHaptic(fab);")
-        );
-        assertTrue(source.contains("focusSearchInputAndShowKeyboard()"));
-        assertTrue(source.contains("onPageListScrolled("));
-        assertTrue(source.contains("hideSearchFocusFab()"));
-        assertTrue(source.contains("showSearchFocusFab()"));
-        assertTrue(source.contains("R.dimen.floating_actions_hide_offset_y"));
-        assertTrue(source.contains(".translationY(getResources().getDimensionPixelSize("));
-        assertFalse(source.contains(".translationY(searchTargetTranslationY)"));
-        assertFalse(source.contains("searchFocusFab.getHeight() +"));
-        assertTrue(source.contains("showFilterDialog()"));
+        assertFalse(source.contains("focusSearchInputAndShowKeyboard()"));
+        assertFalse(source.contains("hideSearchFocusFab()"));
+        assertFalse(source.contains("showSearchFocusFab()"));
         assertTrue(source.contains("new AppListFilterState("));
-        assertTrue(source.contains("setOnCheckedChangeListener"));
-        assertTrue(!source.contains("R.id.filter_apply_button"));
-        assertTrue(!source.contains("R.id.filter_reset_button"));
+        assertTrue(composeWorkspace.contains("AppFilterSheet("));
     }
 
     @Test
-    public void workspaceSwitchHidesAppControlsInTemplateWorkspace()
+    public void composeShellOwnsWorkspaceSelection()
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(source.contains("STATE_WORKSPACE_MODE"));
         assertTrue(source.contains("MainUiState.WorkspaceMode.fromName("));
-        assertTrue(source.contains("bindWorkspaceSwitch()"));
-        assertTrue(
-            source.contains("workspaceSwitch.setOnItemSelectedListener")
-        );
-        assertTrue(
-            source.contains("private boolean updatingWorkspaceSelection;")
-        );
-        assertTrue(
-            source.contains("private void selectWorkspaceItem(int itemId)")
-        );
+        assertFalse(source.contains("bindWorkspaceSwitch()"));
+        assertFalse(source.contains("workspaceSwitch.setOnItemSelectedListener"));
+        assertFalse(source.contains("private boolean updatingWorkspaceSelection;"));
         assertTrue(source.contains("MainUiAction.workspaceModeChanged("));
         assertTrue(source.contains("applyWorkspaceMode(state.workspaceMode);"));
         assertTrue(
@@ -193,39 +79,13 @@ public class MainActivitySourceSmokeTest {
                 "boolean appWorkspace = mode == MainUiState.WorkspaceMode.APP;"
             )
         );
-        assertTrue(source.contains("setVisible(filterTabs, appWorkspace);"));
-        assertTrue(source.contains("new AppListTabsChromeController("));
-        assertTrue(source.contains("appListTabsChromeController.onPageListScrolled(dy)"));
-        assertTrue(source.contains("appListTabsChromeController.onWorkspaceChanged(appWorkspace);"));
-        assertTrue(source.contains("filterTabs.post(appListTabsChromeController::syncListInsets);"));
         assertFalse(source.contains("private void updateWatchFilterTabsScrollOffset(int dy)"));
-        assertTrue(source.contains("setVisible(appPager, appWorkspace);"));
-        assertTrue(source.contains("setVisible(landListPageView, appWorkspace);"));
         assertTrue(source.contains(
                 "setVisible(templateWorkspaceContainer, templateWorkspace);"
         ));
         assertTrue(source.contains("setVisible(toolsWorkspaceContainer, toolsWorkspace);"));
         assertTrue(source.contains("setVisible(settingsWorkspaceContainer, settingsWorkspace);"));
-        assertTrue(
-            source.contains(
-                "boolean floatingActionsVisible"
-            )
-        );
-        assertTrue(compact(source).contains(
-                "boolean floatingActionsVisible = appWorkspace && !isLandscapeDetailMode()"));
-        assertTrue(source.contains("&& WatchUiMode.shouldUseFloatingAppSearch(this);"));
-        assertTrue(source.contains("if (!WatchUiMode.shouldUseFloatingAppSearch(this))"));
-        assertTrue(
-            source.contains(
-                "setSearchFocusFabVisible(floatingActionsVisible);"
-            )
-        );
-        assertTrue(source.contains("private void setSearchFocusFabVisible(boolean visible)"));
-        assertTrue(source.contains("searchFocusFab.setTranslationY(0f);"));
-        assertTrue(source.contains("searchFabHidden = false;"));
-        assertTrue(
-            !source.contains("setVisible(helpFab, floatingActionsVisible);")
-        );
+        assertFalse(source.contains("setSearchFocusFabVisible("));
         assertTrue(
             source.contains(
                 "templateWorkspaceBinder = new TemplateWorkspaceBinder("
@@ -238,25 +98,12 @@ public class MainActivitySourceSmokeTest {
                 "templateWorkspaceBinder.bind( templateWorkspaceContainer, requireUiState().currentQuery() );"
             )
         );
-        assertTrue(source.contains("R.string.template_search_hint"));
         assertTrue(source.contains("STATE_TEMPLATE_QUERY"));
         assertTrue(source.contains("QuickTemplateSortDialog.show"));
-        assertTrue(
-            source.contains("searchFilterButton.setEnabled(appWorkspace);")
-        );
-        assertTrue(
-            compact(source).contains(
-                "searchFilterButton.setVisibility( appWorkspace ? View.VISIBLE : View.GONE );"
-            )
-        );
-        assertTrue(source.contains("applySearchClearButtonPosition(appWorkspace);"));
-        assertTrue(source.contains("private void applySearchClearButtonPosition(boolean filterButtonVisible)"));
-        assertTrue(source.contains("R.dimen.main_search_action_pair_padding"));
-        assertTrue(source.contains("R.dimen.main_search_action_icon_padding_end"));
-        assertTrue(source.contains("workspaceModeForButtonId(int checkedId)"));
-        assertTrue(
-            source.contains("checkedId == R.id.workspace_template_button")
-        );
+        assertFalse(source.contains("searchFilterButton.setEnabled(appWorkspace);"));
+        assertFalse(source.contains("applySearchClearButtonPosition(appWorkspace);"));
+        assertFalse(source.contains("workspaceModeForButtonId(int checkedId)"));
+        assertTrue(source.contains("new MainComposeShellHost("));
     }
 
     @Test
@@ -273,18 +120,16 @@ public class MainActivitySourceSmokeTest {
         assertTrue(
             beforeRestoreSnapshot.contains("if (retainedState != null) {")
         );
-        assertTrue(
-            !beforeRestoreSnapshot.contains("else if (retainedState != null)")
+        assertFalse(
+            beforeRestoreSnapshot.contains("else if (retainedState != null)")
         );
     }
 
     @Test
-    public void landscapeTemplateDetailUsesSeparatePaneAndHomeHidesDetail()
+    public void composeTemplateWorkspaceKeepsTargetSelectionFallbackOnly()
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String layout = read("src/main/res/layout-land/activity_status.xml");
-        String globalDetail = read("src/main/res/layout/view_land_global_prefill_detail.xml");
-        String templateDetail = read("src/main/res/layout/view_land_quick_template_detail.xml");
         String targetsDetail = read("src/main/res/layout/view_land_quick_template_targets_detail.xml");
 
         assertTrue(layout.contains("android:id=\"@+id/land_detail_content\""));
@@ -302,35 +147,17 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("showQuickTemplateEditor(String templateId)"));
         assertTrue(source.contains("TemplateDetailSelection.quickTemplate(templateId)"));
         assertTrue(source.contains("showQuickTemplateEditor(null);"));
-        assertTrue(source.contains("GlobalPrefillEditorBinder.bind("));
-        assertTrue(source.contains("QuickTemplateEditorBinder.bind("));
-        assertTrue(source.contains("activeQuickTemplateEditorBinder.currentTemplateId()"));
-        assertTrue(source.contains("templateId != null && templateId.isBlank()"));
-        assertTrue(source.contains("applyTemplateDetailInsets("));
-        assertFalse(source.contains("GlobalPrefillSheetDialog.bindInto("));
-        assertFalse(source.contains("QuickTemplateEditSheetDialog.bindInto("));
+        assertFalse(source.contains("GlobalPrefillEditorBinder"));
+        assertFalse(source.contains("QuickTemplateEditorBinder"));
+        assertFalse(source.contains("GlobalPrefillSheetDialog"));
+        assertFalse(source.contains("QuickTemplateEditSheetDialog"));
         assertTrue(source.contains("templateDetailSelection = TemplateDetailSelection.none();"));
-        assertTrue(source.contains("R.layout.view_land_global_prefill_detail"));
-        assertTrue(source.contains("R.layout.view_land_quick_template_detail"));
         assertTrue(source.contains("R.layout.view_land_quick_template_targets_detail"));
         assertTrue(source.contains("TemplateDetailKind.QUICK_TEMPLATE_TARGETS"));
         assertTrue(source.contains("TemplateDetailSelection.quickTemplateTargets(templateId)"));
         assertTrue(source.contains("activeQuickTemplateTargetsBinder.dispose();"));
         assertFalse(source.contains("? R.layout.dialog_global_prefill_sheet"));
         assertFalse(source.contains(": R.layout.dialog_quick_template_edit_sheet"));
-        assertTrue(globalDetail.contains("android:layout_height=\"match_parent\""));
-        assertTrue(globalDetail.contains("android:clipToPadding=\"false\""));
-        assertTrue(globalDetail.contains("android:fillViewport=\"true\""));
-        assertTrue(globalDetail.contains("@layout/view_template_config_sheet_fields"));
-        assertTrue(globalDetail.contains("android:baselineAligned=\"false\""));
-        assertTrue(globalDetail.contains("android:layout_gravity=\"center_vertical\""));
-        assertTrue(globalDetail.contains("android:translationY=\"@dimen/template_detail_inline_badge_visual_offset_top\""));
-        assertTrue(globalDetail.contains("@dimen/land_template_detail_subtitle_spacing_top"));
-        assertFalse(globalDetail.contains("@dimen/land_app_identity_secondary_spacing_top"));
-        assertFalse(globalDetail.contains("@layout/view_sheet_unsaved_badge_handle"));
-        assertFalse(globalDetail.contains("sheet_drag_handle"));
-        assertTrue(templateDetail.contains("android:layout_height=\"match_parent\""));
-        assertTrue(templateDetail.contains("android:clipToPadding=\"false\""));
         assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_detail_root\""));
         assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_list\""));
         assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_save_button\""));
@@ -338,15 +165,7 @@ public class MainActivitySourceSmokeTest {
         assertFalse(targetsDetail.contains("@dimen/land_app_identity_secondary_spacing_top"));
         assertFalse(targetsDetail.contains("quick_template_targets_back_button"));
         assertFalse(targetsDetail.contains("@layout/activity_quick_template_targets"));
-        assertTrue(templateDetail.contains("android:fillViewport=\"true\""));
-        assertTrue(templateDetail.contains("@layout/view_template_config_sheet_fields"));
-        assertTrue(templateDetail.contains("android:baselineAligned=\"false\""));
-        assertTrue(templateDetail.contains("android:layout_gravity=\"center_vertical\""));
-        assertTrue(templateDetail.contains("android:translationY=\"@dimen/template_detail_inline_badge_visual_offset_top\""));
-        assertTrue(templateDetail.contains("@dimen/land_template_detail_subtitle_spacing_top"));
-        assertFalse(templateDetail.contains("@dimen/land_app_identity_secondary_spacing_top"));
-        assertFalse(templateDetail.contains("@layout/view_sheet_unsaved_badge_handle"));
-        assertFalse(templateDetail.contains("sheet_drag_handle"));
+        assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_detail_root\""));
     }
 
     @Test
@@ -376,63 +195,59 @@ public class MainActivitySourceSmokeTest {
         assertTrue(landLayout.contains("android:id=\"@+id/workspace_switch_scroll\""));
         assertTrue(landLayout.contains("android:fillViewport=\"true\""));
         assertTrue(landLayout.contains("app:labelVisibilityMode=\"selected\""));
-        assertTrue(source.contains("bindLandscapeWorkspaceRailItemHeight();"));
-        assertTrue(source.contains("workspaceSwitch instanceof NavigationRailView"));
-        assertTrue(source.contains("applyCompactLandscapeWorkspaceRailItemHeight();"));
-        assertTrue(source.contains("R.dimen.main_land_workspace_rail_item_min_height"));
-        assertTrue(source.contains("railView.setItemMinimumHeight(itemHeight);"));
-        assertTrue(!source.contains("availableHeight / railView.getMenu().size()"));
+        assertFalse(source.contains("bindLandscapeWorkspaceRailItemHeight();"));
+        assertFalse(source.contains("workspaceSwitch instanceof NavigationRailView"));
+        assertFalse(source.contains("availableHeight / railView.getMenu().size()"));
         assertTrue(dimensions.contains("main_land_workspace_rail_item_min_height\">64dp"));
         assertTrue(roundDimensions.contains("main_land_workspace_rail_item_min_height\">56dp"));
-        assertTrue(!source.contains("NavigationRailMenuView"));
+        assertFalse(source.contains("NavigationRailMenuView"));
     }
 
     @Test
     public void templateEditorDraftMigratesBetweenSheetAndPane() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
-        String globalBinder = read("src/main/java/com/dpis/module/templates/GlobalPrefillEditorBinder.java");
-        String quickBinder = read("src/main/java/com/dpis/module/templates/QuickTemplateEditorBinder.java");
-        String globalSheet = read("src/main/java/com/dpis/module/templates/GlobalPrefillSheetDialog.java");
-        String quickSheet = read("src/main/java/com/dpis/module/templates/QuickTemplateEditSheetDialog.java");
+        String draft = read("src/main/java/com/dpis/module/templates/TemplateEditorDraft.java");
+        String workspace = read(
+                "src/main/java/com/dpis/module/templates/TemplateWorkspacePresentation.kt");
 
         assertTrue(source.contains("retainedGlobalPrefillDraft"));
         assertTrue(source.contains("retainedQuickTemplateDraft"));
-        assertTrue(source.contains("captureTemplateEditorDraft();"));
-        assertTrue(source.contains("activeGlobalPrefillEditorBinder.snapshotDraft()"));
-        assertTrue(source.contains("activeQuickTemplateEditorBinder.snapshotDraft()"));
-        assertTrue(source.contains("closeActiveTemplateSheetForMigration();"));
-        assertTrue(source.contains("templateSheetMigrationInProgress"));
         assertTrue(source.contains("retainedState.globalPrefillDraft"));
         assertTrue(source.contains("retainedState.quickTemplateDraft"));
         assertTrue(source.contains("retainedGlobalPrefillDraft"));
         assertTrue(source.contains("retainedQuickTemplateDraft"));
-        assertTrue(globalBinder.contains("Draft snapshotDraft()"));
-        assertTrue(globalBinder.contains("private void applyDraft(Draft draft)"));
-        assertTrue(quickBinder.contains("Draft snapshotDraft()"));
-        assertTrue(quickBinder.contains("private void applyDraft(Draft draft)"));
-        assertTrue(globalSheet.contains("GlobalPrefillEditorBinder.Draft initialDraft"));
-        assertTrue(globalSheet.contains("GlobalPrefillEditorBinder.Draft snapshotDraft()"));
-        assertTrue(quickSheet.contains("QuickTemplateEditorBinder.Draft initialDraft"));
-        assertTrue(quickSheet.contains("QuickTemplateEditorBinder.Draft snapshotDraft()"));
+        assertTrue(source.contains("TemplateEditorDraft globalPrefillDraft"));
+        assertTrue(source.contains("TemplateEditorDraft quickTemplateDraft"));
+        assertTrue(draft.contains("viewportScaleInput"));
+        assertTrue(draft.contains("viewportAbsoluteInput"));
+        assertTrue(workspace.contains("globalPrefillDraft: TemplateEditorDraft?"));
+        assertTrue(workspace.contains("quickTemplateDraft: TemplateEditorDraft?"));
+        assertFalse(source.contains("GlobalPrefillEditorBinder"));
+        assertFalse(source.contains("QuickTemplateEditorBinder"));
     }
 
     @Test
-    public void loadInstalledApps_usesIconCacheEntryPoint() throws IOException {
+    public void loadInstalledApps_publishesRowsBeforeIcons() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String coordinatorSource = read(
             "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.java"
         );
+        String iconSource = read("src/main/java/com/dpis/module/ui/compose/InstalledAppIcon.kt");
+        String workspaceSource = read("src/main/java/com/dpis/module/ui/compose/AppWorkspaceContent.kt");
 
         assertTrue(
             source.contains("installedAppCatalogCoordinator.loadInstalledApps(")
         );
-        assertTrue(coordinatorSource.contains("AppIconMemoryCache"));
-        assertTrue(
-            coordinatorSource.contains(
-                "loadAppIcon(packageManager, applicationInfo)"
-            )
-        );
-        assertTrue(!coordinatorSource.contains("getDefaultActivityIcon()"));
+        assertTrue(coordinatorSource.contains("item.hyperOsNativeProxyCandidate, true, null"));
+        assertTrue(coordinatorSource.contains("ApplicationInfoFlags.of(0L)"));
+        assertTrue(coordinatorSource.contains("getInstalledApplications(0)"));
+        assertFalse(coordinatorSource.contains("GET_META_DATA"));
+        assertTrue(source.contains("HyperOsNativeAppDetector.isNativeProxyCandidate("));
+        assertTrue(iconSource.contains("produceState<Drawable?>"));
+        assertTrue(iconSource.contains("InstalledAppIconCache.load"));
+        assertTrue(workspaceSource.contains("rememberInstalledAppIcon(item.packageName, item.icon)"));
+        assertFalse(workspaceSource.contains("preloadIcons("));
+        assertFalse(coordinatorSource.contains("getDefaultActivityIcon()"));
     }
 
     @Test
@@ -484,12 +299,31 @@ public class MainActivitySourceSmokeTest {
     public void savesAndRestoresPageScrollStatesForRotation()
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
+        String compose = read(
+                "src/main/java/com/dpis/module/ui/compose/AppWorkspaceContent.kt");
 
-        assertTrue(source.contains("STATE_PAGE_SCROLL_STATES"));
-        assertTrue(source.contains("putSparseParcelableArray("));
-        assertTrue(source.contains("capturePageScrollStates()"));
-        assertTrue(source.contains("restorePageScrollStates("));
-        assertTrue(source.contains("restoredPageScrollStates"));
+        assertTrue(source.contains("appWorkspaceScrollStateStore.snapshot()"));
+        assertTrue(source.contains("appWorkspaceScrollStateStore.restore("));
+        assertFalse(source.contains("STATE_APP_LIST_SCROLL_POSITIONS"));
+        assertFalse(source.contains("putIntArray(\n                STATE_APP_LIST_SCROLL_POSITIONS"));
+        assertTrue(compose.contains("PersistAppListScrollPosition("));
+        assertTrue(compose.contains("snapshotFlow"));
+        assertTrue(compose.contains("latestActions.updateScrollPosition(page, index, offset)"));
+    }
+
+    @Test
+    public void appWorkspaceSupportsTabClicksAndHorizontalPageSwipes()
+        throws IOException {
+        String compose = read(
+                "src/main/java/com/dpis/module/ui/compose/AppWorkspaceContent.kt");
+
+        assertTrue(compose.contains("rememberPagerState("));
+        assertTrue(compose.contains("HorizontalPager("));
+        assertTrue(compose.contains("pagerState.animateScrollToPage(page.position())"));
+        assertTrue(compose.contains("snapshotFlow { pagerState.settledPage }"));
+        assertTrue(compose.contains(".drop(1)"));
+        assertTrue(compose.contains("latestActions.changePage(page)"));
+        assertTrue(compose.contains("pageItems = state.itemsFor(page)"));
     }
 
     @Test
@@ -497,7 +331,7 @@ public class MainActivitySourceSmokeTest {
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String runtimeLayout = read(
-            "src/main/res/layout/dialog_module_runtime_reload_advice.xml"
+            "src/main/java/com/dpis/module/ui/compose/LocalToolDialogs.kt"
         );
         String strings = read("src/main/res/values/strings.xml");
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
@@ -514,30 +348,22 @@ public class MainActivitySourceSmokeTest {
             )
         );
         assertTrue(
-            source.contains("R.layout.dialog_module_runtime_reload_advice")
+            source.contains("ModuleRuntimeReloadComposeDialog.show(this")
         );
-        assertTrue(source.contains("new MaterialAlertDialogBuilder(this)"));
-        assertTrue(
-            source.contains(
-                "DialogWindowSizer.applyStandardWidth(dialog, this)"
-            )
-        );
-        assertTrue(source.contains("module_runtime_reload_ack_button"));
-        assertTrue(!source.contains("ModuleRuntimeReloader.softReloadAsync("));
-        assertTrue(!source.contains("module_runtime_reload_now_button"));
-        assertTrue(!source.contains("module_runtime_reload_later_button"));
-        assertTrue(runtimeLayout.contains("@drawable/ic_error_outline_24"));
+        assertTrue(runtimeLayout.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"));
+        assertFalse(source.contains("ModuleRuntimeReloader.softReloadAsync("));
+        assertFalse(source.contains("module_runtime_reload_now_button"));
+        assertFalse(source.contains("module_runtime_reload_later_button"));
+        assertTrue(runtimeLayout.contains("R.drawable.ic_error_outline_24"));
         assertTrue(runtimeLayout.contains("module_runtime_reload_title"));
         assertTrue(runtimeLayout.contains("module_runtime_reload_message"));
         assertTrue(runtimeLayout.contains("module_runtime_reload_ack_button"));
-        assertTrue(runtimeLayout.contains("@dimen/dialog_status_icon_size"));
-        assertTrue(runtimeLayout.contains("@dimen/dialog_status_icon_padding"));
+        assertTrue(runtimeLayout.contains("R.dimen.dialog_status_icon_padding"));
         assertTrue(
-            runtimeLayout.contains("@dimen/dialog_surface_padding_horizontal")
+            runtimeLayout.contains("R.dimen.dialog_surface_padding_horizontal")
         );
-        assertTrue(runtimeLayout.contains("@dimen/dialog_body_spacing"));
-        assertTrue(runtimeLayout.contains("@dimen/dialog_text_line_spacing"));
-        assertTrue(runtimeLayout.contains("@dimen/dialog_action_spacing_top"));
+        assertTrue(runtimeLayout.contains("R.dimen.dialog_body_spacing"));
+        assertTrue(runtimeLayout.contains("R.dimen.dialog_action_spacing_top"));
         String runtimeMessage = stringEntry(
             strings,
             "module_runtime_reload_message"
@@ -554,10 +380,10 @@ public class MainActivitySourceSmokeTest {
         assertTrue(
             zhRuntimeMessage.contains("部分修改可能需要重启设备后才能完全生效")
         );
-        assertTrue(!runtimeMessage.contains("HyperOS"));
-        assertTrue(!runtimeMessage.contains("Rust"));
-        assertTrue(!zhRuntimeMessage.contains("HyperOS"));
-        assertTrue(!zhRuntimeMessage.contains("Rust"));
+        assertFalse(runtimeMessage.contains("HyperOS"));
+        assertFalse(runtimeMessage.contains("Rust"));
+        assertFalse(zhRuntimeMessage.contains("HyperOS"));
+        assertFalse(zhRuntimeMessage.contains("Rust"));
         assertTrue(source.contains("maybeShowStartupDisclaimerDialog()"));
         assertTrue(
             source.contains("if (!maybeShowStartupDisclaimerDialog()) {")
@@ -589,7 +415,7 @@ public class MainActivitySourceSmokeTest {
             source.indexOf("private boolean maybeShowStartupDisclaimerDialog()"),
             source.indexOf("private boolean maybeShowModuleRuntimeReloadAdvice()")
         );
-        assertTrue(!disclaimerBlock.contains("DpisConfigStore"));
+        assertFalse(disclaimerBlock.contains("DpisConfigStore"));
     }
 
     @Test
@@ -731,8 +557,8 @@ public class MainActivitySourceSmokeTest {
         assertTrue(coordinatorSource.contains("onStartupUpdateAvailable"));
         assertTrue(coordinatorSource.contains("onStartupUpdateUpToDate"));
         assertTrue(coordinatorSource.contains("onStartupUpdateCheckFailed"));
-        assertTrue(!coordinatorSource.contains("launchStartupUpdateDialog"));
-        assertTrue(!source.contains("private void launchStartupUpdateDialog("));
+        assertFalse(coordinatorSource.contains("launchStartupUpdateDialog"));
+        assertFalse(source.contains("private void launchStartupUpdateDialog("));
         assertTrue(source.contains("HomeUpdateUiState.CHECKING"));
         assertTrue(source.contains("HomeUpdateUiState.available(manifest)"));
         assertTrue(source.contains("HomeUpdateUiState.UP_TO_DATE"));
@@ -746,10 +572,10 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("startupUpdateCheckCoordinator.checkForUpdatesNow();"));
         assertTrue(homeBinderSource.contains("bindUpdateActions("));
         assertTrue(homeBinderSource.contains("home_update_action_card"));
-        assertTrue(!homeBinderSource.contains("bringToFront();"));
+        assertFalse(homeBinderSource.contains("bringToFront();"));
         assertTrue(homeLayout.contains("com.dpis.module.home.HomePrimaryStatusClusterLayout"));
-        assertTrue(!homeBinderSource.contains("bindPrimaryStatusShape("));
-        assertTrue(!homeBinderSource.contains("setBottomLeftCornerSize("));
+        assertFalse(homeBinderSource.contains("bindPrimaryStatusShape("));
+        assertFalse(homeBinderSource.contains("setBottomLeftCornerSize("));
         assertTrue(homeLayout.contains("android:id=\"@+id/home_primary_status_cluster\""));
         assertTrue(homeLayout.contains("android:clipChildren=\"false\""));
         assertTrue(
@@ -759,18 +585,18 @@ public class MainActivitySourceSmokeTest {
         );
         assertTrue(homeLayout.contains("android:id=\"@+id/home_update_action_card\""));
         assertTrue(homeLayout.contains("app:cardElevation=\"0dp\""));
-        assertTrue(!homeLayout.contains("android:translationZ="));
-        assertTrue(!homeLayout.contains("home_primary_status_foreground_elevation"));
+        assertFalse(homeLayout.contains("android:translationZ="));
+        assertFalse(homeLayout.contains("home_primary_status_foreground_elevation"));
         assertTrue(homeLayout.contains("android:layout_height=\"@dimen/home_update_action_card_height\""));
         assertTrue(homeLayout.contains("android:layout_marginTop=\"@dimen/home_update_action_card_hidden_offset_top\""));
         assertTrue(homeLayout.contains("app:cardBackgroundColor=\"@color/home_update_action_card_container\""));
         assertTrue(homeLayout.contains("app:strokeColor=\"?attr/colorOutlineVariant\""));
         assertTrue(homeLayout.contains("android:gravity=\"bottom|center_vertical\""));
-        assertTrue(!homeLayout.contains("android:background=\"@drawable/bg_home_update_drawer\""));
-        assertTrue(!homeLayout.contains("home_update_drawer"));
-        assertTrue(!homeLayout.contains("home_update_card_"));
-        assertTrue(!homeLayout.contains("home_update_foreground_card_elevation"));
-        assertTrue(!homeLayout.contains("android:background=\"?attr/colorOutlineVariant\""));
+        assertFalse(homeLayout.contains("android:background=\"@drawable/bg_home_update_drawer\""));
+        assertFalse(homeLayout.contains("home_update_drawer"));
+        assertFalse(homeLayout.contains("home_update_card_"));
+        assertFalse(homeLayout.contains("home_update_foreground_card_elevation"));
+        assertFalse(homeLayout.contains("android:background=\"?attr/colorOutlineVariant\""));
         assertTrue(homeLayout.contains("android:layout_height=\"@dimen/home_update_action_card_button_height\""));
         assertTrue(homeLayout.contains("android:paddingStart=\"@dimen/home_update_action_card_padding_start\""));
         assertTrue(homeLayout.contains("android:paddingEnd=\"@dimen/home_update_action_card_padding_end\""));
@@ -780,7 +606,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(homeLayout.contains("android:id=\"@+id/home_update_action_install_progress_fill\""));
         assertTrue(homeLayout.contains("android:background=\"@drawable/bg_home_update_action_install_progress\""));
         assertTrue(homeLayout.contains("android:id=\"@+id/home_update_action_install_button\""));
-        assertTrue(!homeLayout.contains("android:id=\"@+id/home_update_download_progress\""));
+        assertFalse(homeLayout.contains("android:id=\"@+id/home_update_download_progress\""));
         assertTrue(homeLayout.contains("style=\"@style/Widget.Dpis.HomeUpdateActionCard.NotesButton\""));
         assertTrue(homeLayout.contains("style=\"@style/Widget.Dpis.HomeUpdateActionCard.InstallButton\""));
         assertTrue(homeLayout.contains("android:layout_width=\"wrap_content\""));
@@ -789,15 +615,15 @@ public class MainActivitySourceSmokeTest {
         assertTrue(homeBinderSource.contains("PrimaryStatusTone.DISABLED"));
         assertTrue(homeBinderSource.contains("PrimaryStatusTone.ENABLED"));
         assertTrue(homeBinderSource.contains("PrimaryStatusTone.UPDATE_AVAILABLE"));
-        assertTrue(!homeBinderSource.contains("home_status_checking"));
+        assertFalse(homeBinderSource.contains("home_status_checking"));
         assertTrue(homeBinderSource.contains("state.updateState.showsUpdateActionCard()"));
         assertTrue(homeBinderSource.contains("installButton.setOnClickListener(downloading"));
         assertTrue(homeBinderSource.contains("state.actions.installDownloadedUpdate();"));
         assertTrue(homeBinderSource.contains("R.string.home_update_action_downloading"));
         assertTrue(homeBinderSource.contains("R.string.home_update_action_install_ready"));
-        assertTrue(!homeBinderSource.contains("installButton.setClickable(false)"));
-        assertTrue(!homeBinderSource.contains("R.id.home_update_download_progress)"));
-        assertTrue(!homeLayout.contains("ic_download_24"));
+        assertFalse(homeBinderSource.contains("installButton.setClickable(false)"));
+        assertFalse(homeBinderSource.contains("R.id.home_update_download_progress)"));
+        assertFalse(homeLayout.contains("ic_download_24"));
         assertTrue(
             coordinatorSource.contains(
                 "updateCoordinator.markStartupCheckFinished("
@@ -835,14 +661,14 @@ public class MainActivitySourceSmokeTest {
             downloadCoordinatorSource.contains("downloadExecutor.download(")
         );
         assertTrue(source.contains("new StartupUpdatePackageHandler(this)"));
-        assertTrue(
-            !downloadCoordinatorSource.contains("verifyDownloadedApk(")
+        assertFalse(
+            downloadCoordinatorSource.contains("verifyDownloadedApk(")
         );
-        assertTrue(
-            !downloadCoordinatorSource.contains("UntrustedUpdateException")
+        assertFalse(
+            downloadCoordinatorSource.contains("UntrustedUpdateException")
         );
-        assertTrue(
-            !downloadCoordinatorSource.contains("about_update_download_untrusted")
+        assertFalse(
+            downloadCoordinatorSource.contains("about_update_download_untrusted")
         );
         assertTrue(downloadCoordinatorSource.contains("void onSucceeded(File targetFile)"));
         assertTrue(source.contains("current.asInstallReady(targetFile)"));
@@ -853,11 +679,11 @@ public class MainActivitySourceSmokeTest {
         );
         assertTrue(source.contains("new ReleaseNotesController("));
         assertTrue(source.contains("ReleaseNotesMarkdownRenderer.render("));
-        assertTrue(!source.contains("ReleaseNotesMarkdownLite.format("));
-        assertTrue(
-            !source.contains("private void verifyDownloadedApk(File apkFile)")
+        assertFalse(source.contains("ReleaseNotesMarkdownLite.format("));
+        assertFalse(
+            source.contains("private void verifyDownloadedApk(File apkFile)")
         );
-        assertTrue(!source.contains("updatePromptDialogCoordinator().showUpdateAvailableDialog("));
+        assertFalse(source.contains("updatePromptDialogCoordinator().showUpdateAvailableDialog("));
         assertTrue(source.contains("current.releaseNotes"));
         assertTrue(source.contains("startStartupUpdateDownload("));
         assertTrue(
@@ -870,8 +696,8 @@ public class MainActivitySourceSmokeTest {
                 "startupUpdateDownloadCancelRequested = state.downloadCancelRequested;"
             )
         );
-        assertTrue(
-            !source.contains(
+        assertFalse(
+            source.contains(
                 "startActivity(AboutActivity.createStartupUpdateIntent("
             )
         );
@@ -901,12 +727,12 @@ public class MainActivitySourceSmokeTest {
                 )
         );
         assertTrue(layout.contains("startup_disclaimer_accept_button"));
-        assertTrue(!layout.contains("startup_disclaimer_exit_button"));
+        assertFalse(layout.contains("startup_disclaimer_exit_button"));
         assertTrue(layout.contains("@dimen/dialog_surface_padding_horizontal"));
         assertTrue(layout.contains("@dimen/dialog_body_spacing"));
         assertTrue(layout.contains("@dimen/dialog_text_line_spacing"));
         assertTrue(layout.contains("@dimen/dialog_action_spacing_top"));
-        assertTrue(!layout.contains("@dimen/dialog_action_spacing_between"));
+        assertFalse(layout.contains("@dimen/dialog_action_spacing_between"));
         assertTrue(roundLayout.contains("@style/TextAppearance.Material3.TitleSmall"));
         assertTrue(roundLayout.contains("android:maxLines=\"2\""));
         assertTrue(roundLayout.contains("app:maxHeightFraction=\"0.25\""));
@@ -932,77 +758,10 @@ public class MainActivitySourceSmokeTest {
                 "android:minHeight=\"@dimen/dialog_mode_toggle_row_min_height\""
             )
         );
-        assertTrue(
-            !layout.contains(
+        assertFalse(
+            layout.contains(
                 "android:layout_height=\"@dimen/dialog_mode_toggle_row_height\""
             )
-        );
-    }
-
-    @Test
-    public void applyFilter_submitsPerPageListsWithoutRedundantStatusRefresh()
-        throws IOException {
-        String source = read("src/main/java/com/dpis/module/MainActivity.java");
-
-        int applyFilterStart = source.indexOf("private void applyFilter() {");
-        int applyFilterEnd = source.indexOf(
-            "private void showFilterDialog()",
-            applyFilterStart
-        );
-        assertTrue(applyFilterStart >= 0);
-        assertTrue(applyFilterEnd > applyFilterStart);
-
-        String applyFilterBody = source.substring(
-            applyFilterStart,
-            applyFilterEnd
-        );
-        assertTrue(applyFilterBody.contains("pagerAdapter.submitPage("));
-        assertTrue(applyFilterBody.contains("landListController.bind("));
-        assertTrue(
-            applyFilterBody.contains("state.visibleItems(landCurrentPage)")
-        );
-        assertTrue(
-            applyFilterBody.contains(
-                "landScrollStates.get(landCurrentPage.position())"
-            )
-        );
-        assertFalse(
-            applyFilterBody.contains("restoredPageScrollStates.remove")
-        );
-        assertTrue(
-            !applyFilterBody.contains("pagerAdapter.refreshVisibleStatuses();")
-        );
-    }
-
-    @Test
-    public void landscapeList_keepsScrollStateSeparateFromPagerAdapter()
-        throws IOException {
-        String source = read("src/main/java/com/dpis/module/MainActivity.java");
-
-        assertTrue(
-            source.contains(
-                "private final SparseArray<Parcelable> landScrollStates"
-            )
-        );
-        assertTrue(source.contains("= new SparseArray<>();"));
-        assertTrue(
-            source.contains(
-                "restoreLandscapeScrollStates(restoredPageScrollStates);"
-            )
-        );
-        assertTrue(
-            source.contains("private void captureCurrentLandscapeScrollState()")
-        );
-        assertTrue(
-            source.contains(
-                "landScrollStates.put(landCurrentPage.position(), landState);"
-            )
-        );
-        assertTrue(
-            source.contains("return pagerAdapter.capturePageScrollStates();")
-        );
-        assertTrue(
-            source.contains("for (int i = 0; i < landScrollStates.size(); i++)")
         );
     }
 
@@ -1015,7 +774,7 @@ public class MainActivitySourceSmokeTest {
             "private void onPageRefreshRequested(AppListPage page) {"
         );
         int refreshEnd = source.indexOf(
-            "private void onPageListScrolled(",
+            "private void requestAppsLoad()",
             refreshStart
         );
         assertTrue(refreshStart >= 0);
@@ -1159,9 +918,9 @@ public class MainActivitySourceSmokeTest {
                 "landDetailContent.post(() -> applyLandDetailContentLayout(dialogView))"
             )
         );
-        assertTrue(!source.contains("private void bindDialogValidation("));
-        assertTrue(!source.contains("private void bindDialogActions("));
-        assertTrue(!source.contains("private void refreshDialogState("));
+        assertFalse(source.contains("private void bindDialogValidation("));
+        assertFalse(source.contains("private void bindDialogActions("));
+        assertFalse(source.contains("private void refreshDialogState("));
     }
 
     @Test
@@ -1183,30 +942,10 @@ public class MainActivitySourceSmokeTest {
     }
 
     @Test
-    public void appListAdapter_usesStableIdsAndPositionBasedClickBinding()
-        throws IOException {
-        String source = read(
-            "src/main/java/com/dpis/module/applist/AppListPagerAdapter.java"
-        );
-
-        assertTrue(source.contains("setHasStableIds(true);"));
-        assertTrue(source.contains("public long getItemId(int position)"));
-        assertTrue(source.contains("holder.getBindingAdapterPosition();"));
-        assertTrue(source.contains("position == RecyclerView.NO_POSITION"));
-        assertTrue(
-            source.contains(
-                "onAppClickListener.onAppClicked(getItem(position));"
-            )
-        );
-    }
-
-    @Test
     public void landscapeStatusLayout_usesFlatDetailPane() throws IOException {
         String layout = read("src/main/res/layout-land/activity_status.xml");
 
         assertTrue(layout.contains("@+id/land_root_row"));
-        assertTrue(layout.contains("@+id/land_app_list_page"));
-        assertTrue(layout.contains("@layout/item_app_list_page"));
         assertFalse(layout.contains("@+id/app_pager"));
         assertTrue(layout.contains("@+id/land_detail_pane"));
         assertTrue(layout.contains("@+id/land_detail_content"));
@@ -1248,6 +987,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(landScrollBlock.contains(
             "android:paddingTop=\"@dimen/main_land_detail_top_padding\""
         ));
+        assertTrue(layout.contains("android:id=\"@+id/land_detail_scroll_content\""));
         assertFalse(layout.contains("android:layout_height=\"@dimen/main_content_divider_height\""));
         assertFalse(layout.contains("@dimen/land_app_detail_input_group_padding_horizontal"));
         assertTrue(layout.contains("@dimen/land_app_detail_section_gap"));
@@ -1292,6 +1032,35 @@ public class MainActivitySourceSmokeTest {
         assertTrue(unsavedBadgeBlock.contains("android:layout_width=\"wrap_content\""));
         assertFalse(unsavedBadgeBlock.contains("android:layout_weight=\"1\""));
         assertTrue(layout.contains("android:id=\"@+id/land_detail_action_dock\""));
+        int actionDockIdStart = layout.indexOf("android:id=\"@+id/land_detail_action_dock\"");
+        int actionDockStart = layout.lastIndexOf("<FrameLayout", actionDockIdStart);
+        int actionDockTagEnd = layout.indexOf(">", actionDockStart);
+        String actionDockTag = layout.substring(actionDockStart, actionDockTagEnd);
+        assertTrue(actionDockTag.contains("<FrameLayout"));
+        assertFalse(actionDockTag.contains("cardBackgroundColor"));
+        int actionSurfaceStart = layout.indexOf(
+                "android:id=\"@+id/land_detail_action_surface\""
+        );
+        int actionSurfaceTagEnd = layout.indexOf(">", actionSurfaceStart);
+        String actionSurfaceTag = layout.substring(actionSurfaceStart, actionSurfaceTagEnd);
+        assertTrue(actionSurfaceTag.contains(
+                "app:cardBackgroundColor=\"?attr/colorSurfaceContainerHigh\""));
+        assertTrue(actionSurfaceTag.contains(
+                "app:cardCornerRadius=\"@dimen/land_app_detail_dock_corner_radius\""));
+        assertTrue(layout.contains(
+                "android:id=\"@+id/land_detail_process_action_group\""));
+        assertTrue(layout.contains(
+                "app:cardBackgroundColor=\"?attr/colorSurfaceContainer\""));
+        int clearanceStart = binder.indexOf("private void updateScrollContentClearance(");
+        int clearanceEnd = binder.indexOf(
+                "private static boolean updateSaveButtonState(",
+                clearanceStart
+        );
+        String clearanceBlock = binder.substring(clearanceStart, clearanceEnd);
+        assertTrue(clearanceBlock.contains("R.id.land_detail_scroll_content"));
+        assertTrue(clearanceBlock.contains("content.setPaddingRelative("));
+        assertFalse(clearanceBlock.contains("MarginLayoutParams"));
+        assertFalse(clearanceBlock.contains("bottomMargin"));
         assertTrue(layout.contains("android:id=\"@+id/land_detail_save_button\""));
         assertTrue(layout.contains("android:id=\"@+id/land_detail_scope_row\""));
         assertTrue(
@@ -1440,7 +1209,7 @@ public class MainActivitySourceSmokeTest {
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         int methodStart = source.indexOf("private void applyLandDetailContentInsets");
-        int methodEnd = source.indexOf("private void focusSearchInputAndShowKeyboard", methodStart);
+        int methodEnd = source.indexOf("private void showToast", methodStart);
 
         assertTrue(methodStart >= 0);
         assertTrue(methodEnd > methodStart);
@@ -1471,35 +1240,30 @@ public class MainActivitySourceSmokeTest {
                 "FontRuntimePropertySyncer.clearTargetAsync(packageName)"
             )
         );
-        assertTrue(
-            !source.contains("private void runProcessAction(String packageName")
+        assertFalse(
+            source.contains("private void runProcessAction(String packageName")
         );
-        assertTrue(
-            !source.contains("private int[] saveAppConfig(AppListItem item")
+        assertFalse(
+            source.contains("private int[] saveAppConfig(AppListItem item")
         );
     }
 
     @Test
-    public void firstScreen_loadUsesPlaceholderAndAsyncIconWarmup()
+    public void installedCatalog_defersIconsUntilRowsAreVisible()
         throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String coordinatorSource = read(
             "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.java"
         );
 
-        assertTrue(
-            source.contains(
-                "installedAppCatalogCoordinator.onIconLoadRequested(packageName);"
-            )
-        );
-        assertTrue(coordinatorSource.contains("firstScreenIconWarmupLimit"));
-        assertTrue(
-            coordinatorSource.contains("maybeScheduleFirstScreenIconWarmup(")
-        );
-        assertTrue(coordinatorSource.contains("pendingOnDemandIconLoads"));
-        assertTrue(coordinatorSource.contains("resolveDisplayIcon(item)"));
-        assertTrue(coordinatorSource.contains("scheduleIconRefresh();"));
-        assertTrue(!coordinatorSource.contains("getDefaultActivityIcon()"));
+        assertTrue(source.contains("loadInstalledApps(forceInstalledAppCatalogReload)"));
+        assertTrue(coordinatorSource.contains("List<InstalledAppCatalogItem> catalog = loadInstalledAppCatalog("));
+        assertTrue(coordinatorSource.contains("return applicationInfo.loadIcon(packageManager);"));
+        assertFalse(coordinatorSource.contains("icon = loadApplicationIcon(packageManager, applicationInfo);"));
+        assertFalse(coordinatorSource.contains("maybeScheduleFirstScreenIconWarmup("));
+        assertFalse(coordinatorSource.contains("ExecutorService"));
+        assertFalse(coordinatorSource.contains("onIconsLoaded("));
+        assertFalse(coordinatorSource.contains("getDefaultActivityIcon()"));
     }
 
     @Test
@@ -1524,8 +1288,8 @@ public class MainActivitySourceSmokeTest {
                 "de.robv.android.xposed.intent.action.MODULE_SETTINGS"
             )
         );
-        assertTrue(
-            !source.contains("private void toggleScope(String packageName")
+        assertFalse(
+            source.contains("private void toggleScope(String packageName")
         );
     }
 
@@ -1564,13 +1328,13 @@ public class MainActivitySourceSmokeTest {
                 "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)"
             )
         );
-        assertTrue(
-            !source.contains(
+        assertFalse(
+            source.contains(
                 "HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(this, configStore)"
             )
         );
-        assertTrue(
-            !source.contains(
+        assertFalse(
+            source.contains(
                 "HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(this, runtimeDeliveryStore)"
             )
         );
@@ -1594,8 +1358,8 @@ public class MainActivitySourceSmokeTest {
                 "HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(context, DpisLog::e)"
             )
         );
-        assertTrue(
-            !receiver.contains(
+        assertFalse(
+            receiver.contains(
                 "HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(context, store)"
             )
         );
@@ -1637,8 +1401,8 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("AppConfigDialogBinder.resolveFontMode(findFontModeToggle(root))"));
         assertTrue(source.contains("this,"));
         String saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.java");
-        assertTrue(
-            !saveSource.contains("FontRuntimePropertySyncer.publishTargetAsync(")
+        assertFalse(
+            saveSource.contains("FontRuntimePropertySyncer.publishTargetAsync(")
         );
         assertTrue(source.contains("scheduleRuntimePropertiesForTargetLaunch(packageName);"));
         assertTrue(source.contains("FontRuntimePropertySyncer.syncTarget(packageName, store);"));
@@ -1708,6 +1472,61 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("FontHookDomainPresentation"));
         assertTrue(method.contains("AppConfigDialogBinder.AppConfigDialogState state"));
         assertFalse(method.contains("item.previewFromGlobalPrefill"));
+    }
+
+    @Test
+    public void composeTemplateEditorBridgesSelectionDraftAndCloseLifecycle()
+        throws IOException {
+        String activity = read("src/main/java/com/dpis/module/MainActivity.java");
+        String coordinator = read(
+            "src/main/java/com/dpis/module/MainWorkspacePresentationCoordinator.kt");
+        String workspace = read(
+            "src/main/java/com/dpis/module/ui/compose/TemplateWorkspaceContent.kt");
+
+        assertTrue(activity.contains("onComposeTemplateEditorOpened(quickTemplate, templateId)"));
+        assertTrue(activity.contains("boolean dirty = form.isDirty();"));
+        assertTrue(activity.contains("retainedGlobalPrefillDraft = dirty ? form.globalDraft() : null;"));
+        assertTrue(activity.contains("retainedQuickTemplateDraft = dirty ? form.quickDraft() : null;"));
+        assertTrue(activity.contains("private void onComposeTemplateEditorClosed()"));
+        assertTrue(activity.contains("clearTemplateDetailSelection();"));
+        int closeStart = activity.indexOf("private void onComposeTemplateEditorClosed()");
+        int closeEnd = activity.indexOf("private void showQuickTemplateEditor", closeStart);
+        String closeMethod = activity.substring(closeStart, closeEnd);
+        assertTrue(closeMethod.indexOf("clearTemplateDetailSelection();")
+                < closeMethod.indexOf("bindTemplateWorkspace();"));
+        assertTrue(coordinator.contains("onEditorOpened ="));
+        assertTrue(coordinator.contains("onEditorChanged = content::updateTemplateEditor"));
+        assertTrue(coordinator.contains("onEditorClosed = content::closeTemplateEditor"));
+        assertTrue(workspace.contains("onEditorOpened: (quickTemplate: Boolean, templateId: String?)"));
+        assertTrue(workspace.contains("onEditorChanged: (TemplateEditorForm) -> Unit"));
+        assertTrue(workspace.contains("onEditorClosed: () -> Unit"));
+        assertTrue(workspace.contains("onEditorOpened(kind == EDITOR_QUICK, templateId)"));
+        assertTrue(workspace.contains("onEditorChanged(editorDraft.form)"));
+        assertTrue(workspace.contains("onEditorClosed()"));
+        int workspaceCloseStart = workspace.indexOf("fun closeEditor()");
+        int workspaceCloseEnd = workspace.indexOf("fun saveEditor()", workspaceCloseStart);
+        String workspaceClose = workspace.substring(workspaceCloseStart, workspaceCloseEnd);
+        assertFalse(workspaceClose.contains("onEditorDestinationChanged"));
+        assertTrue(workspace.contains("closeEditor()"));
+        assertTrue(workspace.contains("@Preview(showBackground = true"));
+    }
+
+    @Test
+    public void composeTemplateRestorePublishesDetailWithoutLegacyEditorFallback()
+        throws IOException {
+        String activity = read("src/main/java/com/dpis/module/MainActivity.java");
+        int methodStart = activity.indexOf(
+                "private void restoreTemplateEditorForCurrentConfiguration()");
+        int methodEnd = activity.indexOf(
+                "private void clearTemplateDetailSelection()", methodStart);
+        String method = activity.substring(methodStart, methodEnd);
+
+        int composeBranch = method.indexOf("if (composeShellHost != null)");
+        assertTrue(composeBranch >= 0);
+        assertTrue(method.contains("bindTemplateWorkspace();"));
+        assertFalse(method.contains("showGlobalPrefillSheet"));
+        assertFalse(method.contains("showQuickTemplateSheet"));
+        assertFalse(method.contains("closeActiveTemplateSheetForMigration"));
     }
 
     private static String read(String relativePath) throws IOException {

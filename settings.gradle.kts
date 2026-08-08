@@ -1,4 +1,5 @@
 include(":app")
+include(":baselineprofile")
 
 pluginManagement {
     repositories {

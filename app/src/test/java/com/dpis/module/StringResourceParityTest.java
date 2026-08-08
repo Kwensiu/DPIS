@@ -59,20 +59,20 @@ public class StringResourceParityTest {
     public void settingsScreenWiresLanguageSelector() throws IOException {
         String layout = read("src/main/res/layout/view_system_server_settings_content.xml");
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
-        String dialogLayout = read("src/main/res/layout/dialog_language_selection.xml");
+        String dialogs = read("src/main/java/com/dpis/module/ui/compose/SettingsComposeDialogs.kt");
         String localeManager = read("src/main/java/com/dpis/module/settings/AppLocaleManager.java");
 
         assertTrue(layout.contains("android:id=\"@+id/row_language\""));
-        assertTrue(dialogLayout.contains("android:id=\"@+id/language_options_container\""));
-        assertTrue(dialogLayout.contains("@dimen/dialog_surface_padding_horizontal"));
-        assertTrue(dialogLayout.contains("@dimen/dialog_action_spacing_top"));
+        assertTrue(dialogs.contains("LanguageDialogContent("));
+        assertTrue(dialogs.contains("R.dimen.dialog_surface_padding_horizontal"));
+        assertTrue(dialogs.contains("R.dimen.dialog_action_spacing_top"));
         assertTrue(source.contains("R.id.row_language"));
         assertTrue(source.contains("bindLanguageRow()"));
         assertTrue(source.contains("showLanguageDialog"));
         assertTrue(source.contains("AppLocaleManager.supportedLanguages()"));
-        assertTrue(source.contains("createLanguageOptionButton("));
+        assertTrue(source.contains("new LanguageDialogOption("));
         assertTrue(source.contains("AppLocaleManager.setLanguageTag"));
-        assertTrue(source.contains("dialog_language_selection"));
+        assertTrue(source.contains("SettingsComposeDialogs.showLanguage"));
         assertTrue(source.contains("updateLanguageEntrySubtitle()"));
         assertTrue(source.contains("AppLocaleManager.selectedLabelResId(activity)"));
         assertTrue(!source.contains("settings_language_hint"));
@@ -106,7 +106,7 @@ public class StringResourceParityTest {
         String licenseSource = read("src/main/java/com/dpis/module/about/OpenSourceLicenseActivity.java");
         String manifest = read("src/main/AndroidManifest.xml");
 
-        assertTrue(localizedSource.contains("extends Activity"));
+        assertTrue(localizedSource.contains("extends ComponentActivity"));
         assertTrue(localeManager.contains("Context wrap(Context context)"));
         assertTrue(localeManager.contains("createConfigurationContext(configuration)"));
         assertTrue(localeManager.contains("Context.MODE_PRIVATE"));
@@ -119,6 +119,7 @@ public class StringResourceParityTest {
         assertTrue(licenseSource.contains("extends LocalizedActivity"));
         assertTrue(mainSource.contains("new SystemServerSettingsPageController("));
         assertTrue(settingsSource.contains("SystemServerSettingsPageController(LocalizedActivity activity"));
+        assertTrue(manifest.contains("android:supportsRtl=\"false\""));
         assertTrue(!manifest.contains("AppLocalesMetadataHolderService"));
     }
 

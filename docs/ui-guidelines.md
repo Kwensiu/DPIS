@@ -134,6 +134,14 @@ Dialog 必须先按内容和操作归类。
 
 按钮文本应清楚表达结果。高风险操作不要只写“确定”，应写出动作，例如停止、覆盖、导入或清除。
 
+## Compose 点击与触觉
+
+Compose 页面中的离散成功操作应使用
+`rememberDpisConfirmAction`，让卡片、设置入口、开关、按钮、图标按钮和工作区切换与
+现有 `TouchFeedbackBinder.bindPressHaptic` 保持一致。禁用操作、只读信息和滑条连续拖动不触发确认震动。
+
+滑条保留自己的领域语义：离散档位只在跨档时发 tick，不要把每次拖动替换为确认震动。隐藏密集刻度是视觉处理，不能改变原有的可选档位或保存粒度。
+
 ## Tests And Review Gates
 
 UI 变更至少要考虑资源 smoke test。影响 layout id、字符串、debug-only 入口、dialog 结构或关键资源命名时，应新增或更新对应测试。

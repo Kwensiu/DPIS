@@ -100,6 +100,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("dialogView, item, views, state, style, systemHooksEnabled);"));
         assertTrue(binderSource.contains("host.applyHyperOsNativeProxy(item, onFinished)"));
         assertTrue(binderSource.contains("host.unmountHyperOsNativeProxy(item"));
+        assertTrue(binderSource.contains("host.isHyperOsNativeProxyCandidate(item)"));
     }
 
     @Test
@@ -112,7 +113,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(interactionsSource.contains(
                 "new AppConfigSheetModeValidationBinder(binder, host)"));
         assertTrue(countOccurrences(modeValidationSource, "host.onDraftStateChanged(state);") >= 7);
-        assertTrue(mainActivitySource.contains("AppConfigDraft captured = captureAppConfigDraft();"));
+        assertTrue(mainActivitySource.contains("AppConfigEditorDraft captured = captureAppConfigDraft();"));
         assertTrue(mainActivitySource.contains("mainViewModel.setEditingDraft(captured);"));
     }
 
@@ -237,7 +238,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("SystemFontRegistry.listRecommendedFonts()"));
         assertTrue(source.contains("TabLayout"));
         assertTrue(source.contains("R.layout.dialog_typeface_selection"));
-        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialogHolder[0], activity)"));
+        assertTrue(source.contains("DialogWindowSizer.applyConfigurationWidth(dialogHolder[0], activity)"));
         assertTrue(source.contains("R.string.dialog_typeface_tab_system"));
         assertTrue(source.contains("R.string.dialog_typeface_tab_imported"));
         assertTrue(source.contains("bindImportedTypefaceCollectionRows"));
@@ -354,7 +355,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
         assertTrue(source.contains("setTitle(R.string.dialog_font_hook_domains_dialog_title)"));
-        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialog, activity)"));
+        assertTrue(source.contains("DialogWindowSizer.applyConfigurationWidth(dialog, activity)"));
         assertTrue(source.contains("dialog_hook_chain_tab_interface"));
         assertTrue(source.contains("dialog_hook_chain_tab_font"));
         assertTrue(source.contains("normalizeViewportApplyModeForDisplay(currentViewportApplyMode)"));
@@ -719,6 +720,41 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertFalse(landBinder.contains("R.string.status_save_invalid"));
     }
 
+    @Test
+    public void modeToggleThumbUsesHalfOfMeasuredTrackAfterRelayout() throws IOException {
+        String binder = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
+        String dialogLayout = read("src/main/res/layout/dialog_app_config.xml");
+        String landLayout = read("src/main/res/layout/view_land_app_detail.xml");
+
+        assertTrue(binder.contains("private static int updateModeToggleThumbLayout(ModeToggle toggle)"));
+        assertTrue(binder.contains("private static View modeToggleTrack(ModeToggle toggle)"));
+        assertTrue(binder.contains("toggle.thumb.getParent() instanceof View"));
+        assertTrue(binder.contains("int half = availableWidth / 2;"));
+        assertTrue(binder.contains("params.width = half;"));
+        assertTrue(binder.contains("container.getTag(R.id.mode_toggle_layout_listener)"));
+        assertTrue(binder.contains("track.getViewTreeObserver().addOnGlobalLayoutListener(listener)"));
+        assertTrue(binder.contains("modeUsesStartThumb(toggle) ? 0f : half"));
+
+        assertThumbStartsAtZeroWidth(dialogLayout, "dialog_viewport_mode_toggle_thumb");
+        assertThumbStartsAtZeroWidth(dialogLayout, "dialog_font_mode_toggle_thumb");
+        assertThumbStartsAtZeroWidth(landLayout, "land_detail_viewport_mode_toggle_thumb");
+        assertThumbStartsAtZeroWidth(landLayout, "land_detail_font_mode_toggle_thumb");
+    }
+
+    @Test
+    public void landscapeDetailReassertsModeToggleSizeWhenRebound() throws IOException {
+        String landBinder = read(
+                "src/main/java/com/dpis/module/appconfig/LandAppDetailPaneBinder.java"
+        );
+
+        assertTrue(landBinder.contains("stabilizeModeToggleLayout(toggle.container);"));
+        assertTrue(landBinder.contains("R.dimen.dialog_mode_toggle_width"));
+        assertTrue(landBinder.contains("R.dimen.dialog_mode_toggle_row_height"));
+        assertTrue(landBinder.contains("root.getViewTreeObserver().addOnGlobalLayoutListener("));
+        assertTrue(landBinder.contains("primaryRow.getWidth() < threeButtonRequiredWidth"));
+        assertTrue(landBinder.contains("container.post(() ->"));
+    }
+
     private static String read(String relativePath) throws IOException {
         return SourceSmokeTestPaths.read(relativePath);
     }
@@ -738,6 +774,16 @@ public class AppConfigDialogBinderSourceSmokeTest {
             }
         }
         throw new IllegalArgumentException("Missing string resource: " + name);
+    }
+
+    private static void assertThumbStartsAtZeroWidth(String layout, String thumbId) {
+        int thumbIndex = layout.indexOf("android:id=\"@+id/" + thumbId + "\"");
+        assertTrue(thumbIndex >= 0);
+        int viewStart = layout.lastIndexOf("<View", thumbIndex);
+        int tagEnd = layout.indexOf(">", thumbIndex);
+        assertTrue(viewStart >= 0 && tagEnd > viewStart);
+        String declaration = layout.substring(viewStart, tagEnd);
+        assertTrue(declaration.contains("android:layout_width=\"0dp\""));
     }
 
     private static int countOccurrences(String source, String needle) {

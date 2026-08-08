@@ -236,6 +236,40 @@ public final class AppListItem {
         return appSpecificConfigActive;
     }
 
+    /**
+     * Returns this app snapshot with only its asynchronously loaded icon replaced.
+     * Keeping the rest of the immutable state intact lets both app-list tabs refresh together.
+     */
+    public AppListItem withIcon(Drawable updatedIcon) {
+        if (icon == updatedIcon) {
+            return this;
+        }
+        return new AppListItem(
+                label,
+                packageName,
+                inScope,
+                scopeKnown,
+                viewportWidthDp,
+                viewportScaleMilliPercent,
+                viewportMode,
+                viewportTargetType,
+                viewportTargetSpec,
+                fontScalePercent,
+                fontMode,
+                typefaceId,
+                appSpecificConfigActive,
+                wechatDpi,
+                dpisEnabled,
+                configured,
+                installed,
+                systemApp,
+                hyperOsNativeProxyCandidate,
+                previewFromGlobalPrefill,
+                previewFontHookDomainsRaw,
+                updatedIcon
+        );
+    }
+
     public AppListItem withGlobalPrefillPreview(TemplateConfigValue prefill) {
         TemplateConfigValue normalized = prefill != null ? prefill : TemplateConfigValue.EMPTY;
         ViewportTargetSpec viewportTargetSpec =

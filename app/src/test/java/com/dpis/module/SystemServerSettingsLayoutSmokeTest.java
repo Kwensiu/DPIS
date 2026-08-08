@@ -36,15 +36,15 @@ public class SystemServerSettingsLayoutSmokeTest {
     }
 
     @Test
-    public void aboutLayoutContainsHeaderAndFourNavigationRows() throws IOException {
-        String layout = read("src/main/res/layout/activity_about.xml");
+    public void aboutComposeContentContainsHeaderAndNavigationActions() throws IOException {
+        String content = read("src/main/java/com/dpis/module/ui/compose/AboutContent.kt");
 
-        assertTrue(layout.contains("android:id=\"@+id/about_back_button\""));
-        assertTrue(layout.contains("android:id=\"@+id/about_version\""));
-        assertTrue(layout.contains("android:id=\"@+id/row_about_source\""));
-        assertTrue(layout.contains("android:id=\"@+id/row_about_update\""));
-        assertTrue(layout.contains("android:id=\"@+id/row_about_feedback\""));
-        assertTrue(layout.contains("android:id=\"@+id/row_about_open_source_license\""));
+        assertTrue(content.contains("R.string.about_title"));
+        assertTrue(content.contains("versionText"));
+        assertTrue(content.contains("onOpenSource"));
+        assertTrue(content.contains("onCheckUpdates"));
+        assertTrue(content.contains("onOpenFeedback"));
+        assertTrue(content.contains("onOpenLicenses"));
     }
 
     @Test
@@ -93,51 +93,35 @@ public class SystemServerSettingsLayoutSmokeTest {
     }
 
     @Test
-    public void experimentalSettingsActivityOnlySetsLayoutAndInsets() throws IOException {
+    public void experimentalSettingsActivityUsesComposeContentWithoutRestoringOldFeatureFlags() throws IOException {
         String source = read(
                 "src/main/java/com/dpis/module/settings/ExperimentalSettingsActivity.java");
 
-        assertTrue(source.contains("setContentView(R.layout.activity_experimental_settings);"));
-        assertTrue(source.contains("bindToolbar();"));
-        assertTrue(source.contains("R.id.experimental_settings_back_button"));
-        assertTrue(source.contains("backButton.setOnClickListener"));
-        assertTrue(source.contains("finish()"));
-        assertTrue(source.contains("applyInsets();"));
+        assertTrue(source.contains("SupportActivityContent.installExperimentalSettings(this);"));
         assertTrue(!source.contains("setFlutterFontHookEnabled"));
         assertTrue(!source.contains("setFlutterSettingsFontHookEnabled"));
         assertTrue(!source.contains("setHyperOsFlutterFontHookEnabled"));
     }
 
     @Test
-    public void experimentalSettingsPageShowsEmptyState() throws IOException {
+    public void experimentalSettingsPageKeepsManifestAndLocalizedEmptyState() throws IOException {
         String manifest = read("src/main/AndroidManifest.xml");
-        String layout = read("src/main/res/layout/activity_experimental_settings.xml");
+        String content = read("src/main/java/com/dpis/module/ui/compose/ExperimentalSettingsContent.kt");
         String strings = read("src/main/res/values/strings.xml");
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
         assertTrue(manifest.contains(".settings.ExperimentalSettingsActivity"));
-        assertTrue(layout.contains("android:id=\"@+id/experimental_settings_toolbar\""));
-        assertTrue(layout.contains("android:id=\"@+id/experimental_settings_back_button\""));
-        assertTrue(layout.contains("android:id=\"@+id/experimental_settings_title\""));
-        assertTrue(layout.contains("android:contentDescription=\"@string/system_settings_back\""));
-        assertTrue(layout.contains("android:text=\"@string/settings_experimental_title\""));
-        assertTrue(layout.contains("android:src=\"@drawable/ic_arrow_back_24\""));
-        assertTrue(layout.contains("@dimen/page_toolbar_padding_horizontal"));
-        assertTrue(layout.contains("@dimen/page_title_spacing_start"));
-        assertTrue(layout.contains("android:id=\"@+id/experimental_settings_content\""));
-        assertTrue(layout.contains("android:paddingStart=\"@dimen/experimental_settings_content_padding_horizontal\""));
-        assertTrue(layout.contains("android:paddingTop=\"@dimen/experimental_settings_content_padding_top\""));
-        assertTrue(layout.contains("android:paddingEnd=\"@dimen/experimental_settings_content_padding_horizontal\""));
-        assertTrue(layout.contains("android:paddingBottom=\"@dimen/experimental_settings_content_padding_bottom\""));
-        assertTrue(layout.contains("android:gravity=\"center\""));
-        assertTrue(layout.contains("@string/settings_experimental_empty"));
-        assertTrue(!layout.contains("row_flutter_font_hook"));
-        assertTrue(!layout.contains("row_flutter_settings_font_hook"));
-        assertTrue(!layout.contains("row_hyperos_flutter_font_hook"));
+        assertTrue(content.contains("R.string.system_settings_back"));
+        assertTrue(content.contains("R.string.settings_experimental_title"));
+        assertTrue(content.contains("R.drawable.ic_arrow_back_24"));
+        assertTrue(content.contains("R.string.settings_experimental_empty"));
+        assertTrue(!content.contains("row_flutter_font_hook"));
+        assertTrue(!content.contains("row_flutter_settings_font_hook"));
+        assertTrue(!content.contains("row_hyperos_flutter_font_hook"));
         assertTrue(strings.contains("<string name=\"settings_experimental_empty\">No experimental features available</string>"));
         assertTrue(zhStrings.contains("<string name=\"settings_experimental_empty\">暂无实验功能</string>"));
-        assertFalse(layout.contains("experimental_ttc_import_row"));
-        assertFalse(layout.contains("item_settings_switch"));
+        assertFalse(content.contains("experimental_ttc_import_row"));
+        assertFalse(content.contains("item_settings_switch"));
     }
 
     @Test
@@ -150,41 +134,37 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(source.contains("R.string.system_safe_mode_disable_confirm_message"));
         assertTrue(source.contains("if (!store.setSystemServerSafeModeEnabled(false))"));
         assertTrue(source.contains("setCheckedSilently(safeModeSwitch, true"));
-        assertTrue(source.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"));
+        assertTrue(source.contains("ComposeConfirmDialog.show("));
         assertTrue(strings.contains("system_safe_mode_disable_confirm_title"));
         assertTrue(strings.contains("system_safe_mode_disable_confirm_message"));
     }
 
     @Test
-    public void configBackupDialogsUseCustomLayoutStructure() throws IOException {
-        String actionDialog = read("src/main/res/layout/dialog_config_backup.xml");
-        String confirmDialog = read("src/main/res/layout/dialog_config_backup_confirm.xml");
+    public void configBackupDialogsUseComposeActionAndConfirmationSurfaces() throws IOException {
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
+        String dialogs = read("src/main/java/com/dpis/module/ui/compose/SettingsComposeDialogs.kt");
 
-        assertTrue(actionDialog.contains("android:id=\"@+id/config_backup_export_button\""));
-        assertTrue(actionDialog.contains("android:id=\"@+id/config_backup_import_button\""));
-        assertTrue(actionDialog.contains("android:id=\"@+id/config_backup_close_button\""));
-        assertTrue(actionDialog.contains("@dimen/dialog_surface_padding_horizontal"));
-        assertTrue(actionDialog.contains("@dimen/dialog_action_spacing_top"));
-        assertTrue(actionDialog.contains("@dimen/dialog_action_spacing_between"));
-        assertTrue(actionDialog.contains("@dimen/dialog_footer_spacing_top"));
-        assertTrue(confirmDialog.contains("android:id=\"@+id/config_backup_confirm_proceed_button\""));
-        assertTrue(confirmDialog.contains("android:id=\"@+id/config_backup_confirm_cancel_button\""));
-        assertTrue(confirmDialog.contains("@dimen/dialog_surface_padding_horizontal"));
-        assertTrue(confirmDialog.contains("@dimen/dialog_body_spacing"));
-        assertTrue(confirmDialog.contains("@dimen/dialog_action_spacing_top"));
-        assertTrue(confirmDialog.contains("@dimen/dialog_action_spacing_between"));
+        assertTrue(source.contains("SettingsComposeDialogs.showBackupActions("));
+        assertTrue(source.contains("ComposeConfirmDialog.show("));
+        assertTrue(dialogs.contains("BackupActionsDialogContent("));
+        assertTrue(dialogs.contains("R.string.config_backup_export_action"));
+        assertTrue(dialogs.contains("R.string.config_backup_import_action"));
+        assertTrue(dialogs.contains("R.dimen.dialog_surface_padding_horizontal"));
+        assertTrue(dialogs.contains("BackupActionTile("));
+        assertTrue(dialogs.contains("modifier.aspectRatio(1f)"));
+        assertTrue(dialogs.contains("R.dimen.dialog_footer_spacing_top"));
     }
 
     @Test
     public void settingsDialogsUseSharedWindowSizer() throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
+        String settingsDialogs = read(
+                "src/main/java/com/dpis/module/ui/compose/SettingsComposeDialogs.kt");
 
-        assertTrue(source.contains("R.layout.dialog_interface_scale"));
-        assertTrue(source.contains("R.layout.dialog_language_selection"));
-        assertTrue(source.contains("R.layout.dialog_config_backup"));
-        assertTrue(source.contains("R.layout.dialog_config_backup_confirm"));
-        assertTrue(occurrences(source, "DialogWindowSizer.applyLargeWidth(dialog, activity)") >= 4);
-        assertTrue(occurrences(source, "DialogWindowSizer.applyStandardWidth(dialog, activity)") >= 2);
+        assertTrue(source.contains("SettingsComposeDialogs.showInterfaceScale("));
+        assertTrue(source.contains("SettingsComposeDialogs.showLanguage("));
+        assertTrue(source.contains("SettingsComposeDialogs.showBackupActions("));
+        assertTrue(settingsDialogs.contains("DialogWindowSizer.applyLargeWidth(dialog, activity)"));
     }
 
     @Test
@@ -251,21 +231,17 @@ public class SystemServerSettingsLayoutSmokeTest {
     }
 
     @Test
-    public void hideLauncherIconConfirmationUsesCustomCenteredDialogLayout() throws IOException {
+    public void hideLauncherIconConfirmationUsesSharedComposeDialog() throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
 
         assertTrue(source.contains("private void showHideLauncherIconConfirmationDialog()"));
-        assertTrue(source.contains("R.layout.dialog_process_action_confirm"));
-        assertTrue(source.contains("R.id.process_action_confirm_title"));
-        assertTrue(source.contains("R.id.process_action_confirm_message"));
-        assertTrue(source.contains("R.id.process_action_confirm_proceed_button"));
-        assertTrue(source.contains("R.id.process_action_confirm_cancel_button"));
-        assertTrue(source.contains("new MaterialAlertDialogBuilder(activity)"));
+        assertTrue(source.contains("ComposeConfirmDialog.show("));
+        assertTrue(source.contains("R.string.settings_hide_launcher_icon_confirm_title"));
+        assertTrue(source.contains("R.string.settings_hide_launcher_icon_confirm_message"));
+        assertTrue(!source.contains("R.layout.dialog_process_action_confirm"));
         assertTrue(!source.contains("new AlertDialog.Builder(this)"));
         assertTrue(source.contains("if (!persistLauncherIconState(true))"));
         assertTrue(source.contains("setCheckedSilently(hideLauncherIconSwitch, false"));
-        assertTrue(source.contains("dialog.setOnCancelListener"));
-        assertTrue(source.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"));
     }
 
     @Test
@@ -273,8 +249,8 @@ public class SystemServerSettingsLayoutSmokeTest {
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
         String application = read("src/main/java/com/dpis/module/DpisApplication.java");
 
-        assertTrue(source.contains("importButton.setOnClickListener(v -> {"));
-        assertTrue(source.contains("launchImportBackupPicker();"));
+        assertTrue(source.contains("SettingsComposeDialogs.showBackupActions("));
+        assertTrue(source.contains("this::launchImportBackupPicker"));
         assertTrue(source.contains("private void showImportBackupConfirmDialog(Uri uri)"));
         assertTrue(source.contains("showImportBackupConfirmDialog(uri);"));
         assertTrue(source.contains("importConfigBackup(uri);"));
@@ -304,17 +280,17 @@ public class SystemServerSettingsLayoutSmokeTest {
     @Test
     public void settingsDebugSwitchesPublishRuntimeMirrors() throws IOException {
         String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
-        String layout = read("src/main/res/layout/dialog_font_debug_stats.xml");
+        String layout = read("src/main/java/com/dpis/module/ui/compose/FontDebugComposeSheet.kt");
 
         assertTrue(source.contains("RuntimeDebugPropertySyncer.publishAsync("));
         assertTrue(source.contains("isChecked,"));
         assertTrue(source.contains("store.isFontDebugOverlayEnabled()"));
         assertTrue(source.contains("requestedEnabled"));
-        assertTrue(source.contains("R.layout.dialog_font_debug_stats"));
-        assertTrue(layout.contains("@dimen/font_debug_dialog_surface_padding_horizontal"));
-        assertTrue(layout.contains("@dimen/font_debug_dialog_stats_panel_height"));
-        assertTrue(layout.contains("@dimen/font_debug_dialog_action_button_height"));
-        assertTrue(layout.contains("@dimen/font_debug_dialog_filter_button_corner_radius"));
+        assertTrue(source.contains("FontDebugComposeSheet.show(activity"));
+        assertTrue(source.contains("handle.update("));
+        assertTrue(layout.contains("R.dimen.font_debug_dialog_surface_padding_horizontal"));
+        assertTrue(layout.contains("MaterialTheme.colorScheme.surfaceContainer"));
+        assertTrue(layout.contains("MaterialTheme.colorScheme.errorContainer"));
     }
 
     private static String read(String relativePath) throws IOException {

@@ -154,7 +154,7 @@ public final class FontHookDomainDialog {
                 .setView(view)
                 .create();
         dialog.show();
-        DialogWindowSizer.applyLargeWidth(dialog, activity);
+        DialogWindowSizer.applyConfigurationWidth(dialog, activity);
     }
 
     private static void bindFontEditableContentEnabled(View editableContent, boolean enabled) {

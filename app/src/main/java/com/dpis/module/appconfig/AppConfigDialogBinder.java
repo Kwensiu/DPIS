@@ -1,7 +1,6 @@
 package com.dpis.module.appconfig;
 
 import com.dpis.module.DpisConfigStore;
-
 import com.dpis.module.fonts.FontApplyMode;
 
 import com.dpis.module.applist.AppStatusFormatter;
@@ -88,6 +87,11 @@ public final class AppConfigDialogBinder {
         void applyHyperOsNativeProxy(AppListItem item, Runnable onFinished);
 
         void unmountHyperOsNativeProxy(AppListItem item, Runnable onFinished);
+
+        /** Metadata is deliberately resolved only for an app about to use the proxy. */
+        default boolean isHyperOsNativeProxyCandidate(AppListItem item) {
+            return item != null && item.hyperOsNativeProxyCandidate;
+        }
 
         public boolean setDpisEnabled(String packageName, boolean enabled);
 
@@ -332,8 +336,13 @@ public final class AppConfigDialogBinder {
 
     public void bindTypefaceSelector(MaterialButton selectorButton, String selectedTypefaceId) {
         configureTypefaceSelectorMarquee(selectorButton);
-        selectorButton.setText(formatTypefaceSelectorText(resolveTypefaceDisplayText(
-                selectedTypefaceId, listFontLibraryEntries())));
+        selectorButton.setText(typefaceSelectorText(selectedTypefaceId));
+    }
+
+    /** Shared display contract for View and Compose app editors. */
+    public String typefaceSelectorText(String selectedTypefaceId) {
+        return formatTypefaceSelectorText(resolveTypefaceDisplayText(
+                selectedTypefaceId, listFontLibraryEntries()));
     }
 
     private void configureTypefaceSelectorMarquee(MaterialButton selectorButton) {
@@ -407,7 +416,7 @@ public final class AppConfigDialogBinder {
         dialogHolder[0].setCanceledOnTouchOutside(true);
         applyTypefaceDialogListHeight(root);
         dialogHolder[0].show();
-        DialogWindowSizer.applyLargeWidth(dialogHolder[0], activity);
+        DialogWindowSizer.applyConfigurationWidth(dialogHolder[0], activity);
         TabLayout.Tab initialTab = tabs.getTabAt(selectedImported ? 1 : 0);
         if (initialTab != null) {
             initialTab.select();
@@ -911,7 +920,7 @@ public final class AppConfigDialogBinder {
 
     public void syncHyperOsNativeProxyAfterSave(
             AppListItem item, AppConfigDialogViews views, AppConfigDialogState state) {
-        if (!item.hyperOsNativeProxyCandidate) {
+        if (!host.isHyperOsNativeProxyCandidate(item)) {
             return;
         }
         setSaveAndResetButtonsEnabled(views, false);
@@ -1077,6 +1086,7 @@ public final class AppConfigDialogBinder {
     private static void updateModeToggleVisual(ModeToggle toggle,
             boolean emulationActive,
             boolean animate) {
+        toggle.emulationActive = emulationActive;
         int activeTextColor = MaterialColors.getColor(
                 toggle.container, com.google.android.material.R.attr.colorOnSecondaryContainer);
         int inactiveTextColor = MaterialColors.getColor(
@@ -1094,21 +1104,10 @@ public final class AppConfigDialogBinder {
         toggle.replaceLabel.setScaleX(emulationActive ? 1f : 1.04f);
         toggle.replaceLabel.setScaleY(emulationActive ? 1f : 1.04f);
         toggle.container.post(() -> {
-            int availableWidth = toggle.container.getWidth()
-                    - toggle.container.getPaddingLeft()
-                    - toggle.container.getPaddingRight();
-            if (availableWidth <= 0) {
+            installModeToggleLayoutObserver(toggle);
+            int half = updateModeToggleThumbLayout(toggle);
+            if (half <= 0) {
                 return;
-            }
-            int half = availableWidth / 2;
-            ViewGroup.LayoutParams params = toggle.thumb.getLayoutParams();
-            if (params == null) {
-                params = new ViewGroup.LayoutParams(half, ViewGroup.LayoutParams.MATCH_PARENT);
-            }
-            if (params.width != half || params.height != ViewGroup.LayoutParams.MATCH_PARENT) {
-                params.width = half;
-                params.height = ViewGroup.LayoutParams.MATCH_PARENT;
-                toggle.thumb.setLayoutParams(params);
             }
             float target = emulationActive ? 0f : half;
             if (animate) {
@@ -1124,6 +1123,75 @@ public final class AppConfigDialogBinder {
                 toggle.thumb.setTranslationY(0f);
             }
         });
+    }
+
+    /** Keeps the animated thumb half-width even when the landscape parent is measured later. */
+    private static int updateModeToggleThumbLayout(ModeToggle toggle) {
+        if (toggle == null || toggle.container == null || toggle.thumb == null) {
+            return 0;
+        }
+        View track = modeToggleTrack(toggle);
+        int availableWidth = track.getWidth()
+                - track.getPaddingLeft()
+                - track.getPaddingRight();
+        if (availableWidth <= 0) {
+            return 0;
+        }
+        int half = availableWidth / 2;
+        ViewGroup.LayoutParams params = toggle.thumb.getLayoutParams();
+        if (params == null) {
+            params = new ViewGroup.LayoutParams(
+                    half,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+            );
+        }
+        if (params.width != half || params.height != ViewGroup.LayoutParams.MATCH_PARENT) {
+            params.width = half;
+            params.height = ViewGroup.LayoutParams.MATCH_PARENT;
+            toggle.thumb.setLayoutParams(params);
+        }
+        toggle.thumb.setTranslationY(0f);
+        toggle.thumb.setTranslationX(modeUsesStartThumb(toggle) ? 0f : half);
+        return half;
+    }
+
+    private static View modeToggleTrack(ModeToggle toggle) {
+        return toggle.thumb.getParent() instanceof View
+                ? (View) toggle.thumb.getParent()
+                : toggle.container;
+    }
+
+    /**
+     * Runs after the complete view-tree measure/layout pass. A child LayoutParams mutation made
+     * from an OnLayoutChange callback can otherwise leave the thumb's measured width at zero on
+     * the first landscape detail creation.
+     */
+    private static void installModeToggleLayoutObserver(ModeToggle toggle) {
+        if (toggle == null || toggle.container == null || !toggle.container.isAttachedToWindow()) {
+            return;
+        }
+        Object existingListener = toggle.container.getTag(R.id.mode_toggle_layout_listener);
+        if (existingListener instanceof android.view.ViewTreeObserver.OnGlobalLayoutListener) {
+            return;
+        }
+        View track = modeToggleTrack(toggle);
+        android.view.ViewTreeObserver.OnGlobalLayoutListener listener =
+                () -> updateModeToggleThumbLayout(toggle);
+        toggle.container.setTag(R.id.mode_toggle_layout_listener, listener);
+        track.getViewTreeObserver().addOnGlobalLayoutListener(listener);
+    }
+
+    private static boolean modeUsesStartThumb(ModeToggle toggle) {
+        Object modeTag = toggle.container.getTag();
+        if (FontApplyMode.SYSTEM_EMULATION.equals(modeTag)
+                || ViewportTargetType.RELATIVE_SCALE.equals(modeTag)) {
+            return true;
+        }
+        if (FontApplyMode.FIELD_REWRITE.equals(modeTag)
+                || ViewportTargetType.ABSOLUTE_DP.equals(modeTag)) {
+            return false;
+        }
+        return toggle.emulationActive;
     }
 
     private void bindScopeButton(MaterialButton scopeButton,
@@ -1189,6 +1257,7 @@ public final class AppConfigDialogBinder {
         public final View thumb;
         public final MaterialTextView emulationLabel;
         public final MaterialTextView replaceLabel;
+        private boolean emulationActive;
 
         public ModeToggle(View container, View thumb, MaterialTextView emulationLabel,
                 MaterialTextView replaceLabel) {
