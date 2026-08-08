@@ -99,14 +99,44 @@ bundle and does not modify global agent skills.
   - `./gradlew Delete`
 
 ## Coding Style & Naming Conventions
-- Language: Java (target/source 17).
-- Indentation: 4 spaces; keep braces and line wrapping consistent with existing files.
+- Kotlin is the default language for new production code and UI components.
+  Java 17 remains the compatibility target for existing Java sources and JVM
+  bytecode.
+- DPIS has completed its main Compose UI migration. Build new screens,
+  dialogs, sheets, list rows, navigation surfaces, and reusable controls with
+  Jetpack Compose and Kotlin; do not add new XML/View UI unless an external API
+  makes Compose impractical and the exception is documented in the change.
+- When a task materially changes an existing Java class, migrate that class to
+  Kotlin when the conversion stays within the task's ownership boundary. Keep
+  Java-callable signatures stable with tools such as `@JvmStatic`, explicit
+  interfaces, and nullable types where existing Java callers require them.
+- Do not turn a focused change into a repository-wide language migration.
+  Flavor-specific Xposed entrypoints, reflection-sensitive hooks, JNI-facing
+  code, or classes with externally observed JVM signatures may remain Java
+  until their interoperability contract can be verified explicitly.
+- Kotlin uses the existing project formatting conventions and trailing commas
+  for multiline declarations/calls. Java continues to use 4-space indentation
+  and the surrounding brace/wrapping style.
 - Naming:
   - Classes: `PascalCase` (e.g., `SystemServerMutationPolicy`)
   - Methods/fields: `camelCase`
   - Constants: `UPPER_SNAKE_CASE`
 - Keep class responsibilities focused; prefer small helper classes over monolithic installers.
 - Do not keep growing `MainActivity` with new feature workflows. New session flows, exporters, diagnostics, coordinators, or feature-specific state machines should live in focused classes under `app/src/main/java/com/dpis/module/`; `MainActivity` should remain an entry/assembly surface that wires UI events to those helpers.
+- Treat Compose as the presentation and interaction layer. Hoist durable state
+  and business/runtime work into focused coordinators, presenters, stores, or
+  ViewModels; composables should not become alternate owners of package state,
+  runtime-route decisions, persistence, or long-running I/O.
+- Standalone Compose secondary pages must use the shared
+  `SecondaryPageScaffold` so title typography, status-bar ownership, content
+  insets, haptics, and the circular back button remain consistent. Use
+  `SecondaryPageTopBar` directly only when a specialized scaffold is required;
+  do not hand-roll a plain `TopAppBar` or `CenterAlignedTopAppBar` for standard
+  secondary navigation.
+- Preserve the adaptive Compose baseline across phone, tablet, landscape, and
+  compact/round watch layouts. New navigation and bottom surfaces must handle
+  cutouts and colored safe areas explicitly while allowing scroll content to
+  render beneath gesture insets where the existing shell permits it.
 - Do not introduce unnecessary abstractions; follow KISS/YAGNI.
 
 ## Testing Guidelines
@@ -127,6 +157,14 @@ bundle and does not modify global agent skills.
   files. Use `rg` for removed ids/helper names/layouts so tests keep checking
   the current product semantics instead of preserving stale implementation
   details.
+- After Java-to-Kotlin conversion, update source smoke tests to read the active
+  `.kt` source and assert semantic anchors rather than Java-specific local
+  variables, generic syntax, or the old file extension.
+- For Compose UI changes, run the relevant unit/source smoke tests, build the
+  Modern Debug APK, and install it on the active device after a successful
+  build. For shared Java/Kotlin interoperability, dependency, R8, or flavor
+  changes, validate both flavors and run the release shrink path when signing
+  configuration is available.
 
 ## Update Flow Guidelines
 - Do not cache update detection, version decisions, or manifest results.
