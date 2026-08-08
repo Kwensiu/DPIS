@@ -2,7 +2,6 @@ package com.dpis.module.ui.compose
 
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,6 +33,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /** Compose-owned informational dialog whose body may be updated by a Java controller. */
 object ComposeMessageDialog {
+    // TODO: Migrate after external progress/message updates are represented as Compose state.
     @JvmStatic
     fun show(
         activity: Activity,
@@ -63,7 +63,7 @@ object ComposeMessageDialog {
         val dialog = MaterialAlertDialogBuilder(activity).setView(composeView).create()
         val handle = Handle(dialog, message.toComposeAnnotatedString())
         composeView.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 MessageDialogContent(
                     title = title.toString(),
                     message = handle.message,

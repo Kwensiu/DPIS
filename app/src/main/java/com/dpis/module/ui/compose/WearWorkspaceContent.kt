@@ -43,6 +43,7 @@ import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.home.HomeUpdateUiState
 import com.dpis.module.home.HomeWorkspaceBinder
+import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.SystemFontScaleToolState
 import com.dpis.module.templates.TemplateWorkspacePresentation
 import com.dpis.module.templates.TemplateEditorForm
@@ -485,6 +486,7 @@ internal fun WearSettingsWorkspaceContent(
     onFontDebug: () -> Unit,
     onFontLibrary: () -> Unit,
     onExperimental: () -> Unit,
+    onThemeSettings: () -> Unit,
     onLanguage: () -> Unit,
     onBackup: () -> Unit,
     onClearCache: () -> Unit,
@@ -497,12 +499,13 @@ internal fun WearSettingsWorkspaceContent(
         wearSwitch("safe", R.string.system_safe_mode_label, state?.safeModeEnabled == true, state?.storeAvailable == true, onSafeModeChanged)
         wearSwitch("logs", R.string.global_log_enabled_label, state?.globalLogEnabled == true, state?.storeAvailable == true, onGlobalLogChanged)
         if (state?.globalLogEnabled == true) wearButton("logs-page", context.getString(R.string.tools_log_title), context.getString(R.string.tools_log_subtitle), R.drawable.ic_overview_24, enabled = state.storeAvailable, onClick = onOpenLogs)
-        val scale = state?.interfaceScalePercent ?: 100
+        val scale = state?.interfaceScalePercent ?: AppUiScaleManager.DEFAULT_SCALE_PERCENT
         wearButton("scale-minus", context.getString(R.string.system_font_scale_decrement), "$scale%", R.drawable.ic_remove_24, enabled = state?.storeAvailable == true, onClick = { onInterfaceScaleChanged(scale - 5) })
         wearButton("scale-plus", context.getString(R.string.system_font_scale_increment), "$scale%", R.drawable.ic_add_24, enabled = state?.storeAvailable == true, onClick = { onInterfaceScaleChanged(scale + 5) })
         wearButton("scale-details", context.getString(R.string.settings_interface_scale_dialog_title), icon = R.drawable.ic_fit_width_24, enabled = state?.storeAvailable == true, onClick = onInterfaceScaleDetails)
         wearButton("font-library", context.getString(R.string.settings_font_library_label), icon = R.drawable.ic_upload_file_24, enabled = state?.storeAvailable == true, onClick = onFontLibrary)
         wearButton("experimental", context.getString(R.string.settings_experimental_title), icon = R.drawable.ic_experiment_24, enabled = state?.storeAvailable == true, onClick = onExperimental)
+        wearButton("theme-settings", context.getString(R.string.settings_theme_settings_title), context.getString(R.string.settings_theme_settings_hint), R.drawable.ic_format_paint_24, onClick = onThemeSettings)
         wearButton("language", context.getString(R.string.settings_language_label), state?.languageLabel, R.drawable.ic_language_24, state?.storeAvailable == true, onLanguage)
         wearButton("backup", context.getString(R.string.settings_config_backup_label), icon = R.drawable.ic_upload_file_24, enabled = state?.storeAvailable == true, onClick = onBackup)
         wearButton("cache", context.getString(R.string.settings_clear_cache_label), state?.cacheUsage, R.drawable.ic_mop_24, state?.storeAvailable == true && state.cacheClearInProgress != true, onClearCache)

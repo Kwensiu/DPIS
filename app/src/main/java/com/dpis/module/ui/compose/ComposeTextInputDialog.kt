@@ -2,7 +2,6 @@ package com.dpis.module.ui.compose
 
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,6 +36,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.util.function.Predicate
 
 object ComposeTextInputDialog {
+    // TODO: Migrate after Java callers no longer require an imperative AlertDialog return value.
     @JvmStatic
     fun show(
         activity: Activity,
@@ -68,7 +68,7 @@ object ComposeTextInputDialog {
         }
         val dialog = MaterialAlertDialogBuilder(activity).setView(composeView).create()
         composeView.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 TextInputDialogContent(title.toString(), hint.toString(), initialValue,
                     { dialog.dismiss() },
                     { if (onSubmit.test(it)) dialog.dismiss() })

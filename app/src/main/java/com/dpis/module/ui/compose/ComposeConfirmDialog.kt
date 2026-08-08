@@ -1,7 +1,6 @@
 package com.dpis.module.ui.compose
 
 import android.app.Activity
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -42,6 +41,7 @@ internal object DpisConfirmDialogUiTokens {
 
 /** Shared Compose replacement for the legacy full-width confirmation dialog layout. */
 object ComposeConfirmDialog {
+    // TODO: Migrate this Java handle API after callers use DpisConfirmAlertDialog state directly.
     @JvmStatic
     fun show(
         activity: Activity,
@@ -75,7 +75,7 @@ object ComposeConfirmDialog {
         var actionHandled = false
 
         composeView.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 ConfirmDialogContent(
                     title = title.toString(),
                     message = message.toString(),
@@ -191,22 +191,15 @@ internal fun DpisConfirmAlertDialog(
     confirmLabel: String,
     onConfirm: () -> Unit
 ) {
-    Dialog(onDismissRequest = onDismissRequest) {
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 6.dp
-        ) {
-            ConfirmDialogContent(
-                title = title,
-                message = message,
-                cancelLabel = cancelLabel,
-                confirmLabel = confirmLabel,
-                onConfirm = onConfirm,
-                onCancel = onDismissRequest
-            )
-        }
+    DpisModalDialog(onDismissRequest = onDismissRequest) {
+        ConfirmDialogContent(
+            title = title,
+            message = message,
+            cancelLabel = cancelLabel,
+            confirmLabel = confirmLabel,
+            onConfirm = onConfirm,
+            onCancel = onDismissRequest
+        )
     }
 }
 

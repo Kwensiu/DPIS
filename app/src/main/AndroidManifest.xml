@@ -68,6 +68,9 @@
             android:name=".settings.ExperimentalSettingsActivity"
             android:exported="false" />
         <activity
+            android:name=".settings.ThemeSettingsActivity"
+            android:exported="false" />
+        <activity
             android:name=".about.AboutActivity"
             android:exported="false" />
         <activity

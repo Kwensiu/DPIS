@@ -4,7 +4,6 @@ import android.app.Activity
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -46,12 +45,14 @@ import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.ui.compose.DpisConfirmDialogUiTokens
 import com.dpis.module.ui.compose.DpisTheme
+import com.dpis.module.ui.compose.dpisDarkTheme
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlin.math.abs
 import kotlin.math.sign
 
 /** Compose-owned template ordering dialog; persistence remains in the Java host. */
 object QuickTemplateSortDialog {
+    // TODO: Migrate after Java callers stop retaining the AlertDialog for imperative dismissal.
     interface Host {
         fun saveOrder(orderedIds: List<String>): Boolean
         fun onOrderSaved()
@@ -73,7 +74,7 @@ object QuickTemplateSortDialog {
             .setView(composeView)
             .create()
         composeView.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 QuickTemplateSortContent(
                     initialItems = templates.map { QuickTemplateSortItem(it.id, it.name) },
                     onCancel = dialog::dismiss,

@@ -2,7 +2,6 @@ package com.dpis.module.ui.compose
 
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,6 +28,7 @@ import com.dpis.module.ui.DialogWindowSizer
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 object LicenseDetailDialog {
+    // TODO: Migrate when the license detail route is owned by Compose navigation state.
     @JvmStatic
     fun show(activity: Activity, title: String, detail: String, hasWebsite: Boolean,
         onWebsite: Runnable): AlertDialog {
@@ -37,7 +37,7 @@ object LicenseDetailDialog {
         }
         val dialog = MaterialAlertDialogBuilder(activity).setView(view).create()
         view.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 LicenseDetailContent(title, detail, hasWebsite, { onWebsite.run() }, { dialog.dismiss() })
             }
         }

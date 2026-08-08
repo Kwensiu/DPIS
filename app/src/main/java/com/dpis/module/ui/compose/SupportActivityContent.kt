@@ -3,24 +3,88 @@ package com.dpis.module.ui.compose
 import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.dpis.module.home.ModeGuideActivity
 import com.dpis.module.LogActivity
 import com.dpis.module.QuickConfigActivity
 import com.dpis.module.about.OpenSourceLicenseActivity
 import com.dpis.module.fonts.FontDetailActivity
 import com.dpis.module.fonts.FontLibraryActivity
+import com.dpis.module.settings.ThemeModeStore
+import com.dpis.module.settings.AppUiScaleManager
+import com.dpis.module.settings.InterfaceScaleStore
 import java.util.function.Consumer
 
 /** Type-safe Compose entry points for Java-owned standalone Activity contracts. */
 object SupportActivityContent {
+    @JvmStatic
+    fun installThemeSettings(activity: ComponentActivity) {
+        activity.setContent {
+            var dynamicColorEnabled by remember {
+                mutableStateOf(ThemeModeStore.isDynamicColorEnabled(activity))
+            }
+            var themeColor by remember { mutableStateOf(ThemeModeStore.getThemeColor(activity)) }
+            var paletteStyle by remember { mutableStateOf(ThemeModeStore.getPaletteStyle(activity)) }
+            var colorSpecification by remember {
+                mutableStateOf(ThemeModeStore.getColorSpecification(activity))
+            }
+            DpisTheme(
+                darkTheme = dpisDarkTheme(),
+                dynamicColor = dynamicColorEnabled,
+                themeColor = themeColor,
+                paletteStyle = paletteStyle,
+                colorSpecification = colorSpecification,
+            ) {
+                    ThemeSettingsContent(
+                        mode = ThemeModeStore.getMode(activity),
+                    dynamicColorEnabled = dynamicColorEnabled,
+                    themeColor = themeColor,
+                    paletteStyle = paletteStyle,
+                    colorSpecification = colorSpecification,
+                    interfaceScalePercent = AppUiScaleManager.getScalePercent(activity),
+                    onModeSelected = { mode ->
+                        ThemeModeStore.setMode(activity, mode)
+                        activity.recreate()
+                    },
+                    onDynamicColorChanged = { enabled ->
+                        ThemeModeStore.setDynamicColorEnabled(activity, enabled)
+                        dynamicColorEnabled = enabled
+                    },
+                    onThemeColorSelected = { color ->
+                        ThemeModeStore.setThemeColor(activity, color)
+                        themeColor = color
+                    },
+                    onPaletteStyleSelected = { style ->
+                        ThemeModeStore.setPaletteStyle(activity, style)
+                        paletteStyle = style
+                    },
+                    onColorSpecificationSelected = { specification ->
+                        ThemeModeStore.setColorSpecification(activity, specification)
+                        colorSpecification = specification
+                    },
+                    onInterfaceScaleChanged = { percent ->
+                        val store = InterfaceScaleStore(activity)
+                        val normalized = AppUiScaleManager.normalizeScalePercent(percent)
+                        if (normalized != store.percent || !store.hasExplicitPercent()) {
+                            if (store.setPercent(normalized)) activity.recreate()
+                        }
+                    },
+                    onBack = activity::finish,
+                )
+            }
+        }
+    }
+
     @JvmStatic
     fun installQuickConfig(
         activity: QuickConfigActivity,
         presentation: QuickConfigPresentation
     ) {
         activity.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 QuickConfigContent(presentation = presentation, onDismiss = activity::finish)
             }
         }
@@ -29,7 +93,7 @@ object SupportActivityContent {
     @JvmStatic
     fun installDonate(activity: ComponentActivity) {
         activity.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 DonateSupportPage(onBack = activity::finish)
             }
         }
@@ -38,7 +102,7 @@ object SupportActivityContent {
     @JvmStatic
     fun installModeHelp(activity: ComponentActivity) {
         activity.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 ModeHelpPage(
                     onBack = activity::finish,
                     onOpenModeGuide = {
@@ -52,7 +116,7 @@ object SupportActivityContent {
     @JvmStatic
     fun installModeGuide(activity: ComponentActivity) {
         activity.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 ModeGuidePage(onBack = activity::finish)
             }
         }
@@ -61,7 +125,7 @@ object SupportActivityContent {
     @JvmStatic
     fun installExperimentalSettings(activity: ComponentActivity) {
         activity.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 ExperimentalSettingsContent(onBack = activity::finish)
             }
         }
@@ -79,7 +143,7 @@ object SupportActivityContent {
         onOpenLicenses: Runnable
     ) {
         activity.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 AboutContent(
                     versionText = versionText,
                     showDebugUpdateEntry = showDebugUpdateEntry,
@@ -101,7 +165,7 @@ object SupportActivityContent {
         onItemSelected: Consumer<OpenSourceLicenseActivity.LicenseItem>
     ) {
         activity.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 OpenSourceLicenseContent(
                     items = items,
                     onBack = activity::finish,
@@ -121,7 +185,7 @@ object SupportActivityContent {
         onFontSelected: Consumer<String>
     ) {
         activity.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 FontLibraryContent(
                     presentation = presentation,
                     onBack = activity::finish,
@@ -144,7 +208,7 @@ object SupportActivityContent {
         onRemoveReference: Consumer<String>
     ) {
         activity.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 FontDetailContent(
                     presentation = presentation,
                     onBack = activity::finish,
@@ -171,7 +235,7 @@ object SupportActivityContent {
         onCopyEntry: Consumer<String>
     ) {
         activity.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 LogContent(
                     presentation = presentation,
                     onBack = activity::finish,

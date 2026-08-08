@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 public final class FontHookDomainDialog {
+    // TODO: Migrate when the Java-owned hook-domain editor can make dialog visibility Compose state.
     public interface Host {
         boolean saveCustom(String packageName,
                            Set<String> selectedKnownDomains,

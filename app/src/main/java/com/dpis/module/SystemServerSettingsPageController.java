@@ -23,6 +23,7 @@ import com.dpis.module.settings.SafeCacheCleaner;
 import com.dpis.module.settings.SystemHookState;
 import com.dpis.module.settings.SystemHooksToggleController;
 import com.dpis.module.settings.ExperimentalSettingsActivity;
+import com.dpis.module.settings.ThemeSettingsActivity;
 import com.dpis.module.about.AboutActivity;
 import com.dpis.module.home.DonateActivity;
 
@@ -287,8 +288,10 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     void setHooksEnabledFromPresentation(boolean enabled) { onHooksEnabledChanged(null, enabled); }
     void showFontDebugFromPresentation() { showFontDebugDialog(null); }
     void showExperimentalSettingsFromPresentation() { startActivity(new Intent(activity, ExperimentalSettingsActivity.class)); }
+    void showThemeSettingsFromPresentation() { startActivity(new Intent(activity, ThemeSettingsActivity.class)); }
     void showFontLibraryFromPresentation() { startActivity(new Intent(activity, FontLibraryActivity.class)); }
     void showLanguageFromPresentation() { showLanguageDialog(null); }
+    void setLanguageFromPresentation(String selectedTag) { applyLanguageSelection(selectedTag); }
     void saveInterfaceScaleFromPresentation(int percent) { saveInterfaceScalePercent(percent); }
     void showInterfaceScaleFromPresentation() { showInterfaceScaleDialog(); }
     void showConfigBackupFromPresentation() { showConfigBackupDialog(null); }
@@ -604,7 +607,10 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             options.add(new LanguageDialogOption(option.tag, getString(option.labelResId)));
         }
         SettingsComposeDialogs.showLanguage(activity, options,
-                AppLocaleManager.getLanguageTag(activity), selectedTag -> {
+                AppLocaleManager.getLanguageTag(activity), this::applyLanguageSelection);
+    }
+
+    private void applyLanguageSelection(String selectedTag) {
         String previousTag = AppLocaleManager.getLanguageTag(activity);
         if (!AppLocaleManager.setLanguageTag(activity, selectedTag)) {
             showToast(R.string.system_settings_save_failed);
@@ -614,7 +620,6 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         if (!selectedTag.equals(previousTag)) {
             recreate();
         }
-        });
     }
 
     private void updateLanguageEntrySubtitle() {

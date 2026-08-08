@@ -4,7 +4,6 @@ import android.app.Activity
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.ui.compose.DpisTheme
+import com.dpis.module.ui.compose.dpisDarkTheme
 import com.dpis.module.ui.compose.toComposeAnnotatedString
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -53,6 +53,7 @@ data class UpdateDialogState(
 )
 
 object UpdateAvailableDialog {
+    // TODO: Migrate after download progress is lifted from the mutable DialogHandle API.
     @JvmStatic
     fun create(activity: Activity, title: CharSequence, message: CharSequence): DialogHandle {
         val view = ComposeView(activity).apply {
@@ -61,7 +62,7 @@ object UpdateAvailableDialog {
         val dialog = MaterialAlertDialogBuilder(activity).setView(view).create()
         val handle = DialogHandle(dialog)
         view.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 UpdateDialogContent(title.toString(), message.toString(), handle.state,
                     { handle.primaryAction.run() }, { handle.cancelAction.run() })
             }

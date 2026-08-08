@@ -3,7 +3,6 @@ package com.dpis.module.ui.compose
 import android.app.Activity
 import android.view.KeyEvent
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -42,6 +41,7 @@ import java.util.function.BooleanSupplier
 
 /** Phone/tablet Compose host for the mandatory first-start disclaimer contract. */
 object StartupDisclaimerDialog {
+    // TODO: Migrate after first-run gating is modeled as durable Compose screen state.
     @JvmStatic
     fun show(
         activity: Activity,
@@ -69,7 +69,7 @@ object StartupDisclaimerDialog {
             }
         }
         composeView.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 StartupDisclaimerContent(
                     onAccept = {
                         if (!markAccepted.asBoolean) {

@@ -127,7 +127,7 @@ public final class LogActivitySourceSmokeTest {
         assertTrue(source.contains("EMPTY_EXPORT_MESSAGE = \"No log lines found.\""));
         assertTrue(source.contains("? LSPOSED_EXPORT_SOURCE"));
         assertTrue(source.contains(": DPIS_EXPORT_SOURCE"));
-        assertTrue(strings.contains("Browse current DPIS and LSPosed logs"));
+        assertTrue(strings.contains("Browse logs related to DPIS"));
         assertFalse(source.contains("R.string.log_export_file_title"));
         assertFalse(source.contains("R.string.log_action_save_zip"));
         assertFalse(source.contains("R.string.log_action_share_zip"));

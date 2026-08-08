@@ -82,8 +82,8 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         fun setSettingsLauncherHidden(hidden: Boolean)
         fun setSettingsScale(percent: Int)
         fun openSettingsScaleDetails()
-        fun openSettingsFontDebug(); fun openSettingsFontLibrary(); fun openSettingsExperimental()
-        fun openSettingsLanguage(); fun openSettingsBackup(); fun clearSettingsCache(); fun openSettingsAbout(); fun openSettingsDonate()
+        fun openSettingsFontDebug(); fun openSettingsFontLibrary(); fun openSettingsExperimental(); fun openThemeSettings()
+        fun setSettingsLanguage(tag: String); fun openSettingsLanguage(); fun openSettingsBackup(); fun clearSettingsCache(); fun openSettingsAbout(); fun openSettingsDonate()
         fun templateState(): TemplateWorkspacePresentation.State
         fun changeTemplateQuery(query: String)
         fun openTemplateEditor(quickTemplate: Boolean, templateId: String?)
@@ -112,7 +112,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         }
         MainUiState.WorkspaceMode.HOME -> { homeRevision; ComposeWorkspaceSurface { HomeWorkspaceContent(content.homeState(), padding) }; true }
         MainUiState.WorkspaceMode.TOOLS -> { toolsRevision; ComposeWorkspaceSurface { ToolsWorkspaceContent(content.toolsState(), padding, toolsExpanded, { toolsExpanded = !toolsExpanded }, content::changeToolsPending, content::applyTools, content::restoreTools, content::requestToolsPermission) }; true }
-        MainUiState.WorkspaceMode.SETTINGS -> { settingsRevision; ComposeWorkspaceSurface { SettingsWorkspaceContent(content.settingsState(), padding, content::setSettingsHooks, content::setSettingsSafeMode, content::setSettingsGlobalLog, content::openSettingsLogs, content::setSettingsLauncherHidden, content::setSettingsScale, content::openSettingsScaleDetails, content::openSettingsFontDebug, content::openSettingsFontLibrary, content::openSettingsExperimental, content::openSettingsLanguage, content::openSettingsBackup, content::clearSettingsCache, content::openSettingsAbout, content::openSettingsDonate) }; true }
+        MainUiState.WorkspaceMode.SETTINGS -> { settingsRevision; ComposeWorkspaceSurface { SettingsWorkspaceContent(content.settingsState(), padding, content::setSettingsHooks, content::setSettingsSafeMode, content::setSettingsGlobalLog, content::openSettingsLogs, content::setSettingsLauncherHidden, content::openSettingsFontDebug, content::openSettingsFontLibrary, content::openSettingsExperimental, content::openThemeSettings, content::setSettingsLanguage, content::openSettingsBackup, content::clearSettingsCache, content::openSettingsAbout, content::openSettingsDonate) }; true }
         MainUiState.WorkspaceMode.TEMPLATE -> {
             templateRevision
             ComposeWorkspaceSurface {
@@ -147,7 +147,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         }
         MainUiState.WorkspaceMode.SETTINGS -> {
             settingsRevision
-            WearSettingsWorkspaceContent(content.settingsState(), content::setSettingsHooks, content::setSettingsSafeMode, content::setSettingsGlobalLog, content::openSettingsLogs, content::setSettingsLauncherHidden, content::setSettingsScale, content::openSettingsScaleDetails, content::openSettingsFontDebug, content::openSettingsFontLibrary, content::openSettingsExperimental, content::openSettingsLanguage, content::openSettingsBackup, content::clearSettingsCache, content::openSettingsAbout, content::openSettingsDonate)
+            WearSettingsWorkspaceContent(content.settingsState(), content::setSettingsHooks, content::setSettingsSafeMode, content::setSettingsGlobalLog, content::openSettingsLogs, content::setSettingsLauncherHidden, content::setSettingsScale, content::openSettingsScaleDetails, content::openSettingsFontDebug, content::openSettingsFontLibrary, content::openSettingsExperimental, content::openThemeSettings, content::openSettingsLanguage, content::openSettingsBackup, content::clearSettingsCache, content::openSettingsAbout, content::openSettingsDonate)
             true
         }
         MainUiState.WorkspaceMode.TEMPLATE -> {

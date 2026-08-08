@@ -2,7 +2,6 @@ package com.dpis.module.ui.compose
 
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.dimensionResource
@@ -61,6 +61,7 @@ internal const val LanguageDialogOptionsTestTag = "language-dialog-options"
 
 /** Compose-owned phone/tablet settings dialogs; persistence remains controller-owned. */
 object SettingsComposeDialogs {
+    // TODO: Retire this adapter after remaining Java settings callers own Compose dialog state.
     @JvmStatic
     fun showInterfaceScale(
         activity: Activity,
@@ -95,10 +96,13 @@ object SettingsComposeDialogs {
         hapticFeedbackEnabled: Boolean,
         onSelected: Consumer<String>
     ): AlertDialog = showDialog(activity) { dismiss ->
-        LanguageDialogContent(options, selectedTag, hapticFeedbackEnabled, dismiss) {
-            dismiss()
-            onSelected.accept(it)
-        }
+        LanguageDialogContent(
+            options = options,
+            selectedTag = selectedTag,
+            hapticFeedbackEnabled = hapticFeedbackEnabled,
+            onDone = dismiss,
+            onSelected = onSelected::accept,
+        )
     }
 
     @JvmStatic
@@ -123,7 +127,7 @@ object SettingsComposeDialogs {
         }
         val dialog = MaterialAlertDialogBuilder(activity).setView(composeView).create()
         composeView.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) { content { dialog.dismiss() } }
+            DpisTheme(darkTheme = dpisDarkTheme()) { content { dialog.dismiss() } }
         }
         dialog.setCanceledOnTouchOutside(true)
         dialog.show()
@@ -176,15 +180,17 @@ internal fun LanguageDialogContent(
     selectedTag: String,
     hapticFeedbackEnabled: Boolean = true,
     onDone: () -> Unit,
-    onSelected: (String) -> Unit
+    onSelected: (String) -> Unit,
 ) {
+    val maxListHeight = (LocalConfiguration.current.screenHeightDp * 0.45f)
+        .coerceAtMost(320f).dp
     DialogColumn {
         DialogTitle(stringResource(R.string.settings_language_dialog_title))
         Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 320.dp)
+                .heightIn(max = maxListHeight)
                 .testTag(LanguageDialogOptionsTestTag),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
@@ -316,7 +322,7 @@ private fun BackupActionTile(
 }
 
 @Composable
-private fun DialogColumn(content: @Composable ColumnScope.() -> Unit) {
+internal fun DialogColumn(content: @Composable ColumnScope.() -> Unit) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(
             start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
@@ -329,7 +335,7 @@ private fun DialogColumn(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-private fun DialogTitle(text: String, textAlign: TextAlign = TextAlign.Center) {
+internal fun DialogTitle(text: String, textAlign: TextAlign = TextAlign.Center) {
     Text(
         text = text,
         modifier = Modifier.fillMaxWidth(),

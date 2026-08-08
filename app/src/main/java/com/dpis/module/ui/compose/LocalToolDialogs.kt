@@ -2,7 +2,6 @@ package com.dpis.module.ui.compose
 
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -53,7 +52,7 @@ object AppFilterComposeSheet {
         }
         val dialog = BottomSheetDialog(activity)
         view.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 AppFilterContent(showSystem, injectedOnly, widthOnly, fontOnly, listener::onChanged)
             }
         }
@@ -104,6 +103,7 @@ private fun FilterSwitch(label: Int, checked: Boolean, tag: String = "", onCheck
 }
 
 object ModuleRuntimeReloadComposeDialog {
+    // TODO: Migrate when the runtime reload notice is owned by Compose state instead of Java callbacks.
     @JvmStatic
     fun show(activity: Activity, onAcknowledge: Runnable): AlertDialog {
         val view = ComposeView(activity).apply {
@@ -111,7 +111,7 @@ object ModuleRuntimeReloadComposeDialog {
         }
         val dialog = MaterialAlertDialogBuilder(activity).setView(view).create()
         view.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 RuntimeReloadNoticeContent { dialog.dismiss(); onAcknowledge.run() }
             }
         }

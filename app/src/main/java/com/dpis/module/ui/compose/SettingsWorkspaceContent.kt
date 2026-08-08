@@ -31,6 +31,11 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -39,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -46,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.SettingsUiState
 import com.dpis.module.settings.AppUiScaleManager
+import com.dpis.module.settings.AppLocaleManager
 import kotlin.math.roundToInt
 
 /** Compose rendering only; all settings workflows execute through Java-owned actions. */
@@ -58,21 +65,24 @@ fun SettingsWorkspaceContent(
     onGlobalLogChanged: (Boolean) -> Unit,
     onOpenLogs: () -> Unit,
     onLauncherHiddenChanged: (Boolean) -> Unit,
-    onInterfaceScaleChanged: (Int) -> Unit,
-    onInterfaceScaleDetails: () -> Unit,
     onFontDebug: () -> Unit,
     onFontLibrary: () -> Unit,
     onExperimental: () -> Unit,
-    onLanguage: () -> Unit,
+    onThemeSettings: () -> Unit,
+    onLanguageSelected: (String) -> Unit,
     onBackup: () -> Unit,
     onClearCache: () -> Unit,
     onAbout: () -> Unit,
     onDonate: () -> Unit
 ) {
-    val generalItemCount = if (state?.globalLogEnabled == true) 6 else 5
-    var pendingScale by remember(state?.interfaceScalePercent) {
-        mutableFloatStateOf((state?.interfaceScalePercent ?: 100).toFloat())
+    val context = LocalContext.current
+    var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
+    val languageOptions = remember(context) {
+        AppLocaleManager.supportedLanguages().map {
+            LanguageDialogOption(it.tag, context.getString(it.labelResId))
+        }
     }
+    val generalItemCount = if (state?.globalLogEnabled == true) 6 else 5
     Scaffold(
         modifier = Modifier.padding(padding),
         // Horizontal cutout ownership belongs to DpisWorkspaceShell, not this nested scaffold.
@@ -157,21 +167,20 @@ fun SettingsWorkspaceContent(
         item {
             SettingsSection(R.string.settings_section_theme) {
                 SettingsEntry(
+                    R.drawable.ic_format_paint_24,
+                    R.string.settings_theme_settings_title,
+                    R.string.settings_theme_settings_hint,
+                    enabled = true,
+                    index = 0, total = 2,
+                    onThemeSettings
+                )
+                SettingsEntry(
                     R.drawable.ic_language_24,
                     R.string.settings_language_label,
                     state?.languageLabel ?: stringResource(R.string.settings_language_follow_system),
                     enabled = state?.storeAvailable == true,
-                    index = 0, total = 2,
-                    onLanguage
-                )
-                SettingsScaleRow(
-                    R.drawable.ic_fit_width_24,
-                    pendingScale = pendingScale,
-                    enabled = state?.storeAvailable == true,
                     index = 1, total = 2,
-                    onPendingScaleChanged = { pendingScale = it },
-                    onScaleChanged = onInterfaceScaleChanged,
-                    onDetails = onInterfaceScaleDetails
+                    { showLanguageDialog = true }
                 )
             }
         }
@@ -225,6 +234,16 @@ fun SettingsWorkspaceContent(
             }
         }
     }
+    }
+    if (showLanguageDialog) {
+        DpisModalDialog(onDismissRequest = { showLanguageDialog = false }) {
+            LanguageDialogContent(
+                options = languageOptions,
+                selectedTag = AppLocaleManager.getLanguageTag(context),
+                onDone = { showLanguageDialog = false },
+                onSelected = onLanguageSelected,
+            )
+        }
     }
 }
 
@@ -283,119 +302,6 @@ private fun SettingsSwitchRow(
                 enabled = enabled
             )
         }
-    )
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private fun SettingsScaleRow(
-    @androidx.annotation.DrawableRes iconRes: Int,
-    pendingScale: Float,
-    enabled: Boolean,
-    index: Int,
-    total: Int,
-    onPendingScaleChanged: (Float) -> Unit,
-    onScaleChanged: (Int) -> Unit,
-    onDetails: () -> Unit
-) {
-    val hapticDetails = rememberDpisConfirmAction(onDetails)
-    // A SegmentedListItem reserves the trailing slot across every content line. The scale
-    // control must instead span the full card width, as a separate control beneath its label.
-    // Surface owns the entire-card ripple and clips it to the segmented card shape.
-    Surface(
-        onClick = hapticDetails,
-        modifier = Modifier.fillMaxWidth(),
-        enabled = enabled,
-        shape = ListItemDefaults.segmentedShapes(index, total).shape,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        contentColor = MaterialTheme.colorScheme.onSurface
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    painterResource(iconRes),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        stringResource(R.string.settings_interface_scale_label),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        stringResource(R.string.settings_interface_scale_hint),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Spacer(Modifier.width(16.dp))
-                Text(
-                    stringResource(R.string.settings_interface_scale_value, pendingScale.roundToInt()),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-            CenteredScaleSlider(
-                value = pendingScale,
-                onValueChange = onPendingScaleChanged,
-                onValueChangeFinished = { onScaleChanged(it.roundToInt()) },
-                enabled = enabled,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
-    }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private fun CenteredScaleSlider(
-    value: Float,
-    onValueChange: (Float) -> Unit,
-    onValueChangeFinished: (Float) -> Unit,
-    enabled: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val valueRange = AppUiScaleManager.MIN_SCALE_PERCENT.toFloat()..
-        AppUiScaleManager.MAX_SCALE_PERCENT.toFloat()
-    val coercedValue = value.coerceIn(valueRange.start, valueRange.endInclusive)
-    val interactionSource = remember { MutableInteractionSource() }
-    val latestGestureValue = remember { mutableFloatStateOf(coercedValue) }
-    val view = LocalView.current
-    var lastFeedbackPercent by remember(value) {
-        mutableIntStateOf(AppUiScaleManager.normalizeSliderPercent(coercedValue))
-    }
-    Slider(
-        value = coercedValue,
-        onValueChange = { changedValue ->
-            val normalizedValue = AppUiScaleManager.normalizeSliderPercent(changedValue)
-            // Store the event value before publishing UI state, avoiding a stale Compose
-            // snapshot when a track tap changes and completes the gesture in one frame.
-            latestGestureValue.floatValue = normalizedValue.toFloat()
-            if (normalizedValue != lastFeedbackPercent) {
-                lastFeedbackPercent = normalizedValue
-                view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-            }
-            onValueChange(normalizedValue.toFloat())
-        },
-        onValueChangeFinished = { onValueChangeFinished(latestGestureValue.floatValue) },
-        valueRange = valueRange,
-        // A continuous slider keeps Material 3's two endpoint stop indicators while
-        // suppressing the intermediate tick marks that read as a dotted track.
-        steps = 0,
-        enabled = enabled,
-        interactionSource = interactionSource,
-        thumb = {
-            SliderDefaults.Thumb(
-                interactionSource = interactionSource,
-                isVertical = false
-            )
-        },
-        track = { sliderState -> SliderDefaults.Track(sliderState = sliderState) },
-        modifier = modifier
-            .fillMaxWidth()
-            .height(48.dp)
     )
 }
 

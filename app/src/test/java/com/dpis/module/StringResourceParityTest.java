@@ -99,21 +99,22 @@ public class StringResourceParityTest {
     @Test
     public void localeSwitchUsesWrappedBaseContextAndExplicitRecreate() throws IOException {
         String settingsSource = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
-        String localizedSource = read("src/main/java/com/dpis/module/LocalizedActivity.java");
+        String localizedSource = read("src/main/java/com/dpis/module/LocalizedActivity.kt");
         String localeManager = read("src/main/java/com/dpis/module/settings/AppLocaleManager.java");
         String mainSource = read("src/main/java/com/dpis/module/MainActivity.java");
         String aboutSource = read("src/main/java/com/dpis/module/about/AboutActivity.java");
         String licenseSource = read("src/main/java/com/dpis/module/about/OpenSourceLicenseActivity.java");
         String manifest = read("src/main/AndroidManifest.xml");
 
-        assertTrue(localizedSource.contains("extends ComponentActivity"));
+        assertTrue(localizedSource.contains(": ComponentActivity()"));
         assertTrue(localeManager.contains("Context wrap(Context context)"));
         assertTrue(localeManager.contains("createConfigurationContext(configuration)"));
         assertTrue(localeManager.contains("Context.MODE_PRIVATE"));
         assertTrue(localizedSource.contains("attachBaseContext("));
-        assertTrue(localizedSource.contains("protected void onResume()"));
+        assertTrue(localizedSource.contains("override fun onResume()"));
         assertTrue(localizedSource.contains("AppLocaleManager.getLanguageTag(this)"));
-        assertTrue(localizedSource.contains("recreate();"));
+        assertTrue(localizedSource.contains("recreate()"));
+        assertTrue(localizedSource.contains("ThemeModeStore.getAppearance(this)"));
         assertTrue(mainSource.contains("extends LocalizedActivity"));
         assertTrue(aboutSource.contains("extends LocalizedActivity"));
         assertTrue(licenseSource.contains("extends LocalizedActivity"));

@@ -2,7 +2,6 @@ package com.dpis.module.diagnostics
 
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -33,6 +32,7 @@ import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.ui.compose.DpisConfirmDialogUiTokens
 import com.dpis.module.ui.compose.DpisTheme
+import com.dpis.module.ui.compose.dpisDarkTheme
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -60,7 +60,7 @@ class FeedbackDiagnosticResultSheet(
         }
         val dialog = BottomSheetDialog(activity)
         composeView.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 FeedbackDiagnosticResultContent(
                     title = activity.getString(
                         R.string.feedback_diagnostic_result_title,
@@ -199,6 +199,7 @@ internal fun FeedbackDiagnosticResultContent(
 
 /** Shared Compose progress dialog used while the diagnostic ZIP is being built. */
 object FeedbackDiagnosticPackagingDialog {
+    // TODO: Migrate after packaging progress no longer requires an externally mutable AlertDialog.
     @JvmStatic
     fun show(activity: Activity): AlertDialog {
         val composeView = ComposeView(activity).apply {
@@ -209,7 +210,7 @@ object FeedbackDiagnosticPackagingDialog {
             .setCancelable(false)
             .create()
         composeView.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 FeedbackDiagnosticPackagingContent()
             }
         }

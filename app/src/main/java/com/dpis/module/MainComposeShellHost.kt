@@ -7,8 +7,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.foundation.isSystemInDarkTheme
 import com.dpis.module.ui.compose.DpisTheme
+import com.dpis.module.ui.compose.dpisDarkTheme
 
 /** Installs the Compose shell; domain state and actions remain Activity-owned. */
 internal class MainComposeShellHost(
@@ -22,7 +22,7 @@ internal class MainComposeShellHost(
 
     init {
         composeView.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 Box(Modifier.fillMaxSize()) {
                     MainComposeWorkspaceShell(
                         state = state,

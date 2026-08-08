@@ -63,6 +63,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class AppConfigDialogBinder {
+    // TODO: Move to DpisModalDialog when this legacy binder no longer exposes AlertDialog handles.
     private static final long MODE_TOGGLE_ANIM_DURATION_MS = 200L;
     private final boolean showDragHandle;
 

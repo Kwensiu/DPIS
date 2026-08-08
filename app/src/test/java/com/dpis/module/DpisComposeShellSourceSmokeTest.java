@@ -20,7 +20,7 @@ public final class DpisComposeShellSourceSmokeTest {
         String haptics = read("src/main/java/com/dpis/module/ui/compose/DpisComposeHaptics.kt");
         String previews = read("src/main/java/com/dpis/module/ui/compose/DpisWorkspaceShellPreviews.kt");
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
-        String localizedActivity = read("src/main/java/com/dpis/module/LocalizedActivity.java");
+        String localizedActivity = read("src/main/java/com/dpis/module/LocalizedActivity.kt");
         String presentation = read(
                 "src/main/java/com/dpis/module/templates/TemplateWorkspacePresentation.kt");
         String coordinator = read(
@@ -31,8 +31,8 @@ public final class DpisComposeShellSourceSmokeTest {
                 "src/main/java/com/dpis/module/ui/compose/WearWorkspaceContent.kt");
 
         assertTrue(theme.contains("fun DpisTheme("));
-        assertTrue(theme.contains("dynamicLightColorScheme"));
-        assertTrue(theme.contains("dynamicDarkColorScheme"));
+        assertTrue(theme.contains("DpisColorSchemeFactory.create("));
+        assertTrue(theme.contains("system_accent1_500"));
         assertTrue(shell.contains("APP(R.string.workspace_app"));
         assertTrue(shell.contains("TEMPLATE(R.string.workspace_template"));
         assertTrue(shell.contains("HOME(R.string.workspace_home"));
@@ -109,8 +109,8 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(shell.contains("background = phoneColors.background"));
         assertTrue(mainActivity.contains("getLastCustomNonConfigurationInstance()"));
         assertTrue(mainActivity.contains("onRetainCustomNonConfigurationInstance()"));
-        assertTrue(localizedActivity.contains("import androidx.activity.ComponentActivity;"));
-        assertTrue(localizedActivity.contains("extends ComponentActivity"));
+        assertTrue(localizedActivity.contains("import androidx.activity.ComponentActivity"));
+        assertTrue(localizedActivity.contains(": ComponentActivity()"));
         assertFalse(mainActivity.contains("removeView(landDetailPane)"));
         assertTrue(shell.contains("rememberDpisConfirmAction"));
         assertTrue(haptics.contains("HapticFeedbackType.Confirm"));
@@ -145,17 +145,18 @@ public final class DpisComposeShellSourceSmokeTest {
     @Test
     public void interfaceScaleSliderShowsOnlyEndpointMarkers() throws IOException {
         String settings = read("src/main/java/com/dpis/module/ui/compose/SettingsWorkspaceContent.kt");
+        String theme = read("src/main/java/com/dpis/module/ui/compose/ThemeSettingsContent.kt");
         String home = read("src/main/java/com/dpis/module/ui/compose/HomeWorkspaceContent.kt");
         String tools = read("src/main/java/com/dpis/module/ui/compose/ToolsWorkspaceContent.kt");
         String support = read("src/main/java/com/dpis/module/ui/compose/SupportPages.kt");
 
-        assertTrue(settings.contains("steps = 0"));
-        assertTrue(settings.contains("SliderDefaults.Track"));
-        assertTrue(settings.contains("latestGestureValue.floatValue"));
-        assertTrue(settings.contains("AppUiScaleManager.normalizeSliderPercent(changedValue)"));
-        assertTrue(settings.contains("HapticFeedbackConstants.CLOCK_TICK"));
-        assertTrue(settings.contains("rememberDpisConfirmAction(onDetails)"));
-        assertTrue(settings.contains("Surface owns the entire-card ripple"));
+        assertTrue(theme.contains("steps = 0"));
+        assertTrue(theme.contains("SliderDefaults.Track"));
+        assertTrue(theme.contains("latestGestureValue.floatValue"));
+        assertTrue(theme.contains("AppUiScaleManager.normalizeSliderPercent(changedValue)"));
+        assertTrue(theme.contains("HapticFeedbackConstants.CLOCK_TICK"));
+        assertTrue(theme.contains("style = MaterialTheme.typography.titleMedium"));
+        assertFalse(settings.contains("SettingsScaleRow("));
         assertTrue(settings.contains(
                 "state?.languageLabel ?: stringResource(R.string.settings_language_follow_system)"));
         assertTrue(settings.contains(
@@ -180,6 +181,40 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(settings.contains(
                 "windowInsets = WindowInsets.statusBars.only(WindowInsetsSides.Top)"));
         assertTrue(support.contains("rememberDpisConfirmAction"));
+    }
+
+    @Test
+    public void standaloneSettingsPagesUseSharedSecondaryPageChrome() throws IOException {
+        String support = read("src/main/java/com/dpis/module/ui/compose/SupportPages.kt");
+        String theme = read("src/main/java/com/dpis/module/ui/compose/ThemeSettingsContent.kt");
+        String experimental = read(
+                "src/main/java/com/dpis/module/ui/compose/ExperimentalSettingsContent.kt");
+
+        assertTrue(support.contains("internal fun SecondaryPageScaffold("));
+        assertTrue(support.contains("SecondaryPageTopBar("));
+        assertTrue(theme.contains("SecondaryPageScaffold("));
+        assertTrue(experimental.contains("SecondaryPageScaffold("));
+        assertFalse(theme.contains("TopAppBar("));
+        assertFalse(experimental.contains("CenterAlignedTopAppBar("));
+    }
+
+    @Test
+    public void themeSettingsExpandsStaticColorOptionsWhenDynamicColorIsDisabled()
+            throws IOException {
+        String theme = read("src/main/java/com/dpis/module/ui/compose/ThemeSettingsContent.kt");
+        String support = read("src/main/java/com/dpis/module/ui/compose/SupportActivityContent.kt");
+        String colors = read("src/main/java/com/dpis/module/ui/compose/DpisTheme.kt");
+
+        assertTrue(theme.contains("ThemeDynamicColorRow("));
+        assertTrue(theme.contains("AnimatedConditionalItem(visible = !dynamicColorEnabled)"));
+        assertTrue(theme.contains("R.string.settings_theme_color_label"));
+        assertTrue(theme.contains("R.string.settings_theme_palette_style_label"));
+        assertTrue(theme.contains("R.string.settings_theme_color_spec_label"));
+        assertTrue(theme.contains("ThemeColorOption(ThemeModeStore.DEFAULT_STATIC_THEME_COLOR)"));
+        assertFalse(theme.contains("ThemeColorOption(\"default\")"));
+        assertTrue(support.contains("ThemeModeStore.setDynamicColorEnabled(activity, enabled)"));
+        assertTrue(support.contains("dynamicColorEnabled = enabled"));
+        assertTrue(colors.contains("ThemeModeStore.isDynamicColorEnabled(LocalContext.current)"));
     }
 
     @Test

@@ -21,6 +21,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
 public final class WechatDpiSheetBinder {
+    // TODO: Migrate when this View binder is replaced by a Compose-owned quirk settings flow.
     private WechatDpiSheetBinder() {
     }
 

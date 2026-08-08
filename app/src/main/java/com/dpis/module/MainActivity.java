@@ -1066,6 +1066,8 @@ public final class MainActivity
                     @Override public void openSettingsFontDebug() { ensureComposeSettingsController().showFontDebugFromPresentation(); }
                     @Override public void openSettingsFontLibrary() { ensureComposeSettingsController().showFontLibraryFromPresentation(); }
                     @Override public void openSettingsExperimental() { ensureComposeSettingsController().showExperimentalSettingsFromPresentation(); }
+                    @Override public void openThemeSettings() { ensureComposeSettingsController().showThemeSettingsFromPresentation(); }
+                    @Override public void setSettingsLanguage(String tag) { ensureComposeSettingsController().setLanguageFromPresentation(tag); }
                     @Override public void openSettingsLanguage() { ensureComposeSettingsController().showLanguageFromPresentation(); }
                     @Override public void openSettingsBackup() { ensureComposeSettingsController().showConfigBackupFromPresentation(); }
                     @Override public void clearSettingsCache() { ensureComposeSettingsController().clearCacheFromPresentation(); }

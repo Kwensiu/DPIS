@@ -1,7 +1,6 @@
 package com.dpis.module.ui.compose
 
 import android.app.Activity
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -64,7 +63,7 @@ object FontDebugComposeSheet {
         val dialog = BottomSheetDialog(activity)
         val handle = Handle(dialog)
         view.setContent {
-            DpisTheme(darkTheme = isSystemInDarkTheme()) {
+            DpisTheme(darkTheme = dpisDarkTheme()) {
                 FontDebugSheetContent(handle.state, onMode::run, onWindow::run,
                     onOverlay::run, onClear::run) { dialog.dismiss() }
             }

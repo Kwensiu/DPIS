@@ -62,7 +62,7 @@ import com.dpis.module.R
 @Composable
 fun DonateSupportPage(onBack: () -> Unit) {
     var supportersVisible by remember { mutableStateOf(false) }
-    SupportScaffold(titleRes = R.string.donate_title, onBack = onBack) { padding ->
+    SecondaryPageScaffold(titleRes = R.string.donate_title, onBack = onBack) { padding ->
         LazyColumn(
             modifier = Modifier.padding(padding),
             contentPadding = PaddingValues(
@@ -132,7 +132,7 @@ fun DonateSupportPage(onBack: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModeHelpPage(onBack: () -> Unit, onOpenModeGuide: () -> Unit) {
-    SupportScaffold(
+    SecondaryPageScaffold(
         titleRes = R.string.mode_help_title,
         onBack = onBack
     ) { padding ->
@@ -186,7 +186,7 @@ fun ModeHelpPage(onBack: () -> Unit, onOpenModeGuide: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModeGuidePage(onBack: () -> Unit) {
-    SupportScaffold(
+    SecondaryPageScaffold(
         titleRes = R.string.mode_guide_title,
         onBack = onBack
     ) { padding ->
@@ -222,7 +222,7 @@ fun ModeGuidePage(onBack: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SupportScaffold(
+internal fun SecondaryPageScaffold(
     @StringRes titleRes: Int,
     onBack: () -> Unit,
     content: @Composable (PaddingValues) -> Unit

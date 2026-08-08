@@ -111,9 +111,8 @@ public class SystemServerSettingsLayoutSmokeTest {
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
         assertTrue(manifest.contains(".settings.ExperimentalSettingsActivity"));
-        assertTrue(content.contains("R.string.system_settings_back"));
+        assertTrue(content.contains("SecondaryPageScaffold("));
         assertTrue(content.contains("R.string.settings_experimental_title"));
-        assertTrue(content.contains("R.drawable.ic_arrow_back_24"));
         assertTrue(content.contains("R.string.settings_experimental_empty"));
         assertTrue(!content.contains("row_flutter_font_hook"));
         assertTrue(!content.contains("row_flutter_settings_font_hook"));

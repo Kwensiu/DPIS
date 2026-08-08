@@ -16,8 +16,7 @@ public final class ExperimentalSettingsActivitySourceSmokeTest {
         String strings = read("src/main/res/values/strings.xml");
 
         assertTrue(source.contains("SupportActivityContent.installExperimentalSettings(this);"));
-        assertTrue(content.contains("CenterAlignedTopAppBar"));
-        assertTrue(content.contains("R.string.system_settings_back"));
+        assertTrue(content.contains("SecondaryPageScaffold("));
         assertTrue(content.contains("R.string.settings_experimental_title"));
         assertTrue(content.contains("contentAlignment = Alignment.Center"));
         assertTrue(content.contains("R.string.settings_experimental_empty"));
