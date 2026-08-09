@@ -122,7 +122,7 @@ public class ModuleMainHookInstallerTest {
         String source = read("src/modern/java/com/dpis/module/ModuleMain.java");
 
         assertTrue(source.contains("installChromiumViewportProbe(param.getPackageName(), param.getClassLoader())"));
-        assertTrue(source.contains("installChromiumViewportProbe(packageName, classLoader)"));
+        assertTrue(source.contains("private void installChromiumViewportProbe(String packageName, ClassLoader classLoader)"));
         assertTrue(source.contains("ChromiumViewportProbeHookInstaller.install(this, classLoader)"));
         assertTrue(source.contains("WebApkRuntimeOwnerBridge.CHROME_PACKAGE.equals(packageName)"));
         assertTrue(source.contains("debug.dpis.webapk.chromium_probe_package"));
@@ -275,7 +275,7 @@ public class ModuleMainHookInstallerTest {
     }
 
     @Test
-    public void modernHotReloadUsesVersionedModernApiCapabilities() throws IOException {
+    public void modernUsesApi101BaselineWithApi102HotReloadAndHookIds() throws IOException {
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
         String resourcesRead = read("src/main/java/com/dpis/module/runtime/appprocess/ResourcesReadHookInstaller.java");
         String resourcesImpl = read("src/main/java/com/dpis/module/runtime/appprocess/ResourcesImplHookInstaller.java");
@@ -285,11 +285,10 @@ public class ModuleMainHookInstallerTest {
         String api102 = read("src/main/java/com/dpis/module/runtime/hookapi/ModernApi102Capabilities.java");
         String resolver = read("src/main/java/com/dpis/module/runtime/hookapi/ModernApiCapabilitiesResolver.java");
 
+        assertTrue(moduleMain.contains("onHotReloading(XposedModuleInterface.HotReloadingParam param)"));
         assertTrue(moduleMain.contains("onHotReloaded(XposedModuleInterface.HotReloadedParam param)"));
-        assertTrue(moduleMain.contains("lastPackageReadyPackageName"));
         assertTrue(moduleMain.contains("restoreHotReloadState(savedState)"));
         assertTrue(moduleMain.contains("replayPackageReadySupplementsAfterHotReload("));
-        assertTrue(moduleMain.contains("package-ready hot reload replay enter"));
         assertTrue(moduleMain.contains("AppProcessHotReloadResetter.resetAll();"));
         assertFalse(moduleMain.contains("ModernHookRegistry"));
         assertTrue(moduleMain.contains("private volatile ModernApiCapabilities modernApiCapabilities;"));
@@ -305,9 +304,9 @@ public class ModuleMainHookInstallerTest {
         assertTrue(api102.contains("XposedInterface.HookBuilder.class.getMethod(\"setId\", String.class)"));
         assertTrue(resolver.contains("static final int API_101 = 101;"));
         assertTrue(resolver.contains("static final int API_102 = 102;"));
-        assertTrue(resolver.contains("The published Modern artifact declares 102"));
-        assertTrue(resolver.contains("Runtime behavior still degrades"));
-        assertTrue(resolver.contains("101 capability set when the host framework does not expose 102 features"));
+        assertTrue(resolver.contains("keeps API 101 as the loading baseline and targets API 102"));
+        assertTrue(resolver.contains("API 102 hosts may exercise hot reload and stable hook ids"));
+        assertTrue(resolver.contains("API 101 keeps"));
         assertTrue(resourcesRead.contains("apiCapabilities.applyStableHookId("));
         assertTrue(resourcesImpl.contains("apiCapabilities.applyStableHookId("));
         assertTrue(resourcesManager.contains("apiCapabilities.applyStableHookId("));
@@ -418,14 +417,18 @@ public class ModuleMainHookInstallerTest {
     }
 
     @Test
-    public void modernRuntimeHotReloadDocsAndScriptMatchCurrentBoundary() throws IOException {
+    public void modernRuntimeApiCapabilityDocsAndScriptMatchCurrentBoundary() throws IOException {
         String docs = readRepositoryRoot("docs/modern-runtime-resync.md");
         String script = readRepositoryRoot("scripts/pull-lsposed-logs.ps1");
 
-        assertTrue(docs.contains("System-server replay"));
-        assertTrue(docs.contains("hot-reload surface"));
-        assertTrue(docs.contains("the shipped Modern artifact declares API 102"));
-        assertTrue(docs.contains("that declaration does not mean \"102-only runtime behavior\""));
+        assertTrue(docs.contains("declares `minApiVersion=101`"));
+        assertTrue(docs.contains("`targetApiVersion=102`"));
+        assertTrue(docs.contains("declare `autoHotReload=true`"));
+        assertTrue(docs.contains("API 102 hosts can use the hot-reload lifecycle"));
+        assertTrue(docs.contains("API 101 hosts keep"));
+        assertTrue(docs.contains("install-and-restart path"));
+        assertTrue(docs.contains("stable hook ids"));
+        assertTrue(docs.contains("framework exposes"));
         assertTrue(docs.contains("degrades to the 101 capability set"));
         assertTrue(docs.contains("ForceTextSize hook ready"));
         assertTrue(docs.contains("dynamic resource-creation / `createResourcesImpl` overload hooks derive ids"));

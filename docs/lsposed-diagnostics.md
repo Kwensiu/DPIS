@@ -80,44 +80,28 @@ hot-reload matches.
 Useful filters:
 
 ```powershell
-.\scripts\pull-lsposed-logs.ps1 -Pattern 'io.github.kwensiu.dpis|DPIS hot reload|Auto hot reload|status='
-.\scripts\pull-lsposed-logs.ps1 -Pattern 'com.salt.music|DPIS|Auto hot reload'
+.\scripts\pull-lsposed-logs.ps1 -Pattern 'io.github.kwensiu.dpis|DPIS|status='
+.\scripts\pull-lsposed-logs.ps1 -Pattern 'com.salt.music|DPIS'
 ```
 
-## Hot Reload Evidence
+## API 102 Capability Evidence
 
-For API 102 Modern builds, LSPosed bridge logs are the primary evidence for
-hot reload. A module-side reload reached DPIS only when the current
-`modules_*.log` or `verbose_*.log` contains:
+The single Modern artifact targets API 102 but declares `minApiVersion=101`.
+It also declares `autoHotReload=true`: API 102 hosts can use LSPosed automatic
+hot reload, while API 101 hosts keep the normal install-and-restart path.
 
-- `DPIS hot reload begin`
-- `DPIS hot reload replay`
-- `DPIS hot reload end`
+For API 102 hot reload, LSPosed bridge logs are the primary evidence. A
+module-side reload reached DPIS only when the current `modules_*.log` or
+`verbose_*.log` contains `DPIS hot reload begin`, `DPIS hot reload replay`,
+and `DPIS hot reload end`.
 
-`Auto hot reload failed ... status=3, message=null` without a matching
-`DPIS hot reload begin` means LSPosed did not reach DPIS's reload callback.
-The common first-update case is an already-running target process that still
-holds an older DPIS generation whose default `onHotReloading()` rejects reload.
-Restart that target process once after installing the 102-capable build, then
-use the next install/update to validate the hot-reload path.
+Stable hook ids are a separate runtime enhancement. Validate them by checking
+normal DPIS hook-install logs and route effects; the hook id path must still
+fall back to the original builder on API 101 hosts.
 
-`Auto hot reload failed ... status=4, message=null` has been observed when a
-target process is being stopped or has stale process state during the reload
-window. Treat it as framework/process-lifetime evidence first: confirm the
-current PID with `adb shell pidof <package>`, relaunch the target, and validate
-again from fresh LSPosed logs before blaming DPIS hook replay.
-
-LSPosed notification progress can update later than the module install moment.
-The practical test is process-local: if a target app is launched or becomes
-active after install and then its current bridge log shows
-`DPIS hot reload begin -> replay -> end`, that process reached DPIS's 102 replay
-path even if an older log file still contains earlier `Auto hot reload failed`
-entries. Do not mix old failure windows with the current process evidence.
-
-Feedback diagnostics can include hot-reload-related events when the diagnostic
-session survives long enough, but reinstall-driven reload can end or disrupt
-the diagnostic packaging window. Do not use a missing feedback-diagnostic entry
-as negative evidence for hot reload.
+If LSPosed still reports that DPIS requires API 102, inspect the installed APK's
+`META-INF/xposed/module.prop` first. `minApiVersion=102` means the installed
+artifact is stale or built from an older API 102-only metadata revision.
 
 ## Encoding
 

@@ -10,9 +10,9 @@ public final class ModernApiCapabilitiesResolver {
     }
 
     public static ModernApiCapabilities fromXposed(XposedInterface xposed) {
-        // The published Modern artifact declares 102 because LSPosed only lets us
-        // advertise one modern API surface. Runtime behavior still degrades to the
-        // 101 capability set when the host framework does not expose 102 features.
+        // One Modern artifact keeps API 101 as the loading baseline and targets API 102.
+        // API 102 hosts may exercise hot reload and stable hook ids; API 101 keeps
+        // the normal install path and ignores the unavailable lifecycle enhancement.
         int apiVersion = xposed != null ? xposed.getApiVersion() : API_101;
         return apiVersion >= API_102
                 ? ModernApi102Capabilities.INSTANCE

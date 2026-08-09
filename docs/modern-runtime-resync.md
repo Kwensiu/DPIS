@@ -28,19 +28,19 @@ changing Modern behavior?
 ## 102 Coexistence Plan
 
 The Modern codebase stays single-track. API 102 does not get a separate business
-tree; it adds lifecycle and hook-management capabilities on top of the existing
-101 runtime routes.
+tree; it adds hook-management capabilities on top of the existing 101 runtime
+routes.
 
 Artifact/runtime rule:
 
-- the shipped Modern artifact declares API 102 because LSPosed only allows one
-  advertised modern API version per artifact;
-- that declaration does not mean "102-only runtime behavior";
+- the shipped Modern artifact declares `minApiVersion=101` and
+  `targetApiVersion=102`;
+- the target declaration does not mean "102-only runtime behavior";
 - on a 101-capable LSPosed framework, DPIS still runs the same Modern route tree
   and degrades to the 101 capability set;
 - on a 102-capable LSPosed framework, DPIS keeps the same route tree but also
-  enables stable hook ids, hot-reload callbacks, and related 102 maintenance
-  features.
+  enables stable hook ids and hot-reload callbacks where the framework exposes
+  them.
 
 Naming rule:
 
@@ -53,64 +53,32 @@ Naming rule:
 Planned shape:
 
 - keep the current shared app-process and system_server routing model;
-- add `onHotReloading()` / `onHotReloaded()` in the Modern entry only;
-- treat `replaceHook()` and hook ids as the preferred 102-level maintenance
-  path for hooks that already have stable identities;
+- declare `autoHotReload=true` in the single Modern artifact so API 102 hosts
+  can use the hot-reload lifecycle while API 101 hosts keep the normal
+  install-and-restart path;
+- treat hook ids as the preferred 102-level maintenance path for hooks that
+  already have stable identities;
 - keep 101-compatible install behavior as the default runtime path and fall back
   to full reinstall when a hook is not yet id-stable;
 - avoid splitting installer logic into `101` and `102` copies unless a route
   proves it needs different runtime behavior.
 
-Hot reload implementation notes:
+API 102 capability notes:
 
 - when a hook can be given a stable id, assign it once at install time instead
   of adding a second replacement path later;
-- for stable app-process resource hooks, let API 102 rebuild the hook with the
-  same executable and id so the framework replaces it atomically;
-- when a hook is not yet id-stable, keep it on the restart-required path until
-  the route has a proven reload owner;
-- start with the hot paths that already have stable ownership boundaries:
-  `ModuleMain`, `runtime.appprocess.AppProcessHookInstaller`, and the system_server installer
-  entry, then expand only when a real reload path is needed.
-- verify hot reload with LSPosed bridge logs first. A successful module-side
-  reload should show `DPIS hot reload begin`, `DPIS hot reload replay`, and
-  `DPIS hot reload end` in `modules_*.log` or `verbose_*.log`. Feedback
-  diagnostics are useful as supporting context only, because reinstall-driven
-  reload can end the diagnostic session before packaging. System-server replay
-  is not part of the current 102 hot-reload surface and still depends on the
-  next normal install path.
-- if LSPosed reports `Auto hot reload failed ... status=3, message=null` and
-  there is no `DPIS hot reload begin`, the reload did not reach the new replay
-  path. The common first-update case is that the already-running target process
-  still holds an older DPIS generation whose default `onHotReloading()` rejects
-  reload. Restart the target process once after installing the 102-capable
-  build, then use the next install/update to validate the hot-reload path.
-- LSPosed's notification progress may lag behind the install moment for target
-  processes that are stopped, stale, or not immediately schedulable. In the
-  2026-06-24 device export, old `Auto hot reload failed` lines clustered around
-  04:34-04:44, while later user-launched/active processes produced fresh
-  `DPIS hot reload begin -> replay -> end` evidence at 12:20 and 12:35. Treat
-  those later bridge logs as the replay truth for that process instead of
-  treating the notification progress as a DPIS save/config failure.
-- API 102 still does not replay package-ready callbacks automatically. DPIS
-  carries the last package-ready package/classloader/applicationInfo through
-  `setSavedInstanceState(...)` and, after generic module-loaded replay, retries
-  the package-ready supplement routes that need the app classloader: WeChat DPI,
-  typeface replacement, and Flutter settings. This supplement replay is
-  intentionally app-process only; system_server uses the narrower replay path
-  below.
-- system_server replay is narrower and more valuable than broad app-process
-  replay. On API 102 hot reload, only the system process clears the
-  system_server install gate and re-enters the existing system_server installer
-  with stable hook ids. App processes continue to use best-effort replay and may
-  still need a target app restart when frozen or cached runtime objects remain.
+- use runtime capability detection before applying a hook id; API 101 must keep
+  the same install path and simply return the original builder;
+- API 102 hosts can use the hot-reload lifecycle. API 101 hosts keep the normal
+  install-and-restart path and must not depend on reload callbacks for
+  correctness.
 
 Practical boundary:
 
-- the Modern artifact advertises 102, but shared route semantics still use the
-  101 capability set as the runtime fallback baseline;
-- 102 is used to simplify lifecycle cleanup and hot-reload replay when the host
-  framework actually exposes 102 features;
+- the Modern artifact targets 102, but shared route semantics still use the 101
+  capability set as the runtime fallback baseline;
+- 102 is used to add stable hook ids and automatic hot reload when the host
+  framework actually exposes those features;
 - Legacy stays on its own 100 surface and is not part of the 102 migration.
 - version-specific capability code should stay explicit (`101`, `102`) rather
   than introducing vague tiers like `baseline` / `enhanced`.
@@ -434,8 +402,8 @@ Detailed app-specific runtime evidence lives in
   +-- app/src/modern/java/com/dpis/module/ModuleMain.java
   +-- libxposed XposedModule lifecycle
   +-- runtime.systemserver.SystemServerDisplayEnvironmentInstaller installation through XposedInterface
-  +-- 102 hot-reload callbacks are only enabled when the Modern entry is running
-      on an API 102-capable framework
+  +-- API 102 target enhancements are optional: stable hook ids and hot-reload
+      callbacks run only when the host framework exposes the API 102 lifecycle
 
 100-only
   |

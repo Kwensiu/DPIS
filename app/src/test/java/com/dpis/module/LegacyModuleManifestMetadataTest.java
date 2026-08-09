@@ -45,7 +45,7 @@ public final class LegacyModuleManifestMetadataTest {
         String javaInit = readProjectFile(
                 "src/modern/resources/META-INF/xposed/java_init.list");
 
-        assertTrue(moduleProp.contains("minApiVersion=102"));
+        assertTrue(moduleProp.contains("minApiVersion=101"));
         assertTrue(moduleProp.contains("targetApiVersion=102"));
         assertTrue(moduleProp.contains("autoHotReload=true"));
         assertTrue(javaInit.contains("com.dpis.module.ModuleMain"));
