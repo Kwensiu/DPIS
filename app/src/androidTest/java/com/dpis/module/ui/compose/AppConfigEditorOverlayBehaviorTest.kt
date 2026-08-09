@@ -1,10 +1,14 @@
 package com.dpis.module.ui.compose
 
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.Text
+import androidx.compose.material3.Button
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -116,6 +120,46 @@ class AppConfigEditorOverlayBehaviorTest {
     }
 
     @Test
+    fun destinationPageOwnsClicksAfterReturningAndReenteringDuringAnimatedTransition() {
+        val destination = mutableStateOf(ConfigEditorDestination.MAIN)
+        val targetClicked = AtomicBoolean(false)
+        composeRule.setContent {
+            var currentDestination by remember { destination }
+            DpisTheme(darkTheme = false, dynamicColor = false) {
+                ConfigEditorAnimatedContent(
+                    destination = currentDestination,
+                    modifier = Modifier.fillMaxSize(),
+                    mainContent = {
+                        Box(Modifier.fillMaxSize().clickable { })
+                    },
+                    hookContent = { Text("Hook") },
+                    typefaceContent = {
+                        Button(
+                            onClick = { targetClicked.set(true) },
+                            modifier = Modifier.testTag(TypefaceTargetButtonTag)
+                        ) {
+                            Text("Typeface")
+                        }
+                    }
+                )
+            }
+        }
+
+        repeat(2) {
+            composeRule.runOnIdle {
+                destination.value = ConfigEditorDestination.TYPEFACE
+            }
+            composeRule.onNodeWithTag(TypefaceTargetButtonTag).performClick()
+            composeRule.runOnIdle {
+                assertTrue(targetClicked.get())
+                targetClicked.set(false)
+                destination.value = ConfigEditorDestination.MAIN
+            }
+            composeRule.waitForIdle()
+        }
+    }
+
+    @Test
     fun draggingOutsideTypefaceListClosesTheSheetWithoutAVisiblePartialStop() {
         val dismissed = AtomicBoolean(false)
         val expandedContentOwnsHeight = AtomicBoolean(false)
@@ -165,8 +209,8 @@ class AppConfigEditorOverlayBehaviorTest {
                     onReturnToMain = {
                         currentDestination = currentDestination.backDestination()
                     },
-                    topChrome = { Text("Editor", Modifier.testTag(SheetChromeTag)) }
-                ) { reportAdvancedAnchor, contentOwnsHeight, returnToMain ->
+                    topChrome = { Text("Editor", Modifier.testTag(SheetChromeTag)) },
+                    content = { reportAdvancedAnchor, contentOwnsHeight, returnToMain ->
                     expandedContentOwnsHeight?.set(contentOwnsHeight)
                     if (currentDestination.isHookChain) {
                         HookChainEditorPage(
@@ -195,7 +239,8 @@ class AppConfigEditorOverlayBehaviorTest {
                             Text("Advanced editor", Modifier.testTag(AdvancedEditorTag))
                         }
                     }
-                }
+                    }
+                )
             }
         }
         return destination
@@ -205,5 +250,6 @@ class AppConfigEditorOverlayBehaviorTest {
         const val MainEditorTag = "app-editor-main"
         const val SheetChromeTag = "app-editor-sheet-chrome"
         const val AdvancedEditorTag = "app-editor-advanced"
+        const val TypefaceTargetButtonTag = "typeface-target-button"
     }
 }

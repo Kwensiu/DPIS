@@ -415,6 +415,8 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(page.contains("clipContentToAnimatedBounds"));
         assertTrue(page.contains("slideInHorizontally("));
         assertTrue(page.contains("if (animateSize)"));
+        assertTrue(page.contains("Modifier.zIndex"));
+        assertTrue(page.contains("targetPage == editorPage"));
         assertTrue(page.contains("EditorDestinationHeightDurationMillis = 180"));
         assertTrue(page.contains("HookTabHeightDurationMillis = 180"));
         assertTrue(page.contains("verticalScroll(rememberScrollState())"));

@@ -62,6 +62,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.AppConfigEditorPresentation
 import com.dpis.module.R
@@ -116,14 +117,22 @@ internal fun ConfigEditorAnimatedContent(
         contentKey = { it },
         label = "config-editor-destination"
     ) { targetPage ->
+        // AnimatedContent keeps the outgoing page composed while it slides away. It remains
+        // visible in the portrait sheet because the transition intentionally is not clipped,
+        // but the destination page must own the interaction layer for the whole transition.
+        val pageLayerModifier = Modifier.zIndex(
+            if (targetPage == editorPage) 1f else 0f
+        )
         when (targetPage) {
-            ConfigEditorPage.TYPEFACE -> if (typefaceContent != null) {
-                typefaceContent()
-            } else {
-                mainContent()
+            ConfigEditorPage.TYPEFACE -> Box(pageLayerModifier) {
+                if (typefaceContent != null) {
+                    typefaceContent()
+                } else {
+                    mainContent()
+                }
             }
-            ConfigEditorPage.HOOK_CHAIN -> hookContent()
-            ConfigEditorPage.MAIN -> mainContent()
+            ConfigEditorPage.HOOK_CHAIN -> Box(pageLayerModifier) { hookContent() }
+            ConfigEditorPage.MAIN -> Box(pageLayerModifier) { mainContent() }
         }
     }
 }
