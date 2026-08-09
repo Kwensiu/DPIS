@@ -1291,7 +1291,16 @@ private fun WearAppIcon(
         modifier = modifier
             .size(44.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(androidx.wear.compose.material3.MaterialTheme.colorScheme.surfaceContainer),
+            // The surface is a fallback for unresolved icons, not a permanent icon mask.
+            .then(
+                if (icon == null) {
+                    Modifier.background(
+                        androidx.wear.compose.material3.MaterialTheme.colorScheme.surfaceContainer
+                    )
+                } else {
+                    Modifier
+                }
+            ),
         contentAlignment = Alignment.Center
     ) {
         if (icon != null) {

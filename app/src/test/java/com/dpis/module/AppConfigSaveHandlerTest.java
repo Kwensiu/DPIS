@@ -335,11 +335,11 @@ public class AppConfigSaveHandlerTest {
 
         assertTrue(result.success);
         assertFalse(store.getTargetViewportSpec(item.packageName).isEnabled());
-        assertEquals(ViewportTargetType.ABSOLUTE_DP,
+        assertEquals(ViewportTargetType.OFF,
                 store.getTargetViewportType(item.packageName));
         assertEquals(ViewportApplyMode.OFF,
                 store.getTargetViewportApplyMode(item.packageName));
-        assertTrue(store.hasRealPackageConfig(item.packageName));
+        assertFalse(store.hasRealPackageConfig(item.packageName));
     }
 
     @Test
@@ -401,6 +401,72 @@ public class AppConfigSaveHandlerTest {
         assertFalse(store.hasRealPackageConfig(item.packageName));
         assertFalse(store.hasUserVisiblePackageConfig(item.packageName));
         assertFalse(store.getConfiguredPackages().contains(item.packageName));
+    }
+
+    @Test
+    public void resetRemovesStaleAggregatedDefaultViewportType() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putStringSet(DpisConfigStore.KEY_TARGET_PACKAGES,
+                        Set.of("com.example.app"))
+                .putString(
+                        "package_config.com.example.app.viewport.target_type",
+                        ViewportTargetType.RELATIVE_SCALE)
+                .commit();
+        DpisConfigStore store = new DpisConfigStore(prefs);
+        AppListItem item = app("com.example.app");
+
+        AppConfigSaveHandler.Result result = new AppConfigSaveHandler().saveResolved(
+                item,
+                ViewportTargetSpec.off(),
+                ViewportTargetType.RELATIVE_SCALE,
+                ViewportApplyMode.OFF,
+                true,
+                null,
+                FontApplyMode.SYSTEM_EMULATION,
+                null,
+                null,
+                true,
+                "",
+                "",
+                true,
+                store,
+                null);
+
+        assertTrue(result.success);
+        assertFalse(store.hasUserVisiblePackageConfig(item.packageName));
+        assertFalse(store.getConfiguredPackages().contains(item.packageName));
+        assertFalse(prefs.contains(
+                "package_config.com.example.app.viewport.target_type"));
+    }
+
+    @Test
+    public void saveAfterDisablingPackageUsesPersistedDisabledState() {
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
+        AppListItem item = app("com.example.app");
+        assertTrue(store.setTargetDpisEnabled(item.packageName, false));
+
+        AppConfigSaveHandler.Result result = new AppConfigSaveHandler().saveResolved(
+                item,
+                ViewportTargetSpec.off(),
+                ViewportTargetType.RELATIVE_SCALE,
+                ViewportApplyMode.OFF,
+                false,
+                null,
+                FontApplyMode.SYSTEM_EMULATION,
+                null,
+                null,
+                false,
+                "",
+                "",
+                true,
+                store,
+                null);
+
+        assertTrue(result.success);
+        assertFalse(store.isTargetDpisEnabled(item.packageName));
+        assertTrue(store.hasRealPackageConfig(item.packageName));
+        assertFalse(store.hasUserVisiblePackageConfig(item.packageName));
     }
 
     @Test

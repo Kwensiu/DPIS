@@ -563,8 +563,18 @@ private fun AppRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
-            modifier = Modifier.size(50.dp).clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+            modifier = Modifier
+                .size(50.dp)
+                .clip(RoundedCornerShape(12.dp))
+                // The rounded surface is only an icon-loading placeholder. Keeping it
+                // behind a resolved launcher icon makes the icon look double-masked.
+                .then(
+                    if (icon == null) {
+                        Modifier.background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                    } else {
+                        Modifier
+                    }
+                ),
             contentAlignment = Alignment.Center
         ) {
             if (icon != null) {

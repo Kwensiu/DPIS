@@ -106,6 +106,8 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(adapter.contains("holder.icon.setImageDrawable(item.icon);"));
         assertTrue(adapter.contains("holder.iconSkeleton.setVisibility(View.VISIBLE);"));
         assertTrue(adapter.contains("iconResolveRequestListener.onIconResolveRequested(item.packageName);"));
+        assertTrue(composeContent.contains("if (icon == null)"));
+        assertTrue(composeContent.contains("surfaceVariant"));
         assertTrue(adapter.contains("quick_template_target_configured_badge"));
         assertFalse(adapter.contains("selectionListener.onSelectionChanged(item.packageName, selected);"));
         assertTrue(layout.contains("android:id=\"@+id/quick_template_targets_search_input\""));

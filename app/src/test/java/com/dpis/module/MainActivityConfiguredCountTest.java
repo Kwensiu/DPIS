@@ -28,4 +28,11 @@ public class MainActivityConfiguredCountTest {
                 null,
                 new MainActivity.ScopeState(Set.of("com.example.legacy"), false)));
     }
+
+    @Test
+    public void configuredCountMatchesKnownScopeOnlyPackage() {
+        assertEquals(1, MainActivity.countUserVisibleConfiguredPackages(
+                null,
+                new MainActivity.ScopeState(Set.of("com.example.injected"), true)));
+    }
 }

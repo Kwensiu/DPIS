@@ -246,6 +246,8 @@ public class MainActivitySourceSmokeTest {
         assertTrue(iconSource.contains("produceState<Drawable?>"));
         assertTrue(iconSource.contains("InstalledAppIconCache.load"));
         assertTrue(workspaceSource.contains("rememberInstalledAppIcon(item.packageName, item.icon)"));
+        assertTrue(workspaceSource.contains("if (icon == null)"));
+        assertTrue(workspaceSource.contains("surfaceContainerHighest"));
         assertFalse(workspaceSource.contains("preloadIcons("));
         assertFalse(coordinatorSource.contains("getDefaultActivityIcon()"));
     }
@@ -1400,7 +1402,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("isFontHookDomainEditingEnabled()"));
         assertTrue(source.contains("AppConfigDialogBinder.resolveFontMode(findFontModeToggle(root))"));
         assertTrue(source.contains("this,"));
-        String saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.java");
+        String saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.kt");
         assertFalse(
             saveSource.contains("FontRuntimePropertySyncer.publishTargetAsync(")
         );

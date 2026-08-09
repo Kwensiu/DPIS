@@ -1003,12 +1003,16 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
 
     public boolean prunePackageIfOnlyDefaultConfigRemains(String packageName) {
         if (packageName == null || packageName.isBlank()
+                || !isTargetDpisEnabled(packageName)
                 || hasAnyPackageConfigAfterRemoving(packageName)) {
             return true;
         }
         LinkedHashSet<String> packages = new LinkedHashSet<>(getConfiguredPackages());
         packages.remove(packageName);
-        return commitBoth(editor -> editor.putStringSet(KEY_TARGET_PACKAGES, packages));
+        return commitBoth(editor -> editor
+                .putStringSet(KEY_TARGET_PACKAGES, packages)
+                .remove(keyForDpisEnabled(packageName))
+                .remove(keyForPackageDpisEnabled(packageName)));
     }
 
     public String getPackageFontHookDomainsRaw(String packageName) {
@@ -1062,7 +1066,14 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
         if (packageName == null || packageName.isBlank()) {
             return false;
         }
-        return hasAnyPackageConfigAfterRemoving(packageName);
+        // A disabled-only record has runtime meaning, but it is equivalent to
+        // the default user-facing state when no viewport, font, or app-specific
+        // value remains. Keep it for runtime delivery while excluding it from
+        // the configured-app list and home count.
+        return hasAnyPackageConfigAfterRemoving(
+                packageName,
+                keyForDpisEnabled(packageName),
+                keyForPackageDpisEnabled(packageName));
     }
 
     public PackageConfigValue readPackageConfig(String packageName) {
@@ -1625,6 +1636,8 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
         String normalized = value instanceof String stringValue
                 ? ViewportTargetType.normalize(stringValue)
                 : ViewportTargetType.OFF;
+        // Relative scale is the default editor draft; fixed-width selection is
+        // an explicit user preference even before its numeric value is entered.
         return ViewportTargetType.ABSOLUTE_DP.equals(normalized);
     }
 
@@ -1632,7 +1645,7 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
         String normalized = value instanceof String stringValue
                 ? ViewportTargetType.normalize(stringValue)
                 : ViewportTargetType.OFF;
-        return !ViewportTargetType.OFF.equals(normalized);
+        return ViewportTargetType.ABSOLUTE_DP.equals(normalized);
     }
 
     private static boolean isConfiguredViewportModeValue(Object value) {

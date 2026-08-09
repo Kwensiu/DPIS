@@ -169,7 +169,16 @@ fun AppConfigEditorContent(
                     modifier = Modifier
                         .size(AppConfigSheetUiTokens.AppIconSize)
                         .clip(AppConfigSheetUiTokens.AppIconShape)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                        // The rounded surface is only needed while the real app icon is absent.
+                        .then(
+                            if (appIcon == null) {
+                                Modifier.background(
+                                    MaterialTheme.colorScheme.surfaceContainerHighest
+                                )
+                            } else {
+                                Modifier
+                            }
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     appIcon?.let { icon ->

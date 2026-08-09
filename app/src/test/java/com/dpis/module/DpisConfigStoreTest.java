@@ -107,7 +107,7 @@ public class DpisConfigStoreTest {
         assertTrue(store.getConfiguredPackages().contains("com.example.disabled"));
         assertTrue(store.getConfiguredPackages().contains("com.example.domains"));
         assertTrue(store.hasUserVisiblePackageConfig("com.example.modeonly"));
-        assertTrue(store.hasUserVisiblePackageConfig("com.example.disabled"));
+        assertFalse(store.hasUserVisiblePackageConfig("com.example.disabled"));
         assertTrue(store.hasUserVisiblePackageConfig("com.example.domains"));
     }
 
@@ -136,6 +136,23 @@ public class DpisConfigStoreTest {
                         ViewportApplyMode.AUTO)
                 .putString("font.com.example.default.mode",
                         FontApplyMode.SYSTEM_EMULATION)
+                .commit();
+
+        DpisConfigStore store = new DpisConfigStore(prefs);
+
+        assertFalse(store.hasRealPackageConfig("com.example.default"));
+        assertFalse(store.hasUserVisiblePackageConfig("com.example.default"));
+    }
+
+    @Test
+    public void aggregatedViewportTypeWithoutValueIsNotConfigured() {
+        FakePrefs prefs = new FakePrefs();
+        prefs.edit()
+                .putStringSet(DpisConfigStore.KEY_TARGET_PACKAGES,
+                        Set.of("com.example.default"))
+                .putString(
+                        "package_config.com.example.default.viewport.target_type",
+                        ViewportTargetType.RELATIVE_SCALE)
                 .commit();
 
         DpisConfigStore store = new DpisConfigStore(prefs);
@@ -372,7 +389,7 @@ public class DpisConfigStoreTest {
     }
 
     @Test
-    public void aggregatedRelativeTargetTypeOnlyIsUserVisibleConfig() {
+    public void aggregatedRelativeTargetTypeOnlyRemainsDraftState() {
         FakePrefs prefs = new FakePrefs();
         prefs.edit()
                 .putString("package_config.org.chromium.webapk.test_v2.viewport.target_type",
@@ -380,8 +397,9 @@ public class DpisConfigStoreTest {
                 .commit();
         DpisConfigStore store = new DpisConfigStore(prefs);
 
-        assertTrue(store.getConfiguredPackages().contains("org.chromium.webapk.test_v2"));
-        assertTrue(store.hasUserVisiblePackageConfig("org.chromium.webapk.test_v2"));
+        assertFalse(store.getConfiguredPackages().contains("org.chromium.webapk.test_v2"));
+        assertFalse(store.hasRealPackageConfig("org.chromium.webapk.test_v2"));
+        assertFalse(store.hasUserVisiblePackageConfig("org.chromium.webapk.test_v2"));
     }
 
     @Test
@@ -620,7 +638,58 @@ public class DpisConfigStoreTest {
 
         assertFalse(store.isTargetDpisEnabled("com.example.app"));
         assertTrue(store.getConfiguredPackages().contains("com.example.app"));
+        assertTrue(store.hasRealPackageConfig("com.example.app"));
+        assertFalse(store.hasUserVisiblePackageConfig("com.example.app"));
+    }
+
+    @Test
+    public void disabledOnlyStateIsNotUserVisibleConfigured() {
+        FakePrefs prefs = new FakePrefs();
+        DpisConfigStore store = new DpisConfigStore(prefs);
+
+        assertTrue(store.setTargetDpisEnabled("com.example.app", false));
+
+        assertTrue(store.hasRealPackageConfig("com.example.app"));
+        assertFalse(store.hasUserVisiblePackageConfig("com.example.app"));
+    }
+
+    @Test
+    public void fixedWidthTypeOnlyStateIsUserVisibleConfigured() {
+        FakePrefs prefs = new FakePrefs();
+        DpisConfigStore store = new DpisConfigStore(prefs);
+
+        assertTrue(store.setTargetViewportTypeDraft(
+                "com.example.app",
+                ViewportTargetType.ABSOLUTE_DP));
+
         assertTrue(store.hasUserVisiblePackageConfig("com.example.app"));
+    }
+
+    @Test
+    public void disabledStateRemainsUserVisibleWhenAnotherValueIsConfigured() {
+        FakePrefs prefs = new FakePrefs();
+        DpisConfigStore store = new DpisConfigStore(prefs);
+
+        assertTrue(store.setTargetDpisEnabled("com.example.app", false));
+        assertTrue(store.setTargetFontScalePercent("com.example.app", 125));
+
+        assertTrue(store.hasUserVisiblePackageConfig("com.example.app"));
+    }
+
+    @Test
+    public void prunePreservesExplicitlyDisabledOnlyState() {
+        FakePrefs prefs = new FakePrefs();
+        DpisConfigStore store = new DpisConfigStore(prefs);
+
+        assertTrue(store.setTargetDpisEnabled("com.example.app", false));
+        assertTrue(store.prunePackageIfOnlyDefaultConfigRemains("com.example.app"));
+
+        assertFalse(store.isTargetDpisEnabled("com.example.app"));
+        assertTrue(store.hasRealPackageConfig("com.example.app"));
+        assertFalse(store.hasUserVisiblePackageConfig("com.example.app"));
+        assertTrue(store.getConfiguredPackages().contains("com.example.app"));
+        assertTrue(prefs.contains("target.com.example.app.dpis_enabled"));
+        assertTrue(prefs.contains("package_config.com.example.app.target.dpis_enabled"));
     }
 
     @Test
@@ -1941,7 +2010,7 @@ public class DpisConfigStoreTest {
         assertTrue(store.getConfiguredPackages().contains("com.example.disabled"));
         assertTrue(store.getConfiguredPackages().contains("com.example.domains"));
         assertTrue(store.hasUserVisiblePackageConfig("com.example.legacy"));
-        assertTrue(store.hasUserVisiblePackageConfig("com.example.disabled"));
+        assertFalse(store.hasUserVisiblePackageConfig("com.example.disabled"));
         assertTrue(store.hasUserVisiblePackageConfig("com.example.domains"));
     }
 

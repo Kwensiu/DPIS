@@ -353,7 +353,14 @@ private fun TargetAppIcon(icon: android.graphics.drawable.Drawable?) {
         modifier = Modifier
             .size(40.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
+            // Do not leave the loading mask under an application icon once it resolves.
+            .then(
+                if (icon == null) {
+                    Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+                } else {
+                    Modifier
+                }
+            ),
         contentAlignment = Alignment.Center
     ) {
         if (icon != null) {

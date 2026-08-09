@@ -64,7 +64,11 @@ class InstalledAppCatalogCoordinator(
         scopeKnown: Boolean,
     ): List<AppListItem> {
         val catalog = loadInstalledAppCatalog(forceInstalledAppCatalogReload)
-        val configuredPackages = userVisibleConfiguredPackages(store)
+        val configuredPackages = userVisibleConfiguredPackages(
+            store,
+            scopePackages,
+            scopeKnown,
+        )
         val result = ArrayList<AppListItem>(catalog.size)
         for (item in catalog) {
             val inScope = scopePackages?.contains(item.packageName) == true
@@ -203,6 +207,24 @@ class InstalledAppCatalogCoordinator(
             if (store == null) return emptySet()
             return store.configuredPackages
                 .filterTo(HashSet()) { store.hasUserVisiblePackageConfig(it) }
+        }
+
+        /**
+         * Keeps scope-only packages aligned with the home configured-app count.
+         * A known scope is user-visible configured state even when no package
+         * field has been persisted yet.
+         */
+        @JvmStatic
+        fun userVisibleConfiguredPackages(
+            store: DpisConfigStore?,
+            scopePackages: Set<String>?,
+            scopeKnown: Boolean,
+        ): Set<String> {
+            val configured = userVisibleConfiguredPackages(store).toMutableSet()
+            if (scopeKnown) {
+                configured.addAll(scopePackages.orEmpty())
+            }
+            return configured
         }
 
         /** An unconfigured row has no persisted package state to decode. */

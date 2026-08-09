@@ -3063,27 +3063,14 @@ public final class MainActivity
 
     static int countUserVisibleConfiguredPackages(DpisConfigStore store,
             ScopeState scopeState) {
-        Set<String> packageNames = new HashSet<>();
-        if (store != null) {
-            packageNames.addAll(store.getConfiguredPackages());
-        }
         ScopeState safeScopeState = scopeState != null
                 ? scopeState
                 : new ScopeState(Collections.emptySet(), false);
-        if (safeScopeState.known) {
-            packageNames.addAll(safeScopeState.packages);
-        }
-        int count = 0;
-        for (String packageName : packageNames) {
-            if (InstalledAppCatalogCoordinator.isUserVisibleConfiguredPackage(
-                    store,
-                    packageName,
-                    safeScopeState.known,
-                    safeScopeState.packages.contains(packageName))) {
-                count++;
-            }
-        }
-        return count;
+        return InstalledAppCatalogCoordinator.userVisibleConfiguredPackages(
+                store,
+                safeScopeState.packages,
+                safeScopeState.known
+        ).size();
     }
 
     static final class ScopeState {

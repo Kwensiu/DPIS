@@ -225,7 +225,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
     @Test
     public void binder_wiresTypefaceSelector() throws IOException {
         String source = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
-        String saveHandler = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.java");
+        String saveHandler = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.kt");
         String layout = read("src/main/res/layout/dialog_app_config.xml");
         String selectorLayout = read("src/main/res/layout/dialog_typeface_selection.xml");
 
@@ -618,10 +618,11 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void savingViewportConfigPublishesRuntimeViewportTarget() throws IOException {
-        String saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.java");
+        String saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.kt");
         String mainSource = read("src/main/java/com/dpis/module/MainActivity.java");
 
-        assertTrue(saveSource.contains("ViewportApplyMode.SYSTEM.equals"));
+        assertTrue(saveSource.contains(
+                "ViewportApplyMode.SYSTEM == ViewportApplyMode.normalize(viewportApplyMode)"));
         assertTrue(mainSource.contains("scheduleRuntimePropertiesForTargetLaunch(packageName);"));
         assertTrue(mainSource.contains("ViewportPropertySyncer.syncTarget(packageName, store);"));
         assertTrue(mainSource.contains("finalizeAppConfigSaveWithRuntimeSync("));
@@ -634,21 +635,21 @@ public class AppConfigDialogBinderSourceSmokeTest {
     public void previewViewportApplyModeUsesMutableSheetStateForStatusAndSave() throws IOException {
         String binderSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java");
         String actionSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java");
-        String saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.java");
+        String saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.kt");
 
         assertTrue(binderSource.contains("String viewportApplyMode;"));
         assertTrue(binderSource.contains("this.viewportApplyMode = ViewportApplyMode.normalize(viewportApplyMode);"));
         assertTrue(binderSource.contains("state.viewportApplyMode"));
         assertTrue(actionSource.contains("state.viewportApplyMode"));
         assertTrue(actionSource.contains("state.viewportApplyModeResetRequested"));
-        assertTrue(saveSource.contains("String currentViewportApplyMode"));
-        assertTrue(saveSource.contains("boolean viewportApplyModeResetRequested"));
+        assertTrue(saveSource.contains("currentViewportApplyMode: String?"));
+        assertTrue(saveSource.contains("viewportApplyModeResetRequested: Boolean"));
         assertTrue(saveSource.contains("viewportApplyModeResetRequested, viewportTargetSpec"));
     }
 
     @Test
     public void savingEmptyFontScaleClearsOnlyFontScaleRuntimeTargets() throws IOException {
-        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.java");
+        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.kt");
         int clearStart = source.indexOf("if (fontScalePercent == null)");
         int configuredStart = source.indexOf("} else {", clearStart);
         String clearBlock = source.substring(clearStart, configuredStart);
@@ -661,13 +662,13 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void savingPreviewHookDomainsIsIndependentFromFontScaleBranch() throws IOException {
-        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.java");
+        String source = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.kt");
         int persistCall = source.indexOf("persistPreviewOnlyConfig(");
         int fontScaleBranch = source.indexOf("if (fontScalePercent == null)");
 
         assertTrue(persistCall > 0);
         assertTrue(fontScaleBranch > persistCall);
-        assertTrue(source.contains("publishFontHookDomainsAfterSave(item.packageName, store);"));
+        assertTrue(source.contains("publishFontHookDomainsAfterSave(item.packageName, store)"));
     }
 
     @Test
@@ -683,19 +684,20 @@ public class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     public void savingFontConfigPublishesUnifiedFontRuntimeTarget() throws IOException {
-        String saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.java");
+        String saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.kt");
         String mainSource = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(mainSource.contains("scheduleRuntimePropertiesForTargetLaunch(packageName);"));
         assertTrue(mainSource.contains("FontRuntimePropertySyncer.syncTarget(packageName, store);"));
         assertTrue(mainSource.contains("finalizeAppConfigSaveWithRuntimeSync("));
         assertFalse(saveSource.contains("FontRuntimePropertySyncer.publishTargetAsync("));
-        assertTrue(saveSource.contains("FontApplyMode.SYSTEM_EMULATION.equals"));
+        assertTrue(saveSource.contains(
+                "FontApplyMode.SYSTEM_EMULATION == FontApplyMode.normalize("));
     }
 
     @Test
     public void savingTypefaceConfigPublishesRuntimeTypefaceTarget() throws IOException {
-        String saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.java");
+        String saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.kt");
         String mainSource = read("src/main/java/com/dpis/module/MainActivity.java");
 
         assertTrue(mainSource.contains("scheduleRuntimePropertiesForTargetLaunch(packageName);"));

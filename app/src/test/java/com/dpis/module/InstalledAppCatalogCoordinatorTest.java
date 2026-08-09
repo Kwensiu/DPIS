@@ -57,6 +57,23 @@ public class InstalledAppCatalogCoordinatorTest {
     }
 
     @Test
+    public void userVisibleConfiguredPackagesIncludesKnownScopeOnlyPackages() {
+        FakePrefs prefs = new FakePrefs();
+        DpisConfigStore store = new DpisConfigStore(prefs);
+        store.setTargetFontScalePercent("com.example.saved", 125);
+
+        Set<String> configured = InstalledAppCatalogCoordinator
+                .userVisibleConfiguredPackages(
+                        store,
+                        Set.of("com.example.injected"),
+                        true);
+
+        assertTrue(configured.contains("com.example.saved"));
+        assertTrue(configured.contains("com.example.injected"));
+        assertFalse(configured.contains("com.example.plain"));
+    }
+
+    @Test
     public void unconfiguredItemUsesTheSameDefaultStatusWithoutStoreReads() {
         AppListItem item = InstalledAppCatalogCoordinator.createUnconfiguredAppListItem(
                 "Plain", "com.example.plain", false, true, false, false, true);
