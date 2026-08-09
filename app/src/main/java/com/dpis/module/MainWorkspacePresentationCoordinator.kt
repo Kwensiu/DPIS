@@ -149,7 +149,21 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         }
         MainUiState.WorkspaceMode.SETTINGS -> {
             settingsRevision
-            WearSettingsWorkspaceContent(content.settingsState(), content::setSettingsHooks, content::setSettingsSafeMode, content::setSettingsGlobalLog, content::openSettingsLogs, content::setSettingsLauncherHidden, content::setSettingsScale, content::openSettingsScaleDetails, content::openSettingsFontDebug, content::openSettingsFontLibrary, content::openSettingsExperimental, content::openThemeSettings, content::openSettingsLanguage, content::openSettingsBackup, content::clearSettingsCache, content::openSettingsAbout, content::openSettingsDonate)
+            WearSettingsWorkspaceContent(
+                content.settingsState(),
+                content::setSettingsHooks,
+                content::setSettingsSafeMode,
+                content::setSettingsGlobalLog,
+                content::openSettingsLogs,
+                content::setSettingsLauncherHidden,
+                content::openSettingsFontLibrary,
+                content::openSettingsExperimental,
+                content::openThemeSettings,
+                content::openSettingsLanguage,
+                content::openSettingsBackup,
+                content::clearSettingsCache,
+                content::openSettingsAbout
+            )
             true
         }
         MainUiState.WorkspaceMode.TEMPLATE -> {

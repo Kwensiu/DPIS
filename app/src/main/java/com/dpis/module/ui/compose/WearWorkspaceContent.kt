@@ -3,31 +3,55 @@
 package com.dpis.module.ui.compose
 
 import android.content.Intent
+import android.widget.ImageView
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
+import androidx.wear.compose.material3.Card
+import androidx.wear.compose.material3.CardDefaults
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.ListHeader
+import androidx.wear.compose.material3.OutlinedButton
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.SurfaceTransformation
 import androidx.wear.compose.material3.SwitchButton
@@ -40,10 +64,10 @@ import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.R
 import com.dpis.module.SettingsUiState
 import com.dpis.module.applist.AppListItem
+import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.home.HomeUpdateUiState
 import com.dpis.module.home.HomeWorkspaceBinder
-import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.SystemFontScaleToolState
 import com.dpis.module.templates.TemplateWorkspacePresentation
 import com.dpis.module.templates.TemplateEditorForm
@@ -61,18 +85,111 @@ import com.dpis.module.hooks.HookDomainOverrideStore
 @Composable
 internal fun WearAppWorkspaceContent(state: AppWorkspacePresentation.State) {
     val context = LocalContext.current
+    var filtersVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (state.selectedPage != AppListPage.ALL_APPS) {
+            state.actions.changePage(AppListPage.ALL_APPS)
+        }
+    }
+    if (filtersVisible) {
+        WearAppFilterPage(
+            filterState = state.filterState,
+            onFilterChanged = state.actions::changeFilters,
+            onBack = { filtersVisible = false },
+        )
+        return
+    }
     WearWorkspaceList(title = R.string.workspace_app) {
-        wearTextField("query", state.query, context.getString(R.string.search_hint), state.actions::changeQuery)
-        wearButton("all", context.getString(R.string.tab_all_apps), state.allAppsCount.toString(), R.drawable.ic_apps_24, onClick = { state.actions.changePage(AppListPage.ALL_APPS) })
-        wearButton("configured", context.getString(R.string.tab_configured_apps), state.configuredAppsCount.toString(), R.drawable.ic_check_24, onClick = { state.actions.changePage(AppListPage.CONFIGURED_APPS) })
-        wearButton("refresh", context.getString(R.string.log_action_refresh), icon = R.drawable.ic_refresh_24, enabled = !state.refreshing, onClick = { state.actions.refresh(state.selectedPage) })
+        wearSearchFieldWithAction(
+            key = "query",
+            value = state.query,
+            label = context.getString(R.string.search_hint),
+            actionDescription = context.getString(R.string.filter_button),
+            onValueChanged = state.actions::changeQuery,
+            onActionClick = { filtersVisible = true },
+        )
+        wearPageTabs(
+            selectedPage = state.selectedPage,
+            onSelect = state.actions::changePage
+        )
         state.visibleItems.forEach { item ->
-            wearButton(
+            wearAppCard(
                 key = item.packageName,
                 label = item.label,
-                secondaryLabel = wearAppSummary(item),
-                icon = R.drawable.ic_apps_24,
+                secondaryLabel = item.packageName,
+                icon = item.icon,
                 onClick = { state.actions.openApp(item) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun WearAppFilterPage(
+    filterState: AppListFilterState,
+    onFilterChanged: (AppListFilterState) -> Unit,
+    onBack: () -> Unit,
+) {
+    BackHandler(onBack = onBack)
+    WearWorkspaceList(title = R.string.filter_sheet_title) {
+        wearSwitch(
+            key = "show-system",
+            label = R.string.filter_show_system_apps,
+            checked = filterState.showSystemApps(),
+            enabled = true,
+        ) { checked ->
+            onFilterChanged(
+                AppListFilterState(
+                    checked,
+                    filterState.injectedOnly(),
+                    filterState.widthConfiguredOnly(),
+                    filterState.fontConfiguredOnly(),
+                )
+            )
+        }
+        wearSwitch(
+            key = "injected-only",
+            label = R.string.filter_injected_only,
+            checked = filterState.injectedOnly(),
+            enabled = true,
+        ) { checked ->
+            onFilterChanged(
+                AppListFilterState(
+                    filterState.showSystemApps(),
+                    checked,
+                    filterState.widthConfiguredOnly(),
+                    filterState.fontConfiguredOnly(),
+                )
+            )
+        }
+        wearSwitch(
+            key = "width-only",
+            label = R.string.filter_width_only,
+            checked = filterState.widthConfiguredOnly(),
+            enabled = true,
+        ) { checked ->
+            onFilterChanged(
+                AppListFilterState(
+                    filterState.showSystemApps(),
+                    filterState.injectedOnly(),
+                    checked,
+                    filterState.fontConfiguredOnly(),
+                )
+            )
+        }
+        wearSwitch(
+            key = "font-only",
+            label = R.string.filter_font_only,
+            checked = filterState.fontConfiguredOnly(),
+            enabled = true,
+        ) { checked ->
+            onFilterChanged(
+                AppListFilterState(
+                    filterState.showSystemApps(),
+                    filterState.injectedOnly(),
+                    filterState.widthConfiguredOnly(),
+                    checked,
+                )
             )
         }
     }
@@ -108,32 +225,37 @@ internal fun WearAppConfigEditorContent(state: AppConfigEditorPresentation.State
             onBack = closeOrBack
         )
         else -> WearWorkspaceList(title = R.string.dialog_title) {
-            wearButton("back", context.getString(R.string.system_settings_back), icon = R.drawable.ic_arrow_back_24, onClick = closeOrBack)
             wearSwitch("scope", R.string.dialog_scope_button, state.isScopeSelected, true) { state.actions.toggleScope() }
             wearSwitch("enabled", R.string.dialog_dpis_enable_button, state.isDpisEnabled, true) { state.actions.toggleDpisEnabled() }
-            val viewport = state.draft.viewportInputFor(state.draft.viewportMode).toDoubleOrNull() ?: 0.0
-            wearTextField("viewport", state.draft.viewportInputFor(state.draft.viewportMode), context.getString(R.string.dialog_viewport_hint_scale), state.actions::updateViewportInput)
-            wearButton("viewport-minus", context.getString(R.string.system_font_scale_decrement), wearNumber(viewport), R.drawable.ic_remove_24, onClick = { state.actions.updateViewportInput(wearNumber(viewport - 1.0)) })
-            wearButton("viewport-plus", context.getString(R.string.system_font_scale_increment), wearNumber(viewport), R.drawable.ic_add_24, onClick = { state.actions.updateViewportInput(wearNumber(viewport + 1.0)) })
-            wearButton(
-                "viewport-mode",
-                context.getString(if (state.usesAbsoluteViewport()) R.string.dialog_viewport_mode_compat else R.string.dialog_viewport_mode_system),
-                icon = R.drawable.ic_fit_width_24,
-                onClick = {
-                    state.actions.changeViewportMode(if (state.usesAbsoluteViewport()) ViewportTargetType.RELATIVE_SCALE else ViewportTargetType.ABSOLUTE_DP)
-                }
+            wearTextFieldModeRow(
+                key = "viewport",
+                value = state.draft.viewportInputFor(state.draft.viewportMode),
+                label = context.getString(R.string.dialog_viewport_hint_scale),
+                onValueChanged = state.actions::updateViewportInput,
+                startLabel = context.getString(R.string.dialog_viewport_mode_system),
+                endLabel = context.getString(R.string.dialog_viewport_mode_compat),
+                startSelected = !state.usesAbsoluteViewport(),
+                onStartSelected = {
+                    state.actions.changeViewportMode(ViewportTargetType.RELATIVE_SCALE)
+                },
+                onEndSelected = {
+                    state.actions.changeViewportMode(ViewportTargetType.ABSOLUTE_DP)
+                },
             )
-            val font = state.draft.fontInput.toIntOrNull() ?: 100
-            wearTextField("font", state.draft.fontInput, context.getString(R.string.dialog_font_scale_hint), state.actions::updateFontInput)
-            wearButton("font-minus", context.getString(R.string.system_font_scale_decrement), "$font%", R.drawable.ic_remove_24, onClick = { state.actions.updateFontInput((font - 1).toString()) })
-            wearButton("font-plus", context.getString(R.string.system_font_scale_increment), "$font%", R.drawable.ic_add_24, onClick = { state.actions.updateFontInput((font + 1).toString()) })
-            wearButton(
-                "font-mode",
-                context.getString(if (state.usesSystemFontMode()) R.string.dialog_font_mode_system else R.string.dialog_font_mode_compat),
-                icon = R.drawable.ic_adjust_24,
-                onClick = {
-                    state.actions.changeFontMode(if (state.usesSystemFontMode()) FontApplyMode.FIELD_REWRITE else FontApplyMode.SYSTEM_EMULATION)
-                }
+            wearTextFieldModeRow(
+                key = "font",
+                value = state.draft.fontInput,
+                label = context.getString(R.string.dialog_font_scale_hint),
+                onValueChanged = state.actions::updateFontInput,
+                startLabel = context.getString(R.string.dialog_font_mode_system),
+                endLabel = context.getString(R.string.dialog_font_mode_compat),
+                startSelected = state.usesSystemFontMode(),
+                onStartSelected = {
+                    state.actions.changeFontMode(FontApplyMode.SYSTEM_EMULATION)
+                },
+                onEndSelected = {
+                    state.actions.changeFontMode(FontApplyMode.FIELD_REWRITE)
+                },
             )
             wearButton("typeface", context.getString(R.string.dialog_typeface_dialog_title), state.typefaceSelectorText, R.drawable.ic_adjust_24, onClick = { state.actions.navigate(ConfigEditorDestination.TYPEFACE) })
             wearButton("hooks", context.getString(R.string.dialog_font_hook_domains_title), state.hookChainText, R.drawable.ic_checklist_rtl_24, onClick = { state.actions.navigate(ConfigEditorDestination.HOOK_CHAIN_INTERFACE) })
@@ -141,20 +263,19 @@ internal fun WearAppConfigEditorContent(state: AppConfigEditorPresentation.State
                 wearTextField("wechat", state.draft.wechatDpiInput, context.getString(R.string.dialog_wechat_dpi_hint), state.actions::updateWechatDpiInput)
                 wearButton("wechat-help", context.getString(R.string.dialog_wechat_dpi_help_button), icon = R.drawable.ic_question_mark_24, onClick = state.actions::showWechatDpiHelp)
             }
-            wearButton("launch", context.getString(R.string.dialog_start_button), icon = R.drawable.ic_play_arrow_24, onClick = state.actions::startProcess)
-            wearButton("restart", context.getString(R.string.dialog_restart_button), icon = R.drawable.ic_refresh_24, onClick = state.actions::restartProcess)
-            wearButton("stop", context.getString(R.string.dialog_stop_button), icon = R.drawable.ic_pause_24, onClick = state.actions::stopProcess)
+            wearActionRow(
+                startLabel = context.getString(R.string.dialog_start_button),
+                stopLabel = context.getString(R.string.dialog_stop_button),
+                restartLabel = context.getString(R.string.dialog_restart_button),
+                onStart = state.actions::startProcess,
+                onStop = state.actions::stopProcess,
+                onRestart = state.actions::restartProcess
+            )
+            wearButton("save", context.getString(R.string.status_save_button), icon = R.drawable.ic_save_24dp, enabled = state.saveEnabled, onClick = state.actions::save)
             wearButton("diagnostic", context.getString(R.string.feedback_diagnostic_action), icon = R.drawable.ic_bug_report_24, onClick = state.actions::startFeedbackDiagnostic)
             wearButton("reset", context.getString(R.string.dialog_disable_button), icon = R.drawable.ic_refresh_24, onClick = state.actions::reset)
-            wearButton("save", context.getString(R.string.status_save_button), icon = R.drawable.ic_save_24dp, enabled = state.saveEnabled, onClick = state.actions::save)
         }
     }
-}
-
-private fun wearNumber(value: Double): String = if (value % 1.0 == 0.0) {
-    value.toInt().toString()
-} else {
-    value.toString()
 }
 
 @Composable
@@ -169,7 +290,6 @@ private fun WearTypefacePickerPage(
     val library = ConfigStoreFactory.createLocalUiFontLibraryStore(context, null)
     val importedFonts = library.listFonts()
     WearWorkspaceList(title = R.string.dialog_typeface_dialog_title) {
-        wearButton("back", context.getString(R.string.system_settings_back), icon = R.drawable.ic_arrow_back_24, onClick = onBack)
         wearButton("default", context.getString(R.string.dialog_typeface_default), icon = if (selectedTypefaceId == null) R.drawable.ic_check_24 else R.drawable.ic_adjust_24, onClick = { onTypefaceSelected(null) })
         systemFonts.forEach { font ->
             wearButton("system:${font.id()}", font.displayName(), font.id(), if (selectedTypefaceId == font.id()) R.drawable.ic_check_24 else R.drawable.ic_adjust_24, onClick = { onTypefaceSelected(font.id()) })
@@ -201,30 +321,56 @@ private fun WearHookChainEditorPage(
     val automatic = resetDomains || !override.customPathEnabled
     val selected = if (automatic) automaticDomains else override.enabledKnownDomains
     val unknown = if (automatic) emptySet() else override.unknownDomains
+    val effectiveViewportApplyMode = ViewportApplyMode.normalize(viewportApplyMode)
+        .let { if (it == ViewportApplyMode.OFF) ViewportApplyMode.AUTO else it }
     if (destination == ConfigEditorDestination.HOOK_CHAIN_INTERFACE) {
         WearWorkspaceList(title = R.string.dialog_hook_chain_tab_interface) {
-            wearButton("back", context.getString(R.string.system_settings_back), icon = R.drawable.ic_arrow_back_24, onClick = onBack)
-            wearButton("font-tab", context.getString(R.string.dialog_hook_chain_tab_font), icon = R.drawable.ic_chevron_right_24, onClick = { onDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_FONT) })
+            wearDualTabRow(
+                key = "hook-tabs",
+                startLabel = context.getString(R.string.dialog_hook_chain_tab_interface),
+                endLabel = context.getString(R.string.dialog_hook_chain_tab_font),
+                startSelected = true,
+                onStartSelected = { onDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_INTERFACE) },
+                onEndSelected = { onDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_FONT) },
+            )
             listOf(
                 ViewportApplyMode.AUTO to R.string.dialog_viewport_apply_auto,
                 ViewportApplyMode.SYSTEM to R.string.dialog_viewport_apply_system,
-                ViewportApplyMode.COMPAT to R.string.dialog_viewport_apply_compat,
-                ViewportApplyMode.OFF to R.string.dialog_disable_button
+                ViewportApplyMode.COMPAT to R.string.dialog_viewport_apply_compat
             ).forEach { (mode, label) ->
-                wearButton("mode:$mode", context.getString(label), icon = if (ViewportApplyMode.normalize(viewportApplyMode) == mode) R.drawable.ic_check_24 else R.drawable.ic_fit_width_24, onClick = {
-                    onChanged(rawDomains.orEmpty(), resetDomains, mode, mode == ViewportApplyMode.OFF)
-                })
+                wearRadioButton(
+                    key = "mode:$mode",
+                    label = context.getString(label),
+                    selected = effectiveViewportApplyMode == mode,
+                    onClick = {
+                        onChanged(rawDomains.orEmpty(), resetDomains, mode, false)
+                    }
+                )
             }
         }
     } else {
         WearWorkspaceList(title = R.string.dialog_hook_chain_tab_font) {
-            wearButton("back", context.getString(R.string.system_settings_back), icon = R.drawable.ic_arrow_back_24, onClick = onBack)
-            wearButton("interface-tab", context.getString(R.string.dialog_hook_chain_tab_interface), icon = R.drawable.ic_chevron_right_24, onClick = { onDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_INTERFACE) })
+            wearDualTabRow(
+                key = "hook-tabs",
+                startLabel = context.getString(R.string.dialog_hook_chain_tab_interface),
+                endLabel = context.getString(R.string.dialog_hook_chain_tab_font),
+                startSelected = false,
+                onStartSelected = { onDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_INTERFACE) },
+                onEndSelected = { onDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_FONT) },
+            )
+            wearButton(
+                key = "restore-recommended",
+                label = context.getString(R.string.dialog_font_hook_domains_restore_button),
+                icon = R.drawable.ic_reset_settings_24,
+                onClick = {
+                    onChanged("", true, effectiveViewportApplyMode, false)
+                }
+            )
             FontHookDomainRegistry.orderedCustomizableDisplayIdsList().forEach { id ->
                 wearSwitch("domain:$id", FontHookDomainRegistry.titleResFor(id), selected.contains(id), editable) { checked ->
                     val next = selected.toMutableSet().apply { if (checked) add(id) else remove(id) }
                     val raw = HookDomainOverrideStore.rawValueForSelection(next, automaticDomains, unknown)
-                    onChanged(raw.orEmpty(), raw == null, viewportApplyMode, ViewportApplyMode.OFF == viewportApplyMode)
+                    onChanged(raw.orEmpty(), raw == null, effectiveViewportApplyMode, false)
                 }
             }
         }
@@ -401,32 +547,46 @@ private fun WearTemplateEditorContent(
                 editorDraft.form.nameInput = it
                 changed()
             }
-            wearTextField("viewport", editorDraft.form.viewportInput, context.getString(R.string.dialog_viewport_hint_scale)) {
-                editorDraft.form.viewportInput = it
-                editorDraft.form.updateActiveViewportDraft()
-                changed()
-            }
-            wearButton(
-                "viewport-mode",
-                context.getString(if (ViewportTargetType.ABSOLUTE_DP == editorDraft.form.viewportMode) R.string.dialog_viewport_mode_compat else R.string.dialog_viewport_mode_system),
-                icon = R.drawable.ic_fit_width_24,
-                onClick = {
-                    editorDraft.form.switchViewportMode(if (ViewportTargetType.ABSOLUTE_DP == editorDraft.form.viewportMode) ViewportTargetType.RELATIVE_SCALE else ViewportTargetType.ABSOLUTE_DP)
+            wearTextFieldModeRow(
+                key = "viewport",
+                value = editorDraft.form.viewportInput,
+                label = context.getString(R.string.dialog_viewport_hint_scale),
+                onValueChanged = {
+                    editorDraft.form.viewportInput = it
+                    editorDraft.form.updateActiveViewportDraft()
                     changed()
-                }
+                },
+                startLabel = context.getString(R.string.dialog_viewport_mode_system),
+                endLabel = context.getString(R.string.dialog_viewport_mode_compat),
+                startSelected = ViewportTargetType.ABSOLUTE_DP != editorDraft.form.viewportMode,
+                onStartSelected = {
+                    editorDraft.form.switchViewportMode(ViewportTargetType.RELATIVE_SCALE)
+                    changed()
+                },
+                onEndSelected = {
+                    editorDraft.form.switchViewportMode(ViewportTargetType.ABSOLUTE_DP)
+                    changed()
+                },
             )
-            wearTextField("font", editorDraft.form.fontInput, context.getString(R.string.dialog_font_scale_hint)) {
-                editorDraft.form.fontInput = it
-                changed()
-            }
-            wearButton(
-                "font-mode",
-                context.getString(if (editorDraft.form.fontMode == FontApplyMode.SYSTEM_EMULATION) R.string.dialog_font_mode_system else R.string.dialog_font_mode_compat),
-                icon = R.drawable.ic_adjust_24,
-                onClick = {
-                    editorDraft.form.fontMode = if (editorDraft.form.fontMode == FontApplyMode.SYSTEM_EMULATION) FontApplyMode.FIELD_REWRITE else FontApplyMode.SYSTEM_EMULATION
+            wearTextFieldModeRow(
+                key = "font",
+                value = editorDraft.form.fontInput,
+                label = context.getString(R.string.dialog_font_scale_hint),
+                onValueChanged = {
+                    editorDraft.form.fontInput = it
                     changed()
-                }
+                },
+                startLabel = context.getString(R.string.dialog_font_mode_system),
+                endLabel = context.getString(R.string.dialog_font_mode_compat),
+                startSelected = editorDraft.form.fontMode == FontApplyMode.SYSTEM_EMULATION,
+                onStartSelected = {
+                    editorDraft.form.fontMode = FontApplyMode.SYSTEM_EMULATION
+                    changed()
+                },
+                onEndSelected = {
+                    editorDraft.form.fontMode = FontApplyMode.FIELD_REWRITE
+                    changed()
+                },
             )
             wearButton("typeface", context.getString(R.string.dialog_typeface_dialog_title), editorDraft.form.selectedTypefaceId, R.drawable.ic_adjust_24, onClick = { onDestinationChanged(ConfigEditorDestination.TYPEFACE) })
             wearButton("hooks", context.getString(R.string.dialog_font_hook_domains_title), icon = R.drawable.ic_checklist_rtl_24, onClick = { onDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_INTERFACE) })
@@ -481,58 +641,161 @@ internal fun WearSettingsWorkspaceContent(
     onGlobalLogChanged: (Boolean) -> Unit,
     onOpenLogs: () -> Unit,
     onLauncherHiddenChanged: (Boolean) -> Unit,
-    onInterfaceScaleChanged: (Int) -> Unit,
-    onInterfaceScaleDetails: () -> Unit,
-    onFontDebug: () -> Unit,
     onFontLibrary: () -> Unit,
     onExperimental: () -> Unit,
     onThemeSettings: () -> Unit,
     onLanguage: () -> Unit,
     onBackup: () -> Unit,
     onClearCache: () -> Unit,
-    onAbout: () -> Unit,
-    onDonate: () -> Unit
+    onAbout: () -> Unit
 ) {
     val context = LocalContext.current
     WearWorkspaceList(title = R.string.workspace_settings) {
+        wearSectionHeader(R.string.system_settings_section_general)
         wearSwitch("hooks", R.string.system_hooks_enabled_label, state?.systemHooksEnabled == true, state?.storeAvailable == true, onHooksChanged)
         wearSwitch("safe", R.string.system_safe_mode_label, state?.safeModeEnabled == true, state?.storeAvailable == true, onSafeModeChanged)
         wearSwitch("logs", R.string.global_log_enabled_label, state?.globalLogEnabled == true, state?.storeAvailable == true, onGlobalLogChanged)
         if (state?.globalLogEnabled == true) wearButton("logs-page", context.getString(R.string.tools_log_title), context.getString(R.string.tools_log_subtitle), R.drawable.ic_overview_24, enabled = state.storeAvailable, onClick = onOpenLogs)
-        val scale = state?.interfaceScalePercent ?: AppUiScaleManager.DEFAULT_SCALE_PERCENT
-        wearButton("scale-minus", context.getString(R.string.system_font_scale_decrement), "$scale%", R.drawable.ic_remove_24, enabled = state?.storeAvailable == true, onClick = { onInterfaceScaleChanged(scale - 5) })
-        wearButton("scale-plus", context.getString(R.string.system_font_scale_increment), "$scale%", R.drawable.ic_add_24, enabled = state?.storeAvailable == true, onClick = { onInterfaceScaleChanged(scale + 5) })
-        wearButton("scale-details", context.getString(R.string.settings_interface_scale_dialog_title), icon = R.drawable.ic_fit_width_24, enabled = state?.storeAvailable == true, onClick = onInterfaceScaleDetails)
         wearButton("font-library", context.getString(R.string.settings_font_library_label), icon = R.drawable.ic_upload_file_24, enabled = state?.storeAvailable == true, onClick = onFontLibrary)
         wearButton("experimental", context.getString(R.string.settings_experimental_title), icon = R.drawable.ic_experiment_24, enabled = state?.storeAvailable == true, onClick = onExperimental)
+        wearSectionHeader(R.string.settings_section_theme)
         wearButton("theme-settings", context.getString(R.string.settings_theme_settings_title), context.getString(R.string.settings_theme_settings_hint), R.drawable.ic_format_paint_24, onClick = onThemeSettings)
         wearButton("language", context.getString(R.string.settings_language_label), state?.languageLabel, R.drawable.ic_language_24, state?.storeAvailable == true, onLanguage)
+        wearSectionHeader(R.string.settings_section_other)
         wearButton("backup", context.getString(R.string.settings_config_backup_label), icon = R.drawable.ic_upload_file_24, enabled = state?.storeAvailable == true, onClick = onBackup)
         wearButton("cache", context.getString(R.string.settings_clear_cache_label), state?.cacheUsage, R.drawable.ic_mop_24, state?.storeAvailable == true && state.cacheClearInProgress != true, onClearCache)
         wearSwitch("launcher", R.string.settings_hide_launcher_icon_label, state?.launcherIconHidden == true, state?.storeAvailable == true, onLauncherHiddenChanged)
+        wearSectionHeader(R.string.settings_section_about)
         wearButton("about", context.getString(R.string.settings_about_label), icon = R.drawable.ic_info_24, onClick = onAbout)
-        wearButton("donate", context.getString(R.string.settings_donate_label), icon = R.drawable.ic_volunteer_24, onClick = onDonate)
     }
 }
 
-private fun wearAppSummary(item: AppListItem): String = when {
-    !item.installed -> item.packageName
-    item.configured -> item.packageName
-    else -> item.packageName
-}
-
-private class WearListScope(
+internal class WearListScope(
     private val scope: androidx.wear.compose.foundation.lazy.TransformingLazyColumnScope,
     private val transformationSpec: androidx.wear.compose.material3.lazy.TransformationSpec
 ) {
+    fun wearSectionHeader(@StringRes title: Int) = with(scope) {
+        item(key = "section:$title") {
+            ListHeader(
+                modifier = Modifier.fillMaxWidth()
+                    .transformedHeight(this, transformationSpec),
+                transformation = SurfaceTransformation(transformationSpec)
+            ) {
+                Text(stringResource(title))
+            }
+        }
+    }
+
+    fun wearSearchField(key: Any, value: String, label: String, onValueChanged: (String) -> Unit) = with(scope) {
+        item(key = key) {
+            var focused by remember { mutableStateOf(false) }
+            Card(
+                modifier = Modifier.fillMaxWidth()
+                    .transformedHeight(this, transformationSpec),
+                contentPadding = CardDefaults.ContentPadding,
+                transformation = SurfaceTransformation(transformationSpec)
+            ) {
+                BasicTextField(
+                    value = value,
+                    onValueChange = onValueChanged,
+                    singleLine = true,
+                    textStyle = androidx.wear.compose.material3.MaterialTheme.typography.bodyMedium.copy(
+                        color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurface
+                    ),
+                    cursorBrush = SolidColor(
+                        androidx.wear.compose.material3.MaterialTheme.colorScheme.primary
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                        .onFocusChanged { focused = it.isFocused },
+                    decorationBox = { inner ->
+                        Box(Modifier.fillMaxWidth()) {
+                            if (value.isEmpty() && !focused) {
+                                Text(
+                                    label,
+                                    maxLines = 1,
+                                    color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            inner()
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    fun wearSearchFieldWithAction(
+        key: Any,
+        value: String,
+        label: String,
+        actionDescription: String,
+        onValueChanged: (String) -> Unit,
+        onActionClick: () -> Unit
+    ) = with(scope) {
+        item(key = key) {
+            var focused by remember { mutableStateOf(false) }
+            Row(
+                modifier = Modifier.fillMaxWidth()
+                    .transformedHeight(this, transformationSpec),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Card(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = CardDefaults.ContentPadding,
+                    transformation = SurfaceTransformation(transformationSpec)
+                ) {
+                    BasicTextField(
+                        value = value,
+                        onValueChange = onValueChanged,
+                        singleLine = true,
+                        textStyle = androidx.wear.compose.material3.MaterialTheme.typography.bodyMedium.copy(
+                            color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurface
+                        ),
+                        cursorBrush = SolidColor(
+                            androidx.wear.compose.material3.MaterialTheme.colorScheme.primary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                            .onFocusChanged { focused = it.isFocused },
+                        decorationBox = { inner ->
+                            Box(Modifier.fillMaxWidth()) {
+                                if (value.isEmpty() && !focused) {
+                                    Text(
+                                        label,
+                                        maxLines = 1,
+                                        color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                inner()
+                            }
+                        }
+                    )
+                }
+                Button(
+                    onClick = rememberDpisConfirmAction(onActionClick),
+                    label = {},
+                    icon = {
+                        Icon(
+                            painterResource(R.drawable.ic_tune_24),
+                            contentDescription = actionDescription
+                        )
+                    },
+                    modifier = Modifier.size(56.dp),
+                    transformation = SurfaceTransformation(transformationSpec)
+                )
+            }
+        }
+    }
+
     fun wearTextField(key: Any, value: String, label: String, onValueChanged: (String) -> Unit) = with(scope) {
         item(key = key) {
-            Surface(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                shape = RoundedCornerShape(18.dp),
-                color = androidx.wear.compose.material3.MaterialTheme.colorScheme.surfaceContainer
+            Card(
+                modifier = Modifier.fillMaxWidth()
+                    .transformedHeight(this, transformationSpec),
+                contentPadding = CardDefaults.ContentPadding,
+                transformation = SurfaceTransformation(transformationSpec)
             ) {
-                Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+                Column(Modifier.fillMaxWidth()) {
                     Text(
                         label,
                         maxLines = 1,
@@ -552,6 +815,88 @@ private class WearListScope(
                     )
                 }
             }
+        }
+    }
+
+    fun wearTextFieldModeRow(
+        key: Any,
+        value: String,
+        label: String,
+        onValueChanged: (String) -> Unit,
+        startLabel: String,
+        endLabel: String,
+        startSelected: Boolean,
+        onStartSelected: () -> Unit,
+        onEndSelected: () -> Unit
+    ) = with(scope) {
+        item(key = key) {
+            Card(
+                modifier = Modifier.fillMaxWidth()
+                    .transformedHeight(this, transformationSpec),
+                contentPadding = CardDefaults.ContentPadding,
+                transformation = SurfaceTransformation(transformationSpec)
+            ) {
+                Column(Modifier.fillMaxWidth()) {
+                    Text(
+                        label,
+                        maxLines = 1,
+                        color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    BasicTextField(
+                        value = value,
+                        onValueChange = onValueChanged,
+                        singleLine = true,
+                        textStyle = androidx.wear.compose.material3.MaterialTheme.typography.bodyMedium.copy(
+                            color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurface
+                        ),
+                        cursorBrush = SolidColor(
+                            androidx.wear.compose.material3.MaterialTheme.colorScheme.primary
+                        ),
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        wearModeChoiceButton(
+                            label = startLabel,
+                            selected = startSelected,
+                            modifier = Modifier.weight(1f),
+                            onClick = onStartSelected
+                        )
+                        wearModeChoiceButton(
+                            label = endLabel,
+                            selected = !startSelected,
+                            modifier = Modifier.weight(1f),
+                            onClick = onEndSelected
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun wearModeChoiceButton(
+        label: String,
+        selected: Boolean,
+        modifier: Modifier,
+        onClick: () -> Unit
+    ) {
+        if (selected) {
+            Button(
+                onClick = rememberDpisConfirmAction(onClick),
+                label = { wearCenteredButtonLabel(label) },
+                icon = {},
+                modifier = modifier
+            )
+        } else {
+            OutlinedButton(
+                onClick = rememberDpisConfirmAction(onClick),
+                label = { wearCenteredButtonLabel(label) },
+                icon = {},
+                modifier = modifier
+            )
         }
     }
 
@@ -579,6 +924,347 @@ private class WearListScope(
         }
     }
 
+    fun wearInfoCard(
+        key: Any,
+        title: String,
+        secondaryLabel: String? = null,
+        tertiaryLabel: String? = null,
+        @DrawableRes icon: Int? = null
+    ) = with(scope) {
+        item(key = key) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .transformedHeight(this, transformationSpec),
+                contentPadding = CardDefaults.ContentPadding,
+                transformation = SurfaceTransformation(transformationSpec)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (icon != null) {
+                        Icon(
+                            painterResource(icon),
+                            contentDescription = null,
+                            modifier = Modifier.padding(end = 12.dp)
+                        )
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            title,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        secondaryLabel?.takeIf(String::isNotBlank)?.let { value ->
+                            Text(
+                                value,
+                                modifier = Modifier.padding(top = 2.dp),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        tertiaryLabel?.takeIf(String::isNotBlank)?.let { value ->
+                            Text(
+                                value,
+                                modifier = Modifier.padding(top = 2.dp),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun wearAppCard(
+        key: Any,
+        label: String,
+        secondaryLabel: String,
+        icon: android.graphics.drawable.Drawable?,
+        onClick: () -> Unit
+    ) = with(scope) {
+        item(key = key) {
+            Card(
+                onClick = rememberDpisConfirmAction(onClick),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .transformedHeight(this, transformationSpec),
+                contentPadding = CardDefaults.ContentPadding,
+                transformation = SurfaceTransformation(transformationSpec)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    WearAppIcon(
+                        packageName = secondaryLabel,
+                        initialIcon = icon,
+                        modifier = Modifier.padding(end = 12.dp)
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                            Text(
+                                label,
+                                maxLines = 1,
+                                overflow = TextOverflow.Clip
+                            )
+                        }
+                        Spacer(Modifier.height(2.dp))
+                        Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                            Text(
+                                secondaryLabel,
+                                maxLines = 1,
+                                overflow = TextOverflow.Clip,
+                                color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun wearPageTabs(
+        selectedPage: AppListPage,
+        onSelect: (AppListPage) -> Unit
+    ) = with(scope) {
+        item(key = "tabs") {
+            val safeSelectedPage = selectedPage
+            val allLabel = stringResource(R.string.tab_all_apps)
+            val configuredLabel = stringResource(R.string.tab_configured_apps)
+            Card(
+                modifier = Modifier.fillMaxWidth()
+                    .height(52.dp)
+                    .transformedHeight(this, transformationSpec),
+                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                contentPadding = PaddingValues(0.dp),
+                transformation = SurfaceTransformation(transformationSpec)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (safeSelectedPage == AppListPage.ALL_APPS) {
+                        Button(
+                            onClick = rememberDpisConfirmAction { onSelect(AppListPage.ALL_APPS) },
+                            label = { wearCenteredButtonLabel(allLabel) },
+                            icon = {},
+                            modifier = Modifier.weight(1f)
+                        )
+                    } else {
+                        OutlinedButton(
+                            onClick = rememberDpisConfirmAction { onSelect(AppListPage.ALL_APPS) },
+                            label = { wearCenteredButtonLabel(allLabel) },
+                            icon = {},
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    if (safeSelectedPage == AppListPage.CONFIGURED_APPS) {
+                        Button(
+                            onClick = rememberDpisConfirmAction { onSelect(AppListPage.CONFIGURED_APPS) },
+                            label = { wearCenteredButtonLabel(configuredLabel) },
+                            icon = {},
+                            modifier = Modifier.weight(1f)
+                        )
+                    } else {
+                        OutlinedButton(
+                            onClick = rememberDpisConfirmAction { onSelect(AppListPage.CONFIGURED_APPS) },
+                            label = { wearCenteredButtonLabel(configuredLabel) },
+                            icon = {},
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun wearDualTabRow(
+        key: Any,
+        startLabel: String,
+        endLabel: String,
+        startSelected: Boolean,
+        onStartSelected: () -> Unit,
+        onEndSelected: () -> Unit
+    ) = with(scope) {
+        item(key = key) {
+            Row(
+                modifier = Modifier.fillMaxWidth()
+                    .transformedHeight(this, transformationSpec),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (startSelected) {
+                    Button(
+                        onClick = rememberDpisConfirmAction(onStartSelected),
+                        label = { wearCenteredButtonLabel(startLabel) },
+                        icon = {},
+                        modifier = Modifier.weight(1f),
+                        transformation = SurfaceTransformation(transformationSpec)
+                    )
+                } else {
+                    OutlinedButton(
+                        onClick = rememberDpisConfirmAction(onStartSelected),
+                        label = { wearCenteredButtonLabel(startLabel) },
+                        icon = {},
+                        modifier = Modifier.weight(1f),
+                        transformation = SurfaceTransformation(transformationSpec)
+                    )
+                }
+                if (!startSelected) {
+                    Button(
+                        onClick = rememberDpisConfirmAction(onEndSelected),
+                        label = { wearCenteredButtonLabel(endLabel) },
+                        icon = {},
+                        modifier = Modifier.weight(1f),
+                        transformation = SurfaceTransformation(transformationSpec)
+                    )
+                } else {
+                    OutlinedButton(
+                        onClick = rememberDpisConfirmAction(onEndSelected),
+                        label = { wearCenteredButtonLabel(endLabel) },
+                        icon = {},
+                        modifier = Modifier.weight(1f),
+                        transformation = SurfaceTransformation(transformationSpec)
+                    )
+                }
+            }
+        }
+    }
+
+    fun wearRadioButton(
+        key: Any,
+        label: String,
+        selected: Boolean,
+        onClick: () -> Unit
+    ) = with(scope) {
+        item(key = key) {
+            Button(
+                onClick = rememberDpisConfirmAction(onClick),
+                label = { Text(label, maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                icon = {
+                    Icon(
+                        painterResource(
+                            if (selected) {
+                                R.drawable.ic_radio_button_checked_24
+                            } else {
+                                R.drawable.ic_radio_button_unchecked_24
+                            }
+                        ),
+                        contentDescription = null
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
+                    .transformedHeight(this, transformationSpec)
+                    .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding),
+                transformation = SurfaceTransformation(transformationSpec)
+            )
+        }
+    }
+
+    fun wearActionRow(
+        startLabel: String,
+        stopLabel: String,
+        restartLabel: String,
+        onStart: () -> Unit,
+        onStop: () -> Unit,
+        onRestart: () -> Unit
+    ) = with(scope) {
+        item(key = "process_actions") {
+            Card(
+                modifier = Modifier.fillMaxWidth()
+                    .height(52.dp)
+                    .transformedHeight(this, transformationSpec),
+                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                contentPadding = PaddingValues(0.dp),
+                transformation = SurfaceTransformation(transformationSpec)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    wearIconActionButton(
+                        description = startLabel,
+                        icon = R.drawable.ic_wear_play_arrow_24,
+                        modifier = Modifier.weight(1f),
+                        onClick = onStart
+                    )
+                    wearIconActionButton(
+                        description = stopLabel,
+                        icon = R.drawable.ic_wear_stop_24,
+                        modifier = Modifier.weight(1f),
+                        onClick = onStop
+                    )
+                    wearIconActionButton(
+                        description = restartLabel,
+                        icon = R.drawable.ic_wear_restart_alt_24,
+                        modifier = Modifier.weight(1f),
+                        onClick = onRestart
+                    )
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun wearSmallActionButton(
+        label: String,
+        modifier: Modifier,
+        enabled: Boolean = true,
+        secondaryLabel: String? = null,
+        onClick: () -> Unit
+    ) {
+        Button(
+            onClick = rememberDpisConfirmAction(onClick),
+            enabled = enabled,
+            label = { wearCenteredButtonLabel(label) },
+            secondaryLabel = secondaryLabel?.let { value ->
+                { Text(value, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            },
+            icon = {},
+            modifier = modifier
+        )
+    }
+
+    @Composable
+    fun wearIconActionButton(
+        description: String,
+        @DrawableRes icon: Int,
+        modifier: Modifier,
+        onClick: () -> Unit
+    ) {
+        Button(
+            onClick = rememberDpisConfirmAction(onClick),
+            label = {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painterResource(icon),
+                        contentDescription = description
+                    )
+                }
+            },
+            icon = {},
+            modifier = modifier
+        )
+    }
+
+    @Composable
+    fun wearCenteredButtonLabel(label: String) {
+        Text(
+            label,
+            modifier = Modifier.fillMaxWidth(),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
+        )
+    }
+
     fun wearSwitch(key: Any, @StringRes label: Int, checked: Boolean, enabled: Boolean, onChanged: (Boolean) -> Unit) = with(scope) {
         item(key = key) {
             SwitchButton(
@@ -595,20 +1281,96 @@ private class WearListScope(
 }
 
 @Composable
-private fun WearWorkspaceList(@StringRes title: Int, content: WearListScope.() -> Unit) {
-    val state = rememberTransformingLazyColumnState()
-    val transformationSpec = rememberTransformationSpec()
-    ScreenScaffold(
-        scrollState = state,
-        contentPadding = LocalWearWorkspaceContentPadding.current
-    ) { contentPadding: PaddingValues ->
-        TransformingLazyColumn(
-            state = state,
-            contentPadding = contentPadding,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            item(key = "header") { ListHeader { Text(stringResource(title)) } }
-            WearListScope(this, transformationSpec).content()
+private fun WearAppIcon(
+    packageName: String,
+    initialIcon: android.graphics.drawable.Drawable?,
+    modifier: Modifier = Modifier
+) {
+    val icon = rememberInstalledAppIcon(packageName, initialIcon)
+    Box(
+        modifier = modifier
+            .size(44.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(androidx.wear.compose.material3.MaterialTheme.colorScheme.surfaceContainer),
+        contentAlignment = Alignment.Center
+    ) {
+        if (icon != null) {
+            AndroidView(
+                factory = { context ->
+                    ImageView(context).apply {
+                        scaleType = ImageView.ScaleType.FIT_CENTER
+                    }
+                },
+                update = { it.setImageDrawable(icon) },
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Icon(
+                painterResource(R.drawable.ic_apps_24),
+                contentDescription = null
+            )
         }
     }
+}
+
+@Composable
+internal fun WearWorkspaceList(@StringRes title: Int, content: WearListScope.() -> Unit) {
+    val state = rememberTransformingLazyColumnState()
+    val transformationSpec = rememberTransformationSpec()
+    WearDpisMaterialTheme {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = androidx.wear.compose.material3.MaterialTheme.colorScheme.background
+        ) {
+            ScreenScaffold(
+                scrollState = state,
+                contentPadding = LocalWearWorkspaceContentPadding.current
+            ) { contentPadding: PaddingValues ->
+                TransformingLazyColumn(
+                    state = state,
+                    contentPadding = contentPadding,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    item(key = "header") { ListHeader { Text(stringResource(title)) } }
+                    WearListScope(this, transformationSpec).content()
+                    item(key = "bottom-spacer") {
+                        Spacer(Modifier.height(48.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun WearDpisMaterialTheme(content: @Composable () -> Unit) {
+    val phoneColors = androidx.compose.material3.MaterialTheme.colorScheme
+    val wearColors = androidx.wear.compose.material3.MaterialTheme.colorScheme.copy(
+        primary = phoneColors.primary,
+        primaryContainer = phoneColors.primaryContainer,
+        onPrimary = phoneColors.onPrimary,
+        onPrimaryContainer = phoneColors.onPrimaryContainer,
+        secondary = phoneColors.secondary,
+        secondaryContainer = phoneColors.secondaryContainer,
+        onSecondary = phoneColors.onSecondary,
+        onSecondaryContainer = phoneColors.onSecondaryContainer,
+        tertiary = phoneColors.tertiary,
+        tertiaryContainer = phoneColors.tertiaryContainer,
+        onTertiary = phoneColors.onTertiary,
+        onTertiaryContainer = phoneColors.onTertiaryContainer,
+        surfaceContainerLow = phoneColors.surfaceContainerLow,
+        surfaceContainer = phoneColors.surfaceContainer,
+        surfaceContainerHigh = phoneColors.surfaceContainerHigh,
+        onSurface = phoneColors.onSurface,
+        onSurfaceVariant = phoneColors.onSurfaceVariant,
+        outline = phoneColors.outline,
+        outlineVariant = phoneColors.outlineVariant,
+        background = phoneColors.background,
+        onBackground = phoneColors.onBackground,
+        error = phoneColors.error,
+        errorContainer = phoneColors.errorContainer,
+        onError = phoneColors.onError,
+        onErrorContainer = phoneColors.onErrorContainer
+    )
+    androidx.wear.compose.material3.MaterialTheme(colorScheme = wearColors, content = content)
 }

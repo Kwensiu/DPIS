@@ -13,6 +13,7 @@ import com.dpis.module.QuickConfigActivity
 import com.dpis.module.about.OpenSourceLicenseActivity
 import com.dpis.module.fonts.FontDetailActivity
 import com.dpis.module.fonts.FontLibraryActivity
+import com.dpis.module.ui.WatchUiMode
 import com.dpis.module.settings.ThemeModeStore
 import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.InterfaceScaleStore
@@ -38,42 +39,88 @@ object SupportActivityContent {
                 paletteStyle = paletteStyle,
                 colorSpecification = colorSpecification,
             ) {
+                if (WatchUiMode.shouldUseCompactUi(activity)) {
+                    WearThemeSettingsContent(
+                        mode = ThemeModeStore.getMode(activity),
+                        dynamicColorEnabled = dynamicColorEnabled,
+                        themeColor = themeColor,
+                        paletteStyle = paletteStyle,
+                        colorSpecification = colorSpecification,
+                        interfaceScalePercent = AppUiScaleManager.getScalePercent(activity),
+                        onModeSelected = { mode ->
+                            ThemeModeStore.setMode(activity, mode)
+                            activity.recreate()
+                        },
+                        onDynamicColorChanged = { enabled ->
+                            ThemeModeStore.setDynamicColorEnabled(activity, enabled)
+                            dynamicColorEnabled = enabled
+                            activity.recreate()
+                        },
+                        onThemeColorSelected = { color ->
+                            ThemeModeStore.setThemeColor(activity, color)
+                            themeColor = color
+                            activity.recreate()
+                        },
+                        onPaletteStyleSelected = { style ->
+                            ThemeModeStore.setPaletteStyle(activity, style)
+                            paletteStyle = style
+                            activity.recreate()
+                        },
+                        onColorSpecificationSelected = { specification ->
+                            ThemeModeStore.setColorSpecification(activity, specification)
+                            colorSpecification = specification
+                            activity.recreate()
+                        },
+                        onInterfaceScaleChanged = { percent ->
+                            val store = InterfaceScaleStore(activity)
+                            val normalized = AppUiScaleManager.normalizeScalePercent(percent)
+                            if (normalized != store.percent || !store.hasExplicitPercent()) {
+                                if (store.setPercent(normalized)) activity.recreate()
+                            }
+                        }
+                    )
+                } else {
                     ThemeSettingsContent(
                         mode = ThemeModeStore.getMode(activity),
-                    dynamicColorEnabled = dynamicColorEnabled,
-                    themeColor = themeColor,
-                    paletteStyle = paletteStyle,
-                    colorSpecification = colorSpecification,
-                    interfaceScalePercent = AppUiScaleManager.getScalePercent(activity),
-                    onModeSelected = { mode ->
-                        ThemeModeStore.setMode(activity, mode)
-                        activity.recreate()
-                    },
-                    onDynamicColorChanged = { enabled ->
-                        ThemeModeStore.setDynamicColorEnabled(activity, enabled)
-                        dynamicColorEnabled = enabled
-                    },
-                    onThemeColorSelected = { color ->
-                        ThemeModeStore.setThemeColor(activity, color)
-                        themeColor = color
-                    },
-                    onPaletteStyleSelected = { style ->
-                        ThemeModeStore.setPaletteStyle(activity, style)
-                        paletteStyle = style
-                    },
-                    onColorSpecificationSelected = { specification ->
-                        ThemeModeStore.setColorSpecification(activity, specification)
-                        colorSpecification = specification
-                    },
-                    onInterfaceScaleChanged = { percent ->
-                        val store = InterfaceScaleStore(activity)
-                        val normalized = AppUiScaleManager.normalizeScalePercent(percent)
-                        if (normalized != store.percent || !store.hasExplicitPercent()) {
-                            if (store.setPercent(normalized)) activity.recreate()
-                        }
-                    },
-                    onBack = activity::finish,
-                )
+                        dynamicColorEnabled = dynamicColorEnabled,
+                        themeColor = themeColor,
+                        paletteStyle = paletteStyle,
+                        colorSpecification = colorSpecification,
+                        interfaceScalePercent = AppUiScaleManager.getScalePercent(activity),
+                        onModeSelected = { mode ->
+                            ThemeModeStore.setMode(activity, mode)
+                            activity.recreate()
+                        },
+                        onDynamicColorChanged = { enabled ->
+                            ThemeModeStore.setDynamicColorEnabled(activity, enabled)
+                            dynamicColorEnabled = enabled
+                            activity.recreate()
+                        },
+                        onThemeColorSelected = { color ->
+                            ThemeModeStore.setThemeColor(activity, color)
+                            themeColor = color
+                            activity.recreate()
+                        },
+                        onPaletteStyleSelected = { style ->
+                            ThemeModeStore.setPaletteStyle(activity, style)
+                            paletteStyle = style
+                            activity.recreate()
+                        },
+                        onColorSpecificationSelected = { specification ->
+                            ThemeModeStore.setColorSpecification(activity, specification)
+                            colorSpecification = specification
+                            activity.recreate()
+                        },
+                        onInterfaceScaleChanged = { percent ->
+                            val store = InterfaceScaleStore(activity)
+                            val normalized = AppUiScaleManager.normalizeScalePercent(percent)
+                            if (normalized != store.percent || !store.hasExplicitPercent()) {
+                                if (store.setPercent(normalized)) activity.recreate()
+                            }
+                        },
+                        onBack = activity::finish,
+                    )
+                }
             }
         }
     }
@@ -126,7 +173,11 @@ object SupportActivityContent {
     fun installExperimentalSettings(activity: ComponentActivity) {
         activity.setContent {
             DpisTheme(darkTheme = dpisDarkTheme()) {
-                ExperimentalSettingsContent(onBack = activity::finish)
+                if (WatchUiMode.shouldUseCompactUi(activity)) {
+                    WearExperimentalSettingsContent()
+                } else {
+                    ExperimentalSettingsContent(onBack = activity::finish)
+                }
             }
         }
     }
@@ -144,16 +195,28 @@ object SupportActivityContent {
     ) {
         activity.setContent {
             DpisTheme(darkTheme = dpisDarkTheme()) {
-                AboutContent(
-                    versionText = versionText,
-                    showDebugUpdateEntry = showDebugUpdateEntry,
-                    onBack = activity::finish,
-                    onCheckUpdates = onCheckUpdates::run,
-                    onShowDebugUpdate = onShowDebugUpdate::run,
-                    onOpenSource = onOpenSource::run,
-                    onOpenFeedback = onOpenFeedback::run,
-                    onOpenLicenses = onOpenLicenses::run
-                )
+                if (WatchUiMode.shouldUseCompactUi(activity)) {
+                    WearAboutContent(
+                        versionText = versionText,
+                        showDebugUpdateEntry = showDebugUpdateEntry,
+                        onCheckUpdates = onCheckUpdates::run,
+                        onShowDebugUpdate = onShowDebugUpdate::run,
+                        onOpenSource = onOpenSource::run,
+                        onOpenFeedback = onOpenFeedback::run,
+                        onOpenLicenses = onOpenLicenses::run,
+                    )
+                } else {
+                    AboutContent(
+                        versionText = versionText,
+                        showDebugUpdateEntry = showDebugUpdateEntry,
+                        onBack = activity::finish,
+                        onCheckUpdates = onCheckUpdates::run,
+                        onShowDebugUpdate = onShowDebugUpdate::run,
+                        onOpenSource = onOpenSource::run,
+                        onOpenFeedback = onOpenFeedback::run,
+                        onOpenLicenses = onOpenLicenses::run
+                    )
+                }
             }
         }
     }
@@ -166,11 +229,18 @@ object SupportActivityContent {
     ) {
         activity.setContent {
             DpisTheme(darkTheme = dpisDarkTheme()) {
-                OpenSourceLicenseContent(
-                    items = items,
-                    onBack = activity::finish,
-                    onItemSelected = onItemSelected::accept
-                )
+                if (WatchUiMode.shouldUseCompactUi(activity)) {
+                    WearOpenSourceLicenseContent(
+                        items = items,
+                        onItemSelected = onItemSelected::accept,
+                    )
+                } else {
+                    OpenSourceLicenseContent(
+                        items = items,
+                        onBack = activity::finish,
+                        onItemSelected = onItemSelected::accept
+                    )
+                }
             }
         }
     }
@@ -186,14 +256,24 @@ object SupportActivityContent {
     ) {
         activity.setContent {
             DpisTheme(darkTheme = dpisDarkTheme()) {
-                FontLibraryContent(
-                    presentation = presentation,
-                    onBack = activity::finish,
-                    onImportFont = onImportFont::run,
-                    onExportArchive = onExportArchive::run,
-                    onImportArchive = onImportArchive::run,
-                    onFontSelected = onFontSelected::accept
-                )
+                if (WatchUiMode.shouldUseCompactUi(activity)) {
+                    WearFontLibraryContent(
+                        presentation = presentation,
+                        onImportFont = onImportFont::run,
+                        onExportArchive = onExportArchive::run,
+                        onImportArchive = onImportArchive::run,
+                        onFontSelected = onFontSelected::accept,
+                    )
+                } else {
+                    FontLibraryContent(
+                        presentation = presentation,
+                        onBack = activity::finish,
+                        onImportFont = onImportFont::run,
+                        onExportArchive = onExportArchive::run,
+                        onImportArchive = onImportArchive::run,
+                        onFontSelected = onFontSelected::accept
+                    )
+                }
             }
         }
     }
