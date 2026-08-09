@@ -30,6 +30,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -64,7 +66,7 @@ fun AppConfigEditorOverlay(
     var hasExpandedOnce by remember { mutableStateOf(false) }
     var dismissalInProgress by remember { mutableStateOf(false) }
     var previousDestination by remember { mutableStateOf(destination) }
-    var childContentOwnsHeightTransition by remember { mutableStateOf(false) }
+    var childPageTransitionActive by remember { mutableStateOf(false) }
     var mainCollapsedAnchor by remember { mutableStateOf<Dp?>(null) }
     var returnToMainPending by remember { mutableStateOf(false) }
     // BottomSheetScaffold has no modal scrim. Its target changes at the same instant as the
@@ -120,17 +122,23 @@ fun AppConfigEditorOverlay(
     LaunchedEffect(destination) {
         val wasChild = previousDestination.isChildPage()
         val isChild = destination.isChildPage()
-        childContentOwnsHeightTransition = wasChild && isChild
+        childPageTransitionActive = wasChild && isChild
+        if (isChild) {
+            // Re-entering a child page cancels a pending return before its retained MAIN anchor
+            // can drive another partial-expand request.
+            returnToMainPending = false
+        }
         if (wasChild && !isChild) {
             // The return action has already moved the sheet to the retained main anchor.
             hasExpandedOnce = false
         }
         previousDestination = destination
-        if (destination == ConfigEditorDestination.TYPEFACE &&
-            bottomSheetState.currentValue != SheetValue.Hidden) {
-            // Typeface selection owns a persistent bottom management action, so it always uses
-            // the sheet's maximum anchor instead of inheriting MAIN's partial anchor.
-            bottomSheetState.expand()
+    }
+    LaunchedEffect(returnToMainPending, mainCollapsedAnchor, destination) {
+        if (returnToMainPending && !destination.isChildPage() && mainCollapsedAnchor != null) {
+            // The MAIN anchor can be measured after the destination changes. Keep this as a
+            // separate effect so a late measurement still completes the pending return.
+            bottomSheetState.partialExpand()
         }
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -150,11 +158,13 @@ fun AppConfigEditorOverlay(
             animationSpec = when {
                 !hasOpened -> snap()
                 returnToMainPending -> tween(durationMillis = 180)
-                childContentOwnsHeightTransition -> snap()
+                childPageTransitionActive -> snap()
                 else -> tween(durationMillis = 180)
             },
             label = "app-config-sheet-peek-height"
         )
+        val sheetMotionInProgress = measuredPeekHeight != targetPeekHeight ||
+            returnToMainPending
 
         Box(Modifier.fillMaxSize()) {
             Box(
@@ -176,14 +186,10 @@ fun AppConfigEditorOverlay(
                 modifier = Modifier.fillMaxSize().zIndex(1f),
                 scaffoldState = scaffoldState,
                 containerColor = Color.Transparent,
-                // Typeface is an expanded-or-dismissed child page. A zero peek removes its
-                // visible partial anchor while keeping sheet gestures available outside the
-                // font lists; MAIN restores its measured advanced-section anchor.
-                sheetPeekHeight = if (destination == ConfigEditorDestination.TYPEFACE) {
-                    0.dp
-                } else {
-                    measuredPeekHeight
-                },
+                sheetSwipeEnabled = !sheetMotionInProgress,
+                // Keep one shared peek anchor for MAIN, Hook, and Typeface pages. Child pages
+                // report their content height through the same callback as the Hook editor.
+                sheetPeekHeight = measuredPeekHeight,
                 sheetContainerColor = MaterialTheme.colorScheme.surface,
                 sheetContentColor = MaterialTheme.colorScheme.onSurface,
                 sheetTonalElevation = 0.dp,
@@ -212,6 +218,26 @@ fun AppConfigEditorOverlay(
                         // Draw after the editor content while keeping the overlay out of the
                         // measured column height, so it remains anchored to the sheet chrome.
                         overlayContent()
+                        if (sheetMotionInProgress) {
+                            // BottomSheetScaffold keeps its drag layer above sheet content while
+                            // an anchor or settle animation is running. Consume the gesture here
+                            // as well, otherwise a tap can start a drag against a moving layout
+                            // and leave the visible page detached from its hit-test coordinates.
+                            Box(
+                                Modifier
+                                    .fillMaxSize()
+                                    .zIndex(2f)
+                                    .pointerInput(Unit) {
+                                        awaitPointerEventScope {
+                                            while (true) {
+                                                awaitPointerEvent(PointerEventPass.Initial)
+                                                    .changes
+                                                    .forEach { it.consume() }
+                                            }
+                                        }
+                                    }
+                            )
+                        }
                     }
                 }
             ) { }
@@ -233,11 +259,6 @@ fun AppConfigEditorOverlay(
                 returnToMainPending = false
             }
         }
-        LaunchedEffect(returnToMainPending, mainCollapsedAnchor) {
-            if (returnToMainPending && mainCollapsedAnchor != null) {
-                bottomSheetState.partialExpand()
-            }
-        }
     }
     // Do not animate from a provisional 50% peek height. The editor measures its advanced
     // divider while hidden, then enters once the legacy collapsed edge is known and stable.
@@ -246,11 +267,7 @@ fun AppConfigEditorOverlay(
                 && bottomSheetState.currentValue == SheetValue.Hidden
                 && bottomSheetState.targetValue == SheetValue.Hidden
                 && !dismissalInProgress) {
-            if (destination == ConfigEditorDestination.TYPEFACE) {
-                bottomSheetState.expand()
-            } else {
-                bottomSheetState.partialExpand()
-            }
+            bottomSheetState.partialExpand()
         }
     }
 }

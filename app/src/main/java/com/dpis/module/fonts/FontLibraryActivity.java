@@ -128,7 +128,10 @@ public final class FontLibraryActivity extends LocalizedActivity {
                 return;
             }
             RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
-            runOnUiThread(this::refreshFontList);
+            runOnUiThread(() -> {
+                TypefaceCatalogCache.invalidate(this);
+                refreshFontList();
+            });
         }, "dpis-font-library-catalog-recovery").start();
     }
 
@@ -253,6 +256,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
                     return;
                 }
                 RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
+                TypefaceCatalogCache.invalidate(this);
                 refreshFontList();
                 if (finalResult.failureCount > 0) {
                     showToast(R.string.font_library_archive_import_partial,
@@ -367,6 +371,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
                     showToast(R.string.font_library_import_success, finalImportedEntry.displayName);
                 }
                 RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
+                TypefaceCatalogCache.invalidate(this);
                 refreshFontList();
             });
         }, "dpis-font-import").start();
@@ -421,6 +426,9 @@ public final class FontLibraryActivity extends LocalizedActivity {
         new Thread(() -> {
             FontLibraryStore.RepairResult result = fontLibraryStore.retryPublishedFallbacks();
             runOnUiThread(() -> {
+                if (result.catalogUpdated) {
+                    TypefaceCatalogCache.invalidate(this);
+                }
                 refreshFontList();
                 showToast(result.catalogUpdated && result.publishedCollectionCount > 0
                         ? R.string.font_library_publication_retry_success

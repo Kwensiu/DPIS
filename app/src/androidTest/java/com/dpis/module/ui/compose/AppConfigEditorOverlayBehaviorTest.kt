@@ -18,7 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
@@ -120,6 +123,84 @@ class AppConfigEditorOverlayBehaviorTest {
     }
 
     @Test
+    fun typefacePageControlsRemainClickableAfterReturningAndReenteringSheet() {
+        val destination = showOverlayStartingInHook(ConfigEditorDestination.MAIN)
+
+        composeRule.runOnIdle {
+            destination.value = ConfigEditorDestination.TYPEFACE
+        }
+        composeRule.onNodeWithContentDescription(
+            composeRule.activity.getString(R.string.system_settings_back)
+        ).performClick()
+        composeRule.onNodeWithTag(MainEditorTag).assertExists()
+
+        composeRule.runOnIdle {
+            destination.value = ConfigEditorDestination.TYPEFACE
+        }
+        val importedTab = composeRule.activity.getString(R.string.dialog_typeface_tab_imported)
+        composeRule.onNodeWithText(importedTab).performClick()
+        composeRule.onNodeWithText(importedTab).assertIsSelected()
+        composeRule.onNodeWithTag(TypefacePickerManageTestTag).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(
+            composeRule.activity.getString(R.string.system_settings_back)
+        ).performClick()
+        composeRule.onNodeWithTag(MainEditorTag).assertExists()
+    }
+
+    @Test
+    fun animatedTypefacePageControlsRemainClickableInsideTheProductionSheetPath() {
+        val destination = showAnimatedOverlay()
+        val defaultTypeface = composeRule.activity.getString(R.string.dialog_typeface_default)
+
+        repeat(2) {
+            composeRule.runOnIdle {
+                destination.value = ConfigEditorDestination.TYPEFACE
+            }
+            composeRule.onNodeWithText(defaultTypeface).performClick()
+            composeRule.onNodeWithTag(MainEditorTag).assertExists()
+        }
+
+        composeRule.runOnIdle {
+            destination.value = ConfigEditorDestination.TYPEFACE
+        }
+        val importedTab = composeRule.activity.getString(R.string.dialog_typeface_tab_imported)
+        composeRule.onNodeWithText(importedTab).performClick()
+        composeRule.onNodeWithText(importedTab).assertIsSelected()
+        composeRule.onNodeWithTag(TypefacePickerManageTestTag).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(
+            composeRule.activity.getString(R.string.system_settings_back)
+        ).performClick()
+        composeRule.onNodeWithTag(MainEditorTag).assertExists()
+    }
+
+    @Test
+    fun typefaceControlsRemainClickableWhenReenteredDuringReturnAnimation() {
+        val destination = showAnimatedOverlay()
+        composeRule.mainClock.autoAdvance = false
+
+        composeRule.runOnUiThread {
+            destination.value = ConfigEditorDestination.TYPEFACE
+        }
+        composeRule.mainClock.advanceTimeBy(1_000)
+
+        composeRule.runOnUiThread {
+            destination.value = ConfigEditorDestination.MAIN
+        }
+        // Let MAIN publish the return target and start partialExpand(), but do not finish it.
+        composeRule.mainClock.advanceTimeByFrame()
+
+        composeRule.runOnUiThread {
+            destination.value = ConfigEditorDestination.TYPEFACE
+        }
+        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.mainClock.autoAdvance = true
+
+        val importedTab = composeRule.activity.getString(R.string.dialog_typeface_tab_imported)
+        composeRule.onNodeWithText(importedTab).performClick()
+        composeRule.onNodeWithText(importedTab).assertIsSelected()
+    }
+
+    @Test
     fun destinationPageOwnsClicksAfterReturningAndReenteringDuringAnimatedTransition() {
         val destination = mutableStateOf(ConfigEditorDestination.MAIN)
         val targetClicked = AtomicBoolean(false)
@@ -160,7 +241,7 @@ class AppConfigEditorOverlayBehaviorTest {
     }
 
     @Test
-    fun draggingOutsideTypefaceListClosesTheSheetWithoutAVisiblePartialStop() {
+    fun draggingOutsideTypefaceListKeepsTheExpandedTypefacePageInteractive() {
         val dismissed = AtomicBoolean(false)
         val expandedContentOwnsHeight = AtomicBoolean(false)
         val destination = showOverlayStartingInHook(
@@ -182,7 +263,13 @@ class AppConfigEditorOverlayBehaviorTest {
                 durationMillis = 500
             )
         }
-        composeRule.waitUntil(timeoutMillis = 3_000) { dismissed.get() }
+        composeRule.runOnIdle {
+            assertTrue(!dismissed.get())
+        }
+        composeRule.onNodeWithContentDescription(
+            composeRule.activity.getString(R.string.system_settings_back)
+        ).performClick()
+        composeRule.onNodeWithTag(MainEditorTag).assertExists()
     }
 
     @Test
@@ -239,6 +326,46 @@ class AppConfigEditorOverlayBehaviorTest {
                             Text("Advanced editor", Modifier.testTag(AdvancedEditorTag))
                         }
                     }
+                    }
+                )
+            }
+        }
+        return destination
+    }
+
+    private fun showAnimatedOverlay():
+        androidx.compose.runtime.MutableState<ConfigEditorDestination> {
+        val destination = mutableStateOf(ConfigEditorDestination.MAIN)
+        composeRule.setContent {
+            var currentDestination by remember { destination }
+            DpisTheme(darkTheme = false, dynamicColor = false) {
+                AppConfigEditorOverlay(
+                    onDismissRequest = {},
+                    destination = currentDestination,
+                    onReturnToMain = {
+                        currentDestination = currentDestination.backDestination()
+                    },
+                    topChrome = { Text("Editor", Modifier.testTag(SheetChromeTag)) },
+                    content = { reportAdvancedAnchor, _, returnToMain ->
+                        LaunchedEffect(Unit) { reportAdvancedAnchor(320.dp) }
+                        ConfigEditorAnimatedContent(
+                            destination = currentDestination,
+                            modifier = Modifier.fillMaxSize(),
+                            mainContent = {
+                                Column {
+                                    Text("Main editor", Modifier.testTag(MainEditorTag))
+                                    Spacer(Modifier.height(400.dp))
+                                }
+                            },
+                            hookContent = { Text("Hook") },
+                            typefaceContent = {
+                                AppTypefacePickerPage(
+                                    selectedTypefaceId = null,
+                                    onTypefaceSelected = { returnToMain() },
+                                    onBack = returnToMain
+                                )
+                            }
+                        )
                     }
                 )
             }

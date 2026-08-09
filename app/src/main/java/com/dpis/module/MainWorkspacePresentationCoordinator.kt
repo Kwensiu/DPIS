@@ -283,18 +283,36 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                     }
                 },
                 content = { onAdvancedAnchorMeasured, destinationContentOwnsHeight, onReturnFromChild ->
+                fun reportChildPageAnchor(contentHeightPx: Int) {
+                    val contentHeight = with(density) { contentHeightPx.toDp() }
+                    onAdvancedAnchorMeasured(
+                        contentHeight +
+                            AppConfigSheetUiTokens.SaveToAdvancedDividerGap -
+                            AppConfigSheetUiTokens.CollapsedBottomClearance
+                    )
+                }
                 ConfigEditorAnimatedContent(
                     destination = editorState.destination,
                     // Expanded sheets ignore the peek anchor, so their destination content owns
                     // height. Partially expanded sheets keep that ownership in the peek anchor.
-                    animateSize = destinationContentOwnsHeight,
-                    // A full-width Sheet has no adjacent pane, so its outgoing editor may remain
-                    // drawable until the horizontal transition completes.
+                    // Keep all child pages on the same transition path. The active destination
+                    // owns pointer input while the outgoing page is clipped to shared bounds.
+                    // This full-width sheet is the stable viewport for the transition. Clipping
+                    // to AnimatedContent's changing size cuts off the outgoing page while its
+                    // horizontal exit is still running and makes the sheet appear to jump.
                     clipContentToAnimatedBounds = false,
+                    // Hook and Typeface child pages share the same sheet size transition.
+                    animateSize = destinationContentOwnsHeight,
                     mainContent = {
                         AppConfigEditorContent(
                             editorState,
-                            onAdvancedAnchorMeasured = onAdvancedAnchorMeasured,
+                            onAdvancedAnchorMeasured = { measuredAnchor ->
+                                // The main page can remain composed while a child page enters.
+                                // Only MAIN may establish the collapsed editor anchor.
+                                if (editorState.destination == ConfigEditorDestination.MAIN) {
+                                    onAdvancedAnchorMeasured(measuredAnchor)
+                                }
+                            },
                             showInlineUnsavedBadge = false
                         )
                     },
@@ -306,12 +324,9 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                             animateTabSize = true,
                             onBack = onReturnFromChild,
                             modifier = androidx.compose.ui.Modifier.onSizeChanged { size ->
-                                val contentHeight = with(density) { size.height.toDp() }
-                                onAdvancedAnchorMeasured(
-                                    contentHeight +
-                                        AppConfigSheetUiTokens.SaveToAdvancedDividerGap -
-                                        AppConfigSheetUiTokens.CollapsedBottomClearance
-                                )
+                                if (editorState.destination.isHookChain()) {
+                                    reportChildPageAnchor(size.height)
+                                }
                             }
                         )
                     },
@@ -324,12 +339,9 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                             },
                             onBack = onReturnFromChild,
                             modifier = androidx.compose.ui.Modifier.onSizeChanged { size ->
-                                val contentHeight = with(density) { size.height.toDp() }
-                                onAdvancedAnchorMeasured(
-                                    contentHeight +
-                                        AppConfigSheetUiTokens.SaveToAdvancedDividerGap -
-                                        AppConfigSheetUiTokens.CollapsedBottomClearance
-                                )
+                                if (editorState.destination == ConfigEditorDestination.TYPEFACE) {
+                                    reportChildPageAnchor(size.height)
+                                }
                             }
                         )
                     }

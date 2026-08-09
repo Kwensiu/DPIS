@@ -146,6 +146,7 @@ public final class FontDetailActivity extends LocalizedActivity {
                     return false;
                 }
                 RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
+                TypefaceCatalogCache.invalidate(this);
                 refreshDetails();
                 return true;
                 });
@@ -169,6 +170,7 @@ public final class FontDetailActivity extends LocalizedActivity {
     private void handleDeleteResult(FontLibraryStore.DeleteResult result) {
         if (result == FontLibraryStore.DeleteResult.DELETED) {
             RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
+            TypefaceCatalogCache.invalidate(this);
             finish();
         } else {
             showToast(result == FontLibraryStore.DeleteResult.IN_USE
@@ -220,6 +222,9 @@ public final class FontDetailActivity extends LocalizedActivity {
         new Thread(() -> {
             FontLibraryStore.RepairResult result = fontLibraryStore.retryPublishedFallbacks();
             runOnUiThread(() -> {
+                if (result.catalogUpdated) {
+                    TypefaceCatalogCache.invalidate(this);
+                }
                 refreshDetails();
                 showToast(result.catalogUpdated && result.publishedCollectionCount > 0
                         ? R.string.font_library_publication_retry_success

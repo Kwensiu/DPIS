@@ -350,8 +350,9 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(overlay.contains("LaunchedEffect(advancedAnchor)"));
         assertTrue(overlay.contains("value == SheetValue.Hidden"));
         assertTrue(overlay.contains("sheetDragHandle = null"));
-        assertTrue(overlay.contains(
-                "sheetPeekHeight = if (destination == ConfigEditorDestination.TYPEFACE)"));
+        assertTrue(overlay.contains("sheetPeekHeight = measuredPeekHeight"));
+        assertTrue(overlay.contains("returnToMainPending = false"));
+        assertTrue(overlay.contains("wasChild && !isChild"));
         assertTrue(overlay.contains("advancedAnchor"));
         assertTrue(overlay.contains("maxHeight * 0.75f"));
         assertTrue(coordinator.contains("R.string.dialog_advanced_wizard_hint"));
@@ -380,6 +381,11 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(typefacePicker.contains("fun AppTypefacePickerPage("));
         assertFalse(typefacePicker.contains("Dialog("));
         assertTrue(typefacePicker.contains("TypefacePickerUiTokens.TypefaceOptionHeight"));
+        assertTrue(typefacePicker.contains("TypefaceCatalogCache.Catalog"));
+        assertTrue(typefacePicker.contains("TypefaceCatalogCache.cached()"));
+        assertTrue(typefacePicker.contains("withContext(Dispatchers.IO)"));
+        assertTrue(typefacePicker.contains("height(typefacePageHeight())"));
+        assertTrue(typefacePicker.contains("animateContentSize(tween(180))"));
         int dpisToggleStart = activity.indexOf("@Override public void toggleDpisEnabled()");
         int dpisToggleEnd = activity.indexOf("@Override public void startProcess()", dpisToggleStart);
         assertTrue(dpisToggleStart > 0);
@@ -417,6 +423,7 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(page.contains("if (animateSize)"));
         assertTrue(page.contains("Modifier.zIndex"));
         assertTrue(page.contains("targetPage == editorPage"));
+        assertTrue(page.contains("clipToBounds()"));
         assertTrue(page.contains("EditorDestinationHeightDurationMillis = 180"));
         assertTrue(page.contains("HookTabHeightDurationMillis = 180"));
         assertTrue(page.contains("verticalScroll(rememberScrollState())"));
@@ -433,12 +440,20 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(coordinator.contains("ConfigEditorAnimatedContent("));
         assertTrue(coordinator.contains("animateTabSize = true"));
         assertTrue(coordinator.contains("clipContentToAnimatedBounds = false"));
+        assertTrue(coordinator.contains(
+                "editorState.destination == ConfigEditorDestination.MAIN"));
+        assertTrue(coordinator.contains("editorState.destination.isHookChain()"));
+        assertTrue(coordinator.contains(
+                "editorState.destination == ConfigEditorDestination.TYPEFACE"));
         String appOverlay = read(
                 "src/main/java/com/dpis/module/ui/compose/AppConfigEditorOverlay.kt");
         assertTrue(appOverlay.contains("mainCollapsedAnchor"));
         assertTrue(appOverlay.contains("fun returnToMainCollapsed()"));
         assertTrue(appOverlay.contains("bottomSheetState.partialExpand()"));
         assertTrue(appOverlay.contains("bottomSheetState.currentValue == SheetValue.PartiallyExpanded"));
+        assertTrue(appOverlay.contains("sheetSwipeEnabled = !sheetMotionInProgress"));
+        assertTrue(appOverlay.contains("awaitPointerEvent(PointerEventPass.Initial)"));
+        assertFalse(appOverlay.contains("bottomSheetState.expand()"));
         assertTrue(viewModel.contains("ConfigEditorDestination editingDestination"));
         assertTrue(activity.contains("mainViewModel.getEditingDestination()"));
         assertTrue(activity.contains("retainedState.editingDestination"));

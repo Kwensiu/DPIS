@@ -117,9 +117,8 @@ internal fun ConfigEditorAnimatedContent(
         contentKey = { it },
         label = "config-editor-destination"
     ) { targetPage ->
-        // AnimatedContent keeps the outgoing page composed while it slides away. It remains
-        // visible in the portrait sheet because the transition intentionally is not clipped,
-        // but the destination page must own the interaction layer for the whole transition.
+        // AnimatedContent keeps both pages composed during the transition. The destination page
+        // must own the interaction layer so an outgoing page cannot consume pointer input.
         val pageLayerModifier = Modifier.zIndex(
             if (targetPage == editorPage) 1f else 0f
         )

@@ -3,6 +3,7 @@ package com.dpis.module;
 import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.diagnostics.DpisAppLogStore;
 import com.dpis.module.fonts.HyperOsNativeProxyAssetExporter;
+import com.dpis.module.fonts.TypefaceCatalogCache;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
 import com.dpis.module.runtime.RuntimePropertyRecoveryCoordinator;
 import com.dpis.module.updates.UpdatePackageInstaller;
@@ -50,6 +51,7 @@ public final class DpisApplication extends Application implements XposedServiceH
         HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(this, DpisLog::e);
         // Migrate the private catalog before remote config mirroring can touch the old XML.
         ConfigStoreFactory.createLocalFontLibraryStore(this);
+        TypefaceCatalogCache.preload(this);
         configStore = ConfigStoreFactory.createLocalModuleConfigStore(this);
         migrateLocalConfigStore(configStore);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());

@@ -2,6 +2,8 @@ package com.dpis.module.ui.compose
 
 import android.content.Intent
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
@@ -29,8 +31,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
@@ -41,11 +44,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Velocity
-import com.dpis.module.ConfigStoreFactory
 import com.dpis.module.R
 import com.dpis.module.fonts.FontLibraryActivity
+import com.dpis.module.fonts.TypefaceCatalogCache
 import com.dpis.module.fonts.SystemFontRegistry
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal const val TypefacePickerPagerTestTag = "typeface-picker-pager"
 internal const val TypefacePickerManageTestTag = "typeface-picker-manage"
@@ -94,25 +99,23 @@ private fun TypefacePickerContent(
             && !SystemFontRegistry.isSystemFontId(selectedTypefaceId)) 1 else 0
     val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { 2 })
     val pagerScope = rememberCoroutineScope()
-    val systemEntries = remember {
-        SystemFontRegistry.listRecommendedFonts().map {
-            TypefaceOption(it.id(), it.displayName(), SystemFontRegistry.loadTypeface(it.id()))
+    val catalog by produceState<TypefaceCatalogCache.Catalog?>(
+        initialValue = TypefaceCatalogCache.cached(),
+        key1 = context.applicationContext
+    ) {
+        value = withContext(Dispatchers.IO) {
+            TypefaceCatalogCache.get(context.applicationContext)
         }
     }
-    val importedEntries = remember {
-        val store = ConfigStoreFactory.createLocalUiFontLibraryStore(context, null)
-        store.listFonts().map { entry ->
-            TypefaceOption(
-                entry.id,
-                entry.displayName,
-                store.resolveFontFile(entry.id)?.let { file ->
-                    com.dpis.module.fonts.FontTypefaceLoader.load(file, entry.ttcIndex)
-                }
-            )
-        }
-    }
+    val systemEntries = catalog?.systemEntries.orEmpty()
+    val importedEntries = catalog?.importedEntries.orEmpty()
     Column(
-        modifier.fillMaxWidth().height(typefacePageHeight()).padding(
+        modifier.fillMaxWidth()
+            .height(typefacePageHeight())
+            // Match HookChainEditorPage: page-internal height changes are animated before
+            // the parent sheet receives the next measured anchor.
+            .animateContentSize(tween(180))
+            .padding(
             top = 8.dp,
             bottom = 16.dp
         )
@@ -161,9 +164,17 @@ private fun TypefacePickerContent(
             overscrollEffect = null,
             verticalAlignment = Alignment.Top
         ) { page ->
-            if (page == 0) {
+            if (catalog == null) {
+                Box(
+                    Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    androidx.compose.material3.CircularProgressIndicator()
+                }
+            } else if (page == 0) {
                 TypefaceOptionList(
-                    options = listOf(TypefaceOption(null, defaultTypefaceLabel, null)) + systemEntries,
+                    options = listOf(TypefaceOption(null, defaultTypefaceLabel, null)) +
+                        systemEntries.map { TypefaceOption(it.id, it.displayName, it.preview) },
                     selectedTypefaceId = selectedTypefaceId,
                     onTypefaceSelected = onTypefaceSelected,
                     modifier = Modifier.fillMaxSize().padding(
@@ -186,7 +197,8 @@ private fun TypefacePickerContent(
                 }
             } else {
                 TypefaceOptionList(
-                    options = listOf(TypefaceOption(null, defaultTypefaceLabel, null)) + importedEntries,
+                    options = listOf(TypefaceOption(null, defaultTypefaceLabel, null)) +
+                        importedEntries.map { TypefaceOption(it.id, it.displayName, it.preview) },
                     selectedTypefaceId = selectedTypefaceId,
                     onTypefaceSelected = onTypefaceSelected,
                     modifier = Modifier.fillMaxSize().padding(
