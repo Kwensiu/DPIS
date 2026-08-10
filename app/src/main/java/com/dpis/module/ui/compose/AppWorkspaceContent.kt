@@ -528,7 +528,7 @@ private fun AppRow(
     systemScopeSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     val resources = context.resources
     // This composable exists only for visible LazyColumn rows. Loading here keeps icon I/O out
     // of the catalogue state, so an icon result cannot rebuild or re-filter every app row.

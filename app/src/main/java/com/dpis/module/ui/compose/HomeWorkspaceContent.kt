@@ -129,7 +129,7 @@ private fun HomePrimaryStatus(state: HomeWorkspaceBinder.State) {
             Column(Modifier.padding(start = 12.dp).weight(1f)) {
                 Text(stringResource(if (disabled) R.string.home_workspace_status_enable_in_lsposed else R.string.home_workspace_status_enabled), style = MaterialTheme.typography.titleMedium, color = content, fontWeight = FontWeight.Bold)
                 Text(
-                    state.updateState.subtitle(LocalContext.current),
+                    state.updateState.subtitle(context),
                     modifier = if (state.updateState.status == HomeUpdateUiState.Status.FAILED) {
                         Modifier.clickable {
                             confirmFeedback()

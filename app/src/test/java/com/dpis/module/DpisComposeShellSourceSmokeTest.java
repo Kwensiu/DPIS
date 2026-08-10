@@ -216,7 +216,7 @@ public final class DpisComposeShellSourceSmokeTest {
         assertFalse(theme.contains("ThemeColorOption(\"default\")"));
         assertTrue(support.contains("ThemeModeStore.setDynamicColorEnabled(activity, enabled)"));
         assertTrue(support.contains("dynamicColorEnabled = enabled"));
-        assertTrue(colors.contains("ThemeModeStore.isDynamicColorEnabled(LocalContext.current)"));
+        assertTrue(colors.contains("ThemeModeStore.isDynamicColorEnabled(context)"));
     }
 
     @Test
@@ -291,7 +291,7 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(controls.contains("cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)"));
         assertTrue(editor.contains("val hookDomainsButtonText = FontHookDomainPresentation"));
         assertTrue(editor.contains("forRecommendedTemplateRaw(form.fontHookDomainsRaw)"));
-        assertTrue(editor.contains(".buttonText(LocalContext.current)"));
+        assertTrue(editor.contains(".buttonText(context)"));
         assertFalse(editor.contains("dialog_font_hook_domains_title_with_count, 1, 1"));
     }
 
