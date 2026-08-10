@@ -114,6 +114,26 @@ public final class TypefaceOverrideHookInstallerTest {
     }
 
     @Test
+    public void modernInstallerRecordsLoadSourceAndTtcIndex() throws Exception {
+        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.java");
+
+        assertTrue(source.contains("\"load_source\""));
+        assertTrue(source.contains("source=\" + source"));
+        assertTrue(source.contains("ttcIndex=\" + ttcIndex"));
+        assertTrue(source.contains("loadSource=\" + loadSourceFor"));
+        assertTrue(source.contains("ttcIndex=\" + ttcIndexFor"));
+    }
+
+    @Test
+    public void modernTypefaceEventsReachRuntimeTransport() throws Exception {
+        String source = SourceSmokeTestPaths.read(
+                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticRuntimeEvents.java");
+
+        assertTrue(source.contains("FeedbackDiagnosticRuntimeTransport.record("));
+        assertTrue(source.contains("\"typeface\", stage, packageName, message"));
+    }
+
+    @Test
     public void modernInstallerAppliesTypefaceWhenTextViewAttaches() throws Exception {
         String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.java");
 
