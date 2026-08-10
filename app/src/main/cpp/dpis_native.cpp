@@ -1669,7 +1669,7 @@ void launch_main_thread() {
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_dpis_module_HyperOsFlutterFontHookInstaller_configure(JNIEnv *env,
+Java_com_dpis_module_runtime_font_HyperOsFlutterFontHookInstaller_configure(JNIEnv *env,
                                                                jclass,
                                                                jstring package_name,
                                                                jint target_font_scale_percent,
@@ -1721,7 +1721,7 @@ Java_com_dpis_module_HyperOsFlutterFontHookInstaller_configure(JNIEnv *env,
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_dpis_module_HyperOsFlutterFontHookInstaller_onRuntimeLibraryLoaded(JNIEnv *env,
+Java_com_dpis_module_runtime_font_HyperOsFlutterFontHookInstaller_onRuntimeLibraryLoaded(JNIEnv *env,
                                                                             jclass,
                                                                             jstring package_name,
                                                                             jstring library_name) {
@@ -1755,7 +1755,7 @@ Java_com_dpis_module_HyperOsFlutterFontHookInstaller_onRuntimeLibraryLoaded(JNIE
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_dpis_module_HyperOsFlutterFontHookInstaller_genericFlutterProbeStatus(JNIEnv *env,
+Java_com_dpis_module_runtime_font_HyperOsFlutterFontHookInstaller_genericFlutterProbeStatus(JNIEnv *env,
                                                                                jclass,
                                                                                jstring package_name,
                                                                                jstring source) {

@@ -327,7 +327,8 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(nativeSource.contains("library="));
         assertTrue(nativeSource.contains("bridge_log_info(\"DPIS_FONT \" + message)"));
         assertTrue(nativeSource.contains("GetStaticMethodID("));
-        assertTrue(nativeSource.contains("Java_com_dpis_module_HyperOsFlutterFontHookInstaller_genericFlutterProbeStatus"));
+        assertTrue(nativeSource.contains(
+                "Java_com_dpis_module_runtime_font_HyperOsFlutterFontHookInstaller_genericFlutterProbeStatus"));
         assertTrue(nativeSource.contains("std::fopen(\"/proc/self/maps\", \"r\")"));
         assertTrue(nativeSource.contains("detected-not-hooked"));
         assertTrue(nativeSource.contains("push-style-d11-hooked"));
