@@ -263,6 +263,9 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(source.contains("installFrameProbe(xposed, packageName)"));
         assertTrue(source.contains("installViewRootTraversalProbe(xposed, packageName)"));
         assertTrue(source.contains("installHandlerDispatchProbe(xposed, packageName)"));
+        assertTrue(source.contains("installAssetManagerProbe(xposed, packageName)"));
+        assertTrue(source.contains("Flutter Java asset open observed"));
+        assertTrue(source.contains("AssetManager.class.getDeclaredMethod"));
         assertTrue(source.contains("\"handler-\" + remaining"));
         assertTrue(source.contains("Handler dispatch Flutter probe ready"));
         assertTrue(source.contains("\"view-root-\" + remaining"));
@@ -274,6 +277,9 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(source.contains("\"load0\""));
         assertTrue(source.contains("onRuntimeLibraryLoaded(packageName, loadedName)"));
         assertTrue(source.contains("genericFlutterProbeStatus(packageName, source)"));
+        assertTrue(source.contains("PublishedFontFileResolver.resolve(typefaceId)"));
+        assertTrue(source.contains("loadNativeLibrary();"));
+        assertTrue(source.contains("configureTypeface(packageName, publishedTypeface.getAbsolutePath())"));
         assertTrue(source.contains("logGenericFlutterProbe(packageName, \"post-configure-\" + reason)"));
         assertTrue(source.contains("scheduleDelayedGenericFlutterProbe(packageName)"));
         assertTrue(source.contains("if (probesEnabled())"));
@@ -329,6 +335,11 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(nativeSource.contains("GetStaticMethodID("));
         assertTrue(nativeSource.contains(
                 "Java_com_dpis_module_runtime_font_HyperOsFlutterFontHookInstaller_genericFlutterProbeStatus"));
+        assertTrue(nativeSource.contains(
+                "Java_com_dpis_module_runtime_font_HyperOsFlutterFontHookInstaller_configureTypeface"));
+        assertTrue(nativeSource.contains("AAssetManager_open"));
+        assertTrue(nativeSource.contains("dlopen(\"libandroid.so\""));
+        assertTrue(nativeSource.contains("Flutter typeface asset replacement hit"));
         assertTrue(nativeSource.contains("std::fopen(\"/proc/self/maps\", \"r\")"));
         assertTrue(nativeSource.contains("detected-not-hooked"));
         assertTrue(nativeSource.contains("push-style-d11-hooked"));

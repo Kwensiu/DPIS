@@ -905,3 +905,20 @@ not change route selection, mutation policy, or evidence semantics.
   (Provider or published-file fallback), hook installation, first replacement
   hit per source, and load failure as stable `typeface` timeline stages. These
   records are observational only and do not change hook selection or loading.
+- 2026-08-10: Kazumi investigation confirmed that its `MI_Sans_Regular` face
+  is loaded from Flutter `FontManifest.json` assets and bypasses Android
+  `Typeface`/`Paint` field hooks. The active Modern diagnostic experiment keeps
+  the Android Typeface route unchanged and, for a typeface-only target, installs
+  a debug-gated NDK `AAssetManager` route after loading the published DPIS font
+  file. Replaceable `.ttf`/`.otf`/`.ttc` assets are redirected to that file;
+  Material/Cupertino/icon fonts are excluded. This route remains experimental
+  until device logs prove both AssetManager callback entry and valid Flutter
+  rendering of the replacement.
+- 2026-08-10: Device validation of `com.predidit.kazumi` confirmed by visual
+  inspection that all visible text uses the selected replacement typeface.
+  The same run proved `reason=typeface`, the published font file load, and
+  `libflutter.so`/`ParagraphBuilder`/`pushStyle` diagnostics, but recorded no
+  Java `AssetManager.open` or NDK `AAssetManager_open` font-asset callback.
+  Therefore the visible effect is accepted as real, while the exact Flutter
+  font-loading boundary remains unresolved; the Java and NDK probes are
+  observational and must not be treated as proof of replacement on their own.

@@ -3,11 +3,13 @@ package com.dpis.module.runtime.font;
 import com.dpis.module.DpisConfigStore;
 
 import com.dpis.module.fonts.FontApplyMode;
+import com.dpis.module.fonts.PublishedFontFileResolver;
 
 import com.dpis.module.BuildConfig;
 import com.dpis.module.DpisLog;
 
 import android.annotation.SuppressLint;
+import android.content.res.AssetManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -58,6 +60,8 @@ public final class HyperOsFlutterFontHookInstaller {
     private static final AtomicInteger HANDLER_PROBE_BUDGET =
             new AtomicInteger(MAX_HANDLER_PROBES);
     private static final AtomicBoolean HANDLER_PROBE_INSTALLED = new AtomicBoolean();
+    private static final AtomicBoolean ASSET_MANAGER_PROBE_INSTALLED = new AtomicBoolean();
+    private static final AtomicInteger ASSET_MANAGER_PROBE_BUDGET = new AtomicInteger(12);
 
     private HyperOsFlutterFontHookInstaller() {
     }
@@ -90,6 +94,21 @@ public final class HyperOsFlutterFontHookInstaller {
         if (!probesEnabled() || store == null || packageName == null || packageName.isBlank()
                 || store.getTargetTypefaceId(packageName) == null) {
             return;
+        }
+        String typefaceId = store.getTargetTypefaceId(packageName);
+        File publishedTypeface = PublishedFontFileResolver.resolve(typefaceId);
+        if (publishedTypeface != null) {
+            try {
+                loadNativeLibrary();
+                configureTypeface(packageName, publishedTypeface.getAbsolutePath());
+            } catch (Throwable throwable) {
+                DpisLog.e("DPIS_FONT Flutter typeface asset replacement configure failed: package="
+                        + packageName, throwable);
+            }
+        } else {
+            DpisLog.i("DPIS_FONT Flutter typeface asset replacement skipped: package="
+                    + packageName + ", reason=published-font-unavailable"
+                    + ", typefaceId=" + typefaceId);
         }
         installConfigured(xposed, packageName, 100, false, "typeface");
     }
@@ -136,6 +155,43 @@ public final class HyperOsFlutterFontHookInstaller {
         installFrameProbe(xposed, packageName);
         installViewRootTraversalProbe(xposed, packageName);
         installHandlerDispatchProbe(xposed, packageName);
+        installAssetManagerProbe(xposed, packageName);
+    }
+
+    private static void installAssetManagerProbe(
+            XposedInterface xposed,
+            String packageName
+    ) {
+        if (xposed == null || !ASSET_MANAGER_PROBE_INSTALLED.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            Method open = AssetManager.class.getDeclaredMethod("open", String.class, int.class);
+            xposed.hook(open)
+                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+                    .intercept(chain -> {
+                        Object result = chain.proceed();
+                        Object assetName = chain.getArg(0);
+                        if (assetName != null && isFontAssetName(assetName.toString())) {
+                            int remaining = ASSET_MANAGER_PROBE_BUDGET.getAndDecrement();
+                            if (remaining > 0) {
+                                DpisLog.i("DPIS_FONT Flutter Java asset open observed: package="
+                                        + packageName + ", asset=" + assetName);
+                            }
+                        }
+                        return result;
+                    });
+            DpisLog.i("DPIS_FONT Flutter Java AssetManager probe ready for " + packageName);
+        } catch (Throwable throwable) {
+            ASSET_MANAGER_PROBE_INSTALLED.set(false);
+            DpisLog.e("DPIS_FONT Flutter Java AssetManager probe failed for "
+                    + packageName, throwable);
+        }
+    }
+
+    private static boolean isFontAssetName(String name) {
+        String lower = name.toLowerCase(java.util.Locale.ROOT);
+        return lower.endsWith(".ttf") || lower.endsWith(".otf") || lower.endsWith(".ttc");
     }
 
     private static void installHandlerDispatchProbe(XposedInterface xposed, String packageName) {
@@ -573,6 +629,8 @@ public final class HyperOsFlutterFontHookInstaller {
     }
 
     private static native void configure(String packageName, int targetFontScalePercent, boolean enabled);
+
+    private static native void configureTypeface(String packageName, String fontPath);
 
     private static native void onRuntimeLibraryLoaded(String packageName, String libraryName);
 
