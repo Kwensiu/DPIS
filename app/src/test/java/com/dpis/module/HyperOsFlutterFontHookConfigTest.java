@@ -271,13 +271,13 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(source.contains("\"load0\""));
         assertTrue(source.contains("onRuntimeLibraryLoaded(packageName, loadedName)"));
         assertTrue(source.contains("genericFlutterProbeStatus(packageName, source)"));
-        assertTrue(source.contains("logGenericFlutterProbe(packageName, \"post-configure\")"));
+        assertTrue(source.contains("logGenericFlutterProbe(packageName, \"post-configure-\" + reason)"));
         assertTrue(source.contains("scheduleDelayedGenericFlutterProbe(packageName)"));
         assertTrue(source.contains("if (DEBUG_PROBES)"));
         assertTrue(source.contains("scheduleMainThreadGenericFlutterProbe(packageName)"));
         assertTrue(source.contains("scheduleOneShotThreadGenericFlutterProbe(packageName)"));
         assertTrue(source.contains("scheduleLateMapsProbe(packageName)"));
-        assertTrue(source.contains("logGenericFlutterProbe(packageName, \"post-install\")"));
+        assertTrue(source.contains("logGenericFlutterProbe(packageName, \"post-install-\" + reason)"));
         assertTrue(source.contains("\"delayed-\" + delay + \"ms\""));
         assertTrue(source.contains("\"main-delayed-\" + delay + \"ms\""));
         assertTrue(source.contains("\"thread-delayed-8000ms\""));
