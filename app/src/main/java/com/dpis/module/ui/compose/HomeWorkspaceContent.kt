@@ -111,6 +111,7 @@ fun HomeWorkspaceContent(state: HomeWorkspaceBinder.State, padding: PaddingValue
 
 @Composable
 private fun HomePrimaryStatus(state: HomeWorkspaceBinder.State) {
+    val context = LocalContext.current
     val confirmFeedback = rememberDpisConfirmFeedback()
     val disabled = !state.xposedModuleActivated
     val container = when {

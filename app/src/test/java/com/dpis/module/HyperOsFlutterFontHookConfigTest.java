@@ -225,6 +225,8 @@ public class HyperOsFlutterFontHookConfigTest {
                 "HyperOsFlutterFontHookInstaller.installTypefaceProbe(xposed, packageName, store)"));
     }
 
+    @Test
+    public void nativeHookInstallerRequiresEnabledFontMode() throws Exception {
         String source = readSource("src/main/java/com/dpis/module/runtime/font/HyperOsFlutterFontHookInstaller.java");
 
         assertTrue(source.contains("store.getTargetFontApplyMode(packageName)"));
@@ -256,7 +258,7 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(source.contains("private static boolean probesEnabled()"));
         assertTrue(source.contains("BuildConfig.DEBUG || DpisLog.isLoggingEnabled()"));
         assertTrue(source.contains("installDebugOnlyProbes(xposed, packageName)"));
-        assertTrue(source.contains("if (!DEBUG_PROBES)"));
+        assertTrue(source.contains("if (!probesEnabled())"));
         assertTrue(source.contains("installActivityResumeProbe(xposed, packageName)"));
         assertTrue(source.contains("installFrameProbe(xposed, packageName)"));
         assertTrue(source.contains("installViewRootTraversalProbe(xposed, packageName)"));
@@ -274,7 +276,7 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(source.contains("genericFlutterProbeStatus(packageName, source)"));
         assertTrue(source.contains("logGenericFlutterProbe(packageName, \"post-configure-\" + reason)"));
         assertTrue(source.contains("scheduleDelayedGenericFlutterProbe(packageName)"));
-        assertTrue(source.contains("if (DEBUG_PROBES)"));
+        assertTrue(source.contains("if (probesEnabled())"));
         assertTrue(source.contains("scheduleMainThreadGenericFlutterProbe(packageName)"));
         assertTrue(source.contains("scheduleOneShotThreadGenericFlutterProbe(packageName)"));
         assertTrue(source.contains("scheduleLateMapsProbe(packageName)"));
