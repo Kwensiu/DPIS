@@ -34,6 +34,8 @@ import java.util.concurrent.TimeUnit;
 import io.github.libxposed.api.XposedInterface;
 
 public final class HyperOsFlutterFontHookInstaller {
+    private static volatile boolean TYPEFACE_ASSET_REPLACEMENT_READY;
+
     private static boolean probesEnabled() {
         return BuildConfig.DEBUG || DpisLog.isLoggingEnabled();
     }
@@ -91,6 +93,7 @@ public final class HyperOsFlutterFontHookInstaller {
             String packageName,
             DpisConfigStore store
     ) {
+        TYPEFACE_ASSET_REPLACEMENT_READY = false;
         if (!probesEnabled() || store == null || packageName == null || packageName.isBlank()
                 || store.getTargetTypefaceId(packageName) == null) {
             return;
@@ -100,17 +103,28 @@ public final class HyperOsFlutterFontHookInstaller {
         if (publishedTypeface != null) {
             try {
                 loadNativeLibrary();
-                configureTypeface(packageName, publishedTypeface.getAbsolutePath());
+                TYPEFACE_ASSET_REPLACEMENT_READY = configureTypeface(
+                        packageName, publishedTypeface.getAbsolutePath());
+                if (!TYPEFACE_ASSET_REPLACEMENT_READY) {
+                    DpisLog.i("DPIS_FONT Flutter typeface asset replacement unavailable: package="
+                            + packageName + ", reason=native-hook-not-ready");
+                }
             } catch (Throwable throwable) {
+                TYPEFACE_ASSET_REPLACEMENT_READY = false;
                 DpisLog.e("DPIS_FONT Flutter typeface asset replacement configure failed: package="
                         + packageName, throwable);
             }
         } else {
+            TYPEFACE_ASSET_REPLACEMENT_READY = false;
             DpisLog.i("DPIS_FONT Flutter typeface asset replacement skipped: package="
                     + packageName + ", reason=published-font-unavailable"
                     + ", typefaceId=" + typefaceId);
         }
         installConfigured(xposed, packageName, 100, false, "typeface");
+    }
+
+    public static boolean isTypefaceAssetReplacementReady() {
+        return TYPEFACE_ASSET_REPLACEMENT_READY;
     }
 
     private static void installConfigured(
@@ -663,7 +677,7 @@ public final class HyperOsFlutterFontHookInstaller {
 
     private static native void configure(String packageName, int targetFontScalePercent, boolean enabled);
 
-    private static native void configureTypeface(String packageName, String fontPath);
+    private static native boolean configureTypeface(String packageName, String fontPath);
 
     private static native void onRuntimeLibraryLoaded(String packageName, String libraryName);
 

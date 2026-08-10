@@ -100,6 +100,7 @@ std::atomic<bool> g_generic_get_scaled_font_size_hooked{false};
 std::atomic<bool> g_generic_create_hooked{false};
 std::atomic<bool> g_generic_push_style_hooked{false};
 std::atomic<bool> g_asset_hooks_installed{false};
+std::atomic<bool> g_asset_hooks_ready{false};
 std::atomic<int> g_asset_replace_log_budget{16};
 std::mutex g_asset_override_mutex;
 std::string g_typeface_replacement_path;
@@ -296,18 +297,22 @@ bool asset_name_is_replaceable_font(const char *name) {
 }
 
 bool ensure_typeface_replacement_loaded() {
-    std::lock_guard<std::mutex> lock(g_asset_override_mutex);
-    if (!g_typeface_replacement_data.empty()) {
-        return true;
-    }
-    if (g_typeface_replacement_path.empty()) {
-        return false;
+    std::string path;
+    {
+        std::lock_guard<std::mutex> lock(g_asset_override_mutex);
+        if (!g_typeface_replacement_data.empty()) {
+            return true;
+        }
+        path = g_typeface_replacement_path;
+        if (path.empty()) {
+            return false;
+        }
     }
 
-    FILE *file = std::fopen(g_typeface_replacement_path.c_str(), "rb");
+    FILE *file = std::fopen(path.c_str(), "rb");
     if (file == nullptr) {
         log_info("Flutter typeface asset replacement lazy open failed: path="
-                + g_typeface_replacement_path
+                + path
                 + " errno=" + std::to_string(errno));
         return false;
     }
@@ -325,17 +330,27 @@ bool ensure_typeface_replacement_loaded() {
     std::fclose(file);
     if (read != data.size()) {
         log_info("Flutter typeface asset replacement lazy read failed: path="
-                + g_typeface_replacement_path
+                + path
                 + " expected=" + std::to_string(data.size())
                 + " read=" + std::to_string(read));
         return false;
     }
-    g_typeface_replacement_data = std::move(data);
-    g_asset_override_offsets.clear();
+    const size_t loaded_size = data.size();
+    {
+        std::lock_guard<std::mutex> lock(g_asset_override_mutex);
+        if (g_typeface_replacement_path != path) {
+            return false;
+        }
+        if (!g_typeface_replacement_data.empty()) {
+            return true;
+        }
+        g_typeface_replacement_data = std::move(data);
+        g_asset_override_offsets.clear();
+    }
     log_info("Flutter typeface asset replacement lazy loaded: process="
             + current_process_name()
-            + " path=" + g_typeface_replacement_path
-            + " bytes=" + std::to_string(g_typeface_replacement_data.size()));
+            + " path=" + path
+            + " bytes=" + std::to_string(loaded_size));
     return true;
 }
 
@@ -477,33 +492,44 @@ int install_asset_hook(const char *name, void *replacement, void **backup) {
             : inline_hook_arm64(target, replacement, backup);
 }
 
-void install_flutter_typeface_asset_hooks() {
+bool install_flutter_typeface_asset_hooks() {
+    if (g_asset_hooks_ready.load(std::memory_order_acquire)) {
+        return true;
+    }
     bool expected = false;
     if (!g_asset_hooks_installed.compare_exchange_strong(expected, true,
             std::memory_order_acq_rel)) {
-        return;
+        return g_asset_hooks_ready.load(std::memory_order_acquire);
     }
-    int open_result = install_asset_hook("AAssetManager_open",
+    int open_result = g_backup_asset_manager_open != nullptr ? 0 : install_asset_hook("AAssetManager_open",
             reinterpret_cast<void *>(replace_asset_manager_open),
             &g_backup_asset_manager_open);
-    int buffer_result = install_asset_hook("AAsset_getBuffer",
+    int buffer_result = g_backup_asset_get_buffer != nullptr ? 0 : install_asset_hook("AAsset_getBuffer",
             reinterpret_cast<void *>(replace_asset_get_buffer),
             &g_backup_asset_get_buffer);
-    int length_result = install_asset_hook("AAsset_getLength",
+    int length_result = g_backup_asset_get_length != nullptr ? 0 : install_asset_hook("AAsset_getLength",
             reinterpret_cast<void *>(replace_asset_get_length),
             &g_backup_asset_get_length);
-    int remaining_result = install_asset_hook("AAsset_getRemainingLength",
+    int remaining_result = g_backup_asset_get_remaining_length != nullptr ? 0 : install_asset_hook("AAsset_getRemainingLength",
             reinterpret_cast<void *>(replace_asset_get_remaining_length),
             &g_backup_asset_get_remaining_length);
-    int read_result = install_asset_hook("AAsset_read",
+    int read_result = g_backup_asset_read != nullptr ? 0 : install_asset_hook("AAsset_read",
             reinterpret_cast<void *>(replace_asset_read),
             &g_backup_asset_read);
-    int seek_result = install_asset_hook("AAsset_seek",
+    int seek_result = g_backup_asset_seek != nullptr ? 0 : install_asset_hook("AAsset_seek",
             reinterpret_cast<void *>(replace_asset_seek),
             &g_backup_asset_seek);
-    int close_result = install_asset_hook("AAsset_close",
+    int close_result = g_backup_asset_close != nullptr ? 0 : install_asset_hook("AAsset_close",
             reinterpret_cast<void *>(replace_asset_close),
             &g_backup_asset_close);
+    bool ready = open_result == 0
+            && buffer_result == 0
+            && length_result == 0
+            && remaining_result == 0
+            && read_result == 0
+            && seek_result == 0
+            && close_result == 0;
+    g_asset_hooks_ready.store(ready, std::memory_order_release);
     log_info("Flutter typeface asset hooks: process=" + current_process_name()
             + " open=" + std::to_string(open_result)
             + " buffer=" + std::to_string(buffer_result)
@@ -511,7 +537,12 @@ void install_flutter_typeface_asset_hooks() {
             + " remaining=" + std::to_string(remaining_result)
             + " read=" + std::to_string(read_result)
             + " seek=" + std::to_string(seek_result)
-            + " close=" + std::to_string(close_result));
+            + " close=" + std::to_string(close_result)
+            + " ready=" + std::to_string(ready ? 1 : 0));
+    if (!ready) {
+        g_asset_hooks_installed.store(false, std::memory_order_release);
+    }
+    return ready;
 }
 
 bool load_typeface_replacement_file(const char *path) {
@@ -520,14 +551,18 @@ bool load_typeface_replacement_file(const char *path) {
     }
     {
         std::lock_guard<std::mutex> lock(g_asset_override_mutex);
-        g_typeface_replacement_path = path;
+        // A failed reconfiguration must not leave the previous typeface active.
+        g_typeface_replacement_path.clear();
         g_typeface_replacement_data.clear();
         g_asset_override_offsets.clear();
     }
-
     // Install before the synchronous read. Flutter engine startup may proceed
     // on another thread while this call is loading a multi-megabyte font.
-    install_flutter_typeface_asset_hooks();
+    if (!install_flutter_typeface_asset_hooks()) {
+        log_info("Flutter typeface asset replacement unavailable: process="
+                + current_process_name() + " reason=native-hooks-not-ready");
+        return false;
+    }
 
     FILE *file = std::fopen(path, "rb");
     if (file == nullptr) {
@@ -552,10 +587,9 @@ bool load_typeface_replacement_file(const char *path) {
     }
     {
         std::lock_guard<std::mutex> lock(g_asset_override_mutex);
-        if (g_typeface_replacement_data.empty()) {
-            g_typeface_replacement_data = std::move(data);
-            g_asset_override_offsets.clear();
-        }
+        g_typeface_replacement_path = path;
+        g_typeface_replacement_data = std::move(data);
+        g_asset_override_offsets.clear();
     }
     log_info("Flutter typeface asset replacement configured: process="
             + current_process_name() + " path=" + path
@@ -2034,7 +2068,7 @@ Java_com_dpis_module_runtime_font_HyperOsFlutterFontHookInstaller_configure(JNIE
     schedule_generic_flutter_status();
 }
 
-extern "C" JNIEXPORT void JNICALL
+extern "C" JNIEXPORT jboolean JNICALL
 Java_com_dpis_module_runtime_font_HyperOsFlutterFontHookInstaller_configureTypeface(
         JNIEnv *env,
         jclass,
@@ -2057,6 +2091,7 @@ Java_com_dpis_module_runtime_font_HyperOsFlutterFontHookInstaller_configureTypef
     }
     log_info("Flutter typeface asset replacement configure: package=" + package_text
             + " loaded=" + std::to_string(loaded ? 1 : 0));
+    return loaded ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT void JNICALL

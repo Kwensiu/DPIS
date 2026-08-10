@@ -283,7 +283,9 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(source.contains("genericFlutterProbeStatus(packageName, source)"));
         assertTrue(source.contains("PublishedFontFileResolver.resolve(typefaceId)"));
         assertTrue(source.contains("loadNativeLibrary();"));
-        assertTrue(source.contains("configureTypeface(packageName, publishedTypeface.getAbsolutePath())"));
+        assertTrue(source.contains("configureTypeface("));
+        assertTrue(source.contains("publishedTypeface.getAbsolutePath()"));
+        assertTrue(source.contains("TYPEFACE_ASSET_REPLACEMENT_READY"));
         assertTrue(source.contains("logGenericFlutterProbe(packageName, \"post-configure-\" + reason)"));
         assertTrue(source.contains("scheduleDelayedGenericFlutterProbe(packageName)"));
         assertTrue(source.contains("if (probesEnabled())"));
@@ -344,6 +346,8 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(nativeSource.contains("AAssetManager_open"));
         assertTrue(nativeSource.contains("dlopen(\"libandroid.so\""));
         assertTrue(nativeSource.contains("Flutter typeface asset replacement hit"));
+        assertTrue(nativeSource.contains("g_asset_hooks_ready"));
+        assertTrue(nativeSource.contains("ready="));
         assertTrue(nativeSource.contains("std::fopen(\"/proc/self/maps\", \"r\")"));
         assertTrue(nativeSource.contains("detected-not-hooked"));
         assertTrue(nativeSource.contains("push-style-d11-hooked"));

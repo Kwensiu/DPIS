@@ -936,10 +936,13 @@ not change route selection, mutation policy, or evidence semantics.
 - 2026-08-10: Bettbox runtime probing confirmed that its Flutter
   `runBundleAndSnapshotFromLibrary` callback receives the expected
   `AssetManager`, but the visible default text did not request the declared
-  `HarmonyOS_Sans` asset. Typeface-only Flutter setup now adds a temporary
-  asset-path overlay before bundle startup, appends a `Roboto` family pointing
-  to a placeholder `.ttf`, and lets the native asset boundary supply the
-  selected DPIS font bytes. Device screenshot validation showed the selected
+  `HarmonyOS_Sans` asset. Typeface-only Flutter setup now identifies the
+  manifest root by probing the callback's asset-directory arguments, parses
+  the manifest before adding a temporary asset-path overlay, and appends a
+  `Roboto` family pointing to a placeholder `.ttf` only when that family is
+  absent. The overlay is created only after all native asset hooks and the
+  selected font have reported ready; otherwise Flutter keeps its original
+  manifest and assets. Device screenshot validation showed the selected
   imported typeface on Bettbox's visible Chinese text. Emoji assets are
   excluded from the generic replacement predicate so a text replacement
   cannot corrupt Twemoji.

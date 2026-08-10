@@ -27,6 +27,7 @@ import com.dpis.module.runtime.appprocess.AppProcessHookInstaller;
 
 import com.dpis.module.runtime.font.DebugFontOverride;
 import com.dpis.module.runtime.font.FlutterSettingsFontHookInstaller;
+import com.dpis.module.runtime.font.HyperOsFlutterFontHookInstaller;
 import com.dpis.module.fonts.PublishedFontFileResolver;
 
 import com.dpis.module.runtime.appprocess.ChromiumViewportProbeHookInstaller;
@@ -584,6 +585,11 @@ public final class ModuleMain extends XposedModule {
         if (replacementFont == null || !replacementFont.isFile()) {
             DpisLog.i("DPIS_FONT Flutter typeface probe skipped: package=" + packageName
                     + ", reason=published-font-unavailable");
+            return;
+        }
+        if (!HyperOsFlutterFontHookInstaller.isTypefaceAssetReplacementReady()) {
+            DpisLog.i("DPIS_FONT Flutter typeface probe skipped: package=" + packageName
+                    + ", reason=native-replacement-not-ready");
             return;
         }
         FlutterSettingsFontHookInstaller.installTypefaceProbe(
