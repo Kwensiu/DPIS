@@ -206,7 +206,25 @@ public class HyperOsFlutterFontHookConfigTest {
     }
 
     @Test
-    public void nativeHookInstallerRequiresEnabledFontMode() throws Exception {
+    public void typefaceOnlyProbeEntryDoesNotRequireFontScale() throws Exception {
+        String source = readSource("src/main/java/com/dpis/module/runtime/font/HyperOsFlutterFontHookInstaller.java");
+
+        assertTrue(source.contains("installTypefaceProbe("));
+        assertTrue(source.contains("store.getTargetTypefaceId(packageName)"));
+        assertTrue(source.contains("installConfigured(xposed, packageName, 100, false, \"typeface\")"));
+        assertTrue(source.contains("reason=\" + reason"));
+    }
+
+    @Test
+    public void appProcessInstallsTypefaceOnlyProbeAlongsideTypefaceHook() throws Exception {
+        String source = readSource(
+                "src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.java");
+
+        assertTrue(source.contains("if (packagePlan.typefaceEnabled)"));
+        assertTrue(source.contains(
+                "HyperOsFlutterFontHookInstaller.installTypefaceProbe(xposed, packageName, store)"));
+    }
+
         String source = readSource("src/main/java/com/dpis/module/runtime/font/HyperOsFlutterFontHookInstaller.java");
 
         assertTrue(source.contains("store.getTargetFontApplyMode(packageName)"));

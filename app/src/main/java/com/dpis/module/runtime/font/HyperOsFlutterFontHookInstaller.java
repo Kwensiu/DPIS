@@ -72,23 +72,54 @@ public final class HyperOsFlutterFontHookInstaller {
         if (!FontApplyMode.isEnabled(targetFontMode)) {
             return;
         }
+        installConfigured(xposed, packageName, targetFontScalePercent, true, "font-scale");
+    }
+
+    /**
+     * Debug-only probe entry for apps that have a Typeface target but no font-scale target.
+     * It deliberately does not enable the native font-size override; it only observes whether
+     * the generic Flutter engine route can be reached for a typeface-only configuration.
+     */
+    public static void installTypefaceProbe(
+            XposedInterface xposed,
+            String packageName,
+            DpisConfigStore store
+    ) {
+        if (!DEBUG_PROBES || store == null || packageName == null || packageName.isBlank()
+                || store.getTargetTypefaceId(packageName) == null) {
+            return;
+        }
+        installConfigured(xposed, packageName, 100, false, "typeface");
+    }
+
+    private static void installConfigured(
+            XposedInterface xposed,
+            String packageName,
+            int targetFontScalePercent,
+            boolean enableFontScale,
+            String reason
+    ) {
+        if (packageName == null || packageName.isBlank()) {
+            return;
+        }
         try {
             loadNativeLibrary();
-            configure(packageName, targetFontScalePercent, true);
+            configure(packageName, targetFontScalePercent, enableFontScale);
             installRuntimeLibraryProbe(xposed, packageName);
             installFlutterViewAttachProbe(xposed, packageName);
             installDebugOnlyProbes(xposed, packageName);
             if (DEBUG_PROBES) {
-                logGenericFlutterProbe(packageName, "post-configure");
+                logGenericFlutterProbe(packageName, "post-configure-" + reason);
                 scheduleDelayedGenericFlutterProbe(packageName);
-                logGenericFlutterProbe(packageName, "post-install");
+                logGenericFlutterProbe(packageName, "post-install-" + reason);
                 DpisLog.i("DPIS_FONT Flutter native font probe configured: package="
-                        + packageName + ", targetFontScalePercent=" + targetFontScalePercent
-                        + ", hyperOsHookEnabled=" + store.isHyperOsFlutterFontHookEnabled());
+                        + packageName + ", reason=" + reason
+                        + ", targetFontScalePercent=" + targetFontScalePercent
+                        + ", fontScaleOverride=" + enableFontScale);
             }
         } catch (Throwable throwable) {
             DpisLog.e("DPIS_FONT Flutter native font probe configure failed: package="
-                    + packageName, throwable);
+                    + packageName + ", reason=" + reason, throwable);
         }
     }
 
