@@ -32,7 +32,9 @@ import java.util.concurrent.TimeUnit;
 import io.github.libxposed.api.XposedInterface;
 
 public final class HyperOsFlutterFontHookInstaller {
-    private static final boolean DEBUG_PROBES = BuildConfig.DEBUG;
+    private static boolean probesEnabled() {
+        return BuildConfig.DEBUG || DpisLog.isLoggingEnabled();
+    }
     private static final ScheduledExecutorService FLUTTER_PROBE_EXECUTOR =
             Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
                 @Override
@@ -85,7 +87,7 @@ public final class HyperOsFlutterFontHookInstaller {
             String packageName,
             DpisConfigStore store
     ) {
-        if (!DEBUG_PROBES || store == null || packageName == null || packageName.isBlank()
+        if (!probesEnabled() || store == null || packageName == null || packageName.isBlank()
                 || store.getTargetTypefaceId(packageName) == null) {
             return;
         }
@@ -108,7 +110,7 @@ public final class HyperOsFlutterFontHookInstaller {
             installRuntimeLibraryProbe(xposed, packageName);
             installFlutterViewAttachProbe(xposed, packageName);
             installDebugOnlyProbes(xposed, packageName);
-            if (DEBUG_PROBES) {
+            if (probesEnabled()) {
                 logGenericFlutterProbe(packageName, "post-configure-" + reason);
                 scheduleDelayedGenericFlutterProbe(packageName);
                 logGenericFlutterProbe(packageName, "post-install-" + reason);
@@ -124,7 +126,7 @@ public final class HyperOsFlutterFontHookInstaller {
     }
 
     private static void installDebugOnlyProbes(XposedInterface xposed, String packageName) {
-        if (!DEBUG_PROBES) {
+        if (!probesEnabled()) {
             return;
         }
         scheduleMainThreadGenericFlutterProbe(packageName);

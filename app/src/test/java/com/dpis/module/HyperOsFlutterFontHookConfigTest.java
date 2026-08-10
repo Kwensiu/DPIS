@@ -253,7 +253,8 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(appProcessInstaller.contains("HyperOsFlutterFontHookInstaller.install(xposed, packageName, store)"));
         assertTrue(source.contains("installRuntimeLibraryProbe(xposed, packageName)"));
         assertTrue(source.contains("installFlutterViewAttachProbe(xposed, packageName)"));
-        assertTrue(source.contains("private static final boolean DEBUG_PROBES = BuildConfig.DEBUG"));
+        assertTrue(source.contains("private static boolean probesEnabled()"));
+        assertTrue(source.contains("BuildConfig.DEBUG || DpisLog.isLoggingEnabled()"));
         assertTrue(source.contains("installDebugOnlyProbes(xposed, packageName)"));
         assertTrue(source.contains("if (!DEBUG_PROBES)"));
         assertTrue(source.contains("installActivityResumeProbe(xposed, packageName)"));
