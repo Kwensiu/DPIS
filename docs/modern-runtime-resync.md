@@ -933,3 +933,13 @@ not change route selection, mutation policy, or evidence semantics.
   This rules out treating native probe configuration as proof of the visual
   route and makes Flutter font-family selection/actual asset consumption a
   required boundary for the next experiment.
+- 2026-08-10: Bettbox runtime probing confirmed that its Flutter
+  `runBundleAndSnapshotFromLibrary` callback receives the expected
+  `AssetManager`, but the visible default text did not request the declared
+  `HarmonyOS_Sans` asset. Typeface-only Flutter setup now adds a temporary
+  asset-path overlay before bundle startup, appends a `Roboto` family pointing
+  to a placeholder `.ttf`, and lets the native asset boundary supply the
+  selected DPIS font bytes. Device screenshot validation showed the selected
+  imported typeface on Bettbox's visible Chinese text. Emoji assets are
+  excluded from the generic replacement predicate so a text replacement
+  cannot corrupt Twemoji.

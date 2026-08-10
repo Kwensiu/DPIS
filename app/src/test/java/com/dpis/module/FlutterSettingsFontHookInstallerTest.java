@@ -52,6 +52,19 @@ public class FlutterSettingsFontHookInstallerTest {
         }
 
         @Test
+        public void sourceContainsTypefaceOnlyDefaultFamilyOverlayRoute() throws Exception {
+                String source = readSource(
+                                "src/main/java/com/dpis/module/runtime/font/FlutterSettingsFontHookInstaller.java");
+
+                assertTrue(source.contains("installTypefaceProbe("));
+                assertTrue(source.contains("runBundleAndSnapshotFromLibrary"));
+                assertTrue(source.contains("installTypefaceDefaultFamilyOverlay("));
+                assertTrue(source.contains("appendDefaultRobotoFamily("));
+                assertTrue(source.contains("dpis/typeface.ttf"));
+                assertTrue(source.contains("\"addAssetPath\""));
+        }
+
+        @Test
         public void sourceContainsFlutterViewAttachBridgeForLateSemanticHookInstall() throws Exception {
                 String source = readSource("src/main/java/com/dpis/module/runtime/font/FlutterSettingsFontHookInstaller.java");
 

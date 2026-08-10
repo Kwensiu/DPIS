@@ -102,6 +102,7 @@ std::atomic<bool> g_generic_push_style_hooked{false};
 std::atomic<bool> g_asset_hooks_installed{false};
 std::atomic<int> g_asset_replace_log_budget{16};
 std::mutex g_asset_override_mutex;
+std::string g_typeface_replacement_path;
 std::vector<uint8_t> g_typeface_replacement_data;
 std::unordered_map<AAsset *, off_t> g_asset_override_offsets;
 void *g_android_library_handle = nullptr;
@@ -284,12 +285,58 @@ bool asset_name_is_replaceable_font(const char *name) {
     });
     if (lower.find("materialicons") != std::string::npos
             || lower.find("cupertinoicons") != std::string::npos
+            || lower.find("twemoji") != std::string::npos
+            || lower.find("emoji") != std::string::npos
             || lower.find("icon") != std::string::npos) {
         return false;
     }
     return lower.ends_with(".ttf")
             || lower.ends_with(".otf")
             || lower.ends_with(".ttc");
+}
+
+bool ensure_typeface_replacement_loaded() {
+    std::lock_guard<std::mutex> lock(g_asset_override_mutex);
+    if (!g_typeface_replacement_data.empty()) {
+        return true;
+    }
+    if (g_typeface_replacement_path.empty()) {
+        return false;
+    }
+
+    FILE *file = std::fopen(g_typeface_replacement_path.c_str(), "rb");
+    if (file == nullptr) {
+        log_info("Flutter typeface asset replacement lazy open failed: path="
+                + g_typeface_replacement_path
+                + " errno=" + std::to_string(errno));
+        return false;
+    }
+    if (std::fseek(file, 0, SEEK_END) != 0) {
+        std::fclose(file);
+        return false;
+    }
+    long length = std::ftell(file);
+    if (length <= 0 || std::fseek(file, 0, SEEK_SET) != 0) {
+        std::fclose(file);
+        return false;
+    }
+    std::vector<uint8_t> data(static_cast<size_t>(length));
+    size_t read = std::fread(data.data(), 1, data.size(), file);
+    std::fclose(file);
+    if (read != data.size()) {
+        log_info("Flutter typeface asset replacement lazy read failed: path="
+                + g_typeface_replacement_path
+                + " expected=" + std::to_string(data.size())
+                + " read=" + std::to_string(read));
+        return false;
+    }
+    g_typeface_replacement_data = std::move(data);
+    g_asset_override_offsets.clear();
+    log_info("Flutter typeface asset replacement lazy loaded: process="
+            + current_process_name()
+            + " path=" + g_typeface_replacement_path
+            + " bytes=" + std::to_string(g_typeface_replacement_data.size()));
+    return true;
 }
 
 AAsset *replace_asset_manager_open(AAssetManager *manager,
@@ -312,6 +359,10 @@ AAsset *replace_asset_manager_open(AAssetManager *manager,
     if (asset == nullptr || !asset_name_is_replaceable_font(filename)) {
         return asset;
     }
+    // Flutter can request its first font asset while configureTypeface is still
+    // reading a large imported font file. Load on the asset boundary so the
+    // first request cannot race past an empty replacement buffer.
+    ensure_typeface_replacement_loaded();
     std::lock_guard<std::mutex> lock(g_asset_override_mutex);
     if (g_typeface_replacement_data.empty()) {
         return asset;
@@ -467,6 +518,17 @@ bool load_typeface_replacement_file(const char *path) {
     if (path == nullptr || path[0] == '\0') {
         return false;
     }
+    {
+        std::lock_guard<std::mutex> lock(g_asset_override_mutex);
+        g_typeface_replacement_path = path;
+        g_typeface_replacement_data.clear();
+        g_asset_override_offsets.clear();
+    }
+
+    // Install before the synchronous read. Flutter engine startup may proceed
+    // on another thread while this call is loading a multi-megabyte font.
+    install_flutter_typeface_asset_hooks();
+
     FILE *file = std::fopen(path, "rb");
     if (file == nullptr) {
         log_info("Flutter typeface asset replacement file open failed: path=" + std::string(path)
@@ -490,13 +552,14 @@ bool load_typeface_replacement_file(const char *path) {
     }
     {
         std::lock_guard<std::mutex> lock(g_asset_override_mutex);
-        g_typeface_replacement_data = std::move(data);
-        g_asset_override_offsets.clear();
+        if (g_typeface_replacement_data.empty()) {
+            g_typeface_replacement_data = std::move(data);
+            g_asset_override_offsets.clear();
+        }
     }
     log_info("Flutter typeface asset replacement configured: process="
             + current_process_name() + " path=" + path
             + " bytes=" + std::to_string(read));
-    install_flutter_typeface_asset_hooks();
     return true;
 }
 
