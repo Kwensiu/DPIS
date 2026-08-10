@@ -265,6 +265,10 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(source.contains("installHandlerDispatchProbe(xposed, packageName)"));
         assertTrue(source.contains("installAssetManagerProbe(xposed, packageName)"));
         assertTrue(source.contains("Flutter Java asset open observed"));
+        assertTrue(source.contains("hookAssetManagerMethod"));
+        assertTrue(source.contains("\"openFd\""));
+        assertTrue(source.contains("\"openNonAsset\""));
+        assertTrue(source.contains("\"openNonAssetFd\""));
         assertTrue(source.contains("AssetManager.class.getDeclaredMethod"));
         assertTrue(source.contains("\"handler-\" + remaining"));
         assertTrue(source.contains("Handler dispatch Flutter probe ready"));

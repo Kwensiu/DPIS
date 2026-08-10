@@ -166,27 +166,60 @@ public final class HyperOsFlutterFontHookInstaller {
             return;
         }
         try {
-            Method open = AssetManager.class.getDeclaredMethod("open", String.class, int.class);
-            xposed.hook(open)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
-                    .intercept(chain -> {
-                        Object result = chain.proceed();
-                        Object assetName = chain.getArg(0);
-                        if (assetName != null && isFontAssetName(assetName.toString())) {
-                            int remaining = ASSET_MANAGER_PROBE_BUDGET.getAndDecrement();
-                            if (remaining > 0) {
-                                DpisLog.i("DPIS_FONT Flutter Java asset open observed: package="
-                                        + packageName + ", asset=" + assetName);
-                            }
-                        }
-                        return result;
-                    });
+            hookAssetManagerMethod(
+                    xposed,
+                    AssetManager.class.getDeclaredMethod("open", String.class, int.class),
+                    packageName,
+                    "open");
+            hookAssetManagerMethod(
+                    xposed,
+                    AssetManager.class.getDeclaredMethod("openFd", String.class),
+                    packageName,
+                    "openFd");
+            hookAssetManagerMethod(
+                    xposed,
+                    AssetManager.class.getDeclaredMethod(
+                            "openNonAsset", int.class, String.class, int.class),
+                    packageName,
+                    "openNonAsset");
+            hookAssetManagerMethod(
+                    xposed,
+                    AssetManager.class.getDeclaredMethod(
+                            "openNonAssetFd", int.class, String.class),
+                    packageName,
+                    "openNonAssetFd");
             DpisLog.i("DPIS_FONT Flutter Java AssetManager probe ready for " + packageName);
         } catch (Throwable throwable) {
             ASSET_MANAGER_PROBE_INSTALLED.set(false);
             DpisLog.e("DPIS_FONT Flutter Java AssetManager probe failed for "
                     + packageName, throwable);
         }
+    }
+
+    private static void hookAssetManagerMethod(
+            XposedInterface xposed,
+            Method method,
+            String packageName,
+            String methodName
+    ) {
+        xposed.hook(method)
+                .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+                .intercept(chain -> {
+                    Object result = chain.proceed();
+                    java.util.List<Object> args = chain.getArgs();
+                    for (Object argument : args) {
+                        if (argument != null && isFontAssetName(argument.toString())) {
+                            int remaining = ASSET_MANAGER_PROBE_BUDGET.getAndDecrement();
+                            if (remaining > 0) {
+                                DpisLog.i("DPIS_FONT Flutter Java asset open observed: package="
+                                        + packageName + ", method=" + methodName
+                                        + ", asset=" + argument);
+                            }
+                            break;
+                        }
+                    }
+                    return result;
+                });
     }
 
     private static boolean isFontAssetName(String name) {

@@ -922,3 +922,14 @@ not change route selection, mutation policy, or evidence semantics.
   Therefore the visible effect is accepted as real, while the exact Flutter
   font-loading boundary remains unresolved; the Java and NDK probes are
   observational and must not be treated as proof of replacement on their own.
+- 2026-08-10: `com.appshub.bettbox` was added as a negative visual control.
+  It uses the same `libflutter.so` build as Kazumi, receives the same
+  typeface-only configuration, publishes the same replacement file, and
+  installs the same Android/NDK probes, but its visual text replacement was
+  reported as ineffective. Neither app produced a Java or NDK font-asset
+  callback. Their Flutter manifests differ: Kazumi declares one main
+  application family, `MI_Sans_Regular`, while Bettbox declares several
+  families including `HarmonyOS_Sans`, `JetBrainsMono`, and icon fonts.
+  This rules out treating native probe configuration as proof of the visual
+  route and makes Flutter font-family selection/actual asset consumption a
+  required boundary for the next experiment.
