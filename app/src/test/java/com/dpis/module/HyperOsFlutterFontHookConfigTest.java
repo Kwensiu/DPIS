@@ -206,6 +206,26 @@ public class HyperOsFlutterFontHookConfigTest {
     }
 
     @Test
+    public void typefaceOnlyProbeEntryDoesNotRequireFontScale() throws Exception {
+        String source = readSource("src/main/java/com/dpis/module/runtime/font/HyperOsFlutterFontHookInstaller.java");
+
+        assertTrue(source.contains("installTypefaceProbe("));
+        assertTrue(source.contains("store.getTargetTypefaceId(packageName)"));
+        assertTrue(source.contains("installConfigured(xposed, packageName, 100, false, \"typeface\")"));
+        assertTrue(source.contains("reason=\" + reason"));
+    }
+
+    @Test
+    public void appProcessInstallsTypefaceOnlyProbeAlongsideTypefaceHook() throws Exception {
+        String source = readSource(
+                "src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.java");
+
+        assertTrue(source.contains("if (packagePlan.typefaceEnabled)"));
+        assertTrue(source.contains(
+                "HyperOsFlutterFontHookInstaller.installTypefaceProbe(xposed, packageName, store)"));
+    }
+
+    @Test
     public void nativeHookInstallerRequiresEnabledFontMode() throws Exception {
         String source = readSource("src/main/java/com/dpis/module/runtime/font/HyperOsFlutterFontHookInstaller.java");
 
@@ -235,13 +255,21 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(appProcessInstaller.contains("HyperOsFlutterFontHookInstaller.install(xposed, packageName, store)"));
         assertTrue(source.contains("installRuntimeLibraryProbe(xposed, packageName)"));
         assertTrue(source.contains("installFlutterViewAttachProbe(xposed, packageName)"));
-        assertTrue(source.contains("private static final boolean DEBUG_PROBES = BuildConfig.DEBUG"));
+        assertTrue(source.contains("private static boolean probesEnabled()"));
+        assertTrue(source.contains("BuildConfig.DEBUG || DpisLog.isLoggingEnabled()"));
         assertTrue(source.contains("installDebugOnlyProbes(xposed, packageName)"));
-        assertTrue(source.contains("if (!DEBUG_PROBES)"));
+        assertTrue(source.contains("if (!probesEnabled())"));
         assertTrue(source.contains("installActivityResumeProbe(xposed, packageName)"));
         assertTrue(source.contains("installFrameProbe(xposed, packageName)"));
         assertTrue(source.contains("installViewRootTraversalProbe(xposed, packageName)"));
         assertTrue(source.contains("installHandlerDispatchProbe(xposed, packageName)"));
+        assertTrue(source.contains("installAssetManagerProbe(xposed, packageName)"));
+        assertTrue(source.contains("Flutter Java asset open observed"));
+        assertTrue(source.contains("hookAssetManagerMethod"));
+        assertTrue(source.contains("\"openFd\""));
+        assertTrue(source.contains("\"openNonAsset\""));
+        assertTrue(source.contains("\"openNonAssetFd\""));
+        assertTrue(source.contains("AssetManager.class.getDeclaredMethod"));
         assertTrue(source.contains("\"handler-\" + remaining"));
         assertTrue(source.contains("Handler dispatch Flutter probe ready"));
         assertTrue(source.contains("\"view-root-\" + remaining"));
@@ -253,13 +281,18 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(source.contains("\"load0\""));
         assertTrue(source.contains("onRuntimeLibraryLoaded(packageName, loadedName)"));
         assertTrue(source.contains("genericFlutterProbeStatus(packageName, source)"));
-        assertTrue(source.contains("logGenericFlutterProbe(packageName, \"post-configure\")"));
+        assertTrue(source.contains("PublishedFontFileResolver.resolve(typefaceId)"));
+        assertTrue(source.contains("loadNativeLibrary();"));
+        assertTrue(source.contains("configureTypeface("));
+        assertTrue(source.contains("publishedTypeface.getAbsolutePath()"));
+        assertTrue(source.contains("TYPEFACE_ASSET_REPLACEMENT_READY"));
+        assertTrue(source.contains("logGenericFlutterProbe(packageName, \"post-configure-\" + reason)"));
         assertTrue(source.contains("scheduleDelayedGenericFlutterProbe(packageName)"));
-        assertTrue(source.contains("if (DEBUG_PROBES)"));
+        assertTrue(source.contains("if (probesEnabled())"));
         assertTrue(source.contains("scheduleMainThreadGenericFlutterProbe(packageName)"));
         assertTrue(source.contains("scheduleOneShotThreadGenericFlutterProbe(packageName)"));
         assertTrue(source.contains("scheduleLateMapsProbe(packageName)"));
-        assertTrue(source.contains("logGenericFlutterProbe(packageName, \"post-install\")"));
+        assertTrue(source.contains("logGenericFlutterProbe(packageName, \"post-install-\" + reason)"));
         assertTrue(source.contains("\"delayed-\" + delay + \"ms\""));
         assertTrue(source.contains("\"main-delayed-\" + delay + \"ms\""));
         assertTrue(source.contains("\"thread-delayed-8000ms\""));
@@ -306,7 +339,15 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(nativeSource.contains("library="));
         assertTrue(nativeSource.contains("bridge_log_info(\"DPIS_FONT \" + message)"));
         assertTrue(nativeSource.contains("GetStaticMethodID("));
-        assertTrue(nativeSource.contains("Java_com_dpis_module_HyperOsFlutterFontHookInstaller_genericFlutterProbeStatus"));
+        assertTrue(nativeSource.contains(
+                "Java_com_dpis_module_runtime_font_HyperOsFlutterFontHookInstaller_genericFlutterProbeStatus"));
+        assertTrue(nativeSource.contains(
+                "Java_com_dpis_module_runtime_font_HyperOsFlutterFontHookInstaller_configureTypeface"));
+        assertTrue(nativeSource.contains("AAssetManager_open"));
+        assertTrue(nativeSource.contains("dlopen(\"libandroid.so\""));
+        assertTrue(nativeSource.contains("Flutter typeface asset replacement hit"));
+        assertTrue(nativeSource.contains("g_asset_hooks_ready"));
+        assertTrue(nativeSource.contains("ready="));
         assertTrue(nativeSource.contains("std::fopen(\"/proc/self/maps\", \"r\")"));
         assertTrue(nativeSource.contains("detected-not-hooked"));
         assertTrue(nativeSource.contains("push-style-d11-hooked"));

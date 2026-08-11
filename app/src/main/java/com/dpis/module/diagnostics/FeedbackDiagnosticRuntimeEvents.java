@@ -92,6 +92,8 @@ public final class FeedbackDiagnosticRuntimeEvents {
      */
     public static void recordTypeface(String packageName, String stage, String message) {
         recordStructured(packageName, "typeface", stage, "I", message);
+        FeedbackDiagnosticRuntimeTransport.record(
+                "runtime", "typeface", stage, packageName, message);
     }
 
     private static final class Session {

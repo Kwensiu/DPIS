@@ -84,8 +84,9 @@ public final class AppProcessHookInstaller {
                 + ", builtinDomains=" + plan.builtinDomains
                 + ", unknownCustomDomains=" + plan.unknownCustomDomains
                 + ", reason={" + plan.reason.formatForLog() + "}");
-        if (packagePlan.typefaceActive) {
+        if (packagePlan.typefaceEnabled) {
             installTypefaceHooks(xposed, packageName, store, packagePlan.targetTypefaceId);
+            HyperOsFlutterFontHookInstaller.installTypefaceProbe(xposed, packageName, store);
         }
         if (plan.viewportEnabled) {
             AppProcessViewportStateSeeder.seedDisplayBaseline(

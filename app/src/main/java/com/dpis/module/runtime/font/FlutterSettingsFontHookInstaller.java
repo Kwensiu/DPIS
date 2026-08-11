@@ -6,6 +6,7 @@ import com.dpis.module.BuildConfig;
 
 import com.dpis.module.DpisLog;
 import com.dpis.module.fonts.hookdomain.FontHookArbitration;
+import com.dpis.module.runtime.font.FlutterFontManifestTransformer;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -13,14 +14,20 @@ import android.app.Application;
 import android.content.Context;
 import android.content.ContentProvider;
 import android.content.pm.ProviderInfo;
+import android.content.res.AssetManager;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Process;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.ViewGroup;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -31,6 +38,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.WeakHashMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import io.github.libxposed.api.XposedInterface;
 
@@ -58,6 +68,11 @@ public final class FlutterSettingsFontHookInstaller {
     private static final AtomicBoolean ACTIVE_ACTIVITY_SCAN_THREAD_STARTED = new AtomicBoolean();
     private static final Set<String> HOOKED_CLASSES = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private static final Set<Integer> RESENT_SETTINGS_VIEW_IDS = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private static final Map<AssetManager, String> TYPEFACE_OVERLAY_PATHS =
+            Collections.synchronizedMap(new WeakHashMap<>());
+    private static final Object TYPEFACE_OVERLAY_LOCK = new Object();
+    private static final String TYPEFACE_OVERLAY_PREFIX = "dpis_flutter_typeface_";
+    private static final long STALE_TYPEFACE_OVERLAY_AGE_MS = 24L * 60L * 60L * 1000L;
     private static final float EPSILON = 0.0001f;
 
     private static final AtomicBoolean APP_CLASSLOADER_RETRY_ATTEMPTED = new AtomicBoolean();
@@ -113,6 +128,40 @@ public final class FlutterSettingsFontHookInstaller {
                 appClassLoader);
         tryHookFlutterJni(xposed, packageName, fontScale.effective, fontScale.targetPercent,
                 appClassLoader);
+    }
+
+    /**
+     * Typeface-only diagnostic route. Flutter asset ownership is independent of
+     * the text-scale settings channel, so this probe must not require a
+     * fontScale target just to observe engine asset-manager setup.
+     */
+    public static void installTypefaceProbe(
+            XposedInterface xposed,
+            String packageName,
+            ClassLoader appClassLoader,
+            String replacementFontPath
+    ) {
+        if (xposed == null || packageName == null || packageName.isBlank()
+                || appClassLoader == null
+                || replacementFontPath == null || replacementFontPath.isBlank()) {
+            return;
+        }
+        if (!BuildConfig.DEBUG && !DpisLog.isLoggingEnabled()) {
+            DpisLog.i("DPIS_FONT Flutter typeface probe skipped: package="
+                    + packageName + ", reason=diagnostics-disabled");
+            return;
+        }
+        try {
+            Class<?> flutterJniClass = Class.forName(
+                    FLUTTER_JNI_CLASS, false, appClassLoader);
+            hookFlutterTypefaceProbeMethods(
+                    xposed, packageName, flutterJniClass, replacementFontPath);
+        } catch (ClassNotFoundException ignored) {
+            bridgeProbe("DPIS_FONT Flutter typeface probe class not found: package="
+                    + packageName + ", classLoader=" + appClassLoader);
+        } catch (Throwable throwable) {
+            DpisLog.e("DPIS_FONT Flutter typeface probe failed for " + packageName, throwable);
+        }
     }
 
     private static void probeClassLoaderCapability(ClassLoader classLoader, String packageName) {
@@ -1194,6 +1243,289 @@ public final class FlutterSettingsFontHookInstaller {
             DpisLog.i("DPIS_FONT FlutterJNI hook skipped: no platform message methods in "
                     + clazz.getName());
         }
+    }
+
+    private static void hookFlutterTypefaceProbeMethods(
+            XposedInterface xposed,
+            String packageName,
+            Class<?> clazz,
+            String replacementFontPath
+    ) {
+        if (xposed == null || clazz == null || !isFlutterJniClass(clazz.getName())) {
+            return;
+        }
+        boolean hookedAny = false;
+        for (Method method : clazz.getDeclaredMethods()) {
+            String methodName = method.getName();
+            if (!"updateJavaAssetManager".equals(methodName)
+                    && !"runBundleAndSnapshotFromLibrary".equals(methodName)) {
+                continue;
+            }
+            String key = "typeface-probe@" + clazz.getName() + "@"
+                    + System.identityHashCode(clazz.getClassLoader()) + "@"
+                    + System.identityHashCode(method);
+            if (!HOOKED_CLASSES.add(key)) {
+                continue;
+            }
+            try {
+                xposed.hook(method)
+                        .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
+                        .intercept(chain -> {
+                            if ("runBundleAndSnapshotFromLibrary".equals(method.getName())) {
+                                logTypefaceManifest(
+                                        packageName,
+                                        chain.getArgs(),
+                                        replacementFontPath);
+                            }
+                            DpisLog.i("DPIS_FONT Flutter typeface JNI callback: package="
+                                    + packageName + ", method=" + method.getName()
+                                    + ", args=" + describeTypefaceProbeArgs(chain.getArgs()));
+                            bridgeProbe("DPIS_FONT Flutter typeface JNI callback: package="
+                                    + packageName + ", method=" + method.getName());
+                            Object result = chain.proceed();
+                            DpisLog.i("DPIS_FONT Flutter typeface JNI callback returned: package="
+                                    + packageName + ", method=" + method.getName());
+                            return result;
+                        });
+                hookedAny = true;
+                DpisLog.i("DPIS_FONT Flutter typeface JNI probe ready: package="
+                        + packageName + ", method=" + method.toGenericString());
+            } catch (Throwable throwable) {
+                DpisLog.e("DPIS_FONT Flutter typeface JNI probe hook failed: package="
+                        + packageName + ", method=" + method.toGenericString(), throwable);
+            }
+        }
+        if (!hookedAny) {
+            DpisLog.i("DPIS_FONT Flutter typeface JNI probe found no asset setup methods: package="
+                    + packageName + ", class=" + clazz.getName());
+        }
+    }
+
+    private static void logTypefaceManifest(
+            String packageName,
+            List<Object> args,
+            String replacementFontPath
+    ) {
+        if (args == null) {
+            return;
+        }
+        AssetManager assetManager = null;
+        String assetRoot = "flutter_assets";
+        for (Object arg : args) {
+            if (arg instanceof AssetManager manager) {
+                assetManager = manager;
+            } else if (arg instanceof String value && "flutter_assets".equals(value)) {
+                assetRoot = value;
+            }
+        }
+        if (assetManager == null) {
+            DpisLog.i("DPIS_FONT Flutter typeface manifest probe skipped: package="
+                    + packageName + ", assetManagerMissing=true");
+            return;
+        }
+        String manifest = null;
+        for (Object arg : args) {
+            if (!(arg instanceof String candidate) || candidate.isBlank()) {
+                continue;
+            }
+            String candidateManifest = readAssetText(
+                    assetManager, candidate + "/FontManifest.json");
+            if (candidateManifest != null) {
+                assetRoot = candidate;
+                manifest = candidateManifest;
+                break;
+            }
+        }
+        if (manifest == null) {
+            manifest = readAssetText(assetManager, assetRoot + "/FontManifest.json");
+        }
+        if (manifest == null) {
+            DpisLog.i("DPIS_FONT Flutter typeface manifest probe failed: package="
+                    + packageName + ", assetRoot=" + assetRoot);
+            return;
+        }
+        installTypefaceDefaultFamilyOverlay(
+                packageName, assetManager, assetRoot, manifest, replacementFontPath);
+        DpisLog.i("DPIS_FONT Flutter typeface manifest observed: package="
+                + packageName + ", assetRoot=" + assetRoot
+                + ", manifestBytes=" + manifest.length());
+        bridgeProbe("DPIS_FONT Flutter typeface manifest observed: package="
+                + packageName + ", assetRoot=" + assetRoot);
+    }
+
+    private static void installTypefaceDefaultFamilyOverlay(
+            String packageName,
+            AssetManager assetManager,
+            String assetRoot,
+            String originalManifest,
+            String replacementFontPath
+    ) {
+        String manifest = FlutterFontManifestTransformer.addDefaultFamilyIfMissing(
+                originalManifest);
+        if (manifest == null) {
+            DpisLog.i("DPIS_FONT Flutter typeface default-family overlay skipped: package="
+                    + packageName + ", reason=manifest-not-array");
+            return;
+        }
+        if (manifest.equals(originalManifest.trim())) {
+            DpisLog.i("DPIS_FONT Flutter typeface default-family overlay skipped: package="
+                    + packageName + ", reason=default-family-already-declared");
+            return;
+        }
+        synchronized (TYPEFACE_OVERLAY_LOCK) {
+            if (TYPEFACE_OVERLAY_PATHS.containsKey(assetManager)) {
+                return;
+            }
+            File overlay = null;
+            try {
+                cleanupStaleTypefaceOverlays();
+                overlay = File.createTempFile(
+                        TYPEFACE_OVERLAY_PREFIX + Process.myPid() + "_", ".zip");
+                try (ZipOutputStream zip = new ZipOutputStream(
+                        new java.io.BufferedOutputStream(
+                                new java.io.FileOutputStream(overlay)))) {
+                    writeZipEntry(zip, "assets/" + assetRoot + "/FontManifest.json",
+                            manifest.getBytes(StandardCharsets.UTF_8));
+                    // The native asset hook replaces this placeholder with the selected font bytes.
+                    writeZipEntry(zip, "assets/" + assetRoot + "/dpis/typeface.ttf", new byte[0]);
+                }
+                Method addAssetPath = AssetManager.class.getDeclaredMethod(
+                        "addAssetPath", String.class);
+                addAssetPath.setAccessible(true);
+                Object cookie = addAssetPath.invoke(assetManager, overlay.getAbsolutePath());
+                if (cookie instanceof Integer value && value <= 0) {
+                    DpisLog.i("DPIS_FONT Flutter typeface default-family overlay rejected: package="
+                            + packageName + ", path=" + overlay.getAbsolutePath()
+                            + ", cookie=" + value);
+                    overlay.delete();
+                    return;
+                }
+                // AssetManager owns the path for the process lifetime. Deleting it immediately
+                // would make later lazy asset opens dependent on platform implementation details.
+                overlay.deleteOnExit();
+                TYPEFACE_OVERLAY_PATHS.put(assetManager, overlay.getAbsolutePath());
+                verifyTypefaceOverlayVisibility(
+                        packageName,
+                        assetManager,
+                        assetRoot,
+                        manifest);
+                DpisLog.i("DPIS_FONT Flutter typeface default-family overlay ready: package="
+                        + packageName + ", path=" + overlay.getAbsolutePath()
+                        + ", replacement=" + replacementFontPath
+                        + ", cookie=" + cookie);
+                bridgeProbe("DPIS_FONT Flutter typeface default-family overlay ready: package="
+                        + packageName + ", cookie=" + cookie);
+            } catch (Throwable throwable) {
+                if (overlay != null && overlay.exists()) {
+                    overlay.delete();
+                }
+                DpisLog.e("DPIS_FONT Flutter typeface default-family overlay failed: package="
+                        + packageName, throwable);
+            }
+        }
+    }
+
+    /**
+     * AssetManager path registration is not sufficient evidence that Flutter
+     * will see the overlay. Read the two entries through the same manager
+     * immediately after registration so diagnostics can distinguish an
+     * accepted path from an actually visible overlay.
+     */
+    private static void verifyTypefaceOverlayVisibility(
+            String packageName,
+            AssetManager assetManager,
+            String assetRoot,
+            String transformedManifest
+    ) {
+        String manifestPath = assetRoot + "/FontManifest.json";
+        String placeholderPath = assetRoot + "/dpis/typeface.ttf";
+        String visibleManifest = readAssetText(assetManager, manifestPath);
+        boolean manifestVisible = visibleManifest != null
+                && transformedManifest.equals(visibleManifest);
+        boolean placeholderVisible = assetExists(assetManager, placeholderPath);
+        DpisLog.i("DPIS_FONT Flutter typeface overlay visibility: package="
+                + packageName
+                + ", manifestPath=" + manifestPath
+                + ", manifestVisible=" + manifestVisible
+                + ", placeholderPath=" + placeholderPath
+                + ", placeholderVisible=" + placeholderVisible
+                + ", transformedManifestBytes=" + transformedManifest.length()
+                + ", visibleManifestBytes="
+                + (visibleManifest == null ? 0 : visibleManifest.length()));
+        bridgeProbe("DPIS_FONT Flutter typeface overlay visibility: package="
+                + packageName
+                + ", manifestVisible=" + manifestVisible
+                + ", placeholderVisible=" + placeholderVisible);
+    }
+
+    private static boolean assetExists(AssetManager assetManager, String path) {
+        try (InputStream input = assetManager.open(path, AssetManager.ACCESS_STREAMING)) {
+            return input != null;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    private static void cleanupStaleTypefaceOverlays() {
+        File tempDirectory = new File(System.getProperty("java.io.tmpdir", "."));
+        File[] candidates = tempDirectory.listFiles((directory, name) ->
+                name.startsWith(TYPEFACE_OVERLAY_PREFIX) && name.endsWith(".zip"));
+        if (candidates == null) {
+            return;
+        }
+        long cutoff = System.currentTimeMillis() - STALE_TYPEFACE_OVERLAY_AGE_MS;
+        for (File candidate : candidates) {
+            if (candidate.lastModified() < cutoff && !candidate.delete()) {
+                DpisLog.i("DPIS_FONT Flutter typeface stale overlay cleanup skipped: path="
+                        + candidate.getAbsolutePath());
+            }
+        }
+    }
+
+    private static void writeZipEntry(ZipOutputStream zip, String path, byte[] content)
+            throws IOException {
+        zip.putNextEntry(new ZipEntry(path));
+        zip.write(content);
+        zip.closeEntry();
+    }
+
+    private static String readAssetText(AssetManager assetManager, String path) {
+        try (InputStream input = assetManager.open(path, AssetManager.ACCESS_STREAMING)) {
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int count;
+            while ((count = input.read(buffer)) != -1) {
+                if (count > 0) {
+                    output.write(buffer, 0, count);
+                }
+            }
+            // ByteArrayOutputStream#toString(Charset) is only available from API 33.
+            return new String(output.toByteArray(), StandardCharsets.UTF_8);
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private static String describeTypefaceProbeArgs(List<Object> args) {
+        if (args == null || args.isEmpty()) {
+            return "[]";
+        }
+        StringBuilder builder = new StringBuilder("[");
+        for (int i = 0; i < args.size(); i++) {
+            if (i > 0) {
+                builder.append(", ");
+            }
+            Object value = args.get(i);
+            if (value == null) {
+                builder.append("null");
+            } else {
+                builder.append(value.getClass().getSimpleName());
+                if (value instanceof String) {
+                    builder.append('=').append(value);
+                }
+            }
+        }
+        return builder.append(']').toString();
     }
 
     private static void hookSettingsChannelClass(String packageName,

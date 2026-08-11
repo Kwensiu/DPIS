@@ -27,6 +27,8 @@ import com.dpis.module.runtime.appprocess.AppProcessHookInstaller;
 
 import com.dpis.module.runtime.font.DebugFontOverride;
 import com.dpis.module.runtime.font.FlutterSettingsFontHookInstaller;
+import com.dpis.module.runtime.font.HyperOsFlutterFontHookInstaller;
+import com.dpis.module.fonts.PublishedFontFileResolver;
 
 import com.dpis.module.runtime.appprocess.ChromiumViewportProbeHookInstaller;
 
@@ -165,6 +167,8 @@ public final class ModuleMain extends XposedModule {
         retryTypefaceHooksWithPackageReady(store, snapshot, param.getPackageName());
         retryFlutterHooksWithAppClassLoader(store, snapshot, param.getClassLoader(),
                 param.getPackageName());
+        retryTypefaceFlutterProbe(
+                snapshot, param.getClassLoader(), param.getPackageName());
     }
 
     @Override
@@ -308,6 +312,7 @@ public final class ModuleMain extends XposedModule {
         retryTypefaceHooksWithPackageReady(store, snapshot, packageName);
         installChromiumViewportProbe(packageName, classLoader);
         retryFlutterHooksWithAppClassLoader(store, snapshot, classLoader, packageName);
+        retryTypefaceFlutterProbe(snapshot, classLoader, packageName);
     }
 
     private void installChromiumViewportProbe(String packageName, ClassLoader classLoader) {
@@ -562,6 +567,33 @@ public final class ModuleMain extends XposedModule {
                 packagePlan.packageName,
                 store,
                 packagePlan.targetTypefaceId);
+    }
+
+    private void retryTypefaceFlutterProbe(ConfigSnapshot snapshot,
+            ClassLoader classLoader,
+            String packageName) {
+        if (classLoader == null || packageName == null
+                || SystemServerProcess.isSystemServer(currentProcessName, packageName)) {
+            return;
+        }
+        ModulePackagePlan packagePlan = ModulePackagePlan.resolve(snapshot, packageName);
+        if (!packagePlan.targetDpisEnabled || !packagePlan.typefaceActive) {
+            return;
+        }
+        java.io.File replacementFont = PublishedFontFileResolver.resolve(
+                packagePlan.targetTypefaceId);
+        if (replacementFont == null || !replacementFont.isFile()) {
+            DpisLog.i("DPIS_FONT Flutter typeface probe skipped: package=" + packageName
+                    + ", reason=published-font-unavailable");
+            return;
+        }
+        if (!HyperOsFlutterFontHookInstaller.isTypefaceAssetReplacementReady()) {
+            DpisLog.i("DPIS_FONT Flutter typeface probe skipped: package=" + packageName
+                    + ", reason=native-replacement-not-ready");
+            return;
+        }
+        FlutterSettingsFontHookInstaller.installTypefaceProbe(
+                this, packageName, classLoader, replacementFont.getAbsolutePath());
     }
 
     private DpisConfigStore getOrCreateConfigStore() {

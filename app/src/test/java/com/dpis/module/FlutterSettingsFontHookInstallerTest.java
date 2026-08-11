@@ -1,5 +1,6 @@
 package com.dpis.module;
 
+import com.dpis.module.runtime.font.FlutterFontManifestTransformer;
 import com.dpis.module.runtime.font.FlutterSettingsFontHookInstaller;
 
 import android.util.DisplayMetrics;
@@ -14,6 +15,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class FlutterSettingsFontHookInstallerTest {
         @Test
@@ -49,6 +51,46 @@ public class FlutterSettingsFontHookInstallerTest {
                                 "tryHookMessageBuilder(xposed, packageName, fontScale.effective, fontScale.targetPercent,"));
                 assertTrue(source.contains(
                                 "tryHookFlutterJni(xposed, packageName, fontScale.effective, fontScale.targetPercent,"));
+        }
+
+        @Test
+        public void sourceContainsTypefaceOnlyDefaultFamilyOverlayRoute() throws Exception {
+                String source = readSource(
+                                "src/main/java/com/dpis/module/runtime/font/FlutterSettingsFontHookInstaller.java");
+
+                assertTrue(source.contains("installTypefaceProbe("));
+                assertTrue(source.contains("runBundleAndSnapshotFromLibrary"));
+                assertTrue(source.contains("installTypefaceDefaultFamilyOverlay("));
+                assertTrue(source.contains("dpis/typeface.ttf"));
+                assertTrue(source.contains("\"addAssetPath\""));
+                assertTrue(source.contains("verifyTypefaceOverlayVisibility("));
+                assertTrue(source.contains("manifestVisible="));
+                assertTrue(source.contains("placeholderVisible="));
+                assertTrue(source.contains("assetManager.open(path, AssetManager.ACCESS_STREAMING)"));
+        }
+
+        @Test
+        public void manifestTransformerAddsDefaultFamilyWithoutDependingOnFormatting() {
+                String transformed = FlutterFontManifestTransformer.addDefaultFamilyIfMissing(
+                        " [ { \"family\" : \"HarmonyOS_Sans\", \"fonts\" : [] } ] ");
+
+                assertNotNull(transformed);
+                assertTrue(transformed.contains("\"family\":\"Roboto\""));
+                assertTrue(transformed.contains("\"asset\":\"dpis/typeface.ttf\""));
+        }
+
+        @Test
+        public void manifestTransformerDoesNotDuplicateExistingDefaultFamily() {
+                String manifest = "[{\"family\":\"Roboto\",\"fonts\":[{\"asset\":\"fonts/Roboto.ttf\"}]}]";
+
+                assertEquals(manifest,
+                        FlutterFontManifestTransformer.addDefaultFamilyIfMissing(manifest));
+        }
+
+        @Test
+        public void manifestTransformerRejectsMalformedManifest() {
+                assertNull(FlutterFontManifestTransformer.addDefaultFamilyIfMissing(
+                        "{\"family\":\"Roboto\"}"));
         }
 
         @Test

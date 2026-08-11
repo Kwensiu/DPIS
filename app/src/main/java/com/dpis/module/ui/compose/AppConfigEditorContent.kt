@@ -105,8 +105,10 @@ fun AppConfigEditorContent(
     val appSpecificConfigActive = viewportTargetSpec.isEnabled()
         || fontScalePercent != null
         || !draft.selectedTypefaceId.isNullOrEmpty()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val resources = context.resources
     val statusLabel = AppStatusFormatter.formatCompact(
-        androidx.compose.ui.platform.LocalContext.current.resources,
+        resources,
         AppStatusFormatter.StatusInput(
             state.item.inScope,
             state.item.scopeKnown,

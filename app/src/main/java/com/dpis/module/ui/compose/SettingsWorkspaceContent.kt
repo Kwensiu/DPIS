@@ -39,8 +39,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -72,12 +72,10 @@ fun SettingsWorkspaceContent(
     onAbout: () -> Unit,
     onDonate: () -> Unit
 ) {
-    val context = LocalContext.current
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
-    val languageOptions = remember(context) {
-        AppLocaleManager.supportedLanguages().map {
-            LanguageDialogOption(it.tag, context.getString(it.labelResId))
-        }
+    val context = LocalContext.current
+    val languageOptions = AppLocaleManager.supportedLanguages().map {
+        LanguageDialogOption(it.tag, stringResource(it.labelResId))
     }
     val generalItemCount = if (state?.globalLogEnabled == true) 6 else 5
     PrimaryPageScaffold(

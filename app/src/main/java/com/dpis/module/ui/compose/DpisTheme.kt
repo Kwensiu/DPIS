@@ -23,10 +23,13 @@ internal val LocalDpisClickHapticsEnabled = staticCompositionLocalOf { true }
 
 /** Resolves the stored preference at every Compose root without duplicating mode policy. */
 @Composable
-fun dpisDarkTheme(): Boolean = ThemeModeStore.isDarkTheme(
-    LocalContext.current,
-    isSystemInDarkTheme(),
-)
+fun dpisDarkTheme(): Boolean {
+    val context = LocalContext.current
+    return ThemeModeStore.isDarkTheme(
+        context,
+        isSystemInDarkTheme(),
+    )
+}
 
 /**
  * The Compose counterpart to the existing Material3 XML theme.
@@ -37,26 +40,30 @@ fun dpisDarkTheme(): Boolean = ThemeModeStore.isDarkTheme(
 @Composable
 fun DpisTheme(
     darkTheme: Boolean,
-    dynamicColor: Boolean = ThemeModeStore.isDynamicColorEnabled(LocalContext.current),
-    themeColor: String = ThemeModeStore.getThemeColor(LocalContext.current),
-    paletteStyle: String = ThemeModeStore.getPaletteStyle(LocalContext.current),
-    colorSpecification: String = ThemeModeStore.getColorSpecification(LocalContext.current),
+    dynamicColor: Boolean? = null,
+    themeColor: String? = null,
+    paletteStyle: String? = null,
+    colorSpecification: String? = null,
     clickHapticsEnabled: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
+    val resolvedDynamicColor = dynamicColor ?: ThemeModeStore.isDynamicColorEnabled(context)
+    val resolvedThemeColor = themeColor ?: ThemeModeStore.getThemeColor(context)
+    val resolvedPaletteStyle = paletteStyle ?: ThemeModeStore.getPaletteStyle(context)
+    val resolvedColorSpecification = colorSpecification ?: ThemeModeStore.getColorSpecification(context)
     val view = LocalView.current
-    val seedColor = if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+    val seedColor = if (resolvedDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         colorResource(android.R.color.system_accent1_500)
     } else {
-        DpisColorSchemeFactory.seedColor(themeColor)
+        DpisColorSchemeFactory.seedColor(resolvedThemeColor)
     }
-    val targetColors = remember(seedColor, darkTheme, paletteStyle, colorSpecification) {
+    val targetColors = remember(seedColor, darkTheme, resolvedPaletteStyle, resolvedColorSpecification) {
         DpisColorSchemeFactory.create(
             seedColor = seedColor,
             darkTheme = darkTheme,
-            paletteStyle = paletteStyle,
-            requestedSpecification = colorSpecification,
+            paletteStyle = resolvedPaletteStyle,
+            requestedSpecification = resolvedColorSpecification,
         )
     }
     val colors = targetColors.animateDpisAsState()

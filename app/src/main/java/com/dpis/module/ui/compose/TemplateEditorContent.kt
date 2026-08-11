@@ -185,9 +185,10 @@ fun TemplateEditorContent(
     val nameError = if (form.isNameValid()) null else nameErrorMessage
     val viewportError = if (form.isViewportInputValid()) null else inputErrorMessage
     val fontError = if (form.isFontInputValid()) null else inputErrorMessage
+    val context = LocalContext.current
     val hookDomainsButtonText = FontHookDomainPresentation
         .forRecommendedTemplateRaw(form.fontHookDomainsRaw)
-        .buttonText(LocalContext.current)
+        .buttonText(context)
     Column(
         modifier = modifier
             .fillMaxWidth()

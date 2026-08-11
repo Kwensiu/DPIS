@@ -905,3 +905,67 @@ not change route selection, mutation policy, or evidence semantics.
   (Provider or published-file fallback), hook installation, first replacement
   hit per source, and load failure as stable `typeface` timeline stages. These
   records are observational only and do not change hook selection or loading.
+- 2026-08-10: Kazumi investigation confirmed that its `MI_Sans_Regular` face
+  is loaded from Flutter `FontManifest.json` assets and bypasses Android
+  `Typeface`/`Paint` field hooks. The active Modern diagnostic experiment keeps
+  the Android Typeface route unchanged and, for a typeface-only target, installs
+  a debug-gated NDK `AAssetManager` route after loading the published DPIS font
+  file. Replaceable `.ttf`/`.otf`/`.ttc` assets are redirected to that file;
+  Material/Cupertino/icon fonts are excluded. This route remains experimental
+  until device logs prove both AssetManager callback entry and valid Flutter
+  rendering of the replacement.
+- 2026-08-10: Device validation of `com.predidit.kazumi` confirmed by visual
+  inspection that all visible text uses the selected replacement typeface.
+  The same run proved `reason=typeface`, the published font file load, and
+  `libflutter.so`/`ParagraphBuilder`/`pushStyle` diagnostics, but recorded no
+  Java `AssetManager.open` or NDK `AAssetManager_open` font-asset callback.
+  Therefore the visible effect is accepted as real, while the exact Flutter
+  font-loading boundary remains unresolved; the Java and NDK probes are
+  observational and must not be treated as proof of replacement on their own.
+- 2026-08-10: `com.appshub.bettbox` was added as a negative visual control.
+  It uses the same `libflutter.so` build as Kazumi, receives the same
+  typeface-only configuration, publishes the same replacement file, and
+  installs the same Android/NDK probes, but its visual text replacement was
+  reported as ineffective. Neither app produced a Java or NDK font-asset
+  callback. Their Flutter manifests differ: Kazumi declares one main
+  application family, `MI_Sans_Regular`, while Bettbox declares several
+  families including `HarmonyOS_Sans`, `JetBrainsMono`, and icon fonts.
+  This rules out treating native probe configuration as proof of the visual
+  route and makes Flutter font-family selection/actual asset consumption a
+  required boundary for the next experiment.
+- 2026-08-10: Bettbox runtime probing confirmed that its Flutter
+  `runBundleAndSnapshotFromLibrary` callback receives the expected
+  `AssetManager`, but the visible default text did not request the declared
+  `HarmonyOS_Sans` asset. Typeface-only Flutter setup now identifies the
+  manifest root by probing the callback's asset-directory arguments, parses
+  the manifest before adding a temporary asset-path overlay, and appends a
+  `Roboto` family pointing to a placeholder `.ttf` only when that family is
+  absent. The overlay is created only after all native asset hooks and the
+  selected font have reported ready; otherwise Flutter keeps its original
+  manifest and assets. Device screenshot validation showed the selected
+  imported typeface on Bettbox's visible Chinese text. Emoji assets are
+   excluded from the generic replacement predicate so a text replacement
+   cannot corrupt Twemoji.
+- 2026-08-11: A debug-only overlay visibility probe now reads
+  `flutter_assets/FontManifest.json` and `flutter_assets/dpis/typeface.ttf`
+  back through the same `AssetManager` immediately after `addAssetPath`.
+  Fresh Modern runs for both Kazumi and Bettbox reported
+  `manifestVisible=true`, `placeholderVisible=true`, and equal transformed
+  versus visible manifest lengths. This proves the temporary asset overlay is
+  visible to the Java-side `AssetManager` before
+  `runBundleAndSnapshotFromLibrary`; neither run produced
+  `Flutter typeface asset replacement hit`. The remaining unproven boundary is
+  Flutter engine font-asset consumption, not DPIS configuration, native hook
+  readiness, overlay registration, or JNI startup reachability.
+- 2026-08-11: A reversible baseline APK from `47a635ec` was installed after a
+  device reboot so LSPosed could reload the pre-overlay module code. Kazumi's
+  baseline log showed Android `DPIS_FONT_STYLE` hooks ready, no overlay or
+  asset callback, and no Flutter replacement hit; the visible application
+  remained usable. After restoring the current Modern APK and rebooting,
+  Kazumi produced one `AAssetManager` open and one replacement hit for
+  `flutter_assets/assets/fonts/MiSans-Regular.ttf`, while Bettbox produced
+  overlay visibility and JNI startup evidence but no asset open or replacement
+  hit. This separates the two apps at the Flutter asset-consumption boundary:
+  the current route is exercised by Kazumi, but not by Bettbox. The generic
+  `route=NONE` / `ParagraphBuilder` / `pushStyle` probe remains unrelated
+  font-size evidence and is not a negative result for the Typeface route.

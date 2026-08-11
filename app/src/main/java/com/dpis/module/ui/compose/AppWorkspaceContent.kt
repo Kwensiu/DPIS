@@ -62,6 +62,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -528,7 +529,7 @@ private fun AppRow(
     systemScopeSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     val resources = context.resources
     // This composable exists only for visible LazyColumn rows. Loading here keeps icon I/O out
     // of the catalogue state, so an icon result cannot rebuild or re-filter every app row.

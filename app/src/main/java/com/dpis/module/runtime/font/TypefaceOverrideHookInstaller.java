@@ -57,6 +57,8 @@ public final class TypefaceOverrideHookInstaller {
     // whether it is loaded for the current package.
     private static volatile int installedPid = -1;
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
+    private static final Map<String, String> LAST_LOAD_SOURCES = new ConcurrentHashMap<>();
+    private static final Map<String, Integer> LAST_LOAD_TTC_INDICES = new ConcurrentHashMap<>();
     private static final ThreadLocal<Boolean> INTERNAL_UPDATE =
             ThreadLocal.withInitial(() -> Boolean.FALSE);
 
@@ -65,6 +67,9 @@ public final class TypefaceOverrideHookInstaller {
 
     public static void resetForHotReload() {
         installedPid = -1;
+        LAST_MESSAGES.clear();
+        LAST_LOAD_SOURCES.clear();
+        LAST_LOAD_TTC_INDICES.clear();
     }
 
     public static void install(XposedInterface xposed,
@@ -183,7 +188,9 @@ public final class TypefaceOverrideHookInstaller {
             FeedbackDiagnosticRuntimeEvents.recordTypeface(
                     packageName,
                     "hook_installed",
-                    "typeface hook ready: id=" + targetTypefaceId);
+                    "typefaceId=" + targetTypefaceId
+                            + ", loadSource=" + loadSourceFor(packageName, targetTypefaceId)
+                            + ", ttcIndex=" + ttcIndexFor(packageName, targetTypefaceId));
         }
     }
 
@@ -202,6 +209,7 @@ public final class TypefaceOverrideHookInstaller {
         }
         Typeface systemTypeface = SystemFontRegistry.loadTypeface(typefaceId);
         if (systemTypeface != null) {
+            recordLoadSource(packageName, typefaceId, "system", 0);
             logIfChanged(packageName + ":loaded:" + typefaceId,
                     LOG_PREFIX + "target typeface loaded: package=" + packageName
                             + ", typefaceId=" + typefaceId);
@@ -217,6 +225,7 @@ public final class TypefaceOverrideHookInstaller {
         int ttcIndex = selectedFace != null ? selectedFace.ttcIndex : 0;
         Typeface providerTypeface = FontProviderTypefaceLoader.load(typefaceId, ttcIndex);
         if (providerTypeface != null) {
+            recordLoadSource(packageName, typefaceId, "provider", ttcIndex);
             logTypefaceIfChanged(packageName, "source_provider_loaded", typefaceId,
                     packageName + ":loaded-provider:" + typefaceId,
                     LOG_PREFIX + "target typeface loaded through provider: package=" + packageName
@@ -224,6 +233,7 @@ public final class TypefaceOverrideHookInstaller {
             return providerTypeface;
         }
         if (fontLibraryStore == null) {
+            recordLoadSource(packageName, typefaceId, "provider_failed", ttcIndex);
             logIfChanged(packageName + ":provider-load-failed:" + typefaceId,
                     LOG_PREFIX + "font provider unavailable and no fallback catalog: package="
                             + packageName + ", typefaceId=" + typefaceId);
@@ -242,6 +252,7 @@ public final class TypefaceOverrideHookInstaller {
             }
         }
         if (file == null || !file.canRead()) {
+            recordLoadSource(packageName, typefaceId, "unreadable", ttcIndex);
             logIfChanged(packageName + ":unreadable:" + typefaceId,
                     LOG_PREFIX + "font file unreadable: package=" + packageName
                             + ", typefaceId=" + typefaceId);
@@ -249,11 +260,13 @@ public final class TypefaceOverrideHookInstaller {
         }
         Typeface loaded = FontTypefaceLoader.load(file, ttcIndex);
         if (loaded == null) {
+            recordLoadSource(packageName, typefaceId, "load_failed", ttcIndex);
             logTypefaceIfChanged(packageName, "load_failed", typefaceId,
                     packageName + ":load-failed:" + typefaceId,
                     LOG_PREFIX + "font load failed: package=" + packageName
                             + ", typefaceId=" + typefaceId);
         } else {
+            recordLoadSource(packageName, typefaceId, "fallback", ttcIndex);
             logTypefaceIfChanged(packageName, "source_fallback_loaded", typefaceId,
                     packageName + ":loaded-fallback:" + typefaceId,
                     LOG_PREFIX + "target typeface loaded through fallback: package=" + packageName
@@ -335,6 +348,31 @@ public final class TypefaceOverrideHookInstaller {
         } catch (NumberFormatException ignored) {
             return 0;
         }
+    }
+
+    private static void recordLoadSource(
+            String packageName,
+            String typefaceId,
+            String source,
+            int ttcIndex
+    ) {
+        String key = packageName + ":" + typefaceId;
+        LAST_LOAD_SOURCES.put(key, source);
+        LAST_LOAD_TTC_INDICES.put(key, ttcIndex);
+        FeedbackDiagnosticRuntimeEvents.recordTypeface(
+                packageName,
+                "load_source",
+                "typefaceId=" + typefaceId + ", source=" + source + ", ttcIndex=" + ttcIndex);
+    }
+
+    private static String loadSourceFor(String packageName, String typefaceId) {
+        String value = LAST_LOAD_SOURCES.get(packageName + ":" + typefaceId);
+        return value != null ? value : "unknown";
+    }
+
+    private static int ttcIndexFor(String packageName, String typefaceId) {
+        Integer value = LAST_LOAD_TTC_INDICES.get(packageName + ":" + typefaceId);
+        return value != null ? value : 0;
     }
 
     private static boolean logIfChanged(String key, String message) {
