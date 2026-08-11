@@ -13,7 +13,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.dpis.module.R
 import com.dpis.module.about.OpenSourceLicenseActivity
@@ -35,17 +34,31 @@ internal fun WearThemeSettingsContent(
     onColorSpecificationSelected: (String) -> Unit,
     onInterfaceScaleChanged: (Int) -> Unit,
 ) {
-    val context = LocalContext.current
     var showScaleDialog by remember { mutableStateOf(false) }
     var pendingScale by remember(interfaceScalePercent) {
         mutableFloatStateOf(interfaceScalePercent.toFloat())
     }
     val supports2025 = DpisColorSchemeFactory.supports2025Specification(paletteStyle)
+    val modeLabel = stringResource(R.string.settings_theme_mode_label)
+    val modeValue = stringResource(themeModeLabel(mode))
+    val themeColorLabel = stringResource(R.string.settings_theme_color_label)
+    val themeColorValue = stringResource(themeColorLabel(themeColor))
+    val paletteLabel = stringResource(R.string.settings_theme_palette_style_label)
+    val paletteValue = stringResource(paletteStyleLabel(paletteStyle))
+    val colorSpecificationLabel = stringResource(R.string.settings_theme_color_spec_label)
+    val colorSpecificationValue = stringResource(
+        colorSpecificationLabel(paletteStyle, colorSpecification)
+    )
+    val interfaceScaleLabel = stringResource(R.string.settings_interface_scale_label)
+    val interfaceScaleValue = stringResource(
+        R.string.settings_interface_scale_value,
+        interfaceScalePercent,
+    )
     WearWorkspaceList(title = R.string.settings_theme_settings_title) {
-            wearButton(
-                key = "mode",
-                label = context.getString(R.string.settings_theme_mode_label),
-                secondaryLabel = context.getString(themeModeLabel(mode)),
+        wearButton(
+            key = "mode",
+            label = modeLabel,
+            secondaryLabel = modeValue,
             icon = R.drawable.ic_routine_24,
             onClick = { onModeSelected(nextThemeMode(mode)) },
         )
@@ -59,25 +72,23 @@ internal fun WearThemeSettingsContent(
         if (!dynamicColorEnabled) {
             wearButton(
                 key = "theme-color",
-                label = context.getString(R.string.settings_theme_color_label),
-                secondaryLabel = context.getString(themeColorLabel(themeColor)),
+                label = themeColorLabel,
+                secondaryLabel = themeColorValue,
                 icon = R.drawable.ic_pie_chart_24,
                 onClick = { onThemeColorSelected(nextThemeColor(themeColor)) },
             )
         }
         wearButton(
-                key = "palette",
-                label = context.getString(R.string.settings_theme_palette_style_label),
-                secondaryLabel = context.getString(paletteStyleLabel(paletteStyle)),
+            key = "palette",
+            label = paletteLabel,
+            secondaryLabel = paletteValue,
             icon = R.drawable.ic_style_24,
             onClick = { onPaletteStyleSelected(nextPaletteStyle(paletteStyle)) },
         )
-            wearButton(
-                key = "spec",
-                label = context.getString(R.string.settings_theme_color_spec_label),
-                secondaryLabel = context.getString(
-                    colorSpecificationLabel(paletteStyle, colorSpecification)
-                ),
+        wearButton(
+            key = "spec",
+            label = colorSpecificationLabel,
+            secondaryLabel = colorSpecificationValue,
             icon = R.drawable.ic_design_services_24,
             enabled = supports2025,
             onClick = {
@@ -86,11 +97,8 @@ internal fun WearThemeSettingsContent(
         )
         wearButton(
             key = "scale",
-            label = context.getString(R.string.settings_interface_scale_label),
-            secondaryLabel = context.getString(
-                R.string.settings_interface_scale_value,
-                interfaceScalePercent
-            ),
+            label = interfaceScaleLabel,
+            secondaryLabel = interfaceScaleValue,
             icon = R.drawable.ic_fit_width_24,
             onClick = { showScaleDialog = true },
         )
@@ -122,43 +130,48 @@ internal fun WearAboutContent(
     onOpenFeedback: () -> Unit,
     onOpenLicenses: () -> Unit,
 ) {
-    val context = LocalContext.current
+    val appName = stringResource(R.string.app_name)
+    val updateLabel = stringResource(R.string.about_link_update_title)
+    val sourceLabel = stringResource(R.string.about_link_source_title)
+    val debugUpdateLabel = stringResource(R.string.about_link_update_dialog_debug_only_title)
+    val feedbackLabel = stringResource(R.string.about_link_feedback_title)
+    val licensesLabel = stringResource(R.string.open_source_license)
     WearWorkspaceList(title = R.string.about_title) {
         wearInfoCard(
             key = "about-summary",
-            title = context.getString(R.string.app_name),
+            title = appName,
             secondaryLabel = versionText,
             icon = R.drawable.ic_info_24,
         )
         wearButton(
             key = "check-updates",
-            label = context.getString(R.string.about_link_update_title),
+            label = updateLabel,
             icon = R.drawable.ic_refresh_24,
             onClick = onCheckUpdates,
         )
         wearButton(
             key = "source",
-            label = context.getString(R.string.about_link_source_title),
+            label = sourceLabel,
             icon = R.drawable.ic_code_24,
             onClick = onOpenSource,
         )
         if (showDebugUpdateEntry) {
             wearButton(
                 key = "debug-update",
-                label = context.getString(R.string.about_link_update_dialog_debug_only_title),
+                label = debugUpdateLabel,
                 icon = R.drawable.ic_refresh_24,
                 onClick = onShowDebugUpdate,
             )
         }
         wearButton(
             key = "feedback",
-            label = context.getString(R.string.about_link_feedback_title),
+            label = feedbackLabel,
             icon = R.drawable.ic_adjust_24,
             onClick = onOpenFeedback,
         )
         wearButton(
             key = "licenses",
-            label = context.getString(R.string.open_source_license),
+            label = licensesLabel,
             icon = R.drawable.ic_license_24,
             onClick = onOpenLicenses,
         )
@@ -173,30 +186,33 @@ internal fun WearFontLibraryContent(
     onImportArchive: () -> Unit,
     onFontSelected: (String) -> Unit,
 ) {
-    val context = LocalContext.current
+    val importFontLabel = stringResource(R.string.font_library_import_action)
+    val importArchiveLabel = stringResource(R.string.font_library_import_archive_action)
+    val exportArchiveLabel = stringResource(R.string.font_library_export_archive_action)
+    val emptyLabel = stringResource(R.string.font_library_empty)
     WearWorkspaceList(title = R.string.font_library_page_title) {
         wearButton(
             key = "import-font",
-            label = context.getString(R.string.font_library_import_action),
+            label = importFontLabel,
             icon = R.drawable.ic_upload_file_24,
             onClick = onImportFont,
         )
         wearButton(
             key = "import-archive",
-            label = context.getString(R.string.font_library_import_archive_action),
+            label = importArchiveLabel,
             icon = R.drawable.ic_upload_file_24,
             onClick = onImportArchive,
         )
         wearButton(
             key = "export-archive",
-            label = context.getString(R.string.font_library_export_archive_action),
+            label = exportArchiveLabel,
             icon = R.drawable.ic_save_24dp,
             onClick = onExportArchive,
         )
         if (presentation.items.isEmpty()) {
             wearInfoCard(
                 key = "empty",
-                title = context.getString(R.string.font_library_empty),
+                title = emptyLabel,
                 icon = R.drawable.ic_info_24,
             )
         } else {

@@ -1499,7 +1499,8 @@ public final class FlutterSettingsFontHookInstaller {
                     output.write(buffer, 0, count);
                 }
             }
-            return output.toString(StandardCharsets.UTF_8);
+            // ByteArrayOutputStream#toString(Charset) is only available from API 33.
+            return new String(output.toByteArray(), StandardCharsets.UTF_8);
         } catch (Throwable ignored) {
             return null;
         }
