@@ -944,5 +944,16 @@ not change route selection, mutation policy, or evidence semantics.
   selected font have reported ready; otherwise Flutter keeps its original
   manifest and assets. Device screenshot validation showed the selected
   imported typeface on Bettbox's visible Chinese text. Emoji assets are
-  excluded from the generic replacement predicate so a text replacement
-  cannot corrupt Twemoji.
+   excluded from the generic replacement predicate so a text replacement
+   cannot corrupt Twemoji.
+- 2026-08-11: A debug-only overlay visibility probe now reads
+  `flutter_assets/FontManifest.json` and `flutter_assets/dpis/typeface.ttf`
+  back through the same `AssetManager` immediately after `addAssetPath`.
+  Fresh Modern runs for both Kazumi and Bettbox reported
+  `manifestVisible=true`, `placeholderVisible=true`, and equal transformed
+  versus visible manifest lengths. This proves the temporary asset overlay is
+  visible to the Java-side `AssetManager` before
+  `runBundleAndSnapshotFromLibrary`; neither run produced
+  `Flutter typeface asset replacement hit`. The remaining unproven boundary is
+  Flutter engine font-asset consumption, not DPIS configuration, native hook
+  readiness, overlay registration, or JNI startup reachability.

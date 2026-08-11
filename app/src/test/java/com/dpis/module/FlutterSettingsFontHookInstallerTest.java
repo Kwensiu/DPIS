@@ -63,6 +63,10 @@ public class FlutterSettingsFontHookInstallerTest {
                 assertTrue(source.contains("installTypefaceDefaultFamilyOverlay("));
                 assertTrue(source.contains("dpis/typeface.ttf"));
                 assertTrue(source.contains("\"addAssetPath\""));
+                assertTrue(source.contains("verifyTypefaceOverlayVisibility("));
+                assertTrue(source.contains("manifestVisible="));
+                assertTrue(source.contains("placeholderVisible="));
+                assertTrue(source.contains("assetManager.open(path, AssetManager.ACCESS_STREAMING)"));
         }
 
         @Test

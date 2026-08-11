@@ -1404,6 +1404,11 @@ public final class FlutterSettingsFontHookInstaller {
                 // would make later lazy asset opens dependent on platform implementation details.
                 overlay.deleteOnExit();
                 TYPEFACE_OVERLAY_PATHS.put(assetManager, overlay.getAbsolutePath());
+                verifyTypefaceOverlayVisibility(
+                        packageName,
+                        assetManager,
+                        assetRoot,
+                        manifest);
                 DpisLog.i("DPIS_FONT Flutter typeface default-family overlay ready: package="
                         + packageName + ", path=" + overlay.getAbsolutePath()
                         + ", replacement=" + replacementFontPath
@@ -1417,6 +1422,47 @@ public final class FlutterSettingsFontHookInstaller {
                 DpisLog.e("DPIS_FONT Flutter typeface default-family overlay failed: package="
                         + packageName, throwable);
             }
+        }
+    }
+
+    /**
+     * AssetManager path registration is not sufficient evidence that Flutter
+     * will see the overlay. Read the two entries through the same manager
+     * immediately after registration so diagnostics can distinguish an
+     * accepted path from an actually visible overlay.
+     */
+    private static void verifyTypefaceOverlayVisibility(
+            String packageName,
+            AssetManager assetManager,
+            String assetRoot,
+            String transformedManifest
+    ) {
+        String manifestPath = assetRoot + "/FontManifest.json";
+        String placeholderPath = assetRoot + "/dpis/typeface.ttf";
+        String visibleManifest = readAssetText(assetManager, manifestPath);
+        boolean manifestVisible = visibleManifest != null
+                && transformedManifest.equals(visibleManifest);
+        boolean placeholderVisible = assetExists(assetManager, placeholderPath);
+        DpisLog.i("DPIS_FONT Flutter typeface overlay visibility: package="
+                + packageName
+                + ", manifestPath=" + manifestPath
+                + ", manifestVisible=" + manifestVisible
+                + ", placeholderPath=" + placeholderPath
+                + ", placeholderVisible=" + placeholderVisible
+                + ", transformedManifestBytes=" + transformedManifest.length()
+                + ", visibleManifestBytes="
+                + (visibleManifest == null ? 0 : visibleManifest.length()));
+        bridgeProbe("DPIS_FONT Flutter typeface overlay visibility: package="
+                + packageName
+                + ", manifestVisible=" + manifestVisible
+                + ", placeholderVisible=" + placeholderVisible);
+    }
+
+    private static boolean assetExists(AssetManager assetManager, String path) {
+        try (InputStream input = assetManager.open(path, AssetManager.ACCESS_STREAMING)) {
+            return input != null;
+        } catch (Throwable ignored) {
+            return false;
         }
     }
 
